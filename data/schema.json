@@ -1,0 +1,169 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CV Schema",
+  "type": "object",
+  "properties": {
+    "generated_at": { "type": "string" },
+    "header": {
+      "type": "object",
+      "properties": {
+        "full_name": { "type": "string" },
+        "current_title": { "type": "string" },
+        "contact": {
+          "type": "object",
+          "properties": {
+            "email": { "type": "string" },
+            "phone": { "type": "string" },
+            "links": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": { "type": "string" },
+                  "url": { "type": "string", "format": "uri" }
+                },
+                "required": ["url"]
+              }
+            },
+            "location": {
+              "type": "object",
+              "properties": {
+                "city": { "type": "string" },
+                "region": { "type": "string" },
+                "country_code": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "required": ["full_name", "current_title", "contact"]
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "description": { "type": "string" },
+        "domains": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "skills": {
+      "type": "object",
+      "properties": {
+        "hard_skills": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "proficiency": { "type": "string" }
+            },
+            "required": ["name"]
+          }
+        },
+        "soft_skills": { "type": "array", "items": { "type": "string" } },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "proficiency": { "type": "string" }
+            },
+            "required": ["name"]
+          }
+        },
+        "methodologies": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "experience": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "company": { "type": "string" },
+          "department_or_client": { "type": "string" },
+          "start_date": { "type": "string" },
+          "end_date": { "type": "string" },
+          "location": {
+            "type": "object",
+            "properties": {
+              "city": { "type": "string" },
+              "region": { "type": "string" },
+              "country_code": { "type": "string" }
+            }
+          },
+          "description": { "type": "string" },
+          "responsibilities": { "type": "array", "items": { "type": "string" } },
+          "deliverables": { "type": "array", "items": { "type": "string" } },
+          "skills_used": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["title", "company", "start_date", "end_date"]
+      }
+    },
+    "education": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "institution": { "type": "string" },
+          "degree": { "type": "string" },
+          "field_of_study": { "type": "string" },
+          "start_date": { "type": "string" },
+          "end_date": { "type": "string" }
+        },
+        "required": ["institution", "end_date"]
+      }
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "level": { "type": "string" }
+        },
+        "required": ["name", "level"]
+      }
+    },
+    "extras": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "summary": { "type": "string" }
+        },
+        "required": ["name"]
+      }
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "role": { "type": "string" },
+          "start_date": { "type": "string" },
+          "end_date": { "type": "string" },
+          "summary": { "type": "string" },
+          "tech_stack": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["name"]
+      }
+    },
+    "order_hint": { "type": "array", "items": { "type": "string" } },
+    "section_titles": {
+      "type": "object",
+      "properties": {
+        "summary": { "type": "string" },
+        "skills": { "type": "string" },
+        "experience": { "type": "string" },
+        "education": { "type": "string" },
+        "languages": { "type": "string" },
+        "extras": { "type": "string" },
+        "projects": { "type": "string" }
+      }
+    }
+  },
+  "required": ["generated_at", "header", "summary", "skills", "experience"]
+}
