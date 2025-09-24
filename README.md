@@ -27,8 +27,8 @@ Plateforme Next.js pour créer, personnaliser et diffuser des CV ciblés par off
 ## Installation
 ```bash
 # cloner le dépôt
-git clone https://github.com/<votre-compte>/cv-site.git
-cd cv-site
+git clone git@github.com:eds-78/CV_Builder.git
+cd CV_Builder
 
 # installer les dépendances JavaScript
 npm install
