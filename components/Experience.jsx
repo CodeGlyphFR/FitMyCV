@@ -147,39 +147,46 @@ export default function Experience(props){
                 </div>
               )}
 
-              <div className={"flex flex-wrap justify-between gap-2" + (editing ? " pr-20" : "")}>
-                <div className="font-semibold">
+              <div className={"flex flex-wrap items-baseline gap-2" + (editing ? " pr-20" : "")}>
+                <div className="font-semibold flex-1 min-w-0">
                   {e.title || ""}{e.company ? " • " : ""}{e.company || ""}{e.department_or_client ? ` (${e.department_or_client})` : ""}
                 </div>
-                <div className="text-sm opacity-80">{ym(e.start_date)} — {ym(e.end_date)}</div>
+                <div className="ml-3 text-sm opacity-80 whitespace-nowrap">
+                  {ym(e.start_date)} — {ym(e.end_date)}
+                </div>
               </div>
 
               {e.location && (
                 <div className="text-xs opacity-70 mt-0.5">
                   {e.location.city || ""}{e.location.region ? ", " : ""}{e.location.region || ""}{e.location.country_code ? ` (${e.location.country_code})` : ""}
-                </div>
+              </div>
               )}
 
-              <div className="mt-3 grid md:grid-cols-3 gap-4">
-                <div className="md:col-span-2">
-                  {e.description ? (
-                    <p className="text-sm text-justify opacity-95 whitespace-pre-line">{e.description}</p>
-                  ) : null}
-                  {Array.isArray(e.responsibilities) && e.responsibilities.length > 0 && (
-                    <ul className="list-disc pl-5 mt-2 text-sm space-y-1">
-                      {e.responsibilities.map((r, j) => <li key={j}>{r}</li>)}
-                    </ul>
-                  )}
-                </div>
+              <div className="mt-3 space-y-3">
+                {e.description ? (
+                  <p className="text-sm text-justify opacity-95 whitespace-pre-line">{e.description}</p>
+                ) : null}
 
-                {Array.isArray(e.deliverables) && e.deliverables.length > 0 && (
-                  <div className="md:col-span-1">
-                    <div className="text-sm font-medium mb-1">Livrables</div>
-                    <ul className="list-disc pl-5 text-sm space-y-1">
-                      {e.deliverables.map((d, j) => <li key={j}>{d}</li>)}
-                    </ul>
+                {(Array.isArray(e.responsibilities) && e.responsibilities.length > 0) || (Array.isArray(e.deliverables) && e.deliverables.length > 0) ? (
+                  <div className="grid gap-4 md:grid-cols-3">
+                    {Array.isArray(e.responsibilities) && e.responsibilities.length > 0 ? (
+                      <div className="md:col-span-2">
+                        <ul className="list-disc pl-5 text-sm space-y-1">
+                          {e.responsibilities.map((r, j) => <li key={j}>{r}</li>)}
+                        </ul>
+                      </div>
+                    ) : <div className="md:col-span-2" />}
+
+                    {Array.isArray(e.deliverables) && e.deliverables.length > 0 ? (
+                      <div className="md:col-span-1">
+                        <div className="text-sm font-medium mb-1">Livrables</div>
+                        <ul className="list-disc pl-5 text-sm space-y-1">
+                          {e.deliverables.map((d, j) => <li key={j}>{d}</li>)}
+                        </ul>
+                      </div>
+                    ) : null}
                   </div>
-                )}
+                ) : null}
               </div>
 
               <div className="flex flex-wrap gap-1 mt-2">

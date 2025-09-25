@@ -38,6 +38,7 @@ Ce document décrit le flux type pour exploiter la plateforme de génération de
 
 ## 4. Gestion multi-CV
 - Chaque fichier `.json` du dossier utilisateur est accessible via le sélecteur.
+- Les nouveaux fichiers sont horodatés (`1716912345123.json`, `20240515125900123456-2.json` pour l'IA) afin de garder un historique clair.
 - Le cookie `cvFile` mémorise le CV actif. L'interface recharge automatiquement les sections.
 - Vous pouvez renommer ou supprimer un CV depuis le menu contextuel.
 - La validation AJV est visible en mode debug (header `x-debug: 1`).

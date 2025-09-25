@@ -4,13 +4,12 @@ import React from "react";
 export default function DefaultCvIcon({ className = "", size = 16 }){
   return (
     <img
-      src="https://cdn-icons-png.flaticon.com/512/2165/2165920.png"
-      alt="CV"
+      src="/images/manual-hand.svg"
+      alt="CV manuel"
       width={size}
       height={size}
       className={className}
       loading="lazy"
-      referrerPolicy="no-referrer"
     />
   );
 }

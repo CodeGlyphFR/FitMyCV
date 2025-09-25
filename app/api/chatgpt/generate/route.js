@@ -203,18 +203,55 @@ export async function POST(request){
             if (exitCode === 0){
               const workspaceFiles = (await fs.readdir(workspaceDir).catch(() => []))
                 .filter(name => name.endsWith(".json"));
-              const initialSet = new Set(existingFilesBefore);
+              const existingSet = new Set(existingFilesBefore);
+              const persistedSet = new Set(existingFilesBefore);
 
               for (const file of workspaceFiles){
                 try {
                   const absolute = path.join(workspaceDir, file);
                   const content = await fs.readFile(absolute, "utf-8");
-                  await writeUserCvFile(userId, file, content);
-                  if (!initialSet.has(file)) generatedFiles.push(file);
+                  if (existingSet.has(file)){
+                    try {
+                      const original = await readUserCvFile(userId, file);
+                      if (typeof original === "string" && original.trim() === content.trim()){
+                        continue;
+                      }
+                    } catch (_err) {}
+                  }
+                  let enriched = content;
+                  try {
+                    const parsed = JSON.parse(content);
+                    const isoNow = new Date().toISOString();
+                    const nextMeta = {
+                      ...(parsed.meta || {}),
+                      generator: "chatgpt",
+                      source: "chatgpt",
+                      updated_at: isoNow,
+                    };
+                    if (!nextMeta.created_at) nextMeta.created_at = isoNow;
+                    parsed.meta = nextMeta;
+                    enriched = JSON.stringify(parsed, null, 2);
+                  } catch (metaError) {
+                    console.error(`Impossible d'enrichir ${file} avec les métadonnées`, metaError);
+                  }
+                  let targetFile = file;
+                  if (persistedSet.has(targetFile)){
+                    const dot = targetFile.lastIndexOf(".");
+                    const base = dot >= 0 ? targetFile.slice(0, dot) : targetFile;
+                    const ext = dot >= 0 ? targetFile.slice(dot) : "";
+                    let suffix = 1;
+                    while (persistedSet.has(targetFile)){
+                      targetFile = `${base}-${suffix}${ext}`;
+                      suffix += 1;
+                    }
+                  }
+                  await writeUserCvFile(userId, targetFile, enriched);
+                  generatedFiles.push(targetFile);
+                  persistedSet.add(targetFile);
                   await prisma.cvFile.upsert({
-                    where: { userId_filename: { userId, filename: file } },
+                    where: { userId_filename: { userId, filename: targetFile } },
                     update: {},
-                    create: { userId, filename: file },
+                    create: { userId, filename: targetFile },
                   });
                 } catch (error) {
                   console.error(`Impossible de persister ${file}`, error);
