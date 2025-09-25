@@ -9,6 +9,10 @@ import GptLogo from "./ui/GptLogo";
 import DefaultCvIcon from "./ui/DefaultCvIcon";
 import { useAdmin } from "./admin/AdminProvider";
 
+const useIsomorphicLayoutEffect = typeof window !== "undefined"
+  ? React.useLayoutEffect
+  : React.useEffect;
+
 const FALLBACK_TITLE = "CV en cours d'édition";
 const FALLBACK_DATE = "??/??/????";
 
@@ -22,10 +26,24 @@ function formatDateLabel(value){
   return `${day}/${month}/${year}`;
 }
 
-function enhanceItem(item){
+function enhanceItem(item, titleCache = null){
   const trimmedTitle = typeof item?.title === "string" ? item.title.trim() : "";
-  const hasTitle = trimmedTitle.length > 0;
-  const displayTitle = hasTitle ? trimmedTitle : FALLBACK_TITLE;
+  const fileId = typeof item?.file === "string" ? item.file : null;
+
+  let effectiveTitle = trimmedTitle;
+
+  if (!effectiveTitle && titleCache && fileId){
+    const cachedTitle = titleCache.get(fileId);
+    if (cachedTitle) {
+      effectiveTitle = cachedTitle;
+    }
+  }
+
+  const hasTitle = effectiveTitle.length > 0;
+  const displayTitle = hasTitle ? effectiveTitle : FALLBACK_TITLE;
+  if (titleCache && hasTitle && fileId){
+    titleCache.set(fileId, effectiveTitle);
+  }
   const dateLabel = item?.dateLabel
     || formatDateLabel(item?.createdAt)
     || formatDateLabel(item?.updatedAt);
@@ -34,24 +52,212 @@ function enhanceItem(item){
   return {
     ...item,
     hasTitle,
+    title: effectiveTitle,
     displayTitle,
     displayDate,
   };
 }
 
-function ItemLabel({ item, className = "", withHyphen = true }){
+function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0 }){
   if (!item) return null;
-  const rootClass = ["truncate", className].filter(Boolean).join(" ");
+  const rootClass = [
+    "flex min-w-0 items-center gap-2 leading-tight overflow-hidden",
+    className,
+  ].filter(Boolean).join(" ");
   const prefix = item.displayDate || FALLBACK_DATE;
-  const hyphen = withHyphen ? " - " : " ";
-  const titleClass = item.hasTitle
-    ? "truncate align-middle"
-    : "truncate align-middle italic text-neutral-500";
+  const baseTitleClass = item.hasTitle ? "font-medium" : "italic text-neutral-500";
+  const titleClass = `${baseTitleClass} text-sm sm:text-base`;
+  const containerRef = React.useRef(null);
+  const innerRef = React.useRef(null);
+  const [scrollActive, setScrollActive] = React.useState(false);
+  const rafRef = React.useRef(null);
+  const metricsRef = React.useRef({
+    needsScroll: null,
+    contentWidth: 0,
+    totalWidth: 0,
+    duration: 0,
+    truncationDelta: 0,
+  });
+  const scrollActiveRef = React.useRef(false);
+  const ellipsisRef = React.useRef(null);
+
+  React.useEffect(() => {
+    scrollActiveRef.current = scrollActive;
+  }, [scrollActive]);
+
+  useIsomorphicLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    const container = containerRef.current;
+    const inner = innerRef.current;
+    if (!container || !inner) return;
+    let cancelled = false;
+
+    const clearScheduledToggle = () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+
+    const measure = () => {
+      if (cancelled) return;
+      const firstChunk = inner.querySelector(".cv-ticker__chunk");
+      if (!firstChunk) return;
+
+      const containerWidth = container.offsetWidth;
+      const contentWidth = firstChunk.scrollWidth;
+      if (!containerWidth || !contentWidth) {
+        inner.style.removeProperty("--cv-ticker-shift");
+        inner.style.removeProperty("--cv-ticker-duration");
+        clearScheduledToggle();
+        if (scrollActiveRef.current) setScrollActive(false);
+        metricsRef.current = {
+          needsScroll: false,
+          contentWidth: 0,
+          totalWidth: 0,
+          duration: 0,
+          truncationDelta: 0,
+        };
+        return;
+      }
+
+      const style = window.getComputedStyle(inner);
+      const gapValue = parseFloat(style.columnGap || style.gap || "0");
+      const gap = Number.isFinite(gapValue) ? gapValue : 0;
+      const totalWidth = contentWidth + gap;
+      const prevMetrics = metricsRef.current;
+      const wasScrolling = prevMetrics.needsScroll === true;
+      let truncationDelta;
+      const ellipsisEl = ellipsisRef.current;
+
+      if (ellipsisEl && ellipsisEl.offsetParent) {
+        truncationDelta = ellipsisEl.scrollWidth - ellipsisEl.clientWidth;
+      } else {
+        truncationDelta = contentWidth - containerWidth;
+      }
+
+      const enableThreshold = 1.5;
+      const disableThreshold = -3;
+      const needsScroll = wasScrolling
+        ? truncationDelta > disableThreshold
+        : truncationDelta > enableThreshold;
+
+      if (!needsScroll) {
+        metricsRef.current = {
+          needsScroll: false,
+          contentWidth,
+          totalWidth,
+          duration: 0,
+          truncationDelta,
+        };
+        inner.style.removeProperty("--cv-ticker-shift");
+        inner.style.removeProperty("--cv-ticker-duration");
+        clearScheduledToggle();
+        if (scrollActiveRef.current) setScrollActive(false);
+        return;
+      }
+
+      const duration = Math.min(Math.max(totalWidth / 40, 8), 24);
+      const metricsChanged =
+        prevMetrics.needsScroll !== true
+        || Math.abs(prevMetrics.contentWidth - contentWidth) > 1.5
+        || Math.abs(prevMetrics.totalWidth - totalWidth) > 1.5
+        || Math.abs(prevMetrics.duration - duration) > 0.1
+        || Math.abs(prevMetrics.truncationDelta - truncationDelta) > 1.5;
+
+      metricsRef.current = {
+        needsScroll: true,
+        contentWidth,
+        totalWidth,
+        duration,
+        truncationDelta,
+      };
+
+      if (!metricsChanged) {
+        if (!scrollActiveRef.current) {
+          clearScheduledToggle();
+          rafRef.current = window.requestAnimationFrame(() => {
+            if (cancelled) return;
+            setScrollActive(true);
+            rafRef.current = null;
+          });
+        }
+        return;
+      }
+
+      inner.style.setProperty("--cv-ticker-shift", `${-totalWidth}px`);
+      inner.style.setProperty("--cv-ticker-duration", `${duration}s`);
+      if (!scrollActiveRef.current) {
+        clearScheduledToggle();
+        rafRef.current = window.requestAnimationFrame(() => {
+          if (cancelled) return;
+          setScrollActive(true);
+          rafRef.current = null;
+        });
+      } else {
+        clearScheduledToggle();
+      }
+    };
+
+    measure();
+
+    if (typeof document !== "undefined" && document.fonts?.ready) {
+      document.fonts.ready
+        .then(() => {
+          if (!cancelled) measure();
+        })
+        .catch(() => {});
+    }
+
+    let resizeObserver;
+    let detachWindowListener = null;
+
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => {
+        measure();
+      });
+      resizeObserver.observe(container);
+    } else {
+      const handler = () => measure();
+      window.addEventListener("resize", handler);
+      detachWindowListener = () => window.removeEventListener("resize", handler);
+    }
+
+    return () => {
+      cancelled = true;
+      clearScheduledToggle();
+      if (resizeObserver) resizeObserver.disconnect();
+      if (detachWindowListener) detachWindowListener();
+    };
+  }, [item.displayTitle, tickerKey]);
 
   return (
     <span className={rootClass}>
-      <span className="opacity-60">{prefix}{hyphen}</span>
-      <span className={titleClass}>{item.displayTitle}</span>
+      <span className="hidden sm:inline-flex flex-shrink-0 text-xs sm:text-sm opacity-60 whitespace-nowrap">
+        {prefix}
+      </span>
+      {withHyphen ? (
+        <span className="hidden sm:inline-flex flex-shrink-0 opacity-30 text-xs sm:text-sm" aria-hidden="true">
+          –
+        </span>
+      ) : null}
+      <span
+        ref={ellipsisRef}
+        className={`hidden sm:block truncate ${titleClass}`}
+      >
+        {item.displayTitle}
+      </span>
+      <span
+        ref={containerRef}
+        className={`cv-ticker sm:hidden ${titleClass} ${scrollActive ? "cv-ticker--active" : ""}`}
+      >
+        <span ref={innerRef} className="cv-ticker__inner">
+          <span className="cv-ticker__chunk">{item.displayTitle}</span>
+          {scrollActive ? (
+            <span className="cv-ticker__chunk" aria-hidden="true">{item.displayTitle}</span>
+          ) : null}
+        </span>
+      </span>
     </span>
   );
 }
@@ -86,6 +292,9 @@ export default function TopBar() {
   const triggerRef = React.useRef(null);
   const dropdownPortalRef = React.useRef(null);
   const logsRef = React.useRef(null);
+  const barRef = React.useRef(null);
+  const titleCacheRef = React.useRef(new Map());
+  const [tickerResetKey, setTickerResetKey] = React.useState(() => Date.now());
   const currentItem = React.useMemo(
     () => items.find((it) => it.file === current),
     [items, current],
@@ -114,6 +323,7 @@ export default function TopBar() {
     if (!isAuthenticated) {
       setItems([]);
       setCurrent("main.json");
+      titleCacheRef.current.clear();
       return;
     }
 
@@ -123,8 +333,9 @@ export default function TopBar() {
         throw new Error("API CV non disponible");
       }
       const data = await res.json();
+      const cache = titleCacheRef.current;
       const normalizedItems = Array.isArray(data.items)
-        ? data.items.map(enhanceItem)
+        ? data.items.map((it) => enhanceItem(it, cache))
         : [];
       setItems(normalizedItems);
       if (data.current) {
@@ -248,6 +459,32 @@ export default function TopBar() {
       document.removeEventListener("mousedown", handleClick);
       document.removeEventListener("keydown", handleKey);
     };
+  }, []);
+
+  React.useEffect(() => {
+    if (typeof document === "undefined") return;
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        setTickerResetKey(Date.now());
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined" || !barRef.current || typeof IntersectionObserver === "undefined") {
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setTickerResetKey(Date.now());
+        }
+      });
+    }, { threshold: 0.6 });
+    observer.observe(barRef.current);
+    return () => observer.disconnect();
   }, []);
 
   async function deleteCurrent() {
@@ -544,8 +781,12 @@ export default function TopBar() {
   }
 
   return (
-    <div className="no-print sticky top-0 inset-x-0 z-40 w-full bg-white/80 backdrop-blur border-b">
-      <div className="w-full p-3 flex flex-wrap items-center gap-2 sm:gap-3">
+    <>
+      <div
+        ref={barRef}
+        className="no-print sticky top-0 inset-x-0 z-40 w-full bg-white/80 backdrop-blur border-b"
+      >
+        <div className="w-full p-3 flex flex-wrap items-center gap-2 sm:gap-3">
         <div className="relative" ref={userMenuRef}>
           <button
             type="button"
@@ -600,10 +841,10 @@ export default function TopBar() {
           <button
             type="button"
             onClick={() => setListOpen((prev) => !prev)}
-            className="w-full min-w-0 rounded border px-3 py-1 text-sm flex items-center justify-between gap-3 hover:shadow"
+            className="w-full min-w-0 rounded border px-3 py-1 text-sm flex items-center justify-between gap-3 hover:shadow overflow-hidden"
             ref={triggerRef}
           >
-            <span className="flex items-center gap-3 min-w-0">
+            <span className="flex items-center gap-3 min-w-0 overflow-hidden">
               {currentItem ? (
                 <span className="flex h-6 w-6 items-center justify-center shrink-0">
                   {currentItem.isMain ? (
@@ -619,7 +860,11 @@ export default function TopBar() {
               ) : null}
               <span className="min-w-0">
                 {currentItem ? (
-                  <ItemLabel item={currentItem} />
+                  <ItemLabel
+                    item={currentItem}
+                    tickerKey={tickerResetKey}
+                    withHyphen={false}
+                  />
                 ) : (
                   <span className="truncate italic text-neutral-500">
                     Chargement en cours ...
@@ -665,7 +910,12 @@ export default function TopBar() {
                             <DefaultCvIcon className="h-4 w-4" size={16} />
                           )}
                         </span>
-                        <ItemLabel item={it} className="leading-tight" />
+                        <ItemLabel
+                          item={it}
+                          className="leading-tight"
+                          tickerKey={tickerResetKey}
+                          withHyphen={false}
+                        />
                       </button>
                     </li>
                   ))}
@@ -676,14 +926,14 @@ export default function TopBar() {
           : null}
         <button
           onClick={() => setOpenGenerator(true)}
-          className="rounded border px-2 py-1 text-sm hover:shadow inline-flex items-center justify-center leading-none"
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8"
           type="button"
         >
           <GptLogo className="h-4 w-4" />
         </button>
         <button
           onClick={() => router.push("/admin/new")}
-          className="rounded border px-2 py-1 text-sm hover:shadow"
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8"
         >
           ➕
         </button>
@@ -693,7 +943,7 @@ export default function TopBar() {
             setOpenDelete(true);
           }}
           disabled={current === "main.json"}
-          className={`rounded border px-2 py-1 text-sm hover:shadow ${current === "main.json" ? "opacity-40 cursor-not-allowed" : "text-red-700"}`}
+          className={`rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 ${current === "main.json" ? "opacity-40 cursor-not-allowed" : "text-red-700"}`}
           title={
             current === "main.json"
               ? "Le CV RAW ne peut pas être supprimé"
@@ -835,11 +1085,10 @@ export default function TopBar() {
         <div className="space-y-3">
           <p className="text-sm">
             Voulez-vous vraiment supprimer le CV :{" "}
-            <strong>{currentItem ? currentItem.label : current}</strong> ?
+            <strong>{currentItem ? currentItem.displayTitle : current}</strong> ?
           </p>
           <p className="text-xs opacity-70">
-            Cette action est <strong>irréversible</strong>. Le fichier JSON sera
-            supprimé.
+            Cette action est <strong>irréversible</strong>.
           </p>
           <div className="flex justify-end gap-2">
             <button
@@ -858,5 +1107,46 @@ export default function TopBar() {
         </div>
       </Modal>
     </div>
+      <style jsx global>{`
+        .cv-ticker {
+          max-width: 100%;
+        }
+
+        .cv-ticker__inner {
+          --cv-ticker-duration: 12s;
+          --cv-ticker-shift: -50%;
+          display: inline-flex;
+          align-items: center;
+          gap: 1.5rem;
+          transform: translate3d(0, 0, 0);
+        }
+
+        .cv-ticker__chunk {
+          display: inline-block;
+          white-space: nowrap;
+        }
+
+        @media (max-width: 639px) {
+          .cv-ticker {
+            position: relative;
+            display: block;
+            overflow: hidden;
+          }
+
+          .cv-ticker--active .cv-ticker__inner {
+            animation: cv-ticker-scroll var(--cv-ticker-duration) linear infinite;
+          }
+        }
+
+        @keyframes cv-ticker-scroll {
+          0% {
+            transform: translate3d(0, 0, 0);
+          }
+          100% {
+            transform: translate3d(var(--cv-ticker-shift), 0, 0);
+          }
+        }
+      `}</style>
+    </>
   );
 }
