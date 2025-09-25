@@ -604,23 +604,25 @@ export default function TopBar() {
             ref={triggerRef}
           >
             <span className="flex items-center gap-3 min-w-0">
-              <span className="flex h-6 w-6 items-center justify-center shrink-0">
-                {currentItem?.isMain ? (
-                  <span className="text-[10px] font-semibold uppercase tracking-wide leading-none">
-                    RAW
-                  </span>
-                ) : currentItem?.isGpt ? (
-                  <GptLogo className="h-4 w-4" />
-                ) : (
-                  <DefaultCvIcon className="h-4 w-4" size={16} />
-                )}
-              </span>
+              {currentItem ? (
+                <span className="flex h-6 w-6 items-center justify-center shrink-0">
+                  {currentItem.isMain ? (
+                    <span className="text-[10px] font-semibold uppercase tracking-wide leading-none">
+                      RAW
+                    </span>
+                  ) : currentItem.isGpt ? (
+                    <GptLogo className="h-4 w-4" />
+                  ) : (
+                    <DefaultCvIcon className="h-4 w-4" size={16} />
+                  )}
+                </span>
+              ) : null}
               <span className="min-w-0">
                 {currentItem ? (
                   <ItemLabel item={currentItem} />
                 ) : (
                   <span className="truncate italic text-neutral-500">
-                    Sélectionner
+                    Chargement en cours ...
                   </span>
                 )}
               </span>
