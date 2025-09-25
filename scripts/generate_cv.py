@@ -40,9 +40,9 @@ DEFAULT_USER_PROMPT = (
     "  Dans les compétences du CV, ne mélange pas les outils aux compétences technique.\n"
     "- Pour les champs education, languages et projects ne fait pas de modifications et reprend ceux du CV main.json sauf pour les tech_stack des projets où tu peux adapter suivant la description du projet et les soft skills de l'offre.\n"
     "- Pour le champ experience, je veux que tu adaptes les expérience de main.json à l'offre d'emploi en conservant une écriture orienté RH pour de la selection de CV. Tu ne dois pas modifier le titre du poste, ni mentir ou inventer sur les expériences.\n"
-    "- Si plusieurs adaptations semblent possibles, compare-les et ne conserve que la version la plus pertinente pour l'offre afin de renvoyer un unique CV final.\n"
     "- Pour le champ current_title tu dois en générer un à partir du titre de poste de l'offre d'emploi tout en respectant mon titre actuel, il doit y avoir une certaine logique.\n"
     "- Et enfin, rédige la description du champ summary du CV final avec un texte impactant pour taper dans l'oeil du recruteur. Tu ne dois pas inventer et te baser sur mon expérience. Ici la subtilité c'est de montrer au recruteur que avec mon expérience et mes skills, je peux répondre à l'offre et apporter beaucoup.\n"
+    "- Si plusieurs adaptations semblent possibles, compare-les et ne conserve que la version la plus pertinente pour l'offre afin de renvoyer un unique CV final.\n"
     "  Réponds en texte uniquement le JSON final qui doit impérativement respecter la structure de main.json.\n"
 )
 
