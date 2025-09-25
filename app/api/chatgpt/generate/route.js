@@ -35,6 +35,13 @@ function sanitizeFilename(value){
   return trimmed;
 }
 
+function sanitizeLabel(value){
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  return trimmed.slice(0, 200);
+}
+
 function isLikelyGptMeta(meta){
   if (!meta || typeof meta !== "object") return false;
   const extract = (field) => {
@@ -111,6 +118,7 @@ export async function POST(request){
     const formData = await request.formData();
     const rawLinks = formData.get("links");
     const rawBaseFile = formData.get("baseFile");
+    const rawBaseFileLabel = formData.get("baseFileLabel");
     const rawAnalysisLevel = formData.get("analysisLevel");
     const rawModel = formData.get("model");
     let parsedLinks = [];
@@ -131,6 +139,7 @@ export async function POST(request){
     }
 
     const requestedBaseFile = sanitizeFilename(rawBaseFile);
+    const requestedBaseFileLabel = sanitizeLabel(rawBaseFileLabel);
     const requestedAnalysisLevel = typeof rawAnalysisLevel === "string" ? rawAnalysisLevel.trim().toLowerCase() : "";
     const requestedModel = typeof rawModel === "string" ? rawModel.trim() : "";
 
@@ -142,14 +151,20 @@ export async function POST(request){
     const candidateFiles = existingFilesBefore.filter((name) => name.endsWith(".json"));
     let baseFile = candidateFiles.includes(requestedBaseFile) ? requestedBaseFile : "";
     const manualFiles = [];
+    const manualTitles = new Map();
 
     for (const fileName of candidateFiles){
       let isGpt = false;
+      let parsed;
+      let title = "";
       try {
         const raw = await readUserCvFile(userId, fileName);
-        const parsed = JSON.parse(raw);
+        parsed = JSON.parse(raw);
         if (isLikelyGptMeta(parsed?.meta)){
           isGpt = true;
+        }
+        if (parsed && parsed.header && typeof parsed.header.current_title === "string"){
+          title = parsed.header.current_title.trim();
         }
       } catch (_error) {
         // ignore JSON errors; treat as manuel
@@ -158,6 +173,7 @@ export async function POST(request){
         if (fileName === baseFile) baseFile = "";
       } else {
         manualFiles.push(fileName);
+        if (title) manualTitles.set(fileName, title);
       }
     }
 
@@ -173,6 +189,8 @@ export async function POST(request){
       : (Object.entries(ANALYSIS_MODEL_MAP).find(([, value]) => value === requestedModel)?.[0]
         || DEFAULT_ANALYSIS_LEVEL);
     const model = ANALYSIS_MODEL_MAP[levelKey] || ANALYSIS_MODEL_MAP[DEFAULT_ANALYSIS_LEVEL];
+    const baseFileLabel = requestedBaseFileLabel || manualTitles.get(baseFile) || "";
+    const displayBaseLabel = baseFileLabel || baseFile;
 
     const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), `cv-work-${userId}-`));
     for (const fileName of existingFilesBefore){
@@ -189,6 +207,7 @@ export async function POST(request){
       links,
       files: saved,
       base_file: baseFile,
+      base_file_label: displayBaseLabel,
       analysis_level: levelKey,
       model,
       user: {
@@ -226,7 +245,7 @@ export async function POST(request){
           try {
             send({ type: "status", message: "Analyse en cours..." });
             send({ type: "status", message: `Modèle GPT utilisé : ${activeModel}` });
-            send({ type: "status", message: `CV de référence : ${baseFile}` });
+            send({ type: "status", message: `CV de référence : ${displayBaseLabel}` });
             pythonProcess = spawn(interpreter, [scriptPath], {
               cwd: process.cwd(),
               env: {
@@ -237,6 +256,7 @@ export async function POST(request){
                 GPT_USER_NAME: session.user?.name || "",
                 GPT_OPENAI_MODEL: activeModel,
                 GPT_ANALYSIS_LEVEL: levelKey,
+                GPT_BASE_FILE_LABEL: displayBaseLabel,
               },
               stdio: ["ignore", "pipe", "pipe"],
             });

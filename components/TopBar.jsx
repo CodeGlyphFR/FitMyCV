@@ -733,6 +733,10 @@ export default function TopBar() {
     const formData = new FormData();
     formData.append("links", JSON.stringify(cleanedLinks));
     formData.append("baseFile", generatorBaseFile);
+    const baseFileLabel = generatorBaseItem?.displayTitle
+      || generatorBaseItem?.title
+      || "";
+    formData.append("baseFileLabel", baseFileLabel);
     const selectedAnalysis = currentAnalysisOption;
     formData.append("analysisLevel", selectedAnalysis.id);
     formData.append("model", selectedAnalysis.model);
