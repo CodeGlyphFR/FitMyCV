@@ -3,8 +3,12 @@ import React from "react";
 import TopBar from "@/components/TopBar";
 import RootProviders from "@/components/RootProviders";
 import { auth } from "@/lib/auth/session";
+import { SITE_TITLE } from "@/lib/site";
 
-export const metadata = { title:"CV Builder", description:"Compatible avec les parser ATS" };
+export const metadata = {
+  title: SITE_TITLE,
+  description: "Compatible avec les parser ATS",
+};
 
 export default async function RootLayout(props){
   const session = await auth();

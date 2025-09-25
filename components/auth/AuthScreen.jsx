@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { SITE_TITLE } from "@/lib/site";
 
 const allProviders = [
   { id: "google", label: "Continuer avec Google", image: "/images/g_logo.png" },
@@ -127,7 +128,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
       <div className="relative z-10 w-full max-w-lg rounded-3xl border border-white/10 bg-white shadow-2xl p-6 space-y-6">
         <div className="space-y-1 text-aligned">
           <h1 className="text-2xl font-semibold text-center">
-            {isRegister ? "Créer un compte" : "CV Builder 1.0"}
+            {isRegister ? "Créer un compte" : SITE_TITLE}
           </h1>
           <p className="text-sm text-neutral-600">
             Bienvenue ! Avec CV Builder, créez des CV taillés pour chaque opportunité grâce à l’IA.

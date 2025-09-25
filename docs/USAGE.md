@@ -47,6 +47,7 @@ Ce document décrit le flux type pour exploiter la plateforme de génération de
 - Utilisez le bouton "Exporter" pour récupérer une version imprimable/PDF du CV actif.
 - Personnalisez les titres de section et l'ordre via `order_hint` dans le JSON (`projects` est toujours inclus automatiquement).
 - Le footer affiche la version et l'auteur : adaptez-le dans `app/page.jsx` si besoin.
+- Avant chaque commit/déploiement, exécutez `npm run version:auto` pour synchroniser la version (`package.json`, interface, métadonnées).
 
 ## 6. Administration et maintenance
 - Les API `app/api/cvs` permettent de créer, mettre à jour et supprimer des fichiers côté serveur.
