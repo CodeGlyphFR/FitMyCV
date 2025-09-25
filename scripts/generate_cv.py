@@ -149,6 +149,7 @@ def prepare_attachments(
     client,
     main_cv_path: Optional[Path],
     files: List[Dict[str, Any]],
+    reference_label: str,
 ) -> Tuple[Optional[str], Dict[str, Any], List[Dict[str, Any]], List[Path]]:
     temp_paths: List[Path] = []
     main_json_content: Optional[str] = None
@@ -159,16 +160,16 @@ def prepare_attachments(
         try:
             main_json_content = main_cv_path.read_text(encoding="utf-8")
         except Exception as exc:  # noqa: BLE001
-            print(f"[ERREUR] Lecture impossible de main.json: {exc}", file=sys.stderr)
+            print(f"[ERREUR] Lecture impossible de {reference_label} : {exc}", file=sys.stderr)
             cleanup_temp_paths(temp_paths)
             return None, {}, [], temp_paths
 
         main_prompt = {
-            "name": "main.json (contenu intégré)",
+            "name": f"{reference_label} (contenu intégré)",
             "description": "CV de référence complet utilisé pour l'adaptation",
         }
     else:
-        print("[ERREUR] main.json est requis mais introuvable.", file=sys.stderr)
+        print(f"[ERREUR] {reference_label} est requis mais introuvable.", file=sys.stderr)
 
     for entry in files:
         path_value = entry.get("path")
@@ -212,7 +213,7 @@ def build_user_prompt(
 
     if main_json_content:
         sections.append(
-            "\nContenu du fichier main.json à adapter (respecte strictement cette structure) :\n"
+            "\nContenu du CV de référence à adapter (respecte strictement cette structure) :\n"
             "```json\n"
             f"{main_json_content.strip()}\n"
             "```"
@@ -366,6 +367,11 @@ def main() -> int:
 
     links = payload.get("links") or []
     files: List[Dict[str, Any]] = list(payload.get("files") or [])
+    raw_reference_file = payload.get("base_file") or "main.json"
+    if not isinstance(raw_reference_file, str):
+        raw_reference_file = "main.json"
+    reference_file = (raw_reference_file.strip() or "main.json")
+    reference_file = Path(reference_file).name
 
     system_prompt = os.environ.get("GPT_SYSTEM_PROMPT", DEFAULT_SYSTEM_PROMPT).strip()
     base_prompt = os.environ.get("GPT_BASE_PROMPT", DEFAULT_USER_PROMPT).strip()
@@ -373,13 +379,13 @@ def main() -> int:
     project_root = Path(__file__).resolve().parent.parent
     user_cv_dir = os.environ.get("GPT_USER_CV_DIR")
     if user_cv_dir:
-        main_cv_path = Path(user_cv_dir) / "main.json"
+        main_cv_path = Path(user_cv_dir) / reference_file
     else:
-        main_cv_path = project_root / "data" / "cvs" / "main.json"
+        main_cv_path = project_root / "data" / "cvs" / reference_file
     main_exists = False
     try:
         main_exists = main_cv_path.is_file()
-        if not main_exists:
+        if not main_exists and reference_file == "main.json":
             try:
                 minimal = {
                     "schema_version": "1.0.0",
@@ -391,9 +397,12 @@ def main() -> int:
                 main_cv_path.write_text(json.dumps(minimal, indent=2, ensure_ascii=False), encoding="utf-8")
                 main_exists = True
             except Exception as write_exc:  # noqa: BLE001
-                print(f"[AVERTISSEMENT] main.json introuvable et impossible de le créer : {write_exc}", file=sys.stderr)
+                print(
+                    f"[AVERTISSEMENT] {reference_file} introuvable et impossible de le créer : {write_exc}",
+                    file=sys.stderr,
+                )
     except OSError as exc:  # noqa: BLE001
-        print(f"[AVERTISSEMENT] Accès impossible à main.json : {exc}", file=sys.stderr)
+        print(f"[AVERTISSEMENT] Accès impossible à {reference_file} : {exc}", file=sys.stderr)
         main_exists = False
 
     try:
@@ -402,11 +411,16 @@ def main() -> int:
         print(f"[ERREUR] {exc}", file=sys.stderr)
         return 1
 
-    main_json_content, main_prompt, extra_remotes, temp_paths = prepare_attachments(client, main_cv_path if main_exists else None, files)
+    main_json_content, main_prompt, extra_remotes, temp_paths = prepare_attachments(
+        client,
+        main_cv_path if main_exists else None,
+        files,
+        reference_file,
+    )
 
     if not main_json_content:
         cleanup_temp_paths(temp_paths)
-        print("[ERREUR] Contenu du main.json indisponible, arrêt.", file=sys.stderr)
+        print("[ERREUR] Contenu du CV de référence indisponible, arrêt.", file=sys.stderr)
         return 1
 
     target_dir = ensure_response_directory()

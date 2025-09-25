@@ -9,6 +9,27 @@ import GptLogo from "./ui/GptLogo";
 import DefaultCvIcon from "./ui/DefaultCvIcon";
 import { useAdmin } from "./admin/AdminProvider";
 
+const ANALYSIS_OPTIONS = Object.freeze([
+  {
+    id: "rapid",
+    label: "Rapide",
+    model: "gpt-5-nano-2025-08-07",
+    hint: "Analyse la plus rapide, pour un aperçu rapide.",
+  },
+  {
+    id: "medium",
+    label: "Moyen",
+    model: "gpt-5-mini-2025-08-07",
+    hint: "Équilibre entre vitesse et qualité (recommandé).",
+  },
+  {
+    id: "deep",
+    label: "Approfondi",
+    model: "gpt-5-2025-08-07",
+    hint: "Analyse complète pour des résultats optimisés.",
+  },
+]);
+
 const useIsomorphicLayoutEffect = typeof window !== "undefined"
   ? React.useLayoutEffect
   : React.useEffect;
@@ -26,6 +47,20 @@ function formatDateLabel(value){
   return `${day}/${month}/${year}`;
 }
 
+function normalizeBoolean(value){
+  if (value === true || value === false) return value;
+  if (typeof value === "string"){
+    const trimmed = value.trim().toLowerCase();
+    if (trimmed === "true") return true;
+    if (trimmed === "false") return false;
+  }
+  return Boolean(value);
+}
+
+function getAnalysisOption(id){
+  return ANALYSIS_OPTIONS.find((option) => option.id === id) || ANALYSIS_OPTIONS[1];
+}
+
 function enhanceItem(item, titleCache = null){
   const trimmedTitle = typeof item?.title === "string" ? item.title.trim() : "";
   const fileId = typeof item?.file === "string" ? item.file : null;
@@ -39,6 +74,8 @@ function enhanceItem(item, titleCache = null){
     }
   }
 
+  const isMain = normalizeBoolean(item?.isMain);
+  const isGpt = normalizeBoolean(item?.isGpt);
   const hasTitle = effectiveTitle.length > 0;
   const displayTitle = hasTitle ? effectiveTitle : FALLBACK_TITLE;
   if (titleCache && hasTitle && fileId){
@@ -51,6 +88,9 @@ function enhanceItem(item, titleCache = null){
 
   return {
     ...item,
+    isMain,
+    isGpt,
+    isManual: !isMain && !isGpt,
     hasTitle,
     title: effectiveTitle,
     displayTitle,
@@ -287,17 +327,34 @@ export default function TopBar() {
   const [generatorLogs, setGeneratorLogs] = React.useState([]);
   const [generationDone, setGenerationDone] = React.useState(false);
   const [pendingFile, setPendingFile] = React.useState(null);
+  const [generatorBaseFile, setGeneratorBaseFile] = React.useState("main.json");
+  const [baseSelectorOpen, setBaseSelectorOpen] = React.useState(false);
+  const [analysisLevel, setAnalysisLevel] = React.useState("medium");
 
   const fileInputRef = React.useRef(null);
   const triggerRef = React.useRef(null);
   const dropdownPortalRef = React.useRef(null);
   const logsRef = React.useRef(null);
   const barRef = React.useRef(null);
+  const baseSelectorRef = React.useRef(null);
+  const baseDropdownRef = React.useRef(null);
   const titleCacheRef = React.useRef(new Map());
   const [tickerResetKey, setTickerResetKey] = React.useState(() => Date.now());
   const currentItem = React.useMemo(
     () => items.find((it) => it.file === current),
     [items, current],
+  );
+  const generatorSourceItems = React.useMemo(
+    () => items.filter((it) => !it.isGpt),
+    [items],
+  );
+  const generatorBaseItem = React.useMemo(
+    () => generatorSourceItems.find((it) => it.file === generatorBaseFile) || null,
+    [generatorSourceItems, generatorBaseFile],
+  );
+  const currentAnalysisOption = React.useMemo(
+    () => getAnalysisOption(analysisLevel),
+    [analysisLevel],
   );
   const emitListChanged = React.useCallback(() => {
     if (typeof window !== "undefined") {
@@ -357,6 +414,23 @@ export default function TopBar() {
   }, [isAuthenticated, pathname, searchParams?.toString()]);
 
   React.useEffect(() => {
+    if (!generatorSourceItems.length) {
+      setGeneratorBaseFile("");
+      setBaseSelectorOpen(false);
+      return;
+    }
+    setGeneratorBaseFile((prev) => {
+      if (prev && generatorSourceItems.some((it) => it.file === prev)) {
+        return prev;
+      }
+      const preferred = generatorSourceItems.find((it) => it.file === current)
+        || generatorSourceItems.find((it) => it.isMain)
+        || generatorSourceItems[0];
+      return preferred ? preferred.file : prev;
+    });
+  }, [generatorSourceItems, current]);
+
+  React.useEffect(() => {
     if (!isAuthenticated) return undefined;
     const onChanged = () => reload();
     window.addEventListener("cv:list:changed", onChanged);
@@ -383,6 +457,30 @@ export default function TopBar() {
   React.useEffect(() => {
     setPortalReady(true);
   }, []);
+
+  const openGeneratorModal = React.useCallback(() => {
+    setBaseSelectorOpen(false);
+    const manualItems = generatorSourceItems;
+    let nextBase = "";
+
+    if (
+      currentItem &&
+      !currentItem.isGpt &&
+      manualItems.some((it) => it.file === currentItem.file)
+    ) {
+      nextBase = currentItem.file;
+    } else {
+      const mainCandidate = manualItems.find((it) => it.isMain);
+      nextBase = mainCandidate?.file || manualItems[0]?.file || "";
+    }
+
+    setGeneratorBaseFile((prev) => {
+      if (nextBase) return nextBase;
+      return manualItems.some((it) => it.file === prev) ? prev : "";
+    });
+    setGeneratorError("");
+    setOpenGenerator(true);
+  }, [currentItem, generatorSourceItems]);
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -462,6 +560,28 @@ export default function TopBar() {
   }, []);
 
   React.useEffect(() => {
+    if (!baseSelectorOpen) return undefined;
+    function handleClick(event) {
+      const container = baseSelectorRef.current;
+      const dropdown = baseDropdownRef.current;
+      if (container && container.contains(event.target)) return;
+      if (dropdown && dropdown.contains(event.target)) return;
+      setBaseSelectorOpen(false);
+    }
+
+    function handleKey(event) {
+      if (event.key === "Escape") setBaseSelectorOpen(false);
+    }
+
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [baseSelectorOpen]);
+
+  React.useEffect(() => {
     if (typeof document === "undefined") return;
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
@@ -537,6 +657,8 @@ export default function TopBar() {
     setGeneratorLogs([]);
     setGenerationDone(false);
     setPendingFile(null);
+    setAnalysisLevel("medium");
+    setBaseSelectorOpen(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -593,6 +715,11 @@ export default function TopBar() {
     event.preventDefault();
     if (generatorLoading) return;
 
+    if (!generatorBaseFile) {
+      setGeneratorError("Sélectionnez un CV de référence avant de lancer l'analyse.");
+      return;
+    }
+
     const cleanedLinks = linkInputs
       .map((l) => (l || "").trim())
       .filter(Boolean);
@@ -605,6 +732,10 @@ export default function TopBar() {
 
     const formData = new FormData();
     formData.append("links", JSON.stringify(cleanedLinks));
+    formData.append("baseFile", generatorBaseFile);
+    const selectedAnalysis = currentAnalysisOption;
+    formData.append("analysisLevel", selectedAnalysis.id);
+    formData.append("model", selectedAnalysis.model);
     (fileSelection || []).forEach((file) => formData.append("files", file));
 
     setGeneratorLoading(true);
@@ -925,7 +1056,7 @@ export default function TopBar() {
             )
           : null}
         <button
-          onClick={() => setOpenGenerator(true)}
+          onClick={openGeneratorModal}
           className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8"
           type="button"
         >
@@ -962,29 +1093,91 @@ export default function TopBar() {
         <form onSubmit={submitGenerator} className="space-y-4">
           <div className="text-sm text-neutral-700">
             Renseignez des offres d'emploi à analyser (liens ou fichier
-            PDF/Word) pour générer des CV adaptés à partir de votre CV RAW.
+            PDF/Word) pour générer des CV adaptés à partir du CV de référence
+            sélectionné.
           </div>
 
           <div className="space-y-2">
-            {generatorLoading ? (
-              <div className="h-2 w-full overflow-hidden rounded bg-emerald-100">
-                <div className="h-full w-full bg-emerald-500 animate-pulse"></div>
-              </div>
-            ) : null}
-            <div
-              ref={logsRef}
-              className="h-40 overflow-y-auto rounded border bg-black/90 p-2 font-mono text-xs text-emerald-100"
-            >
-              {generatorLogs.length ? (
-                generatorLogs.map((line, idx) => (
-                  <div key={idx} className="whitespace-pre-wrap">
-                    {line}
+            <div className="text-sm font-medium">CV de référence</div>
+            {generatorSourceItems.length ? (
+              <div className="relative" ref={baseSelectorRef}>
+                <button
+                  type="button"
+                  onClick={() => setBaseSelectorOpen((prev) => !prev)}
+                  className="w-full min-w-0 rounded border px-3 py-1 text-sm flex items-center justify-between gap-3 hover:shadow bg-white"
+                >
+                  <span className="flex items-center gap-3 min-w-0 overflow-hidden">
+                    {generatorBaseItem ? (
+                      <span className="flex h-6 w-6 items-center justify-center shrink-0">
+                        {generatorBaseItem.isMain ? (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide leading-none">
+                            RAW
+                          </span>
+                        ) : (
+                          <DefaultCvIcon className="h-4 w-4" size={16} />
+                        )}
+                      </span>
+                    ) : null}
+                    <span className="min-w-0">
+                      {generatorBaseItem ? (
+                        <ItemLabel
+                          item={generatorBaseItem}
+                          withHyphen={false}
+                          tickerKey={tickerResetKey}
+                        />
+                      ) : (
+                        <span className="truncate italic text-neutral-500">
+                          Sélectionnez un CV
+                        </span>
+                      )}
+                    </span>
+                  </span>
+                  <span className="text-xs opacity-60">▾</span>
+                </button>
+                {baseSelectorOpen ? (
+                  <div
+                    ref={baseDropdownRef}
+                    className="absolute z-10 mt-1 w-full rounded border bg-white shadow-lg max-h-60 overflow-y-auto"
+                  >
+                    <ul className="py-1">
+                      {generatorSourceItems.map((item) => (
+                        <li key={item.file}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setGeneratorBaseFile(item.file);
+                              setBaseSelectorOpen(false);
+                            }}
+                            className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-zinc-100 ${item.file === generatorBaseFile ? "bg-zinc-50" : ""}`}
+                          >
+                            <span className="flex h-6 w-6 items-center justify-center shrink-0">
+                              {item.isMain ? (
+                                <span className="text-[10px] font-semibold uppercase tracking-wide leading-none">
+                                  RAW
+                                </span>
+                              ) : (
+                                <DefaultCvIcon className="h-4 w-4" size={16} />
+                              )}
+                            </span>
+                            <ItemLabel
+                              item={item}
+                              className="leading-tight"
+                              withHyphen={false}
+                              tickerKey={tickerResetKey}
+                            />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                ))
-              ) : (
-                <div className="opacity-60">En attente...</div>
-              )}
-            </div>
+                ) : null}
+              </div>
+            ) : (
+              <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                Aucun CV manuel disponible. Créez un CV avant de lancer une
+                génération avec l'IA.
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -1047,6 +1240,51 @@ export default function TopBar() {
             ) : null}
           </div>
 
+          <div className="space-y-2">
+            {generatorLoading ? (
+              <div className="h-2 w-full overflow-hidden rounded bg-emerald-100">
+                <div className="h-full w-full bg-emerald-500 animate-pulse"></div>
+              </div>
+            ) : null}
+            <div
+              ref={logsRef}
+              className="h-40 overflow-y-auto rounded border bg-black/90 p-2 font-mono text-xs text-emerald-100"
+            >
+              {generatorLogs.length ? (
+                generatorLogs.map((line, idx) => (
+                  <div key={idx} className="whitespace-pre-wrap">
+                    {line}
+                  </div>
+                ))
+              ) : (
+                <div className="opacity-60">En attente...</div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-sm font-medium">Qualité de l'analyse</div>
+            <div className="grid grid-cols-3 gap-1 rounded-lg border bg-neutral-50 p-1 text-xs sm:text-sm">
+              {ANALYSIS_OPTIONS.map((option) => {
+                const active = option.id === analysisLevel;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setAnalysisLevel(option.id)}
+                    className={`rounded-md px-2 py-1 font-medium transition ${active ? "bg-white text-emerald-600 shadow" : "text-neutral-600 hover:bg-white"}`}
+                    aria-pressed={active}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-neutral-500">
+              {currentAnalysisOption.hint}
+            </p>
+          </div>
+
           {generatorError ? (
             <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
               {generatorError}
@@ -1064,7 +1302,7 @@ export default function TopBar() {
             <button
               type={generationDone ? "button" : "submit"}
               className="rounded border px-3 py-1 text-sm"
-              disabled={generatorLoading}
+              disabled={generatorLoading || !generatorBaseFile}
               onClick={generationDone ? finalizeGeneration : undefined}
             >
               {generatorLoading

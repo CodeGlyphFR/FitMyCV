@@ -7,6 +7,14 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { ensureUserCvDir, listUserCvFiles, readUserCvFile, writeUserCvFile } from "@/lib/cv/storage";
 
+const ANALYSIS_MODEL_MAP = Object.freeze({
+  rapid: "gpt-5-nano-2025-08-07",
+  medium: "gpt-5-mini-2025-08-07",
+  deep: "gpt-5-2025-08-07",
+});
+
+const DEFAULT_ANALYSIS_LEVEL = "medium";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -16,6 +24,26 @@ function sanitizeLinks(raw){
     .map(link => (typeof link === "string" ? link : String(link || "")))
     .map(link => link.trim())
     .filter(link => !!link);
+}
+
+function sanitizeFilename(value){
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (/[\\/]/.test(trimmed)) return "";
+  if (trimmed.includes("..")) return "";
+  return trimmed;
+}
+
+function isLikelyGptMeta(meta){
+  if (!meta || typeof meta !== "object") return false;
+  const extract = (field) => {
+    const raw = meta[field];
+    return typeof raw === "string" ? raw.toLowerCase().trim() : "";
+  };
+  const generator = extract("generator");
+  const source = extract("source");
+  return generator === "chatgpt" || generator === "openai" || source === "chatgpt" || source === "openai";
 }
 
 async function saveUploads(files){
@@ -82,6 +110,9 @@ export async function POST(request){
   try {
     const formData = await request.formData();
     const rawLinks = formData.get("links");
+    const rawBaseFile = formData.get("baseFile");
+    const rawAnalysisLevel = formData.get("analysisLevel");
+    const rawModel = formData.get("model");
     let parsedLinks = [];
 
     if (rawLinks){
@@ -99,11 +130,50 @@ export async function POST(request){
       return NextResponse.json({ error: "Ajoutez au moins un lien ou un fichier pour lancer l'assistant." }, { status: 400 });
     }
 
+    const requestedBaseFile = sanitizeFilename(rawBaseFile);
+    const requestedAnalysisLevel = typeof rawAnalysisLevel === "string" ? rawAnalysisLevel.trim().toLowerCase() : "";
+    const requestedModel = typeof rawModel === "string" ? rawModel.trim() : "";
+
     const { directory, saved } = await saveUploads(files);
 
     const userId = session.user.id;
     const userCvDir = await ensureUserCvDir(userId);
     const existingFilesBefore = await listUserCvFiles(userId);
+    const candidateFiles = existingFilesBefore.filter((name) => name.endsWith(".json"));
+    let baseFile = candidateFiles.includes(requestedBaseFile) ? requestedBaseFile : "";
+    const manualFiles = [];
+
+    for (const fileName of candidateFiles){
+      let isGpt = false;
+      try {
+        const raw = await readUserCvFile(userId, fileName);
+        const parsed = JSON.parse(raw);
+        if (isLikelyGptMeta(parsed?.meta)){
+          isGpt = true;
+        }
+      } catch (_error) {
+        // ignore JSON errors; treat as manuel
+      }
+      if (isGpt){
+        if (fileName === baseFile) baseFile = "";
+      } else {
+        manualFiles.push(fileName);
+      }
+    }
+
+    if (!baseFile){
+      if (manualFiles.includes("main.json")) baseFile = "main.json";
+      else if (manualFiles.length) baseFile = manualFiles[0];
+      else if (candidateFiles.includes("main.json")) baseFile = "main.json";
+      else baseFile = requestedBaseFile || "main.json";
+    }
+
+    const levelKey = ANALYSIS_MODEL_MAP[requestedAnalysisLevel]
+      ? requestedAnalysisLevel
+      : (Object.entries(ANALYSIS_MODEL_MAP).find(([, value]) => value === requestedModel)?.[0]
+        || DEFAULT_ANALYSIS_LEVEL);
+    const model = ANALYSIS_MODEL_MAP[levelKey] || ANALYSIS_MODEL_MAP[DEFAULT_ANALYSIS_LEVEL];
+
     const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), `cv-work-${userId}-`));
     for (const fileName of existingFilesBefore){
       try {
@@ -118,6 +188,9 @@ export async function POST(request){
       created_at: new Date().toISOString(),
       links,
       files: saved,
+      base_file: baseFile,
+      analysis_level: levelKey,
+      model,
       user: {
         id: userId,
         cv_dir: workspaceDir,
@@ -141,17 +214,19 @@ export async function POST(request){
       start(controller) {
         const send = payload => controller.enqueue(encoder.encode(JSON.stringify(payload) + "\n"));
 
-        const model = process.env.GPT_OPENAI_MODEL
+        const activeModel = model
+          || process.env.GPT_OPENAI_MODEL
           || process.env.OPENAI_MODEL
           || process.env.OPENAI_API_MODEL
-          || "gpt-4.1-mini";
+          || ANALYSIS_MODEL_MAP[DEFAULT_ANALYSIS_LEVEL];
 
         (async () => {
           let stdout = "";
           let stderr = "";
           try {
             send({ type: "status", message: "Analyse en cours..." });
-            send({ type: "status", message: `Modèle GPT utilisé : ${model}` });
+            send({ type: "status", message: `Modèle GPT utilisé : ${activeModel}` });
+            send({ type: "status", message: `CV de référence : ${baseFile}` });
             pythonProcess = spawn(interpreter, [scriptPath], {
               cwd: process.cwd(),
               env: {
@@ -160,6 +235,8 @@ export async function POST(request){
                 GPT_USER_ID: userId,
                 GPT_USER_CV_DIR: workspaceDir,
                 GPT_USER_NAME: session.user?.name || "",
+                GPT_OPENAI_MODEL: activeModel,
+                GPT_ANALYSIS_LEVEL: levelKey,
               },
               stdio: ["ignore", "pipe", "pipe"],
             });
