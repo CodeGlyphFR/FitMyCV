@@ -22,9 +22,9 @@ import os
 import shutil
 import sys
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-from urllib.parse import urlparse
 
 DEFAULT_SYSTEM_PROMPT = (
     "Tu es un assistant spécialisé dans la rédaction de CV en français et tu connais tous les secrets du formatage ATS des outils RH pour le parsing de CV.\n"
@@ -42,7 +42,7 @@ DEFAULT_USER_PROMPT = (
     "- Pour le champ experience, je veux que tu adaptes les expérience de main.json à l'offre d'emploi en conservant une écriture orienté RH pour de la selection de CV. Tu ne dois pas modifier le titre du poste, ni mentir ou inventer sur les expériences.\n"
     "- Pour le champ current_title tu dois en générer un à partir du titre de poste de l'offre d'emploi tout en respectant mon titre actuel, il doit y avoir une certaine logique.\n"
     "- Et enfin, rédige la description du champ summary du CV final avec un texte impactant pour taper dans l'oeil du recruteur. Tu ne dois pas inventer et te baser sur mon expérience. Ici la subtilité c'est de montrer au recruteur que avec mon expérience et mes skills, je peux répondre à l'offre et apporter beaucoup.\n"
-    "  Réponds en texte uniquement le JSON final qui doit impérativement respecter la structure de main.pdf.\n"
+    "  Réponds en texte uniquement le JSON final qui doit impérativement respecter la structure de main.json.\n"
 )
 
 
@@ -101,123 +101,6 @@ def convert_word_to_pdf(path: Path) -> Tuple[Optional[Path], List[Path]]:
     return target, [tmp_dir]
 
 
-def _escape_pdf_text(text: str) -> str:
-    return text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
-
-
-def _chunk_lines(lines: List[str], max_lines: int = 55) -> List[List[str]]:
-    if not lines:
-        return [[""]]
-    chunks: List[List[str]] = []
-    current: List[str] = []
-    for line in lines:
-        current.append(line)
-        if len(current) >= max_lines:
-            chunks.append(current)
-            current = []
-    if current:
-        chunks.append(current)
-    return chunks or [[""]]
-
-
-def _build_pdf_bytes_from_text(text: str) -> bytes:
-    raw_lines = text.splitlines() or [""]
-    lines: List[str] = []
-    wrap_width = 110
-    for line in raw_lines:
-        if not line:
-            lines.append("")
-            continue
-        for i in range(0, len(line), wrap_width):
-            lines.append(line[i : i + wrap_width])
-
-    line_chunks = _chunk_lines(lines)
-
-    objects: Dict[int, str] = {}
-    next_obj = 1
-
-    def reserve() -> int:
-        nonlocal next_obj
-        obj = next_obj
-        next_obj += 1
-        return obj
-
-    def set_obj(obj: int, content: str) -> None:
-        objects[obj] = content
-
-    catalog_obj = reserve()
-    pages_obj = reserve()
-    font_obj = reserve()
-
-    page_entries = []
-    for chunk in line_chunks:
-        content_obj = reserve()
-        page_obj = reserve()
-        page_entries.append((page_obj, content_obj, chunk))
-
-    set_obj(font_obj, "<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>")
-
-    for page_obj, content_obj, chunk in page_entries:
-        safe_lines = [_escape_pdf_text(line) if line.strip() else " " for line in chunk]
-        stream_parts = ["BT", "/F1 10 Tf", "14 TL", "72 770 Td"]
-        if safe_lines:
-            stream_parts.append(f"({safe_lines[0]}) Tj")
-            for safe_line in safe_lines[1:]:
-                stream_parts.append("T*")
-                stream_parts.append(f"({safe_line}) Tj")
-        else:
-            stream_parts.append("() Tj")
-        stream_parts.append("ET")
-        stream = "\n".join(stream_parts)
-        stream_bytes = stream.encode("utf-8")
-        set_obj(content_obj, f"<< /Length {len(stream_bytes)} >>\nstream\n{stream}\nendstream")
-        set_obj(
-            page_obj,
-            (
-                f"<< /Type /Page /Parent {pages_obj} 0 R /MediaBox [0 0 612 792] "
-                f"/Contents {content_obj} 0 R /Resources << /Font << /F1 {font_obj} 0 R >> >> >>"
-            ),
-        )
-
-    kids = " ".join(f"{page_obj} 0 R" for page_obj, _, _ in page_entries)
-    set_obj(pages_obj, f"<< /Type /Pages /Count {len(page_entries)} /Kids [{kids}] >>")
-    set_obj(catalog_obj, f"<< /Type /Catalog /Pages {pages_obj} 0 R >>")
-
-    pdf_bytes = bytearray(b"%PDF-1.4\n")
-    offsets: Dict[int, int] = {}
-
-    for obj_num in range(1, next_obj):
-        offsets[obj_num] = len(pdf_bytes)
-        content = objects[obj_num]
-        pdf_bytes.extend(f"{obj_num} 0 obj\n{content}\nendobj\n".encode("utf-8"))
-
-    xref_offset = len(pdf_bytes)
-    pdf_bytes.extend(f"xref\n0 {next_obj}\n".encode("utf-8"))
-    pdf_bytes.extend(b"0000000000 65535 f \n")
-    for obj_num in range(1, next_obj):
-        pdf_bytes.extend(f"{offsets[obj_num]:010d} 00000 n \n".encode("utf-8"))
-    pdf_bytes.extend(
-        (
-            f"trailer\n<< /Size {next_obj} /Root {catalog_obj} 0 R >>\n"
-            f"startxref\n{xref_offset}\n%%EOF\n"
-        ).encode("utf-8")
-    )
-
-    return bytes(pdf_bytes)
-
-
-def create_pdf_from_text(text: str, base_name: str) -> Tuple[Optional[Path], List[Path]]:
-    tmp_dir = Path(tempfile.mkdtemp())
-    pdf_path = tmp_dir / f"{slugify(base_name) or 'document'}.pdf"
-    try:
-        pdf_bytes = _build_pdf_bytes_from_text(text)
-        pdf_path.write_bytes(pdf_bytes)
-        return pdf_path, [tmp_dir]
-    except Exception as exc:  # noqa: BLE001
-        print(f"[ERREUR] Impossible de générer le PDF pour {base_name}: {exc}", file=sys.stderr)
-        return None, [tmp_dir]
-
-
 def cleanup_temp_paths(paths: List[Path]) -> None:
     for temp in paths:
         try:
@@ -266,37 +149,24 @@ def prepare_attachments(
     client,
     main_cv_path: Optional[Path],
     files: List[Dict[str, Any]],
-) -> Tuple[Optional[Dict[str, Any]], Dict[str, Any], List[Dict[str, Any]], List[Path]]:
+) -> Tuple[Optional[str], Dict[str, Any], List[Dict[str, Any]], List[Path]]:
     temp_paths: List[Path] = []
-    main_remote: Optional[Dict[str, Any]] = None
+    main_json_content: Optional[str] = None
     main_prompt: Dict[str, Any] = {}
     extra_remotes: List[Dict[str, Any]] = []
 
     if main_cv_path and main_cv_path.exists():
         try:
-            raw_text = main_cv_path.read_text(encoding="utf-8")
+            main_json_content = main_cv_path.read_text(encoding="utf-8")
         except Exception as exc:  # noqa: BLE001
             print(f"[ERREUR] Lecture impossible de main.json: {exc}", file=sys.stderr)
             cleanup_temp_paths(temp_paths)
             return None, {}, [], temp_paths
 
-        pdf_path, temps_pdf = create_pdf_from_text(raw_text or "(vide)", "main")
-        temp_paths.extend(temps_pdf)
-        if not pdf_path or not pdf_path.exists():
-            print("[ERREUR] Conversion PDF du main.json impossible.", file=sys.stderr)
-            cleanup_temp_paths(temp_paths)
-            return None, {}, [], temp_paths
-
-        remote, temps = upload_file_for_responses(
-            client,
-            pdf_path,
-            alias="main.pdf",
-            source_path=main_cv_path,
-        )
-        temp_paths.extend(temps)
-        if remote:
-            main_remote = remote
-            main_prompt = {"name": "main.pdf", "description": "PDF généré à partir de main.json"}
+        main_prompt = {
+            "name": "main.json (contenu intégré)",
+            "description": "CV de référence complet utilisé pour l'adaptation",
+        }
     else:
         print("[ERREUR] main.json est requis mais introuvable.", file=sys.stderr)
 
@@ -326,14 +196,27 @@ def prepare_attachments(
                 }
             )
 
-    return main_remote, main_prompt, extra_remotes, temp_paths
+    return main_json_content, main_prompt, extra_remotes, temp_paths
 
 
-def build_user_prompt(base_prompt: str, links: List[str], files: List[Dict[str, Any]]) -> str:
+def build_user_prompt(
+    base_prompt: str,
+    links: List[str],
+    files: List[Dict[str, Any]],
+    main_json_content: Optional[str],
+) -> str:
     sections: List[str] = []
     base_text = (base_prompt or "").strip()
     if base_text:
         sections.append(base_text)
+
+    if main_json_content:
+        sections.append(
+            "\nContenu du fichier main.json à adapter (respecte strictement cette structure) :\n"
+            "```json\n"
+            f"{main_json_content.strip()}\n"
+            "```"
+        )
 
     if links:
         link_lines = ["\nLiens à explorer :"] + [f"- {link}" for link in links]
@@ -435,20 +318,11 @@ def ensure_response_directory() -> Path:
     return target_dir
 
 
-def slugify(value: str) -> str:
-    base = value.lower().strip()
-    cleaned = [ch if ch.isalnum() else "-" for ch in base]
-    slug = "".join(cleaned).strip("-")
-    return slug or "cv"
-
-
-def derive_base_name(link: Optional[str], index: int) -> str:
-    if link:
-        parsed = urlparse(link)
-        host = parsed.netloc or parsed.path
-        slug = slugify(host)
-        return f"GPT_cv_{slug}"
-    return "GPT_cv" if index == 0 else f"GPT_cv_{index+1}"
+def derive_base_name(index: int) -> str:
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
+    if index == 0:
+        return timestamp
+    return f"{timestamp}-{index+1}"
 
 
 def save_output_file(content: str, target_dir: Path, base_name: str) -> Path:
@@ -528,11 +402,11 @@ def main() -> int:
         print(f"[ERREUR] {exc}", file=sys.stderr)
         return 1
 
-    main_remote, main_prompt, extra_remotes, temp_paths = prepare_attachments(client, main_cv_path if main_exists else None, files)
+    main_json_content, main_prompt, extra_remotes, temp_paths = prepare_attachments(client, main_cv_path if main_exists else None, files)
 
-    if not main_remote:
+    if not main_json_content:
         cleanup_temp_paths(temp_paths)
-        print("[ERREUR] Upload du CV principal impossible, arrêt.", file=sys.stderr)
+        print("[ERREUR] Contenu du main.json indisponible, arrêt.", file=sys.stderr)
         return 1
 
     target_dir = ensure_response_directory()
@@ -542,29 +416,34 @@ def main() -> int:
     for link in links:
         runs.append({
             "links": [link],
-            "attachments": [main_remote],
-            "prompt_files": [main_prompt],
+            "attachments": [],
+            "prompt_files": [main_prompt] if main_prompt else [],
             "label": link,
         })
     if not links and not extra_remotes:
         runs.append({
             "links": [],
-            "attachments": [main_remote],
-            "prompt_files": [main_prompt],
+            "attachments": [],
+            "prompt_files": [main_prompt] if main_prompt else [],
             "label": None,
         })
 
     for extra in extra_remotes:
         runs.append({
             "links": [],
-            "attachments": [main_remote, extra["remote"]],
-            "prompt_files": [main_prompt, extra["prompt"]],
-            "label": extra["remote"].get("name")
+            "attachments": [extra["remote"]],
+            "prompt_files": ([main_prompt] if main_prompt else []) + [extra["prompt"]],
+            "label": extra["remote"].get("name"),
         })
 
     for index, run in enumerate(runs):
         current_links = run["links"]
-        user_prompt = build_user_prompt(base_prompt, current_links, run["prompt_files"])
+        user_prompt = build_user_prompt(
+            base_prompt,
+            current_links,
+            run["prompt_files"],
+            main_json_content,
+        )
 
         #print("\n=== Réponse de ChatGPT ===", file=sys.stdout)
 
@@ -581,8 +460,7 @@ def main() -> int:
             cleanup_temp_paths(temp_paths)
             return 1
 
-        base_input = current_links[0] if current_links else run.get("label")
-        base_name = derive_base_name(base_input, index)
+        base_name = derive_base_name(index)
 
         text_output = output.get("content", "").strip()
         if not text_output:

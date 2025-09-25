@@ -31,6 +31,17 @@ export async function POST(req){
       default: return NextResponse.json({ error:"Opération inconnue"},{ status:400 });
     }
     const sanitized = sanitizeInMemory(cv);
+    const isoNow = new Date().toISOString();
+    const meta = {
+      ...(sanitized.meta || {}),
+      updated_at: isoNow,
+    };
+    if (!meta.created_at) meta.created_at = isoNow;
+    if (!meta.generator) meta.generator = selected === "main.json" ? "raw" : "manual";
+    if (!meta.source){
+      meta.source = selected === "main.json" ? "raw" : "manual";
+    }
+    sanitized.meta = meta;
     await writeUserCvFile(userId, selected, JSON.stringify(sanitized,null,2)); return NextResponse.json({ ok:true });
   }catch(e){ return NextResponse.json({ error:(e&&e.message)||"Erreur inconnue"},{ status:500 }); }
 }

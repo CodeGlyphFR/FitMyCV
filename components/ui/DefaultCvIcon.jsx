@@ -2,15 +2,19 @@
 import React from "react";
 
 export default function DefaultCvIcon({ className = "", size = 16 }){
+  const style = {
+    fontSize: `${size}px`,
+    lineHeight: 1,
+  };
+
   return (
-    <img
-      src="https://cdn-icons-png.flaticon.com/512/2165/2165920.png"
-      alt="CV"
-      width={size}
-      height={size}
-      className={className}
-      loading="lazy"
-      referrerPolicy="no-referrer"
-    />
+    <span
+      role="img"
+      aria-label="CV manuel"
+      className={`inline-flex items-center justify-center ${className}`.trim()}
+      style={style}
+    >
+      🖐️
+    </span>
   );
 }

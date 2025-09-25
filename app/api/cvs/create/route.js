@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/session";
-import { ensureUserCvDir, writeUserCvFile } from "@/lib/cv/storage";
+import { ensureUserCvDir, listUserCvFiles, writeUserCvFile } from "@/lib/cv/storage";
 
 export const runtime="nodejs"; export const dynamic="force-dynamic";
-function slugify(s){ return (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"cv"; }
 export async function POST(req){
   try{
     const session = await auth();
@@ -13,11 +12,22 @@ export async function POST(req){
     }
 
     var body=await req.json(); var full_name=(body.full_name||"").trim(); var current_title=(body.current_title||"").trim(); var email=(body.email||"").trim();
-    var now=new Date(); var generated_at=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
+    var now=new Date();
+    var isoNow=now.toISOString();
+    var generated_at=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
     var cv={ generated_at, header:{ full_name, current_title, contact:{ email, links:[], location:{} } }, summary:{ description:"", domains:[] },
       skills:{ hard_skills:[], tools:[], methodologies:[] }, experience:[], education:[], languages:[], extras:{ driver_licenses:[] }, projects:[],
-      order_hint:["header","summary","skills","experience","education","languages","extras","projects"], section_titles:{ summary:"Résumé", skills:"Compétences", experience:"Expérience", education:"Éducation", languages:"Langues", extras:"Informations complémentaires", projects:"Projets personnels" } };
-    var dir=await ensureUserCvDir(session.user.id); var file=slugify(full_name)+"-"+Date.now()+".json"; // enforce baseline sections
+      order_hint:["header","summary","skills","experience","education","languages","extras","projects"], section_titles:{ summary:"Résumé", skills:"Compétences", experience:"Expérience", education:"Éducation", languages:"Langues", extras:"Informations complémentaires", projects:"Projets personnels" },
+      meta:{ generator:"manual", source:"manual", created_at:isoNow, updated_at:isoNow }
+    };
+    await ensureUserCvDir(session.user.id);
+    const existingFiles = await listUserCvFiles(session.user.id).catch(() => []);
+    let baseName = String(Date.now());
+    var file = baseName+".json";
+    while (existingFiles.includes(file)){
+      baseName = String(Number(baseName) + 1);
+      file = baseName+".json";
+    }
     try{
       if (!cv.summary) cv.summary = { description:"", domains:[] };
       if (!cv.skills) cv.skills = { hard_skills:[], tools:[], methodologies:[], soft_skills:[] };

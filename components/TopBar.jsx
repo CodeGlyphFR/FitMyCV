@@ -9,6 +9,53 @@ import GptLogo from "./ui/GptLogo";
 import DefaultCvIcon from "./ui/DefaultCvIcon";
 import { useAdmin } from "./admin/AdminProvider";
 
+const FALLBACK_TITLE = "CV en cours d'édition";
+const FALLBACK_DATE = "??/??/????";
+
+function formatDateLabel(value){
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+function enhanceItem(item){
+  const trimmedTitle = typeof item?.title === "string" ? item.title.trim() : "";
+  const hasTitle = trimmedTitle.length > 0;
+  const displayTitle = hasTitle ? trimmedTitle : FALLBACK_TITLE;
+  const dateLabel = item?.dateLabel
+    || formatDateLabel(item?.createdAt)
+    || formatDateLabel(item?.updatedAt);
+  const displayDate = dateLabel || FALLBACK_DATE;
+
+  return {
+    ...item,
+    hasTitle,
+    displayTitle,
+    displayDate,
+  };
+}
+
+function ItemLabel({ item, className = "", withHyphen = true }){
+  if (!item) return null;
+  const rootClass = ["truncate", className].filter(Boolean).join(" ");
+  const prefix = item.displayDate || FALLBACK_DATE;
+  const hyphen = withHyphen ? " - " : " ";
+  const titleClass = item.hasTitle
+    ? "truncate align-middle"
+    : "truncate align-middle italic text-neutral-500";
+
+  return (
+    <span className={rootClass}>
+      <span className="opacity-60">{prefix}{hyphen}</span>
+      <span className={titleClass}>{item.displayTitle}</span>
+    </span>
+  );
+}
+
 export default function TopBar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -43,6 +90,11 @@ export default function TopBar() {
     () => items.find((it) => it.file === current),
     [items, current],
   );
+  const emitListChanged = React.useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("cv:list:changed"));
+    }
+  }, []);
   const defaultLogout = React.useMemo(() => {
     if (
       typeof window !== "undefined" &&
@@ -71,7 +123,10 @@ export default function TopBar() {
         throw new Error("API CV non disponible");
       }
       const data = await res.json();
-      setItems(data.items || []);
+      const normalizedItems = Array.isArray(data.items)
+        ? data.items.map(enhanceItem)
+        : [];
+      setItems(normalizedItems);
       if (data.current) {
         setCurrent(data.current);
         try {
@@ -223,7 +278,12 @@ export default function TopBar() {
         setCurrent("");
       }
       setOpenDelete(false);
-      await reload();
+      try {
+        await reload();
+      } catch (reloadError) {
+        console.error("Impossible de recharger la liste des CV", reloadError);
+      }
+      emitListChanged();
       router.refresh();
     } catch (e) {
       alert(
@@ -453,6 +513,12 @@ export default function TopBar() {
     }
 
     if (finalSuccess) {
+      try {
+        await reload();
+      } catch (reloadError) {
+        console.error("Impossible de recharger la liste après génération", reloadError);
+      }
+      emitListChanged();
       if (finalTargetFile) {
         setPendingFile(finalTargetFile);
       }
@@ -538,19 +604,27 @@ export default function TopBar() {
             ref={triggerRef}
           >
             <span className="flex items-center gap-3 min-w-0">
-              <span className="flex h-6 w-6 items-center justify-center shrink-0">
-                {currentItem?.isMain ? (
-                  <span className="text-[10px] font-semibold uppercase tracking-wide leading-none">
-                    RAW
-                  </span>
-                ) : currentItem?.isGpt ? (
-                  <GptLogo className="h-4 w-4" />
+              {currentItem ? (
+                <span className="flex h-6 w-6 items-center justify-center shrink-0">
+                  {currentItem.isMain ? (
+                    <span className="text-[10px] font-semibold uppercase tracking-wide leading-none">
+                      RAW
+                    </span>
+                  ) : currentItem.isGpt ? (
+                    <GptLogo className="h-4 w-4" />
+                  ) : (
+                    <DefaultCvIcon className="h-4 w-4" size={16} />
+                  )}
+                </span>
+              ) : null}
+              <span className="min-w-0">
+                {currentItem ? (
+                  <ItemLabel item={currentItem} />
                 ) : (
-                  <DefaultCvIcon className="h-4 w-4" size={16} />
+                  <span className="truncate italic text-neutral-500">
+                    Chargement en cours ...
+                  </span>
                 )}
-              </span>
-              <span className="truncate">
-                {currentItem ? currentItem.label : "Sélectionner"}
               </span>
             </span>
             <span className="text-xs opacity-60">▾</span>
@@ -591,9 +665,7 @@ export default function TopBar() {
                             <DefaultCvIcon className="h-4 w-4" size={16} />
                           )}
                         </span>
-                        <span className="truncate leading-tight">
-                          {it.label}
-                        </span>
+                        <ItemLabel item={it} className="leading-tight" />
                       </button>
                     </li>
                   ))}
