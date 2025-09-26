@@ -1,7 +1,7 @@
 {
   "name": "cv-site-v4-1",
   "private": true,
-  "version": "1.0.6",
+  "version": "1.0.7",
   "scripts": {
     "dev": "next dev -H 0.0.0.0 -p 3000",
     "build": "next build",

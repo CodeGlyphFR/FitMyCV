@@ -1,4 +1,4 @@
-# CV Site v1.0
+# CV Site v1.0.7
 
 Plateforme Next.js pour créer, personnaliser et diffuser des CV ciblés par offre d'emploi. L'utilisateur démarre avec un CV générique, sélectionne une offre (lien ou pièce jointe) et s'appuie sur l'IA pour générer une version optimisée ATS et prête à candidater.
 
@@ -102,4 +102,4 @@ public/           # Assets publics
 - Configurer un stockage persistant (S3, GCS…) pour les fichiers CV si nécessaire.
 
 ## Licence
-Projet privé Erick DE SMET – Version 1.0.
+Projet privé Erick DE SMET – Version 1.0.7.
