@@ -340,6 +340,9 @@ export default function TopBar() {
   const baseDropdownRef = React.useRef(null);
   const titleCacheRef = React.useRef(new Map());
   const [tickerResetKey, setTickerResetKey] = React.useState(() => Date.now());
+  const [iconRefreshKey, setIconRefreshKey] = React.useState(() => Date.now());
+  const lastSelectedRef = React.useRef(null);
+  const lastSelectedMetaRef = React.useRef(null);
   const currentItem = React.useMemo(
     () => items.find((it) => it.file === current),
     [items, current],
@@ -356,6 +359,23 @@ export default function TopBar() {
     () => getAnalysisOption(analysisLevel),
     [analysisLevel],
   );
+  const resolvedCurrentItem = React.useMemo(() => {
+    // Always prioritize the current item from fresh data
+    if (currentItem) return currentItem;
+
+    // Only use cached reference if it matches current selection and exists in items
+    const cachedRef = lastSelectedMetaRef.current;
+    if (cachedRef && current === cachedRef.file && items.some(it => it.file === cachedRef.file)) {
+      // Refresh the cached item with current data to avoid stale properties
+      const freshItem = items.find(it => it.file === cachedRef.file);
+      if (freshItem) {
+        lastSelectedMetaRef.current = freshItem;
+        return freshItem;
+      }
+    }
+
+    return null;
+  }, [currentItem, current, items]);
   const emitListChanged = React.useCallback(() => {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("cv:list:changed"));
@@ -376,11 +396,13 @@ export default function TopBar() {
   }, []);
   const [logoutTarget, setLogoutTarget] = React.useState(defaultLogout);
 
-  async function reload() {
+  async function reload(preferredCurrent) {
     if (!isAuthenticated) {
       setItems([]);
       setCurrent("main.json");
       titleCacheRef.current.clear();
+      lastSelectedRef.current = "main.json";
+      lastSelectedMetaRef.current = null;
       return;
     }
 
@@ -395,12 +417,36 @@ export default function TopBar() {
         ? data.items.map((it) => enhanceItem(it, cache))
         : [];
       setItems(normalizedItems);
-      if (data.current) {
-        setCurrent(data.current);
+
+      const candidate = preferredCurrent || lastSelectedRef.current;
+      const hasCandidate = candidate && normalizedItems.some((it) => it.file === candidate);
+      const serverSuggested = data.current && normalizedItems.some((it) => it.file === data.current)
+        ? data.current
+        : null;
+
+      let nextCurrent = null;
+      if (hasCandidate) {
+        nextCurrent = candidate;
+      } else if (serverSuggested) {
+        nextCurrent = serverSuggested;
+      } else if (normalizedItems.length) {
+        const mainItem = normalizedItems.find((it) => it.isMain);
+        nextCurrent = mainItem ? mainItem.file : normalizedItems[0].file;
+      }
+
+      if (nextCurrent) {
+        setCurrent(nextCurrent);
+        lastSelectedRef.current = nextCurrent;
         try {
-          localStorage.setItem("admin:cv", data.current);
+          localStorage.setItem("admin:cv", nextCurrent);
         } catch (_err) {}
-        if (typeof setCurrentFile === "function") setCurrentFile(data.current);
+        if (typeof setCurrentFile === "function") setCurrentFile(nextCurrent);
+        // Clear any stale reference first, then set the fresh one
+        lastSelectedMetaRef.current = null;
+        const matched = normalizedItems.find((it) => it.file === nextCurrent);
+        if (matched) {
+          lastSelectedMetaRef.current = matched;
+        }
       }
     } catch (error) {
       console.error(error);
@@ -442,6 +488,14 @@ export default function TopBar() {
   }, [isAuthenticated]);
 
   async function selectFile(file) {
+    // Clear the cached reference to avoid stale data
+    lastSelectedMetaRef.current = null;
+
+    const selected = items.find((it) => it.file === file);
+    if (selected) {
+      lastSelectedMetaRef.current = selected;
+    }
+    lastSelectedRef.current = file;
     document.cookie =
       "cvFile=" + encodeURIComponent(file) + "; path=/; max-age=31536000";
     try {
@@ -449,9 +503,11 @@ export default function TopBar() {
     } catch (_err) {}
     if (typeof setCurrentFile === "function") setCurrentFile(file);
     setCurrent(file);
+    // Force icon refresh to prevent caching issues
+    setIconRefreshKey(Date.now());
     router.refresh();
     // also refresh list labels, in case ordering/labels changed
-    await reload();
+    await reload(file);
   }
 
   React.useEffect(() => {
@@ -463,12 +519,13 @@ export default function TopBar() {
     const manualItems = generatorSourceItems;
     let nextBase = "";
 
+    const baseCandidate = currentItem || lastSelectedMetaRef.current;
     if (
-      currentItem &&
-      !currentItem.isGpt &&
-      manualItems.some((it) => it.file === currentItem.file)
+      baseCandidate &&
+      !baseCandidate.isGpt &&
+      manualItems.some((it) => it.file === baseCandidate.file)
     ) {
-      nextBase = currentItem.file;
+      nextBase = baseCandidate.file;
     } else {
       const mainCandidate = manualItems.find((it) => it.isMain);
       nextBase = mainCandidate?.file || manualItems[0]?.file || "";
@@ -980,13 +1037,16 @@ export default function TopBar() {
             ref={triggerRef}
           >
             <span className="flex items-center gap-3 min-w-0 overflow-hidden">
-              {currentItem ? (
-                <span className="flex h-6 w-6 items-center justify-center shrink-0">
-                  {currentItem.isMain ? (
+              {resolvedCurrentItem ? (
+                <span
+                  key={`icon-${current}-${resolvedCurrentItem.isMain}-${resolvedCurrentItem.isGpt}-${iconRefreshKey}`}
+                  className="flex h-6 w-6 items-center justify-center shrink-0"
+                >
+                  {resolvedCurrentItem.isMain ? (
                     <span className="text-[10px] font-semibold uppercase tracking-wide leading-none">
                       RAW
                     </span>
-                  ) : currentItem.isGpt ? (
+                  ) : resolvedCurrentItem.isGpt ? (
                     <GptLogo className="h-4 w-4" />
                   ) : (
                     <DefaultCvIcon className="h-4 w-4" size={16} />
@@ -994,9 +1054,9 @@ export default function TopBar() {
                 </span>
               ) : null}
               <span className="min-w-0">
-                {currentItem ? (
+                {resolvedCurrentItem ? (
                   <ItemLabel
-                    item={currentItem}
+                    item={resolvedCurrentItem}
                     tickerKey={tickerResetKey}
                     withHyphen={false}
                   />
@@ -1034,7 +1094,10 @@ export default function TopBar() {
                         }}
                         className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-zinc-100 ${it.file === current ? "bg-zinc-50" : ""}`}
                       >
-                        <span className="flex h-6 w-6 items-center justify-center shrink-0">
+                        <span
+                          key={`dropdown-icon-${it.file}-${it.isMain}-${it.isGpt}`}
+                          className="flex h-6 w-6 items-center justify-center shrink-0"
+                        >
                           {it.isMain ? (
                             <span className="text-[10px] font-semibold uppercase tracking-wide leading-none">
                               RAW
@@ -1112,7 +1175,10 @@ export default function TopBar() {
                 >
                   <span className="flex items-center gap-3 min-w-0 overflow-hidden">
                     {generatorBaseItem ? (
-                      <span className="flex h-6 w-6 items-center justify-center shrink-0">
+                      <span
+                        key={`gen-base-icon-${generatorBaseFile}-${generatorBaseItem.isMain}-${generatorBaseItem.isGpt}`}
+                        className="flex h-6 w-6 items-center justify-center shrink-0"
+                      >
                         {generatorBaseItem.isMain ? (
                           <span className="text-[10px] font-semibold uppercase tracking-wide leading-none">
                             RAW
@@ -1154,7 +1220,10 @@ export default function TopBar() {
                             }}
                             className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-zinc-100 ${item.file === generatorBaseFile ? "bg-zinc-50" : ""}`}
                           >
-                            <span className="flex h-6 w-6 items-center justify-center shrink-0">
+                            <span
+                              key={`gen-dropdown-icon-${item.file}-${item.isMain}-${item.isGpt}`}
+                              className="flex h-6 w-6 items-center justify-center shrink-0"
+                            >
                               {item.isMain ? (
                                 <span className="text-[10px] font-semibold uppercase tracking-wide leading-none">
                                   RAW
