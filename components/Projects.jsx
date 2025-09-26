@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import Section from "./Section";
+import { ym } from "@/lib/utils";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
@@ -24,8 +25,8 @@ export default function Projects(props){
   const [delIndex, setDelIndex]   = React.useState(null);
   const [addOpen, setAddOpen]     = React.useState(false);
 
-  const [f,  setF]  = React.useState({ name:"", role:"", start:"", end:"", summary:"", tech_stack:"" });
-  const [nf, setNf] = React.useState({ name:"", role:"", start:"", end:"", summary:"", tech_stack:"" });
+  const [f,  setF]  = React.useState({ name:"", role:"", start:"", end:"", inProgress: false, summary:"", tech_stack:"" });
+  const [nf, setNf] = React.useState({ name:"", role:"", start:"", end:"", inProgress: false, summary:"", tech_stack:"" });
 
   const isEmpty = projects.length === 0;
   const shouldRender = isEditing || !isEmpty; // rend la section si on édite OU si non vide
@@ -33,11 +34,13 @@ export default function Projects(props){
 
   function openEdit(i){
     const p = projects[i] || {};
+    const isCurrentProject = p.end_date === "present";
     setF({
       name: p.name || "",
       role: p.role || "",
       start: p.start_date || "",
-      end: p.end_date || "",
+      end: isCurrentProject ? "" : (p.end_date || ""),
+      inProgress: isCurrentProject,
       summary: p.summary || "",
       tech_stack: Array.isArray(p.tech_stack) ? p.tech_stack.join(", ") : (p.tech_stack || "")
     });
@@ -49,7 +52,11 @@ export default function Projects(props){
     if (f.name) p.name = f.name;
     if (f.role) p.role = f.role;
     if (f.start) p.start_date = norm(f.start);
-    if (f.end) p.end_date = norm(f.end);
+    if (f.inProgress) {
+      p.end_date = "present";
+    } else if (f.end) {
+      p.end_date = norm(f.end);
+    }
     if (f.summary) p.summary = f.summary;
     const tech_stack = (f.tech_stack || "").split(",").map(t => t.trim()).filter(Boolean);
     if (tech_stack.length) p.tech_stack = tech_stack;
@@ -63,13 +70,17 @@ export default function Projects(props){
     if (nf.name) p.name = nf.name;
     if (nf.role) p.role = nf.role;
     if (nf.start) p.start_date = norm(nf.start);
-    if (nf.end) p.end_date = norm(nf.end);
+    if (nf.inProgress) {
+      p.end_date = "present";
+    } else if (nf.end) {
+      p.end_date = norm(nf.end);
+    }
     if (nf.summary) p.summary = nf.summary;
     const tech_stack = (nf.tech_stack || "").split(",").map(t => t.trim()).filter(Boolean);
     if (tech_stack.length) p.tech_stack = tech_stack;
 
     await mutate({ op:"push", path:"projects", value:p });
-    setNf({ name:"", role:"", start:"", end:"", summary:"", tech_stack:"" });
+    setNf({ name:"", role:"", start:"", end:"", inProgress: false, summary:"", tech_stack:"" });
     setAddOpen(false);
   }
 
@@ -110,7 +121,7 @@ export default function Projects(props){
                 <div className="font-semibold flex-1 min-w-0 break-words">{p.name || ""}</div>
                 <div className="text-sm opacity-80 whitespace-nowrap ml-auto mt-1">
                   {(p.start_date || p.end_date)
-                    ? [p.start_date || "", p.end_date || ""].filter(Boolean).join(" → ")
+                    ? [ym(p.start_date) || "", ym(p.end_date) || ""].filter(Boolean).join(" → ")
                     : ""}
                 </div>
               </div>
@@ -143,7 +154,11 @@ export default function Projects(props){
           <input className="rounded border px-2 py-1 text-sm" placeholder="Nom du projet" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
           <input className="rounded border px-2 py-1 text-sm" placeholder="Rôle" value={f.role} onChange={e => setF({ ...f, role: e.target.value })} />
           <input className="rounded border px-2 py-1 text-sm" placeholder="Début (YYYY ou YYYY-MM)" value={f.start} onChange={e => setF({ ...f, start: e.target.value })} />
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Fin (YYYY ou YYYY-MM)" value={f.end} onChange={e => setF({ ...f, end: e.target.value })} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder="Fin (YYYY ou YYYY-MM)" value={f.end} onChange={e => setF({ ...f, end: e.target.value })} disabled={f.inProgress} />
+          <div className="md:col-span-2 flex items-center gap-2">
+            <input type="checkbox" id="edit-inProgress" checked={f.inProgress} onChange={e => setF({ ...f, inProgress: e.target.checked, end: e.target.checked ? "" : f.end })} />
+            <label htmlFor="edit-inProgress" className="text-sm">Projet en cours (fin = présent)</label>
+          </div>
           <textarea className="rounded border px-2 py-1 text-sm md:col-span-2" placeholder="Description" value={f.summary} onChange={e => setF({ ...f, summary: e.target.value })} />
           <input className="rounded border px-2 py-1 text-sm md:col-span-2" placeholder="Compétences utilisées (séparées par des virgules)" value={f.tech_stack || ""} onChange={e => setF({ ...f, tech_stack: e.target.value })} />
           <div className="md:col-span-2 flex justify-end gap-2">
@@ -159,7 +174,11 @@ export default function Projects(props){
           <input className="rounded border px-2 py-1 text-sm" placeholder="Nom du projet" value={nf.name} onChange={e => setNf({ ...nf, name: e.target.value })} />
           <input className="rounded border px-2 py-1 text-sm" placeholder="Rôle" value={nf.role} onChange={e => setNf({ ...nf, role: e.target.value })} />
           <input className="rounded border px-2 py-1 text-sm" placeholder="Début (YYYY ou YYYY-MM)" value={nf.start} onChange={e => setNf({ ...nf, start: e.target.value })} />
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Fin (YYYY ou YYYY-MM)" value={nf.end} onChange={e => setNf({ ...nf, end: e.target.value })} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder="Fin (YYYY ou YYYY-MM)" value={nf.end} onChange={e => setNf({ ...nf, end: e.target.value })} disabled={nf.inProgress} />
+          <div className="md:col-span-2 flex items-center gap-2">
+            <input type="checkbox" id="add-inProgress" checked={nf.inProgress} onChange={e => setNf({ ...nf, inProgress: e.target.checked, end: e.target.checked ? "" : nf.end })} />
+            <label htmlFor="add-inProgress" className="text-sm">Projet en cours (fin = présent)</label>
+          </div>
           <textarea className="rounded border px-2 py-1 text-sm md:col-span-2" placeholder="Description" value={nf.summary} onChange={e => setNf({ ...nf, summary: e.target.value })} />
 
           {/* ✅ Champ tech_stack ajouté */}

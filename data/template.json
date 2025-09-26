@@ -1,0 +1,57 @@
+{
+  "generated_at": "",
+  "header": {
+    "full_name": "",
+    "current_title": "",
+    "contact": {
+      "email": "",
+      "phone": "",
+      "links": [],
+      "location": {
+        "city": "",
+        "region": "",
+        "country_code": ""
+      }
+    }
+  },
+  "summary": {
+    "description": "",
+    "domains": []
+  },
+  "skills": {
+    "hard_skills": [],
+    "soft_skills": [],
+    "tools": [],
+    "methodologies": []
+  },
+  "experience": [],
+  "education": [],
+  "languages": [],
+  "extras": [],
+  "projects": [],
+  "order_hint": [
+    "header",
+    "summary",
+    "skills",
+    "experience",
+    "education",
+    "languages",
+    "extras",
+    "projects"
+  ],
+  "section_titles": {
+    "summary": "Résumé",
+    "skills": "Compétences",
+    "experience": "Expérience",
+    "education": "Éducation",
+    "languages": "Langues",
+    "extras": "Informations complémentaires",
+    "projects": "Projets personnels"
+  },
+  "meta": {
+    "generator": "manual",
+    "source": "manual",
+    "created_at": "2025-09-26T13:03:59.652Z",
+    "updated_at": "2025-09-26T13:04:09.183Z"
+  }
+}
