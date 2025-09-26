@@ -39,13 +39,14 @@ export default function Experience(props){
   // ---- Actions ----
   const openEdit = (i) => {
     const e = experience[i] || {};
+    const isCurrentPosition = e.end_date === "present";
     setF({
       title: e.title || "",
       company: e.company || "",
       department_or_client: e.department_or_client || "",
       start: e.start_date || "",
-      end: e.end_date === "present" ? "present" : (e.end_date || ""),
-      inProgress: e.end_date === "present",
+      end: isCurrentPosition ? "" : (e.end_date || ""),
+      inProgress: isCurrentPosition,
       city: e.location?.city || "",
       region: e.location?.region || "",
       country_code: e.location?.country_code || "",
@@ -189,7 +190,7 @@ export default function Experience(props){
                 ) : null}
               </div>
 
-              <div className="flex flex-wrap gap-1 mt-2">
+              <div className="flex flex-wrap gap-1 mt-4">
                 {Array.isArray(e.skills_used) && e.skills_used.map((m, k) => (
                   <span key={k} className="inline-block rounded border px-1.5 py-0.5 text-[11px] opacity-90">{m}</span>
                 ))}

@@ -330,8 +330,15 @@ export default function TopBar() {
   const [generatorBaseFile, setGeneratorBaseFile] = React.useState("main.json");
   const [baseSelectorOpen, setBaseSelectorOpen] = React.useState(false);
   const [analysisLevel, setAnalysisLevel] = React.useState("medium");
+  const [openPdfImport, setOpenPdfImport] = React.useState(false);
+  const [pdfFile, setPdfFile] = React.useState(null);
+  const [pdfImportLoading, setPdfImportLoading] = React.useState(false);
+  const [pdfImportError, setPdfImportError] = React.useState("");
+  const [pdfImportLogs, setPdfImportLogs] = React.useState([]);
+  const [pdfAnalysisLevel, setPdfAnalysisLevel] = React.useState("medium");
 
   const fileInputRef = React.useRef(null);
+  const pdfFileInputRef = React.useRef(null);
   const triggerRef = React.useRef(null);
   const dropdownPortalRef = React.useRef(null);
   const logsRef = React.useRef(null);
@@ -358,6 +365,10 @@ export default function TopBar() {
   const currentAnalysisOption = React.useMemo(
     () => getAnalysisOption(analysisLevel),
     [analysisLevel],
+  );
+  const currentPdfAnalysisOption = React.useMemo(
+    () => getAnalysisOption(pdfAnalysisLevel),
+    [pdfAnalysisLevel],
   );
   const resolvedCurrentItem = React.useMemo(() => {
     // Always prioritize the current item from fresh data
@@ -768,6 +779,172 @@ export default function TopBar() {
     if (!selectionFailed) closeGenerator();
   }
 
+  function resetPdfImportState() {
+    setPdfFile(null);
+    setPdfImportError("");
+    setPdfImportLogs([]);
+    setPdfAnalysisLevel("medium");
+    if (pdfFileInputRef.current) pdfFileInputRef.current.value = "";
+  }
+
+  function closePdfImport() {
+    setOpenPdfImport(false);
+    resetPdfImportState();
+  }
+
+  function onPdfFileChanged(event) {
+    const file = event.target.files?.[0] || null;
+    setPdfFile(file);
+  }
+
+  async function submitPdfImport(event) {
+    event.preventDefault();
+    if (pdfImportLoading || !pdfFile) return;
+
+    const formData = new FormData();
+    formData.append("pdfFile", pdfFile);
+    const selectedPdfAnalysis = currentPdfAnalysisOption;
+    formData.append("analysisLevel", selectedPdfAnalysis.id);
+    formData.append("model", selectedPdfAnalysis.model);
+
+    setPdfImportLoading(true);
+    setPdfImportError("");
+    setPdfImportLogs([]);
+
+    let finalSuccess = false;
+    let finalError = "";
+    let finalTargetFile = null;
+
+    const appendPdfLog = (message) => {
+      if (!message) return;
+      setPdfImportLogs((prev) => [...prev, message]);
+    };
+
+    try {
+      appendPdfLog("Traitement du fichier PDF en cours...");
+
+      const response = await fetch("/api/chatgpt/import-pdf", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(
+          payload?.error || "Erreur lors de l'import du PDF."
+        );
+      }
+
+      const contentType = response.headers.get("content-type") || "";
+
+      if (contentType.includes("application/x-ndjson")) {
+        // Traitement en streaming comme pour le générateur
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error("Flux de réponse indisponible.");
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let streamClosed = false;
+        let hasStreamOutput = false;
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split("\n");
+          buffer = parts.pop() || "";
+          for (const part of parts) {
+            if (!part.trim()) continue;
+            let evt;
+            try {
+              evt = JSON.parse(part);
+            } catch (_err) {
+              appendPdfLog(part.trim());
+              continue;
+            }
+
+            if (evt.type === "stdout" || evt.type === "log") {
+              appendPdfLog(evt.message || evt.data || "");
+              hasStreamOutput = true;
+            } else if (evt.type === "stderr") {
+              const raw = evt.message || evt.data || "";
+              const trimmed = raw.trim();
+              if (/^\[(INFO|AVERTISSEMENT)\]/i.test(trimmed))
+                appendPdfLog(trimmed);
+              else appendPdfLog(`[Erreur] ${trimmed || raw}`);
+            } else if (evt.type === "status") {
+              appendPdfLog(evt.message || "");
+            } else if (evt.type === "error") {
+              finalError = evt.message || "Erreur lors de l'import du PDF.";
+              appendPdfLog(`[Erreur] ${finalError}`);
+              streamClosed = true;
+              break;
+            } else if (evt.type === "complete") {
+              if (evt.output && !hasStreamOutput) {
+                appendPdfLog(evt.output);
+              }
+              finalSuccess = !!evt.success;
+              if (finalSuccess) {
+                finalTargetFile = evt.file || null;
+                appendPdfLog("Import PDF terminé avec succès.");
+              } else {
+                finalError = evt.error || evt.output || "L'import a échoué.";
+                appendPdfLog(`[Erreur] ${finalError}`);
+              }
+              streamClosed = true;
+              break;
+            }
+          }
+          if (streamClosed) break;
+        }
+
+        if (!streamClosed && buffer.trim()) appendPdfLog(buffer.trim());
+        await reader.cancel().catch(() => {});
+
+        if (!streamClosed && !finalSuccess && !finalError) {
+          finalError = "Flux interrompu avant la fin de l'import.";
+        }
+      } else {
+        // Réponse JSON classique
+        const payload = await response.json().catch(() => ({}));
+        const generatedFile = payload?.file;
+
+        if (payload?.output) appendPdfLog(payload.output);
+
+        if (generatedFile) {
+          finalTargetFile = generatedFile;
+          finalSuccess = true;
+          appendPdfLog(`CV généré : ${generatedFile}`);
+        } else if (payload?.success) {
+          finalSuccess = true;
+          appendPdfLog("Import terminé.");
+        } else {
+          finalError = payload?.error || "L'import s'est terminé sans fichier.";
+          appendPdfLog(`[Erreur] ${finalError}`);
+        }
+      }
+    } catch (error) {
+      finalError = error.message || "Erreur inattendue lors de l'import du PDF.";
+      appendPdfLog(`[Erreur] ${finalError}`);
+    } finally {
+      setPdfImportLoading(false);
+    }
+
+    if (finalSuccess) {
+      try {
+        await reload();
+      } catch (reloadError) {
+        console.error("Impossible de recharger la liste après import", reloadError);
+      }
+      emitListChanged();
+      if (finalTargetFile) {
+        await selectFile(finalTargetFile);
+      }
+      closePdfImport();
+    } else if (finalError) {
+      setPdfImportError(finalError);
+    }
+  }
+
   async function submitGenerator(event) {
     event.preventDefault();
     if (generatorLoading) return;
@@ -1130,6 +1307,14 @@ export default function TopBar() {
           <GptLogo className="h-4 w-4" />
         </button>
         <button
+          onClick={() => setOpenPdfImport(true)}
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8"
+          type="button"
+          title="Importer un CV PDF"
+        >
+          📄
+        </button>
+        <button
           onClick={() => router.push("/admin/new")}
           className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8"
         >
@@ -1383,6 +1568,101 @@ export default function TopBar() {
                 : generationDone
                   ? "Terminer"
                   : "Valider"}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        open={openPdfImport}
+        onClose={closePdfImport}
+        title="Importer un CV PDF"
+      >
+        <form onSubmit={submitPdfImport} className="space-y-4">
+          <div className="text-sm text-neutral-700">
+            Importez un CV au format PDF pour le convertir automatiquement en
+            utilisant l'intelligence artificielle et le schéma de votre CV raw.
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-sm font-medium">Fichier PDF</div>
+            <input
+              ref={pdfFileInputRef}
+              className="w-full rounded border px-2 py-1 text-sm"
+              type="file"
+              accept=".pdf"
+              onChange={onPdfFileChanged}
+            />
+            {pdfFile ? (
+              <div className="rounded border bg-neutral-50 px-3 py-2 text-xs">
+                <div className="font-medium">Fichier sélectionné :</div>
+                <div className="truncate">{pdfFile.name}</div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="space-y-2">
+            {pdfImportLoading ? (
+              <div className="h-2 w-full overflow-hidden rounded bg-blue-100">
+                <div className="h-full w-full bg-blue-500 animate-pulse"></div>
+              </div>
+            ) : null}
+            <div className="h-40 overflow-y-auto rounded border bg-black/90 p-2 font-mono text-xs text-blue-100">
+              {pdfImportLogs.length ? (
+                pdfImportLogs.map((line, idx) => (
+                  <div key={idx} className="whitespace-pre-wrap">
+                    {line}
+                  </div>
+                ))
+              ) : (
+                <div className="opacity-60">En attente...</div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-sm font-medium">Qualité de l'analyse</div>
+            <div className="grid grid-cols-3 gap-1 rounded-lg border bg-neutral-50 p-1 text-xs sm:text-sm">
+              {ANALYSIS_OPTIONS.map((option) => {
+                const active = option.id === pdfAnalysisLevel;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setPdfAnalysisLevel(option.id)}
+                    className={`rounded-md px-2 py-1 font-medium transition ${active ? "bg-white text-blue-600 shadow" : "text-neutral-600 hover:bg-white"}`}
+                    aria-pressed={active}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-neutral-500">
+              {currentPdfAnalysisOption.hint}
+            </p>
+          </div>
+
+          {pdfImportError ? (
+            <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {pdfImportError}
+            </div>
+          ) : null}
+
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={closePdfImport}
+              className="rounded border px-3 py-1 text-sm"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="rounded border px-3 py-1 text-sm"
+              disabled={pdfImportLoading || !pdfFile}
+            >
+              {pdfImportLoading ? "Import..." : "Importer"}
             </button>
           </div>
         </form>

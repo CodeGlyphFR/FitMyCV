@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import Section from "./Section";
+import { ym } from "@/lib/utils";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
@@ -86,9 +87,9 @@ export default function Education(props){
                   </div>
                   <div className="text-sm opacity-80 whitespace-nowrap ml-auto mt-1">
                     {e.start_date ? (
-                      <span>{e.start_date} — {e.end_date}</span>
+                      <span>{ym(e.start_date)} — {ym(e.end_date)}</span>
                     ) : (
-                      <span>{e.end_date}</span>
+                      <span>{ym(e.end_date)}</span>
                     )}
                   </div>
                 </div>
