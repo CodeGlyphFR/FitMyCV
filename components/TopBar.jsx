@@ -1312,7 +1312,7 @@ export default function TopBar() {
           type="button"
           title="Importer un CV PDF"
         >
-          📄
+          <img src="/icons/import.png" alt="Import" className="h-4 w-4" />
         </button>
         <button
           onClick={() => router.push("/admin/new")}
