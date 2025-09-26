@@ -1,0 +1,770 @@
+import { NextResponse } from "next/server";
+import puppeteer from "puppeteer";
+import { promises as fs } from "fs";
+import path from "path";
+import { auth } from "@/lib/auth/session";
+import { readUserCvFile } from "@/lib/cv/storage";
+
+export async function POST(request) {
+  console.log('[PDF Export] Request received'); // Log pour debug
+  try {
+    // Vérifier l'authentification
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    }
+
+    const requestData = await request.json();
+    let filename = requestData.filename;
+
+    // Si filename est un objet, extraire le nom du fichier
+    if (typeof filename === 'object' && filename !== null) {
+      filename = filename.file || filename.name || filename.filename || String(filename);
+    }
+
+    // Assurer que filename est une string
+    filename = String(filename || '');
+
+    if (!filename || filename === 'undefined') {
+      return NextResponse.json({ error: "Nom de fichier manquant" }, { status: 400 });
+    }
+
+    // Charger les données du CV via le système de stockage utilisateur
+    let cvData;
+    try {
+      const cvContent = await readUserCvFile(session.user.id, filename);
+      cvData = JSON.parse(cvContent);
+      console.log('[PDF Export] CV loaded successfully for user:', session.user.id);
+    } catch (error) {
+      console.error('[PDF Export] Error loading CV:', error);
+      return NextResponse.json({ error: "CV introuvable" }, { status: 404 });
+    }
+
+    // Lancer Puppeteer avec options compatibles
+    const browser = await puppeteer.launch({
+      headless: 'new',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu',
+        '--disable-web-security',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection'
+      ],
+      executablePath: puppeteer.executablePath(),
+      timeout: 60000
+    });
+
+    const page = await browser.newPage();
+
+    // Générer le HTML du CV
+    const htmlContent = generateCvHtml(cvData);
+
+    await page.setContent(htmlContent, {
+      waitUntil: 'networkidle0',
+      timeout: 30000
+    });
+
+    // Générer le PDF avec gestion intelligente des sauts de page
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '15mm',
+        right: '12mm',
+        bottom: '15mm',
+        left: '12mm'
+      },
+      preferCSSPageSize: true,
+      displayHeaderFooter: false
+    });
+
+    await browser.close();
+
+    // Retourner le PDF
+    return new NextResponse(pdfBuffer, {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="CV_${filename.replace('.json', '')}.pdf"`
+      }
+    });
+
+  } catch (error) {
+    console.error("Erreur lors de la génération PDF:", error);
+    console.error("Stack trace:", error.stack);
+
+    // Erreurs spécifiques de Puppeteer
+    if (error.message.includes('Could not find expected browser')) {
+      return NextResponse.json({
+        error: "Chromium non trouvé. Installation de Puppeteer incomplète."
+      }, { status: 500 });
+    }
+
+    if (error.message.includes('Failed to launch')) {
+      return NextResponse.json({
+        error: "Impossible de lancer le navigateur. Vérifiez les dépendances système."
+      }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      error: `Erreur lors de la génération du PDF: ${error.message}`
+    }, { status: 500 });
+  }
+}
+
+function generateCvHtml(cvData) {
+  const {
+    header = {},
+    summary = {},
+    skills = {},
+    experience = [],
+    education = [],
+    languages = [],
+    projects = [],
+    extras = [],
+    section_titles = {}
+  } = cvData;
+
+  const contact = header.contact || {};
+
+  return `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CV - ${header.full_name || 'Sans nom'}</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.4;
+      color: #1f2937;
+      background: white;
+      font-size: 11px;
+    }
+
+    /* Force breaks everywhere */
+    * {
+      break-inside: auto !important;
+      page-break-inside: auto !important;
+    }
+
+    .break-point {
+      break-after: auto;
+      page-break-after: auto;
+      margin-bottom: 20px;
+    }
+
+    .experience-item:not(:first-child) {
+      margin-top: 8px;
+      page-break-before: auto;
+    }
+
+    /* Forcer l'espacement après les sauts de page */
+    .experience-item {
+      orphans: 2;
+      widows: 2;
+    }
+
+    @media print {
+      .experience-item {
+        margin-top: 8px !important;
+        margin-bottom: 8px !important;
+      }
+
+      .experience-item:first-child {
+        margin-top: 0 !important;
+      }
+    }
+
+    .experience-header {
+      orphans: 3;
+      widows: 3;
+    }
+
+    .cv-container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 0;
+    }
+
+    /* Header Section */
+    .header {
+      padding-bottom: 15px;
+      margin-bottom: 12px;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #111827;
+    }
+
+    .header .title {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+
+    .contact-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 11px;
+    }
+
+    .contact-item {
+      color: #4b5563;
+    }
+
+    .contact-links {
+      margin-top: 8px;
+    }
+
+    .contact-links a {
+      color: #2563eb;
+      text-decoration: none;
+      margin-right: 15px;
+    }
+
+    /* Section Styling */
+    .section {
+      margin-bottom: 10px;
+    }
+
+    .section:not(:first-child) {
+      margin-top: 15px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #111827;
+      border-bottom: 1px solid #d1d5db;
+      padding-bottom: 5px;
+      margin-bottom: 10px;
+    }
+
+    /* Summary */
+    .summary-content {
+      margin-bottom: 15px;
+      line-height: 1.6;
+      text-align: justify;
+    }
+
+    .domains {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .domain-tag {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      color: #374151;
+    }
+
+    /* Skills */
+    .skills-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .skill-category h3 {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #374151;
+    }
+
+    .skill-list {
+      font-size: 11px;
+      color: #374151;
+      line-height: 1.4;
+    }
+
+    .skill-item {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+    }
+
+    /* Experience */
+    .experience-item {
+      margin-bottom: 25px;
+      page-break-inside: avoid;
+      border-left: 3px solid #e5e7eb;
+      padding-left: 15px;
+    }
+
+    .experience-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .experience-title {
+      font-weight: 600;
+      font-size: 13px;
+      color: #111827;
+    }
+
+    .experience-company {
+      color: #6b7280;
+      font-size: 12px;
+    }
+
+    .experience-dates {
+      font-size: 11px;
+      color: #6b7280;
+      white-space: nowrap;
+      margin-left: 8px;
+    }
+
+    .experience-location {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 10px;
+    }
+
+    .experience-description {
+      margin-bottom: 12px;
+      line-height: 1.6;
+      text-align: justify;
+    }
+
+    .experience-lists {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .responsibilities, .deliverables {
+      font-size: 11px;
+      margin-bottom: 6px;
+      break-inside: avoid;
+      -webkit-column-break-inside: avoid;
+    }
+
+    .responsibilities h4, .deliverables h4 {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #374151;
+    }
+
+    .responsibilities ul, .deliverables ul {
+      list-style: disc;
+      padding-left: 15px;
+      margin-bottom: 8px;
+    }
+
+    .responsibilities li, .deliverables li {
+      margin-bottom: 2px;
+      line-height: 1.3;
+    }
+
+    .skills-used {
+      margin-top: 6px;
+      font-size: 11px;
+      color: #6b7280;
+      line-height: 1.4;
+      break-inside: avoid;
+      -webkit-column-break-inside: avoid;
+    }
+
+    .skill-tag {
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 9px;
+      color: #374151;
+    }
+
+    /* Education */
+    .education-item {
+      margin-bottom: 12px;
+    }
+
+    .education-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .education-institution {
+      font-weight: 600;
+      color: #111827;
+      font-size: 13px;
+    }
+
+    .education-degree {
+      color: #6b7280;
+      font-size: 11px;
+    }
+
+    .education-dates {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    /* Projects and Extras */
+    .project-item, .extra-item {
+      margin-bottom: 12px;
+    }
+
+    .project-header {
+      display: flex;
+      justify-content: between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .project-name {
+      font-weight: 600;
+      color: #111827;
+      font-size: 13px;
+    }
+
+    .project-role {
+      color: #6b7280;
+      font-size: 12px;
+    }
+
+    .project-dates {
+      font-size: 11px;
+      color: #6b7280;
+      margin-left: auto;
+    }
+
+    .project-summary {
+      margin-bottom: 10px;
+      line-height: 1.6;
+      text-align: justify;
+    }
+
+    /* Languages */
+    .languages-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .language-item {
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+
+    /* Page break utilities */
+    .page-break-before {
+      page-break-before: always;
+    }
+
+    .page-break-after {
+      page-break-after: always;
+    }
+
+    .page-break-inside-avoid {
+      page-break-inside: avoid;
+    }
+
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .section {
+        page-break-inside: avoid;
+      }
+
+      .experience-item {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="cv-container">
+    <!-- Header -->
+    <header class="header">
+      <h1>${header.full_name || 'Sans nom'}</h1>
+      ${header.current_title ? `<div class="title">${header.current_title}</div>` : ''}
+      <div class="contact-info">
+        ${contact.email ? `<span class="contact-item">${contact.email}</span>` : ''}
+        ${contact.phone ? `<span class="contact-item">${formatPhone(contact.phone, contact.location)}</span>` : ''}
+        ${contact.location ? `<span class="contact-item">${formatLocation(contact.location)}</span>` : ''}
+      </div>
+      ${contact.links && contact.links.length > 0 ? `
+        <div class="contact-links">
+          ${contact.links.map(link => `<a href="${link.url}" target="_blank">${link.label || link.url}</a>`).join('')}
+        </div>
+      ` : ''}
+    </header>
+
+    <!-- Summary -->
+    ${summary.description ? `
+      <section class="section">
+        <h2 class="section-title">${section_titles.summary || 'Résumé'}</h2>
+        <div class="summary-content">${summary.description}</div>
+      </section>
+    ` : ''}
+
+    <!-- Skills -->
+    ${Object.values(skills).some(skillArray => Array.isArray(skillArray) && skillArray.length > 0) ? `
+      <section class="section">
+        <h2 class="section-title">${section_titles.skills || 'Compétences'}</h2>
+        <div class="skills-grid">
+          ${skills.hard_skills && skills.hard_skills.length > 0 ? `
+            <div class="skill-category">
+              <h3>Compétences techniques</h3>
+              <div class="skill-list">
+                ${skills.hard_skills.map(skill => `${skill.name}${skill.proficiency ? ` (${skill.proficiency})` : ''}`).join(', ')}
+              </div>
+            </div>
+          ` : ''}
+
+          ${skills.tools && skills.tools.length > 0 ? `
+            <div class="skill-category">
+              <h3>Outils & Technologies</h3>
+              <div class="skill-list">
+                ${skills.tools.map(tool => `${tool.name}${tool.proficiency ? ` (${tool.proficiency})` : ''}`).join(', ')}
+              </div>
+            </div>
+          ` : ''}
+
+          ${skills.soft_skills && skills.soft_skills.length > 0 ? `
+            <div class="skill-category">
+              <h3>Compétences relationnelles</h3>
+              <div class="skill-list">
+                ${skills.soft_skills.join(', ')}
+              </div>
+            </div>
+          ` : ''}
+
+          ${skills.methodologies && skills.methodologies.length > 0 ? `
+            <div class="skill-category">
+              <h3>Méthodologies</h3>
+              <div class="skill-list">
+                ${skills.methodologies.join(', ')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      </section>
+    ` : ''}
+
+    <!-- Experience -->
+    ${experience && experience.length > 0 ? `
+      <section class="section">
+        <h2 class="section-title">${section_titles.experience || 'Expérience'}</h2>
+        ${experience.map((exp, index) => `
+          <div class="experience-item">
+            <div class="experience-header">
+              <div>
+                <div class="experience-title">${exp.title || ''}</div>
+                <div class="experience-company">${exp.company || ''}${exp.department_or_client ? ` (${exp.department_or_client})` : ''}</div>
+              </div>
+              <div class="experience-dates">${formatDate(exp.start_date)} – ${formatDate(exp.end_date)}</div>
+            </div>
+            ${exp.location ? `<div class="experience-location">${formatLocation(exp.location)}</div>` : ''}
+            ${exp.description ? `<div class="experience-description">${exp.description}</div>` : ''}
+
+            ${(exp.responsibilities && exp.responsibilities.length > 0) || (exp.deliverables && exp.deliverables.length > 0) ? `
+              <div class="experience-lists">
+                ${exp.responsibilities && exp.responsibilities.length > 0 ? `
+                  <div class="responsibilities">
+                    <h4>Responsabilités</h4>
+                    <ul>
+                      ${exp.responsibilities.map(resp => `<li>${resp}</li>`).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+
+                ${exp.deliverables && exp.deliverables.length > 0 ? `
+                  <div class="deliverables">
+                    <h4>Livrables</h4>
+                    <ul>
+                      ${exp.deliverables.map(deliv => `<li>${deliv}</li>`).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+              </div>
+            ` : ''}
+
+            ${exp.skills_used && exp.skills_used.length > 0 ? `
+              <div class="skills-used">
+                <strong>Technologies:</strong> ${exp.skills_used.join(', ')}
+              </div>
+            ` : ''}
+          </div>
+        `).join('')}
+      </section>
+    ` : ''}
+
+    <!-- Education -->
+    ${education && education.length > 0 ? `
+      <section class="section">
+        <h2 class="section-title">${section_titles.education || 'Éducation'}</h2>
+        ${education.map(edu => `
+          <div class="education-item">
+            <div class="education-header">
+              <div>
+                <div class="education-institution">${edu.institution || ''}</div>
+                <div class="education-degree">${edu.degree || ''}${edu.field_of_study ? ` • ${edu.field_of_study}` : ''}</div>
+              </div>
+              <div class="education-dates">${formatDate(edu.start_date)}${edu.end_date ? ` – ${formatDate(edu.end_date)}` : ''}</div>
+            </div>
+          </div>
+        `).join('')}
+      </section>
+    ` : ''}
+
+    <!-- Languages -->
+    ${languages && languages.length > 0 ? `
+      <section class="section">
+        <h2 class="section-title">${section_titles.languages || 'Langues'}</h2>
+        <div class="languages-grid">
+          ${languages.map(lang => `
+            <div class="language-item">
+              <strong>${lang.name || ''}:</strong> ${lang.level || ''}
+            </div>
+          `).join('')}
+        </div>
+      </section>
+    ` : ''}
+
+    <!-- Projects -->
+    ${projects && projects.length > 0 ? `
+      <section class="section">
+        <h2 class="section-title">${section_titles.projects || 'Projets'}</h2>
+        ${projects.map(project => `
+          <div class="project-item">
+            <div class="project-header">
+              <div>
+                <div class="project-name">${project.name || ''}</div>
+                ${project.role ? `<div class="project-role">${project.role}</div>` : ''}
+              </div>
+              ${project.start_date || project.end_date ? `
+                <div class="project-dates">${formatDate(project.start_date)}${project.end_date ? ` – ${formatDate(project.end_date)}` : ''}</div>
+              ` : ''}
+            </div>
+            ${project.summary ? `<div class="project-summary">${project.summary}</div>` : ''}
+            ${project.tech_stack && project.tech_stack.length > 0 ? `
+              <div class="skills-used">
+                <strong>Technologies:</strong> ${project.tech_stack.join(', ')}
+              </div>
+            ` : ''}
+          </div>
+        `).join('')}
+      </section>
+    ` : ''}
+
+    <!-- Extras -->
+    ${extras && extras.length > 0 ? `
+      <section class="section">
+        <h2 class="section-title">${section_titles.extras || 'Informations complémentaires'}</h2>
+        <div class="extras-grid">
+          ${extras.map(extra => `
+            <div class="extra-item">
+              <strong>${extra.name || ''}:</strong> ${extra.summary || ''}
+            </div>
+          `).join('')}
+        </div>
+      </section>
+    ` : ''}
+  </div>
+</body>
+</html>
+  `;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return "";
+  if (dateStr.toLowerCase() === "present") {
+    const now = new Date();
+    const currentMonth = String(now.getMonth() + 1).padStart(2, "0");
+    const currentYear = now.getFullYear();
+    return `${currentMonth}/${currentYear}`;
+  }
+
+  // Format YYYY-MM to MM/YYYY
+  const parts = String(dateStr).split("-");
+  const year = parts[0];
+  const month = parts[1] || "1";
+  const mm = String(Number(month)).padStart(2, "0");
+  return `${mm}/${year}`;
+}
+
+function getCountryCallingCode(countryCode) {
+  const countryCodes = {
+    'FR': '+33', 'BE': '+32', 'CH': '+41', 'LU': '+352', 'MC': '+377',
+    'US': '+1', 'CA': '+1', 'UK': '+44', 'GB': '+44', 'DE': '+49',
+    'IT': '+39', 'ES': '+34', 'PT': '+351', 'NL': '+31', 'AT': '+43',
+    'SE': '+46', 'NO': '+47', 'DK': '+45', 'FI': '+358', 'PL': '+48',
+    'CZ': '+420', 'SK': '+421', 'HU': '+36', 'RO': '+40', 'BG': '+359',
+    'GR': '+30', 'TR': '+90', 'RU': '+7', 'UA': '+380', 'BY': '+375',
+    'JP': '+81', 'CN': '+86', 'KR': '+82', 'IN': '+91', 'AU': '+61',
+    'NZ': '+64', 'ZA': '+27', 'BR': '+55', 'AR': '+54', 'MX': '+52',
+    'CL': '+56', 'CO': '+57', 'PE': '+51', 'VE': '+58', 'EG': '+20',
+    'MA': '+212', 'TN': '+216', 'DZ': '+213', 'SN': '+221', 'CI': '+225'
+  };
+  return countryCodes[countryCode?.toUpperCase()] || '';
+}
+
+function formatPhone(phone, location) {
+  if (!phone) return "";
+
+  // Si le numéro commence déjà par +, on le laisse tel quel
+  if (phone.startsWith('+')) return phone;
+
+  // Essayer de déterminer l'indicatif à partir du pays
+  let countryCode = '';
+  if (location?.country_code) {
+    countryCode = getCountryCallingCode(location.country_code);
+  }
+
+  // Si on a trouvé un indicatif et que le numéro ne commence pas par +
+  if (countryCode && !phone.startsWith('+')) {
+    // Supprimer le 0 initial s'il existe (format français/européen)
+    const cleanPhone = phone.replace(/^0+/, '');
+    return `${countryCode} ${cleanPhone}`;
+  }
+
+  return phone;
+}
+
+function formatLocation(location) {
+  if (!location) return "";
+  const parts = [];
+  if (location.city) parts.push(location.city);
+  if (location.region) parts.push(location.region);
+  if (location.country_code) parts.push(`(${location.country_code})`);
+  return parts.join(", ");
+}

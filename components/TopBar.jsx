@@ -945,6 +945,47 @@ export default function TopBar() {
     }
   }
 
+  async function exportToPdf() {
+    if (!currentItem) {
+      alert("Aucun CV sélectionné pour l'export.");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/export-pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          filename: currentItem,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erreur lors de l'export PDF");
+      }
+
+      // Créer un blob à partir de la réponse
+      const blob = await response.blob();
+
+      // Créer un lien de téléchargement
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = url;
+      const filename = currentItem.file || currentItem.name || currentItem.filename || currentItem;
+      a.download = `CV_${filename.replace ? filename.replace(".json", "") : filename}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Erreur lors de l'export PDF:", error);
+      alert("Erreur lors de l'export PDF. Veuillez réessayer.");
+    }
+  }
+
   async function submitGenerator(event) {
     event.preventDefault();
     if (generatorLoading) return;
@@ -1313,6 +1354,14 @@ export default function TopBar() {
           title="Importer un CV PDF"
         >
           <img src="/icons/import.png" alt="Import" className="h-4 w-4" />
+        </button>
+        <button
+          onClick={exportToPdf}
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8"
+          type="button"
+          title="Exporter en PDF"
+        >
+          <img src="/icons/export.png" alt="Export" className="h-4 w-4" />
         </button>
         <button
           onClick={() => router.push("/admin/new")}
