@@ -11,6 +11,7 @@ import { useAdmin } from "./admin/AdminProvider";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { executeImportPdfTask, executeGenerateCvTask } from "@/lib/backgroundTasks";
 import TaskQueueModal from "./TaskQueueModal";
+import TaskQueueDropdown from "./TaskQueueDropdown";
 import QueueIcon from "./ui/QueueIcon";
 
 const ANALYSIS_OPTIONS = Object.freeze([
@@ -335,10 +336,22 @@ export default function TopBar() {
   const [pdfFile, setPdfFile] = React.useState(null);
   const [pdfAnalysisLevel, setPdfAnalysisLevel] = React.useState("medium");
   const [openTaskQueue, setOpenTaskQueue] = React.useState(false);
+  const [openTaskDropdown, setOpenTaskDropdown] = React.useState(false);
 
   const fileInputRef = React.useRef(null);
   const pdfFileInputRef = React.useRef(null);
   const triggerRef = React.useRef(null);
+  const taskQueueButtonRef = React.useRef(null);
+
+  // Close dropdown on window resize (mobile/desktop change)
+  React.useEffect(() => {
+    const handleResize = () => {
+      setOpenTaskDropdown(false);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const dropdownPortalRef = React.useRef(null);
   const barRef = React.useRef(null);
   const baseSelectorRef = React.useRef(null);
@@ -784,7 +797,7 @@ export default function TopBar() {
       successMessage: `CV '${pdfFile.name}' importé avec succès`,
       type: 'import',
       shouldUpdateCvList: true,
-      execute: (abortSignal) => executeImportPdfTask(pdfFile, selectedPdfAnalysis.id, selectedPdfAnalysis, abortSignal)
+      execute: (abortSignal, taskId) => executeImportPdfTask(pdfFile, selectedPdfAnalysis.id, selectedPdfAnalysis, abortSignal, taskId)
     });
 
     // Close modal immediately
@@ -861,13 +874,14 @@ export default function TopBar() {
       successMessage: `CV '${baseCvName}' adapté avec succès`,
       type: 'generation',
       shouldUpdateCvList: true,
-      execute: (abortSignal) => executeGenerateCvTask(
+      execute: (abortSignal, taskId) => executeGenerateCvTask(
         linkInputs,
         fileSelection,
         generatorBaseFile,
         generatorBaseItem,
         selectedAnalysis,
-        abortSignal
+        abortSignal,
+        taskId
       )
     });
 
@@ -1039,14 +1053,33 @@ export default function TopBar() {
               document.body,
             )
           : null}
-        <button
-          onClick={() => setOpenTaskQueue(true)}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8"
-          type="button"
-          title="File d'attente des tâches"
-        >
-          <QueueIcon className="h-4 w-4" />
-        </button>
+        {/* Task Queue Button - Responsive behavior */}
+        <div className="relative">
+          <button
+            ref={taskQueueButtonRef}
+            onClick={() => {
+              // On mobile: open modal, on desktop: toggle dropdown
+              if (window.innerWidth < 768) {
+                setOpenTaskQueue(true);
+              } else {
+                setOpenTaskDropdown(!openTaskDropdown);
+              }
+            }}
+            className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8"
+            type="button"
+            title="File d'attente des tâches"
+          >
+            <QueueIcon className="h-4 w-4" />
+          </button>
+
+          {/* Desktop Dropdown */}
+          <TaskQueueDropdown
+            isOpen={openTaskDropdown}
+            onClose={() => setOpenTaskDropdown(false)}
+            buttonRef={taskQueueButtonRef}
+            className="hidden md:block"
+          />
+        </div>
         <button
           onClick={openGeneratorModal}
           className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8"
@@ -1405,6 +1438,7 @@ export default function TopBar() {
         </div>
       </Modal>
 
+      {/* Mobile Modal */}
       <TaskQueueModal
         open={openTaskQueue}
         onClose={() => setOpenTaskQueue(false)}

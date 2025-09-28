@@ -7,6 +7,9 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { ensureUserCvDir, listUserCvFiles, readUserCvFile, writeUserCvFile } from "@/lib/cv/storage";
 
+// Store running processes to enable cancellation
+const runningProcesses = new Map();
+
 const ANALYSIS_MODEL_MAP = Object.freeze({
   rapid: "gpt-5-nano-2025-08-07",
   medium: "gpt-5-mini-2025-08-07",
@@ -121,6 +124,7 @@ export async function POST(request) {
     const rawBaseFileLabel = formData.get("baseFileLabel");
     const rawAnalysisLevel = formData.get("analysisLevel");
     const rawModel = formData.get("model");
+    const taskId = formData.get("taskId");
     let parsedLinks = [];
 
     if (rawLinks) {
@@ -249,8 +253,14 @@ export async function POST(request) {
         stdio: ["ignore", "pipe", "pipe"],
       });
 
+      // Store the process for potential cancellation
+      if (taskId) {
+        runningProcesses.set(taskId, pythonProcess);
+      }
+
       let stdout = "";
       let stderr = "";
+      let cancelled = false;
 
       pythonProcess.stdout.on("data", chunk => {
         stdout += chunk.toString();
@@ -260,9 +270,54 @@ export async function POST(request) {
         stderr += chunk.toString();
       });
 
+      // Function to check if task was cancelled
+      const checkCancellation = async () => {
+        if (!taskId) return false;
+
+        try {
+          // Check task status directly from file (same as sync route does)
+          const TASKS_FILE_PATH = path.join(process.cwd(), 'data', 'background-tasks.json');
+          const data = await fs.readFile(TASKS_FILE_PATH, 'utf8');
+          const tasks = JSON.parse(data);
+          const task = tasks.find(t => t.id === taskId);
+
+          if (task && task.status === 'cancelled') {
+            return true;
+          }
+        } catch (error) {
+          console.warn('Failed to check task cancellation status:', error);
+        }
+
+        return false;
+      };
+
+      // Periodic cancellation check
+      const cancellationInterval = setInterval(async () => {
+        if (await checkCancellation()) {
+          cancelled = true;
+          clearInterval(cancellationInterval);
+          pythonProcess.kill('SIGTERM');
+          setTimeout(() => {
+            if (!pythonProcess.killed) {
+              pythonProcess.kill('SIGKILL');
+            }
+          }, 5000); // Force kill after 5 seconds if SIGTERM doesn't work
+        }
+      }, 1000); // Check every second
+
       const exitCode = await new Promise(resolve => {
-        pythonProcess.on("close", code => resolve(code));
+        pythonProcess.on("close", code => {
+          clearInterval(cancellationInterval);
+          if (taskId) {
+            runningProcesses.delete(taskId);
+          }
+          resolve(cancelled ? -999 : code);
+        });
         pythonProcess.on("error", error => {
+          clearInterval(cancellationInterval);
+          if (taskId) {
+            runningProcesses.delete(taskId);
+          }
           stderr += `\n${error.message || error.toString()}`;
           resolve(-1);
         });
@@ -343,6 +398,14 @@ export async function POST(request) {
         await cleanupUploads(directory);
         await fs.rm(workspaceDir, { recursive: true, force: true });
       } catch (_err) {}
+
+      if (exitCode === -999) {
+        // Task was cancelled
+        return NextResponse.json({
+          error: "Tâche annulée",
+          cancelled: true
+        }, { status: 499 }); // 499 Client Closed Request
+      }
 
       if (exitCode !== 0) {
         const message = (stderr.trim() || "Le script Python a échoué.");

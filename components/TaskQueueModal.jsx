@@ -67,7 +67,7 @@ function TaskItem({ task, onCancel }) {
 }
 
 export default function TaskQueueModal({ open, onClose }) {
-  const { tasks, clearCompletedTasks, addTask, cancelTask } = useBackgroundTasks();
+  const { tasks, clearCompletedTasks, addTask, cancelTask, isApiSyncEnabled } = useBackgroundTasks();
 
   // Debug function to add test tasks
   const addTestTask = () => {
@@ -77,7 +77,7 @@ export default function TaskQueueModal({ open, onClose }) {
       successMessage: `CV 'test-${taskNumber}.pdf' importé avec succès`,
       type: 'import',
       shouldUpdateCvList: false,
-      execute: (abortSignal) => new Promise((resolve, reject) => {
+      execute: (abortSignal, taskId) => new Promise((resolve, reject) => {
         const timeoutId = setTimeout(() => resolve({}), 5000);
         abortSignal?.addEventListener('abort', () => {
           clearTimeout(timeoutId);
@@ -147,8 +147,15 @@ export default function TaskQueueModal({ open, onClose }) {
               + 6 Tests
             </button>
           </div>
-          <div className="text-xs text-gray-500">
-            Total tâches: {tasks.length}
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <div className="flex items-center gap-1">
+              <div
+                className={`w-2 h-2 rounded-full ${isApiSyncEnabled ? 'bg-green-500' : 'bg-orange-500'}`}
+                title={isApiSyncEnabled ? 'Sync inter-appareils actif' : 'Sync local uniquement'}
+              />
+              <span>{isApiSyncEnabled ? 'Synchronisation Cloud' : 'Stockage Local'}</span>
+            </div>
+            <div>Total: {tasks.length}</div>
           </div>
           <button
             onClick={onClose}

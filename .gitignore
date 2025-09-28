@@ -29,3 +29,6 @@ prisma/dev.db*
 
 # Données utilisateurs générées
 data/users/
+
+# Données de synchronisation des tâches
+data/background-tasks.json
