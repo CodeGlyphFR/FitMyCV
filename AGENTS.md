@@ -8,7 +8,9 @@ Ce document centralise les consignes destinées aux agents (humains ou IA) qui o
 - Favoriser des commits autoportants avec un message explicite (français admis, anglais recommandé si contribution publique).
 - Ajouter des commentaires uniquement lorsqu'ils apportent de la clarté sur une logique complexe.
 - Préférer `rg` pour les recherches et respecter la configuration du projet (Node 18+, Next.js 14, Prisma, etc.).
-- A chaque merge appliquer la commande no ff
+- A chaque commit, ne pas mentionner que ça été fait par une IA.
+- A chaque demande de merge appliquer l'option --no-ff.
+- Le projet tourne dans un service, il ne faut pas relancer le serveur npm, le site est dejà accéssible à l'adresse http://localhost:3000.
 
 ## Stratégie de versioning
 Le projet suit Semantic Versioning (`MAJEUR.MINEUR.CORRECTIF`). L'environnement client (UI) lit directement la version de `package.json` via `next.config.js`.
@@ -30,7 +32,7 @@ Le projet suit Semantic Versioning (`MAJEUR.MINEUR.CORRECTIF`). L'environnement 
 4. Mettre à jour toutes les occurrences visibles dans la documentation, notamment :
    - Titre et section Licence de `README.md`.
    - Tout document marketing ou d'onboarding exposant la version (ex. `docs/`, pages publiques).
-5. Si la version est affichée dans l'interface, s'assurer que `NEXT_PUBLIC_APP_VERSION` (injectée automatiquement) procure la valeur attendue. Contrôle rapide via `npm run dev` si possible.
+5. Si la version est affichée dans l'interface, s'assurer que `NEXT_PUBLIC_APP_VERSION` (injectée automatiquement) procure la valeur attendue.
 6. Mentionner le bump de version et les surfaces mises à jour dans le message de commit.
 
 ## Checklist intervention
@@ -47,8 +49,5 @@ Le projet suit Semantic Versioning (`MAJEUR.MINEUR.CORRECTIF`). L'environnement 
 - Proposer des prochaines étapes logiques (tests, build, déploiement) sans imposer.
 
 ## Outils utiles
-- `npm run version:auto` : alternative pour recalculer le patch à partir du nombre de commits (à utiliser uniquement si la politique projet le permet).
-- `npx prisma migrate deploy` : appliquer les migrations avant un test end-to-end.
-- `npm run build` : validation de l'intégration Next.js avant livraison.
 
 Bonnes interventions !
