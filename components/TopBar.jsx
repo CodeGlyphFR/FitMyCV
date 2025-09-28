@@ -784,7 +784,7 @@ export default function TopBar() {
       successMessage: `CV '${pdfFile.name}' importé avec succès`,
       type: 'import',
       shouldUpdateCvList: true,
-      execute: () => executeImportPdfTask(pdfFile, selectedPdfAnalysis.id, selectedPdfAnalysis)
+      execute: (abortSignal) => executeImportPdfTask(pdfFile, selectedPdfAnalysis.id, selectedPdfAnalysis, abortSignal)
     });
 
     // Close modal immediately
@@ -861,12 +861,13 @@ export default function TopBar() {
       successMessage: `CV '${baseCvName}' adapté avec succès`,
       type: 'generation',
       shouldUpdateCvList: true,
-      execute: () => executeGenerateCvTask(
+      execute: (abortSignal) => executeGenerateCvTask(
         linkInputs,
         fileSelection,
         generatorBaseFile,
         generatorBaseItem,
-        selectedAnalysis
+        selectedAnalysis,
+        abortSignal
       )
     });
 

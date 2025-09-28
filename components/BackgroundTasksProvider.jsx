@@ -19,6 +19,7 @@ export default function BackgroundTasksProvider({ children }) {
   const [tasks, setTasks] = useState([]);
   const [runningTasks, setRunningTasks] = useState([]);
   const taskQueue = useRef([]);
+  const abortControllers = useRef(new Map());
   const { addNotification } = useNotifications();
 
   const processQueue = useCallback(async () => {
@@ -28,6 +29,10 @@ export default function BackgroundTasksProvider({ children }) {
 
     const nextTask = taskQueue.current.shift();
     if (!nextTask) return;
+
+    // Create AbortController for this task
+    const abortController = new AbortController();
+    abortControllers.current.set(nextTask.id, abortController);
 
     setRunningTasks(prev => [...prev, nextTask.id]);
     setTasks(prev => prev.map(task =>
@@ -42,8 +47,13 @@ export default function BackgroundTasksProvider({ children }) {
     });
 
     try {
-      // Execute the task
-      const result = await nextTask.execute();
+      // Check if task was cancelled before execution
+      if (abortController.signal.aborted) {
+        throw new Error('Task cancelled');
+      }
+
+      // Execute the task with abort signal
+      const result = await nextTask.execute(abortController.signal);
 
       // Task completed successfully
       setTasks(prev => prev.map(task =>
@@ -67,17 +77,27 @@ export default function BackgroundTasksProvider({ children }) {
       }
 
     } catch (error) {
-      // Task failed
-      setTasks(prev => prev.map(task =>
-        task.id === nextTask.id ? { ...task, status: 'failed', error: error.message } : task
-      ));
+      // Check if error is due to cancellation
+      if (error.message === 'Task cancelled' || abortController.signal.aborted) {
+        // Task was cancelled - don't show error notification
+        setTasks(prev => prev.map(task =>
+          task.id === nextTask.id ? { ...task, status: 'cancelled' } : task
+        ));
+      } else {
+        // Task failed for other reasons
+        setTasks(prev => prev.map(task =>
+          task.id === nextTask.id ? { ...task, status: 'failed', error: error.message } : task
+        ));
 
-      addNotification({
-        type: "error",
-        message: "Erreur ! Echec lors de la création du CV.",
-        duration: 5000,
-      });
+        addNotification({
+          type: "error",
+          message: "Erreur ! Echec lors de la création du CV.",
+          duration: 5000,
+        });
+      }
     } finally {
+      // Clean up abort controller
+      abortControllers.current.delete(nextTask.id);
       setRunningTasks(prev => prev.filter(id => id !== nextTask.id));
 
       // Process next task in queue
@@ -142,23 +162,18 @@ export default function BackgroundTasksProvider({ children }) {
         duration: 2000,
       });
     }
-    // If task is running, mark it as cancelled (the execution will handle cleanup)
+    // If task is running, abort it using the AbortController
     else if (task.status === 'running') {
-      setTasks(prev => prev.map(t =>
-        t.id === taskId ? { ...t, status: 'cancelled' } : t
-      ));
-
-      // Remove from running tasks
-      setRunningTasks(prev => prev.filter(id => id !== taskId));
+      const abortController = abortControllers.current.get(taskId);
+      if (abortController) {
+        abortController.abort();
+      }
 
       addNotification({
         type: "info",
         message: "Tâche en cours annulée",
         duration: 2000,
       });
-
-      // Process next task in queue
-      setTimeout(() => processQueue(), 100);
     }
   }, [tasks, addNotification, processQueue]);
 

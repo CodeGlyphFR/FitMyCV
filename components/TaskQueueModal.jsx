@@ -77,7 +77,13 @@ export default function TaskQueueModal({ open, onClose }) {
       successMessage: `CV 'test-${taskNumber}.pdf' importé avec succès`,
       type: 'import',
       shouldUpdateCvList: false,
-      execute: () => new Promise(resolve => setTimeout(() => resolve({}), 5000))
+      execute: (abortSignal) => new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => resolve({}), 5000);
+        abortSignal?.addEventListener('abort', () => {
+          clearTimeout(timeoutId);
+          reject(new Error('Task cancelled'));
+        });
+      })
     });
   };
 
