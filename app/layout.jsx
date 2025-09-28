@@ -1,6 +1,7 @@
 import "./globals.css";
 import React from "react";
 import TopBar from "@/components/TopBar";
+import Footer from "@/components/Footer";
 import RootProviders from "@/components/RootProviders";
 import { auth } from "@/lib/auth/session";
 import { SITE_TITLE } from "@/lib/site";
@@ -14,10 +15,13 @@ export default async function RootLayout(props){
   const session = await auth();
   return (
     <html lang="fr">
-      <body className="min-h-screen antialiased">
+      <body className="min-h-screen antialiased flex flex-col">
         <RootProviders session={session}>
           <TopBar />
-          {props.children}
+          <main className="flex-grow mb-0">
+            {props.children}
+          </main>
+          <Footer />
         </RootProviders>
       </body>
     </html>
