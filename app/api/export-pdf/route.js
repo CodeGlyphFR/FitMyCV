@@ -124,13 +124,27 @@ function generateCvHtml(cvData) {
     header = {},
     summary = {},
     skills = {},
-    experience = [],
-    education = [],
+    experience: rawExperience = [],
+    education: rawEducation = [],
     languages = [],
     projects = [],
     extras = [],
     section_titles = {}
   } = cvData;
+
+  // Tri des expériences par date décroissante (plus récent en premier)
+  const experience = [...rawExperience].sort((a, b) => {
+    const dateA = a.end_date === "present" ? "9999-99" : (a.end_date || a.start_date || "");
+    const dateB = b.end_date === "present" ? "9999-99" : (b.end_date || b.start_date || "");
+    return dateB.localeCompare(dateA);
+  });
+
+  // Tri des formations par date décroissante (plus récent en premier)
+  const education = [...rawEducation].sort((a, b) => {
+    const dateA = a.end_date || a.start_date || "";
+    const dateB = b.end_date || b.start_date || "";
+    return dateB.localeCompare(dateA);
+  });
 
   const contact = header.contact || {};
 
@@ -346,7 +360,8 @@ function generateCvHtml(cvData) {
     .experience-location {
       font-size: 12px;
       color: #9ca3af;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
+      margin-top: 2px;
     }
 
     .experience-description {
@@ -639,7 +654,7 @@ function generateCvHtml(cvData) {
                 <div class="education-institution">${edu.institution || ''}</div>
                 <div class="education-degree">${edu.degree || ''}${edu.field_of_study ? ` • ${edu.field_of_study}` : ''}</div>
               </div>
-              <div class="education-dates">${formatDate(edu.start_date)}${edu.end_date ? ` – ${formatDate(edu.end_date)}` : ''}</div>
+              <div class="education-dates">${edu.start_date && edu.start_date !== edu.end_date ? `${formatDate(edu.start_date)} – ` : ''}${formatDate(edu.end_date)}</div>
             </div>
           </div>
         `).join('')}
@@ -708,16 +723,14 @@ function generateCvHtml(cvData) {
 function formatDate(dateStr) {
   if (!dateStr) return "";
   if (dateStr.toLowerCase() === "present") {
-    const now = new Date();
-    const currentMonth = String(now.getMonth() + 1).padStart(2, "0");
-    const currentYear = now.getFullYear();
-    return `${currentMonth}/${currentYear}`;
+    return "présent";
   }
 
-  // Format YYYY-MM to MM/YYYY
+  // Format YYYY-MM to MM/YYYY or YYYY only
   const parts = String(dateStr).split("-");
   const year = parts[0];
-  const month = parts[1] || "1";
+  if (!parts[1]) return year; // Retourne uniquement l'année si pas de mois
+  const month = parts[1];
   const mm = String(Number(month)).padStart(2, "0");
   return `${mm}/${year}`;
 }
