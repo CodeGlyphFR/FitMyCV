@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Modal from "./ui/Modal";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
+import { useNotifications } from "@/components/notifications/NotificationProvider";
 
 function LoadingSpinner() {
   return (
@@ -11,7 +12,13 @@ function LoadingSpinner() {
   );
 }
 
-function TaskItem({ task, onCancel, onRemovePhantom, localDeviceId }) {
+function extractQuotedName(text) {
+  if (typeof text !== 'string') return '';
+  const match = text.match(/'([^']+)'/);
+  return match ? match[1] : '';
+}
+
+function TaskItem({ task, onCancel }) {
   const getStatusDisplay = (status) => {
     switch (status) {
       case 'queued':
@@ -38,50 +45,54 @@ function TaskItem({ task, onCancel, onRemovePhantom, localDeviceId }) {
 
   const canCancel = task.status === 'queued' || task.status === 'running';
 
-  // Detect potential phantom tasks (running without execute function after page refresh)
-  const isOwnedByLocalDevice = task.deviceId ? task.deviceId === localDeviceId : Boolean(task.execute);
-  const isPhantomTask = isOwnedByLocalDevice && task.status === 'running' && !task.execute;
+  const payload = task?.payload && typeof task.payload === 'object' ? task.payload : null;
+
+  const importName = payload?.savedName || extractQuotedName(task.title);
+  const generationName = payload?.baseFileLabel || payload?.baseFile || extractQuotedName(task.title);
+
+  let description = task.title || 'Tâche';
+
+  if (task.status === 'failed' && task.error) {
+    description = task.error;
+  } else if (task.type === 'import') {
+    if (task.status === 'running') {
+      description = `Import en cours${importName ? ` : '${importName}'` : ''}`;
+    } else if (task.status === 'queued') {
+      description = `Import en attente${importName ? ` : '${importName}'` : ''}`;
+    }
+  } else if (task.type === 'generation') {
+    if (task.status === 'running') {
+      description = `Création en cours${generationName ? ` : '${generationName}'` : ''}`;
+    } else if (task.status === 'queued') {
+      description = `Création en attente${generationName ? ` : '${generationName}'` : ''}`;
+    }
+  }
 
   return (
-    <div className={`flex items-center justify-between p-3 border rounded-lg ${isPhantomTask ? 'bg-orange-50 border-orange-200' : 'bg-gray-50'}`}>
+    <div className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <div className="text-sm font-medium text-gray-900 truncate">
-            {task.title}
+            {description}
           </div>
-          {isPhantomTask && (
-            <span className="text-xs bg-orange-100 text-orange-700 px-1 rounded" title="Tâche fantôme - pas de contrôle local">
-              👻
-            </span>
-          )}
         </div>
         <div className="text-xs text-gray-500">
           Créé à {createdAt}
-          {isPhantomTask && <span className="text-orange-600 ml-2">(Fantôme)</span>}
         </div>
       </div>
       <div className="flex items-center gap-2 ml-4">
-        {task.status === 'running' && !isPhantomTask && <LoadingSpinner />}
-        {isPhantomTask && <span className="text-xs text-orange-600">⚠️</span>}
+        {task.status === 'running' && <LoadingSpinner />}
         <span className={`text-sm font-medium ${statusDisplay.color}`}>
           {statusDisplay.label}
         </span>
-        {canCancel && !isPhantomTask && (
+        {canCancel && (
           <button
+            type="button"
             onClick={() => onCancel(task.id)}
             className="ml-2 text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded"
             title="Annuler la tâche"
           >
             ✕
-          </button>
-        )}
-        {isPhantomTask && (
-          <button
-            onClick={() => onRemovePhantom(task.id)}
-            className="ml-2 text-xs text-orange-600 hover:text-orange-800 hover:bg-orange-100 px-2 py-1 rounded"
-            title="Nettoyer la tâche fantôme"
-          >
-            🗑️
           </button>
         )}
       </div>
@@ -90,29 +101,32 @@ function TaskItem({ task, onCancel, onRemovePhantom, localDeviceId }) {
 }
 
 export default function TaskQueueModal({ open, onClose }) {
-  const { tasks, clearCompletedTasks, addTask, cancelTask, isApiSyncEnabled, removePhantomTask, localDeviceId } = useBackgroundTasks();
+  const { tasks, clearCompletedTasks, cancelTask, isApiSyncEnabled, refreshTasks, localDeviceId } = useBackgroundTasks();
+  const { addNotification } = useNotifications();
+  const [creatingTest, setCreatingTest] = useState(false);
 
-  // Debug function to add test tasks
-  const addTestTask = () => {
-    const taskNumber = tasks.length + 1;
-    addTask({
-      title: `Test d'importation CV 'test-${taskNumber}.pdf' en cours ...`,
-      successMessage: `CV 'test-${taskNumber}.pdf' importé avec succès`,
-      type: 'import',
-      shouldUpdateCvList: false,
-      execute: (abortSignal, taskId) => new Promise((resolve, reject) => {
-        const timeoutId = setTimeout(() => resolve({}), 5000);
-        abortSignal?.addEventListener('abort', () => {
-          clearTimeout(timeoutId);
-          reject(new Error('Task cancelled'));
-        });
-      })
-    });
-  };
+  const createTestTasks = async (count) => {
+    setCreatingTest(true);
+    try {
+      const response = await fetch('/api/background-tasks/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ count, deviceId: localDeviceId }),
+      });
 
-  const addMultipleTestTasks = () => {
-    for (let i = 0; i < 6; i++) {
-      setTimeout(() => addTestTask(), i * 100);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || `Impossible de créer ${count} tâche(s) de test.`);
+      }
+
+      addNotification({ type: 'info', message: `${data.created} tâche(s) de test ajoutée(s)`, duration: 2500 });
+      await refreshTasks?.();
+    } catch (error) {
+      addNotification({ type: 'error', message: error?.message || 'Erreur lors de la création des tâches de test', duration: 4000 });
+    } finally {
+      setCreatingTest(false);
     }
   };
 
@@ -147,25 +161,29 @@ export default function TaskQueueModal({ open, onClose }) {
             </div>
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {sortedTasks.map(task => (
-                <TaskItem key={task.id} task={task} onCancel={cancelTask} onRemovePhantom={removePhantomTask} localDeviceId={localDeviceId} />
+                <TaskItem key={task.id} task={task} onCancel={cancelTask} />
               ))}
             </div>
           </div>
         )}
 
         <div className="flex justify-between items-center pt-4 border-t">
-          <div className="hidden md:flex gap-2">
+          <div className="flex gap-2">
             <button
-              onClick={addTestTask}
-              className="rounded border px-2 py-1 text-xs hover:bg-gray-50 bg-blue-50 text-blue-600"
+              type="button"
+              onClick={() => createTestTasks(1)}
+              disabled={creatingTest}
+              className="rounded border px-2 py-1 text-xs hover:bg-gray-50 bg-blue-50 text-blue-600 disabled:opacity-50"
             >
-              + 1 Test
+              + 1 Tâche test
             </button>
             <button
-              onClick={addMultipleTestTasks}
-              className="rounded border px-2 py-1 text-xs hover:bg-gray-50 bg-purple-50 text-purple-600"
+              type="button"
+              onClick={() => createTestTasks(3)}
+              disabled={creatingTest}
+              className="rounded border px-2 py-1 text-xs hover:bg-gray-50 bg-purple-50 text-purple-600 disabled:opacity-50"
             >
-              + 6 Tests
+              + 3 Tâches test
             </button>
           </div>
           <div className="flex items-center justify-between text-xs text-gray-500">

@@ -9,7 +9,7 @@ import GptLogo from "./ui/GptLogo";
 import DefaultCvIcon from "./ui/DefaultCvIcon";
 import { useAdmin } from "./admin/AdminProvider";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
-import { executeImportPdfTask, executeGenerateCvTask } from "@/lib/backgroundTasks";
+import { useNotifications } from "@/components/notifications/NotificationProvider";
 import TaskQueueModal from "./TaskQueueModal";
 import TaskQueueDropdown from "./TaskQueueDropdown";
 import QueueIcon from "./ui/QueueIcon";
@@ -314,7 +314,8 @@ export default function TopBar() {
   const { setCurrentFile } = useAdmin();
   const { data: session, status } = useSession();
   const isAuthenticated = !!session?.user?.id;
-  const { addTask } = useBackgroundTasks();
+  const { localDeviceId, refreshTasks } = useBackgroundTasks();
+  const { addNotification } = useNotifications();
 
   const [items, setItems] = React.useState([]);
   const [current, setCurrent] = React.useState("");
@@ -790,18 +791,41 @@ export default function TopBar() {
     if (!pdfFile) return;
 
     const selectedPdfAnalysis = currentPdfAnalysisOption;
+    try {
+      const formData = new FormData();
+      formData.append("pdfFile", pdfFile);
+      formData.append("analysisLevel", selectedPdfAnalysis.id);
+      formData.append("model", selectedPdfAnalysis.model);
+      if (localDeviceId) {
+        formData.append("deviceId", localDeviceId);
+      }
 
-    // Add background task
-    addTask({
-      title: `Importation du CV '${pdfFile.name}' en cours ...`,
-      successMessage: `CV '${pdfFile.name}' importé avec succès`,
-      type: 'import',
-      shouldUpdateCvList: true,
-      execute: (abortSignal, taskId) => executeImportPdfTask(pdfFile, selectedPdfAnalysis.id, selectedPdfAnalysis, abortSignal, taskId)
-    });
+      const response = await fetch("/api/background-tasks/import-pdf", {
+        method: "POST",
+        body: formData,
+      });
 
-    // Close modal immediately
-    closePdfImport();
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || "Impossible de mettre la tâche en file.");
+      }
+
+      addNotification({
+        type: "info",
+        message: `Import '${pdfFile.name}' planifié`,
+        duration: 2500,
+      });
+
+      closePdfImport();
+      await refreshTasks();
+    } catch (error) {
+      console.error("Impossible de planifier l'import", error);
+      addNotification({
+        type: "error",
+        message: error?.message || "Erreur lors de la planification de l'import",
+        duration: 4000,
+      });
+    }
   }
 
   async function exportToPdf() {
@@ -868,25 +892,47 @@ export default function TopBar() {
     // Get the base CV name for the message
     const baseCvName = generatorBaseItem?.displayTitle || generatorBaseItem?.title || generatorBaseFile;
 
-    // Add background task
-    addTask({
-      title: `Adaptation du CV '${baseCvName}' en cours ...`,
-      successMessage: `CV '${baseCvName}' adapté avec succès`,
-      type: 'generation',
-      shouldUpdateCvList: true,
-      execute: (abortSignal, taskId) => executeGenerateCvTask(
-        linkInputs,
-        fileSelection,
-        generatorBaseFile,
-        generatorBaseItem,
-        selectedAnalysis,
-        abortSignal,
-        taskId
-      )
-    });
+    try {
+      const formData = new FormData();
+      formData.append("links", JSON.stringify(cleanedLinks));
+      formData.append("baseFile", generatorBaseFile);
+      formData.append("baseFileLabel", baseCvName || "");
+      formData.append("analysisLevel", selectedAnalysis.id);
+      formData.append("model", selectedAnalysis.model);
+      if (localDeviceId) {
+        formData.append("deviceId", localDeviceId);
+      }
 
-    // Close modal immediately
-    closeGenerator();
+      (fileSelection || []).forEach(file => {
+        formData.append("files", file);
+      });
+
+      const response = await fetch("/api/background-tasks/generate-cv", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || "Impossible de mettre la tâche en file.");
+      }
+
+      addNotification({
+        type: "info",
+        message: `Adaptation du CV '${baseCvName}' planifié`,
+        duration: 2500,
+      });
+
+      closeGenerator();
+      await refreshTasks();
+    } catch (error) {
+      console.error("Impossible de planifier la génération de CV", error);
+      addNotification({
+        type: "error",
+        message: error?.message || "Erreur lors de la planification de la génération",
+        duration: 4000,
+      });
+    }
   }
 
   if (status === "loading") {

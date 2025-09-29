@@ -82,6 +82,7 @@ model BackgroundTask {
   shouldUpdateCvList Boolean @default(false)
   result            String?  // JSON string
   error             String?
+  payload           String?
   deviceId          String
   userId            String?  // Optional - for user-specific tasks
   updatedAt         DateTime @default(now()) @updatedAt

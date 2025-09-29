@@ -46,6 +46,16 @@ function serializeTask(record) {
     base.result = null;
   }
 
+  if (record.payload) {
+    try {
+      base.payload = JSON.parse(record.payload);
+    } catch (_error) {
+      base.payload = record.payload;
+    }
+  } else {
+    base.payload = null;
+  }
+
   return base;
 }
 
@@ -70,6 +80,20 @@ function buildUpdatePayload(task, deviceId) {
 
   if (Object.prototype.hasOwnProperty.call(task, 'error')) {
     payload.error = task.error == null ? null : String(task.error);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(task, 'payload')) {
+    if (task.payload == null) {
+      payload.payload = null;
+    } else if (typeof task.payload === 'string') {
+      payload.payload = task.payload;
+    } else {
+      try {
+        payload.payload = JSON.stringify(task.payload);
+      } catch (_error) {
+        payload.payload = String(task.payload);
+      }
+    }
   }
 
   return payload;
