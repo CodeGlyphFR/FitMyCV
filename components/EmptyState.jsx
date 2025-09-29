@@ -37,6 +37,9 @@ export default function EmptyState() {
   const [loadingMessage, setLoadingMessage] = React.useState("");
   const pdfFileInputRef = React.useRef(null);
   const pollIntervalRef = React.useRef(null);
+  const timeoutRef = React.useRef(null);
+  const progressIntervalRef = React.useRef(null);
+  const messageIntervalRef = React.useRef(null);
 
   // Extract first name from user name
   const firstName = session?.user?.name?.split(' ')[0] || "utilisateur";
@@ -119,12 +122,12 @@ export default function EmptyState() {
     setLoadingMessage(loadingMessages[0]);
 
     // Change message every 2-3 seconds
-    const messageInterval = setInterval(() => {
+    messageIntervalRef.current = setInterval(() => {
       messageIndex = (messageIndex + 1) % loadingMessages.length;
       setLoadingMessage(loadingMessages[messageIndex]);
     }, 2500);
 
-    const progressInterval = setInterval(() => {
+    progressIntervalRef.current = setInterval(() => {
       progress += Math.random() * 15;
       if (progress > 85) progress = 85; // Cap at 85% until real completion
       setImportProgress(Math.min(progress, 85));
@@ -138,8 +141,9 @@ export default function EmptyState() {
           if (data.items && data.items.length > 0) {
             // CV created! Stop polling
             clearInterval(pollIntervalRef.current);
-            clearInterval(progressInterval);
-            clearInterval(messageInterval);
+            clearInterval(progressIntervalRef.current);
+            clearInterval(messageIntervalRef.current);
+            clearTimeout(timeoutRef.current);
             setImportProgress(100);
             setLoadingMessage("🎉 Votre CV est prêt !");
 
@@ -163,11 +167,11 @@ export default function EmptyState() {
     }, 2000);
 
     // Safety timeout: stop after 5 minutes
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current);
-        clearInterval(progressInterval);
-        clearInterval(messageInterval);
+        clearInterval(progressIntervalRef.current);
+        clearInterval(messageIntervalRef.current);
         setIsImporting(false);
         alert("L'import prend plus de temps que prévu. Veuillez rafraîchir la page.");
       }
@@ -176,8 +180,18 @@ export default function EmptyState() {
 
   React.useEffect(() => {
     return () => {
+      // Cleanup all intervals and timeouts when component unmounts
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current);
+      }
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+      if (messageIntervalRef.current) {
+        clearInterval(messageIntervalRef.current);
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
     };
   }, []);
