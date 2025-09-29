@@ -77,15 +77,14 @@ export async function GET(){
       const json = sanitizeInMemory(JSON.parse(raw));
       const title = json?.header?.current_title ? String(json.header.current_title).trim() : "";
       const trimmedTitle = title || "";
-      const isMain = file === "main.json";
       const generator = typeof json?.meta?.generator === "string"
         ? json.meta.generator.toLowerCase().trim()
         : "";
       const isLikelyGpt = /^(generated_chatgpt_cv|gpt_)/i.test(file);
-      const rawSource = generator || (isMain ? "raw" : (typeof json?.meta?.source === "string" ? json.meta.source : "manual"));
+      const rawSource = generator || (typeof json?.meta?.source === "string" ? json.meta.source : "manual");
       const source = typeof rawSource === "string" ? rawSource.toLowerCase().trim() || "manual" : "manual";
       const isGpt = generator === "chatgpt" || generator === "openai" || source === "chatgpt" || isLikelyGpt;
-      const isManual = !isMain && !isGpt;
+      const isManual = !isGpt;
       const createdAtCandidates = [
         json?.meta?.created_at,
         json?.meta?.updated_at,
@@ -114,7 +113,6 @@ export async function GET(){
         hasTitle,
         dateLabel: dateLabel || null,
         isGpt,
-        isMain,
         isManual,
         source,
         createdAt: createdAtIso,
@@ -122,7 +120,6 @@ export async function GET(){
         sortKey: createdTimestamp ?? updatedTimestamp ?? null,
       });
     } catch (error) {
-      const isMain = file === "main.json";
       const isGpt = /^(generated_chatgpt_cv|gpt_)/i.test(file);
       const sortKey = timestampFromFilename(file);
       const dateLabel = formatDateLabel(sortKey);
@@ -133,9 +130,8 @@ export async function GET(){
         hasTitle: false,
         dateLabel: dateLabel || null,
         isGpt,
-        isMain,
-        isManual: !isMain && !isGpt,
-        source: isMain ? "raw" : (isGpt ? "chatgpt" : "manual"),
+        isManual: !isGpt,
+        source: isGpt ? "chatgpt" : "manual",
         createdAt: null,
         updatedAt: null,
         sortKey,
@@ -153,7 +149,7 @@ export async function GET(){
   const items = rawItems.map(({ sortKey, ...rest }) => rest);
 
   const currentCookie = (cookies().get("cvFile") || {}).value;
-  const current = files.includes(currentCookie) ? currentCookie : "main.json";
+  const current = files.includes(currentCookie) ? currentCookie : (files[0] || null);
 
   return NextResponse.json({ items, current });
 }

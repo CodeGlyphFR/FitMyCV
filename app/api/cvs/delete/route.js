@@ -58,21 +58,6 @@ function timestampFromFilename(name){
   return parseNumericTimestamp(base);
 }
 
-async function ensureAtLeastOneCV(userId){
-  const now = new Date();
-  const file = "cv-" + now.getFullYear() + String(now.getMonth()+1).padStart(2,"0") + "-" + now.getTime() + ".json";
-  const minimal = {
-    generated_at: now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0"),
-    header: { full_name: "Nouveau CV", current_title: "", contact: { email: "", links: [], location: {} } },
-    summary: { description: "", domains: [] },
-    skills: { hard_skills: [], tools: [], methodologies: [] },
-    experience: [], education: [], languages: [], extras: { driver_licenses: [] }, projects: [],
-    order_hint: ["header","summary","skills","experience","education","languages","extras","projects"],
-    section_titles: { summary:"Résumé", skills:"Compétences", experience:"Expérience", education:"Éducation", languages:"Langues", extras:"Informations complémentaires", projects:"Projets personnels" }
-  };
-  await writeUserCvFile(userId, file, JSON.stringify(minimal, null, 2));
-  return file;
-}
 
 async function computeSortKey(userId, dir, file){
   try {
@@ -119,9 +104,6 @@ async function pickNextFile(userId, dir, files){
     return a.file.localeCompare(b.file);
   });
 
-  const preferred = entries.find((entry) => entry.file !== "main.json");
-  if (preferred) return preferred.file;
-
   return entries.length ? entries[0].file : null;
 }
 
@@ -152,7 +134,7 @@ export async function POST(req){
     const all = await listUserCvFiles(session.user.id);
     let nextFile = await pickNextFile(session.user.id, dir, all);
     if (!nextFile && all.length > 0) nextFile = all[0];
-    if (!nextFile) nextFile = await ensureAtLeastOneCV(session.user.id);
+
     if (nextFile){
       await prisma.cvFile.upsert({
         where: { userId_filename: { userId: session.user.id, filename: nextFile } },
@@ -160,7 +142,7 @@ export async function POST(req){
         create: { userId: session.user.id, filename: nextFile },
       });
     }
-    return NextResponse.json({ ok: true, nextFile });
+    return NextResponse.json({ ok: true, nextFile: nextFile || null });
   }catch(e){
     return NextResponse.json({ error: (e && e.message) || "Erreur inconnue" }, { status: 500 });
   }

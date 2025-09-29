@@ -7,7 +7,8 @@ export function useAdmin(){ var c=React.useContext(Ctx); if(!c) throw new Error(
 export default function AdminProvider(props){
   const { data: session } = useSession();
   const [editing, setEditingState] = React.useState(false);
-  const [currentFile, setCurrentFile] = React.useState("main.json");
+  const [currentFile, setCurrentFile] = React.useState("");
+  const [hasAnyCv, setHasAnyCv] = React.useState(true);
   const pathname = usePathname();
 
   React.useEffect(function(){
@@ -15,10 +16,34 @@ export default function AdminProvider(props){
     if (stored) { setCurrentFile(stored); return; }
     const cookie = document.cookie.split(";").map(v=>v.trim()).find(v=>v.startsWith("cvFile="));
     if (cookie){
-      const value = decodeURIComponent(cookie.split("=")[1] || "main.json");
-      setCurrentFile(value || "main.json");
+      const value = decodeURIComponent(cookie.split("=")[1] || "");
+      setCurrentFile(value || "");
     }
   }, []);
+
+  // Check if user has any CVs
+  React.useEffect(() => {
+    if (!session?.user?.id) return;
+
+    async function checkCvs() {
+      try {
+        const res = await fetch("/api/cvs", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          setHasAnyCv(data.items && data.items.length > 0);
+        }
+      } catch (error) {
+        console.error("Failed to check CVs:", error);
+      }
+    }
+
+    checkCvs();
+
+    // Listen for CV list changes
+    const handleCvListChanged = () => checkCvs();
+    window.addEventListener("cv:list:changed", handleCvListChanged);
+    return () => window.removeEventListener("cv:list:changed", handleCvListChanged);
+  }, [session?.user?.id]);
 
   React.useEffect(function(){
     localStorage.setItem("admin:editing", editing ? "1" : "0");
@@ -43,7 +68,7 @@ export default function AdminProvider(props){
       } catch (_err) {}
     } else {
       setEditingState(false);
-      setCurrentFile("main.json");
+      setCurrentFile("");
     }
   }, [session?.user?.id]);
 
@@ -58,7 +83,7 @@ export default function AdminProvider(props){
   return (
     <Ctx.Provider value={{ editing, setEditing, setCurrentFile }}>
       {props.children}
-      {session?.user?.id && pathname !== "/admin/new" ? (
+      {session?.user?.id && pathname !== "/admin/new" && hasAnyCv ? (
         <button
           onClick={()=>setEditing(!editing)}
           className="fixed bottom-4 right-4 z-50 rounded-full px-4 py-2 shadow border bg-white text-sm hover:shadow-md"
