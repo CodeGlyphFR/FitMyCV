@@ -7,7 +7,16 @@ import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 
 export default function Education(props){
-  const education = Array.isArray(props.education)? props.education:[];
+  const rawEducation = Array.isArray(props.education)? props.education:[];
+  // Tri par date décroissante (plus récent en premier)
+  const education = React.useMemo(() => {
+    return [...rawEducation].sort((a, b) => {
+      const dateA = a.end_date || a.start_date || "";
+      const dateB = b.end_date || b.start_date || "";
+      return dateB.localeCompare(dateA);
+    });
+  }, [rawEducation]);
+
   const sectionTitles = props.sectionTitles || {};
   const title = sectionTitles.education || "Éducation";
   const { editing } = useAdmin();
@@ -86,7 +95,7 @@ export default function Education(props){
                     {e.institution || ""}
                   </div>
                   <div className="text-sm opacity-80 whitespace-nowrap ml-auto mt-1">
-                    {e.start_date ? (
+                    {e.start_date && e.start_date !== e.end_date ? (
                       <span>{ym(e.start_date)} — {ym(e.end_date)}</span>
                     ) : (
                       <span>{ym(e.end_date)}</span>
