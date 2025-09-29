@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Modal from "./ui/Modal";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
-import { useNotifications } from "@/components/notifications/NotificationProvider";
 
 function LoadingSpinner() {
   return (
@@ -101,34 +100,7 @@ function TaskItem({ task, onCancel }) {
 }
 
 export default function TaskQueueModal({ open, onClose }) {
-  const { tasks, clearCompletedTasks, cancelTask, isApiSyncEnabled, refreshTasks, localDeviceId } = useBackgroundTasks();
-  const { addNotification } = useNotifications();
-  const [creatingTest, setCreatingTest] = useState(false);
-
-  const createTestTasks = async (count) => {
-    setCreatingTest(true);
-    try {
-      const response = await fetch('/api/background-tasks/test', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ count, deviceId: localDeviceId }),
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data?.success) {
-        throw new Error(data?.error || `Impossible de créer ${count} tâche(s) de test.`);
-      }
-
-      addNotification({ type: 'info', message: `${data.created} tâche(s) de test ajoutée(s)`, duration: 2500 });
-      await refreshTasks?.();
-    } catch (error) {
-      addNotification({ type: 'error', message: error?.message || 'Erreur lors de la création des tâches de test', duration: 4000 });
-    } finally {
-      setCreatingTest(false);
-    }
-  };
+  const { tasks, clearCompletedTasks, cancelTask, isApiSyncEnabled } = useBackgroundTasks();
 
   // Sort tasks so running ones appear first (newest to oldest) and limit to 8
   const sortedTasks = sortTasksForDisplay(tasks).slice(0, 8);
@@ -167,35 +139,15 @@ export default function TaskQueueModal({ open, onClose }) {
           </div>
         )}
 
-        <div className="flex justify-between items-center pt-4 border-t">
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => createTestTasks(1)}
-              disabled={creatingTest}
-              className="rounded border px-2 py-1 text-xs hover:bg-gray-50 bg-blue-50 text-blue-600 disabled:opacity-50"
-            >
-              + 1 Tâche test
-            </button>
-            <button
-              type="button"
-              onClick={() => createTestTasks(3)}
-              disabled={creatingTest}
-              className="rounded border px-2 py-1 text-xs hover:bg-gray-50 bg-purple-50 text-purple-600 disabled:opacity-50"
-            >
-              + 3 Tâches test
-            </button>
+        <div className="flex justify-between items-center pt-4 border-t text-xs text-gray-500">
+          <div className="flex items-center gap-1">
+            <div
+              className={`w-2 h-2 rounded-full ${isApiSyncEnabled ? 'bg-green-500' : 'bg-orange-500'}`}
+              title={isApiSyncEnabled ? 'Synchronisation Cloud active' : 'Sync local uniquement'}
+            />
+            <span>{isApiSyncEnabled ? 'Cloud' : 'Stockage Local'}</span>
           </div>
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <div className="flex items-center gap-1">
-              <div
-                className={`w-2 h-2 rounded-full ${isApiSyncEnabled ? 'bg-green-500' : 'bg-orange-500'}`}
-                title={isApiSyncEnabled ? 'Sync inter-appareils actif' : 'Sync local uniquement'}
-              />
-              <span>{isApiSyncEnabled ? 'Synchronisation Cloud' : 'Stockage Local'}</span>
-            </div>
-            <div>Total: {tasks.length}</div>
-          </div>
+          <div>Total: {tasks.length}</div>
           <button
             onClick={onClose}
             className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
