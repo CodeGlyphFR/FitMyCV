@@ -439,17 +439,21 @@ export default function TopBar() {
         : [];
       setItems(normalizedItems);
 
-      const candidate = preferredCurrent || lastSelectedRef.current;
-      const hasCandidate = candidate && normalizedItems.some((it) => it.file === candidate);
+      // Priority: 1) preferredCurrent 2) server cookie 3) localStorage/lastSelected 4) first item
       const serverSuggested = data.current && normalizedItems.some((it) => it.file === data.current)
         ? data.current
         : null;
+      const candidate = preferredCurrent || lastSelectedRef.current;
+      const hasCandidate = candidate && normalizedItems.some((it) => it.file === candidate);
 
       let nextCurrent = null;
-      if (hasCandidate) {
-        nextCurrent = candidate;
+      if (preferredCurrent && normalizedItems.some((it) => it.file === preferredCurrent)) {
+        nextCurrent = preferredCurrent;
       } else if (serverSuggested) {
+        // Prioritize cookie (set when creating new CV)
         nextCurrent = serverSuggested;
+      } else if (hasCandidate) {
+        nextCurrent = candidate;
       } else if (normalizedItems.length) {
         nextCurrent = normalizedItems[0].file;
       }

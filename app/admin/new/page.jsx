@@ -36,12 +36,19 @@ export default function NewCVPage(){
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Erreur");
+
+      // Set the newly created CV as current
       document.cookie = "cvFile="+encodeURIComponent(data.file)+"; path=/; max-age=31536000";
+      try {
+        localStorage.setItem("admin:cv", data.file);
+      } catch (_err) {}
 
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("cv:list:changed"));
       }
-      router.push("/?r=" + Date.now());
+
+      // Redirect to home with the new CV
+      router.push("/");
       router.refresh();
     } catch(e) {
       setError(e?.message || "Erreur");
