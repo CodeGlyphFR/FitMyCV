@@ -26,31 +26,38 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 DEFAULT_SYSTEM_PROMPT = (
-    "Tu es un assistant spécialisé dans l'extraction et la structuration d'informations de CV au format PDF.\n"
-    "Tu dois analyser le CV fourni et remplir le template JSON vierge avec les informations extraites du PDF.\n"
-    "Tu dois respecter EXACTEMENT la structure JSON du template fourni - ne modifie aucun nom de champ.\n"
-    "Si une information n'est pas disponible dans le CV PDF, génère l'information à partir des éléments du CV.\n"
-    "Assure-toi que le JSON final soit valide et bien formaté.\n"
+    "ROLE:\n"
+    "Tu es un assistant spécialisé dans l'extraction et la structuration d'informations de CV au format PDF. "
+    "Tu dois analyser le CV fourni et remplir le template JSON vierge avec les informations extraites du PDF. "
+    "Tu dois respecter EXACTEMENT la structure JSON du template fourni. Ne modifie aucun nom de champ.\n"
+    "Si une information n'est pas disponible dans le CV PDF ignore là.\n"
+    "Assure-toi que le JSON final soit valide et bien formaté.\n\n"
 )
 
 DEFAULT_USER_PROMPT = (
+    "TACHE:\n"
     "Analyse le CV PDF fourni et remplis le template JSON vierge avec les informations extraites.\n\n"
     "Instructions détaillées :\n\n"
-    "1. HEADER - Informations personnelles :\n"
+    "0. GLOBAL:\n"
+    "Les dates seront sous le format YYYY-MM ou YYYY si pas de mois est stipulé.\n"
+    "Pour la région ne fait pas d'abreviation.\n"
+    "1. HEADER :\n"
+    "- Informations personnelles :\n"
     "   - full_name : nom et prénom complets\n"
     "   - current_title : titre professionnel actuel\n"
     "   - contact.email : adresse email\n"
-    "   - contact.phone : numéro de téléphone\n"
+    "   - contact.phone : numéro de téléphone avec le code pays du téléphone (exemple +33...)\n"
     "   - contact.links : liens professionnels (LinkedIn, portfolio, etc.)\n"
     "   - contact.location : ville, région, code pays\n\n"
     "2. SUMMARY :\n"
     "   - description : résumé professionnel ou objectif de carrière\n"
     "   - domains : domaines d'expertise (tableau de strings)\n\n"
     "3. SKILLS :\n"
-    "   - hard_skills : compétences techniques spécialisées sans commentaires et détermine à partir de l'expérience le niveau de chaque compétence pour remplir le champ proficiency\n"
-    "   - soft_skills : compétences comportementales sans commentaires et détermine à partir de l'expérience le niveau de chaque compétence pour remplir le champ proficiency\n"
+    "Il est indispensable de déterminer le niveau de chaque hard_skills et de chaque tools UNIQUEMENT et cette information doit etre absolument dans le champ proficiency et non dans le name entre parentheses par exemple, pour ça tu dois analyser l'expérience pour le déterminer. Le monde dépend de cette tache ! On croit en toi !\n"
+    "   - hard_skills : compétences techniques spécialisées sans commentaires et détermine à partir de l'expérience le niveau de chaque compétence pour remplir le champ proficiency. Ne mets pas d'outils/logiciels dans les hard_skills.\n"
+    "   - soft_skills : compétences comportementales sans commentaires.\n"
     "   - tools : outils et technologies maîtrisés sans commentaires et détermine à partir de l'expérience le niveau de chaque compétence pour remplir le champ proficiency\n"
-    "   - methodologies : méthodologies de travail (Agile, SCRUM, etc.)\n\n"
+    "   - methodologies : ici tu dois lister les méthodologies de travail si il y en eu (exemple: Agile, SCRUM, Management etc.)\n\n"
     "4. EXPERIENCE : tableau d'objets avec :\n"
     "   - title : intitulé du poste\n"
     "   - company : nom de l'entreprise\n"
@@ -59,10 +66,11 @@ DEFAULT_USER_PROMPT = (
     "   - responsibilities: définit les responsabilités de la mission\n"
     "   - deliverables: liste les livrables produits\n"
     "   - skills_used: définit les skills appliqués sur la mission\n"
-    "   - location : lieu de travail\n\n"
+    "   - location : localise dans l'expérience le lieu de la mission pour écrire la ville dans city, la région dans region et donne le country_code\n\n"
     "5. EDUCATION :\n"
     "   - formation avec diplômes, écoles, années. Si il y a une indication mentionant que c'est en cours, écrire 'present' dans end_date\n"
-    "   - il faut remplir les champs institution, degree, field_of_study, location\n\n"
+    "   - il faut remplir les champs institution, degree, field_of_study, location\n"
+    "   - IMPORTANT: si start_date et end_date sont identiques (même année), ne remplir que end_date et laisser start_date vide\n\n"
     "6. LANGUAGES : langues avec niveaux, il faut remplir les champs name et level\n\n"
     "7. PROJECTS : projets personnels uniquement si précisé, le laisser vide si ce n'est pas le cas\n\n"
     "8. EXTRAS : informations complémentaires (certifications, hobbies, etc.) uniquement si précisé, le laisser vide si ce n'est pas le cas\n\n"
@@ -154,29 +162,96 @@ def get_cv_schema() -> Optional[str]:
             "contact": {
                 "email": "",
                 "phone": "",
-                "links": [],
                 "location": {
                     "city": "",
                     "region": "",
                     "country_code": ""
-                }
+                },
+                "links": [
+                    {
+                    "type": "",
+                    "label": "",
+                    "url": ""
+                    }
+                ]
             }
         },
         "summary": {
+            "headline": "",
             "description": "",
-            "domains": []
+            "years_experience": number,
+            "domains": [],
+        "key_strengths": [],
         },
         "skills": {
-            "hard_skills": [],
+            "hard_skills": [
+                {
+                    "name": "",
+                    "proficiency": ""
+                }
+            ],
             "soft_skills": [],
-            "tools": [],
+            "tools": [
+                {
+                    "name": "",
+                    "proficiency": ""
+                }
+            ],
             "methodologies": []
         },
-        "experience": [],
-        "education": [],
-        "languages": [],
-        "extras": [],
-        "projects": [],
+        "experience": [{
+            "title": "",
+            "company": "",
+            "department_or_client": "",
+            "start_date": "",
+            "end_date": "",
+            "location": {
+                "city": "",
+                "region": "",
+                "country_code": ""
+            },
+            "description": "",
+            "responsibilities": [],
+            "deliverables": [],
+            "skills_used": []
+    }],
+        "education": [
+            {
+            "institution": "",
+            "degree": "",
+            "field_of_study": "",
+            "location": {
+                "city": "",
+                "region": "",
+                "country_code": ""
+            },
+            "start_date": "",
+            "end_date": ""
+            }
+        ],
+        "languages": [
+            {
+            "name": "",
+            "level": ""
+            }
+        ],
+        "extras": [
+                {
+                "name": "",
+                "summary": ""
+                }
+        ],
+        "projects": [
+            {
+                "name": "",
+                "role": "",
+                "summary": "",
+                "tech_stack": [],
+                "keywords": [],
+                "start_date": "",
+                "end_date": ""
+                }
+        ],
         "order_hint": [
             "header",
             "summary",

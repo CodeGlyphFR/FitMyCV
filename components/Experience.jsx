@@ -8,7 +8,16 @@ import Modal from "./ui/Modal";
 
 
 export default function Experience(props){
-  const experience = Array.isArray(props.experience) ? props.experience : [];
+  const rawExperience = Array.isArray(props.experience) ? props.experience : [];
+  // Tri par date décroissante (plus récent en premier)
+  const experience = React.useMemo(() => {
+    return [...rawExperience].sort((a, b) => {
+      const dateA = a.end_date === "present" ? "9999-99" : (a.end_date || a.start_date || "");
+      const dateB = b.end_date === "present" ? "9999-99" : (b.end_date || b.start_date || "");
+      return dateB.localeCompare(dateA);
+    });
+  }, [rawExperience]);
+
   const sectionTitles = props.sectionTitles || {};
   const title = sectionTitles.experience || "Expérience";
   const { editing } = useAdmin();
