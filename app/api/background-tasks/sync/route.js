@@ -1,97 +1,136 @@
 import { NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { auth } from '@/lib/auth/session';
+import prisma from '@/lib/prisma';
+import { killRegisteredProcess } from '@/lib/backgroundTasks/processRegistry';
 
-// Chemin vers le fichier de stockage des tâches
-const TASKS_FILE_PATH = path.join(process.cwd(), 'data', 'background-tasks.json');
+const MAX_PERSISTED_TASKS = 100;
+const MAX_RETURNED_TASKS = 150;
 
-// Stockage en mémoire avec persistance en fichier
-let tasks = [];
-let isLoaded = false;
-
-// Charger les tâches depuis le fichier
-async function loadTasks() {
-  if (isLoaded) return;
-
-  try {
-    // Créer le dossier data s'il n'existe pas
-    await fs.mkdir(path.dirname(TASKS_FILE_PATH), { recursive: true });
-
-    // Charger les tâches existantes
-    const data = await fs.readFile(TASKS_FILE_PATH, 'utf8');
-    tasks = JSON.parse(data);
-    console.log(`Loaded ${tasks.length} tasks from file`);
-  } catch (error) {
-    // Fichier n'existe pas ou erreur de lecture, on commence avec un tableau vide
-    tasks = [];
-    console.log('Starting with empty tasks array');
-  }
-
-  isLoaded = true;
+const LAST_WIPE_SYMBOL = Symbol.for('cvSite.backgroundTasksLastFullSync');
+if (!globalThis[LAST_WIPE_SYMBOL]) {
+  globalThis[LAST_WIPE_SYMBOL] = new Map();
 }
 
-// Sauvegarder les tâches dans le fichier
-async function saveTasks() {
-  try {
-    await fs.writeFile(TASKS_FILE_PATH, JSON.stringify(tasks, null, 2));
-  } catch (error) {
-    console.error('Failed to save tasks to file:', error);
+function getFullSyncCache() {
+  return globalThis[LAST_WIPE_SYMBOL];
+}
+function toNumberTimestamp(value, fallback = Date.now()) {
+  const num = Number(value);
+  if (Number.isNaN(num) || !Number.isFinite(num)) {
+    return fallback;
   }
+  return num;
+}
+
+function serializeTask(record) {
+  const base = {
+    id: record.id,
+    title: record.title,
+    successMessage: record.successMessage ?? null,
+    type: record.type,
+    status: record.status,
+    createdAt: Number(record.createdAt),
+    shouldUpdateCvList: record.shouldUpdateCvList ?? false,
+    deviceId: record.deviceId ?? null,
+    error: record.error ?? null,
+    updatedAt: record.updatedAt?.getTime?.() ?? Date.now(),
+  };
+
+  if (record.result) {
+    try {
+      base.result = JSON.parse(record.result);
+    } catch (_error) {
+      base.result = record.result;
+    }
+  } else {
+    base.result = null;
+  }
+
+  return base;
+}
+
+function sanitiseStatus(status) {
+  const allowed = new Set(['queued', 'running', 'completed', 'failed', 'cancelled']);
+  return allowed.has(status) ? status : 'queued';
+}
+
+function buildUpdatePayload(task, deviceId) {
+  const payload = {
+    title: task.title ?? '',
+    successMessage: task.successMessage ?? null,
+    type: task.type ?? 'unknown',
+    status: sanitiseStatus(task.status),
+    shouldUpdateCvList: Boolean(task.shouldUpdateCvList),
+    deviceId: deviceId ?? 'unknown-device',
+  };
+
+  if (Object.prototype.hasOwnProperty.call(task, 'result')) {
+    payload.result = task.result == null ? null : JSON.stringify(task.result);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(task, 'error')) {
+    payload.error = task.error == null ? null : String(task.error);
+  }
+
+  return payload;
 }
 
 export async function GET(request) {
-  try {
-    // Charger les tâches depuis le fichier
-    await loadTasks();
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
 
+  try {
     const { searchParams } = new URL(request.url);
-    const deviceId = searchParams.get('deviceId');
-    const since = searchParams.get('since'); // timestamp
+    const deviceId = searchParams.get('deviceId') || undefined;
+    const since = searchParams.get('since');
     const taskId = searchParams.get('taskId');
     const action = searchParams.get('action');
 
-    // If checking a specific task status
     if (taskId && action === 'check') {
-      const task = tasks.find(t => t.id === taskId);
+      const task = await prisma.backgroundTask.findFirst({
+        where: { id: taskId, userId: session.user.id },
+      });
+
       return NextResponse.json({
         success: true,
-        task: task || null,
-        timestamp: Date.now()
+        task: task ? serializeTask(task) : null,
+        timestamp: Date.now(),
       });
     }
 
-    // Nettoyer les anciens marqueurs de sync (plus de 5 minutes)
-    const now = Date.now();
-    const oldMarkerCount = tasks.length;
-    tasks = tasks.filter(task => {
-      if (task.type === 'sync_marker') {
-        return (now - task.createdAt) < 5 * 60 * 1000; // Garder 5 minutes
-      }
-      return true;
+    const cache = getFullSyncCache();
+    const lastKnown = cache.get(session.user.id) || 0;
+    const whereClause = { userId: session.user.id };
+    const sinceValue = since ? toNumberTimestamp(since, 0) : 0;
+    const hasIncrementalFilter = Boolean(since && sinceValue > 0 && sinceValue >= lastKnown);
+
+    if (hasIncrementalFilter) {
+      whereClause.updatedAt = { gt: new Date(sinceValue) };
+    }
+
+    // Return most recent tasks, capped to avoid unbounded payloads
+    const tasks = await prisma.backgroundTask.findMany({
+      where: whereClause,
+      orderBy: [
+        { createdAt: 'desc' },
+        { updatedAt: 'desc' },
+      ],
+      take: MAX_RETURNED_TASKS,
     });
-    if (tasks.length !== oldMarkerCount) {
-      await saveTasks();
-    }
 
-    // Filtrer les tâches si un timestamp "since" est fourni
-    let filteredTasks = tasks;
-    if (since) {
-      const sinceTimestamp = parseInt(since);
-      filteredTasks = tasks.filter(task => task.updatedAt > sinceTimestamp);
-    }
-
-    // Exclure les tâches du même device pour éviter les doublons
-    if (deviceId) {
-      filteredTasks = filteredTasks.filter(task => task.deviceId !== deviceId);
-    }
+    const serialized = tasks.map(serializeTask);
 
     return NextResponse.json({
       success: true,
-      tasks: filteredTasks,
-      timestamp: Date.now()
+      deviceId,
+      tasks: serialized,
+      timestamp: Date.now(),
+      syncType: hasIncrementalFilter ? 'incremental' : 'full',
     });
   } catch (error) {
-    console.error('Error fetching tasks:', error);
+    console.error('Error fetching background tasks:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch tasks' },
       { status: 500 }
@@ -100,53 +139,84 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    // Charger les tâches depuis le fichier
-    await loadTasks();
-
     const body = await request.json();
-    const { tasks: newTasks, deviceId } = body;
+    const { tasks: incomingTasks, deviceId } = body || {};
 
-    if (!Array.isArray(newTasks) || !deviceId) {
+    if (!Array.isArray(incomingTasks) || !incomingTasks.length) {
       return NextResponse.json(
-        { success: false, error: 'Invalid request body' },
+        { success: false, error: 'No tasks provided' },
         { status: 400 }
       );
     }
 
-    // Ajouter/mettre à jour les tâches
-    for (const newTask of newTasks) {
-      const existingIndex = tasks.findIndex(t => t.id === newTask.id);
-      const taskWithTimestamp = {
-        ...newTask,
-        deviceId,
-        updatedAt: Date.now()
-      };
+    const userId = session.user.id;
+    const processedIds = [];
 
-      if (existingIndex >= 0) {
-        // Mettre à jour la tâche existante
-        tasks[existingIndex] = taskWithTimestamp;
+    const operations = incomingTasks.map(async (task) => {
+      if (!task?.id) {
+        return;
+      }
+
+      const existing = await prisma.backgroundTask.findUnique({ where: { id: task.id } });
+      const updatePayload = buildUpdatePayload(task, deviceId);
+
+      if (existing) {
+        if (existing.userId !== userId) {
+          return;
+        }
+        await prisma.backgroundTask.update({
+          where: { id: task.id },
+          data: updatePayload,
+        });
       } else {
-        // Ajouter une nouvelle tâche
-        tasks.push(taskWithTimestamp);
+        await prisma.backgroundTask.create({
+          data: {
+            id: task.id,
+            userId,
+            createdAt: BigInt(task.createdAt ?? Date.now()),
+            ...updatePayload,
+          },
+        });
+      }
+      processedIds.push(task.id);
+    });
+
+    await Promise.all(operations);
+
+    // Keep task history bounded per user
+    const totalTasks = await prisma.backgroundTask.count({ where: { userId } });
+    if (totalTasks > MAX_PERSISTED_TASKS) {
+      const excess = totalTasks - MAX_PERSISTED_TASKS;
+      const oldest = await prisma.backgroundTask.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'asc' },
+        take: excess,
+        select: { id: true },
+      });
+      if (oldest.length) {
+        await prisma.backgroundTask.deleteMany({
+          where: {
+            id: { in: oldest.map((entry) => entry.id) },
+            userId,
+          },
+        });
       }
     }
 
-    // Garder seulement les 100 tâches les plus récentes pour éviter l'explosion mémoire
-    tasks = tasks
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, 100);
-
-    // Sauvegarder les tâches dans le fichier
-    await saveTasks();
-
     return NextResponse.json({
       success: true,
-      synced: newTasks.length,
-      timestamp: Date.now()
+      synced: processedIds.length,
+      processedIds,
+      timestamp: Date.now(),
     });
   } catch (error) {
-    console.error('Error syncing tasks:', error);
+    console.error('Error syncing background tasks:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to sync tasks' },
       { status: 500 }
@@ -155,51 +225,44 @@ export async function POST(request) {
 }
 
 export async function DELETE(request) {
-  try {
-    // Charger les tâches depuis le fichier
-    await loadTasks();
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
 
+  try {
+    const userId = session.user.id;
     const { searchParams } = new URL(request.url);
     const taskId = searchParams.get('taskId');
-    const action = searchParams.get('action'); // 'delete', 'cancel', or 'deleteCompleted'
+    const action = searchParams.get('action');
 
-    // Handle bulk deletion of completed tasks
     if (action === 'deleteCompleted') {
-      const body = await request.json();
-      const { taskIds } = body;
+      const body = await request.json().catch(() => ({}));
+      const taskIds = Array.isArray(body?.taskIds) ? body.taskIds : [];
 
-      if (!Array.isArray(taskIds)) {
+      if (!taskIds.length) {
         return NextResponse.json(
           { success: false, error: 'Task IDs array required' },
           { status: 400 }
         );
       }
 
-      const initialLength = tasks.length;
-      tasks = tasks.filter(task => !taskIds.includes(task.id));
-      const deleted = initialLength - tasks.length;
+      const result = await prisma.backgroundTask.deleteMany({
+        where: {
+          id: { in: taskIds },
+          userId,
+        },
+      });
 
-      // Save to file if any deletions occurred
-      if (deleted > 0) {
-        await saveTasks();
-
-        // Add a special marker task to force sync on all devices
-        const syncMarker = {
-          id: `sync_marker_${Date.now()}`,
-          type: 'sync_marker',
-          action: 'tasks_deleted',
-          deleted_count: deleted,
-          updatedAt: Date.now(),
-          createdAt: Date.now()
-        };
-        tasks.push(syncMarker);
-        await saveTasks();
+      if (result.count > 0) {
+        const cache = getFullSyncCache();
+        cache.set(userId, Date.now());
       }
 
       return NextResponse.json({
         success: true,
-        deleted,
-        timestamp: Date.now()
+        deleted: result.count,
+        timestamp: Date.now(),
       });
     }
 
@@ -211,48 +274,53 @@ export async function DELETE(request) {
     }
 
     if (action === 'cancel') {
-      // Annuler la tâche (changer son statut en 'cancelled')
-      const taskIndex = tasks.findIndex(task => task.id === taskId);
-      if (taskIndex >= 0) {
-        tasks[taskIndex] = {
-          ...tasks[taskIndex],
+      const updateResult = await prisma.backgroundTask.updateMany({
+        where: { id: taskId, userId },
+        data: {
           status: 'cancelled',
-          updatedAt: Date.now()
-        };
-        await saveTasks();
+          error: null,
+        },
+      });
 
-        return NextResponse.json({
-          success: true,
-          cancelled: true,
-          timestamp: Date.now()
-        });
-      } else {
-        return NextResponse.json({
-          success: false,
-          cancelled: false,
-          error: 'Task not found'
-        });
-      }
-    } else {
-      // Supprimer la tâche complètement
-      const initialLength = tasks.length;
-      tasks = tasks.filter(task => task.id !== taskId);
-
-      const deleted = initialLength !== tasks.length;
-
-      // Sauvegarder les tâches dans le fichier si une suppression a eu lieu
-      if (deleted) {
-        await saveTasks();
+      let killedProcesses = null;
+      if (updateResult.count > 0) {
+        try {
+          const killResult = await killRegisteredProcess(taskId, { logger: console });
+          killedProcesses = killResult;
+        } catch (killError) {
+          console.warn(`Failed to terminate process for task ${taskId}:`, killError);
+        }
       }
 
       return NextResponse.json({
-        success: true,
-        deleted,
-        timestamp: Date.now()
+        success: updateResult.count > 0,
+        cancelled: updateResult.count > 0,
+        killInfo: killedProcesses,
+        timestamp: Date.now(),
       });
     }
+
+    const deleteResult = await prisma.backgroundTask.deleteMany({
+      where: { id: taskId, userId },
+    });
+
+    let killInfo = null;
+    if (deleteResult.count > 0) {
+      try {
+        killInfo = await killRegisteredProcess(taskId, { logger: console });
+      } catch (killError) {
+        console.warn(`Failed to terminate process while deleting task ${taskId}:`, killError);
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      deleted: deleteResult.count > 0,
+      killInfo,
+      timestamp: Date.now(),
+    });
   } catch (error) {
-    console.error('Error processing task:', error);
+    console.error('Error processing background task deletion:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to process task' },
       { status: 500 }

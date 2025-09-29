@@ -1,7 +1,9 @@
-import { useEffect, useCallback, useRef } from 'react'
+import { useEffect, useCallback, useRef, useState } from 'react'
 
 export function useTaskSyncAPI(tasks, setTasks, abortControllers) {
   const lastSyncTimestamp = useRef(0);
+  const deviceIdRef = useRef(null);
+  const [localDeviceId, setLocalDeviceId] = useState(null);
 
   // Generate a unique device ID for this browser/device
   const getDeviceId = useCallback(() => {
@@ -11,6 +13,11 @@ export function useTaskSyncAPI(tasks, setTasks, abortControllers) {
     if (!deviceId) {
       deviceId = `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       localStorage.setItem('device_id', deviceId)
+    }
+
+    if (deviceIdRef.current !== deviceId) {
+      deviceIdRef.current = deviceId
+      setLocalDeviceId(deviceId)
     }
     return deviceId
   }, [])
@@ -79,66 +86,107 @@ export function useTaskSyncAPI(tasks, setTasks, abortControllers) {
       }
 
       const result = await response.json()
-      if (result.success && result.tasks.length > 0) {
-        console.log(`Loaded ${result.tasks.length} tasks from server`)
+      if (!result.success) {
+        return
+      }
 
-        // Check for sync markers that indicate significant changes
-        const syncMarkers = result.tasks.filter(task => task.type === 'sync_marker')
-        const hasDeletionMarker = syncMarkers.some(marker => marker.action === 'tasks_deleted')
+      const tasksFromServer = Array.isArray(result.tasks) ? result.tasks : []
+      console.log(`Loaded ${tasksFromServer.length} tasks from server`)
 
-        if (hasDeletionMarker) {
-          // Force complete reload on next sync
-          console.log('Detected tasks deletion marker, forcing complete reload')
-          lastSyncTimestamp.current = 0
+      const syncType = result.syncType || (lastSyncTimestamp.current === 0 ? 'full' : 'incremental')
+      const isFullSync = syncType !== 'incremental'
 
-          // Remove sync markers and reload immediately
-          setTimeout(async () => {
-            await loadTasksFromServer()
-          }, 100)
-          return
+      setTasks(prev => {
+        if (!tasksFromServer.length && !isFullSync) {
+          return prev
         }
 
-        // Merge with existing tasks, giving priority to server status
-        setTasks(prev => {
-          const merged = [...prev]
+        const normalisedServerTasks = tasksFromServer
+          .filter(task => task?.type !== 'sync_marker')
+          .map(task => ({
+          ...task,
+          createdAt: typeof task.createdAt === 'number'
+            ? task.createdAt
+            : Number(task.createdAt ?? Date.now()),
+          updatedAt: typeof task.updatedAt === 'number'
+            ? task.updatedAt
+            : (task.updatedAt ? new Date(task.updatedAt).getTime?.() ?? Date.now() : Date.now()),
+        }))
 
-          result.tasks.forEach(serverTask => {
-            // Skip sync markers in regular merge
-            if (serverTask.type === 'sync_marker') {
-              return
-            }
-
-            const existingIndex = merged.findIndex(t => t.id === serverTask.id)
-            if (existingIndex >= 0) {
-              // Update existing task, but preserve execute function if it exists
-              const existingTask = merged[existingIndex]
-              merged[existingIndex] = {
-                ...serverTask,
-                execute: existingTask.execute // Preserve local execute function
-              }
-
-              // If the task was cancelled on the server and is currently running locally,
-              // we need to trigger local cancellation
-              if (serverTask.status === 'cancelled' && existingTask.status === 'running') {
-                // Trigger abort for running task
-                const abortController = abortControllers?.current?.get?.(serverTask.id)
-                if (abortController) {
-                  console.log(`Aborting task ${serverTask.id} due to server cancellation`)
-                  abortController.abort()
-                }
-              }
-            } else {
-              // Add new task
-              merged.push(serverTask)
-            }
-          })
-
-          // Sort by creation time
-          return merged.sort((a, b) => b.createdAt - a.createdAt)
+        const localRunningTasks = new Map()
+        const localTaskStates = new Map()
+        prev.forEach(task => {
+          if (task.execute) {
+            localRunningTasks.set(task.id, task.execute)
+          }
+          localTaskStates.set(task.id, task.status)
         })
 
-        lastSyncTimestamp.current = result.timestamp
-      }
+        const previousTaskMap = new Map(prev.map(task => [task.id, task]))
+
+        const STATUS_PRIORITY = {
+          queued: 1,
+          running: 2,
+          cancelled: 3,
+          failed: 3,
+          completed: 4,
+        }
+
+        const mergeServerTask = (serverTask) => {
+          const previous = previousTaskMap.get(serverTask.id)
+          const localExecute = localRunningTasks.get(serverTask.id) || previous?.execute
+          const previousStatus = previous?.status
+          const previousPriority = STATUS_PRIORITY[previousStatus] ?? 0
+          const serverPriority = STATUS_PRIORITY[serverTask.status] ?? 0
+
+          // Avoid regressing when we still control the task locally (same execute reference)
+          const shouldPreserveLocalStatus = Boolean(localExecute) && previousPriority >= 3 && serverPriority < previousPriority
+
+          if (serverTask.status === 'cancelled' && localExecute && previousStatus === 'running') {
+            const abortController = abortControllers?.current?.get?.(serverTask.id)
+            if (abortController) {
+              console.log(`Aborting task ${serverTask.id} due to server cancellation`)
+              abortController.abort()
+            }
+          }
+
+          const mergedStatus = shouldPreserveLocalStatus ? previousStatus : serverTask.status
+          const mergedError = shouldPreserveLocalStatus ? previous?.error : serverTask.error
+          const mergedResult = shouldPreserveLocalStatus ? previous?.result : serverTask.result
+
+          return {
+            ...(previous || {}),
+            ...serverTask,
+            status: mergedStatus,
+            error: mergedError,
+            result: mergedResult,
+            execute: localExecute || undefined,
+          }
+        }
+
+        if (isFullSync) {
+          const serverTaskIds = new Set(normalisedServerTasks.map(task => task.id))
+        const mergedFromServer = normalisedServerTasks.map(mergeServerTask)
+
+        const localOnlyTasks = prev.filter(task =>
+          !serverTaskIds.has(task.id) &&
+          task.execute &&
+            (task.status === 'queued' || task.status === 'running')
+          )
+
+          return [...mergedFromServer, ...localOnlyTasks].sort((a, b) => b.createdAt - a.createdAt)
+        }
+
+        // Incremental merge
+        const nextMap = new Map(prev.map(task => [task.id, task]))
+        normalisedServerTasks.forEach(serverTask => {
+          nextMap.set(serverTask.id, mergeServerTask(serverTask))
+        })
+
+        return Array.from(nextMap.values()).sort((a, b) => b.createdAt - a.createdAt)
+      })
+
+      lastSyncTimestamp.current = result.timestamp ?? Date.now()
     } catch (error) {
       console.warn('Failed to load tasks from server:', error)
     }
@@ -153,40 +201,70 @@ export function useTaskSyncAPI(tasks, setTasks, abortControllers) {
   useEffect(() => {
     console.log('API-based cross-device sync enabled')
 
-    // Load initial tasks
+    // Load initial tasks immediately - this will override any stale localStorage data
     loadTasksFromServer()
 
-    // Set up polling every 5 seconds
-    const pollInterval = setInterval(pollForUpdates, 5000)
+    // Quick refresh after 500ms to ensure we have the most up-to-date status
+    setTimeout(() => {
+      loadTasksFromServer()
+    }, 500)
+
+    // Set up polling every 3 seconds for more responsiveness
+    const pollInterval = setInterval(pollForUpdates, 3000)
+
+    // Set up phantom task detection every 30 seconds
+    const phantomCheckInterval = setInterval(() => {
+      const currentDeviceId = deviceIdRef.current
+      setTasks(prev => {
+        const now = Date.now()
+        let hasPhantoms = false
+
+        const updatedTasks = prev.map(task => {
+          // Detect phantom tasks (running without execute function for > 2 minutes)
+          const ownedByDevice = !task.deviceId || task.deviceId === currentDeviceId
+          if (ownedByDevice && task.status === 'running' && !task.execute && (now - task.createdAt) > 120000) {
+            console.warn(`Detected phantom task: ${task.id}`)
+            hasPhantoms = true
+            // Auto-cancel phantom tasks
+            return { ...task, status: 'cancelled' }
+          }
+          return task
+        })
+
+        if (hasPhantoms) {
+          console.log('Auto-cancelled phantom tasks')
+        }
+
+        return hasPhantoms ? updatedTasks : prev
+      })
+    }, 30000) // Check every 30 seconds
 
     return () => {
       clearInterval(pollInterval)
+      clearInterval(phantomCheckInterval)
     }
-  }, [loadTasksFromServer, pollForUpdates])
+  }, [loadTasksFromServer, pollForUpdates, setTasks])
 
   // Sync tasks when they change
   useEffect(() => {
-    if (tasks.length > 0) {
-      // Debounce to avoid too many syncs
-      const timeoutId = setTimeout(() => {
-        // Only sync tasks that are not cancelled externally
-        const tasksToSync = tasks.filter(task => {
-          // Don't sync tasks that don't have execute function and are cancelled
-          // (these are likely cancelled from another device)
-          if (task.status === 'cancelled' && !task.execute) {
-            return false
-          }
-          return true
-        })
-
-        if (tasksToSync.length > 0) {
-          syncTasksToServer(tasksToSync)
+    const timeoutId = setTimeout(() => {
+      // Only sync tasks that are not cancelled externally
+      const tasksToSync = tasks.filter(task => {
+        if (task.status === 'cancelled' && !task.execute) {
+          return false
         }
-      }, 1000)
+        return true
+      })
 
-      return () => clearTimeout(timeoutId)
-    }
-  }, [tasks, syncTasksToServer])
+      if (tasksToSync.length > 0) {
+        syncTasksToServer(tasksToSync)
+      } else {
+        loadTasksFromServer()
+      }
+    }, 1000)
+
+    return () => clearTimeout(timeoutId)
+  }, [tasks, syncTasksToServer, loadTasksFromServer])
 
   // Cancel task on server
   const cancelTaskOnServer = useCallback(async (taskId) => {
@@ -246,6 +324,7 @@ export function useTaskSyncAPI(tasks, setTasks, abortControllers) {
     syncTasksToServer,
     loadTasksFromServer,
     cancelTaskOnServer,
-    deleteCompletedTasksOnServer
+    deleteCompletedTasksOnServer,
+    localDeviceId,
   }
 }

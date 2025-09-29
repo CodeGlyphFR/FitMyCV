@@ -19,16 +19,17 @@ export function useBackgroundTasks() {
 export default function BackgroundTasksProvider({ children }) {
   const [tasks, setTasks] = useState([]);
   const [runningTasks, setRunningTasks] = useState([]);
+  const tasksRef = useRef([]);
   const taskQueue = useRef([]);
   const abortControllers = useRef(new Map());
   const { addNotification } = useNotifications();
 
   // Initialize cross-device sync
-  const { isApiSyncEnabled, cancelTaskOnServer, deleteCompletedTasksOnServer } = useTaskSyncAPI(tasks, setTasks, abortControllers);
+  const { isApiSyncEnabled, cancelTaskOnServer, deleteCompletedTasksOnServer, loadTasksFromServer, localDeviceId } = useTaskSyncAPI(tasks, setTasks, abortControllers);
 
-  // Fallback persistence - only use localStorage if API sync is not enabled
+  // Load from localStorage only as fallback, API sync will override with real data
   useEffect(() => {
-    if (typeof window !== 'undefined' && !isApiSyncEnabled) {
+    if (typeof window !== 'undefined') {
       try {
         // Clear old storage keys
         localStorage.removeItem('backgroundRunningTasks');
@@ -36,22 +37,41 @@ export default function BackgroundTasksProvider({ children }) {
         const savedTasks = localStorage.getItem('backgroundTasks');
         if (savedTasks) {
           const parsedTasks = JSON.parse(savedTasks);
-          // Only restore completed/failed/cancelled tasks, not running ones
-          const restoredTasks = parsedTasks.map(task => ({
-            ...task,
-            status: (task.status === 'running' || task.status === 'queued') ? 'cancelled' : task.status
-          }));
-          setTasks(restoredTasks);
+
+          // Filter out potentially stale running tasks from localStorage
+          const safeTasks = parsedTasks.filter(task => {
+            // Keep completed/failed/cancelled tasks
+            if (task.status !== 'running' && task.status !== 'queued') {
+              return true;
+            }
+
+            // For running/queued tasks, only keep very recent ones (< 1 minute old)
+            const age = Date.now() - task.createdAt;
+            return age < 60000; // 1 minute
+          });
+
+          if (safeTasks.length > 0) {
+            console.log(`Loading ${safeTasks.length} safe tasks from localStorage (filtered ${parsedTasks.length - safeTasks.length} potentially stale tasks)`);
+            setTasks(safeTasks);
+          }
+
+          // Clear localStorage after API sync initializes to prevent interference
+          setTimeout(() => {
+            if (isApiSyncEnabled) {
+              console.log('Clearing localStorage after API sync initialization');
+              localStorage.removeItem('backgroundTasks');
+            }
+          }, 3000);
         }
       } catch (error) {
         console.warn('Failed to load tasks:', error);
       }
     }
-  }, [isApiSyncEnabled]);
+  }, []); // Remove dependency on isApiSyncEnabled
 
-  // Fallback persistence - save tasks when they change (only if API sync not enabled)
+  // Always save tasks to localStorage for immediate persistence (in addition to API sync)
   useEffect(() => {
-    if (typeof window !== 'undefined' && !isApiSyncEnabled && tasks.length > 0) {
+    if (typeof window !== 'undefined' && tasks.length > 0) {
       try {
         const tasksToSave = tasks.map(task => ({
           id: task.id,
@@ -69,7 +89,11 @@ export default function BackgroundTasksProvider({ children }) {
         console.warn('Failed to save tasks:', error);
       }
     }
-  }, [tasks, isApiSyncEnabled]);
+  }, [tasks]); // Remove dependency on isApiSyncEnabled
+
+  useEffect(() => {
+    tasksRef.current = tasks;
+  }, [tasks]);
 
   // Helper function to execute a task with periodic cancellation checks
   const executeWithCancellationCheck = useCallback(async (task, abortSignal) => {
@@ -200,14 +224,46 @@ export default function BackgroundTasksProvider({ children }) {
       }
 
     } catch (error) {
+      const currentTaskState = tasksRef.current.find(t => t.id === nextTask.id);
+      const alreadyMarkedCancelled = currentTaskState?.status === 'cancelled';
+      const looksLikeCancellation = Boolean(
+        error?.message === 'Task cancelled' ||
+        error?.message === 'Task cancelled externally' ||
+        (typeof error?.message === 'string' && error.message.includes('Task cancelled')) ||
+        error?.name === 'AbortError'
+      );
+      const cancellationRequested = alreadyMarkedCancelled;
+      const isTransientNetworkError = (() => {
+        if (error?.name === 'AbortError') return true;
+        if (error?.name === 'TypeError') {
+          const msg = typeof error?.message === 'string' ? error.message.toLowerCase() : '';
+          return msg.includes('fetch') || msg.includes('network') || msg.includes('abort');
+        }
+        if (typeof error?.message === 'string') {
+          const msg = error.message.toLowerCase();
+          return msg.includes('networkerror') || msg.includes('network request failed') || msg.includes('aborted');
+        }
+        return false;
+      })();
+
       // Check if error is due to cancellation
-      if (error.message === 'Task cancelled' ||
-          error.message === 'Task cancelled externally' ||
-          error.message.includes('Task cancelled') ||
-          abortController.signal.aborted) {
+      if (looksLikeCancellation && cancellationRequested) {
         // Task was cancelled - don't show error notification
         setTasks(prev => prev.map(task =>
           task.id === nextTask.id ? { ...task, status: 'cancelled' } : task
+        ));
+      } else if (looksLikeCancellation) {
+        // Navigation refresh or dropped connection: keep task as running to allow server to drive status
+        setTasks(prev => prev.map(task =>
+          task.id === nextTask.id
+            ? { ...task, status: 'running', error: null }
+            : task
+        ));
+      } else if (isTransientNetworkError) {
+        setTasks(prev => prev.map(task =>
+          task.id === nextTask.id
+            ? { ...task, status: 'running', error: null }
+            : task
         ));
       } else {
         // Task failed for other reasons
@@ -280,18 +336,51 @@ export default function BackgroundTasksProvider({ children }) {
     }
   }, [tasks, isApiSyncEnabled, deleteCompletedTasksOnServer]);
 
+  // Function to force clear all tasks (for debugging/cleanup)
+  const clearAllTasks = useCallback(() => {
+    setTasks([]);
+    taskQueue.current = [];
+    abortControllers.current.clear();
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('backgroundTasks');
+    }
+  }, []);
+
+  // Function to force sync with server
+  const forceSyncWithServer = useCallback(async () => {
+    if (loadTasksFromServer) {
+      await loadTasksFromServer();
+    }
+  }, [loadTasksFromServer]);
+
   const cancelTask = useCallback(async (taskId) => {
     // Find the task
     const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
+    if (!task) {
+      console.warn(`Task ${taskId} not found for cancellation`);
+      return;
+    }
 
-    // If task is queued, remove it from queue and tasks
+    console.log(`Attempting to cancel task ${taskId} with status: ${task.status}`);
+
+    // For queued tasks
     if (task.status === 'queued') {
-      // Remove from queue
+      // Remove from local queue if present
       taskQueue.current = taskQueue.current.filter(t => t.id !== taskId);
 
-      // Remove from tasks list
+      // Update local state immediately for instant feedback
       setTasks(prev => prev.filter(t => t.id !== taskId));
+
+      // Try server cancellation for consistency
+      if (isApiSyncEnabled && cancelTaskOnServer) {
+        try {
+          await cancelTaskOnServer(taskId);
+          // Server will handle the cancellation and sync will update the UI
+        } catch (error) {
+          console.warn('Server cancellation failed for queued task:', error);
+          // Task is already removed locally, so this is not critical
+        }
+      }
 
       addNotification({
         type: "info",
@@ -299,31 +388,111 @@ export default function BackgroundTasksProvider({ children }) {
         duration: 2000,
       });
     }
-    // If task is running, abort it locally AND on server
+    // For running tasks
     else if (task.status === 'running') {
-      // Local abort
-      const abortController = abortControllers.current.get(taskId);
-      if (abortController) {
-        abortController.abort();
-      }
-
-      // Server-side cancel (if API sync is enabled)
+      // Server-side cancel (primary method - works even after page refresh)
       if (isApiSyncEnabled && cancelTaskOnServer) {
-        await cancelTaskOnServer(taskId);
-      } else {
-        // If no API sync, mark as cancelled locally
-        setTasks(prev => prev.map(t =>
-          t.id === taskId ? { ...t, status: 'cancelled' } : t
-        ));
-      }
+        try {
+          // Update local state immediately for instant feedback
+          setTasks(prev => prev.map(t =>
+            t.id === taskId ? { ...t, status: 'cancelled' } : t
+          ));
 
+          await cancelTaskOnServer(taskId);
+
+          // Also try local abort if controller exists (for immediate local feedback)
+          const abortController = abortControllers.current.get(taskId);
+          if (abortController) {
+            abortController.abort();
+          }
+
+          // Force immediate sync to get updated status from server
+          if (loadTasksFromServer) {
+            // Quick sync without delay for immediate feedback
+            loadTasksFromServer();
+            // And a backup sync after a short delay
+            setTimeout(() => loadTasksFromServer(), 100);
+          }
+
+          addNotification({
+            type: "info",
+            message: "Tâche en cours annulée",
+            duration: 2000,
+          });
+        } catch (error) {
+          console.warn('Server cancellation failed:', error);
+
+          // Rollback local state if server cancellation failed
+          setTasks(prev => prev.map(t =>
+            t.id === taskId ? { ...t, status: 'running' } : t
+          ));
+
+          addNotification({
+            type: "error",
+            message: "Erreur lors de l'annulation de la tâche",
+            duration: 3000,
+          });
+        }
+      } else {
+        // No API sync - only works for locally running tasks
+        const abortController = abortControllers.current.get(taskId);
+        if (abortController) {
+          abortController.abort();
+          setTasks(prev => prev.map(t =>
+            t.id === taskId ? { ...t, status: 'cancelled' } : t
+          ));
+          addNotification({
+            type: "info",
+            message: "Tâche en cours annulée",
+            duration: 2000,
+          });
+        } else {
+          addNotification({
+            type: "warning",
+            message: "Impossible d'annuler cette tâche (rafraîchissez la page pour voir le statut actuel)",
+            duration: 3000,
+          });
+        }
+      }
+    }
+    // Handle cases where task might be stuck/phantom
+    else if (task.status === 'running' || task.status === 'queued') {
+      // For phantom tasks, try to remove them forcefully
       addNotification({
-        type: "info",
-        message: "Tâche en cours annulée",
+        type: "warning",
+        message: "Suppression forcée de la tâche fantôme...",
         duration: 2000,
       });
+
+      setTasks(prev => prev.filter(t => t.id !== taskId));
     }
   }, [tasks, addNotification, isApiSyncEnabled, cancelTaskOnServer]);
+
+  // Function to remove phantom tasks
+  const removePhantomTask = useCallback(async (taskId) => {
+    // Try to cancel on server first if API sync is enabled
+    if (isApiSyncEnabled && cancelTaskOnServer) {
+      try {
+        await cancelTaskOnServer(taskId);
+        addNotification({
+          type: "info",
+          message: "Tâche fantôme nettoyée sur le serveur",
+          duration: 2000,
+        });
+        return;
+      } catch (error) {
+        console.warn('Failed to clean phantom task on server:', error);
+      }
+    }
+
+    // Fallback to local removal
+    setTasks(prev => prev.filter(t => t.id !== taskId));
+    addNotification({
+      type: "info",
+      message: "Tâche fantôme supprimée localement",
+      duration: 2000,
+    });
+  }, [addNotification, isApiSyncEnabled, cancelTaskOnServer]);
 
   return (
     <BackgroundTasksContext.Provider value={{
@@ -334,6 +503,10 @@ export default function BackgroundTasksProvider({ children }) {
       clearCompletedTasks,
       cancelTask,
       isApiSyncEnabled,
+      clearAllTasks,
+      forceSyncWithServer,
+      removePhantomTask,
+      localDeviceId,
     }}>
       {children}
     </BackgroundTasksContext.Provider>

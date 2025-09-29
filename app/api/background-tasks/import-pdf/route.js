@@ -6,9 +6,7 @@ import os from "os";
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { ensureUserCvDir, listUserCvFiles, readUserCvFile, writeUserCvFile } from "@/lib/cv/storage";
-
-// Store running processes to enable cancellation
-const runningProcesses = new Map();
+import { registerProcess, clearRegisteredProcess } from "@/lib/backgroundTasks/processRegistry";
 
 const ANALYSIS_MODEL_MAP = Object.freeze({
   rapid: "gpt-5-nano-2025-08-07",
@@ -20,6 +18,34 @@ const DEFAULT_ANALYSIS_LEVEL = "medium";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+async function updateBackgroundTask(taskId, userId, data) {
+  if (!taskId) return;
+  try {
+    await prisma.backgroundTask.updateMany({
+      where: { id: taskId, userId },
+      data,
+    });
+  } catch (error) {
+    console.warn(`Impossible de mettre à jour la tâche ${taskId}`, error);
+  }
+}
+
+function isClientDisconnect(error) {
+  if (!error) return false;
+  if (error.name === 'AbortError') return true;
+  if (error.code === 'ERR_STREAM_PREMATURE_CLOSE') return true;
+  if (error.code === 'ECONNRESET') return true;
+  if (typeof error.message === 'string') {
+    const msg = error.message.toLowerCase();
+    return msg.includes('request aborted') ||
+      msg.includes('client aborted') ||
+      msg.includes('socket hang up') ||
+      msg.includes('connection reset') ||
+      msg.includes('premature close');
+  }
+  return false;
+}
 
 async function savePdfUpload(file) {
   if (!file) return { directory: null, saved: null };
@@ -82,12 +108,39 @@ export async function POST(request) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 
+  let currentTaskId = null;
+  let clientAborted = false;
+  const abortHandler = () => {
+    clientAborted = true;
+  };
+  if (request?.signal?.addEventListener) {
+    request.signal.addEventListener('abort', abortHandler);
+  }
+
   try {
     const formData = await request.formData();
     const pdfFile = formData.get("pdfFile");
     const rawAnalysisLevel = formData.get("analysisLevel");
     const rawModel = formData.get("model");
     const taskId = formData.get("taskId");
+
+    currentTaskId = typeof taskId === "string" ? taskId : null;
+
+    if (taskId) {
+      const existing = await prisma.backgroundTask.findFirst({
+        where: { id: taskId, userId: session.user.id },
+        select: { status: true },
+      });
+
+      if (existing?.status === "cancelled") {
+        return NextResponse.json({ error: "Tâche annulée", cancelled: true }, { status: 499 });
+      }
+
+      await updateBackgroundTask(taskId, session.user.id, {
+        status: "running",
+        error: null,
+      });
+    }
 
     if (!pdfFile) {
       return NextResponse.json({ error: "Aucun fichier PDF fourni." }, { status: 400 });
@@ -172,7 +225,7 @@ export async function POST(request) {
 
       // Store the process for potential cancellation
       if (taskId) {
-        runningProcesses.set(taskId, pythonProcess);
+        registerProcess(taskId, pythonProcess);
       }
 
       let stdout = "";
@@ -192,13 +245,12 @@ export async function POST(request) {
         if (!taskId) return false;
 
         try {
-          // Check task status directly from file (same as sync route does)
-          const TASKS_FILE_PATH = path.join(process.cwd(), 'data', 'background-tasks.json');
-          const data = await fs.readFile(TASKS_FILE_PATH, 'utf8');
-          const tasks = JSON.parse(data);
-          const task = tasks.find(t => t.id === taskId);
+          const task = await prisma.backgroundTask.findFirst({
+            where: { id: taskId, userId: session.user.id },
+            select: { status: true },
+          });
 
-          if (task && task.status === 'cancelled') {
+          if (task?.status === "cancelled") {
             return true;
           }
         } catch (error) {
@@ -226,14 +278,14 @@ export async function POST(request) {
         pythonProcess.on("close", code => {
           clearInterval(cancellationInterval);
           if (taskId) {
-            runningProcesses.delete(taskId);
+            clearRegisteredProcess(taskId);
           }
           resolve(cancelled ? -999 : code);
         });
         pythonProcess.on("error", error => {
           clearInterval(cancellationInterval);
           if (taskId) {
-            runningProcesses.delete(taskId);
+            clearRegisteredProcess(taskId);
           }
           stderr += `\n${error.message || error.toString()}`;
           resolve(-1);
@@ -325,18 +377,53 @@ export async function POST(request) {
         await fs.rm(workspaceDir, { recursive: true, force: true });
       } catch (_err) {}
 
-      if (exitCode === -999) {
-        // Task was cancelled
+      let latestStatus = null;
+      if (taskId) {
+        try {
+          const record = await prisma.backgroundTask.findFirst({
+            where: { id: taskId, userId: session.user.id },
+            select: { status: true },
+          });
+          latestStatus = record?.status || null;
+        } catch (statusError) {
+          console.warn(`Impossible de récupérer le statut de la tâche ${taskId}`, statusError);
+        }
+      }
+
+      const wasMarkedCancelled = exitCode === -999 || latestStatus === 'cancelled';
+
+      if (wasMarkedCancelled) {
+        await updateBackgroundTask(taskId, session.user.id, {
+          status: "cancelled",
+          result: null,
+          error: null,
+        });
         return NextResponse.json({
           error: "Tâche annulée",
           cancelled: true
-        }, { status: 499 }); // 499 Client Closed Request
+        }, { status: 499 });
       }
 
       if (exitCode !== 0) {
         const message = (stderr.trim() || "Le script Python d'import PDF a échoué.");
+        await updateBackgroundTask(taskId, session.user.id, {
+          status: "failed",
+          error: message,
+        });
         throw new Error(message);
       }
+
+      const resultPayload = {
+        files: generatedFiles,
+        file: generatedFiles.length ? generatedFiles[generatedFiles.length - 1] : null,
+        type: "import",
+      };
+
+      await updateBackgroundTask(taskId, session.user.id, {
+        status: "completed",
+        result: JSON.stringify(resultPayload),
+        error: null,
+      });
 
       return NextResponse.json({
         success: true,
@@ -356,8 +443,30 @@ export async function POST(request) {
 
   } catch (error) {
     console.error("Erreur lors de l'import PDF en arrière-plan", error);
+    const clientDisconnected = isClientDisconnect(error) || clientAborted;
+
+    if (currentTaskId && session?.user?.id) {
+      if (error?.cancelled) {
+        await updateBackgroundTask(currentTaskId, session.user.id, {
+          status: "cancelled",
+          result: null,
+        });
+      } else if (!clientDisconnected) {
+        await updateBackgroundTask(currentTaskId, session.user.id, {
+          status: "failed",
+          error: error.message || "Erreur interne",
+        });
+      }
+    }
+
+    const statusCode = error?.cancelled || clientDisconnected ? 499 : 500;
     return NextResponse.json({
-      error: error.message || "Erreur interne lors de l'import du PDF."
-    }, { status: 500 });
+      error: error.message || "Erreur interne lors de l'import du PDF.",
+      cancelled: Boolean(error?.cancelled || clientDisconnected),
+    }, { status: statusCode });
+  } finally {
+    if (request?.signal?.removeEventListener) {
+      request.signal.removeEventListener('abort', abortHandler);
+    }
   }
 }

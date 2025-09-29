@@ -10,7 +10,7 @@ function LoadingSpinner() {
   );
 }
 
-function TaskItem({ task, onCancel }) {
+function TaskItem({ task, onCancel, onRemovePhantom, localDeviceId }) {
   const getStatusDisplay = (status) => {
     switch (status) {
       case 'queued':
@@ -37,22 +37,35 @@ function TaskItem({ task, onCancel }) {
 
   const canCancel = task.status === 'queued' || task.status === 'running';
 
+  // Detect potential phantom tasks (running without execute function after page refresh)
+  const isOwnedByLocalDevice = task.deviceId ? task.deviceId === localDeviceId : Boolean(task.execute);
+  const isPhantomTask = isOwnedByLocalDevice && task.status === 'running' && !task.execute;
+
   return (
-    <div className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+    <div className={`flex items-center justify-between p-3 border rounded-lg ${isPhantomTask ? 'bg-orange-50 border-orange-200' : 'bg-gray-50'}`}>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-gray-900 truncate">
-          {task.title}
+        <div className="flex items-center gap-2">
+          <div className="text-sm font-medium text-gray-900 truncate">
+            {task.title}
+          </div>
+          {isPhantomTask && (
+            <span className="text-xs bg-orange-100 text-orange-700 px-1 rounded" title="Tâche fantôme - pas de contrôle local">
+              👻
+            </span>
+          )}
         </div>
         <div className="text-xs text-gray-500">
           Créé à {createdAt}
+          {isPhantomTask && <span className="text-orange-600 ml-2">(Fantôme)</span>}
         </div>
       </div>
       <div className="flex items-center gap-2 ml-4">
-        {task.status === 'running' && <LoadingSpinner />}
+        {task.status === 'running' && !isPhantomTask && <LoadingSpinner />}
+        {isPhantomTask && <span className="text-xs text-orange-600">⚠️</span>}
         <span className={`text-sm font-medium ${statusDisplay.color}`}>
           {statusDisplay.label}
         </span>
-        {canCancel && (
+        {canCancel && !isPhantomTask && (
           <button
             onClick={() => onCancel(task.id)}
             className="ml-2 text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded"
@@ -61,13 +74,22 @@ function TaskItem({ task, onCancel }) {
             ✕
           </button>
         )}
+        {isPhantomTask && (
+          <button
+            onClick={() => onRemovePhantom(task.id)}
+            className="ml-2 text-xs text-orange-600 hover:text-orange-800 hover:bg-orange-100 px-2 py-1 rounded"
+            title="Nettoyer la tâche fantôme"
+          >
+            🗑️
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
 export default function TaskQueueModal({ open, onClose }) {
-  const { tasks, clearCompletedTasks, addTask, cancelTask, isApiSyncEnabled } = useBackgroundTasks();
+  const { tasks, clearCompletedTasks, addTask, cancelTask, isApiSyncEnabled, removePhantomTask, localDeviceId } = useBackgroundTasks();
 
   // Debug function to add test tasks
   const addTestTask = () => {
@@ -126,14 +148,14 @@ export default function TaskQueueModal({ open, onClose }) {
             </div>
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {sortedTasks.map(task => (
-                <TaskItem key={task.id} task={task} onCancel={cancelTask} />
+                <TaskItem key={task.id} task={task} onCancel={cancelTask} onRemovePhantom={removePhantomTask} localDeviceId={localDeviceId} />
               ))}
             </div>
           </div>
         )}
 
         <div className="flex justify-between items-center pt-4 border-t">
-          <div className="flex gap-2">
+          <div className="hidden md:flex gap-2">
             <button
               onClick={addTestTask}
               className="rounded border px-2 py-1 text-xs hover:bg-gray-50 bg-blue-50 text-blue-600"
