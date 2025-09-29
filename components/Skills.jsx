@@ -71,19 +71,6 @@ export default function Skills(props){
   const soft = Array.isArray(skills.soft_skills)? skills.soft_skills:[];
   const tools = Array.isArray(skills.tools)? skills.tools:[];
   const methods = Array.isArray(skills.methodologies)? skills.methodologies:[];
-  const { editing } = useAdmin();
-  const { mutate } = useMutate();
-
-  // --- NEW: règle d’affichage global ---
-  const hasHard = hard?.length > 0;
-  const hasTools = tools?.length > 0;
-  const hasMethods = methods?.length > 0;
-  const hasSoft = soft?.length > 0;
-  const allEmpty = !hasHard && !hasTools && !hasMethods && !hasSoft;
-
-  // Si tout est vide et pas en édition -> on cache entièrement la section
-  if (!editing && allEmpty) return null;
-
   const [openHard, setOpenHard] = React.useState(false);
   const [hardLocal, setHardLocal] = React.useState(() => (hard || []).map(toEditableSkill));
   React.useEffect(() => setHardLocal((hard || []).map(toEditableSkill)), [skills]);
@@ -99,6 +86,16 @@ export default function Skills(props){
   const [openMeth, setOpenMeth] = React.useState(false);
   const [methLocal, setMethLocal] = React.useState((methods||[]).map(it=> (typeof it==='object'? (it.name||it.label||it.title||it.value||'') : String(it))));
   React.useEffect(()=> setMethLocal((methods||[]).map(it=> (typeof it==='object'? (it.name||it.label||it.title||it.value||'') : String(it)))), [skills]);
+
+  const { editing } = useAdmin();
+  const { mutate } = useMutate();
+
+  const hasHard = hard?.length > 0;
+  const hasTools = tools?.length > 0;
+  const hasMethods = methods?.length > 0;
+  const hasSoft = soft?.length > 0;
+  const hideSection = !editing && !hasHard && !hasTools && !hasMethods && !hasSoft;
+  if (hideSection) return null;
 
   async function saveHard(){ await mutate({ op:"set", path:"skills.hard_skills", value: hardLocal }); setOpenHard(false); }
   async function saveSoft(){ await mutate({ op:"set", path:"skills.soft_skills", value: softLocal }); setOpenSoft(false); }

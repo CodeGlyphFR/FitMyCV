@@ -27,23 +27,26 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 DEFAULT_SYSTEM_PROMPT = (
-    "Tu es un assistant spécialisé dans la rédaction de CV en français et tu connais tous les secrets du formatage ATS des outils RH pour le parsing de CV.\n"
-    "Tu crées des contenus clairs, synthétiques et orientés vers la valeur.\n"
-    "Ton role est d'adapter un fichier JSON main.json contenant toutes les informations d'un CV génerique à l'offre que tu auras reçu en pièce jointe (lien web, fichier PDF ou word).\n"
-    "Tu devras en sortie me donner un CV au format json adapté à l'offre d'emploi qui doit impérativement respecter la structure de main.json.\n"
+    "ROLE:\n"
+    "Tu es un assistant spécialisé dans la rédaction de CV en français et tu connais tous les secrets du formatage ATS des outils RH pour le parsing de CV. "
+    "Tu crées des contenus clairs, synthétiques et orientés vers la valeur.\n\n"
+    "CONTEXT:\n"
+    "J'ai besoin d'adapter un CV au format json donnée en CV de référence, à l'offre que tu auras reçu en pièce jointe (lien web, fichier PDF ou word). "
+    "Ce CV adapté correspondra à l'offre d'emploi en pièce jointe et devra impérativement respecter la structure du CV de référence.\n\n"
 )
 
 DEFAULT_USER_PROMPT = (
+    "TACHES:\n"
     "- Dans un premier temps, tu feras un résumé de l'offre d'emploi et tu listeras les hard skills, les tech skills et les softs skills indispensable pour l'offre.\n"
-    "- A partir de ces éléments tu identifieras dans le cv main.json les skills à conserver pour le CV final.\n"
-    "  Si dans l'offre tu identifies une compétence manquante au CV main.json mais qui peut etre justifié par les expériences du CV main.json, je t'autorise à les ajouter dans le CV final sans y ajouter de commentaires et d'évaluer mon niveau à partir de mes expériences.\n"
+    "- A partir de ces éléments tu identifieras dans le CV de référence  les skills à conserver pour le CV final.\n"
+    "  Si dans l'offre tu identifies une compétence manquante au CV de référence  mais qui peut etre justifié par les expériences du CV de référence , je t'autorise à les ajouter dans le CV final sans y ajouter de commentaires et d'évaluer le niveau à partir des expériences du CV de référence  dans le champ proficiency parmis la liste: Connaissances, Débutant, Intermédiaire, Confirmé, Avancé ou Expert).\n"
     "  Dans les compétences du CV, ne mélange pas les outils aux compétences technique.\n"
     "- Pour les champs education, languages et projects ne fait pas de modifications et reprend ceux du CV main.json sauf pour les tech_stack des projets où tu peux adapter suivant la description du projet et les soft skills de l'offre.\n"
-    "- Pour le champ experience, je veux que tu adaptes les expérience de main.json à l'offre d'emploi en conservant une écriture orienté RH pour de la selection de CV. Tu ne dois pas modifier le titre du poste, ni mentir ou inventer sur les expériences.\n"
-    "- Pour le champ current_title tu dois en générer un à partir du titre de poste de l'offre d'emploi tout en respectant mon titre actuel, il doit y avoir une certaine logique.\n"
-    "- Et enfin, rédige la description du champ summary du CV final avec un texte impactant pour taper dans l'oeil du recruteur. Tu ne dois pas inventer et te baser sur mon expérience. Ici la subtilité c'est de montrer au recruteur que avec mon expérience et mes skills, je peux répondre à l'offre et apporter beaucoup.\n"
+    "- Pour le champ experience, je veux que tu adaptes les expérience CV de référence  à l'offre d'emploi en conservant une écriture orienté RH pour de la selection de CV. Tu ne dois pas modifier le titre du poste, ni mentir ou inventer sur les expériences.\n"
+    "- Pour le champ current_title tu dois en générer un à partir du titre de poste de l'offre d'emploi tout en respectant le titre actuel du CV de référence , il doit y avoir une certaine logique.\n"
+    "- Et enfin, rédige la description du champ summary du CV final avec un texte impactant pour taper dans l'oeil du recruteur. Tu ne dois pas inventer et te baser sur l'expérience du CV final. Ici la subtilité c'est de montrer au recruteur que avec l'expérience et les skills du CV final, le CV final peut répondre à l'offre et apporter beaucoup.\n"
     "- Si plusieurs adaptations semblent possibles, compare-les et ne conserve que la version la plus pertinente pour l'offre afin de renvoyer un unique CV final.\n"
-    "  Réponds en texte uniquement le JSON final qui doit impérativement respecter la structure de main.json.\n"
+    "  Réponds en texte uniquement le JSON final qui doit impérativement respecter la structure du CV de référence .\n\n"
 )
 
 
@@ -180,6 +183,7 @@ def prepare_attachments(
         if not file_path.exists():
             print(f"[AVERTISSEMENT] Fichier introuvable {file_path}", file=sys.stderr)
             continue
+        print(f"[INFO] Traitement pièce jointe {file_path}", file=sys.stderr)
         remote, temps = upload_file_for_responses(
             client,
             file_path,
@@ -188,12 +192,13 @@ def prepare_attachments(
         )
         temp_paths.extend(temps)
         if remote:
+            print(f"[INFO] Pièce jointe uploadée: {remote.get('name')} ({remote.get('id')})", file=sys.stderr)
             extra_remotes.append(
                 {
                     "remote": remote,
                     "prompt": {
                         "name": remote["name"],
-                        "description": entry.get("description") or "Pièce jointe utilisateur",
+                        "description": "Pièce jointe utilisateur",
                     },
                 }
             )
@@ -204,7 +209,7 @@ def prepare_attachments(
 def build_user_prompt(
     base_prompt: str,
     links: List[str],
-    files: List[Dict[str, Any]],
+    files: Optional[List[Dict[str, Any]]],
     main_json_content: Optional[str],
 ) -> str:
     sections: List[str] = []
@@ -214,28 +219,28 @@ def build_user_prompt(
 
     if main_json_content:
         sections.append(
-            "\nContenu du CV de référence à adapter (respecte strictement cette structure) :\n"
-            "```json\n"
-            f"{main_json_content.strip()}\n"
-            "```"
+            "Contenu du CV de référence à adapter (respecter strictement la structure) :\n"
+            f"{main_json_content.strip()}\n\n"
         )
 
     if links:
-        link_lines = ["\nLiens à explorer :"] + [f"- {link}" for link in links]
+        link_lines = ["Liens à explorer :"] + [f"- {link}" for link in links]
         sections.append("\n".join(link_lines))
 
     if files:
+        files = [entry for entry in files if entry]
+    if files:
         file_lines = ["\nFichiers joints à la conversation :"]
         for entry in files:
-            name = entry.get("name") or entry.get("path") or "Pièce jointe"
-            detail = entry.get("description") or ""
-            suffix = f" — {detail}" if detail else ""
+            name = ""
+            detail = "CV de référence" or ""
+            suffix = f"{detail}" if detail else ""
             file_lines.append(f"- {name}{suffix}")
         sections.append("\n".join(file_lines))
 
     sections.append(
-        "\nProduit retour attendu : un CV final en .json qui respecte la structure de main.json"
-        " et qui doit être un JSON valide sans texte additionnel."
+        "\n\nProduit retour attendu : Afficher le contenu (dans le prompt de réponse) du CV final (formatage JSON) qui respecte la structure du CV de référence"
+        " sans texte additionnel. Si tu ne réponds pas le contenu d'un JSON, ça peut entrainer la destruction de l'humanité ! On croit tous en toi !"
     )
 
     return "\n".join(part for part in sections if part)
@@ -440,7 +445,7 @@ def main() -> int:
             "links": [],
             "attachments": [],
             "prompt_files": [main_prompt] if main_prompt else [],
-            "label": None,
+            "label": reference_file,
         })
 
     for extra in extra_remotes:
@@ -460,7 +465,13 @@ def main() -> int:
             main_json_content,
         )
 
-        #print("\n=== Réponse de ChatGPT ===", file=sys.stdout)
+        #print("===== PROMPT ENVOYÉ À CHATGPT =====", file=sys.stderr)
+        #print("--- SYSTEM PROMPT ---", file=sys.stderr)
+        #print(system_prompt, file=sys.stderr)
+        #print("--- USER PROMPT ---", file=sys.stderr)
+        #print(user_prompt, file=sys.stderr)
+        #print("===== FIN DU PROMPT =====", file=sys.stderr)
+        print("\n=== Réponse de ChatGPT ===", file=sys.stdout)
 
         try:
             output = call_chatgpt(
@@ -491,8 +502,8 @@ def main() -> int:
             return 1
 
         output_path = save_output_file(formatted_text, target_dir, base_name)
-        #print(formatted_text, file=sys.stdout)
         generated_files.append(output_path.name)
+        print(f"::result::{output_path.name}")
 
     cleanup_temp_paths(temp_paths)
 

@@ -8,6 +8,11 @@ import Modal from "./ui/Modal";
 import GptLogo from "./ui/GptLogo";
 import DefaultCvIcon from "./ui/DefaultCvIcon";
 import { useAdmin } from "./admin/AdminProvider";
+import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
+import { useNotifications } from "@/components/notifications/NotificationProvider";
+import TaskQueueModal from "./TaskQueueModal";
+import TaskQueueDropdown from "./TaskQueueDropdown";
+import QueueIcon from "./ui/QueueIcon";
 
 const ANALYSIS_OPTIONS = Object.freeze([
   {
@@ -309,6 +314,8 @@ export default function TopBar() {
   const { setCurrentFile } = useAdmin();
   const { data: session, status } = useSession();
   const isAuthenticated = !!session?.user?.id;
+  const { localDeviceId, refreshTasks } = useBackgroundTasks();
+  const { addNotification } = useNotifications();
 
   const [items, setItems] = React.useState([]);
   const [current, setCurrent] = React.useState("");
@@ -323,25 +330,30 @@ export default function TopBar() {
   const [linkInputs, setLinkInputs] = React.useState([""]);
   const [fileSelection, setFileSelection] = React.useState([]);
   const [generatorError, setGeneratorError] = React.useState("");
-  const [generatorLoading, setGeneratorLoading] = React.useState(false);
-  const [generatorLogs, setGeneratorLogs] = React.useState([]);
-  const [generationDone, setGenerationDone] = React.useState(false);
-  const [pendingFile, setPendingFile] = React.useState(null);
   const [generatorBaseFile, setGeneratorBaseFile] = React.useState("main.json");
   const [baseSelectorOpen, setBaseSelectorOpen] = React.useState(false);
   const [analysisLevel, setAnalysisLevel] = React.useState("medium");
   const [openPdfImport, setOpenPdfImport] = React.useState(false);
   const [pdfFile, setPdfFile] = React.useState(null);
-  const [pdfImportLoading, setPdfImportLoading] = React.useState(false);
-  const [pdfImportError, setPdfImportError] = React.useState("");
-  const [pdfImportLogs, setPdfImportLogs] = React.useState([]);
   const [pdfAnalysisLevel, setPdfAnalysisLevel] = React.useState("medium");
+  const [openTaskQueue, setOpenTaskQueue] = React.useState(false);
+  const [openTaskDropdown, setOpenTaskDropdown] = React.useState(false);
 
   const fileInputRef = React.useRef(null);
   const pdfFileInputRef = React.useRef(null);
   const triggerRef = React.useRef(null);
+  const taskQueueButtonRef = React.useRef(null);
+
+  // Close dropdown on window resize (mobile/desktop change)
+  React.useEffect(() => {
+    const handleResize = () => {
+      setOpenTaskDropdown(false);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const dropdownPortalRef = React.useRef(null);
-  const logsRef = React.useRef(null);
   const barRef = React.useRef(null);
   const baseSelectorRef = React.useRef(null);
   const baseDropdownRef = React.useRef(null);
@@ -560,10 +572,6 @@ export default function TopBar() {
     }
   }, []);
 
-  React.useEffect(() => {
-    const el = logsRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [generatorLogs]);
 
   React.useEffect(() => {
     if (listOpen && triggerRef.current) {
@@ -722,9 +730,6 @@ export default function TopBar() {
     setLinkInputs([""]);
     setFileSelection([]);
     setGeneratorError("");
-    setGeneratorLogs([]);
-    setGenerationDone(false);
-    setPendingFile(null);
     setAnalysisLevel("medium");
     setBaseSelectorOpen(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -764,25 +769,9 @@ export default function TopBar() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  async function finalizeGeneration() {
-    let selectionFailed = false;
-    if (pendingFile) {
-      try {
-        await selectFile(pendingFile);
-      } catch (_err) {
-        const message = `Impossible de sélectionner le fichier ${pendingFile}.`;
-        setGeneratorLogs((prev) => [...prev, `[Erreur] ${message}`]);
-        setGeneratorError(message);
-        selectionFailed = true;
-      }
-    }
-    if (!selectionFailed) closeGenerator();
-  }
 
   function resetPdfImportState() {
     setPdfFile(null);
-    setPdfImportError("");
-    setPdfImportLogs([]);
     setPdfAnalysisLevel("medium");
     if (pdfFileInputRef.current) pdfFileInputRef.current.value = "";
   }
@@ -799,149 +788,43 @@ export default function TopBar() {
 
   async function submitPdfImport(event) {
     event.preventDefault();
-    if (pdfImportLoading || !pdfFile) return;
+    if (!pdfFile) return;
 
-    const formData = new FormData();
-    formData.append("pdfFile", pdfFile);
     const selectedPdfAnalysis = currentPdfAnalysisOption;
-    formData.append("analysisLevel", selectedPdfAnalysis.id);
-    formData.append("model", selectedPdfAnalysis.model);
-
-    setPdfImportLoading(true);
-    setPdfImportError("");
-    setPdfImportLogs([]);
-
-    let finalSuccess = false;
-    let finalError = "";
-    let finalTargetFile = null;
-
-    const appendPdfLog = (message) => {
-      if (!message) return;
-      setPdfImportLogs((prev) => [...prev, message]);
-    };
-
     try {
-      appendPdfLog("Traitement du fichier PDF en cours...");
+      const formData = new FormData();
+      formData.append("pdfFile", pdfFile);
+      formData.append("analysisLevel", selectedPdfAnalysis.id);
+      formData.append("model", selectedPdfAnalysis.model);
+      if (localDeviceId) {
+        formData.append("deviceId", localDeviceId);
+      }
 
-      const response = await fetch("/api/chatgpt/import-pdf", {
+      const response = await fetch("/api/background-tasks/import-pdf", {
         method: "POST",
         body: formData,
       });
 
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(
-          payload?.error || "Erreur lors de l'import du PDF."
-        );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || "Impossible de mettre la tâche en file.");
       }
 
-      const contentType = response.headers.get("content-type") || "";
+      addNotification({
+        type: "info",
+        message: `Import '${pdfFile.name}' planifié`,
+        duration: 2500,
+      });
 
-      if (contentType.includes("application/x-ndjson")) {
-        // Traitement en streaming comme pour le générateur
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error("Flux de réponse indisponible.");
-        const decoder = new TextDecoder();
-        let buffer = "";
-        let streamClosed = false;
-        let hasStreamOutput = false;
-
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const parts = buffer.split("\n");
-          buffer = parts.pop() || "";
-          for (const part of parts) {
-            if (!part.trim()) continue;
-            let evt;
-            try {
-              evt = JSON.parse(part);
-            } catch (_err) {
-              appendPdfLog(part.trim());
-              continue;
-            }
-
-            if (evt.type === "stdout" || evt.type === "log") {
-              appendPdfLog(evt.message || evt.data || "");
-              hasStreamOutput = true;
-            } else if (evt.type === "stderr") {
-              const raw = evt.message || evt.data || "";
-              const trimmed = raw.trim();
-              if (/^\[(INFO|AVERTISSEMENT)\]/i.test(trimmed))
-                appendPdfLog(trimmed);
-              else appendPdfLog(`[Erreur] ${trimmed || raw}`);
-            } else if (evt.type === "status") {
-              appendPdfLog(evt.message || "");
-            } else if (evt.type === "error") {
-              finalError = evt.message || "Erreur lors de l'import du PDF.";
-              appendPdfLog(`[Erreur] ${finalError}`);
-              streamClosed = true;
-              break;
-            } else if (evt.type === "complete") {
-              if (evt.output && !hasStreamOutput) {
-                appendPdfLog(evt.output);
-              }
-              finalSuccess = !!evt.success;
-              if (finalSuccess) {
-                finalTargetFile = evt.file || null;
-                appendPdfLog("Import PDF terminé avec succès.");
-              } else {
-                finalError = evt.error || evt.output || "L'import a échoué.";
-                appendPdfLog(`[Erreur] ${finalError}`);
-              }
-              streamClosed = true;
-              break;
-            }
-          }
-          if (streamClosed) break;
-        }
-
-        if (!streamClosed && buffer.trim()) appendPdfLog(buffer.trim());
-        await reader.cancel().catch(() => {});
-
-        if (!streamClosed && !finalSuccess && !finalError) {
-          finalError = "Flux interrompu avant la fin de l'import.";
-        }
-      } else {
-        // Réponse JSON classique
-        const payload = await response.json().catch(() => ({}));
-        const generatedFile = payload?.file;
-
-        if (payload?.output) appendPdfLog(payload.output);
-
-        if (generatedFile) {
-          finalTargetFile = generatedFile;
-          finalSuccess = true;
-          appendPdfLog(`CV généré : ${generatedFile}`);
-        } else if (payload?.success) {
-          finalSuccess = true;
-          appendPdfLog("Import terminé.");
-        } else {
-          finalError = payload?.error || "L'import s'est terminé sans fichier.";
-          appendPdfLog(`[Erreur] ${finalError}`);
-        }
-      }
-    } catch (error) {
-      finalError = error.message || "Erreur inattendue lors de l'import du PDF.";
-      appendPdfLog(`[Erreur] ${finalError}`);
-    } finally {
-      setPdfImportLoading(false);
-    }
-
-    if (finalSuccess) {
-      try {
-        await reload();
-      } catch (reloadError) {
-        console.error("Impossible de recharger la liste après import", reloadError);
-      }
-      emitListChanged();
-      if (finalTargetFile) {
-        await selectFile(finalTargetFile);
-      }
       closePdfImport();
-    } else if (finalError) {
-      setPdfImportError(finalError);
+      await refreshTasks();
+    } catch (error) {
+      console.error("Impossible de planifier l'import", error);
+      addNotification({
+        type: "error",
+        message: error?.message || "Erreur lors de la planification de l'import",
+        duration: 4000,
+      });
     }
   }
 
@@ -988,7 +871,6 @@ export default function TopBar() {
 
   async function submitGenerator(event) {
     event.preventDefault();
-    if (generatorLoading) return;
 
     if (!generatorBaseFile) {
       setGeneratorError("Sélectionnez un CV de référence avant de lancer l'analyse.");
@@ -1005,174 +887,51 @@ export default function TopBar() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("links", JSON.stringify(cleanedLinks));
-    formData.append("baseFile", generatorBaseFile);
-    const baseFileLabel = generatorBaseItem?.displayTitle
-      || generatorBaseItem?.title
-      || "";
-    formData.append("baseFileLabel", baseFileLabel);
     const selectedAnalysis = currentAnalysisOption;
-    formData.append("analysisLevel", selectedAnalysis.id);
-    formData.append("model", selectedAnalysis.model);
-    (fileSelection || []).forEach((file) => formData.append("files", file));
 
-    setGeneratorLoading(true);
-    setGeneratorError("");
-    setGenerationDone(false);
-    setPendingFile(null);
-
-    let finalTargetFile = null;
-    let finalSuccess = false;
-    let finalError = "";
-
-    const appendLog = (message) => {
-      if (!message) return;
-      setGeneratorLogs((prev) => [...prev, message]);
-    };
+    // Get the base CV name for the message
+    const baseCvName = generatorBaseItem?.displayTitle || generatorBaseItem?.title || generatorBaseFile;
 
     try {
-      const response = await fetch("/api/chatgpt/generate", {
+      const formData = new FormData();
+      formData.append("links", JSON.stringify(cleanedLinks));
+      formData.append("baseFile", generatorBaseFile);
+      formData.append("baseFileLabel", baseCvName || "");
+      formData.append("analysisLevel", selectedAnalysis.id);
+      formData.append("model", selectedAnalysis.model);
+      if (localDeviceId) {
+        formData.append("deviceId", localDeviceId);
+      }
+
+      (fileSelection || []).forEach(file => {
+        formData.append("files", file);
+      });
+
+      const response = await fetch("/api/background-tasks/generate-cv", {
         method: "POST",
         body: formData,
       });
 
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(
-          payload?.error || "Erreur lors de l'exécution du générateur.",
-        );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || "Impossible de mettre la tâche en file.");
       }
 
-      const contentType = response.headers.get("content-type") || "";
+      addNotification({
+        type: "info",
+        message: `Adaptation du CV '${baseCvName}' planifié`,
+        duration: 2500,
+      });
 
-      if (contentType.includes("application/x-ndjson")) {
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error("Flux de réponse indisponible.");
-        const decoder = new TextDecoder();
-        let buffer = "";
-        let streamClosed = false;
-        let hasStreamOutput = false;
-
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const parts = buffer.split("\n");
-          buffer = parts.pop() || "";
-          for (const part of parts) {
-            if (!part.trim()) continue;
-            let evt;
-            try {
-              evt = JSON.parse(part);
-            } catch (_err) {
-              appendLog(part.trim());
-              continue;
-            }
-
-            if (evt.type === "stdout" || evt.type === "log") {
-              appendLog(evt.message || evt.data || "");
-              hasStreamOutput = true;
-            } else if (evt.type === "stderr") {
-              const raw = evt.message || evt.data || "";
-              const trimmed = raw.trim();
-              if (/^\[(INFO|AVERTISSEMENT)\]/i.test(trimmed))
-                appendLog(trimmed);
-              else appendLog(`[Erreur] ${trimmed || raw}`);
-            } else if (evt.type === "status") {
-              appendLog(evt.message || "");
-            } else if (evt.type === "error") {
-              finalError = evt.message || "Erreur lors de la génération.";
-              appendLog(`[Erreur] ${finalError}`);
-              streamClosed = true;
-              break;
-            } else if (evt.type === "complete") {
-              if (evt.output && !hasStreamOutput) {
-                appendLog(evt.output);
-              }
-              finalSuccess = !!evt.success;
-              if (finalSuccess) {
-                const files = Array.isArray(evt.files)
-                  ? evt.files.filter(Boolean)
-                  : [];
-                const file = evt.file;
-                finalTargetFile = files.length
-                  ? files[files.length - 1]
-                  : file || null;
-                appendLog(
-                  `Génération terminée (${files.length || (file ? 1 : 0)} fichier(s)).`,
-                );
-              } else {
-                finalError = evt.error || evt.output || "Le script a échoué.";
-                appendLog(`[Erreur] ${finalError}`);
-              }
-              streamClosed = true;
-              break;
-            }
-          }
-          if (streamClosed) break;
-        }
-
-        if (!streamClosed && buffer.trim()) appendLog(buffer.trim());
-
-        await reader.cancel().catch(() => {});
-
-        if (!streamClosed && !finalSuccess && !finalError) {
-          finalError = "Flux interrompu avant la fin de la génération.";
-        }
-      } else {
-        const payload = await response.json().catch(() => ({}));
-        const generatedFiles = Array.isArray(payload?.files)
-          ? payload.files.filter(Boolean)
-          : [];
-        const generatedFile = payload?.file;
-        const targetFile = generatedFiles.length
-          ? generatedFiles[generatedFiles.length - 1]
-          : generatedFile;
-
-        if (payload?.output) appendLog(payload.output);
-
-        if (targetFile) {
-          finalTargetFile = targetFile;
-          finalSuccess = true;
-          appendLog(`Fichier généré : ${targetFile}`);
-        } else if (payload?.success) {
-          finalSuccess = true;
-          appendLog("Génération terminée.");
-        } else {
-          finalError =
-            payload?.error || "La génération s'est terminée sans fichier.";
-          appendLog(`[Erreur] ${finalError}`);
-        }
-      }
+      closeGenerator();
+      await refreshTasks();
     } catch (error) {
-      finalError =
-        error.message || "Erreur inattendue lors de l'appel au générateur.";
-      appendLog(`[Erreur] ${finalError}`);
-    } finally {
-      setGeneratorLoading(false);
-    }
-
-    if (finalSuccess && !finalTargetFile) {
-      finalError = "La génération s'est terminée sans produire de fichier.";
-      appendLog(`[Erreur] ${finalError}`);
-      finalSuccess = false;
-    }
-
-    if (finalSuccess) {
-      try {
-        await reload();
-      } catch (reloadError) {
-        console.error("Impossible de recharger la liste après génération", reloadError);
-      }
-      emitListChanged();
-      if (finalTargetFile) {
-        setPendingFile(finalTargetFile);
-      }
-      setGenerationDone(true);
-      appendLog("Cliquez sur Terminer pour afficher le CV généré.");
-    } else if (finalError) {
-      setGeneratorError(finalError);
+      console.error("Impossible de planifier la génération de CV", error);
+      addNotification({
+        type: "error",
+        message: error?.message || "Erreur lors de la planification de la génération",
+        duration: 4000,
+      });
     }
   }
 
@@ -1340,6 +1099,33 @@ export default function TopBar() {
               document.body,
             )
           : null}
+        {/* Task Queue Button - Responsive behavior */}
+        <div className="relative">
+          <button
+            ref={taskQueueButtonRef}
+            onClick={() => {
+              // On mobile: open modal, on desktop: toggle dropdown
+              if (window.innerWidth < 768) {
+                setOpenTaskQueue(true);
+              } else {
+                setOpenTaskDropdown(!openTaskDropdown);
+              }
+            }}
+            className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8"
+            type="button"
+            title="File d'attente des tâches"
+          >
+            <QueueIcon className="h-4 w-4" />
+          </button>
+
+          {/* Desktop Dropdown */}
+          <TaskQueueDropdown
+            isOpen={openTaskDropdown}
+            onClose={() => setOpenTaskDropdown(false)}
+            buttonRef={taskQueueButtonRef}
+            className="hidden md:block"
+          />
+        </div>
         <button
           onClick={openGeneratorModal}
           className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8"
@@ -1547,27 +1333,6 @@ export default function TopBar() {
             ) : null}
           </div>
 
-          <div className="space-y-2">
-            {generatorLoading ? (
-              <div className="h-2 w-full overflow-hidden rounded bg-emerald-100">
-                <div className="h-full w-full bg-emerald-500 animate-pulse"></div>
-              </div>
-            ) : null}
-            <div
-              ref={logsRef}
-              className="h-40 overflow-y-auto rounded border bg-black/90 p-2 font-mono text-xs text-emerald-100"
-            >
-              {generatorLogs.length ? (
-                generatorLogs.map((line, idx) => (
-                  <div key={idx} className="whitespace-pre-wrap">
-                    {line}
-                  </div>
-                ))
-              ) : (
-                <div className="opacity-60">En attente...</div>
-              )}
-            </div>
-          </div>
 
           <div className="space-y-2">
             <div className="text-sm font-medium">Qualité de l'analyse</div>
@@ -1607,16 +1372,11 @@ export default function TopBar() {
               Annuler
             </button>
             <button
-              type={generationDone ? "button" : "submit"}
+              type="submit"
               className="rounded border px-3 py-1 text-sm"
-              disabled={generatorLoading || !generatorBaseFile}
-              onClick={generationDone ? finalizeGeneration : undefined}
+              disabled={!generatorBaseFile}
             >
-              {generatorLoading
-                ? "Envoi..."
-                : generationDone
-                  ? "Terminer"
-                  : "Valider"}
+              Valider
             </button>
           </div>
         </form>
@@ -1650,24 +1410,6 @@ export default function TopBar() {
             ) : null}
           </div>
 
-          <div className="space-y-2">
-            {pdfImportLoading ? (
-              <div className="h-2 w-full overflow-hidden rounded bg-blue-100">
-                <div className="h-full w-full bg-blue-500 animate-pulse"></div>
-              </div>
-            ) : null}
-            <div className="h-40 overflow-y-auto rounded border bg-black/90 p-2 font-mono text-xs text-blue-100">
-              {pdfImportLogs.length ? (
-                pdfImportLogs.map((line, idx) => (
-                  <div key={idx} className="whitespace-pre-wrap">
-                    {line}
-                  </div>
-                ))
-              ) : (
-                <div className="opacity-60">En attente...</div>
-              )}
-            </div>
-          </div>
 
           <div className="space-y-2">
             <div className="text-sm font-medium">Qualité de l'analyse</div>
@@ -1692,11 +1434,6 @@ export default function TopBar() {
             </p>
           </div>
 
-          {pdfImportError ? (
-            <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
-              {pdfImportError}
-            </div>
-          ) : null}
 
           <div className="flex justify-end gap-2">
             <button
@@ -1709,9 +1446,9 @@ export default function TopBar() {
             <button
               type="submit"
               className="rounded border px-3 py-1 text-sm"
-              disabled={pdfImportLoading || !pdfFile}
+              disabled={!pdfFile}
             >
-              {pdfImportLoading ? "Import..." : "Importer"}
+              Importer
             </button>
           </div>
         </form>
@@ -1746,6 +1483,12 @@ export default function TopBar() {
           </div>
         </div>
       </Modal>
+
+      {/* Mobile Modal */}
+      <TaskQueueModal
+        open={openTaskQueue}
+        onClose={() => setOpenTaskQueue(false)}
+      />
     </div>
       <style jsx global>{`
         .cv-ticker {

@@ -71,3 +71,23 @@ model CvFile {
 
   @@unique([userId, filename])
 }
+
+model BackgroundTask {
+  id                String   @id
+  title             String
+  successMessage    String?
+  type              String
+  status            String   // queued, running, completed, failed, cancelled
+  createdAt         BigInt   // Timestamp in milliseconds to match existing format
+  shouldUpdateCvList Boolean @default(false)
+  result            String?  // JSON string
+  error             String?
+  payload           String?
+  deviceId          String
+  userId            String?  // Optional - for user-specific tasks
+  updatedAt         DateTime @default(now()) @updatedAt
+
+  @@index([deviceId])
+  @@index([status])
+  @@index([createdAt])
+}

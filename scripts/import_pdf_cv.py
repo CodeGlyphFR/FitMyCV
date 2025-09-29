@@ -285,7 +285,7 @@ def ensure_response_directory() -> Path:
 
 def derive_filename() -> str:
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
-    return f"imported_{timestamp}"
+    return f"{timestamp}"
 
 
 def save_output_file(content: str, target_dir: Path, base_name: str) -> Path:
@@ -392,7 +392,10 @@ def main() -> int:
         print(f"[DEBUG] Réponse complète reçue : {output}", file=sys.stderr)
         return 1
 
-    print(f"[DEBUG] Réponse brute de ChatGPT : {text_output[:200]}...", file=sys.stderr)
+    preview = text_output.strip().replace("\n", " ")
+    if len(preview) > 200:
+        preview = preview[:200] + "..."
+    print(f"[DEBUG] Réponse brute de ChatGPT : {preview}", file=sys.stderr)
 
     try:
         formatted_text = normalize_json_payload(text_output)
