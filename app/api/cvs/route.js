@@ -83,7 +83,10 @@ export async function GET(){
       const isLikelyGpt = /^(generated_chatgpt_cv|gpt_)/i.test(file);
       const rawSource = generator || (typeof json?.meta?.source === "string" ? json.meta.source : "manual");
       const source = typeof rawSource === "string" ? rawSource.toLowerCase().trim() || "manual" : "manual";
-      const isGpt = generator === "chatgpt" || generator === "openai" || source === "chatgpt" || isLikelyGpt;
+      const isImported = source === "pdf-import";
+      const isGenerated = generator === "chatgpt" || generator === "openai" || source === "chatgpt" || isLikelyGpt;
+      // Consider both AI-generated and PDF-imported CVs as "AI-powered" for display
+      const isGpt = isGenerated || isImported;
       const isManual = !isGpt;
       const createdAtCandidates = [
         json?.meta?.created_at,
@@ -113,6 +116,8 @@ export async function GET(){
         hasTitle,
         dateLabel: dateLabel || null,
         isGpt,
+        isImported,
+        isGenerated,
         isManual,
         source,
         createdAt: createdAtIso,
@@ -120,7 +125,11 @@ export async function GET(){
         sortKey: createdTimestamp ?? updatedTimestamp ?? null,
       });
     } catch (error) {
-      const isGpt = /^(generated_chatgpt_cv|gpt_)/i.test(file);
+      const isLikelyGpt = /^(generated_chatgpt_cv|gpt_)/i.test(file);
+      const isLikelyImport = /^import/i.test(file);
+      const isImported = isLikelyImport;
+      const isGenerated = isLikelyGpt;
+      const isGpt = isGenerated || isImported;
       const sortKey = timestampFromFilename(file);
       const dateLabel = formatDateLabel(sortKey);
       rawItems.push({
@@ -130,6 +139,8 @@ export async function GET(){
         hasTitle: false,
         dateLabel: dateLabel || null,
         isGpt,
+        isImported,
+        isGenerated,
         isManual: !isGpt,
         source: isGpt ? "chatgpt" : "manual",
         createdAt: null,
