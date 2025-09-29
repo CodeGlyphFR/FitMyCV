@@ -20,7 +20,7 @@ export default function BackgroundTasksProvider({ children }) {
   const [tasks, setTasks] = useState([]);
   const [runningTasks, setRunningTasks] = useState([]);
   const tasksRef = useRef([]);
-  const taskQueue = useRef([]);
+  const runningTasksRef = useRef([]);
   const abortControllers = useRef(new Map());
   const { addNotification } = useNotifications();
 
@@ -95,6 +95,11 @@ export default function BackgroundTasksProvider({ children }) {
     tasksRef.current = tasks;
   }, [tasks]);
 
+  useEffect(() => {
+    runningTasksRef.current = runningTasks;
+  }, [runningTasks]);
+
+
   // Helper function to execute a task with periodic cancellation checks
   const executeWithCancellationCheck = useCallback(async (task, abortSignal) => {
     return new Promise((resolve, reject) => {
@@ -138,16 +143,39 @@ export default function BackgroundTasksProvider({ children }) {
   }, []);
 
   const processQueue = useCallback(async () => {
-    if (runningTasks.length >= MAX_CONCURRENT_TASKS || taskQueue.current.length === 0) {
+    // Get queued tasks from tasksRef for better sync compatibility (avoids dependency loop)
+    const queuedTasks = tasksRef.current.filter(task => task.status === 'queued').sort((a, b) => a.createdAt - b.createdAt);
+    const currentRunningCount = runningTasksRef.current.length;
+
+    console.log(`🔄 processQueue called - Running: ${currentRunningCount}/${MAX_CONCURRENT_TASKS}, Queued tasks: ${queuedTasks.length}`);
+
+    if (currentRunningCount >= MAX_CONCURRENT_TASKS) {
+      console.log(`⏸️  Max concurrent tasks reached (${currentRunningCount}/${MAX_CONCURRENT_TASKS})`);
       return;
     }
 
-    const nextTask = taskQueue.current.shift();
-    if (!nextTask) return;
+    if (queuedTasks.length === 0) {
+      console.log(`📭 No queued tasks found`);
+      return;
+    }
 
-    // Check if task was cancelled before we even start processing
-    const currentTaskInState = tasks.find(t => t.id === nextTask.id);
+    // Get the first queued task with an execute function (local tasks)
+    const nextTask = queuedTasks.find(task => task.execute);
+    if (!nextTask) {
+      console.log(`❌ No executable task found in queue (${queuedTasks.length} total queued tasks)`);
+      // Log details about queued tasks for debugging
+      queuedTasks.forEach(task => {
+        console.log(`  - Task ${task.id}: ${task.title} (has execute: ${!!task.execute})`);
+      });
+      return;
+    }
+
+    console.log(`🚀 Starting task: ${nextTask.id} - ${nextTask.title}`);
+
+    // Check if task was cancelled before we even start processing using the ref
+    const currentTaskInState = tasksRef.current.find(t => t.id === nextTask.id);
     if (currentTaskInState && currentTaskInState.status === 'cancelled') {
+      console.log(`🚫 Task ${nextTask.id} was cancelled before start, skipping`);
       // Task already cancelled, don't start it, process next one
       setTimeout(() => processQueue(), 100);
       return;
@@ -157,7 +185,11 @@ export default function BackgroundTasksProvider({ children }) {
     const abortController = new AbortController();
     abortControllers.current.set(nextTask.id, abortController);
 
-    setRunningTasks(prev => [...prev, nextTask.id]);
+    setRunningTasks(prev => {
+      const updated = [...prev, nextTask.id];
+      runningTasksRef.current = updated;
+      return updated;
+    });
     setTasks(prev => prev.map(task =>
       task.id === nextTask.id ? { ...task, status: 'running' } : task
     ));
@@ -206,6 +238,7 @@ export default function BackgroundTasksProvider({ children }) {
       setTasks(prev => prev.map(task =>
         task.id === nextTask.id ? { ...task, status: 'completed', result } : task
       ));
+
 
       addNotification({
         type: "success",
@@ -271,6 +304,7 @@ export default function BackgroundTasksProvider({ children }) {
           task.id === nextTask.id ? { ...task, status: 'failed', error: error.message } : task
         ));
 
+
         addNotification({
           type: "error",
           message: "Erreur ! Echec lors de la création du CV.",
@@ -280,12 +314,16 @@ export default function BackgroundTasksProvider({ children }) {
     } finally {
       // Clean up abort controller
       abortControllers.current.delete(nextTask.id);
-      setRunningTasks(prev => prev.filter(id => id !== nextTask.id));
+      setRunningTasks(prev => {
+        const updated = prev.filter(id => id !== nextTask.id);
+        runningTasksRef.current = updated;
+        return updated;
+      });
 
       // Process next task in queue
       setTimeout(() => processQueue(), 100);
     }
-  }, [runningTasks, addNotification, tasks]);
+  }, [addNotification, executeWithCancellationCheck]);
 
   const addTask = useCallback((taskConfig) => {
     const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -301,15 +339,18 @@ export default function BackgroundTasksProvider({ children }) {
       execute: taskConfig.execute,
     };
 
-    console.log('Adding task:', newTask);
+    console.log(`➕ Adding task: ${taskId} - ${taskConfig.title}`);
     setTasks(prev => {
       const newTasks = [...prev, newTask];
-      console.log('Tasks after adding:', newTasks);
+      console.log(`📋 Total tasks after adding: ${newTasks.length}`);
+      const queuedCount = newTasks.filter(t => t.status === 'queued').length;
+      console.log(`🗂️ Queued tasks: ${queuedCount}`);
+      console.log(`🏃 Currently running: ${runningTasksRef.current.length}/${MAX_CONCURRENT_TASKS}`);
       return newTasks;
     });
-    taskQueue.current.push(newTask);
 
     // Start processing if possible
+    console.log(`⏰ Scheduling processQueue in 0ms`);
     setTimeout(() => processQueue(), 0);
 
     return taskId;
@@ -339,7 +380,10 @@ export default function BackgroundTasksProvider({ children }) {
   // Function to force clear all tasks (for debugging/cleanup)
   const clearAllTasks = useCallback(() => {
     setTasks([]);
-    taskQueue.current = [];
+    setRunningTasks(() => {
+      runningTasksRef.current = [];
+      return [];
+    });
     abortControllers.current.clear();
     if (typeof window !== 'undefined') {
       localStorage.removeItem('backgroundTasks');
@@ -353,6 +397,28 @@ export default function BackgroundTasksProvider({ children }) {
     }
   }, [loadTasksFromServer]);
 
+  // Debug function to inspect system state
+  const debugState = useCallback(() => {
+    const queuedTasks = tasks.filter(task => task.status === 'queued');
+    console.log('=== TASK MANAGER DEBUG ===');
+    console.log('Tasks:', tasks.map(t => ({ id: t.id, status: t.status, title: t.title, hasExecute: !!t.execute })));
+    console.log('Running tasks:', runningTasks);
+    console.log('Queued tasks:', queuedTasks.map(t => ({ id: t.id, title: t.title, hasExecute: !!t.execute })));
+    console.log('Abort controllers:', Array.from(abortControllers.current.keys()));
+    console.log('==========================');
+
+    // Force process queue
+    console.log('🔧 Force processing queue...');
+    processQueue();
+  }, [tasks, runningTasks, processQueue]);
+
+  // Expose debug function globally for console access
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.taskManagerDebug = debugState;
+    }
+  }, [debugState]);
+
   const cancelTask = useCallback(async (taskId) => {
     // Find the task
     const task = tasks.find(t => t.id === taskId);
@@ -361,13 +427,16 @@ export default function BackgroundTasksProvider({ children }) {
       return;
     }
 
+    // Prevent double-cancellation
+    if (task.status === 'cancelled') {
+      console.log(`Task ${taskId} already cancelled`);
+      return;
+    }
+
     console.log(`Attempting to cancel task ${taskId} with status: ${task.status}`);
 
-    // For queued tasks
+    // For queued tasks - simple removal
     if (task.status === 'queued') {
-      // Remove from local queue if present
-      taskQueue.current = taskQueue.current.filter(t => t.id !== taskId);
-
       // Update local state immediately for instant feedback
       setTasks(prev => prev.filter(t => t.id !== taskId));
 
@@ -375,10 +444,8 @@ export default function BackgroundTasksProvider({ children }) {
       if (isApiSyncEnabled && cancelTaskOnServer) {
         try {
           await cancelTaskOnServer(taskId);
-          // Server will handle the cancellation and sync will update the UI
         } catch (error) {
           console.warn('Server cancellation failed for queued task:', error);
-          // Task is already removed locally, so this is not critical
         }
       }
 
@@ -387,76 +454,64 @@ export default function BackgroundTasksProvider({ children }) {
         message: "Tâche annulée",
         duration: 2000,
       });
+
+      // Process next task in queue immediately
+      setTimeout(() => processQueue(), 50);
+      return;
     }
-    // For running tasks
-    else if (task.status === 'running') {
-      // Server-side cancel (primary method - works even after page refresh)
-      if (isApiSyncEnabled && cancelTaskOnServer) {
-        try {
-          // Update local state immediately for instant feedback
-          setTasks(prev => prev.map(t =>
-            t.id === taskId ? { ...t, status: 'cancelled' } : t
-          ));
 
-          await cancelTaskOnServer(taskId);
+    // For running tasks - immediate cleanup approach
+    if (task.status === 'running') {
+      console.log(`Cancelling running task ${taskId}`);
 
-          // Also try local abort if controller exists (for immediate local feedback)
-          const abortController = abortControllers.current.get(taskId);
-          if (abortController) {
-            abortController.abort();
-          }
+      // Update UI immediately
+      setTasks(prev => prev.map(t =>
+        t.id === taskId ? { ...t, status: 'cancelled' } : t
+      ));
 
-          // Force immediate sync to get updated status from server
-          if (loadTasksFromServer) {
-            // Quick sync without delay for immediate feedback
-            loadTasksFromServer();
-            // And a backup sync after a short delay
-            setTimeout(() => loadTasksFromServer(), 100);
-          }
+      // Clean up immediately
+      setRunningTasks(prev => {
+        const newRunning = prev.filter(id => id !== taskId);
+        runningTasksRef.current = newRunning;
+        console.log(`Running tasks after cancel: ${newRunning.length}/${MAX_CONCURRENT_TASKS}`);
+        return newRunning;
+      });
 
-          addNotification({
-            type: "info",
-            message: "Tâche en cours annulée",
-            duration: 2000,
-          });
-        } catch (error) {
-          console.warn('Server cancellation failed:', error);
-
-          // Rollback local state if server cancellation failed
-          setTasks(prev => prev.map(t =>
-            t.id === taskId ? { ...t, status: 'running' } : t
-          ));
-
-          addNotification({
-            type: "error",
-            message: "Erreur lors de l'annulation de la tâche",
-            duration: 3000,
-          });
-        }
-      } else {
-        // No API sync - only works for locally running tasks
-        const abortController = abortControllers.current.get(taskId);
-        if (abortController) {
-          abortController.abort();
-          setTasks(prev => prev.map(t =>
-            t.id === taskId ? { ...t, status: 'cancelled' } : t
-          ));
-          addNotification({
-            type: "info",
-            message: "Tâche en cours annulée",
-            duration: 2000,
-          });
-        } else {
-          addNotification({
-            type: "warning",
-            message: "Impossible d'annuler cette tâche (rafraîchissez la page pour voir le statut actuel)",
-            duration: 3000,
-          });
-        }
+      // Clean up abort controller
+      const abortController = abortControllers.current.get(taskId);
+      if (abortController) {
+        abortController.abort();
       }
+      abortControllers.current.delete(taskId);
+
+      addNotification({
+        type: "info",
+        message: "Tâche annulée",
+        duration: 2000,
+      });
+
+      // Server-side cancel (in background, don't wait)
+      if (isApiSyncEnabled && cancelTaskOnServer) {
+        cancelTaskOnServer(taskId).catch(error => {
+          console.warn('Background server cancellation failed:', error);
+          // Force sync to get real server state
+          if (loadTasksFromServer) {
+            setTimeout(() => loadTasksFromServer(), 1000);
+          }
+        });
+      }
+
+      // Process next task in queue immediately
+      setTimeout(() => {
+        console.log(`Processing queue after cancel - current running: ${runningTasksRef.current.length}`);
+        processQueue();
+      }, 50);
+
+      return;
     }
+
     // Handle cases where task might be stuck/phantom
-    else if (task.status === 'running' || task.status === 'queued') {
+    if (task.status === 'running' || task.status === 'queued') {
       // For phantom tasks, try to remove them forcefully
       addNotification({
         type: "warning",
@@ -465,8 +520,18 @@ export default function BackgroundTasksProvider({ children }) {
       });
 
       setTasks(prev => prev.filter(t => t.id !== taskId));
+      setRunningTasks(prev => {
+        const newRunning = prev.filter(id => id !== taskId);
+        runningTasksRef.current = newRunning;
+        return newRunning;
+      });
+      abortControllers.current.delete(taskId);
+
+      // Process next task
+      setTimeout(() => processQueue(), 50);
     }
-  }, [tasks, addNotification, isApiSyncEnabled, cancelTaskOnServer]);
+  }, [tasks, addNotification, isApiSyncEnabled, cancelTaskOnServer, loadTasksFromServer, processQueue]);
+
 
   // Function to remove phantom tasks
   const removePhantomTask = useCallback(async (taskId) => {
@@ -507,6 +572,7 @@ export default function BackgroundTasksProvider({ children }) {
       forceSyncWithServer,
       removePhantomTask,
       localDeviceId,
+      debugState,
     }}>
       {children}
     </BackgroundTasksContext.Provider>
