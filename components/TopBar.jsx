@@ -79,7 +79,6 @@ function enhanceItem(item, titleCache = null){
     }
   }
 
-  const isMain = normalizeBoolean(item?.isMain);
   const isGpt = normalizeBoolean(item?.isGpt);
   const hasTitle = effectiveTitle.length > 0;
   const displayTitle = hasTitle ? effectiveTitle : FALLBACK_TITLE;
@@ -93,9 +92,8 @@ function enhanceItem(item, titleCache = null){
 
   return {
     ...item,
-    isMain,
     isGpt,
-    isManual: !isMain && !isGpt,
+    isManual: !isGpt,
     hasTitle,
     title: effectiveTitle,
     displayTitle,
@@ -330,7 +328,7 @@ export default function TopBar() {
   const [linkInputs, setLinkInputs] = React.useState([""]);
   const [fileSelection, setFileSelection] = React.useState([]);
   const [generatorError, setGeneratorError] = React.useState("");
-  const [generatorBaseFile, setGeneratorBaseFile] = React.useState("main.json");
+  const [generatorBaseFile, setGeneratorBaseFile] = React.useState("");
   const [baseSelectorOpen, setBaseSelectorOpen] = React.useState(false);
   const [analysisLevel, setAnalysisLevel] = React.useState("medium");
   const [openPdfImport, setOpenPdfImport] = React.useState(false);
@@ -422,9 +420,9 @@ export default function TopBar() {
   async function reload(preferredCurrent) {
     if (!isAuthenticated) {
       setItems([]);
-      setCurrent("main.json");
+      setCurrent("");
       titleCacheRef.current.clear();
-      lastSelectedRef.current = "main.json";
+      lastSelectedRef.current = "";
       lastSelectedMetaRef.current = null;
       return;
     }
@@ -453,8 +451,7 @@ export default function TopBar() {
       } else if (serverSuggested) {
         nextCurrent = serverSuggested;
       } else if (normalizedItems.length) {
-        const mainItem = normalizedItems.find((it) => it.isMain);
-        nextCurrent = mainItem ? mainItem.file : normalizedItems[0].file;
+        nextCurrent = normalizedItems[0].file;
       }
 
       if (nextCurrent) {
@@ -482,6 +479,15 @@ export default function TopBar() {
     reload();
   }, [isAuthenticated, pathname, searchParams?.toString()]);
 
+  // Listen for import event from EmptyState
+  React.useEffect(() => {
+    const handleOpenImport = () => {
+      setOpenPdfImport(true);
+    };
+    window.addEventListener("cv:open-import", handleOpenImport);
+    return () => window.removeEventListener("cv:open-import", handleOpenImport);
+  }, []);
+
   React.useEffect(() => {
     if (!generatorSourceItems.length) {
       setGeneratorBaseFile("");
@@ -493,7 +499,6 @@ export default function TopBar() {
         return prev;
       }
       const preferred = generatorSourceItems.find((it) => it.file === current)
-        || generatorSourceItems.find((it) => it.isMain)
         || generatorSourceItems[0];
       return preferred ? preferred.file : prev;
     });
@@ -550,8 +555,7 @@ export default function TopBar() {
     ) {
       nextBase = baseCandidate.file;
     } else {
-      const mainCandidate = manualItems.find((it) => it.isMain);
-      nextBase = mainCandidate?.file || manualItems[0]?.file || "";
+      nextBase = manualItems[0]?.file || "";
     }
 
     setGeneratorBaseFile((prev) => {
@@ -685,11 +689,6 @@ export default function TopBar() {
 
   async function deleteCurrent() {
     if (!current) {
-      setOpenDelete(false);
-      return;
-    }
-    if (current === "main.json") {
-      alert("Le CV RAW (main.json) ne peut pas être supprimé.");
       setOpenDelete(false);
       return;
     }
@@ -949,6 +948,11 @@ export default function TopBar() {
     return null;
   }
 
+  // Hide TopBar if no CVs exist
+  if (items.length === 0) {
+    return null;
+  }
+
   return (
     <>
       <div
@@ -1016,14 +1020,10 @@ export default function TopBar() {
             <span className="flex items-center gap-3 min-w-0 overflow-hidden">
               {resolvedCurrentItem ? (
                 <span
-                  key={`icon-${current}-${resolvedCurrentItem.isMain}-${resolvedCurrentItem.isGpt}-${iconRefreshKey}`}
+                  key={`icon-${current}-${resolvedCurrentItem.isGpt}-${iconRefreshKey}`}
                   className="flex h-6 w-6 items-center justify-center shrink-0"
                 >
-                  {resolvedCurrentItem.isMain ? (
-                    <span className="text-[10px] font-semibold uppercase tracking-wide leading-none">
-                      RAW
-                    </span>
-                  ) : resolvedCurrentItem.isGpt ? (
+                  {resolvedCurrentItem.isGpt ? (
                     <GptLogo className="h-4 w-4" />
                   ) : (
                     <DefaultCvIcon className="h-4 w-4" size={16} />
@@ -1072,14 +1072,10 @@ export default function TopBar() {
                         className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-zinc-100 ${it.file === current ? "bg-zinc-50" : ""}`}
                       >
                         <span
-                          key={`dropdown-icon-${it.file}-${it.isMain}-${it.isGpt}`}
+                          key={`dropdown-icon-${it.file}-${it.isGpt}`}
                           className="flex h-6 w-6 items-center justify-center shrink-0"
                         >
-                          {it.isMain ? (
-                            <span className="text-[10px] font-semibold uppercase tracking-wide leading-none">
-                              RAW
-                            </span>
-                          ) : it.isGpt ? (
+                          {it.isGpt ? (
                             <GptLogo className="h-4 w-4" />
                           ) : (
                             <DefaultCvIcon className="h-4 w-4" size={16} />
@@ -1156,17 +1152,9 @@ export default function TopBar() {
           ➕
         </button>
         <button
-          onClick={() => {
-            if (current === "main.json") return;
-            setOpenDelete(true);
-          }}
-          disabled={current === "main.json"}
-          className={`rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 ${current === "main.json" ? "opacity-40 cursor-not-allowed" : "text-red-700"}`}
-          title={
-            current === "main.json"
-              ? "Le CV RAW ne peut pas être supprimé"
-              : "Supprimer"
-          }
+          onClick={() => setOpenDelete(true)}
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 text-red-700"
+          title="Supprimer"
         >
           ❌
         </button>
@@ -1196,16 +1184,10 @@ export default function TopBar() {
                   <span className="flex items-center gap-3 min-w-0 overflow-hidden">
                     {generatorBaseItem ? (
                       <span
-                        key={`gen-base-icon-${generatorBaseFile}-${generatorBaseItem.isMain}-${generatorBaseItem.isGpt}`}
+                        key={`gen-base-icon-${generatorBaseFile}-${generatorBaseItem.isGpt}`}
                         className="flex h-6 w-6 items-center justify-center shrink-0"
                       >
-                        {generatorBaseItem.isMain ? (
-                          <span className="text-[10px] font-semibold uppercase tracking-wide leading-none">
-                            RAW
-                          </span>
-                        ) : (
-                          <DefaultCvIcon className="h-4 w-4" size={16} />
-                        )}
+                        <DefaultCvIcon className="h-4 w-4" size={16} />
                       </span>
                     ) : null}
                     <span className="min-w-0">
@@ -1241,16 +1223,10 @@ export default function TopBar() {
                             className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-zinc-100 ${item.file === generatorBaseFile ? "bg-zinc-50" : ""}`}
                           >
                             <span
-                              key={`gen-dropdown-icon-${item.file}-${item.isMain}-${item.isGpt}`}
+                              key={`gen-dropdown-icon-${item.file}-${item.isGpt}`}
                               className="flex h-6 w-6 items-center justify-center shrink-0"
                             >
-                              {item.isMain ? (
-                                <span className="text-[10px] font-semibold uppercase tracking-wide leading-none">
-                                  RAW
-                                </span>
-                              ) : (
-                                <DefaultCvIcon className="h-4 w-4" size={16} />
-                              )}
+                              <DefaultCvIcon className="h-4 w-4" size={16} />
                             </span>
                             <ItemLabel
                               item={item}

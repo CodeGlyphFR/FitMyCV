@@ -7,6 +7,7 @@ import Education from "@/components/Education";
 import Languages from "@/components/Languages";
 import Extras from "@/components/Extras";
 import Projects from "@/components/Projects";
+import EmptyState from "@/components/EmptyState";
 
 import fs from "fs/promises";
 import path from "path";
@@ -25,16 +26,20 @@ async function getCV(userId){
   const cvCookie = (cookies().get("cvFile") || {}).value;
   await ensureUserCvDir(userId);
   const availableFiles = await listUserCvFiles(userId);
-  const fallback = availableFiles.includes("main.json") ? "main.json" : (availableFiles[0] || "main.json");
-  const file = (cvCookie && availableFiles.includes(cvCookie)) ? cvCookie : fallback;
-  const cvPath = path.join(ensureUserCvDirPath(userId), file);
+
+  // Si aucun CV n'existe, retourner null
+  if (availableFiles.length === 0) {
+    return null;
+  }
+
+  const file = (cvCookie && availableFiles.includes(cvCookie)) ? cvCookie : availableFiles[0];
 
   let raw;
   try {
     raw = await readUserCvFile(userId, file);
   } catch (error) {
-    await writeUserCvFile(userId, file, JSON.stringify({ header: { full_name: "" } }, null, 2));
-    raw = await readUserCvFile(userId, file);
+    // Si le fichier n'existe pas, retourner null
+    return null;
   }
 
   let cv = sanitizeInMemory(JSON.parse(raw));
@@ -68,7 +73,14 @@ export default async function Page(){
     redirect("/auth");
   }
 
-  const { cv, valid, errors } = await getCV(session.user.id);
+  const cvResult = await getCV(session.user.id);
+
+  // Si aucun CV n'existe, afficher l'EmptyState
+  if (!cvResult) {
+    return <EmptyState />;
+  }
+
+  const { cv, valid, errors } = cvResult;
   const sectionTitles = cv.section_titles || {};
 
   const sections = {
@@ -83,8 +95,6 @@ export default async function Page(){
   };
 
   // ---- ORDRE DES SECTIONS (toujours inclure "projects") ----
-  // Si order_hint est présent, on le respecte puis on injecte "projects" s'il manque,
-  // idéalement juste après "extras"; sinon en fin.
   const defaultOrder = ["header","summary","skills","experience","education","languages","extras"];
   const base = Array.isArray(cv.order_hint) && cv.order_hint.length ? [...cv.order_hint] : [...defaultOrder];
 
