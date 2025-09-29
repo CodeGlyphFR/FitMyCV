@@ -365,7 +365,7 @@ export default function TopBar() {
     [items, current],
   );
   const generatorSourceItems = React.useMemo(
-    () => items.filter((it) => !it.isGpt),
+    () => items.filter((it) => !it.isGenerated), // Allow imported CVs, exclude only generated ones
     [items],
   );
   const generatorBaseItem = React.useMemo(
@@ -550,7 +550,7 @@ export default function TopBar() {
     const baseCandidate = currentItem || lastSelectedMetaRef.current;
     if (
       baseCandidate &&
-      !baseCandidate.isGpt &&
+      !baseCandidate.isGenerated && // Allow imported CVs as base
       manualItems.some((it) => it.file === baseCandidate.file)
     ) {
       nextBase = baseCandidate.file;
