@@ -285,7 +285,7 @@ def ensure_response_directory() -> Path:
 
 def derive_filename() -> str:
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
-    return f"imported_{timestamp}"
+    return f"{timestamp}"
 
 
 def save_output_file(content: str, target_dir: Path, base_name: str) -> Path:

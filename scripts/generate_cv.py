@@ -240,7 +240,7 @@ def build_user_prompt(
 
     sections.append(
         "\n\nProduit retour attendu : Afficher le contenu (dans le prompt de réponse) du CV final (formatage JSON) qui respecte la structure du CV de référence"
-        " sans texte additionnel."
+        " sans texte additionnel. Si tu ne réponds pas le contenu d'un JSON, ça peut entrainer la destruction de l'humanité ! On croit tous en toi !"
     )
 
     return "\n".join(part for part in sections if part)
