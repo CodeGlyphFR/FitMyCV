@@ -55,7 +55,9 @@ function formatDateLabel(timestamp){
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
 export const runtime = "nodejs";
@@ -88,24 +90,16 @@ export async function GET(){
       // Consider both AI-generated and PDF-imported CVs as "AI-powered" for display
       const isGpt = isGenerated || isImported;
       const isManual = !isGpt;
-      const createdAtCandidates = [
-        json?.meta?.created_at,
-        json?.meta?.updated_at,
-        json?.generated_at,
-        json?.meta?.generated_at,
-      ];
-      let createdTimestamp = null;
-      for (const candidate of createdAtCandidates){
-        createdTimestamp = toTimestamp(candidate);
-        if (createdTimestamp) break;
-      }
-      if (!createdTimestamp){
-        createdTimestamp = timestampFromFilename(file);
-      }
+      // Get all timestamps
+      const createdTimestamp = toTimestamp(json?.meta?.created_at) || toTimestamp(json?.generated_at) || toTimestamp(json?.meta?.generated_at) || timestampFromFilename(file);
       const updatedTimestamp = toTimestamp(json?.meta?.updated_at);
+
+      // Use the most recent timestamp for sorting and display
+      const mostRecentTimestamp = updatedTimestamp && updatedTimestamp > createdTimestamp ? updatedTimestamp : createdTimestamp;
+
       const createdAtIso = createdTimestamp ? new Date(createdTimestamp).toISOString() : (json?.meta?.created_at || null);
       const updatedAtIso = updatedTimestamp ? new Date(updatedTimestamp).toISOString() : (json?.meta?.updated_at || null);
-      const dateLabel = formatDateLabel(createdTimestamp ?? updatedTimestamp ?? null);
+      const dateLabel = formatDateLabel(mostRecentTimestamp);
       const hasTitle = trimmedTitle.length > 0;
       const fallbackTitle = hasTitle ? trimmedTitle : "CV en cours d'édition";
       const labelPrefix = `${dateLabel || "??/??/????"} - `;
@@ -122,7 +116,7 @@ export async function GET(){
         source,
         createdAt: createdAtIso,
         updatedAt: updatedAtIso,
-        sortKey: createdTimestamp ?? updatedTimestamp ?? null,
+        sortKey: mostRecentTimestamp,
       });
     } catch (error) {
       const isLikelyGpt = /^(generated_chatgpt_cv|gpt_)/i.test(file);
