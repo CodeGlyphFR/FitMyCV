@@ -3,6 +3,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
+import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
 
 function LoadingSpinner() {
   return (
@@ -69,10 +70,8 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
   const { tasks, clearCompletedTasks, cancelTask, isApiSyncEnabled } = useBackgroundTasks();
   const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, right: 0 });
 
-  // Sort tasks by creation time (most recent first) and limit to 8
-  const sortedTasks = [...tasks]
-    .sort((a, b) => b.createdAt - a.createdAt)
-    .slice(0, 8);
+  // Sort tasks so running ones appear first (newest to oldest) and limit to 8
+  const sortedTasks = sortTasksForDisplay(tasks).slice(0, 8);
 
   const completedTasksCount = tasks.filter(task =>
     task.status === 'completed' || task.status === 'failed' || task.status === 'cancelled'

@@ -342,6 +342,7 @@ export default function BackgroundTasksProvider({ children }) {
     console.log(`➕ Adding task: ${taskId} - ${taskConfig.title}`);
     setTasks(prev => {
       const newTasks = [...prev, newTask];
+      tasksRef.current = newTasks; // keep ref in sync before queue processing
       console.log(`📋 Total tasks after adding: ${newTasks.length}`);
       const queuedCount = newTasks.filter(t => t.status === 'queued').length;
       console.log(`🗂️ Queued tasks: ${queuedCount}`);
@@ -380,6 +381,7 @@ export default function BackgroundTasksProvider({ children }) {
   // Function to force clear all tasks (for debugging/cleanup)
   const clearAllTasks = useCallback(() => {
     setTasks([]);
+    tasksRef.current = [];
     setRunningTasks(() => {
       runningTasksRef.current = [];
       return [];

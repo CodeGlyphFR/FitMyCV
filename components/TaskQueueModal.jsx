@@ -3,6 +3,7 @@
 import React from "react";
 import Modal from "./ui/Modal";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
+import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
 
 function LoadingSpinner() {
   return (
@@ -115,10 +116,8 @@ export default function TaskQueueModal({ open, onClose }) {
     }
   };
 
-  // Sort tasks by creation time (most recent first) and limit to 8
-  const sortedTasks = [...tasks]
-    .sort((a, b) => b.createdAt - a.createdAt)
-    .slice(0, 8);
+  // Sort tasks so running ones appear first (newest to oldest) and limit to 8
+  const sortedTasks = sortTasksForDisplay(tasks).slice(0, 8);
 
   const completedTasksCount = tasks.filter(task =>
     task.status === 'completed' || task.status === 'failed' || task.status === 'cancelled'
