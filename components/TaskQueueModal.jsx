@@ -38,8 +38,7 @@ function TaskItem({ task, onCancel }) {
   const statusDisplay = getStatusDisplay(task.status);
   const createdAt = new Date(task.createdAt).toLocaleTimeString('fr-FR', {
     hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
+    minute: '2-digit'
   });
 
   const canCancel = task.status === 'queued' || task.status === 'running';
@@ -55,9 +54,9 @@ function TaskItem({ task, onCancel }) {
     description = task.error;
   } else if (task.type === 'import') {
     if (task.status === 'running') {
-      description = `Import en cours${importName ? ` : '${importName}'` : ''}`;
+      description = `Import en cours ...`;
     } else if (task.status === 'queued') {
-      description = `Import en attente${importName ? ` : '${importName}'` : ''}`;
+      description = `Import en attente ...`;
     }
   } else if (task.type === 'generation') {
     if (task.status === 'running') {
@@ -67,6 +66,19 @@ function TaskItem({ task, onCancel }) {
     }
   }
 
+  // Extraire le lien ou la pièce jointe du payload
+  let sourceInfo = null;
+  if (task.type === 'generation' && payload) {
+    if (Array.isArray(payload.links) && payload.links.length > 0) {
+      sourceInfo = payload.links[0];
+    } else if (Array.isArray(payload.uploads) && payload.uploads.length > 0) {
+      sourceInfo = payload.uploads[0].name;
+    }
+  } else if (task.type === 'import' && payload?.savedName) {
+    sourceInfo = payload.savedName;
+  }
+  const hasSourceInfo = (task.type === 'generation' || task.type === 'import') && sourceInfo;
+
   return (
     <div className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
       <div className="flex-1 min-w-0">
@@ -75,8 +87,16 @@ function TaskItem({ task, onCancel }) {
             {description}
           </div>
         </div>
-        <div className="text-xs text-gray-500">
-          Créé à {createdAt}
+        <div className="flex items-center gap-1 text-xs text-gray-500">
+          <span>{createdAt}</span>
+          {hasSourceInfo && (
+            <>
+              <span className="text-gray-400">•</span>
+              <span className="truncate" title={sourceInfo}>
+                {sourceInfo}
+              </span>
+            </>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-2 ml-4">
