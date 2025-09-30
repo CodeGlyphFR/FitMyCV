@@ -127,7 +127,9 @@ export default function EmptyState() {
 
       setOpenNewCv(false);
       resetNewCvForm();
-      router.refresh();
+
+      // Forcer un rechargement complet pour que le cookie soit bien pris en compte
+      window.location.href = "/";
     } catch (error) {
       setNewCvError(error?.message || "Erreur");
     } finally {
