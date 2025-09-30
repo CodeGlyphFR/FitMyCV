@@ -7,9 +7,9 @@ import { useRouter } from "next/navigation";
 import { SITE_TITLE } from "@/lib/site";
 
 const allProviders = [
-  { id: "google", label: "Continuer avec Google", image: "/images/g_logo.png" },
-  { id: "apple", label: "Continuer avec Apple", image: "/images/Apple_logo.png" },
-  { id: "github", label: "Continuer avec GitHub", image: "/images/github.png" },
+  { id: "google", label: "Continuer avec Google", image: "/images/g_logo.png", width: 28, height: 28 },
+  { id: "apple", label: "Continuer avec Apple", image: "/images/Apple_logo.png", width: 22, height: 27 },
+  { id: "github", label: "Continuer avec GitHub", image: "/images/github.png", width: 28, height: 28 },
 ];
 
 export default function AuthScreen({ initialMode = "login", providerAvailability = {} }){
@@ -70,9 +70,6 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           return;
         }
 
-        try {
-          localStorage.setItem("admin:activateEditingOnce", "1");
-        } catch (_err) {}
       }
 
       const result = await signIn("credentials", {
@@ -148,8 +145,8 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
               <Image
                 src={provider.image}
                 alt={provider.label}
-                width={provider.id === "apple" ? 22 : 28}
-                height={provider.id === "apple" ? 22 : 28}
+                width={provider.width}
+                height={provider.height}
                 className="object-contain"
                 priority
               />

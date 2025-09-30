@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import ExportButton from "./ExportButton";
+import SourceInfo from "./SourceInfo";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
@@ -12,6 +12,7 @@ export default function Header(props){
   const { editing } = useAdmin();
   const { mutate } = useMutate();
   const [open, setOpen] = React.useState(false);
+  const [sourceInfo, setSourceInfo] = React.useState({ sourceType: null, sourceValue: null });
 
   const [f, setF] = React.useState({
     full_name: header.full_name || "",
@@ -41,6 +42,20 @@ export default function Header(props){
       ? header.contact.links.map(l => ({ label: l.label || "", url: l.url || "" }))
       : []
     );
+  }, [header]);
+
+  React.useEffect(() => {
+    fetch("/api/cv/source")
+      .then(res => {
+        if (!res.ok) {
+          return { sourceType: null, sourceValue: null };
+        }
+        return res.json();
+      })
+      .then(data => {
+        setSourceInfo({ sourceType: data.sourceType, sourceValue: data.sourceValue });
+      })
+      .catch(err => console.error("Failed to fetch source info:", err));
   }, [header]);
 
   // -- helper: force https:// si pas de schéma http/https
@@ -111,7 +126,7 @@ export default function Header(props){
         {editing ? (
           <button onClick={()=>setOpen(true)} className="no-print rounded border px-2 py-1 text-sm hover:shadow" type="button">🖊️</button>
         ) : null}
-        <ExportButton />
+        <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />
       </div>
 
       <Modal open={open} onClose={()=>setOpen(false)} title="Modifier l'entête">

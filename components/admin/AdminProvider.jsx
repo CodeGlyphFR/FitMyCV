@@ -8,7 +8,7 @@ export default function AdminProvider(props){
   const { data: session } = useSession();
   const [editing, setEditingState] = React.useState(false);
   const [currentFile, setCurrentFile] = React.useState("");
-  const [hasAnyCv, setHasAnyCv] = React.useState(true);
+  const [hasAnyCv, setHasAnyCv] = React.useState(false);
   const pathname = usePathname();
 
   React.useEffect(function(){
@@ -30,7 +30,11 @@ export default function AdminProvider(props){
         const res = await fetch("/api/cvs", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
-          setHasAnyCv(data.items && data.items.length > 0);
+          const hasCv = Array.isArray(data.items) && data.items.length > 0;
+          setHasAnyCv(hasCv);
+          if (!hasCv) {
+            setEditingState(false);
+          }
         }
       } catch (error) {
         console.error("Failed to check CVs:", error);
@@ -56,16 +60,12 @@ export default function AdminProvider(props){
 
   React.useEffect(() => {
     if (session?.user?.id){
-      setEditingState(false);
       try {
-        const shouldActivate = localStorage.getItem("admin:activateEditingOnce");
-        if (shouldActivate === "1"){
-          setEditingState(true);
-          localStorage.removeItem("admin:activateEditingOnce");
-        } else {
-          localStorage.setItem("admin:editing", "0");
-        }
-      } catch (_err) {}
+        const stored = localStorage.getItem("admin:editing");
+        setEditingState(stored === "1");
+      } catch (_err) {
+        setEditingState(false);
+      }
     } else {
       setEditingState(false);
       setCurrentFile("");

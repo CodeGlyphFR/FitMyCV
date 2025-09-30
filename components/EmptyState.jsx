@@ -35,6 +35,12 @@ export default function EmptyState() {
   const [importProgress, setImportProgress] = React.useState(0);
   const [importFileName, setImportFileName] = React.useState("");
   const [loadingMessage, setLoadingMessage] = React.useState("");
+  const [openNewCv, setOpenNewCv] = React.useState(false);
+  const [newCvFullName, setNewCvFullName] = React.useState("");
+  const [newCvCurrentTitle, setNewCvCurrentTitle] = React.useState("");
+  const [newCvEmail, setNewCvEmail] = React.useState("");
+  const [newCvBusy, setNewCvBusy] = React.useState(false);
+  const [newCvError, setNewCvError] = React.useState(null);
   const pdfFileInputRef = React.useRef(null);
   const pollIntervalRef = React.useRef(null);
   const timeoutRef = React.useRef(null);
@@ -77,6 +83,56 @@ export default function EmptyState() {
     setOpenPdfImport(false);
     setPdfFile(null);
     if (pdfFileInputRef.current) pdfFileInputRef.current.value = "";
+  }
+
+  function resetNewCvForm() {
+    setNewCvFullName("");
+    setNewCvCurrentTitle("");
+    setNewCvEmail("");
+    setNewCvError(null);
+  }
+
+  async function createNewCv() {
+    const trimmedName = newCvFullName.trim();
+    const trimmedTitle = newCvCurrentTitle.trim();
+
+    if (!trimmedName || !trimmedTitle) {
+      setNewCvError("Merci de renseigner le nom complet et le titre actuel.");
+      return;
+    }
+
+    setNewCvBusy(true);
+    setNewCvError(null);
+    try {
+      const res = await fetch("/api/cvs/create", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          full_name: trimmedName,
+          current_title: trimmedTitle,
+          email: newCvEmail.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Erreur");
+
+      document.cookie = "cvFile=" + encodeURIComponent(data.file) + "; path=/; max-age=31536000";
+      try {
+        localStorage.setItem("admin:cv", data.file);
+      } catch (_err) {}
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("cv:list:changed"));
+      }
+
+      setOpenNewCv(false);
+      resetNewCvForm();
+      router.refresh();
+    } catch (error) {
+      setNewCvError(error?.message || "Erreur");
+    } finally {
+      setNewCvBusy(false);
+    }
   }
 
   async function submitPdfImport(event) {
@@ -331,7 +387,10 @@ export default function EmptyState() {
 
           {/* Create New CV Card */}
           <button
-            onClick={() => router.push("/admin/new")}
+            onClick={() => {
+              resetNewCvForm();
+              setOpenNewCv(true);
+            }}
             className="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-emerald-500 text-left"
           >
             <div className="flex flex-col items-center text-center space-y-4">
@@ -429,6 +488,75 @@ export default function EmptyState() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        open={openNewCv}
+        onClose={() => {
+          setOpenNewCv(false);
+          resetNewCvForm();
+        }}
+        title="Créer un nouveau CV"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm block mb-1">
+              Nom complet<span className="text-red-500" aria-hidden="true"> *</span>
+            </label>
+            <input
+              className="w-full rounded border px-3 py-2"
+              value={newCvFullName}
+              onChange={(event) => setNewCvFullName(event.target.value)}
+              placeholder="Ex: Jean Dupont"
+              required
+            />
+          </div>
+          <div>
+            <label className="text-sm block mb-1">
+              Titre actuel<span className="text-red-500" aria-hidden="true"> *</span>
+            </label>
+            <input
+              className="w-full rounded border px-3 py-2"
+              value={newCvCurrentTitle}
+              onChange={(event) => setNewCvCurrentTitle(event.target.value)}
+              placeholder="Ex: Développeur Full-Stack"
+              required
+            />
+          </div>
+          <div>
+            <label className="text-sm block mb-1">Email</label>
+            <input
+              className="w-full rounded border px-3 py-2"
+              value={newCvEmail}
+              onChange={(event) => setNewCvEmail(event.target.value)}
+              placeholder="email@exemple.com"
+            />
+          </div>
+          {newCvError ? (
+            <div className="text-sm text-red-600">{String(newCvError)}</div>
+          ) : null}
+          <div className="flex gap-2">
+            <button
+              onClick={createNewCv}
+              disabled={newCvBusy || !newCvFullName.trim() || !newCvCurrentTitle.trim()}
+              className="rounded border px-3 py-2 hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {newCvBusy ? "Création..." : "Créer le CV"}
+            </button>
+            <button
+              onClick={() => {
+                setOpenNewCv(false);
+                resetNewCvForm();
+              }}
+              className="rounded border px-3 py-2"
+            >
+              Annuler
+            </button>
+          </div>
+          <p className="text-xs opacity-70">
+            Tu pourras compléter toutes les sections ensuite via le mode édition.
+          </p>
+        </div>
       </Modal>
     </div>
   );
