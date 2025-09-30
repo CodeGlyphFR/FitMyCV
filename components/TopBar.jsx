@@ -1144,6 +1144,7 @@ export default function TopBar() {
         <button
           onClick={() => router.push("/admin/new")}
           className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 order-6 md:order-4 ml-auto md:ml-0"
+          type="button"
         >
           ➕
         </button>
