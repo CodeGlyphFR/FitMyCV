@@ -974,7 +974,8 @@ export default function TopBar() {
         className="no-print sticky top-0 inset-x-0 z-40 w-full bg-white/80 backdrop-blur border-b"
       >
         <div className="w-full p-3 flex flex-wrap items-center gap-2 sm:gap-3">
-        <div className="relative" ref={userMenuRef}>
+        {/* User Icon */}
+        <div className="relative order-1 md:order-1" ref={userMenuRef}>
           <button
             type="button"
             onClick={() => setUserMenuOpen((prev) => !prev)}
@@ -1024,7 +1025,8 @@ export default function TopBar() {
             </div>
           ) : null}
         </div>
-        <div className="flex-1 min-w-[200px]">
+        {/* CV Selector */}
+        <div className="flex-1 min-w-[120px] md:min-w-[200px] order-3 md:order-2">
           <button
             type="button"
             onClick={() => setListOpen((prev) => !prev)}
@@ -1109,8 +1111,8 @@ export default function TopBar() {
               document.body,
             )
           : null}
-        {/* Task Queue Button - Responsive behavior */}
-        <div className="relative">
+        {/* Task Manager */}
+        <div className="relative order-2 md:order-3">
           <button
             ref={taskQueueButtonRef}
             onClick={() => {
@@ -1136,38 +1138,45 @@ export default function TopBar() {
             className="hidden md:block"
           />
         </div>
+        {/* Break line on mobile */}
+        <div className="w-full md:hidden order-5"></div>
+        {/* Add Button */}
+        <button
+          onClick={() => router.push("/admin/new")}
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 order-6 md:order-4 ml-auto md:ml-0"
+        >
+          ➕
+        </button>
+        {/* GPT Button */}
         <button
           onClick={openGeneratorModal}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8"
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-7 md:order-5"
           type="button"
         >
           <GptLogo className="h-4 w-4" />
         </button>
+        {/* Import Button */}
         <button
           onClick={() => setOpenPdfImport(true)}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8"
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-6"
           type="button"
           title="Importer un CV PDF"
         >
           <img src="/icons/import.png" alt="Import" className="h-4 w-4" />
         </button>
+        {/* Export Button */}
         <button
           onClick={exportToPdf}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8"
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-9 md:order-7"
           type="button"
           title="Exporter en PDF"
         >
           <img src="/icons/export.png" alt="Export" className="h-4 w-4" />
         </button>
-        <button
-          onClick={() => router.push("/admin/new")}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8"
-        >
-          ➕
-        </button>
+        {/* Delete Button */}
         <button
           onClick={() => setOpenDelete(true)}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 text-red-700"
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 text-red-700 order-4 md:order-8"
           title="Supprimer"
         >
           ❌
