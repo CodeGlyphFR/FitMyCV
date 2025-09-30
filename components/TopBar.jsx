@@ -338,6 +338,12 @@ export default function TopBar() {
   const [openTaskQueue, setOpenTaskQueue] = React.useState(false);
   const [openTaskDropdown, setOpenTaskDropdown] = React.useState(false);
   const [linkHistoryDropdowns, setLinkHistoryDropdowns] = React.useState({});
+  const [openNewCv, setOpenNewCv] = React.useState(false);
+  const [newCvFullName, setNewCvFullName] = React.useState("");
+  const [newCvCurrentTitle, setNewCvCurrentTitle] = React.useState("");
+  const [newCvEmail, setNewCvEmail] = React.useState("");
+  const [newCvBusy, setNewCvBusy] = React.useState(false);
+  const [newCvError, setNewCvError] = React.useState(null);
 
   const { history: linkHistory, addLinksToHistory } = useLinkHistory();
 
@@ -948,6 +954,60 @@ export default function TopBar() {
     }
   }
 
+  async function createNewCv() {
+    const trimmedName = newCvFullName.trim();
+    const trimmedTitle = newCvCurrentTitle.trim();
+
+    if (!trimmedName || !trimmedTitle) {
+      setNewCvError("Merci de renseigner le nom complet et le titre actuel.");
+      return;
+    }
+
+    setNewCvBusy(true);
+    setNewCvError(null);
+    try {
+      const res = await fetch("/api/cvs/create", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          full_name: trimmedName,
+          current_title: trimmedTitle,
+          email: newCvEmail.trim()
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Erreur");
+
+      // Set the newly created CV as current
+      document.cookie = "cvFile=" + encodeURIComponent(data.file) + "; path=/; max-age=31536000";
+      try {
+        localStorage.setItem("admin:cv", data.file);
+      } catch (_err) {}
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("cv:list:changed"));
+      }
+
+      // Close modal and reset form
+      setOpenNewCv(false);
+      setNewCvFullName("");
+      setNewCvCurrentTitle("");
+      setNewCvEmail("");
+
+      // Reload CV list
+      await reload(data.file);
+
+      addNotification({
+        type: "success",
+        message: "CV créé avec succès",
+        duration: 3000,
+      });
+    } catch (e) {
+      setNewCvError(e?.message || "Erreur");
+    }
+    setNewCvBusy(false);
+  }
+
   if (status === "loading") {
     return (
       <div className="no-print sticky top-0 inset-x-0 z-40 w-full bg-white/80 backdrop-blur border-b">
@@ -1142,7 +1202,7 @@ export default function TopBar() {
         <div className="w-full md:hidden order-5"></div>
         {/* Add Button */}
         <button
-          onClick={() => router.push("/admin/new")}
+          onClick={() => setOpenNewCv(true)}
           className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 order-6 md:order-4 ml-auto md:ml-0"
           type="button"
         >
@@ -1532,6 +1592,82 @@ export default function TopBar() {
         open={openTaskQueue}
         onClose={() => setOpenTaskQueue(false)}
       />
+
+      {/* New CV Modal */}
+      <Modal
+        open={openNewCv}
+        onClose={() => {
+          setOpenNewCv(false);
+          setNewCvFullName("");
+          setNewCvCurrentTitle("");
+          setNewCvEmail("");
+          setNewCvError(null);
+        }}
+        title="Créer un nouveau CV"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm block mb-1">
+              Nom complet<span className="text-red-500" aria-hidden="true"> *</span>
+            </label>
+            <input
+              className="w-full rounded border px-3 py-2"
+              value={newCvFullName}
+              onChange={(e) => setNewCvFullName(e.target.value)}
+              placeholder="Ex: Jean Dupont"
+              required
+            />
+          </div>
+          <div>
+            <label className="text-sm block mb-1">
+              Titre actuel<span className="text-red-500" aria-hidden="true"> *</span>
+            </label>
+            <input
+              className="w-full rounded border px-3 py-2"
+              value={newCvCurrentTitle}
+              onChange={(e) => setNewCvCurrentTitle(e.target.value)}
+              placeholder="Ex: Développeur Full-Stack"
+              required
+            />
+          </div>
+          <div>
+            <label className="text-sm block mb-1">Email</label>
+            <input
+              className="w-full rounded border px-3 py-2"
+              value={newCvEmail}
+              onChange={(e) => setNewCvEmail(e.target.value)}
+              placeholder="email@exemple.com"
+            />
+          </div>
+          {newCvError ? (
+            <div className="text-sm text-red-600">{String(newCvError)}</div>
+          ) : null}
+          <div className="flex gap-2">
+            <button
+              onClick={createNewCv}
+              disabled={newCvBusy || !newCvFullName.trim() || !newCvCurrentTitle.trim()}
+              className="rounded border px-3 py-2 hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {newCvBusy ? "Création..." : "Créer le CV"}
+            </button>
+            <button
+              onClick={() => {
+                setOpenNewCv(false);
+                setNewCvFullName("");
+                setNewCvCurrentTitle("");
+                setNewCvEmail("");
+                setNewCvError(null);
+              }}
+              className="rounded border px-3 py-2"
+            >
+              Annuler
+            </button>
+          </div>
+          <p className="text-xs opacity-70">
+            Tu pourras compléter toutes les sections ensuite via le mode édition.
+          </p>
+        </div>
+      </Modal>
     </div>
       <style jsx global>{`
         .cv-ticker {
