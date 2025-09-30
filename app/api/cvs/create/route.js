@@ -48,6 +48,15 @@ await prisma.cvFile.upsert({
       update: {},
       create: { userId: session.user.id, filename: file },
     });
-return NextResponse.json({ ok:true, file });
+
+// Définir le cookie côté serveur pour qu'il soit immédiatement disponible
+const response = NextResponse.json({ ok:true, file });
+response.cookies.set('cvFile', file, {
+  path: '/',
+  maxAge: 31536000, // 1 an
+  httpOnly: false,
+  sameSite: 'lax'
+});
+return response;
   }catch(e){ return NextResponse.json({ error: (e&&e.message)||"Erreur inconnue" }, { status:500 }); }
 }

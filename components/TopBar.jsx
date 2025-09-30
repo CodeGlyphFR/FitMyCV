@@ -1032,6 +1032,9 @@ export default function TopBar() {
         message: "CV créé avec succès",
         duration: 3000,
       });
+
+      // Recharger la page pour afficher le nouveau CV
+      router.refresh();
     } catch (e) {
       setNewCvError(e?.message || "Erreur");
     }
