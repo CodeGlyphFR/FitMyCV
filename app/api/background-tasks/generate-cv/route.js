@@ -125,60 +125,124 @@ export async function POST(request) {
     const userId = session.user.id;
     await ensureUserCvDir(userId);
 
-    const taskIdentifier = typeof taskId === "string" && taskId.trim() ? taskId.trim() : `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const createdTasks = [];
+    const now = Date.now();
 
-    const title = requestedBaseFileLabel
-      ? `Adaptation du CV '${requestedBaseFileLabel}' en cours ...`
-      : `Adaptation du CV '${requestedBaseFile || 'inconnu'}' en cours ...`;
+    // Créer une tâche par lien
+    for (let i = 0; i < links.length; i++) {
+      const link = links[i];
+      const linkTaskId = `task_link_${now}_${i}_${Math.random().toString(36).substr(2, 9)}`;
 
-    const successMessage = requestedBaseFileLabel
-      ? `CV '${requestedBaseFileLabel}' adapté avec succès`
-      : "CV adapté avec succès";
+      // Extraire un nom court du lien pour l'affichage
+      let linkDisplay = link;
+      try {
+        const url = new URL(link);
+        linkDisplay = url.hostname + (url.pathname !== '/' ? url.pathname.slice(0, 30) : '');
+      } catch {
+        linkDisplay = link.slice(0, 50);
+      }
 
-    const taskPayload = {
-      links,
-      baseFile: requestedBaseFile,
-      baseFileLabel: requestedBaseFileLabel,
-      analysisLevel: levelKey,
-      model: requestedModel,
-      uploads: savedUploads,
-      uploadDirectory: uploadsDirectory,
-    };
+      const title = requestedBaseFileLabel
+        ? `Adaptation de '${requestedBaseFileLabel}' ...`
+        : `Adaptation du CV avec ${linkDisplay} ...`;
 
-    const existingTask = await prisma.backgroundTask.findUnique({ where: { id: taskIdentifier } });
-    const taskData = {
-      title,
-      successMessage,
-      type: 'generation',
-      status: 'queued',
-      shouldUpdateCvList: true,
-      error: null,
-      result: null,
-      deviceId,
-      payload: JSON.stringify(taskPayload),
-    };
+      const successMessage = requestedBaseFileLabel
+        ? `CV '${requestedBaseFileLabel}' adapté avec succès`
+        : "CV adapté avec succès (lien)";
 
-    if (!existingTask) {
+      const taskPayload = {
+        links: [link],
+        baseFile: requestedBaseFile,
+        baseFileLabel: requestedBaseFileLabel,
+        analysisLevel: levelKey,
+        model: requestedModel,
+        uploads: [],
+        uploadDirectory: null,
+      };
+
       await prisma.backgroundTask.create({
         data: {
-          id: taskIdentifier,
+          id: linkTaskId,
           userId,
-          createdAt: BigInt(Date.now()),
-          ...taskData,
+          createdAt: BigInt(now + i),
+          title,
+          successMessage,
+          type: 'generation',
+          status: 'queued',
+          shouldUpdateCvList: true,
+          error: null,
+          result: null,
+          deviceId,
+          payload: JSON.stringify(taskPayload),
         },
       });
-    } else {
-      await updateBackgroundTask(taskIdentifier, userId, taskData);
+
+      scheduleGenerateCvJob({
+        taskId: linkTaskId,
+        user: { id: userId, name: session.user?.name || "" },
+        payload: taskPayload,
+        deviceId,
+      });
+
+      createdTasks.push(linkTaskId);
     }
 
-    scheduleGenerateCvJob({
-      taskId: taskIdentifier,
-      user: { id: userId, name: session.user?.name || "" },
-      payload: taskPayload,
-      deviceId,
-    });
+    // Créer une tâche par pièce jointe
+    const linkOffset = links.length;
+    for (let i = 0; i < savedUploads.length; i++) {
+      const upload = savedUploads[i];
+      const attachmentTaskId = `task_file_${now}_${i}_${Math.random().toString(36).substr(2, 9)}`;
+      const title = requestedBaseFileLabel
+        ? `Adaptation de '${requestedBaseFileLabel}' ...`
+        : `Adaptation du CV avec ${upload.name} ...`;
 
-    return NextResponse.json({ success: true, queued: true, taskId: taskIdentifier }, { status: 202 });
+      const successMessage = requestedBaseFileLabel
+        ? `CV '${requestedBaseFileLabel}' adapté avec succès`
+        : `CV adapté avec succès (${upload.name})`;
+
+      const taskPayload = {
+        links: [],
+        baseFile: requestedBaseFile,
+        baseFileLabel: requestedBaseFileLabel,
+        analysisLevel: levelKey,
+        model: requestedModel,
+        uploads: [upload],
+        uploadDirectory: uploadsDirectory,
+      };
+
+      await prisma.backgroundTask.create({
+        data: {
+          id: attachmentTaskId,
+          userId,
+          createdAt: BigInt(now + linkOffset + i), // Décalage pour l'ordre après les liens
+          title,
+          successMessage,
+          type: 'generation',
+          status: 'queued',
+          shouldUpdateCvList: true,
+          error: null,
+          result: null,
+          deviceId,
+          payload: JSON.stringify(taskPayload),
+        },
+      });
+
+      scheduleGenerateCvJob({
+        taskId: attachmentTaskId,
+        user: { id: userId, name: session.user?.name || "" },
+        payload: taskPayload,
+        deviceId,
+      });
+
+      createdTasks.push(attachmentTaskId);
+    }
+
+    return NextResponse.json({
+      success: true,
+      queued: true,
+      taskIds: createdTasks,
+      tasksCount: createdTasks.length
+    }, { status: 202 });
   } catch (error) {
     console.error('Erreur lors de la mise en file de la génération de CV:', error);
     return NextResponse.json({ error: "Erreur lors de la mise en file de la génération." }, { status: 500 });

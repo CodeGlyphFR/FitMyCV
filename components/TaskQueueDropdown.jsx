@@ -37,14 +37,36 @@ function TaskItem({ task, onCancel, compact = false }) {
 
   const canCancel = task.status === 'queued' || task.status === 'running';
 
+  // Extraire le lien ou la pièce jointe du payload
+  const payload = task?.payload && typeof task.payload === 'object' ? task.payload : null;
+  let sourceInfo = null;
+  if (task.type === 'generation' && payload) {
+    if (Array.isArray(payload.links) && payload.links.length > 0) {
+      sourceInfo = payload.links[0];
+    } else if (Array.isArray(payload.uploads) && payload.uploads.length > 0) {
+      sourceInfo = payload.uploads[0].name;
+    }
+  } else if (task.type === 'import' && payload?.savedName) {
+    sourceInfo = payload.savedName;
+  }
+  const hasSourceInfo = (task.type === 'generation' || task.type === 'import') && sourceInfo;
+
   return (
     <div className={`flex items-center justify-between ${compact ? 'p-2' : 'p-3'} border-b border-gray-100 last:border-b-0 hover:bg-gray-50`}>
       <div className="flex-1 min-w-0 mr-2">
         <div className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-gray-900 truncate`}>
           {task.title}
         </div>
-        <div className="text-xs text-gray-500">
-          {createdAt}
+        <div className="flex items-center gap-1 text-xs text-gray-500">
+          <span>{createdAt}</span>
+          {hasSourceInfo && (
+            <>
+              <span className="text-gray-400">•</span>
+              <span className="truncate" title={sourceInfo}>
+                {sourceInfo}
+              </span>
+            </>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-2">

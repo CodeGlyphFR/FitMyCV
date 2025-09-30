@@ -18,6 +18,8 @@ function extractQuotedName(text) {
 }
 
 function TaskItem({ task, onCancel }) {
+  console.log('TaskItem rendered for task:', task?.id);
+
   const getStatusDisplay = (status) => {
     switch (status) {
       case 'queued':
@@ -38,13 +40,20 @@ function TaskItem({ task, onCancel }) {
   const statusDisplay = getStatusDisplay(task.status);
   const createdAt = new Date(task.createdAt).toLocaleTimeString('fr-FR', {
     hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
+    minute: '2-digit'
   });
 
   const canCancel = task.status === 'queued' || task.status === 'running';
 
   const payload = task?.payload && typeof task.payload === 'object' ? task.payload : null;
+
+  console.log('Task info:', {
+    id: task.id,
+    type: task.type,
+    hasPayload: !!payload,
+    payloadType: typeof task.payload,
+    rawPayload: task.payload
+  });
 
   const importName = payload?.savedName || extractQuotedName(task.title);
   const generationName = payload?.baseFileLabel || payload?.baseFile || extractQuotedName(task.title);
@@ -55,9 +64,9 @@ function TaskItem({ task, onCancel }) {
     description = task.error;
   } else if (task.type === 'import') {
     if (task.status === 'running') {
-      description = `Import en cours${importName ? ` : '${importName}'` : ''}`;
+      description = `Import en cours ...`;
     } else if (task.status === 'queued') {
-      description = `Import en attente${importName ? ` : '${importName}'` : ''}`;
+      description = `Import en attente ...`;
     }
   } else if (task.type === 'generation') {
     if (task.status === 'running') {
@@ -67,6 +76,26 @@ function TaskItem({ task, onCancel }) {
     }
   }
 
+  // Extraire le lien ou la pièce jointe du payload
+  let sourceInfo = null;
+  if (task.type === 'generation' && payload) {
+    console.log('Generation task detected:', { taskId: task.id, payload, hasLinks: Array.isArray(payload.links), hasUploads: Array.isArray(payload.uploads) });
+    if (Array.isArray(payload.links) && payload.links.length > 0) {
+      sourceInfo = payload.links[0];
+      console.log('Link source extracted:', sourceInfo);
+    } else if (Array.isArray(payload.uploads) && payload.uploads.length > 0) {
+      sourceInfo = payload.uploads[0].name;
+      console.log('Upload source extracted:', sourceInfo);
+    } else {
+      console.log('No source info found in payload');
+    }
+  } else if (task.type === 'import' && payload?.savedName) {
+    sourceInfo = payload.savedName;
+    console.log('Import source extracted:', sourceInfo);
+  }
+  const hasSourceInfo = (task.type === 'generation' || task.type === 'import') && sourceInfo;
+  console.log('Final state:', { taskId: task.id, hasSourceInfo, sourceInfo });
+
   return (
     <div className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
       <div className="flex-1 min-w-0">
@@ -75,8 +104,16 @@ function TaskItem({ task, onCancel }) {
             {description}
           </div>
         </div>
-        <div className="text-xs text-gray-500">
-          Créé à {createdAt}
+        <div className="flex items-center gap-1 text-xs text-gray-500">
+          <span>{createdAt}</span>
+          {hasSourceInfo && (
+            <>
+              <span className="text-gray-400">•</span>
+              <span className="truncate" title={sourceInfo}>
+                {sourceInfo}
+              </span>
+            </>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-2 ml-4">
@@ -104,6 +141,9 @@ export default function TaskQueueModal({ open, onClose }) {
 
   // Sort tasks so running ones appear first (newest to oldest) and limit to 8
   const sortedTasks = sortTasksForDisplay(tasks).slice(0, 8);
+
+  console.log('TaskQueueModal - Total tasks:', tasks.length, 'Sorted tasks:', sortedTasks.length);
+  console.log('Sorted tasks content:', sortedTasks);
 
   const completedTasksCount = tasks.filter(task =>
     task.status === 'completed' || task.status === 'failed' || task.status === 'cancelled'
