@@ -10,17 +10,18 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String        @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?       @unique
   emailVerified DateTime?
   passwordHash  String?
   image         String?
   accounts      Account[]
   sessions      Session[]
   cvs           CvFile[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  linkHistory   LinkHistory[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model Account {
@@ -90,4 +91,15 @@ model BackgroundTask {
   @@index([deviceId])
   @@index([status])
   @@index([createdAt])
+}
+
+model LinkHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  url       String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, url])
+  @@index([userId, createdAt])
 }
