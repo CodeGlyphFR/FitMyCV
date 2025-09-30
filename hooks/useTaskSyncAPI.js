@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSession } from 'next-auth/react'
 
 export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}) {
   const { enabled = true, pollInterval = 3000 } = options
   const lastSyncType = useRef('full')
   const deviceIdRef = useRef(null)
   const [localDeviceId, setLocalDeviceId] = useState(null)
+  const { status } = useSession()
+  const isAuthenticated = status === 'authenticated'
 
   const getDeviceId = useCallback(() => {
     if (typeof window === 'undefined') return null
@@ -55,7 +58,11 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
   }, [])
 
   const loadTasksFromServer = useCallback(async () => {
-    if (!enabled) {
+    if (!enabled || status === 'loading') {
+      return
+    }
+
+    if (!isAuthenticated) {
       setTasks([])
       return
     }
@@ -69,6 +76,10 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
 
       const response = await fetch(url)
       if (!response.ok) {
+        if (response.status === 401) {
+          setTasks([])
+          return
+        }
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
@@ -83,10 +94,19 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
     } catch (error) {
       console.warn('Failed to load tasks from server:', error)
     }
-  }, [enabled, getDeviceId, normaliseTasks, setTasks])
+  }, [enabled, getDeviceId, isAuthenticated, normaliseTasks, setTasks, status])
 
   useEffect(() => {
     if (!enabled) {
+      setTasks([])
+      return
+    }
+
+    if (status === 'loading') {
+      return
+    }
+
+    if (!isAuthenticated) {
       setTasks([])
       return
     }
@@ -97,10 +117,10 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
     return () => {
       clearInterval(intervalId)
     }
-  }, [enabled, loadTasksFromServer, pollInterval, setTasks])
+  }, [enabled, isAuthenticated, loadTasksFromServer, pollInterval, setTasks, status])
 
   const cancelTaskOnServer = useCallback(async (taskId) => {
-    if (!enabled || !taskId) {
+    if (!enabled || !taskId || !isAuthenticated) {
       return { success: false }
     }
 
@@ -119,10 +139,10 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
       console.warn('Failed to cancel task on server:', error)
       return { success: false, error: error?.message }
     }
-  }, [enabled])
+  }, [enabled, isAuthenticated])
 
   const deleteCompletedTasksOnServer = useCallback(async (taskIds) => {
-    if (!enabled || !Array.isArray(taskIds) || !taskIds.length) {
+    if (!enabled || !Array.isArray(taskIds) || !taskIds.length || !isAuthenticated) {
       return { success: false }
     }
 
@@ -145,7 +165,7 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
       console.warn('Failed to delete completed tasks on server:', error)
       return { success: false, error: error?.message }
     }
-  }, [enabled])
+  }, [enabled, isAuthenticated])
 
   return useMemo(() => ({
     isApiSyncEnabled: enabled,

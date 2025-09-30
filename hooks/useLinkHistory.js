@@ -1,11 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 
 export function useLinkHistory() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
 
   // Load history from API on mount
   const loadHistory = useCallback(async () => {
+    if (!isAuthenticated) {
+      setHistory([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/link-history');
       if (!response.ok) {
@@ -27,15 +36,20 @@ export function useLinkHistory() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
+    if (status === 'loading') {
+      setLoading(true);
+      return;
+    }
+
     loadHistory();
-  }, [loadHistory]);
+  }, [loadHistory, status]);
 
   // Add multiple links at once
   const addLinksToHistory = useCallback(async (links) => {
-    if (!Array.isArray(links)) return;
+    if (!isAuthenticated || !Array.isArray(links)) return;
 
     const validLinks = links
       .map(link => typeof link === 'string' ? link.trim() : '')
@@ -59,7 +73,7 @@ export function useLinkHistory() {
     } catch (error) {
       console.warn('Failed to save link history:', error);
     }
-  }, [loadHistory]);
+  }, [isAuthenticated, loadHistory]);
 
   return {
     history,
