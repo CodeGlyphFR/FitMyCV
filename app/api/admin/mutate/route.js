@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { auth } from "@/lib/auth/session";
 import { listUserCvFiles, readUserCvFile, writeUserCvFile } from "@/lib/cv/storage";
 import { sanitizeInMemory } from "@/lib/sanitize";
+import { validateCv } from "@/lib/cv/validation";
 
 export const runtime="nodejs"; export const dynamic="force-dynamic";
 function parsePath(p){ var out=[]; var re=/([^\[.]+)|\[(\d+)\]/g; var m; while((m=re.exec(p))!==null){ if(m[1]!=null) out.push(m[1]); else if(m[2]!=null) out.push(Number(m[2])); } return out; }
@@ -31,6 +32,13 @@ export async function POST(req){
       default: return NextResponse.json({ error:"Opération inconnue"},{ status:400 });
     }
     const sanitized = sanitizeInMemory(cv);
+
+    // Validation (optionnelle, pas bloquante)
+    const { valid, errors } = await validateCv(sanitized);
+    if (!valid) {
+      console.warn(`[mutate] CV validation errors for ${userId}/${selected}:`, errors);
+    }
+
     const isoNow = new Date().toISOString();
     const meta = {
       ...(sanitized.meta || {}),

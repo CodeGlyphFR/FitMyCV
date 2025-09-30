@@ -98,6 +98,9 @@ export default function BackgroundTasksProvider({ children }) {
         return;
       }
 
+      // Log tous les changements de statut dans la console
+      console.log(`[BackgroundTask] Tâche ${task.id} (${task.type}): ${prevStatus} → ${task.status}`);
+
       if (task?.shouldUpdateCvList && typeof window !== 'undefined') {
         window.dispatchEvent(new Event('cv:list:changed'));
       }
@@ -118,9 +121,13 @@ export default function BackgroundTasksProvider({ children }) {
         });
         didTrigger = true;
       } else if (task.status === 'failed') {
+        const errorMessage = task.error || 'Échec de la tâche';
+        console.error(`[BackgroundTask] Tâche ${task.id} (${task.type}) a échoué:`, errorMessage);
+        console.error(`[BackgroundTask] Détails de la tâche:`, task);
+
         addNotification({
           type: 'error',
-          message: task.error || 'Échec de la tâche',
+          message: errorMessage,
           duration: 4000,
         });
         didTrigger = true;
