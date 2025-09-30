@@ -10,20 +10,19 @@ import { SITE_TITLE } from "@/lib/site";
 export const metadata = {
   title: SITE_TITLE,
   description: "Compatible avec les parser ATS",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default async function RootLayout(props){
   const session = await auth();
   return (
     <html lang="fr">
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-      </head>
       <body className="min-h-screen antialiased flex flex-col">
         <RootProviders session={session}>
           <TopBar />
