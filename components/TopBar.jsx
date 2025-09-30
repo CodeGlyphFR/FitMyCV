@@ -13,6 +13,7 @@ import { useNotifications } from "@/components/notifications/NotificationProvide
 import TaskQueueModal from "./TaskQueueModal";
 import TaskQueueDropdown from "./TaskQueueDropdown";
 import QueueIcon from "./ui/QueueIcon";
+import { useLinkHistory } from "@/hooks/useLinkHistory";
 
 const ANALYSIS_OPTIONS = Object.freeze([
   {
@@ -336,6 +337,9 @@ export default function TopBar() {
   const [pdfAnalysisLevel, setPdfAnalysisLevel] = React.useState("medium");
   const [openTaskQueue, setOpenTaskQueue] = React.useState(false);
   const [openTaskDropdown, setOpenTaskDropdown] = React.useState(false);
+  const [linkHistoryDropdowns, setLinkHistoryDropdowns] = React.useState({});
+
+  const { history: linkHistory, addLinksToHistory } = useLinkHistory();
 
   const fileInputRef = React.useRef(null);
   const pdfFileInputRef = React.useRef(null);
@@ -735,6 +739,7 @@ export default function TopBar() {
     setGeneratorError("");
     setAnalysisLevel("medium");
     setBaseSelectorOpen(false);
+    setLinkHistoryDropdowns({});
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -888,6 +893,11 @@ export default function TopBar() {
     if (!cleanedLinks.length && !hasFiles) {
       setGeneratorError("Ajoutez au moins un lien ou un fichier.");
       return;
+    }
+
+    // Save links to history
+    if (cleanedLinks.length > 0) {
+      addLinksToHistory(cleanedLinks);
     }
 
     const selectedAnalysis = currentAnalysisOption;
@@ -1257,6 +1267,49 @@ export default function TopBar() {
             <div className="text-sm font-medium">Liens</div>
             {linkInputs.map((value, index) => (
               <div key={index} className="flex gap-2">
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLinkHistoryDropdowns(prev => ({
+                        ...prev,
+                        [index]: !prev[index]
+                      }));
+                    }}
+                    className="h-full rounded border px-2 py-1 text-xs hover:bg-gray-50"
+                    title="Charger un lien récent"
+                    disabled={linkHistory.length === 0}
+                  >
+                    📋
+                  </button>
+                  {linkHistoryDropdowns[index] && linkHistory.length > 0 && (
+                    <div className="absolute left-0 top-full mt-1 w-80 max-h-60 overflow-y-auto bg-white border rounded shadow-lg z-10">
+                      <div className="p-2 border-b bg-gray-50 text-xs font-medium text-gray-600">
+                        Liens récents
+                      </div>
+                      <ul className="py-1">
+                        {linkHistory.map((link, histIndex) => (
+                          <li key={histIndex}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateLink(link, index);
+                                setLinkHistoryDropdowns(prev => ({
+                                  ...prev,
+                                  [index]: false
+                                }));
+                              }}
+                              className="w-full px-3 py-2 text-left text-xs hover:bg-gray-100 truncate"
+                              title={link}
+                            >
+                              {link}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
                 <input
                   className="flex-1 rounded border px-2 py-1 text-sm"
                   placeholder="https://..."
