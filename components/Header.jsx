@@ -14,12 +14,6 @@ export default function Header(props){
   const [open, setOpen] = React.useState(false);
   const [sourceInfo, setSourceInfo] = React.useState({ sourceType: null, sourceValue: null });
 
-  // Si le CV est vide (pas de header), ne pas afficher le composant
-  const isEmpty = !header.full_name && !header.current_title && !header.contact?.email;
-  if (isEmpty && !editing) {
-    return null;
-  }
-
   const [f, setF] = React.useState({
     full_name: header.full_name || "",
     current_title: header.current_title || "",
@@ -63,6 +57,12 @@ export default function Header(props){
       })
       .catch(err => console.error("Failed to fetch source info:", err));
   }, []); // Fetch seulement au montage du composant
+
+  // Si le CV est vide (pas de header), ne pas afficher le composant
+  const isEmpty = !header.full_name && !header.current_title && !header.contact?.email;
+  if (isEmpty && !editing) {
+    return null;
+  }
 
   // -- helper: force https:// si pas de schéma http/https
   function ensureAbsoluteUrl(u) {
