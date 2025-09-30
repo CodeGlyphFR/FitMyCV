@@ -9,15 +9,11 @@ import Extras from "@/components/Extras";
 import Projects from "@/components/Projects";
 import EmptyState from "@/components/EmptyState";
 
-import fs from "fs/promises";
-import path from "path";
-import Ajv from "ajv";
-import addFormats from "ajv-formats";
 import { sanitizeInMemory } from "@/lib/sanitize";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/session";
-import { ensureUserCvDir, listUserCvFiles, readUserCvFile, writeUserCvFile } from "@/lib/cv/storage";
+import { ensureUserCvDir, listUserCvFiles, readUserCvFile } from "@/lib/cv/storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,29 +38,10 @@ async function getCV(userId){
     return null;
   }
 
-  let cv = sanitizeInMemory(JSON.parse(raw));
-  await writeUserCvFile(userId, file, JSON.stringify(cv, null, 2));
+  // Pas de sanitize ni validation à l'affichage - uniquement parsing
+  const cv = JSON.parse(raw);
 
-  const schemaRaw = await readSchema();
-  const schema = JSON.parse(schemaRaw);
-
-  const ajv = new Ajv({ allErrors:true, allowUnionTypes:true });
-  addFormats(ajv);
-
-  const validate = ajv.compile(schema);
-  const valid = !!validate(cv);
-  const errors = valid ? [] : (validate.errors || []);
-
-  return { cv, valid, errors };
-}
-
-function ensureUserCvDirPath(userId){
-  const baseDir = process.env.CV_BASE_DIR || "data/users";
-  return path.join(process.cwd(), baseDir, userId, "cvs");
-}
-
-async function readSchema(){
-  return fs.readFile(path.join(process.cwd(), "data", "schema.json"), "utf-8");
+  return { cv };
 }
 
 export default async function Page(){
@@ -80,7 +57,7 @@ export default async function Page(){
     return <EmptyState />;
   }
 
-  const { cv, valid, errors } = cvResult;
+  const { cv } = cvResult;
   const sectionTitles = cv.section_titles || {};
 
   const sections = {
@@ -106,20 +83,8 @@ export default async function Page(){
 
   const order = base;
 
-  const showBanner = headers().get("x-debug") === "1";
-
   return (
     <main className="max-w-4xl mx-auto p-4">
-      {(!valid && showBanner) ? (
-        <div className="no-print mb-4 rounded-2xl border border-yellow-300 bg-yellow-50 text-yellow-900 p-3">
-          <div className="font-semibold">Avertissement: le JSON ne valide pas le schéma</div>
-          <ul className="list-disc pl-5 text-sm">
-            {errors.map((e, i) => (
-              <li key={i}>{(e.instancePath || "(racine)")} — {e.message}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
 
       {order.map(k => (
         <div key={k}>{sections[k]}</div>
