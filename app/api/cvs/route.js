@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { auth } from "@/lib/auth/session";
 import { listUserCvFiles, readUserCvFile } from "@/lib/cv/storage";
 import { sanitizeInMemory } from "@/lib/sanitize";
+import prisma from "@/lib/prisma";
 
 function parseNumericTimestamp(value){
   if (!value) return null;
@@ -71,6 +72,28 @@ export async function GET(){
 
   const userId = session.user.id;
   const files = await listUserCvFiles(userId);
+
+  // Récupérer tous les sourceType et createdBy depuis la DB en une seule requête
+  const cvFilesData = await prisma.cvFile.findMany({
+    where: {
+      userId,
+      filename: { in: files }
+    },
+    select: {
+      filename: true,
+      sourceType: true,
+      sourceValue: true,
+      createdBy: true,
+    },
+  });
+
+  // Créer une map pour un accès rapide
+  const sourceMap = new Map(cvFilesData.map(cf => [cf.filename, {
+    sourceType: cf.sourceType,
+    sourceValue: cf.sourceValue,
+    createdBy: cf.createdBy
+  }]));
+
   const rawItems = [];
 
   for (const file of files){
@@ -79,17 +102,20 @@ export async function GET(){
       const json = sanitizeInMemory(JSON.parse(raw));
       const title = json?.header?.current_title ? String(json.header.current_title).trim() : "";
       const trimmedTitle = title || "";
-      const generator = typeof json?.meta?.generator === "string"
-        ? json.meta.generator.toLowerCase().trim()
-        : "";
-      const isLikelyGpt = /^(generated_chatgpt_cv|gpt_)/i.test(file);
-      const rawSource = generator || (typeof json?.meta?.source === "string" ? json.meta.source : "manual");
-      const source = typeof rawSource === "string" ? rawSource.toLowerCase().trim() || "manual" : "manual";
-      const isImported = source === "pdf-import";
-      const isGenerated = generator === "chatgpt" || generator === "openai" || source === "chatgpt" || isLikelyGpt;
-      // Consider both AI-generated and PDF-imported CVs as "AI-powered" for display
-      const isGpt = isGenerated || isImported;
-      const isManual = !isGpt;
+
+      // Récupérer les données de source depuis la DB
+      const sourceData = sourceMap.get(file);
+      const sourceType = sourceData?.sourceType || null;
+      const sourceValue = sourceData?.sourceValue || null;
+      const createdBy = sourceData?.createdBy || null;
+
+      // Déterminer le type de CV basé sur createdBy
+      // createdBy = 'generate-cv' => Généré par IA (icon GPT)
+      // createdBy = 'import-pdf' => Importé depuis PDF (icon Import)
+      // createdBy = null => Créé manuellement (pas d'icon)
+      const isGenerated = createdBy === 'generate-cv';
+      const isImported = createdBy === 'import-pdf';
+      const isManual = createdBy === null;
       // Get all timestamps
       const createdTimestamp = toTimestamp(json?.meta?.created_at) || toTimestamp(json?.generated_at) || toTimestamp(json?.meta?.generated_at) || timestampFromFilename(file);
       const updatedTimestamp = toTimestamp(json?.meta?.updated_at);
@@ -109,21 +135,27 @@ export async function GET(){
         title: trimmedTitle,
         hasTitle,
         dateLabel: dateLabel || null,
-        isGpt,
-        isImported,
-        isGenerated,
-        isManual,
-        source,
+        sourceType, // 'link', 'pdf', ou null
+        sourceValue, // URL ou nom de fichier PDF
+        createdBy, // 'generate-cv', 'import-pdf', ou null
+        isGenerated, // true si createdBy === 'generate-cv'
+        isImported, // true si createdBy === 'import-pdf'
+        isManual, // true si createdBy === null
         createdAt: createdAtIso,
         updatedAt: updatedAtIso,
         sortKey: mostRecentTimestamp,
       });
     } catch (error) {
-      const isLikelyGpt = /^(generated_chatgpt_cv|gpt_)/i.test(file);
-      const isLikelyImport = /^import/i.test(file);
-      const isImported = isLikelyImport;
-      const isGenerated = isLikelyGpt;
-      const isGpt = isGenerated || isImported;
+      // En cas d'erreur de lecture, utiliser les données de la DB si disponibles
+      const sourceData = sourceMap.get(file);
+      const sourceType = sourceData?.sourceType || null;
+      const sourceValue = sourceData?.sourceValue || null;
+      const createdBy = sourceData?.createdBy || null;
+
+      const isGenerated = createdBy === 'generate-cv';
+      const isImported = createdBy === 'import-pdf';
+      const isManual = createdBy === null;
+
       const sortKey = timestampFromFilename(file);
       const dateLabel = formatDateLabel(sortKey);
       rawItems.push({
@@ -132,11 +164,12 @@ export async function GET(){
         title: "",
         hasTitle: false,
         dateLabel: dateLabel || null,
-        isGpt,
-        isImported,
+        sourceType,
+        sourceValue,
+        createdBy,
         isGenerated,
-        isManual: !isGpt,
-        source: isGpt ? "chatgpt" : "manual",
+        isImported,
+        isManual,
         createdAt: null,
         updatedAt: null,
         sortKey,
