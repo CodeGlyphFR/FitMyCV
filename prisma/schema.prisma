@@ -63,12 +63,14 @@ model VerificationToken {
 }
 
 model CvFile {
-  id        String   @id @default(cuid())
-  userId    String
-  filename  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  userId      String
+  filename    String
+  sourceType  String?  // 'link', 'pdf', or null for manual
+  sourceValue String?  // URL or PDF filename
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, filename])
 }
