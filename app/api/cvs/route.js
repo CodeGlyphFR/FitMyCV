@@ -73,7 +73,7 @@ export async function GET(){
   const userId = session.user.id;
   const files = await listUserCvFiles(userId);
 
-  // Récupérer tous les sourceType et createdBy depuis la DB en une seule requête
+  // Récupérer tous les sourceType, createdBy et analysisLevel depuis la DB en une seule requête
   const cvFilesData = await prisma.cvFile.findMany({
     where: {
       userId,
@@ -84,6 +84,7 @@ export async function GET(){
       sourceType: true,
       sourceValue: true,
       createdBy: true,
+      analysisLevel: true,
     },
   });
 
@@ -91,7 +92,8 @@ export async function GET(){
   const sourceMap = new Map(cvFilesData.map(cf => [cf.filename, {
     sourceType: cf.sourceType,
     sourceValue: cf.sourceValue,
-    createdBy: cf.createdBy
+    createdBy: cf.createdBy,
+    analysisLevel: cf.analysisLevel,
   }]));
 
   const rawItems = [];
@@ -108,6 +110,7 @@ export async function GET(){
       const sourceType = sourceData?.sourceType || null;
       const sourceValue = sourceData?.sourceValue || null;
       const createdBy = sourceData?.createdBy || null;
+      const analysisLevel = sourceData?.analysisLevel || null;
 
       // Déterminer le type de CV basé sur createdBy
       // createdBy = 'generate-cv' => Généré par IA (icon GPT)
@@ -138,6 +141,7 @@ export async function GET(){
         sourceType, // 'link', 'pdf', ou null
         sourceValue, // URL ou nom de fichier PDF
         createdBy, // 'generate-cv', 'import-pdf', ou null
+        analysisLevel, // 'rapid', 'medium', 'deep', ou null
         isGenerated, // true si createdBy === 'generate-cv'
         isImported, // true si createdBy === 'import-pdf'
         isManual, // true si createdBy === null
@@ -151,6 +155,7 @@ export async function GET(){
       const sourceType = sourceData?.sourceType || null;
       const sourceValue = sourceData?.sourceValue || null;
       const createdBy = sourceData?.createdBy || null;
+      const analysisLevel = sourceData?.analysisLevel || null;
 
       const isGenerated = createdBy === 'generate-cv';
       const isImported = createdBy === 'import-pdf';
@@ -167,6 +172,7 @@ export async function GET(){
         sourceType,
         sourceValue,
         createdBy,
+        analysisLevel,
         isGenerated,
         isImported,
         isManual,

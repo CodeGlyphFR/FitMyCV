@@ -81,6 +81,16 @@ function getCvIcon(createdBy, className) {
   return null; // Pas d'icône pour les CVs manuels
 }
 
+function getAnalysisLevelLabel(level) {
+  if (!level) return null;
+  const labels = {
+    'rapid': 'Rapide',
+    'medium': 'Moyen',
+    'deep': 'Approfondi'
+  };
+  return labels[level] || null;
+}
+
 function enhanceItem(item, titleCache = null){
   const trimmedTitle = typeof item?.title === "string" ? item.title.trim() : "";
   const fileId = typeof item?.file === "string" ? item.file : null;
@@ -287,7 +297,13 @@ function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0 }){
       if (resizeObserver) resizeObserver.disconnect();
       if (detachWindowListener) detachWindowListener();
     };
-  }, [item.displayTitle, tickerKey]);
+  }, [item.displayTitle, item.analysisLevel, item.createdBy, tickerKey]);
+
+  const levelLabel = getAnalysisLevelLabel(item.analysisLevel);
+  const shouldShowLevel = (item.createdBy === 'generate-cv' || item.createdBy === 'import-pdf') && levelLabel;
+  const displayTitleWithLevel = shouldShowLevel
+    ? `${item.displayTitle} [${levelLabel}]`
+    : item.displayTitle;
 
   return (
     <span className={rootClass}>
@@ -303,16 +319,16 @@ function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0 }){
         ref={ellipsisRef}
         className={`hidden sm:block truncate ${titleClass}`}
       >
-        {item.displayTitle}
+        {displayTitleWithLevel}
       </span>
       <span
         ref={containerRef}
         className={`cv-ticker sm:hidden ${titleClass} ${scrollActive ? "cv-ticker--active" : ""}`}
       >
         <span ref={innerRef} className="cv-ticker__inner">
-          <span className="cv-ticker__chunk">{item.displayTitle}</span>
+          <span className="cv-ticker__chunk">{displayTitleWithLevel}</span>
           {scrollActive ? (
-            <span className="cv-ticker__chunk" aria-hidden="true">{item.displayTitle}</span>
+            <span className="cv-ticker__chunk" aria-hidden="true">{displayTitleWithLevel}</span>
           ) : null}
         </span>
       </span>
