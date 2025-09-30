@@ -1,6 +1,6 @@
 import "./globals.css";
 import React from "react";
-import TopBar from "@/components/TopBar";
+import ConditionalTopBar from "@/components/ConditionalTopBar";
 import Footer from "@/components/Footer";
 import CookieBanner from "@/components/cookies/CookieBanner";
 import RootProviders from "@/components/RootProviders";
@@ -25,7 +25,7 @@ export default async function RootLayout(props){
     <html lang="fr">
       <body className="min-h-screen antialiased flex flex-col">
         <RootProviders session={session}>
-          <TopBar />
+          <ConditionalTopBar />
           <main className="flex-grow mb-0">
             {props.children}
           </main>
