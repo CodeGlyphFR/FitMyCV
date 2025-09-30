@@ -2,6 +2,7 @@ import "./globals.css";
 import React from "react";
 import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
+import CookieBanner from "@/components/cookies/CookieBanner";
 import RootProviders from "@/components/RootProviders";
 import { auth } from "@/lib/auth/session";
 import { SITE_TITLE } from "@/lib/site";
@@ -22,6 +23,7 @@ export default async function RootLayout(props){
             {props.children}
           </main>
           <Footer />
+          <CookieBanner />
         </RootProviders>
       </body>
     </html>
