@@ -1202,7 +1202,7 @@ export default function TopBar() {
         <div className="w-full md:hidden order-5"></div>
         {/* Add Button */}
         <button
-          onClick={() => router.push("/admin/new")}
+          onClick={() => setOpenNewCv(true)}
           className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 order-6 md:order-4 ml-auto md:ml-0"
           type="button"
         >
