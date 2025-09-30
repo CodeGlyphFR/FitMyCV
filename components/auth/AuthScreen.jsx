@@ -70,9 +70,6 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           return;
         }
 
-        try {
-          localStorage.setItem("admin:activateEditingOnce", "1");
-        } catch (_err) {}
       }
 
       const result = await signIn("credentials", {
