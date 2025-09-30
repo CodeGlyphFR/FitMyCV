@@ -7,6 +7,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Modal from "./ui/Modal";
 import GptLogo from "./ui/GptLogo";
 import DefaultCvIcon from "./ui/DefaultCvIcon";
+import ImportIcon from "./ui/ImportIcon";
 import { useAdmin } from "./admin/AdminProvider";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
@@ -65,6 +66,29 @@ function normalizeBoolean(value){
 
 function getAnalysisOption(id){
   return ANALYSIS_OPTIONS.find((option) => option.id === id) || ANALYSIS_OPTIONS[1];
+}
+
+function getCvIcon(createdBy, className) {
+  // createdBy = 'generate-cv' => GPT icon (généré par IA)
+  // createdBy = 'import-pdf' => Import icon (importé depuis PDF)
+  // createdBy = null => Pas d'icône (créé manuellement)
+  if (createdBy === 'generate-cv') {
+    return <GptLogo className={className} />;
+  }
+  if (createdBy === 'import-pdf') {
+    return <ImportIcon className={className} size={16} />;
+  }
+  return null; // Pas d'icône pour les CVs manuels
+}
+
+function getAnalysisLevelLabel(level) {
+  if (!level) return null;
+  const labels = {
+    'rapid': 'Rapide',
+    'medium': 'Moyen',
+    'deep': 'Approfondi'
+  };
+  return labels[level] || null;
 }
 
 function enhanceItem(item, titleCache = null){
@@ -273,7 +297,13 @@ function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0 }){
       if (resizeObserver) resizeObserver.disconnect();
       if (detachWindowListener) detachWindowListener();
     };
-  }, [item.displayTitle, tickerKey]);
+  }, [item.displayTitle, item.analysisLevel, item.createdBy, tickerKey]);
+
+  const levelLabel = getAnalysisLevelLabel(item.analysisLevel);
+  const shouldShowLevel = (item.createdBy === 'generate-cv' || item.createdBy === 'import-pdf') && levelLabel;
+  const displayTitleWithLevel = shouldShowLevel
+    ? `${item.displayTitle} [${levelLabel}]`
+    : item.displayTitle;
 
   return (
     <span className={rootClass}>
@@ -289,16 +319,16 @@ function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0 }){
         ref={ellipsisRef}
         className={`hidden sm:block truncate ${titleClass}`}
       >
-        {item.displayTitle}
+        {displayTitleWithLevel}
       </span>
       <span
         ref={containerRef}
         className={`cv-ticker sm:hidden ${titleClass} ${scrollActive ? "cv-ticker--active" : ""}`}
       >
         <span ref={innerRef} className="cv-ticker__inner">
-          <span className="cv-ticker__chunk">{item.displayTitle}</span>
+          <span className="cv-ticker__chunk">{displayTitleWithLevel}</span>
           {scrollActive ? (
-            <span className="cv-ticker__chunk" aria-hidden="true">{item.displayTitle}</span>
+            <span className="cv-ticker__chunk" aria-hidden="true">{displayTitleWithLevel}</span>
           ) : null}
         </span>
       </span>
@@ -1096,14 +1126,10 @@ export default function TopBar() {
             <span className="flex items-center gap-3 min-w-0 overflow-hidden">
               {resolvedCurrentItem ? (
                 <span
-                  key={`icon-${current}-${resolvedCurrentItem.isGpt}-${iconRefreshKey}`}
+                  key={`icon-${current}-${resolvedCurrentItem.createdBy}-${iconRefreshKey}`}
                   className="flex h-6 w-6 items-center justify-center shrink-0"
                 >
-                  {resolvedCurrentItem.isGpt ? (
-                    <GptLogo className="h-4 w-4" />
-                  ) : (
-                    <DefaultCvIcon className="h-4 w-4" size={16} />
-                  )}
+                  {getCvIcon(resolvedCurrentItem.createdBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
                 </span>
               ) : null}
               <span className="min-w-0">
@@ -1148,14 +1174,10 @@ export default function TopBar() {
                         className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-zinc-100 ${it.file === current ? "bg-zinc-50" : ""}`}
                       >
                         <span
-                          key={`dropdown-icon-${it.file}-${it.isGpt}`}
+                          key={`dropdown-icon-${it.file}-${it.createdBy}`}
                           className="flex h-6 w-6 items-center justify-center shrink-0"
                         >
-                          {it.isGpt ? (
-                            <GptLogo className="h-4 w-4" />
-                          ) : (
-                            <DefaultCvIcon className="h-4 w-4" size={16} />
-                          )}
+                          {getCvIcon(it.createdBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
                         </span>
                         <ItemLabel
                           item={it}
@@ -1268,10 +1290,10 @@ export default function TopBar() {
                   <span className="flex items-center gap-3 min-w-0 overflow-hidden">
                     {generatorBaseItem ? (
                       <span
-                        key={`gen-base-icon-${generatorBaseFile}-${generatorBaseItem.isGpt}`}
+                        key={`gen-base-icon-${generatorBaseFile}-${generatorBaseItem.createdBy}`}
                         className="flex h-6 w-6 items-center justify-center shrink-0"
                       >
-                        <DefaultCvIcon className="h-4 w-4" size={16} />
+                        {getCvIcon(generatorBaseItem.createdBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
                       </span>
                     ) : null}
                     <span className="min-w-0">
@@ -1307,10 +1329,10 @@ export default function TopBar() {
                             className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-zinc-100 ${item.file === generatorBaseFile ? "bg-zinc-50" : ""}`}
                           >
                             <span
-                              key={`gen-dropdown-icon-${item.file}-${item.isGpt}`}
+                              key={`gen-dropdown-icon-${item.file}-${item.createdBy}`}
                               className="flex h-6 w-6 items-center justify-center shrink-0"
                             >
-                              <DefaultCvIcon className="h-4 w-4" size={16} />
+                              {getCvIcon(item.createdBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
                             </span>
                             <ItemLabel
                               item={item}
