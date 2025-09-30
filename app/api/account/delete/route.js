@@ -36,20 +36,33 @@ export async function DELETE(request){
     return NextResponse.json({ error: "Mot de passe incorrect." }, { status: 400 });
   }
 
+  // Supprimer toutes les données liées dans l'ordre (contraintes FK)
+  try {
+    console.log(`[DELETE account] Suppression des données pour l'utilisateur ${user.id}`);
+
+    await prisma.cvSource.deleteMany({ where: { userId: user.id } });
+    await prisma.cvFile.deleteMany({ where: { userId: user.id } });
+    await prisma.backgroundTask.deleteMany({ where: { userId: user.id } });
+    await prisma.session.deleteMany({ where: { userId: user.id } });
+    await prisma.account.deleteMany({ where: { userId: user.id } });
+    await prisma.user.delete({ where: { id: user.id } });
+
+    console.log(`[DELETE account] Utilisateur ${user.id} supprimé de la DB`);
+  } catch (error) {
+    console.error("Suppression de l'utilisateur impossible", error);
+    return NextResponse.json({ error: "Impossible de supprimer le compte pour le moment." }, { status: 500 });
+  }
+
+  // Supprimer le dossier utilisateur
   const userDir = getUserCvDir(user.id);
   try {
     await fs.rm(userDir, { recursive: true, force: true });
     const parentDir = path.dirname(userDir);
     await fs.rm(parentDir, { recursive: true, force: true });
+    console.log(`[DELETE account] Dossier utilisateur ${userDir} supprimé`);
   } catch (error) {
     console.error("Suppression du dossier utilisateur impossible", error);
-  }
-
-  try {
-    await prisma.user.delete({ where: { id: user.id } });
-  } catch (error) {
-    console.error("Suppression de l'utilisateur impossible", error);
-    return NextResponse.json({ error: "Impossible de supprimer le compte pour le moment." }, { status: 500 });
+    // Ne pas retourner d'erreur si le dossier n'existe pas ou ne peut pas être supprimé
   }
 
   return NextResponse.json({ ok: true });
