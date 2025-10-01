@@ -1076,8 +1076,8 @@ export default function TopBar() {
 
   if (status === "loading") {
     return (
-      <div className="no-print sticky top-0 inset-x-0 z-40 w-full bg-white/80 backdrop-blur border-b">
-        <div className="w-full p-3 flex items-center justify-between">
+      <div className="no-print sticky top-0 inset-x-0 z-40 w-full bg-white/80 backdrop-blur border-b h-[60px]">
+        <div className="w-full p-3 flex items-center justify-between h-full">
           <span className="text-sm font-medium">Chargement…</span>
         </div>
       </div>
@@ -1085,21 +1085,21 @@ export default function TopBar() {
   }
 
   if (!isAuthenticated) {
-    return null;
+    return <div className="h-[60px]" />;
   }
 
   // Hide TopBar if no CVs exist
   if (items.length === 0) {
-    return null;
+    return <div className="h-[60px]" />;
   }
 
   return (
     <>
       <div
         ref={barRef}
-        className="no-print sticky top-0 inset-x-0 z-40 w-full bg-white/80 backdrop-blur border-b"
+        className="no-print sticky top-0 inset-x-0 z-40 w-full bg-white/80 backdrop-blur border-b h-[60px]"
       >
-        <div className="w-full p-3 flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="w-full p-3 flex flex-wrap items-center gap-2 sm:gap-3 h-full">
         {/* User Icon */}
         <div className="relative order-1 md:order-1" ref={userMenuRef}>
           <button

@@ -62,7 +62,10 @@ export default function Summary(props){
           <p className="text-sm opacity-60">Aucun résumé pour le moment.</p>
         ) : null
       ) : (
-        <p className="text-sm text-justify leading-relaxed opacity-95 whitespace-pre-line">
+        <p
+          className="text-sm text-justify leading-relaxed opacity-95 whitespace-pre-line"
+          suppressHydrationWarning
+        >
           {summary.description}
         </p>
       )}

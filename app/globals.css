@@ -1,4 +1,66 @@
 @tailwind base; @tailwind components; @tailwind utilities;
+
+/* Optimisations LCP - Chargement critique */
+@layer base {
+  /* Font display swap pour éviter FOIT (Flash of Invisible Text) */
+  @font-face {
+    font-display: swap;
+  }
+
+  /* Optimisation du rendu des polices */
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-synthesis: none;
+  }
+
+  /* Prévenir le CLS sur les images */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Optimiser le rendu du texte critique */
+  body {
+    font-display: swap;
+  }
+
+  /* Priorité de rendu pour le contenu LCP */
+  p.text-sm.text-justify.leading-relaxed {
+    contain: layout style;
+    will-change: auto;
+  }
+}
+
+/* Optimisation CLS - Réserver l'espace pour les composants critiques */
+.topbar-placeholder {
+  min-height: 60px;
+  contain: layout;
+}
+
+.footer-placeholder {
+  min-height: 56px;
+  contain: layout;
+}
+
+/* Utiliser content-visibility pour optimiser le rendu */
+.cv-section {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+/* Optimisations pour les éléments fixes (éviter CLS) */
+button[class*="fixed"] {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Empêcher le CLS du main */
+main {
+  min-height: calc(100vh - 116px); /* 60px topbar + 56px footer */
+}
+
 @media print { @page{ size:A4; margin:12mm } .no-print{ display:none!important } .page{ break-inside:avoid } a[href]:after{ content:""!important } }
 
 /* Prevent iOS zoom on input focus */

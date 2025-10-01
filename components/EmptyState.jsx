@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Modal from "./ui/Modal";
@@ -367,10 +368,13 @@ export default function EmptyState() {
           >
             <div className="flex flex-col items-center text-center space-y-4">
               <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <img
+                <Image
                   src="/icons/import.png"
                   alt="Import"
+                  width={40}
+                  height={40}
                   className="w-10 h-10"
+                  priority
                 />
               </div>
               <div>
