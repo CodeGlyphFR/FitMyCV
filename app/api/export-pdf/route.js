@@ -4,6 +4,76 @@ import { promises as fs } from "fs";
 import path from "path";
 import { auth } from "@/lib/auth/session";
 import { readUserCvFile } from "@/lib/cv/storage";
+import frTranslations from "@/locales/fr.json";
+import enTranslations from "@/locales/en.json";
+
+const translations = {
+  fr: frTranslations,
+  en: enTranslations,
+};
+
+// Helper function to get translation
+function getTranslation(language, path) {
+  const keys = path.split(".");
+  let value = translations[language] || translations.fr;
+
+  for (const key of keys) {
+    if (value && typeof value === "object") {
+      value = value[key];
+    } else {
+      return path;
+    }
+  }
+
+  return value || path;
+}
+
+// Get section title with smart detection of default vs custom titles
+function getSectionTitle(sectionKey, customTitle, language) {
+  const t = (path) => getTranslation(language, path);
+
+  // Si pas de titre personnalisé, utiliser la traduction par défaut
+  if (!customTitle || !customTitle.trim()) {
+    return t(`cvSections.${sectionKey}`);
+  }
+
+  // Titres par défaut en français (avec variantes)
+  const defaultTitlesFr = {
+    header: ["En-tête"],
+    summary: ["Résumé"],
+    experience: ["Expérience"],
+    education: ["Formation", "Éducation"],
+    skills: ["Compétences"],
+    projects: ["Projets personnels", "Projets"],
+    languages: ["Langues"],
+    extras: ["Informations complémentaires", "Extras"]
+  };
+
+  // Titres par défaut en anglais
+  const defaultTitlesEn = {
+    header: ["Header"],
+    summary: ["Summary"],
+    experience: ["Experience"],
+    education: ["Education"],
+    skills: ["Skills"],
+    projects: ["Personal Projects", "Projects"],
+    languages: ["Languages"],
+    extras: ["Additional Information", "Extras"]
+  };
+
+  // Vérifier si le titre correspond à un titre par défaut (FR ou EN)
+  const trimmedTitle = customTitle.trim();
+  const isFrenchDefault = defaultTitlesFr[sectionKey] && defaultTitlesFr[sectionKey].includes(trimmedTitle);
+  const isEnglishDefault = defaultTitlesEn[sectionKey] && defaultTitlesEn[sectionKey].includes(trimmedTitle);
+
+  // Si c'est un titre par défaut, utiliser la traduction
+  if (isFrenchDefault || isEnglishDefault) {
+    return t(`cvSections.${sectionKey}`);
+  }
+
+  // Sinon, c'est un titre personnalisé, on le garde tel quel
+  return customTitle;
+}
 
 export async function POST(request) {
   console.log('[PDF Export] Request received'); // Log pour debug
@@ -16,6 +86,7 @@ export async function POST(request) {
 
     const requestData = await request.json();
     let filename = requestData.filename;
+    const language = requestData.language || 'fr';
 
     // Si filename est un objet, extraire le nom du fichier
     if (typeof filename === 'object' && filename !== null) {
@@ -65,7 +136,7 @@ export async function POST(request) {
     const page = await browser.newPage();
 
     // Générer le HTML du CV
-    const htmlContent = generateCvHtml(cvData);
+    const htmlContent = generateCvHtml(cvData, language);
 
     await page.setContent(htmlContent, {
       waitUntil: 'networkidle0',
@@ -119,7 +190,9 @@ export async function POST(request) {
   }
 }
 
-function generateCvHtml(cvData) {
+function generateCvHtml(cvData, language = 'fr') {
+  const t = (path) => getTranslation(language, path);
+
   const {
     header = {},
     summary = {},
@@ -150,11 +223,11 @@ function generateCvHtml(cvData) {
 
   return `
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="${language}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CV - ${header.full_name || 'Sans nom'}</title>
+  <title>CV - ${header.full_name || t('cvSections.header')}</title>
   <style>
     * {
       margin: 0;
@@ -529,13 +602,15 @@ function generateCvHtml(cvData) {
   <div class="cv-container">
     <!-- Header -->
     <header class="header">
-      <h1>${header.full_name || 'Sans nom'}</h1>
+      <h1>${header.full_name || ''}</h1>
       ${header.current_title ? `<div class="title">${header.current_title}</div>` : ''}
-      <div class="contact-info">
-        ${contact.email ? `<span class="contact-item">${contact.email}</span>` : ''}
-        ${contact.phone ? `<span class="contact-item">${formatPhone(contact.phone, contact.location)}</span>` : ''}
-        ${contact.location ? `<span class="contact-item">${formatLocation(contact.location)}</span>` : ''}
-      </div>
+      ${contact.email || contact.phone || contact.location ? `
+        <div class="contact-info">
+          ${contact.email ? `<span class="contact-item">${contact.email}</span>` : ''}
+          ${contact.phone ? `<span class="contact-item">${formatPhone(contact.phone, contact.location)}</span>` : ''}
+          ${contact.location ? `<span class="contact-item">${formatLocation(contact.location)}</span>` : ''}
+        </div>
+      ` : ''}
       ${contact.links && contact.links.length > 0 ? `
         <div class="contact-links">
           ${contact.links.map(link => `<a href="${link.url}" target="_blank">${link.label || link.url}</a>`).join('')}
@@ -544,9 +619,9 @@ function generateCvHtml(cvData) {
     </header>
 
     <!-- Summary -->
-    ${summary.description ? `
+    ${summary.description && summary.description.trim() ? `
       <section class="section">
-        <h2 class="section-title">${section_titles.summary || 'Résumé'}</h2>
+        <h2 class="section-title">${getSectionTitle('summary', section_titles.summary, language)}</h2>
         <div class="summary-content">${summary.description}</div>
       </section>
     ` : ''}
@@ -554,40 +629,40 @@ function generateCvHtml(cvData) {
     <!-- Skills -->
     ${Object.values(skills).some(skillArray => Array.isArray(skillArray) && skillArray.length > 0) ? `
       <section class="section">
-        <h2 class="section-title">${section_titles.skills || 'Compétences'}</h2>
+        <h2 class="section-title">${getSectionTitle('skills', section_titles.skills, language)}</h2>
         <div class="skills-grid">
-          ${skills.hard_skills && skills.hard_skills.length > 0 ? `
+          ${skills.hard_skills && skills.hard_skills.filter(skill => skill.name && skill.proficiency).length > 0 ? `
             <div class="skill-category">
-              <h3>Compétences techniques</h3>
+              <h3>${t('cvSections.hardSkills')}</h3>
               <div class="skill-list">
-                ${skills.hard_skills.map(skill => `${skill.name}${skill.proficiency ? ` (${skill.proficiency})` : ''}`).join(', ')}
+                ${skills.hard_skills.filter(skill => skill.name && skill.proficiency).map(skill => `${skill.name} (${skill.proficiency})`).join(', ')}
               </div>
             </div>
           ` : ''}
 
-          ${skills.tools && skills.tools.length > 0 ? `
+          ${skills.tools && skills.tools.filter(tool => tool.name && tool.proficiency).length > 0 ? `
             <div class="skill-category">
-              <h3>Outils & Technologies</h3>
+              <h3>${t('cvSections.tools')}</h3>
               <div class="skill-list">
-                ${skills.tools.map(tool => `${tool.name}${tool.proficiency ? ` (${tool.proficiency})` : ''}`).join(', ')}
+                ${skills.tools.filter(tool => tool.name && tool.proficiency).map(tool => `${tool.name} (${tool.proficiency})`).join(', ')}
               </div>
             </div>
           ` : ''}
 
-          ${skills.soft_skills && skills.soft_skills.length > 0 ? `
+          ${skills.soft_skills && skills.soft_skills.filter(s => s && s.trim()).length > 0 ? `
             <div class="skill-category">
-              <h3>Compétences relationnelles</h3>
+              <h3>${t('cvSections.softSkills')}</h3>
               <div class="skill-list">
-                ${skills.soft_skills.join(', ')}
+                ${skills.soft_skills.filter(s => s && s.trim()).join(', ')}
               </div>
             </div>
           ` : ''}
 
-          ${skills.methodologies && skills.methodologies.length > 0 ? `
+          ${skills.methodologies && skills.methodologies.filter(m => m && m.trim()).length > 0 ? `
             <div class="skill-category">
-              <h3>Méthodologies</h3>
+              <h3>${t('cvSections.methodologies')}</h3>
               <div class="skill-list">
-                ${skills.methodologies.join(', ')}
+                ${skills.methodologies.filter(m => m && m.trim()).join(', ')}
               </div>
             </div>
           ` : ''}
@@ -598,24 +673,24 @@ function generateCvHtml(cvData) {
     <!-- Experience -->
     ${experience && experience.length > 0 ? `
       <section class="section">
-        <h2 class="section-title">${section_titles.experience || 'Expérience'}</h2>
+        <h2 class="section-title">${getSectionTitle('experience', section_titles.experience, language)}</h2>
         ${experience.map((exp, index) => `
           <div class="experience-item">
             <div class="experience-header">
               <div>
-                <div class="experience-title">${exp.title || ''}</div>
-                <div class="experience-company">${exp.company || ''}${exp.department_or_client ? ` (${exp.department_or_client})` : ''}</div>
+                ${exp.title ? `<div class="experience-title">${exp.title}</div>` : ''}
+                ${exp.company ? `<div class="experience-company">${exp.company}${exp.department_or_client ? ` (${exp.department_or_client})` : ''}</div>` : ''}
               </div>
-              <div class="experience-dates">${formatDate(exp.start_date)} – ${formatDate(exp.end_date)}</div>
+              ${exp.start_date || exp.end_date ? `<div class="experience-dates">${formatDate(exp.start_date, language)} – ${formatDate(exp.end_date, language)}</div>` : ''}
             </div>
             ${exp.location ? `<div class="experience-location">${formatLocation(exp.location)}</div>` : ''}
-            ${exp.description ? `<div class="experience-description">${exp.description}</div>` : ''}
+            ${exp.description && exp.description.trim() ? `<div class="experience-description">${exp.description}</div>` : ''}
 
             ${(exp.responsibilities && exp.responsibilities.length > 0) || (exp.deliverables && exp.deliverables.length > 0) ? `
               <div class="experience-lists">
                 ${exp.responsibilities && exp.responsibilities.length > 0 ? `
                   <div class="responsibilities">
-                    <h4>Responsabilités</h4>
+                    <h4>${t('cvSections.responsibilities')}</h4>
                     <ul>
                       ${exp.responsibilities.map(resp => `<li>${resp}</li>`).join('')}
                     </ul>
@@ -624,7 +699,7 @@ function generateCvHtml(cvData) {
 
                 ${exp.deliverables && exp.deliverables.length > 0 ? `
                   <div class="deliverables">
-                    <h4>Livrables</h4>
+                    <h4>${t('cvSections.deliverables')}</h4>
                     <ul>
                       ${exp.deliverables.map(deliv => `<li>${deliv}</li>`).join('')}
                     </ul>
@@ -635,7 +710,7 @@ function generateCvHtml(cvData) {
 
             ${exp.skills_used && exp.skills_used.length > 0 ? `
               <div class="skills-used">
-                <strong>Technologies:</strong> ${exp.skills_used.join(', ')}
+                <strong>${t('cvSections.technologies')}:</strong> ${exp.skills_used.join(', ')}
               </div>
             ` : ''}
           </div>
@@ -646,15 +721,15 @@ function generateCvHtml(cvData) {
     <!-- Education -->
     ${education && education.length > 0 ? `
       <section class="section">
-        <h2 class="section-title">${section_titles.education || 'Éducation'}</h2>
+        <h2 class="section-title">${getSectionTitle('education', section_titles.education, language)}</h2>
         ${education.map(edu => `
           <div class="education-item">
             <div class="education-header">
               <div>
-                <div class="education-institution">${edu.institution || ''}</div>
-                <div class="education-degree">${edu.degree || ''}${edu.field_of_study ? ` • ${edu.field_of_study}` : ''}</div>
+                ${edu.institution ? `<div class="education-institution">${edu.institution}</div>` : ''}
+                ${edu.degree || edu.field_of_study ? `<div class="education-degree">${edu.degree || ''}${edu.degree && edu.field_of_study ? ' • ' : ''}${edu.field_of_study || ''}</div>` : ''}
               </div>
-              <div class="education-dates">${edu.start_date && edu.start_date !== edu.end_date ? `${formatDate(edu.start_date)} – ` : ''}${formatDate(edu.end_date)}</div>
+              ${edu.start_date || edu.end_date ? `<div class="education-dates">${edu.start_date && edu.start_date !== edu.end_date ? `${formatDate(edu.start_date, language)} – ` : ''}${formatDate(edu.end_date, language)}</div>` : ''}
             </div>
           </div>
         `).join('')}
@@ -662,13 +737,13 @@ function generateCvHtml(cvData) {
     ` : ''}
 
     <!-- Languages -->
-    ${languages && languages.length > 0 ? `
+    ${languages && languages.filter(lang => lang.name && lang.level).length > 0 ? `
       <section class="section">
-        <h2 class="section-title">${section_titles.languages || 'Langues'}</h2>
+        <h2 class="section-title">${getSectionTitle('languages', section_titles.languages, language)}</h2>
         <div class="languages-grid">
-          ${languages.map(lang => `
+          ${languages.filter(lang => lang.name && lang.level).map(lang => `
             <div class="language-item">
-              <strong>${lang.name || ''}:</strong> ${lang.level || ''}
+              <strong>${lang.name}:</strong> ${lang.level}
             </div>
           `).join('')}
         </div>
@@ -678,22 +753,22 @@ function generateCvHtml(cvData) {
     <!-- Projects -->
     ${projects && projects.length > 0 ? `
       <section class="section">
-        <h2 class="section-title">${section_titles.projects || 'Projets'}</h2>
+        <h2 class="section-title">${getSectionTitle('projects', section_titles.projects, language)}</h2>
         ${projects.map(project => `
           <div class="project-item">
             <div class="project-header">
               <div>
-                <div class="project-name">${project.name || ''}</div>
+                ${project.name ? `<div class="project-name">${project.name}</div>` : ''}
                 ${project.role ? `<div class="project-role">${project.role}</div>` : ''}
               </div>
               ${project.start_date || project.end_date ? `
-                <div class="project-dates">${formatDate(project.start_date)}${project.end_date ? ` – ${formatDate(project.end_date)}` : ''}</div>
+                <div class="project-dates">${formatDate(project.start_date, language)}${project.end_date ? ` – ${formatDate(project.end_date, language)}` : ''}</div>
               ` : ''}
             </div>
-            ${project.summary ? `<div class="project-summary">${project.summary}</div>` : ''}
+            ${project.summary && project.summary.trim() ? `<div class="project-summary">${project.summary}</div>` : ''}
             ${project.tech_stack && project.tech_stack.length > 0 ? `
               <div class="skills-used">
-                <strong>Technologies:</strong> ${project.tech_stack.join(', ')}
+                <strong>${t('cvSections.technologies')}:</strong> ${project.tech_stack.join(', ')}
               </div>
             ` : ''}
           </div>
@@ -702,13 +777,13 @@ function generateCvHtml(cvData) {
     ` : ''}
 
     <!-- Extras -->
-    ${extras && extras.length > 0 ? `
+    ${extras && extras.filter(extra => extra.name && extra.summary).length > 0 ? `
       <section class="section">
-        <h2 class="section-title">${section_titles.extras || 'Informations complémentaires'}</h2>
+        <h2 class="section-title">${getSectionTitle('extras', section_titles.extras, language)}</h2>
         <div class="extras-grid">
-          ${extras.map(extra => `
+          ${extras.filter(extra => extra.name && extra.summary).map(extra => `
             <div class="extra-item">
-              <strong>${extra.name || ''}:</strong> ${extra.summary || ''}
+              <strong>${extra.name}:</strong> ${extra.summary}
             </div>
           `).join('')}
         </div>
@@ -720,10 +795,10 @@ function generateCvHtml(cvData) {
   `;
 }
 
-function formatDate(dateStr) {
+function formatDate(dateStr, language = 'fr') {
   if (!dateStr) return "";
   if (dateStr.toLowerCase() === "present") {
-    return "présent";
+    return getTranslation(language, "cvSections.present");
   }
 
   // Format YYYY-MM to MM/YYYY or YYYY only

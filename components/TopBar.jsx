@@ -898,6 +898,7 @@ export default function TopBar() {
         },
         body: JSON.stringify({
           filename: currentItem,
+          language: language,
         }),
       });
 
