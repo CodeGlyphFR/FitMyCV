@@ -4,6 +4,7 @@ import ConditionalTopBar from "@/components/ConditionalTopBar";
 import Footer from "@/components/Footer";
 import CookieBanner from "@/components/cookies/CookieBanner";
 import RootProviders from "@/components/RootProviders";
+import LoadingOverlay from "@/components/LoadingOverlay";
 import { auth } from "@/lib/auth/session";
 import { SITE_TITLE } from "@/lib/site";
 
@@ -34,11 +35,6 @@ export default async function RootLayout(props){
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
           }
           /* Réserver l'espace pour éviter CLS */
-          .topbar-placeholder {
-            height: auto;
-            min-height: 60px;
-            overflow: visible;
-          }
           .footer-placeholder {
             height: 56px;
             min-height: 56px;
@@ -62,10 +58,9 @@ export default async function RootLayout(props){
       </head>
       <body className="min-h-screen antialiased flex flex-col">
         <RootProviders session={session}>
-          {/* Réservation d'espace pour TopBar pour éviter CLS */}
-          <div className="topbar-placeholder">
-            <ConditionalTopBar />
-          </div>
+          <LoadingOverlay />
+          {/* TopBar sans wrapper pour éviter l'espace vide */}
+          <ConditionalTopBar />
           <main className="flex-grow mb-0">
             {props.children}
           </main>

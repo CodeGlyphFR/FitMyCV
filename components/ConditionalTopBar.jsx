@@ -8,7 +8,7 @@ export default function ConditionalTopBar() {
 
   // Ne pas afficher la TopBar sur la page de login
   if (pathname === "/auth") {
-    return null;
+    return <></>;
   }
 
   return <TopBar />;
