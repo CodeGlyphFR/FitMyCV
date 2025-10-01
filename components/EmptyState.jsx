@@ -218,7 +218,7 @@ export default function EmptyState() {
   // Show importing state
   if (isImporting) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-white">
+      <div className="min-h-screen flex items-start justify-center p-4 pt-16 bg-white">
         <div className="max-w-xl w-full">
           <div className="bg-white rounded-2xl shadow-2xl p-8 border-2 border-blue-100">
             <div className="text-center mb-8">
