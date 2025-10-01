@@ -48,7 +48,7 @@ export default function LanguageSwitcher() {
   return (
     <div
       ref={containerRef}
-      className="fixed bottom-6 left-6 z-50 no-print"
+      className="fixed bottom-6 left-6 z-40 no-print"
       style={{
         // Prevent printing
         '@media print': {

@@ -339,7 +339,9 @@ export default function TopBar() {
   const [dropdownRect, setDropdownRect] = React.useState(null);
   const [portalReady, setPortalReady] = React.useState(false);
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
+  const [userMenuRect, setUserMenuRect] = React.useState(null);
   const userMenuRef = React.useRef(null);
+  const userMenuButtonRef = React.useRef(null);
 
   const [linkInputs, setLinkInputs] = React.useState([""]);
   const [fileSelection, setFileSelection] = React.useState([]);
@@ -624,10 +626,17 @@ export default function TopBar() {
   }, [listOpen, items, current]);
 
   React.useEffect(() => {
+    if (userMenuOpen && userMenuButtonRef.current) {
+      setUserMenuRect(userMenuButtonRef.current.getBoundingClientRect());
+    }
+  }, [userMenuOpen]);
+
+  React.useEffect(() => {
     function handleClick(event) {
+      const buttonEl = userMenuButtonRef.current;
       const menuEl = userMenuRef.current;
-      if (!menuEl) return;
-      if (menuEl.contains(event.target)) return;
+      if (buttonEl && buttonEl.contains(event.target)) return;
+      if (menuEl && menuEl.contains(event.target)) return;
       setUserMenuOpen(false);
     }
 
@@ -1072,9 +1081,14 @@ export default function TopBar() {
     setNewCvBusy(false);
   }
 
+  // Ne rien afficher sur la page de login
+  if (pathname === "/auth") {
+    return null;
+  }
+
   if (status === "loading") {
     return (
-      <div className="no-print sticky top-0 inset-x-0 z-40 w-full bg-white/80 backdrop-blur border-b min-h-[60px]">
+      <div className="no-print sticky top-0 inset-x-0 z-[100] w-full bg-white/80 backdrop-blur border-b min-h-[60px]">
         <div className="w-full p-3 flex items-center justify-between">
           <span className="text-sm font-medium">{t("topbar.loading")}</span>
         </div>
@@ -1095,12 +1109,13 @@ export default function TopBar() {
     <>
       <div
         ref={barRef}
-        className="no-print sticky top-0 inset-x-0 z-40 w-full bg-white/80 backdrop-blur border-b min-h-[60px]"
+        className="no-print sticky top-0 inset-x-0 z-[100] w-full bg-white/80 backdrop-blur border-b min-h-[60px]"
       >
         <div className="w-full p-3 flex flex-wrap items-center gap-x-2 gap-y-1 sm:gap-3">
         {/* User Icon */}
-        <div className="relative order-1 md:order-1" ref={userMenuRef}>
+        <div className="relative order-1 md:order-1">
           <button
+            ref={userMenuButtonRef}
             type="button"
             onClick={() => setUserMenuOpen((prev) => !prev)}
             className="h-8 w-8 flex items-center justify-center rounded-full border hover:shadow bg-white"
@@ -1114,40 +1129,6 @@ export default function TopBar() {
               className="object-contain"
             />
           </button>
-          {userMenuOpen ? (
-            <div className="absolute left-0 mt-2 rounded-lg border bg-white shadow-lg p-2 text-sm space-y-1 min-w-[10rem] max-w-[16rem]">
-              <div className="px-2 py-1 text-xs uppercase text-neutral-500 truncate">
-                {session?.user?.name || t("topbar.user")}
-              </div>
-              <button
-                className="w-full text-left rounded px-2 py-1 hover:bg-neutral-100"
-                onClick={() => {
-                  setUserMenuOpen(false);
-                  router.push("/");
-                }}
-              >
-                {t("topbar.myCvs")}
-              </button>
-              <button
-                className="w-full text-left rounded px-2 py-1 hover:bg-neutral-100"
-                onClick={() => {
-                  setUserMenuOpen(false);
-                  router.push("/account");
-                }}
-              >
-                {t("topbar.myAccount")}
-              </button>
-              <button
-                className="w-full text-left rounded px-2 py-1 hover:bg-neutral-100"
-                onClick={() => {
-                  setUserMenuOpen(false);
-                  signOut({ callbackUrl: logoutTarget });
-                }}
-              >
-                {t("topbar.logout")}
-              </button>
-            </div>
-          ) : null}
         </div>
         {/* CV Selector */}
         <div className="flex-1 min-w-[120px] md:min-w-[200px] order-3 md:order-2">
@@ -1225,6 +1206,52 @@ export default function TopBar() {
                     </li>
                   ))}
                 </ul>
+              </div>,
+              document.body,
+            )
+          : null}
+        {userMenuOpen && portalReady && userMenuRect
+          ? createPortal(
+              <div
+                ref={userMenuRef}
+                style={{
+                  position: "fixed",
+                  top: userMenuRect.bottom + 8,
+                  left: userMenuRect.left,
+                  zIndex: 1000,
+                }}
+                className="rounded-lg border bg-white shadow-lg p-2 text-sm space-y-1 min-w-[10rem] max-w-[16rem]"
+              >
+                <div className="px-2 py-1 text-xs uppercase text-neutral-500 truncate">
+                  {session?.user?.name || t("topbar.user")}
+                </div>
+                <button
+                  className="w-full text-left rounded px-2 py-1 hover:bg-neutral-100"
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    router.push("/");
+                  }}
+                >
+                  {t("topbar.myCvs")}
+                </button>
+                <button
+                  className="w-full text-left rounded px-2 py-1 hover:bg-neutral-100"
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    router.push("/account");
+                  }}
+                >
+                  {t("topbar.myAccount")}
+                </button>
+                <button
+                  className="w-full text-left rounded px-2 py-1 hover:bg-neutral-100"
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    signOut({ callbackUrl: logoutTarget });
+                  }}
+                >
+                  {t("topbar.logout")}
+                </button>
               </div>,
               document.body,
             )
