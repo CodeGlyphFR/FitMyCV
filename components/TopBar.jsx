@@ -343,7 +343,7 @@ export default function TopBar() {
   const { setCurrentFile } = useAdmin();
   const { data: session, status } = useSession();
   const isAuthenticated = !!session?.user?.id;
-  const { localDeviceId, refreshTasks } = useBackgroundTasks();
+  const { localDeviceId, refreshTasks, addOptimisticTask, removeOptimisticTask } = useBackgroundTasks();
   const { addNotification } = useNotifications();
 
   const [items, setItems] = React.useState([]);
@@ -457,7 +457,7 @@ export default function TopBar() {
   }, []);
   const [logoutTarget, setLogoutTarget] = React.useState(defaultLogout);
 
-  async function reload(preferredCurrent) {
+  const reload = React.useCallback(async (preferredCurrent) => {
     if (!isAuthenticated) {
       setItems([]);
       setCurrent("");
@@ -516,12 +516,12 @@ export default function TopBar() {
       console.error(error);
       setItems([]);
     }
-  }
+  }, [isAuthenticated, setCurrentFile]);
 
   React.useEffect(() => {
     if (!isAuthenticated) return;
     reload();
-  }, [isAuthenticated, pathname, searchParams?.toString()]);
+  }, [isAuthenticated, pathname, searchParams?.toString(), reload]);
 
   // Listen for import event from EmptyState
   React.useEffect(() => {
@@ -557,7 +557,7 @@ export default function TopBar() {
       window.removeEventListener("cv:list:changed", onChanged);
       window.removeEventListener("focus", onChanged);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, reload]);
 
   async function selectFile(file) {
     // Clear the cached reference to avoid stale data
@@ -835,6 +835,25 @@ export default function TopBar() {
     if (!pdfFile) return;
 
     const selectedPdfAnalysis = currentPdfAnalysisOption;
+    const fileName = pdfFile.name;
+
+    // Créer la tâche optimiste immédiatement
+    const optimisticTaskId = addOptimisticTask({
+      type: 'import-pdf',
+      label: `Import '${fileName}'`,
+      metadata: { fileName, analysisLevel: selectedPdfAnalysis.id },
+      shouldUpdateCvList: true,
+    });
+
+    // Fermer le modal et notifier immédiatement
+    addNotification({
+      type: "info",
+      message: `Import '${fileName}' planifié`,
+      duration: 2500,
+    });
+    closePdfImport();
+
+    // Envoyer la requête en arrière-plan
     try {
       const formData = new FormData();
       formData.append("pdfFile", pdfFile);
@@ -854,16 +873,13 @@ export default function TopBar() {
         throw new Error(data?.error || "Impossible de mettre la tâche en file.");
       }
 
-      addNotification({
-        type: "info",
-        message: `Import '${pdfFile.name}' planifié`,
-        duration: 2500,
-      });
-
-      closePdfImport();
+      // Succès : supprimer la tâche optimiste et rafraîchir
+      removeOptimisticTask(optimisticTaskId);
       await refreshTasks();
     } catch (error) {
       console.error("Impossible de planifier l'import", error);
+      // Échec : supprimer la tâche optimiste et notifier
+      removeOptimisticTask(optimisticTaskId);
       addNotification({
         type: "error",
         message: error?.message || "Erreur lors de la planification de l'import",
@@ -937,10 +953,30 @@ export default function TopBar() {
     }
 
     const selectedAnalysis = currentAnalysisOption;
-
-    // Get the base CV name for the message
     const baseCvName = generatorBaseItem?.displayTitle || generatorBaseItem?.title || generatorBaseFile;
 
+    // Créer la tâche optimiste immédiatement
+    const optimisticTaskId = addOptimisticTask({
+      type: 'generate-cv',
+      label: `Adaptation du CV '${baseCvName}'`,
+      metadata: {
+        baseFile: generatorBaseFile,
+        analysisLevel: selectedAnalysis.id,
+        linksCount: cleanedLinks.length,
+        filesCount: (fileSelection || []).length,
+      },
+      shouldUpdateCvList: true,
+    });
+
+    // Fermer le modal et notifier immédiatement
+    addNotification({
+      type: "info",
+      message: `Adaptation du CV '${baseCvName}' planifié`,
+      duration: 2500,
+    });
+    closeGenerator();
+
+    // Envoyer la requête en arrière-plan
     try {
       const formData = new FormData();
       formData.append("links", JSON.stringify(cleanedLinks));
@@ -966,16 +1002,13 @@ export default function TopBar() {
         throw new Error(data?.error || "Impossible de mettre la tâche en file.");
       }
 
-      addNotification({
-        type: "info",
-        message: `Adaptation du CV '${baseCvName}' planifié`,
-        duration: 2500,
-      });
-
-      closeGenerator();
+      // Succès : supprimer la tâche optimiste et rafraîchir
+      removeOptimisticTask(optimisticTaskId);
       await refreshTasks();
     } catch (error) {
       console.error("Impossible de planifier la génération de CV", error);
+      // Échec : supprimer la tâche optimiste et notifier
+      removeOptimisticTask(optimisticTaskId);
       addNotification({
         type: "error",
         message: error?.message || "Erreur lors de la planification de la génération",

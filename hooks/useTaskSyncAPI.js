@@ -41,19 +41,24 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
           : (task.updatedAt ? new Date(task.updatedAt).getTime?.() ?? Date.now() : Date.now()),
       }))
       .sort((a, b) => {
-        if (a.status === b.status) {
-          return b.createdAt - a.createdAt
-        }
+        // Priorité 1 : Trier par statut (running en premier, tout le reste pareil)
         const STATUS_PRIORITY = {
           running: 0,
           queued: 1,
-          cancelled: 2,
-          failed: 2,
-          completed: 3,
+          cancelled: 1,
+          failed: 1,
+          completed: 1,
         }
         const priorityA = STATUS_PRIORITY[a.status] ?? 99
         const priorityB = STATUS_PRIORITY[b.status] ?? 99
-        return priorityA - priorityB
+        const priorityDiff = priorityA - priorityB
+
+        if (priorityDiff !== 0) {
+          return priorityDiff
+        }
+
+        // Priorité 2 : Trier par date (plus récent en premier)
+        return b.createdAt - a.createdAt
       })
   }, [])
 
@@ -90,11 +95,16 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
 
       lastSyncType.current = result.syncType || 'full'
       const tasksFromServer = normaliseTasks(result.tasks)
-      setTasks(tasksFromServer)
+
+      // Préserver les tâches optimistes lors du merge
+      setTasks(prevTasks => {
+        const optimisticTasks = prevTasks.filter(task => task.isOptimistic)
+        return [...optimisticTasks, ...tasksFromServer]
+      })
     } catch (error) {
       console.warn('Failed to load tasks from server:', error)
     }
-  }, [enabled, getDeviceId, isAuthenticated, normaliseTasks, setTasks, status])
+  }, [enabled, getDeviceId, isAuthenticated, normaliseTasks, status])
 
   useEffect(() => {
     if (!enabled) {

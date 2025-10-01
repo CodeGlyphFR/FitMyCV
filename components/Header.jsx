@@ -28,7 +28,13 @@ export default function Header(props){
     Array.isArray(links) ? links.map(l => ({ label: l.label || "", url: l.url || "" })) : []
   );
 
+  const headerKeyRef = React.useRef("");
+  const currentHeaderKey = JSON.stringify(header);
+
   React.useEffect(()=>{
+    if (headerKeyRef.current === currentHeaderKey) return;
+    headerKeyRef.current = currentHeaderKey;
+
     setF({
       full_name: header.full_name || "",
       current_title: header.current_title || "",
@@ -42,7 +48,7 @@ export default function Header(props){
       ? header.contact.links.map(l => ({ label: l.label || "", url: l.url || "" }))
       : []
     );
-  }, [header]);
+  });
 
   React.useEffect(() => {
     fetch("/api/cv/source")

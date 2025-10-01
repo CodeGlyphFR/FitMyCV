@@ -67,6 +67,24 @@ export default function BackgroundTasksProvider({ children }) {
     addNotification({ type: "error", message, duration: 4000 });
   }, [tasks, deleteCompletedTasksOnServer, addNotification, refreshTasks]);
 
+  const addOptimisticTask = useCallback((taskData) => {
+    const optimisticTask = {
+      id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      status: 'queued',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      isOptimistic: true,
+      ...taskData,
+    };
+
+    setTasks(prev => [optimisticTask, ...prev]);
+    return optimisticTask.id;
+  }, []);
+
+  const removeOptimisticTask = useCallback((taskId) => {
+    setTasks(prev => prev.filter(task => task.id !== taskId));
+  }, []);
+
   const value = useMemo(() => ({
     tasks,
     runningTasks: tasks.filter(task => task.status === 'running'),
@@ -75,7 +93,9 @@ export default function BackgroundTasksProvider({ children }) {
     clearCompletedTasks,
     refreshTasks,
     localDeviceId,
-  }), [tasks, isApiSyncEnabled, cancelTask, clearCompletedTasks, refreshTasks, localDeviceId]);
+    addOptimisticTask,
+    removeOptimisticTask,
+  }), [tasks, isApiSyncEnabled, cancelTask, clearCompletedTasks, refreshTasks, localDeviceId, addOptimisticTask, removeOptimisticTask]);
 
   useEffect(() => {
     if (!isAuthenticated) {
