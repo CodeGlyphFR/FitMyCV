@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import Header from "@/components/Header";
 import Summary from "@/components/Summary";
 import Skills from "@/components/Skills";
@@ -84,15 +84,15 @@ export default async function Page(){
   const order = base;
 
   return (
-    <main className="max-w-4xl mx-auto p-4">
+    <main className="max-w-4xl mx-auto p-4 min-h-[calc(100vh-116px)]">
 
       {order.map(k => (
-        <div key={k}>{sections[k]}</div>
+        <div key={k} className="cv-section">{sections[k]}</div>
       ))}
 
-      <footer className="no-print mt-8 text-xs opacity-60 text-center">
+      <div className="no-print mt-8 text-xs opacity-60 text-center">
         Next.js (JS) • Erick DE SMET • 2025
-      </footer>
+      </div>
     </main>
   );
 }
