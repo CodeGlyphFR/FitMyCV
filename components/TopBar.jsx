@@ -1143,12 +1143,12 @@ export default function TopBar() {
   }
 
   if (!isAuthenticated) {
-    return <div className="min-h-[60px]" />;
+    return null;
   }
 
   // Hide TopBar if no CVs exist
   if (items.length === 0) {
-    return <div className="min-h-[60px]" />;
+    return null;
   }
 
   return (

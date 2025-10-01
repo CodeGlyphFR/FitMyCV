@@ -1,9 +1,10 @@
 "use client";
 import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 import packageInfo from '../package.json';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 
-export default function Footer() {
+export default function Footer({ showLogout = false }) {
   const { t } = useLanguage();
 
   return (
@@ -17,6 +18,17 @@ export default function Footer() {
         >
           {t("footer.cookieManagement")}
         </Link>
+        {showLogout && (
+          <>
+            <span className="hidden sm:inline">•</span>
+            <button
+              onClick={() => signOut({ callbackUrl: '/auth' })}
+              className="hover:text-gray-700 dark:hover:text-gray-300 underline transition-colors"
+            >
+              {t("topbar.logout")}
+            </button>
+          </>
+        )}
       </div>
     </footer>
   );

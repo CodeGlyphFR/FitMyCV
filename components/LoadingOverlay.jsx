@@ -20,6 +20,14 @@ export default function LoadingOverlay() {
     const checkTopBarReady = () => {
       attempts++;
 
+      // Vérifier si on est dans l'EmptyState (pas de CVs)
+      // Si oui, masquer immédiatement le loading
+      const emptyStateTitle = document.querySelector('h1.text-4xl.font-bold.text-slate-800');
+      if (emptyStateTitle) {
+        setIsLoading(false);
+        return;
+      }
+
       // Vérifier si la TopBar est présente ET visible avec son contenu
       const topBar = document.querySelector('.sticky.top-0');
 
