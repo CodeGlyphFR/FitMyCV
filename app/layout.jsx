@@ -35,9 +35,8 @@ export default async function RootLayout(props){
           }
           /* Réserver l'espace pour éviter CLS */
           .topbar-placeholder {
-            height: 60px;
+            height: auto;
             min-height: 60px;
-            max-height: 60px;
             overflow: visible;
           }
           .footer-placeholder {
@@ -64,7 +63,7 @@ export default async function RootLayout(props){
       <body className="min-h-screen antialiased flex flex-col">
         <RootProviders session={session}>
           {/* Réservation d'espace pour TopBar pour éviter CLS */}
-          <div className="topbar-placeholder h-[60px]">
+          <div className="topbar-placeholder">
             <ConditionalTopBar />
           </div>
           <main className="flex-grow mb-0">
