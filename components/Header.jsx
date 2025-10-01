@@ -50,8 +50,8 @@ export default function Header(props){
     );
   });
 
-  React.useEffect(() => {
-    fetch("/api/cv/source")
+  const fetchSourceInfo = React.useCallback(() => {
+    fetch("/api/cv/source", { cache: "no-store" })
       .then(res => {
         if (!res.ok) {
           return { sourceType: null, sourceValue: null };
@@ -62,7 +62,21 @@ export default function Header(props){
         setSourceInfo({ sourceType: data.sourceType, sourceValue: data.sourceValue });
       })
       .catch(err => console.error("Failed to fetch source info:", err));
-  }, []); // Fetch seulement au montage du composant
+  }, []);
+
+  React.useEffect(() => {
+    fetchSourceInfo();
+  }, [fetchSourceInfo]); // Fetch au montage
+
+  React.useEffect(() => {
+    // Écouter les changements de CV sélectionné
+    const handleCvSelected = () => {
+      fetchSourceInfo();
+    };
+
+    window.addEventListener("cv:selected", handleCvSelected);
+    return () => window.removeEventListener("cv:selected", handleCvSelected);
+  }, [fetchSourceInfo]);
 
   // Si le CV est vide (pas de header), ne pas afficher le composant
   const isEmpty = !header.full_name && !header.current_title && !header.contact?.email;
