@@ -43,16 +43,7 @@ export default async function RootLayout(props){
           }
           /* Stabiliser le main pour éviter CLS */
           main {
-            min-height: calc(100vh - 116px);
-          }
-          /* Optimiser le LCP element */
-          p.text-sm.text-justify {
-            contain: layout;
-          }
-          /* Éléments fixes sur leur propre couche GPU */
-          button[class*="fixed"] {
-            transform: translateZ(0);
-            backface-visibility: hidden;
+            min-height: calc(100vh - 56px);
           }
         `}} />
       </head>

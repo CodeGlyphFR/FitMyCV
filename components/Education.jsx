@@ -107,7 +107,7 @@ export default function Education(props){
                 </div>
 
                 {editing && (
-                  <div className="no-print absolute top-2 right-2 z-20 flex gap-2 bg-white/90 backdrop-blur-sm rounded shadow px-2 py-1">
+                  <div className="no-print absolute top-2 right-2 z-20 flex gap-2 bg-white rounded shadow px-2 py-1">
                     <button onClick={() => openEdit(i)} className="text-[11px] px-2 py-0.5">🖊️</button>
                     <button onClick={() => setDelIndex(i)} className="text-[11px]">❌</button>
                   </div>

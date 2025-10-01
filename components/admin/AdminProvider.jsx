@@ -88,7 +88,7 @@ export default function AdminProvider(props){
       {session?.user?.id && pathname !== "/admin/new" && hasAnyCv ? (
         <button
           onClick={()=>setEditing(!editing)}
-          className="fixed bottom-6 right-6 z-40 rounded-full px-4 py-2 shadow border bg-white text-sm hover:shadow-md no-print"
+          className="fixed bottom-6 right-6 z-20 rounded-full px-4 py-2 shadow border bg-white text-sm hover:shadow-md no-print"
           style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
         >
           {editing ? t("editMode.on") : t("editMode.off")}

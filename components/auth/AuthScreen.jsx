@@ -115,7 +115,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
   }
 
   return (
-    <div className="relative min-h-screen min-h-[100dvh] w-full overflow-hidden bg-slate-950 flex items-start justify-center p-6 pt-16 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div className="relative min-h-screen min-h-[100dvh] w-full overflow-hidden bg-slate-950 flex items-start justify-center p-6 pt-12 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-32 -left-40 h-80 w-80 rounded-full bg-gradient-to-br from-emerald-400/90 via-sky-500/70 to-transparent blur-2xl animate-auth-blob-fast"/>
         <div className="absolute top-[20%] right-[-140px] h-96 w-96 rounded-full bg-gradient-to-br from-sky-500/70 via-emerald-400/50 to-transparent blur-3xl animate-auth-blob animation-delay-1500"/>
@@ -124,7 +124,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(126,207,244,0.25),_transparent_65%)]"/>
       </div>
 
-      <div className="relative z-10 w-full max-w-lg rounded-3xl border border-white/10 bg-white shadow-2xl p-6 space-y-6">
+      <div className="relative z-10 w-full max-w-lg rounded-3xl border border-white/10 bg-white shadow-2xl p-6 space-y-6 mt-12">
         <div className="space-y-1 text-aligned">
           <h1 className="text-2xl font-semibold text-center">
             {isRegister ? t("auth.title") : t("auth.siteTitle")}

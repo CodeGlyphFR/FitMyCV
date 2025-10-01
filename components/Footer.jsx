@@ -7,7 +7,7 @@ export default function Footer() {
   const { t } = useLanguage();
 
   return (
-    <footer className="w-full text-center text-gray-500 text-sm py-4 h-[56px] flex items-center justify-center">
+    <footer className="w-full text-center text-gray-500 text-sm pt-4 pb-8 min-h-[56px] flex items-center justify-center">
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         <span>Version {packageInfo.version}</span>
         <span className="hidden sm:inline">•</span>

@@ -80,7 +80,7 @@ export default function SourceInfo({ sourceType, sourceValue }) {
   return (
     <div
       ref={containerRef}
-      className="no-print relative"
+      className="no-print relative z-10"
       onMouseEnter={() => !isMobile && setIsHovered(true)}
       onMouseLeave={() => !isMobile && setIsHovered(false)}
     >
@@ -96,7 +96,7 @@ export default function SourceInfo({ sourceType, sourceValue }) {
 
       {/* Tooltip animé */}
       <div
-        className={`absolute top-1/2 right-full mr-2 -translate-y-1/2 transition-all duration-300 ease-out origin-right ${
+        className={`absolute top-0 right-full mr-2 transition-all duration-300 ease-out origin-right z-10 ${
           isMobile ? "" : "pointer-events-none"
         } ${
           showTooltip
@@ -106,7 +106,7 @@ export default function SourceInfo({ sourceType, sourceValue }) {
       >
         <div className="bg-white border border-blue-200 rounded-lg shadow-xl px-3 py-2 min-w-[200px] max-w-[300px]">
           {/* Flèche pointant vers le bouton */}
-          <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-white border-r border-t border-blue-200 rotate-45"></div>
+          <div className="absolute top-2 -right-1.5 w-3 h-3 bg-white border-r border-t border-blue-200 rotate-45"></div>
 
           {/* Contenu */}
           <div className="relative z-10">

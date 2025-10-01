@@ -68,8 +68,13 @@ export default function LoadingOverlay() {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80 backdrop-blur-md transition-opacity duration-300"
-      style={{ opacity: isLoading ? 1 : 0 }}
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-white/80 backdrop-blur-md transition-opacity duration-300"
+      style={{
+        opacity: isLoading ? 1 : 0,
+        height: '100vh',
+        height: '100dvh',
+        paddingBottom: 'env(safe-area-inset-bottom)'
+      }}
     >
       <div className="flex flex-col items-center gap-4">
         {/* Loading spinner */}

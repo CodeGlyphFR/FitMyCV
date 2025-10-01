@@ -361,6 +361,8 @@ export default function TopBar() {
   const [newCvEmail, setNewCvEmail] = React.useState("");
   const [newCvBusy, setNewCvBusy] = React.useState(false);
   const [newCvError, setNewCvError] = React.useState(null);
+  const [isScrollingDown, setIsScrollingDown] = React.useState(false);
+  const [lastScrollY, setLastScrollY] = React.useState(0);
 
   const { history: linkHistory, addLinksToHistory } = useLinkHistory();
 
@@ -368,6 +370,7 @@ export default function TopBar() {
   const pdfFileInputRef = React.useRef(null);
   const triggerRef = React.useRef(null);
   const taskQueueButtonRef = React.useRef(null);
+  const scrollTimeoutRef = React.useRef(null);
 
   // Close dropdown on window resize (mobile/desktop change)
   React.useEffect(() => {
@@ -665,6 +668,41 @@ export default function TopBar() {
       window.removeEventListener("scroll", updatePosition, true);
     };
   }, [listOpen]);
+
+  // Hide topbar on scroll down (mobile only)
+  React.useEffect(() => {
+    const handleScroll = () => {
+      // Only on mobile (width < 768px)
+      if (window.innerWidth >= 768) {
+        setIsScrollingDown(false);
+        return;
+      }
+
+      const currentScrollY = window.scrollY;
+
+      // Clear previous timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+
+      // Hide topbar when scrolling down, show when scrolling up
+      if (currentScrollY > lastScrollY && currentScrollY > 60) {
+        setIsScrollingDown(true);
+      } else if (currentScrollY < lastScrollY) {
+        setIsScrollingDown(false);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [lastScrollY]);
 
   React.useEffect(() => {
     function handleClick(event) {
@@ -1088,7 +1126,15 @@ export default function TopBar() {
 
   if (status === "loading") {
     return (
-      <div className="no-print sticky top-0 inset-x-0 z-[100] w-full bg-white/80 backdrop-blur border-b min-h-[60px]">
+      <div
+        className="no-print sticky top-0 inset-x-0 z-[9999] w-full bg-white border-b min-h-[60px] transition-transform duration-300"
+        style={{
+          position: '-webkit-sticky',
+          paddingTop: 'env(safe-area-inset-top)',
+          marginTop: 'calc(-1 * env(safe-area-inset-top))',
+          transform: isScrollingDown ? 'translateY(-100%)' : 'translateY(0)'
+        }}
+      >
         <div className="w-full p-3 flex items-center justify-between">
           <span className="text-sm font-medium">{t("topbar.loading")}</span>
         </div>
@@ -1109,7 +1155,13 @@ export default function TopBar() {
     <>
       <div
         ref={barRef}
-        className="no-print sticky top-0 inset-x-0 z-[100] w-full bg-white/80 backdrop-blur border-b min-h-[60px]"
+        className="no-print sticky top-0 inset-x-0 z-[9999] w-full bg-white border-b min-h-[60px] transition-transform duration-300"
+        style={{
+          position: '-webkit-sticky',
+          paddingTop: 'env(safe-area-inset-top)',
+          marginTop: 'calc(-1 * env(safe-area-inset-top))',
+          transform: isScrollingDown ? 'translateY(-100%)' : 'translateY(0)'
+        }}
       >
         <div className="w-full p-3 flex flex-wrap items-center gap-x-2 gap-y-1 sm:gap-3">
         {/* User Icon */}
@@ -1174,7 +1226,7 @@ export default function TopBar() {
                   top: dropdownRect.bottom + 4,
                   left: dropdownRect.left,
                   width: dropdownRect.width,
-                  zIndex: 1000,
+                  zIndex: 10000,
                 }}
                 className="rounded border bg-white shadow-lg"
               >
@@ -1218,7 +1270,7 @@ export default function TopBar() {
                   position: "fixed",
                   top: userMenuRect.bottom + 8,
                   left: userMenuRect.left,
-                  zIndex: 1000,
+                  zIndex: 10000,
                 }}
                 className="rounded-lg border bg-white shadow-lg p-2 text-sm space-y-1 min-w-[10rem] max-w-[16rem]"
               >

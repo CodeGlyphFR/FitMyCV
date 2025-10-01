@@ -161,13 +161,13 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
     <>
       {/* Overlay for click outside - covers entire viewport */}
       <div
-        className="fixed inset-0 z-[60] bg-transparent"
+        className="fixed inset-0 z-[10000] bg-transparent"
         onClick={onClose}
       />
 
       {/* Dropdown content */}
       <div
-        className={`fixed w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-[60] ${className}`}
+        className={`fixed w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-[10001] ${className}`}
         style={{
           top: `${dropdownPosition.top}px`,
           right: `${dropdownPosition.right}px`

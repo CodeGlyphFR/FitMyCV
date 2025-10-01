@@ -13,6 +13,7 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     font-synthesis: none;
+    background-color: white;
   }
 
   /* Prévenir le CLS sur les images */
@@ -24,36 +25,17 @@
   /* Optimiser le rendu du texte critique */
   body {
     font-display: swap;
-  }
-
-  /* Priorité de rendu pour le contenu LCP */
-  p.text-sm.text-justify.leading-relaxed {
-    contain: layout style;
-    will-change: auto;
+    background-color: white;
   }
 }
 
 /* Optimisation CLS - Réserver l'espace pour les composants critiques */
 .topbar-placeholder {
   min-height: 60px;
-  contain: layout;
 }
 
 .footer-placeholder {
   min-height: 56px;
-  contain: layout;
-}
-
-/* Utiliser content-visibility pour optimiser le rendu */
-.cv-section {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 500px;
-}
-
-/* Optimisations pour les éléments fixes (éviter CLS) */
-button[class*="fixed"] {
-  transform: translateZ(0);
-  backface-visibility: hidden;
 }
 
 /* Empêcher le CLS du main */
