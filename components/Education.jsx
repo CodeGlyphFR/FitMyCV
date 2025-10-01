@@ -5,8 +5,11 @@ import { ym } from "@/lib/utils";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getSectionTitle } from "@/lib/i18n/cvLabels";
 
 export default function Education(props){
+  const { t } = useLanguage();
   const rawEducation = Array.isArray(props.education)? props.education:[];
   // Tri par date décroissante (plus récent en premier)
   const education = React.useMemo(() => {
@@ -18,7 +21,7 @@ export default function Education(props){
   }, [rawEducation]);
 
   const sectionTitles = props.sectionTitles || {};
-  const title = sectionTitles.education || "Éducation";
+  const title = getSectionTitle('education', sectionTitles.education, t);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
   const [editIndex, setEditIndex] = React.useState(null);
@@ -76,7 +79,7 @@ export default function Education(props){
                 onClick={() => setAddOpen(true)}
                 className="no-print text-xs rounded border px-2 py-1"
               >
-                + Ajouter
+                {t("common.add")}
               </button>
             )}
           </div>
@@ -84,7 +87,7 @@ export default function Education(props){
       >
         {(!education || education.length === 0) ? (
           <div className="rounded-xl border p-3 text-sm opacity-60">
-            Aucune formation ou certification pour le moment.
+            {t("cvSections.noEducation")}
           </div>
         ) : (
           <div className={education.length > 1 ? "grid md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
@@ -120,40 +123,40 @@ export default function Education(props){
           </div>
         )}
 
-      <Modal open={editIndex!==null} onClose={()=>setEditIndex(null)} title="Modifier la formation">
+      <Modal open={editIndex!==null} onClose={()=>setEditIndex(null)} title={t("cvSections.editEducation")}>
         <div className="grid gap-2">
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Établissement" value={f.institution} onChange={e=>setF({...f,institution:e.target.value})} />
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Diplôme" value={f.degree} onChange={e=>setF({...f,degree:e.target.value})} />
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Spécialité" value={f.field_of_study} onChange={e=>setF({...f,field_of_study:e.target.value})} />
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Début (YYYY ou YYYY-MM)" value={f.start_date} onChange={e=>setF({...f,start_date:e.target.value})} />
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Fin (YYYY ou YYYY-MM)" value={f.end_date} onChange={e=>setF({...f,end_date:e.target.value})} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.institution")} value={f.institution} onChange={e=>setF({...f,institution:e.target.value})} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.degree")} value={f.degree} onChange={e=>setF({...f,degree:e.target.value})} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.fieldOfStudy")} value={f.field_of_study} onChange={e=>setF({...f,field_of_study:e.target.value})} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.startDate")} value={f.start_date} onChange={e=>setF({...f,start_date:e.target.value})} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.endDate")} value={f.end_date} onChange={e=>setF({...f,end_date:e.target.value})} />
           <div className="flex justify-end gap-2">
-            <button onClick={()=>setEditIndex(null)} className="rounded border px-3 py-1 text-sm">Annuler</button>
-            <button onClick={edit} className="rounded border px-3 py-1 text-sm">Enregistrer</button>
+            <button onClick={()=>setEditIndex(null)} className="rounded border px-3 py-1 text-sm">{t("common.cancel")}</button>
+            <button onClick={edit} className="rounded border px-3 py-1 text-sm">{t("common.save")}</button>
           </div>
         </div>
       </Modal>
 
-      <Modal open={addOpen} onClose={()=>setAddOpen(false)} title="Ajouter une formation ou une certification">
+      <Modal open={addOpen} onClose={()=>setAddOpen(false)} title={t("cvSections.addEducation")}>
         <div className="grid gap-2">
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Établissement" value={nf.institution} onChange={e=>setNf({...nf,institution:e.target.value})} />
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Diplôme ou certification" value={nf.degree} onChange={e=>setNf({...nf,degree:e.target.value})} />
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Spécialité" value={nf.field_of_study} onChange={e=>setNf({...nf,field_of_study:e.target.value})} />
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Début (YYYY ou YYYY-MM)" value={nf.start_date} onChange={e=>setNf({...nf,start_date:e.target.value})} />
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Fin (YYYY ou YYYY-MM)" value={nf.end_date} onChange={e=>setNf({...nf,end_date:e.target.value})} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.institution")} value={nf.institution} onChange={e=>setNf({...nf,institution:e.target.value})} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.degreeOrCertification")} value={nf.degree} onChange={e=>setNf({...nf,degree:e.target.value})} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.fieldOfStudy")} value={nf.field_of_study} onChange={e=>setNf({...nf,field_of_study:e.target.value})} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.startDate")} value={nf.start_date} onChange={e=>setNf({...nf,start_date:e.target.value})} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.endDate")} value={nf.end_date} onChange={e=>setNf({...nf,end_date:e.target.value})} />
           <div className="flex justify-end gap-2">
-            <button onClick={()=>setAddOpen(false)} className="rounded border px-3 py-1 text-sm">Annuler</button>
-            <button onClick={add} className="rounded border px-3 py-1 text-sm">Ajouter</button>
+            <button onClick={()=>setAddOpen(false)} className="rounded border px-3 py-1 text-sm">{t("common.cancel")}</button>
+            <button onClick={add} className="rounded border px-3 py-1 text-sm">{t("common.add")}</button>
           </div>
         </div>
       </Modal>
 
-      <Modal open={delIndex!==null} onClose={()=>setDelIndex(null)} title="Confirmation">
+      <Modal open={delIndex!==null} onClose={()=>setDelIndex(null)} title={t("common.confirmation")}>
         <div className="space-y-3">
-          <p className="text-sm">Voulez-vous vraiment supprimer cet élément ?</p>
+          <p className="text-sm">{t("cvSections.deleteEducation")}</p>
           <div className="flex justify-end gap-2">
-            <button onClick={()=>setDelIndex(null)} className="rounded border px-3 py-1 text-sm">Non</button>
-            <button onClick={confirmDelete} className="rounded border px-3 py-1 text-sm text-red-700">Oui</button>
+            <button onClick={()=>setDelIndex(null)} className="rounded border px-3 py-1 text-sm">{t("common.cancel")}</button>
+            <button onClick={confirmDelete} className="rounded border px-3 py-1 text-sm text-red-700">{t("common.delete")}</button>
           </div>
         </div>
       </Modal>

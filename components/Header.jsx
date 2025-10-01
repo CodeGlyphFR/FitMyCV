@@ -5,12 +5,14 @@ import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import FormRow from "./ui/FormRow";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function Header(props){
   const header = props.header || {};
   const links = (header.contact && header.contact.links) || [];
   const { editing } = useAdmin();
   const { mutate } = useMutate();
+  const { t } = useLanguage();
   const [open, setOpen] = React.useState(false);
   const [sourceInfo, setSourceInfo] = React.useState({ sourceType: null, sourceValue: null });
 
@@ -155,47 +157,47 @@ export default function Header(props){
         <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />
       </div>
 
-      <Modal open={open} onClose={()=>setOpen(false)} title="Modifier l'entête">
+      <Modal open={open} onClose={()=>setOpen(false)} title={t("header.modalTitle")}>
         <div className="grid gap-3 md:grid-cols-2">
-          <FormRow label="Nom complet">
+          <FormRow label={t("header.fullName")}>
             <input className="rounded border px-2 py-1 text-sm w-full" value={f.full_name} onChange={e=>setF({...f,full_name:e.target.value})} />
           </FormRow>
-          <FormRow label="Titre actuel">
+          <FormRow label={t("header.currentTitle")}>
             <input className="rounded border px-2 py-1 text-sm w-full" value={f.current_title} onChange={e=>setF({...f,current_title:e.target.value})} />
           </FormRow>
-          <FormRow label="Email">
+          <FormRow label={t("header.email")}>
             <input className="rounded border px-2 py-1 text-sm w-full" value={f.email} onChange={e=>setF({...f,email:e.target.value})} />
           </FormRow>
-          <FormRow label="Téléphone">
+          <FormRow label={t("header.phone")}>
             <input className="rounded border px-2 py-1 text-sm w-full" value={f.phone} onChange={e=>setF({...f,phone:e.target.value})} />
           </FormRow>
 
           <div className="md:col-span-2 grid grid-cols-3 gap-3">
-            <FormRow label="Ville">
+            <FormRow label={t("header.city")}>
               <input className="rounded border px-2 py-1 text-sm w-full" value={f.city} onChange={e=>setF({...f,city:e.target.value})} />
             </FormRow>
-            <FormRow label="Région">
+            <FormRow label={t("header.region")}>
               <input className="rounded border px-2 py-1 text-sm w-full" value={f.region} onChange={e=>setF({...f,region:e.target.value})} />
             </FormRow>
-            <FormRow label="Pays (code)">
+            <FormRow label={t("header.countryCode")}>
               <input className="rounded border px-2 py-1 text-sm w-full" value={f.country_code} onChange={e=>setF({...f,country_code:e.target.value})} />
             </FormRow>
           </div>
 
           {/* Liens */}
           <div className="md:col-span-2">
-            <div className="text-sm font-medium mb-2">Liens</div>
+            <div className="text-sm font-medium mb-2">{t("header.links")}</div>
             <div className="space-y-2">
               {linksLocal.length === 0 && (
                 <div className="rounded border px-2 py-1 text-xs opacity-60">
-                  Aucun lien pour le moment.
+                  {t("header.noLinks")}
                 </div>
               )}
               {linksLocal.map((row, idx) => (
                 <div key={idx} className="grid grid-cols-7 gap-2 items-center">
                   <input
                     className="col-span-2 rounded border px-2 py-1 text-sm"
-                    placeholder="Label (ex: GitHub)"
+                    placeholder={t("header.labelPlaceholder")}
                     value={row.label}
                     onChange={e=>{
                       const arr=[...linksLocal]; arr[idx]={...arr[idx], label:e.target.value}; setLinksLocal(arr);
@@ -203,7 +205,7 @@ export default function Header(props){
                   />
                   <input
                     className="col-span-4 rounded border px-2 py-1 text-sm"
-                    placeholder="URL (ex: https://github.com/erick)"
+                    placeholder={t("header.urlPlaceholder")}
                     value={row.url}
                     onChange={e=>{
                       const arr=[...linksLocal]; arr[idx]={...arr[idx], url:e.target.value}; setLinksLocal(arr);
@@ -215,7 +217,7 @@ export default function Header(props){
                       const arr=[...linksLocal]; arr.splice(idx,1); setLinksLocal(arr);
                     }}
                     className="text-xs rounded border px-2 py-1"
-                    title="Supprimer"
+                    title={t("common.delete")}
                   >
                     ❌
                   </button>
@@ -227,15 +229,15 @@ export default function Header(props){
                   onClick={()=>setLinksLocal([...(linksLocal||[]), {label:"", url:""}])}
                   className="text-xs rounded border px-2 py-1"
                 >
-                  ➕ Ajouter un lien
+                  ➕ {t("header.addLink")}
                 </button>
               </div>
             </div>
           </div>
 
           <div className="md:col-span-2 flex justify-end gap-2">
-            <button onClick={()=>setOpen(false)} className="rounded border px-3 py-1 text-sm" type="button">Annuler</button>
-            <button onClick={save} className="rounded border px-3 py-1 text-sm" type="button">Enregistrer</button>
+            <button onClick={()=>setOpen(false)} className="rounded border px-3 py-1 text-sm" type="button">{t("common.cancel")}</button>
+            <button onClick={save} className="rounded border px-3 py-1 text-sm" type="button">{t("common.save")}</button>
           </div>
         </div>
       </Modal>

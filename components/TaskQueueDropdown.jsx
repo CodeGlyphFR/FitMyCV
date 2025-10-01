@@ -4,6 +4,7 @@ import React from "react";
 import { createPortal } from "react-dom";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 function LoadingSpinner() {
   return (
@@ -12,21 +13,21 @@ function LoadingSpinner() {
 }
 
 function TaskItem({ task, onCancel, compact = false }) {
+  const { t } = useLanguage();
+
   const getStatusDisplay = (status) => {
-    switch (status) {
-      case 'queued':
-        return { label: 'En attente', color: 'text-gray-600' };
-      case 'running':
-        return { label: 'En cours', color: 'text-blue-600' };
-      case 'completed':
-        return { label: 'Terminé', color: 'text-green-600' };
-      case 'failed':
-        return { label: 'Échec', color: 'text-red-600' };
-      case 'cancelled':
-        return { label: 'Annulé', color: 'text-orange-600' };
-      default:
-        return { label: 'Inconnu', color: 'text-gray-400' };
-    }
+    const colors = {
+      'queued': 'text-gray-600',
+      'running': 'text-blue-600',
+      'completed': 'text-green-600',
+      'failed': 'text-red-600',
+      'cancelled': 'text-orange-600'
+    };
+
+    return {
+      label: t(`taskQueue.status.${status}`) || t("taskQueue.status.unknown"),
+      color: colors[status] || 'text-gray-400'
+    };
   };
 
   const statusDisplay = getStatusDisplay(task.status);
@@ -39,6 +40,48 @@ function TaskItem({ task, onCancel, compact = false }) {
 
   // Extraire le lien ou la pièce jointe du payload
   const payload = task?.payload && typeof task.payload === 'object' ? task.payload : null;
+
+  // Helper to extract quoted name
+  const extractQuotedName = (text) => {
+    if (typeof text !== 'string') return '';
+    const match = text.match(/'([^']+)'/);
+    return match ? match[1] : '';
+  };
+
+  const importName = payload?.savedName || extractQuotedName(task.title);
+  const generationName = payload?.baseFileLabel || payload?.baseFile || extractQuotedName(task.title);
+
+  // Generate translated description
+  let description = task.title || t("taskQueue.messages.task");
+
+  if (task.status === 'failed' && task.error) {
+    description = task.error;
+  } else if (task.type === 'import') {
+    if (task.status === 'running') {
+      description = t("taskQueue.messages.importInProgress");
+    } else if (task.status === 'queued') {
+      description = t("taskQueue.messages.importQueued");
+    } else if (task.status === 'completed') {
+      description = t("taskQueue.messages.importCompleted");
+    } else if (task.status === 'cancelled') {
+      description = t("taskQueue.messages.importCancelled");
+    } else if (task.status === 'failed') {
+      description = t("taskQueue.messages.importFailed");
+    }
+  } else if (task.type === 'generation') {
+    if (task.status === 'running') {
+      description = `${t("taskQueue.messages.creationInProgress")}${generationName ? ` : '${generationName}'` : ''}`;
+    } else if (task.status === 'queued') {
+      description = `${t("taskQueue.messages.creationQueued")}${generationName ? ` : '${generationName}'` : ''}`;
+    } else if (task.status === 'completed') {
+      description = `${t("taskQueue.messages.creationCompleted")}${generationName ? ` : '${generationName}'` : ''}`;
+    } else if (task.status === 'cancelled') {
+      description = `${t("taskQueue.messages.creationCancelled")}${generationName ? ` : '${generationName}'` : ''}`;
+    } else if (task.status === 'failed') {
+      description = `${t("taskQueue.messages.creationFailed")}${generationName ? ` : '${generationName}'` : ''}`;
+    }
+  }
+
   let sourceInfo = null;
   if (task.type === 'generation' && payload) {
     if (Array.isArray(payload.links) && payload.links.length > 0) {
@@ -55,7 +98,7 @@ function TaskItem({ task, onCancel, compact = false }) {
     <div className={`flex items-center justify-between ${compact ? 'p-2' : 'p-3'} border-b border-gray-100 last:border-b-0 hover:bg-gray-50`}>
       <div className="flex-1 min-w-0 mr-2">
         <div className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-gray-900 truncate`}>
-          {task.title}
+          {description}
         </div>
         <div className="flex items-center gap-1 text-xs text-gray-500">
           <span>{createdAt}</span>
@@ -78,7 +121,7 @@ function TaskItem({ task, onCancel, compact = false }) {
           <button
             onClick={() => onCancel(task.id)}
             className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-1 py-0.5 rounded"
-            title="Annuler la tâche"
+            title={t("taskQueue.cancelTask")}
           >
             ✕
           </button>
@@ -89,6 +132,7 @@ function TaskItem({ task, onCancel, compact = false }) {
 }
 
 export default function TaskQueueDropdown({ isOpen, onClose, className = "", buttonRef }) {
+  const { t } = useLanguage();
   const { tasks, clearCompletedTasks, cancelTask, isApiSyncEnabled } = useBackgroundTasks();
   const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, right: 0 });
 
@@ -131,7 +175,7 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
         <div className="max-h-80 overflow-y-auto">
           {sortedTasks.length === 0 ? (
             <div className="p-6 text-center text-gray-500">
-              <div className="text-sm">Aucune tâche en cours</div>
+              <div className="text-sm">{t("taskQueue.noTasks")}</div>
             </div>
           ) : (
             <>
@@ -142,7 +186,7 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
                       onClick={clearCompletedTasks}
                       className="text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded"
                     >
-                      Effacer terminées ({completedTasksCount})
+                      {t("taskQueue.clearCompleted")} ({completedTasksCount})
                     </button>
                   </div>
                 </div>
@@ -167,11 +211,11 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
             <div className="flex items-center gap-1">
               <div
                 className={`w-2 h-2 rounded-full ${isApiSyncEnabled ? 'bg-green-500' : 'bg-orange-500'}`}
-                title={isApiSyncEnabled ? 'Sync inter-appareils actif' : 'Sync local uniquement'}
+                title={isApiSyncEnabled ? t("taskQueue.cloudSyncActive") : t("taskQueue.localSyncOnly")}
               />
-              <span>{isApiSyncEnabled ? 'Cloud' : 'Local'}</span>
+              <span>{isApiSyncEnabled ? t("taskQueue.cloud") : t("taskQueue.localStorage")}</span>
             </div>
-            <div>Total: {tasks.length}</div>
+            <div>{t("taskQueue.total")}: {tasks.length}</div>
           </div>
         </div>
       </div>

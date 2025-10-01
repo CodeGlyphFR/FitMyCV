@@ -5,6 +5,8 @@ import { ym } from "@/lib/utils";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getSectionTitle } from "@/lib/i18n/cvLabels";
 
 function norm(s){
   const m = (s || "").trim();
@@ -14,9 +16,10 @@ function norm(s){
 }
 
 export default function Projects(props){
+  const { t } = useLanguage();
   const projects = Array.isArray(props.projects) ? props.projects : [];
   const sectionTitles = props.sectionTitles || {};
-  const title = sectionTitles.projects || "Projets personnels";
+  const title = getSectionTitle('projects', sectionTitles.projects, t);
   const { editing } = useAdmin();
   const isEditing = !!editing; // force bool
   const { mutate } = useMutate();
@@ -100,7 +103,7 @@ export default function Projects(props){
               onClick={() => setAddOpen(true)}
               className="no-print text-xs rounded border px-2 py-1"
             >
-              + Ajouter
+              {t("common.add")}
             </button>
           )}
         </div>
@@ -110,7 +113,7 @@ export default function Projects(props){
         // visible en édition quand vide
         isEditing ? (
           <div className="rounded-2xl border p-3 text-sm opacity-60">
-            Aucun projet pour le moment.
+            {t("cvSections.noProjects")}
           </div>
         ) : null
       ) : (
@@ -121,7 +124,7 @@ export default function Projects(props){
                 <div className="font-semibold flex-1 min-w-0 break-words">{p.name || ""}</div>
                 <div className="text-sm opacity-80 whitespace-nowrap ml-auto mt-1">
                   {(p.start_date || p.end_date)
-                    ? [ym(p.start_date) || "", ym(p.end_date) || ""].filter(Boolean).join(" → ")
+                    ? [ym(p.start_date) || "", p.end_date === "present" ? t("cvSections.present") : (ym(p.end_date) || "")].filter(Boolean).join(" → ")
                     : ""}
                 </div>
               </div>
@@ -149,60 +152,60 @@ export default function Projects(props){
       )}
 
       {/* Edit Modal */}
-      <Modal open={editIndex !== null} onClose={() => setEditIndex(null)} title="Modifier le projet">
+      <Modal open={editIndex !== null} onClose={() => setEditIndex(null)} title={t("cvSections.editProjects")}>
         <div className="grid gap-2 md:grid-cols-2">
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Nom du projet" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Rôle" value={f.role} onChange={e => setF({ ...f, role: e.target.value })} />
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Début (YYYY ou YYYY-MM)" value={f.start} onChange={e => setF({ ...f, start: e.target.value })} />
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Fin (YYYY ou YYYY-MM)" value={f.end} onChange={e => setF({ ...f, end: e.target.value })} disabled={f.inProgress} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.projectName")} value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.role")} value={f.role} onChange={e => setF({ ...f, role: e.target.value })} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.startDate")} value={f.start} onChange={e => setF({ ...f, start: e.target.value })} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.endDate")} value={f.end} onChange={e => setF({ ...f, end: e.target.value })} disabled={f.inProgress} />
           <div className="md:col-span-2 flex items-center gap-2">
             <input type="checkbox" id="edit-inProgress" checked={f.inProgress} onChange={e => setF({ ...f, inProgress: e.target.checked, end: e.target.checked ? "" : f.end })} />
-            <label htmlFor="edit-inProgress" className="text-sm">Projet en cours (fin = présent)</label>
+            <label htmlFor="edit-inProgress" className="text-sm">{t("cvSections.projectInProgress")}</label>
           </div>
-          <textarea className="rounded border px-2 py-1 text-sm md:col-span-2" placeholder="Description" value={f.summary} onChange={e => setF({ ...f, summary: e.target.value })} />
-          <input className="rounded border px-2 py-1 text-sm md:col-span-2" placeholder="Compétences utilisées (séparées par des virgules)" value={f.tech_stack || ""} onChange={e => setF({ ...f, tech_stack: e.target.value })} />
+          <textarea className="rounded border px-2 py-1 text-sm md:col-span-2" placeholder={t("cvSections.placeholders.description")} value={f.summary} onChange={e => setF({ ...f, summary: e.target.value })} />
+          <input className="rounded border px-2 py-1 text-sm md:col-span-2" placeholder={t("cvSections.technologies")} value={f.tech_stack || ""} onChange={e => setF({ ...f, tech_stack: e.target.value })} />
           <div className="md:col-span-2 flex justify-end gap-2">
-            <button type="button" onClick={() => setEditIndex(null)} className="rounded border px-3 py-1 text-sm">Annuler</button>
-            <button type="button" onClick={save} className="rounded border px-3 py-1 text-sm">Enregistrer</button>
+            <button type="button" onClick={() => setEditIndex(null)} className="rounded border px-3 py-1 text-sm">{t("common.cancel")}</button>
+            <button type="button" onClick={save} className="rounded border px-3 py-1 text-sm">{t("common.save")}</button>
           </div>
         </div>
       </Modal>
 
       {/* Add Modal */}
-      <Modal open={!!addOpen} onClose={() => setAddOpen(false)} title="Ajouter un projet">
+      <Modal open={!!addOpen} onClose={() => setAddOpen(false)} title={t("cvSections.addProject")}>
         <div className="grid gap-2 md:grid-cols-2">
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Nom du projet" value={nf.name} onChange={e => setNf({ ...nf, name: e.target.value })} />
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Rôle" value={nf.role} onChange={e => setNf({ ...nf, role: e.target.value })} />
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Début (YYYY ou YYYY-MM)" value={nf.start} onChange={e => setNf({ ...nf, start: e.target.value })} />
-          <input className="rounded border px-2 py-1 text-sm" placeholder="Fin (YYYY ou YYYY-MM)" value={nf.end} onChange={e => setNf({ ...nf, end: e.target.value })} disabled={nf.inProgress} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.projectName")} value={nf.name} onChange={e => setNf({ ...nf, name: e.target.value })} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.role")} value={nf.role} onChange={e => setNf({ ...nf, role: e.target.value })} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.startDate")} value={nf.start} onChange={e => setNf({ ...nf, start: e.target.value })} />
+          <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.endDate")} value={nf.end} onChange={e => setNf({ ...nf, end: e.target.value })} disabled={nf.inProgress} />
           <div className="md:col-span-2 flex items-center gap-2">
             <input type="checkbox" id="add-inProgress" checked={nf.inProgress} onChange={e => setNf({ ...nf, inProgress: e.target.checked, end: e.target.checked ? "" : nf.end })} />
-            <label htmlFor="add-inProgress" className="text-sm">Projet en cours (fin = présent)</label>
+            <label htmlFor="add-inProgress" className="text-sm">{t("cvSections.projectInProgress")}</label>
           </div>
-          <textarea className="rounded border px-2 py-1 text-sm md:col-span-2" placeholder="Description" value={nf.summary} onChange={e => setNf({ ...nf, summary: e.target.value })} />
+          <textarea className="rounded border px-2 py-1 text-sm md:col-span-2" placeholder={t("cvSections.placeholders.description")} value={nf.summary} onChange={e => setNf({ ...nf, summary: e.target.value })} />
 
           {/* ✅ Champ tech_stack ajouté */}
           <input
             className="rounded border px-2 py-1 text-sm md:col-span-2"
-            placeholder="Compétences utilisées (séparées par des virgules)"
+            placeholder={t("cvSections.technologies")}
             value={nf.tech_stack || ""}
             onChange={e => setNf({ ...nf, tech_stack: e.target.value })}
           />
 
           <div className="md:col-span-2 flex justify-end gap-2">
-            <button type="button" onClick={() => setAddOpen(false)} className="rounded border px-3 py-1 text-sm">Annuler</button>
-            <button type="button" onClick={add} className="rounded border px-3 py-1 text-sm">Ajouter</button>
+            <button type="button" onClick={() => setAddOpen(false)} className="rounded border px-3 py-1 text-sm">{t("common.cancel")}</button>
+            <button type="button" onClick={add} className="rounded border px-3 py-1 text-sm">{t("common.add")}</button>
           </div>
         </div>
       </Modal>
 
       {/* Delete Modal */}
-      <Modal open={delIndex !== null} onClose={() => setDelIndex(null)} title="Confirmation ?">
+      <Modal open={delIndex !== null} onClose={() => setDelIndex(null)} title={t("common.confirmation")}>
         <div className="space-y-3">
-          <p className="text-sm">Voulez-vous vraiment supprimer cet élément ?</p>
+          <p className="text-sm">{t("cvSections.deleteProject")}</p>
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setDelIndex(null)} className="rounded border px-3 py-1 text-sm">Non</button>
-            <button type="button" onClick={confirmDelete} className="rounded border px-3 py-1 text-sm text-red-700">Oui</button>
+            <button type="button" onClick={() => setDelIndex(null)} className="rounded border px-3 py-1 text-sm">{t("common.cancel")}</button>
+            <button type="button" onClick={confirmDelete} className="rounded border px-3 py-1 text-sm text-red-700">{t("common.delete")}</button>
           </div>
         </div>
       </Modal>

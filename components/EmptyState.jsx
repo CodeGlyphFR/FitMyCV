@@ -4,31 +4,13 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Modal from "./ui/Modal";
-
-const ANALYSIS_OPTIONS = Object.freeze([
-  {
-    id: "rapid",
-    label: "Rapide",
-    model: "gpt-5-nano-2025-08-07",
-    hint: "Analyse la plus rapide, pour un aperçu rapide.",
-  },
-  {
-    id: "medium",
-    label: "Moyen",
-    model: "gpt-5-mini-2025-08-07",
-    hint: "Équilibre entre vitesse et qualité (recommandé).",
-  },
-  {
-    id: "deep",
-    label: "Approfondi",
-    model: "gpt-5-2025-08-07",
-    hint: "Analyse complète pour des résultats optimisés.",
-  },
-]);
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { ANALYSIS_OPTIONS } from "@/lib/i18n/cvLabels";
 
 export default function EmptyState() {
   const router = useRouter();
   const { data: session } = useSession();
+  const { t } = useLanguage();
   const [openPdfImport, setOpenPdfImport] = React.useState(false);
   const [pdfFile, setPdfFile] = React.useState(null);
   const [pdfAnalysisLevel, setPdfAnalysisLevel] = React.useState("medium");
@@ -51,29 +33,8 @@ export default function EmptyState() {
   // Extract first name from user name
   const firstName = session?.user?.name?.split(' ')[0] || "utilisateur";
 
-  // Messages de chargement style Les Sims
-  const loadingMessages = [
-    "🔍 Recherche de vos super-pouvoirs cachés...",
-    "🎨 Application d'une touche de magie sur votre parcours...",
-    "🧠 L'IA réfléchit intensément à votre profil...",
-    "📚 Lecture entre les lignes de votre expérience...",
-    "✨ Polissage de vos compétences...",
-    "🎯 Optimisation de votre profil professionnel...",
-    "🚀 Préparation au décollage de votre carrière...",
-    "🎭 Mise en valeur de vos talents...",
-    "🔮 Prédiction de votre succès futur...",
-    "💎 Transformation de votre CV en diamant...",
-    "🎪 Orchestration de votre parcours professionnel...",
-    "🌟 Ajout d'une touche d'excellence...",
-    "🎨 Peinture de votre portrait professionnel...",
-    "🏆 Préparation de votre arsenal de compétences...",
-    "📖 Écriture de votre légende professionnelle...",
-    "🎬 Réalisation du film de votre carrière...",
-    "🧩 Assemblage des pièces de votre puzzle professionnel...",
-    "🎵 Composition de la symphonie de vos réussites...",
-    "🔬 Analyse moléculaire de vos compétences...",
-    "🎪 Organisation du spectacle de vos talents...",
-  ];
+  // Messages de chargement style Les Sims - traduits
+  const loadingMessages = t("emptyState.importing.loadingMessages");
 
   function onPdfFileChanged(event) {
     const file = event.target.files?.[0] || null;
@@ -98,7 +59,7 @@ export default function EmptyState() {
     const trimmedTitle = newCvCurrentTitle.trim();
 
     if (!trimmedName || !trimmedTitle) {
-      setNewCvError("Merci de renseigner le nom complet et le titre actuel.");
+      setNewCvError(t("newCvModal.errors.fillRequired"));
       return;
     }
 
@@ -115,7 +76,7 @@ export default function EmptyState() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Erreur");
+      if (!res.ok) throw new Error(data?.error || t("newCvModal.errors.generic"));
 
       document.cookie = "cvFile=" + encodeURIComponent(data.file) + "; path=/; max-age=31536000";
       try {
@@ -132,7 +93,7 @@ export default function EmptyState() {
       // Forcer un rechargement complet pour que le cookie soit bien pris en compte
       window.location.href = "/";
     } catch (error) {
-      setNewCvError(error?.message || "Erreur");
+      setNewCvError(error?.message || t("newCvModal.errors.generic"));
     } finally {
       setNewCvBusy(false);
     }
@@ -142,7 +103,7 @@ export default function EmptyState() {
     event.preventDefault();
     if (!pdfFile) return;
 
-    const selectedPdfAnalysis = ANALYSIS_OPTIONS.find(o => o.id === pdfAnalysisLevel);
+    const selectedPdfAnalysis = ANALYSIS_OPTIONS(t).find(o => o.id === pdfAnalysisLevel);
     try {
       const formData = new FormData();
       formData.append("pdfFile", pdfFile);
@@ -156,7 +117,7 @@ export default function EmptyState() {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data?.success) {
-        throw new Error(data?.error || "Impossible de mettre la tâche en file.");
+        throw new Error(data?.error || t("pdfImport.notifications.error"));
       }
 
       // Close modal and show importing state
@@ -169,7 +130,7 @@ export default function EmptyState() {
       startPollingForCompletion();
     } catch (error) {
       console.error("Impossible de planifier l'import", error);
-      alert(error?.message || "Erreur lors de la planification de l'import");
+      alert(error?.message || t("pdfImport.notifications.error"));
     }
   }
 
@@ -204,7 +165,7 @@ export default function EmptyState() {
             clearInterval(messageIntervalRef.current);
             clearTimeout(timeoutRef.current);
             setImportProgress(100);
-            setLoadingMessage("🎉 Votre CV est prêt !");
+            setLoadingMessage(t("emptyState.importing.ready"));
 
             // Select the new CV
             const newCv = data.items[0];
@@ -232,7 +193,7 @@ export default function EmptyState() {
         clearInterval(progressIntervalRef.current);
         clearInterval(messageIntervalRef.current);
         setIsImporting(false);
-        alert("L'import prend plus de temps que prévu. Veuillez rafraîchir la page.");
+        alert(t("emptyState.importing.timeoutAlert"));
       }
     }, 300000);
   }
@@ -267,7 +228,7 @@ export default function EmptyState() {
                 </svg>
               </div>
               <h2 className="text-3xl font-bold text-slate-800 mb-2">
-                Import en cours...
+                {t("emptyState.importing.title")}
               </h2>
               <p className="text-slate-600 min-h-[1.5rem] transition-all duration-300">
                 {loadingMessage}
@@ -302,7 +263,7 @@ export default function EmptyState() {
                       </svg>
                     )}
                   </div>
-                  <span>Lecture du fichier PDF</span>
+                  <span>{t("emptyState.importing.steps.reading")}</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <div className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center ${importProgress > 50 ? 'bg-green-500' : 'bg-slate-300'}`}>
@@ -312,7 +273,7 @@ export default function EmptyState() {
                       </svg>
                     )}
                   </div>
-                  <span>Analyse intelligente du contenu</span>
+                  <span>{t("emptyState.importing.steps.analyzing")}</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <div className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center ${importProgress > 80 ? 'bg-green-500' : 'bg-slate-300'}`}>
@@ -322,7 +283,7 @@ export default function EmptyState() {
                       </svg>
                     )}
                   </div>
-                  <span>Structuration des données</span>
+                  <span>{t("emptyState.importing.steps.structuring")}</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <div className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center ${importProgress >= 100 ? 'bg-green-500' : 'bg-slate-300'}`}>
@@ -332,14 +293,14 @@ export default function EmptyState() {
                       </svg>
                     )}
                   </div>
-                  <span>Finalisation</span>
+                  <span>{t("emptyState.importing.steps.finalizing")}</span>
                 </div>
               </div>
             </div>
 
             <div className="mt-6 text-center">
               <p className="text-xs text-slate-500 animate-pulse">
-                {importProgress >= 100 ? "🎊 Redirection en cours..." : "☕ Pendant ce temps, préparez-vous une boisson chaude..."}
+                {importProgress >= 100 ? t("emptyState.importing.redirect") : t("emptyState.importing.timeout")}
               </p>
             </div>
           </div>
@@ -353,10 +314,10 @@ export default function EmptyState() {
       <div className="max-w-2xl w-full">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-slate-800 mb-3">
-            Bienvenue <span className="text-blue-600">{firstName}</span> sur votre gestionnaire de CV
+            {t("emptyState.welcome", { firstName })}
           </h1>
           <p className="text-lg text-slate-600">
-            Commencez par créer votre premier CV ou importez-en un existant
+            {t("emptyState.subtitle")}
           </p>
         </div>
 
@@ -379,14 +340,14 @@ export default function EmptyState() {
               </div>
               <div>
                 <h2 className="text-2xl font-semibold text-slate-800 mb-2">
-                  Importer un CV
+                  {t("emptyState.importCard.title")}
                 </h2>
                 <p className="text-slate-600">
-                  Importez votre CV existant au format PDF pour le convertir automatiquement
+                  {t("emptyState.importCard.description")}
                 </p>
               </div>
               <div className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg group-hover:bg-blue-600 transition-colors">
-                Importer →
+                {t("emptyState.importCard.button")}
               </div>
             </div>
           </button>
@@ -405,14 +366,14 @@ export default function EmptyState() {
               </div>
               <div>
                 <h2 className="text-2xl font-semibold text-slate-800 mb-2">
-                  Créer un nouveau CV
+                  {t("emptyState.createCard.title")}
                 </h2>
                 <p className="text-slate-600">
-                  Commencez avec un CV vierge et remplissez-le à votre rythme
+                  {t("emptyState.createCard.description")}
                 </p>
               </div>
               <div className="mt-4 px-6 py-2 bg-emerald-500 text-white rounded-lg group-hover:bg-emerald-600 transition-colors">
-                Créer →
+                {t("emptyState.createCard.button")}
               </div>
             </div>
           </button>
@@ -420,7 +381,7 @@ export default function EmptyState() {
 
         <div className="mt-12 text-center">
           <p className="text-sm text-slate-500">
-            💡 Astuce : Vous pourrez éditer, dupliquer et exporter vos CV à tout moment
+            {t("emptyState.tip")}
           </p>
         </div>
       </div>
@@ -429,16 +390,15 @@ export default function EmptyState() {
       <Modal
         open={openPdfImport}
         onClose={closePdfImport}
-        title="Importer un CV PDF"
+        title={t("pdfImport.title")}
       >
         <form onSubmit={submitPdfImport} className="space-y-4">
           <div className="text-sm text-neutral-700">
-            Importez un CV au format PDF pour le convertir automatiquement en
-            utilisant l'intelligence artificielle.
+            {t("pdfImport.description")}
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">Fichier PDF</div>
+            <div className="text-sm font-medium">{t("pdfImport.pdfFile")}</div>
             <input
               ref={pdfFileInputRef}
               className="w-full rounded border px-2 py-1 text-sm"
@@ -448,16 +408,16 @@ export default function EmptyState() {
             />
             {pdfFile ? (
               <div className="rounded border bg-neutral-50 px-3 py-2 text-xs">
-                <div className="font-medium">Fichier sélectionné :</div>
+                <div className="font-medium">{t("pdfImport.fileSelected")}</div>
                 <div className="truncate">{pdfFile.name}</div>
               </div>
             ) : null}
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">Qualité de l'analyse</div>
+            <div className="text-sm font-medium">{t("pdfImport.analysisQuality")}</div>
             <div className="grid grid-cols-3 gap-1 rounded-lg border bg-neutral-50 p-1 text-xs sm:text-sm">
-              {ANALYSIS_OPTIONS.map((option) => {
+              {ANALYSIS_OPTIONS(t).map((option) => {
                 const active = option.id === pdfAnalysisLevel;
                 return (
                   <button
@@ -473,7 +433,7 @@ export default function EmptyState() {
               })}
             </div>
             <p className="text-xs text-neutral-500">
-              {ANALYSIS_OPTIONS.find(o => o.id === pdfAnalysisLevel)?.hint}
+              {ANALYSIS_OPTIONS(t).find(o => o.id === pdfAnalysisLevel)?.hint}
             </p>
           </div>
 
@@ -483,14 +443,14 @@ export default function EmptyState() {
               onClick={closePdfImport}
               className="rounded border px-3 py-1 text-sm"
             >
-              Annuler
+              {t("pdfImport.cancel")}
             </button>
             <button
               type="submit"
               className="rounded border px-3 py-1 text-sm"
               disabled={!pdfFile}
             >
-              Importer
+              {t("pdfImport.import")}
             </button>
           </div>
         </form>
@@ -502,12 +462,12 @@ export default function EmptyState() {
           setOpenNewCv(false);
           resetNewCvForm();
         }}
-        title="Créer un nouveau CV"
+        title={t("newCvModal.title")}
       >
         <div className="space-y-4">
           <div>
             <label className="text-sm block mb-1">
-              Nom complet<span className="text-red-500" aria-hidden="true"> *</span>
+              {t("newCvModal.fullName")}<span className="text-red-500" aria-hidden="true"> {t("newCvModal.required")}</span>
             </label>
             <input
               className="w-full rounded border px-3 py-2"
@@ -519,7 +479,7 @@ export default function EmptyState() {
           </div>
           <div>
             <label className="text-sm block mb-1">
-              Titre actuel<span className="text-red-500" aria-hidden="true"> *</span>
+              {t("newCvModal.currentTitle")}<span className="text-red-500" aria-hidden="true"> {t("newCvModal.required")}</span>
             </label>
             <input
               className="w-full rounded border px-3 py-2"
@@ -530,7 +490,7 @@ export default function EmptyState() {
             />
           </div>
           <div>
-            <label className="text-sm block mb-1">Email</label>
+            <label className="text-sm block mb-1">{t("newCvModal.email")}</label>
             <input
               className="w-full rounded border px-3 py-2"
               value={newCvEmail}
@@ -547,7 +507,7 @@ export default function EmptyState() {
               disabled={newCvBusy || !newCvFullName.trim() || !newCvCurrentTitle.trim()}
               className="rounded border px-3 py-2 hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {newCvBusy ? "Création..." : "Créer le CV"}
+              {newCvBusy ? t("newCvModal.creating") : t("newCvModal.create")}
             </button>
             <button
               onClick={() => {
@@ -556,11 +516,11 @@ export default function EmptyState() {
               }}
               className="rounded border px-3 py-2"
             >
-              Annuler
+              {t("newCvModal.cancel")}
             </button>
           </div>
           <p className="text-xs opacity-70">
-            Tu pourras compléter toutes les sections ensuite via le mode édition.
+            {t("newCvModal.hint")}
           </p>
         </div>
       </Modal>

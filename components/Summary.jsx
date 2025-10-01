@@ -5,10 +5,13 @@ import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import FormRow from "./ui/FormRow";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getSectionTitle } from "@/lib/i18n/cvLabels";
 
 export default function Summary(props){
+  const { t } = useLanguage();
   const summary = props.summary || {};
-  const title = (props.sectionTitles && props.sectionTitles.summary) || "Résumé";
+  const title = getSectionTitle('summary', props.sectionTitles?.summary, t);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
 
@@ -59,7 +62,7 @@ export default function Summary(props){
     >
       {isEmpty ? (
         editing ? (
-          <p className="text-sm opacity-60">Aucun résumé pour le moment.</p>
+          <p className="text-sm opacity-60">{t("cvSections.noSummary")}</p>
         ) : null
       ) : (
         <p
@@ -70,9 +73,9 @@ export default function Summary(props){
         </p>
       )}
 
-      <Modal open={open} onClose={()=>setOpen(false)} title="Modifier le résumé">
+      <Modal open={open} onClose={()=>setOpen(false)} title={t("cvSections.editSummary")}>
         <div className="space-y-2">
-          <FormRow label="Résumé">
+          <FormRow label={t("cvSections.summary")}>
             <textarea
               className="w-full rounded border p-2 text-sm"
               rows={6}
@@ -85,7 +88,7 @@ export default function Summary(props){
               onClick={save}
               className="rounded border px-3 py-1 text-sm"
             >
-              Enregistrer
+              {t("common.save")}
             </button>
           </div>
         </div>

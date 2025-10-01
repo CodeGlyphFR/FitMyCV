@@ -15,34 +15,12 @@ import TaskQueueModal from "./TaskQueueModal";
 import TaskQueueDropdown from "./TaskQueueDropdown";
 import QueueIcon from "./ui/QueueIcon";
 import { useLinkHistory } from "@/hooks/useLinkHistory";
-
-const ANALYSIS_OPTIONS = Object.freeze([
-  {
-    id: "rapid",
-    label: "Rapide",
-    model: "gpt-5-nano-2025-08-07",
-    hint: "Analyse la plus rapide, pour un aperçu rapide.",
-  },
-  {
-    id: "medium",
-    label: "Moyen",
-    model: "gpt-5-mini-2025-08-07",
-    hint: "Équilibre entre vitesse et qualité (recommandé).",
-  },
-  {
-    id: "deep",
-    label: "Approfondi",
-    model: "gpt-5-2025-08-07",
-    hint: "Analyse complète pour des résultats optimisés.",
-  },
-]);
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { ANALYSIS_OPTIONS, getAnalysisLevelLabel } from "@/lib/i18n/cvLabels";
 
 const useIsomorphicLayoutEffect = typeof window !== "undefined"
   ? React.useLayoutEffect
   : React.useEffect;
-
-const FALLBACK_TITLE = "CV en cours d'édition";
-const FALLBACK_DATE = "??/??/????";
 
 function formatDateLabel(value){
   if (!value) return null;
@@ -64,8 +42,9 @@ function normalizeBoolean(value){
   return Boolean(value);
 }
 
-function getAnalysisOption(id){
-  return ANALYSIS_OPTIONS.find((option) => option.id === id) || ANALYSIS_OPTIONS[1];
+function getAnalysisOption(id, t){
+  const options = ANALYSIS_OPTIONS(t);
+  return options.find((option) => option.id === id) || options[1];
 }
 
 function getCvIcon(createdBy, className) {
@@ -81,17 +60,8 @@ function getCvIcon(createdBy, className) {
   return null; // Pas d'icône pour les CVs manuels
 }
 
-function getAnalysisLevelLabel(level) {
-  if (!level) return null;
-  const labels = {
-    'rapid': 'Rapide',
-    'medium': 'Moyen',
-    'deep': 'Approfondi'
-  };
-  return labels[level] || null;
-}
 
-function enhanceItem(item, titleCache = null){
+function enhanceItem(item, titleCache = null, fallbackTitle = "CV"){
   const trimmedTitle = typeof item?.title === "string" ? item.title.trim() : "";
   const fileId = typeof item?.file === "string" ? item.file : null;
 
@@ -106,14 +76,14 @@ function enhanceItem(item, titleCache = null){
 
   const isGpt = normalizeBoolean(item?.isGpt);
   const hasTitle = effectiveTitle.length > 0;
-  const displayTitle = hasTitle ? effectiveTitle : FALLBACK_TITLE;
+  const displayTitle = hasTitle ? effectiveTitle : fallbackTitle;
   if (titleCache && hasTitle && fileId){
     titleCache.set(fileId, effectiveTitle);
   }
   const dateLabel = item?.dateLabel
     || formatDateLabel(item?.createdAt)
     || formatDateLabel(item?.updatedAt);
-  const displayDate = dateLabel || FALLBACK_DATE;
+  const displayDate = dateLabel || "??/??/????";
 
   return {
     ...item,
@@ -126,13 +96,13 @@ function enhanceItem(item, titleCache = null){
   };
 }
 
-function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0 }){
+function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0, t }){
   if (!item) return null;
   const rootClass = [
     "flex min-w-0 items-center gap-2 leading-tight overflow-hidden",
     className,
   ].filter(Boolean).join(" ");
-  const prefix = item.displayDate || FALLBACK_DATE;
+  const prefix = item.displayDate || "??/??/????";
   const baseTitleClass = item.hasTitle ? "font-medium" : "italic text-neutral-500";
   const titleClass = `${baseTitleClass} text-sm sm:text-base`;
   const containerRef = React.useRef(null);
@@ -152,6 +122,8 @@ function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0 }){
   React.useEffect(() => {
     scrollActiveRef.current = scrollActive;
   }, [scrollActive]);
+
+  const levelLabel = getAnalysisLevelLabel(item.analysisLevel, t);
 
   useIsomorphicLayoutEffect(() => {
     if (typeof window === "undefined") return;
@@ -299,7 +271,6 @@ function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0 }){
     };
   }, [item.displayTitle, item.analysisLevel, item.createdBy, tickerKey]);
 
-  const levelLabel = getAnalysisLevelLabel(item.analysisLevel);
   const shouldShowLevel = (item.createdBy === 'generate-cv' || item.createdBy === 'import-pdf') && levelLabel;
   const displayTitleWithLevel = shouldShowLevel
     ? `${item.displayTitle} [${levelLabel}]`
@@ -345,6 +316,7 @@ export default function TopBar() {
   const isAuthenticated = !!session?.user?.id;
   const { localDeviceId, refreshTasks, addOptimisticTask, removeOptimisticTask } = useBackgroundTasks();
   const { addNotification } = useNotifications();
+  const { t } = useLanguage();
 
   const [items, setItems] = React.useState([]);
   const [current, setCurrent] = React.useState("");
@@ -413,12 +385,12 @@ export default function TopBar() {
     [generatorSourceItems, generatorBaseFile],
   );
   const currentAnalysisOption = React.useMemo(
-    () => getAnalysisOption(analysisLevel),
-    [analysisLevel],
+    () => getAnalysisOption(analysisLevel, t),
+    [analysisLevel, t],
   );
   const currentPdfAnalysisOption = React.useMemo(
-    () => getAnalysisOption(pdfAnalysisLevel),
-    [pdfAnalysisLevel],
+    () => getAnalysisOption(pdfAnalysisLevel, t),
+    [pdfAnalysisLevel, t],
   );
   const resolvedCurrentItem = React.useMemo(() => {
     // Always prioritize the current item from fresh data
@@ -475,7 +447,7 @@ export default function TopBar() {
       const data = await res.json();
       const cache = titleCacheRef.current;
       const normalizedItems = Array.isArray(data.items)
-        ? data.items.map((it) => enhanceItem(it, cache))
+        ? data.items.map((it) => enhanceItem(it, cache, "CV"))
         : [];
       setItems(normalizedItems);
 
@@ -774,7 +746,7 @@ export default function TopBar() {
       router.refresh();
     } catch (e) {
       alert(
-        "Suppression impossible: " + (e && e.message ? e.message : String(e)),
+        t("deleteModal.errors.deleteFailed") + " " + (e && e.message ? e.message : String(e)),
       );
       setOpenDelete(false);
     }
@@ -859,7 +831,7 @@ export default function TopBar() {
     // Fermer le modal et notifier immédiatement
     addNotification({
       type: "info",
-      message: `Import '${fileName}' planifié`,
+      message: t("pdfImport.notifications.scheduled", { fileName }),
       duration: 2500,
     });
     closePdfImport();
@@ -893,7 +865,7 @@ export default function TopBar() {
       removeOptimisticTask(optimisticTaskId);
       addNotification({
         type: "error",
-        message: error?.message || "Erreur lors de la planification de l'import",
+        message: error?.message || t("pdfImport.notifications.error"),
         duration: 4000,
       });
     }
@@ -901,7 +873,7 @@ export default function TopBar() {
 
   async function exportToPdf() {
     if (!currentItem) {
-      alert("Aucun CV sélectionné pour l'export.");
+      alert(t("export.noCvSelected"));
       return;
     }
 
@@ -936,7 +908,7 @@ export default function TopBar() {
       document.body.removeChild(a);
     } catch (error) {
       console.error("Erreur lors de l'export PDF:", error);
-      alert("Erreur lors de l'export PDF. Veuillez réessayer.");
+      alert(t("export.errors.exportFailed"));
     }
   }
 
@@ -944,7 +916,7 @@ export default function TopBar() {
     event.preventDefault();
 
     if (!generatorBaseFile) {
-      setGeneratorError("Sélectionnez un CV de référence avant de lancer l'analyse.");
+      setGeneratorError(t("cvGenerator.errors.selectReference"));
       return;
     }
 
@@ -954,7 +926,7 @@ export default function TopBar() {
     const hasFiles = (fileSelection || []).length > 0;
 
     if (!cleanedLinks.length && !hasFiles) {
-      setGeneratorError("Ajoutez au moins un lien ou un fichier.");
+      setGeneratorError(t("cvGenerator.errors.addLinkOrFile"));
       return;
     }
 
@@ -982,7 +954,7 @@ export default function TopBar() {
     // Fermer le modal et notifier immédiatement
     addNotification({
       type: "info",
-      message: `Adaptation du CV '${baseCvName}' planifié`,
+      message: t("cvGenerator.notifications.scheduled", { baseCvName }),
       duration: 2500,
     });
     closeGenerator();
@@ -1022,7 +994,7 @@ export default function TopBar() {
       removeOptimisticTask(optimisticTaskId);
       addNotification({
         type: "error",
-        message: error?.message || "Erreur lors de la planification de la génération",
+        message: error?.message || t("cvGenerator.notifications.error"),
         duration: 4000,
       });
     }
@@ -1033,7 +1005,7 @@ export default function TopBar() {
     const trimmedTitle = newCvCurrentTitle.trim();
 
     if (!trimmedName || !trimmedTitle) {
-      setNewCvError("Merci de renseigner le nom complet et le titre actuel.");
+      setNewCvError(t("newCvModal.errors.fillRequired"));
       return;
     }
 
@@ -1074,7 +1046,7 @@ export default function TopBar() {
 
       addNotification({
         type: "success",
-        message: "CV créé avec succès",
+        message: t("newCvModal.notifications.success"),
         duration: 3000,
       });
 
@@ -1090,7 +1062,7 @@ export default function TopBar() {
     return (
       <div className="no-print sticky top-0 inset-x-0 z-40 w-full bg-white/80 backdrop-blur border-b min-h-[60px]">
         <div className="w-full p-3 flex items-center justify-between">
-          <span className="text-sm font-medium">Chargement…</span>
+          <span className="text-sm font-medium">{t("topbar.loading")}</span>
         </div>
       </div>
     );
@@ -1118,11 +1090,11 @@ export default function TopBar() {
             type="button"
             onClick={() => setUserMenuOpen((prev) => !prev)}
             className="h-8 w-8 flex items-center justify-center rounded-full border hover:shadow bg-white"
-            aria-label="Menu utilisateur"
+            aria-label={t("topbar.userMenu")}
           >
             <Image
               src="/images/user-icon.png"
-              alt="Menu utilisateur"
+              alt={t("topbar.userMenu")}
               width={20}
               height={20}
               className="object-contain"
@@ -1131,7 +1103,7 @@ export default function TopBar() {
           {userMenuOpen ? (
             <div className="absolute left-0 mt-2 rounded-lg border bg-white shadow-lg p-2 text-sm space-y-1 min-w-[10rem] max-w-[16rem]">
               <div className="px-2 py-1 text-xs uppercase text-neutral-500 truncate">
-                {session?.user?.name || "Utilisateur"}
+                {session?.user?.name || t("topbar.user")}
               </div>
               <button
                 className="w-full text-left rounded px-2 py-1 hover:bg-neutral-100"
@@ -1140,7 +1112,7 @@ export default function TopBar() {
                   router.push("/");
                 }}
               >
-                Mes CVs
+                {t("topbar.myCvs")}
               </button>
               <button
                 className="w-full text-left rounded px-2 py-1 hover:bg-neutral-100"
@@ -1149,7 +1121,7 @@ export default function TopBar() {
                   router.push("/account");
                 }}
               >
-                Mon compte
+                {t("topbar.myAccount")}
               </button>
               <button
                 className="w-full text-left rounded px-2 py-1 hover:bg-neutral-100"
@@ -1158,7 +1130,7 @@ export default function TopBar() {
                   signOut({ callbackUrl: logoutTarget });
                 }}
               >
-                Déconnexion
+                {t("topbar.logout")}
               </button>
             </div>
           ) : null}
@@ -1186,10 +1158,11 @@ export default function TopBar() {
                     item={resolvedCurrentItem}
                     tickerKey={tickerResetKey}
                     withHyphen={false}
+                    t={t}
                   />
                 ) : (
                   <span className="truncate italic text-neutral-500">
-                    Chargement en cours ...
+                    {t("topbar.loadingInProgress")}
                   </span>
                 )}
               </span>
@@ -1232,6 +1205,7 @@ export default function TopBar() {
                           className="leading-tight"
                           tickerKey={tickerResetKey}
                           withHyphen={false}
+                          t={t}
                         />
                       </button>
                     </li>
@@ -1255,7 +1229,7 @@ export default function TopBar() {
             }}
             className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8"
             type="button"
-            title="File d'attente des tâches"
+            title={t("topbar.taskQueue")}
           >
             <QueueIcon className="h-4 w-4" />
           </button>
@@ -1291,7 +1265,7 @@ export default function TopBar() {
           onClick={() => setOpenPdfImport(true)}
           className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-6"
           type="button"
-          title="Importer un CV PDF"
+          title={t("pdfImport.title")}
         >
           <img src="/icons/import.png" alt="Import" className="h-4 w-4" />
         </button>
@@ -1308,7 +1282,7 @@ export default function TopBar() {
         <button
           onClick={() => setOpenDelete(true)}
           className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 text-red-700 order-4 md:order-8"
-          title="Supprimer"
+          title={t("topbar.delete")}
         >
           ❌
         </button>
@@ -1317,17 +1291,15 @@ export default function TopBar() {
       <Modal
         open={openGenerator}
         onClose={closeGenerator}
-        title="Générer un CV avec ChatGPT"
+        title={t("cvGenerator.title")}
       >
         <form onSubmit={submitGenerator} className="space-y-4">
           <div className="text-sm text-neutral-700">
-            Renseignez des offres d'emploi à analyser (liens ou fichier
-            PDF/Word) pour générer des CV adaptés à partir du CV de référence
-            sélectionné.
+            {t("cvGenerator.description")}
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">CV de référence</div>
+            <div className="text-sm font-medium">{t("cvGenerator.referenceCV")}</div>
             {generatorSourceItems.length ? (
               <div className="relative" ref={baseSelectorRef}>
                 <button
@@ -1350,10 +1322,11 @@ export default function TopBar() {
                           item={generatorBaseItem}
                           withHyphen={false}
                           tickerKey={tickerResetKey}
+                          t={t}
                         />
                       ) : (
                         <span className="truncate italic text-neutral-500">
-                          Sélectionnez un CV
+                          {t("cvGenerator.selectCV")}
                         </span>
                       )}
                     </span>
@@ -1387,6 +1360,7 @@ export default function TopBar() {
                               className="leading-tight"
                               withHyphen={false}
                               tickerKey={tickerResetKey}
+                              t={t}
                             />
                           </button>
                         </li>
@@ -1397,14 +1371,13 @@ export default function TopBar() {
               </div>
             ) : (
               <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                Aucun CV manuel disponible. Créez un CV avant de lancer une
-                génération avec l'IA.
+                {t("cvGenerator.noManualCV")}
               </div>
             )}
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">Liens</div>
+            <div className="text-sm font-medium">{t("cvGenerator.links")}</div>
             {linkInputs.map((value, index) => (
               <div key={index} className="flex gap-2">
                 <div className="relative">
@@ -1417,7 +1390,7 @@ export default function TopBar() {
                       }));
                     }}
                     className="h-full rounded border px-2 py-1 text-xs hover:bg-gray-50"
-                    title="Charger un lien récent"
+                    title={t("cvGenerator.loadRecentLink")}
                     disabled={linkHistory.length === 0}
                   >
                     📋
@@ -1425,7 +1398,7 @@ export default function TopBar() {
                   {linkHistoryDropdowns[index] && linkHistory.length > 0 && (
                     <div className="absolute left-0 top-full mt-1 w-80 max-h-60 overflow-y-auto bg-white border rounded shadow-lg z-10">
                       <div className="p-2 border-b bg-gray-50 text-xs font-medium text-gray-600">
-                        Liens récents
+                        {t("cvGenerator.recentLinks")}
                       </div>
                       <ul className="py-1">
                         {linkHistory.map((link, histIndex) => (
@@ -1460,7 +1433,7 @@ export default function TopBar() {
                   type="button"
                   onClick={() => removeLinkField(index)}
                   className="rounded border px-2 py-1 text-xs"
-                  title="Supprimer ce lien"
+                  title={t("topbar.delete")}
                 >
                   ✕
                 </button>
@@ -1472,13 +1445,13 @@ export default function TopBar() {
                 onClick={addLinkField}
                 className="rounded border px-2 py-1 text-xs"
               >
-                ➕ Ajouter un lien
+                ➕ {t("cvGenerator.addLink")}
               </button>
             </div>
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">Fichiers</div>
+            <div className="text-sm font-medium">{t("cvGenerator.files")}</div>
             <input
               ref={fileInputRef}
               className="w-full rounded border px-2 py-1 text-sm"
@@ -1489,7 +1462,7 @@ export default function TopBar() {
             />
             {(fileSelection || []).length ? (
               <div className="rounded border bg-neutral-50 px-3 py-2 text-xs space-y-1">
-                <div className="font-medium">Sélection :</div>
+                <div className="font-medium">{t("cvGenerator.selection")}</div>
                 {(fileSelection || []).map((file, idx) => (
                   <div key={idx} className="truncate">
                     {file.name}
@@ -1500,7 +1473,7 @@ export default function TopBar() {
                   onClick={clearFiles}
                   className="mt-1 rounded border px-2 py-1 text-xs"
                 >
-                  Effacer les fichiers
+                  {t("cvGenerator.clearFiles")}
                 </button>
               </div>
             ) : null}
@@ -1508,9 +1481,9 @@ export default function TopBar() {
 
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">Qualité de l'analyse</div>
+            <div className="text-sm font-medium">{t("cvGenerator.analysisQuality")}</div>
             <div className="grid grid-cols-3 gap-1 rounded-lg border bg-neutral-50 p-1 text-xs sm:text-sm">
-              {ANALYSIS_OPTIONS.map((option) => {
+              {ANALYSIS_OPTIONS(t).map((option) => {
                 const active = option.id === analysisLevel;
                 return (
                   <button
@@ -1542,14 +1515,14 @@ export default function TopBar() {
               onClick={closeGenerator}
               className="rounded border px-3 py-1 text-sm"
             >
-              Annuler
+              {t("cvGenerator.cancel")}
             </button>
             <button
               type="submit"
               className="rounded border px-3 py-1 text-sm"
               disabled={!generatorBaseFile}
             >
-              Valider
+              {t("cvGenerator.validate")}
             </button>
           </div>
         </form>
@@ -1558,16 +1531,15 @@ export default function TopBar() {
       <Modal
         open={openPdfImport}
         onClose={closePdfImport}
-        title="Importer un CV PDF"
+        title={t("pdfImport.title")}
       >
         <form onSubmit={submitPdfImport} className="space-y-4">
           <div className="text-sm text-neutral-700">
-            Importez un CV au format PDF pour le convertir automatiquement en
-            utilisant l'intelligence artificielle et le schéma de votre CV raw.
+            {t("pdfImport.description")}
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">Fichier PDF</div>
+            <div className="text-sm font-medium">{t("pdfImport.pdfFile")}</div>
             <input
               ref={pdfFileInputRef}
               className="w-full rounded border px-2 py-1 text-sm"
@@ -1577,7 +1549,7 @@ export default function TopBar() {
             />
             {pdfFile ? (
               <div className="rounded border bg-neutral-50 px-3 py-2 text-xs">
-                <div className="font-medium">Fichier sélectionné :</div>
+                <div className="font-medium">{t("pdfImport.fileSelected")}</div>
                 <div className="truncate">{pdfFile.name}</div>
               </div>
             ) : null}
@@ -1585,9 +1557,9 @@ export default function TopBar() {
 
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">Qualité de l'analyse</div>
+            <div className="text-sm font-medium">{t("pdfImport.analysisQuality")}</div>
             <div className="grid grid-cols-3 gap-1 rounded-lg border bg-neutral-50 p-1 text-xs sm:text-sm">
-              {ANALYSIS_OPTIONS.map((option) => {
+              {ANALYSIS_OPTIONS(t).map((option) => {
                 const active = option.id === pdfAnalysisLevel;
                 return (
                   <button
@@ -1614,14 +1586,14 @@ export default function TopBar() {
               onClick={closePdfImport}
               className="rounded border px-3 py-1 text-sm"
             >
-              Annuler
+              {t("pdfImport.cancel")}
             </button>
             <button
               type="submit"
               className="rounded border px-3 py-1 text-sm"
               disabled={!pdfFile}
             >
-              Importer
+              {t("pdfImport.import")}
             </button>
           </div>
         </form>
@@ -1630,28 +1602,28 @@ export default function TopBar() {
       <Modal
         open={openDelete}
         onClose={() => setOpenDelete(false)}
-        title="Confirmation"
+        title={t("deleteModal.title")}
       >
         <div className="space-y-3">
           <p className="text-sm">
-            Voulez-vous vraiment supprimer le CV :{" "}
+            {t("deleteModal.question")}{" "}
             <strong>{currentItem ? currentItem.displayTitle : current}</strong> ?
           </p>
           <p className="text-xs opacity-70">
-            Cette action est <strong>irréversible</strong>.
+            {t("deleteModal.warning")} <strong>{t("deleteModal.irreversible")}</strong>.
           </p>
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setOpenDelete(false)}
               className="rounded border px-3 py-1 text-sm"
             >
-              Non
+              {t("deleteModal.no")}
             </button>
             <button
               onClick={deleteCurrent}
               className="rounded border px-3 py-1 text-sm text-red-700"
             >
-              Oui
+              {t("deleteModal.yes")}
             </button>
           </div>
         </div>
@@ -1673,12 +1645,12 @@ export default function TopBar() {
           setNewCvEmail("");
           setNewCvError(null);
         }}
-        title="Créer un nouveau CV"
+        title={t("newCvModal.title")}
       >
         <div className="space-y-4">
           <div>
             <label className="text-sm block mb-1">
-              Nom complet<span className="text-red-500" aria-hidden="true"> *</span>
+              {t("newCvModal.fullName")}<span className="text-red-500" aria-hidden="true"> {t("newCvModal.required")}</span>
             </label>
             <input
               className="w-full rounded border px-3 py-2"
@@ -1690,7 +1662,7 @@ export default function TopBar() {
           </div>
           <div>
             <label className="text-sm block mb-1">
-              Titre actuel<span className="text-red-500" aria-hidden="true"> *</span>
+              {t("newCvModal.currentTitle")}<span className="text-red-500" aria-hidden="true"> {t("newCvModal.required")}</span>
             </label>
             <input
               className="w-full rounded border px-3 py-2"
@@ -1701,7 +1673,7 @@ export default function TopBar() {
             />
           </div>
           <div>
-            <label className="text-sm block mb-1">Email</label>
+            <label className="text-sm block mb-1">{t("newCvModal.email")}</label>
             <input
               className="w-full rounded border px-3 py-2"
               value={newCvEmail}
@@ -1718,7 +1690,7 @@ export default function TopBar() {
               disabled={newCvBusy || !newCvFullName.trim() || !newCvCurrentTitle.trim()}
               className="rounded border px-3 py-2 hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {newCvBusy ? "Création..." : "Créer le CV"}
+              {newCvBusy ? t("newCvModal.creating") : t("newCvModal.create")}
             </button>
             <button
               onClick={() => {
@@ -1730,11 +1702,11 @@ export default function TopBar() {
               }}
               className="rounded border px-3 py-2"
             >
-              Annuler
+              {t("newCvModal.cancel")}
             </button>
           </div>
           <p className="text-xs opacity-70">
-            Tu pourras compléter toutes les sections ensuite via le mode édition.
+            {t("newCvModal.hint")}
           </p>
         </div>
       </Modal>

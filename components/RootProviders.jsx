@@ -7,6 +7,8 @@ import AdminProvider from "@/components/admin/AdminProvider";
 import NotificationProvider from "@/components/notifications/NotificationProvider";
 import NotificationContainer from "@/components/notifications/NotificationContainer";
 import BackgroundTasksProvider from "@/components/BackgroundTasksProvider";
+import { LanguageProvider } from "@/lib/i18n/LanguageContext";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function RootProviders({ session, children }){
   const pathname = usePathname();
@@ -14,21 +16,25 @@ export default function RootProviders({ session, children }){
 
   return (
     <SessionProvider session={session}>
-      <AdminProvider>
-        <NotificationProvider>
-          {isAuthPage ? (
-            <>
-              {children}
-              <NotificationContainer />
-            </>
-          ) : (
-            <BackgroundTasksProvider>
-              {children}
-              <NotificationContainer />
-            </BackgroundTasksProvider>
-          )}
-        </NotificationProvider>
-      </AdminProvider>
+      <LanguageProvider>
+        <AdminProvider>
+          <NotificationProvider>
+            {isAuthPage ? (
+              <>
+                {children}
+                <NotificationContainer />
+                <LanguageSwitcher />
+              </>
+            ) : (
+              <BackgroundTasksProvider>
+                {children}
+                <NotificationContainer />
+                <LanguageSwitcher />
+              </BackgroundTasksProvider>
+            )}
+          </NotificationProvider>
+        </AdminProvider>
+      </LanguageProvider>
     </SessionProvider>
   );
 }

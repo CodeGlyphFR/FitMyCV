@@ -4,6 +4,7 @@ import React from "react";
 import Modal from "./ui/Modal";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 function LoadingSpinner() {
   return (
@@ -18,21 +19,21 @@ function extractQuotedName(text) {
 }
 
 function TaskItem({ task, onCancel }) {
+  const { t } = useLanguage();
+
   const getStatusDisplay = (status) => {
-    switch (status) {
-      case 'queued':
-        return { label: 'En attente', color: 'text-gray-600' };
-      case 'running':
-        return { label: 'En cours', color: 'text-blue-600' };
-      case 'completed':
-        return { label: 'Terminé', color: 'text-green-600' };
-      case 'failed':
-        return { label: 'Échec', color: 'text-red-600' };
-      case 'cancelled':
-        return { label: 'Annulé', color: 'text-orange-600' };
-      default:
-        return { label: 'Inconnu', color: 'text-gray-400' };
-    }
+    const colors = {
+      'queued': 'text-gray-600',
+      'running': 'text-blue-600',
+      'completed': 'text-green-600',
+      'failed': 'text-red-600',
+      'cancelled': 'text-orange-600'
+    };
+
+    return {
+      label: t(`taskQueue.status.${status}`) || t("taskQueue.status.unknown"),
+      color: colors[status] || 'text-gray-400'
+    };
   };
 
   const statusDisplay = getStatusDisplay(task.status);
@@ -48,21 +49,33 @@ function TaskItem({ task, onCancel }) {
   const importName = payload?.savedName || extractQuotedName(task.title);
   const generationName = payload?.baseFileLabel || payload?.baseFile || extractQuotedName(task.title);
 
-  let description = task.title || 'Tâche';
+  let description = task.title || t("taskQueue.messages.task");
 
   if (task.status === 'failed' && task.error) {
     description = task.error;
   } else if (task.type === 'import') {
     if (task.status === 'running') {
-      description = `Import en cours ...`;
+      description = t("taskQueue.messages.importInProgress");
     } else if (task.status === 'queued') {
-      description = `Import en attente ...`;
+      description = t("taskQueue.messages.importQueued");
+    } else if (task.status === 'completed') {
+      description = t("taskQueue.messages.importCompleted");
+    } else if (task.status === 'cancelled') {
+      description = t("taskQueue.messages.importCancelled");
+    } else if (task.status === 'failed') {
+      description = t("taskQueue.messages.importFailed");
     }
   } else if (task.type === 'generation') {
     if (task.status === 'running') {
-      description = `Création en cours${generationName ? ` : '${generationName}'` : ''}`;
+      description = `${t("taskQueue.messages.creationInProgress")}${generationName ? ` : '${generationName}'` : ''}`;
     } else if (task.status === 'queued') {
-      description = `Création en attente${generationName ? ` : '${generationName}'` : ''}`;
+      description = `${t("taskQueue.messages.creationQueued")}${generationName ? ` : '${generationName}'` : ''}`;
+    } else if (task.status === 'completed') {
+      description = `${t("taskQueue.messages.creationCompleted")}${generationName ? ` : '${generationName}'` : ''}`;
+    } else if (task.status === 'cancelled') {
+      description = `${t("taskQueue.messages.creationCancelled")}${generationName ? ` : '${generationName}'` : ''}`;
+    } else if (task.status === 'failed') {
+      description = `${t("taskQueue.messages.creationFailed")}${generationName ? ` : '${generationName}'` : ''}`;
     }
   }
 
@@ -109,7 +122,7 @@ function TaskItem({ task, onCancel }) {
             type="button"
             onClick={() => onCancel(task.id)}
             className="ml-2 text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded"
-            title="Annuler la tâche"
+            title={t("taskQueue.cancelTask")}
           >
             ✕
           </button>
@@ -120,6 +133,7 @@ function TaskItem({ task, onCancel }) {
 }
 
 export default function TaskQueueModal({ open, onClose }) {
+  const { t } = useLanguage();
   const { tasks, clearCompletedTasks, cancelTask, isApiSyncEnabled } = useBackgroundTasks();
 
   // Sort tasks so running ones appear first (newest to oldest) and limit to 8
@@ -130,24 +144,24 @@ export default function TaskQueueModal({ open, onClose }) {
   ).length;
 
   return (
-    <Modal open={open} onClose={onClose} title="File d'attente des tâches">
+    <Modal open={open} onClose={onClose} title={t("taskQueue.title")}>
       <div className="space-y-4">
         {sortedTasks.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
-            <div className="text-sm">Aucune tâche en cours</div>
+            <div className="text-sm">{t("taskQueue.noTasks")}</div>
           </div>
         ) : (
           <div>
             <div className="flex items-center justify-between mb-3">
               <div className="text-sm font-medium text-gray-700">
-                Tâches ({sortedTasks.length}{tasks.length > 8 ? ` sur ${tasks.length}` : ''})
+                {t("taskQueue.tasks")} ({sortedTasks.length}{tasks.length > 8 ? ` ${t("taskQueue.of")} ${tasks.length}` : ''})
               </div>
               {completedTasksCount > 0 && (
                 <button
                   onClick={clearCompletedTasks}
                   className="text-xs text-blue-600 hover:text-blue-800"
                 >
-                  Effacer terminées ({completedTasksCount})
+                  {t("taskQueue.clearCompleted")} ({completedTasksCount})
                 </button>
               )}
             </div>
@@ -163,16 +177,16 @@ export default function TaskQueueModal({ open, onClose }) {
           <div className="flex items-center gap-1">
             <div
               className={`w-2 h-2 rounded-full ${isApiSyncEnabled ? 'bg-green-500' : 'bg-orange-500'}`}
-              title={isApiSyncEnabled ? 'Synchronisation Cloud active' : 'Sync local uniquement'}
+              title={isApiSyncEnabled ? t("taskQueue.cloudSyncActive") : t("taskQueue.localSyncOnly")}
             />
-            <span>{isApiSyncEnabled ? 'Cloud' : 'Stockage Local'}</span>
+            <span>{isApiSyncEnabled ? t("taskQueue.cloud") : t("taskQueue.localStorage")}</span>
           </div>
-          <div>Total: {tasks.length}</div>
+          <div>{t("taskQueue.total")}: {tasks.length}</div>
           <button
             onClick={onClose}
             className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
           >
-            Fermer
+            {t("common.close")}
           </button>
         </div>
       </div>

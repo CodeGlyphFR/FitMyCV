@@ -9,8 +9,10 @@ import {
   DEFAULT_CONSENT,
   COOKIE_CATEGORIES
 } from '@/lib/cookies/consent';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export default function CookieBanner() {
+  const { t } = useLanguage();
   const [showBanner, setShowBanner] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
   const [preferences, setPreferences] = useState(DEFAULT_CONSENT);
@@ -60,22 +62,22 @@ export default function CookieBanner() {
                 <span className="text-2xl">🍪</span>
                 <div className="flex-1">
                   <h2 className="text-sm font-semibold mb-1 text-gray-900 dark:text-white">
-                    Ce site utilise des cookies
+                    {t("cookies.banner.title")}
                   </h2>
                   <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
-                    Nous utilisons des cookies pour améliorer votre expérience.
+                    {t("cookies.banner.description")}
                     <button
                       onClick={() => setShowPreferences(true)}
                       className="text-blue-600 hover:text-blue-700 dark:text-blue-400 ml-1 underline"
                     >
-                      En savoir plus
+                      {t("cookies.banner.learnMore")}
                     </button>
                   </p>
                 </div>
                 <button
                   onClick={handleRejectAll}
                   className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none"
-                  title="Fermer"
+                  title={t("cookies.banner.close")}
                 >
                   ✕
                 </button>
@@ -86,19 +88,19 @@ export default function CookieBanner() {
                   onClick={handleAcceptAll}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors"
                 >
-                  Accepter tout
+                  {t("cookies.banner.acceptAll")}
                 </button>
                 <button
                   onClick={handleRejectAll}
                   className="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white text-sm font-medium py-2 px-4 rounded transition-colors"
                 >
-                  Refuser tout
+                  {t("cookies.banner.rejectAll")}
                 </button>
                 <button
                   onClick={() => setShowPreferences(true)}
                   className="flex-1 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-sm font-medium py-2 px-4 rounded border border-gray-300 dark:border-gray-600 transition-colors"
                 >
-                  Personnaliser
+                  {t("cookies.banner.customize")}
                 </button>
               </div>
             </>
@@ -106,7 +108,7 @@ export default function CookieBanner() {
             <>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-base font-bold text-gray-900 dark:text-white">
-                  Préférences de cookies
+                  {t("cookies.preferences.title")}
                 </h2>
                 <button
                   onClick={() => setShowPreferences(false)}
@@ -120,21 +122,21 @@ export default function CookieBanner() {
                 <div className="border border-gray-200 dark:border-gray-700 rounded p-3">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Cookies nécessaires
+                      {t("cookies.preferences.necessary.title")}
                     </h3>
                     <span className="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-0.5 rounded">
-                      Actifs
+                      {t("cookies.preferences.necessary.active")}
                     </span>
                   </div>
                   <p className="text-xs text-gray-600 dark:text-gray-300">
-                    Essentiels au fonctionnement du site.
+                    {t("cookies.preferences.necessary.description")}
                   </p>
                 </div>
 
                 <div className="border border-gray-200 dark:border-gray-700 rounded p-3">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Cookies fonctionnels
+                      {t("cookies.preferences.functional.title")}
                     </h3>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -147,14 +149,14 @@ export default function CookieBanner() {
                     </label>
                   </div>
                   <p className="text-xs text-gray-600 dark:text-gray-300">
-                    Mémorisent vos préférences.
+                    {t("cookies.preferences.functional.description")}
                   </p>
                 </div>
 
                 <div className="border border-gray-200 dark:border-gray-700 rounded p-3">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Cookies analytiques
+                      {t("cookies.preferences.analytics.title")}
                     </h3>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -167,14 +169,14 @@ export default function CookieBanner() {
                     </label>
                   </div>
                   <p className="text-xs text-gray-600 dark:text-gray-300">
-                    Statistiques d'utilisation du site.
+                    {t("cookies.preferences.analytics.description")}
                   </p>
                 </div>
 
                 <div className="border border-gray-200 dark:border-gray-700 rounded p-3">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Cookies marketing
+                      {t("cookies.preferences.marketing.title")}
                     </h3>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -187,7 +189,7 @@ export default function CookieBanner() {
                     </label>
                   </div>
                   <p className="text-xs text-gray-600 dark:text-gray-300">
-                    Publicité ciblée.
+                    {t("cookies.preferences.marketing.description")}
                   </p>
                 </div>
               </div>
@@ -197,13 +199,13 @@ export default function CookieBanner() {
                   onClick={handleSavePreferences}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors"
                 >
-                  Enregistrer
+                  {t("cookies.preferences.save")}
                 </button>
                 <button
                   onClick={() => setShowPreferences(false)}
                   className="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white text-sm font-medium py-2 px-4 rounded transition-colors"
                 >
-                  Retour
+                  {t("cookies.preferences.back")}
                 </button>
               </div>
             </>
