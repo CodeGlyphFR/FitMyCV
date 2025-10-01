@@ -71,21 +71,31 @@ export default function Skills(props){
   const soft = Array.isArray(skills.soft_skills)? skills.soft_skills:[];
   const tools = Array.isArray(skills.tools)? skills.tools:[];
   const methods = Array.isArray(skills.methodologies)? skills.methodologies:[];
+
+  const skillsKeyRef = React.useRef("");
+  const currentSkillsKey = JSON.stringify(skills);
+
   const [openHard, setOpenHard] = React.useState(false);
   const [hardLocal, setHardLocal] = React.useState(() => (hard || []).map(toEditableSkill));
-  React.useEffect(() => setHardLocal((hard || []).map(toEditableSkill)), [skills]);
 
   const [openSoft, setOpenSoft] = React.useState(false);
   const [softLocal, setSoftLocal] = React.useState((soft||[]).map(it=> (typeof it==='object'? (it.name||it.label||it.title||it.value||'') : String(it))));
-  React.useEffect(()=> setSoftLocal((soft||[]).map(it=> (typeof it==='object'? (it.name||it.label||it.title||it.value||'') : String(it)))), [skills]);
 
   const [openTools, setOpenTools] = React.useState(false);
   const [toolsLocal, setToolsLocal] = React.useState(() => (tools || []).map(toEditableSkill));
-  React.useEffect(() => setToolsLocal((tools || []).map(toEditableSkill)), [skills]);
 
   const [openMeth, setOpenMeth] = React.useState(false);
   const [methLocal, setMethLocal] = React.useState((methods||[]).map(it=> (typeof it==='object'? (it.name||it.label||it.title||it.value||'') : String(it))));
-  React.useEffect(()=> setMethLocal((methods||[]).map(it=> (typeof it==='object'? (it.name||it.label||it.title||it.value||'') : String(it)))), [skills]);
+
+  React.useEffect(() => {
+    if (skillsKeyRef.current === currentSkillsKey) return;
+    skillsKeyRef.current = currentSkillsKey;
+
+    setHardLocal((hard || []).map(toEditableSkill));
+    setSoftLocal((soft||[]).map(it=> (typeof it==='object'? (it.name||it.label||it.title||it.value||'') : String(it))));
+    setToolsLocal((tools || []).map(toEditableSkill));
+    setMethLocal((methods||[]).map(it=> (typeof it==='object'? (it.name||it.label||it.title||it.value||'') : String(it))));
+  });
 
   const { editing } = useAdmin();
   const { mutate } = useMutate();

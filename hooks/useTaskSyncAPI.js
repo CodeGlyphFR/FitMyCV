@@ -90,11 +90,16 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
 
       lastSyncType.current = result.syncType || 'full'
       const tasksFromServer = normaliseTasks(result.tasks)
-      setTasks(tasksFromServer)
+
+      // Préserver les tâches optimistes lors du merge
+      setTasks(prevTasks => {
+        const optimisticTasks = prevTasks.filter(task => task.isOptimistic)
+        return [...optimisticTasks, ...tasksFromServer]
+      })
     } catch (error) {
       console.warn('Failed to load tasks from server:', error)
     }
-  }, [enabled, getDeviceId, isAuthenticated, normaliseTasks, setTasks, status])
+  }, [enabled, getDeviceId, isAuthenticated, normaliseTasks, status])
 
   useEffect(() => {
     if (!enabled) {
