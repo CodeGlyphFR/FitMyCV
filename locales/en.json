@@ -298,7 +298,8 @@
     "error": "Error",
     "success": "Success",
     "close": "Close",
-    "confirmation": "Confirmation"
+    "confirmation": "Confirmation",
+    "locale": "en-US"
   },
   "editMode": {
     "on": "✏️ Edit ON",

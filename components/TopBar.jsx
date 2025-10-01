@@ -22,13 +22,18 @@ const useIsomorphicLayoutEffect = typeof window !== "undefined"
   ? React.useLayoutEffect
   : React.useEffect;
 
-function formatDateLabel(value){
+function formatDateLabel(value, language = 'fr'){
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
+
+  // Format selon la langue : FR = DD/MM/YYYY, EN = MM/DD/YYYY
+  if (language === 'en') {
+    return `${month}/${day}/${year}`;
+  }
   return `${day}/${month}/${year}`;
 }
 
@@ -80,11 +85,8 @@ function enhanceItem(item, titleCache = null, fallbackTitle = "CV"){
   if (titleCache && hasTitle && fileId){
     titleCache.set(fileId, effectiveTitle);
   }
-  const dateLabel = item?.dateLabel
-    || formatDateLabel(item?.createdAt)
-    || formatDateLabel(item?.updatedAt);
-  const displayDate = dateLabel || "??/??/????";
 
+  // Don't calculate displayDate here - let useMemo handle it for reactivity
   return {
     ...item,
     isGpt,
@@ -92,7 +94,6 @@ function enhanceItem(item, titleCache = null, fallbackTitle = "CV"){
     hasTitle,
     title: effectiveTitle,
     displayTitle,
-    displayDate,
   };
 }
 
@@ -316,9 +317,21 @@ export default function TopBar() {
   const isAuthenticated = !!session?.user?.id;
   const { localDeviceId, refreshTasks, addOptimisticTask, removeOptimisticTask } = useBackgroundTasks();
   const { addNotification } = useNotifications();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
-  const [items, setItems] = React.useState([]);
+  const [rawItems, setRawItems] = React.useState([]);
+
+  // Recalculate displayDate when language changes
+  const items = React.useMemo(() => {
+    return rawItems.map((it) => {
+      // Always recalculate from raw dates, ignore any existing dateLabel
+      const formattedDate = formatDateLabel(it.createdAt, language)
+        || formatDateLabel(it.updatedAt, language);
+      const displayDate = formattedDate || it.dateLabel || "??/??/????";
+      return { ...it, displayDate };
+    });
+  }, [rawItems, language]);
+
   const [current, setCurrent] = React.useState("");
   const [openDelete, setOpenDelete] = React.useState(false);
   const [openGenerator, setOpenGenerator] = React.useState(false);
@@ -431,7 +444,7 @@ export default function TopBar() {
 
   const reload = React.useCallback(async (preferredCurrent) => {
     if (!isAuthenticated) {
-      setItems([]);
+      setRawItems([]);
       setCurrent("");
       titleCacheRef.current.clear();
       lastSelectedRef.current = "";
@@ -449,7 +462,7 @@ export default function TopBar() {
       const normalizedItems = Array.isArray(data.items)
         ? data.items.map((it) => enhanceItem(it, cache, "CV"))
         : [];
-      setItems(normalizedItems);
+      setRawItems(normalizedItems);
 
       // Priority: 1) preferredCurrent 2) server cookie 3) localStorage/lastSelected 4) first item
       const serverSuggested = data.current && normalizedItems.some((it) => it.file === data.current)
@@ -491,7 +504,7 @@ export default function TopBar() {
       }
     } catch (error) {
       console.error(error);
-      setItems([]);
+      setRawItems([]);
     }
   }, [isAuthenticated, setCurrentFile]);
 

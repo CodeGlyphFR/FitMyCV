@@ -31,7 +31,8 @@ function TaskItem({ task, onCancel, compact = false }) {
   };
 
   const statusDisplay = getStatusDisplay(task.status);
-  const createdAt = new Date(task.createdAt).toLocaleTimeString('fr-FR', {
+  const locale = t("common.locale") || 'fr-FR'; // fr-FR ou en-US
+  const createdAt = new Date(task.createdAt).toLocaleTimeString(locale, {
     hour: '2-digit',
     minute: '2-digit'
   });
