@@ -511,6 +511,11 @@ export default function TopBar() {
         if (matched) {
           lastSelectedMetaRef.current = matched;
         }
+
+        // Notify components that CV has been selected/changed
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("cv:selected", { detail: { file: nextCurrent } }));
+        }
       }
     } catch (error) {
       console.error(error);
@@ -577,6 +582,12 @@ export default function TopBar() {
     setCurrent(file);
     // Force icon refresh to prevent caching issues
     setIconRefreshKey(Date.now());
+
+    // Dispatch event to notify components that CV has changed
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("cv:selected", { detail: { file } }));
+    }
+
     router.refresh();
     // also refresh list labels, in case ordering/labels changed
     await reload(file);
@@ -1049,6 +1060,7 @@ export default function TopBar() {
 
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("cv:list:changed"));
+        window.dispatchEvent(new CustomEvent("cv:selected", { detail: { file: data.file } }));
       }
 
       // Close modal and reset form
