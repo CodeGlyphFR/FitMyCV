@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const languages = [
-  { code: "fr", flag: "🇫🇷", label: "Français" },
-  { code: "en", flag: "🇬🇧", label: "English" },
+  { code: "fr", flag: "/icons/fr.svg", label: "Français" },
+  { code: "en", flag: "/icons/gb.svg", label: "English" },
 ];
 
 export default function LanguageSwitcher() {
@@ -71,13 +72,14 @@ export default function LanguageSwitcher() {
               key={lang.code}
               onClick={() => handleLanguageChange(lang.code)}
               className={`
-                w-12 h-12 rounded-full
-                bg-white shadow-lg border-2 border-neutral-200
+                w-8 h-8 rounded-full
+                bg-white shadow-lg border border-neutral-200
                 flex items-center justify-center
-                text-2xl
-                hover:scale-110 hover:shadow-xl
+                overflow-hidden
+                hover:shadow-xl
                 transition-all duration-200
                 cursor-pointer
+                p-0.5
               `}
               style={{
                 transitionDelay: isOpen ? `${index * 50}ms` : '0ms'
@@ -85,7 +87,13 @@ export default function LanguageSwitcher() {
               title={lang.label}
               aria-label={`Switch to ${lang.label}`}
             >
-              {lang.flag}
+              <Image
+                src={lang.flag}
+                alt={lang.label}
+                width={24}
+                height={24}
+                className="object-cover"
+              />
             </button>
           ))}
       </div>
@@ -94,20 +102,29 @@ export default function LanguageSwitcher() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`
-          w-14 h-14 rounded-full
-          bg-white shadow-lg border-2 border-neutral-300
+          w-8 h-8 rounded-full
+          bg-white shadow-lg border border-neutral-300
           flex items-center justify-center
-          text-3xl
-          hover:scale-110 hover:shadow-xl
+          overflow-hidden
+          hover:shadow-xl
           transition-all duration-200
           cursor-pointer
-          ${isOpen ? 'scale-110 shadow-xl' : ''}
+          p-0.5
+          ${isOpen ? 'shadow-xl' : ''}
         `}
         title={currentLanguage?.label}
         aria-label="Language selector"
         aria-expanded={isOpen}
       >
-        {currentLanguage?.flag}
+        {currentLanguage && (
+          <Image
+            src={currentLanguage.flag}
+            alt={currentLanguage.label}
+            width={24}
+            height={24}
+            className="object-cover"
+          />
+        )}
       </button>
 
       <style jsx>{`
