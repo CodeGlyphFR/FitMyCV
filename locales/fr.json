@@ -1,0 +1,415 @@
+{
+  "auth": {
+    "title": "Créer un compte",
+    "siteTitle": "CV Builder",
+    "welcome": "Bienvenue ! Avec CV Builder, créez des CV taillés pour chaque opportunité grâce à l'IA.",
+    "continueWithGoogle": "Continuer avec Google",
+    "continueWithApple": "Continuer avec Apple",
+    "continueWithGithub": "Continuer avec GitHub",
+    "or": "ou",
+    "fullName": "Nom complet",
+    "email": "Email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmez le mot de passe",
+    "createAccount": "Créer mon compte",
+    "login": "Me connecter",
+    "alreadyRegistered": "Déjà inscrit ?",
+    "loginLink": "Se connecter",
+    "new": "Nouveau ?",
+    "createAccountLink": "Créer un compte",
+    "termsText": "En vous connectant, vous acceptez nos conditions d'utilisation. Pas de spam.",
+    "pleaseWait": "Veuillez patienter…",
+    "errors": {
+      "required": "Email et mot de passe sont requis.",
+      "nameRequired": "Renseignez votre nom complet.",
+      "passwordLength": "Le mot de passe doit contenir au moins 8 caractères.",
+      "passwordMismatch": "Les mots de passe ne correspondent pas.",
+      "createFailed": "Impossible de créer votre compte.",
+      "invalidCredentials": "Identifiants invalides.",
+      "unexpected": "Erreur inattendue. Réessayez.",
+      "oauthUnavailable": "Connexion via ce fournisseur indisponible. Configurez les identifiants OAuth."
+    }
+  },
+  "topbar": {
+    "loading": "Chargement…",
+    "userMenu": "Menu utilisateur",
+    "user": "Utilisateur",
+    "myCvs": "Mes CVs",
+    "myAccount": "Mon compte",
+    "logout": "Déconnexion",
+    "loadingInProgress": "Chargement en cours ...",
+    "taskQueue": "File d'attente des tâches",
+    "delete": "Supprimer",
+    "cvInProgress": "CV en cours d'édition",
+    "analysisLevels": {
+      "rapid": "Rapide",
+      "medium": "Moyen",
+      "deep": "Approfondi"
+    }
+  },
+  "cvGenerator": {
+    "title": "Générer un CV avec ChatGPT",
+    "description": "Renseignez des offres d'emploi à analyser (liens ou fichier PDF/Word) pour générer des CV adaptés à partir du CV de référence sélectionné.",
+    "referenceCV": "CV de référence",
+    "selectCV": "Sélectionnez un CV",
+    "noManualCV": "Aucun CV manuel disponible. Créez un CV avant de lancer une génération avec l'IA.",
+    "links": "Liens",
+    "loadRecentLink": "Charger un lien récent",
+    "recentLinks": "Liens récents",
+    "addLink": "Ajouter un lien",
+    "files": "Fichiers",
+    "selection": "Sélection :",
+    "clearFiles": "Effacer les fichiers",
+    "analysisQuality": "Qualité de l'analyse",
+    "analysisHints": {
+      "rapid": "Analyse la plus rapide, pour un aperçu rapide.",
+      "medium": "Équilibre entre vitesse et qualité (recommandé).",
+      "deep": "Analyse complète pour des résultats optimisés."
+    },
+    "cancel": "Annuler",
+    "validate": "Valider",
+    "errors": {
+      "selectReference": "Sélectionnez un CV de référence avant de lancer l'analyse.",
+      "addLinkOrFile": "Ajoutez au moins un lien ou un fichier."
+    },
+    "notifications": {
+      "scheduled": "Adaptation du CV '{baseCvName}' planifié",
+      "error": "Erreur lors de la planification de la génération"
+    }
+  },
+  "pdfImport": {
+    "title": "Importer un CV PDF",
+    "description": "Importez un CV au format PDF pour le convertir automatiquement en utilisant l'intelligence artificielle et le schéma de votre CV raw.",
+    "pdfFile": "Fichier PDF",
+    "fileSelected": "Fichier sélectionné :",
+    "analysisQuality": "Qualité de l'analyse",
+    "cancel": "Annuler",
+    "import": "Importer",
+    "notifications": {
+      "scheduled": "Import '{fileName}' planifié",
+      "error": "Erreur lors de la planification de l'import"
+    }
+  },
+  "deleteModal": {
+    "title": "Confirmation",
+    "question": "Voulez-vous vraiment supprimer le CV :",
+    "warning": "Cette action est",
+    "irreversible": "irréversible",
+    "no": "Non",
+    "yes": "Oui",
+    "errors": {
+      "deleteFailed": "Suppression impossible:"
+    }
+  },
+  "export": {
+    "noCvSelected": "Aucun CV sélectionné pour l'export.",
+    "errors": {
+      "exportFailed": "Erreur lors de l'export PDF. Veuillez réessayer."
+    }
+  },
+  "newCvModal": {
+    "title": "Créer un nouveau CV",
+    "fullName": "Nom complet",
+    "currentTitle": "Titre actuel",
+    "email": "Email",
+    "required": "*",
+    "create": "Créer le CV",
+    "creating": "Création...",
+    "cancel": "Annuler",
+    "hint": "Tu pourras compléter toutes les sections ensuite via le mode édition.",
+    "errors": {
+      "fillRequired": "Merci de renseigner le nom complet et le titre actuel.",
+      "generic": "Erreur"
+    },
+    "notifications": {
+      "success": "CV créé avec succès"
+    }
+  },
+  "cvSections": {
+    "header": "En-tête",
+    "summary": "Résumé",
+    "experience": "Expérience",
+    "education": "Formation",
+    "skills": "Compétences",
+    "projects": "Projets",
+    "languages": "Langues",
+    "extras": "Extras",
+    "editSummary": "Modifier le résumé",
+    "noSummary": "Aucun résumé pour le moment.",
+    "editExperience": "Modifier l'expérience",
+    "addExperience": "Ajouter une expérience",
+    "deleteExperience": "Supprimer cette expérience",
+    "noExperience": "Aucune expérience pour le moment.",
+    "editEducation": "Modifier la formation",
+    "addEducation": "Ajouter une formation",
+    "deleteEducation": "Supprimer cette formation",
+    "noEducation": "Aucune formation pour le moment.",
+    "editSkills": "Modifier les compétences",
+    "addSkill": "Ajouter une compétence",
+    "deleteSkill": "Supprimer cette compétence",
+    "noSkills": "Aucune compétence pour le moment.",
+    "editProjects": "Modifier le projet",
+    "addProject": "Ajouter un projet",
+    "deleteProject": "Supprimer ce projet",
+    "noProjects": "Aucun projet pour le moment.",
+    "editLanguages": "Modifier les langues",
+    "addLanguage": "Ajouter une langue",
+    "deleteLanguage": "Supprimer cette langue",
+    "noLanguages": "Aucune langue pour le moment.",
+    "editExtras": "Modifier les extras",
+    "noExtras": "Aucun extra pour le moment.",
+    "present": "Présent",
+    "inProgress": "Poste en cours",
+    "projectInProgress": "Projet en cours",
+    "responsibilities": "Responsabilités",
+    "deliverables": "Livrables",
+    "skillsUsed": "Compétences utilisées",
+    "technologies": "Technologies",
+    "hardSkills": "Compétences techniques",
+    "tools": "Outils",
+    "methodologies": "Méthodologies",
+    "softSkills": "Soft skills",
+    "noTools": "Aucun outil pour le moment.",
+    "noMethodologies": "Aucune méthodologie pour le moment.",
+    "noSoftSkills": "Aucun soft skill pour le moment.",
+    "editTools": "Modifier les outils",
+    "editMethodologies": "Modifier les méthodologies",
+    "editSoftSkills": "Modifier les soft skills",
+    "addExtra": "Ajouter un extra",
+    "deleteExtra": "Supprimer cet extra",
+    "placeholders": {
+      "institution": "Établissement",
+      "degree": "Diplôme",
+      "degreeOrCertification": "Diplôme ou certification",
+      "fieldOfStudy": "Spécialité",
+      "startDate": "Début (YYYY ou YYYY-MM)",
+      "endDate": "Fin (YYYY ou YYYY-MM)",
+      "projectName": "Nom du projet",
+      "role": "Rôle",
+      "description": "Description",
+      "skillName": "Nom",
+      "skillLabel": "Libellé",
+      "chooseLevel": "Choisir un niveau…",
+      "languageName": "Langue",
+      "languageLevel": "Niveau (ex: C1, B2, courant...)",
+      "extraTitle": "Titre",
+      "extraSummary": "Résumé",
+      "experienceTitleShort": "Intitulé",
+      "experienceCompanyShort": "Entreprise",
+      "experienceDepartment": "Département/Client",
+      "experienceStartShort": "Début (YYYY ou YYYY-MM)",
+      "experienceEndShort": "Fin (YYYY, YYYY-MM)",
+      "experienceEndShortWithPresent": "Fin (YYYY, YYYY-MM ou present)",
+      "city": "Ville",
+      "region": "Région",
+      "countryCode": "Pays (code)"
+    }
+  },
+  "skillLevels": {
+    "awareness": "Notions",
+    "beginner": "Débutant",
+    "intermediate": "Intermédiaire",
+    "proficient": "Compétent",
+    "advanced": "Avancé",
+    "expert": "Expert"
+  },
+  "languageLevels": {
+    "A1": "Débutant (A1)",
+    "A2": "Élémentaire (A2)",
+    "B1": "Intermédiaire (B1)",
+    "B2": "Intermédiaire supérieur (B2)",
+    "C1": "Avancé (C1)",
+    "C2": "Maîtrise (C2)",
+    "native": "Langue maternelle",
+    "Native": "Langue maternelle",
+    "beginner": "Débutant",
+    "Beginner": "Débutant",
+    "elementary": "Élémentaire",
+    "Elementary": "Élémentaire",
+    "intermediate": "Intermédiaire",
+    "Intermediate": "Intermédiaire",
+    "advanced": "Avancé",
+    "Advanced": "Avancé",
+    "fluent": "Courant",
+    "Fluent": "Courant",
+    "proficient": "Compétent",
+    "Proficient": "Compétent"
+  },
+  "footer": {
+    "cookieManagement": "Gestion des cookies"
+  },
+  "cookies": {
+    "banner": {
+      "title": "Ce site utilise des cookies",
+      "description": "Nous utilisons des cookies pour améliorer votre expérience.",
+      "learnMore": "En savoir plus",
+      "acceptAll": "Accepter tout",
+      "rejectAll": "Tout refuser",
+      "customize": "Personnaliser",
+      "close": "Fermer"
+    },
+    "preferences": {
+      "title": "Préférences des cookies",
+      "description": "Choisissez les types de cookies que vous souhaitez autoriser.",
+      "save": "Enregistrer mes préférences",
+      "necessary": {
+        "title": "Cookies nécessaires",
+        "description": "Essentiels au fonctionnement du site.",
+        "active": "Actifs"
+      },
+      "functional": {
+        "title": "Cookies fonctionnels",
+        "description": "Mémorisent vos préférences."
+      },
+      "analytics": {
+        "title": "Cookies analytiques",
+        "description": "Statistiques d'utilisation du site."
+      },
+      "marketing": {
+        "title": "Cookies marketing",
+        "description": "Publicité ciblée."
+      },
+      "back": "Retour",
+      "save": "Enregistrer"
+    }
+  },
+  "header": {
+    "modalTitle": "Modifier l'entête",
+    "fullName": "Nom complet",
+    "currentTitle": "Titre actuel",
+    "email": "Email",
+    "phone": "Téléphone",
+    "city": "Ville",
+    "region": "Région",
+    "countryCode": "Pays (code)",
+    "links": "Liens",
+    "noLinks": "Aucun lien pour le moment.",
+    "labelPlaceholder": "Label (ex: GitHub)",
+    "urlPlaceholder": "URL (ex: https://github.com/erick)",
+    "addLink": "Ajouter un lien"
+  },
+  "common": {
+    "edit": "Éditer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "add": "Ajouter",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "close": "Fermer",
+    "confirmation": "Confirmation",
+    "locale": "fr-FR"
+  },
+  "editMode": {
+    "on": "✏️ Édition ON",
+    "off": "Édition OFF"
+  },
+  "taskQueue": {
+    "title": "File d'attente des tâches",
+    "noTasks": "Aucune tâche en cours",
+    "tasks": "Tâches",
+    "of": "sur",
+    "clearCompleted": "Effacer terminées",
+    "total": "Total",
+    "cancelTask": "Annuler la tâche",
+    "cloudSyncActive": "Synchronisation Cloud active",
+    "localSyncOnly": "Sync local uniquement",
+    "cloud": "Cloud",
+    "localStorage": "Stockage Local",
+    "status": {
+      "queued": "En attente",
+      "running": "En cours",
+      "completed": "Terminé",
+      "failed": "Échec",
+      "cancelled": "Annulé",
+      "unknown": "Inconnu"
+    },
+    "messages": {
+      "task": "Tâche",
+      "importInProgress": "Import en cours ...",
+      "importQueued": "Import en attente ...",
+      "importCompleted": "Import terminé",
+      "importCancelled": "Import annulé",
+      "importFailed": "Import échoué",
+      "creationInProgress": "Création en cours",
+      "creationQueued": "Création en attente",
+      "creationCompleted": "Création terminée",
+      "creationCancelled": "Création annulée",
+      "creationFailed": "Création échouée"
+    }
+  },
+  "emptyState": {
+    "welcome": "Bienvenue {firstName} sur votre gestionnaire de CV",
+    "subtitle": "Commencez par créer votre premier CV ou importez-en un existant",
+    "createManual": "Créer un CV manuellement",
+    "orImport": "ou importer un CV PDF",
+    "importButton": "Importer un PDF",
+    "importCard": {
+      "title": "Importer un CV",
+      "description": "Importez votre CV existant au format PDF pour le convertir automatiquement",
+      "button": "Importer →"
+    },
+    "createCard": {
+      "title": "Créer un nouveau CV",
+      "description": "Commencez avec un CV vierge et remplissez-le à votre rythme",
+      "button": "Créer →"
+    },
+    "tip": "💡 Astuce : Vous pourrez éditer, dupliquer et exporter vos CV à tout moment",
+    "importing": {
+      "title": "Import en cours...",
+      "ready": "🎉 Votre CV est prêt !",
+      "steps": {
+        "reading": "Lecture du fichier PDF",
+        "analyzing": "Analyse intelligente du contenu",
+        "structuring": "Structuration des données",
+        "finalizing": "Finalisation"
+      },
+      "redirect": "🎊 Redirection en cours...",
+      "timeout": "☕ Pendant ce temps, préparez-vous une boisson chaude...",
+      "timeoutAlert": "L'import prend plus de temps que prévu. Veuillez rafraîchir la page.",
+      "loadingMessages": [
+        "🔍 Recherche de vos super-pouvoirs cachés...",
+        "🎨 Application d'une touche de magie sur votre parcours...",
+        "🧠 L'IA réfléchit intensément à votre profil...",
+        "📚 Lecture entre les lignes de votre expérience...",
+        "✨ Polissage de vos compétences...",
+        "🎯 Optimisation de votre profil professionnel...",
+        "🚀 Préparation au décollage de votre carrière...",
+        "🎭 Mise en valeur de vos talents...",
+        "🔮 Prédiction de votre succès futur...",
+        "💎 Transformation de votre CV en diamant...",
+        "🎪 Orchestration de votre parcours professionnel...",
+        "🌟 Ajout d'une touche d'excellence...",
+        "🎨 Peinture de votre portrait professionnel...",
+        "🏆 Préparation de votre arsenal de compétences...",
+        "📖 Écriture de votre légende professionnelle...",
+        "🎬 Réalisation du film de votre carrière...",
+        "🧩 Assemblage des pièces de votre puzzle professionnel...",
+        "🎵 Composition de la symphonie de vos réussites...",
+        "🔬 Analyse moléculaire de vos compétences...",
+        "🎪 Organisation du spectacle de vos talents..."
+      ]
+    }
+  },
+  "newCv": {
+    "title": "Créer un nouveau CV",
+    "fullName": "Nom complet",
+    "fullNamePlaceholder": "Ex: Erick De Smet",
+    "currentTitle": "Titre actuel",
+    "currentTitlePlaceholder": "Ex: Développeur Full‑Stack",
+    "email": "Email",
+    "emailPlaceholder": "email@exemple.com",
+    "required": "Merci de renseigner le nom complet et le titre actuel.",
+    "creating": "Création...",
+    "createButton": "Créer le CV",
+    "cancel": "Annuler",
+    "tip": "Tu pourras compléter toutes les sections ensuite via le mode édition.",
+    "loading": "Chargement…",
+    "error": "Erreur"
+  },
+  "sourceInfo": {
+    "createdFromLink": "Créé depuis un lien",
+    "createdFromPdf": "Créé depuis un PDF"
+  }
+}

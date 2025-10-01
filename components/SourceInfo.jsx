@@ -1,7 +1,9 @@
 "use client";
 import React from "react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function SourceInfo({ sourceType, sourceValue }) {
+  const { t } = useLanguage();
   const [isHovered, setIsHovered] = React.useState(false);
   const [isOpen, setIsOpen] = React.useState(false);
   const [isMobile, setIsMobile] = React.useState(false);
@@ -36,14 +38,14 @@ export default function SourceInfo({ sourceType, sourceValue }) {
   const getTooltipContent = () => {
     if (sourceType === "link") {
       return {
-        title: "Créé depuis un lien",
+        title: t("sourceInfo.createdFromLink"),
         value: sourceValue,
         icon: "🔗"
       };
     }
     if (sourceType === "pdf") {
       return {
-        title: "Créé depuis un PDF",
+        title: t("sourceInfo.createdFromPdf"),
         value: sourceValue,
         icon: "📄"
       };

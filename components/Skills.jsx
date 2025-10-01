@@ -4,17 +4,10 @@ import Section from "./Section";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getSkillLevelLabel, getSectionTitle } from "@/lib/i18n/cvLabels";
 
 function Row({children}){ return <div className="flex gap-2">{children}</div>; }
-
-const LEVEL_OPTIONS = [
-  { value: "awareness", label: "Connaissances" },
-  { value: "beginner", label: "Débutant" },
-  { value: "intermediate", label: "Intermédiaire" },
-  { value: "proficient", label: "Confirmé" },
-  { value: "advanced", label: "Avancé" },
-  { value: "expert", label: "Expert" },
-];
 
 function normalizeProficiency(value){
   if (value === null || value === undefined) return "";
@@ -38,11 +31,10 @@ function normalizeProficiency(value){
   return key;
 }
 
-function formatProficiency(value){
+function formatProficiency(value, t){
   const normalized = normalizeProficiency(value);
   if (!normalized) return "";
-  const option = LEVEL_OPTIONS.find(opt => opt.value === normalized);
-  return option ? option.label : normalized;
+  return getSkillLevelLabel(normalized, t) || normalized;
 }
 
 function toEditableSkill(entry){
@@ -56,16 +48,17 @@ function toEditableSkill(entry){
   return { name: entry ? String(entry) : "", proficiency: "" };
 }
 
-function displaySkillLevel(skill){
+function displaySkillLevel(skill, t){
   if (!skill || typeof skill !== "object") return "";
   const source = skill.proficiency ?? skill.level ?? skill.rating ?? skill.level_label ?? skill.level_name ?? skill.level_0to5;
-  return formatProficiency(source);
+  return formatProficiency(source, t);
 }
 
 export default function Skills(props){
+  const { t } = useLanguage();
   const skills = props.skills || {};
   const sectionTitles = props.sectionTitles || {};
-  const title = sectionTitles.skills || "Compétences";
+  const title = getSectionTitle('skills', sectionTitles.skills, t);
 
   const hard = Array.isArray(skills.hard_skills)? skills.hard_skills:[];
   const soft = Array.isArray(skills.soft_skills)? skills.soft_skills:[];
@@ -107,6 +100,15 @@ export default function Skills(props){
   const hideSection = !editing && !hasHard && !hasTools && !hasMethods && !hasSoft;
   if (hideSection) return null;
 
+  const LEVEL_OPTIONS = [
+    { value: "awareness", label: getSkillLevelLabel("awareness", t) },
+    { value: "beginner", label: getSkillLevelLabel("beginner", t) },
+    { value: "intermediate", label: getSkillLevelLabel("intermediate", t) },
+    { value: "proficient", label: getSkillLevelLabel("proficient", t) },
+    { value: "advanced", label: getSkillLevelLabel("advanced", t) },
+    { value: "expert", label: getSkillLevelLabel("expert", t) },
+  ];
+
   async function saveHard(){ await mutate({ op:"set", path:"skills.hard_skills", value: hardLocal }); setOpenHard(false); }
   async function saveSoft(){ await mutate({ op:"set", path:"skills.soft_skills", value: softLocal }); setOpenSoft(false); }
   async function saveTools(){ await mutate({ op:"set", path:"skills.tools", value: toolsLocal }); setOpenTools(false); }
@@ -126,7 +128,7 @@ export default function Skills(props){
               {!hideHardBecauseOthersFull && showHard && (
                 <div className="w-full rounded-2xl border p-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold mb-2">Compétences techniques</h3>
+                    <h3 className="font-semibold mb-2">{t("cvSections.hardSkills")}</h3>
                     {editing && (
                       <button onClick={() => setOpenHard(true)} className="text-[11px] px-2 py-0.5">🖊️</button>
                     )}
@@ -135,7 +137,7 @@ export default function Skills(props){
                   {hasHard ? (
                     <div className={`grid gap-3 ${hard.length > 5 ? "md:grid-cols-2" : "grid-cols-1"}`}>
                       {hard.map((s, i) => {
-                        const levelLabel = displaySkillLevel(s);
+                        const levelLabel = displaySkillLevel(s, t);
                         return (
                           <div key={i} className="text-sm">
                             <span className="font-medium">
@@ -147,7 +149,7 @@ export default function Skills(props){
                       })}
                     </div>
                   ) : (
-                    editing && <div className="text-sm opacity-60">Aucune compétence pour le moment.</div>
+                    editing && <div className="text-sm opacity-60">{t("cvSections.noSkills")}</div>
                   )}
                 </div>
               )}
@@ -158,7 +160,7 @@ export default function Skills(props){
                 {(hasTools || editing) && (
                   <div className="w-full rounded-2xl border p-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold mb-2">Outils</h3>
+                      <h3 className="font-semibold mb-2">{t("cvSections.tools")}</h3>
                       {editing && (
                         <button onClick={() => setOpenTools(true)} className="text-[11px] px-2 py-0.5">🖊️</button>
                       )}
@@ -166,12 +168,12 @@ export default function Skills(props){
 
                     {hasTools ? (
                       <ul className="space-y-1">
-                        {tools.map((t, i) => {
-                          const levelLabel = displaySkillLevel(t);
+                        {tools.map((tool, i) => {
+                          const levelLabel = displaySkillLevel(tool, t);
                           return (
                             <li key={i} className="text-sm">
                               <span className="font-medium">
-                                {t && (t.name || t.label || t.title || t.value || (typeof t === "string" ? t : ""))}
+                                {tool && (tool.name || tool.label || tool.title || tool.value || (typeof tool === "string" ? tool : ""))}
                               </span>
                               {levelLabel ? <span className="opacity-70"> • {levelLabel}</span> : null}
                             </li>
@@ -179,7 +181,7 @@ export default function Skills(props){
                         })}
                       </ul>
                     ) : (
-                      editing && <div className="text-sm opacity-60">Aucun outil pour le moment.</div>
+                      editing && <div className="text-sm opacity-60">{t("cvSections.noTools")}</div>
                     )}
                   </div>
                 )}
@@ -188,7 +190,7 @@ export default function Skills(props){
                 {(hasMethods || editing) && (
                   <div className="w-full rounded-2xl border p-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold mb-2">Méthodologies</h3>
+                      <h3 className="font-semibold mb-2">{t("cvSections.methodologies")}</h3>
                       {editing && (
                         <button onClick={() => setOpenMeth(true)} className="text-[11px] px-2 py-0.5">🖊️</button>
                       )}
@@ -206,7 +208,7 @@ export default function Skills(props){
                         })}
                       </div>
                     ) : (
-                      editing && <div className="text-sm opacity-60">Aucune méthodologie pour le moment.</div>
+                      editing && <div className="text-sm opacity-60">{t("cvSections.noMethodologies")}</div>
                     )}
                   </div>
                 )}
@@ -233,10 +235,10 @@ export default function Skills(props){
                 editing && (
                   <div className="rounded-2xl border p-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold mb-2">Soft skills</h3>
+                      <h3 className="font-semibold mb-2">{t("cvSections.softSkills")}</h3>
                       <button onClick={() => setOpenSoft(true)} className="text-[11px] px-2 py-0.5">🖊️</button>
                     </div>
-                    <div className="text-sm opacity-60">Aucun soft skills pour le moment.</div>
+                    <div className="text-sm opacity-60">{t("cvSections.noSoftSkills")}</div>
                   </div>
                 )
               )}
@@ -246,17 +248,17 @@ export default function Skills(props){
       </div>
 
       {/* Modals */}
-      <Modal open={openHard} onClose={()=>setOpenHard(false)} title="Modifier les compétences techniques">
+      <Modal open={openHard} onClose={()=>setOpenHard(false)} title={t("cvSections.editSkills")}>
         <div className="space-y-2">
           {hardLocal.map((row,idx)=>(
             <div key={idx} className="grid grid-cols-7 gap-2 items-center">
-              <input className="col-span-3 rounded border px-2 py-1 text-sm" placeholder="Nom" value={row.name||""} onChange={e=>{ const arr=[...hardLocal]; arr[idx]={...arr[idx], name:e.target.value}; setHardLocal(arr); }} />
+              <input className="col-span-3 rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...hardLocal]; arr[idx]={...arr[idx], name:e.target.value}; setHardLocal(arr); }} />
               <select
                 className="col-span-3 rounded border px-2 py-1 text-sm"
                 value={row.proficiency ?? ""}
                 onChange={e => { const arr=[...hardLocal]; arr[idx]={ ...arr[idx], proficiency:e.target.value }; setHardLocal(arr); }}
               >
-                <option value="" disabled>Choisir un niveau…</option>
+                <option value="" disabled>{t("cvSections.placeholders.chooseLevel")}</option>
                 {LEVEL_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
@@ -264,22 +266,22 @@ export default function Skills(props){
               <button onClick={()=>{ const arr=[...hardLocal]; arr.splice(idx,1); setHardLocal(arr); }} className="text-xs rounded border px-2 py-1">❌</button>
             </div>
           ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setHardLocal([...(hardLocal||[]),{name:"",proficiency:""}])} className="text-xs rounded border px-2 py-1">➕</button></div>
-          <div className="flex justify-end gap-2"><button onClick={saveHard} className="rounded border px-3 py-1 text-sm">Enregistrer</button></div>
+          <div className="flex justify-end gap-2"><button onClick={()=>setHardLocal([...(hardLocal||[]),{name:"",proficiency:""}])} className="text-xs rounded border px-2 py-1">{t("common.add")}</button></div>
+          <div className="flex justify-end gap-2"><button onClick={saveHard} className="rounded border px-3 py-1 text-sm">{t("common.save")}</button></div>
         </div>
       </Modal>
 
-      <Modal open={openTools} onClose={()=>setOpenTools(false)} title="Modifier les outils">
+      <Modal open={openTools} onClose={()=>setOpenTools(false)} title={t("cvSections.editTools")}>
         <div className="space-y-2">
           {toolsLocal.map((row,idx)=>(
             <div key={idx} className="grid grid-cols-7 gap-2 items-center">
-              <input className="col-span-3 rounded border px-2 py-1 text-sm" placeholder="Nom" value={row.name||""} onChange={e=>{ const arr=[...toolsLocal]; arr[idx]={...arr[idx], name:e.target.value}; setToolsLocal(arr); }} />
+              <input className="col-span-3 rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...toolsLocal]; arr[idx]={...arr[idx], name:e.target.value}; setToolsLocal(arr); }} />
               <select
                 className="col-span-3 rounded border px-2 py-1 text-sm"
                 value={row.proficiency ?? ""}
                 onChange={e => { const arr=[...toolsLocal]; arr[idx]={ ...arr[idx], proficiency:e.target.value }; setToolsLocal(arr); }}
               >
-                <option value="" disabled>Choisir un niveau…</option>
+                <option value="" disabled>{t("cvSections.placeholders.chooseLevel")}</option>
                 {LEVEL_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
@@ -287,34 +289,34 @@ export default function Skills(props){
               <button onClick={()=>{ const arr=[...toolsLocal]; arr.splice(idx,1); setToolsLocal(arr); }} className="text-xs rounded border px-2 py-1">❌</button>
             </div>
           ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setToolsLocal([...(toolsLocal||[]),{name:"",proficiency:""}])} className="rounded border px-3 py-1 text-sm">➕</button></div>
-          <div className="flex justify-end gap-2"><button onClick={saveTools} className="rounded border px-3 py-1 text-sm">Enregistrer</button></div>
+          <div className="flex justify-end gap-2"><button onClick={()=>setToolsLocal([...(toolsLocal||[]),{name:"",proficiency:""}])} className="rounded border px-3 py-1 text-sm">{t("common.add")}</button></div>
+          <div className="flex justify-end gap-2"><button onClick={saveTools} className="rounded border px-3 py-1 text-sm">{t("common.save")}</button></div>
         </div>
       </Modal>
 
-      <Modal open={openMeth} onClose={()=>setOpenMeth(false)} title="Modifier les méthodologies">
+      <Modal open={openMeth} onClose={()=>setOpenMeth(false)} title={t("cvSections.editMethodologies")}>
         <div className="space-y-2">
           {methLocal.map((row,idx)=>(
             <div key={idx} className="grid grid-cols-6 gap-2 items-center">
-              <input className="col-span-5 rounded border px-2 py-1 text-sm" placeholder="Libellé" value={row||""} onChange={e=>{ const arr=[...methLocal]; arr[idx]=e.target.value; setMethLocal(arr); }} />
+              <input className="col-span-5 rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...methLocal]; arr[idx]=e.target.value; setMethLocal(arr); }} />
               <button onClick={()=>{ const arr=[...methLocal]; arr.splice(idx,1); setMethLocal(arr); }} className="text-xs rounded border px-2 py-1">❌</button>
             </div>
           ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setMethLocal([...(methLocal||[]), ""])} className="text-xs rounded border px-2 py-1">➕</button></div>
-          <div className="flex justify-end gap-2"><button onClick={saveMeth} className="rounded border px-3 py-1 text-sm">Enregistrer</button></div>
+          <div className="flex justify-end gap-2"><button onClick={()=>setMethLocal([...(methLocal||[]), ""])} className="text-xs rounded border px-2 py-1">{t("common.add")}</button></div>
+          <div className="flex justify-end gap-2"><button onClick={saveMeth} className="rounded border px-3 py-1 text-sm">{t("common.save")}</button></div>
         </div>
       </Modal>
 
-      <Modal open={openSoft} onClose={()=>setOpenSoft(false)} title="Modifier les soft skills">
+      <Modal open={openSoft} onClose={()=>setOpenSoft(false)} title={t("cvSections.editSoftSkills")}>
         <div className="space-y-2">
           {softLocal.map((row,idx)=>(
             <div key={idx} className="grid grid-cols-6 gap-2 items-center">
-              <input className="col-span-5 rounded border px-2 py-1 text-sm" placeholder="Libellé" value={row||""} onChange={e=>{ const arr=[...softLocal]; arr[idx]=e.target.value; setSoftLocal(arr); }} />
+              <input className="col-span-5 rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...softLocal]; arr[idx]=e.target.value; setSoftLocal(arr); }} />
               <button onClick={()=>{ const arr=[...softLocal]; arr.splice(idx,1); setSoftLocal(arr); }} className="text-xs rounded border px-2 py-1">❌</button>
             </div>
           ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setSoftLocal([...(softLocal||[]), ""])} className="text-xs rounded border px-2 py-1">➕</button></div>
-          <div className="flex justify-end gap-2"><button onClick={saveSoft} className="rounded border px-3 py-1 text-sm">Enregistrer</button></div>
+          <div className="flex justify-end gap-2"><button onClick={()=>setSoftLocal([...(softLocal||[]), ""])} className="text-xs rounded border px-2 py-1">{t("common.add")}</button></div>
+          <div className="flex justify-end gap-2"><button onClick={saveSoft} className="rounded border px-3 py-1 text-sm">{t("common.save")}</button></div>
         </div>
       </Modal>
     </Section>

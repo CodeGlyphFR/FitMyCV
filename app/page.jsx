@@ -58,7 +58,10 @@ export default async function Page(){
   }
 
   const { cv } = cvResult;
-  const sectionTitles = cv.section_titles || {};
+  // Ne passer sectionTitles que s'ils sont vraiment personnalisés (non vides et non par défaut)
+  const rawSectionTitles = cv.section_titles || {};
+  const hasCustomTitles = Object.keys(rawSectionTitles).length > 0;
+  const sectionTitles = hasCustomTitles ? rawSectionTitles : {};
 
   const sections = {
     header:     <Header header={cv.header} />,
