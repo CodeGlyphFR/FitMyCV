@@ -406,5 +406,9 @@
     "tip": "You can complete all sections later via edit mode.",
     "loading": "Loading…",
     "error": "Error"
+  },
+  "sourceInfo": {
+    "createdFromLink": "Created from link",
+    "createdFromPdf": "Created from PDF"
   }
 }

@@ -406,5 +406,9 @@
     "tip": "Tu pourras compléter toutes les sections ensuite via le mode édition.",
     "loading": "Chargement…",
     "error": "Erreur"
+  },
+  "sourceInfo": {
+    "createdFromLink": "Créé depuis un lien",
+    "createdFromPdf": "Créé depuis un PDF"
   }
 }
