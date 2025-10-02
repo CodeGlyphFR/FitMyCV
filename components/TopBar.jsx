@@ -106,7 +106,7 @@ function enhanceItem(item, titleCache = null, fallbackTitle = "CV"){
   };
 }
 
-function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0, t }){
+const ItemLabel = React.memo(function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0, t }){
   if (!item) return null;
   const rootClass = [
     "flex min-w-0 items-center gap-2 leading-tight overflow-hidden",
@@ -141,6 +141,7 @@ function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0, t }
     const inner = innerRef.current;
     if (!container || !inner) return;
     let cancelled = false;
+    let measureTimeout = null;
 
     const clearScheduledToggle = () => {
       if (rafRef.current !== null) {
@@ -151,25 +152,33 @@ function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0, t }
 
     const measure = () => {
       if (cancelled) return;
-      const firstChunk = inner.querySelector(".cv-ticker__chunk");
-      if (!firstChunk) return;
 
-      const containerWidth = container.offsetWidth;
-      const contentWidth = firstChunk.scrollWidth;
-      if (!containerWidth || !contentWidth) {
-        inner.style.removeProperty("--cv-ticker-shift");
-        inner.style.removeProperty("--cv-ticker-duration");
-        clearScheduledToggle();
-        if (scrollActiveRef.current) setScrollActive(false);
-        metricsRef.current = {
-          needsScroll: false,
-          contentWidth: 0,
-          totalWidth: 0,
-          duration: 0,
-          truncationDelta: 0,
-        };
-        return;
+      // Debounce measure to avoid excessive calculations
+      if (measureTimeout) {
+        clearTimeout(measureTimeout);
       }
+
+      measureTimeout = setTimeout(() => {
+        if (cancelled) return;
+        const firstChunk = inner.querySelector(".cv-ticker__chunk");
+        if (!firstChunk) return;
+
+        const containerWidth = container.offsetWidth;
+        const contentWidth = firstChunk.scrollWidth;
+        if (!containerWidth || !contentWidth) {
+          inner.style.removeProperty("--cv-ticker-shift");
+          inner.style.removeProperty("--cv-ticker-duration");
+          clearScheduledToggle();
+          if (scrollActiveRef.current) setScrollActive(false);
+          metricsRef.current = {
+            needsScroll: false,
+            contentWidth: 0,
+            totalWidth: 0,
+            duration: 0,
+            truncationDelta: 0,
+          };
+          return;
+        }
 
       const style = window.getComputedStyle(inner);
       const gapValue = parseFloat(style.columnGap || style.gap || "0");
@@ -247,6 +256,7 @@ function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0, t }
       } else {
         clearScheduledToggle();
       }
+      }, 50); // 50ms debounce
     };
 
     measure();
@@ -276,6 +286,7 @@ function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0, t }
     return () => {
       cancelled = true;
       clearScheduledToggle();
+      if (measureTimeout) clearTimeout(measureTimeout);
       if (resizeObserver) resizeObserver.disconnect();
       if (detachWindowListener) detachWindowListener();
     };
@@ -317,7 +328,20 @@ function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0, t }
       </span>
     </span>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison function for React.memo
+  // Only re-render if these specific props changed
+  return (
+    prevProps.item?.file === nextProps.item?.file &&
+    prevProps.item?.displayTitle === nextProps.item?.displayTitle &&
+    prevProps.item?.displayDate === nextProps.item?.displayDate &&
+    prevProps.item?.analysisLevel === nextProps.item?.analysisLevel &&
+    prevProps.item?.createdBy === nextProps.item?.createdBy &&
+    prevProps.tickerKey === nextProps.tickerKey &&
+    prevProps.className === nextProps.className &&
+    prevProps.withHyphen === nextProps.withHyphen
+  );
+});
 
 export default function TopBar() {
   const router = useRouter();
@@ -374,6 +398,7 @@ export default function TopBar() {
   const [newCvError, setNewCvError] = React.useState(null);
   const [isScrollingDown, setIsScrollingDown] = React.useState(false);
   const [lastScrollY, setLastScrollY] = React.useState(0);
+  const isScrollingDownRef = React.useRef(false);
 
   const { history: linkHistory, addLinksToHistory } = useLinkHistory();
 
@@ -670,73 +695,117 @@ export default function TopBar() {
     };
   }, []);
 
+  // Unified scroll handler
   React.useEffect(() => {
+    let scrollEndTimeout = null;
+    let lastDirection = null;
+    let isScrolling = false;
+
+    function handleScroll() {
+      // Only on mobile (width < 768px)
+      if (window.innerWidth >= 768) {
+        setIsScrollingDown(false);
+        // Close dropdown on scroll (desktop only - avoid interfering with mobile touch)
+        if (listOpen) {
+          setListOpen(false);
+        }
+        return;
+      }
+
+      // TEMPORARY: Disable hide/show on mobile to test
+      setIsScrollingDown(false);
+      return;
+
+      // On mobile: don't close dropdown immediately, let user interaction handle it
+      // This prevents the dropdown from closing during scroll-triggered events
+
+      const currentScrollY = window.scrollY;
+      isScrolling = true;
+
+      // Clear scroll end timeout
+      if (scrollEndTimeout) {
+        clearTimeout(scrollEndTimeout);
+      }
+
+      const scrollDelta = currentScrollY - lastScrollY;
+
+      // Determine scroll direction
+      let currentDirection = null;
+      if (scrollDelta > 5 && currentScrollY > 60) {
+        currentDirection = 'down';
+      } else if (scrollDelta < -5) {
+        currentDirection = 'up';
+      }
+
+      // Only update state if direction changed or is significant
+      if (currentDirection === 'down' && lastDirection !== 'down') {
+        setIsScrollingDown(true);
+        lastDirection = 'down';
+      } else if (currentDirection === 'up' && lastDirection !== 'up') {
+        setIsScrollingDown(false);
+        lastDirection = 'up';
+      }
+
+      setLastScrollY(currentScrollY);
+
+      // After scroll stops (no scroll event for 150ms), always show topbar
+      scrollEndTimeout = setTimeout(() => {
+        setIsScrollingDown(false);
+        lastDirection = null;
+        isScrolling = false;
+      }, 150);
+    }
+
     function updatePosition() {
       if (listOpen && triggerRef.current) {
         setDropdownRect(triggerRef.current.getBoundingClientRect());
       }
     }
+
     window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
-    return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
-    };
-  }, [listOpen]);
-
-  // Hide topbar on scroll down (mobile only)
-  React.useEffect(() => {
-    const handleScroll = () => {
-      // Only on mobile (width < 768px)
-      if (window.innerWidth >= 768) {
-        setIsScrollingDown(false);
-        return;
-      }
-
-      const currentScrollY = window.scrollY;
-
-      // Clear previous timeout
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-
-      // Hide topbar when scrolling down, show when scrolling up
-      if (currentScrollY > lastScrollY && currentScrollY > 60) {
-        setIsScrollingDown(true);
-      } else if (currentScrollY < lastScrollY) {
-        setIsScrollingDown(false);
-      }
-
-      setLastScrollY(currentScrollY);
-    };
-
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
+      window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", handleScroll);
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
+      if (scrollEndTimeout) {
+        clearTimeout(scrollEndTimeout);
+      }
     };
-  }, [lastScrollY]);
+  }, [lastScrollY, listOpen]);
 
   React.useEffect(() => {
     function handleClick(event) {
       const triggerEl = triggerRef.current;
       const dropdownEl = dropdownPortalRef.current;
       if (!triggerEl) return;
-      if (triggerEl.contains(event.target)) return;
-      if (dropdownEl && dropdownEl.contains(event.target)) return;
+      if (triggerEl.contains(event.target)) {
+        console.log('[Outside Click] Ignored - clicked on trigger');
+        return;
+      }
+      if (dropdownEl && dropdownEl.contains(event.target)) {
+        console.log('[Outside Click] Ignored - clicked on dropdown');
+        return;
+      }
+      console.log('[Outside Click] Closing dropdown');
       setListOpen(false);
     }
 
     function handleKey(event) {
-      if (event.key === "Escape") setListOpen(false);
+      if (event.key === "Escape") {
+        console.log('[Escape] Closing dropdown');
+        setListOpen(false);
+      }
     }
 
     document.addEventListener("mousedown", handleClick);
+    document.addEventListener("touchstart", handleClick, { passive: true });
     document.addEventListener("keydown", handleKey);
     return () => {
       document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("touchstart", handleClick);
       document.removeEventListener("keydown", handleKey);
     };
   }, []);
@@ -1172,12 +1241,15 @@ export default function TopBar() {
   if (status === "loading") {
     return (
       <div
-        className="no-print sticky top-0 inset-x-0 z-[9999] w-full bg-white border-b min-h-[60px] transition-transform duration-300"
+        className="no-print sticky top-0 inset-x-0 z-[10001] w-full bg-white border-b min-h-[60px]"
         style={{
           position: '-webkit-sticky',
           paddingTop: 'env(safe-area-inset-top)',
           marginTop: 'calc(-1 * env(safe-area-inset-top))',
-          transform: isScrollingDown ? 'translateY(-100%)' : 'translateY(0)'
+          transform: isScrollingDown ? 'translateY(-100%)' : 'translateY(0)',
+          transition: 'transform 0.15s ease-out',
+          willChange: 'transform',
+          pointerEvents: 'auto'
         }}
       >
         <div className="w-full p-3 flex items-center justify-between">
@@ -1200,12 +1272,15 @@ export default function TopBar() {
     <>
       <div
         ref={barRef}
-        className="no-print sticky top-0 inset-x-0 z-[9999] w-full bg-white border-b min-h-[60px] transition-transform duration-300"
+        className="no-print sticky top-0 inset-x-0 z-[10001] w-full bg-white border-b min-h-[60px]"
         style={{
           position: '-webkit-sticky',
           paddingTop: 'env(safe-area-inset-top)',
           marginTop: 'calc(-1 * env(safe-area-inset-top))',
-          transform: isScrollingDown ? 'translateY(-100%)' : 'translateY(0)'
+          transform: isScrollingDown ? 'translateY(-100%)' : 'translateY(0)',
+          transition: 'transform 0.15s ease-out',
+          willChange: 'transform',
+          pointerEvents: 'auto'
         }}
       >
         <div className="w-full p-3 flex flex-wrap items-center gap-x-2 gap-y-1 sm:gap-3">
@@ -1231,7 +1306,14 @@ export default function TopBar() {
         <div className="flex-1 min-w-[120px] md:min-w-[200px] order-3 md:order-2">
           <button
             type="button"
-            onClick={() => setListOpen((prev) => !prev)}
+            onClick={(e) => {
+              console.log('[CV Selector] Clicked! listOpen:', listOpen, 'isScrollingDown:', isScrollingDown);
+              e.stopPropagation();
+              setListOpen((prev) => {
+                console.log('[CV Selector] Toggling from', prev, 'to', !prev);
+                return !prev;
+              });
+            }}
             className="w-full min-w-0 rounded border px-3 py-1 text-sm flex items-center justify-between gap-3 hover:shadow overflow-hidden"
             ref={triggerRef}
           >
@@ -1271,7 +1353,7 @@ export default function TopBar() {
                   top: dropdownRect.bottom + 4,
                   left: dropdownRect.left,
                   width: dropdownRect.width,
-                  zIndex: 10000,
+                  zIndex: 10002,
                 }}
                 className="rounded border bg-white shadow-lg"
               >
@@ -1315,7 +1397,7 @@ export default function TopBar() {
                   position: "fixed",
                   top: userMenuRect.bottom + 8,
                   left: userMenuRect.left,
-                  zIndex: 10000,
+                  zIndex: 10002,
                 }}
                 className="rounded-lg border bg-white shadow-lg p-2 text-sm space-y-1 min-w-[10rem] max-w-[16rem]"
               >
