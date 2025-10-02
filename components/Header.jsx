@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import SourceInfo from "./SourceInfo";
+import MatchScore from "./MatchScore";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
@@ -18,6 +19,8 @@ export default function Header(props){
   const [open, setOpen] = React.useState(false);
   const [openTranslateModal, setOpenTranslateModal] = React.useState(false);
   const [sourceInfo, setSourceInfo] = React.useState({ sourceType: null, sourceValue: null });
+  const [matchScore, setMatchScore] = React.useState(null);
+  const [matchScoreStatus, setMatchScoreStatus] = React.useState("idle");
   const { localDeviceId, addOptimisticTask, removeOptimisticTask, refreshTasks } = useBackgroundTasks();
   const { addNotification } = useNotifications();
 
@@ -57,6 +60,29 @@ export default function Header(props){
     );
   });
 
+  const fetchMatchScore = React.useCallback(async () => {
+    try {
+      // Récupérer le fichier CV actuel depuis le cookie
+      const cookies = document.cookie.split(';');
+      const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
+      if (!cvFileCookie) return;
+
+      const currentFile = decodeURIComponent(cvFileCookie.split('=')[1]);
+
+      const response = await fetch(`/api/cv/match-score?file=${encodeURIComponent(currentFile)}`);
+      if (!response.ok) {
+        console.error("Failed to fetch match score");
+        return;
+      }
+
+      const data = await response.json();
+      setMatchScore(data.score);
+      setMatchScoreStatus(data.score !== null ? "idle" : "idle");
+    } catch (error) {
+      console.error("Error fetching match score:", error);
+    }
+  }, []);
+
   const fetchSourceInfo = React.useCallback(() => {
     fetch("/api/cv/source", { cache: "no-store" })
       .then(res => {
@@ -67,9 +93,17 @@ export default function Header(props){
       })
       .then(data => {
         setSourceInfo({ sourceType: data.sourceType, sourceValue: data.sourceValue });
+
+        // Si le CV est créé depuis un lien, récupérer le score de match
+        if (data.sourceType === "link") {
+          fetchMatchScore();
+        } else {
+          setMatchScore(null);
+          setMatchScoreStatus("idle");
+        }
       })
       .catch(err => console.error("Failed to fetch source info:", err));
-  }, []);
+  }, [fetchMatchScore]);
 
   React.useEffect(() => {
     fetchSourceInfo();
@@ -84,6 +118,51 @@ export default function Header(props){
     window.addEventListener("cv:selected", handleCvSelected);
     return () => window.removeEventListener("cv:selected", handleCvSelected);
   }, [fetchSourceInfo]);
+
+  const handleRefreshMatchScore = React.useCallback(async () => {
+    setMatchScoreStatus("loading");
+
+    try {
+      // Récupérer le fichier CV actuel depuis le cookie
+      const cookies = document.cookie.split(';');
+      const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
+      if (!cvFileCookie) {
+        throw new Error("No CV file selected");
+      }
+
+      const currentFile = decodeURIComponent(cvFileCookie.split('=')[1]);
+
+      const response = await fetch("/api/cv/match-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cvFile: currentFile }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to calculate match score");
+      }
+
+      const data = await response.json();
+      setMatchScore(data.score);
+      setMatchScoreStatus("idle");
+
+      addNotification({
+        type: "success",
+        message: t("matchScore.refreshSuccess", { score: data.score }),
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error("Error refreshing match score:", error);
+      setMatchScoreStatus("error");
+
+      addNotification({
+        type: "error",
+        message: t("matchScore.refreshError"),
+        duration: 4000,
+      });
+    }
+  }, [t, addNotification]);
 
   // Si le CV est vide (pas de header), ne pas afficher le composant
   const isEmpty = !header.full_name && !header.current_title && !header.contact?.email;
@@ -236,6 +315,13 @@ export default function Header(props){
         {editing ? (
           <button onClick={()=>setOpen(true)} className="no-print rounded border px-2 py-1 text-sm hover:shadow" type="button">🖊️</button>
         ) : null}
+        <MatchScore
+          sourceType={sourceInfo.sourceType}
+          sourceValue={sourceInfo.sourceValue}
+          score={matchScore}
+          status={matchScoreStatus}
+          onRefresh={handleRefreshMatchScore}
+        />
         <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />
       </div>
 

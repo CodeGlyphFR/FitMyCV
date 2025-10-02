@@ -56,6 +56,15 @@
       "error": "Error generating CV"
     }
   },
+  "matchScore": {
+    "score": "Match score: {score}/100",
+    "notCalculated": "Match score →",
+    "calculating": "Calculating",
+    "failed": "Failed",
+    "refresh": "Refresh match score",
+    "refreshSuccess": "Match score updated: {score}/100",
+    "refreshError": "Error calculating match score"
+  },
   "cvGenerator": {
     "title": "Generate CV with ChatGPT",
     "description": "Provide job offers to analyze (links or PDF/Word file) to generate tailored CVs from the selected reference CV.",
