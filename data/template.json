@@ -6,29 +6,98 @@
     "contact": {
       "email": "",
       "phone": "",
-      "links": [],
       "location": {
         "city": "",
         "region": "",
         "country_code": ""
-      }
+      },
+      "links": [
+        {
+          "type": "",
+          "label": "",
+          "url": ""
+        }
+      ]
     }
   },
   "summary": {
+    "headline": "",
     "description": "",
-    "domains": []
+    "years_experience": 0,
+    "domains": [],
+    "key_strengths": []
   },
   "skills": {
-    "hard_skills": [],
+    "hard_skills": [
+      {
+        "name": "",
+        "proficiency": ""
+      }
+    ],
     "soft_skills": [],
-    "tools": [],
+    "tools": [
+      {
+        "name": "",
+        "proficiency": ""
+      }
+    ],
     "methodologies": []
   },
-  "experience": [],
-  "education": [],
-  "languages": [],
-  "extras": [],
-  "projects": [],
+  "experience": [
+    {
+      "title": "",
+      "company": "",
+      "department_or_client": "",
+      "start_date": "",
+      "end_date": "",
+      "location": {
+        "city": "",
+        "region": "",
+        "country_code": ""
+      },
+      "description": "",
+      "responsibilities": [],
+      "deliverables": [],
+      "skills_used": []
+    }
+  ],
+  "education": [
+    {
+      "institution": "",
+      "degree": "",
+      "field_of_study": "",
+      "location": {
+        "city": "",
+        "region": "",
+        "country_code": ""
+      },
+      "start_date": "",
+      "end_date": ""
+    }
+  ],
+  "languages": [
+    {
+      "name": "",
+      "level": ""
+    }
+  ],
+  "extras": [
+    {
+      "name": "",
+      "summary": ""
+    }
+  ],
+  "projects": [
+    {
+      "name": "",
+      "role": "",
+      "summary": "",
+      "tech_stack": [],
+      "keywords": [],
+      "start_date": "",
+      "end_date": ""
+    }
+  ],
   "order_hint": [
     "header",
     "summary",
@@ -51,7 +120,7 @@
   "meta": {
     "generator": "manual",
     "source": "manual",
-    "created_at": "2025-09-26T13:03:59.652Z",
-    "updated_at": "2025-09-26T13:04:09.183Z"
+    "created_at": "",
+    "updated_at": ""
   }
 }

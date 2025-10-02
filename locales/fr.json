@@ -53,6 +53,8 @@
     "referenceCV": "CV de référence",
     "selectCV": "Sélectionnez un CV",
     "noManualCV": "Aucun CV manuel disponible. Créez un CV avant de lancer une génération avec l'IA.",
+    "createTemplateOption": "Créer un nouveau modèle de CV",
+    "templateCreationLabel": "Création de CV modèle",
     "links": "Liens",
     "loadRecentLink": "Charger un lien récent",
     "recentLinks": "Liens récents",
@@ -74,6 +76,7 @@
     },
     "notifications": {
       "scheduled": "Adaptation du CV '{baseCvName}' planifié",
+      "templateScheduled": "Création de CV modèle planifiée",
       "error": "Erreur lors de la planification de la génération"
     }
   },
@@ -336,7 +339,12 @@
       "creationQueued": "Création en attente",
       "creationCompleted": "Création terminée",
       "creationCancelled": "Création annulée",
-      "creationFailed": "Création échouée"
+      "creationFailed": "Création échouée",
+      "templateCreationInProgress": "Création de CV modèle en cours ...",
+      "templateCreationQueued": "Création de CV modèle en attente ...",
+      "templateCreationCompleted": "CV modèle créé avec succès",
+      "templateCreationCancelled": "Création de CV modèle annulée",
+      "templateCreationFailed": "Création de CV modèle échouée"
     }
   },
   "emptyState": {
