@@ -1274,6 +1274,7 @@ export default function TopBar() {
     try {
       const formData = new FormData();
       formData.append("jobTitle", trimmedJobTitle);
+      formData.append("language", language === 'en' ? 'anglais' : 'français');
       formData.append("analysisLevel", "medium");
       if (localDeviceId) {
         formData.append("deviceId", localDeviceId);

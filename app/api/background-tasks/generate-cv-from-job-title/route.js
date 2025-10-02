@@ -22,6 +22,7 @@ export async function POST(request) {
   try {
     const formData = await request.formData();
     const jobTitle = formData.get("jobTitle");
+    const language = formData.get("language") || "français";
     const rawAnalysisLevel = formData.get("analysisLevel");
     const rawModel = formData.get("model");
     const deviceId = formData.get("deviceId") || "unknown-device";
@@ -51,6 +52,7 @@ export async function POST(request) {
 
     const taskPayload = {
       jobTitle: trimmedJobTitle,
+      language: language,
       analysisLevel: levelKey,
       model: requestedModel,
     };
