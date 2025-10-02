@@ -1429,7 +1429,7 @@ export default function TopBar() {
                 }}
                 className="rounded border bg-white shadow-lg"
               >
-                <ul className="max-h-[70vh] overflow-y-auto py-1">
+                <ul className="max-h-[400px] overflow-y-auto py-1">
                   {items.map((it) => (
                     <li key={it.file}>
                       <button
