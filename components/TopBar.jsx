@@ -1540,12 +1540,11 @@ export default function TopBar() {
         <div className="w-auto flex-1 order-6 flex justify-start md:justify-center px-4 py-1 min-w-0">
           <div className="relative w-full md:max-w-xl flex items-center group job-title-input-wrapper">
             {/* Search icon with pulse animation */}
-            <span className="absolute left-0 text-gray-400 group-hover:text-blue-500 text-lg flex items-center justify-center w-6 h-6 transition-all duration-300 search-icon-pulse">
+            <span className="absolute left-0 text-gray-400 text-lg flex items-center justify-center w-6 h-6">
               🔍
             </span>
 
-            {/* Animated underline */}
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-400 via-purple-500 to-blue-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 animated-underline"></div>
+            {/* Animated underline - removed */}
 
             {/* Input field */}
             <input
@@ -1554,14 +1553,11 @@ export default function TopBar() {
               onChange={(e) => setJobTitleInput(e.target.value)}
               onKeyDown={handleJobTitleSubmit}
               placeholder={isMobile ? t("topbar.jobTitlePlaceholderMobile") : t("topbar.jobTitlePlaceholder")}
-              className="w-full bg-transparent border-0 border-b border-gray-300 pl-8 pr-2 py-1 text-sm italic text-gray-700 placeholder-gray-400 focus:outline-none focus:border-transparent transition-all duration-300 hover:border-blue-400"
+              className="w-full bg-transparent border-0 border-b border-gray-300 pl-8 pr-2 py-1 text-sm italic text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500"
               style={{ caretColor: '#3B82F6' }}
             />
 
-            {/* Sparkle effect on hover - hidden on mobile */}
-            <span className="hidden md:inline absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 sparkle-effect">
-              ✨
-            </span>
+            {/* Sparkle effect - removed */}
           </div>
         </div>
 
