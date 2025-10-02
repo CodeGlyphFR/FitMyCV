@@ -1374,7 +1374,7 @@ export default function TopBar() {
           </button>
         </div>
         {/* CV Selector */}
-        <div className="flex-1 min-w-[120px] md:min-w-[200px] order-3 md:order-2">
+        <div className="flex-1 min-w-[120px] md:min-w-[200px] md:max-w-none order-3 md:order-2">
           <button
             type="button"
             onClick={(e) => {
@@ -1537,7 +1537,7 @@ export default function TopBar() {
         <div className="w-full md:hidden order-5"></div>
 
         {/* Job Title Input - Second Line on mobile, end of first line on desktop */}
-        <div className="w-auto flex-1 order-6 md:order-9 flex justify-start md:justify-end px-4 py-1 min-w-0 md:ml-auto">
+        <div className="w-auto flex-1 order-6 md:order-9 md:flex-none flex justify-start md:justify-end px-4 py-1 min-w-0">
           <div className="relative w-full md:max-w-xl flex items-center group job-title-input-wrapper">
             {/* Search icon with pulse animation */}
             <span className="absolute left-0 text-gray-400 text-lg flex items-center justify-center w-6 h-6">
