@@ -1524,51 +1524,9 @@ export default function TopBar() {
         </div>
         {/* Break line on mobile */}
         <div className="w-full md:hidden order-5"></div>
-        {/* Add Button */}
-        <button
-          onClick={() => setOpenNewCv(true)}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 order-6 md:order-4 ml-auto md:ml-0"
-          type="button"
-        >
-          ➕
-        </button>
-        {/* GPT Button */}
-        <button
-          onClick={openGeneratorModal}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-7 md:order-5"
-          type="button"
-        >
-          <GptLogo className="h-4 w-4" />
-        </button>
-        {/* Import Button */}
-        <button
-          onClick={() => setOpenPdfImport(true)}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-6"
-          type="button"
-          title={t("pdfImport.title")}
-        >
-          <img src="/icons/import.png" alt="Import" className="h-4 w-4" />
-        </button>
-        {/* Export Button */}
-        <button
-          onClick={exportToPdf}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-9 md:order-7"
-          type="button"
-          title="Exporter en PDF"
-        >
-          <img src="/icons/export.png" alt="Export" className="h-4 w-4" />
-        </button>
-        {/* Delete Button */}
-        <button
-          onClick={() => setOpenDelete(true)}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 text-red-700 order-4 md:order-8"
-          title={t("topbar.delete")}
-        >
-          ❌
-        </button>
 
-        {/* Job Title Input - Second Line - Centered on desktop, left on mobile */}
-        <div className="w-full order-10 flex justify-start md:justify-center px-4 py-1">
+        {/* Job Title Input - Second Line - Left on mobile, centered on desktop */}
+        <div className="w-auto flex-1 order-6 flex justify-start md:justify-center px-4 py-1 min-w-0">
           <div className="relative w-full md:max-w-xl flex items-center group job-title-input-wrapper">
             {/* Search icon with pulse animation */}
             <span className="absolute left-0 text-gray-400 group-hover:text-blue-500 text-lg flex items-center justify-center w-6 h-6 transition-all duration-300 search-icon-pulse">
@@ -1595,6 +1553,49 @@ export default function TopBar() {
             </span>
           </div>
         </div>
+
+        {/* Add Button */}
+        <button
+          onClick={() => setOpenNewCv(true)}
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 order-7 md:order-4"
+          type="button"
+        >
+          ➕
+        </button>
+        {/* GPT Button */}
+        <button
+          onClick={openGeneratorModal}
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-5"
+          type="button"
+        >
+          <GptLogo className="h-4 w-4" />
+        </button>
+        {/* Import Button */}
+        <button
+          onClick={() => setOpenPdfImport(true)}
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-9 md:order-6"
+          type="button"
+          title={t("pdfImport.title")}
+        >
+          <img src="/icons/import.png" alt="Import" className="h-4 w-4" />
+        </button>
+        {/* Export Button */}
+        <button
+          onClick={exportToPdf}
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7"
+          type="button"
+          title="Exporter en PDF"
+        >
+          <img src="/icons/export.png" alt="Export" className="h-4 w-4" />
+        </button>
+        {/* Delete Button */}
+        <button
+          onClick={() => setOpenDelete(true)}
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 text-red-700 order-4 md:order-8"
+          title={t("topbar.delete")}
+        >
+          ❌
+        </button>
       </div>
 
       <Modal
