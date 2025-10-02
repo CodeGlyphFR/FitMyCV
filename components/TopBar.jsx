@@ -1567,9 +1567,9 @@ export default function TopBar() {
           ❌
         </button>
 
-        {/* Job Title Input - Second Line - Centered with elegant design and animations */}
-        <div className="w-full order-10 flex justify-center px-4 py-1">
-          <div className="relative w-full max-w-xl flex items-center group job-title-input-wrapper">
+        {/* Job Title Input - Second Line - Centered on desktop, left on mobile */}
+        <div className="w-full order-10 flex justify-start md:justify-center px-4 py-1">
+          <div className="relative w-full md:max-w-xl flex items-center group job-title-input-wrapper">
             {/* Search icon with pulse animation */}
             <span className="absolute left-0 text-gray-400 group-hover:text-blue-500 text-lg flex items-center justify-center w-6 h-6 transition-all duration-300 search-icon-pulse">
               🔍
