@@ -21,6 +21,9 @@ export default function Header(props){
   const [sourceInfo, setSourceInfo] = React.useState({ sourceType: null, sourceValue: null });
   const [matchScore, setMatchScore] = React.useState(null);
   const [matchScoreStatus, setMatchScoreStatus] = React.useState("idle");
+  const [canRefreshScore, setCanRefreshScore] = React.useState(true);
+  const [refreshCount, setRefreshCount] = React.useState(0);
+  const [minutesUntilReset, setMinutesUntilReset] = React.useState(0);
   const { localDeviceId, addOptimisticTask, removeOptimisticTask, refreshTasks } = useBackgroundTasks();
   const { addNotification } = useNotifications();
 
@@ -78,6 +81,9 @@ export default function Header(props){
       const data = await response.json();
       setMatchScore(data.score);
       setMatchScoreStatus(data.score !== null ? "idle" : "idle");
+      setCanRefreshScore(data.canRefresh ?? true);
+      setRefreshCount(data.refreshCount || 0);
+      setMinutesUntilReset(data.minutesUntilReset || 0);
     } catch (error) {
       console.error("Error fetching match score:", error);
     }
@@ -120,6 +126,16 @@ export default function Header(props){
   }, [fetchSourceInfo]);
 
   const handleRefreshMatchScore = React.useCallback(async () => {
+    // Vérifier le rate limit avant de commencer
+    if (!canRefreshScore) {
+      addNotification({
+        type: "error",
+        message: t("matchScore.rateLimitExceeded", { minutes: minutesUntilReset }),
+        duration: 5000,
+      });
+      return;
+    }
+
     setMatchScoreStatus("loading");
 
     try {
@@ -135,11 +151,19 @@ export default function Header(props){
       const response = await fetch("/api/cv/match-score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cvFile: currentFile }),
+        body: JSON.stringify({ cvFile: currentFile, isAutomatic: false }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+
+        // Gestion spéciale pour le rate limit
+        if (response.status === 429) {
+          setCanRefreshScore(false);
+          setMinutesUntilReset(errorData.minutesLeft || 60);
+          throw new Error(errorData.details || t("matchScore.rateLimitExceeded", { minutes: errorData.minutesLeft || 60 }));
+        }
+
         const errorMessage = errorData.details || errorData.error || "Failed to calculate match score";
         console.error("[Header] Erreur API match score:", errorData);
         throw new Error(errorMessage);
@@ -148,10 +172,16 @@ export default function Header(props){
       const data = await response.json();
       setMatchScore(data.score);
       setMatchScoreStatus("idle");
+      setRefreshCount(data.refreshCount || 0);
+
+      // Si on atteint la limite
+      if (data.refreshCount >= 5) {
+        setCanRefreshScore(false);
+      }
 
       addNotification({
         type: "success",
-        message: t("matchScore.refreshSuccess", { score: data.score }),
+        message: t("matchScore.refreshSuccess", { score: data.score, count: data.refreshCount, limit: data.refreshLimit }),
         duration: 3000,
       });
     } catch (error) {
@@ -161,11 +191,11 @@ export default function Header(props){
 
       addNotification({
         type: "error",
-        message: error.message.includes("details") ? error.message : t("matchScore.refreshError"),
+        message: error.message,
         duration: 6000,
       });
     }
-  }, [t, addNotification]);
+  }, [t, addNotification, canRefreshScore, minutesUntilReset]);
 
   // Si le CV est vide (pas de header), ne pas afficher le composant
   const isEmpty = !header.full_name && !header.current_title && !header.contact?.email;
@@ -323,6 +353,9 @@ export default function Header(props){
           sourceValue={sourceInfo.sourceValue}
           score={matchScore}
           status={matchScoreStatus}
+          canRefresh={canRefreshScore}
+          refreshCount={refreshCount}
+          minutesUntilReset={minutesUntilReset}
           onRefresh={handleRefreshMatchScore}
         />
         <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />

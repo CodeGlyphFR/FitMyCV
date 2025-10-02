@@ -62,8 +62,11 @@
     "calculating": "Calculating",
     "failed": "Failed",
     "refresh": "Refresh match score",
-    "refreshSuccess": "Match score updated: {score}/100",
-    "refreshError": "Error calculating match score"
+    "refreshSuccess": "Score updated: {score}/100 ({count}/{limit})",
+    "refreshError": "Error calculating match score",
+    "rateLimitExceeded": "Limit reached. Try again in {minutes} min",
+    "rateLimitReached": "5 refreshes/hour limit reached. Try again in {minutes} min",
+    "refreshWithCount": "Refresh ({count}/{limit})"
   },
   "cvGenerator": {
     "title": "Generate CV with ChatGPT",

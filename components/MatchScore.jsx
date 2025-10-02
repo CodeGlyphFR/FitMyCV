@@ -2,7 +2,16 @@
 import React from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-export default function MatchScore({ sourceType, sourceValue, score, status, onRefresh }) {
+export default function MatchScore({
+  sourceType,
+  sourceValue,
+  score,
+  status,
+  canRefresh,
+  refreshCount,
+  minutesUntilReset,
+  onRefresh
+}) {
   const { t } = useLanguage();
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
@@ -12,6 +21,10 @@ export default function MatchScore({ sourceType, sourceValue, score, status, onR
   }
 
   const handleRefresh = async () => {
+    if (!canRefresh) {
+      return; // Déjà bloqué par le parent
+    }
+
     setIsRefreshing(true);
 
     try {
@@ -36,6 +49,18 @@ export default function MatchScore({ sourceType, sourceValue, score, status, onR
     return t("matchScore.score", { score });
   };
 
+  const isDisabled = isRefreshing || !canRefresh;
+
+  const getButtonTitle = () => {
+    if (!canRefresh) {
+      return t("matchScore.rateLimitReached", { minutes: minutesUntilReset });
+    }
+    if (refreshCount > 0) {
+      return t("matchScore.refreshWithCount", { count: refreshCount, limit: 5 });
+    }
+    return t("matchScore.refresh");
+  };
+
   return (
     <div className="no-print flex items-center gap-2 text-sm">
       <span className={`font-medium ${status === "error" ? "text-red-600" : "text-gray-700"}`}>
@@ -43,15 +68,20 @@ export default function MatchScore({ sourceType, sourceValue, score, status, onR
       </span>
       <button
         onClick={handleRefresh}
-        disabled={isRefreshing}
-        className={`inline-flex items-center justify-center w-6 h-6 rounded-full border bg-white hover:bg-gray-50 hover:shadow transition-all duration-200 ${
-          isRefreshing ? "animate-spin cursor-not-allowed opacity-50" : "cursor-pointer hover:scale-110"
-        }`}
+        disabled={isDisabled}
+        className={`inline-flex items-center justify-center w-6 h-6 rounded-full border bg-white transition-all duration-200 ${
+          isDisabled
+            ? "cursor-not-allowed opacity-40"
+            : "cursor-pointer hover:bg-gray-50 hover:shadow hover:scale-110"
+        } ${isRefreshing ? "animate-spin" : ""}`}
         type="button"
-        title={t("matchScore.refresh")}
+        title={getButtonTitle()}
       >
         🔄
       </button>
+      {refreshCount > 0 && canRefresh && (
+        <span className="text-xs text-gray-500">({refreshCount}/5)</span>
+      )}
     </div>
   );
 }

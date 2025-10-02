@@ -62,8 +62,11 @@
     "calculating": "Calcul en cours",
     "failed": "Échec",
     "refresh": "Rafraîchir le score de match",
-    "refreshSuccess": "Score de match mis à jour: {score}/100",
-    "refreshError": "Erreur lors du calcul du score de match"
+    "refreshSuccess": "Score mis à jour: {score}/100 ({count}/{limit})",
+    "refreshError": "Erreur lors du calcul du score de match",
+    "rateLimitExceeded": "Limite atteinte. Réessayez dans {minutes} min",
+    "rateLimitReached": "Limite de 5 refresh/heure atteinte. Réessayez dans {minutes} min",
+    "refreshWithCount": "Rafraîchir ({count}/{limit})"
   },
   "cvGenerator": {
     "title": "Générer un CV avec ChatGPT",
