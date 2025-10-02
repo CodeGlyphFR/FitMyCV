@@ -1558,8 +1558,8 @@ export default function TopBar() {
               style={{ caretColor: '#3B82F6' }}
             />
 
-            {/* Sparkle effect on hover */}
-            <span className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 sparkle-effect">
+            {/* Sparkle effect on hover - hidden on mobile */}
+            <span className="hidden md:inline absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 sparkle-effect">
               ✨
             </span>
           </div>
