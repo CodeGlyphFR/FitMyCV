@@ -411,5 +411,17 @@
   "sourceInfo": {
     "createdFromLink": "Créé depuis un lien",
     "createdFromPdf": "Créé depuis un PDF"
+  },
+  "translate": {
+    "buttonTitle": "Traduire le CV",
+    "selectLanguage": "Sélectionner la langue de traduction",
+    "selectLanguageDescription": "Choisissez la langue dans laquelle vous souhaitez traduire votre CV :",
+    "errors": {
+      "noCvSelected": "Aucun CV sélectionné"
+    },
+    "notifications": {
+      "scheduled": "Traduction en {targetLangName} planifiée",
+      "error": "Erreur lors de la traduction"
+    }
   }
 }

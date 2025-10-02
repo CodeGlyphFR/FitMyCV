@@ -6,15 +6,20 @@ import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import FormRow from "./ui/FormRow";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
+import { useNotifications } from "@/components/notifications/NotificationProvider";
 
 export default function Header(props){
   const header = props.header || {};
   const links = (header.contact && header.contact.links) || [];
   const { editing } = useAdmin();
   const { mutate } = useMutate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [open, setOpen] = React.useState(false);
+  const [openTranslateModal, setOpenTranslateModal] = React.useState(false);
   const [sourceInfo, setSourceInfo] = React.useState({ sourceType: null, sourceValue: null });
+  const { localDeviceId, addOptimisticTask, removeOptimisticTask, refreshTasks } = useBackgroundTasks();
+  const { addNotification } = useNotifications();
 
   const [f, setF] = React.useState({
     full_name: header.full_name || "",
@@ -117,6 +122,83 @@ export default function Header(props){
     setOpen(false);
   }
 
+  function handleTranslate() {
+    // Ouvrir le modal de sélection de langue
+    setOpenTranslateModal(true);
+  }
+
+  async function executeTranslation(targetLanguage) {
+    // Récupérer le fichier CV actuel depuis le cookie ou localStorage
+    let currentFile = null;
+    try {
+      const cookies = document.cookie.split(';');
+      const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
+      if (cvFileCookie) {
+        currentFile = decodeURIComponent(cvFileCookie.split('=')[1]);
+      }
+    } catch (err) {
+      console.error('Erreur lors de la récupération du CV actuel:', err);
+    }
+
+    if (!currentFile) {
+      addNotification({
+        type: "error",
+        message: t("translate.errors.noCvSelected"),
+        duration: 3000,
+      });
+      return;
+    }
+
+    const targetLangName = targetLanguage === 'fr' ? 'français' : 'anglais';
+
+    // Créer la tâche optimiste immédiatement
+    const optimisticTaskId = addOptimisticTask({
+      type: 'translate-cv',
+      label: `Traduction en ${targetLangName}`,
+      metadata: { sourceFile: currentFile, targetLanguage },
+      shouldUpdateCvList: true,
+    });
+
+    // Fermer le modal et notifier immédiatement
+    setOpenTranslateModal(false);
+    addNotification({
+      type: "info",
+      message: t("translate.notifications.scheduled", { targetLangName }),
+      duration: 2500,
+    });
+
+    // Envoyer la requête en arrière-plan
+    try {
+      const response = await fetch("/api/background-tasks/translate-cv", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sourceFile: currentFile,
+          targetLanguage,
+          deviceId: localDeviceId,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || "Impossible de mettre la tâche en file.");
+      }
+
+      // Succès : supprimer la tâche optimiste et rafraîchir
+      removeOptimisticTask(optimisticTaskId);
+      await refreshTasks();
+    } catch (error) {
+      console.error("Impossible de planifier la traduction", error);
+      // Échec : supprimer la tâche optimiste et notifier
+      removeOptimisticTask(optimisticTaskId);
+      addNotification({
+        type: "error",
+        message: error?.message || t("translate.notifications.error"),
+        duration: 4000,
+      });
+    }
+  }
+
   return (
     <header className="page mb-6 flex items-start justify-between gap-4 bg-gradient-to-r from-zinc-100 to-zinc-50 p-4 rounded-2xl border relative">
       <div>
@@ -156,6 +238,18 @@ export default function Header(props){
         ) : null}
         <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />
       </div>
+
+      {/* Bouton de traduction en bas à droite */}
+      {!editing ? (
+        <button
+          onClick={handleTranslate}
+          className="no-print absolute bottom-3 right-3 rounded border px-2 py-1 text-xs hover:shadow bg-white"
+          type="button"
+          title={t("translate.buttonTitle")}
+        >
+          🌐
+        </button>
+      ) : null}
 
       <Modal open={open} onClose={()=>setOpen(false)} title={t("header.modalTitle")}>
         <div className="grid gap-3 md:grid-cols-2">
@@ -238,6 +332,34 @@ export default function Header(props){
           <div className="md:col-span-2 flex justify-end gap-2">
             <button onClick={()=>setOpen(false)} className="rounded border px-3 py-1 text-sm" type="button">{t("common.cancel")}</button>
             <button onClick={save} className="rounded border px-3 py-1 text-sm" type="button">{t("common.save")}</button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de sélection de langue pour la traduction */}
+      <Modal open={openTranslateModal} onClose={()=>setOpenTranslateModal(false)} title={t("translate.selectLanguage")}>
+        <div className="space-y-4">
+          <p className="text-sm text-neutral-700">{t("translate.selectLanguageDescription")}</p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => executeTranslation('fr')}
+              className="rounded border px-4 py-3 text-sm hover:shadow hover:bg-zinc-50 flex flex-col items-center gap-2"
+              type="button"
+            >
+              <span className="text-2xl">🇫🇷</span>
+              <span className="font-medium">Français</span>
+            </button>
+            <button
+              onClick={() => executeTranslation('en')}
+              className="rounded border px-4 py-3 text-sm hover:shadow hover:bg-zinc-50 flex flex-col items-center gap-2"
+              type="button"
+            >
+              <span className="text-2xl">🇬🇧</span>
+              <span className="font-medium">English</span>
+            </button>
+          </div>
+          <div className="flex justify-end">
+            <button onClick={()=>setOpenTranslateModal(false)} className="rounded border px-3 py-1 text-sm" type="button">{t("common.cancel")}</button>
           </div>
         </div>
       </Modal>
