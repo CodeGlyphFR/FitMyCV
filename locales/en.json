@@ -58,7 +58,8 @@
   },
   "matchScore": {
     "score": "Match score: {score}/100",
-    "notCalculated": "Match score →",
+    "scoreTooltip": "Match score: {score}/100",
+    "notCalculated": "Match score not calculated",
     "calculating": "Calculating",
     "failed": "Failed",
     "refresh": "Refresh match score",

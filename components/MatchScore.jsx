@@ -44,9 +44,22 @@ export default function MatchScore({
       return t("matchScore.failed");
     }
     if (score === null) {
+      return "→";
+    }
+    return `${score}/100`;
+  };
+
+  const getScoreTooltip = () => {
+    if (status === "loading") {
+      return t("matchScore.calculating");
+    }
+    if (status === "error") {
+      return t("matchScore.failed");
+    }
+    if (score === null) {
       return t("matchScore.notCalculated");
     }
-    return t("matchScore.score", { score });
+    return t("matchScore.scoreTooltip", { score });
   };
 
   const isDisabled = isRefreshing || !canRefresh;
@@ -70,7 +83,10 @@ export default function MatchScore({
 
   return (
     <div className="no-print flex items-center gap-2 text-sm">
-      <span className={`font-medium ${status === "error" ? "text-red-600" : "text-gray-700"}`}>
+      <span
+        className={`font-medium ${status === "error" ? "text-red-600" : "text-gray-700"} cursor-help`}
+        title={getScoreTooltip()}
+      >
         {getDisplayText()}
       </span>
       <div className="relative">

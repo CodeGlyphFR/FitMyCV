@@ -58,7 +58,8 @@
   },
   "matchScore": {
     "score": "Score de match: {score}/100",
-    "notCalculated": "Score de match →",
+    "scoreTooltip": "Score de match: {score}/100",
+    "notCalculated": "Score de match non calculé",
     "calculating": "Calcul en cours",
     "failed": "Échec",
     "refresh": "Rafraîchir le score de match",
