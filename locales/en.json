@@ -53,6 +53,8 @@
     "referenceCV": "Reference CV",
     "selectCV": "Select a CV",
     "noManualCV": "No manual CV available. Create a CV before launching AI generation.",
+    "createTemplateOption": "Create a new CV template",
+    "templateCreationLabel": "CV template creation",
     "links": "Links",
     "loadRecentLink": "Load recent link",
     "recentLinks": "Recent links",
@@ -74,6 +76,7 @@
     },
     "notifications": {
       "scheduled": "CV adaptation '{baseCvName}' scheduled",
+      "templateScheduled": "CV template creation scheduled",
       "error": "Error scheduling generation"
     }
   },
@@ -336,7 +339,12 @@
       "creationQueued": "Creation queued",
       "creationCompleted": "Creation completed",
       "creationCancelled": "Creation cancelled",
-      "creationFailed": "Creation failed"
+      "creationFailed": "Creation failed",
+      "templateCreationInProgress": "CV template creation in progress ...",
+      "templateCreationQueued": "CV template creation queued ...",
+      "templateCreationCompleted": "CV template created successfully",
+      "templateCreationCancelled": "CV template creation cancelled",
+      "templateCreationFailed": "CV template creation failed"
     }
   },
   "emptyState": {

@@ -23,6 +23,9 @@ const useIsomorphicLayoutEffect = typeof window !== "undefined"
   ? React.useLayoutEffect
   : React.useEffect;
 
+// Option spéciale pour créer un nouveau CV modèle à partir d'une offre
+const CREATE_TEMPLATE_OPTION = "__CREATE_NEW_TEMPLATE__";
+
 function formatDateLabel(value, language = 'fr'){
   if (!value) return null;
   const date = new Date(value);
@@ -56,12 +59,13 @@ function getAnalysisOption(id, t){
 function getCvIcon(createdBy, originalCreatedBy, className) {
   // createdBy = 'translate-cv' => Translate icon (traduit)
   // createdBy = 'generate-cv' => GPT icon (généré par IA)
+  // createdBy = 'create-template' => GPT icon (CV modèle créé par IA)
   // createdBy = 'import-pdf' => Import icon (importé depuis PDF)
   // createdBy = null => Pas d'icône (créé manuellement)
   if (createdBy === 'translate-cv') {
     return <TranslateIcon className={className} size={16} />;
   }
-  if (createdBy === 'generate-cv') {
+  if (createdBy === 'generate-cv' || createdBy === 'create-template') {
     return <GptLogo className={className} />;
   }
   if (createdBy === 'import-pdf') {
@@ -536,11 +540,15 @@ export default function TopBar() {
 
   React.useEffect(() => {
     if (!generatorSourceItems.length) {
-      setGeneratorBaseFile("");
+      setGeneratorBaseFile(CREATE_TEMPLATE_OPTION);
       setBaseSelectorOpen(false);
       return;
     }
     setGeneratorBaseFile((prev) => {
+      // Conserver l'option template si elle est sélectionnée
+      if (prev === CREATE_TEMPLATE_OPTION) {
+        return prev;
+      }
       if (prev && generatorSourceItems.some((it) => it.file === prev)) {
         return prev;
       }
@@ -983,6 +991,8 @@ export default function TopBar() {
   async function submitGenerator(event) {
     event.preventDefault();
 
+    const isTemplateCreation = generatorBaseFile === CREATE_TEMPLATE_OPTION;
+
     if (!generatorBaseFile) {
       setGeneratorError(t("cvGenerator.errors.selectReference"));
       return;
@@ -1004,25 +1014,47 @@ export default function TopBar() {
     }
 
     const selectedAnalysis = currentAnalysisOption;
-    const baseCvName = generatorBaseItem?.displayTitle || generatorBaseItem?.title || generatorBaseFile;
 
-    // Créer la tâche optimiste immédiatement
-    const optimisticTaskId = addOptimisticTask({
-      type: 'generate-cv',
-      label: `Adaptation du CV '${baseCvName}'`,
-      metadata: {
-        baseFile: generatorBaseFile,
-        analysisLevel: selectedAnalysis.id,
-        linksCount: cleanedLinks.length,
-        filesCount: (fileSelection || []).length,
-      },
-      shouldUpdateCvList: true,
-    });
+    // Créer la tâche optimiste et préparer la notification
+    let optimisticTaskId, notificationMessage, endpoint;
+
+    if (isTemplateCreation) {
+      // Mode création de template
+      const baseCvName = t("cvGenerator.createTemplateOption");
+      optimisticTaskId = addOptimisticTask({
+        type: 'create-template-cv',
+        label: t("cvGenerator.templateCreationLabel"),
+        metadata: {
+          analysisLevel: selectedAnalysis.id,
+          linksCount: cleanedLinks.length,
+          filesCount: (fileSelection || []).length,
+        },
+        shouldUpdateCvList: true,
+      });
+      notificationMessage = t("cvGenerator.notifications.templateScheduled");
+      endpoint = "/api/background-tasks/create-template-cv";
+    } else {
+      // Mode adaptation de CV existant
+      const baseCvName = generatorBaseItem?.displayTitle || generatorBaseItem?.title || generatorBaseFile;
+      optimisticTaskId = addOptimisticTask({
+        type: 'generate-cv',
+        label: `Adaptation du CV '${baseCvName}'`,
+        metadata: {
+          baseFile: generatorBaseFile,
+          analysisLevel: selectedAnalysis.id,
+          linksCount: cleanedLinks.length,
+          filesCount: (fileSelection || []).length,
+        },
+        shouldUpdateCvList: true,
+      });
+      notificationMessage = t("cvGenerator.notifications.scheduled", { baseCvName });
+      endpoint = "/api/background-tasks/generate-cv";
+    }
 
     // Fermer le modal et notifier immédiatement
     addNotification({
       type: "info",
-      message: t("cvGenerator.notifications.scheduled", { baseCvName }),
+      message: notificationMessage,
       duration: 2500,
     });
     closeGenerator();
@@ -1031,8 +1063,14 @@ export default function TopBar() {
     try {
       const formData = new FormData();
       formData.append("links", JSON.stringify(cleanedLinks));
-      formData.append("baseFile", generatorBaseFile);
-      formData.append("baseFileLabel", baseCvName || "");
+
+      if (!isTemplateCreation) {
+        // Seulement pour l'adaptation de CV
+        const baseCvName = generatorBaseItem?.displayTitle || generatorBaseItem?.title || generatorBaseFile;
+        formData.append("baseFile", generatorBaseFile);
+        formData.append("baseFileLabel", baseCvName || "");
+      }
+
       formData.append("analysisLevel", selectedAnalysis.id);
       formData.append("model", selectedAnalysis.model);
       if (localDeviceId) {
@@ -1043,7 +1081,7 @@ export default function TopBar() {
         formData.append("files", file);
       });
 
-      const response = await fetch("/api/background-tasks/generate-cv", {
+      const response = await fetch(endpoint, {
         method: "POST",
         body: formData,
       });
@@ -1400,7 +1438,8 @@ export default function TopBar() {
 
           <div className="space-y-2">
             <div className="text-sm font-medium">{t("cvGenerator.referenceCV")}</div>
-            {generatorSourceItems.length ? (
+            {/* Toujours afficher le dropdown car on a l'option template */}
+            {true ? (
               <div className="relative" ref={baseSelectorRef}>
                 <button
                   type="button"
@@ -1408,28 +1447,37 @@ export default function TopBar() {
                   className="w-full min-w-0 rounded border px-3 py-1 text-sm flex items-center justify-between gap-3 hover:shadow bg-white"
                 >
                   <span className="flex items-center gap-3 min-w-0 overflow-hidden">
-                    {generatorBaseItem ? (
-                      <span
-                        key={`gen-base-icon-${generatorBaseFile}-${generatorBaseItem.createdBy}`}
-                        className="flex h-6 w-6 items-center justify-center shrink-0"
-                      >
-                        {getCvIcon(generatorBaseItem.createdBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
-                      </span>
-                    ) : null}
-                    <span className="min-w-0">
-                      {generatorBaseItem ? (
-                        <ItemLabel
-                          item={generatorBaseItem}
-                          withHyphen={false}
-                          tickerKey={tickerResetKey}
-                          t={t}
-                        />
-                      ) : (
-                        <span className="truncate italic text-neutral-500">
-                          {t("cvGenerator.selectCV")}
+                    {generatorBaseFile === CREATE_TEMPLATE_OPTION ? (
+                      <>
+                        <span className="flex h-6 w-6 items-center justify-center shrink-0">
+                          <span className="text-lg">✨</span>
                         </span>
-                      )}
-                    </span>
+                        <span className="font-medium text-blue-600">
+                          {t("cvGenerator.createTemplateOption")}
+                        </span>
+                      </>
+                    ) : generatorBaseItem ? (
+                      <>
+                        <span
+                          key={`gen-base-icon-${generatorBaseFile}-${generatorBaseItem.createdBy}`}
+                          className="flex h-6 w-6 items-center justify-center shrink-0"
+                        >
+                          {getCvIcon(generatorBaseItem.createdBy, generatorBaseItem.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
+                        </span>
+                        <span className="min-w-0">
+                          <ItemLabel
+                            item={generatorBaseItem}
+                            withHyphen={false}
+                            tickerKey={tickerResetKey}
+                            t={t}
+                          />
+                        </span>
+                      </>
+                    ) : (
+                      <span className="truncate italic text-neutral-500">
+                        {t("cvGenerator.selectCV")}
+                      </span>
+                    )}
                   </span>
                   <span className="text-xs opacity-60">▾</span>
                 </button>
@@ -1439,6 +1487,29 @@ export default function TopBar() {
                     className="absolute z-10 mt-1 w-full rounded border bg-white shadow-lg max-h-60 overflow-y-auto"
                   >
                     <ul className="py-1">
+                      {/* Option spéciale : Créer un nouveau modèle de CV */}
+                      <li key={CREATE_TEMPLATE_OPTION}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setGeneratorBaseFile(CREATE_TEMPLATE_OPTION);
+                            setBaseSelectorOpen(false);
+                          }}
+                          className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-zinc-100 ${CREATE_TEMPLATE_OPTION === generatorBaseFile ? "bg-zinc-50" : ""}`}
+                        >
+                          <span className="flex h-6 w-6 items-center justify-center shrink-0">
+                            <span className="text-lg">✨</span>
+                          </span>
+                          <span className="font-medium text-blue-600">
+                            {t("cvGenerator.createTemplateOption")}
+                          </span>
+                        </button>
+                      </li>
+                      {/* Séparateur */}
+                      {generatorSourceItems.length > 0 && (
+                        <li className="my-1 border-t border-gray-200"></li>
+                      )}
+                      {/* CVs existants */}
                       {generatorSourceItems.map((item) => (
                         <li key={item.file}>
                           <button
@@ -1453,7 +1524,7 @@ export default function TopBar() {
                               key={`gen-dropdown-icon-${item.file}-${item.createdBy}`}
                               className="flex h-6 w-6 items-center justify-center shrink-0"
                             >
-                              {getCvIcon(item.createdBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
+                              {getCvIcon(item.createdBy, item.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
                             </span>
                             <ItemLabel
                               item={item}
