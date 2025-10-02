@@ -8,6 +8,7 @@ import Modal from "./ui/Modal";
 import GptLogo from "./ui/GptLogo";
 import DefaultCvIcon from "./ui/DefaultCvIcon";
 import ImportIcon from "./ui/ImportIcon";
+import TranslateIcon from "./ui/TranslateIcon";
 import { useAdmin } from "./admin/AdminProvider";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
@@ -52,10 +53,14 @@ function getAnalysisOption(id, t){
   return options.find((option) => option.id === id) || options[1];
 }
 
-function getCvIcon(createdBy, className) {
+function getCvIcon(createdBy, originalCreatedBy, className) {
+  // createdBy = 'translate-cv' => Translate icon (traduit)
   // createdBy = 'generate-cv' => GPT icon (généré par IA)
   // createdBy = 'import-pdf' => Import icon (importé depuis PDF)
   // createdBy = null => Pas d'icône (créé manuellement)
+  if (createdBy === 'translate-cv') {
+    return <TranslateIcon className={className} size={16} />;
+  }
   if (createdBy === 'generate-cv') {
     return <GptLogo className={className} />;
   }
@@ -270,12 +275,14 @@ function ItemLabel({ item, className = "", withHyphen = true, tickerKey = 0, t }
       if (resizeObserver) resizeObserver.disconnect();
       if (detachWindowListener) detachWindowListener();
     };
-  }, [item.displayTitle, item.analysisLevel, item.createdBy, tickerKey]);
+  }, [item.displayTitle, item.analysisLevel, item.createdBy, item.isTranslated, tickerKey]);
 
   const shouldShowLevel = (item.createdBy === 'generate-cv' || item.createdBy === 'import-pdf') && levelLabel;
-  const displayTitleWithLevel = shouldShowLevel
-    ? `${item.displayTitle} [${levelLabel}]`
-    : item.displayTitle;
+
+  let displayTitleWithLevel = item.displayTitle;
+  if (shouldShowLevel) {
+    displayTitleWithLevel = `${displayTitleWithLevel} [${levelLabel}]`;
+  }
 
   return (
     <span className={rootClass}>
@@ -1196,7 +1203,7 @@ export default function TopBar() {
                   key={`icon-${current}-${resolvedCurrentItem.createdBy}-${iconRefreshKey}`}
                   className="flex h-6 w-6 items-center justify-center shrink-0"
                 >
-                  {getCvIcon(resolvedCurrentItem.createdBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
+                  {getCvIcon(resolvedCurrentItem.createdBy, resolvedCurrentItem.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
                 </span>
               ) : null}
               <span className="min-w-0">
@@ -1245,7 +1252,7 @@ export default function TopBar() {
                           key={`dropdown-icon-${it.file}-${it.createdBy}`}
                           className="flex h-6 w-6 items-center justify-center shrink-0"
                         >
-                          {getCvIcon(it.createdBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
+                          {getCvIcon(it.createdBy, it.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
                         </span>
                         <ItemLabel
                           item={it}
