@@ -140,7 +140,9 @@ export default function Header(props){
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to calculate match score");
+        const errorMessage = errorData.details || errorData.error || "Failed to calculate match score";
+        console.error("[Header] Erreur API match score:", errorData);
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -154,12 +156,13 @@ export default function Header(props){
       });
     } catch (error) {
       console.error("Error refreshing match score:", error);
+      console.error("Error message:", error.message);
       setMatchScoreStatus("error");
 
       addNotification({
         type: "error",
-        message: t("matchScore.refreshError"),
-        duration: 4000,
+        message: error.message.includes("details") ? error.message : t("matchScore.refreshError"),
+        duration: 6000,
       });
     }
   }, [t, addNotification]);
