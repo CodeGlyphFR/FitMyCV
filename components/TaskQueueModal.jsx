@@ -78,11 +78,23 @@ function TaskItem({ task, onCancel }) {
     } else if (task.status === 'failed') {
       description = `${t("taskQueue.messages.creationFailed")}${generationName ? ` : '${generationName}'` : ''}`;
     }
+  } else if (task.type === 'template-creation') {
+    if (task.status === 'running') {
+      description = t("taskQueue.messages.templateCreationInProgress");
+    } else if (task.status === 'queued') {
+      description = t("taskQueue.messages.templateCreationQueued");
+    } else if (task.status === 'completed') {
+      description = t("taskQueue.messages.templateCreationCompleted");
+    } else if (task.status === 'cancelled') {
+      description = t("taskQueue.messages.templateCreationCancelled");
+    } else if (task.status === 'failed') {
+      description = t("taskQueue.messages.templateCreationFailed");
+    }
   }
 
   // Extraire le lien ou la pièce jointe du payload
   let sourceInfo = null;
-  if (task.type === 'generation' && payload) {
+  if ((task.type === 'generation' || task.type === 'template-creation') && payload) {
     if (Array.isArray(payload.links) && payload.links.length > 0) {
       sourceInfo = payload.links[0];
     } else if (Array.isArray(payload.uploads) && payload.uploads.length > 0) {
@@ -91,7 +103,7 @@ function TaskItem({ task, onCancel }) {
   } else if (task.type === 'import' && payload?.savedName) {
     sourceInfo = payload.savedName;
   }
-  const hasSourceInfo = (task.type === 'generation' || task.type === 'import') && sourceInfo;
+  const hasSourceInfo = (task.type === 'generation' || task.type === 'template-creation' || task.type === 'import') && sourceInfo;
 
   return (
     <div className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
