@@ -60,12 +60,13 @@ function getCvIcon(createdBy, originalCreatedBy, className) {
   // createdBy = 'translate-cv' => Translate icon (traduit)
   // createdBy = 'generate-cv' => GPT icon (généré par IA)
   // createdBy = 'create-template' => GPT icon (CV modèle créé par IA)
+  // createdBy = 'generate-cv-job-title' => GPT icon (CV généré depuis titre de poste)
   // createdBy = 'import-pdf' => Import icon (importé depuis PDF)
   // createdBy = null => Pas d'icône (créé manuellement)
   if (createdBy === 'translate-cv') {
     return <TranslateIcon className={className} size={16} />;
   }
-  if (createdBy === 'generate-cv' || createdBy === 'create-template') {
+  if (createdBy === 'generate-cv' || createdBy === 'create-template' || createdBy === 'generate-cv-job-title') {
     return <GptLogo className={className} />;
   }
   if (createdBy === 'import-pdf') {
@@ -292,7 +293,7 @@ const ItemLabel = React.memo(function ItemLabel({ item, className = "", withHyph
     };
   }, [item.displayTitle, item.analysisLevel, item.createdBy, item.isTranslated, tickerKey]);
 
-  const shouldShowLevel = (item.createdBy === 'generate-cv' || item.createdBy === 'import-pdf') && levelLabel;
+  const shouldShowLevel = (item.createdBy === 'generate-cv' || item.createdBy === 'import-pdf' || item.createdBy === 'generate-cv-job-title') && levelLabel;
 
   let displayTitleWithLevel = item.displayTitle;
   if (shouldShowLevel) {
@@ -399,6 +400,7 @@ export default function TopBar() {
   const [isScrollingDown, setIsScrollingDown] = React.useState(false);
   const [lastScrollY, setLastScrollY] = React.useState(0);
   const isScrollingDownRef = React.useRef(false);
+  const [jobTitleInput, setJobTitleInput] = React.useState("");
 
   const { history: linkHistory, addLinksToHistory } = useLinkHistory();
 
@@ -1233,6 +1235,64 @@ export default function TopBar() {
     setNewCvBusy(false);
   }
 
+  async function handleJobTitleSubmit(event) {
+    if (event.key !== 'Enter') return;
+
+    const trimmedJobTitle = jobTitleInput.trim();
+    if (!trimmedJobTitle) return;
+
+    // Créer une tâche optimiste
+    const optimisticTaskId = addOptimisticTask({
+      type: 'job-title-generation',
+      label: t("jobTitleGenerator.notifications.scheduled", { jobTitle: trimmedJobTitle }),
+      metadata: { jobTitle: trimmedJobTitle },
+      shouldUpdateCvList: true,
+    });
+
+    // Notifier immédiatement
+    addNotification({
+      type: "info",
+      message: t("jobTitleGenerator.notifications.scheduled", { jobTitle: trimmedJobTitle }),
+      duration: 2500,
+    });
+
+    // Réinitialiser le champ
+    setJobTitleInput("");
+
+    // Envoyer la requête en arrière-plan
+    try {
+      const formData = new FormData();
+      formData.append("jobTitle", trimmedJobTitle);
+      formData.append("analysisLevel", "medium");
+      if (localDeviceId) {
+        formData.append("deviceId", localDeviceId);
+      }
+
+      const response = await fetch("/api/background-tasks/generate-cv-from-job-title", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || "Impossible de mettre la tâche en file.");
+      }
+
+      // Succès : supprimer la tâche optimiste et rafraîchir
+      removeOptimisticTask(optimisticTaskId);
+      await refreshTasks();
+    } catch (error) {
+      console.error("Impossible de planifier la génération de CV depuis le titre", error);
+      // Échec : supprimer la tâche optimiste et notifier
+      removeOptimisticTask(optimisticTaskId);
+      addNotification({
+        type: "error",
+        message: error?.message || t("jobTitleGenerator.notifications.error"),
+        duration: 4000,
+      });
+    }
+  }
+
   // Ne rien afficher sur la page de login
   if (pathname === "/auth") {
     return null;
@@ -1283,7 +1343,7 @@ export default function TopBar() {
           pointerEvents: 'auto'
         }}
       >
-        <div className="w-full p-3 flex flex-wrap items-center gap-x-2 gap-y-1 sm:gap-3">
+        <div className="w-full p-3 flex flex-wrap items-center gap-x-2 gap-y-2 sm:gap-3">
         {/* User Icon */}
         <div className="relative order-1 md:order-1">
           <button
@@ -1506,6 +1566,18 @@ export default function TopBar() {
         >
           ❌
         </button>
+
+        {/* Job Title Input - Second Line - Centered */}
+        <div className="w-full order-10 flex justify-center">
+          <input
+            type="text"
+            value={jobTitleInput}
+            onChange={(e) => setJobTitleInput(e.target.value)}
+            onKeyDown={handleJobTitleSubmit}
+            placeholder={t("topbar.jobTitlePlaceholder")}
+            className="w-full max-w-md rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
       </div>
 
       <Modal

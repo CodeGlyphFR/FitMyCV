@@ -41,10 +41,18 @@
     "taskQueue": "File d'attente des tâches",
     "delete": "Supprimer",
     "cvInProgress": "CV en cours d'édition",
+    "jobTitlePlaceholder": "Entrez un titre de poste (ex: Développeur Full-Stack)",
     "analysisLevels": {
       "rapid": "Rapide",
       "medium": "Moyen",
       "deep": "Approfondi"
+    }
+  },
+  "jobTitleGenerator": {
+    "notifications": {
+      "scheduled": "Génération du CV pour '{jobTitle}' en cours...",
+      "invalidTitle": "Le titre '{jobTitle}' ne semble pas être un poste valide",
+      "error": "Erreur lors de la génération du CV"
     }
   },
   "cvGenerator": {
