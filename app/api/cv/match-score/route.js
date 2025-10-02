@@ -48,15 +48,18 @@ export async function POST(request) {
     }
 
     // Lire le contenu du CV depuis le fichier
-    const cvDir = path.join(process.cwd(), "data", "users", userId, "cv");
+    const cvDir = path.join(process.cwd(), "data", "users", userId, "cvs");
     const cvPath = path.join(cvDir, cvFile);
+
+    console.log("[match-score] Chemin du CV:", cvPath);
 
     let cvContent;
     try {
       const fileContent = await fs.readFile(cvPath, "utf-8");
       cvContent = fileContent;
     } catch (error) {
-      console.error("Error reading CV file:", error);
+      console.error("[match-score] Error reading CV file:", error);
+      console.error("[match-score] Chemin attendu:", cvPath);
       return NextResponse.json({ error: "Failed to read CV file" }, { status: 500 });
     }
 
