@@ -55,10 +55,17 @@ export default function MatchScore({
     if (!canRefresh) {
       return t("matchScore.rateLimitReached", { minutes: minutesUntilReset });
     }
-    if (refreshCount > 0) {
-      return t("matchScore.refreshWithCount", { count: refreshCount, limit: 5 });
-    }
     return t("matchScore.refresh");
+  };
+
+  // Calculer le nombre de refresh restants
+  const refreshesLeft = 5 - refreshCount;
+
+  // Déterminer la couleur de la bulle selon les refresh restants
+  const getBubbleColor = () => {
+    if (refreshesLeft === 0) return "bg-red-500 text-white";
+    if (refreshesLeft <= 2) return "bg-orange-500 text-white";
+    return "bg-blue-500 text-white";
   };
 
   return (
@@ -66,22 +73,27 @@ export default function MatchScore({
       <span className={`font-medium ${status === "error" ? "text-red-600" : "text-gray-700"}`}>
         {getDisplayText()}
       </span>
-      <button
-        onClick={handleRefresh}
-        disabled={isDisabled}
-        className={`inline-flex items-center justify-center w-6 h-6 rounded-full border bg-white transition-all duration-200 ${
-          isDisabled
-            ? "cursor-not-allowed opacity-40"
-            : "cursor-pointer hover:bg-gray-50 hover:shadow hover:scale-110"
-        } ${isRefreshing ? "animate-spin" : ""}`}
-        type="button"
-        title={getButtonTitle()}
-      >
-        🔄
-      </button>
-      {refreshCount > 0 && canRefresh && (
-        <span className="text-xs text-gray-500">({refreshCount}/5)</span>
-      )}
+      <div className="relative">
+        <button
+          onClick={handleRefresh}
+          disabled={isDisabled}
+          className={`inline-flex items-center justify-center w-6 h-6 rounded-full border bg-white transition-all duration-200 ${
+            isDisabled
+              ? "cursor-not-allowed opacity-40"
+              : "cursor-pointer hover:bg-gray-50 hover:shadow hover:scale-110"
+          } ${isRefreshing ? "animate-spin" : ""}`}
+          type="button"
+          title={getButtonTitle()}
+        >
+          🔄
+        </button>
+        {/* Bulle avec le décompte des refresh restants */}
+        {refreshCount >= 0 && (
+          <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${getBubbleColor()} flex items-center justify-center text-[10px] font-bold shadow-sm`}>
+            {refreshesLeft}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

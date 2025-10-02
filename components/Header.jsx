@@ -179,11 +179,7 @@ export default function Header(props){
         setCanRefreshScore(false);
       }
 
-      addNotification({
-        type: "success",
-        message: t("matchScore.refreshSuccess", { score: data.score, count: data.refreshCount, limit: data.refreshLimit }),
-        duration: 3000,
-      });
+      // Pas de notification - le décompte dans la bulle suffit
     } catch (error) {
       console.error("Error refreshing match score:", error);
       console.error("Error message:", error.message);
