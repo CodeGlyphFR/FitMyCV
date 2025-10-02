@@ -1567,16 +1567,25 @@ export default function TopBar() {
           ❌
         </button>
 
-        {/* Job Title Input - Second Line - Centered */}
-        <div className="w-full order-10 flex justify-center">
-          <input
-            type="text"
-            value={jobTitleInput}
-            onChange={(e) => setJobTitleInput(e.target.value)}
-            onKeyDown={handleJobTitleSubmit}
-            placeholder={t("topbar.jobTitlePlaceholder")}
-            className="w-full max-w-md rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+        {/* Job Title Input - Second Line - Centered with elegant design */}
+        <div className="w-full order-10 flex justify-center px-4">
+          <div className="relative w-full max-w-xl flex items-center group">
+            {/* Search icon */}
+            <span className="absolute left-0 text-gray-400 text-lg flex items-center justify-center w-6 h-6">
+              🔍
+            </span>
+
+            {/* Input field */}
+            <input
+              type="text"
+              value={jobTitleInput}
+              onChange={(e) => setJobTitleInput(e.target.value)}
+              onKeyDown={handleJobTitleSubmit}
+              placeholder={t("topbar.jobTitlePlaceholder")}
+              className="w-full bg-transparent border-0 border-b border-gray-300 pl-8 pr-2 py-1 text-sm italic text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors duration-200"
+              style={{ caretColor: '#3B82F6' }}
+            />
+          </div>
         </div>
       </div>
 
@@ -2073,6 +2082,20 @@ export default function TopBar() {
           }
           100% {
             transform: translate3d(var(--cv-ticker-shift), 0, 0);
+          }
+        }
+
+        /* Job title input blinking cursor effect */
+        input[type="text"]::placeholder {
+          animation: blink-placeholder 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink-placeholder {
+          0%, 49% {
+            opacity: 1;
+          }
+          50%, 100% {
+            opacity: 0.3;
           }
         }
       `}</style>
