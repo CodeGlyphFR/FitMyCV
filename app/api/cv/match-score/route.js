@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
-import { promises as fs } from "fs";
-import path from "path";
+import { readUserCvFile } from "@/lib/cv/storage";
 import { calculateMatchScore } from "@/lib/openai/calculateMatchScore";
 
 export async function POST(request) {
@@ -47,19 +46,15 @@ export async function POST(request) {
       return NextResponse.json({ error: "Job offer URL not found" }, { status: 400 });
     }
 
-    // Lire le contenu du CV depuis le fichier
-    const cvDir = path.join(process.cwd(), "data", "users", userId, "cvs");
-    const cvPath = path.join(cvDir, cvFile);
-
-    console.log("[match-score] Chemin du CV:", cvPath);
+    // Lire et décrypter le contenu du CV
+    console.log("[match-score] Lecture du CV:", cvFile);
 
     let cvContent;
     try {
-      const fileContent = await fs.readFile(cvPath, "utf-8");
-      cvContent = fileContent;
+      cvContent = await readUserCvFile(userId, cvFile);
+      console.log("[match-score] CV lu et décrypté avec succès");
     } catch (error) {
       console.error("[match-score] Error reading CV file:", error);
-      console.error("[match-score] Chemin attendu:", cvPath);
       return NextResponse.json({ error: "Failed to read CV file" }, { status: 500 });
     }
 
