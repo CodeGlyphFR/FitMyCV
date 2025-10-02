@@ -6,8 +6,11 @@ import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 export default function QueueIcon({ className = "h-4 w-4" }) {
   const { tasks } = useBackgroundTasks();
 
-  const runningTasksCount = tasks.filter(task => task.status === 'running').length;
-  const queuedTasksCount = tasks.filter(task => task.status === 'queued').length;
+  // Filtrer les tâches de calcul de match score (elles ne doivent apparaître que dans l'animation du bouton)
+  const visibleTasks = tasks.filter(task => task.type !== 'calculate-match-score');
+
+  const runningTasksCount = visibleTasks.filter(task => task.status === 'running').length;
+  const queuedTasksCount = visibleTasks.filter(task => task.status === 'queued').length;
   const hasActiveTasks = runningTasksCount > 0 || queuedTasksCount > 0;
 
   return (

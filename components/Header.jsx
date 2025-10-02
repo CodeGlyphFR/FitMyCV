@@ -21,8 +21,10 @@ export default function Header(props){
   const [sourceInfo, setSourceInfo] = React.useState({ sourceType: null, sourceValue: null });
   const [matchScore, setMatchScore] = React.useState(null);
   const [matchScoreStatus, setMatchScoreStatus] = React.useState("idle");
+  const [isLoadingMatchScore, setIsLoadingMatchScore] = React.useState(false);
   const [canRefreshScore, setCanRefreshScore] = React.useState(true);
   const [refreshCount, setRefreshCount] = React.useState(0);
+  const [hoursUntilReset, setHoursUntilReset] = React.useState(0);
   const [minutesUntilReset, setMinutesUntilReset] = React.useState(0);
   const { localDeviceId, addOptimisticTask, removeOptimisticTask, refreshTasks } = useBackgroundTasks();
   const { addNotification } = useNotifications();
@@ -64,32 +66,49 @@ export default function Header(props){
   });
 
   const fetchMatchScore = React.useCallback(async () => {
+    setIsLoadingMatchScore(true);
     try {
       // Récupérer le fichier CV actuel depuis le cookie
       const cookies = document.cookie.split(';');
       const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
-      if (!cvFileCookie) return;
+      if (!cvFileCookie) {
+        setIsLoadingMatchScore(false);
+        return;
+      }
 
       const currentFile = decodeURIComponent(cvFileCookie.split('=')[1]);
 
       const response = await fetch(`/api/cv/match-score?file=${encodeURIComponent(currentFile)}`);
       if (!response.ok) {
         console.error("Failed to fetch match score");
+        setIsLoadingMatchScore(false);
         return;
       }
 
       const data = await response.json();
       setMatchScore(data.score);
-      setMatchScoreStatus(data.score !== null ? "idle" : "idle");
+      setMatchScoreStatus(data.status || 'idle');
       setCanRefreshScore(data.canRefresh ?? true);
       setRefreshCount(data.refreshCount || 0);
+      setHoursUntilReset(data.hoursUntilReset || 0);
       setMinutesUntilReset(data.minutesUntilReset || 0);
     } catch (error) {
       console.error("Error fetching match score:", error);
+    } finally {
+      setIsLoadingMatchScore(false);
     }
   }, []);
 
   const fetchSourceInfo = React.useCallback(() => {
+    // Réinitialiser TOUS les états du match score avant de charger le nouveau CV
+    setMatchScore(null);
+    setMatchScoreStatus('idle');
+    setIsLoadingMatchScore(true);
+    setCanRefreshScore(true);
+    setRefreshCount(0);
+    setHoursUntilReset(0);
+    setMinutesUntilReset(0);
+
     fetch("/api/cv/source", { cache: "no-store" })
       .then(res => {
         if (!res.ok) {
@@ -103,9 +122,6 @@ export default function Header(props){
         // Si le CV est créé depuis un lien, récupérer le score de match
         if (data.sourceType === "link") {
           fetchMatchScore();
-        } else {
-          setMatchScore(null);
-          setMatchScoreStatus("idle");
         }
       })
       .catch(err => console.error("Failed to fetch source info:", err));
@@ -125,18 +141,59 @@ export default function Header(props){
     return () => window.removeEventListener("cv:selected", handleCvSelected);
   }, [fetchSourceInfo]);
 
+  // SSE pour écouter les changements de status en temps réel
+  React.useEffect(() => {
+    if (matchScoreStatus !== 'calculating') return;
+
+    // Récupérer le fichier CV actuel depuis le cookie
+    const cookies = document.cookie.split(';');
+    const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
+    if (!cvFileCookie) return;
+
+    const currentFile = decodeURIComponent(cvFileCookie.split('=')[1]);
+
+    console.log('[MatchScore SSE] Connexion SSE pour', currentFile);
+
+    const eventSource = new EventSource(`/api/cv/match-score/stream?file=${encodeURIComponent(currentFile)}`);
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('[MatchScore SSE] Status update:', data);
+
+        setMatchScore(data.score);
+        setMatchScoreStatus(data.status || 'idle');
+
+        // Si le status est 'idle' ou 'error', rafraîchir pour avoir les infos de rate limit
+        if (data.status === 'idle' || data.status === 'error') {
+          fetchMatchScore();
+        }
+      } catch (error) {
+        console.error('[MatchScore SSE] Error parsing event:', error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('[MatchScore SSE] Error:', error);
+      eventSource.close();
+    };
+
+    return () => {
+      console.log('[MatchScore SSE] Fermeture connexion SSE');
+      eventSource.close();
+    };
+  }, [matchScoreStatus, fetchMatchScore]);
+
   const handleRefreshMatchScore = React.useCallback(async () => {
     // Vérifier le rate limit avant de commencer
     if (!canRefreshScore) {
       addNotification({
         type: "error",
-        message: t("matchScore.rateLimitExceeded", { minutes: minutesUntilReset }),
+        message: t("matchScore.rateLimitExceeded", { hours: hoursUntilReset, minutes: minutesUntilReset }),
         duration: 5000,
       });
       return;
     }
-
-    setMatchScoreStatus("loading");
 
     try {
       // Récupérer le fichier CV actuel depuis le cookie
@@ -148,50 +205,47 @@ export default function Header(props){
 
       const currentFile = decodeURIComponent(cvFileCookie.split('=')[1]);
 
-      const response = await fetch("/api/cv/match-score", {
+      // Envoyer la requête pour lancer le calcul
+      const response = await fetch("/api/background-tasks/calculate-match-score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cvFile: currentFile, isAutomatic: false }),
+        body: JSON.stringify({
+          cvFile: currentFile,
+          isAutomatic: false,
+          deviceId: localDeviceId,
+        }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+      const data = await response.json().catch(() => ({}));
 
+      if (!response.ok) {
         // Gestion spéciale pour le rate limit
         if (response.status === 429) {
           setCanRefreshScore(false);
-          setMinutesUntilReset(errorData.minutesLeft || 60);
-          throw new Error(errorData.details || t("matchScore.rateLimitExceeded", { minutes: errorData.minutesLeft || 60 }));
+          const hours = data.hoursLeft || 24;
+          const minutes = data.minutesLeft || 0;
+          setHoursUntilReset(hours);
+          setMinutesUntilReset(minutes);
+          throw new Error(t("matchScore.rateLimitExceeded", { hours, minutes }));
         }
 
-        const errorMessage = errorData.details || errorData.error || "Failed to calculate match score";
-        console.error("[Header] Erreur API match score:", errorData);
+        const errorMessage = data.details || data.error || "Impossible de lancer le calcul.";
         throw new Error(errorMessage);
       }
 
-      const data = await response.json();
-      setMatchScore(data.score);
-      setMatchScoreStatus("idle");
-      setRefreshCount(data.refreshCount || 0);
+      // Succès : recharger le status depuis la DB (qui sera maintenant 'calculating')
+      await fetchMatchScore();
 
-      // Si on atteint la limite
-      if (data.refreshCount >= 5) {
-        setCanRefreshScore(false);
-      }
-
-      // Pas de notification - le décompte dans la bulle suffit
+      // Le polling se chargera de détecter quand le status passe à 'idle' ou 'error'
     } catch (error) {
       console.error("Error refreshing match score:", error);
-      console.error("Error message:", error.message);
-      setMatchScoreStatus("error");
-
       addNotification({
         type: "error",
         message: error.message,
         duration: 6000,
       });
     }
-  }, [t, addNotification, canRefreshScore, minutesUntilReset]);
+  }, [t, addNotification, canRefreshScore, hoursUntilReset, minutesUntilReset, localDeviceId, fetchMatchScore]);
 
   // Si le CV est vide (pas de header), ne pas afficher le composant
   const isEmpty = !header.full_name && !header.current_title && !header.contact?.email;
@@ -348,9 +402,11 @@ export default function Header(props){
           sourceType={sourceInfo.sourceType}
           sourceValue={sourceInfo.sourceValue}
           score={matchScore}
-          status={matchScoreStatus}
+          status={matchScoreStatus === 'calculating' ? 'loading' : matchScoreStatus}
+          isLoading={isLoadingMatchScore}
           canRefresh={canRefreshScore}
           refreshCount={refreshCount}
+          hoursUntilReset={hoursUntilReset}
           minutesUntilReset={minutesUntilReset}
           onRefresh={handleRefreshMatchScore}
         />

@@ -65,8 +65,9 @@
     "refresh": "Rafraîchir le score de match",
     "refreshSuccess": "Score mis à jour: {score}/100 ({count}/{limit})",
     "refreshError": "Erreur lors du calcul du score de match",
-    "rateLimitExceeded": "Limite atteinte. Réessayez dans {minutes} min",
-    "rateLimitReached": "Limite de 5 refresh/heure atteinte. Réessayez dans {minutes} min",
+    "rateLimitExceeded": "Limite globale atteinte (5 refresh/24h tous CVs confondus). Réinitialisation dans {hours} heures et {minutes} minutes",
+    "rateLimitReached": "Limite globale de 5 refresh/24h atteinte",
+    "resetIn": "Réinitialisation dans {hours} heures et {minutes} minutes",
     "refreshWithCount": "Rafraîchir ({count}/{limit})"
   },
   "cvGenerator": {
@@ -366,7 +367,12 @@
       "templateCreationQueued": "Création de CV modèle en attente ...",
       "templateCreationCompleted": "CV modèle créé avec succès",
       "templateCreationCancelled": "Création de CV modèle annulée",
-      "templateCreationFailed": "Création de CV modèle échouée"
+      "templateCreationFailed": "Création de CV modèle échouée",
+      "matchScoreInProgress": "Calcul du score de match en cours ...",
+      "matchScoreQueued": "Calcul du score de match en attente ...",
+      "matchScoreCompleted": "Score de match calculé avec succès",
+      "matchScoreCancelled": "Calcul du score de match annulé",
+      "matchScoreFailed": "Calcul du score de match échoué"
     }
   },
   "emptyState": {

@@ -41,45 +41,50 @@ export async function POST(request) {
       return NextResponse.json({ error: "CV was not created from a job offer link" }, { status: 400 });
     }
 
-    // Rate limiting (seulement pour les refresh manuels, pas pour les calculs automatiques)
+    // Rate limiting GLOBAL (au niveau utilisateur, pas par CV)
     if (!isAutomatic) {
       const now = new Date();
-      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-      // Si first refresh est null OU plus vieux qu'1h, on reset le compteur
-      if (!cvRecord.matchScoreFirstRefreshAt || cvRecord.matchScoreFirstRefreshAt < oneHourAgo) {
-        // Reset le compteur
-        await prisma.cvFile.update({
-          where: {
-            userId_filename: {
-              userId,
-              filename: cvFile,
-            },
-          },
+      // Récupérer l'utilisateur avec ses compteurs de refresh
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          matchScoreRefreshCount: true,
+          matchScoreFirstRefreshAt: true,
+        },
+      });
+
+      let refreshCount = user?.matchScoreRefreshCount || 0;
+      let firstRefreshAt = user?.matchScoreFirstRefreshAt;
+
+      // Si first refresh est null OU plus vieux que 24h, on reset le compteur
+      if (!firstRefreshAt || firstRefreshAt < oneDayAgo) {
+        await prisma.user.update({
+          where: { id: userId },
           data: {
             matchScoreRefreshCount: 0,
             matchScoreFirstRefreshAt: null,
           },
         });
-        // Recharger le record
-        const updatedRecord = await prisma.cvFile.findUnique({
-          where: { userId_filename: { userId, filename: cvFile } },
-        });
-        cvRecord.matchScoreRefreshCount = updatedRecord.matchScoreRefreshCount;
-        cvRecord.matchScoreFirstRefreshAt = updatedRecord.matchScoreFirstRefreshAt;
+        refreshCount = 0;
+        firstRefreshAt = null;
       }
 
-      // Vérifier la limite de 5 refresh par heure
-      if (cvRecord.matchScoreRefreshCount >= 5) {
-        const timeUntilReset = cvRecord.matchScoreFirstRefreshAt
-          ? new Date(cvRecord.matchScoreFirstRefreshAt.getTime() + 60 * 60 * 1000)
+      // Vérifier la limite de 5 refresh par 24h (GLOBAL pour tous les CVs)
+      if (refreshCount >= 5) {
+        const timeUntilReset = firstRefreshAt
+          ? new Date(firstRefreshAt.getTime() + 24 * 60 * 60 * 1000)
           : new Date();
-        const minutesLeft = Math.ceil((timeUntilReset - now) / (60 * 1000));
+        const totalMinutesLeft = Math.ceil((timeUntilReset - now) / (60 * 1000));
+        const hoursLeft = Math.floor(totalMinutesLeft / 60);
+        const minutesLeft = totalMinutesLeft % 60;
 
-        console.log("[match-score] Rate limit atteint pour", cvFile);
+        console.log("[match-score] Rate limit GLOBAL atteint pour l'utilisateur", userId);
         return NextResponse.json({
           error: "Rate limit exceeded",
-          details: `Vous avez atteint la limite de 5 rafraîchissements par heure. Réessayez dans ${minutesLeft} minute(s).`,
+          details: `Vous avez atteint la limite de 5 rafraîchissements par 24h (global pour tous vos CVs). Réessayez dans ${hoursLeft}h${minutesLeft}m.`,
+          hoursLeft,
           minutesLeft,
         }, { status: 429 });
       }
@@ -118,35 +123,16 @@ export async function POST(request) {
     } catch (error) {
       console.error("[match-score] Erreur lors du calcul du score:", error);
       console.error("[match-score] Stack trace:", error.stack);
+      // IMPORTANT: En cas d'erreur, on retourne SANS incrémenter le compteur
       return NextResponse.json({
         error: "Failed to calculate match score",
         details: error.message
       }, { status: 500 });
     }
 
-    // Sauvegarder le score dans la DB et mettre à jour le compteur de refresh
-    const updateData = {
-      matchScore: score,
-      matchScoreUpdatedAt: new Date(),
-    };
+    // ✅ Le score a été calculé avec succès, on peut maintenant sauvegarder et incrémenter le compteur
 
-    // Si c'est un refresh manuel, incrémenter le compteur
-    if (!isAutomatic) {
-      const now = new Date();
-
-      // Si c'est le premier refresh de la fenêtre, initialiser firstRefreshAt
-      if (!cvRecord.matchScoreFirstRefreshAt || cvRecord.matchScoreRefreshCount === 0) {
-        updateData.matchScoreFirstRefreshAt = now;
-        updateData.matchScoreRefreshCount = 1;
-      } else {
-        updateData.matchScoreRefreshCount = cvRecord.matchScoreRefreshCount + 1;
-      }
-
-      console.log(`[match-score] Refresh manuel ${updateData.matchScoreRefreshCount}/5`);
-    } else {
-      console.log(`[match-score] Calcul automatique (pas de compteur)`);
-    }
-
+    // Sauvegarder le score dans le CV
     await prisma.cvFile.update({
       where: {
         userId_filename: {
@@ -154,15 +140,58 @@ export async function POST(request) {
           filename: cvFile,
         },
       },
-      data: updateData,
+      data: {
+        matchScore: score,
+        matchScoreUpdatedAt: new Date(),
+      },
     });
+
+    let finalRefreshCount = 0;
+
+    // Si c'est un refresh manuel, incrémenter le compteur GLOBAL de l'utilisateur
+    if (!isAutomatic) {
+      const now = new Date();
+
+      // Récupérer les infos actuelles de l'utilisateur
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          matchScoreRefreshCount: true,
+          matchScoreFirstRefreshAt: true,
+        },
+      });
+
+      // Si c'est le premier refresh de la fenêtre, initialiser firstRefreshAt
+      if (!user?.matchScoreFirstRefreshAt || user.matchScoreRefreshCount === 0) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            matchScoreFirstRefreshAt: now,
+            matchScoreRefreshCount: 1,
+          },
+        });
+        finalRefreshCount = 1;
+      } else {
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            matchScoreRefreshCount: user.matchScoreRefreshCount + 1,
+          },
+        });
+        finalRefreshCount = user.matchScoreRefreshCount + 1;
+      }
+
+      console.log(`[match-score] ✅ Calcul réussi - Refresh manuel GLOBAL ${finalRefreshCount}/5`);
+    } else {
+      console.log(`[match-score] ✅ Calcul automatique réussi (pas de compteur)`);
+    }
 
     console.log(`[match-score] Score calculé et sauvegardé : ${score}/100`);
 
     return NextResponse.json({
       success: true,
       score,
-      refreshCount: updateData.matchScoreRefreshCount || cvRecord.matchScoreRefreshCount || 0,
+      refreshCount: finalRefreshCount,
       refreshLimit: 5,
     }, { status: 200 });
   } catch (error) {
@@ -198,8 +227,7 @@ export async function GET(request) {
       select: {
         matchScore: true,
         matchScoreUpdatedAt: true,
-        matchScoreRefreshCount: true,
-        matchScoreFirstRefreshAt: true,
+        matchScoreStatus: true,
       },
     });
 
@@ -207,28 +235,43 @@ export async function GET(request) {
       return NextResponse.json({ error: "CV not found" }, { status: 404 });
     }
 
-    // Calculer si le rate limit est actif
+    // Calculer si le rate limit GLOBAL est actif (au niveau utilisateur)
     const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    // Récupérer les infos de l'utilisateur
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        matchScoreRefreshCount: true,
+        matchScoreFirstRefreshAt: true,
+      },
+    });
 
     let canRefresh = true;
+    let hoursUntilReset = 0;
     let minutesUntilReset = 0;
+    let refreshCount = user?.matchScoreRefreshCount || 0;
 
-    if (cvRecord.matchScoreFirstRefreshAt && cvRecord.matchScoreFirstRefreshAt > oneHourAgo) {
-      // On est dans la fenêtre d'1h
-      if (cvRecord.matchScoreRefreshCount >= 5) {
+    if (user?.matchScoreFirstRefreshAt && user.matchScoreFirstRefreshAt > oneDayAgo) {
+      // On est dans la fenêtre de 24h
+      if (refreshCount >= 5) {
         canRefresh = false;
-        const resetTime = new Date(cvRecord.matchScoreFirstRefreshAt.getTime() + 60 * 60 * 1000);
-        minutesUntilReset = Math.ceil((resetTime - now) / (60 * 1000));
+        const resetTime = new Date(user.matchScoreFirstRefreshAt.getTime() + 24 * 60 * 60 * 1000);
+        const totalMinutesLeft = Math.ceil((resetTime - now) / (60 * 1000));
+        hoursUntilReset = Math.floor(totalMinutesLeft / 60);
+        minutesUntilReset = totalMinutesLeft % 60;
       }
     }
 
     return NextResponse.json({
       score: cvRecord.matchScore,
       updatedAt: cvRecord.matchScoreUpdatedAt,
-      refreshCount: cvRecord.matchScoreRefreshCount || 0,
+      status: cvRecord.matchScoreStatus || 'idle', // Status du calcul: 'idle', 'calculating', 'error'
+      refreshCount, // Compteur global de l'utilisateur
       refreshLimit: 5,
       canRefresh,
+      hoursUntilReset,
       minutesUntilReset,
     }, { status: 200 });
   } catch (error) {

@@ -7,13 +7,29 @@ export default function MatchScore({
   sourceValue,
   score,
   status,
+  isLoading = false,
   canRefresh,
   refreshCount,
+  hoursUntilReset,
   minutesUntilReset,
   onRefresh
 }) {
   const { t } = useLanguage();
-  const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const [loadingDots, setLoadingDots] = React.useState(".");
+
+  // Animation des points pendant le chargement
+  React.useEffect(() => {
+    if (status === "loading") {
+      const interval = setInterval(() => {
+        setLoadingDots(prev => {
+          if (prev === ".") return "..";
+          if (prev === "..") return "...";
+          return ".";
+        });
+      }, 500);
+      return () => clearInterval(interval);
+    }
+  }, [status]);
 
   // Afficher le composant uniquement si le CV a été généré depuis un lien
   if (sourceType !== "link" || !sourceValue) {
@@ -21,30 +37,26 @@ export default function MatchScore({
   }
 
   const handleRefresh = async () => {
-    if (!canRefresh) {
-      return; // Déjà bloqué par le parent
+    if (!canRefresh || status === "loading") {
+      return; // Déjà bloqué par le parent ou en cours de calcul
     }
-
-    setIsRefreshing(true);
 
     try {
       await onRefresh();
     } catch (error) {
       console.error("Erreur lors du rafraîchissement du score:", error);
-    } finally {
-      setIsRefreshing(false);
     }
   };
 
   const getDisplayText = () => {
     if (status === "loading") {
-      return t("matchScore.calculating");
+      return loadingDots;
     }
     if (status === "error") {
       return t("matchScore.failed");
     }
     if (score === null) {
-      return "→";
+      return "Calcule moi !";
     }
     return `${score}/100`;
   };
@@ -59,14 +71,14 @@ export default function MatchScore({
     if (score === null) {
       return t("matchScore.notCalculated");
     }
-    return t("matchScore.scoreTooltip", { score });
+    return `${score}/100`;
   };
 
-  const isDisabled = isRefreshing || !canRefresh;
+  const isDisabled = status === "loading" || !canRefresh;
 
   const getButtonTitle = () => {
     if (!canRefresh) {
-      return t("matchScore.rateLimitReached", { minutes: minutesUntilReset });
+      return t("matchScore.resetIn", { hours: hoursUntilReset, minutes: minutesUntilReset });
     }
     return t("matchScore.refresh");
   };
@@ -82,7 +94,7 @@ export default function MatchScore({
   };
 
   return (
-    <div className="no-print flex items-center gap-2 text-sm">
+    <div className={`no-print flex items-center gap-2 text-sm transition-opacity duration-200 ${isLoading ? "opacity-40 blur-sm" : "opacity-100"}`}>
       <span
         className={`font-medium ${status === "error" ? "text-red-600" : "text-gray-700"} cursor-help`}
         title={getScoreTooltip()}
@@ -92,19 +104,19 @@ export default function MatchScore({
       <div className="relative">
         <button
           onClick={handleRefresh}
-          disabled={isDisabled}
+          disabled={isDisabled || isLoading}
           className={`inline-flex items-center justify-center w-6 h-6 rounded-full border bg-white transition-all duration-200 ${
-            isDisabled
+            isDisabled || isLoading
               ? "cursor-not-allowed opacity-40"
               : "cursor-pointer hover:bg-gray-50 hover:shadow hover:scale-110"
-          } ${isRefreshing ? "animate-spin" : ""}`}
+          } ${status === "loading" ? "animate-spin" : ""}`}
           type="button"
           title={getButtonTitle()}
         >
           🔄
         </button>
         {/* Bulle avec le décompte des refresh restants */}
-        {refreshCount >= 0 && (
+        {refreshCount >= 0 && !isLoading && (
           <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${getBubbleColor()} flex items-center justify-center text-[10px] font-bold shadow-sm`}>
             {refreshesLeft}
           </div>
