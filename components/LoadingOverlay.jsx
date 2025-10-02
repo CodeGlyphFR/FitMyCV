@@ -20,6 +20,14 @@ export default function LoadingOverlay() {
     const checkTopBarReady = () => {
       attempts++;
 
+      // Vérifier si on est dans l'EmptyState (pas de CVs)
+      // Si oui, masquer immédiatement le loading
+      const emptyStateTitle = document.querySelector('h1.text-4xl.font-bold.text-slate-800');
+      if (emptyStateTitle) {
+        setIsLoading(false);
+        return;
+      }
+
       // Vérifier si la TopBar est présente ET visible avec son contenu
       const topBar = document.querySelector('.sticky.top-0');
 
@@ -68,8 +76,13 @@ export default function LoadingOverlay() {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80 backdrop-blur-md transition-opacity duration-300"
-      style={{ opacity: isLoading ? 1 : 0 }}
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-white/80 backdrop-blur-md transition-opacity duration-300"
+      style={{
+        opacity: isLoading ? 1 : 0,
+        height: '100vh',
+        height: '100dvh',
+        paddingBottom: 'env(safe-area-inset-bottom)'
+      }}
     >
       <div className="flex flex-col items-center gap-4">
         {/* Loading spinner */}

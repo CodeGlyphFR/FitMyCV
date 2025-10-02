@@ -1,13 +1,14 @@
 "use client";
 import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 import packageInfo from '../package.json';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 
-export default function Footer() {
+export default function Footer({ showLogout = false }) {
   const { t } = useLanguage();
 
   return (
-    <footer className="w-full text-center text-gray-500 text-sm py-4 h-[56px] flex items-center justify-center">
+    <footer className="w-full text-center text-gray-500 text-sm pt-4 pb-8 min-h-[56px] flex items-center justify-center">
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         <span>Version {packageInfo.version}</span>
         <span className="hidden sm:inline">•</span>
@@ -17,6 +18,17 @@ export default function Footer() {
         >
           {t("footer.cookieManagement")}
         </Link>
+        {showLogout && (
+          <>
+            <span className="hidden sm:inline">•</span>
+            <button
+              onClick={() => signOut({ callbackUrl: '/auth' })}
+              className="hover:text-gray-700 dark:hover:text-gray-300 underline transition-colors"
+            >
+              {t("topbar.logout")}
+            </button>
+          </>
+        )}
       </div>
     </footer>
   );

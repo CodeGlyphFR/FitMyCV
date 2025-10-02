@@ -9,7 +9,7 @@ export default function Modal({ open, onClose, title, children }){
   React.useEffect(()=>{ setMounted(true); },[]);
   if(!open || !mounted) return null;
   return createPortal(
-    <div className="fixed inset-0 z-[1000] overflow-y-auto">
+    <div className="fixed inset-0 z-[10002] overflow-y-auto">
       <div className="fixed inset-0 bg-black/30" onClick={onClose}></div>
       <div className="relative min-h-full flex items-start sm:items-center justify-center p-4">
         <div className="relative z-10 w-full max-w-lg rounded-2xl border bg-white p-4 shadow-lg">

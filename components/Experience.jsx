@@ -154,7 +154,7 @@ export default function Experience(props){
           experience.map((e, i) => (
             <div key={i} className="rounded-2xl border p-3 relative">
               {editing && (
-                <div className="no-print absolute top-2 right-2 z-20 flex gap-2 bg-white/90 backdrop-blur-sm rounded shadow px-2 py-1">
+                <div className="no-print absolute top-2 right-2 z-20 flex gap-2 bg-white rounded shadow px-2 py-1">
                   <button type="button" onClick={() => openEdit(i)} className="text-[11px] px-2 py-0.5">🖊️</button>
                   <button type="button" onClick={() => setDelIndex(i)} className="text-xs rounded border px-2 py-1 hover:shadow text-red-700">❌</button>
                 </div>

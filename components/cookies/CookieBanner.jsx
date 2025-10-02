@@ -53,7 +53,7 @@ export default function CookieBanner() {
   if (!showBanner) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
+    <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
       <div className={`pointer-events-auto ${showPreferences ? 'max-w-3xl' : 'max-w-2xl'} mx-auto mb-4 mx-4 sm:mx-auto`}>
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4">
           {!showPreferences ? (
