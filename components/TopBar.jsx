@@ -1568,7 +1568,7 @@ export default function TopBar() {
         </button>
 
         {/* Job Title Input - Second Line - Centered with elegant design and animations */}
-        <div className="w-full order-10 flex justify-center px-4 py-2">
+        <div className="w-full order-10 flex justify-center px-4 py-1">
           <div className="relative w-full max-w-xl flex items-center group job-title-input-wrapper">
             {/* Search icon with pulse animation */}
             <span className="absolute left-0 text-gray-400 group-hover:text-blue-500 text-lg flex items-center justify-center w-6 h-6 transition-all duration-300 search-icon-pulse">
@@ -1585,7 +1585,7 @@ export default function TopBar() {
               onChange={(e) => setJobTitleInput(e.target.value)}
               onKeyDown={handleJobTitleSubmit}
               placeholder={t("topbar.jobTitlePlaceholder")}
-              className="w-full bg-transparent border-0 border-b border-gray-300 pl-8 pr-2 py-2 text-sm italic text-gray-700 placeholder-gray-400 focus:outline-none focus:border-transparent transition-all duration-300 hover:border-blue-400"
+              className="w-full bg-transparent border-0 border-b border-gray-300 pl-8 pr-2 py-1 text-sm italic text-gray-700 placeholder-gray-400 focus:outline-none focus:border-transparent transition-all duration-300 hover:border-blue-400"
               style={{ caretColor: '#3B82F6' }}
             />
 
