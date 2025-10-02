@@ -2105,35 +2105,7 @@ export default function TopBar() {
           }
         }
 
-        /* Job title input animations */
-        .job-title-input-wrapper {
-          animation: gentle-bounce 3s ease-in-out infinite;
-        }
-
-        @keyframes gentle-bounce {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-2px);
-          }
-        }
-
-        /* Search icon pulse animation */
-        .search-icon-pulse {
-          animation: pulse-icon 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse-icon {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-          50% {
-            transform: scale(1.1);
-            opacity: 0.8;
-          }
-        }
+        /* Job title input animations - disabled */
 
         /* Animated gradient underline */
         .animated-underline {
@@ -2173,18 +2145,9 @@ export default function TopBar() {
           }
         }
 
-        /* Blinking placeholder */
+        /* Placeholder styling - no animation */
         input[type="text"]::placeholder {
-          animation: blink-placeholder 2s ease-in-out infinite;
-        }
-
-        @keyframes blink-placeholder {
-          0%, 49% {
-            opacity: 1;
-          }
-          50%, 100% {
-            opacity: 0.4;
-          }
+          opacity: 1;
         }
 
         /* Focus state: stop animations */
