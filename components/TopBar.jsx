@@ -1430,7 +1430,7 @@ export default function TopBar() {
                 className="rounded border bg-white shadow-lg"
               >
                 <ul
-                  className="max-h-[400px] overflow-y-auto py-1"
+                  className="max-h-[240px] overflow-y-auto py-1"
                   onWheel={(e) => {
                     const target = e.currentTarget;
                     const isAtTop = target.scrollTop === 0;
