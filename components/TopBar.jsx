@@ -1567,13 +1567,16 @@ export default function TopBar() {
           ❌
         </button>
 
-        {/* Job Title Input - Second Line - Centered with elegant design */}
-        <div className="w-full order-10 flex justify-center px-4">
-          <div className="relative w-full max-w-xl flex items-center group">
-            {/* Search icon */}
-            <span className="absolute left-0 text-gray-400 text-lg flex items-center justify-center w-6 h-6">
+        {/* Job Title Input - Second Line - Centered with elegant design and animations */}
+        <div className="w-full order-10 flex justify-center px-4 py-2">
+          <div className="relative w-full max-w-xl flex items-center group job-title-input-wrapper">
+            {/* Search icon with pulse animation */}
+            <span className="absolute left-0 text-gray-400 group-hover:text-blue-500 text-lg flex items-center justify-center w-6 h-6 transition-all duration-300 search-icon-pulse">
               🔍
             </span>
+
+            {/* Animated underline */}
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-400 via-purple-500 to-blue-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 animated-underline"></div>
 
             {/* Input field */}
             <input
@@ -1582,9 +1585,14 @@ export default function TopBar() {
               onChange={(e) => setJobTitleInput(e.target.value)}
               onKeyDown={handleJobTitleSubmit}
               placeholder={t("topbar.jobTitlePlaceholder")}
-              className="w-full bg-transparent border-0 border-b border-gray-300 pl-8 pr-2 py-1 text-sm italic text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors duration-200"
+              className="w-full bg-transparent border-0 border-b border-gray-300 pl-8 pr-2 py-2 text-sm italic text-gray-700 placeholder-gray-400 focus:outline-none focus:border-transparent transition-all duration-300 hover:border-blue-400"
               style={{ caretColor: '#3B82F6' }}
             />
+
+            {/* Sparkle effect on hover */}
+            <span className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 sparkle-effect">
+              ✨
+            </span>
           </div>
         </div>
       </div>
@@ -2085,9 +2093,77 @@ export default function TopBar() {
           }
         }
 
-        /* Job title input blinking cursor effect */
+        /* Job title input animations */
+        .job-title-input-wrapper {
+          animation: gentle-bounce 3s ease-in-out infinite;
+        }
+
+        @keyframes gentle-bounce {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-2px);
+          }
+        }
+
+        /* Search icon pulse animation */
+        .search-icon-pulse {
+          animation: pulse-icon 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-icon {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(1.1);
+            opacity: 0.8;
+          }
+        }
+
+        /* Animated gradient underline */
+        .animated-underline {
+          animation: gradient-shift 3s ease infinite;
+          background-size: 200% 100%;
+        }
+
+        @keyframes gradient-shift {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+
+        /* Sparkle effect */
+        .sparkle-effect {
+          animation: sparkle-rotate 2s linear infinite;
+        }
+
+        @keyframes sparkle-rotate {
+          0%, 100% {
+            transform: rotate(0deg) scale(1);
+          }
+          25% {
+            transform: rotate(10deg) scale(1.1);
+          }
+          50% {
+            transform: rotate(0deg) scale(1);
+          }
+          75% {
+            transform: rotate(-10deg) scale(1.1);
+          }
+        }
+
+        /* Blinking placeholder */
         input[type="text"]::placeholder {
-          animation: blink-placeholder 1.5s ease-in-out infinite;
+          animation: blink-placeholder 2s ease-in-out infinite;
         }
 
         @keyframes blink-placeholder {
@@ -2095,8 +2171,19 @@ export default function TopBar() {
             opacity: 1;
           }
           50%, 100% {
-            opacity: 0.3;
+            opacity: 0.4;
           }
+        }
+
+        /* Focus state: stop animations */
+        .job-title-input-wrapper:focus-within {
+          animation: none;
+        }
+
+        .job-title-input-wrapper:focus-within .search-icon-pulse {
+          animation: none;
+          transform: scale(1.1);
+          color: #3B82F6;
         }
       `}</style>
     </>
