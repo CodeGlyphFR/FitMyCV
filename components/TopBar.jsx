@@ -718,10 +718,7 @@ export default function TopBar() {
       // Only on mobile (width < 768px)
       if (window.innerWidth >= 768) {
         setIsScrollingDown(false);
-        // Close dropdown on scroll (desktop only - avoid interfering with mobile touch)
-        if (listOpen) {
-          setListOpen(false);
-        }
+        // Don't close dropdown on scroll - let outside click handle it
         return;
       }
 
@@ -791,23 +788,31 @@ export default function TopBar() {
 
   React.useEffect(() => {
     function handleClick(event) {
+      if (!listOpen) return; // Only handle when dropdown is open
+
       const triggerEl = triggerRef.current;
       const dropdownEl = dropdownPortalRef.current;
+
       if (!triggerEl) return;
+
+      // Ignore clicks on trigger
       if (triggerEl.contains(event.target)) {
         console.log('[Outside Click] Ignored - clicked on trigger');
         return;
       }
+
+      // Ignore clicks inside dropdown
       if (dropdownEl && dropdownEl.contains(event.target)) {
         console.log('[Outside Click] Ignored - clicked on dropdown');
         return;
       }
+
       console.log('[Outside Click] Closing dropdown');
       setListOpen(false);
     }
 
     function handleKey(event) {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && listOpen) {
         console.log('[Escape] Closing dropdown');
         setListOpen(false);
       }
@@ -821,7 +826,7 @@ export default function TopBar() {
       document.removeEventListener("touchstart", handleClick);
       document.removeEventListener("keydown", handleKey);
     };
-  }, []);
+  }, [listOpen]);
 
   React.useEffect(() => {
     if (!baseSelectorOpen) return undefined;
