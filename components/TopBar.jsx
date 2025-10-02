@@ -402,6 +402,7 @@ export default function TopBar() {
   const isScrollingDownRef = React.useRef(false);
   const [jobTitleInput, setJobTitleInput] = React.useState("");
   const [isMobile, setIsMobile] = React.useState(false);
+  const [isScrollingInDropdown, setIsScrollingInDropdown] = React.useState(false);
 
   const { history: linkHistory, addLinksToHistory } = useLinkHistory();
 
@@ -789,6 +790,7 @@ export default function TopBar() {
   React.useEffect(() => {
     function handleClick(event) {
       if (!listOpen) return; // Only handle when dropdown is open
+      if (isScrollingInDropdown) return; // Don't close while scrolling
 
       const triggerEl = triggerRef.current;
       const dropdownEl = dropdownPortalRef.current;
@@ -826,7 +828,7 @@ export default function TopBar() {
       document.removeEventListener("touchstart", handleClick);
       document.removeEventListener("keydown", handleKey);
     };
-  }, [listOpen]);
+  }, [listOpen, isScrollingInDropdown]);
 
   React.useEffect(() => {
     if (!baseSelectorOpen) return undefined;
@@ -1436,6 +1438,14 @@ export default function TopBar() {
               >
                 <ul
                   className="max-h-[240px] overflow-y-auto py-1"
+                  onScroll={() => {
+                    // Set flag when scrolling starts
+                    setIsScrollingInDropdown(true);
+                  }}
+                  onScrollEnd={() => {
+                    // Clear flag when scrolling ends (after delay)
+                    setTimeout(() => setIsScrollingInDropdown(false), 100);
+                  }}
                   onWheel={(e) => {
                     const target = e.currentTarget;
                     const isAtTop = target.scrollTop === 0;
@@ -1457,7 +1467,7 @@ export default function TopBar() {
                           await selectFile(it.file);
                           setListOpen(false);
                         }}
-                        className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-zinc-100 ${it.file === current ? "bg-zinc-50" : ""}`}
+                        className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-zinc-100 ${it.file === current ? "bg-blue-50 border-l-2 border-blue-500" : ""}`}
                       >
                         <span
                           key={`dropdown-icon-${it.file}-${it.createdBy}`}
