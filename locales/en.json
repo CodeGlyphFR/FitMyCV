@@ -42,6 +42,7 @@
     "delete": "Delete",
     "cvInProgress": "CV in progress",
     "jobTitlePlaceholder": "Enter a job title (e.g., Full-Stack Developer)",
+    "jobTitlePlaceholderMobile": "e.g., Full-Stack Developer",
     "analysisLevels": {
       "rapid": "Fast",
       "medium": "Medium",

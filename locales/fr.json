@@ -42,6 +42,7 @@
     "delete": "Supprimer",
     "cvInProgress": "CV en cours d'édition",
     "jobTitlePlaceholder": "Entrez un titre de poste (ex: Développeur Full-Stack)",
+    "jobTitlePlaceholderMobile": "ex: Développeur Full-Stack",
     "analysisLevels": {
       "rapid": "Rapide",
       "medium": "Moyen",

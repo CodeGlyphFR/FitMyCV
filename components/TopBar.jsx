@@ -401,8 +401,19 @@ export default function TopBar() {
   const [lastScrollY, setLastScrollY] = React.useState(0);
   const isScrollingDownRef = React.useRef(false);
   const [jobTitleInput, setJobTitleInput] = React.useState("");
+  const [isMobile, setIsMobile] = React.useState(false);
 
   const { history: linkHistory, addLinksToHistory } = useLinkHistory();
+
+  // Detect mobile screen size
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const fileInputRef = React.useRef(null);
   const pdfFileInputRef = React.useRef(null);
@@ -1542,7 +1553,7 @@ export default function TopBar() {
               value={jobTitleInput}
               onChange={(e) => setJobTitleInput(e.target.value)}
               onKeyDown={handleJobTitleSubmit}
-              placeholder={t("topbar.jobTitlePlaceholder")}
+              placeholder={isMobile ? t("topbar.jobTitlePlaceholderMobile") : t("topbar.jobTitlePlaceholder")}
               className="w-full bg-transparent border-0 border-b border-gray-300 pl-8 pr-2 py-1 text-sm italic text-gray-700 placeholder-gray-400 focus:outline-none focus:border-transparent transition-all duration-300 hover:border-blue-400"
               style={{ caretColor: '#3B82F6' }}
             />
