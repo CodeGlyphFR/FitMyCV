@@ -1507,7 +1507,7 @@ export default function TopBar() {
             )
           : null}
         {/* Task Manager */}
-        <div className="relative order-2 md:order-3">
+        <div className="relative order-2 md:order-7">
           <button
             ref={taskQueueButtonRef}
             onClick={() => {
@@ -1564,7 +1564,7 @@ export default function TopBar() {
         {/* Add Button */}
         <button
           onClick={() => setOpenNewCv(true)}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 order-7 md:order-4"
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 order-7 md:order-3"
           type="button"
         >
           ➕
@@ -1572,7 +1572,7 @@ export default function TopBar() {
         {/* GPT Button */}
         <button
           onClick={openGeneratorModal}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-5"
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-4"
           type="button"
         >
           <GptLogo className="h-4 w-4" />
@@ -1580,7 +1580,7 @@ export default function TopBar() {
         {/* Import Button */}
         <button
           onClick={() => setOpenPdfImport(true)}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-9 md:order-6"
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-9 md:order-5"
           type="button"
           title={t("pdfImport.title")}
         >
@@ -1589,7 +1589,7 @@ export default function TopBar() {
         {/* Export Button */}
         <button
           onClick={exportToPdf}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7"
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-6"
           type="button"
           title="Exporter en PDF"
         >
