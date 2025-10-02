@@ -1429,7 +1429,21 @@ export default function TopBar() {
                 }}
                 className="rounded border bg-white shadow-lg"
               >
-                <ul className="max-h-[400px] overflow-y-auto py-1">
+                <ul
+                  className="max-h-[400px] overflow-y-auto py-1"
+                  onWheel={(e) => {
+                    const target = e.currentTarget;
+                    const isAtTop = target.scrollTop === 0;
+                    const isAtBottom = target.scrollTop + target.clientHeight >= target.scrollHeight;
+
+                    // Prevent page scroll when scrolling inside dropdown
+                    if ((isAtTop && e.deltaY < 0) || (isAtBottom && e.deltaY > 0)) {
+                      // Allow propagation only at edges when trying to scroll further
+                      return;
+                    }
+                    e.stopPropagation();
+                  }}
+                >
                   {items.map((it) => (
                     <li key={it.file}>
                       <button
