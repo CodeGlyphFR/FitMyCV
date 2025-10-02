@@ -60,12 +60,13 @@ function getCvIcon(createdBy, originalCreatedBy, className) {
   // createdBy = 'translate-cv' => Translate icon (traduit)
   // createdBy = 'generate-cv' => GPT icon (généré par IA)
   // createdBy = 'create-template' => GPT icon (CV modèle créé par IA)
+  // createdBy = 'generate-cv-job-title' => GPT icon (CV généré depuis titre de poste)
   // createdBy = 'import-pdf' => Import icon (importé depuis PDF)
   // createdBy = null => Pas d'icône (créé manuellement)
   if (createdBy === 'translate-cv') {
     return <TranslateIcon className={className} size={16} />;
   }
-  if (createdBy === 'generate-cv' || createdBy === 'create-template') {
+  if (createdBy === 'generate-cv' || createdBy === 'create-template' || createdBy === 'generate-cv-job-title') {
     return <GptLogo className={className} />;
   }
   if (createdBy === 'import-pdf') {
@@ -292,7 +293,7 @@ const ItemLabel = React.memo(function ItemLabel({ item, className = "", withHyph
     };
   }, [item.displayTitle, item.analysisLevel, item.createdBy, item.isTranslated, tickerKey]);
 
-  const shouldShowLevel = (item.createdBy === 'generate-cv' || item.createdBy === 'import-pdf') && levelLabel;
+  const shouldShowLevel = (item.createdBy === 'generate-cv' || item.createdBy === 'import-pdf' || item.createdBy === 'generate-cv-job-title') && levelLabel;
 
   let displayTitleWithLevel = item.displayTitle;
   if (shouldShowLevel) {
@@ -399,8 +400,21 @@ export default function TopBar() {
   const [isScrollingDown, setIsScrollingDown] = React.useState(false);
   const [lastScrollY, setLastScrollY] = React.useState(0);
   const isScrollingDownRef = React.useRef(false);
+  const [jobTitleInput, setJobTitleInput] = React.useState("");
+  const [isMobile, setIsMobile] = React.useState(false);
+  const [isScrollingInDropdown, setIsScrollingInDropdown] = React.useState(false);
 
   const { history: linkHistory, addLinksToHistory } = useLinkHistory();
+
+  // Detect mobile screen size
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const fileInputRef = React.useRef(null);
   const pdfFileInputRef = React.useRef(null);
@@ -705,10 +719,7 @@ export default function TopBar() {
       // Only on mobile (width < 768px)
       if (window.innerWidth >= 768) {
         setIsScrollingDown(false);
-        // Close dropdown on scroll (desktop only - avoid interfering with mobile touch)
-        if (listOpen) {
-          setListOpen(false);
-        }
+        // Don't close dropdown on scroll - let outside click handle it
         return;
       }
 
@@ -778,23 +789,32 @@ export default function TopBar() {
 
   React.useEffect(() => {
     function handleClick(event) {
+      if (!listOpen) return; // Only handle when dropdown is open
+      if (isScrollingInDropdown) return; // Don't close while scrolling
+
       const triggerEl = triggerRef.current;
       const dropdownEl = dropdownPortalRef.current;
+
       if (!triggerEl) return;
+
+      // Ignore clicks on trigger
       if (triggerEl.contains(event.target)) {
         console.log('[Outside Click] Ignored - clicked on trigger');
         return;
       }
+
+      // Ignore clicks inside dropdown
       if (dropdownEl && dropdownEl.contains(event.target)) {
         console.log('[Outside Click] Ignored - clicked on dropdown');
         return;
       }
+
       console.log('[Outside Click] Closing dropdown');
       setListOpen(false);
     }
 
     function handleKey(event) {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && listOpen) {
         console.log('[Escape] Closing dropdown');
         setListOpen(false);
       }
@@ -808,7 +828,7 @@ export default function TopBar() {
       document.removeEventListener("touchstart", handleClick);
       document.removeEventListener("keydown", handleKey);
     };
-  }, []);
+  }, [listOpen, isScrollingInDropdown]);
 
   React.useEffect(() => {
     if (!baseSelectorOpen) return undefined;
@@ -1233,6 +1253,65 @@ export default function TopBar() {
     setNewCvBusy(false);
   }
 
+  async function handleJobTitleSubmit(event) {
+    if (event.key !== 'Enter') return;
+
+    const trimmedJobTitle = jobTitleInput.trim();
+    if (!trimmedJobTitle) return;
+
+    // Créer une tâche optimiste
+    const optimisticTaskId = addOptimisticTask({
+      type: 'job-title-generation',
+      label: t("jobTitleGenerator.notifications.scheduled", { jobTitle: trimmedJobTitle }),
+      metadata: { jobTitle: trimmedJobTitle },
+      shouldUpdateCvList: true,
+    });
+
+    // Notifier immédiatement
+    addNotification({
+      type: "info",
+      message: t("jobTitleGenerator.notifications.scheduled", { jobTitle: trimmedJobTitle }),
+      duration: 2500,
+    });
+
+    // Réinitialiser le champ
+    setJobTitleInput("");
+
+    // Envoyer la requête en arrière-plan
+    try {
+      const formData = new FormData();
+      formData.append("jobTitle", trimmedJobTitle);
+      formData.append("language", language === 'en' ? 'anglais' : 'français');
+      formData.append("analysisLevel", "medium");
+      if (localDeviceId) {
+        formData.append("deviceId", localDeviceId);
+      }
+
+      const response = await fetch("/api/background-tasks/generate-cv-from-job-title", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || "Impossible de mettre la tâche en file.");
+      }
+
+      // Succès : supprimer la tâche optimiste et rafraîchir
+      removeOptimisticTask(optimisticTaskId);
+      await refreshTasks();
+    } catch (error) {
+      console.error("Impossible de planifier la génération de CV depuis le titre", error);
+      // Échec : supprimer la tâche optimiste et notifier
+      removeOptimisticTask(optimisticTaskId);
+      addNotification({
+        type: "error",
+        message: error?.message || t("jobTitleGenerator.notifications.error"),
+        duration: 4000,
+      });
+    }
+  }
+
   // Ne rien afficher sur la page de login
   if (pathname === "/auth") {
     return null;
@@ -1283,7 +1362,7 @@ export default function TopBar() {
           pointerEvents: 'auto'
         }}
       >
-        <div className="w-full p-3 flex flex-wrap items-center gap-x-2 gap-y-1 sm:gap-3">
+        <div className="w-full p-3 flex flex-wrap items-center gap-x-2 gap-y-2 sm:gap-3">
         {/* User Icon */}
         <div className="relative order-1 md:order-1">
           <button
@@ -1303,7 +1382,7 @@ export default function TopBar() {
           </button>
         </div>
         {/* CV Selector */}
-        <div className="flex-1 min-w-[120px] md:min-w-[200px] order-3 md:order-2">
+        <div className="flex-1 min-w-[120px] md:min-w-[200px] md:max-w-none order-3 md:order-2">
           <button
             type="button"
             onClick={(e) => {
@@ -1357,7 +1436,29 @@ export default function TopBar() {
                 }}
                 className="rounded border bg-white shadow-lg"
               >
-                <ul className="max-h-[70vh] overflow-y-auto py-1">
+                <ul
+                  className="max-h-[240px] overflow-y-auto py-1"
+                  onScroll={() => {
+                    // Set flag when scrolling starts
+                    setIsScrollingInDropdown(true);
+                  }}
+                  onScrollEnd={() => {
+                    // Clear flag when scrolling ends (after delay)
+                    setTimeout(() => setIsScrollingInDropdown(false), 100);
+                  }}
+                  onWheel={(e) => {
+                    const target = e.currentTarget;
+                    const isAtTop = target.scrollTop === 0;
+                    const isAtBottom = target.scrollTop + target.clientHeight >= target.scrollHeight;
+
+                    // Prevent page scroll when scrolling inside dropdown
+                    if ((isAtTop && e.deltaY < 0) || (isAtBottom && e.deltaY > 0)) {
+                      // Allow propagation only at edges when trying to scroll further
+                      return;
+                    }
+                    e.stopPropagation();
+                  }}
+                >
                   {items.map((it) => (
                     <li key={it.file}>
                       <button
@@ -1366,7 +1467,7 @@ export default function TopBar() {
                           await selectFile(it.file);
                           setListOpen(false);
                         }}
-                        className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-zinc-100 ${it.file === current ? "bg-zinc-50" : ""}`}
+                        className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-zinc-100 ${it.file === current ? "bg-blue-50 border-l-2 border-blue-500" : ""}`}
                       >
                         <span
                           key={`dropdown-icon-${it.file}-${it.createdBy}`}
@@ -1464,26 +1565,52 @@ export default function TopBar() {
         </div>
         {/* Break line on mobile */}
         <div className="w-full md:hidden order-5"></div>
-        {/* Add Button */}
-        <button
-          onClick={() => setOpenNewCv(true)}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 order-6 md:order-4 ml-auto md:ml-0"
-          type="button"
-        >
-          ➕
-        </button>
+
+        {/* Job Title Input - Second Line on mobile, end of first line on desktop */}
+        <div className="w-auto flex-1 order-6 md:order-9 md:flex-none flex justify-start md:justify-end px-4 py-1 min-w-0">
+          <div className="relative w-full md:w-[400px] flex items-center group job-title-input-wrapper">
+            {/* Search icon with pulse animation */}
+            <span className="absolute left-0 text-gray-400 text-lg flex items-center justify-center w-6 h-6">
+              🔍
+            </span>
+
+            {/* Animated underline - removed */}
+
+            {/* Input field */}
+            <input
+              type="text"
+              value={jobTitleInput}
+              onChange={(e) => setJobTitleInput(e.target.value)}
+              onKeyDown={handleJobTitleSubmit}
+              placeholder={isMobile ? t("topbar.jobTitlePlaceholderMobile") : t("topbar.jobTitlePlaceholder")}
+              className="w-full bg-transparent border-0 border-b border-gray-300 pl-8 pr-2 py-1 text-sm italic text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500"
+              style={{ caretColor: '#3B82F6' }}
+            />
+
+            {/* Sparkle effect - removed */}
+          </div>
+        </div>
+
         {/* GPT Button */}
         <button
           onClick={openGeneratorModal}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-7 md:order-5"
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-4"
           type="button"
         >
           <GptLogo className="h-4 w-4" />
         </button>
+        {/* Add Button */}
+        <button
+          onClick={() => setOpenNewCv(true)}
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 order-7 md:order-5"
+          type="button"
+        >
+          ➕
+        </button>
         {/* Import Button */}
         <button
           onClick={() => setOpenPdfImport(true)}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-6"
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-9 md:order-6"
           type="button"
           title={t("pdfImport.title")}
         >
@@ -1492,7 +1619,7 @@ export default function TopBar() {
         {/* Export Button */}
         <button
           onClick={exportToPdf}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-9 md:order-7"
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7"
           type="button"
           title="Exporter en PDF"
         >
@@ -2002,6 +2129,62 @@ export default function TopBar() {
           100% {
             transform: translate3d(var(--cv-ticker-shift), 0, 0);
           }
+        }
+
+        /* Job title input animations - disabled */
+
+        /* Animated gradient underline */
+        .animated-underline {
+          animation: gradient-shift 3s ease infinite;
+          background-size: 200% 100%;
+        }
+
+        @keyframes gradient-shift {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+
+        /* Sparkle effect */
+        .sparkle-effect {
+          animation: sparkle-rotate 2s linear infinite;
+        }
+
+        @keyframes sparkle-rotate {
+          0%, 100% {
+            transform: rotate(0deg) scale(1);
+          }
+          25% {
+            transform: rotate(10deg) scale(1.1);
+          }
+          50% {
+            transform: rotate(0deg) scale(1);
+          }
+          75% {
+            transform: rotate(-10deg) scale(1.1);
+          }
+        }
+
+        /* Placeholder styling - no animation */
+        input[type="text"]::placeholder {
+          opacity: 1;
+        }
+
+        /* Focus state: stop animations */
+        .job-title-input-wrapper:focus-within {
+          animation: none;
+        }
+
+        .job-title-input-wrapper:focus-within .search-icon-pulse {
+          animation: none;
+          transform: scale(1.1);
+          color: #3B82F6;
         }
       `}</style>
     </>
