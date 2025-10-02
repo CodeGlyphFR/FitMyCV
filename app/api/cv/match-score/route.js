@@ -59,6 +59,8 @@ export async function POST(request) {
 
     // Calculer le score de match avec GPT (sans worker, en direct)
     console.log("[match-score] Calcul du score de match pour", cvFile);
+    console.log("[match-score] URL de l'offre:", jobOfferUrl);
+    console.log("[match-score] Taille du CV:", cvContent.length, "caractères");
 
     let score;
     try {
@@ -67,9 +69,14 @@ export async function POST(request) {
         jobOfferUrl,
         signal: null,
       });
+      console.log("[match-score] Score calculé:", score);
     } catch (error) {
       console.error("[match-score] Erreur lors du calcul du score:", error);
-      return NextResponse.json({ error: "Failed to calculate match score" }, { status: 500 });
+      console.error("[match-score] Stack trace:", error.stack);
+      return NextResponse.json({
+        error: "Failed to calculate match score",
+        details: error.message
+      }, { status: 500 });
     }
 
     // Sauvegarder le score dans la DB (ajouter un champ matchScore)
