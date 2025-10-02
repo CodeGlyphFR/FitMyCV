@@ -1507,7 +1507,7 @@ export default function TopBar() {
             )
           : null}
         {/* Task Manager */}
-        <div className="relative order-2 md:order-7">
+        <div className="relative order-2 md:order-3">
           <button
             ref={taskQueueButtonRef}
             onClick={() => {
@@ -1536,8 +1536,8 @@ export default function TopBar() {
         {/* Break line on mobile */}
         <div className="w-full md:hidden order-5"></div>
 
-        {/* Job Title Input - Second Line - Left on mobile, centered on desktop */}
-        <div className="w-auto flex-1 order-6 flex justify-start md:justify-center px-4 py-1 min-w-0">
+        {/* Job Title Input - Second Line on mobile, end of first line on desktop */}
+        <div className="w-auto flex-1 order-6 md:order-9 flex justify-start md:justify-end px-4 py-1 min-w-0 md:ml-auto">
           <div className="relative w-full md:max-w-xl flex items-center group job-title-input-wrapper">
             {/* Search icon with pulse animation */}
             <span className="absolute left-0 text-gray-400 text-lg flex items-center justify-center w-6 h-6">
@@ -1561,14 +1561,6 @@ export default function TopBar() {
           </div>
         </div>
 
-        {/* Add Button */}
-        <button
-          onClick={() => setOpenNewCv(true)}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 order-7 md:order-3"
-          type="button"
-        >
-          ➕
-        </button>
         {/* GPT Button */}
         <button
           onClick={openGeneratorModal}
@@ -1577,10 +1569,18 @@ export default function TopBar() {
         >
           <GptLogo className="h-4 w-4" />
         </button>
+        {/* Add Button */}
+        <button
+          onClick={() => setOpenNewCv(true)}
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 order-7 md:order-5"
+          type="button"
+        >
+          ➕
+        </button>
         {/* Import Button */}
         <button
           onClick={() => setOpenPdfImport(true)}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-9 md:order-5"
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-9 md:order-6"
           type="button"
           title={t("pdfImport.title")}
         >
@@ -1589,7 +1589,7 @@ export default function TopBar() {
         {/* Export Button */}
         <button
           onClick={exportToPdf}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-6"
+          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7"
           type="button"
           title="Exporter en PDF"
         >
