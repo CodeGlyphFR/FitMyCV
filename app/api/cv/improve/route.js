@@ -139,13 +139,19 @@ async function improveCvAsync({
 
     // Enrichir le CV amélioré avec des métadonnées
     const improvedCv = JSON.parse(result.improvedCv);
+
+    // Extraire les sections modifiées depuis changesMade
+    const modifiedSections = [...new Set(result.changesMade.map(c => c.section))];
+
     improvedCv.meta = {
       ...improvedCv.meta,
       improved_from: cvFile,
       improved_at: new Date().toISOString(),
       score_before: currentScore,
       score_estimate: result.newScoreEstimate,
-      changes_count: result.changesMade.length
+      changes_count: result.changesMade.length,
+      changes_made: result.changesMade,
+      modified_sections: modifiedSections
     };
 
     // Sauvegarder le CV amélioré

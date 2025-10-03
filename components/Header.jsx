@@ -4,6 +4,7 @@ import Image from "next/image";
 import SourceInfo from "./SourceInfo";
 import MatchScore from "./MatchScore";
 import CVImprovementPanel from "./CVImprovementPanel";
+import HighlightToggle from "./HighlightToggle";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
@@ -445,7 +446,7 @@ export default function Header(props){
         </div>
       </div>
 
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 flex-wrap">
         <MatchScore
           sourceType={sourceInfo.sourceType}
           sourceValue={sourceInfo.sourceValue}
@@ -463,6 +464,8 @@ export default function Header(props){
         {sourceInfo.sourceType === "link" && currentCvFile && (
           <CVImprovementPanel cvFile={currentCvFile} />
         )}
+        {/* Toggle pour afficher/masquer les modifications */}
+        <HighlightToggle />
         <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />
       </div>
 
