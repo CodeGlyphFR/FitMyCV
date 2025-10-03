@@ -34,8 +34,8 @@ export async function POST(request) {
     }
 
     // Vérifier que le CV a été créé depuis un lien
-    // Les CVs depuis liens peuvent avoir createdBy = "generate-cv" ou "create-template"
-    const validCreatedBy = ["generate-cv", "create-template"];
+    // Les CVs depuis liens peuvent avoir createdBy = "generate-cv", "create-template" ou "improve-cv"
+    const validCreatedBy = ["generate-cv", "create-template", "improve-cv"];
     if (!validCreatedBy.includes(cvRecord.createdBy) || cvRecord.sourceType !== "link") {
       console.log("[match-score] CV non éligible - createdBy:", cvRecord.createdBy, "sourceType:", cvRecord.sourceType);
       return NextResponse.json({ error: "CV was not created from a job offer link" }, { status: 400 });
