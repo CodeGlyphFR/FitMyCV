@@ -15,6 +15,7 @@
     "ajv-formats": "^3.0.1",
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
+    "lucide-react": "^0.544.0",
     "luxon": "^3.7.2",
     "next": "^14.2.32",
     "next-auth": "^4.24.11",
