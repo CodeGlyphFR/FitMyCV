@@ -297,6 +297,52 @@
       },
       "back": "Retour",
       "save": "Enregistrer"
+    },
+    "settings": {
+      "pageTitle": "Gestion des cookies",
+      "saved": "Vos préférences ont été enregistrées",
+      "currentStatus": "Statut actuel",
+      "consentGiven": "Consentement donné le :",
+      "expiresOn": "Expire le :",
+      "aboutTitle": "À propos des cookies",
+      "aboutDescription": "Conformément au Règlement Général sur la Protection des Données (RGPD) et à la réglementation française, nous vous informons sur l'utilisation des cookies sur notre site.",
+      "consentValidity": "Votre consentement est valable pendant 6 mois. Vous pouvez modifier vos préférences à tout moment sur cette page.",
+      "necessary": {
+        "title": "Cookies nécessaires",
+        "alwaysActive": "Toujours actifs",
+        "description": "Ces cookies sont essentiels au fonctionnement du site. Ils permettent l'authentification, la sécurité, et la navigation de base. Ils ne peuvent pas être désactivés.",
+        "examples": "Session utilisateur, tokens CSRF, préférences de langue"
+      },
+      "functional": {
+        "title": "Cookies fonctionnels",
+        "description": "Ces cookies améliorent l'expérience utilisateur en mémorisant vos choix et préférences (thème, mise en page, options d'affichage).",
+        "examples": "Préférences d'interface, paramètres d'affichage"
+      },
+      "analytics": {
+        "title": "Cookies analytiques",
+        "description": "Ces cookies nous aident à comprendre comment vous utilisez notre site pour l'améliorer. Les données sont anonymisées et agrégées.",
+        "examples": "Pages visitées, temps passé, parcours utilisateur"
+      },
+      "marketing": {
+        "title": "Cookies marketing",
+        "description": "Ces cookies sont utilisés pour vous proposer des contenus publicitaires personnalisés en fonction de vos centres d'intérêt.",
+        "examples": "Suivi publicitaire, remarketing"
+      },
+      "savePreferences": "Enregistrer mes préférences",
+      "acceptAll": "Tout accepter",
+      "rejectAll": "Tout refuser",
+      "resetConsent": "Réinitialiser le consentement",
+      "yourRights": "Vos droits",
+      "rightsDescription": "Conformément au RGPD, vous disposez des droits suivants :",
+      "rights": {
+        "access": "Droit d'accès à vos données personnelles",
+        "rectification": "Droit de rectification de vos données",
+        "erasure": "Droit à l'effacement de vos données",
+        "objection": "Droit d'opposition au traitement de vos données",
+        "portability": "Droit à la portabilité de vos données",
+        "withdraw": "Droit de retirer votre consentement à tout moment"
+      },
+      "examplesLabel": "Exemples :"
     }
   },
   "header": {

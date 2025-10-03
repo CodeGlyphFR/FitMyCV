@@ -21,6 +21,7 @@ model User {
   cvs           CvFile[]
   linkHistory   LinkHistory[]
   feedbacks     Feedback[]
+  consentLogs   ConsentLog[]
   matchScoreRefreshCount Int @default(0) // Number of manual refreshes in current window (global for all CVs)
   matchScoreFirstRefreshAt DateTime? // Timestamp of first refresh in current window (for rate limiting)
   createdAt     DateTime      @default(now())
@@ -137,4 +138,21 @@ model Feedback {
   @@index([createdAt])
   @@index([isBugReport])
   @@index([status])
+}
+
+model ConsentLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  action      String   // "created" | "updated" | "revoked"
+  preferences String   // JSON string: { necessary: true, functional: false, analytics: true, marketing: false }
+
+  ip          String?  // Adresse IP (optionnel, pour traçabilité)
+  userAgent   String?  // Navigateur
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }

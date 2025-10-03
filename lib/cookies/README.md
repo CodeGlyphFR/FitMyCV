@@ -8,24 +8,44 @@ Ce système de gestion des cookies est conforme à la réglementation française
 ✅ Acceptation/Refus global ou personnalisé
 ✅ Page de gestion des préférences (`/cookies`)
 ✅ Expiration automatique du consentement après 6 mois
-✅ Cookies sécurisés (HttpOnly, SameSite, Secure en production)
+✅ Cookies sécurisés (HttpOnly, SameSite, Secure)
 ✅ Sessions avec expiration (30 jours)
 ✅ Hook React pour conditionner le chargement de scripts
+✅ **Synchronisation multi-onglets** (BroadcastChannel API)
+✅ **Révocation effective** des cookies refusés
+✅ **Registre détaillé** de tous les cookies avec leurs caractéristiques
+✅ **Politique de confidentialité** complète (`/privacy`)
+✅ **Traductions complètes** (FR/EN)
+✅ **Performance optimisée** (plus de polling inefficace)
+✅ **Audit des consentements** en base de données (modèle `ConsentLog`)
+✅ **Historique consultable** pour l'utilisateur (page `/cookies`)
+✅ **Charge de la preuve RGPD** avec logs IP/userAgent
 
 ## Architecture
 
 ```
 lib/cookies/
-├── consent.js           # Logique de gestion du consentement
-├── useCookieConsent.js  # Hook React
+├── consent.js           # Logique de gestion du consentement + révocation + logging
+├── useCookieConsent.js  # Hook React avec BroadcastChannel
+├── registry.js          # Registre détaillé des cookies
+├── consentLogger.js     # Logger serveur pour audit RGPD
 └── README.md            # Documentation
 
 components/cookies/
 ├── CookieBanner.jsx     # Bannière de consentement
-└── CookieSettings.jsx   # Page de paramètres
+├── CookieSettings.jsx   # Page de paramètres (traduite)
+├── CookieRegistry.jsx   # Composant d'affichage du registre
+└── ConsentHistory.jsx   # Composant d'affichage de l'historique
 
-app/cookies/
-└── page.jsx             # Route /cookies
+app/
+├── cookies/page.jsx     # Route /cookies
+├── privacy/page.jsx     # Route /privacy (politique de confidentialité)
+└── api/consent/
+    ├── log/route.js     # POST - Logger un consentement
+    └── history/route.js # GET - Récupérer l'historique
+
+prisma/
+└── schema.prisma        # Modèle ConsentLog (audit)
 ```
 
 ## Catégories de cookies
@@ -118,6 +138,83 @@ session: {
 }
 ```
 
+## Nouvelles fonctionnalités (v2)
+
+### 1. Synchronisation multi-onglets 🔄
+
+Utilise **BroadcastChannel API** au lieu du polling inefficace :
+- Les changements de consentement se propagent instantanément entre tous les onglets
+- Fallback sur `storage` event pour les navigateurs qui ne supportent pas BroadcastChannel
+- Performance nettement améliorée (pas de setInterval toutes les secondes)
+
+### 2. Révocation effective des cookies 🗑️
+
+Quand l'utilisateur refuse une catégorie :
+- Les cookies de cette catégorie sont **automatiquement supprimés**
+- Le localStorage/sessionStorage lié est nettoyé
+- Fonction `revokeCookiesByCategory()` pour suppression ciblée
+- Support des wildcards (ex: `_ga_*`)
+
+### 3. Registre détaillé des cookies 📋
+
+Nouveau fichier `lib/cookies/registry.js` :
+- Liste complète de tous les cookies avec :
+  - Nom exact
+  - Catégorie
+  - Durée de vie
+  - Finalité précise
+  - Fournisseur (first-party / third-party)
+  - Type de stockage (cookie / localStorage / sessionStorage)
+- Affichage dans la page `/cookies` via composant `CookieRegistry`
+- Interface accordéon pour explorer par catégorie
+
+### 4. Politique de confidentialité 📄
+
+Page `/privacy` complète avec :
+- Données collectées (identification, CV, connexion, cookies)
+- Finalités du traitement
+- Base légale
+- Durée de conservation
+- Partage des données (notamment OpenAI)
+- Mesures de sécurité (chiffrement AES-256-GCM, etc.)
+- Droits RGPD
+- Contact CNIL
+
+### 5. Traductions complètes 🌍
+
+- Toutes les chaînes de `CookieSettings.jsx` sont traduites
+- Support FR/EN avec détection de locale pour formatage des dates
+- Clés ajoutées dans `locales/fr.json` et `locales/en.json`
+
+### 6. Audit des consentements (RGPD) 📊
+
+**Pourquoi c'est crucial** : La CNIL exige de pouvoir prouver qu'un utilisateur a donné son consentement de manière libre et éclairée (charge de la preuve).
+
+**Implémentation** :
+- Modèle `ConsentLog` en base de données (Prisma)
+- Logging automatique à chaque changement de consentement :
+  - Action : `created` (premier consentement), `updated` (modification), `revoked` (suppression)
+  - Préférences complètes (JSON)
+  - Contexte : IP, userAgent, timestamp
+- API REST pour :
+  - POST `/api/consent/log` : enregistrer un consentement (côté client, authentifié)
+  - GET `/api/consent/history` : consulter l'historique (droit d'accès RGPD)
+- Composant `ConsentHistory` dans la page `/cookies` :
+  - Affichage accordéon
+  - Historique avec dates, actions, détails des préférences
+  - Info RGPD sur la conservation
+
+**Cycle de vie** :
+1. Utilisateur modifie ses préférences dans la bannière ou `/cookies`
+2. `saveConsent()` met à jour le cookie local
+3. Appel API `/api/consent/log` (non-bloquant)
+4. Serveur enregistre dans `ConsentLog` avec IP/userAgent
+5. Utilisateur peut consulter son historique dans `/cookies`
+
+**Nettoyage** :
+- Logs supprimés automatiquement avec le compte (cascade `onDelete: Cascade`)
+- Fonction `cleanOldConsentLogs(beforeDate)` disponible pour purger les anciens logs (minimisation des données RGPD)
+
 ## Conformité RGPD
 
 ### Points respectés
@@ -125,9 +222,14 @@ session: {
 ✅ **Consentement libre et éclairé** : L'utilisateur peut accepter/refuser
 ✅ **Granularité** : Choix par catégorie de cookies
 ✅ **Durée limitée** : 6 mois (recommandation CNIL)
-✅ **Révocation** : L'utilisateur peut changer d'avis à tout moment
-✅ **Information claire** : Description de chaque catégorie
+✅ **Révocation effective** : Les cookies refusés sont supprimés
+✅ **Information claire** : Registre détaillé + politique de confidentialité
 ✅ **Pas de case précochée** : Aucune catégorie optionnelle n'est active par défaut
+✅ **Transparence** : Liste exhaustive des cookies avec finalités
+✅ **Droits RGPD** : Tous les droits expliqués clairement
+✅ **Traçabilité/Audit** : Historique des consentements en base de données
+✅ **Charge de la preuve** : Logs avec IP/userAgent/timestamp
+✅ **Droit d'accès** : L'utilisateur peut consulter son historique
 
 ### Actions utilisateur
 
@@ -143,7 +245,7 @@ session: {
 // Récupérer le consentement
 const consent = getConsent();
 
-// Sauvegarder le consentement
+// Sauvegarder le consentement (+ révocation automatique si changement)
 saveConsent({
   necessary: true,
   functional: true,
@@ -154,7 +256,7 @@ saveConsent({
 // Accepter tout
 acceptAllCookies();
 
-// Refuser tout (sauf nécessaires)
+// Refuser tout (sauf nécessaires) + révocation
 rejectAllCookies();
 
 // Vérifier une catégorie
@@ -164,6 +266,33 @@ if (isCategoryAccepted(COOKIE_CATEGORIES.ANALYTICS)) {
 
 // Réinitialiser
 clearConsent();
+
+// Révoquer les cookies d'une catégorie (nouveau)
+revokeCookiesByCategory(COOKIE_CATEGORIES.ANALYTICS);
+
+// Révoquer tous les cookies non nécessaires (nouveau)
+revokeAllNonEssentialCookies();
+```
+
+### `registry.js` (nouveau)
+
+```javascript
+import { COOKIE_REGISTRY, getCookiesByCategory, getCookieByName } from '@/lib/cookies/registry';
+
+// Récupérer tous les cookies
+console.log(COOKIE_REGISTRY);
+
+// Récupérer les cookies d'une catégorie
+const analyticsCookies = getCookiesByCategory(COOKIE_CATEGORIES.ANALYTICS);
+
+// Récupérer un cookie spécifique
+const gaCookie = getCookieByName('_ga');
+
+// Compter les cookies par catégorie
+const counts = getCookieCountByCategory();
+
+// Récupérer les fournisseurs tiers
+const thirdParty = getThirdPartyProviders(); // ['Google', 'Meta', ...]
 ```
 
 ### Hook `useCookieConsent()`
@@ -230,9 +359,12 @@ Ouvrir les DevTools → Application → Cookies et vérifier :
 ## Prochaines étapes recommandées
 
 1. **Ajouter Google Analytics** (si souhaité) avec consentement conditionnel
-2. **Créer une politique de confidentialité** détaillée
-3. **Ajouter des mentions légales**
-4. **Logger les consentements** en base de données (optionnel, pour audit)
+2. ~~**Créer une politique de confidentialité** détaillée~~ ✅ FAIT (`/privacy`)
+3. **Ajouter des mentions légales** (page `/legal`)
+4. **Logger les consentements** en base de données (optionnel, pour audit et conformité RGPD)
+5. **Tests E2E** avec Playwright pour vérifier le workflow complet
+6. **Content Security Policy (CSP)** dans `next.config.js` pour sécurité renforcée
+7. **Support IAB TCF** (si marketing tiers avec partenaires multiples)
 
 ## Ressources
 
