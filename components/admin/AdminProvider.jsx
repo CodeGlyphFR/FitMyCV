@@ -88,16 +88,44 @@ export default function AdminProvider(props){
       {session?.user?.id && pathname !== "/admin/new" && hasAnyCv ? (
         <button
           onClick={()=>setEditing(!editing)}
-          className="fixed bottom-6 right-6 z-20 rounded-full px-4 py-2 shadow border bg-white text-sm hover:shadow-md no-print"
-          style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
+          className={`
+            fixed bottom-6 right-6 z-50 no-print
+            w-10 h-10 rounded-full
+            shadow-lg hover:shadow-xl
+            flex items-center justify-center
+            transition-all duration-200
+            hover:scale-110
+            border
+            pointer-events-auto
+            ${editing
+              ? 'bg-blue-50 border-blue-300'
+              : 'bg-white border-neutral-300'
+            }
+          `}
+          title={editing ? t("editMode.on") : t("editMode.off")}
+          aria-label={editing ? t("editMode.on") : t("editMode.off")}
+          style={{
+            transform: 'translateZ(0)',
+            backfaceVisibility: 'hidden',
+            WebkitTransform: 'translateZ(0)',
+            WebkitBackfaceVisibility: 'hidden',
+            willChange: 'transform'
+          }}
         >
-          {editing ? t("editMode.on") : t("editMode.off")}
+          <span className={`text-xl ${editing ? '' : 'grayscale opacity-70'}`}>
+            📝
+          </span>
         </button>
       ) : null}
 
       <style jsx global>{`
         .admin-editing [data-editable="true"]{outline:1px dashed rgba(37,99,235,.6);cursor:text}
         .admin-editing [data-editable="true"]:hover{background:rgba(37,99,235,.06)}
+        @media print {
+          .no-print {
+            display: none !important;
+          }
+        }
       `}</style>
     </Ctx.Provider>
   );

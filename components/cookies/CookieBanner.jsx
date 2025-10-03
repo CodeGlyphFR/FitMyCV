@@ -24,6 +24,25 @@ export default function CookieBanner() {
     }
   }, []);
 
+  // Désactiver le scroll quand les préférences sont ouvertes
+  useEffect(() => {
+    if (showPreferences) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [showPreferences]);
+
   const handleAcceptAll = () => {
     acceptAllCookies();
     setShowBanner(false);
@@ -53,7 +72,7 @@ export default function CookieBanner() {
   if (!showBanner) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
+    <div className="fixed bottom-0 left-0 right-0 z-[100] pointer-events-none">
       <div className={`pointer-events-auto ${showPreferences ? 'max-w-3xl' : 'max-w-2xl'} mx-auto mb-4 mx-4 sm:mx-auto`}>
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4">
           {!showPreferences ? (

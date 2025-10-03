@@ -1,8 +1,9 @@
 import "./globals.css";
 import React from "react";
 import ConditionalTopBar from "@/components/ConditionalTopBar";
-import Footer from "@/components/Footer";
+import ConditionalFooter from "@/components/ConditionalFooter";
 import CookieBanner from "@/components/cookies/CookieBanner";
+import FeedbackButton from "@/components/feedback/FeedbackButton";
 import RootProviders from "@/components/RootProviders";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import { auth } from "@/lib/auth/session";
@@ -57,9 +58,10 @@ export default async function RootLayout(props){
           </main>
           {/* Réservation d'espace pour Footer pour éviter CLS */}
           <div className="footer-placeholder h-[56px]">
-            <Footer />
+            <ConditionalFooter />
           </div>
           <CookieBanner />
+          <FeedbackButton />
         </RootProviders>
       </body>
     </html>
