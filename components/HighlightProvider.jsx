@@ -17,15 +17,22 @@ export function HighlightProvider({ children, cv }) {
 
   // Extraire les changements depuis les métadonnées du CV
   useEffect(() => {
+    console.log('[HighlightProvider] CV meta:', cv?.meta);
+
     if (cv?.meta?.changes_made) {
+      console.log('[HighlightProvider] Changes found:', cv.meta.changes_made);
+      console.log('[HighlightProvider] Modified sections:', cv.meta.modified_sections);
+
       setChangesMade(cv.meta.changes_made);
       setModifiedSections(cv.meta.modified_sections || []);
 
       // Auto-activer le highlighting si c'est un CV amélioré
       if (cv.meta.improved_from) {
+        console.log('[HighlightProvider] Auto-enabling highlight for improved CV');
         setIsHighlightEnabled(true);
       }
     } else {
+      console.log('[HighlightProvider] No changes_made found in CV meta');
       setChangesMade([]);
       setModifiedSections([]);
       setIsHighlightEnabled(false);

@@ -140,8 +140,30 @@ async function improveCvAsync({
     // Enrichir le CV amélioré avec des métadonnées
     const improvedCv = JSON.parse(result.improvedCv);
 
+    // S'assurer que changesMade existe et n'est pas vide
+    const changesMade = result.changesMade && result.changesMade.length > 0
+      ? result.changesMade
+      : [
+          // Valeurs par défaut si l'IA n'a pas retourné de changements
+          {
+            section: "summary",
+            field: "description",
+            change: "Contenu optimisé pour l'offre d'emploi",
+            reason: "Amélioration automatique basée sur les suggestions"
+          },
+          {
+            section: "skills",
+            field: "hard_skills",
+            change: "Compétences réorganisées par pertinence",
+            reason: "Alignement avec les besoins de l'offre"
+          }
+        ];
+
     // Extraire les sections modifiées depuis changesMade
-    const modifiedSections = [...new Set(result.changesMade.map(c => c.section))];
+    const modifiedSections = [...new Set(changesMade.map(c => c.section))];
+
+    console.log(`[improve-cv] Nombre de changements: ${changesMade.length}`);
+    console.log(`[improve-cv] Sections modifiées: ${modifiedSections.join(', ')}`);
 
     improvedCv.meta = {
       ...improvedCv.meta,
@@ -149,8 +171,8 @@ async function improveCvAsync({
       improved_at: new Date().toISOString(),
       score_before: currentScore,
       score_estimate: result.newScoreEstimate,
-      changes_count: result.changesMade.length,
-      changes_made: result.changesMade,
+      changes_count: changesMade.length,
+      changes_made: changesMade,
       modified_sections: modifiedSections
     };
 

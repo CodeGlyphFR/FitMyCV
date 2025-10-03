@@ -40,6 +40,11 @@ export default function Summary(props){
   const isSectionModified = isModified('summary', 'description');
   const changeInfo = getChangeInfo('summary', 'description');
 
+  // Log pour debug
+  console.log('[Summary] isHighlightEnabled:', isHighlightEnabled);
+  console.log('[Summary] isSectionModified:', isSectionModified);
+  console.log('[Summary] changeInfo:', changeInfo);
+
   // Appliquer les styles de highlighting si activé et modifié
   const highlightStyles = isSectionModified && isHighlightEnabled
     ? 'bg-yellow-50 border-l-4 border-yellow-400 pl-3 -ml-3 transition-all duration-300 animate-pulse-once'
