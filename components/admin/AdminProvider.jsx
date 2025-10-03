@@ -89,13 +89,14 @@ export default function AdminProvider(props){
         <button
           onClick={()=>setEditing(!editing)}
           className={`
-            fixed bottom-6 right-6 z-20 no-print
+            fixed bottom-6 right-6 z-50 no-print
             w-10 h-10 rounded-full
             shadow-lg hover:shadow-xl
             flex items-center justify-center
             transition-all duration-200
             hover:scale-110
             border
+            pointer-events-auto
             ${editing
               ? 'bg-blue-50 border-blue-300'
               : 'bg-white border-neutral-300'
@@ -103,7 +104,13 @@ export default function AdminProvider(props){
           `}
           title={editing ? t("editMode.on") : t("editMode.off")}
           aria-label={editing ? t("editMode.on") : t("editMode.off")}
-          style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
+          style={{
+            transform: 'translateZ(0)',
+            backfaceVisibility: 'hidden',
+            WebkitTransform: 'translateZ(0)',
+            WebkitBackfaceVisibility: 'hidden',
+            willChange: 'transform'
+          }}
         >
           <span className={`text-xl ${editing ? '' : 'grayscale opacity-70'}`}>
             📝

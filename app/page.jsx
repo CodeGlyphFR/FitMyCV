@@ -87,14 +87,24 @@ export default async function Page(){
   const order = base;
 
   return (
-    <main className="max-w-4xl mx-auto p-4 min-h-[calc(100vh-116px)]">
+    <main className="max-w-4xl mx-auto p-4 pb-8">
 
       {order.map(k => (
         <div key={k} className="cv-section">{sections[k]}</div>
       ))}
 
-      <div className="no-print mt-8 text-xs opacity-60 text-center">
-        Next.js (JS) • Erick DE SMET • 2025
+      <div className="no-print mt-8 text-xs opacity-60 text-center space-y-1">
+        <div>Next.js (JS) • Erick DE SMET • 2025</div>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+          <span>Version 1.0.8</span>
+          <span className="hidden sm:inline">•</span>
+          <a
+            href="/cookies"
+            className="hover:opacity-80 underline transition-opacity"
+          >
+            Gestion des cookies
+          </a>
+        </div>
       </div>
     </main>
   );

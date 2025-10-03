@@ -10,15 +10,25 @@ export default function FeedbackButton() {
       <button
         onClick={() => setIsModalOpen(true)}
         className="
-          no-print fixed bottom-4 left-1/2 -translate-x-1/2 z-10
-          px-6 py-3 rounded-full
-          bg-blue-600 text-white
+          no-print fixed bottom-6 left-1/2 z-50
+          px-6 py-2 rounded-full
+          bg-gold-gradient text-white
           shadow-lg hover:shadow-xl
           flex items-center gap-2
           transition-all duration-200
           hover:scale-105
-          focus:outline-none focus:ring-4 focus:ring-blue-300
+          focus:outline-none focus:ring-4 focus:ring-yellow-300
+          animate-gold-shimmer
+          bg-[length:200%_100%]
+          pointer-events-auto
         "
+        style={{
+          transform: 'translateX(-50%) translateZ(0)',
+          backfaceVisibility: 'hidden',
+          WebkitTransform: 'translateX(-50%) translateZ(0)',
+          WebkitBackfaceVisibility: 'hidden',
+          willChange: 'transform'
+        }}
         title="Donner votre avis"
         aria-label="Donner votre avis"
       >

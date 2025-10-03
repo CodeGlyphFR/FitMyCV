@@ -48,12 +48,13 @@ export default function LanguageSwitcher() {
   return (
     <div
       ref={containerRef}
-      className="fixed bottom-6 left-6 z-20 no-print"
+      className="fixed bottom-6 left-6 z-50 no-print pointer-events-auto"
       style={{
-        // Prevent printing
-        '@media print': {
-          display: 'none'
-        }
+        transform: 'translateZ(0)',
+        backfaceVisibility: 'hidden',
+        WebkitTransform: 'translateZ(0)',
+        WebkitBackfaceVisibility: 'hidden',
+        willChange: 'transform'
       }}
     >
       {/* Language options - appear above the button when open */}
