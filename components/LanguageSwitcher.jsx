@@ -72,14 +72,14 @@ export default function LanguageSwitcher() {
               key={lang.code}
               onClick={() => handleLanguageChange(lang.code)}
               className={`
-                w-8 h-8 rounded-full
+                w-10 h-10 rounded-full
                 bg-white shadow-lg border border-neutral-200
                 flex items-center justify-center
                 overflow-hidden
                 hover:shadow-xl
                 transition-all duration-200
                 cursor-pointer
-                p-0.5
+                p-1
               `}
               style={{
                 transitionDelay: isOpen ? `${index * 50}ms` : '0ms'
@@ -90,8 +90,8 @@ export default function LanguageSwitcher() {
               <Image
                 src={lang.flag}
                 alt={lang.label}
-                width={24}
-                height={24}
+                width={28}
+                height={28}
                 className="object-cover"
               />
             </button>
@@ -102,14 +102,14 @@ export default function LanguageSwitcher() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`
-          w-8 h-8 rounded-full
+          w-10 h-10 rounded-full
           bg-white shadow-lg border border-neutral-300
           flex items-center justify-center
           overflow-hidden
           hover:shadow-xl
           transition-all duration-200
           cursor-pointer
-          p-0.5
+          p-1
           ${isOpen ? 'shadow-xl' : ''}
         `}
         title={currentLanguage?.label}
@@ -120,8 +120,8 @@ export default function LanguageSwitcher() {
           <Image
             src={currentLanguage.flag}
             alt={currentLanguage.label}
-            width={24}
-            height={24}
+            width={28}
+            height={28}
             className="object-cover"
           />
         )}
