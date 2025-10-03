@@ -5,6 +5,7 @@ import SourceInfo from "./SourceInfo";
 import MatchScore from "./MatchScore";
 import CVImprovementPanel from "./CVImprovementPanel";
 import HighlightToggle from "./HighlightToggle";
+import ChangesPanel from "./ChangesPanel";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
@@ -466,6 +467,8 @@ export default function Header(props){
         )}
         {/* Toggle pour afficher/masquer les modifications */}
         <HighlightToggle />
+        {/* Historique des modifications */}
+        <ChangesPanel />
         <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />
       </div>
 
