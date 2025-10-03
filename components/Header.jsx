@@ -3,6 +3,7 @@ import React from "react";
 import Image from "next/image";
 import SourceInfo from "./SourceInfo";
 import MatchScore from "./MatchScore";
+import CVImprovementPanel from "./CVImprovementPanel";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
@@ -458,6 +459,10 @@ export default function Header(props){
           onRefresh={handleRefreshMatchScore}
           currentCvFile={currentCvFile}
         />
+        {/* Panneau d'amélioration si le CV a été généré depuis une offre */}
+        {sourceInfo.sourceType === "link" && currentCvFile && (
+          <CVImprovementPanel cvFile={currentCvFile} />
+        )}
         <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />
       </div>
 
