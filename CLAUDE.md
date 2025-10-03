@@ -227,4 +227,4 @@ const userId = session?.user?.id;
   bug/name_of_the_feature, si elle existe déjà incrémente là
 - Quand je veux corriger un petit bug, créer une branche
   hotfix/name_of_the_feature, si elle existe déjà incrémente là
-- Ne te mentionne jamais dans un commit
+- N'utilise jamais "🤖 Generated with" dans un commit, ne fait aucune mention de Claude Code

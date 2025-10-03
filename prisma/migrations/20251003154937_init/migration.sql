@@ -6,6 +6,8 @@ CREATE TABLE "User" (
     "emailVerified" DATETIME,
     "passwordHash" TEXT,
     "image" TEXT,
+    "matchScoreRefreshCount" INTEGER NOT NULL DEFAULT 0,
+    "matchScoreFirstRefreshAt" DATETIME,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
@@ -52,6 +54,15 @@ CREATE TABLE "CvFile" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "filename" TEXT NOT NULL,
+    "sourceType" TEXT,
+    "sourceValue" TEXT,
+    "createdBy" TEXT,
+    "originalCreatedBy" TEXT,
+    "analysisLevel" TEXT,
+    "isTranslated" BOOLEAN NOT NULL DEFAULT false,
+    "matchScore" INTEGER,
+    "matchScoreUpdatedAt" DATETIME,
+    "matchScoreStatus" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "CvFile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
@@ -68,9 +79,34 @@ CREATE TABLE "BackgroundTask" (
     "shouldUpdateCvList" BOOLEAN NOT NULL DEFAULT false,
     "result" TEXT,
     "error" TEXT,
+    "payload" TEXT,
     "deviceId" TEXT NOT NULL,
     "userId" TEXT,
     "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- CreateTable
+CREATE TABLE "LinkHistory" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "url" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "LinkHistory_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "Feedback" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "rating" INTEGER NOT NULL,
+    "comment" TEXT NOT NULL,
+    "isBugReport" BOOLEAN NOT NULL DEFAULT false,
+    "currentCvFile" TEXT,
+    "userAgent" TEXT,
+    "pageUrl" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "status" TEXT NOT NULL DEFAULT 'new',
+    CONSTRAINT "Feedback_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateIndex
@@ -99,3 +135,21 @@ CREATE INDEX "BackgroundTask_status_idx" ON "BackgroundTask"("status");
 
 -- CreateIndex
 CREATE INDEX "BackgroundTask_createdAt_idx" ON "BackgroundTask"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "LinkHistory_userId_createdAt_idx" ON "LinkHistory"("userId", "createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "LinkHistory_userId_url_key" ON "LinkHistory"("userId", "url");
+
+-- CreateIndex
+CREATE INDEX "Feedback_userId_idx" ON "Feedback"("userId");
+
+-- CreateIndex
+CREATE INDEX "Feedback_createdAt_idx" ON "Feedback"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "Feedback_isBugReport_idx" ON "Feedback"("isBugReport");
+
+-- CreateIndex
+CREATE INDEX "Feedback_status_idx" ON "Feedback"("status");
