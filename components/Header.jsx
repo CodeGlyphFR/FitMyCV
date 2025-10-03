@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Image from "next/image";
 import SourceInfo from "./SourceInfo";
 import MatchScore from "./MatchScore";
 import { useAdmin } from "./admin/AdminProvider";
@@ -17,8 +18,9 @@ export default function Header(props){
   const { mutate } = useMutate();
   const { t, language } = useLanguage();
   const [open, setOpen] = React.useState(false);
-  const [openTranslateModal, setOpenTranslateModal] = React.useState(false);
+  const [isTranslateDropdownOpen, setIsTranslateDropdownOpen] = React.useState(false);
   const [sourceInfo, setSourceInfo] = React.useState({ sourceType: null, sourceValue: null });
+  const translateDropdownRef = React.useRef(null);
   const [matchScore, setMatchScore] = React.useState(null);
   const [matchScoreStatus, setMatchScoreStatus] = React.useState("idle");
   const [isLoadingMatchScore, setIsLoadingMatchScore] = React.useState(false);
@@ -161,6 +163,30 @@ export default function Header(props){
     window.addEventListener("cv:selected", handleCvSelected);
     return () => window.removeEventListener("cv:selected", handleCvSelected);
   }, [fetchSourceInfo]);
+
+  // Fermer le dropdown de traduction quand on clique à l'extérieur
+  React.useEffect(() => {
+    function handleClickOutside(event) {
+      if (translateDropdownRef.current && !translateDropdownRef.current.contains(event.target)) {
+        setIsTranslateDropdownOpen(false);
+      }
+    }
+
+    function handleEscape(event) {
+      if (event.key === "Escape") {
+        setIsTranslateDropdownOpen(false);
+      }
+    }
+
+    if (isTranslateDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleEscape);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleEscape);
+      };
+    }
+  }, [isTranslateDropdownOpen]);
 
   // SSE pour écouter les changements de status en temps réel
   React.useEffect(() => {
@@ -312,12 +338,9 @@ export default function Header(props){
     setOpen(false);
   }
 
-  function handleTranslate() {
-    // Ouvrir le modal de sélection de langue
-    setOpenTranslateModal(true);
-  }
-
   async function executeTranslation(targetLanguage) {
+    // Fermer le dropdown
+    setIsTranslateDropdownOpen(false);
     // Récupérer le fichier CV actuel depuis le cookie ou localStorage
     let currentFile = null;
     try {
@@ -349,8 +372,7 @@ export default function Header(props){
       shouldUpdateCvList: true,
     });
 
-    // Fermer le modal et notifier immédiatement
-    setOpenTranslateModal(false);
+    // Notifier immédiatement
     addNotification({
       type: "info",
       message: t("translate.notifications.scheduled", { targetLangName }),
@@ -442,16 +464,77 @@ export default function Header(props){
         <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />
       </div>
 
-      {/* Bouton de traduction en bas à droite */}
+      {/* Bouton de traduction en bas à droite avec dropdown */}
       {!editing ? (
-        <button
-          onClick={handleTranslate}
-          className="no-print absolute bottom-3 right-3 rounded border px-2 py-1 text-xs hover:shadow bg-white"
-          type="button"
-          title={t("translate.buttonTitle")}
+        <div
+          ref={translateDropdownRef}
+          className="no-print absolute bottom-3 right-3"
         >
-          🌐
-        </button>
+          {/* Options de langue - apparaissent à gauche du bouton quand ouvert */}
+          <div
+            className={`
+              absolute right-full top-0 mr-2
+              flex flex-row gap-2
+              transition-all duration-300 ease-out origin-right
+              ${isTranslateDropdownOpen ? 'opacity-100 scale-100 translate-x-0' : 'opacity-0 scale-75 translate-x-2 pointer-events-none'}
+            `}
+          >
+            {[
+              { code: 'fr', flag: '/icons/fr.svg', label: 'Français' },
+              { code: 'en', flag: '/icons/gb.svg', label: 'English' }
+            ].map((lang, index) => (
+              <button
+                key={lang.code}
+                onClick={() => executeTranslation(lang.code)}
+                className={`
+                  w-8 h-8 rounded-full
+                  bg-white shadow-lg border border-neutral-200
+                  flex items-center justify-center
+                  overflow-hidden
+                  hover:shadow-xl
+                  transition-all duration-200
+                  cursor-pointer
+                  p-0.5
+                `}
+                style={{
+                  transitionDelay: isTranslateDropdownOpen ? `${index * 50}ms` : '0ms'
+                }}
+                title={`Traduire en ${lang.label}`}
+                aria-label={`Traduire en ${lang.label}`}
+                type="button"
+              >
+                <Image
+                  src={lang.flag}
+                  alt={lang.label}
+                  width={24}
+                  height={24}
+                  className="object-cover"
+                />
+              </button>
+            ))}
+          </div>
+
+          {/* Bouton principal */}
+          <button
+            onClick={() => setIsTranslateDropdownOpen(!isTranslateDropdownOpen)}
+            className={`
+              w-8 h-8 rounded-full
+              bg-white shadow-lg border border-neutral-300
+              flex items-center justify-center
+              hover:shadow-xl
+              transition-all duration-200
+              cursor-pointer
+              text-base
+              ${isTranslateDropdownOpen ? 'shadow-xl' : ''}
+            `}
+            title={t("translate.buttonTitle")}
+            aria-label="Traduire le CV"
+            aria-expanded={isTranslateDropdownOpen}
+            type="button"
+          >
+            🌐
+          </button>
+        </div>
       ) : null}
 
       <Modal open={open} onClose={()=>setOpen(false)} title={t("header.modalTitle")}>
@@ -535,34 +618,6 @@ export default function Header(props){
           <div className="md:col-span-2 flex justify-end gap-2">
             <button onClick={()=>setOpen(false)} className="rounded border px-3 py-1 text-sm" type="button">{t("common.cancel")}</button>
             <button onClick={save} className="rounded border px-3 py-1 text-sm" type="button">{t("common.save")}</button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Modal de sélection de langue pour la traduction */}
-      <Modal open={openTranslateModal} onClose={()=>setOpenTranslateModal(false)} title={t("translate.selectLanguage")}>
-        <div className="space-y-4">
-          <p className="text-sm text-neutral-700">{t("translate.selectLanguageDescription")}</p>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => executeTranslation('fr')}
-              className="rounded border px-4 py-3 text-sm hover:shadow hover:bg-zinc-50 flex flex-col items-center gap-2"
-              type="button"
-            >
-              <span className="text-2xl">🇫🇷</span>
-              <span className="font-medium">Français</span>
-            </button>
-            <button
-              onClick={() => executeTranslation('en')}
-              className="rounded border px-4 py-3 text-sm hover:shadow hover:bg-zinc-50 flex flex-col items-center gap-2"
-              type="button"
-            >
-              <span className="text-2xl">🇬🇧</span>
-              <span className="font-medium">English</span>
-            </button>
-          </div>
-          <div className="flex justify-end">
-            <button onClick={()=>setOpenTranslateModal(false)} className="rounded border px-3 py-1 text-sm" type="button">{t("common.cancel")}</button>
           </div>
         </div>
       </Modal>
