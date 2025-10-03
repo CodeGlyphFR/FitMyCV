@@ -85,8 +85,14 @@ export default function Summary(props){
           </FormRow>
           <div className="flex justify-end gap-2">
             <button
+              onClick={()=>setOpen(false)}
+              className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              {t("common.cancel")}
+            </button>
+            <button
               onClick={save}
-              className="rounded border px-3 py-1 text-sm"
+              className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
             >
               {t("common.save")}
             </button>

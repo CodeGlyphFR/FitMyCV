@@ -459,5 +459,23 @@
       "scheduled": "Translation to {targetLangName} scheduled",
       "error": "Translation error"
     }
+  },
+  "feedback": {
+    "title": "Your feedback helps us improve!",
+    "ratingLabel": "How would you rate your experience?",
+    "commentLabel": "Your feedback (optional)",
+    "commentPlaceholder": "Share your feedback, suggest new features, or report bugs...",
+    "bugReportLabel": "Bug report",
+    "markAsBug": "Mark as bug",
+    "markedAsBug": "Marked as bug",
+    "charactersCount": "{count}/500 characters",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "submitting": "Submitting...",
+    "errors": {
+      "ratingRequired": "Please select a rating",
+      "commentTooLong": "Comment cannot exceed 500 characters"
+    },
+    "success": "Thank you for your feedback! 🙏"
   }
 }

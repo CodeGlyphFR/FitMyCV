@@ -3,8 +3,10 @@ import React from "react";
 import Modal from "../ui/Modal";
 import StarRating from "./StarRating";
 import { useNotifications } from "../notifications/NotificationProvider";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function FeedbackModal({ isOpen, onClose }) {
+  const { t } = useLanguage();
   const [rating, setRating] = React.useState(0);
   const [comment, setComment] = React.useState("");
   const [isBugReport, setIsBugReport] = React.useState(false);
@@ -16,7 +18,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
     if (rating === 0) {
       addNotification({
         type: "error",
-        message: "Veuillez sélectionner une note",
+        message: t("feedback.errors.ratingRequired"),
         duration: 3000,
       });
       return;
@@ -25,7 +27,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
     if (comment.length > 500) {
       addNotification({
         type: "error",
-        message: "Le commentaire ne peut pas dépasser 500 caractères",
+        message: t("feedback.errors.commentTooLong"),
         duration: 3000,
       });
       return;
@@ -60,7 +62,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
 
       addNotification({
         type: "success",
-        message: "Merci pour votre retour ! 🙏",
+        message: t("feedback.success"),
         duration: 4000,
       });
 
@@ -91,12 +93,12 @@ export default function FeedbackModal({ isOpen, onClose }) {
   };
 
   return (
-    <Modal open={isOpen} onClose={handleClose} title="Votre retour nous aide à améliorer !">
+    <Modal open={isOpen} onClose={handleClose} title={t("feedback.title")}>
       <div className="space-y-6">
         {/* Section notation */}
         <div className="flex flex-col items-center gap-2">
           <label className="text-sm font-medium text-gray-700">
-            Comment évaluez-vous votre expérience ?
+            {t("feedback.ratingLabel")}
           </label>
           <StarRating rating={rating} setRating={setRating} />
         </div>
@@ -104,13 +106,13 @@ export default function FeedbackModal({ isOpen, onClose }) {
         {/* Section commentaire avec bouton bug */}
         <div className="relative">
           <label className="text-sm font-medium text-gray-700 block mb-2">
-            Votre retour (optionnel)
+            {t("feedback.commentLabel")}
           </label>
           <div className="relative">
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Partagez votre retour, proposez de nouvelles fonctionnalités ou signalez des bugs..."
+              placeholder={t("feedback.commentPlaceholder")}
               className="w-full h-32 px-3 py-2 pr-14 pb-12 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               maxLength={500}
             />
@@ -130,7 +132,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                   : 'bg-gray-100'
                 }
               `}
-              title={isBugReport ? "Marqué comme bug" : "Marquer comme bug"}
+              title={isBugReport ? t("feedback.markedAsBug") : t("feedback.markAsBug")}
             >
               <span className={`text-lg ${isBugReport ? '' : 'grayscale opacity-50'}`}>
                 🐛
@@ -141,11 +143,11 @@ export default function FeedbackModal({ isOpen, onClose }) {
           {/* Compteur de caractères */}
           <div className="flex justify-between items-center mt-1">
             <span className={`text-xs ${comment.length > 500 ? 'text-red-500' : 'text-gray-500'}`}>
-              {comment.length}/500 caractères
+              {t("feedback.charactersCount", { count: comment.length })}
             </span>
             {isBugReport && (
               <span className="text-xs text-red-600 font-medium">
-                🐛 Signalement de bug
+                🐛 {t("feedback.bugReportLabel")}
               </span>
             )}
           </div>
@@ -159,7 +161,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
             disabled={isSubmitting}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
           >
-            Annuler
+            {t("feedback.cancel")}
           </button>
           <button
             type="button"
@@ -167,7 +169,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
             disabled={isSubmitting}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? "Envoi..." : "Envoyer"}
+            {isSubmitting ? t("feedback.submitting") : t("feedback.submit")}
           </button>
         </div>
       </div>

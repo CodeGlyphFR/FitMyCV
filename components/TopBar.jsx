@@ -1382,7 +1382,7 @@ export default function TopBar() {
           </button>
         </div>
         {/* CV Selector */}
-        <div className="flex-1 min-w-[120px] md:min-w-[200px] md:max-w-none order-3 md:order-2">
+        <div className="flex-1 min-w-[120px] md:min-w-[200px] md:max-w-none order-3 md:order-3">
           <button
             type="button"
             onClick={(e) => {
@@ -1537,7 +1537,7 @@ export default function TopBar() {
             )
           : null}
         {/* Task Manager */}
-        <div className="relative order-2 md:order-3">
+        <div className="relative order-2 md:order-2">
           <button
             ref={taskQueueButtonRef}
             onClick={() => {
@@ -1823,7 +1823,7 @@ export default function TopBar() {
               <button
                 type="button"
                 onClick={addLinkField}
-                className="rounded border px-2 py-1 text-xs"
+                className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 ➕ {t("cvGenerator.addLink")}
               </button>
@@ -1893,13 +1893,13 @@ export default function TopBar() {
             <button
               type="button"
               onClick={closeGenerator}
-              className="rounded border px-3 py-1 text-sm"
+              className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               {t("cvGenerator.cancel")}
             </button>
             <button
               type="submit"
-              className="rounded border px-3 py-1 text-sm"
+              className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!generatorBaseFile}
             >
               {t("cvGenerator.validate")}
@@ -1964,13 +1964,13 @@ export default function TopBar() {
             <button
               type="button"
               onClick={closePdfImport}
-              className="rounded border px-3 py-1 text-sm"
+              className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               {t("pdfImport.cancel")}
             </button>
             <button
               type="submit"
-              className="rounded border px-3 py-1 text-sm"
+              className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!pdfFile}
             >
               {t("pdfImport.import")}
@@ -1995,13 +1995,13 @@ export default function TopBar() {
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setOpenDelete(false)}
-              className="rounded border px-3 py-1 text-sm"
+              className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               {t("deleteModal.no")}
             </button>
             <button
               onClick={deleteCurrent}
-              className="rounded border px-3 py-1 text-sm text-red-700"
+              className="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
             >
               {t("deleteModal.yes")}
             </button>
@@ -2066,13 +2066,6 @@ export default function TopBar() {
           ) : null}
           <div className="flex gap-2">
             <button
-              onClick={createNewCv}
-              disabled={newCvBusy || !newCvFullName.trim() || !newCvCurrentTitle.trim()}
-              className="rounded border px-3 py-2 hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {newCvBusy ? t("newCvModal.creating") : t("newCvModal.create")}
-            </button>
-            <button
               onClick={() => {
                 setOpenNewCv(false);
                 setNewCvFullName("");
@@ -2080,9 +2073,16 @@ export default function TopBar() {
                 setNewCvEmail("");
                 setNewCvError(null);
               }}
-              className="rounded border px-3 py-2"
+              className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               {t("newCvModal.cancel")}
+            </button>
+            <button
+              onClick={createNewCv}
+              disabled={newCvBusy || !newCvFullName.trim() || !newCvCurrentTitle.trim()}
+              className="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {newCvBusy ? t("newCvModal.creating") : t("newCvModal.create")}
             </button>
           </div>
           <p className="text-xs opacity-70">

@@ -35,7 +35,6 @@ export default function Modal({ open, onClose, title, children }){
         <div className="relative z-10 w-full max-w-lg rounded-2xl border bg-white p-4 shadow-lg">
           <div className="flex items-center justify-between mb-2">
             <div className="font-semibold">{title || t("common.confirmation")}</div>
-            <button onClick={onClose} className="rounded border px-2 py-1 text-xs">{t("common.close")}</button>
           </div>
           <div>{children}</div>
         </div>

@@ -245,7 +245,8 @@ export default function Experience(props){
           <input className="rounded border px-2 py-1 text-sm md:col-span-2" placeholder={t("cvSections.skillsUsed")} value={f.skills_used || ""} onChange={e => setF({ ...f, skills_used: e.target.value })} />
 
           <div className="md:col-span-2 flex justify-end gap-2">
-            <button type="button" onClick={saveEdit} className="rounded border px-3 py-1 text-sm">{t("common.save")}</button>
+            <button type="button" onClick={() => setEditIndex(null)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
+            <button type="button" onClick={saveEdit} className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">{t("common.save")}</button>
           </div>
         </div>
       </Modal>
@@ -277,7 +278,8 @@ export default function Experience(props){
           <input className="rounded border px-2 py-1 text-sm md:col-span-2" placeholder={t("cvSections.skillsUsed")} value={nf.skills_used || ""} onChange={e => setNf({ ...nf, skills_used: e.target.value })} />
 
           <div className="md:col-span-2 flex justify-end gap-2">
-            <button type="button" onClick={saveAdd} className="rounded border px-3 py-1 text-sm">{t("common.add")}</button>
+            <button type="button" onClick={() => setAddOpen(false)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
+            <button type="button" onClick={saveAdd} className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">{t("common.add")}</button>
           </div>
         </div>
       </Modal>
@@ -287,8 +289,8 @@ export default function Experience(props){
         <div className="space-y-3">
           <p className="text-sm">{t("cvSections.deleteExperience")}</p>
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setDelIndex(null)} className="rounded border px-3 py-1 text-sm">{t("common.cancel")}</button>
-            <button type="button" onClick={confirmDelete} className="rounded border px-3 py-1 text-sm text-red-700">{t("common.delete")}</button>
+            <button type="button" onClick={() => setDelIndex(null)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
+            <button type="button" onClick={confirmDelete} className="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">{t("common.delete")}</button>
           </div>
         </div>
       </Modal>

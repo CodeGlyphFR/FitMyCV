@@ -615,7 +615,7 @@ export default function Header(props){
                 <button
                   type="button"
                   onClick={()=>setLinksLocal([...(linksLocal||[]), {label:"", url:""}])}
-                  className="text-xs rounded border px-2 py-1"
+                  className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
                   ➕ {t("header.addLink")}
                 </button>
@@ -624,8 +624,8 @@ export default function Header(props){
           </div>
 
           <div className="md:col-span-2 flex justify-end gap-2">
-            <button onClick={()=>setOpen(false)} className="rounded border px-3 py-1 text-sm" type="button">{t("common.cancel")}</button>
-            <button onClick={save} className="rounded border px-3 py-1 text-sm" type="button">{t("common.save")}</button>
+            <button onClick={()=>setOpen(false)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50" type="button">{t("common.cancel")}</button>
+            <button onClick={save} className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700" type="button">{t("common.save")}</button>
           </div>
         </div>
       </Modal>

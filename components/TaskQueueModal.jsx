@@ -201,7 +201,7 @@ export default function TaskQueueModal({ open, onClose }) {
           <div>{t("taskQueue.total")}: {tasks.length}</div>
           <button
             onClick={onClose}
-            className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+            className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             {t("common.close")}
           </button>

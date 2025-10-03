@@ -6,8 +6,8 @@ import Footer from "@/components/Footer";
 export default function ConditionalFooter() {
   const pathname = usePathname();
 
-  // Ne pas afficher le Footer sur la page principale (CV)
-  if (pathname === "/") {
+  // Ne pas afficher le Footer sur la page principale (CV) et la page Mon compte
+  if (pathname === "/" || pathname === "/account") {
     return <></>;
   }
 

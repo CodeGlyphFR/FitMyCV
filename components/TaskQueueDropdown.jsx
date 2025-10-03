@@ -148,7 +148,7 @@ function TaskItem({ task, onCancel, compact = false }) {
 export default function TaskQueueDropdown({ isOpen, onClose, className = "", buttonRef }) {
   const { t } = useLanguage();
   const { tasks, clearCompletedTasks, cancelTask, isApiSyncEnabled } = useBackgroundTasks();
-  const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, right: 0 });
+  const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0 });
 
   // Filtrer les tâches de calcul de match score (elles ne doivent apparaître que dans l'animation du bouton)
   const visibleTasks = tasks.filter(task => task.type !== 'calculate-match-score');
@@ -164,9 +164,22 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
   React.useEffect(() => {
     if (isOpen && buttonRef?.current) {
       const rect = buttonRef.current.getBoundingClientRect();
+      const dropdownWidth = 384; // w-96 = 24rem = 384px
+      const viewportWidth = window.innerWidth;
+
+      // Align left edge of dropdown with left edge of button
+      let leftPos = rect.left;
+
+      // Check if dropdown would overflow on the right side
+      const rightEdge = leftPos + dropdownWidth;
+      if (rightEdge > viewportWidth - 8) { // 8px minimum margin
+        // Adjust position to prevent overflow
+        leftPos = viewportWidth - dropdownWidth - 8;
+      }
+
       setDropdownPosition({
         top: rect.bottom + 8,
-        right: window.innerWidth - rect.right
+        left: Math.max(8, leftPos)
       });
     }
   }, [isOpen, buttonRef]);
@@ -186,7 +199,7 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
         className={`fixed w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-[10001] ${className}`}
         style={{
           top: `${dropdownPosition.top}px`,
-          right: `${dropdownPosition.right}px`
+          left: `${dropdownPosition.left}px`
         }}
       >
         <div className="max-h-80 overflow-y-auto">

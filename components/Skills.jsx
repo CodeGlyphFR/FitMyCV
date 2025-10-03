@@ -266,8 +266,11 @@ export default function Skills(props){
               <button onClick={()=>{ const arr=[...hardLocal]; arr.splice(idx,1); setHardLocal(arr); }} className="text-xs rounded border px-2 py-1">❌</button>
             </div>
           ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setHardLocal([...(hardLocal||[]),{name:"",proficiency:""}])} className="text-xs rounded border px-2 py-1">{t("common.add")}</button></div>
-          <div className="flex justify-end gap-2"><button onClick={saveHard} className="rounded border px-3 py-1 text-sm">{t("common.save")}</button></div>
+          <div className="flex justify-end gap-2"><button onClick={()=>setHardLocal([...(hardLocal||[]),{name:"",proficiency:""}])} className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.add")}</button></div>
+          <div className="flex justify-end gap-2">
+            <button onClick={()=>setOpenHard(false)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
+            <button onClick={saveHard} className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">{t("common.save")}</button>
+          </div>
         </div>
       </Modal>
 
@@ -289,8 +292,11 @@ export default function Skills(props){
               <button onClick={()=>{ const arr=[...toolsLocal]; arr.splice(idx,1); setToolsLocal(arr); }} className="text-xs rounded border px-2 py-1">❌</button>
             </div>
           ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setToolsLocal([...(toolsLocal||[]),{name:"",proficiency:""}])} className="rounded border px-3 py-1 text-sm">{t("common.add")}</button></div>
-          <div className="flex justify-end gap-2"><button onClick={saveTools} className="rounded border px-3 py-1 text-sm">{t("common.save")}</button></div>
+          <div className="flex justify-end gap-2"><button onClick={()=>setToolsLocal([...(toolsLocal||[]),{name:"",proficiency:""}])} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.add")}</button></div>
+          <div className="flex justify-end gap-2">
+            <button onClick={()=>setOpenTools(false)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
+            <button onClick={saveTools} className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">{t("common.save")}</button>
+          </div>
         </div>
       </Modal>
 
@@ -302,8 +308,11 @@ export default function Skills(props){
               <button onClick={()=>{ const arr=[...methLocal]; arr.splice(idx,1); setMethLocal(arr); }} className="text-xs rounded border px-2 py-1">❌</button>
             </div>
           ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setMethLocal([...(methLocal||[]), ""])} className="text-xs rounded border px-2 py-1">{t("common.add")}</button></div>
-          <div className="flex justify-end gap-2"><button onClick={saveMeth} className="rounded border px-3 py-1 text-sm">{t("common.save")}</button></div>
+          <div className="flex justify-end gap-2"><button onClick={()=>setMethLocal([...(methLocal||[]), ""])} className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.add")}</button></div>
+          <div className="flex justify-end gap-2">
+            <button onClick={()=>setOpenMeth(false)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
+            <button onClick={saveMeth} className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">{t("common.save")}</button>
+          </div>
         </div>
       </Modal>
 
@@ -315,8 +324,11 @@ export default function Skills(props){
               <button onClick={()=>{ const arr=[...softLocal]; arr.splice(idx,1); setSoftLocal(arr); }} className="text-xs rounded border px-2 py-1">❌</button>
             </div>
           ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setSoftLocal([...(softLocal||[]), ""])} className="text-xs rounded border px-2 py-1">{t("common.add")}</button></div>
-          <div className="flex justify-end gap-2"><button onClick={saveSoft} className="rounded border px-3 py-1 text-sm">{t("common.save")}</button></div>
+          <div className="flex justify-end gap-2"><button onClick={()=>setSoftLocal([...(softLocal||[]), ""])} className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.add")}</button></div>
+          <div className="flex justify-end gap-2">
+            <button onClick={()=>setOpenSoft(false)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
+            <button onClick={saveSoft} className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">{t("common.save")}</button>
+          </div>
         </div>
       </Modal>
     </Section>
