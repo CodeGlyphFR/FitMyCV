@@ -32,4 +32,4 @@ data/users/
 
 # Données de synchronisation des tâches
 data/background-tasks.json
-prisma/prisma/dev.db
+prisma/dev.db
