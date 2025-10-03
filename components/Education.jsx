@@ -131,8 +131,8 @@ export default function Education(props){
           <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.startDate")} value={f.start_date} onChange={e=>setF({...f,start_date:e.target.value})} />
           <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.endDate")} value={f.end_date} onChange={e=>setF({...f,end_date:e.target.value})} />
           <div className="flex justify-end gap-2">
-            <button onClick={()=>setEditIndex(null)} className="rounded border px-3 py-1 text-sm">{t("common.cancel")}</button>
-            <button onClick={edit} className="rounded border px-3 py-1 text-sm">{t("common.save")}</button>
+            <button onClick={()=>setEditIndex(null)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
+            <button onClick={edit} className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">{t("common.save")}</button>
           </div>
         </div>
       </Modal>
@@ -145,8 +145,8 @@ export default function Education(props){
           <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.startDate")} value={nf.start_date} onChange={e=>setNf({...nf,start_date:e.target.value})} />
           <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.endDate")} value={nf.end_date} onChange={e=>setNf({...nf,end_date:e.target.value})} />
           <div className="flex justify-end gap-2">
-            <button onClick={()=>setAddOpen(false)} className="rounded border px-3 py-1 text-sm">{t("common.cancel")}</button>
-            <button onClick={add} className="rounded border px-3 py-1 text-sm">{t("common.add")}</button>
+            <button onClick={()=>setAddOpen(false)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
+            <button onClick={add} className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">{t("common.add")}</button>
           </div>
         </div>
       </Modal>
@@ -155,8 +155,8 @@ export default function Education(props){
         <div className="space-y-3">
           <p className="text-sm">{t("cvSections.deleteEducation")}</p>
           <div className="flex justify-end gap-2">
-            <button onClick={()=>setDelIndex(null)} className="rounded border px-3 py-1 text-sm">{t("common.cancel")}</button>
-            <button onClick={confirmDelete} className="rounded border px-3 py-1 text-sm text-red-700">{t("common.delete")}</button>
+            <button onClick={()=>setDelIndex(null)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
+            <button onClick={confirmDelete} className="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">{t("common.delete")}</button>
           </div>
         </div>
       </Modal>

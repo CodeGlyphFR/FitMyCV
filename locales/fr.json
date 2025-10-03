@@ -459,5 +459,23 @@
       "scheduled": "Traduction en {targetLangName} planifiée",
       "error": "Erreur lors de la traduction"
     }
+  },
+  "feedback": {
+    "title": "Votre retour nous aide à améliorer !",
+    "ratingLabel": "Comment évaluez-vous votre expérience ?",
+    "commentLabel": "Votre retour (optionnel)",
+    "commentPlaceholder": "Partagez votre retour, proposez de nouvelles fonctionnalités ou signalez des bugs...",
+    "bugReportLabel": "Signalement de bug",
+    "markAsBug": "Marquer comme bug",
+    "markedAsBug": "Marqué comme bug",
+    "charactersCount": "{count}/500 caractères",
+    "cancel": "Annuler",
+    "submit": "Envoyer",
+    "submitting": "Envoi...",
+    "errors": {
+      "ratingRequired": "Veuillez sélectionner une note",
+      "commentTooLong": "Le commentaire ne peut pas dépasser 500 caractères"
+    },
+    "success": "Merci pour votre retour ! 🙏"
   }
 }

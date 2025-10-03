@@ -19,8 +19,10 @@ export default function MatchScore({
   const { t } = useLanguage();
   const [isHovered, setIsHovered] = React.useState(false);
   const [showSuccessEffect, setShowSuccessEffect] = React.useState(false);
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
   const prevStatusRef = React.useRef(status);
   const prevCvFileRef = React.useRef(currentCvFile);
+  const isRefreshingRef = React.useRef(false);
 
   // Réinitialiser les états visuels lors d'un changement de CV
   React.useEffect(() => {
@@ -47,14 +49,22 @@ export default function MatchScore({
   }
 
   const handleRefresh = async () => {
-    if (!canRefresh || status === "loading") {
+    // Vérifier avec le ref pour bloquer immédiatement (avant que l'état ne se mette à jour)
+    if (!canRefresh || status === "loading" || isRefreshing || isRefreshingRef.current) {
       return;
     }
+
+    // Bloquer immédiatement avec le ref
+    isRefreshingRef.current = true;
+    setIsRefreshing(true);
 
     try {
       await onRefresh();
     } catch (error) {
       console.error("Erreur lors du rafraîchissement du score:", error);
+    } finally {
+      setIsRefreshing(false);
+      isRefreshingRef.current = false;
     }
   };
 
@@ -109,7 +119,7 @@ export default function MatchScore({
     return `${score}/100`;
   };
 
-  const isDisabled = status === "loading" || !canRefresh;
+  const isDisabled = status === "loading" || !canRefresh || isRefreshing;
 
   // Calculer le nombre de refresh restants
   const refreshesLeft = 5 - refreshCount;

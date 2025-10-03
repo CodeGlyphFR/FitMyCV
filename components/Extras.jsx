@@ -79,8 +79,8 @@ export default function Extras(props){
           <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.extraTitle")} value={f.name} onChange={e=>setF({...f,name:e.target.value})} />
           <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.extraSummary")} value={f.summary} onChange={e=>setF({...f,summary:e.target.value})} />
           <div className="flex justify-end gap-2">
-            <button onClick={()=>setEditIndex(null)} className="rounded border px-3 py-1 text-sm">{t("common.cancel")}</button>
-            <button onClick={save} className="rounded border px-3 py-1 text-sm">{t("common.save")}</button>
+            <button onClick={()=>setEditIndex(null)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
+            <button onClick={save} className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">{t("common.save")}</button>
           </div>
         </div>
       </Modal>
@@ -90,8 +90,8 @@ export default function Extras(props){
           <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.extraTitle")} value={nf.name} onChange={e=>setNf({...nf,name:e.target.value})} />
           <input className="rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.extraSummary")} value={nf.summary} onChange={e=>setNf({...nf,summary:e.target.value})} />
           <div className="flex justify-end gap-2">
-            <button onClick={()=>setAddOpen(false)} className="rounded border px-3 py-1 text-sm">{t("common.cancel")}</button>
-            <button onClick={add} className="rounded border px-3 py-1 text-sm">{t("common.add")}</button>
+            <button onClick={()=>setAddOpen(false)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
+            <button onClick={add} className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">{t("common.add")}</button>
           </div>
         </div>
       </Modal>
@@ -100,8 +100,8 @@ export default function Extras(props){
         <div className="space-y-3">
           <p className="text-sm">{t("cvSections.deleteExtra")}</p>
           <div className="flex justify-end gap-2">
-            <button onClick={()=>setDelIndex(null)} className="rounded border px-3 py-1 text-sm">{t("common.cancel")}</button>
-            <button onClick={confirmDelete} className="rounded border px-3 py-1 text-sm text-red-700">{t("common.delete")}</button>
+            <button onClick={()=>setDelIndex(null)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
+            <button onClick={confirmDelete} className="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">{t("common.delete")}</button>
           </div>
         </div>
       </Modal>
