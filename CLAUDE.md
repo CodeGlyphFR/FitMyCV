@@ -2,19 +2,6 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Rules
-- Ne merge jamais sans une demande explicite
-- Ne commit jamais sans une demande explicite
-- Si tu dois utiliser npm, utilise le port 3001
-- Pour les migrations Prisma, le chemin DATABASE_URL se trouve dans .env.local
-- Quand je veux créer ou ajouter une feature, créer une branche feature/name_of_the_feature
-- Quand je veux ajouter ou modifier une feature, créer une branche
-  improvement/name_of_the_feature
-- Quand je veux corriger un gros bug, créer une branche
-  bug/name_of_the_feature
-- Quand je veux corriger un petit bug, créer une branche
-  hotfix/name_of_the_feature
-
 ## Development Commands
 
 ### Next.js
@@ -228,4 +215,16 @@ import { getSession } from '@/lib/auth/session';
 const session = await getSession();
 const userId = session?.user?.id;
 ```
+## Project Rules
+- Ne merge jamais sans une demande explicite
+- Ne commit jamais sans une demande explicite
+- Si tu dois utiliser npm, utilise le port 3001
+- Pour les migrations Prisma, le chemin DATABASE_URL se trouve dans .env.local
+- Quand je veux créer ou ajouter une feature, créer une branche feature/name_of_the_feature
+- Quand je veux ajouter ou modifier une feature, créer une branche
+  improvement/name_of_the_feature, si elle existe déjà incrémente là
+- Quand je veux corriger un gros bug, créer une branche
+  bug/name_of_the_feature, si elle existe déjà incrémente là
+- Quand je veux corriger un petit bug, créer une branche
+  hotfix/name_of_the_feature, si elle existe déjà incrémente là
 - Ne te mentionne jamais dans un commit
