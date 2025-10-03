@@ -81,7 +81,20 @@ function TaskItem({ task, onCancel, compact = false }) {
     } else if (task.status === 'failed') {
       description = `${t("taskQueue.messages.creationFailed")}${generationName ? ` : '${generationName}'` : ''}`;
     }
+  } else if (task.type === 'template-creation') {
+    if (task.status === 'running') {
+      description = t("taskQueue.messages.templateCreationInProgress");
+    } else if (task.status === 'queued') {
+      description = t("taskQueue.messages.templateCreationQueued");
+    } else if (task.status === 'completed') {
+      description = t("taskQueue.messages.templateCreationCompleted");
+    } else if (task.status === 'cancelled') {
+      description = t("taskQueue.messages.templateCreationCancelled");
+    } else if (task.status === 'failed') {
+      description = t("taskQueue.messages.templateCreationFailed");
+    }
   }
+  // Note: Les tâches 'calculate-match-score' sont filtrées et n'apparaissent pas dans le gestionnaire
 
   let sourceInfo = null;
   if (task.type === 'generation' && payload) {
@@ -137,10 +150,13 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
   const { tasks, clearCompletedTasks, cancelTask, isApiSyncEnabled } = useBackgroundTasks();
   const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, right: 0 });
 
-  // Sort tasks so running ones appear first (newest to oldest) and limit to 8
-  const sortedTasks = sortTasksForDisplay(tasks).slice(0, 8);
+  // Filtrer les tâches de calcul de match score (elles ne doivent apparaître que dans l'animation du bouton)
+  const visibleTasks = tasks.filter(task => task.type !== 'calculate-match-score');
 
-  const completedTasksCount = tasks.filter(task =>
+  // Sort tasks so running ones appear first (newest to oldest) and limit to 8
+  const sortedTasks = sortTasksForDisplay(visibleTasks).slice(0, 8);
+
+  const completedTasksCount = visibleTasks.filter(task =>
     task.status === 'completed' || task.status === 'failed' || task.status === 'cancelled'
   ).length;
 
@@ -216,7 +232,7 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
               />
               <span>{isApiSyncEnabled ? t("taskQueue.cloud") : t("taskQueue.localStorage")}</span>
             </div>
-            <div>{t("taskQueue.total")}: {tasks.length}</div>
+            <div>{t("taskQueue.total")}: {visibleTasks.length}</div>
           </div>
         </div>
       </div>

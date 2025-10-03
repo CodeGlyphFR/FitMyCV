@@ -91,6 +91,7 @@ function TaskItem({ task, onCancel }) {
       description = t("taskQueue.messages.templateCreationFailed");
     }
   }
+  // Note: Les tâches 'calculate-match-score' sont filtrées et n'apparaissent pas dans le gestionnaire
 
   // Extraire le lien ou la pièce jointe du payload
   let sourceInfo = null;
@@ -149,10 +150,13 @@ export default function TaskQueueModal({ open, onClose }) {
   const { t } = useLanguage();
   const { tasks, clearCompletedTasks, cancelTask, isApiSyncEnabled } = useBackgroundTasks();
 
-  // Sort tasks so running ones appear first (newest to oldest) and limit to 8
-  const sortedTasks = sortTasksForDisplay(tasks).slice(0, 8);
+  // Filtrer les tâches de calcul de match score (elles ne doivent apparaître que dans l'animation du bouton)
+  const visibleTasks = tasks.filter(task => task.type !== 'calculate-match-score');
 
-  const completedTasksCount = tasks.filter(task =>
+  // Sort tasks so running ones appear first (newest to oldest) and limit to 8
+  const sortedTasks = sortTasksForDisplay(visibleTasks).slice(0, 8);
+
+  const completedTasksCount = visibleTasks.filter(task =>
     task.status === 'completed' || task.status === 'failed' || task.status === 'cancelled'
   ).length;
 
@@ -167,7 +171,7 @@ export default function TaskQueueModal({ open, onClose }) {
           <div>
             <div className="flex items-center justify-between mb-3">
               <div className="text-sm font-medium text-gray-700">
-                {t("taskQueue.tasks")} ({sortedTasks.length}{tasks.length > 8 ? ` ${t("taskQueue.of")} ${tasks.length}` : ''})
+                {t("taskQueue.tasks")} ({sortedTasks.length}{visibleTasks.length > 8 ? ` ${t("taskQueue.of")} ${visibleTasks.length}` : ''})
               </div>
               {completedTasksCount > 0 && (
                 <button

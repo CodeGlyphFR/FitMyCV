@@ -1,0 +1,281 @@
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth/session";
+import prisma from "@/lib/prisma";
+import { readUserCvFile } from "@/lib/cv/storage";
+import { calculateMatchScore } from "@/lib/openai/calculateMatchScore";
+
+export async function POST(request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  }
+
+  try {
+    const { cvFile, isAutomatic = false } = await request.json();
+
+    if (!cvFile) {
+      return NextResponse.json({ error: "CV file missing" }, { status: 400 });
+    }
+
+    const userId = session.user.id;
+
+    // Récupérer les métadonnées du CV depuis la DB
+    const cvRecord = await prisma.cvFile.findUnique({
+      where: {
+        userId_filename: {
+          userId,
+          filename: cvFile,
+        },
+      },
+    });
+
+    if (!cvRecord) {
+      return NextResponse.json({ error: "CV not found" }, { status: 404 });
+    }
+
+    // Vérifier que le CV a été créé depuis un lien
+    // Les CVs depuis liens peuvent avoir createdBy = "generate-cv" ou "create-template"
+    const validCreatedBy = ["generate-cv", "create-template"];
+    if (!validCreatedBy.includes(cvRecord.createdBy) || cvRecord.sourceType !== "link") {
+      console.log("[match-score] CV non éligible - createdBy:", cvRecord.createdBy, "sourceType:", cvRecord.sourceType);
+      return NextResponse.json({ error: "CV was not created from a job offer link" }, { status: 400 });
+    }
+
+    // Rate limiting GLOBAL (au niveau utilisateur, pas par CV)
+    if (!isAutomatic) {
+      const now = new Date();
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+      // Récupérer l'utilisateur avec ses compteurs de refresh
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          matchScoreRefreshCount: true,
+          matchScoreFirstRefreshAt: true,
+        },
+      });
+
+      let refreshCount = user?.matchScoreRefreshCount || 0;
+      let firstRefreshAt = user?.matchScoreFirstRefreshAt;
+
+      // Si first refresh est null OU plus vieux que 24h, on reset le compteur
+      if (!firstRefreshAt || firstRefreshAt < oneDayAgo) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            matchScoreRefreshCount: 0,
+            matchScoreFirstRefreshAt: null,
+          },
+        });
+        refreshCount = 0;
+        firstRefreshAt = null;
+      }
+
+      // Vérifier la limite de 5 refresh par 24h (GLOBAL pour tous les CVs)
+      if (refreshCount >= 5) {
+        const timeUntilReset = firstRefreshAt
+          ? new Date(firstRefreshAt.getTime() + 24 * 60 * 60 * 1000)
+          : new Date();
+        const totalMinutesLeft = Math.ceil((timeUntilReset - now) / (60 * 1000));
+        const hoursLeft = Math.floor(totalMinutesLeft / 60);
+        const minutesLeft = totalMinutesLeft % 60;
+
+        console.log("[match-score] Rate limit GLOBAL atteint pour l'utilisateur", userId);
+        return NextResponse.json({
+          error: "Rate limit exceeded",
+          details: `Vous avez atteint la limite de 5 rafraîchissements par 24h (global pour tous vos CVs). Réessayez dans ${hoursLeft}h${minutesLeft}m.`,
+          hoursLeft,
+          minutesLeft,
+        }, { status: 429 });
+      }
+    }
+
+    const jobOfferUrl = cvRecord.sourceValue;
+    if (!jobOfferUrl) {
+      return NextResponse.json({ error: "Job offer URL not found" }, { status: 400 });
+    }
+
+    // Lire et décrypter le contenu du CV
+    console.log("[match-score] Lecture du CV:", cvFile);
+
+    let cvContent;
+    try {
+      cvContent = await readUserCvFile(userId, cvFile);
+      console.log("[match-score] CV lu et décrypté avec succès");
+    } catch (error) {
+      console.error("[match-score] Error reading CV file:", error);
+      return NextResponse.json({ error: "Failed to read CV file" }, { status: 500 });
+    }
+
+    // Calculer le score de match avec GPT (sans worker, en direct)
+    console.log("[match-score] Calcul du score de match pour", cvFile);
+    console.log("[match-score] URL de l'offre:", jobOfferUrl);
+    console.log("[match-score] Taille du CV:", cvContent.length, "caractères");
+
+    let score;
+    try {
+      score = await calculateMatchScore({
+        cvContent,
+        jobOfferUrl,
+        signal: null,
+      });
+      console.log("[match-score] Score calculé:", score);
+    } catch (error) {
+      console.error("[match-score] Erreur lors du calcul du score:", error);
+      console.error("[match-score] Stack trace:", error.stack);
+      // IMPORTANT: En cas d'erreur, on retourne SANS incrémenter le compteur
+      return NextResponse.json({
+        error: "Failed to calculate match score",
+        details: error.message
+      }, { status: 500 });
+    }
+
+    // ✅ Le score a été calculé avec succès, on peut maintenant sauvegarder et incrémenter le compteur
+
+    // Sauvegarder le score dans le CV
+    await prisma.cvFile.update({
+      where: {
+        userId_filename: {
+          userId,
+          filename: cvFile,
+        },
+      },
+      data: {
+        matchScore: score,
+        matchScoreUpdatedAt: new Date(),
+      },
+    });
+
+    let finalRefreshCount = 0;
+
+    // Si c'est un refresh manuel, incrémenter le compteur GLOBAL de l'utilisateur
+    if (!isAutomatic) {
+      const now = new Date();
+
+      // Récupérer les infos actuelles de l'utilisateur
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          matchScoreRefreshCount: true,
+          matchScoreFirstRefreshAt: true,
+        },
+      });
+
+      // Si c'est le premier refresh de la fenêtre, initialiser firstRefreshAt
+      if (!user?.matchScoreFirstRefreshAt || user.matchScoreRefreshCount === 0) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            matchScoreFirstRefreshAt: now,
+            matchScoreRefreshCount: 1,
+          },
+        });
+        finalRefreshCount = 1;
+      } else {
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            matchScoreRefreshCount: user.matchScoreRefreshCount + 1,
+          },
+        });
+        finalRefreshCount = user.matchScoreRefreshCount + 1;
+      }
+
+      console.log(`[match-score] ✅ Calcul réussi - Refresh manuel GLOBAL ${finalRefreshCount}/5`);
+    } else {
+      console.log(`[match-score] ✅ Calcul automatique réussi (pas de compteur)`);
+    }
+
+    console.log(`[match-score] Score calculé et sauvegardé : ${score}/100`);
+
+    return NextResponse.json({
+      success: true,
+      score,
+      refreshCount: finalRefreshCount,
+      refreshLimit: 5,
+    }, { status: 200 });
+  } catch (error) {
+    console.error("Error calculating match score:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+// GET endpoint pour récupérer le score existant
+export async function GET(request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const cvFile = searchParams.get("file");
+
+    if (!cvFile) {
+      return NextResponse.json({ error: "CV file missing" }, { status: 400 });
+    }
+
+    const userId = session.user.id;
+
+    const cvRecord = await prisma.cvFile.findUnique({
+      where: {
+        userId_filename: {
+          userId,
+          filename: cvFile,
+        },
+      },
+      select: {
+        matchScore: true,
+        matchScoreUpdatedAt: true,
+        matchScoreStatus: true,
+      },
+    });
+
+    if (!cvRecord) {
+      return NextResponse.json({ error: "CV not found" }, { status: 404 });
+    }
+
+    // Calculer si le rate limit GLOBAL est actif (au niveau utilisateur)
+    const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    // Récupérer les infos de l'utilisateur
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        matchScoreRefreshCount: true,
+        matchScoreFirstRefreshAt: true,
+      },
+    });
+
+    let canRefresh = true;
+    let hoursUntilReset = 0;
+    let minutesUntilReset = 0;
+    let refreshCount = user?.matchScoreRefreshCount || 0;
+
+    if (user?.matchScoreFirstRefreshAt && user.matchScoreFirstRefreshAt > oneDayAgo) {
+      // On est dans la fenêtre de 24h
+      if (refreshCount >= 5) {
+        canRefresh = false;
+        const resetTime = new Date(user.matchScoreFirstRefreshAt.getTime() + 24 * 60 * 60 * 1000);
+        const totalMinutesLeft = Math.ceil((resetTime - now) / (60 * 1000));
+        hoursUntilReset = Math.floor(totalMinutesLeft / 60);
+        minutesUntilReset = totalMinutesLeft % 60;
+      }
+    }
+
+    return NextResponse.json({
+      score: cvRecord.matchScore,
+      updatedAt: cvRecord.matchScoreUpdatedAt,
+      status: cvRecord.matchScoreStatus || 'idle', // Status du calcul: 'idle', 'calculating', 'error'
+      refreshCount, // Compteur global de l'utilisateur
+      refreshLimit: 5,
+      canRefresh,
+      hoursUntilReset,
+      minutesUntilReset,
+    }, { status: 200 });
+  } catch (error) {
+    console.error("Error fetching match score:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

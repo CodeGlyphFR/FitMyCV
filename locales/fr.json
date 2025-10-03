@@ -56,6 +56,20 @@
       "error": "Erreur lors de la génération du CV"
     }
   },
+  "matchScore": {
+    "score": "Score de match: {score}/100",
+    "scoreTooltip": "Score de match: {score}/100",
+    "notCalculated": "Score de match non calculé",
+    "calculating": "Calcul en cours",
+    "failed": "Échec",
+    "refresh": "Rafraîchir le score de match",
+    "refreshSuccess": "Score mis à jour: {score}/100 ({count}/{limit})",
+    "refreshError": "Erreur lors du calcul du score de match",
+    "rateLimitExceeded": "Limite globale atteinte (5 refresh/24h tous CVs confondus). Réinitialisation dans {hours} heures et {minutes} minutes",
+    "rateLimitReached": "Limite globale de 5 refresh/24h atteinte",
+    "resetIn": "Réinitialisation dans {hours} heures et {minutes} minutes",
+    "refreshWithCount": "Rafraîchir ({count}/{limit})"
+  },
   "cvGenerator": {
     "title": "Générer un CV avec ChatGPT",
     "description": "Renseignez des offres d'emploi à analyser (liens ou fichier PDF/Word) pour générer des CV adaptés à partir du CV de référence sélectionné.",
@@ -353,7 +367,12 @@
       "templateCreationQueued": "Création de CV modèle en attente ...",
       "templateCreationCompleted": "CV modèle créé avec succès",
       "templateCreationCancelled": "Création de CV modèle annulée",
-      "templateCreationFailed": "Création de CV modèle échouée"
+      "templateCreationFailed": "Création de CV modèle échouée",
+      "matchScoreInProgress": "Calcul du score de match en cours ...",
+      "matchScoreQueued": "Calcul du score de match en attente ...",
+      "matchScoreCompleted": "Score de match calculé avec succès",
+      "matchScoreCancelled": "Calcul du score de match annulé",
+      "matchScoreFailed": "Calcul du score de match échoué"
     }
   },
   "emptyState": {
