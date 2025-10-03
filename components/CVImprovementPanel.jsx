@@ -12,9 +12,9 @@ export default function CVImprovementPanel({ cvFile }) {
   const [improveSuccess, setImproveSuccess] = useState(false);
   const { t, language } = useLanguage();
 
-  // Charger les données du CV
+  // Charger les données du CV dès que le composant est monté
   useEffect(() => {
-    if (!cvFile || !isOpen) return;
+    if (!cvFile) return;
 
     async function fetchCvData() {
       setLoading(true);
@@ -32,7 +32,7 @@ export default function CVImprovementPanel({ cvFile }) {
     }
 
     fetchCvData();
-  }, [cvFile, isOpen]);
+  }, [cvFile]); // Retirer isOpen de la dépendance pour charger dès le montage
 
   // Parser les données JSON
   const parseJson = (jsonString, defaultValue = null) => {
@@ -133,8 +133,9 @@ export default function CVImprovementPanel({ cvFile }) {
     improveSuccess: language === 'fr' ? "✅ CV amélioré ! Rechargement..." : "✅ CV improved! Reloading...",
   };
 
-  // Si pas de données d'amélioration, ne pas afficher le bouton
-  if (!cvData?.matchScore && !cvData?.improvementSuggestions) {
+  // Ne pas afficher le bouton seulement si on a fini de charger ET qu'il n'y a pas de données
+  // Pendant le chargement initial (loading=true, cvData=null), on affiche quand même le bouton
+  if (!loading && cvData && !cvData.matchScore && !cvData.improvementSuggestions) {
     return null;
   }
 
