@@ -216,7 +216,7 @@ const session = await getSession();
 const userId = session?.user?.id;
 ```
 ## Project Rules
-- Ne merge jamais sans une demande explicite
+- Ne merge jamais sans une demande explicite. Si un merge est demandé il faudra merge avec main avec l'option `--no-ff`
 - Ne commit jamais sans une demande explicite
 - Si tu dois utiliser npm, utilise le port 3001
 - Pour les migrations Prisma, le chemin DATABASE_URL se trouve dans .env.local
