@@ -445,9 +445,6 @@ export default function Header(props){
       </div>
 
       <div className="flex items-start gap-3">
-        {editing ? (
-          <button onClick={()=>setOpen(true)} className="no-print rounded border px-2 py-1 text-sm hover:shadow" type="button">🖊️</button>
-        ) : null}
         <MatchScore
           sourceType={sourceInfo.sourceType}
           sourceValue={sourceInfo.sourceValue}
@@ -463,6 +460,17 @@ export default function Header(props){
         />
         <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />
       </div>
+
+      {/* Bouton d'édition du header en mode édition */}
+      {editing ? (
+        <button
+          onClick={()=>setOpen(true)}
+          className="no-print absolute bottom-3 right-3 rounded border px-2 py-1 text-sm hover:shadow"
+          type="button"
+        >
+          🖊️
+        </button>
+      ) : null}
 
       {/* Bouton de traduction en bas à droite avec dropdown */}
       {!editing ? (
