@@ -8,6 +8,8 @@ export default function CVImprovementPanel({ cvFile }) {
   const [loading, setLoading] = useState(false);
   const [cvData, setCvData] = useState(null);
   const [error, setError] = useState(null);
+  const [isImproving, setIsImproving] = useState(false);
+  const [improveSuccess, setImproveSuccess] = useState(false);
   const { t, language } = useLanguage();
 
   // Charger les données du CV
@@ -69,6 +71,42 @@ export default function CVImprovementPanel({ cvFile }) {
     return 'text-red-600';
   };
 
+  // Fonction pour lancer l'amélioration automatique
+  const handleImprove = async () => {
+    setIsImproving(true);
+    setImproveSuccess(false);
+    try {
+      const response = await fetch("/api/cv/improve", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          cvFile,
+          analysisLevel: "deep", // Utiliser le niveau max pour l'amélioration
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erreur lors de l'amélioration");
+      }
+
+      const data = await response.json();
+      setImproveSuccess(true);
+
+      // Rafraîchir la page après 3 secondes pour voir le nouveau CV
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+    } catch (err) {
+      console.error("Erreur amélioration:", err);
+      alert(err.message);
+    } finally {
+      setIsImproving(false);
+    }
+  };
+
   // Labels traduits
   const labels = {
     title: language === 'fr' ? "Analyse et Optimisation" : "Analysis & Optimization",
@@ -90,6 +128,9 @@ export default function CVImprovementPanel({ cvFile }) {
     loading: language === 'fr' ? "Chargement..." : "Loading...",
     close: language === 'fr' ? "Fermer" : "Close",
     optimize: language === 'fr' ? "🎯 Optimiser" : "🎯 Optimize",
+    autoImprove: language === 'fr' ? "🚀 Améliorer automatiquement" : "🚀 Auto-Improve",
+    improving: language === 'fr' ? "Amélioration en cours..." : "Improving...",
+    improveSuccess: language === 'fr' ? "✅ CV amélioré ! Rechargement..." : "✅ CV improved! Reloading...",
   };
 
   // Si pas de données d'amélioration, ne pas afficher le bouton
@@ -235,8 +276,34 @@ export default function CVImprovementPanel({ cvFile }) {
             </>
           )}
 
-          {/* Bouton fermer */}
-          <div className="flex justify-end pt-4 border-t">
+          {/* Boutons d'action */}
+          <div className="flex justify-between items-center pt-4 border-t">
+            {/* Bouton amélioration automatique */}
+            {suggestions.length > 0 && !improveSuccess && (
+              <button
+                onClick={handleImprove}
+                disabled={isImproving}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  isImproving
+                    ? 'bg-gray-300 text-gray-500 cursor-wait'
+                    : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:shadow-lg'
+                }`}
+              >
+                {isImproving ? labels.improving : labels.autoImprove}
+              </button>
+            )}
+
+            {/* Message de succès */}
+            {improveSuccess && (
+              <div className="text-green-600 font-medium animate-pulse">
+                {labels.improveSuccess}
+              </div>
+            )}
+
+            {/* Spacer si pas de bouton amélioration */}
+            {(suggestions.length === 0 || improveSuccess) && <div />}
+
+            {/* Bouton fermer */}
             <button
               onClick={() => setIsOpen(false)}
               className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
