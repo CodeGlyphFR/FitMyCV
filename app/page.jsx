@@ -8,6 +8,7 @@ import Languages from "@/components/Languages";
 import Extras from "@/components/Extras";
 import Projects from "@/components/Projects";
 import EmptyState from "@/components/EmptyState";
+import ScrollToTopOnMount from "@/components/ScrollToTopOnMount";
 
 import { sanitizeInMemory } from "@/lib/sanitize";
 import { cookies, headers } from "next/headers";
@@ -88,6 +89,7 @@ export default async function Page(){
 
   return (
     <main className="max-w-4xl mx-auto p-4 pb-8">
+      <ScrollToTopOnMount />
 
       {order.map(k => (
         <div key={k} className="cv-section">{sections[k]}</div>

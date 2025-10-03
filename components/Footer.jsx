@@ -18,6 +18,13 @@ export default function Footer({ showLogout = false }) {
         >
           {t("footer.cookieManagement")}
         </Link>
+        <span className="hidden sm:inline">•</span>
+        <Link
+          href="/privacy"
+          className="hover:text-gray-700 dark:hover:text-gray-300 underline transition-colors"
+        >
+          Confidentialité
+        </Link>
         {showLogout && (
           <>
             <span className="hidden sm:inline">•</span>
