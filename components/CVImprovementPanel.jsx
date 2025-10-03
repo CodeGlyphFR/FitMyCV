@@ -152,7 +152,7 @@ export default function CVImprovementPanel({ cvFile }) {
 
       {/* Modal avec les suggestions */}
       <Modal
-        isOpen={isOpen}
+        open={isOpen}
         onClose={() => setIsOpen(false)}
         title={labels.title}
         size="large"
