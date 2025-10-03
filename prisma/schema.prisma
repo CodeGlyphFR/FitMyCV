@@ -20,6 +20,7 @@ model User {
   sessions      Session[]
   cvs           CvFile[]
   linkHistory   LinkHistory[]
+  feedbacks     Feedback[]
   matchScoreRefreshCount Int @default(0) // Number of manual refreshes in current window (global for all CVs)
   matchScoreFirstRefreshAt DateTime? // Timestamp of first refresh in current window (for rate limiting)
   createdAt     DateTime      @default(now())
@@ -113,4 +114,27 @@ model LinkHistory {
 
   @@unique([userId, url])
   @@index([userId, createdAt])
+}
+
+model Feedback {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  rating          Int      // 1-5 (obligatoire)
+  comment         String   // Texte du feedback (max 500 caractères, validé côté API)
+  isBugReport     Boolean  @default(false) // Toggle bug activé ou non
+
+  // Contexte au moment du feedback
+  currentCvFile   String?  // CV affiché au moment du feedback
+  userAgent       String?  // Browser info
+  pageUrl         String?  // URL de la page
+
+  createdAt       DateTime @default(now())
+  status          String   @default("new") // new, reviewed, resolved
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([isBugReport])
+  @@index([status])
 }

@@ -3,6 +3,7 @@ import React from "react";
 import ConditionalTopBar from "@/components/ConditionalTopBar";
 import Footer from "@/components/Footer";
 import CookieBanner from "@/components/cookies/CookieBanner";
+import FeedbackButton from "@/components/feedback/FeedbackButton";
 import RootProviders from "@/components/RootProviders";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import { auth } from "@/lib/auth/session";
@@ -60,6 +61,7 @@ export default async function RootLayout(props){
             <Footer />
           </div>
           <CookieBanner />
+          <FeedbackButton />
         </RootProviders>
       </body>
     </html>
