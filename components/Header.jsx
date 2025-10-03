@@ -26,6 +26,7 @@ export default function Header(props){
   const [refreshCount, setRefreshCount] = React.useState(0);
   const [hoursUntilReset, setHoursUntilReset] = React.useState(0);
   const [minutesUntilReset, setMinutesUntilReset] = React.useState(0);
+  const [currentCvFile, setCurrentCvFile] = React.useState(null);
   const { localDeviceId, addOptimisticTask, removeOptimisticTask, refreshTasks } = useBackgroundTasks();
   const { addNotification } = useNotifications();
 
@@ -77,6 +78,7 @@ export default function Header(props){
       }
 
       const currentFile = decodeURIComponent(cvFileCookie.split('=')[1]);
+      setCurrentCvFile(currentFile);
 
       const response = await fetch(`/api/cv/match-score?file=${encodeURIComponent(currentFile)}`);
       if (!response.ok) {
@@ -86,12 +88,20 @@ export default function Header(props){
       }
 
       const data = await response.json();
-      setMatchScore(data.score);
-      setMatchScoreStatus(data.status || 'idle');
-      setCanRefreshScore(data.canRefresh ?? true);
-      setRefreshCount(data.refreshCount || 0);
-      setHoursUntilReset(data.hoursUntilReset || 0);
-      setMinutesUntilReset(data.minutesUntilReset || 0);
+
+      // Vérifier que le CV n'a pas changé entre temps
+      const updatedCookies = document.cookie.split(';');
+      const updatedCvFileCookie = updatedCookies.find(c => c.trim().startsWith('cvFile='));
+      const updatedFile = updatedCvFileCookie ? decodeURIComponent(updatedCvFileCookie.split('=')[1]) : null;
+
+      if (updatedFile === currentFile) {
+        setMatchScore(data.score);
+        setMatchScoreStatus(data.status || 'idle');
+        setCanRefreshScore(data.canRefresh ?? true);
+        setRefreshCount(data.refreshCount || 0);
+        setHoursUntilReset(data.hoursUntilReset || 0);
+        setMinutesUntilReset(data.minutesUntilReset || 0);
+      }
     } catch (error) {
       console.error("Error fetching match score:", error);
     } finally {
@@ -100,6 +110,11 @@ export default function Header(props){
   }, []);
 
   const fetchSourceInfo = React.useCallback(() => {
+    // Récupérer le CV actuel depuis le cookie pour détecter les changements
+    const cookies = document.cookie.split(';');
+    const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
+    const newCvFile = cvFileCookie ? decodeURIComponent(cvFileCookie.split('=')[1]) : null;
+
     // Réinitialiser TOUS les états du match score avant de charger le nouveau CV
     setMatchScore(null);
     setMatchScoreStatus('idle');
@@ -108,6 +123,7 @@ export default function Header(props){
     setRefreshCount(0);
     setHoursUntilReset(0);
     setMinutesUntilReset(0);
+    setCurrentCvFile(newCvFile);
 
     fetch("/api/cv/source", { cache: "no-store" })
       .then(res => {
@@ -122,9 +138,14 @@ export default function Header(props){
         // Si le CV est créé depuis un lien, récupérer le score de match
         if (data.sourceType === "link") {
           fetchMatchScore();
+        } else {
+          setIsLoadingMatchScore(false);
         }
       })
-      .catch(err => console.error("Failed to fetch source info:", err));
+      .catch(err => {
+        console.error("Failed to fetch source info:", err);
+        setIsLoadingMatchScore(false);
+      });
   }, [fetchMatchScore]);
 
   React.useEffect(() => {
@@ -161,12 +182,19 @@ export default function Header(props){
         const data = JSON.parse(event.data);
         console.log('[MatchScore SSE] Status update:', data);
 
-        setMatchScore(data.score);
-        setMatchScoreStatus(data.status || 'idle');
+        // Vérifier que le CV n'a pas changé entre temps
+        const updatedCookies = document.cookie.split(';');
+        const updatedCvFileCookie = updatedCookies.find(c => c.trim().startsWith('cvFile='));
+        const updatedFile = updatedCvFileCookie ? decodeURIComponent(updatedCvFileCookie.split('=')[1]) : null;
 
-        // Si le status est 'idle' ou 'error', rafraîchir pour avoir les infos de rate limit
-        if (data.status === 'idle' || data.status === 'error') {
-          fetchMatchScore();
+        if (updatedFile === currentFile) {
+          setMatchScore(data.score);
+          setMatchScoreStatus(data.status || 'idle');
+
+          // Si le status est 'idle' ou 'error', rafraîchir pour avoir les infos de rate limit
+          if (data.status === 'idle' || data.status === 'error') {
+            fetchMatchScore();
+          }
         }
       } catch (error) {
         console.error('[MatchScore SSE] Error parsing event:', error);
@@ -409,6 +437,7 @@ export default function Header(props){
           hoursUntilReset={hoursUntilReset}
           minutesUntilReset={minutesUntilReset}
           onRefresh={handleRefreshMatchScore}
+          currentCvFile={currentCvFile}
         />
         <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />
       </div>
