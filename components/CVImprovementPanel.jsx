@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
@@ -8,7 +8,9 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
   const [loading, setLoading] = useState(false);
   const [cvData, setCvData] = useState(null);
   const [error, setError] = useState(null);
+  const [animatedScore, setAnimatedScore] = useState(0);
   const { t, language } = useLanguage();
+  const animationRef = useRef(null);
 
   // Fonction pour charger les données
   const fetchCvData = React.useCallback(async () => {
@@ -243,14 +245,14 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
     noData: language === 'fr' ? "Aucune donnée d'optimisation disponible" : "No optimization data available",
     loading: language === 'fr' ? "Chargement..." : "Loading...",
     close: language === 'fr' ? "Fermer" : "Close",
-    optimize: language === 'fr' ? "🎯 Optimiser" : "🎯 Optimize",
-    autoImprove: language === 'fr' ? "🚀 Améliorer automatiquement" : "🚀 Auto-Improve",
+    optimize: language === 'fr' ? "Optimiser" : "Optimize",
+    autoImprove: language === 'fr' ? "Améliorer automatiquement" : "Auto-Improve",
     improving: language === 'fr' ? "Amélioration en cours..." : "Improving...",
-    improveSuccess: language === 'fr' ? "✅ CV amélioré ! Rechargement..." : "✅ CV improved! Reloading...",
-    needNewScore: language === 'fr' ? "⚠️ Recalculer le score d'abord" : "⚠️ Recalculate score first",
+    improveSuccess: language === 'fr' ? "CV amélioré ! Rechargement..." : "CV improved! Reloading...",
+    needNewScore: language === 'fr' ? "Recalculer le score d'abord" : "Recalculate score first",
     modifiedWarning: language === 'fr' ? "Le CV a été modifié. Recalculez le score pour pouvoir l'optimiser." : "CV has been modified. Recalculate the score to enable optimization.",
-    improvementInProgress: language === 'fr' ? "⏳ Amélioration en cours..." : "⏳ Improvement in progress...",
-    calculatingScore: language === 'fr' ? "📊 Calcul du score en cours..." : "📊 Calculating score...",
+    improvementInProgress: language === 'fr' ? "Amélioration en cours..." : "Improvement in progress...",
+    calculatingScore: language === 'fr' ? "Calcul du score en cours..." : "Calculating score...",
   };
 
   // Fonction pour la couleur du badge selon les actions restantes
@@ -261,6 +263,46 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
     if (actionsLeft === 3) return "bg-yellow-500";
     return "bg-green-500";
   };
+
+  // Fonction pour normaliser les scores (convertir de /100 à leurs échelles respectives)
+  const normalizeScore = (score, maxScore) => {
+    if (!score || !maxScore) return 0;
+    return Math.round((score / 100) * maxScore);
+  };
+
+  // Animation count-up pour le score
+  useEffect(() => {
+    if (isOpen && cvData?.matchScore !== null) {
+      const targetScore = cvData.matchScore;
+      const duration = 1500; // 1.5 secondes
+      const startTime = Date.now();
+
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Easing function (ease-out cubic)
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const currentScore = Math.round(easeOut * targetScore);
+
+        setAnimatedScore(currentScore);
+
+        if (progress < 1) {
+          animationRef.current = requestAnimationFrame(animate);
+        }
+      };
+
+      animationRef.current = requestAnimationFrame(animate);
+
+      return () => {
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+        }
+      };
+    } else {
+      setAnimatedScore(0);
+    }
+  }, [isOpen, cvData?.matchScore]);
 
   // Ne pas afficher le bouton si:
   // 1. On a fini de charger ET il n'y a pas de données
@@ -308,173 +350,463 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
         title={labels.title}
         size="large"
       >
-        <div className="p-4 space-y-6">
-          {loading && (
-            <div className="text-center py-8 text-gray-500">
-              {labels.loading}
-            </div>
-          )}
+        <style jsx>{`
+          @keyframes slideInLeft {
+            from {
+              opacity: 0;
+              transform: translateX(-30px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
 
-          {error && (
-            <div className="text-center py-8 text-red-500">
-              {error}
-            </div>
-          )}
+          @keyframes slideInRight {
+            from {
+              opacity: 0;
+              transform: translateX(30px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
 
-          {!loading && !error && cvData && (
-            <>
-              {/* Score principal */}
-              {cvData.matchScore !== null && (
-                <div className="text-center">
-                  <div className="text-sm text-gray-600 mb-1">{labels.matchScore}</div>
-                  <div className={`text-5xl font-bold ${getScoreColor(cvData.matchScore)}`}>
-                    {cvData.matchScore}
-                  </div>
+          @keyframes scaleIn {
+            from {
+              opacity: 0;
+              transform: scale(0.9);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+
+          @keyframes shimmer {
+            0% {
+              background-position: -1000px 0;
+            }
+            100% {
+              background-position: 1000px 0;
+            }
+          }
+
+          @keyframes barGrow {
+            from {
+              width: 0;
+            }
+          }
+
+          .animate-slide-in-left {
+            animation: slideInLeft 0.5s ease-out forwards;
+          }
+
+          .animate-slide-in-right {
+            animation: slideInRight 0.5s ease-out forwards;
+          }
+
+          .animate-scale-in {
+            animation: scaleIn 0.4s ease-out forwards;
+          }
+
+          .animate-bar-grow {
+            animation: barGrow 1s ease-out forwards;
+          }
+
+          .shimmer-bg {
+            background: linear-gradient(
+              90deg,
+              rgba(255, 255, 255, 0) 0%,
+              rgba(255, 255, 255, 0.3) 50%,
+              rgba(255, 255, 255, 0) 100%
+            );
+            background-size: 1000px 100%;
+            animation: shimmer 3s infinite;
+          }
+        `}</style>
+
+        <div className="relative">
+          {/* Header avec gradient animé */}
+          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 rounded-t-2xl -mt-4 -mx-4" />
+
+          <div className="relative p-4 space-y-4">
+            {loading && (
+              <div className="text-center py-12 text-gray-500 text-sm">
+                <div className="inline-block w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin mb-3" />
+                <div>{labels.loading}</div>
+              </div>
+            )}
+
+            {error && (
+              <div className="text-center py-12">
+                <div className="text-red-500 text-sm bg-red-50 rounded-lg p-4">
+                  {error}
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Détail du score */}
-              {Object.keys(scoreBreakdown).length > 0 && (
-                <div>
-                  <h3 className="font-semibold mb-3">{labels.scoreBreakdown}</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex justify-between p-2 bg-gray-50 rounded">
-                      <span>{labels.technicalSkills}:</span>
-                      <span className="font-medium">{scoreBreakdown.technical_skills || 0}/35</span>
-                    </div>
-                    <div className="flex justify-between p-2 bg-gray-50 rounded">
-                      <span>{labels.experience}:</span>
-                      <span className="font-medium">{scoreBreakdown.experience || 0}/30</span>
-                    </div>
-                    <div className="flex justify-between p-2 bg-gray-50 rounded">
-                      <span>{labels.education}:</span>
-                      <span className="font-medium">{scoreBreakdown.education || 0}/20</span>
-                    </div>
-                    <div className="flex justify-between p-2 bg-gray-50 rounded">
-                      <span>{labels.softSkills}:</span>
-                      <span className="font-medium">{scoreBreakdown.soft_skills || 0}/15</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Suggestions d'amélioration */}
-              {suggestions.length > 0 && (
-                <div>
-                  <h3 className="font-semibold mb-3">{labels.suggestions}</h3>
-                  <div className="space-y-2">
-                    {suggestions.map((suggestion, index) => (
-                      <div
-                        key={index}
-                        className={`p-3 rounded-lg border ${getPriorityColor(suggestion.priority)}`}
-                      >
-                        <div className="flex items-start justify-between mb-1">
-                          <span className="text-xs font-semibold uppercase">
-                            {labels.priority}: {labels[suggestion.priority?.toLowerCase()] || suggestion.priority}
-                          </span>
-                          {suggestion.impact && (
-                            <span className="text-xs font-medium">
-                              {labels.impact}: {suggestion.impact}
-                            </span>
-                          )}
+            {!loading && !error && cvData && (
+              <>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* COLONNE GAUCHE : Score + Breakdown */}
+                  <div className="space-y-4 animate-slide-in-left">
+                    {/* Score principal avec cercle animé */}
+                    {cvData.matchScore !== null && (
+                      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-100">
+                        <div className="text-center">
+                          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                            {labels.matchScore}
+                          </div>
+                          <div className="flex items-center justify-center gap-2">
+                            {/* Cercle de progression animé */}
+                            <div className="relative w-32 h-32">
+                              <svg className="w-32 h-32 transform -rotate-90">
+                                {/* Cercle de fond avec dégradé */}
+                                <defs>
+                                  <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor={
+                                      cvData.matchScore >= 80 ? '#22c55e' :
+                                      cvData.matchScore >= 65 ? '#eab308' :
+                                      cvData.matchScore >= 50 ? '#f97316' : '#ef4444'
+                                    } />
+                                    <stop offset="100%" stopColor={
+                                      cvData.matchScore >= 80 ? '#16a34a' :
+                                      cvData.matchScore >= 65 ? '#ca8a04' :
+                                      cvData.matchScore >= 50 ? '#ea580c' : '#dc2626'
+                                    } />
+                                  </linearGradient>
+                                </defs>
+                                <circle
+                                  cx="64"
+                                  cy="64"
+                                  r="56"
+                                  stroke="#e5e7eb"
+                                  strokeWidth="8"
+                                  fill="none"
+                                />
+                                {/* Cercle de progression avec gradient */}
+                                <circle
+                                  cx="64"
+                                  cy="64"
+                                  r="56"
+                                  stroke="url(#scoreGradient)"
+                                  strokeWidth="8"
+                                  fill="none"
+                                  strokeDasharray={`${2 * Math.PI * 56}`}
+                                  strokeDashoffset={`${2 * Math.PI * 56 * (1 - animatedScore / 100)}`}
+                                  strokeLinecap="round"
+                                  className="transition-all duration-1000 ease-out"
+                                  filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
+                                />
+                              </svg>
+                              {/* Score au centre avec animation */}
+                              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className={`text-4xl font-bold transition-colors duration-300 ${getScoreColor(animatedScore)}`}>
+                                  {animatedScore}
+                                </span>
+                                <span className="text-sm text-gray-400 font-medium">/100</span>
+                              </div>
+                              {/* Effet shimmer sur score élevé */}
+                              {cvData.matchScore >= 90 && (
+                                <div className="absolute inset-0 shimmer-bg rounded-full opacity-30" />
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-sm">{suggestion.suggestion}</p>
                       </div>
-                    ))}
+                    )}
+
+                    {/* Détail du score avec barres de progression animées */}
+                    {Object.keys(scoreBreakdown).length > 0 && (
+                      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-100">
+                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                          {labels.scoreBreakdown}
+                        </h3>
+                        <div className="space-y-3">
+                          {/* Compétences techniques */}
+                          <div style={{ animationDelay: '0.1s' }} className="animate-scale-in">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">💻</span>
+                                <span className="text-xs font-medium text-gray-700">{labels.technicalSkills}</span>
+                              </div>
+                              <span className="text-xs font-bold text-gray-900">
+                                {normalizeScore(scoreBreakdown.technical_skills, 35)}/35
+                              </span>
+                            </div>
+                            <div className="w-full bg-gradient-to-r from-gray-100 to-gray-200 rounded-full h-2 overflow-hidden">
+                              <div
+                                className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full shadow-sm animate-bar-grow"
+                                style={{
+                                  width: `${(normalizeScore(scoreBreakdown.technical_skills, 35) / 35) * 100}%`,
+                                  animationDelay: '0.2s'
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Expérience */}
+                          <div style={{ animationDelay: '0.2s' }} className="animate-scale-in">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">💼</span>
+                                <span className="text-xs font-medium text-gray-700">{labels.experience}</span>
+                              </div>
+                              <span className="text-xs font-bold text-gray-900">
+                                {normalizeScore(scoreBreakdown.experience, 30)}/30
+                              </span>
+                            </div>
+                            <div className="w-full bg-gradient-to-r from-gray-100 to-gray-200 rounded-full h-2 overflow-hidden">
+                              <div
+                                className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full shadow-sm animate-bar-grow"
+                                style={{
+                                  width: `${(normalizeScore(scoreBreakdown.experience, 30) / 30) * 100}%`,
+                                  animationDelay: '0.3s'
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Formation */}
+                          <div style={{ animationDelay: '0.3s' }} className="animate-scale-in">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">🎓</span>
+                                <span className="text-xs font-medium text-gray-700">{labels.education}</span>
+                              </div>
+                              <span className="text-xs font-bold text-gray-900">
+                                {normalizeScore(scoreBreakdown.education, 20)}/20
+                              </span>
+                            </div>
+                            <div className="w-full bg-gradient-to-r from-gray-100 to-gray-200 rounded-full h-2 overflow-hidden">
+                              <div
+                                className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full shadow-sm animate-bar-grow"
+                                style={{
+                                  width: `${(normalizeScore(scoreBreakdown.education, 20) / 20) * 100}%`,
+                                  animationDelay: '0.4s'
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Soft skills */}
+                          <div style={{ animationDelay: '0.4s' }} className="animate-scale-in">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">💬</span>
+                                <span className="text-xs font-medium text-gray-700">{labels.softSkills}</span>
+                              </div>
+                              <span className="text-xs font-bold text-gray-900">
+                                {normalizeScore(scoreBreakdown.soft_skills_languages || scoreBreakdown.soft_skills, 15)}/15
+                              </span>
+                            </div>
+                            <div className="w-full bg-gradient-to-r from-gray-100 to-gray-200 rounded-full h-2 overflow-hidden">
+                              <div
+                                className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full shadow-sm animate-bar-grow"
+                                style={{
+                                  width: `${(normalizeScore(scoreBreakdown.soft_skills_languages || scoreBreakdown.soft_skills, 15) / 15) * 100}%`,
+                                  animationDelay: '0.5s'
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* COLONNE DROITE : Suggestions (full height) */}
+                  <div className="animate-slide-in-right flex flex-col">
+                    {/* Suggestions d'amélioration étendues */}
+                    {suggestions.length > 0 && (
+                      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-100 flex flex-col h-full">
+                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+                          <span>💡</span>
+                          {labels.suggestions}
+                        </h3>
+                        <div
+                          className="space-y-2 overflow-y-auto pr-2 flex-1"
+                          style={{
+                            scrollbarWidth: 'thin',
+                            scrollbarColor: '#d1d5db #f3f4f6'
+                          }}
+                        >
+                          {suggestions.map((suggestion, index) => (
+                            <div
+                              key={index}
+                              style={{ animationDelay: `${index * 0.1}s` }}
+                              className={`
+                                p-3 rounded-xl border-l-4 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5
+                                ${suggestion.priority?.toLowerCase() === 'high'
+                                  ? 'bg-red-50/80 border-red-500 hover:bg-red-50'
+                                  : suggestion.priority?.toLowerCase() === 'medium'
+                                  ? 'bg-yellow-50/80 border-yellow-500 hover:bg-yellow-50'
+                                  : 'bg-green-50/80 border-green-500 hover:bg-green-50'
+                                }
+                                animate-scale-in
+                              `}
+                            >
+                              <div className="flex items-start justify-between mb-1.5 gap-2">
+                                <span className={`
+                                  inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full whitespace-nowrap
+                                  ${suggestion.priority?.toLowerCase() === 'high'
+                                    ? 'bg-red-200 text-red-800 animate-pulse'
+                                    : suggestion.priority?.toLowerCase() === 'medium'
+                                    ? 'bg-yellow-200 text-yellow-800'
+                                    : 'bg-green-200 text-green-800'
+                                  }
+                                `}>
+                                  {suggestion.priority?.toLowerCase() === 'high' ? '🔥' :
+                                   suggestion.priority?.toLowerCase() === 'medium' ? '⚡' : '✨'}
+                                  {labels[suggestion.priority?.toLowerCase()] || suggestion.priority}
+                                </span>
+                                {suggestion.impact && (
+                                  <span className="text-[10px] font-semibold text-gray-600 whitespace-nowrap bg-white/50 px-2 py-0.5 rounded-full">
+                                    {suggestion.impact}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs leading-relaxed text-gray-700 break-words">
+                                {suggestion.suggestion}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
 
-              {/* Compétences manquantes */}
-              {missingSkills.length > 0 && (
-                <div>
-                  <h3 className="font-semibold mb-3 text-red-600">{labels.missingSkills}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {missingSkills.map((skill, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-red-50 text-red-700 rounded-full text-sm"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
+              {/* Section compétences en bas - 2 colonnes */}
+              {(missingSkills.length > 0 || matchingSkills.length > 0) && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                  {/* Compétences manquantes (bas gauche) */}
+                  {missingSkills.length > 0 && (
+                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-100 animate-scale-in">
+                      <h3 className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <span>❌</span>
+                        {labels.missingSkills}
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {missingSkills.map((skill, index) => (
+                          <span
+                            key={index}
+                            style={{ animationDelay: `${index * 0.05}s` }}
+                            className="
+                              px-3 py-1 bg-gradient-to-r from-red-50 to-red-100 text-red-700
+                              rounded-full text-xs font-medium border border-red-200
+                              hover:shadow-md hover:scale-105 transition-all duration-200
+                              animate-scale-in
+                            "
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Compétences correspondantes (bas droite) */}
+                  {matchingSkills.length > 0 && (
+                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-100 animate-scale-in">
+                      <h3 className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <span>✅</span>
+                        {labels.matchingSkills}
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {matchingSkills.map((skill, index) => (
+                          <span
+                            key={index}
+                            style={{ animationDelay: `${index * 0.05}s` }}
+                            className="
+                              px-3 py-1 bg-gradient-to-r from-green-50 to-green-100 text-green-700
+                              rounded-full text-xs font-medium border border-green-200
+                              hover:shadow-md hover:scale-105 transition-all duration-200
+                              animate-scale-in inline-flex items-center gap-1
+                            "
+                          >
+                            <span className="text-green-500">✓</span>
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
+              </>
+            )}
 
-              {/* Compétences correspondantes */}
-              {matchingSkills.length > 0 && (
-                <div>
-                  <h3 className="font-semibold mb-3 text-green-600">{labels.matchingSkills}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {matchingSkills.map((skill, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm"
-                      >
-                        ✓ {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+            {/* Message si aucune donnée */}
+            {!loading && !error && cvData && !cvData.matchScore && suggestions.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-5xl mb-4">📊</div>
+                <div className="text-gray-500 text-sm font-medium">{labels.noData}</div>
+              </div>
+            )}
+          </div>
+        </div>
 
-              {/* Message si aucune donnée */}
-              {!cvData.matchScore && suggestions.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  {labels.noData}
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Boutons d'action */}
-          <div className="flex justify-between items-center pt-4 border-t">
+        {/* Boutons d'action avec design amélioré */}
+        <div className="sticky bottom-0 bg-gradient-to-t from-white via-white to-transparent pt-4 pb-2 px-4 -mx-4 mt-4">
+          <div className="flex justify-between items-center gap-4">
             {/* Bouton amélioration automatique */}
             {suggestions.length > 0 && (
               <>
                 {noTokensLeft ? (
                   // Plus de tokens disponibles
-                  <div className="flex flex-col items-center gap-2">
+                  <div className="flex flex-col items-start gap-1">
                     <button
                       disabled
-                      className="px-4 py-2 rounded-lg font-medium bg-gray-200 text-gray-400 cursor-not-allowed grayscale"
+                      className="px-4 py-2 rounded-xl text-sm font-semibold bg-gray-200 text-gray-400 cursor-not-allowed grayscale"
                     >
                       {labels.autoImprove}
                     </button>
-                    <p className="text-sm text-red-600 text-center">
-                      {language === 'fr' ? '❌ Plus de tokens disponibles' : '❌ No tokens left'}
+                    <p className="text-xs text-red-600 font-medium">
+                      {language === 'fr' ? 'Plus de tokens disponibles' : 'No tokens left'}
                     </p>
                   </div>
                 ) : shouldDisableButton || isImproving ? (
                   // Amélioration ou calcul en cours
                   <button
                     disabled
-                    className="px-4 py-2 rounded-lg font-medium bg-gray-300 text-gray-500 cursor-not-allowed animate-pulse"
+                    className="px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-gray-300 to-gray-400 text-white cursor-not-allowed animate-pulse inline-flex items-center gap-2"
                   >
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     {cvData?.optimiseStatus === 'inprogress' || isImproving
                       ? labels.improvementInProgress
                       : labels.calculatingScore}
                   </button>
                 ) : canImprove ? (
-                  // Bouton actif
+                  // Bouton actif avec animation
                   <button
                     onClick={handleImprove}
                     disabled={isImproving}
-                    className="px-4 py-2 rounded-lg font-medium transition-all bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="
+                      group px-4 py-2 rounded-xl text-sm font-semibold
+                      bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600
+                      text-white shadow-lg hover:shadow-xl
+                      transform hover:scale-105 active:scale-95
+                      transition-all duration-200
+                      disabled:opacity-50 disabled:cursor-not-allowed
+                      relative overflow-hidden
+                    "
                   >
-                    {labels.autoImprove}
+                    <span className="absolute inset-0 shimmer-bg opacity-30" />
+                    <span className="relative">{labels.autoImprove}</span>
                   </button>
                 ) : (
                   // CV modifié, besoin de recalculer le score
-                  <div className="flex flex-col items-center gap-2">
+                  <div className="flex flex-col items-start gap-1">
                     <button
                       disabled
-                      className="px-4 py-2 rounded-lg font-medium bg-gray-300 text-gray-500 cursor-not-allowed"
+                      className="px-4 py-2 rounded-xl text-sm font-semibold bg-orange-100 text-orange-600 cursor-not-allowed"
                     >
                       {labels.needNewScore}
                     </button>
-                    <p className="text-sm text-orange-600 text-center">
+                    <p className="text-xs text-orange-600 font-medium">
                       {labels.modifiedWarning}
                     </p>
                   </div>
@@ -485,10 +817,16 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
             {/* Spacer si pas de bouton amélioration */}
             {suggestions.length === 0 && <div />}
 
-            {/* Bouton fermer */}
+            {/* Bouton fermer avec hover effect */}
             <button
               onClick={() => setIsOpen(false)}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              className="
+                px-4 py-2 rounded-xl text-sm font-semibold
+                bg-gray-100 text-gray-700
+                hover:bg-gray-200 hover:text-gray-900
+                transform hover:scale-105 active:scale-95
+                transition-all duration-200
+              "
             >
               {labels.close}
             </button>
