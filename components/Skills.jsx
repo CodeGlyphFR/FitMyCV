@@ -6,7 +6,6 @@ import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getSkillLevelLabel, getSectionTitle } from "@/lib/i18n/cvLabels";
-import { useHighlight } from "./HighlightProvider";
 
 function Row({children}){ return <div className="flex gap-2">{children}</div>; }
 

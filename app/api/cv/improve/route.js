@@ -12,7 +12,7 @@ export async function POST(request) {
   }
 
   try {
-    const { cvFile, analysisLevel = 'medium' } = await request.json();
+    const { cvFile, analysisLevel = 'medium', replaceExisting = false } = await request.json();
 
     if (!cvFile) {
       return NextResponse.json({ error: "CV file missing" }, { status: 400 });
@@ -57,6 +57,73 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
+    // Rate limiting GLOBAL (partagé avec le calcul de score)
+    const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    // Récupérer l'utilisateur avec ses compteurs
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        matchScoreRefreshCount: true,
+        matchScoreFirstRefreshAt: true,
+      },
+    });
+
+    let refreshCount = user?.matchScoreRefreshCount || 0;
+    let firstRefreshAt = user?.matchScoreFirstRefreshAt;
+
+    // Si first refresh est null OU plus vieux que 24h, reset
+    if (!firstRefreshAt || firstRefreshAt < oneDayAgo) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          matchScoreRefreshCount: 0,
+          matchScoreFirstRefreshAt: null,
+        },
+      });
+      refreshCount = 0;
+      firstRefreshAt = null;
+    }
+
+    // Vérifier la limite de 5 actions par 24h
+    if (refreshCount >= 5) {
+      const timeUntilReset = firstRefreshAt
+        ? new Date(firstRefreshAt.getTime() + 24 * 60 * 60 * 1000)
+        : new Date();
+      const totalMinutesLeft = Math.ceil((timeUntilReset - now) / (60 * 1000));
+      const hoursLeft = Math.floor(totalMinutesLeft / 60);
+      const minutesLeft = totalMinutesLeft % 60;
+
+      console.log("[improve-cv] Rate limit GLOBAL atteint pour l'utilisateur", userId);
+      return NextResponse.json({
+        error: "Rate limit exceeded",
+        details: `Vous avez atteint la limite de 5 actions par 24h (calculs de score + optimisations combinés). Réessayez dans ${hoursLeft}h${minutesLeft}m.`,
+        hoursLeft,
+        minutesLeft,
+      }, { status: 429 });
+    }
+
+    // INCRÉMENTER LE COMPTEUR IMMÉDIATEMENT (anti-fraude)
+    if (!firstRefreshAt || refreshCount === 0) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          matchScoreFirstRefreshAt: now,
+          matchScoreRefreshCount: 1,
+        },
+      });
+      console.log("[improve-cv] ✅ Compteur incrémenté: 1/5");
+    } else {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          matchScoreRefreshCount: refreshCount + 1,
+        },
+      });
+      console.log(`[improve-cv] ✅ Compteur incrémenté: ${refreshCount + 1}/5`);
+    }
+
     // Lire le contenu actuel du CV
     const cvContent = await readUserCvFile(userId, cvFile);
 
@@ -73,13 +140,29 @@ export async function POST(request) {
         shouldUpdateCvList: true,
         deviceId: request.headers.get('x-device-id') || 'unknown',
         userId,
+        cvFile, // Lien direct vers le CV
         payload: JSON.stringify({
           cvFile,
           analysisLevel,
           jobOfferUrl: cvRecord.sourceValue,
           currentScore: cvRecord.matchScore || 0,
-          suggestions
+          suggestions,
+          replaceExisting
         })
+      }
+    });
+
+    // Mettre le status d'optimisation à "inprogress"
+    await prisma.cvFile.update({
+      where: {
+        userId_filename: {
+          userId,
+          filename: cvFile,
+        },
+      },
+      data: {
+        optimiseStatus: 'inprogress',
+        optimiseUpdatedAt: new Date()
       }
     });
 
@@ -92,7 +175,8 @@ export async function POST(request) {
       jobOfferUrl: cvRecord.sourceValue,
       currentScore: cvRecord.matchScore || 0,
       suggestions,
-      analysisLevel
+      analysisLevel,
+      replaceExisting
     });
 
     return NextResponse.json({
@@ -119,7 +203,8 @@ async function improveCvAsync({
   jobOfferUrl,
   currentScore,
   suggestions,
-  analysisLevel
+  analysisLevel,
+  replaceExisting = false
 }) {
   try {
     console.log(`[improve-cv] Démarrage amélioration pour ${cvFile}`);
@@ -133,9 +218,16 @@ async function improveCvAsync({
       analysisLevel
     });
 
-    // Générer un nouveau nom de fichier pour la version améliorée
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-    const improvedFilename = `improved_${timestamp}.json`;
+    // Déterminer le nom de fichier à utiliser
+    let improvedFilename;
+    if (replaceExisting) {
+      // Remplacer le CV existant
+      improvedFilename = cvFile;
+    } else {
+      // Générer un nouveau nom de fichier pour la version améliorée
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      improvedFilename = `improved_${timestamp}.json`;
+    }
 
     // Enrichir le CV amélioré avec des métadonnées
     const improvedCv = JSON.parse(result.improvedCv);
@@ -179,21 +271,46 @@ async function improveCvAsync({
     // Sauvegarder le CV amélioré
     await writeUserCvFile(userId, improvedFilename, JSON.stringify(improvedCv, null, 2));
 
-    // Créer l'entrée dans la DB pour le nouveau CV
-    await prisma.cvFile.create({
-      data: {
-        userId,
-        filename: improvedFilename,
-        sourceType: 'link',
-        sourceValue: jobOfferUrl,
-        createdBy: 'improve-cv',
-        analysisLevel,
-        matchScore: result.newScoreEstimate,
-        matchScoreUpdatedAt: new Date()
-      }
-    });
+    if (replaceExisting) {
+      // Mettre à jour l'entrée existante dans la DB
+      await prisma.cvFile.update({
+        where: {
+          userId_filename: {
+            userId,
+            filename: improvedFilename
+          }
+        },
+        data: {
+          matchScore: result.newScoreEstimate,
+          matchScoreUpdatedAt: new Date(),
+          scoreBreakdown: JSON.stringify(result.scoreBreakdown || {}),
+          improvementSuggestions: JSON.stringify(result.newSuggestions || suggestions),
+          optimiseStatus: 'idle',
+          optimiseUpdatedAt: new Date(),
+          updatedAt: new Date()
+        }
+      });
+    } else {
+      // Créer une nouvelle entrée dans la DB
+      await prisma.cvFile.create({
+        data: {
+          userId,
+          filename: improvedFilename,
+          sourceType: 'link',
+          sourceValue: jobOfferUrl,
+          createdBy: 'improve-cv',
+          analysisLevel,
+          matchScore: result.newScoreEstimate,
+          matchScoreUpdatedAt: new Date()
+        }
+      });
+    }
 
     // Mettre à jour la tâche comme terminée
+    const successMessage = replaceExisting
+      ? `CV remplacé ! Score estimé: ${result.newScoreEstimate}/100 (${result.improvementDelta})`
+      : `CV amélioré ! Score estimé: ${result.newScoreEstimate}/100 (${result.improvementDelta})`;
+
     await prisma.backgroundTask.update({
       where: { id: taskId },
       data: {
@@ -202,9 +319,10 @@ async function improveCvAsync({
           improvedFile: improvedFilename,
           changesMade: result.changesMade,
           newScore: result.newScoreEstimate,
-          improvementDelta: result.improvementDelta
+          improvementDelta: result.improvementDelta,
+          replaced: replaceExisting
         }),
-        successMessage: `CV amélioré ! Score estimé: ${result.newScoreEstimate}/100 (${result.improvementDelta})`
+        successMessage
       }
     });
 
@@ -212,6 +330,24 @@ async function improveCvAsync({
 
   } catch (error) {
     console.error(`[improve-cv] Erreur:`, error);
+
+    // ❌ En cas d'erreur, DÉCRÉMENTER le compteur (car il a été incrémenté au début)
+    const userRecord = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        matchScoreRefreshCount: true,
+      },
+    });
+
+    if (userRecord && userRecord.matchScoreRefreshCount > 0) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          matchScoreRefreshCount: userRecord.matchScoreRefreshCount - 1,
+        },
+      });
+      console.log(`[improve-cv] ❌ Erreur - Compteur décrémenté: ${userRecord.matchScoreRefreshCount - 1}/5`);
+    }
 
     // Mettre à jour la tâche comme échouée
     await prisma.backgroundTask.update({
@@ -221,5 +357,19 @@ async function improveCvAsync({
         error: error.message || 'Échec de l\'amélioration'
       }
     });
+
+    // Mettre le CV en failed
+    await prisma.cvFile.update({
+      where: {
+        userId_filename: {
+          userId,
+          filename: cvFile
+        }
+      },
+      data: {
+        optimiseStatus: 'failed',
+        optimiseUpdatedAt: new Date()
+      }
+    }).catch(err => console.error('[improve-cv] Erreur update status failed:', err));
   }
 }

@@ -48,10 +48,9 @@ export async function POST(request) {
       return NextResponse.json({ error: "CV not found" }, { status: 404 });
     }
 
-    // Vérifier que le CV a été créé depuis un lien
-    const validCreatedBy = ["generate-cv", "create-template"];
-    if (!validCreatedBy.includes(cvRecord.createdBy) || cvRecord.sourceType !== "link") {
-      console.log("[calculate-match-score] CV non éligible - createdBy:", cvRecord.createdBy, "sourceType:", cvRecord.sourceType);
+    // Vérifier que le CV a été créé depuis un lien (peu importe comment il a été modifié ensuite)
+    if (cvRecord.sourceType !== "link") {
+      console.log("[calculate-match-score] CV non éligible - sourceType:", cvRecord.sourceType);
       return NextResponse.json({ error: "CV was not created from a job offer link" }, { status: 400 });
     }
 
@@ -152,6 +151,7 @@ export async function POST(request) {
       error: null,
       result: null,
       deviceId: deviceId || "unknown-device",
+      cvFile, // Lien direct vers le CV
       payload: JSON.stringify(payload),
     };
 
@@ -168,7 +168,7 @@ export async function POST(request) {
       await updateBackgroundTask(taskIdentifier, userId, taskData);
     }
 
-    // Mettre le status du CV à "calculating" immédiatement
+    // Mettre le status du CV à "inprogress" immédiatement
     await prisma.cvFile.update({
       where: {
         userId_filename: {
@@ -177,7 +177,7 @@ export async function POST(request) {
         },
       },
       data: {
-        matchScoreStatus: 'calculating',
+        matchScoreStatus: 'inprogress',
       },
     }).catch(err => console.error('[calculate-match-score] Impossible de mettre à jour le status du CV:', err));
 

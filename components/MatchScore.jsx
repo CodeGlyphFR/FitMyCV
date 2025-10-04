@@ -38,10 +38,17 @@ export default function MatchScore({
     if (prevStatusRef.current === "loading" && status === "idle" && score !== null) {
       setShowSuccessEffect(true);
       const timer = setTimeout(() => setShowSuccessEffect(false), 1000);
+
+      // Déclencher un événement pour notifier que le score a été mis à jour
+      console.log('[MatchScore] Déclenchement événement score:updated', { cvFile: currentCvFile, score });
+      window.dispatchEvent(new CustomEvent('score:updated', {
+        detail: { cvFile: currentCvFile, score, status }
+      }));
+
       return () => clearTimeout(timer);
     }
     prevStatusRef.current = status;
-  }, [status, score]);
+  }, [status, score, currentCvFile]);
 
   // Afficher le composant uniquement si le CV a été généré depuis un lien
   if (sourceType !== "link" || !sourceValue) {
@@ -116,7 +123,7 @@ export default function MatchScore({
     if (!canRefresh) {
       return t("matchScore.resetIn", { hours: hoursUntilReset, minutes: minutesUntilReset });
     }
-    return `${score}/100`;
+    return `Score: ${score}`;
   };
 
   const isDisabled = status === "loading" || !canRefresh || isRefreshing;
@@ -135,11 +142,11 @@ export default function MatchScore({
   };
 
   return (
-    <div className="no-print relative -ml-5">
+    <div className="no-print relative -ml-3">
       {/* Bulle principale */}
       <div
         className={`
-          relative w-16 h-16 rounded-full flex items-center justify-center
+          relative w-12 h-12 rounded-full flex items-center justify-center
           bg-white shadow-[0_0_15px_rgba(0,0,0,0.2)]
           ${!isDisabled && !isLoading ? "cursor-pointer" : "cursor-not-allowed"}
           transition-all duration-300
@@ -158,22 +165,17 @@ export default function MatchScore({
           `}
         >
           {score !== null && (
-            <>
-              <div className="relative flex items-center justify-center">
-                <span
-                  className={`text-xl font-bold ${
-                    score > 90 && status !== "loading"
-                      ? "bg-gold-gradient bg-[length:200%_100%] animate-gold-shimmer text-transparent bg-clip-text"
-                      : getScoreColor()
-                  }`}
-                >
-                  {getDisplayText()}
-                </span>
-              </div>
-              {status !== "error" && status !== "loading" && (
-                <span className="text-[10px] text-gray-500">/100</span>
-              )}
-            </>
+            <div className="relative flex items-center justify-center">
+              <span
+                className={`text-base font-bold ${
+                  score > 90 && status !== "loading"
+                    ? "bg-gold-gradient bg-[length:200%_100%] animate-gold-shimmer text-transparent bg-clip-text"
+                    : getScoreColor()
+                }`}
+              >
+                {getDisplayText()}
+              </span>
+            </div>
           )}
         </div>
 
@@ -181,7 +183,7 @@ export default function MatchScore({
         {isHovered && !isDisabled && status !== "loading" && score !== null && (
           <div className="absolute inset-0 flex items-center justify-center">
             <RefreshCw
-              className="w-6 h-6 text-gray-600 opacity-60"
+              className="w-5 h-5 text-gray-600 opacity-60"
               strokeWidth={2.5}
             />
           </div>
@@ -191,7 +193,7 @@ export default function MatchScore({
         {status === "loading" && (
           <div className={`absolute inset-0 flex items-center justify-center animate-spin-slow shimmer`}>
             <RefreshCw
-              className="w-6 h-6 text-gray-600 opacity-60"
+              className="w-5 h-5 text-gray-600 opacity-60"
               strokeWidth={2.5}
             />
           </div>
@@ -201,7 +203,7 @@ export default function MatchScore({
         {score === null && status !== "loading" && status !== "error" && (
           <div className="absolute inset-0 flex items-center justify-center">
             <RefreshCw
-              className="w-6 h-6 text-gray-600 opacity-60"
+              className="w-5 h-5 text-gray-600 opacity-60"
               strokeWidth={2.5}
             />
           </div>
@@ -212,10 +214,10 @@ export default function MatchScore({
       {refreshCount >= 0 && !isLoading && (
         <div
           className={`
-            absolute -top-1 -right-1 w-6 h-6 rounded-full
+            absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full
             ${getBadgeColor()}
             flex items-center justify-center
-            text-white text-xs font-bold
+            text-white text-[10px] font-bold
             shadow-md border-2 border-white
             transition-all duration-300
           `}

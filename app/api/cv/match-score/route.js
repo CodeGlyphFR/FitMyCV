@@ -267,7 +267,7 @@ export async function GET(request) {
     return NextResponse.json({
       score: cvRecord.matchScore,
       updatedAt: cvRecord.matchScoreUpdatedAt,
-      status: cvRecord.matchScoreStatus || 'idle', // Status du calcul: 'idle', 'calculating', 'error'
+      status: cvRecord.matchScoreStatus || 'idle', // Status du calcul: 'idle', 'inprogress', 'failed'
       refreshCount, // Compteur global de l'utilisateur
       refreshLimit: 5,
       canRefresh,

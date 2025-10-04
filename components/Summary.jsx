@@ -7,7 +7,7 @@ import Modal from "./ui/Modal";
 import FormRow from "./ui/FormRow";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getSectionTitle } from "@/lib/i18n/cvLabels";
-import { useHighlight } from "./HighlightProvider";
+import ChangesPanel from "./ChangesPanel";
 
 export default function Summary(props){
   const { t } = useLanguage();
@@ -15,7 +15,6 @@ export default function Summary(props){
   const title = getSectionTitle('summary', props.sectionTitles?.summary, t);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
-  const { isModified, getChangeInfo, isHighlightEnabled } = useHighlight();
 
   const [open, setOpen] = React.useState(false);
   const [text, setText] = React.useState(summary.description || "");
@@ -36,50 +35,35 @@ export default function Summary(props){
   // Masquer entièrement la section si vide et pas en édition
   if (!editing && isEmpty) return null;
 
-  // Vérifier si cette section a été modifiée
-  const isSectionModified = isModified('summary', 'description');
-  const changeInfo = getChangeInfo('summary', 'description');
-
-  // Log pour debug
-  console.log('[Summary] isHighlightEnabled:', isHighlightEnabled);
-  console.log('[Summary] isSectionModified:', isSectionModified);
-  console.log('[Summary] changeInfo:', changeInfo);
-
-  // Appliquer les styles de highlighting si activé et modifié
-  const highlightStyles = isSectionModified && isHighlightEnabled
-    ? 'bg-yellow-50 border-l-4 border-yellow-400 pl-3 -ml-3 transition-all duration-300 animate-pulse-once'
-    : '';
-
   return (
     <Section
       title={
-        <div className="flex items-center justify-between gap-2">
-          <span className="flex items-center gap-2">
-            {title}
-            {isSectionModified && isHighlightEnabled && (
-              <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full font-medium">
-                Modifié
-              </span>
-            )}
-          </span>
-          {editing && (
-            <div className="flex gap-2">
-              <button
-                onClick={()=>setOpen(true)}
-                className="no-print text-xs rounded border px-2 py-0.5"
-              >
-                🖊️
-              </button>
-              {!isEmpty && (
+        <div className="flex items-center justify-between gap-2 w-full">
+          <span>{title}</span>
+          <div className="flex items-center gap-2">
+            {editing && (
+              <div className="flex gap-2">
                 <button
-                  onClick={clear}
-                  className="no-print text-xs rounded border px-2 py-0.5 text-red-600"
+                  onClick={()=>setOpen(true)}
+                  className="no-print text-xs rounded border px-2 py-0.5"
                 >
-                  ❌
+                  🖊️
                 </button>
-              )}
+                {!isEmpty && (
+                  <button
+                    onClick={clear}
+                    className="no-print text-xs rounded border px-2 py-0.5 text-red-600"
+                  >
+                    ❌
+                  </button>
+                )}
+              </div>
+            )}
+            {/* Bouton Historique des modifications */}
+            <div className="no-print">
+              <ChangesPanel />
             </div>
-          )}
+          </div>
         </div>
       }
     >
@@ -88,19 +72,12 @@ export default function Summary(props){
           <p className="text-sm opacity-60">{t("cvSections.noSummary")}</p>
         ) : null
       ) : (
-        <div className={highlightStyles}>
-          <p
-            className="text-sm text-justify leading-relaxed opacity-95 whitespace-pre-line"
-            suppressHydrationWarning
-          >
-            {summary.description}
-          </p>
-          {changeInfo && isHighlightEnabled && (
-            <div className="mt-2 text-xs text-yellow-700 italic">
-              💡 {changeInfo.change || "Section améliorée"}
-            </div>
-          )}
-        </div>
+        <p
+          className="text-sm text-justify leading-relaxed opacity-95 whitespace-pre-line"
+          suppressHydrationWarning
+        >
+          {summary.description}
+        </p>
       )}
 
       <Modal open={open} onClose={()=>setOpen(false)} title={t("cvSections.editSummary")}>

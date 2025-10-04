@@ -3,36 +3,54 @@ import React, { useState, useEffect } from "react";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-export default function CVImprovementPanel({ cvFile }) {
+export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefresh = true }) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cvData, setCvData] = useState(null);
   const [error, setError] = useState(null);
-  const [isImproving, setIsImproving] = useState(false);
-  const [improveSuccess, setImproveSuccess] = useState(false);
   const { t, language } = useLanguage();
+
+  // Fonction pour charger les données
+  const fetchCvData = React.useCallback(async () => {
+    if (!cvFile) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/cv/metadata?file=${encodeURIComponent(cvFile)}`);
+      if (!response.ok) throw new Error("Erreur lors du chargement");
+      const data = await response.json();
+      setCvData(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [cvFile]);
 
   // Charger les données du CV dès que le composant est monté
   useEffect(() => {
-    if (!cvFile) return;
-
-    async function fetchCvData() {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(`/api/cv/metadata?file=${encodeURIComponent(cvFile)}`);
-        if (!response.ok) throw new Error("Erreur lors du chargement");
-        const data = await response.json();
-        setCvData(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchCvData();
-  }, [cvFile]); // Retirer isOpen de la dépendance pour charger dès le montage
+  }, [fetchCvData]);
+
+  // Écouter les changements de score (événement déclenché par le MatchScore)
+  useEffect(() => {
+    const handleScoreUpdate = (event) => {
+      // Recharger les données quand le score est mis à jour
+      if (event.detail?.cvFile === cvFile) {
+        console.log('[CVImprovementPanel] Score mis à jour, rechargement des données...');
+        fetchCvData();
+      }
+    };
+
+    window.addEventListener('score:updated', handleScoreUpdate);
+    window.addEventListener('cv:selected', fetchCvData);
+
+    return () => {
+      window.removeEventListener('score:updated', handleScoreUpdate);
+      window.removeEventListener('cv:selected', fetchCvData);
+    };
+  }, [cvFile, fetchCvData]);
 
   // Parser les données JSON
   const parseJson = (jsonString, defaultValue = null) => {
@@ -48,6 +66,88 @@ export default function CVImprovementPanel({ cvFile }) {
   const scoreBreakdown = parseJson(cvData?.scoreBreakdown, {});
   const missingSkills = parseJson(cvData?.missingSkills, []);
   const matchingSkills = parseJson(cvData?.matchingSkills, []);
+
+  // Vérifier si le CV a été modifié après le dernier calcul de score
+  const isModifiedAfterScore = () => {
+    if (!cvData) return false;
+    if (!cvData.matchScoreUpdatedAt) return true; // Pas de score calculé
+
+    const updatedAt = new Date(cvData.updatedAt);
+    const scoreUpdatedAt = new Date(cvData.matchScoreUpdatedAt);
+
+    // Si le CV a été modifié après le calcul du score (avec une marge de 5 secondes)
+    return updatedAt > new Date(scoreUpdatedAt.getTime() + 5000);
+  };
+
+  // Polling pour vérifier les mises à jour du score
+  useEffect(() => {
+    // Fonction pour vérifier si on a besoin de faire du polling
+    const needsPolling = () => {
+      if (!cvData) return true; // Pas encore de données
+
+      // Si le CV a été modifié après le score et qu'on n'a pas encore de nouvelles suggestions
+      if (isModifiedAfterScore() && (!cvData.improvementSuggestions || cvData.improvementSuggestions === '[]')) {
+        return true;
+      }
+
+      return false;
+    };
+
+    if (needsPolling()) {
+      const interval = setInterval(() => {
+        console.log('[CVImprovementPanel] Polling pour nouvelles données...');
+        fetchCvData();
+      }, 2000); // Vérifier toutes les 2 secondes
+
+      return () => clearInterval(interval);
+    }
+  }, [cvData, fetchCvData]);
+
+  // État pour l'anti-spam sur le bouton "Améliorer automatiquement"
+  const [isImproving, setIsImproving] = useState(false);
+
+  // Polling pour détecter la fin de l'optimisation et recharger la page
+  useEffect(() => {
+    if (!cvData || cvData.optimiseStatus !== 'inprogress') return;
+
+    console.log('[CVImprovementPanel] Polling activé - optimisation en cours...');
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/cv/metadata?file=${encodeURIComponent(cvFile)}`);
+        if (!response.ok) return;
+
+        const data = await response.json();
+        console.log('[CVImprovementPanel] Polling status:', data.optimiseStatus);
+
+        // Si l'optimisation est terminée (idle) ou a échoué (failed)
+        if (data.optimiseStatus === 'idle') {
+          console.log('[CVImprovementPanel] Optimisation terminée - rechargement de la page...');
+          clearInterval(interval);
+
+          // RECHARGEMENT COMPLET DE LA PAGE
+          window.location.reload();
+        } else if (data.optimiseStatus === 'failed') {
+          console.error('[CVImprovementPanel] Optimisation échouée');
+          clearInterval(interval);
+          setCvData(data); // Mettre à jour pour afficher l'erreur
+          setIsImproving(false);
+        }
+      } catch (error) {
+        console.error('[CVImprovementPanel] Erreur polling:', error);
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [cvData?.optimiseStatus, cvFile]);
+
+  // Vérifier si le bouton doit être grisé
+  const shouldDisableButton =
+    cvData?.matchScoreStatus === 'inprogress' ||
+    cvData?.optimiseStatus === 'inprogress';
+
+  // Désactiver le bouton si pas de suggestions, si CV modifié après le score, ou si tâche en cours
+  const canImprove = suggestions.length > 0 && !isModifiedAfterScore() && !shouldDisableButton;
 
   // Fonction pour obtenir la couleur selon la priorité
   const getPriorityColor = (priority) => {
@@ -73,8 +173,10 @@ export default function CVImprovementPanel({ cvFile }) {
 
   // Fonction pour lancer l'amélioration automatique
   const handleImprove = async () => {
+    // Anti-spam : empêcher les clics multiples
+    if (isImproving) return;
     setIsImproving(true);
-    setImproveSuccess(false);
+
     try {
       const response = await fetch("/api/cv/improve", {
         method: "POST",
@@ -84,26 +186,34 @@ export default function CVImprovementPanel({ cvFile }) {
         body: JSON.stringify({
           cvFile,
           analysisLevel: "deep", // Utiliser le niveau max pour l'amélioration
+          replaceExisting: true, // Remplacer le CV existant au lieu d'en créer un nouveau
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
+        setIsImproving(false);
+
+        // Gestion spéciale pour la limite de rate
+        if (response.status === 429) {
+          alert(`⏱️ ${error.details || error.error}`);
+          return;
+        }
+
         throw new Error(error.error || "Erreur lors de l'amélioration");
       }
 
-      const data = await response.json();
-      setImproveSuccess(true);
+      // Fermer immédiatement la modal après avoir lancé le job
+      setIsOpen(false);
 
-      // Rafraîchir la page après 3 secondes pour voir le nouveau CV
-      setTimeout(() => {
-        window.location.reload();
-      }, 3000);
+      // Recharger les données pour obtenir le nouveau statut (optimiseStatus = 'inprogress')
+      await fetchCvData();
+
+      // Le polling détectera quand l'optimisation est terminée et rechargera la page
     } catch (err) {
       console.error("Erreur amélioration:", err);
-      alert(err.message);
-    } finally {
       setIsImproving(false);
+      alert(err.message);
     }
   };
 
@@ -131,23 +241,57 @@ export default function CVImprovementPanel({ cvFile }) {
     autoImprove: language === 'fr' ? "🚀 Améliorer automatiquement" : "🚀 Auto-Improve",
     improving: language === 'fr' ? "Amélioration en cours..." : "Improving...",
     improveSuccess: language === 'fr' ? "✅ CV amélioré ! Rechargement..." : "✅ CV improved! Reloading...",
+    needNewScore: language === 'fr' ? "⚠️ Recalculer le score d'abord" : "⚠️ Recalculate score first",
+    modifiedWarning: language === 'fr' ? "Le CV a été modifié. Recalculez le score pour pouvoir l'optimiser." : "CV has been modified. Recalculate the score to enable optimization.",
+    improvementInProgress: language === 'fr' ? "⏳ Amélioration en cours..." : "⏳ Improvement in progress...",
+    calculatingScore: language === 'fr' ? "📊 Calcul du score en cours..." : "📊 Calculating score...",
   };
 
-  // Ne pas afficher le bouton seulement si on a fini de charger ET qu'il n'y a pas de données
-  // Pendant le chargement initial (loading=true, cvData=null), on affiche quand même le bouton
+  // Calculer le nombre d'actions restantes (partagé avec le calcul de score)
+  const actionsLeft = 5 - refreshCount;
+
+  // Fonction pour la couleur du badge selon les actions restantes
+  const getBadgeColor = () => {
+    if (actionsLeft === 0) return "bg-gray-400";
+    if (actionsLeft === 1) return "bg-red-500";
+    if (actionsLeft === 2) return "bg-orange-500";
+    if (actionsLeft === 3) return "bg-yellow-500";
+    return "bg-green-500";
+  };
+
+  // Ne pas afficher le bouton si:
+  // 1. On a fini de charger ET il n'y a pas de données
+  // 2. Le CV a été modifié après le calcul du score (sauf si une tâche est en cours)
   if (!loading && cvData && !cvData.matchScore && !cvData.improvementSuggestions) {
+    return null;
+  }
+
+  // Si le CV a été modifié ET qu'aucune tâche n'est en cours, ne pas afficher le bouton
+  if (isModifiedAfterScore() && !shouldDisableButton) {
     return null;
   }
 
   return (
     <>
-      {/* Bouton d'ouverture */}
+      {/* Bouton d'ouverture en petite bulle circulaire */}
       <button
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-        title={labels.title}
+        disabled={shouldDisableButton}
+        className={`
+          w-9 h-9 rounded-full flex items-center justify-center
+          shadow-lg border transition-all duration-300
+          ${shouldDisableButton
+            ? 'bg-gray-100 border-gray-200 cursor-not-allowed animate-pulse opacity-60'
+            : 'bg-white border-neutral-200 cursor-pointer hover:shadow-xl'
+          }
+        `}
+        title={shouldDisableButton
+          ? (cvData?.optimiseStatus === 'inprogress' ? labels.improvementInProgress : labels.calculatingScore)
+          : labels.title}
       >
-        {labels.optimize}
+        <span className={`text-base leading-none ${shouldDisableButton ? 'animate-bounce' : ''}`}>
+          {shouldDisableButton ? '📈' : '🎯'}
+        </span>
       </button>
 
       {/* Modal avec les suggestions */}
@@ -177,7 +321,7 @@ export default function CVImprovementPanel({ cvFile }) {
                 <div className="text-center">
                   <div className="text-sm text-gray-600 mb-1">{labels.matchScore}</div>
                   <div className={`text-5xl font-bold ${getScoreColor(cvData.matchScore)}`}>
-                    {cvData.matchScore}/100
+                    {cvData.matchScore}
                   </div>
                 </div>
               )}
@@ -280,29 +424,46 @@ export default function CVImprovementPanel({ cvFile }) {
           {/* Boutons d'action */}
           <div className="flex justify-between items-center pt-4 border-t">
             {/* Bouton amélioration automatique */}
-            {suggestions.length > 0 && !improveSuccess && (
-              <button
-                onClick={handleImprove}
-                disabled={isImproving}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  isImproving
-                    ? 'bg-gray-300 text-gray-500 cursor-wait'
-                    : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:shadow-lg'
-                }`}
-              >
-                {isImproving ? labels.improving : labels.autoImprove}
-              </button>
-            )}
-
-            {/* Message de succès */}
-            {improveSuccess && (
-              <div className="text-green-600 font-medium animate-pulse">
-                {labels.improveSuccess}
-              </div>
+            {suggestions.length > 0 && (
+              <>
+                {shouldDisableButton || isImproving ? (
+                  // Amélioration ou calcul en cours
+                  <button
+                    disabled
+                    className="px-4 py-2 rounded-lg font-medium bg-gray-300 text-gray-500 cursor-not-allowed animate-pulse"
+                  >
+                    {cvData?.optimiseStatus === 'inprogress' || isImproving
+                      ? labels.improvementInProgress
+                      : labels.calculatingScore}
+                  </button>
+                ) : canImprove ? (
+                  // Bouton actif
+                  <button
+                    onClick={handleImprove}
+                    disabled={isImproving}
+                    className="px-4 py-2 rounded-lg font-medium transition-all bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {labels.autoImprove}
+                  </button>
+                ) : (
+                  // CV modifié, besoin de recalculer le score
+                  <div className="flex flex-col items-center gap-2">
+                    <button
+                      disabled
+                      className="px-4 py-2 rounded-lg font-medium bg-gray-300 text-gray-500 cursor-not-allowed"
+                    >
+                      {labels.needNewScore}
+                    </button>
+                    <p className="text-sm text-orange-600 text-center">
+                      {labels.modifiedWarning}
+                    </p>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Spacer si pas de bouton amélioration */}
-            {(suggestions.length === 0 || improveSuccess) && <div />}
+            {suggestions.length === 0 && <div />}
 
             {/* Bouton fermer */}
             <button

@@ -101,10 +101,24 @@ Flux principal dans `lib/openai/generateCv.js`:
 
 ### Match Score
 Score de correspondance (0-100) entre CV et offre d'emploi:
-- Calculé via OpenAI (`lib/openai/calculateMatchScore.js`)
+- Calculé via OpenAI (`lib/openai/calculateMatchScoreWithAnalysis.js`)
 - Stocké dans `CvFile.matchScore`
 - Rate limiting: `User.matchScoreRefreshCount` et `matchScoreFirstRefreshAt`
-- États: `idle`, `calculating`, `error` (`matchScoreStatus`)
+- États: `idle`, `inprogress`, `failed` (`matchScoreStatus`)
+- Retourne aussi: scoreBreakdown, suggestions, missingSkills, matchingSkills
+
+### CV Optimization
+Optimisation automatique des CV basée sur les suggestions d'amélioration:
+- Route: `/api/cv/improve` (POST)
+- Fonction OpenAI: `lib/openai/improveCv.js`
+- États: `idle`, `inprogress`, `failed` (`optimiseStatus`)
+- Workflow:
+  1. Vérification de `matchScoreStatus === 'idle'` et suggestions disponibles
+  2. Lancement: `optimiseStatus → 'inprogress'`
+  3. Amélioration en arrière-plan (remplace le CV existant)
+  4. Fin: `optimiseStatus → 'idle'` et rechargement automatique de la page
+- Anti-spam: Bouton désactivé pendant l'optimisation
+- Le bouton "Optimiser" est grisé si `matchScoreStatus === 'inprogress'` OU `optimiseStatus === 'inprogress'`
 
 ### Validation & Sanitization
 - **Validation**: AJV avec `data/schema.json` (`lib/cv/validation.js`)

@@ -27,6 +27,7 @@ const nextConfig = {
   // Optimiser le chunking
   experimental: {
     optimizePackageImports: ['lucide-react', 'next-auth'],
+    instrumentationHook: true,
   },
   // Optimiser le splitting des chunks
   webpack: (config, { isServer }) => {

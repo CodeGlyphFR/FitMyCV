@@ -4,8 +4,6 @@ import Image from "next/image";
 import SourceInfo from "./SourceInfo";
 import MatchScore from "./MatchScore";
 import CVImprovementPanel from "./CVImprovementPanel";
-import HighlightToggle from "./HighlightToggle";
-import ChangesPanel from "./ChangesPanel";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
@@ -106,6 +104,14 @@ export default function Header(props){
         setRefreshCount(data.refreshCount || 0);
         setHoursUntilReset(data.hoursUntilReset || 0);
         setMinutesUntilReset(data.minutesUntilReset || 0);
+
+        // Déclencher un événement si le score est disponible
+        if (data.score !== null && data.status === 'idle') {
+          console.log('[Header] Déclenchement événement score:updated', { cvFile: currentFile, score: data.score });
+          window.dispatchEvent(new CustomEvent('score:updated', {
+            detail: { cvFile: currentFile, score: data.score, status: data.status || 'idle' }
+          }));
+        }
       }
     } catch (error) {
       console.error("Error fetching match score:", error);
@@ -167,6 +173,38 @@ export default function Header(props){
     return () => window.removeEventListener("cv:selected", handleCvSelected);
   }, [fetchSourceInfo]);
 
+  // Écouter les changements de tâches pour rafraîchir le CV après une optimisation
+  React.useEffect(() => {
+    const handleTasksChanged = async () => {
+      if (!currentCvFile) return;
+
+      try {
+        // Vérifier si une tâche improve-cv vient de se terminer pour ce CV
+        const response = await fetch(`/api/cv/active-tasks?file=${encodeURIComponent(currentCvFile)}`);
+        if (!response.ok) return;
+
+        const data = await response.json();
+
+        // Si aucune tâche improve-cv n'est en cours mais qu'on a des tâches terminées,
+        // on rafraîchit le CV et le score
+        if (!data.hasImproveCv && !data.hasCalculateScore) {
+          console.log('[Header] Tâches terminées, rafraîchissement du CV et score...');
+
+          // Déclencher le rechargement du CV
+          window.dispatchEvent(new Event('cv:selected'));
+
+          // Rafraîchir le score
+          fetchMatchScore();
+        }
+      } catch (error) {
+        console.error('[Header] Erreur vérification tâches:', error);
+      }
+    };
+
+    window.addEventListener('cv:list:changed', handleTasksChanged);
+    return () => window.removeEventListener('cv:list:changed', handleTasksChanged);
+  }, [currentCvFile, fetchMatchScore]);
+
   // Fermer le dropdown de traduction quand on clique à l'extérieur
   React.useEffect(() => {
     function handleClickOutside(event) {
@@ -193,7 +231,7 @@ export default function Header(props){
 
   // SSE pour écouter les changements de status en temps réel
   React.useEffect(() => {
-    if (matchScoreStatus !== 'calculating') return;
+    if (matchScoreStatus !== 'inprogress') return;
 
     // Récupérer le fichier CV actuel depuis le cookie
     const cookies = document.cookie.split(';');
@@ -223,6 +261,14 @@ export default function Header(props){
           // Si le status est 'idle' ou 'error', rafraîchir pour avoir les infos de rate limit
           if (data.status === 'idle' || data.status === 'error') {
             fetchMatchScore();
+
+            // Déclencher un événement pour notifier que le score a été mis à jour
+            if (data.status === 'idle' && data.score !== null) {
+              console.log('[Header SSE] Déclenchement événement score:updated', { cvFile: currentFile, score: data.score });
+              window.dispatchEvent(new CustomEvent('score:updated', {
+                detail: { cvFile: currentFile, score: data.score, status: data.status }
+              }));
+            }
           }
         }
       } catch (error) {
@@ -447,28 +493,34 @@ export default function Header(props){
         </div>
       </div>
 
-      <div className="flex items-start gap-3 flex-wrap">
-        <MatchScore
-          sourceType={sourceInfo.sourceType}
-          sourceValue={sourceInfo.sourceValue}
-          score={matchScore}
-          status={matchScoreStatus === 'calculating' ? 'loading' : matchScoreStatus}
-          isLoading={isLoadingMatchScore}
-          canRefresh={canRefreshScore}
-          refreshCount={refreshCount}
-          hoursUntilReset={hoursUntilReset}
-          minutesUntilReset={minutesUntilReset}
-          onRefresh={handleRefreshMatchScore}
-          currentCvFile={currentCvFile}
-        />
-        {/* Panneau d'amélioration si le CV a été généré depuis une offre */}
-        {sourceInfo.sourceType === "link" && currentCvFile && (
-          <CVImprovementPanel cvFile={currentCvFile} />
-        )}
-        {/* Toggle pour afficher/masquer les modifications */}
-        <HighlightToggle />
-        {/* Historique des modifications */}
-        <ChangesPanel />
+      {/* Score et Info en haut à droite */}
+      <div className="flex items-start gap-4">
+        {/* Container pour le bouton Optimiser + Score avec positionnement relatif */}
+        <div className="relative">
+          {/* Bouton Optimiser - petite bulle en haut à gauche du score */}
+          {sourceInfo.sourceType === "link" && currentCvFile && (
+            <div className="absolute -top -left-14 z-10">
+              <CVImprovementPanel
+                cvFile={currentCvFile}
+                refreshCount={refreshCount}
+                canRefresh={canRefreshScore}
+              />
+            </div>
+          )}
+          <MatchScore
+            sourceType={sourceInfo.sourceType}
+            sourceValue={sourceInfo.sourceValue}
+            score={matchScore}
+            status={matchScoreStatus === 'inprogress' ? 'loading' : matchScoreStatus}
+            isLoading={isLoadingMatchScore}
+            canRefresh={canRefreshScore}
+            refreshCount={refreshCount}
+            hoursUntilReset={hoursUntilReset}
+            minutesUntilReset={minutesUntilReset}
+            onRefresh={handleRefreshMatchScore}
+            currentCvFile={currentCvFile}
+          />
+        </div>
         <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />
       </div>
 
@@ -483,76 +535,79 @@ export default function Header(props){
         </button>
       ) : null}
 
-      {/* Bouton de traduction en bas à droite avec dropdown */}
+      {/* Bouton de traduction en bas à droite */}
       {!editing ? (
-        <div
-          ref={translateDropdownRef}
-          className="no-print absolute bottom-3 right-3"
-        >
-          {/* Options de langue - apparaissent à gauche du bouton quand ouvert */}
+        <div className="no-print absolute bottom-3 right-3 flex items-center gap-2">
+          {/* Bouton de traduction avec dropdown */}
           <div
-            className={`
-              absolute right-full top-0 mr-2
-              flex flex-row gap-2
-              transition-all duration-300 ease-out origin-right
-              ${isTranslateDropdownOpen ? 'opacity-100 scale-100 translate-x-0' : 'opacity-0 scale-75 translate-x-2 pointer-events-none'}
-            `}
+            ref={translateDropdownRef}
+            className="relative"
           >
-            {[
-              { code: 'fr', flag: '/icons/fr.svg', label: 'Français' },
-              { code: 'en', flag: '/icons/gb.svg', label: 'English' }
-            ].map((lang, index) => (
-              <button
-                key={lang.code}
-                onClick={() => executeTranslation(lang.code)}
-                className={`
-                  w-8 h-8 rounded-full
-                  bg-white shadow-lg border border-neutral-200
-                  flex items-center justify-center
-                  overflow-hidden
-                  hover:shadow-xl
-                  transition-all duration-200
-                  cursor-pointer
-                  p-0.5
-                `}
-                style={{
-                  transitionDelay: isTranslateDropdownOpen ? `${index * 50}ms` : '0ms'
-                }}
-                title={`Traduire en ${lang.label}`}
-                aria-label={`Traduire en ${lang.label}`}
-                type="button"
-              >
-                <Image
-                  src={lang.flag}
-                  alt={lang.label}
-                  width={24}
-                  height={24}
-                  className="object-cover"
-                />
-              </button>
-            ))}
-          </div>
+            {/* Options de langue - apparaissent à gauche du bouton quand ouvert */}
+            <div
+              className={`
+                absolute right-full top-0 mr-2
+                flex flex-row gap-2
+                transition-all duration-300 ease-out origin-right
+                ${isTranslateDropdownOpen ? 'opacity-100 scale-100 translate-x-0' : 'opacity-0 scale-75 translate-x-2 pointer-events-none'}
+              `}
+            >
+              {[
+                { code: 'fr', flag: '/icons/fr.svg', label: 'Français' },
+                { code: 'en', flag: '/icons/gb.svg', label: 'English' }
+              ].map((lang, index) => (
+                <button
+                  key={lang.code}
+                  onClick={() => executeTranslation(lang.code)}
+                  className={`
+                    w-8 h-8 rounded-full
+                    bg-white shadow-lg border border-neutral-200
+                    flex items-center justify-center
+                    overflow-hidden
+                    hover:shadow-xl
+                    transition-all duration-200
+                    cursor-pointer
+                    p-0.5
+                  `}
+                  style={{
+                    transitionDelay: isTranslateDropdownOpen ? `${index * 50}ms` : '0ms'
+                  }}
+                  title={`Traduire en ${lang.label}`}
+                  aria-label={`Traduire en ${lang.label}`}
+                  type="button"
+                >
+                  <Image
+                    src={lang.flag}
+                    alt={lang.label}
+                    width={24}
+                    height={24}
+                    className="object-cover"
+                  />
+                </button>
+              ))}
+            </div>
 
-          {/* Bouton principal */}
-          <button
-            onClick={() => setIsTranslateDropdownOpen(!isTranslateDropdownOpen)}
-            className={`
-              w-8 h-8 rounded-full
-              bg-white shadow-lg border border-neutral-300
-              flex items-center justify-center
-              hover:shadow-xl
-              transition-all duration-200
-              cursor-pointer
-              text-base
-              ${isTranslateDropdownOpen ? 'shadow-xl' : ''}
-            `}
-            title={t("translate.buttonTitle")}
-            aria-label="Traduire le CV"
-            aria-expanded={isTranslateDropdownOpen}
-            type="button"
-          >
-            🌐
-          </button>
+            {/* Bouton principal de traduction */}
+            <button
+              onClick={() => setIsTranslateDropdownOpen(!isTranslateDropdownOpen)}
+              className={`
+                w-8 h-8 rounded-full
+                bg-white shadow-lg border border-neutral-300
+                inline-flex items-center justify-center
+                hover:shadow-xl
+                transition-all duration-200
+                cursor-pointer
+                text-sm leading-none
+                ${isTranslateDropdownOpen ? 'shadow-xl' : ''}
+              `}
+              title={t("translate.buttonTitle")}
+              aria-label="Traduire le CV"
+              aria-expanded={isTranslateDropdownOpen}
+              type="button"
+            >
+              <span className="block">🌐</span>
+            </button>
+          </div>
         </div>
       ) : null}
 

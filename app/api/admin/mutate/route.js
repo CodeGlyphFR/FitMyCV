@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth/session";
 import { listUserCvFiles, readUserCvFile, writeUserCvFile } from "@/lib/cv/storage";
 import { sanitizeInMemory } from "@/lib/sanitize";
 import { validateCv } from "@/lib/cv/validation";
+import prisma from "@/lib/prisma";
 
 export const runtime="nodejs"; export const dynamic="force-dynamic";
 function parsePath(p){ var out=[]; var re=/([^\[.]+)|\[(\d+)\]/g; var m; while((m=re.exec(p))!==null){ if(m[1]!=null) out.push(m[1]); else if(m[2]!=null) out.push(Number(m[2])); } return out; }
@@ -40,8 +41,10 @@ export async function POST(req){
     }
 
     const isoNow = new Date().toISOString();
+    // Préserver les métadonnées importantes du CV original
+    const originalMeta = cv.meta || {};
     const meta = {
-      ...(sanitized.meta || {}),
+      ...originalMeta, // Préserve improved_from, changes_made, etc.
       updated_at: isoNow,
     };
     if (!meta.created_at) meta.created_at = isoNow;
@@ -50,6 +53,47 @@ export async function POST(req){
       meta.source = selected === "main.json" ? "raw" : "manual";
     }
     sanitized.meta = meta;
-    await writeUserCvFile(userId, selected, JSON.stringify(sanitized,null,2)); return NextResponse.json({ ok:true });
+    await writeUserCvFile(userId, selected, JSON.stringify(sanitized,null,2));
+
+    // Vérifier si une entrée existe dans la DB pour ce CV
+    const existingCvFile = await prisma.cvFile.findUnique({
+      where: {
+        userId_filename: {
+          userId: userId,
+          filename: selected
+        }
+      }
+    });
+
+    if (existingCvFile) {
+      // Si l'entrée existe, mettre à jour uniquement la date sans toucher aux métadonnées importantes
+      await prisma.cvFile.update({
+        where: {
+          userId_filename: {
+            userId: userId,
+            filename: selected
+          }
+        },
+        data: {
+          updatedAt: new Date()
+          // Ne PAS modifier sourceType, sourceValue, createdBy, etc.
+        }
+      });
+    } else {
+      // Si l'entrée n'existe pas (cas du main.json initial par exemple), la créer
+      // avec des valeurs par défaut qui ne casseront pas le système
+      await prisma.cvFile.create({
+        data: {
+          userId: userId,
+          filename: selected,
+          sourceType: null, // Garder null pour ne pas interférer avec la détection
+          sourceValue: null,
+          createdBy: 'manual-edit',
+          updatedAt: new Date()
+        }
+      });
+    }
+
+    return NextResponse.json({ ok:true });
   }catch(e){ return NextResponse.json({ error:(e&&e.message)||"Erreur inconnue"},{ status:500 }); }
 }
