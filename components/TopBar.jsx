@@ -803,23 +803,19 @@ export default function TopBar() {
 
       // Ignore clicks on trigger
       if (triggerEl.contains(event.target)) {
-        console.log('[Outside Click] Ignored - clicked on trigger');
         return;
       }
 
       // Ignore clicks inside dropdown
       if (dropdownEl && dropdownEl.contains(event.target)) {
-        console.log('[Outside Click] Ignored - clicked on dropdown');
         return;
       }
 
-      console.log('[Outside Click] Closing dropdown');
       setListOpen(false);
     }
 
     function handleKey(event) {
       if (event.key === "Escape" && listOpen) {
-        console.log('[Escape] Closing dropdown');
         setListOpen(false);
       }
     }
@@ -1390,12 +1386,8 @@ export default function TopBar() {
           <button
             type="button"
             onClick={(e) => {
-              console.log('[CV Selector] Clicked! listOpen:', listOpen, 'isScrollingDown:', isScrollingDown);
               e.stopPropagation();
-              setListOpen((prev) => {
-                console.log('[CV Selector] Toggling from', prev, 'to', !prev);
-                return !prev;
-              });
+              setListOpen((prev) => !prev);
             }}
             className="w-full min-w-0 rounded border px-3 py-1 text-sm flex items-center justify-between gap-3 hover:shadow overflow-hidden"
             ref={triggerRef}

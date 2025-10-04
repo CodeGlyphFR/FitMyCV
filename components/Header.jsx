@@ -32,6 +32,7 @@ export default function Header(props){
   const [currentCvFile, setCurrentCvFile] = React.useState(null);
   const { localDeviceId, addOptimisticTask, removeOptimisticTask, refreshTasks } = useBackgroundTasks();
   const { addNotification } = useNotifications();
+  const previousScoreRef = React.useRef(null);
 
   const [f, setF] = React.useState({
     full_name: header.full_name || "",
@@ -105,9 +106,10 @@ export default function Header(props){
         setHoursUntilReset(data.hoursUntilReset || 0);
         setMinutesUntilReset(data.minutesUntilReset || 0);
 
-        // Déclencher un événement si le score est disponible
-        if (data.score !== null && data.status === 'idle') {
+        // Déclencher un événement UNIQUEMENT si le score a changé
+        if (data.score !== null && data.status === 'idle' && previousScoreRef.current !== data.score) {
           console.log('[Header] Déclenchement événement score:updated', { cvFile: currentFile, score: data.score });
+          previousScoreRef.current = data.score;
           window.dispatchEvent(new CustomEvent('score:updated', {
             detail: { cvFile: currentFile, score: data.score, status: data.status || 'idle' }
           }));
@@ -135,6 +137,7 @@ export default function Header(props){
     setHoursUntilReset(0);
     setMinutesUntilReset(0);
     setCurrentCvFile(newCvFile);
+    previousScoreRef.current = null; // Réinitialiser le score précédent
 
     fetch("/api/cv/source", { cache: "no-store" })
       .then(res => {
@@ -262,9 +265,10 @@ export default function Header(props){
           if (data.status === 'idle' || data.status === 'error') {
             fetchMatchScore();
 
-            // Déclencher un événement pour notifier que le score a été mis à jour
-            if (data.status === 'idle' && data.score !== null) {
+            // Déclencher un événement UNIQUEMENT si le score a changé
+            if (data.status === 'idle' && data.score !== null && previousScoreRef.current !== data.score) {
               console.log('[Header SSE] Déclenchement événement score:updated', { cvFile: currentFile, score: data.score });
+              previousScoreRef.current = data.score;
               window.dispatchEvent(new CustomEvent('score:updated', {
                 detail: { cvFile: currentFile, score: data.score, status: data.status }
               }));
