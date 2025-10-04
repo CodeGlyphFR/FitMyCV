@@ -68,7 +68,8 @@
     "rateLimitExceeded": "Global limit reached (5 refreshes/24h for all CVs). Reset in {hours} hours and {minutes} minutes",
     "rateLimitReached": "Global limit of 5 refreshes/24h reached",
     "resetIn": "Reset in {hours} hours and {minutes} minutes",
-    "refreshWithCount": "Refresh ({count}/{limit})"
+    "refreshWithCount": "Refresh ({count}/{limit})",
+    "noTokensLeft": "❌ No tokens left"
   },
   "cvGenerator": {
     "title": "Generate CV with ChatGPT",

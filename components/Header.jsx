@@ -499,7 +499,7 @@ export default function Header(props){
         <div className="relative">
           {/* Bouton Optimiser - petite bulle en haut à gauche du score */}
           {sourceInfo.sourceType === "link" && currentCvFile && (
-            <div className="absolute -top -left-14 z-10">
+            <div className="absolute -bottom-6 -right-11 z-10">
               <CVImprovementPanel
                 cvFile={currentCvFile}
                 refreshCount={refreshCount}

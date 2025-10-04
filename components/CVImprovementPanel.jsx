@@ -141,6 +141,9 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
     return () => clearInterval(interval);
   }, [cvData?.optimiseStatus, cvFile]);
 
+  // Calculer le nombre d'actions restantes (partagé avec le calcul de score)
+  const actionsLeft = 5 - refreshCount;
+
   // Vérifier si le bouton doit être grisé
   const shouldDisableButton =
     cvData?.matchScoreStatus === 'inprogress' ||
@@ -148,6 +151,9 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
 
   // Désactiver le bouton si pas de suggestions, si CV modifié après le score, ou si tâche en cours
   const canImprove = suggestions.length > 0 && !isModifiedAfterScore() && !shouldDisableButton;
+
+  // Vérifier si plus de tokens disponibles
+  const noTokensLeft = actionsLeft === 0;
 
   // Fonction pour obtenir la couleur selon la priorité
   const getPriorityColor = (priority) => {
@@ -247,9 +253,6 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
     calculatingScore: language === 'fr' ? "📊 Calcul du score en cours..." : "📊 Calculating score...",
   };
 
-  // Calculer le nombre d'actions restantes (partagé avec le calcul de score)
-  const actionsLeft = 5 - refreshCount;
-
   // Fonction pour la couleur du badge selon les actions restantes
   const getBadgeColor = () => {
     if (actionsLeft === 0) return "bg-gray-400";
@@ -276,17 +279,21 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
       {/* Bouton d'ouverture en petite bulle circulaire */}
       <button
         onClick={() => setIsOpen(true)}
-        disabled={shouldDisableButton}
+        disabled={shouldDisableButton || noTokensLeft}
         className={`
           w-9 h-9 rounded-full flex items-center justify-center
           shadow-lg border transition-all duration-300
           ${shouldDisableButton
             ? 'bg-gray-100 border-gray-200 cursor-not-allowed animate-pulse opacity-60'
+            : noTokensLeft
+            ? 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-50 grayscale'
             : 'bg-white border-neutral-200 cursor-pointer hover:shadow-xl'
           }
         `}
         title={shouldDisableButton
           ? (cvData?.optimiseStatus === 'inprogress' ? labels.improvementInProgress : labels.calculatingScore)
+          : noTokensLeft
+          ? (language === 'fr' ? '❌ Plus de tokens disponibles' : '❌ No tokens left')
           : labels.title}
       >
         <span className={`text-base leading-none ${shouldDisableButton ? 'animate-bounce' : ''}`}>
@@ -426,7 +433,20 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
             {/* Bouton amélioration automatique */}
             {suggestions.length > 0 && (
               <>
-                {shouldDisableButton || isImproving ? (
+                {noTokensLeft ? (
+                  // Plus de tokens disponibles
+                  <div className="flex flex-col items-center gap-2">
+                    <button
+                      disabled
+                      className="px-4 py-2 rounded-lg font-medium bg-gray-200 text-gray-400 cursor-not-allowed grayscale"
+                    >
+                      {labels.autoImprove}
+                    </button>
+                    <p className="text-sm text-red-600 text-center">
+                      {language === 'fr' ? '❌ Plus de tokens disponibles' : '❌ No tokens left'}
+                    </p>
+                  </div>
+                ) : shouldDisableButton || isImproving ? (
                   // Amélioration ou calcul en cours
                   <button
                     disabled

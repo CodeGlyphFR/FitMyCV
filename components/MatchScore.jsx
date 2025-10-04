@@ -121,6 +121,10 @@ export default function MatchScore({
       return t("matchScore.notCalculated");
     }
     if (!canRefresh) {
+      // Si plus de tokens disponibles (refreshesLeft === 0)
+      if (refreshesLeft === 0) {
+        return t("matchScore.noTokensLeft");
+      }
       return t("matchScore.resetIn", { hours: hoursUntilReset, minutes: minutesUntilReset });
     }
     return `Score: ${score}`;
@@ -155,6 +159,7 @@ export default function MatchScore({
         onClick={handleRefresh}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        title={getScoreTooltip()}
       >
         {/* Contenu de la bulle (score) */}
         <div
