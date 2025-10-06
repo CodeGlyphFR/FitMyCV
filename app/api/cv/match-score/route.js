@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 import { readUserCvFile } from "@/lib/cv/storage";
 import { calculateMatchScore } from "@/lib/openai/calculateMatchScore";
 
+const TOKEN_LIMIT = 5;
+
 export async function POST(request) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -27,18 +29,20 @@ export async function POST(request) {
           filename: cvFile,
         },
       },
+      select: {
+        extractedJobOffer: true,
+        sourceValue: true,
+      },
     });
 
     if (!cvRecord) {
       return NextResponse.json({ error: "CV not found" }, { status: 404 });
     }
 
-    // Vérifier que le CV a été créé depuis un lien
-    // Les CVs depuis liens peuvent avoir createdBy = "generate-cv" ou "create-template"
-    const validCreatedBy = ["generate-cv", "create-template"];
-    if (!validCreatedBy.includes(cvRecord.createdBy) || cvRecord.sourceType !== "link") {
-      console.log("[match-score] CV non éligible - createdBy:", cvRecord.createdBy, "sourceType:", cvRecord.sourceType);
-      return NextResponse.json({ error: "CV was not created from a job offer link" }, { status: 400 });
+    // Vérifier que le CV a une analyse d'offre d'emploi en base
+    if (!cvRecord.extractedJobOffer) {
+      console.log("[match-score] CV non éligible - pas d'extractedJobOffer");
+      return NextResponse.json({ error: "CV does not have a job offer analysis" }, { status: 400 });
     }
 
     // Rate limiting GLOBAL (au niveau utilisateur, pas par CV)
@@ -58,21 +62,22 @@ export async function POST(request) {
       let refreshCount = user?.matchScoreRefreshCount || 0;
       let firstRefreshAt = user?.matchScoreFirstRefreshAt;
 
-      // Si first refresh est null OU plus vieux que 24h, on reset le compteur
-      if (!firstRefreshAt || firstRefreshAt < oneDayAgo) {
+      // Reset UNIQUEMENT si tokens à 0 ET 24h écoulées (ou pas de firstRefreshAt)
+      if (refreshCount === 0 && (!firstRefreshAt || firstRefreshAt < oneDayAgo)) {
         await prisma.user.update({
           where: { id: userId },
           data: {
-            matchScoreRefreshCount: 0,
+            matchScoreRefreshCount: TOKEN_LIMIT,
             matchScoreFirstRefreshAt: null,
           },
         });
-        refreshCount = 0;
+        refreshCount = TOKEN_LIMIT;
         firstRefreshAt = null;
+        console.log(`[match-score] ✅ Reset des tokens: ${TOKEN_LIMIT}/${TOKEN_LIMIT}`);
       }
 
-      // Vérifier la limite de 5 refresh par 24h (GLOBAL pour tous les CVs)
-      if (refreshCount >= 5) {
+      // Vérifier si plus de tokens disponibles (GLOBAL pour tous les CVs)
+      if (refreshCount === 0) {
         const timeUntilReset = firstRefreshAt
           ? new Date(firstRefreshAt.getTime() + 24 * 60 * 60 * 1000)
           : new Date();
@@ -80,19 +85,19 @@ export async function POST(request) {
         const hoursLeft = Math.floor(totalMinutesLeft / 60);
         const minutesLeft = totalMinutesLeft % 60;
 
-        console.log("[match-score] Rate limit GLOBAL atteint pour l'utilisateur", userId);
+        console.log("[match-score] Plus de tokens disponibles pour l'utilisateur", userId);
         return NextResponse.json({
-          error: "Rate limit exceeded",
-          details: `Vous avez atteint la limite de 5 rafraîchissements par 24h (global pour tous vos CVs). Réessayez dans ${hoursLeft}h${minutesLeft}m.`,
+          error: "No tokens available",
+          details: `Vous n'avez plus de tokens disponibles. Réessayez dans ${hoursLeft}h${minutesLeft}m.`,
           hoursLeft,
           minutesLeft,
         }, { status: 429 });
       }
     }
 
-    const jobOfferUrl = cvRecord.sourceValue;
-    if (!jobOfferUrl) {
-      return NextResponse.json({ error: "Job offer URL not found" }, { status: 400 });
+    const jobOfferIdentifier = cvRecord.sourceValue; // URL ou nom de fichier PDF
+    if (!jobOfferIdentifier) {
+      return NextResponse.json({ error: "Job offer source not found" }, { status: 400 });
     }
 
     // Lire et décrypter le contenu du CV
@@ -109,14 +114,14 @@ export async function POST(request) {
 
     // Calculer le score de match avec GPT (sans worker, en direct)
     console.log("[match-score] Calcul du score de match pour", cvFile);
-    console.log("[match-score] URL de l'offre:", jobOfferUrl);
+    console.log("[match-score] Source de l'offre:", jobOfferIdentifier);
     console.log("[match-score] Taille du CV:", cvContent.length, "caractères");
 
     let score;
     try {
       score = await calculateMatchScore({
         cvContent,
-        jobOfferUrl,
+        jobOfferUrl: jobOfferIdentifier, // Peut être URL ou nom fichier, mais extractedJobOffer est en cache
         signal: null,
       });
       console.log("[match-score] Score calculé:", score);
@@ -148,7 +153,7 @@ export async function POST(request) {
 
     let finalRefreshCount = 0;
 
-    // Si c'est un refresh manuel, incrémenter le compteur GLOBAL de l'utilisateur
+    // Si c'est un refresh manuel, décrémenter le compteur GLOBAL de l'utilisateur
     if (!isAutomatic) {
       const now = new Date();
 
@@ -162,26 +167,26 @@ export async function POST(request) {
       });
 
       // Si c'est le premier refresh de la fenêtre, initialiser firstRefreshAt
-      if (!user?.matchScoreFirstRefreshAt || user.matchScoreRefreshCount === 0) {
+      if (!user?.matchScoreFirstRefreshAt || user.matchScoreRefreshCount === TOKEN_LIMIT) {
         await prisma.user.update({
           where: { id: userId },
           data: {
             matchScoreFirstRefreshAt: now,
-            matchScoreRefreshCount: 1,
+            matchScoreRefreshCount: TOKEN_LIMIT - 1,
           },
         });
-        finalRefreshCount = 1;
+        finalRefreshCount = TOKEN_LIMIT - 1;
       } else {
         await prisma.user.update({
           where: { id: userId },
           data: {
-            matchScoreRefreshCount: user.matchScoreRefreshCount + 1,
+            matchScoreRefreshCount: user.matchScoreRefreshCount - 1,
           },
         });
-        finalRefreshCount = user.matchScoreRefreshCount + 1;
+        finalRefreshCount = user.matchScoreRefreshCount - 1;
       }
 
-      console.log(`[match-score] ✅ Calcul réussi - Refresh manuel GLOBAL ${finalRefreshCount}/5`);
+      console.log(`[match-score] ✅ Calcul réussi - Tokens restants: ${finalRefreshCount}/${TOKEN_LIMIT}`);
     } else {
       console.log(`[match-score] ✅ Calcul automatique réussi (pas de compteur)`);
     }
@@ -192,7 +197,7 @@ export async function POST(request) {
       success: true,
       score,
       refreshCount: finalRefreshCount,
-      refreshLimit: 5,
+      refreshLimit: TOKEN_LIMIT,
     }, { status: 200 });
   } catch (error) {
     console.error("Error calculating match score:", error);
@@ -228,6 +233,13 @@ export async function GET(request) {
         matchScore: true,
         matchScoreUpdatedAt: true,
         matchScoreStatus: true,
+        scoreBreakdown: true,
+        improvementSuggestions: true,
+        missingSkills: true,
+        matchingSkills: true,
+        optimiseStatus: true,
+        extractedJobOffer: true,
+        sourceValue: true,
       },
     });
 
@@ -255,7 +267,7 @@ export async function GET(request) {
 
     if (user?.matchScoreFirstRefreshAt && user.matchScoreFirstRefreshAt > oneDayAgo) {
       // On est dans la fenêtre de 24h
-      if (refreshCount >= 5) {
+      if (refreshCount === 0) {
         canRefresh = false;
         const resetTime = new Date(user.matchScoreFirstRefreshAt.getTime() + 24 * 60 * 60 * 1000);
         const totalMinutesLeft = Math.ceil((resetTime - now) / (60 * 1000));
@@ -264,12 +276,35 @@ export async function GET(request) {
       }
     }
 
+    // Parser les JSON strings
+    let scoreBreakdown = null;
+    let improvementSuggestions = null;
+    let missingSkills = null;
+    let matchingSkills = null;
+
+    try {
+      if (cvRecord.scoreBreakdown) scoreBreakdown = JSON.parse(cvRecord.scoreBreakdown);
+      if (cvRecord.improvementSuggestions) improvementSuggestions = JSON.parse(cvRecord.improvementSuggestions);
+      if (cvRecord.missingSkills) missingSkills = JSON.parse(cvRecord.missingSkills);
+      if (cvRecord.matchingSkills) matchingSkills = JSON.parse(cvRecord.matchingSkills);
+    } catch (e) {
+      console.error("[match-score] Erreur parsing JSON:", e);
+    }
+
     return NextResponse.json({
       score: cvRecord.matchScore,
       updatedAt: cvRecord.matchScoreUpdatedAt,
-      status: cvRecord.matchScoreStatus || 'idle', // Status du calcul: 'idle', 'calculating', 'error'
-      refreshCount, // Compteur global de l'utilisateur
-      refreshLimit: 5,
+      status: cvRecord.matchScoreStatus || 'idle', // Status du calcul: 'idle', 'inprogress', 'failed'
+      scoreBreakdown,
+      improvementSuggestions,
+      missingSkills,
+      matchingSkills,
+      optimiseStatus: cvRecord.optimiseStatus || 'idle',
+      hasExtractedJobOffer: !!cvRecord.extractedJobOffer, // Boolean pour savoir si on peut calculer le score
+      hasScoreBreakdown: !!cvRecord.scoreBreakdown, // Boolean pour savoir si on peut optimiser
+      sourceValue: cvRecord.sourceValue,
+      refreshCount, // Tokens restants pour l'utilisateur
+      refreshLimit: TOKEN_LIMIT,
       canRefresh,
       hoursUntilReset,
       minutesUntilReset,

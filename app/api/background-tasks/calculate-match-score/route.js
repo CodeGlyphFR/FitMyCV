@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { scheduleCalculateMatchScoreJob } from "@/lib/backgroundTasks/calculateMatchScoreJob";
 
+const TOKEN_LIMIT = 5;
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -42,17 +44,21 @@ export async function POST(request) {
           filename: cvFile,
         },
       },
+      select: {
+        extractedJobOffer: true,
+        sourceValue: true,
+        sourceType: true,
+      },
     });
 
     if (!cvRecord) {
       return NextResponse.json({ error: "CV not found" }, { status: 404 });
     }
 
-    // Vérifier que le CV a été créé depuis un lien
-    const validCreatedBy = ["generate-cv", "create-template"];
-    if (!validCreatedBy.includes(cvRecord.createdBy) || cvRecord.sourceType !== "link") {
-      console.log("[calculate-match-score] CV non éligible - createdBy:", cvRecord.createdBy, "sourceType:", cvRecord.sourceType);
-      return NextResponse.json({ error: "CV was not created from a job offer link" }, { status: 400 });
+    // Vérifier que le CV a une analyse d'offre d'emploi en base
+    if (!cvRecord.extractedJobOffer) {
+      console.log("[calculate-match-score] CV non éligible - pas d'extractedJobOffer");
+      return NextResponse.json({ error: "CV does not have a job offer analysis" }, { status: 400 });
     }
 
     // Rate limiting GLOBAL (au niveau utilisateur, pas par CV)
@@ -72,21 +78,22 @@ export async function POST(request) {
       let refreshCount = user?.matchScoreRefreshCount || 0;
       let firstRefreshAt = user?.matchScoreFirstRefreshAt;
 
-      // Si first refresh est null OU plus vieux que 24h, on reset le compteur
-      if (!firstRefreshAt || firstRefreshAt < oneDayAgo) {
+      // Reset UNIQUEMENT si tokens à 0 ET 24h écoulées (ou pas de firstRefreshAt)
+      if (refreshCount === 0 && (!firstRefreshAt || firstRefreshAt < oneDayAgo)) {
         await prisma.user.update({
           where: { id: userId },
           data: {
-            matchScoreRefreshCount: 0,
+            matchScoreRefreshCount: TOKEN_LIMIT,
             matchScoreFirstRefreshAt: null,
           },
         });
-        refreshCount = 0;
+        refreshCount = TOKEN_LIMIT;
         firstRefreshAt = null;
+        console.log(`[calculate-match-score] ✅ Reset des tokens: ${TOKEN_LIMIT}/${TOKEN_LIMIT}`);
       }
 
-      // Vérifier la limite de 5 refresh par 24h (GLOBAL pour tous les CVs)
-      if (refreshCount >= 5) {
+      // Vérifier si plus de tokens disponibles (GLOBAL pour tous les CVs)
+      if (refreshCount === 0) {
         const timeUntilReset = firstRefreshAt
           ? new Date(firstRefreshAt.getTime() + 24 * 60 * 60 * 1000)
           : new Date();
@@ -94,34 +101,34 @@ export async function POST(request) {
         const hoursLeft = Math.floor(totalMinutesLeft / 60);
         const minutesLeft = totalMinutesLeft % 60;
 
-        console.log("[calculate-match-score] Rate limit GLOBAL atteint pour l'utilisateur", userId);
+        console.log("[calculate-match-score] Plus de tokens disponibles pour l'utilisateur", userId);
         return NextResponse.json({
-          error: "Rate limit exceeded",
-          details: `Vous avez atteint la limite de 5 rafraîchissements par 24h (global pour tous vos CVs). Réessayez dans ${hoursLeft}h${minutesLeft}m.`,
+          error: "No tokens available",
+          details: `Vous n'avez plus de tokens disponibles. Réessayez dans ${hoursLeft}h${minutesLeft}m.`,
           hoursLeft,
           minutesLeft,
         }, { status: 429 });
       }
 
-      // ✅ INCRÉMENTER LE COMPTEUR IMMÉDIATEMENT (anti-fraude)
-      // Si la tâche échoue, le job le décrémentera
-      if (!firstRefreshAt || refreshCount === 0) {
+      // ✅ DÉCRÉMENTER LE COMPTEUR IMMÉDIATEMENT (anti-fraude)
+      // Si la tâche échoue, le job l'incrémentera pour restituer le token
+      if (!firstRefreshAt || refreshCount === TOKEN_LIMIT) {
         await prisma.user.update({
           where: { id: userId },
           data: {
             matchScoreFirstRefreshAt: now,
-            matchScoreRefreshCount: 1,
+            matchScoreRefreshCount: TOKEN_LIMIT - 1,
           },
         });
-        console.log("[calculate-match-score] ✅ Compteur incrémenté immédiatement: 1/5");
+        console.log(`[calculate-match-score] ✅ Token consommé immédiatement: ${TOKEN_LIMIT - 1}/${TOKEN_LIMIT} restants`);
       } else {
         await prisma.user.update({
           where: { id: userId },
           data: {
-            matchScoreRefreshCount: refreshCount + 1,
+            matchScoreRefreshCount: refreshCount - 1,
           },
         });
-        console.log(`[calculate-match-score] ✅ Compteur incrémenté immédiatement: ${refreshCount + 1}/5`);
+        console.log(`[calculate-match-score] ✅ Token consommé immédiatement: ${refreshCount - 1}/${TOKEN_LIMIT} restants`);
       }
     }
 
@@ -152,6 +159,7 @@ export async function POST(request) {
       error: null,
       result: null,
       deviceId: deviceId || "unknown-device",
+      cvFile, // Lien direct vers le CV
       payload: JSON.stringify(payload),
     };
 
@@ -168,7 +176,7 @@ export async function POST(request) {
       await updateBackgroundTask(taskIdentifier, userId, taskData);
     }
 
-    // Mettre le status du CV à "calculating" immédiatement
+    // Mettre le status du CV à "inprogress" immédiatement
     await prisma.cvFile.update({
       where: {
         userId_filename: {
@@ -177,7 +185,7 @@ export async function POST(request) {
         },
       },
       data: {
-        matchScoreStatus: 'calculating',
+        matchScoreStatus: 'inprogress',
       },
     }).catch(err => console.error('[calculate-match-score] Impossible de mettre à jour le status du CV:', err));
 

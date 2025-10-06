@@ -1,0 +1,118 @@
+AMÉLIORATION CIBLÉE DU CV
+
+## 📊 ANALYSE DE L'ÉCART
+
+Tu as reçu:
+1. Un CV existant avec un score de **{currentScore}/100**
+2. L'offre d'emploi cible: **{jobOfferUrl}**
+3. Les suggestions d'amélioration identifiées
+
+## 🎯 OBJECTIF
+
+Améliorer **UNIQUEMENT** les sections qui font perdre des points, sans toucher aux parties déjà optimales.
+
+## 📝 RÈGLES D'AMÉLIORATION
+
+1. ✅ NE PAS modifier les sections qui correspondent déjà bien
+2. ❌ NE JAMAIS inventer d'expériences ou compétences absentes
+3. ✅ REFORMULER pour mettre en valeur ce qui existe déjà
+4. ✅ AJOUTER uniquement des compétences justifiables par les expériences
+5. ✅ OPTIMISER les mots-clés pour l'ATS
+6. ✅ CLARIFIER les responsabilités et impacts
+
+## 🔧 MODIFICATIONS AUTORISÉES
+
+- **Summary**: Reformuler pour mieux matcher le poste
+- **Skills**: Réorganiser par priorité, ajouter si justifié par l'expérience
+- **Experience**: Détailler les responsabilités pertinentes, ajouter métriques
+- **Current title**: Adapter au poste visé (rester cohérent)
+
+## 📐 CALCUL DU NOUVEAU SCORE ESTIMÉ
+
+Évalue le nouveau score selon **4 catégories** (chacune notée sur 100):
+
+| Catégorie | Poids | Description |
+|-----------|-------|-------------|
+| `technical_skills` | 35% | Compétences techniques, technologies, outils |
+| `experience` | 30% | Expérience professionnelle pertinente |
+| `education` | 20% | Formation, diplômes, certifications |
+| `soft_skills_languages` | 15% | Soft skills + langues |
+
+### FORMULE DE CALCUL
+
+```
+new_score_estimate = (technical_skills × 0.35) +
+                     (experience × 0.30) +
+                     (education × 0.20) +
+                     (soft_skills_languages × 0.15)
+```
+
+**⚠️ IMPORTANT** : Le score final DOIT correspondre exactement à cette formule (tolérance ±2 points max).
+
+## 📄 FORMAT DE RÉPONSE OBLIGATOIRE (JSON)
+
+```json
+{
+  "improved_cv": {
+    // CV amélioré complet avec TOUTES les sections
+    // Structure identique au CV d'origine
+  },
+  "changes_made": [
+    {
+      "section": "summary",
+      "field": "description",
+      "change": "Ajouté mention de gestion d'équipe et reformulé pour matcher le poste",
+      "reason": "Gestion d'équipe requise dans l'offre et présente dans l'expérience"
+    },
+    {
+      "section": "skills",
+      "field": "hard_skills",
+      "change": "Ajouté Docker et Kubernetes avec niveau confirmé",
+      "reason": "Technologies mentionnées dans l'offre et utilisées dans les projets"
+    }
+  ],
+  "new_score_estimate": 85,
+  "improvement_delta": "+10 points",
+  "score_breakdown": {
+    "technical_skills": 85,
+    "experience": 90,
+    "education": 80,
+    "soft_skills_languages": 75
+  },
+  "suggestions": [
+    {
+      "title": "Ajouter métriques de performance",
+      "suggestion": "Ajouter des métriques de performance quantifiables dans les expériences professionnelles",
+      "priority": "medium",
+      "impact": "+2 points"
+    }
+  ],
+  "missing_skills": ["Kubernetes", "TypeScript"],
+  "matching_skills": ["React", "Node.js", "Docker", "MongoDB"]
+}
+```
+
+## ⚠️ VALIDATIONS OBLIGATOIRES
+
+1. **changes_made** : Tableau COMPLET avec TOUTES les modifications effectuées (section, field, change, reason)
+2. **score_breakdown** : 4 catégories avec scores sur 100 (pas sur poids)
+3. **suggestions** : Nouvelles suggestions d'amélioration restantes (3-5 max)
+4. **missing_skills** : Compétences critiques encore manquantes
+5. **matching_skills** : Compétences du CV qui correspondent à l'offre
+6. **Formule** : VÉRIFIE que le score final correspond à la formule. Si écart > 2 points → ajuste le score_breakdown
+
+---
+
+## CV ACTUEL
+
+{cvContent}
+
+---
+
+## SUGGESTIONS D'AMÉLIORATION PRIORITAIRES
+
+{suggestionsText}
+
+---
+
+Améliore le CV en te basant sur ces suggestions. Sois précis et justifie chaque modification.

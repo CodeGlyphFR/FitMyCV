@@ -9,6 +9,7 @@ import Extras from "@/components/Extras";
 import Projects from "@/components/Projects";
 import EmptyState from "@/components/EmptyState";
 import ScrollToTopOnMount from "@/components/ScrollToTopOnMount";
+import { HighlightProvider } from "@/components/HighlightProvider";
 
 import { sanitizeInMemory } from "@/lib/sanitize";
 import { cookies, headers } from "next/headers";
@@ -88,26 +89,28 @@ export default async function Page(){
   const order = base;
 
   return (
-    <main className="max-w-4xl mx-auto p-4 pb-8">
-      <ScrollToTopOnMount />
+    <HighlightProvider cv={cv}>
+      <main className="max-w-4xl mx-auto p-4 pb-8">
+        <ScrollToTopOnMount />
 
-      {order.map(k => (
-        <div key={k} className="cv-section">{sections[k]}</div>
-      ))}
+        {order.map(k => (
+          <div key={k} className="cv-section">{sections[k]}</div>
+        ))}
 
-      <div className="no-print mt-8 text-xs opacity-60 text-center space-y-1">
-        <div>Next.js (JS) • Erick DE SMET • 2025</div>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
-          <span>Version 1.0.8</span>
-          <span className="hidden sm:inline">•</span>
-          <a
-            href="/cookies"
-            className="hover:opacity-80 underline transition-opacity"
-          >
-            Gestion des cookies
-          </a>
+        <div className="no-print mt-8 text-xs opacity-60 text-center space-y-1">
+          <div>Next.js (JS) • Erick DE SMET • 2025</div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+            <span>Version 1.0.8</span>
+            <span className="hidden sm:inline">•</span>
+            <a
+              href="/cookies"
+              className="hover:opacity-80 underline transition-opacity"
+            >
+              Gestion des cookies
+            </a>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </HighlightProvider>
   );
 }

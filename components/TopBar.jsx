@@ -61,10 +61,14 @@ function getCvIcon(createdBy, originalCreatedBy, className) {
   // createdBy = 'generate-cv' => GPT icon (généré par IA)
   // createdBy = 'create-template' => GPT icon (CV modèle créé par IA)
   // createdBy = 'generate-cv-job-title' => GPT icon (CV généré depuis titre de poste)
+  // createdBy = 'improve-cv' => Rocket icon (CV amélioré par IA)
   // createdBy = 'import-pdf' => Import icon (importé depuis PDF)
   // createdBy = null => Pas d'icône (créé manuellement)
   if (createdBy === 'translate-cv') {
     return <TranslateIcon className={className} size={16} />;
+  }
+  if (createdBy === 'improve-cv') {
+    return <span className={className}>🚀</span>; // Icône fusée pour CV amélioré
   }
   if (createdBy === 'generate-cv' || createdBy === 'create-template' || createdBy === 'generate-cv-job-title') {
     return <GptLogo className={className} />;
@@ -799,23 +803,19 @@ export default function TopBar() {
 
       // Ignore clicks on trigger
       if (triggerEl.contains(event.target)) {
-        console.log('[Outside Click] Ignored - clicked on trigger');
         return;
       }
 
       // Ignore clicks inside dropdown
       if (dropdownEl && dropdownEl.contains(event.target)) {
-        console.log('[Outside Click] Ignored - clicked on dropdown');
         return;
       }
 
-      console.log('[Outside Click] Closing dropdown');
       setListOpen(false);
     }
 
     function handleKey(event) {
       if (event.key === "Escape" && listOpen) {
-        console.log('[Escape] Closing dropdown');
         setListOpen(false);
       }
     }
@@ -1386,12 +1386,8 @@ export default function TopBar() {
           <button
             type="button"
             onClick={(e) => {
-              console.log('[CV Selector] Clicked! listOpen:', listOpen, 'isScrollingDown:', isScrollingDown);
               e.stopPropagation();
-              setListOpen((prev) => {
-                console.log('[CV Selector] Toggling from', prev, 'to', !prev);
-                return !prev;
-              });
+              setListOpen((prev) => !prev);
             }}
             className="w-full min-w-0 rounded border px-3 py-1 text-sm flex items-center justify-between gap-3 hover:shadow overflow-hidden"
             ref={triggerRef}

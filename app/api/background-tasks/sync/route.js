@@ -198,6 +198,40 @@ export async function POST(request) {
           where: { id: task.id },
           data: updatePayload,
         });
+
+        // Si une tâche est annulée, réinitialiser les statuts du CV
+        if (task.status === 'cancelled' && existing.status !== 'cancelled') {
+          console.log(`[sync] Tâche ${task.id} (${existing.type}) passée à 'cancelled'`);
+
+          try {
+            const payload = existing.payload ? JSON.parse(existing.payload) : null;
+            const cvFile = payload?.cvFile;
+
+            console.log(`[sync] Payload cvFile:`, cvFile);
+
+            if (cvFile) {
+              if (existing.type === 'improve-cv') {
+                // Réinitialiser optimiseStatus
+                await prisma.cvFile.update({
+                  where: { userId_filename: { userId, filename: cvFile } },
+                  data: { optimiseStatus: 'idle', optimiseUpdatedAt: new Date() }
+                });
+                console.log(`[sync] ✅ optimiseStatus → idle pour ${cvFile}`);
+              } else if (existing.type === 'calculate-match-score') {
+                // Réinitialiser matchScoreStatus
+                await prisma.cvFile.update({
+                  where: { userId_filename: { userId, filename: cvFile } },
+                  data: { matchScoreStatus: 'idle' }
+                });
+                console.log(`[sync] ✅ matchScoreStatus → idle pour ${cvFile}`);
+              }
+            } else {
+              console.warn(`[sync] ⚠️ Pas de cvFile dans le payload pour ${task.id}`);
+            }
+          } catch (err) {
+            console.error('[sync] ❌ Erreur réinitialisation statuts CV:', err);
+          }
+        }
       } else {
         await prisma.backgroundTask.create({
           data: {

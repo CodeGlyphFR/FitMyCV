@@ -7,6 +7,7 @@ import Modal from "./ui/Modal";
 import FormRow from "./ui/FormRow";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getSectionTitle } from "@/lib/i18n/cvLabels";
+import ChangesPanel from "./ChangesPanel";
 
 export default function Summary(props){
   const { t } = useLanguage();
@@ -37,26 +38,32 @@ export default function Summary(props){
   return (
     <Section
       title={
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2 w-full">
           <span>{title}</span>
-          {editing && (
-            <div className="flex gap-2">
-              <button
-                onClick={()=>setOpen(true)}
-                className="no-print text-xs rounded border px-2 py-0.5"
-              >
-                🖊️
-              </button>
-              {!isEmpty && (
+          <div className="flex items-center gap-2">
+            {editing && (
+              <div className="flex gap-2">
                 <button
-                  onClick={clear}
-                  className="no-print text-xs rounded border px-2 py-0.5 text-red-600"
+                  onClick={()=>setOpen(true)}
+                  className="no-print text-xs rounded border px-2 py-0.5"
                 >
-                  ❌
+                  🖊️
                 </button>
-              )}
+                {!isEmpty && (
+                  <button
+                    onClick={clear}
+                    className="no-print text-xs rounded border px-2 py-0.5 text-red-600"
+                  >
+                    ❌
+                  </button>
+                )}
+              </div>
+            )}
+            {/* Bouton Historique des modifications */}
+            <div className="no-print">
+              <ChangesPanel />
             </div>
-          )}
+          </div>
         </div>
       }
     >
