@@ -62,8 +62,8 @@ export async function POST(request) {
       let refreshCount = user?.matchScoreRefreshCount || 0;
       let firstRefreshAt = user?.matchScoreFirstRefreshAt;
 
-      // Si first refresh est null OU plus vieux que 24h, on reset le compteur
-      if (!firstRefreshAt || firstRefreshAt < oneDayAgo) {
+      // Reset UNIQUEMENT si tokens à 0 ET 24h écoulées (ou pas de firstRefreshAt)
+      if (refreshCount === 0 && (!firstRefreshAt || firstRefreshAt < oneDayAgo)) {
         await prisma.user.update({
           where: { id: userId },
           data: {
@@ -73,6 +73,7 @@ export async function POST(request) {
         });
         refreshCount = TOKEN_LIMIT;
         firstRefreshAt = null;
+        console.log(`[match-score] ✅ Reset des tokens: ${TOKEN_LIMIT}/${TOKEN_LIMIT}`);
       }
 
       // Vérifier si plus de tokens disponibles (GLOBAL pour tous les CVs)
