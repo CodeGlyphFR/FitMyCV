@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefresh = true }) {
+export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cvData, setCvData] = useState(null);
@@ -69,44 +69,18 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
   const missingSkills = parseJson(cvData?.missingSkills, []);
   const matchingSkills = parseJson(cvData?.matchingSkills, []);
 
-  // Vérifier si le CV a été modifié après le dernier calcul de score
-  const isModifiedAfterScore = () => {
-    if (!cvData) return false;
-    if (!cvData.matchScoreUpdatedAt) return true; // Pas de score calculé
-
-    const updatedAt = new Date(cvData.updatedAt);
-    const scoreUpdatedAt = new Date(cvData.matchScoreUpdatedAt);
-
-    // Si le CV a été modifié après le calcul du score (avec une marge de 5 secondes)
-    return updatedAt > new Date(scoreUpdatedAt.getTime() + 5000);
-  };
-
-  // Polling pour vérifier les mises à jour du score
-  useEffect(() => {
-    // Fonction pour vérifier si on a besoin de faire du polling
-    const needsPolling = () => {
-      if (!cvData) return true; // Pas encore de données
-
-      // Si le CV a été modifié après le score et qu'on n'a pas encore de nouvelles suggestions
-      if (isModifiedAfterScore() && (!cvData.improvementSuggestions || cvData.improvementSuggestions === '[]')) {
-        return true;
-      }
-
-      return false;
-    };
-
-    if (needsPolling()) {
-      const interval = setInterval(() => {
-        console.log('[CVImprovementPanel] Polling pour nouvelles données...');
-        fetchCvData();
-      }, 2000); // Vérifier toutes les 2 secondes
-
-      return () => clearInterval(interval);
-    }
-  }, [cvData, fetchCvData]);
-
   // État pour l'anti-spam sur le bouton "Améliorer automatiquement"
   const [isImproving, setIsImproving] = useState(false);
+
+  // Synchroniser isImproving avec optimiseStatus
+  useEffect(() => {
+    if (cvData?.optimiseStatus === 'idle' || cvData?.optimiseStatus === 'failed' || cvData?.optimiseStatus === null) {
+      if (isImproving) {
+        console.log('[CVImprovementPanel] Réinitialisation de isImproving car optimiseStatus =', cvData?.optimiseStatus);
+        setIsImproving(false);
+      }
+    }
+  }, [cvData?.optimiseStatus, isImproving]);
 
   // Polling pour détecter la fin de l'optimisation et recharger la page
   useEffect(() => {
@@ -124,11 +98,18 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
 
         // Si l'optimisation est terminée (idle) ou a échoué (failed)
         if (data.optimiseStatus === 'idle') {
-          console.log('[CVImprovementPanel] Optimisation terminée - rechargement de la page...');
+          console.log('[CVImprovementPanel] Optimisation terminée - rechargement du CV...');
           clearInterval(interval);
 
-          // RECHARGEMENT COMPLET DE LA PAGE
-          window.location.reload();
+          // Déclencher le rechargement de la liste des CV (au cas où un nouveau CV a été créé)
+          window.dispatchEvent(new Event('cv:list:changed'));
+
+          // Déclencher le rechargement du CV actuellement affiché
+          window.dispatchEvent(new Event('cv:selected'));
+
+          // Recharger les données locales
+          fetchCvData();
+          setIsImproving(false);
         } else if (data.optimiseStatus === 'failed') {
           console.error('[CVImprovementPanel] Optimisation échouée');
           clearInterval(interval);
@@ -143,19 +124,10 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
     return () => clearInterval(interval);
   }, [cvData?.optimiseStatus, cvFile]);
 
-  // Calculer le nombre d'actions restantes (partagé avec le calcul de score)
-  const actionsLeft = 5 - refreshCount;
-
-  // Vérifier si le bouton doit être grisé
+  // Vérifier si une tâche est en cours (optimisation ou calcul de score)
   const shouldDisableButton =
     cvData?.matchScoreStatus === 'inprogress' ||
     cvData?.optimiseStatus === 'inprogress';
-
-  // Désactiver le bouton si pas de suggestions, si CV modifié après le score, ou si tâche en cours
-  const canImprove = suggestions.length > 0 && !isModifiedAfterScore() && !shouldDisableButton;
-
-  // Vérifier si plus de tokens disponibles
-  const noTokensLeft = actionsLeft === 0;
 
   // Fonction pour obtenir la couleur selon la priorité
   const getPriorityColor = (priority) => {
@@ -249,19 +221,8 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
     autoImprove: language === 'fr' ? "Améliorer automatiquement" : "Auto-Improve",
     improving: language === 'fr' ? "Amélioration en cours..." : "Improving...",
     improveSuccess: language === 'fr' ? "CV amélioré ! Rechargement..." : "CV improved! Reloading...",
-    needNewScore: language === 'fr' ? "Recalculer le score d'abord" : "Recalculate score first",
-    modifiedWarning: language === 'fr' ? "Le CV a été modifié. Recalculez le score pour pouvoir l'optimiser." : "CV has been modified. Recalculate the score to enable optimization.",
     improvementInProgress: language === 'fr' ? "Amélioration en cours..." : "Improvement in progress...",
     calculatingScore: language === 'fr' ? "Calcul du score en cours..." : "Calculating score...",
-  };
-
-  // Fonction pour la couleur du badge selon les actions restantes
-  const getBadgeColor = () => {
-    if (actionsLeft === 0) return "bg-gray-400";
-    if (actionsLeft === 1) return "bg-red-500";
-    if (actionsLeft === 2) return "bg-orange-500";
-    if (actionsLeft === 3) return "bg-yellow-500";
-    return "bg-green-500";
   };
 
   // Fonction pour normaliser les scores (convertir de /100 à leurs échelles respectives)
@@ -304,15 +265,8 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
     }
   }, [isOpen, cvData?.matchScore]);
 
-  // Ne pas afficher le bouton si:
-  // 1. On a fini de charger ET il n'y a pas de données
-  // 2. Le CV a été modifié après le calcul du score (sauf si une tâche est en cours)
-  if (!loading && cvData && !cvData.matchScore && !cvData.improvementSuggestions) {
-    return null;
-  }
-
-  // Si le CV a été modifié ET qu'aucune tâche n'est en cours, ne pas afficher le bouton
-  if (isModifiedAfterScore() && !shouldDisableButton) {
+  // Condition ultime d'affichage: afficher uniquement si scoreBreakdown existe dans la base
+  if (!loading && cvData && !cvData.scoreBreakdown) {
     return null;
   }
 
@@ -321,21 +275,17 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
       {/* Bouton d'ouverture en petite bulle circulaire */}
       <button
         onClick={() => setIsOpen(true)}
-        disabled={shouldDisableButton || noTokensLeft}
+        disabled={shouldDisableButton}
         className={`
           w-9 h-9 rounded-full flex items-center justify-center
           shadow-lg border transition-all duration-300
           ${shouldDisableButton
             ? 'bg-gray-100 border-gray-200 cursor-not-allowed animate-pulse opacity-60'
-            : noTokensLeft
-            ? 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-50 grayscale'
             : 'bg-white border-neutral-200 cursor-pointer hover:shadow-xl'
           }
         `}
         title={shouldDisableButton
           ? (cvData?.optimiseStatus === 'inprogress' ? labels.improvementInProgress : labels.calculatingScore)
-          : noTokensLeft
-          ? (language === 'fr' ? '❌ Plus de tokens disponibles' : '❌ No tokens left')
           : labels.title}
       >
         <span className={`text-base leading-none ${shouldDisableButton ? 'animate-bounce' : ''}`}>
@@ -761,20 +711,7 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
             {/* Bouton amélioration automatique */}
             {suggestions.length > 0 && (
               <>
-                {noTokensLeft ? (
-                  // Plus de tokens disponibles
-                  <div className="flex flex-col items-start gap-1">
-                    <button
-                      disabled
-                      className="px-4 py-2 rounded-xl text-sm font-semibold bg-gray-200 text-gray-400 cursor-not-allowed grayscale"
-                    >
-                      {labels.autoImprove}
-                    </button>
-                    <p className="text-xs text-red-600 font-medium">
-                      {language === 'fr' ? 'Plus de tokens disponibles' : 'No tokens left'}
-                    </p>
-                  </div>
-                ) : shouldDisableButton || isImproving ? (
+                {shouldDisableButton || isImproving ? (
                   // Amélioration ou calcul en cours
                   <button
                     disabled
@@ -785,7 +722,7 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
                       ? labels.improvementInProgress
                       : labels.calculatingScore}
                   </button>
-                ) : canImprove ? (
+                ) : (
                   // Bouton actif avec animation
                   <button
                     onClick={handleImprove}
@@ -803,19 +740,6 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
                     <span className="absolute inset-0 shimmer-bg opacity-30" />
                     <span className="relative">{labels.autoImprove}</span>
                   </button>
-                ) : (
-                  // CV modifié, besoin de recalculer le score
-                  <div className="flex flex-col items-start gap-1">
-                    <button
-                      disabled
-                      className="px-4 py-2 rounded-xl text-sm font-semibold bg-orange-100 text-orange-600 cursor-not-allowed"
-                    >
-                      {labels.needNewScore}
-                    </button>
-                    <p className="text-xs text-orange-600 font-medium">
-                      {labels.modifiedWarning}
-                    </p>
-                  </div>
                 )}
               </>
             )}
