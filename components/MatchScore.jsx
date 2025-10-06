@@ -133,8 +133,8 @@ export default function MatchScore({
 
   const isDisabled = status === "loading" || !canRefresh || isRefreshing;
 
-  // Calculer le nombre de refresh restants
-  const refreshesLeft = 5 - refreshCount;
+  // refreshCount représente maintenant directement les tokens restants
+  const refreshesLeft = refreshCount;
 
   // Déterminer la couleur de la petite bulle selon les refresh restants
   const getBadgeColor = () => {

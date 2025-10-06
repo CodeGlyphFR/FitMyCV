@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { scheduleCalculateMatchScoreJob } from "@/lib/backgroundTasks/calculateMatchScoreJob";
 
+const TOKEN_LIMIT = 5;
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -81,16 +83,16 @@ export async function POST(request) {
         await prisma.user.update({
           where: { id: userId },
           data: {
-            matchScoreRefreshCount: 0,
+            matchScoreRefreshCount: TOKEN_LIMIT,
             matchScoreFirstRefreshAt: null,
           },
         });
-        refreshCount = 0;
+        refreshCount = TOKEN_LIMIT;
         firstRefreshAt = null;
       }
 
-      // Vérifier la limite de 5 refresh par 24h (GLOBAL pour tous les CVs)
-      if (refreshCount >= 5) {
+      // Vérifier si plus de tokens disponibles (GLOBAL pour tous les CVs)
+      if (refreshCount === 0) {
         const timeUntilReset = firstRefreshAt
           ? new Date(firstRefreshAt.getTime() + 24 * 60 * 60 * 1000)
           : new Date();
@@ -98,34 +100,34 @@ export async function POST(request) {
         const hoursLeft = Math.floor(totalMinutesLeft / 60);
         const minutesLeft = totalMinutesLeft % 60;
 
-        console.log("[calculate-match-score] Rate limit GLOBAL atteint pour l'utilisateur", userId);
+        console.log("[calculate-match-score] Plus de tokens disponibles pour l'utilisateur", userId);
         return NextResponse.json({
-          error: "Rate limit exceeded",
-          details: `Vous avez atteint la limite de 5 rafraîchissements par 24h (global pour tous vos CVs). Réessayez dans ${hoursLeft}h${minutesLeft}m.`,
+          error: "No tokens available",
+          details: `Vous n'avez plus de tokens disponibles. Réessayez dans ${hoursLeft}h${minutesLeft}m.`,
           hoursLeft,
           minutesLeft,
         }, { status: 429 });
       }
 
-      // ✅ INCRÉMENTER LE COMPTEUR IMMÉDIATEMENT (anti-fraude)
-      // Si la tâche échoue, le job le décrémentera
-      if (!firstRefreshAt || refreshCount === 0) {
+      // ✅ DÉCRÉMENTER LE COMPTEUR IMMÉDIATEMENT (anti-fraude)
+      // Si la tâche échoue, le job l'incrémentera pour restituer le token
+      if (!firstRefreshAt || refreshCount === TOKEN_LIMIT) {
         await prisma.user.update({
           where: { id: userId },
           data: {
             matchScoreFirstRefreshAt: now,
-            matchScoreRefreshCount: 1,
+            matchScoreRefreshCount: TOKEN_LIMIT - 1,
           },
         });
-        console.log("[calculate-match-score] ✅ Compteur incrémenté immédiatement: 1/5");
+        console.log(`[calculate-match-score] ✅ Token consommé immédiatement: ${TOKEN_LIMIT - 1}/${TOKEN_LIMIT} restants`);
       } else {
         await prisma.user.update({
           where: { id: userId },
           data: {
-            matchScoreRefreshCount: refreshCount + 1,
+            matchScoreRefreshCount: refreshCount - 1,
           },
         });
-        console.log(`[calculate-match-score] ✅ Compteur incrémenté immédiatement: ${refreshCount + 1}/5`);
+        console.log(`[calculate-match-score] ✅ Token consommé immédiatement: ${refreshCount - 1}/${TOKEN_LIMIT} restants`);
       }
     }
 

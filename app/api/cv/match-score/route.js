@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 import { readUserCvFile } from "@/lib/cv/storage";
 import { calculateMatchScore } from "@/lib/openai/calculateMatchScore";
 
+const TOKEN_LIMIT = 5;
+
 export async function POST(request) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -65,16 +67,16 @@ export async function POST(request) {
         await prisma.user.update({
           where: { id: userId },
           data: {
-            matchScoreRefreshCount: 0,
+            matchScoreRefreshCount: TOKEN_LIMIT,
             matchScoreFirstRefreshAt: null,
           },
         });
-        refreshCount = 0;
+        refreshCount = TOKEN_LIMIT;
         firstRefreshAt = null;
       }
 
-      // Vérifier la limite de 5 refresh par 24h (GLOBAL pour tous les CVs)
-      if (refreshCount >= 5) {
+      // Vérifier si plus de tokens disponibles (GLOBAL pour tous les CVs)
+      if (refreshCount === 0) {
         const timeUntilReset = firstRefreshAt
           ? new Date(firstRefreshAt.getTime() + 24 * 60 * 60 * 1000)
           : new Date();
@@ -82,10 +84,10 @@ export async function POST(request) {
         const hoursLeft = Math.floor(totalMinutesLeft / 60);
         const minutesLeft = totalMinutesLeft % 60;
 
-        console.log("[match-score] Rate limit GLOBAL atteint pour l'utilisateur", userId);
+        console.log("[match-score] Plus de tokens disponibles pour l'utilisateur", userId);
         return NextResponse.json({
-          error: "Rate limit exceeded",
-          details: `Vous avez atteint la limite de 5 rafraîchissements par 24h (global pour tous vos CVs). Réessayez dans ${hoursLeft}h${minutesLeft}m.`,
+          error: "No tokens available",
+          details: `Vous n'avez plus de tokens disponibles. Réessayez dans ${hoursLeft}h${minutesLeft}m.`,
           hoursLeft,
           minutesLeft,
         }, { status: 429 });
@@ -150,7 +152,7 @@ export async function POST(request) {
 
     let finalRefreshCount = 0;
 
-    // Si c'est un refresh manuel, incrémenter le compteur GLOBAL de l'utilisateur
+    // Si c'est un refresh manuel, décrémenter le compteur GLOBAL de l'utilisateur
     if (!isAutomatic) {
       const now = new Date();
 
@@ -164,26 +166,26 @@ export async function POST(request) {
       });
 
       // Si c'est le premier refresh de la fenêtre, initialiser firstRefreshAt
-      if (!user?.matchScoreFirstRefreshAt || user.matchScoreRefreshCount === 0) {
+      if (!user?.matchScoreFirstRefreshAt || user.matchScoreRefreshCount === TOKEN_LIMIT) {
         await prisma.user.update({
           where: { id: userId },
           data: {
             matchScoreFirstRefreshAt: now,
-            matchScoreRefreshCount: 1,
+            matchScoreRefreshCount: TOKEN_LIMIT - 1,
           },
         });
-        finalRefreshCount = 1;
+        finalRefreshCount = TOKEN_LIMIT - 1;
       } else {
         await prisma.user.update({
           where: { id: userId },
           data: {
-            matchScoreRefreshCount: user.matchScoreRefreshCount + 1,
+            matchScoreRefreshCount: user.matchScoreRefreshCount - 1,
           },
         });
-        finalRefreshCount = user.matchScoreRefreshCount + 1;
+        finalRefreshCount = user.matchScoreRefreshCount - 1;
       }
 
-      console.log(`[match-score] ✅ Calcul réussi - Refresh manuel GLOBAL ${finalRefreshCount}/5`);
+      console.log(`[match-score] ✅ Calcul réussi - Tokens restants: ${finalRefreshCount}/${TOKEN_LIMIT}`);
     } else {
       console.log(`[match-score] ✅ Calcul automatique réussi (pas de compteur)`);
     }
@@ -194,7 +196,7 @@ export async function POST(request) {
       success: true,
       score,
       refreshCount: finalRefreshCount,
-      refreshLimit: 5,
+      refreshLimit: TOKEN_LIMIT,
     }, { status: 200 });
   } catch (error) {
     console.error("Error calculating match score:", error);
@@ -264,7 +266,7 @@ export async function GET(request) {
 
     if (user?.matchScoreFirstRefreshAt && user.matchScoreFirstRefreshAt > oneDayAgo) {
       // On est dans la fenêtre de 24h
-      if (refreshCount >= 5) {
+      if (refreshCount === 0) {
         canRefresh = false;
         const resetTime = new Date(user.matchScoreFirstRefreshAt.getTime() + 24 * 60 * 60 * 1000);
         const totalMinutesLeft = Math.ceil((resetTime - now) / (60 * 1000));
@@ -300,8 +302,8 @@ export async function GET(request) {
       hasExtractedJobOffer: !!cvRecord.extractedJobOffer, // Boolean pour savoir si on peut calculer le score
       hasScoreBreakdown: !!cvRecord.scoreBreakdown, // Boolean pour savoir si on peut optimiser
       sourceValue: cvRecord.sourceValue,
-      refreshCount, // Compteur global de l'utilisateur
-      refreshLimit: 5,
+      refreshCount, // Tokens restants pour l'utilisateur
+      refreshLimit: TOKEN_LIMIT,
       canRefresh,
       hoursUntilReset,
       minutesUntilReset,
