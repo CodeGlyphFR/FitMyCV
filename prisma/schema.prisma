@@ -72,6 +72,7 @@ model CvFile {
   filename         String
   sourceType       String?  // 'link', 'pdf', or null for manual
   sourceValue      String?  // URL or PDF filename
+  extractedJobOffer String? // Extraction Claude de l'offre d'emploi (si sourceType='link')
   createdBy        String?  // 'import-pdf', 'generate-cv', 'translate-cv', or null for manual
   originalCreatedBy String? // Original createdBy for translated CVs (to preserve icon)
   analysisLevel    String?  // 'rapid', 'medium', 'deep' for AI-generated CVs

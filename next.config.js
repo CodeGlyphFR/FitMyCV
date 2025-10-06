@@ -28,10 +28,19 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'next-auth'],
     instrumentationHook: true, // Activer le hook instrumentation.js
+    serverComponentsExternalPackages: ['puppeteer', 'puppeteer-extra', 'puppeteer-extra-plugin-stealth'],
   },
   // Optimiser le splitting des chunks
   webpack: (config, { isServer }) => {
+    // Exclure puppeteer du bundling côté client
     if (!isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'puppeteer-extra': false,
+        'puppeteer-extra-plugin-stealth': false,
+        'puppeteer': false,
+      };
+
       config.optimization = {
         ...config.optimization,
         splitChunks: {

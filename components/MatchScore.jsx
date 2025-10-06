@@ -14,7 +14,8 @@ export default function MatchScore({
   hoursUntilReset,
   minutesUntilReset,
   onRefresh,
-  currentCvFile
+  currentCvFile,
+  hasExtractedJobOffer = false
 }) {
   const { t } = useLanguage();
   const [isHovered, setIsHovered] = React.useState(false);
@@ -50,8 +51,8 @@ export default function MatchScore({
     prevStatusRef.current = status;
   }, [status, score, currentCvFile]);
 
-  // Afficher le composant uniquement si le CV a été généré depuis un lien
-  if (sourceType !== "link" || !sourceValue) {
+  // Afficher le composant uniquement si le CV a une analyse d'offre d'emploi en base
+  if (!hasExtractedJobOffer || !sourceValue) {
     return null;
   }
 

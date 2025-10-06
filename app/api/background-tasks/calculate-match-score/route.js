@@ -42,16 +42,21 @@ export async function POST(request) {
           filename: cvFile,
         },
       },
+      select: {
+        extractedJobOffer: true,
+        sourceValue: true,
+        sourceType: true,
+      },
     });
 
     if (!cvRecord) {
       return NextResponse.json({ error: "CV not found" }, { status: 404 });
     }
 
-    // Vérifier que le CV a été créé depuis un lien (peu importe comment il a été modifié ensuite)
-    if (cvRecord.sourceType !== "link") {
-      console.log("[calculate-match-score] CV non éligible - sourceType:", cvRecord.sourceType);
-      return NextResponse.json({ error: "CV was not created from a job offer link" }, { status: 400 });
+    // Vérifier que le CV a une analyse d'offre d'emploi en base
+    if (!cvRecord.extractedJobOffer) {
+      console.log("[calculate-match-score] CV non éligible - pas d'extractedJobOffer");
+      return NextResponse.json({ error: "CV does not have a job offer analysis" }, { status: 400 });
     }
 
     // Rate limiting GLOBAL (au niveau utilisateur, pas par CV)

@@ -28,17 +28,25 @@ export async function POST(request) {
           filename: cvFile,
         },
       },
+      select: {
+        extractedJobOffer: true,
+        scoreBreakdown: true,
+        improvementSuggestions: true,
+        sourceValue: true,
+        sourceType: true,
+        matchScore: true,
+      },
     });
 
     if (!cvRecord) {
       return NextResponse.json({ error: "CV not found" }, { status: 404 });
     }
 
-    // Vérifier que le CV a été créé depuis un lien et a des suggestions
-    if (cvRecord.sourceType !== "link" || !cvRecord.improvementSuggestions) {
+    // Vérifier que le CV a un scoreBreakdown (score calculé) et des suggestions
+    if (!cvRecord.scoreBreakdown || !cvRecord.improvementSuggestions) {
       return NextResponse.json({
         error: "Ce CV ne peut pas être amélioré automatiquement",
-        details: "Seuls les CV générés depuis une offre d'emploi peuvent être optimisés"
+        details: "Seuls les CV avec un score calculé peuvent être optimisés"
       }, { status: 400 });
     }
 
@@ -271,8 +279,18 @@ async function improveCvAsync({
     // Sauvegarder le CV amélioré
     await writeUserCvFile(userId, improvedFilename, JSON.stringify(improvedCv, null, 2));
 
+    // Récupérer le cvRecord pour avoir extractedJobOffer
+    const cvRecord = await prisma.cvFile.findUnique({
+      where: {
+        userId_filename: {
+          userId,
+          filename: cvFile
+        }
+      }
+    });
+
     if (replaceExisting) {
-      // Mettre à jour l'entrée existante dans la DB
+      // Mettre à jour l'entrée existante dans la DB (score estimé temporaire)
       await prisma.cvFile.update({
         where: {
           userId_filename: {
@@ -283,28 +301,39 @@ async function improveCvAsync({
         data: {
           matchScore: result.newScoreEstimate,
           matchScoreUpdatedAt: new Date(),
-          scoreBreakdown: JSON.stringify(result.scoreBreakdown || {}),
-          improvementSuggestions: JSON.stringify(result.newSuggestions || suggestions),
+          scoreBreakdown: null,
+          improvementSuggestions: null,
+          missingSkills: null,
+          matchingSkills: null,
           optimiseStatus: 'idle',
           optimiseUpdatedAt: new Date(),
           updatedAt: new Date()
         }
       });
     } else {
-      // Créer une nouvelle entrée dans la DB
+      // Créer une nouvelle entrée dans la DB (score estimé temporaire)
       await prisma.cvFile.create({
         data: {
           userId,
           filename: improvedFilename,
-          sourceType: 'link',
-          sourceValue: jobOfferUrl,
+          sourceType: cvRecord.sourceType || 'link',
+          sourceValue: cvRecord.sourceValue || jobOfferUrl,
           createdBy: 'improve-cv',
           analysisLevel,
           matchScore: result.newScoreEstimate,
-          matchScoreUpdatedAt: new Date()
+          matchScoreUpdatedAt: new Date(),
+          scoreBreakdown: null,
+          improvementSuggestions: null,
+          missingSkills: null,
+          matchingSkills: null,
+          extractedJobOffer: cvRecord.extractedJobOffer || null,
+          optimiseStatus: 'idle',
+          optimiseUpdatedAt: new Date()
         }
       });
     }
+
+    console.log(`[improve-cv] ✅ Amélioration terminée avec score estimé: ${result.newScoreEstimate}/100`);
 
     // Mettre à jour la tâche comme terminée
     const successMessage = replaceExisting

@@ -494,8 +494,9 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
                                   stroke="url(#scoreGradient)"
                                   strokeWidth="8"
                                   fill="none"
-                                  strokeDasharray={`${2 * Math.PI * 56}`}
-                                  strokeDashoffset={`${2 * Math.PI * 56 * (1 - animatedScore / 100)}`}
+                                  pathLength="100"
+                                  strokeDasharray="100"
+                                  strokeDashoffset={100 - animatedScore}
                                   strokeLinecap="round"
                                   className="transition-all duration-1000 ease-out"
                                   filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
@@ -668,6 +669,11 @@ export default function CVImprovementPanel({ cvFile, refreshCount = 0, canRefres
                                   </span>
                                 )}
                               </div>
+                              {suggestion.title && (
+                                <h4 className="text-sm font-semibold text-gray-800 mb-1">
+                                  {suggestion.title}
+                                </h4>
+                              )}
                               <p className="text-xs leading-relaxed text-gray-700 break-words">
                                 {suggestion.suggestion}
                               </p>

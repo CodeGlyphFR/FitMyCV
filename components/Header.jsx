@@ -30,6 +30,8 @@ export default function Header(props){
   const [hoursUntilReset, setHoursUntilReset] = React.useState(0);
   const [minutesUntilReset, setMinutesUntilReset] = React.useState(0);
   const [currentCvFile, setCurrentCvFile] = React.useState(null);
+  const [hasExtractedJobOffer, setHasExtractedJobOffer] = React.useState(false);
+  const [hasScoreBreakdown, setHasScoreBreakdown] = React.useState(false);
   const { localDeviceId, addOptimisticTask, removeOptimisticTask, refreshTasks } = useBackgroundTasks();
   const { addNotification } = useNotifications();
   const previousScoreRef = React.useRef(null);
@@ -105,6 +107,8 @@ export default function Header(props){
         setRefreshCount(data.refreshCount || 0);
         setHoursUntilReset(data.hoursUntilReset || 0);
         setMinutesUntilReset(data.minutesUntilReset || 0);
+        setHasExtractedJobOffer(data.hasExtractedJobOffer || false);
+        setHasScoreBreakdown(data.hasScoreBreakdown || false);
 
         // Déclencher un événement UNIQUEMENT si le score a changé
         if (data.score !== null && data.status === 'idle' && previousScoreRef.current !== data.score) {
@@ -137,6 +141,7 @@ export default function Header(props){
     setHoursUntilReset(0);
     setMinutesUntilReset(0);
     setCurrentCvFile(newCvFile);
+    setHasExtractedJobOffer(false);
     previousScoreRef.current = null; // Réinitialiser le score précédent
 
     fetch("/api/cv/source", { cache: "no-store" })
@@ -149,12 +154,8 @@ export default function Header(props){
       .then(data => {
         setSourceInfo({ sourceType: data.sourceType, sourceValue: data.sourceValue });
 
-        // Si le CV est créé depuis un lien, récupérer le score de match
-        if (data.sourceType === "link") {
-          fetchMatchScore();
-        } else {
-          setIsLoadingMatchScore(false);
-        }
+        // Toujours tenter de récupérer le score - l'API décidera si le CV est éligible
+        fetchMatchScore();
       })
       .catch(err => {
         console.error("Failed to fetch source info:", err);
@@ -501,8 +502,8 @@ export default function Header(props){
       <div className="flex items-start gap-4">
         {/* Container pour le bouton Optimiser + Score avec positionnement relatif */}
         <div className="relative">
-          {/* Bouton Optimiser - petite bulle en haut à gauche du score */}
-          {sourceInfo.sourceType === "link" && currentCvFile && (
+          {/* Bouton Optimiser - uniquement si le CV a un scoreBreakdown */}
+          {hasScoreBreakdown && currentCvFile && (
             <div className="absolute -bottom-6 -right-11 z-10">
               <CVImprovementPanel
                 cvFile={currentCvFile}
@@ -523,6 +524,7 @@ export default function Header(props){
             minutesUntilReset={minutesUntilReset}
             onRefresh={handleRefreshMatchScore}
             currentCvFile={currentCvFile}
+            hasExtractedJobOffer={hasExtractedJobOffer}
           />
         </div>
         <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />

@@ -27,18 +27,20 @@ export async function POST(request) {
           filename: cvFile,
         },
       },
+      select: {
+        extractedJobOffer: true,
+        sourceValue: true,
+      },
     });
 
     if (!cvRecord) {
       return NextResponse.json({ error: "CV not found" }, { status: 404 });
     }
 
-    // Vérifier que le CV a été créé depuis un lien
-    // Les CVs depuis liens peuvent avoir createdBy = "generate-cv", "create-template" ou "improve-cv"
-    const validCreatedBy = ["generate-cv", "create-template", "improve-cv"];
-    if (!validCreatedBy.includes(cvRecord.createdBy) || cvRecord.sourceType !== "link") {
-      console.log("[match-score] CV non éligible - createdBy:", cvRecord.createdBy, "sourceType:", cvRecord.sourceType);
-      return NextResponse.json({ error: "CV was not created from a job offer link" }, { status: 400 });
+    // Vérifier que le CV a une analyse d'offre d'emploi en base
+    if (!cvRecord.extractedJobOffer) {
+      console.log("[match-score] CV non éligible - pas d'extractedJobOffer");
+      return NextResponse.json({ error: "CV does not have a job offer analysis" }, { status: 400 });
     }
 
     // Rate limiting GLOBAL (au niveau utilisateur, pas par CV)
@@ -90,9 +92,9 @@ export async function POST(request) {
       }
     }
 
-    const jobOfferUrl = cvRecord.sourceValue;
-    if (!jobOfferUrl) {
-      return NextResponse.json({ error: "Job offer URL not found" }, { status: 400 });
+    const jobOfferIdentifier = cvRecord.sourceValue; // URL ou nom de fichier PDF
+    if (!jobOfferIdentifier) {
+      return NextResponse.json({ error: "Job offer source not found" }, { status: 400 });
     }
 
     // Lire et décrypter le contenu du CV
@@ -109,14 +111,14 @@ export async function POST(request) {
 
     // Calculer le score de match avec GPT (sans worker, en direct)
     console.log("[match-score] Calcul du score de match pour", cvFile);
-    console.log("[match-score] URL de l'offre:", jobOfferUrl);
+    console.log("[match-score] Source de l'offre:", jobOfferIdentifier);
     console.log("[match-score] Taille du CV:", cvContent.length, "caractères");
 
     let score;
     try {
       score = await calculateMatchScore({
         cvContent,
-        jobOfferUrl,
+        jobOfferUrl: jobOfferIdentifier, // Peut être URL ou nom fichier, mais extractedJobOffer est en cache
         signal: null,
       });
       console.log("[match-score] Score calculé:", score);
@@ -228,6 +230,13 @@ export async function GET(request) {
         matchScore: true,
         matchScoreUpdatedAt: true,
         matchScoreStatus: true,
+        scoreBreakdown: true,
+        improvementSuggestions: true,
+        missingSkills: true,
+        matchingSkills: true,
+        optimiseStatus: true,
+        extractedJobOffer: true,
+        sourceValue: true,
       },
     });
 
@@ -264,10 +273,33 @@ export async function GET(request) {
       }
     }
 
+    // Parser les JSON strings
+    let scoreBreakdown = null;
+    let improvementSuggestions = null;
+    let missingSkills = null;
+    let matchingSkills = null;
+
+    try {
+      if (cvRecord.scoreBreakdown) scoreBreakdown = JSON.parse(cvRecord.scoreBreakdown);
+      if (cvRecord.improvementSuggestions) improvementSuggestions = JSON.parse(cvRecord.improvementSuggestions);
+      if (cvRecord.missingSkills) missingSkills = JSON.parse(cvRecord.missingSkills);
+      if (cvRecord.matchingSkills) matchingSkills = JSON.parse(cvRecord.matchingSkills);
+    } catch (e) {
+      console.error("[match-score] Erreur parsing JSON:", e);
+    }
+
     return NextResponse.json({
       score: cvRecord.matchScore,
       updatedAt: cvRecord.matchScoreUpdatedAt,
       status: cvRecord.matchScoreStatus || 'idle', // Status du calcul: 'idle', 'inprogress', 'failed'
+      scoreBreakdown,
+      improvementSuggestions,
+      missingSkills,
+      matchingSkills,
+      optimiseStatus: cvRecord.optimiseStatus || 'idle',
+      hasExtractedJobOffer: !!cvRecord.extractedJobOffer, // Boolean pour savoir si on peut calculer le score
+      hasScoreBreakdown: !!cvRecord.scoreBreakdown, // Boolean pour savoir si on peut optimiser
+      sourceValue: cvRecord.sourceValue,
       refreshCount, // Compteur global de l'utilisateur
       refreshLimit: 5,
       canRefresh,

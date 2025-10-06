@@ -1,11 +1,12 @@
 # Smart CV Editing - Implementation Tasks
 
 ## Phase 1: Fusion Génération + Scoring (PRIORITÉ HAUTE) ✅ COMPLÉTÉ
-- [x] Refactorer `lib/openai/generateCv.js` pour retourner CV + score + suggestions
+- [x] Refactorer `lib/openai/generateCv.js` → Migré vers `generateCvWithScore.js` (fichier legacy supprimé)
 - [x] Créer nouveau prompt optimisé (fusion génération + analyse)
 - [x] Adapter `lib/backgroundTasks/generateCvJob.js` pour gérer le nouveau format
 - [x] Mettre à jour la DB pour stocker les suggestions d'amélioration
 - [x] Modifier l'API `/api/background-tasks/generate-cv` pour le nouveau format
+- [x] **Migration complète**: Ancien fichier `generateCv.js` supprimé, remplacé par workflow optimisé
 
 ## Phase 2: Mode Amélioration Guidée (PRIORITÉ HAUTE) ✅ COMPLÉTÉ
 - [x] Créer `/api/cv/improve/route.js` pour amélioration ciblée
