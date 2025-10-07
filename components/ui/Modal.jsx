@@ -49,12 +49,22 @@ export default function Modal({ open, onClose, title, children, size = "default"
 
   if(!open || !mounted) return null;
   return createPortal(
-    <div className="fixed inset-0 z-[10002] overflow-y-auto">
-      <div className="fixed inset-0 bg-black/30" onClick={onClose}></div>
+    <div className="fixed inset-0 z-[10002] overflow-y-auto" style={{ touchAction: 'none' }}>
+      <div
+        className="fixed inset-0 bg-black/30"
+        onClick={onClose}
+        onTouchEnd={(e) => {
+          // Prevent both touchend and click from firing
+          e.preventDefault();
+          onClose();
+        }}
+      ></div>
       <div className="relative min-h-full flex items-start sm:items-center justify-center p-4">
         <div
           className={`relative z-10 w-full ${maxWidthClass} rounded-2xl border bg-white p-4 shadow-lg`}
           onClick={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
+          style={{ touchAction: 'auto' }}
         >
           <div className="flex items-center justify-between mb-2">
             <div className="font-semibold">{title || t("common.confirmation")}</div>

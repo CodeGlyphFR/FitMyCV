@@ -18,8 +18,9 @@ export async function POST(req){
     var body=await req.json(); var fieldPath=body.path; var value=body.value; if(!fieldPath) return NextResponse.json({ error:"Paramètre 'path' manquant"},{ status:400 });
     const userId = session.user.id;
     const files = await listUserCvFiles(userId);
-    var selected=(cookies().get("cvFile")||{}).value || "main.json";
-    if (!files.includes(selected)) selected = "main.json";
+    const currentCookie = (cookies().get("cvFile")||{}).value;
+    var selected = files.includes(currentCookie) ? currentCookie : (files[0] || null);
+    if (!selected) return NextResponse.json({ error: "Aucun CV disponible" }, { status: 404 });
     var cv=JSON.parse(await readUserCvFile(userId, selected));
     setByPath(cv, parsePath(fieldPath), value);
     const sanitized = sanitizeInMemory(cv);

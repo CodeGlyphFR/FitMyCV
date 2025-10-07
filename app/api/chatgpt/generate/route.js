@@ -181,7 +181,13 @@ export async function POST(request){
       if (manualFiles.includes("main.json")) baseFile = "main.json";
       else if (manualFiles.length) baseFile = manualFiles[0];
       else if (candidateFiles.includes("main.json")) baseFile = "main.json";
-      else baseFile = requestedBaseFile || "main.json";
+      else if (candidateFiles.length) baseFile = candidateFiles[0];
+      else baseFile = requestedBaseFile || null;
+    }
+
+    if (!baseFile) {
+      await fs.rm(workspaceDir, { recursive: true, force: true }).catch(() => {});
+      return NextResponse.json({ error: "Aucun CV de référence disponible. Veuillez d'abord importer ou créer un CV." }, { status: 400 });
     }
 
     const levelKey = ANALYSIS_MODEL_MAP[requestedAnalysisLevel]

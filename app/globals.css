@@ -59,6 +59,52 @@ select {
   font-size: 16px !important;
 }
 
+/* iOS touch optimizations */
+button,
+a,
+[role="button"],
+[onclick],
+.clickable {
+  /* Remove 300ms delay on mobile */
+  touch-action: manipulation;
+  /* Remove iOS tap highlight */
+  -webkit-tap-highlight-color: transparent;
+  /* Improve touch target size */
+  min-height: 32px;
+  min-width: 32px;
+  /* Prevent text selection on double-tap */
+  -webkit-user-select: none;
+  user-select: none;
+  /* Hardware acceleration for better performance */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  /* Enable active state on iOS */
+  cursor: pointer;
+}
+
+/* Ensure input and textarea can be selected */
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+  cursor: text;
+}
+
+/* Active state feedback for iOS */
+button:active,
+a:active,
+[role="button"]:active {
+  opacity: 0.7;
+  transform: scale(0.98);
+  transition: opacity 0.1s ease, transform 0.1s ease;
+}
+
+/* Prevent scrolling momentum from interfering with button clicks */
+.no-momentum-scroll {
+  -webkit-overflow-scrolling: auto;
+  overflow-scrolling: auto;
+}
+
 @keyframes auth-blob {
   0% {
     transform: translate3d(0, 0, 0) scale(1) rotate(0deg);

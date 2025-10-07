@@ -705,7 +705,21 @@ export default function TopBar() {
   }, [userMenuOpen]);
 
   React.useEffect(() => {
+    let touchHandled = false;
+    let touchTimeout = null;
+
     function handleClick(event) {
+      // Prevent duplicate handling on iOS
+      if (event.type === 'touchstart') {
+        touchHandled = true;
+        if (touchTimeout) clearTimeout(touchTimeout);
+        touchTimeout = setTimeout(() => {
+          touchHandled = false;
+        }, 500);
+      } else if (event.type === 'mousedown' && touchHandled) {
+        return;
+      }
+
       const buttonEl = userMenuButtonRef.current;
       const menuEl = userMenuRef.current;
       if (buttonEl && buttonEl.contains(event.target)) return;
@@ -718,10 +732,13 @@ export default function TopBar() {
     }
 
     document.addEventListener("mousedown", handleClick);
+    document.addEventListener("touchstart", handleClick, { passive: true });
     document.addEventListener("keydown", handleKey);
     return () => {
       document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("touchstart", handleClick);
       document.removeEventListener("keydown", handleKey);
+      if (touchTimeout) clearTimeout(touchTimeout);
     };
   }, []);
 
@@ -804,9 +821,25 @@ export default function TopBar() {
   }, [lastScrollY, listOpen]);
 
   React.useEffect(() => {
+    let touchHandled = false;
+    let touchTimeout = null;
+
     function handleClick(event) {
       if (!listOpen) return; // Only handle when dropdown is open
       if (isScrollingInDropdown) return; // Don't close while scrolling
+
+      // On iOS, touchstart fires before mousedown
+      // Set flag to prevent duplicate handling
+      if (event.type === 'touchstart') {
+        touchHandled = true;
+        if (touchTimeout) clearTimeout(touchTimeout);
+        touchTimeout = setTimeout(() => {
+          touchHandled = false;
+        }, 500);
+      } else if (event.type === 'mousedown' && touchHandled) {
+        // Skip mousedown if touchstart was just handled
+        return;
+      }
 
       const triggerEl = triggerRef.current;
       const dropdownEl = dropdownPortalRef.current;
@@ -839,12 +872,27 @@ export default function TopBar() {
       document.removeEventListener("mousedown", handleClick);
       document.removeEventListener("touchstart", handleClick);
       document.removeEventListener("keydown", handleKey);
+      if (touchTimeout) clearTimeout(touchTimeout);
     };
   }, [listOpen, isScrollingInDropdown]);
 
   React.useEffect(() => {
     if (!baseSelectorOpen) return undefined;
+    let touchHandled = false;
+    let touchTimeout = null;
+
     function handleClick(event) {
+      // Prevent duplicate handling on iOS
+      if (event.type === 'touchstart') {
+        touchHandled = true;
+        if (touchTimeout) clearTimeout(touchTimeout);
+        touchTimeout = setTimeout(() => {
+          touchHandled = false;
+        }, 500);
+      } else if (event.type === 'mousedown' && touchHandled) {
+        return;
+      }
+
       const container = baseSelectorRef.current;
       const dropdown = baseDropdownRef.current;
       if (container && container.contains(event.target)) return;
@@ -857,10 +905,13 @@ export default function TopBar() {
     }
 
     document.addEventListener("mousedown", handleClick);
+    document.addEventListener("touchstart", handleClick, { passive: true });
     document.addEventListener("keydown", handleKey);
     return () => {
       document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("touchstart", handleClick);
       document.removeEventListener("keydown", handleKey);
+      if (touchTimeout) clearTimeout(touchTimeout);
     };
   }, [baseSelectorOpen]);
 

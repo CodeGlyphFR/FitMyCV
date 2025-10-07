@@ -206,6 +206,9 @@ export default function MatchScore({
 
   const isDisabled = shouldShowLoading || !canRefresh;
 
+  // refreshCount représente maintenant directement les tokens restants
+  const refreshesLeft = refreshCount;
+
   const getScoreTooltip = () => {
     // Si optimisation en cours
     if (optimiseStatus === "inprogress") {
@@ -231,9 +234,6 @@ export default function MatchScore({
     }
     return t("matchScore.notCalculated");
   };
-
-  // refreshCount représente maintenant directement les tokens restants
-  const refreshesLeft = refreshCount;
 
   // Déterminer la couleur de la petite bulle selon les refresh restants
   const getBadgeColor = () => {

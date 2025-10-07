@@ -20,8 +20,9 @@ export async function POST(req){
     var body=await req.json(); var op=body.op, fieldPath=body.path, value=body.value, index=body.index, to=body.to; if(!fieldPath||!op) return NextResponse.json({ error:"Paramètres manquants"},{ status:400 });
     const userId = session.user.id;
     const files = await listUserCvFiles(userId);
-    var selected=(cookies().get("cvFile")||{}).value || "main.json";
-    if (!files.includes(selected)) selected = "main.json";
+    const currentCookie = (cookies().get("cvFile")||{}).value;
+    var selected = files.includes(currentCookie) ? currentCookie : (files[0] || null);
+    if (!selected) return NextResponse.json({ error: "Aucun CV disponible" }, { status: 404 });
     var cv=JSON.parse(await readUserCvFile(userId, selected));
     var tokens=parsePath(fieldPath); var parentPath=tokens.slice(0,-1); var key=tokens[tokens.length-1]; var targetParent=getByPath(cv,parentPath);
     switch(op){
