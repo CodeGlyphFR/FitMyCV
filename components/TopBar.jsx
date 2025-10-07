@@ -605,9 +605,11 @@ export default function TopBar() {
     if (!isAuthenticated) return undefined;
     const onChanged = () => reload();
     window.addEventListener("cv:list:changed", onChanged);
+    window.addEventListener("realtime:cv:list:changed", onChanged); // Écouter les mises à jour temps réel
     window.addEventListener("focus", onChanged);
     return () => {
       window.removeEventListener("cv:list:changed", onChanged);
+      window.removeEventListener("realtime:cv:list:changed", onChanged);
       window.removeEventListener("focus", onChanged);
     };
   }, [isAuthenticated, reload]);
@@ -631,14 +633,24 @@ export default function TopBar() {
     // Force icon refresh to prevent caching issues
     setIconRefreshKey(Date.now());
 
-    // Dispatch event to notify components that CV has changed
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("cv:selected", { detail: { file } }));
-    }
-
+    // Rafraîchir d'abord Next.js et la liste
     router.refresh();
-    // also refresh list labels, in case ordering/labels changed
     await reload(file);
+
+    // Puis déclencher les événements pour les composants clients
+    if (typeof window !== "undefined") {
+      // Petit délai pour laisser router.refresh() se propager
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("cv:selected", { detail: { file } }));
+
+        // Déclencher les mêmes événements que RealtimeRefreshProvider pour la cohérence
+        window.dispatchEvent(new CustomEvent('realtime:cv:updated', { detail: { filename: file } }));
+        window.dispatchEvent(new CustomEvent('realtime:cv:metadata:updated', { detail: { filename: file } }));
+        window.dispatchEvent(new CustomEvent('realtime:cv:list:changed', { detail: { filename: file } }));
+
+        console.log('[TopBar] 📢 Événements de changement de CV déclenchés pour:', file);
+      }, 100);
+    }
   }
 
   React.useEffect(() => {

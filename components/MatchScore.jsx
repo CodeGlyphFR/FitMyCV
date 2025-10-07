@@ -15,28 +15,96 @@ export default function MatchScore({
   minutesUntilReset,
   onRefresh,
   currentCvFile,
-  hasExtractedJobOffer = false
+  hasExtractedJobOffer = false,
+  isOptimizeButtonReady = false,
+  optimiseStatus = "idle"
 }) {
   const { t } = useLanguage();
   const [isHovered, setIsHovered] = React.useState(false);
   const [showSuccessEffect, setShowSuccessEffect] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const [isDelayedLoading, setIsDelayedLoading] = React.useState(false);
   const prevStatusRef = React.useRef(status);
   const prevCvFileRef = React.useRef(currentCvFile);
   const isRefreshingRef = React.useRef(false);
+  const prevScoreRef = React.useRef(score);
+  const prevOptimizeButtonReadyRef = React.useRef(isOptimizeButtonReady);
+  const delayTimeoutRef = React.useRef(null);
 
   // Réinitialiser les états visuels lors d'un changement de CV
   React.useEffect(() => {
     if (prevCvFileRef.current !== currentCvFile) {
       setIsHovered(false);
       setShowSuccessEffect(false);
+      setIsDelayedLoading(false);
+      if (delayTimeoutRef.current) {
+        clearTimeout(delayTimeoutRef.current);
+        delayTimeoutRef.current = null;
+      }
       prevCvFileRef.current = currentCvFile;
     }
   }, [currentCvFile]);
 
-  // Effet de succès quand le score est calculé (détection de transition loading -> idle avec score)
+  // Gérer l'animation qui continue jusqu'à ce que le bouton Optimiser soit disponible
   React.useEffect(() => {
-    if (prevStatusRef.current === "loading" && status === "idle" && score !== null) {
+    const wasIdle = prevStatusRef.current === "idle" || prevStatusRef.current === null;
+    const isNowLoading = status === "loading" || status === "inprogress";
+    const wasLoading = prevStatusRef.current === "loading" || prevStatusRef.current === "inprogress";
+    const isNowIdle = status === "idle" || status === null;
+
+    // Si on commence à charger, forcer la sortie du hover (fix iOS)
+    if (wasIdle && isNowLoading) {
+      console.log('[MatchScore] 🔄 Début du chargement, sortie du hover...');
+      setIsHovered(false);
+      // Activer l'animation prolongée
+      setIsDelayedLoading(true);
+    }
+
+    // Si le status passe à idle mais qu'on est en delayed loading
+    if (wasLoading && isNowIdle && !isLoading && !isRefreshing) {
+      console.log('[MatchScore] 🕐 Status passé à idle, animation continue jusqu\'à l\'apparition du bouton Optimiser...');
+      // isDelayedLoading reste à true jusqu'à ce que hasScoreBreakdown devienne true
+    }
+
+    // Mettre à jour la ref pour la prochaine fois
+    prevStatusRef.current = status;
+  }, [status, isLoading, isRefreshing]);
+
+  // Arrêter l'animation quand le bouton Optimiser devient actif (visible ET cliquable)
+  React.useEffect(() => {
+    const wasNotReady = !prevOptimizeButtonReadyRef.current;
+    const isNowReady = isOptimizeButtonReady;
+
+    if (wasNotReady && isNowReady && isDelayedLoading) {
+      console.log('[MatchScore] ✅ Bouton Optimiser actif, arrêt de l\'animation...');
+      setIsDelayedLoading(false);
+    }
+
+    prevOptimizeButtonReadyRef.current = isOptimizeButtonReady;
+  }, [isOptimizeButtonReady, isDelayedLoading]);
+
+  // WORKAROUND iOS: Forcer le re-render si on détecte un score valide alors qu'on est en loading
+  React.useEffect(() => {
+    if (score !== null && score !== prevScoreRef.current && (status === 'loading' || isLoading)) {
+      console.log('[MatchScore] 🔄 iOS fix: Score reçu mais status=loading, forçage re-render...');
+
+      // Déclencher un événement pour forcer le parent à se rafraîchir
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('matchscore:force-refresh', {
+          detail: { score, cvFile: currentCvFile }
+        }));
+      }
+    }
+    prevScoreRef.current = score;
+  }, [score, status, isLoading, currentCvFile]);
+
+  // Effet de succès quand le score est calculé (détection de transition score null -> score valide)
+  React.useEffect(() => {
+    const hasValidScore = score !== null && score !== undefined;
+    const scoreChanged = prevScoreRef.current !== score;
+
+    if (hasValidScore && scoreChanged) {
+      console.log('[MatchScore] 🎉 Score calculé avec succès:', score);
       setShowSuccessEffect(true);
       const timer = setTimeout(() => setShowSuccessEffect(false), 1000);
 
@@ -48,8 +116,27 @@ export default function MatchScore({
 
       return () => clearTimeout(timer);
     }
-    prevStatusRef.current = status;
   }, [status, score, currentCvFile]);
+
+  // Détecter si on est vraiment en train de charger (score ou optimisation)
+  const isActuallyLoading = (status === "loading" || isLoading || isRefreshing || optimiseStatus === "inprogress");
+  const isStuckLoading = score !== null && !isLoading && status !== "loading" && !isRefreshing && optimiseStatus !== "inprogress";
+  const shouldShowLoading = (isActuallyLoading && !isStuckLoading) || isDelayedLoading;
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('[MatchScore] État de chargement:', {
+      status,
+      isLoading,
+      isRefreshing,
+      isDelayedLoading,
+      optimiseStatus,
+      score,
+      isActuallyLoading,
+      isStuckLoading,
+      shouldShowLoading
+    });
+  }, [status, isLoading, isRefreshing, isDelayedLoading, optimiseStatus, score, isActuallyLoading, isStuckLoading, shouldShowLoading]);
 
   // Afficher le composant uniquement si le CV a une analyse d'offre d'emploi en base
   if (!hasExtractedJobOffer || !sourceValue) {
@@ -58,13 +145,17 @@ export default function MatchScore({
 
   const handleRefresh = async () => {
     // Vérifier avec le ref pour bloquer immédiatement (avant que l'état ne se mette à jour)
-    if (!canRefresh || status === "loading" || isRefreshing || isRefreshingRef.current) {
+    // Aussi bloquer si une optimisation est en cours
+    if (!canRefresh || status === "loading" || isRefreshing || isRefreshingRef.current || optimiseStatus === "inprogress") {
       return;
     }
 
     // Bloquer immédiatement avec le ref
     isRefreshingRef.current = true;
     setIsRefreshing(true);
+
+    // Force la sortie du hover (fix iOS qui garde le hover après touch)
+    setIsHovered(false);
 
     try {
       await onRefresh();
@@ -77,16 +168,18 @@ export default function MatchScore({
   };
 
   const getDisplayText = () => {
+    // WORKAROUND iOS: Si on a un score valide, l'afficher même si status=loading
+    // (bug iOS où le status reste bloqué à loading)
+    if (score !== null && score !== undefined) {
+      return `${score}`;
+    }
     if (status === "loading") {
       return "";
     }
     if (status === "error") {
       return "Échec";
     }
-    if (score === null) {
-      return "?";
-    }
-    return `${score}`;
+    return "?";
   };
 
   const getScoreColor = () => {
@@ -111,27 +204,33 @@ export default function MatchScore({
     return "text-red-700";
   };
 
+  const isDisabled = shouldShowLoading || !canRefresh;
+
   const getScoreTooltip = () => {
-    if (status === "loading") {
+    // Si optimisation en cours
+    if (optimiseStatus === "inprogress") {
+      return t("cvImprovement.improving") || "Amélioration en cours...";
+    }
+    // Si on charge actuellement, afficher "Calcul en cours"
+    if (shouldShowLoading) {
       return t("matchScore.calculating");
+    }
+    // WORKAROUND iOS: Si on a un score, montrer le score même si status=loading
+    if (score !== null && score !== undefined) {
+      if (!canRefresh) {
+        // Si plus de tokens disponibles (refreshesLeft === 0)
+        if (refreshesLeft === 0) {
+          return t("matchScore.noTokensLeft");
+        }
+        return t("matchScore.resetIn", { hours: hoursUntilReset, minutes: minutesUntilReset });
+      }
+      return `Score: ${score}`;
     }
     if (status === "error") {
       return t("matchScore.failed");
     }
-    if (score === null) {
-      return t("matchScore.notCalculated");
-    }
-    if (!canRefresh) {
-      // Si plus de tokens disponibles (refreshesLeft === 0)
-      if (refreshesLeft === 0) {
-        return t("matchScore.noTokensLeft");
-      }
-      return t("matchScore.resetIn", { hours: hoursUntilReset, minutes: minutesUntilReset });
-    }
-    return `Score: ${score}`;
+    return t("matchScore.notCalculated");
   };
-
-  const isDisabled = status === "loading" || !canRefresh || isRefreshing;
 
   // refreshCount représente maintenant directement les tokens restants
   const refreshesLeft = refreshCount;
@@ -167,7 +266,7 @@ export default function MatchScore({
           className={`
             absolute inset-0 flex flex-col items-center justify-center rounded-full
             transition-all duration-300
-            ${(isHovered || status === "loading" || (score === null && status !== "error")) && !isDisabled ? "blur-sm" : "blur-0"}
+            ${shouldShowLoading || (isHovered && !isDisabled) || (score === null && status !== "error" && !isDisabled) ? "blur-sm" : "blur-0"}
           `}
         >
           {score !== null && (
@@ -186,7 +285,7 @@ export default function MatchScore({
         </div>
 
         {/* Icône de refresh au survol (seulement si score existe et pas en loading) */}
-        {isHovered && !isDisabled && status !== "loading" && score !== null && (
+        {isHovered && !isDisabled && !shouldShowLoading && score !== null && (
           <div className="absolute inset-0 flex items-center justify-center">
             <RefreshCw
               className="w-5 h-5 text-gray-600 opacity-60"
@@ -196,7 +295,7 @@ export default function MatchScore({
         )}
 
         {/* Icône de refresh en rotation pendant le chargement */}
-        {status === "loading" && (
+        {shouldShowLoading && (
           <div className={`absolute inset-0 flex items-center justify-center animate-spin-slow shimmer`}>
             <RefreshCw
               className="w-5 h-5 text-gray-600 opacity-60"
@@ -206,7 +305,7 @@ export default function MatchScore({
         )}
 
         {/* Icône de refresh statique quand score non calculé */}
-        {score === null && status !== "loading" && status !== "error" && (
+        {score === null && !shouldShowLoading && status !== "error" && (
           <div className="absolute inset-0 flex items-center justify-center">
             <RefreshCw
               className="w-5 h-5 text-gray-600 opacity-60"
@@ -217,7 +316,7 @@ export default function MatchScore({
       </div>
 
       {/* Petite bulle avec le nombre de refresh restants */}
-      {refreshCount >= 0 && !isLoading && (
+      {refreshCount >= 0 && !shouldShowLoading && (
         <div
           className={`
             absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full

@@ -35,6 +35,72 @@ export default function BackgroundTasksProvider({ children }) {
     await loadTasksFromServer?.();
   }, [loadTasksFromServer]);
 
+  // Ref pour stabiliser refreshTasks et éviter les re-renders inutiles
+  const refreshTasksRef = useRef(refreshTasks);
+  useEffect(() => {
+    refreshTasksRef.current = refreshTasks;
+  }, [refreshTasks]);
+
+  // Debounce pour les rafraîchissements SSE (éviter les rafraîchissements trop rapides)
+  const debounceTimerRef = useRef(null);
+
+  // Écouter les événements temps réel pour rafraîchir les tâches
+  useEffect(() => {
+    const handleRealtimeTaskUpdate = (event) => {
+      console.log('[BackgroundTasksProvider] 🔄 Tâche mise à jour en temps réel:', event.detail);
+
+      // Debounce : ne rafraîchir qu'après 500ms sans nouvel événement
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      debounceTimerRef.current = setTimeout(() => {
+        console.log('[BackgroundTasksProvider] 📥 Rafraîchissement des tâches depuis le serveur...');
+        refreshTasksRef.current().then(() => {
+          console.log('[BackgroundTasksProvider] ✅ Tâches rafraîchies avec succès');
+        }).catch(err => {
+          console.error('[BackgroundTasksProvider] ❌ Erreur rafraîchissement:', err);
+        });
+      }, 500);
+    };
+
+    window.addEventListener('realtime:task:updated', handleRealtimeTaskUpdate);
+    return () => {
+      window.removeEventListener('realtime:task:updated', handleRealtimeTaskUpdate);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []); // Pas de dépendances - utilise la ref pour accéder à refreshTasks
+
+  // Calculer si on a des tâches actives (mémoïsé pour éviter re-render inutiles)
+  const hasRunningTasks = useMemo(() =>
+    tasks.some(task => task.status === 'running' || task.status === 'queued'),
+    [tasks]
+  );
+
+  // Polling de backup si des tâches sont en cours (en cas d'échec SSE)
+  useEffect(() => {
+    if (!isAuthenticated || !hasRunningTasks) {
+      return;
+    }
+
+    console.log('[BackgroundTasksProvider] 🔄 Polling de backup activé (tâches en cours)');
+
+    // Polling toutes les 10 secondes uniquement si des tâches sont actives
+    const interval = setInterval(() => {
+      console.log('[BackgroundTasksProvider] 🔄 Polling de backup - vérification des tâches...');
+      refreshTasks().catch(err => {
+        console.error('[BackgroundTasksProvider] ❌ Erreur polling backup:', err);
+      });
+    }, 10000);
+
+    return () => {
+      console.log('[BackgroundTasksProvider] 🛑 Polling de backup désactivé');
+      clearInterval(interval);
+    };
+  }, [isAuthenticated, hasRunningTasks, refreshTasks]);
+
   const cancelTask = useCallback(async (taskId) => {
     if (!taskId) return;
 

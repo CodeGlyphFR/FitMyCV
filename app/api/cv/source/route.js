@@ -19,7 +19,11 @@ export async function GET() {
 
     if (!cvCookie) {
       console.log("[cv/source] Pas de cookie cvFile");
-      return NextResponse.json({ sourceType: null, sourceValue: null });
+      return NextResponse.json({
+        sourceType: null,
+        sourceValue: null,
+        hasExtractedJobOffer: false,
+      });
     }
 
     const cvFile = await prisma.cvFile.findUnique({
@@ -32,6 +36,7 @@ export async function GET() {
       select: {
         sourceType: true,
         sourceValue: true,
+        extractedJobOffer: true,
       },
     });
 
@@ -39,12 +44,17 @@ export async function GET() {
 
     if (!cvFile) {
       console.log("[cv/source] CV non trouvé en DB");
-      return NextResponse.json({ sourceType: null, sourceValue: null });
+      return NextResponse.json({
+        sourceType: null,
+        sourceValue: null,
+        hasExtractedJobOffer: false,
+      });
     }
 
     return NextResponse.json({
       sourceType: cvFile.sourceType,
       sourceValue: cvFile.sourceValue,
+      hasExtractedJobOffer: !!cvFile.extractedJobOffer,
     });
   } catch (error) {
     console.error("Erreur lors de la récupération de la source du CV:", error);

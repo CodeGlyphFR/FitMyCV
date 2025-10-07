@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 import { killRegisteredProcess } from '@/lib/backgroundTasks/processRegistry';
+import { updateCvFile } from '@/lib/events/prismaWithEvents';
 
 const MAX_PERSISTED_TASKS = 100;
 const MAX_RETURNED_TASKS = 150;
@@ -332,6 +333,12 @@ export async function DELETE(request) {
     }
 
     if (action === 'cancel') {
+      // Récupérer la tâche pour savoir quel CV elle concerne
+      const task = await prisma.backgroundTask.findUnique({
+        where: { id: taskId },
+        select: { type: true, cvFile: true, userId: true }
+      });
+
       const updateResult = await prisma.backgroundTask.updateMany({
         where: { id: taskId, userId },
         data: {
@@ -347,6 +354,32 @@ export async function DELETE(request) {
           killedProcesses = killResult;
         } catch (killError) {
           console.warn(`Failed to terminate process for task ${taskId}:`, killError);
+        }
+
+        // Si c'est une tâche d'optimisation, remettre le optimiseStatus du CV à 'idle'
+        if (task?.type === 'improve-cv' && task.cvFile && task.userId === userId) {
+          try {
+            await updateCvFile(userId, task.cvFile, {
+              optimiseStatus: 'idle',
+              optimiseUpdatedAt: new Date()
+            });
+            console.log(`[cancel] ✅ optimiseStatus remis à 'idle' pour ${task.cvFile}`);
+          } catch (error) {
+            console.error(`[cancel] ❌ Erreur mise à jour optimiseStatus:`, error);
+          }
+        }
+
+        // Si c'est une tâche de calcul de score, remettre le matchScoreStatus du CV à 'idle'
+        if (task?.type === 'calculate-match-score' && task.cvFile && task.userId === userId) {
+          try {
+            await updateCvFile(userId, task.cvFile, {
+              matchScoreStatus: 'idle',
+              matchScoreUpdatedAt: new Date()
+            });
+            console.log(`[cancel] ✅ matchScoreStatus remis à 'idle' pour ${task.cvFile}`);
+          } catch (error) {
+            console.error(`[cancel] ❌ Erreur mise à jour matchScoreStatus:`, error);
+          }
         }
       }
 

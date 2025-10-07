@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { RefreshCw } from "lucide-react";
 
 export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,6 +10,7 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
   const [cvData, setCvData] = useState(null);
   const [error, setError] = useState(null);
   const [animatedScore, setAnimatedScore] = useState(0);
+  const [isAnimationReady, setIsAnimationReady] = useState(false);
   const { t, language } = useLanguage();
   const animationRef = useRef(null);
 
@@ -30,29 +32,38 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
     }
   }, [cvFile]);
 
-  // Charger les données du CV dès que le composant est monté
+  // Charger les données dès le montage pour savoir si le bouton doit être affiché
   useEffect(() => {
     fetchCvData();
   }, [fetchCvData]);
 
-  // Écouter les changements de score (événement déclenché par le MatchScore)
+  // Écouter les mises à jour temps réel du CV
   useEffect(() => {
-    const handleScoreUpdate = (event) => {
-      // Recharger les données quand le score est mis à jour
-      if (event.detail?.cvFile === cvFile) {
-        console.log('[CVImprovementPanel] Score mis à jour, rechargement des données...');
-        fetchCvData();
-      }
+    const handleRealtimeCvUpdate = () => {
+      console.log('[CVImprovementPanel] CV mis à jour en temps réel, rechargement des métadonnées...');
+      fetchCvData();
     };
 
-    window.addEventListener('score:updated', handleScoreUpdate);
-    window.addEventListener('cv:selected', fetchCvData);
+    window.addEventListener('realtime:cv:metadata:updated', handleRealtimeCvUpdate);
+    return () => window.removeEventListener('realtime:cv:metadata:updated', handleRealtimeCvUpdate);
+  }, [fetchCvData]);
 
-    return () => {
-      window.removeEventListener('score:updated', handleScoreUpdate);
-      window.removeEventListener('cv:selected', fetchCvData);
-    };
-  }, [cvFile, fetchCvData]);
+  // Gérer le blur initial pour éviter le flicker
+  useEffect(() => {
+    if (isOpen) {
+      // Réinitialiser l'état
+      setIsAnimationReady(false);
+      // Attendre que le navigateur ait rendu le DOM
+      const timer = setTimeout(() => {
+        setIsAnimationReady(true);
+      }, 50);
+      return () => clearTimeout(timer);
+    } else {
+      setIsAnimationReady(false);
+    }
+  }, [isOpen]);
+
+  // Les données sont chargées au montage uniquement
 
   // Parser les données JSON
   const parseJson = (jsonString, defaultValue = null) => {
@@ -69,65 +80,13 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
   const missingSkills = parseJson(cvData?.missingSkills, []);
   const matchingSkills = parseJson(cvData?.matchingSkills, []);
 
-  // État pour l'anti-spam sur le bouton "Améliorer automatiquement"
-  const [isImproving, setIsImproving] = useState(false);
-
-  // Synchroniser isImproving avec optimiseStatus
-  useEffect(() => {
-    if (cvData?.optimiseStatus === 'idle' || cvData?.optimiseStatus === 'failed' || cvData?.optimiseStatus === null) {
-      if (isImproving) {
-        console.log('[CVImprovementPanel] Réinitialisation de isImproving car optimiseStatus =', cvData?.optimiseStatus);
-        setIsImproving(false);
-      }
-    }
-  }, [cvData?.optimiseStatus, isImproving]);
-
-  // Polling pour détecter la fin de l'optimisation et recharger la page
-  useEffect(() => {
-    if (!cvData || cvData.optimiseStatus !== 'inprogress') return;
-
-    console.log('[CVImprovementPanel] Polling activé - optimisation en cours...');
-
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(`/api/cv/metadata?file=${encodeURIComponent(cvFile)}`);
-        if (!response.ok) return;
-
-        const data = await response.json();
-        console.log('[CVImprovementPanel] Polling status:', data.optimiseStatus);
-
-        // Si l'optimisation est terminée (idle) ou a échoué (failed)
-        if (data.optimiseStatus === 'idle') {
-          console.log('[CVImprovementPanel] Optimisation terminée - rechargement du CV...');
-          clearInterval(interval);
-
-          // Déclencher le rechargement de la liste des CV (au cas où un nouveau CV a été créé)
-          window.dispatchEvent(new Event('cv:list:changed'));
-
-          // Déclencher le rechargement du CV actuellement affiché
-          window.dispatchEvent(new Event('cv:selected'));
-
-          // Recharger les données locales
-          fetchCvData();
-          setIsImproving(false);
-        } else if (data.optimiseStatus === 'failed') {
-          console.error('[CVImprovementPanel] Optimisation échouée');
-          clearInterval(interval);
-          setCvData(data); // Mettre à jour pour afficher l'erreur
-          setIsImproving(false);
-        }
-      } catch (error) {
-        console.error('[CVImprovementPanel] Erreur polling:', error);
-      }
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [cvData?.optimiseStatus, cvFile]);
-
   // Vérifier si une tâche est en cours (optimisation ou calcul de score)
   const shouldDisableButton =
     cvData?.matchScoreStatus === 'inprogress' ||
     cvData?.optimiseStatus === 'inprogress';
+
+  // Bouton Optimiser est cliquable uniquement si optimiseStatus === 'idle'
+  const canOptimize = cvData?.optimiseStatus === 'idle';
 
   // Fonction pour obtenir la couleur selon la priorité
   const getPriorityColor = (priority) => {
@@ -153,9 +112,11 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
 
   // Fonction pour lancer l'amélioration automatique
   const handleImprove = async () => {
-    // Anti-spam : empêcher les clics multiples
-    if (isImproving) return;
-    setIsImproving(true);
+    // Bloquer si optimisation déjà en cours (sécurité anti-spam)
+    if (!canOptimize) {
+      console.log('[CVImprovementPanel] Optimisation déjà en cours, clic ignoré');
+      return;
+    }
 
     try {
       const response = await fetch("/api/cv/improve", {
@@ -172,7 +133,6 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
 
       if (!response.ok) {
         const error = await response.json();
-        setIsImproving(false);
 
         // Gestion spéciale pour la limite de rate
         if (response.status === 429) {
@@ -183,16 +143,10 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
         throw new Error(error.error || "Erreur lors de l'amélioration");
       }
 
-      // Fermer immédiatement la modal après avoir lancé le job
+      // Fermer la modal immédiatement - le job mettra à jour optimiseStatus dans Prisma
       setIsOpen(false);
-
-      // Recharger les données pour obtenir le nouveau statut (optimiseStatus = 'inprogress')
-      await fetchCvData();
-
-      // Le polling détectera quand l'optimisation est terminée et rechargera la page
     } catch (err) {
       console.error("Erreur amélioration:", err);
-      setIsImproving(false);
       alert(err.message);
     }
   };
@@ -277,20 +231,36 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
         onClick={() => setIsOpen(true)}
         disabled={shouldDisableButton}
         className={`
-          w-9 h-9 rounded-full flex items-center justify-center
-          shadow-lg border transition-all duration-300
+          relative w-9 h-9 rounded-full flex items-center justify-center
+          bg-white shadow-lg border border-neutral-200 transition-all duration-300
           ${shouldDisableButton
-            ? 'bg-gray-100 border-gray-200 cursor-not-allowed animate-pulse opacity-60'
-            : 'bg-white border-neutral-200 cursor-pointer hover:shadow-xl'
+            ? 'cursor-not-allowed'
+            : 'cursor-pointer hover:shadow-xl'
           }
         `}
         title={shouldDisableButton
           ? (cvData?.optimiseStatus === 'inprogress' ? labels.improvementInProgress : labels.calculatingScore)
           : labels.title}
       >
-        <span className={`text-base leading-none ${shouldDisableButton ? 'animate-bounce' : ''}`}>
-          {shouldDisableButton ? '📈' : '🎯'}
+        {/* Icône principale avec blur pendant le chargement */}
+        <span
+          className={`
+            text-base leading-none transition-all duration-300
+            ${shouldDisableButton ? 'blur-sm' : 'blur-0'}
+          `}
+        >
+          🎯
         </span>
+
+        {/* Icône de chargement en rotation pendant le chargement */}
+        {shouldDisableButton && (
+          <div className="absolute inset-0 flex items-center justify-center animate-spin-slow">
+            <RefreshCw
+              className="w-4 h-4 text-gray-600 opacity-60"
+              strokeWidth={2.5}
+            />
+          </div>
+        )}
       </button>
 
       {/* Modal avec les suggestions */}
@@ -343,12 +313,6 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
             }
           }
 
-          @keyframes barGrow {
-            from {
-              width: 0;
-            }
-          }
-
           .animate-slide-in-left {
             animation: slideInLeft 0.5s ease-out forwards;
           }
@@ -359,10 +323,6 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
 
           .animate-scale-in {
             animation: scaleIn 0.4s ease-out forwards;
-          }
-
-          .animate-bar-grow {
-            animation: barGrow 1s ease-out forwards;
           }
 
           .shimmer-bg {
@@ -377,11 +337,11 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
           }
         `}</style>
 
-        <div className="relative">
+        <div className="relative -mx-4 mt-0">
           {/* Header avec gradient animé */}
-          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 rounded-t-2xl -mt-4 -mx-4" />
+          <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10" />
 
-          <div className="relative p-4 space-y-4">
+          <div className={`relative px-4 pt-4 space-y-4 transition-all duration-300 ${!isAnimationReady && !loading ? 'blur-sm opacity-0' : 'blur-0 opacity-100'}`}>
             {loading && (
               <div className="text-center py-12 text-gray-500 text-sm">
                 <div className="inline-block w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin mb-3" />
@@ -489,10 +449,10 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                             </div>
                             <div className="w-full bg-gradient-to-r from-gray-100 to-gray-200 rounded-full h-2 overflow-hidden">
                               <div
-                                className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full shadow-sm animate-bar-grow"
+                                className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full shadow-sm transition-all duration-1000 ease-out"
                                 style={{
-                                  width: `${(normalizeScore(scoreBreakdown.technical_skills, 35) / 35) * 100}%`,
-                                  animationDelay: '0.2s'
+                                  width: isAnimationReady ? `${(normalizeScore(scoreBreakdown.technical_skills, 35) / 35) * 100}%` : '0%',
+                                  transitionDelay: '0.2s'
                                 }}
                               />
                             </div>
@@ -511,10 +471,10 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                             </div>
                             <div className="w-full bg-gradient-to-r from-gray-100 to-gray-200 rounded-full h-2 overflow-hidden">
                               <div
-                                className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full shadow-sm animate-bar-grow"
+                                className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full shadow-sm transition-all duration-1000 ease-out"
                                 style={{
-                                  width: `${(normalizeScore(scoreBreakdown.experience, 30) / 30) * 100}%`,
-                                  animationDelay: '0.3s'
+                                  width: isAnimationReady ? `${(normalizeScore(scoreBreakdown.experience, 30) / 30) * 100}%` : '0%',
+                                  transitionDelay: '0.3s'
                                 }}
                               />
                             </div>
@@ -533,10 +493,10 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                             </div>
                             <div className="w-full bg-gradient-to-r from-gray-100 to-gray-200 rounded-full h-2 overflow-hidden">
                               <div
-                                className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full shadow-sm animate-bar-grow"
+                                className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full shadow-sm transition-all duration-1000 ease-out"
                                 style={{
-                                  width: `${(normalizeScore(scoreBreakdown.education, 20) / 20) * 100}%`,
-                                  animationDelay: '0.4s'
+                                  width: isAnimationReady ? `${(normalizeScore(scoreBreakdown.education, 20) / 20) * 100}%` : '0%',
+                                  transitionDelay: '0.4s'
                                 }}
                               />
                             </div>
@@ -555,10 +515,10 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                             </div>
                             <div className="w-full bg-gradient-to-r from-gray-100 to-gray-200 rounded-full h-2 overflow-hidden">
                               <div
-                                className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full shadow-sm animate-bar-grow"
+                                className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full shadow-sm transition-all duration-1000 ease-out"
                                 style={{
-                                  width: `${(normalizeScore(scoreBreakdown.soft_skills_languages || scoreBreakdown.soft_skills, 15) / 15) * 100}%`,
-                                  animationDelay: '0.5s'
+                                  width: isAnimationReady ? `${(normalizeScore(scoreBreakdown.soft_skills_languages || scoreBreakdown.soft_skills, 15) / 15) * 100}%` : '0%',
+                                  transitionDelay: '0.5s'
                                 }}
                               />
                             </div>
@@ -706,19 +666,19 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
         </div>
 
         {/* Boutons d'action avec design amélioré */}
-        <div className="sticky bottom-0 bg-gradient-to-t from-white via-white to-transparent pt-4 pb-2 px-4 -mx-4 mt-4">
-          <div className="flex justify-between items-center gap-4">
+        <div className="sticky bottom-0 bg-gradient-to-t from-white via-white to-transparent pt-6 pb-2 px-4">
+          <div className="flex justify-center items-center gap-3">
             {/* Bouton amélioration automatique */}
             {suggestions.length > 0 && (
               <>
-                {shouldDisableButton || isImproving ? (
+                {!canOptimize ? (
                   // Amélioration ou calcul en cours
                   <button
                     disabled
-                    className="px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-gray-300 to-gray-400 text-white cursor-not-allowed animate-pulse inline-flex items-center gap-2"
+                    className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-gray-300 to-gray-400 text-white cursor-not-allowed animate-pulse inline-flex items-center gap-2"
                   >
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    {cvData?.optimiseStatus === 'inprogress' || isImproving
+                    {cvData?.optimiseStatus === 'inprogress'
                       ? labels.improvementInProgress
                       : labels.calculatingScore}
                   </button>
@@ -726,14 +686,12 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                   // Bouton actif avec animation
                   <button
                     onClick={handleImprove}
-                    disabled={isImproving}
                     className="
-                      group px-4 py-2 rounded-xl text-sm font-semibold
+                      group px-4 py-2.5 rounded-xl text-sm font-semibold
                       bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600
                       text-white shadow-lg hover:shadow-xl
                       transform hover:scale-105 active:scale-95
                       transition-all duration-200
-                      disabled:opacity-50 disabled:cursor-not-allowed
                       relative overflow-hidden
                     "
                   >
@@ -744,14 +702,11 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
               </>
             )}
 
-            {/* Spacer si pas de bouton amélioration */}
-            {suggestions.length === 0 && <div />}
-
             {/* Bouton fermer avec hover effect */}
             <button
               onClick={() => setIsOpen(false)}
               className="
-                px-4 py-2 rounded-xl text-sm font-semibold
+                px-4 py-2.5 rounded-xl text-sm font-semibold
                 bg-gray-100 text-gray-700
                 hover:bg-gray-200 hover:text-gray-900
                 transform hover:scale-105 active:scale-95

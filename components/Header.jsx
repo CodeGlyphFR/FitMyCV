@@ -24,6 +24,7 @@ export default function Header(props){
   const translateDropdownRef = React.useRef(null);
   const [matchScore, setMatchScore] = React.useState(null);
   const [matchScoreStatus, setMatchScoreStatus] = React.useState("idle");
+  const [optimiseStatus, setOptimiseStatus] = React.useState("idle");
   const [isLoadingMatchScore, setIsLoadingMatchScore] = React.useState(false);
   const [canRefreshScore, setCanRefreshScore] = React.useState(true);
   const [refreshCount, setRefreshCount] = React.useState(0);
@@ -32,9 +33,14 @@ export default function Header(props){
   const [currentCvFile, setCurrentCvFile] = React.useState(null);
   const [hasExtractedJobOffer, setHasExtractedJobOffer] = React.useState(false);
   const [hasScoreBreakdown, setHasScoreBreakdown] = React.useState(false);
+  const [isTransitioning, setIsTransitioning] = React.useState(false);
+
+  // Calculer si le bouton Optimiser est disponible (visible ET actif)
+  const isOptimizeButtonReady = React.useMemo(() => {
+    return hasScoreBreakdown && matchScoreStatus !== 'inprogress';
+  }, [hasScoreBreakdown, matchScoreStatus]);
   const { localDeviceId, addOptimisticTask, removeOptimisticTask, refreshTasks } = useBackgroundTasks();
   const { addNotification } = useNotifications();
-  const previousScoreRef = React.useRef(null);
 
   const [f, setF] = React.useState({
     full_name: header.full_name || "",
@@ -73,27 +79,45 @@ export default function Header(props){
   });
 
   const fetchMatchScore = React.useCallback(async () => {
+    console.log('[Header] 📥 fetchMatchScore appelé');
     setIsLoadingMatchScore(true);
     try {
       // Récupérer le fichier CV actuel depuis le cookie
       const cookies = document.cookie.split(';');
       const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
       if (!cvFileCookie) {
+        console.log('[Header] ⚠️ Pas de cookie cvFile');
         setIsLoadingMatchScore(false);
         return;
       }
 
       const currentFile = decodeURIComponent(cvFileCookie.split('=')[1]);
       setCurrentCvFile(currentFile);
+      console.log('[Header] 📄 CV actuel:', currentFile);
 
-      const response = await fetch(`/api/cv/match-score?file=${encodeURIComponent(currentFile)}`);
+      // Cache-busting pour iOS - ajouter un timestamp
+      const cacheBuster = Date.now();
+      const response = await fetch(`/api/cv/match-score?file=${encodeURIComponent(currentFile)}&_=${cacheBuster}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
       if (!response.ok) {
-        console.error("Failed to fetch match score");
+        // 404 = CV sans offre d'emploi (normal pour CV importés), ne pas logger d'erreur
+        if (response.status === 404) {
+          console.log('[Header] ℹ️ CV sans score de match (pas d\'offre d\'emploi associée)');
+        } else {
+          console.error('[Header] ❌ Échec fetch match score:', response.status);
+        }
         setIsLoadingMatchScore(false);
         return;
       }
 
       const data = await response.json();
+      console.log('[Header] 📊 Données reçues:', data);
 
       // Vérifier que le CV n'a pas changé entre temps
       const updatedCookies = document.cookie.split(';');
@@ -101,8 +125,16 @@ export default function Header(props){
       const updatedFile = updatedCvFileCookie ? decodeURIComponent(updatedCvFileCookie.split('=')[1]) : null;
 
       if (updatedFile === currentFile) {
+        // Utiliser le status de la base en priorité
+        // Workaround iOS : si pas de status en base et qu'on a un score, mettre 'idle'
+        const finalStatus = data.status || (data.score !== null ? 'idle' : 'idle');
+        const finalOptimiseStatus = data.optimiseStatus || 'idle';
+
+        console.log('[Header] ✅ Mise à jour state - score:', data.score, 'status from API:', data.status, 'finalStatus:', finalStatus, 'optimiseStatus:', finalOptimiseStatus);
+
         setMatchScore(data.score);
-        setMatchScoreStatus(data.status || 'idle');
+        setMatchScoreStatus(finalStatus);
+        setOptimiseStatus(finalOptimiseStatus);
         setCanRefreshScore(data.canRefresh ?? true);
         setRefreshCount(data.refreshCount || 0);
         setHoursUntilReset(data.hoursUntilReset || 0);
@@ -110,18 +142,16 @@ export default function Header(props){
         setHasExtractedJobOffer(data.hasExtractedJobOffer || false);
         setHasScoreBreakdown(data.hasScoreBreakdown || false);
 
-        // Déclencher un événement UNIQUEMENT si le score a changé
-        if (data.score !== null && data.status === 'idle' && previousScoreRef.current !== data.score) {
-          console.log('[Header] Déclenchement événement score:updated', { cvFile: currentFile, score: data.score });
-          previousScoreRef.current = data.score;
-          window.dispatchEvent(new CustomEvent('score:updated', {
-            detail: { cvFile: currentFile, score: data.score, status: data.status || 'idle' }
-          }));
-        }
+        // Force un re-render en utilisant un timeout (workaround iOS)
+        setTimeout(() => {
+          setIsLoadingMatchScore(false);
+        }, 0);
+      } else {
+        console.log('[Header] ⚠️ CV changé pendant le fetch');
+        setIsLoadingMatchScore(false);
       }
     } catch (error) {
-      console.error("Error fetching match score:", error);
-    } finally {
+      console.error('[Header] ❌ Erreur fetch match score:', error);
       setIsLoadingMatchScore(false);
     }
   }, []);
@@ -132,34 +162,50 @@ export default function Header(props){
     const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
     const newCvFile = cvFileCookie ? decodeURIComponent(cvFileCookie.split('=')[1]) : null;
 
-    // Réinitialiser TOUS les états du match score avant de charger le nouveau CV
-    setMatchScore(null);
-    setMatchScoreStatus('idle');
-    setIsLoadingMatchScore(true);
-    setCanRefreshScore(true);
-    setRefreshCount(0);
-    setHoursUntilReset(0);
-    setMinutesUntilReset(0);
+    // Activer l'état de transition pour éviter le flash visuel
+    setIsTransitioning(true);
+
+    // Mettre à jour seulement le CV actuel et le loading, garder les autres états temporairement
     setCurrentCvFile(newCvFile);
-    setHasExtractedJobOffer(false);
-    previousScoreRef.current = null; // Réinitialiser le score précédent
+    setIsLoadingMatchScore(true);
 
     fetch("/api/cv/source", { cache: "no-store" })
       .then(res => {
         if (!res.ok) {
-          return { sourceType: null, sourceValue: null };
+          return { sourceType: null, sourceValue: null, hasExtractedJobOffer: false };
         }
         return res.json();
       })
       .then(data => {
+        // Mettre à jour les infos de source
         setSourceInfo({ sourceType: data.sourceType, sourceValue: data.sourceValue });
 
-        // Toujours tenter de récupérer le score - l'API décidera si le CV est éligible
-        fetchMatchScore();
+        // Ne récupérer le score que si le CV a une offre d'emploi extraite
+        if (data.hasExtractedJobOffer) {
+          console.log('[Header] ✅ CV avec offre d\'emploi, récupération du score...');
+          fetchMatchScore();
+        } else {
+          console.log('[Header] ℹ️ CV sans offre d\'emploi extraite, pas de score disponible');
+          // Réinitialiser les états du score seulement si pas d'offre
+          setMatchScore(null);
+          setMatchScoreStatus('idle');
+          setOptimiseStatus('idle');
+          setCanRefreshScore(true);
+          setRefreshCount(0);
+          setHoursUntilReset(0);
+          setMinutesUntilReset(0);
+          setHasExtractedJobOffer(false);
+          setHasScoreBreakdown(false);
+          setIsLoadingMatchScore(false);
+        }
+
+        // Fin de la transition après un court délai pour la fluidité
+        setTimeout(() => setIsTransitioning(false), 100);
       })
       .catch(err => {
         console.error("Failed to fetch source info:", err);
         setIsLoadingMatchScore(false);
+        setIsTransitioning(false);
       });
   }, [fetchMatchScore]);
 
@@ -167,47 +213,43 @@ export default function Header(props){
     fetchSourceInfo();
   }, [fetchSourceInfo]); // Fetch au montage
 
+  // Écouter les événements de synchronisation temps réel
   React.useEffect(() => {
-    // Écouter les changements de CV sélectionné
-    const handleCvSelected = () => {
+    const handleRealtimeCvUpdate = (event) => {
+      console.log('[Header] CV mis à jour en temps réel, rechargement...', event.detail);
+      fetchMatchScore();
+    };
+
+    // Écouter les changements de métadonnées (status, score, etc.)
+    const handleRealtimeCvMetadataUpdate = (event) => {
+      console.log('[Header] 📊 Métadonnées CV mises à jour en temps réel:', event.detail);
+      fetchMatchScore();
+    };
+
+    // WORKAROUND iOS: Forcer le refresh si MatchScore détecte une incohérence
+    const handleForceRefresh = (event) => {
+      console.log('[Header] 🔄 Force refresh demandé par MatchScore (iOS fix):', event.detail);
+      fetchMatchScore();
+    };
+
+    // Écouter les changements de CV pour recharger les infos de source
+    const handleCvSelected = (event) => {
+      console.log('[Header] 📄 CV sélectionné, rechargement des infos...', event.detail);
       fetchSourceInfo();
     };
 
-    window.addEventListener("cv:selected", handleCvSelected);
-    return () => window.removeEventListener("cv:selected", handleCvSelected);
-  }, [fetchSourceInfo]);
+    window.addEventListener('realtime:cv:updated', handleRealtimeCvUpdate);
+    window.addEventListener('realtime:cv:metadata:updated', handleRealtimeCvMetadataUpdate);
+    window.addEventListener('matchscore:force-refresh', handleForceRefresh);
+    window.addEventListener('cv:selected', handleCvSelected);
 
-  // Écouter les changements de tâches pour rafraîchir le CV après une optimisation
-  React.useEffect(() => {
-    const handleTasksChanged = async () => {
-      if (!currentCvFile) return;
-
-      try {
-        // Vérifier si une tâche improve-cv vient de se terminer pour ce CV
-        const response = await fetch(`/api/cv/active-tasks?file=${encodeURIComponent(currentCvFile)}`);
-        if (!response.ok) return;
-
-        const data = await response.json();
-
-        // Si aucune tâche improve-cv n'est en cours mais qu'on a des tâches terminées,
-        // on rafraîchit le CV et le score
-        if (!data.hasImproveCv && !data.hasCalculateScore) {
-          console.log('[Header] Tâches terminées, rafraîchissement du CV et score...');
-
-          // Déclencher le rechargement du CV
-          window.dispatchEvent(new Event('cv:selected'));
-
-          // Rafraîchir le score
-          fetchMatchScore();
-        }
-      } catch (error) {
-        console.error('[Header] Erreur vérification tâches:', error);
-      }
+    return () => {
+      window.removeEventListener('realtime:cv:updated', handleRealtimeCvUpdate);
+      window.removeEventListener('realtime:cv:metadata:updated', handleRealtimeCvMetadataUpdate);
+      window.removeEventListener('matchscore:force-refresh', handleForceRefresh);
+      window.removeEventListener('cv:selected', handleCvSelected);
     };
-
-    window.addEventListener('cv:list:changed', handleTasksChanged);
-    return () => window.removeEventListener('cv:list:changed', handleTasksChanged);
-  }, [currentCvFile, fetchMatchScore]);
+  }, [fetchMatchScore, fetchSourceInfo]);
 
   // Fermer le dropdown de traduction quand on clique à l'extérieur
   React.useEffect(() => {
@@ -233,64 +275,7 @@ export default function Header(props){
     }
   }, [isTranslateDropdownOpen]);
 
-  // SSE pour écouter les changements de status en temps réel
-  React.useEffect(() => {
-    if (matchScoreStatus !== 'inprogress') return;
-
-    // Récupérer le fichier CV actuel depuis le cookie
-    const cookies = document.cookie.split(';');
-    const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
-    if (!cvFileCookie) return;
-
-    const currentFile = decodeURIComponent(cvFileCookie.split('=')[1]);
-
-    console.log('[MatchScore SSE] Connexion SSE pour', currentFile);
-
-    const eventSource = new EventSource(`/api/cv/match-score/stream?file=${encodeURIComponent(currentFile)}`);
-
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('[MatchScore SSE] Status update:', data);
-
-        // Vérifier que le CV n'a pas changé entre temps
-        const updatedCookies = document.cookie.split(';');
-        const updatedCvFileCookie = updatedCookies.find(c => c.trim().startsWith('cvFile='));
-        const updatedFile = updatedCvFileCookie ? decodeURIComponent(updatedCvFileCookie.split('=')[1]) : null;
-
-        if (updatedFile === currentFile) {
-          setMatchScore(data.score);
-          setMatchScoreStatus(data.status || 'idle');
-
-          // Si le status est 'idle' ou 'error', rafraîchir pour avoir les infos de rate limit
-          if (data.status === 'idle' || data.status === 'error') {
-            fetchMatchScore();
-
-            // Déclencher un événement UNIQUEMENT si le score a changé
-            if (data.status === 'idle' && data.score !== null && previousScoreRef.current !== data.score) {
-              console.log('[Header SSE] Déclenchement événement score:updated', { cvFile: currentFile, score: data.score });
-              previousScoreRef.current = data.score;
-              window.dispatchEvent(new CustomEvent('score:updated', {
-                detail: { cvFile: currentFile, score: data.score, status: data.status }
-              }));
-            }
-          }
-        }
-      } catch (error) {
-        console.error('[MatchScore SSE] Error parsing event:', error);
-      }
-    };
-
-    eventSource.onerror = (error) => {
-      console.error('[MatchScore SSE] Error:', error);
-      eventSource.close();
-    };
-
-    return () => {
-      console.log('[MatchScore SSE] Fermeture connexion SSE');
-      eventSource.close();
-    };
-  }, [matchScoreStatus, fetchMatchScore]);
+  // Pas de SSE - l'utilisateur rafraîchira manuellement pour voir le résultat
 
   const handleRefreshMatchScore = React.useCallback(async () => {
     // Vérifier le rate limit avant de commencer
@@ -302,6 +287,11 @@ export default function Header(props){
       });
       return;
     }
+
+    // Mise à jour optimiste : passer immédiatement le status en loading
+    console.log('[Header] 🔄 Début calcul score - mise à jour optimiste du status');
+    setMatchScoreStatus('inprogress');
+    setIsLoadingMatchScore(true);
 
     try {
       // Récupérer le fichier CV actuel depuis le cookie
@@ -341,19 +331,21 @@ export default function Header(props){
         throw new Error(errorMessage);
       }
 
-      // Succès : recharger le status depuis la DB (qui sera maintenant 'calculating')
-      await fetchMatchScore();
-
-      // Le polling se chargera de détecter quand le status passe à 'idle' ou 'error'
+      // Succès - pas de notification
     } catch (error) {
       console.error("Error refreshing match score:", error);
+
+      // En cas d'erreur, réinitialiser le status
+      setMatchScoreStatus('idle');
+      setIsLoadingMatchScore(false);
+
       addNotification({
         type: "error",
         message: error.message,
         duration: 6000,
       });
     }
-  }, [t, addNotification, canRefreshScore, hoursUntilReset, minutesUntilReset, localDeviceId, fetchMatchScore]);
+  }, [t, addNotification, canRefreshScore, hoursUntilReset, minutesUntilReset, localDeviceId]);
 
   // Si le CV est vide (pas de header), ne pas afficher le composant
   const isEmpty = !header.full_name && !header.current_title && !header.contact?.email;
@@ -499,7 +491,7 @@ export default function Header(props){
       </div>
 
       {/* Score et Info en haut à droite */}
-      <div className="flex items-start gap-4">
+      <div className={`flex items-start gap-4 transition-opacity duration-200 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}>
         {/* Container pour le bouton Optimiser + Score avec positionnement relatif */}
         <div className="relative">
           {/* Bouton Optimiser - uniquement si le CV a un scoreBreakdown */}
@@ -524,6 +516,8 @@ export default function Header(props){
             onRefresh={handleRefreshMatchScore}
             currentCvFile={currentCvFile}
             hasExtractedJobOffer={hasExtractedJobOffer}
+            isOptimizeButtonReady={isOptimizeButtonReady}
+            optimiseStatus={optimiseStatus}
           />
         </div>
         <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />

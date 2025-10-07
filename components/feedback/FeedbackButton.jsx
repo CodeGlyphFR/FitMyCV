@@ -1,9 +1,16 @@
 "use client";
 import React from "react";
+import { usePathname } from "next/navigation";
 import FeedbackModal from "./FeedbackModal";
 
 export default function FeedbackButton() {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const pathname = usePathname();
+
+  // Masquer sur la page d'authentification
+  if (pathname === "/auth") {
+    return null;
+  }
 
   return (
     <>

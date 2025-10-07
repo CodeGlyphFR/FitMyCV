@@ -2,8 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 
 export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}) {
-  const { enabled = true, pollInterval = 3000 } = options
-  const lastSyncType = useRef('full')
+  const { enabled = true } = options
   const deviceIdRef = useRef(null)
   const [localDeviceId, setLocalDeviceId] = useState(null)
   const { status } = useSession()
@@ -63,18 +62,25 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
   }, [])
 
   const loadTasksFromServer = useCallback(async () => {
+    console.log('[useTaskSyncAPI] 📥 Chargement des tâches depuis le serveur...');
+
     if (!enabled || status === 'loading') {
+      console.log('[useTaskSyncAPI] ⏭️ Ignoré (non activé ou chargement)');
       return
     }
 
     if (!isAuthenticated) {
+      console.log('[useTaskSyncAPI] ⏭️ Non authentifié, reset des tâches');
       setTasks([])
       return
     }
 
     try {
       const deviceId = getDeviceId()
-      if (!deviceId) return
+      if (!deviceId) {
+        console.log('[useTaskSyncAPI] ⏭️ Pas de deviceId');
+        return
+      }
 
       const url = new URL('/api/background-tasks/sync', window.location.origin)
       url.searchParams.set('deviceId', deviceId)
@@ -90,22 +96,26 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
 
       const result = await response.json()
       if (!result.success) {
+        console.log('[useTaskSyncAPI] ⚠️ Réponse non réussie');
         return
       }
 
-      lastSyncType.current = result.syncType || 'full'
       const tasksFromServer = normaliseTasks(result.tasks)
+      console.log(`[useTaskSyncAPI] ✅ ${tasksFromServer.length} tâche(s) chargée(s) depuis le serveur`);
 
       // Préserver les tâches optimistes lors du merge
       setTasks(prevTasks => {
         const optimisticTasks = prevTasks.filter(task => task.isOptimistic)
-        return [...optimisticTasks, ...tasksFromServer]
+        const merged = [...optimisticTasks, ...tasksFromServer]
+        console.log(`[useTaskSyncAPI] 🔄 Mise à jour de l'état local: ${merged.length} tâche(s) totales`);
+        return merged
       })
     } catch (error) {
-      console.warn('Failed to load tasks from server:', error)
+      console.warn('[useTaskSyncAPI] ❌ Erreur chargement tâches:', error)
     }
   }, [enabled, getDeviceId, isAuthenticated, normaliseTasks, status])
 
+  // Chargement initial uniquement (pas de polling)
   useEffect(() => {
     if (!enabled) {
       setTasks([])
@@ -122,12 +132,7 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
     }
 
     loadTasksFromServer()
-    const intervalId = setInterval(loadTasksFromServer, pollInterval)
-
-    return () => {
-      clearInterval(intervalId)
-    }
-  }, [enabled, isAuthenticated, loadTasksFromServer, pollInterval, setTasks, status])
+  }, [enabled, isAuthenticated, loadTasksFromServer, setTasks, status])
 
   const cancelTaskOnServer = useCallback(async (taskId) => {
     if (!enabled || !taskId || !isAuthenticated) {

@@ -26,6 +26,39 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
 
   const isRegister = mode === "register";
 
+  // Désactiver le scroll sur cette page (y compris iOS)
+  React.useEffect(() => {
+    // Sauvegarder les styles originaux
+    const originalBodyStyle = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      width: document.body.style.width,
+      height: document.body.style.height,
+    };
+    const originalHtmlStyle = {
+      overflow: document.documentElement.style.overflow,
+      position: document.documentElement.style.position,
+    };
+
+    // Appliquer les styles pour bloquer le scroll (y compris sur iOS)
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.position = 'fixed';
+
+    return () => {
+      // Restaurer les styles originaux
+      document.body.style.overflow = originalBodyStyle.overflow;
+      document.body.style.position = originalBodyStyle.position;
+      document.body.style.width = originalBodyStyle.width;
+      document.body.style.height = originalBodyStyle.height;
+      document.documentElement.style.overflow = originalHtmlStyle.overflow;
+      document.documentElement.style.position = originalHtmlStyle.position;
+    };
+  }, []);
+
   function switchMode(next){
     setMode(next);
     setError("");

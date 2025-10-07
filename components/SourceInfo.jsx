@@ -86,7 +86,7 @@ export default function SourceInfo({ sourceType, sourceValue }) {
     >
       <button
         onClick={handleButtonClick}
-        className={`inline-flex items-center justify-center w-6 h-6 rounded-full border bg-blue-50 text-blue-600 text-xs font-bold transition-all duration-200 ${
+        className={`inline-flex items-center justify-center w-6 h-6 rounded-full border bg-blue-50 text-blue-600 text-xs font-semibold transition-all duration-200 ${
           isClickable ? "cursor-pointer hover:bg-blue-100 hover:shadow-md hover:scale-110" : "cursor-default"
         } ${showTooltip ? "ring-2 ring-blue-300 ring-opacity-50" : ""}`}
         type="button"
