@@ -14,14 +14,7 @@ Traduis le CV JSON suivant en **{targetLanguage}**.
 
 ### 2. ❌ NE PAS TRADUIRE
 
-- Les noms de personnes
-- Les emails et numéros de téléphone
-- Les URLs et liens
-- Les codes pays (FR, US, etc.)
-- Les dates (garder le format YYYY-MM ou YYYY)
-- Les noms propres d'entreprises connues
-- Les noms de technologies et outils (JavaScript, Python, etc.)
-- Les métadonnées (generated_at, created_at, etc.)
+{INCLUDE:_shared/language-policy.md}
 
 ### 3. 🔧 STRUCTURE
 
@@ -38,4 +31,4 @@ Traduis le CV JSON suivant en **{targetLanguage}**.
 
 ---
 
-⚠️ **IMPORTANT** : Réponds **UNIQUEMENT** avec le JSON traduit complet, sans texte avant ou après.
+{INCLUDE:_shared/response-format.md}

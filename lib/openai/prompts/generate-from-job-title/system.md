@@ -15,6 +15,8 @@ Ce CV doit être **cohérent** avec le titre de poste et servir de **modèle** q
 - Adaptation du contenu au poste visé
 - Création de profils fictifs mais réalistes
 
+{INCLUDE:_shared/language-policy.md}
+
 ## RÈGLES IMPORTANTES
 
 - ✅ Crée un profil fictif mais **réaliste et professionnel**

@@ -20,22 +20,9 @@ Identifie:
 
 ❌ **N'invente JAMAIS** d'expériences ou compétences absentes du CV original
 
-## 3️⃣ CALCUL DU SCORE DE MATCH (0-100)
+## 3️⃣ CALCUL DU SCORE DE MATCH
 
-Évalue objectivement selon 4 catégories (chacune sur 100):
-
-| Catégorie | Poids | Description |
-|-----------|-------|-------------|
-| Compétences techniques | 35% | Technologies, outils, frameworks |
-| Expérience | 30% | Années, responsabilités, secteur |
-| Formation | 20% | Diplômes, certifications |
-| Soft skills & Langues | 15% | Compétences comportementales + langues |
-
-**Formule** : `score = (tech × 0.35) + (exp × 0.30) + (edu × 0.20) + (soft × 0.15)`
-
-## 4️⃣ SUGGESTIONS D'AMÉLIORATION
-
-Liste **3-5 actions concrètes** pour améliorer le score, par ordre de priorité.
+{INCLUDE:_shared/scoring-rules.md}
 
 ---
 
@@ -53,7 +40,7 @@ Liste **3-5 actions concrètes** pour améliorer le score, par ordre de priorit�
     "education": 75,
     "soft_skills_languages": 67
   },
-  "improvement_suggestions": [
+  "suggestions": [
     {
       "title": "Ajouter certification AWS",
       "suggestion": "Ajouter la certification AWS Solution Architect mentionnée comme un atout dans l'offre",
@@ -67,7 +54,7 @@ Liste **3-5 actions concrètes** pour améliorer le score, par ordre de priorit�
       "impact": "+5 points"
     }
   ],
-  "missing_critical_skills": ["Kubernetes", "TypeScript"],
+  "missing_skills": ["Kubernetes", "TypeScript"],
   "matching_skills": ["React", "Node.js", "Docker", "MongoDB"]
 }
 ```

@@ -13,12 +13,7 @@ Améliorer **UNIQUEMENT** les sections qui font perdre des points, sans toucher 
 
 ## 📝 RÈGLES D'AMÉLIORATION
 
-1. ✅ NE PAS modifier les sections qui correspondent déjà bien
-2. ❌ NE JAMAIS inventer d'expériences ou compétences absentes
-3. ✅ REFORMULER pour mettre en valeur ce qui existe déjà
-4. ✅ AJOUTER uniquement des compétences justifiables par les expériences
-5. ✅ OPTIMISER les mots-clés pour l'ATS
-6. ✅ CLARIFIER les responsabilités et impacts
+{INCLUDE:_shared/cv-improvement-rules.md}
 
 ## 🔧 MODIFICATIONS AUTORISÉES
 
@@ -29,25 +24,7 @@ Améliorer **UNIQUEMENT** les sections qui font perdre des points, sans toucher 
 
 ## 📐 CALCUL DU NOUVEAU SCORE ESTIMÉ
 
-Évalue le nouveau score selon **4 catégories** (chacune notée sur 100):
-
-| Catégorie | Poids | Description |
-|-----------|-------|-------------|
-| `technical_skills` | 35% | Compétences techniques, technologies, outils |
-| `experience` | 30% | Expérience professionnelle pertinente |
-| `education` | 20% | Formation, diplômes, certifications |
-| `soft_skills_languages` | 15% | Soft skills + langues |
-
-### FORMULE DE CALCUL
-
-```
-new_score_estimate = (technical_skills × 0.35) +
-                     (experience × 0.30) +
-                     (education × 0.20) +
-                     (soft_skills_languages × 0.15)
-```
-
-**⚠️ IMPORTANT** : Le score final DOIT correspondre exactement à cette formule (tolérance ±2 points max).
+{INCLUDE:_shared/scoring-rules.md}
 
 ## 📄 FORMAT DE RÉPONSE OBLIGATOIRE (JSON)
 

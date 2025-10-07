@@ -4,26 +4,49 @@ Ce dossier contient tous les prompts utilisés par les différentes fonctionnali
 
 ## 📂 Organisation
 
-Chaque feature a son propre sous-dossier avec généralement 2 fichiers :
-- `system.md` : Prompt système (rôle, contexte, règles générales)
-- `user.md` : Prompt utilisateur (instructions spécifiques, format de sortie)
+### Structure principale
+- **`_shared/`** : Composants réutilisables utilisés par plusieurs features
+- **`[feature]/`** : Chaque feature a son dossier avec généralement :
+  - `system.md` : Prompt système (rôle, contexte, règles générales)
+  - `user.md` : Prompt utilisateur (instructions spécifiques, format de sortie)
 
-## 🗂️ Structure
+### Fichiers partagés (_shared/)
+
+Ces fichiers sont inclus automatiquement dans les prompts via la directive `{INCLUDE:...}` :
+
+| Fichier | Description |
+|---------|-------------|
+| `json-instructions.md` | Instructions détaillées pour remplir le template CV JSON |
+| `scoring-rules.md` | Format de scoring unifié (4 catégories, poids, formule) |
+| `cv-improvement-rules.md` | Règles d'amélioration de CV (ce qui est autorisé/interdit) |
+| `language-policy.md` | Politique de langue pour génération et traduction |
+| `response-format.md` | Format de réponse JSON standard |
+
+## 🗂️ Structure complète
 
 ```
 prompts/
-├── scoring/              # Calcul de score de match CV/offre
-├── generate-cv/          # Génération CV adapté à une offre
-├── improve-cv/           # Amélioration ciblée d'un CV
-├── create-template/      # Création CV template depuis offre
-├── import-pdf/           # Import et parsing de CV PDF
-├── translate-cv/         # Traduction de CV
-├── validate-job-title/   # Validation titre de poste
-├── generate-from-title/  # Génération CV depuis titre seul
-└── extract-job-offer/    # Extraction contenu offre (URL/PDF)
+├── _shared/                  # 📦 COMPOSANTS RÉUTILISABLES
+│   ├── json-instructions.md  # Instructions template CV
+│   ├── scoring-rules.md      # Format scoring unifié
+│   ├── cv-improvement-rules.md # Règles amélioration CV
+│   ├── language-policy.md    # Politique de langue
+│   └── response-format.md    # Format réponse JSON
+│
+├── scoring/                  # Calcul score de match CV/offre
+├── generate-cv/              # Génération CV adapté à une offre
+├── improve-cv/               # Amélioration ciblée d'un CV
+├── create-template/          # Création CV template depuis offre
+├── import-pdf/               # Import et parsing de CV PDF
+├── translate-cv/             # Traduction de CV
+├── validate-job-title/       # Validation titre de poste
+├── generate-from-job-title/  # Génération CV depuis titre seul
+└── extract-job-offer/        # Extraction contenu offre (URL/PDF)
 ```
 
 ## 🔧 Utilisation
+
+### Chargement simple
 
 ```javascript
 import { loadPrompt, loadPromptWithVars } from '@/lib/openai/promptLoader';
@@ -37,6 +60,26 @@ const userPrompt = await loadPromptWithVars('scoring/user.md', {
   jobOfferContent: extractedOffer
 });
 ```
+
+### Inclusion de fichiers partagés
+
+Les prompts peuvent inclure des fichiers partagés avec la directive `{INCLUDE:...}` :
+
+```markdown
+## RÈGLES D'AMÉLIORATION
+
+{INCLUDE:_shared/cv-improvement-rules.md}
+
+## FORMAT DE RÉPONSE
+
+{INCLUDE:_shared/response-format.md}
+```
+
+**Avantages** :
+- ✅ Pas de duplication de code
+- ✅ Maintenance centralisée
+- ✅ Cohérence garantie entre features
+- ✅ Support des inclusions imbriquées
 
 ## 📝 Format des variables
 
@@ -58,20 +101,20 @@ OFFRE D'EMPLOI:
 3. **Exemples** : Ajoute des exemples de sortie JSON quand pertinent
 4. **Variables** : Utilise `{variable}` pour les contenus dynamiques
 5. **Format** : Spécifie toujours le format de sortie attendu (JSON, etc.)
+6. **Réutilisation** : Utilise `{INCLUDE:_shared/xxx.md}` au lieu de dupliquer
 
 ## 🔄 Scoring unifié
 
-Toutes les fonctionnalités de scoring utilisent le même format :
+Toutes les fonctionnalités de scoring utilisent le même format défini dans `_shared/scoring-rules.md` :
 
 - **Catégories** : 4 scores sur 100 (technical_skills, experience, education, soft_skills_languages)
 - **Poids** : 35%, 30%, 20%, 15%
 - **Formule** : `score_final = (tech × 0.35) + (exp × 0.30) + (edu × 0.20) + (soft × 0.15)`
-
-Voir `scoring/format.md` pour les détails.
+- **Champs standardisés** : `suggestions`, `missing_skills`, `matching_skills`
 
 ## 📊 Cache
 
-- **Production** : Les prompts sont mis en cache en mémoire
+- **Production** : Les prompts (et leurs inclusions) sont mis en cache en mémoire
 - **Développement** : Pas de cache (hot-reload)
 - Utiliser `clearPromptCache()` pour vider le cache si besoin
 
@@ -81,10 +124,19 @@ Voir `scoring/format.md` pour les détails.
 import { getPromptCacheStats } from '@/lib/openai/promptLoader';
 
 console.log(getPromptCacheStats());
-// { entries: 5, prompts: ['scoring/system.md', ...] }
+// { entries: 12, prompts: ['scoring/system.md', '_shared/scoring-rules.md', ...] }
 ```
 
 ## 📅 Changelog
+
+### 2025-01-10 - Refactorisation majeure
+- ✨ Ajout du dossier `_shared/` avec composants réutilisables
+- ✨ Support des directives `{INCLUDE:...}` dans promptLoader
+- 🔄 Standardisation des noms de champs JSON (`suggestions`, `missing_skills`)
+- 📦 Factorisation de 60% du contenu dupliqué
+- 🗑️ Suppression de `scoring/format.md` (remplacé par `_shared/scoring-rules.md`)
+- ✅ Uniformisation de la politique de langue
+- ✅ Centralisation des règles d'amélioration CV
 
 ### 2025-01-10 - Migration initiale
 - Création de la structure
