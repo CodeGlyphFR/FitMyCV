@@ -1,0 +1,548 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    ANALYSE DES PROMPTS PAR FEATURE
+                     CV Application - OpenAI Integration
+═══════════════════════════════════════════════════════════════════════════════
+
+Ce document liste pour chaque feature les prompts OpenAI utilisés et leur ordre
+d'exécution.
+
+═══════════════════════════════════════════════════════════════════════════════
+1. GÉNÉRATION DE CV DEPUIS URL/PDF (generateCv)
+═══════════════════════════════════════════════════════════════════════════════
+
+Fichier source: lib/openai/generateCv.js
+
+PHASE 1: EXTRACTION DE L'OFFRE D'EMPLOI
+─────────────────────────────────────────────────────────────────────────────
+
+A) Si source = URL
+   ├─ Fonction: extractJobOfferWithGPT()
+   ├─ Modèle: model_extract_job_offer (DB setting)
+   │  └─ Valeur par défaut: gpt-4o-mini
+   ├─ System prompt: lib/openai/prompts/extract-job-offer/system.md
+   │  └─ Rôle: Expert en analyse d'offres d'emploi
+   │  └─ Mission: Extraire informations depuis PDF/HTML
+   ├─ User prompt: lib/openai/prompts/extract-job-offer/user.md
+   │  └─ Variables injectées:
+   │     └─ {sourceContent}: HTML optimisé (détection pattern H/F)
+   └─ Résultat: Extraction structurée (titre, missions, compétences, etc.)
+
+B) Si source = PDF
+   ├─ Fonction: extractJobOfferFromPdf()
+   ├─ Modèle: model_extract_job_offer (DB setting)
+   │  └─ Valeur par défaut: gpt-4o-mini
+   ├─ System prompt: lib/openai/prompts/extract-job-offer/system.md
+   ├─ User prompt: lib/openai/prompts/extract-job-offer/user.md
+   │  └─ Variables injectées:
+   │     └─ {sourceContent}: Texte extrait du PDF
+   └─ Résultat: Extraction structurée de l'offre
+
+PHASE 2: GÉNÉRATION DU CV ADAPTÉ
+─────────────────────────────────────────────────────────────────────────────
+
+   ├─ Modèle: Selon analysisLevel (DB settings partagés)
+   │  ├─ rapid: model_analysis_rapid → gpt-5-nano-2025-08-07
+   │  ├─ medium: model_analysis_medium → gpt-5-mini-2025-08-07
+   │  └─ deep: model_analysis_deep → gpt-5-2025-08-07
+   ├─ System prompt: lib/openai/prompts/generate-cv/system.md
+   │  ├─ Rôle: Expert en recrutement et optimisation de CV (15 ans)
+   │  ├─ Inclusions:
+   │  │  └─ {INCLUDE:_shared/cv-improvement-rules.md}
+   │  └─ Mission: Adapter le CV à l'offre, optimiser pour ATS
+   ├─ User prompt: lib/openai/prompts/generate-cv/user.md
+   │  └─ Variables injectées:
+   │     ├─ {mainCvContent}: CV de référence (JSON)
+   │     └─ {jobOfferContent}: Offre extraite en Phase 1
+   ├─ Format de réponse: JSON structuré
+   └─ Résultat: CV adapté avec extraction de l'offre
+
+Prompts partagés utilisés:
+  • _shared/cv-improvement-rules.md (règles d'amélioration)
+
+═══════════════════════════════════════════════════════════════════════════════
+2. AMÉLIORATION DE CV (improveCv)
+═══════════════════════════════════════════════════════════════════════════════
+
+Fichier source: lib/openai/improveCv.js
+
+PHASE UNIQUE: AMÉLIORATION CIBLÉE
+─────────────────────────────────────────────────────────────────────────────
+
+   ├─ Modèle: Selon analysisLevel (DB settings partagés, medium par défaut)
+   │  ├─ rapid: model_analysis_rapid → gpt-5-nano-2025-08-07
+   │  ├─ medium: model_analysis_medium → gpt-5-mini-2025-08-07
+   │  └─ deep: model_analysis_deep → gpt-5-2025-08-07
+   ├─ System prompt: lib/openai/prompts/improve-cv/system.md
+   │  ├─ Rôle: Coach carrière expert en optimisation CV
+   │  ├─ Inclusions:
+   │  │  ├─ {INCLUDE:_shared/language-policy.md}
+   │  │  └─ {INCLUDE:_shared/cv-improvement-rules.md}
+   │  ├─ Variables injectées:
+   │  │  └─ {cvLanguage}: Langue détectée du CV
+   │  └─ Mission: Corriger UNIQUEMENT les points faibles vs offre
+   ├─ User prompt: lib/openai/prompts/improve-cv/user.md
+   │  ├─ Inclusions:
+   │  │  ├─ {INCLUDE:_shared/cv-improvement-rules.md}
+   │  │  └─ {INCLUDE:_shared/scoring-rules.md}
+   │  ├─ Variables injectées:
+   │  │  ├─ {currentScore}: Score actuel (ex: 75/100)
+   │  │  ├─ {jobOfferContent}: Offre déjà extraite (cache)
+   │  │  ├─ {cvContent}: CV actuel (JSON)
+   │  │  └─ {suggestionsText}: Suggestions formatées
+   │  └─ Format de réponse: JSON avec CV amélioré + changements détaillés
+   └─ Résultat: CV amélioré, changements, nouveau score estimé, nouvelles suggestions
+
+Prompts partagés utilisés:
+  • _shared/language-policy.md (gestion des langues)
+  • _shared/cv-improvement-rules.md (règles d'amélioration)
+  • _shared/scoring-rules.md (calcul du score)
+
+═══════════════════════════════════════════════════════════════════════════════
+3. CALCUL DU SCORE DE CORRESPONDANCE (calculateMatchScoreWithAnalysis)
+═══════════════════════════════════════════════════════════════════════════════
+
+Fichier source: lib/openai/calculateMatchScoreWithAnalysis.js
+
+PHASE 1: EXTRACTION DE L'OFFRE (si pas en cache)
+─────────────────────────────────────────────────────────────────────────────
+
+   ├─ Si extractedJobOffer non disponible en DB
+   ├─ Fonction: extractJobOfferWithGPT()
+   ├─ Modèle: model_extract_job_offer (DB setting)
+   │  └─ Valeur par défaut: gpt-4o-mini
+   ├─ System prompt: lib/openai/prompts/extract-job-offer/system.md
+   ├─ User prompt: lib/openai/prompts/extract-job-offer/user.md
+   │  └─ Variables injectées:
+   │     └─ {sourceContent}: HTML récupéré avec Puppeteer
+   └─ Résultat: Extraction structurée de l'offre
+
+PHASE 2: ANALYSE ET SCORING
+─────────────────────────────────────────────────────────────────────────────
+
+   ├─ Modèle: model_match_score (DB setting)
+   │  └─ Valeur par défaut: gpt-4o-mini
+   ├─ System prompt: lib/openai/prompts/scoring/system.md
+   │  ├─ Rôle: Expert en recrutement et ATS (15 ans)
+   │  ├─ Inclusions:
+   │  │  ├─ {INCLUDE:_shared/language-policy.md}
+   │  │  └─ {INCLUDE:_shared/response-format.md}
+   │  ├─ Variables injectées:
+   │  │  ├─ {cvLanguage}: Langue détectée du CV
+   │  │  └─ {translationInstruction}: Instruction si langues diffèrent
+   │  └─ Mission: Analyser correspondance CV/offre, fournir score + suggestions
+   ├─ User prompt: lib/openai/prompts/scoring/user.md
+   │  ├─ Inclusions:
+   │  │  └─ {INCLUDE:_shared/scoring-rules.md}
+   │  ├─ Variables injectées:
+   │  │  ├─ {cvContent}: CV au format JSON
+   │  │  └─ {jobOfferContent}: Offre extraite (cache ou Phase 1)
+   │  └─ Format de réponse: JSON avec score + breakdown + suggestions
+   └─ Résultat: Score de match, breakdown par catégorie, suggestions, compétences
+
+Note: Logique de score incrémental
+  • Premier calcul → score GPT tel quel
+  • < 5 min depuis dernier calcul → même score (nouvelles suggestions)
+  • > 5 min depuis dernier calcul → score + (0 à 3 points aléatoires)
+
+Prompts partagés utilisés:
+  • _shared/language-policy.md (gestion des langues)
+  • _shared/response-format.md (format JSON)
+  • _shared/scoring-rules.md (formule de calcul du score)
+
+═══════════════════════════════════════════════════════════════════════════════
+4. TRADUCTION DE CV (translateCv)
+═══════════════════════════════════════════════════════════════════════════════
+
+Fichier source: lib/openai/translateCv.js
+
+PHASE UNIQUE: TRADUCTION
+─────────────────────────────────────────────────────────────────────────────
+
+   ├─ Modèle: model_translate_cv (DB setting)
+   │  └─ Valeur par défaut: gpt-4o-mini
+   ├─ System prompt: lib/openai/prompts/translate-cv/system.md
+   │  ├─ Rôle: Assistant spécialisé dans la traduction de CV
+   │  ├─ Inclusions:
+   │  │  └─ {INCLUDE:_shared/language-policy.md}
+   │  └─ Mission: Traduire en préservant structure JSON
+   ├─ User prompt: lib/openai/prompts/translate-cv/user.md
+   │  └─ Variables injectées:
+   │     ├─ {targetLanguage}: Langue cible (ex: "anglais")
+   │     └─ {cvContent}: CV à traduire (JSON)
+   ├─ Temperature: 0.3 (basse pour cohérence)
+   ├─ Format de réponse: JSON structuré
+   └─ Résultat: CV traduit dans la langue cible
+
+Règles spécifiques:
+  • Ne pas traduire: noms, emails, URLs, dates, technologies
+  • Conserver structure JSON exacte
+  • Traduire uniquement les valeurs textuelles
+
+Prompts partagés utilisés:
+  • _shared/language-policy.md (règles de traduction)
+
+═══════════════════════════════════════════════════════════════════════════════
+5. IMPORT DEPUIS PDF (importPdfCv)
+═══════════════════════════════════════════════════════════════════════════════
+
+Fichier source: lib/openai/importPdf.js
+
+PHASE UNIQUE: EXTRACTION ET STRUCTURATION
+─────────────────────────────────────────────────────────────────────────────
+
+   ├─ Modèle: Selon analysisLevel (DB settings partagés)
+   │  ├─ rapid: model_analysis_rapid → gpt-5-nano-2025-08-07
+   │  ├─ medium: model_analysis_medium → gpt-5-mini-2025-08-07
+   │  └─ deep: model_analysis_deep → gpt-5-2025-08-07
+   ├─ System prompt: lib/openai/prompts/import-pdf/system.md
+   │  ├─ Rôle: Assistant extraction/structuration CV PDF
+   │  ├─ Inclusions:
+   │  │  └─ {INCLUDE:_shared/language-policy.md}
+   │  └─ Mission: Analyser CV PDF et remplir template JSON
+   ├─ User prompt: lib/openai/prompts/import-pdf/user.md
+   │  └─ Variables injectées:
+   │     ├─ {cvSchema}: Template JSON (data/template.json)
+   │     └─ {pdfText}: Texte extrait du PDF
+   ├─ Format de réponse: JSON structuré
+   └─ Résultat: CV structuré avec métadonnées enrichies
+
+Processus:
+  1. Extraction texte avec pdf2json
+  2. Récupération du schéma de référence (data/template.json)
+  3. Appel GPT pour structuration
+  4. Enrichissement avec métadonnées (created_at, generator, source)
+
+Prompts partagés utilisés:
+  • _shared/language-policy.md (détection langue source)
+
+═══════════════════════════════════════════════════════════════════════════════
+6. CRÉATION DE CV TEMPLATE (createTemplateCv)
+═══════════════════════════════════════════════════════════════════════════════
+
+Fichier source: lib/openai/createTemplateCv.js
+
+PHASE 1: EXTRACTION DE L'OFFRE
+─────────────────────────────────────────────────────────────────────────────
+
+A) Si source = URL
+   ├─ Fonction: extractJobOfferWithGPT()
+   ├─ Modèle: model_extract_job_offer (DB setting)
+   │  └─ Valeur par défaut: gpt-4o-mini
+   ├─ Prompt inline dans la fonction (pas de fichier .md)
+   │  └─ Instructions: Extraire informations structurées depuis HTML
+   └─ Résultat: Extraction de l'offre
+
+B) Si source = PDF
+   ├─ Fonction: extractJobOfferFromPdf()
+   ├─ Modèle: model_extract_job_offer (DB setting)
+   │  └─ Valeur par défaut: gpt-4o-mini
+   ├─ Prompt inline dans la fonction (pas de fichier .md)
+   │  └─ Instructions: Analyser texte PDF et structurer
+   └─ Résultat: Extraction de l'offre
+
+PHASE 2: CRÉATION DU CV MODÈLE
+─────────────────────────────────────────────────────────────────────────────
+
+   ├─ Modèle: Selon analysisLevel (DB settings partagés)
+   │  ├─ rapid: model_analysis_rapid → gpt-5-nano-2025-08-07
+   │  ├─ medium: model_analysis_medium → gpt-5-mini-2025-08-07
+   │  └─ deep: model_analysis_deep → gpt-5-2025-08-07
+   ├─ System prompt: lib/openai/prompts/create-template/system.md
+   │  ├─ Rôle: Assistant expert en rédaction de CV et standards ATS
+   │  ├─ Inclusions:
+   │  │  └─ {INCLUDE:_shared/language-policy.md}
+   │  └─ Mission: Créer CV professionnel fictif basé sur offre
+   ├─ User prompt: lib/openai/prompts/create-template/user.md
+   │  └─ Variables injectées:
+   │     ├─ {cvSchema}: Template JSON (data/template.json)
+   │     └─ {jobOfferContent}: Offre extraite en Phase 1
+   ├─ Format de réponse: JSON structuré
+   └─ Résultat: CV modèle avec profil fictif réaliste
+
+Particularité:
+  • Crée un CV par source (1 URL = 1 CV, 1 PDF = 1 CV)
+  • Profil fictif mais réaliste adapté au niveau requis (junior/confirmé/senior)
+
+Prompts partagés utilisés:
+  • _shared/language-policy.md (langue = langue de l'offre)
+
+═══════════════════════════════════════════════════════════════════════════════
+7. GÉNÉRATION DEPUIS TITRE DE POSTE (generateCvFromJobTitle)
+═══════════════════════════════════════════════════════════════════════════════
+
+Fichier source: lib/openai/generateCvFromJobTitle.js
+
+PHASE 1: VALIDATION DU TITRE (DÉSACTIVÉE)
+─────────────────────────────────────────────────────────────────────────────
+
+   ├─ Fonction: validateJobTitle() - DÉSACTIVÉE, tous les titres acceptés
+   ├─ Modèle: model_generate_from_job_title (DB setting)
+   │  └─ Valeur par défaut: gpt-5-mini-2025-08-07
+   ├─ System prompt: lib/openai/prompts/validate-job-title/system.md
+   ├─ User prompt: lib/openai/prompts/validate-job-title/user.md
+   │  └─ Variables injectées:
+   │     └─ {jobTitle}: Titre de poste à valider
+   └─ Résultat: Validation (VALIDE/INVALIDE) - actuellement toujours VALIDE
+
+PHASE 2: GÉNÉRATION DU CV
+─────────────────────────────────────────────────────────────────────────────
+
+   ├─ Modèle: model_generate_from_job_title (DB setting)
+   │  └─ Valeur par défaut: gpt-5-mini-2025-08-07
+   ├─ System prompt: lib/openai/prompts/generate-from-job-title/system.md
+   │  ├─ Rôle: Assistant expert en rédaction de CV et standards ATS
+   │  ├─ Inclusions:
+   │  │  └─ {INCLUDE:_shared/language-policy.md}
+   │  └─ Mission: Créer CV professionnel à partir d'un titre de poste
+   ├─ User prompt: lib/openai/prompts/generate-from-job-title/user.md
+   │  └─ Variables injectées:
+   │     ├─ {jobTitle}: Titre de poste (ex: "Développeur Full Stack")
+   │     ├─ {language}: Langue du CV (ex: "français")
+   │     └─ {cvSchema}: Template JSON (data/template.json)
+   ├─ Format de réponse: JSON structuré
+   └─ Résultat: CV modèle adapté au titre de poste
+
+Prompts partagés utilisés:
+  • _shared/language-policy.md (langue spécifiée par l'utilisateur)
+
+═══════════════════════════════════════════════════════════════════════════════
+8. CALCUL DU SCORE (LEGACY) (calculateMatchScore)
+═══════════════════════════════════════════════════════════════════════════════
+
+Fichier source: lib/openai/calculateMatchScore.js
+
+Note: Version legacy, remplacée par calculateMatchScoreWithAnalysis.js
+
+PHASE 1: EXTRACTION DE L'OFFRE
+─────────────────────────────────────────────────────────────────────────────
+
+   ├─ Fonction: extractJobOfferWithGPT()
+   ├─ Modèle: model_extract_job_offer (DB setting)
+   │  └─ Valeur par défaut: gpt-4o-mini
+   ├─ Prompt inline dans la fonction (pas de fichier .md)
+   │  └─ Instructions: Extraire informations structurées depuis HTML
+   └─ Résultat: Extraction de l'offre
+
+═══════════════════════════════════════════════════════════════════════════════
+PROMPTS PARTAGÉS (_shared)
+═══════════════════════════════════════════════════════════════════════════════
+
+Ces prompts sont inclus dans d'autres prompts via la directive {INCLUDE:...}
+
+1. cv-improvement-rules.md
+   └─ Règles fondamentales d'amélioration de CV
+   └─ Utilisé par: generateCv, improveCv
+
+2. scoring-rules.md
+   └─ Format de scoring unifié (0-100) avec formule de calcul
+   └─ Formule: score = (tech×0.35) + (exp×0.30) + (edu×0.20) + (soft×0.15)
+   └─ Utilisé par: calculateMatchScoreWithAnalysis, improveCv
+
+3. language-policy.md
+   └─ Règles de gestion des langues (détection, traduction, cohérence)
+   └─ Utilisé par: improveCv, calculateMatchScoreWithAnalysis, translateCv,
+                   importPdfCv, createTemplateCv, generateCvFromJobTitle
+
+4. response-format.md
+   └─ Directives strictes de formatage de réponse JSON
+   └─ Utilisé par: calculateMatchScoreWithAnalysis
+
+5. json-instructions.md (présent mais non utilisé actuellement)
+   └─ Instructions générales pour génération JSON
+
+═══════════════════════════════════════════════════════════════════════════════
+SYSTÈME DE CONFIGURATION DES MODÈLES IA
+═══════════════════════════════════════════════════════════════════════════════
+
+Tous les modèles IA sont configurables via la base de données Prisma (table
+Setting) pour faciliter la gestion via un futur dashboard admin.
+
+⚠️ AUCUN MODÈLE HARDCODÉ (sauf checkOpenAICredits qui utilise gpt-4o-mini)
+
+ARCHITECTURE DES SETTINGS
+─────────────────────────────────────────────────────────────────────────────
+
+Module: lib/settings/aiModels.js
+Table DB: Setting (settingName, value, category, description)
+
+Fonctions principales:
+  • getAiModelSetting(settingName) - Récupère un setting spécifique
+  • getAiModelForAnalysisLevel(level) - Récupère le modèle selon niveau
+  • clearAiModelCache() - Invalide le cache (pour admin dashboard)
+  • preloadAiModelSettings() - Préchargement optionnel
+
+Cache: Map en mémoire pour performance optimale
+
+SETTINGS DISPONIBLES (7 au total)
+─────────────────────────────────────────────────────────────────────────────
+
+1. SETTINGS PARTAGÉS (utilisés par features avec analysisLevel)
+
+   model_analysis_rapid
+   └─ Valeur par défaut: gpt-5-nano-2025-08-07
+   └─ Description: Modèle rapide et économique pour analyse rapide
+   └─ Utilisé par: generateCv, improveCv, importPdf, createTemplateCv
+
+   model_analysis_medium
+   └─ Valeur par défaut: gpt-5-mini-2025-08-07
+   └─ Description: Modèle standard pour analyse équilibrée
+   └─ Utilisé par: generateCv, improveCv, importPdf, createTemplateCv
+
+   model_analysis_deep
+   └─ Valeur par défaut: gpt-5-2025-08-07
+   └─ Description: Modèle avancé pour analyse approfondie
+   └─ Utilisé par: generateCv, improveCv, importPdf, createTemplateCv
+
+2. SETTINGS DÉDIÉS (modèles spécifiques par feature)
+
+   model_match_score
+   └─ Valeur par défaut: gpt-4o-mini
+   └─ Description: Modèle pour calcul du score de correspondance
+   └─ Utilisé par: calculateMatchScoreWithAnalysis
+
+   model_translate_cv
+   └─ Valeur par défaut: gpt-4o-mini
+   └─ Description: Modèle pour traduction de CV
+   └─ Utilisé par: translateCv
+
+   model_extract_job_offer
+   └─ Valeur par défaut: gpt-4o-mini
+   └─ Description: Modèle pour extraction d'offres d'emploi
+   └─ Utilisé par: generateCv, createTemplateCv, calculateMatchScoreWithAnalysis,
+                   calculateMatchScore (legacy)
+
+   model_generate_from_job_title
+   └─ Valeur par défaut: gpt-5-mini-2025-08-07
+   └─ Description: Modèle pour génération de CV depuis titre de poste
+   └─ Utilisé par: generateCvFromJobTitle
+
+INITIALISATION DES SETTINGS
+─────────────────────────────────────────────────────────────────────────────
+
+Fichier: prisma/seed.js
+Commande: node prisma/seed.js
+
+Le script seed crée/met à jour automatiquement les 7 settings avec leurs
+valeurs par défaut. Il est idempotent (peut être exécuté plusieurs fois).
+
+Migration Prisma: 20251008100421_add_settings_table
+
+PRIORITÉ DES MODÈLES
+─────────────────────────────────────────────────────────────────────────────
+
+Pour les features avec analysisLevel, la priorité est:
+  1. requestedModel (paramètre explicite) - si fourni
+  2. Setting DB (model_analysis_rapid/medium/deep) - obligatoire sinon
+
+⚠️ ATTENTION: Il n'y a PLUS de fallback hardcodé. Si un setting est absent en
+DB, une erreur sera lancée. La DB doit toujours être peuplée via le seed.
+
+EXCEPTION: checkOpenAICredits()
+─────────────────────────────────────────────────────────────────────────────
+
+La fonction checkOpenAICredits() dans lib/openai/client.js utilise un modèle
+hardcodé (gpt-4o-mini) pour vérifier rapidement la disponibilité des crédits.
+C'est la SEULE exception à la règle "tout depuis la DB".
+
+Raison: Cette vérification doit fonctionner même si la DB n'est pas accessible
+ou si les settings sont corrompus.
+
+═══════════════════════════════════════════════════════════════════════════════
+RÉSUMÉ DES MODÈLES UTILISÉS PAR FEATURE
+═══════════════════════════════════════════════════════════════════════════════
+
+Feature                          | Modèle principal (setting DB)      | Modèle extraction (setting DB)
+─────────────────────────────────┼────────────────────────────────────┼──────────────────────────────────
+generateCv                       | model_analysis_rapid/medium/deep   | model_extract_job_offer
+improveCv                        | model_analysis_rapid/medium/deep   | N/A (cache)
+calculateMatchScoreWithAnalysis  | model_match_score                  | model_extract_job_offer
+translateCv                      | model_translate_cv                 | N/A
+importPdfCv                      | model_analysis_rapid/medium/deep   | N/A
+createTemplateCv                 | model_analysis_rapid/medium/deep   | model_extract_job_offer
+generateCvFromJobTitle           | model_generate_from_job_title      | N/A
+calculateMatchScore (legacy)     | N/A                                | model_extract_job_offer
+
+Valeurs par défaut des settings partagés:
+  • model_analysis_rapid  → gpt-5-nano-2025-08-07
+  • model_analysis_medium → gpt-5-mini-2025-08-07
+  • model_analysis_deep   → gpt-5-2025-08-07
+
+Valeurs par défaut des settings dédiés:
+  • model_match_score               → gpt-4o-mini
+  • model_translate_cv              → gpt-4o-mini
+  • model_extract_job_offer         → gpt-4o-mini
+  • model_generate_from_job_title   → gpt-5-mini-2025-08-07
+
+═══════════════════════════════════════════════════════════════════════════════
+MÉCANISMES D'OPTIMISATION
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Cache de l'extraction d'offre
+   └─ Stockage dans CvFile.extractedJobOffer (DB)
+   └─ Évite de ré-extraire l'offre pour le scoring et l'amélioration
+
+2. Optimisation HTML pour extraction
+   └─ Détection du pattern H/F dans le titre
+   └─ Réduction du HTML envoyé à GPT (garde 500 chars avant le titre)
+   └─ Économie de tokens et amélioration de la précision
+
+3. Anti-bot pour scraping
+   └─ Tentative fetch HTTP simple d'abord
+   └─ Puppeteer + Stealth plugin si antibot détecté
+   └─ Utilisé par: generateCv, createTemplateCv, calculateMatchScoreWithAnalysis
+
+4. Score incrémental
+   └─ < 5 min: même score (nouvelles suggestions)
+   └─ > 5 min: score + 0 à 3 points aléatoires
+   └─ Utilisé par: calculateMatchScoreWithAnalysis
+
+5. Vérification des crédits OpenAI
+   └─ Appel systématique avant toute opération longue
+   └─ Évite de lancer des jobs qui échoueront par manque de crédits
+   └─ Fonction: checkOpenAICredits() (lib/openai/client.js)
+   └─ Exception: Utilise gpt-4o-mini hardcodé (seul cas dans tout le code)
+
+6. Cache des settings en mémoire
+   └─ Map pour éviter les requêtes DB répétées
+   └─ Invalidation via clearAiModelCache() (futur admin dashboard)
+   └─ Module: lib/settings/aiModels.js
+
+═══════════════════════════════════════════════════════════════════════════════
+NOTES TECHNIQUES
+═══════════════════════════════════════════════════════════════════════════════
+
+• Chargement des prompts: lib/openai/promptLoader.js
+  ├─ loadPrompt(path): Charge un prompt et résout les {INCLUDE:...}
+  └─ loadPromptWithVars(path, vars): Charge + remplace les variables {varName}
+
+• Résolution des includes: Récursive, support imbriqué
+
+• Format de réponse: JSON structuré avec response_format: { type: 'json_object' }
+
+• Gestion de l'annulation: Support du signal AbortSignal pour toutes les features
+
+• Temperature:
+  ├─ Extraction d'offre: 0.1 (très factuel)
+  ├─ Traduction: 0.3 (cohérence)
+  └─ Autres: Non spécifiée (modèle par défaut, car certains modèles ne supportent pas)
+
+• Configuration des modèles:
+  ├─ Tous les getModelForAnalysisLevel() sont async (depuis v1.1)
+  ├─ Settings stockés en DB (table Setting)
+  ├─ Seed pour initialisation: prisma/seed.js
+  ├─ Aucun fallback hardcodé (DB obligatoire)
+  └─ Exception unique: checkOpenAICredits() utilise gpt-4o-mini hardcodé
+
+• Fichiers modifiés pour retirer les modèles hardcodés:
+  ├─ lib/openai/calculateMatchScore.js (ajout getAiModelSetting)
+  ├─ lib/openai/calculateMatchScoreWithAnalysis.js (ajout getAiModelSetting)
+  ├─ lib/openai/generateCv.js (déjà adapté)
+  ├─ lib/openai/improveCv.js (déjà adapté)
+  ├─ lib/openai/translateCv.js (déjà adapté)
+  ├─ lib/openai/importPdf.js (déjà adapté)
+  ├─ lib/openai/createTemplateCv.js (déjà adapté)
+  └─ lib/openai/generateCvFromJobTitle.js (déjà adapté)
+
+═══════════════════════════════════════════════════════════════════════════════
+FIN DU DOCUMENT
+═══════════════════════════════════════════════════════════════════════════════
