@@ -74,14 +74,10 @@ Architecture de job queue pour les opérations longues (génération IA, import 
 - `cancelled`: annulée
 
 ### Génération de CV par IA
-Flux principal dans `lib/openai/generateCvWithScore.js`:
+Flux principal dans `lib/openai/generateCv.js`:
 1. Extraction du contenu de l'offre (URL scraping avec Puppeteer stealth ou PDF parsing)
 2. Récupération du CV de référence de l'utilisateur
-3. **Un seul appel OpenAI optimisé** qui génère simultanément:
-   - CV adapté à l'offre
-   - Score de match (0-100) avec breakdown détaillé
-   - Suggestions d'amélioration prioritaires
-   - Compétences manquantes et correspondantes
+3. **Appel OpenAI** qui génère un CV adapté à l'offre
 4. Validation du JSON retourné contre `data/template.json`
 5. Stockage chiffré du nouveau CV avec métadonnées enrichies
 

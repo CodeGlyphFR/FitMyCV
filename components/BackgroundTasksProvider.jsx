@@ -47,7 +47,6 @@ export default function BackgroundTasksProvider({ children }) {
   // Écouter les événements temps réel pour rafraîchir les tâches
   useEffect(() => {
     const handleRealtimeTaskUpdate = (event) => {
-      console.log('[BackgroundTasksProvider] 🔄 Tâche mise à jour en temps réel:', event.detail);
 
       // Debounce : ne rafraîchir qu'après 500ms sans nouvel événement
       if (debounceTimerRef.current) {
@@ -55,11 +54,8 @@ export default function BackgroundTasksProvider({ children }) {
       }
 
       debounceTimerRef.current = setTimeout(() => {
-        console.log('[BackgroundTasksProvider] 📥 Rafraîchissement des tâches depuis le serveur...');
         refreshTasksRef.current().then(() => {
-          console.log('[BackgroundTasksProvider] ✅ Tâches rafraîchies avec succès');
         }).catch(err => {
-          console.error('[BackgroundTasksProvider] ❌ Erreur rafraîchissement:', err);
         });
       }, 500);
     };
@@ -85,18 +81,14 @@ export default function BackgroundTasksProvider({ children }) {
       return;
     }
 
-    console.log('[BackgroundTasksProvider] 🔄 Polling de backup activé (tâches en cours)');
 
     // Polling toutes les 10 secondes uniquement si des tâches sont actives
     const interval = setInterval(() => {
-      console.log('[BackgroundTasksProvider] 🔄 Polling de backup - vérification des tâches...');
       refreshTasks().catch(err => {
-        console.error('[BackgroundTasksProvider] ❌ Erreur polling backup:', err);
       });
     }, 10000);
 
     return () => {
-      console.log('[BackgroundTasksProvider] 🛑 Polling de backup désactivé');
       clearInterval(interval);
     };
   }, [isAuthenticated, hasRunningTasks, refreshTasks]);
@@ -185,7 +177,6 @@ export default function BackgroundTasksProvider({ children }) {
       }
 
       // Log tous les changements de statut dans la console
-      console.log(`[BackgroundTask] Tâche ${task.id} (${task.type}): ${prevStatus} → ${task.status}`);
 
       if (task?.shouldUpdateCvList && typeof window !== 'undefined') {
         window.dispatchEvent(new Event('cv:list:changed'));
@@ -208,8 +199,6 @@ export default function BackgroundTasksProvider({ children }) {
         didTrigger = true;
       } else if (task.status === 'failed') {
         const errorMessage = task.error || 'Échec de la tâche';
-        console.error(`[BackgroundTask] Tâche ${task.id} (${task.type}) a échoué:`, errorMessage);
-        console.error(`[BackgroundTask] Détails de la tâche:`, task);
 
         addNotification({
           type: 'error',

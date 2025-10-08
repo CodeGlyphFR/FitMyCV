@@ -9,16 +9,13 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
-    console.log("[cv/source] Non authentifié");
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 
   try {
     const cvCookie = (cookies().get("cvFile") || {}).value;
-    console.log("[cv/source] userId:", session.user.id, "cvFile cookie:", cvCookie);
 
     if (!cvCookie) {
-      console.log("[cv/source] Pas de cookie cvFile");
       return NextResponse.json({
         sourceType: null,
         sourceValue: null,
@@ -40,10 +37,7 @@ export async function GET() {
       },
     });
 
-    console.log("[cv/source] Résultat DB:", cvFile);
-
     if (!cvFile) {
-      console.log("[cv/source] CV non trouvé en DB");
       return NextResponse.json({
         sourceType: null,
         sourceValue: null,

@@ -38,18 +38,14 @@ export function useRealtimeSync(options = {}) {
       return;
     }
 
-    console.log('[useRealtimeSync] 🔌 Tentative de connexion au SSE endpoint /api/events/stream...');
 
     try {
       const eventSource = new EventSource('/api/events/stream');
       eventSourceRef.current = eventSource;
-      console.log('[useRealtimeSync] 📡 EventSource créé, en attente de connexion...');
 
       // Événement de connexion réussie
       eventSource.addEventListener('connected', (event) => {
         const data = JSON.parse(event.data);
-        console.log('[useRealtimeSync] ✅ Connexion SSE établie avec succès pour user:', data.userId);
-        console.log('[useRealtimeSync] 📡 En écoute des événements task:updated et cv:updated');
         setConnected(true);
         setError(null);
       });
@@ -57,31 +53,24 @@ export function useRealtimeSync(options = {}) {
       // Mise à jour de tâche
       eventSource.addEventListener('task:updated', (event) => {
         const data = JSON.parse(event.data);
-        console.log('[useRealtimeSync] 📨 Task updated reçu du SSE:', data);
         if (onTaskUpdate) {
-          console.log('[useRealtimeSync] ✅ Appel du callback onTaskUpdate...');
           onTaskUpdate(data);
         } else {
-          console.warn('[useRealtimeSync] ⚠️ Pas de callback onTaskUpdate défini');
         }
       });
 
       // Mise à jour de CV
       eventSource.addEventListener('cv:updated', (event) => {
         const data = JSON.parse(event.data);
-        console.log('[useRealtimeSync] 📨 CV updated reçu du SSE:', data);
         if (onCvUpdate) {
-          console.log('[useRealtimeSync] ✅ Appel du callback onCvUpdate...');
           onCvUpdate(data);
         } else {
-          console.warn('[useRealtimeSync] ⚠️ Pas de callback onCvUpdate défini');
         }
       });
 
       // Changement DB générique
       eventSource.addEventListener('db:change', (event) => {
         const data = JSON.parse(event.data);
-        console.log('[useRealtimeSync] DB change', data);
         if (onDbChange) {
           onDbChange(data);
         }
@@ -89,36 +78,28 @@ export function useRealtimeSync(options = {}) {
 
       // Gestion des erreurs
       eventSource.onerror = (err) => {
-        console.error('[useRealtimeSync] ❌ Erreur SSE détectée:', err);
-        console.error('[useRealtimeSync] 📊 État EventSource:', eventSource.readyState);
         setConnected(false);
         setError('Connexion perdue');
 
         // Fermer la connexion actuelle
-        console.log('[useRealtimeSync] 🔌 Fermeture de la connexion SSE...');
         eventSource.close();
         eventSourceRef.current = null;
 
         // Tentative de reconnexion après 5 secondes
         if (enabled && isAuthenticated) {
-          console.log('[useRealtimeSync] 🔄 Reconnexion programmée dans 5s...');
           reconnectTimeoutRef.current = setTimeout(() => {
-            console.log('[useRealtimeSync] 🔄 Tentative de reconnexion...');
             connect();
           }, 5000);
         } else {
-          console.log('[useRealtimeSync] ⏭️ Pas de reconnexion (enabled:', enabled, 'isAuthenticated:', isAuthenticated, ')');
         }
       };
     } catch (err) {
-      console.error('[useRealtimeSync] Erreur création EventSource:', err);
       setError(err.message);
     }
   }, [enabled, isAuthenticated, onTaskUpdate, onCvUpdate, onDbChange]);
 
   // Fonction pour se déconnecter
   const disconnect = useCallback(() => {
-    console.log('[useRealtimeSync] Déconnexion...');
 
     if (eventSourceRef.current) {
       eventSourceRef.current.close();

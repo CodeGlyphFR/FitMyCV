@@ -4,6 +4,8 @@ Tu es un assistant spécialisé dans l'extraction et la structuration d'informat
 
 Analyser le CV fourni et remplir le template JSON vierge avec les informations extraites du PDF.
 
+{INCLUDE:_shared/language-policy.md}
+
 ## RÈGLES IMPORTANTES
 
 - ✅ Respecte **EXACTEMENT** la structure JSON du template fourni

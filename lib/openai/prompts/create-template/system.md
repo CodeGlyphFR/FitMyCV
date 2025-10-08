@@ -15,6 +15,8 @@ Ce CV doit être **cohérent** avec l'offre d'emploi et servir de **modèle** qu
 - Création de profils fictifs mais réalistes
 - Adaptation du contenu au poste visé et au niveau requis
 
+{INCLUDE:_shared/language-policy.md}
+
 ## RÈGLES IMPORTANTES
 
 - ✅ Crée un profil fictif mais **réaliste et professionnel**
@@ -23,7 +25,4 @@ Ce CV doit être **cohérent** avec l'offre d'emploi et servir de **modèle** qu
   - **Junior** : 1-3 ans
   - **Confirmé** : 3-7 ans
   - **Senior** : 7+ ans
-- ✅ Le CV doit être rédigé dans la **MÊME LANGUE** que l'offre d'emploi
-  - Si l'offre est en français → CV en français
-  - Si l'offre est en anglais → CV en anglais
 - ❌ Évite les CV **génériques**, fournis du contenu **spécifique et détaillé**

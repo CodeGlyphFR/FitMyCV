@@ -54,7 +54,6 @@ export default function MatchScore({
 
     // Si on commence à charger, forcer la sortie du hover (fix iOS)
     if (wasIdle && isNowLoading) {
-      console.log('[MatchScore] 🔄 Début du chargement, sortie du hover...');
       setIsHovered(false);
       // Activer l'animation prolongée
       setIsDelayedLoading(true);
@@ -62,7 +61,6 @@ export default function MatchScore({
 
     // Si le status passe à idle mais qu'on est en delayed loading
     if (wasLoading && isNowIdle && !isLoading && !isRefreshing) {
-      console.log('[MatchScore] 🕐 Status passé à idle, animation continue jusqu\'à l\'apparition du bouton Optimiser...');
       // isDelayedLoading reste à true jusqu'à ce que hasScoreBreakdown devienne true
     }
 
@@ -76,7 +74,6 @@ export default function MatchScore({
     const isNowReady = isOptimizeButtonReady;
 
     if (wasNotReady && isNowReady && isDelayedLoading) {
-      console.log('[MatchScore] ✅ Bouton Optimiser actif, arrêt de l\'animation...');
       setIsDelayedLoading(false);
     }
 
@@ -86,7 +83,6 @@ export default function MatchScore({
   // WORKAROUND iOS: Forcer le re-render si on détecte un score valide alors qu'on est en loading
   React.useEffect(() => {
     if (score !== null && score !== prevScoreRef.current && (status === 'loading' || isLoading)) {
-      console.log('[MatchScore] 🔄 iOS fix: Score reçu mais status=loading, forçage re-render...');
 
       // Déclencher un événement pour forcer le parent à se rafraîchir
       if (typeof window !== 'undefined') {
@@ -104,12 +100,10 @@ export default function MatchScore({
     const scoreChanged = prevScoreRef.current !== score;
 
     if (hasValidScore && scoreChanged) {
-      console.log('[MatchScore] 🎉 Score calculé avec succès:', score);
       setShowSuccessEffect(true);
       const timer = setTimeout(() => setShowSuccessEffect(false), 1000);
 
       // Déclencher un événement pour notifier que le score a été mis à jour
-      console.log('[MatchScore] Déclenchement événement score:updated', { cvFile: currentCvFile, score });
       window.dispatchEvent(new CustomEvent('score:updated', {
         detail: { cvFile: currentCvFile, score, status }
       }));
@@ -123,20 +117,6 @@ export default function MatchScore({
   const isStuckLoading = score !== null && !isLoading && status !== "loading" && !isRefreshing && optimiseStatus !== "inprogress";
   const shouldShowLoading = (isActuallyLoading && !isStuckLoading) || isDelayedLoading;
 
-  // Debug logging
-  React.useEffect(() => {
-    console.log('[MatchScore] État de chargement:', {
-      status,
-      isLoading,
-      isRefreshing,
-      isDelayedLoading,
-      optimiseStatus,
-      score,
-      isActuallyLoading,
-      isStuckLoading,
-      shouldShowLoading
-    });
-  }, [status, isLoading, isRefreshing, isDelayedLoading, optimiseStatus, score, isActuallyLoading, isStuckLoading, shouldShowLoading]);
 
   // Afficher le composant uniquement si le CV a une analyse d'offre d'emploi en base
   if (!hasExtractedJobOffer || !sourceValue) {
@@ -160,7 +140,6 @@ export default function MatchScore({
     try {
       await onRefresh();
     } catch (error) {
-      console.error("Erreur lors du rafraîchissement du score:", error);
     } finally {
       setIsRefreshing(false);
       isRefreshingRef.current = false;

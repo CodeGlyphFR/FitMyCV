@@ -62,15 +62,11 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
   }, [])
 
   const loadTasksFromServer = useCallback(async () => {
-    console.log('[useTaskSyncAPI] 📥 Chargement des tâches depuis le serveur...');
-
     if (!enabled || status === 'loading') {
-      console.log('[useTaskSyncAPI] ⏭️ Ignoré (non activé ou chargement)');
       return
     }
 
     if (!isAuthenticated) {
-      console.log('[useTaskSyncAPI] ⏭️ Non authentifié, reset des tâches');
       setTasks([])
       return
     }
@@ -78,7 +74,6 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
     try {
       const deviceId = getDeviceId()
       if (!deviceId) {
-        console.log('[useTaskSyncAPI] ⏭️ Pas de deviceId');
         return
       }
 
@@ -96,18 +91,15 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
 
       const result = await response.json()
       if (!result.success) {
-        console.log('[useTaskSyncAPI] ⚠️ Réponse non réussie');
         return
       }
 
       const tasksFromServer = normaliseTasks(result.tasks)
-      console.log(`[useTaskSyncAPI] ✅ ${tasksFromServer.length} tâche(s) chargée(s) depuis le serveur`);
 
       // Préserver les tâches optimistes lors du merge
       setTasks(prevTasks => {
         const optimisticTasks = prevTasks.filter(task => task.isOptimistic)
         const merged = [...optimisticTasks, ...tasksFromServer]
-        console.log(`[useTaskSyncAPI] 🔄 Mise à jour de l'état local: ${merged.length} tâche(s) totales`);
         return merged
       })
     } catch (error) {
