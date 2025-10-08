@@ -79,21 +79,18 @@ export default function Header(props){
   });
 
   const fetchMatchScore = React.useCallback(async () => {
-    console.log('[Header] 📥 fetchMatchScore appelé');
     setIsLoadingMatchScore(true);
     try {
       // Récupérer le fichier CV actuel depuis le cookie
       const cookies = document.cookie.split(';');
       const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
       if (!cvFileCookie) {
-        console.log('[Header] ⚠️ Pas de cookie cvFile');
         setIsLoadingMatchScore(false);
         return;
       }
 
       const currentFile = decodeURIComponent(cvFileCookie.split('=')[1]);
       setCurrentCvFile(currentFile);
-      console.log('[Header] 📄 CV actuel:', currentFile);
 
       // Cache-busting pour iOS - ajouter un timestamp
       const cacheBuster = Date.now();
@@ -108,16 +105,13 @@ export default function Header(props){
       if (!response.ok) {
         // 404 = CV sans offre d'emploi (normal pour CV importés), ne pas logger d'erreur
         if (response.status === 404) {
-          console.log('[Header] ℹ️ CV sans score de match (pas d\'offre d\'emploi associée)');
         } else {
-          console.error('[Header] ❌ Échec fetch match score:', response.status);
         }
         setIsLoadingMatchScore(false);
         return;
       }
 
       const data = await response.json();
-      console.log('[Header] 📊 Données reçues:', data);
 
       // Vérifier que le CV n'a pas changé entre temps
       const updatedCookies = document.cookie.split(';');
@@ -130,7 +124,6 @@ export default function Header(props){
         const finalStatus = data.status || (data.score !== null ? 'idle' : 'idle');
         const finalOptimiseStatus = data.optimiseStatus || 'idle';
 
-        console.log('[Header] ✅ Mise à jour state - score:', data.score, 'status from API:', data.status, 'finalStatus:', finalStatus, 'optimiseStatus:', finalOptimiseStatus);
 
         setMatchScore(data.score);
         setMatchScoreStatus(finalStatus);
@@ -147,11 +140,9 @@ export default function Header(props){
           setIsLoadingMatchScore(false);
         }, 0);
       } else {
-        console.log('[Header] ⚠️ CV changé pendant le fetch');
         setIsLoadingMatchScore(false);
       }
     } catch (error) {
-      console.error('[Header] ❌ Erreur fetch match score:', error);
       setIsLoadingMatchScore(false);
     }
   }, []);
@@ -182,10 +173,8 @@ export default function Header(props){
 
         // Ne récupérer le score que si le CV a une offre d'emploi extraite
         if (data.hasExtractedJobOffer) {
-          console.log('[Header] ✅ CV avec offre d\'emploi, récupération du score...');
           fetchMatchScore();
         } else {
-          console.log('[Header] ℹ️ CV sans offre d\'emploi extraite, pas de score disponible');
           // Réinitialiser les états du score seulement si pas d'offre
           setMatchScore(null);
           setMatchScoreStatus('idle');
@@ -203,7 +192,6 @@ export default function Header(props){
         setTimeout(() => setIsTransitioning(false), 100);
       })
       .catch(err => {
-        console.error("Failed to fetch source info:", err);
         setIsLoadingMatchScore(false);
         setIsTransitioning(false);
       });
@@ -216,25 +204,21 @@ export default function Header(props){
   // Écouter les événements de synchronisation temps réel
   React.useEffect(() => {
     const handleRealtimeCvUpdate = (event) => {
-      console.log('[Header] CV mis à jour en temps réel, rechargement...', event.detail);
       fetchMatchScore();
     };
 
     // Écouter les changements de métadonnées (status, score, etc.)
     const handleRealtimeCvMetadataUpdate = (event) => {
-      console.log('[Header] 📊 Métadonnées CV mises à jour en temps réel:', event.detail);
       fetchMatchScore();
     };
 
     // WORKAROUND iOS: Forcer le refresh si MatchScore détecte une incohérence
     const handleForceRefresh = (event) => {
-      console.log('[Header] 🔄 Force refresh demandé par MatchScore (iOS fix):', event.detail);
       fetchMatchScore();
     };
 
     // Écouter les changements de CV pour recharger les infos de source
     const handleCvSelected = (event) => {
-      console.log('[Header] 📄 CV sélectionné, rechargement des infos...', event.detail);
       fetchSourceInfo();
     };
 
@@ -289,7 +273,6 @@ export default function Header(props){
     }
 
     // Mise à jour optimiste : passer immédiatement le status en loading
-    console.log('[Header] 🔄 Début calcul score - mise à jour optimiste du status');
     setMatchScoreStatus('inprogress');
     setIsLoadingMatchScore(true);
 
@@ -333,7 +316,6 @@ export default function Header(props){
 
       // Succès - pas de notification
     } catch (error) {
-      console.error("Error refreshing match score:", error);
 
       // En cas d'erreur, réinitialiser le status
       setMatchScoreStatus('idle');
@@ -396,7 +378,6 @@ export default function Header(props){
         currentFile = decodeURIComponent(cvFileCookie.split('=')[1]);
       }
     } catch (err) {
-      console.error('Erreur lors de la récupération du CV actuel:', err);
     }
 
     if (!currentFile) {
@@ -446,7 +427,6 @@ export default function Header(props){
       removeOptimisticTask(optimisticTaskId);
       await refreshTasks();
     } catch (error) {
-      console.error("Impossible de planifier la traduction", error);
       // Échec : supprimer la tâche optimiste et notifier
       removeOptimisticTask(optimisticTaskId);
       addNotification({

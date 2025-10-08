@@ -4,7 +4,7 @@ AMÉLIORATION CIBLÉE DU CV
 
 Tu as reçu:
 1. Un CV existant avec un score de **{currentScore}/100**
-2. L'offre d'emploi cible: **{jobOfferUrl}**
+2. L'analyse de l'offre d'emploi cible (déjà extraite et analysée)
 3. Les suggestions d'amélioration identifiées
 
 ## 🎯 OBJECTIF
@@ -17,8 +17,8 @@ Améliorer **UNIQUEMENT** les sections qui font perdre des points, sans toucher 
 
 ## 🔧 MODIFICATIONS AUTORISÉES
 
-- **Summary**: Reformuler pour mieux matcher le poste
-- **Skills**: Réorganiser par priorité, ajouter si justifié par l'expérience
+- **Summary**: Reformuler pour mieux matcher le poste UNIQUEMENT si l'expérience le justifie
+- **Skills**: Réorganiser par priorité, ajouter UNIQUEMENT si justifié par l'expérience ou les projets
 - **Experience**: Détailler les responsabilités pertinentes, ajouter métriques
 - **Current title**: Adapter au poste visé (rester cohérent)
 
@@ -77,6 +77,12 @@ Améliorer **UNIQUEMENT** les sections qui font perdre des points, sans toucher 
 4. **missing_skills** : Compétences critiques encore manquantes
 5. **matching_skills** : Compétences du CV qui correspondent à l'offre
 6. **Formule** : VÉRIFIE que le score final correspond à la formule. Si écart > 2 points → ajuste le score_breakdown
+
+---
+
+## OFFRE D'EMPLOI ANALYSÉE
+
+{jobOfferContent}
 
 ---
 

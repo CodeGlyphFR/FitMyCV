@@ -51,15 +51,19 @@ Ces règles s'appliquent à toutes les opérations d'amélioration, adaptation e
 
 ### Compétences
 - Réorganiser par priorité selon l'offre
+- Donner des noms de compétences court mais respectant le standards reconnus par les ATS
 - Grouper les compétences connexes
 - Ajouter des compétences UNIQUEMENT si justifiées par l'expérience
 
 ## NIVEAU D'EXPÉRIENCE
 
 Adapter le contenu au niveau requis :
-- **Junior** : 1-3 ans d'expérience
-- **Confirmé** : 3-7 ans d'expérience
-- **Senior** : 7+ ans d'expérience
+- **Notions** : stages, petit projets, scolaire
+- **Débutant** : 1 ans d'expérience
+- **Intermédiaire** : 2-3 ans d'expérience
+- **Compétent** : si déjà appliqué lors d'une expérience ou d'un projet
+- **Avancé** : 3-7 ans d'expérience
+- **Expert** : 7+ ans d'expérience
 
 ## PROFESSIONNALISME
 

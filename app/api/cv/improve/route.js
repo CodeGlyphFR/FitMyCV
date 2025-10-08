@@ -97,7 +97,8 @@ export async function POST(request) {
       taskId,
       user: session.user,
       cvFile,
-      jobOfferUrl: cvRecord.sourceValue,
+      jobOfferContent: cvRecord.extractedJobOffer,
+      jobOfferUrl: cvRecord.sourceValue, // Gardé pour les métadonnées uniquement
       currentScore: cvRecord.matchScore || 0,
       suggestions,
       analysisLevel,

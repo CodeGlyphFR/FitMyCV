@@ -562,7 +562,6 @@ export default function TopBar() {
         }
       }
     } catch (error) {
-      console.error(error);
       setRawItems([]);
     }
   }, [isAuthenticated, setCurrentFile]);
@@ -648,7 +647,6 @@ export default function TopBar() {
         window.dispatchEvent(new CustomEvent('realtime:cv:metadata:updated', { detail: { filename: file } }));
         window.dispatchEvent(new CustomEvent('realtime:cv:list:changed', { detail: { filename: file } }));
 
-        console.log('[TopBar] 📢 Événements de changement de CV déclenchés pour:', file);
       }, 100);
     }
   }
@@ -967,7 +965,6 @@ export default function TopBar() {
       try {
         await reload();
       } catch (reloadError) {
-        console.error("Impossible de recharger la liste des CV", reloadError);
       }
       emitListChanged();
       router.refresh();
@@ -1087,7 +1084,6 @@ export default function TopBar() {
       removeOptimisticTask(optimisticTaskId);
       await refreshTasks();
     } catch (error) {
-      console.error("Impossible de planifier l'import", error);
       // Échec : supprimer la tâche optimiste et notifier
       removeOptimisticTask(optimisticTaskId);
       addNotification({
@@ -1135,7 +1131,6 @@ export default function TopBar() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error("Erreur lors de l'export PDF:", error);
       alert(t("export.errors.exportFailed"));
     }
   }
@@ -1247,7 +1242,6 @@ export default function TopBar() {
       removeOptimisticTask(optimisticTaskId);
       await refreshTasks();
     } catch (error) {
-      console.error("Impossible de planifier la génération de CV", error);
       // Échec : supprimer la tâche optimiste et notifier
       removeOptimisticTask(optimisticTaskId);
       addNotification({
@@ -1364,7 +1358,6 @@ export default function TopBar() {
       removeOptimisticTask(optimisticTaskId);
       await refreshTasks();
     } catch (error) {
-      console.error("Impossible de planifier la génération de CV depuis le titre", error);
       // Échec : supprimer la tâche optimiste et notifier
       removeOptimisticTask(optimisticTaskId);
       addNotification({
