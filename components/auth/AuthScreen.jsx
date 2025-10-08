@@ -8,9 +8,9 @@ import { SITE_TITLE } from "@/lib/site";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const getProviders = (t) => [
-  { id: "google", label: t("auth.continueWithGoogle"), image: "/images/g_logo.png", width: 28, height: 28 },
-  { id: "apple", label: t("auth.continueWithApple"), image: "/images/Apple_logo.png", width: 22, height: 27 },
-  { id: "github", label: t("auth.continueWithGithub"), image: "/images/github.png", width: 28, height: 28 },
+  { id: "google", label: t("auth.continueWithGoogle"), image: "/icons/g_logo.png", width: 28, height: 28 },
+  { id: "apple", label: t("auth.continueWithApple"), image: "/icons/Apple_logo.png", width: 22, height: 27 },
+  { id: "github", label: t("auth.continueWithGithub"), image: "/icons/github.png", width: 28, height: 28 },
 ];
 
 export default function AuthScreen({ initialMode = "login", providerAvailability = {} }){

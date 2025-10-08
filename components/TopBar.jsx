@@ -1429,7 +1429,7 @@ export default function TopBar() {
             aria-label={t("topbar.userMenu")}
           >
             <Image
-              src="/images/user-icon.png"
+              src="/icons/user-icon.png"
               alt={t("topbar.userMenu")}
               width={20}
               height={20}
