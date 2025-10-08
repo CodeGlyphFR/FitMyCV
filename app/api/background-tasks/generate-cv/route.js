@@ -8,14 +8,6 @@ import prisma from "@/lib/prisma";
 import { ensureUserCvDir } from "@/lib/cv/storage";
 import { scheduleGenerateCvJob } from "@/lib/backgroundTasks/generateCvJob";
 
-const ANALYSIS_MODEL_MAP = Object.freeze({
-  rapid: "gpt-5-nano-2025-08-07",
-  medium: "gpt-5-mini-2025-08-07",
-  deep: "gpt-5-2025-08-07",
-});
-
-const DEFAULT_ANALYSIS_LEVEL = "medium";
-
 function sanitizeLinks(raw) {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -112,13 +104,8 @@ export async function POST(request) {
 
     const requestedBaseFile = sanitizeFilename(rawBaseFile);
     const requestedBaseFileLabel = sanitizeLabel(rawBaseFileLabel);
-    const requestedAnalysisLevel = typeof rawAnalysisLevel === "string" ? rawAnalysisLevel.trim().toLowerCase() : "";
+    const requestedAnalysisLevel = typeof rawAnalysisLevel === "string" ? rawAnalysisLevel.trim().toLowerCase() : "medium";
     const requestedModel = typeof rawModel === "string" ? rawModel.trim() : "";
-
-    const levelKey = ANALYSIS_MODEL_MAP[requestedAnalysisLevel]
-      ? requestedAnalysisLevel
-      : (Object.entries(ANALYSIS_MODEL_MAP).find(([, value]) => value === requestedModel)?.[0]
-        || DEFAULT_ANALYSIS_LEVEL);
 
     const { directory: uploadsDirectory, saved: savedUploads } = await saveUploads(files);
 
@@ -154,7 +141,7 @@ export async function POST(request) {
         links: [link],
         baseFile: requestedBaseFile,
         baseFileLabel: requestedBaseFileLabel,
-        analysisLevel: levelKey,
+        analysisLevel: requestedAnalysisLevel,
         model: requestedModel,
         uploads: [],
         uploadDirectory: null,
@@ -204,7 +191,7 @@ export async function POST(request) {
         links: [],
         baseFile: requestedBaseFile,
         baseFileLabel: requestedBaseFileLabel,
-        analysisLevel: levelKey,
+        analysisLevel: requestedAnalysisLevel,
         model: requestedModel,
         uploads: [upload],
         uploadDirectory: uploadsDirectory,

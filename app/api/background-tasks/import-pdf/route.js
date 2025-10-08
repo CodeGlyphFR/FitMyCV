@@ -6,14 +6,6 @@ import { promises as fs } from "fs";
 import path from "path";
 import os from "os";
 
-const ANALYSIS_MODEL_MAP = Object.freeze({
-  rapid: "gpt-5-nano-2025-08-07",
-  medium: "gpt-5-mini-2025-08-07",
-  deep: "gpt-5-2025-08-07",
-});
-
-const DEFAULT_ANALYSIS_LEVEL = "medium";
-
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -76,13 +68,8 @@ export async function POST(request) {
       return NextResponse.json({ error: "Le fichier doit être au format PDF." }, { status: 400 });
     }
 
-    const requestedAnalysisLevel = typeof rawAnalysisLevel === "string" ? rawAnalysisLevel.trim().toLowerCase() : "";
+    const requestedAnalysisLevel = typeof rawAnalysisLevel === "string" ? rawAnalysisLevel.trim().toLowerCase() : "medium";
     const requestedModel = typeof rawModel === "string" ? rawModel.trim() : "";
-
-    const levelKey = ANALYSIS_MODEL_MAP[requestedAnalysisLevel]
-      ? requestedAnalysisLevel
-      : (Object.entries(ANALYSIS_MODEL_MAP).find(([, value]) => value === requestedModel)?.[0]
-        || DEFAULT_ANALYSIS_LEVEL);
 
     const { directory, saved } = await savePdfUpload(pdfFile);
     if (!saved) {
@@ -96,7 +83,7 @@ export async function POST(request) {
 
     const existingTask = await prisma.backgroundTask.findUnique({ where: { id: taskIdentifier } });
     const payload = {
-      analysisLevel: levelKey,
+      analysisLevel: requestedAnalysisLevel,
       model: requestedModel,
       savedName: saved.name,
     };
