@@ -1,0 +1,391 @@
+═══════════════════════════════════════════════════════════════════════════════
+                         WORKFLOW DES FEATURES
+                     CV Application - OpenAI Integration
+═══════════════════════════════════════════════════════════════════════════════
+
+Ce document décrit le workflow détaillé de chaque feature de génération/
+amélioration de CV via l'IA.
+
+═══════════════════════════════════════════════════════════════════════════════
+1. GÉNÉRATION DE CV (generateCv)
+═══════════════════════════════════════════════════════════════════════════════
+
+Fichier: lib/openai/generateCv.js
+Entrées: mainCvContent, referenceFile, links[], files[], analysisLevel
+Sortie: CV adapté + extraction de l'offre
+
+WORKFLOW:
+─────────────────────────────────────────────────────────────────────────────
+
+1. ✅ Vérification des crédits OpenAI
+   └─ checkOpenAICredits()
+
+2. 📥 Extraction des offres d'emploi (URL)
+   Pour chaque URL dans links[]:
+   ├─ Tentative fetch HTTP simple
+   │  └─ Si antibot détecté → Puppeteer + Stealth plugin
+   ├─ Détection du titre (pattern H/F)
+   ├─ Optimisation HTML (réduction contexte)
+   └─ Appel GPT (model_extract_job_offer)
+      ├─ System: lib/openai/prompts/extract-job-offer/system.md
+      └─ User: lib/openai/prompts/extract-job-offer/user.md
+      └─ Résultat: Extraction structurée de l'offre
+
+3. 📄 Extraction des offres d'emploi (PDF)
+   Pour chaque PDF dans files[]:
+   ├─ Extraction texte avec pdf2json
+   └─ Appel GPT (model_extract_job_offer)
+      ├─ System: lib/openai/prompts/extract-job-offer/system.md
+      └─ User: lib/openai/prompts/extract-job-offer/user.md
+      └─ Résultat: Extraction structurée de l'offre
+
+4. 🔄 Création des runs
+   ├─ 1 run par URL scrapée
+   ├─ 1 run par PDF extrait
+   └─ Si aucune source → 1 run basique
+
+5. 🤖 Génération du CV adapté
+   Pour chaque run:
+   ├─ Construction du contenu de l'offre (jobOfferContent)
+   ├─ Récupération du modèle selon analysisLevel
+   │  └─ model_analysis_rapid/medium/deep
+   └─ Appel GPT pour génération
+      ├─ System: lib/openai/prompts/generate-cv/system.md
+      │  └─ Inclut: _shared/cv-improvement-rules.md
+      └─ User: lib/openai/prompts/generate-cv/user.md
+      └─ Variables: {mainCvContent}, {jobOfferContent}
+
+6. ✅ Validation et formatage
+   ├─ Parse du JSON retourné
+   ├─ Vérification de adapted_cv
+   └─ Formatage du CV final
+
+7. 📦 Résultat final
+   Pour chaque source:
+   └─ { cvContent, source, extractedJobOffer }
+
+═══════════════════════════════════════════════════════════════════════════════
+2. AMÉLIORATION DE CV (improveCv)
+═══════════════════════════════════════════════════════════════════════════════
+
+Fichier: lib/openai/improveCv.js
+Entrées: cvContent, jobOfferContent, suggestions[], currentScore, analysisLevel
+Sortie: CV amélioré + changements + nouveau score
+
+WORKFLOW:
+─────────────────────────────────────────────────────────────────────────────
+
+1. ✅ Vérification des crédits OpenAI
+   └─ checkOpenAICredits()
+
+2. 🌐 Détection de la langue du CV
+   └─ detectCvLanguage(cvContent)
+
+3. 📝 Formatage des suggestions
+   └─ Transformation en liste numérotée
+
+4. 🤖 Appel GPT pour amélioration
+   ├─ Récupération du modèle selon analysisLevel
+   │  └─ model_analysis_rapid/medium/deep
+   └─ System: lib/openai/prompts/improve-cv/system.md
+      ├─ Inclut: _shared/language-policy.md
+      ├─ Inclut: _shared/cv-improvement-rules.md
+      └─ Variables: {cvLanguage}
+   └─ User: lib/openai/prompts/improve-cv/user.md
+      ├─ Inclut: _shared/cv-improvement-rules.md
+      ├─ Inclut: _shared/scoring-rules.md
+      └─ Variables: {currentScore}, {jobOfferContent}, {cvContent}, {suggestionsText}
+
+5. ✅ Validation de la réponse
+   ├─ Parse du JSON
+   ├─ Vérification de improved_cv
+   └─ Calcul du nouveau score
+
+6. 📦 Résultat final
+   └─ { improved_cv, changes_made, new_estimated_score, new_suggestions }
+
+═══════════════════════════════════════════════════════════════════════════════
+3. CALCUL DU SCORE (calculateMatchScoreWithAnalysis)
+═══════════════════════════════════════════════════════════════════════════════
+
+Fichier: lib/openai/calculateMatchScoreWithAnalysis.js
+Entrées: cvContent, jobOfferUrl, cvFile?, previousScore?, previousScoreUpdatedAt?
+Sortie: matchScore + scoreBreakdown + suggestions + skills
+
+WORKFLOW:
+─────────────────────────────────────────────────────────────────────────────
+
+1. ✅ Vérification des crédits OpenAI
+   └─ checkOpenAICredits()
+
+2. 📥 Récupération de l'offre d'emploi
+   ├─ SI extractedJobOffer en cache (cvFile.extractedJobOffer)
+   │  └─ Utiliser le cache
+   └─ SINON: Extraction avec Puppeteer + GPT
+      ├─ Puppeteer en mode stealth
+      ├─ Détection du titre (pattern H/F)
+      ├─ Optimisation HTML
+      └─ Appel GPT (model_extract_job_offer)
+         ├─ System: lib/openai/prompts/extract-job-offer/system.md
+         └─ User: lib/openai/prompts/extract-job-offer/user.md
+
+3. 🌐 Détection des langues
+   ├─ detectCvLanguage(cvData)
+   ├─ detectJobOfferLanguage(jobOfferContent)
+   └─ SI langues différentes:
+      └─ Création instruction de traduction
+
+4. 🤖 Appel GPT pour analyse et scoring
+   ├─ Modèle: model_match_score
+   ├─ System: lib/openai/prompts/scoring/system.md
+   │  ├─ Inclut: _shared/language-policy.md
+   │  ├─ Inclut: _shared/response-format.md
+   │  └─ Variables: {cvLanguage}, {translationInstruction}
+   └─ User: lib/openai/prompts/scoring/user.md
+      ├─ Inclut: _shared/scoring-rules.md
+      └─ Variables: {cvContent}, {jobOfferContent}
+
+5. ✅ Validation et nettoyage
+   ├─ Parse du JSON
+   ├─ Validation des scores (0-100)
+   └─ Extraction des tableaux (suggestions, skills)
+
+6. 🔄 Logique de score incrémental
+   ├─ SI premier calcul:
+   │  └─ Retourner score GPT tel quel
+   ├─ SI < 5 min depuis dernier calcul:
+   │  └─ Retourner même score (nouvelles suggestions)
+   └─ SI > 5 min depuis dernier calcul:
+      └─ score + (0 à 3 points aléatoires)
+
+7. 📊 Ajustement du scoreBreakdown
+   └─ Formule: score = (tech×0.35) + (exp×0.30) + (edu×0.20) + (soft×0.15)
+
+8. 📦 Résultat final
+   └─ { matchScore, scoreBreakdown, suggestions, missingSkills, matchingSkills }
+
+═══════════════════════════════════════════════════════════════════════════════
+4. TRADUCTION DE CV (translateCv)
+═══════════════════════════════════════════════════════════════════════════════
+
+Fichier: lib/openai/translateCv.js
+Entrées: cvContent, targetLanguage, signal
+Sortie: CV traduit
+
+WORKFLOW:
+─────────────────────────────────────────────────────────────────────────────
+
+1. ✅ Vérification des crédits OpenAI
+   └─ checkOpenAICredits()
+
+2. 🌐 Mapping de la langue
+   └─ fr → "français", en → "anglais"
+
+3. 🤖 Appel GPT pour traduction
+   ├─ Modèle: model_translate_cv
+   ├─ Temperature: 0.3 (cohérence)
+   ├─ System: lib/openai/prompts/translate-cv/system.md
+   │  └─ Inclut: _shared/language-policy.md
+   └─ User: lib/openai/prompts/translate-cv/user.md
+      └─ Variables: {targetLanguage}, {cvContent}
+
+4. ✅ Validation
+   └─ Parse du JSON pour valider
+
+5. 📦 Résultat final
+   └─ CV traduit au format JSON
+
+═══════════════════════════════════════════════════════════════════════════════
+5. IMPORT DEPUIS PDF (importPdfCv)
+═══════════════════════════════════════════════════════════════════════════════
+
+Fichier: lib/openai/importPdf.js
+Entrées: pdfFilePath, analysisLevel, requestedModel?
+Sortie: CV structuré au format JSON
+
+WORKFLOW:
+─────────────────────────────────────────────────────────────────────────────
+
+1. ✅ Vérification des crédits OpenAI
+   └─ checkOpenAICredits()
+
+2. 📄 Extraction du texte du PDF
+   └─ pdf2json (extractTextFromPdf)
+
+3. 📋 Récupération du schéma de référence
+   └─ data/template.json
+
+4. 🤖 Appel GPT pour structuration
+   ├─ Récupération du modèle selon analysisLevel
+   │  └─ model_analysis_rapid/medium/deep
+   ├─ System: lib/openai/prompts/import-pdf/system.md
+   │  └─ Inclut: _shared/language-policy.md
+   └─ User: lib/openai/prompts/import-pdf/user.md
+      └─ Variables: {cvSchema}, {pdfText}
+
+5. ✅ Validation
+   ├─ Parse du JSON
+   └─ Vérification de la structure
+
+6. 🏷️ Enrichissement avec métadonnées
+   ├─ created_at
+   ├─ generator: "pdf_import"
+   └─ source: chemin du PDF
+
+7. 📦 Résultat final
+   └─ CV structuré au format JSON + métadonnées
+
+═══════════════════════════════════════════════════════════════════════════════
+6. CRÉATION DE CV TEMPLATE (createTemplateCv)
+═══════════════════════════════════════════════════════════════════════════════
+
+Fichier: lib/openai/createTemplateCv.js
+Entrées: links[], files[], analysisLevel, requestedModel?
+Sortie: CV modèle fictif adapté à l'offre
+
+WORKFLOW:
+─────────────────────────────────────────────────────────────────────────────
+
+1. ✅ Vérification des crédits OpenAI
+   └─ checkOpenAICredits()
+
+2. 📋 Récupération du schéma de référence
+   └─ data/template.json
+
+3. 📥 Extraction des offres d'emploi (URL)
+   Pour chaque URL dans links[]:
+   ├─ Puppeteer en mode stealth
+   ├─ Détection du titre (pattern H/F)
+   ├─ Optimisation HTML
+   └─ Appel GPT (model_extract_job_offer)
+      └─ Prompt inline (pas de fichier .md)
+
+4. 📄 Extraction des offres d'emploi (PDF)
+   Pour chaque PDF dans files[]:
+   ├─ Extraction texte avec pdf2json
+   └─ Appel GPT (model_extract_job_offer)
+      └─ Prompt inline (pas de fichier .md)
+
+5. 🔄 Création des runs
+   ├─ 1 run par URL scrapée
+   ├─ 1 run par PDF extrait
+   └─ Si aucune source → 1 run basique
+
+6. 🤖 Génération du CV modèle
+   Pour chaque run:
+   ├─ Construction du contenu de l'offre (jobOfferContent)
+   ├─ Récupération du modèle selon analysisLevel
+   │  └─ model_analysis_rapid/medium/deep
+   └─ Appel GPT pour génération
+      ├─ System: lib/openai/prompts/create-template/system.md
+      │  └─ Inclut: _shared/language-policy.md
+      └─ User: lib/openai/prompts/create-template/user.md
+         └─ Variables: {cvSchema}, {jobOfferContent}
+
+7. ✅ Validation
+   ├─ Parse du JSON
+   └─ Vérification de la structure
+
+8. 📦 Résultat final
+   Pour chaque source:
+   └─ { cvContent, source, extractedJobOffer }
+
+NOTE: Crée des profils fictifs mais réalistes (junior/confirmé/senior)
+
+═══════════════════════════════════════════════════════════════════════════════
+7. GÉNÉRATION DEPUIS TITRE DE POSTE (generateCvFromJobTitle)
+═══════════════════════════════════════════════════════════════════════════════
+
+Fichier: lib/openai/generateCvFromJobTitle.js
+Entrées: jobTitle, language, analysisLevel, requestedModel?
+Sortie: CV modèle adapté au titre de poste
+
+WORKFLOW:
+─────────────────────────────────────────────────────────────────────────────
+
+1. ✅ Vérification des crédits OpenAI
+   └─ checkOpenAICredits()
+
+2. ✅ Validation du titre (DÉSACTIVÉE)
+   └─ Tous les titres sont acceptés automatiquement
+
+3. 📋 Récupération du schéma de référence
+   └─ data/template.json
+
+4. 🤖 Appel GPT pour génération
+   ├─ Modèle: model_generate_from_job_title
+   ├─ System: lib/openai/prompts/generate-from-job-title/system.md
+   │  └─ Inclut: _shared/language-policy.md
+   └─ User: lib/openai/prompts/generate-from-job-title/user.md
+      └─ Variables: {jobTitle}, {language}, {cvSchema}
+
+5. ✅ Validation
+   ├─ Parse du JSON
+   └─ Vérification des champs essentiels:
+      ├─ header.full_name
+      └─ header.current_title
+
+6. 📦 Résultat final
+   └─ CV modèle au format JSON
+
+═══════════════════════════════════════════════════════════════════════════════
+8. CALCUL DU SCORE (LEGACY) (calculateMatchScore)
+═══════════════════════════════════════════════════════════════════════════════
+
+Fichier: lib/openai/calculateMatchScore.js
+NOTE: Version legacy, remplacée par calculateMatchScoreWithAnalysis.js
+
+WORKFLOW:
+─────────────────────────────────────────────────────────────────────────────
+
+1. 📥 Extraction de l'offre d'emploi
+   ├─ Puppeteer en mode stealth
+   ├─ Détection du titre (pattern H/F)
+   ├─ Optimisation HTML
+   └─ Appel GPT (model_extract_job_offer)
+      └─ Prompt inline (pas de fichier .md)
+
+═══════════════════════════════════════════════════════════════════════════════
+LÉGENDE DES SYMBOLES
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ = Vérification/Validation
+📥 = Extraction d'entrée
+📄 = Traitement de fichier
+🌐 = Détection de langue
+📝 = Formatage de données
+🤖 = Appel GPT/IA
+🔄 = Boucle/Itération
+📊 = Calcul/Analyse
+🏷️ = Ajout de métadonnées
+📋 = Récupération de schéma
+📦 = Résultat final
+
+═══════════════════════════════════════════════════════════════════════════════
+POINTS COMMUNS À TOUTES LES FEATURES
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Vérification des crédits OpenAI
+   └─ checkOpenAICredits() avant toute opération longue
+
+2. Support de l'annulation
+   └─ AbortSignal pour interrompre les appels GPT
+
+3. Gestion des erreurs
+   ├─ Parse des réponses JSON
+   ├─ Validation des structures
+   └─ Propagation des erreurs avec messages clairs
+
+4. Configuration des modèles
+   ├─ Tous depuis la base de données (table Setting)
+   └─ Pas de fallback hardcodé (sauf checkOpenAICredits)
+
+5. Cache en mémoire
+   └─ Settings AI Models pour performance
+
+6. Logs détaillés
+   └─ Console.log pour suivi du workflow
+
+═══════════════════════════════════════════════════════════════════════════════
+FIN DU DOCUMENT
+═══════════════════════════════════════════════════════════════════════════════

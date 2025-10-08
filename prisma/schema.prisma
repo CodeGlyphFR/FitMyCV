@@ -165,3 +165,16 @@ model ConsentLog {
   @@index([userId])
   @@index([createdAt])
 }
+
+model Setting {
+  id          String   @id @default(cuid())
+  settingName String   @unique // Nom unique du setting (ex: "model_analysis_rapid")
+  value       String   // Valeur du setting (ex: "gpt-5-nano-2025-08-07")
+  category    String   // Catégorie (ex: "ai_models")
+  description String?  // Description pour le dashboard admin
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([settingName])
+}
