@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { SITE_TITLE } from "@/lib/site";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -121,7 +121,6 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         }
 
         // Après inscription réussie, on continue pour se connecter
-        // Le middleware interceptera et redirigera vers /auth/verify-email-required
       }
 
       const result = await signIn("credentials", {
@@ -136,6 +135,20 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         return;
       }
 
+      // Après connexion, récupérer la session pour vérifier si l'email est vérifié
+      const session = await getSession();
+
+      // Si l'email n'est pas vérifié, rediriger vers la page de vérification
+      if (session?.user && !session.user.emailVerified) {
+        const redirectUrl = isRegister
+          ? '/auth/verify-email-required?new=true'
+          : '/auth/verify-email-required';
+        router.replace(redirectUrl);
+        router.refresh();
+        return;
+      }
+
+      // Email vérifié, rediriger vers la page d'accueil
       router.replace("/");
       router.refresh();
     } catch (submitError) {
@@ -174,12 +187,12 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(126,207,244,0.25),_transparent_65%)]"/>
       </div>
 
-      <div className="relative z-10 w-full max-w-lg rounded-3xl border border-white/10 bg-white shadow-2xl p-6 space-y-6 mt-12">
+      <div className="relative z-10 w-full max-w-lg rounded-3xl border-2 border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl p-6 space-y-6 mt-12">
         <div className="space-y-1 text-aligned">
-          <h1 className="text-2xl font-semibold text-center">
+          <h1 className="text-2xl font-semibold text-center text-white drop-shadow-lg">
             {isRegister ? t("auth.title") : t("auth.siteTitle")}
           </h1>
-          <p className="text-sm text-neutral-600">
+          <p className="text-sm text-slate-100 drop-shadow">
             {t("auth.welcome")}
           </p>
         </div>
@@ -207,8 +220,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         </div>
 
         <div className="relative flex items-center justify-center">
-          <div className="absolute inset-x-0 h-px bg-neutral-200"></div>
-          <span className="relative px-3 text-xs uppercase tracking-wide text-neutral-500 bg-white">{t("auth.or")}</span>
+          <div className="h-px bg-white/30 w-full"></div>
         </div>
 
         <form onSubmit={handleCredentialsSubmit} className="space-y-3">
@@ -216,23 +228,23 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <label className="text-xs font-medium uppercase tracking-wide text-neutral-600">{t("auth.firstName")}</label>
+                  <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("auth.firstName")}</label>
                   <input
                     type="text"
                     value={firstName}
                     onChange={event => setFirstName(event.target.value)}
-                    className="w-full rounded border px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
                     placeholder={t("auth.firstName")}
                     autoComplete="given-name"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-medium uppercase tracking-wide text-neutral-600">{t("auth.lastName")}</label>
+                  <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("auth.lastName")}</label>
                   <input
                     type="text"
                     value={lastName}
                     onChange={event => setLastName(event.target.value)}
-                    className="w-full rounded border px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
                     placeholder={t("auth.lastName")}
                     autoComplete="family-name"
                   />
@@ -242,24 +254,24 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           ) : null}
 
           <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-neutral-600">{t("auth.email")}</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("auth.email")}</label>
             <input
               type="email"
               value={email}
               onChange={event => setEmail(event.target.value)}
-              className="w-full rounded border px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
               placeholder="email@example.com"
               autoComplete="email"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-neutral-600">{t("auth.password")}</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("auth.password")}</label>
             <input
               type="password"
               value={password}
               onChange={event => setPassword(event.target.value)}
-              className="w-full rounded border px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
               placeholder="••••••••"
               autoComplete={isRegister ? "new-password" : "current-password"}
             />
@@ -268,12 +280,12 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
 
           {isRegister ? (
             <div className="space-y-2">
-              <label className="text-xs font-medium uppercase tracking-wide text-neutral-600">{t("auth.confirmPassword")}</label>
+              <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("auth.confirmPassword")}</label>
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={event => setConfirmPassword(event.target.value)}
-                className="w-full rounded border px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
                 placeholder="••••••••"
                 autoComplete="new-password"
               />
@@ -297,12 +309,12 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           </button>
         </form>
 
-        <div className="text-center text-sm text-neutral-600">
+        <div className="text-center text-sm text-slate-100 drop-shadow">
           {isRegister ? (
             <span>
               {t("auth.alreadyRegistered")}
               {" "}
-              <button type="button" onClick={()=>switchMode("login")} className="font-medium text-emerald-600 hover:underline">
+              <button type="button" onClick={()=>switchMode("login")} className="font-medium text-emerald-300 hover:text-emerald-200 hover:underline">
                 {t("auth.loginLink")}
               </button>
             </span>
@@ -310,14 +322,14 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
             <span>
               {t("auth.new")}
               {" "}
-              <button type="button" onClick={()=>switchMode("register")} className="font-medium text-emerald-600 hover:underline">
+              <button type="button" onClick={()=>switchMode("register")} className="font-medium text-emerald-300 hover:text-emerald-200 hover:underline">
                 {t("auth.createAccountLink")}
               </button>
             </span>
           )}
         </div>
 
-        <div className="text-center text-xs text-neutral-400">
+        <div className="text-center text-xs text-slate-200 drop-shadow">
           {t("auth.termsText")}
         </div>
       </div>

@@ -89,6 +89,7 @@ export async function middleware(request) {
 
       if (token?.id && !token?.emailVerified) {
         // Rediriger vers la page de vérification email
+        // Le paramètre ?new=true est géré par AuthScreen lors de l'inscription
         const url = request.nextUrl.clone();
         url.pathname = '/auth/verify-email-required';
         return NextResponse.redirect(url);

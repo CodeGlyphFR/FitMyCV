@@ -58,12 +58,12 @@ export default function PasswordStrengthIndicator({ password }) {
       {/* Barre de progression */}
       <div className="space-y-1">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-neutral-600">{t("auth.passwordStrength.label")}</span>
-          <span className={`font-medium ${strengthColor.replace("bg-", "text-")}`}>
+          <span className="text-white drop-shadow">{t("auth.passwordStrength.label")}</span>
+          <span className={`font-medium ${strengthColor.replace("bg-", "text-")} drop-shadow`}>
             {t(`auth.passwordStrength.${strength}`)}
           </span>
         </div>
-        <div className="h-1.5 bg-neutral-200 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
           <div
             className={`h-full ${strengthColor} transition-all duration-300`}
             style={{ width: strengthWidth }}
@@ -73,7 +73,7 @@ export default function PasswordStrengthIndicator({ password }) {
 
       {/* Liste des règles */}
       <div className="space-y-1.5">
-        <p className="text-xs font-medium text-neutral-700">{t("auth.passwordRules.title")}</p>
+        <p className="text-xs font-medium text-white drop-shadow">{t("auth.passwordRules.title")}</p>
 
         <Rule
           valid={hasMinLength}
@@ -104,11 +104,11 @@ function Rule({ valid, text }) {
   return (
     <div className="flex items-center gap-2 text-xs">
       {valid ? (
-        <span className="text-emerald-600 font-bold">✓</span>
+        <span className="text-emerald-400 font-bold drop-shadow">✓</span>
       ) : (
-        <span className="text-neutral-400">○</span>
+        <span className="text-white/40 drop-shadow">○</span>
       )}
-      <span className={valid ? "text-emerald-700" : "text-neutral-600"}>
+      <span className={valid ? "text-emerald-300 drop-shadow font-medium" : "text-slate-100 drop-shadow"}>
         {text}
       </span>
     </div>

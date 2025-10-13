@@ -197,3 +197,23 @@ a:active,
 .animate-apple-spin {
   animation: apple-spin 1s linear infinite;
 }
+
+/* Neutraliser le style d'auto-complétion du navigateur pour conserver le glassmorphisme */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.2) inset !important;
+  -webkit-text-fill-color: white !important;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: white !important;
+}
+
+/* Firefox */
+input:-moz-autofill,
+input:-moz-autofill:hover,
+input:-moz-autofill:focus {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  filter: none !important;
+}

@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { verifyToken, deleteVerificationToken, markEmailAsVerified } from '@/lib/email/emailService';
+import { createAutoSignInToken } from '@/lib/auth/autoSignIn';
 import EmailVerificationError from '@/components/auth/EmailVerificationError';
 import logger from '@/lib/security/secureLogger';
 
@@ -15,27 +16,34 @@ export default async function VerifyEmailPage({ searchParams }) {
     redirect('/auth?error=token-missing');
   }
 
+  // Vérifier le token côté serveur
+  const verification = await verifyToken(token);
+
+  if (!verification.valid) {
+    // Afficher la page d'erreur (Server Component)
+    return <EmailVerificationError message={verification.error || 'Token invalide'} />;
+  }
+
+  // Marquer l'email comme vérifié
   try {
-    // Vérifier le token côté serveur
-    const verification = await verifyToken(token);
-
-    if (!verification.valid) {
-      // Afficher la page d'erreur (Server Component)
-      return <EmailVerificationError message={verification.error || 'Token invalide'} />;
-    }
-
-    // Marquer l'email comme vérifié
     await markEmailAsVerified(verification.userId);
-
-    // Supprimer le token utilisé
     await deleteVerificationToken(token);
-
     logger.context('verify-email', 'info', `Email vérifié avec succès pour user ${verification.userId}`);
-
-    // Rediriger côté serveur (HTTP 307) - INSTANTANÉ, pas de loading !
-    redirect('/');
   } catch (error) {
-    logger.error('[verify-email] Erreur:', error);
+    logger.error('[verify-email] Erreur lors de la mise à jour:', error);
     return <EmailVerificationError message="Erreur lors de la vérification" />;
   }
+
+  // Créer un token de connexion automatique
+  let autoSignInToken;
+  try {
+    autoSignInToken = await createAutoSignInToken(verification.userId);
+  } catch (error) {
+    logger.error('[verify-email] Erreur création token auto-signin:', error);
+    return <EmailVerificationError message="Erreur lors de la connexion automatique" />;
+  }
+
+  // Rediriger vers la page de connexion automatique
+  // IMPORTANT: redirect() doit être en dehors du try/catch car il lance une exception pour fonctionner
+  redirect(`/auth/complete-signin?token=${autoSignInToken}`);
 }
