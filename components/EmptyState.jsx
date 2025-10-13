@@ -218,9 +218,17 @@ export default function EmptyState() {
   // Show importing state
   if (isImporting) {
     return (
-      <div className="min-h-screen flex items-start justify-center p-4 pt-16 bg-white">
-        <div className="max-w-xl w-full">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 border-2 border-blue-100">
+      <div className="relative min-h-screen min-h-[100dvh] w-full overflow-y-auto bg-slate-950 flex items-start justify-center p-4 pt-16 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+        {/* Animated background blobs - same as AuthScreen */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-32 -left-40 h-80 w-80 rounded-full bg-gradient-to-br from-emerald-400/90 via-sky-500/70 to-transparent blur-2xl animate-auth-blob-fast"/>
+          <div className="absolute top-[20%] right-[-140px] h-96 w-96 rounded-full bg-gradient-to-br from-sky-500/70 via-emerald-400/50 to-transparent blur-3xl animate-auth-blob animation-delay-1500"/>
+          <div className="absolute bottom-[-180px] left-[10%] h-[420px] w-[420px] rounded-full bg-gradient-to-br from-emerald-500/55 via-sky-400/35 to-transparent blur-[150px] animate-auth-blob-slow animation-delay-6000"/>
+          <div className="absolute top-[55%] right-[15%] h-56 w-56 rounded-full bg-gradient-to-br from-sky-400/50 via-emerald-300/40 to-transparent blur-2xl animate-auth-blob-fast animation-delay-3000"/>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(126,207,244,0.25),_transparent_65%)]"/>
+        </div>
+        <div className="relative z-10 max-w-xl w-full">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 border border-white/20">
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-blue-100 mb-4 animate-pulse">
                 <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -310,21 +318,30 @@ export default function EmptyState() {
   }
 
   return (
-    <div className="min-h-screen flex items-start justify-center px-4 pt-6 pb-4 bg-white">
-      <div className="max-w-2xl w-full">
-        <div className="text-center mb-6">
-          <h1 className="text-4xl font-bold text-slate-800 mb-3">
+    <div className="relative min-h-screen min-h-[100dvh] w-full overflow-y-auto bg-slate-950 flex items-start justify-center px-4 pt-12 pb-8 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+      {/* Animated background blobs - same as AuthScreen */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-32 -left-40 h-80 w-80 rounded-full bg-gradient-to-br from-emerald-400/90 via-sky-500/70 to-transparent blur-2xl animate-auth-blob-fast"/>
+        <div className="absolute top-[20%] right-[-140px] h-96 w-96 rounded-full bg-gradient-to-br from-sky-500/70 via-emerald-400/50 to-transparent blur-3xl animate-auth-blob animation-delay-1500"/>
+        <div className="absolute bottom-[-180px] left-[10%] h-[420px] w-[420px] rounded-full bg-gradient-to-br from-emerald-500/55 via-sky-400/35 to-transparent blur-[150px] animate-auth-blob-slow animation-delay-6000"/>
+        <div className="absolute top-[55%] right-[15%] h-56 w-56 rounded-full bg-gradient-to-br from-sky-400/50 via-emerald-300/40 to-transparent blur-2xl animate-auth-blob-fast animation-delay-3000"/>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(126,207,244,0.25),_transparent_65%)]"/>
+      </div>
+
+      <div className="relative z-10 max-w-2xl w-full mt-12">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-3 drop-shadow-lg">
             {(() => {
               const welcomeText = t("emptyState.welcome");
               const parts = welcomeText.split('{firstName}');
               return (
                 <>
-                  {parts[0]}<span className="text-blue-600">{firstName}</span>{parts[1]}
+                  {parts[0]}<span className="text-emerald-300">{firstName}</span>{parts[1]}
                 </>
               );
             })()}
           </h1>
-          <p className="text-lg text-slate-600">
+          <p className="text-lg text-slate-200 drop-shadow">
             {t("emptyState.subtitle")}
           </p>
         </div>
@@ -333,7 +350,7 @@ export default function EmptyState() {
           {/* Import CV Card */}
           <button
             onClick={() => setOpenPdfImport(true)}
-            className="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-blue-500 text-left"
+            className="group bg-white/15 backdrop-blur-xl rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/30 hover:border-blue-400 hover:bg-blue-500/25 text-left"
           >
             <div className="flex flex-col items-center text-center space-y-4">
               <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -347,14 +364,14 @@ export default function EmptyState() {
                 />
               </div>
               <div>
-                <h2 className="text-2xl font-semibold text-slate-800 mb-2">
+                <h2 className="text-2xl font-semibold text-white drop-shadow-lg mb-2">
                   {t("emptyState.importCard.title")}
                 </h2>
-                <p className="text-slate-600">
+                <p className="text-slate-100 drop-shadow">
                   {t("emptyState.importCard.description")}
                 </p>
               </div>
-              <div className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg group-hover:bg-blue-600 transition-colors">
+              <div className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg group-hover:bg-blue-600 transition-colors shadow-md">
                 {t("emptyState.importCard.button")}
               </div>
             </div>
@@ -366,21 +383,21 @@ export default function EmptyState() {
               resetNewCvForm();
               setOpenNewCv(true);
             }}
-            className="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-emerald-500 text-left"
+            className="group bg-white/15 backdrop-blur-xl rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/30 hover:border-emerald-400 hover:bg-emerald-500/25 text-left"
           >
             <div className="flex flex-col items-center text-center space-y-4">
               <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <span className="text-4xl">✨</span>
               </div>
               <div>
-                <h2 className="text-2xl font-semibold text-slate-800 mb-2">
+                <h2 className="text-2xl font-semibold text-white drop-shadow-lg mb-2">
                   {t("emptyState.createCard.title")}
                 </h2>
-                <p className="text-slate-600">
+                <p className="text-slate-100 drop-shadow">
                   {t("emptyState.createCard.description")}
                 </p>
               </div>
-              <div className="mt-4 px-6 py-2 bg-emerald-500 text-white rounded-lg group-hover:bg-emerald-600 transition-colors">
+              <div className="mt-4 px-6 py-2 bg-emerald-500 text-white rounded-lg group-hover:bg-emerald-600 transition-colors shadow-md">
                 {t("emptyState.createCard.button")}
               </div>
             </div>
@@ -388,7 +405,7 @@ export default function EmptyState() {
         </div>
 
         <div className="mt-12 text-center">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-300">
             {t("emptyState.tip")}
           </p>
         </div>
@@ -396,7 +413,7 @@ export default function EmptyState() {
         <div className="mt-8 text-center">
           <button
             onClick={() => signOut({ callbackUrl: '/auth' })}
-            className="text-sm text-gray-500 hover:text-gray-700 underline transition-colors"
+            className="text-sm text-slate-300 hover:text-white underline transition-colors"
           >
             {t("topbar.logout")}
           </button>

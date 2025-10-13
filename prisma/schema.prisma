@@ -190,3 +190,15 @@ model EmailVerificationToken {
   @@index([token])
   @@index([expires])
 }
+
+model AutoSignInToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([expires])
+}

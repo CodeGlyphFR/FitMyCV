@@ -1,15 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
+import AuthBackground from '@/components/auth/AuthBackground';
 
 export default function VerifyEmailRequiredPage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const isNewUser = searchParams.get('new') === 'true';
 
   const handleResendEmail = async () => {
     setLoading(true);
@@ -40,12 +43,15 @@ export default function VerifyEmailRequiredPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600 p-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8">
-        <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+    <>
+      <AuthBackground />
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-6 py-8">
+        <div className="w-full max-w-lg">
+          <div className="rounded-3xl border-2 border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl p-8 space-y-6">
+        <div className="text-center space-y-3">
+          <div className="mx-auto w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
             <svg
-              className="w-8 h-8 text-purple-600"
+              className="w-8 h-8 text-emerald-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -59,25 +65,28 @@ export default function VerifyEmailRequiredPage() {
             </svg>
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Vérifiez votre email
+          <h1 className="text-2xl font-semibold text-white drop-shadow-lg">
+            {isNewUser ? 'Bienvenue !' : 'Vérifiez votre email'}
           </h1>
 
-          <p className="text-gray-600">
-            Pour accéder à votre compte, vous devez d'abord vérifier votre adresse email.
+          <p className="text-sm text-slate-100 drop-shadow">
+            {isNewUser
+              ? 'Votre compte a été créé avec succès ! Pour accéder à la plateforme, vérifiez votre adresse email.'
+              : 'Pour accéder à votre compte, vous devez d\'abord vérifier votre adresse email.'
+            }
           </p>
         </div>
 
         {session?.user?.email && (
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-purple-800">
+          <div className="bg-emerald-500/20 border border-emerald-400/50 rounded-lg p-4 backdrop-blur-sm">
+            <p className="text-sm text-white drop-shadow">
               <strong>Email :</strong> {session.user.email}
             </p>
           </div>
         )}
 
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-slate-100 drop-shadow">
             Un email de vérification a été envoyé à votre adresse. Cliquez sur le lien dans l'email pour activer votre compte.
           </p>
 
@@ -96,25 +105,27 @@ export default function VerifyEmailRequiredPage() {
           <button
             onClick={handleResendEmail}
             disabled={loading}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-emerald-500 shadow-md"
           >
             {loading ? 'Envoi en cours...' : 'Renvoyer l\'email'}
           </button>
 
           <button
             onClick={handleLogout}
-            className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
+            className="w-full bg-white/20 hover:bg-white/30 text-white font-medium py-3 px-4 rounded-lg transition-colors border border-white/30 backdrop-blur-sm"
           >
             Se déconnecter
           </button>
         </div>
 
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-xs text-gray-500 text-center">
+        <div className="pt-4 border-t border-white/30">
+          <p className="text-xs text-slate-200 text-center drop-shadow">
             Si vous ne recevez pas l'email, vérifiez votre dossier spam ou cliquez sur "Renvoyer l'email".
           </p>
         </div>
+        </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

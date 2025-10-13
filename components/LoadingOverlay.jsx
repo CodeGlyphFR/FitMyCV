@@ -7,12 +7,14 @@ export default function LoadingOverlay() {
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Ne pas afficher le loading sur la page de connexion
-  if (pathname === "/auth") {
-    return null;
-  }
-
+  // IMPORTANT: useEffect doit être appelé avant tout return conditionnel
   useEffect(() => {
+    // Ne pas exécuter la logique sur les pages d'authentification
+    if (pathname.startsWith("/auth")) {
+      setIsLoading(false);
+      return;
+    }
+
     let attempts = 0;
     const maxAttempts = 60; // 60 tentatives * 100ms = 6 secondes max
 
@@ -70,7 +72,7 @@ export default function LoadingOverlay() {
     return () => {
       clearTimeout(maxTimeout);
     };
-  }, []);
+  }, [pathname]);
 
   if (!isLoading) return null;
 

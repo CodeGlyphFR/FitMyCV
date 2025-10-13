@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import { getConsentHistory } from '@/lib/cookies/consentLogger';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/consent/history
  * Récupère l'historique des consentements de l'utilisateur connecté
