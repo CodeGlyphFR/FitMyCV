@@ -2,8 +2,9 @@
 
 import React from "react";
 import { signOut } from "next-auth/react";
+import PasswordStrengthIndicator from "@/components/auth/PasswordStrengthIndicator";
 
-export default function AccountSettings({ user }){
+export default function AccountSettings({ user, isOAuthUser = false, oauthProviders = [] }){
   const [name, setName] = React.useState(user?.name || "");
   const [email, setEmail] = React.useState(user?.email || "");
   const [profileMessage, setProfileMessage] = React.useState("");
@@ -149,9 +150,15 @@ export default function AccountSettings({ user }){
               type="email"
               value={email}
               onChange={event => setEmail(event.target.value)}
-              className="w-full rounded border px-3 py-2 text-sm"
+              className={`w-full rounded border px-3 py-2 text-sm ${isOAuthUser ? 'bg-neutral-100 cursor-not-allowed' : ''}`}
               placeholder="prenom@exemple.com"
+              disabled={isOAuthUser}
             />
+            {isOAuthUser && (
+              <p className="text-xs text-neutral-500">
+                Votre email est lié à votre compte {oauthProviders.length > 0 ? oauthProviders.join(', ') : 'OAuth'} et ne peut pas être modifié ici.
+              </p>
+            )}
           </div>
           {profileError ? <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{profileError}</div> : null}
           {profileMessage ? <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{profileMessage}</div> : null}
@@ -188,6 +195,51 @@ export default function AccountSettings({ user }){
               className="w-full rounded border px-3 py-2 text-sm"
               placeholder="••••••••"
             />
+            {/* Indicateur de force du mot de passe (adapté pour fond blanc) */}
+            {newPassword && (
+              <div className="mt-3 space-y-3">
+                {/* Barre de progression */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-neutral-600">Force du mot de passe</span>
+                    <span className={`font-medium ${getStrengthColor(newPassword)}`}>
+                      {getStrengthLabel(newPassword)}
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-neutral-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${getStrengthBgColor(newPassword)} transition-all duration-300`}
+                      style={{ width: getStrengthWidth(newPassword) }}
+                    />
+                  </div>
+                </div>
+
+                {/* Liste des règles */}
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-neutral-600">Règles de sécurité</p>
+                  <PasswordRule
+                    valid={newPassword.length >= 12}
+                    text="Au moins 12 caractères"
+                  />
+                  <PasswordRule
+                    valid={/[A-Z]/.test(newPassword)}
+                    text="Au moins une majuscule"
+                  />
+                  <PasswordRule
+                    valid={/[a-z]/.test(newPassword)}
+                    text="Au moins une minuscule"
+                  />
+                  <PasswordRule
+                    valid={/[0-9]/.test(newPassword)}
+                    text="Au moins un chiffre"
+                  />
+                  <PasswordRule
+                    valid={/[!@#$%^&*(),.?":{}|<>_\-+=[\]\\';/~`]/.test(newPassword)}
+                    text="Au moins un caractère spécial"
+                  />
+                </div>
+              </div>
+            )}
           </div>
           <div className="space-y-2">
             <label className="text-xs font-medium uppercase tracking-wide text-neutral-600">Confirmation</label>
@@ -242,6 +294,69 @@ export default function AccountSettings({ user }){
           </button>
         </form>
       </section>
+    </div>
+  );
+}
+
+// Fonctions helper pour l'indicateur de force du mot de passe
+function getStrengthInfo(password) {
+  const hasMinLength = password.length >= 12;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasNumbers = /[0-9]/.test(password);
+  const hasSpecialChars = /[!@#$%^&*(),.?":{}|<>_\-+=[\]\\';/~`]/.test(password);
+
+  const validRules = [
+    hasMinLength,
+    hasUppercase,
+    hasLowercase,
+    hasNumbers,
+    hasSpecialChars,
+  ].filter(Boolean).length;
+
+  if (validRules === 5) {
+    if (password.length >= 16) {
+      return { strength: "very_strong", label: "Très fort", color: "text-emerald-600", bgColor: "bg-emerald-600", width: "100%" };
+    } else if (password.length >= 14) {
+      return { strength: "strong", label: "Fort", color: "text-green-500", bgColor: "bg-green-500", width: "80%" };
+    } else {
+      return { strength: "medium", label: "Moyen", color: "text-yellow-500", bgColor: "bg-yellow-500", width: "60%" };
+    }
+  } else if (validRules >= 3) {
+    return { strength: "medium", label: "Moyen", color: "text-yellow-500", bgColor: "bg-yellow-500", width: "40%" };
+  }
+
+  return { strength: "weak", label: "Faible", color: "text-red-500", bgColor: "bg-red-500", width: "20%" };
+}
+
+function getStrengthLabel(password) {
+  return getStrengthInfo(password).label;
+}
+
+function getStrengthColor(password) {
+  return getStrengthInfo(password).color;
+}
+
+function getStrengthBgColor(password) {
+  return getStrengthInfo(password).bgColor;
+}
+
+function getStrengthWidth(password) {
+  return getStrengthInfo(password).width;
+}
+
+// Composant pour afficher une règle de validation
+function PasswordRule({ valid, text }) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      {valid ? (
+        <span className="text-emerald-500 font-bold">✓</span>
+      ) : (
+        <span className="text-neutral-400">○</span>
+      )}
+      <span className={valid ? "text-emerald-600 font-medium" : "text-neutral-600"}>
+        {text}
+      </span>
     </div>
   );
 }
