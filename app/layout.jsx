@@ -2,6 +2,7 @@ import "./globals.css";
 import React from "react";
 import ConditionalTopBar from "@/components/ConditionalTopBar";
 import ConditionalFooter from "@/components/ConditionalFooter";
+import ConditionalMainWrapper from "@/components/ConditionalMainWrapper";
 import CookieBanner from "@/components/cookies/CookieBanner";
 import FeedbackButton from "@/components/feedback/FeedbackButton";
 import RootProviders from "@/components/RootProviders";
@@ -53,13 +54,15 @@ export default async function RootLayout(props){
           <LoadingOverlay />
           {/* TopBar sans wrapper pour éviter l'espace vide */}
           <ConditionalTopBar />
-          <main className="flex-grow mb-0">
+          <ConditionalMainWrapper
+            footerPlaceholder={
+              <div className="footer-placeholder h-[56px]">
+                <ConditionalFooter />
+              </div>
+            }
+          >
             {props.children}
-          </main>
-          {/* Réservation d'espace pour Footer pour éviter CLS */}
-          <div className="footer-placeholder h-[56px]">
-            <ConditionalFooter />
-          </div>
+          </ConditionalMainWrapper>
           <CookieBanner />
           <FeedbackButton />
         </RootProviders>

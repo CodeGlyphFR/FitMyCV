@@ -6,8 +6,8 @@ import TopBar from "@/components/TopBar";
 export default function ConditionalTopBar() {
   const pathname = usePathname();
 
-  // Ne pas afficher la TopBar sur la page de login
-  if (pathname === "/auth") {
+  // Ne pas afficher la TopBar sur toutes les pages d'authentification
+  if (pathname.startsWith("/auth")) {
     return <></>;
   }
 
