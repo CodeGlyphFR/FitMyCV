@@ -6,6 +6,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { SITE_TITLE } from "@/lib/site";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
 
 const getProviders = (t) => [
   { id: "google", label: t("auth.continueWithGoogle"), image: "/icons/g_logo.png", width: 28, height: 28 },
@@ -20,11 +21,25 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
-  const [name, setName] = React.useState("");
+  const [firstName, setFirstName] = React.useState("");
+  const [lastName, setLastName] = React.useState("");
   const [error, setError] = React.useState("");
   const [loading, setLoading] = React.useState(false);
+  const [successMessage, setSuccessMessage] = React.useState("");
 
   const isRegister = mode === "register";
+
+  // Vérifier si l'utilisateur vient de vérifier son email
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('verified') === 'true') {
+        setSuccessMessage('Email vérifié avec succès ! Vous pouvez maintenant vous connecter.');
+        // Nettoyer l'URL
+        window.history.replaceState({}, '', '/auth');
+      }
+    }
+  }, []);
 
   // Désactiver le scroll sur cette page (y compris iOS)
   React.useEffect(() => {
@@ -76,12 +91,12 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
     try {
       setLoading(true);
       if (isRegister){
-        if (!name){
+        if (!firstName || !lastName){
           setError(t("auth.errors.nameRequired"));
           setLoading(false);
           return;
         }
-        if (password.length < 8){
+        if (password.length < 12){
           setError(t("auth.errors.passwordLength"));
           setLoading(false);
           return;
@@ -95,16 +110,18 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password }),
+          body: JSON.stringify({ firstName, lastName, email, password }),
         });
 
         if (!res.ok){
           const payload = await res.json().catch(() => ({}));
-          setError(payload?.error || t("auth.errors.createFailed"));
+          setError(payload?.error || payload?.details?.join(", ") || t("auth.errors.createFailed"));
           setLoading(false);
           return;
         }
 
+        // Après inscription réussie, on continue pour se connecter
+        // Le middleware interceptera et redirigera vers /auth/verify-email-required
       }
 
       const result = await signIn("credentials", {
@@ -196,17 +213,32 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
 
         <form onSubmit={handleCredentialsSubmit} className="space-y-3">
           {isRegister ? (
-            <div className="space-y-2">
-              <label className="text-xs font-medium uppercase tracking-wide text-neutral-600">{t("auth.fullName")}</label>
-              <input
-                type="text"
-                value={name}
-                onChange={event => setName(event.target.value)}
-                className="w-full rounded border px-3 py-2 text-sm"
-                placeholder={t("auth.fullName")}
-                autoComplete="name"
-              />
-            </div>
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label className="text-xs font-medium uppercase tracking-wide text-neutral-600">{t("auth.firstName")}</label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={event => setFirstName(event.target.value)}
+                    className="w-full rounded border px-3 py-2 text-sm"
+                    placeholder={t("auth.firstName")}
+                    autoComplete="given-name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium uppercase tracking-wide text-neutral-600">{t("auth.lastName")}</label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={event => setLastName(event.target.value)}
+                    className="w-full rounded border px-3 py-2 text-sm"
+                    placeholder={t("auth.lastName")}
+                    autoComplete="family-name"
+                  />
+                </div>
+              </div>
+            </>
           ) : null}
 
           <div className="space-y-2">
@@ -231,6 +263,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
               placeholder="••••••••"
               autoComplete={isRegister ? "new-password" : "current-password"}
             />
+            {isRegister && <PasswordStrengthIndicator password={password} />}
           </div>
 
           {isRegister ? (
@@ -245,6 +278,10 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
                 autoComplete="new-password"
               />
             </div>
+          ) : null}
+
+          {successMessage ? (
+            <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{successMessage}</div>
           ) : null}
 
           {error ? (

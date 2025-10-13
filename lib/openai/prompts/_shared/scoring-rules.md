@@ -69,7 +69,7 @@ Détail du score par catégorie. **Chaque score est sur 100** (pas sur le poids)
 ⚠️ **Nom de clé** : `soft_skills_languages` (pas `soft_skills` seul)
 
 ### `suggestions` (array)
-Liste de **3-5 suggestions** d'amélioration par ordre de priorité décroissante.
+Liste de **max 3-4 suggestions** d'amélioration par ordre de priorité décroissante.
 
 Chaque suggestion contient:
 - `title` (string) : Titre court et clair (3-8 mots)
@@ -78,10 +78,10 @@ Chaque suggestion contient:
 - `impact` (string) : Estimation de l'impact (ex: "+5 points", "+8 points")
 
 ### `missing_skills` (array<string>)
-Liste des compétences **critiques** mentionnées dans l'offre mais absentes du CV.
+Liste des compétences **critiques** (inclus les hard skills, les soft skills, les tools et les methodogies) mentionnées dans l'offre mais absentes du CV
 
 ### `matching_skills` (array<string>)
-Liste des compétences du CV qui correspondent à l'offre.
+Liste des compétences (inclus les hard skills, les soft skills, les tools et les methodogies) du CV qui correspondent à l'offre
 
 ## NOTES IMPORTANTES
 

@@ -178,3 +178,15 @@ model Setting {
   @@index([category])
   @@index([settingName])
 }
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([expires])
+}

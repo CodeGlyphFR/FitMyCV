@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/session";
+import { validatePassword } from "@/lib/security/passwordPolicy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,8 +17,14 @@ export async function PUT(request){
   if (!body) return NextResponse.json({ error: "Payload invalide." }, { status: 400 });
 
   const { currentPassword, newPassword } = body;
-  if (!newPassword || newPassword.length < 8){
-    return NextResponse.json({ error: "Le nouveau mot de passe doit contenir au moins 8 caractères." }, { status: 400 });
+
+  // Validation de la force du nouveau mot de passe
+  const passwordValidation = validatePassword(newPassword);
+  if (!passwordValidation.valid) {
+    return NextResponse.json({
+      error: "Nouveau mot de passe trop faible",
+      details: passwordValidation.errors
+    }, { status: 400 });
   }
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });

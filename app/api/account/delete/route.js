@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth/session";
 import { getUserCvDir } from "@/lib/cv/storage";
 import fs from "fs/promises";
 import path from "path";
+import logger from "@/lib/security/secureLogger";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,37 +40,21 @@ export async function DELETE(request){
 
   // Supprimer toutes les données liées dans l'ordre (contraintes FK)
   try {
-    console.log(`[DELETE account] Suppression des données pour l'utilisateur ${user.id}`);
+    logger.context('DELETE account', 'info', `Suppression des données pour l'utilisateur ${user.id}`);
 
     // Supprimer toutes les relations (ordre important pour les contraintes FK)
-    console.log(`[DELETE account] Suppression des LinkHistory...`);
     await prisma.linkHistory.deleteMany({ where: { userId: user.id } });
-
-    console.log(`[DELETE account] Suppression des Feedback...`);
     await prisma.feedback.deleteMany({ where: { userId: user.id } });
-
-    console.log(`[DELETE account] Suppression des ConsentLog...`);
     await prisma.consentLog.deleteMany({ where: { userId: user.id } });
-
-    console.log(`[DELETE account] Suppression des CvFile...`);
     await prisma.cvFile.deleteMany({ where: { userId: user.id } });
-
-    console.log(`[DELETE account] Suppression des BackgroundTask...`);
     await prisma.backgroundTask.deleteMany({ where: { userId: user.id } });
-
-    console.log(`[DELETE account] Suppression des Session...`);
     await prisma.session.deleteMany({ where: { userId: user.id } });
-
-    console.log(`[DELETE account] Suppression des Account...`);
     await prisma.account.deleteMany({ where: { userId: user.id } });
-
-    console.log(`[DELETE account] Suppression de l'User...`);
     await prisma.user.delete({ where: { id: user.id } });
 
-    console.log(`[DELETE account] ✅ Utilisateur ${user.id} supprimé de la DB`);
+    logger.context('DELETE account', 'info', `✅ Utilisateur ${user.id} supprimé de la DB`);
   } catch (error) {
-    console.error("[DELETE account] ❌ Erreur lors de la suppression:", error);
-    console.error("[DELETE account] Stack trace:", error.stack);
+    logger.context('DELETE account', 'error', "❌ Erreur lors de la suppression:", error);
     return NextResponse.json({
       error: "Impossible de supprimer le compte pour le moment.",
       details: error.message
@@ -82,9 +67,9 @@ export async function DELETE(request){
     await fs.rm(userDir, { recursive: true, force: true });
     const parentDir = path.dirname(userDir);
     await fs.rm(parentDir, { recursive: true, force: true });
-    console.log(`[DELETE account] ✅ Dossier utilisateur ${userDir} supprimé`);
+    logger.context('DELETE account', 'info', '✅ Dossier utilisateur supprimé');
   } catch (error) {
-    console.error("[DELETE account] ⚠️ Suppression du dossier utilisateur impossible:", error);
+    logger.context('DELETE account', 'warn', "⚠️ Suppression du dossier utilisateur impossible:", error);
     // Ne pas retourner d'erreur si le dossier n'existe pas ou ne peut pas être supprimé
   }
 
@@ -106,9 +91,9 @@ export async function DELETE(request){
       cookieStore.delete(cookieName);
     }
 
-    console.log(`[DELETE account] ✅ Cookies supprimés`);
+    logger.context('DELETE account', 'info', '✅ Cookies supprimés');
   } catch (error) {
-    console.error("[DELETE account] ⚠️ Suppression des cookies impossible:", error);
+    logger.context('DELETE account', 'warn', "⚠️ Suppression des cookies impossible:", error);
   }
 
   return NextResponse.json({ ok: true });

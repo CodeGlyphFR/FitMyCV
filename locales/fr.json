@@ -8,6 +8,8 @@
     "continueWithGithub": "Continuer avec GitHub",
     "or": "ou",
     "fullName": "Nom complet",
+    "firstName": "Prénom",
+    "lastName": "Nom",
     "email": "Email",
     "password": "Mot de passe",
     "confirmPassword": "Confirmez le mot de passe",
@@ -19,10 +21,27 @@
     "createAccountLink": "Créer un compte",
     "termsText": "En vous connectant, vous acceptez nos conditions d'utilisation. Pas de spam.",
     "pleaseWait": "Veuillez patienter…",
+    "passwordStrength": {
+      "label": "Force du mot de passe",
+      "weak": "Faible",
+      "medium": "Moyen",
+      "strong": "Fort",
+      "very_strong": "Très fort"
+    },
+    "passwordRules": {
+      "title": "Votre mot de passe doit contenir :",
+      "minLength": "Au moins 12 caractères",
+      "uppercase": "Au moins une majuscule",
+      "lowercase": "Au moins une minuscule",
+      "numbers": "Au moins un chiffre",
+      "specialChars": "Au moins un caractère spécial (!@#$%...)"
+    },
     "errors": {
       "required": "Email et mot de passe sont requis.",
-      "nameRequired": "Renseignez votre nom complet.",
-      "passwordLength": "Le mot de passe doit contenir au moins 8 caractères.",
+      "nameRequired": "Renseignez votre prénom et nom.",
+      "firstNameRequired": "Renseignez votre prénom.",
+      "lastNameRequired": "Renseignez votre nom.",
+      "passwordLength": "Le mot de passe doit contenir au moins 12 caractères.",
       "passwordMismatch": "Les mots de passe ne correspondent pas.",
       "createFailed": "Impossible de créer votre compte.",
       "invalidCredentials": "Identifiants invalides.",
@@ -524,5 +543,8 @@
       "commentTooLong": "Le commentaire ne peut pas dépasser 500 caractères"
     },
     "success": "Merci pour votre retour ! 🙏"
+  },
+  "cvImprovement": {
+    "improving": "Amélioration en cours..."
   }
 }
