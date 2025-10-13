@@ -22,6 +22,7 @@ Thumbs.db
 
 # Prisma
 prisma/dev.db*
+prisma/dev.db
 
 # Outils IDE
 .vscode/
@@ -32,4 +33,15 @@ data/users/
 
 # Données de synchronisation des tâches
 data/background-tasks.json
-prisma/dev.db
+
+# Fichiers Markdown d'analyse (sauf docs et prompts)
+/*.md
+!README.md
+!CLAUDE.md
+
+# Fichiers texte d'analyse temporaires
+FEATURES_WORKFLOW.txt
+PROMPTS_ANALYSIS.txt
+
+# Base de données de développement
+dev.db

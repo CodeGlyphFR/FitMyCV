@@ -7,14 +7,7 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { ensureUserCvDir } from "@/lib/cv/storage";
 import { scheduleGenerateCvJob } from "@/lib/backgroundTasks/generateCvJob";
-
-const ANALYSIS_MODEL_MAP = Object.freeze({
-  rapid: "gpt-5-nano-2025-08-07",
-  medium: "gpt-5-mini-2025-08-07",
-  deep: "gpt-5-2025-08-07",
-});
-
-const DEFAULT_ANALYSIS_LEVEL = "medium";
+import { validateUploadedFile, sanitizeFilename } from "@/lib/security/fileValidation";
 
 function sanitizeLinks(raw) {
   if (!Array.isArray(raw)) return [];
@@ -24,7 +17,8 @@ function sanitizeLinks(raw) {
     .filter(link => !!link);
 }
 
-function sanitizeFilename(value) {
+// Fonction simplifiée (la vraie sanitization est dans lib/security/fileValidation)
+function sanitizeFilenameLocal(value) {
   if (typeof value !== "string") return "";
   const trimmed = value.trim();
   if (!trimmed) return "";
@@ -42,28 +36,39 @@ function sanitizeLabel(value) {
 
 async function saveUploads(files) {
   if (!files.length) {
-    return { directory: null, saved: [] };
+    return { directory: null, saved: [], errors: [] };
   }
 
   const uploadDir = await fs.mkdtemp(path.join(os.tmpdir(), "cv-gen-uploads-"));
   const saved = [];
+  const errors = [];
 
   for (const file of files) {
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    // Validation sécurisée du fichier
+    const validation = await validateUploadedFile(file, {
+      allowedTypes: ['application/pdf'],
+      maxSize: 10 * 1024 * 1024, // 10 MB
+    });
+
+    if (!validation.valid) {
+      console.warn(`[generate-cv] Validation échouée pour ${file.name}: ${validation.error}`);
+      errors.push({ file: file.name, error: validation.error });
+      continue;
+    }
+
     const originalName = file.name || `piece-jointe-${saved.length + 1}`;
-    const safeName = originalName.replace(/[^a-z0-9_.-]/gi, "_");
+    const safeName = sanitizeFilename(originalName);
     const targetPath = path.join(uploadDir, safeName || `piece-jointe-${saved.length + 1}`);
-    await fs.writeFile(targetPath, buffer);
+    await fs.writeFile(targetPath, validation.buffer);
     saved.push({
       path: targetPath,
       name: originalName,
-      size: buffer.length,
-      type: file.type || "application/octet-stream",
+      size: validation.buffer.length,
+      type: file.type || "application/pdf",
     });
   }
 
-  return { directory: uploadDir, saved };
+  return { directory: uploadDir, saved, errors };
 }
 
 async function updateBackgroundTask(taskId, userId, data) {
@@ -110,17 +115,25 @@ export async function POST(request) {
       return NextResponse.json({ error: "Ajoutez au moins un lien ou un fichier." }, { status: 400 });
     }
 
-    const requestedBaseFile = sanitizeFilename(rawBaseFile);
+    const requestedBaseFile = rawBaseFile ? sanitizeFilenameLocal(rawBaseFile) : "";
     const requestedBaseFileLabel = sanitizeLabel(rawBaseFileLabel);
-    const requestedAnalysisLevel = typeof rawAnalysisLevel === "string" ? rawAnalysisLevel.trim().toLowerCase() : "";
+    const requestedAnalysisLevel = typeof rawAnalysisLevel === "string" ? rawAnalysisLevel.trim().toLowerCase() : "medium";
     const requestedModel = typeof rawModel === "string" ? rawModel.trim() : "";
 
-    const levelKey = ANALYSIS_MODEL_MAP[requestedAnalysisLevel]
-      ? requestedAnalysisLevel
-      : (Object.entries(ANALYSIS_MODEL_MAP).find(([, value]) => value === requestedModel)?.[0]
-        || DEFAULT_ANALYSIS_LEVEL);
+    const { directory: uploadsDirectory, saved: savedUploads, errors: uploadErrors } = await saveUploads(files);
 
-    const { directory: uploadsDirectory, saved: savedUploads } = await saveUploads(files);
+    // Si tous les fichiers ont échoué, retourner une erreur
+    if (files.length > 0 && savedUploads.length === 0) {
+      return NextResponse.json({
+        error: "Tous les fichiers ont échoué la validation.",
+        details: uploadErrors
+      }, { status: 400 });
+    }
+
+    // Si certains fichiers ont échoué, logger mais continuer
+    if (uploadErrors.length > 0) {
+      console.warn(`[generate-cv] ${uploadErrors.length} fichier(s) rejeté(s):`, uploadErrors);
+    }
 
     const userId = session.user.id;
     await ensureUserCvDir(userId);
@@ -154,7 +167,7 @@ export async function POST(request) {
         links: [link],
         baseFile: requestedBaseFile,
         baseFileLabel: requestedBaseFileLabel,
-        analysisLevel: levelKey,
+        analysisLevel: requestedAnalysisLevel,
         model: requestedModel,
         uploads: [],
         uploadDirectory: null,
@@ -204,7 +217,7 @@ export async function POST(request) {
         links: [],
         baseFile: requestedBaseFile,
         baseFileLabel: requestedBaseFileLabel,
-        analysisLevel: levelKey,
+        analysisLevel: requestedAnalysisLevel,
         model: requestedModel,
         uploads: [upload],
         uploadDirectory: uploadsDirectory,

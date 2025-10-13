@@ -85,10 +85,10 @@ export default function Experience(props){
 
     if (f.description) p.description = f.description;
 
-    const resp = (f.responsibilities || "").split(/\r?\n|,/).map(s => s.trim()).filter(Boolean);
+    const resp = (f.responsibilities || "").split(/\r?\n/).map(s => s.trim()).filter(Boolean);
     if (resp.length) p.responsibilities = resp;
 
-    const del = (f.deliverables || "").split(/\r?\n|,/).map(s => s.trim()).filter(Boolean);
+    const del = (f.deliverables || "").split(/\r?\n/).map(s => s.trim()).filter(Boolean);
     if (del.length) p.deliverables = del;
 
     const skills = (f.skills_used || "").split(",").map(s => s.trim()).filter(Boolean);
@@ -113,10 +113,10 @@ export default function Experience(props){
 
     if (nf.description) p.description = nf.description;
 
-    const resp = (nf.responsibilities || "").split(/\r?\n|,/).map(s => s.trim()).filter(Boolean);
+    const resp = (nf.responsibilities || "").split(/\r?\n/).map(s => s.trim()).filter(Boolean);
     if (resp.length) p.responsibilities = resp;
 
-    const del = (nf.deliverables || "").split(/\r?\n|,/).map(s => s.trim()).filter(Boolean);
+    const del = (nf.deliverables || "").split(/\r?\n/).map(s => s.trim()).filter(Boolean);
     if (del.length) p.deliverables = del;
 
     const skills = (nf.skills_used || "").split(",").map(s => s.trim()).filter(Boolean);

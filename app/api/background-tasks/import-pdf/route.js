@@ -5,14 +5,7 @@ import { scheduleImportPdfJob } from "@/lib/backgroundTasks/importPdfJob";
 import { promises as fs } from "fs";
 import path from "path";
 import os from "os";
-
-const ANALYSIS_MODEL_MAP = Object.freeze({
-  rapid: "gpt-5-nano-2025-08-07",
-  medium: "gpt-5-mini-2025-08-07",
-  deep: "gpt-5-2025-08-07",
-});
-
-const DEFAULT_ANALYSIS_LEVEL = "medium";
+import { validateUploadedFile, sanitizeFilename } from "@/lib/security/fileValidation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,24 +22,23 @@ async function updateBackgroundTask(taskId, userId, data) {
   }
 }
 
-async function savePdfUpload(file) {
+async function savePdfUpload(file, validatedBuffer) {
   if (!file) return { directory: null, saved: null };
 
   const uploadDir = await fs.mkdtemp(path.join(os.tmpdir(), "cv-pdf-import-bg-"));
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
   const originalName = file.name || "cv-import.pdf";
-  const safeName = originalName.replace(/[^a-z0-9_.-]/gi, "_");
+  const safeName = sanitizeFilename(originalName);
   const targetPath = path.join(uploadDir, safeName);
 
-  await fs.writeFile(targetPath, buffer);
+  // Utiliser le buffer déjà validé pour éviter une double lecture
+  await fs.writeFile(targetPath, validatedBuffer);
 
   return {
     directory: uploadDir,
     saved: {
       path: targetPath,
       name: originalName,
-      size: buffer.length,
+      size: validatedBuffer.length,
       type: file.type || "application/pdf",
     }
   };
@@ -72,19 +64,21 @@ export async function POST(request) {
       return NextResponse.json({ error: "Aucun fichier PDF fourni." }, { status: 400 });
     }
 
-    if (pdfFile.type && !pdfFile.type.includes("pdf")) {
-      return NextResponse.json({ error: "Le fichier doit être au format PDF." }, { status: 400 });
+    // Validation sécurisée du fichier PDF
+    const validation = await validateUploadedFile(pdfFile, {
+      allowedTypes: ['application/pdf'],
+      maxSize: 10 * 1024 * 1024, // 10 MB
+    });
+
+    if (!validation.valid) {
+      console.warn(`[import-pdf] Validation échouée pour ${pdfFile.name}: ${validation.error}`);
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const requestedAnalysisLevel = typeof rawAnalysisLevel === "string" ? rawAnalysisLevel.trim().toLowerCase() : "";
+    const requestedAnalysisLevel = typeof rawAnalysisLevel === "string" ? rawAnalysisLevel.trim().toLowerCase() : "medium";
     const requestedModel = typeof rawModel === "string" ? rawModel.trim() : "";
 
-    const levelKey = ANALYSIS_MODEL_MAP[requestedAnalysisLevel]
-      ? requestedAnalysisLevel
-      : (Object.entries(ANALYSIS_MODEL_MAP).find(([, value]) => value === requestedModel)?.[0]
-        || DEFAULT_ANALYSIS_LEVEL);
-
-    const { directory, saved } = await savePdfUpload(pdfFile);
+    const { directory, saved } = await savePdfUpload(pdfFile, validation.buffer);
     if (!saved) {
       return NextResponse.json({ error: "Impossible d'enregistrer le fichier PDF." }, { status: 500 });
     }
@@ -96,7 +90,7 @@ export async function POST(request) {
 
     const existingTask = await prisma.backgroundTask.findUnique({ where: { id: taskIdentifier } });
     const payload = {
-      analysisLevel: levelKey,
+      analysisLevel: requestedAnalysisLevel,
       model: requestedModel,
       savedName: saved.name,
     };
@@ -130,7 +124,7 @@ export async function POST(request) {
       taskId: taskIdentifier,
       user: { id: userId, name: session.user?.name || "" },
       upload: { directory, saved },
-      analysisLevel: levelKey,
+      analysisLevel: requestedAnalysisLevel,
       requestedModel,
       deviceId,
     });

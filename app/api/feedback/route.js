@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
+import { stripHtml, sanitizeUrl } from "@/lib/security/xssSanitization";
+import logger from "@/lib/security/secureLogger";
 
 export async function POST(request) {
   const session = await auth();
@@ -16,11 +18,15 @@ export async function POST(request) {
       return NextResponse.json({ error: "Note invalide (1-5 requise)" }, { status: 400 });
     }
 
-    const trimmedComment = comment ? comment.trim() : "";
+    // Sanitization XSS du commentaire
+    const trimmedComment = comment ? stripHtml(comment.trim()) : "";
 
     if (trimmedComment.length > 500) {
       return NextResponse.json({ error: "Le commentaire ne peut pas dépasser 500 caractères" }, { status: 400 });
     }
+
+    // Sanitization de l'URL de la page
+    const cleanPageUrl = pageUrl ? sanitizeUrl(pageUrl) : null;
 
     const userId = session.user.id;
 
@@ -50,14 +56,15 @@ export async function POST(request) {
         isBugReport: Boolean(isBugReport),
         currentCvFile: currentCvFile || null,
         userAgent: userAgent || null,
-        pageUrl: pageUrl || null,
+        pageUrl: cleanPageUrl,
       },
     });
 
-    console.log(`[Feedback] Nouveau feedback reçu de ${session.user.email || userId}:`, {
+    logger.context('Feedback', 'info', 'Nouveau feedback reçu:', {
+      userId,
       rating: feedback.rating,
       isBugReport: feedback.isBugReport,
-      length: trimmedComment.length,
+      commentLength: trimmedComment.length,
     });
 
     return NextResponse.json({
@@ -66,7 +73,7 @@ export async function POST(request) {
     }, { status: 201 });
 
   } catch (error) {
-    console.error("Error creating feedback:", error);
+    logger.error("Error creating feedback:", error);
     return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }

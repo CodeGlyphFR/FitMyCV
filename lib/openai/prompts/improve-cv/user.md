@@ -11,10 +11,6 @@ Tu as reçu:
 
 Améliorer **UNIQUEMENT** les sections qui font perdre des points, sans toucher aux parties déjà optimales.
 
-## 📝 RÈGLES D'AMÉLIORATION
-
-{INCLUDE:_shared/cv-improvement-rules.md}
-
 ## 🔧 MODIFICATIONS AUTORISÉES
 
 - **Summary**: Reformuler pour mieux matcher le poste UNIQUEMENT si l'expérience le justifie
@@ -22,17 +18,26 @@ Améliorer **UNIQUEMENT** les sections qui font perdre des points, sans toucher 
 - **Experience**: Détailler les responsabilités pertinentes, ajouter métriques
 - **Current title**: Adapter au poste visé (rester cohérent)
 
-## 📐 CALCUL DU NOUVEAU SCORE ESTIMÉ
-
-{INCLUDE:_shared/scoring-rules.md}
-
 ## 📄 FORMAT DE RÉPONSE OBLIGATOIRE (JSON)
+
+⚠️ **OPTIMISATION** : Retourne UNIQUEMENT les sections modifiées, pas le CV complet.
 
 ```json
 {
-  "improved_cv": {
-    // CV amélioré complet avec TOUTES les sections
-    // Structure identique au CV d'origine
+  "modified_sections": {
+    "header": {
+      "current_title": "Senior Full-Stack Developer"
+    },
+    "summary": {
+      "description": "Développeur Full-Stack avec 5 ans d'expérience en React et Node.js...",
+      "domains": ["Web", "Cloud", "DevOps"]
+    },
+    "skills": {
+      "hard_skills": [
+        {"name": "React", "level": "expert"},
+        {"name": "Docker", "level": "confirmé"}
+      ]
+    }
   },
   "changes_made": [
     {
@@ -47,36 +52,14 @@ Améliorer **UNIQUEMENT** les sections qui font perdre des points, sans toucher 
       "change": "Ajouté Docker et Kubernetes avec niveau confirmé",
       "reason": "Technologies mentionnées dans l'offre et utilisées dans les projets"
     }
-  ],
-  "new_score_estimate": 85,
-  "improvement_delta": "+10 points",
-  "score_breakdown": {
-    "technical_skills": 85,
-    "experience": 90,
-    "education": 80,
-    "soft_skills_languages": 75
-  },
-  "suggestions": [
-    {
-      "title": "Ajouter métriques de performance",
-      "suggestion": "Ajouter des métriques de performance quantifiables dans les expériences professionnelles",
-      "priority": "medium",
-      "impact": "+2 points"
-    }
-  ],
-  "missing_skills": ["Kubernetes", "TypeScript"],
-  "matching_skills": ["React", "Node.js", "Docker", "MongoDB"]
+  ]
 }
 ```
 
 ## ⚠️ VALIDATIONS OBLIGATOIRES
 
-1. **changes_made** : Tableau COMPLET avec TOUTES les modifications effectuées (section, field, change, reason)
-2. **score_breakdown** : 4 catégories avec scores sur 100 (pas sur poids)
-3. **suggestions** : Nouvelles suggestions d'amélioration restantes (3-5 max)
-4. **missing_skills** : Compétences critiques encore manquantes
-5. **matching_skills** : Compétences du CV qui correspondent à l'offre
-6. **Formule** : VÉRIFIE que le score final correspond à la formule. Si écart > 2 points → ajuste le score_breakdown
+1. **modified_sections** : Objet contenant UNIQUEMENT les sections/champs modifiés (pas le CV complet)
+2. **changes_made** : Tableau COMPLET avec TOUTES les modifications effectuées (section, field, change, reason)
 
 ---
 

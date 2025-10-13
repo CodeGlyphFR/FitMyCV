@@ -23,6 +23,7 @@ Identifie:
 ✅ **Optimise les mots-clés** pour l'ATS
 
 ❌ **N'invente JAMAIS** d'expériences ou compétences absentes du CV original
+❌ Si le niveau de compétence déterminé est "not_applicable", ne pas le prendre en compte pour le CV final
 
 ---
 

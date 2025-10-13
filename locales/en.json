@@ -8,6 +8,8 @@
     "continueWithGithub": "Continue with GitHub",
     "or": "or",
     "fullName": "Full name",
+    "firstName": "First name",
+    "lastName": "Last name",
     "email": "Email",
     "password": "Password",
     "confirmPassword": "Confirm password",
@@ -19,10 +21,27 @@
     "createAccountLink": "Create an account",
     "termsText": "By logging in, you accept our terms of use. No spam.",
     "pleaseWait": "Please wait…",
+    "passwordStrength": {
+      "label": "Password strength",
+      "weak": "Weak",
+      "medium": "Medium",
+      "strong": "Strong",
+      "very_strong": "Very strong"
+    },
+    "passwordRules": {
+      "title": "Your password must contain:",
+      "minLength": "At least 12 characters",
+      "uppercase": "At least one uppercase letter",
+      "lowercase": "At least one lowercase letter",
+      "numbers": "At least one number",
+      "specialChars": "At least one special character (!@#$%...)"
+    },
     "errors": {
       "required": "Email and password are required.",
-      "nameRequired": "Please provide your full name.",
-      "passwordLength": "Password must contain at least 8 characters.",
+      "nameRequired": "Please provide your first and last name.",
+      "firstNameRequired": "Please provide your first name.",
+      "lastNameRequired": "Please provide your last name.",
+      "passwordLength": "Password must contain at least 12 characters.",
       "passwordMismatch": "Passwords do not match.",
       "createFailed": "Unable to create your account.",
       "invalidCredentials": "Invalid credentials.",
@@ -524,5 +543,8 @@
       "commentTooLong": "Comment cannot exceed 500 characters"
     },
     "success": "Thank you for your feedback! 🙏"
+  },
+  "cvImprovement": {
+    "improving": "Improving..."
   }
 }
