@@ -24,6 +24,8 @@ model User {
   consentLogs   ConsentLog[]
   matchScoreRefreshCount Int @default(0) // Number of manual refreshes in current window (global for all CVs)
   matchScoreFirstRefreshAt DateTime? // Timestamp of first refresh in current window (for rate limiting)
+  resetToken    String?       // Token for password reset
+  resetTokenExpiry DateTime?  // Expiration date for reset token
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -194,6 +196,19 @@ model EmailVerificationToken {
 model AutoSignInToken {
   id        String   @id @default(cuid())
   userId    String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([expires])
+}
+
+model EmailChangeRequest {
+  id        String   @id @default(cuid())
+  userId    String
+  newEmail  String   // La nouvelle adresse email demandée
   token     String   @unique
   expires   DateTime
   createdAt DateTime @default(now())

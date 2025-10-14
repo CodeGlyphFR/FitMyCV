@@ -2,14 +2,25 @@
 
 import React from "react";
 import { signOut } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import PasswordStrengthIndicator from "@/components/auth/PasswordStrengthIndicator";
 
 export default function AccountSettings({ user, isOAuthUser = false, oauthProviders = [] }){
+  const searchParams = useSearchParams();
   const [name, setName] = React.useState(user?.name || "");
   const [email, setEmail] = React.useState(user?.email || "");
   const [profileMessage, setProfileMessage] = React.useState("");
   const [profileError, setProfileError] = React.useState("");
   const [profileLoading, setProfileLoading] = React.useState(false);
+
+  // Vérifier si l'email a été changé avec succès
+  React.useEffect(() => {
+    if (searchParams.get('email-changed') === 'true') {
+      setProfileMessage("Votre adresse email a été modifiée avec succès !");
+      // Mettre à jour l'email affiché
+      setEmail(user?.email || "");
+    }
+  }, [searchParams, user?.email]);
 
   const [currentPassword, setCurrentPassword] = React.useState("");
   const [newPassword, setNewPassword] = React.useState("");
@@ -44,7 +55,13 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
         setProfileError(payload?.error || "Impossible de mettre à jour le profil.");
         return;
       }
-      setProfileMessage("Profil mis à jour.");
+
+      // Gérer le message de succès en fonction de la réponse
+      if (payload?.emailChangeRequested) {
+        setProfileMessage(payload?.message || "Un email de vérification a été envoyé à votre nouvelle adresse.");
+      } else {
+        setProfileMessage(payload?.message || "Profil mis à jour.");
+      }
     } catch (error) {
       console.error(error);
       setProfileError("Erreur inattendue.");

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth/session";
 import AccountSettings from "@/components/account/AccountSettings";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
+import { Suspense } from "react";
 
 export const runtime = "nodejs";
 
@@ -42,11 +43,13 @@ export default async function AccountPage(){
         <h1 className="text-2xl font-semibold">Mon compte</h1>
         <p className="text-sm text-neutral-600">Gérez vos informations personnelles et vos préférences de sécurité.</p>
       </div>
-      <AccountSettings
-        user={session.user}
-        isOAuthUser={isOAuthUser}
-        oauthProviders={oauthProviders}
-      />
+      <Suspense fallback={<div className="text-center py-4">Chargement...</div>}>
+        <AccountSettings
+          user={session.user}
+          isOAuthUser={isOAuthUser}
+          oauthProviders={oauthProviders}
+        />
+      </Suspense>
     </main>
   );
 }

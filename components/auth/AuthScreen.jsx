@@ -283,6 +283,14 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           </button>
         </form>
 
+        {!isRegister && (
+          <div className="text-center text-sm text-slate-100 drop-shadow">
+            <a href="/auth/forgot-password" className="font-medium text-emerald-300 hover:text-emerald-200 hover:underline">
+              Mot de passe oublié ?
+            </a>
+          </div>
+        )}
+
         <div className="text-center text-sm text-slate-100 drop-shadow">
           {isRegister ? (
             <span>
