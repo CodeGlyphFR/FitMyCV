@@ -1478,7 +1478,7 @@ export default function TopBar() {
         {listOpen && portalReady && dropdownRect
           ? createPortal(
               <>
-                <div className="fixed inset-0 z-[10001] backdrop-blur-sm bg-transparent" onClick={() => setListOpen(false)} />
+                <div className="fixed inset-0 z-[10001] bg-transparent" onClick={() => setListOpen(false)} />
                 <div
                   ref={dropdownPortalRef}
                   style={{
@@ -1628,8 +1628,8 @@ export default function TopBar() {
         <div className="w-auto flex-1 order-6 md:order-9 md:flex-none flex justify-start md:justify-end px-4 py-1 min-w-0">
           <div className="relative w-full md:w-[400px] flex items-center group job-title-input-wrapper">
             {/* Search icon */}
-            <span className="absolute left-0 text-white/70 drop-shadow text-lg flex items-center justify-center w-6 h-6">
-              🔍
+            <span className="absolute left-0 text-white/70 drop-shadow flex items-center justify-center w-6 h-6">
+              <img src="/icons/search.png" alt="Search" className="h-4 w-4" />
             </span>
 
             {/* Input field */}

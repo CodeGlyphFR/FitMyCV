@@ -87,15 +87,13 @@ export default function SourceInfo({ sourceType, sourceValue }) {
       <button
         onClick={handleButtonClick}
         className={`
-          w-5 h-5 rounded-full flex items-center justify-center
-          bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl
           transition-all duration-300
-          ${isClickable ? "cursor-pointer hover:shadow-xl hover:bg-white/30" : "cursor-default"}
-          ${showTooltip ? "ring-4 ring-blue-300" : ""}
+          ${isClickable ? "cursor-pointer hover:scale-110" : "cursor-default"}
+          ${showTooltip ? "drop-shadow-xl" : ""}
         `}
         type="button"
       >
-        <img src="/icons/infos.png" alt="Info" className="h-2.5 w-2.5" />
+        <img src="/icons/infos.png" alt="Info" className="h-4 w-4 opacity-70 hover:opacity-100 transition-opacity" />
       </button>
 
       {/* Tooltip animé */}

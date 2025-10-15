@@ -257,7 +257,7 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
         {shouldDisableButton && (
           <div className="absolute inset-0 flex items-center justify-center animate-spin-slow">
             <RefreshCw
-              className="w-4 h-4 text-gray-600 opacity-60"
+              className="w-4 h-4 text-white opacity-80 drop-shadow"
               strokeWidth={2.5}
             />
           </div>

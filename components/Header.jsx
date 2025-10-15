@@ -438,8 +438,8 @@ export default function Header(props){
   }
 
   return (
-    <header className="page mb-6 flex items-start justify-between gap-4 bg-white/15 backdrop-blur-xl p-4 rounded-2xl shadow-2xl relative">
-      <div>
+    <header className="page mb-6 flex items-start justify-between gap-4 bg-white/15 backdrop-blur-xl p-4 rounded-2xl shadow-2xl relative overflow-visible">
+      <div className="pr-24">
         <h1 className="text-2xl font-bold text-white drop-shadow-lg">{header.full_name || ""}</h1>
         <p className="text-sm text-white/80 drop-shadow">{header.current_title || ""}</p>
         <div className="mt-2 text-sm text-white/90 drop-shadow">
@@ -470,37 +470,44 @@ export default function Header(props){
         </div>
       </div>
 
-      {/* Score et Info en haut à droite */}
-      <div className={`flex items-start gap-4 transition-opacity duration-200 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}>
-        {/* Container pour le bouton Optimiser + Score avec positionnement relatif */}
-        <div className="relative">
-          {/* Bouton Optimiser - uniquement si le CV a un scoreBreakdown */}
+      {/* Boîte des boutons en haut à droite */}
+      <div className={`no-print absolute top-2 right-2 z-30 transition-opacity duration-200 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}>
+        <div className="relative w-20 h-20">
+          {/* Icône info en haut à droite */}
+          <div className="absolute top-0 right-0">
+            <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />
+          </div>
+
+          {/* Bouton Score au milieu à gauche */}
+          <div className="absolute top-1/2 -left-1 -translate-y-1/2">
+            <MatchScore
+              sourceType={sourceInfo.sourceType}
+              sourceValue={sourceInfo.sourceValue}
+              score={matchScore}
+              status={matchScoreStatus === 'inprogress' ? 'loading' : matchScoreStatus}
+              isLoading={isLoadingMatchScore}
+              canRefresh={canRefreshScore}
+              refreshCount={refreshCount}
+              hoursUntilReset={hoursUntilReset}
+              minutesUntilReset={minutesUntilReset}
+              onRefresh={handleRefreshMatchScore}
+              currentCvFile={currentCvFile}
+              hasExtractedJobOffer={hasExtractedJobOffer}
+              isOptimizeButtonReady={isOptimizeButtonReady}
+              optimiseStatus={optimiseStatus}
+            />
+          </div>
+
+          {/* Bouton Optimiser en bas à droite */}
           {hasScoreBreakdown && currentCvFile && (
-            <div className="absolute -bottom-6 -right-11 z-10">
+            <div className="absolute bottom-0 right-2">
               <CVImprovementPanel
                 cvFile={currentCvFile}
                 canRefresh={canRefreshScore}
               />
             </div>
           )}
-          <MatchScore
-            sourceType={sourceInfo.sourceType}
-            sourceValue={sourceInfo.sourceValue}
-            score={matchScore}
-            status={matchScoreStatus === 'inprogress' ? 'loading' : matchScoreStatus}
-            isLoading={isLoadingMatchScore}
-            canRefresh={canRefreshScore}
-            refreshCount={refreshCount}
-            hoursUntilReset={hoursUntilReset}
-            minutesUntilReset={minutesUntilReset}
-            onRefresh={handleRefreshMatchScore}
-            currentCvFile={currentCvFile}
-            hasExtractedJobOffer={hasExtractedJobOffer}
-            isOptimizeButtonReady={isOptimizeButtonReady}
-            optimiseStatus={optimiseStatus}
-          />
         </div>
-        <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />
       </div>
 
       {/* Bouton d'édition du header en mode édition */}

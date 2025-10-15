@@ -97,14 +97,14 @@ export default async function Page(){
           <div key={k} className="cv-section">{sections[k]}</div>
         ))}
 
-        <div className="no-print mt-8 text-xs opacity-60 text-center space-y-1">
+        <div className="no-print mt-8 text-xs text-white/70 text-center space-y-1">
           <div>Next.js (JS) • Erick DE SMET • 2025</div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+          <div className="flex flex-row items-baseline justify-center gap-2">
             <span>Version 1.0.8</span>
-            <span className="hidden sm:inline">•</span>
+            <span>•</span>
             <a
               href="/cookies"
-              className="hover:opacity-80 underline transition-opacity"
+              className="hover:text-white underline transition-colors inline-block"
             >
               Gestion des cookies
             </a>
