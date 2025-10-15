@@ -20,7 +20,7 @@ export default function FeedbackButton() {
           no-print fixed bottom-6 left-1/2 z-50
           px-6 py-2 rounded-full
           bg-gold-gradient text-white
-          shadow-lg hover:shadow-xl
+          shadow-2xl hover:shadow-xl
           flex items-center gap-2
           transition-all duration-200
           hover:scale-105
@@ -28,6 +28,7 @@ export default function FeedbackButton() {
           animate-gold-shimmer
           bg-[length:200%_100%]
           pointer-events-auto
+          border-2 border-white/30
         "
         style={{
           transform: 'translateX(-50%) translateZ(0)',

@@ -25,8 +25,17 @@
   /* Optimiser le rendu du texte critique */
   body {
     font-display: swap;
-    background-color: white;
+    background-color: transparent;
   }
+
+  html {
+    background-color: rgb(2, 6, 23);
+  }
+}
+
+/* Classe utilitaire pour inverser les icônes PNG en blanc */
+.icon-white {
+  filter: invert(1) brightness(2);
 }
 
 /* Optimisation CLS - Réserver l'espace pour les composants critiques */

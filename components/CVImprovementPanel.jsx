@@ -232,10 +232,11 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
         disabled={shouldDisableButton}
         className={`
           relative w-9 h-9 rounded-full flex items-center justify-center
-          bg-white shadow-lg border border-neutral-200 transition-all duration-300
+          bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl
+          transition-all duration-300
           ${shouldDisableButton
             ? 'cursor-not-allowed'
-            : 'cursor-pointer hover:shadow-xl'
+            : 'cursor-pointer hover:shadow-xl hover:bg-white/30'
           }
         `}
         title={shouldDisableButton
@@ -245,11 +246,11 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
         {/* Icône principale avec blur pendant le chargement */}
         <span
           className={`
-            text-base leading-none transition-all duration-300
+            transition-all duration-300
             ${shouldDisableButton ? 'blur-sm' : 'blur-0'}
           `}
         >
-          🎯
+          <img src="/icons/analyzer.png" alt="Analyzer" className="h-4 w-4" />
         </span>
 
         {/* Icône de chargement en rotation pendant le chargement */}

@@ -1376,7 +1376,7 @@ export default function TopBar() {
   if (status === "loading") {
     return (
       <div
-        className="no-print sticky top-0 inset-x-0 z-[10001] w-full bg-white border-b min-h-[60px]"
+        className="no-print sticky top-0 inset-x-0 z-[10001] w-full bg-white/15 backdrop-blur-xl border-b border-white/20 min-h-[60px]"
         style={{
           position: '-webkit-sticky',
           paddingTop: 'env(safe-area-inset-top)',
@@ -1388,7 +1388,7 @@ export default function TopBar() {
         }}
       >
         <div className="w-full p-3 flex items-center justify-between">
-          <span className="text-sm font-medium">{t("topbar.loading")}</span>
+          <span className="text-sm font-medium text-white drop-shadow-lg">{t("topbar.loading")}</span>
         </div>
       </div>
     );
@@ -1407,7 +1407,7 @@ export default function TopBar() {
     <>
       <div
         ref={barRef}
-        className="no-print sticky top-0 inset-x-0 z-[10001] w-full bg-white border-b min-h-[60px]"
+        className="no-print sticky top-0 inset-x-0 z-[10001] w-full bg-white/15 backdrop-blur-xl border-b border-white/20 min-h-[60px]"
         style={{
           position: '-webkit-sticky',
           paddingTop: 'env(safe-area-inset-top)',
@@ -1425,15 +1425,15 @@ export default function TopBar() {
             ref={userMenuButtonRef}
             type="button"
             onClick={() => setUserMenuOpen((prev) => !prev)}
-            className="h-8 w-8 flex items-center justify-center rounded-full border hover:shadow bg-white"
+            className="h-8 w-8 flex items-center justify-center rounded-full border border-white/40 bg-white/20 backdrop-blur-sm hover:bg-white/30 hover:shadow-xl transition-all duration-200"
             aria-label={t("topbar.userMenu")}
           >
             <Image
-              src="/icons/user-icon.png"
+              src="/icons/user.png"
               alt={t("topbar.userMenu")}
               width={20}
               height={20}
-              className="object-contain"
+              className="object-contain "
             />
           </button>
         </div>
@@ -1445,7 +1445,7 @@ export default function TopBar() {
               e.stopPropagation();
               setListOpen((prev) => !prev);
             }}
-            className="w-full min-w-0 rounded border px-3 py-1 text-sm flex items-center justify-between gap-3 hover:shadow overflow-hidden"
+            className="w-full min-w-0 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-1 text-sm flex items-center justify-between gap-3 hover:bg-white/30 hover:shadow-xl overflow-hidden transition-all duration-200 text-white"
             ref={triggerRef}
           >
             <span className="flex items-center gap-3 min-w-0 overflow-hidden">
@@ -1477,19 +1477,21 @@ export default function TopBar() {
         </div>
         {listOpen && portalReady && dropdownRect
           ? createPortal(
-              <div
-                ref={dropdownPortalRef}
-                style={{
-                  position: "fixed",
-                  top: dropdownRect.bottom + 4,
-                  left: dropdownRect.left,
-                  width: dropdownRect.width,
-                  zIndex: 10002,
-                }}
-                className="rounded border bg-white shadow-lg"
-              >
-                <ul
-                  className="max-h-[240px] overflow-y-auto py-1"
+              <>
+                <div className="fixed inset-0 z-[10001] backdrop-blur-sm bg-transparent" onClick={() => setListOpen(false)} />
+                <div
+                  ref={dropdownPortalRef}
+                  style={{
+                    position: "fixed",
+                    top: dropdownRect.bottom + 4,
+                    left: dropdownRect.left,
+                    width: dropdownRect.width,
+                    zIndex: 10002,
+                  }}
+                  className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl"
+                >
+                  <ul
+                    className="max-h-[240px] overflow-y-auto py-1"
                   onScroll={() => {
                     // Set flag when scrolling starts
                     setIsScrollingInDropdown(true);
@@ -1519,7 +1521,7 @@ export default function TopBar() {
                           await selectFile(it.file);
                           setListOpen(false);
                         }}
-                        className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-zinc-100 ${it.file === current ? "bg-blue-50 border-l-2 border-blue-500" : ""}`}
+                        className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-white/25 text-white transition-colors duration-200 ${it.file === current ? "bg-white/20 border-l-2 border-emerald-400" : ""}`}
                       >
                         <span
                           key={`dropdown-icon-${it.file}-${it.createdBy}`}
@@ -1538,27 +1540,30 @@ export default function TopBar() {
                     </li>
                   ))}
                 </ul>
-              </div>,
+              </div>
+              </>,
               document.body,
             )
           : null}
         {userMenuOpen && portalReady && userMenuRect
           ? createPortal(
-              <div
-                ref={userMenuRef}
-                style={{
-                  position: "fixed",
-                  top: userMenuRect.bottom + 8,
-                  left: userMenuRect.left,
-                  zIndex: 10002,
-                }}
-                className="rounded-lg border bg-white shadow-lg p-2 text-sm space-y-1 min-w-[10rem] max-w-[16rem]"
-              >
-                <div className="px-2 py-1 text-xs uppercase text-neutral-500 truncate">
-                  {session?.user?.name || t("topbar.user")}
-                </div>
-                <button
-                  className="w-full text-left rounded px-2 py-1 hover:bg-neutral-100"
+              <>
+                <div className="fixed inset-0 z-[10001] backdrop-blur-sm bg-transparent" onClick={() => setUserMenuOpen(false)} />
+                <div
+                  ref={userMenuRef}
+                  style={{
+                    position: "fixed",
+                    top: userMenuRect.bottom + 8,
+                    left: userMenuRect.left,
+                    zIndex: 10002,
+                  }}
+                  className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl p-2 text-sm space-y-1 min-w-[10rem] max-w-[16rem]"
+                >
+                  <div className="px-2 py-1 text-xs uppercase text-white/70 drop-shadow truncate">
+                    {session?.user?.name || t("topbar.user")}
+                  </div>
+                  <button
+                    className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
                   onClick={() => {
                     setUserMenuOpen(false);
                     router.push("/");
@@ -1567,7 +1572,7 @@ export default function TopBar() {
                   {t("topbar.myCvs")}
                 </button>
                 <button
-                  className="w-full text-left rounded px-2 py-1 hover:bg-neutral-100"
+                  className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
                   onClick={() => {
                     setUserMenuOpen(false);
                     router.push("/account");
@@ -1576,7 +1581,7 @@ export default function TopBar() {
                   {t("topbar.myAccount")}
                 </button>
                 <button
-                  className="w-full text-left rounded px-2 py-1 hover:bg-neutral-100"
+                  className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
                   onClick={() => {
                     setUserMenuOpen(false);
                     signOut({ callbackUrl: logoutTarget });
@@ -1584,7 +1589,8 @@ export default function TopBar() {
                 >
                   {t("topbar.logout")}
                 </button>
-              </div>,
+              </div>
+              </>,
               document.body,
             )
           : null}
@@ -1600,11 +1606,11 @@ export default function TopBar() {
                 setOpenTaskDropdown(!openTaskDropdown);
               }
             }}
-            className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8"
+            className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 transition-all duration-200"
             type="button"
             title={t("topbar.taskQueue")}
           >
-            <QueueIcon className="h-4 w-4" />
+            <img src="/icons/task.png" alt={t("topbar.taskQueue")} className="h-4 w-4 " />
           </button>
 
           {/* Desktop Dropdown */}
@@ -1621,12 +1627,10 @@ export default function TopBar() {
         {/* Job Title Input - Second Line on mobile, end of first line on desktop */}
         <div className="w-auto flex-1 order-6 md:order-9 md:flex-none flex justify-start md:justify-end px-4 py-1 min-w-0">
           <div className="relative w-full md:w-[400px] flex items-center group job-title-input-wrapper">
-            {/* Search icon with pulse animation */}
-            <span className="absolute left-0 text-gray-400 text-lg flex items-center justify-center w-6 h-6">
+            {/* Search icon */}
+            <span className="absolute left-0 text-white/70 drop-shadow text-lg flex items-center justify-center w-6 h-6">
               🔍
             </span>
-
-            {/* Animated underline - removed */}
 
             {/* Input field */}
             <input
@@ -1635,18 +1639,16 @@ export default function TopBar() {
               onChange={(e) => setJobTitleInput(e.target.value)}
               onKeyDown={handleJobTitleSubmit}
               placeholder={isMobile ? t("topbar.jobTitlePlaceholderMobile") : t("topbar.jobTitlePlaceholder")}
-              className="w-full bg-transparent border-0 border-b border-gray-300 pl-8 pr-2 py-1 text-sm italic text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              style={{ caretColor: '#3B82F6' }}
+              className="w-full bg-transparent border-0 border-b-2 border-white/30 pl-8 pr-2 py-1 text-sm italic text-white placeholder-white/50 focus:outline-none focus:border-emerald-400 transition-colors duration-200"
+              style={{ caretColor: '#10b981' }}
             />
-
-            {/* Sparkle effect - removed */}
           </div>
         </div>
 
         {/* GPT Button */}
         <button
           onClick={openGeneratorModal}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-4"
+          className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-4 transition-all duration-200"
           type="button"
         >
           <GptLogo className="h-4 w-4" />
@@ -1654,36 +1656,36 @@ export default function TopBar() {
         {/* Add Button */}
         <button
           onClick={() => setOpenNewCv(true)}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 order-7 md:order-5"
+          className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center h-8 w-8 order-7 md:order-5 transition-all duration-200"
           type="button"
         >
-          ➕
+          <img src="/icons/add.png" alt="Add" className="h-4 w-4 " />
         </button>
         {/* Import Button */}
         <button
           onClick={() => setOpenPdfImport(true)}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-9 md:order-6"
+          className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-9 md:order-6 transition-all duration-200"
           type="button"
           title={t("pdfImport.title")}
         >
-          <img src="/icons/import.png" alt="Import" className="h-4 w-4" />
+          <img src="/icons/import.png" alt="Import" className="h-4 w-4 " />
         </button>
         {/* Export Button */}
         <button
           onClick={exportToPdf}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7"
+          className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7 transition-all duration-200"
           type="button"
           title="Exporter en PDF"
         >
-          <img src="/icons/export.png" alt="Export" className="h-4 w-4" />
+          <img src="/icons/export.png" alt="Export" className="h-4 w-4 " />
         </button>
         {/* Delete Button */}
         <button
           onClick={() => setOpenDelete(true)}
-          className="rounded border text-sm hover:shadow inline-flex items-center justify-center h-8 w-8 text-red-700 order-4 md:order-8"
+          className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center h-8 w-8 order-4 md:order-8 transition-all duration-200"
           title={t("topbar.delete")}
         >
-          ❌
+          <img src="/icons/delete.png" alt="Delete" className="h-4 w-4 " />
         </button>
       </div>
 
@@ -1693,19 +1695,19 @@ export default function TopBar() {
         title={t("cvGenerator.title")}
       >
         <form onSubmit={submitGenerator} className="space-y-4">
-          <div className="text-sm text-neutral-700">
+          <div className="text-sm text-white/90 drop-shadow">
             {t("cvGenerator.description")}
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">{t("cvGenerator.referenceCV")}</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("cvGenerator.referenceCV")}</div>
             {/* Toujours afficher le dropdown car on a l'option template */}
             {true ? (
               <div className="relative" ref={baseSelectorRef}>
                 <button
                   type="button"
                   onClick={() => setBaseSelectorOpen((prev) => !prev)}
-                  className="w-full min-w-0 rounded border px-3 py-1 text-sm flex items-center justify-between gap-3 hover:shadow bg-white"
+                  className="w-full min-w-0 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm flex items-center justify-between gap-3 text-white shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
                 >
                   <span className="flex items-center gap-3 min-w-0 overflow-hidden">
                     {generatorBaseFile === CREATE_TEMPLATE_OPTION ? (
@@ -1745,7 +1747,7 @@ export default function TopBar() {
                 {baseSelectorOpen ? (
                   <div
                     ref={baseDropdownRef}
-                    className="absolute z-10 mt-1 w-full rounded border bg-white shadow-lg max-h-60 overflow-y-auto"
+                    className="absolute z-10 mt-1 w-full rounded-lg border-2 border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl max-h-60 overflow-y-auto"
                   >
                     <ul className="py-1">
                       {/* Option spéciale : Créer un nouveau modèle de CV */}
@@ -1756,7 +1758,7 @@ export default function TopBar() {
                             setGeneratorBaseFile(CREATE_TEMPLATE_OPTION);
                             setBaseSelectorOpen(false);
                           }}
-                          className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-zinc-100 ${CREATE_TEMPLATE_OPTION === generatorBaseFile ? "bg-zinc-50" : ""}`}
+                          className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 text-white transition-colors duration-200 hover:bg-white/25 ${CREATE_TEMPLATE_OPTION === generatorBaseFile ? "bg-white/20" : ""}`}
                         >
                           <span className="flex h-6 w-6 items-center justify-center shrink-0">
                             <span className="text-lg">✨</span>
@@ -1768,7 +1770,7 @@ export default function TopBar() {
                       </li>
                       {/* Séparateur */}
                       {generatorSourceItems.length > 0 && (
-                        <li className="my-1 border-t border-gray-200"></li>
+                        <li className="my-1 border-t border-white/20"></li>
                       )}
                       {/* CVs existants */}
                       {generatorSourceItems.map((item) => (
@@ -1779,7 +1781,7 @@ export default function TopBar() {
                               setGeneratorBaseFile(item.file);
                               setBaseSelectorOpen(false);
                             }}
-                            className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-zinc-100 ${item.file === generatorBaseFile ? "bg-zinc-50" : ""}`}
+                            className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 text-white transition-colors duration-200 hover:bg-white/25 ${item.file === generatorBaseFile ? "bg-white/20" : ""}`}
                           >
                             <span
                               key={`gen-dropdown-icon-${item.file}-${item.createdBy}`}
@@ -1809,7 +1811,7 @@ export default function TopBar() {
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">{t("cvGenerator.links")}</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("cvGenerator.links")}</div>
             {linkInputs.map((value, index) => (
               <div key={index} className="flex gap-2">
                 <div className="relative">
@@ -1821,15 +1823,15 @@ export default function TopBar() {
                         [index]: !prev[index]
                       }));
                     }}
-                    className="h-full rounded border px-2 py-1 text-xs hover:bg-gray-50"
+                    className="h-full rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white hover:bg-white/30 transition-all duration-200 disabled:opacity-50"
                     title={t("cvGenerator.loadRecentLink")}
                     disabled={linkHistory.length === 0}
                   >
                     📋
                   </button>
                   {linkHistoryDropdowns[index] && linkHistory.length > 0 && (
-                    <div className="absolute left-0 top-full mt-1 w-80 max-h-60 overflow-y-auto bg-white border rounded shadow-lg z-10">
-                      <div className="p-2 border-b bg-gray-50 text-xs font-medium text-gray-600">
+                    <div className="absolute left-0 top-full mt-1 w-80 max-h-60 overflow-y-auto bg-white/15 backdrop-blur-xl border-2 border-white/30 rounded-lg shadow-2xl z-10">
+                      <div className="p-2 border-b border-white/20 bg-white/10 text-xs font-medium text-white drop-shadow">
                         {t("cvGenerator.recentLinks")}
                       </div>
                       <ul className="py-1">
@@ -1844,7 +1846,7 @@ export default function TopBar() {
                                   [index]: false
                                 }));
                               }}
-                              className="w-full px-3 py-2 text-left text-xs hover:bg-gray-100 truncate"
+                              className="w-full px-3 py-2 text-left text-xs text-white hover:bg-white/25 truncate transition-colors duration-200"
                               title={link}
                             >
                               {link}
@@ -1856,7 +1858,7 @@ export default function TopBar() {
                   )}
                 </div>
                 <input
-                  className="flex-1 rounded border px-2 py-1 text-sm"
+                  className="flex-1 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
                   placeholder="https://..."
                   value={value}
                   onChange={(event) => updateLink(event.target.value, index)}
@@ -1864,7 +1866,7 @@ export default function TopBar() {
                 <button
                   type="button"
                   onClick={() => removeLinkField(index)}
-                  className="rounded border px-2 py-1 text-xs"
+                  className="rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white hover:bg-white/30 transition-all duration-200"
                   title={t("topbar.delete")}
                 >
                   ✕
@@ -1875,35 +1877,35 @@ export default function TopBar() {
               <button
                 type="button"
                 onClick={addLinkField}
-                className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-xs font-medium text-white hover:bg-white/30 transition-all duration-200 inline-flex items-center gap-1"
               >
-                ➕ {t("cvGenerator.addLink")}
+                <img src="/icons/add.png" alt="" className="h-3 w-3 " /> {t("cvGenerator.addLink")}
               </button>
             </div>
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">{t("cvGenerator.files")}</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("cvGenerator.files")}</div>
             <input
               ref={fileInputRef}
-              className="w-full rounded border px-2 py-1 text-sm"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
               type="file"
               accept=".pdf,.doc,.docx"
               multiple
               onChange={onFilesChanged}
             />
             {(fileSelection || []).length ? (
-              <div className="rounded border bg-neutral-50 px-3 py-2 text-xs space-y-1">
-                <div className="font-medium">{t("cvGenerator.selection")}</div>
+              <div className="rounded-lg border-2 border-white/30 bg-white/10 backdrop-blur-sm px-3 py-2 text-xs space-y-1">
+                <div className="font-medium text-white drop-shadow">{t("cvGenerator.selection")}</div>
                 {(fileSelection || []).map((file, idx) => (
-                  <div key={idx} className="truncate">
+                  <div key={idx} className="truncate text-white/80">
                     {file.name}
                   </div>
                 ))}
                 <button
                   type="button"
                   onClick={clearFiles}
-                  className="mt-1 rounded border px-2 py-1 text-xs"
+                  className="mt-1 rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white hover:bg-white/30 transition-all duration-200"
                 >
                   {t("cvGenerator.clearFiles")}
                 </button>
@@ -1913,8 +1915,8 @@ export default function TopBar() {
 
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">{t("cvGenerator.analysisQuality")}</div>
-            <div className="grid grid-cols-3 gap-1 rounded-lg border bg-neutral-50 p-1 text-xs sm:text-sm">
+            <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("cvGenerator.analysisQuality")}</div>
+            <div className="grid grid-cols-3 gap-1 rounded-lg border-2 border-white/30 bg-white/10 backdrop-blur-sm p-1 text-xs sm:text-sm">
               {ANALYSIS_OPTIONS(t).map((option) => {
                 const active = option.id === analysisLevel;
                 return (
@@ -1922,7 +1924,7 @@ export default function TopBar() {
                     key={option.id}
                     type="button"
                     onClick={() => setAnalysisLevel(option.id)}
-                    className={`rounded-md px-2 py-1 font-medium transition ${active ? "bg-white text-emerald-600 shadow" : "text-neutral-600 hover:bg-white"}`}
+                    className={`rounded-md px-2 py-1 font-medium transition-all duration-200 ${active ? "bg-white/30 text-emerald-400 shadow border-2 border-emerald-400/50" : "text-white/80 hover:bg-white/20"}`}
                     aria-pressed={active}
                   >
                     {option.label}
@@ -1930,13 +1932,13 @@ export default function TopBar() {
                 );
               })}
             </div>
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-white/70 drop-shadow">
               {currentAnalysisOption.hint}
             </p>
           </div>
 
           {generatorError ? (
-            <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {generatorError}
             </div>
           ) : null}
@@ -1945,13 +1947,13 @@ export default function TopBar() {
             <button
               type="button"
               onClick={closeGenerator}
-              className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-white/30 transition-all duration-200"
             >
               {t("cvGenerator.cancel")}
             </button>
             <button
               type="submit"
-              className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500/40 transition-all duration-200 disabled:opacity-60"
               disabled={!generatorBaseFile}
             >
               {t("cvGenerator.validate")}
@@ -1966,31 +1968,31 @@ export default function TopBar() {
         title={t("pdfImport.title")}
       >
         <form onSubmit={submitPdfImport} className="space-y-4">
-          <div className="text-sm text-neutral-700">
+          <div className="text-sm text-white/90 drop-shadow">
             {t("pdfImport.description")}
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">{t("pdfImport.pdfFile")}</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("pdfImport.pdfFile")}</div>
             <input
               ref={pdfFileInputRef}
-              className="w-full rounded border px-2 py-1 text-sm"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
               type="file"
               accept=".pdf"
               onChange={onPdfFileChanged}
             />
             {pdfFile ? (
-              <div className="rounded border bg-neutral-50 px-3 py-2 text-xs">
-                <div className="font-medium">{t("pdfImport.fileSelected")}</div>
-                <div className="truncate">{pdfFile.name}</div>
+              <div className="rounded-lg border-2 border-white/30 bg-white/10 backdrop-blur-sm px-3 py-2 text-xs">
+                <div className="font-medium text-white drop-shadow">{t("pdfImport.fileSelected")}</div>
+                <div className="truncate text-white/80">{pdfFile.name}</div>
               </div>
             ) : null}
           </div>
 
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">{t("pdfImport.analysisQuality")}</div>
-            <div className="grid grid-cols-3 gap-1 rounded-lg border bg-neutral-50 p-1 text-xs sm:text-sm">
+            <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("pdfImport.analysisQuality")}</div>
+            <div className="grid grid-cols-3 gap-1 rounded-lg border-2 border-white/30 bg-white/10 backdrop-blur-sm p-1 text-xs sm:text-sm">
               {ANALYSIS_OPTIONS(t).map((option) => {
                 const active = option.id === pdfAnalysisLevel;
                 return (
@@ -1998,7 +2000,7 @@ export default function TopBar() {
                     key={option.id}
                     type="button"
                     onClick={() => setPdfAnalysisLevel(option.id)}
-                    className={`rounded-md px-2 py-1 font-medium transition ${active ? "bg-white text-blue-600 shadow" : "text-neutral-600 hover:bg-white"}`}
+                    className={`rounded-md px-2 py-1 font-medium transition-all duration-200 ${active ? "bg-white/30 text-emerald-400 shadow border-2 border-emerald-400/50" : "text-white/80 hover:bg-white/20"}`}
                     aria-pressed={active}
                   >
                     {option.label}
@@ -2006,7 +2008,7 @@ export default function TopBar() {
                 );
               })}
             </div>
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-white/70 drop-shadow">
               {currentPdfAnalysisOption.hint}
             </p>
           </div>
@@ -2016,13 +2018,13 @@ export default function TopBar() {
             <button
               type="button"
               onClick={closePdfImport}
-              className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-white/30 transition-all duration-200"
             >
               {t("pdfImport.cancel")}
             </button>
             <button
               type="submit"
-              className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500/40 transition-all duration-200 disabled:opacity-60"
               disabled={!pdfFile}
             >
               {t("pdfImport.import")}
@@ -2037,23 +2039,23 @@ export default function TopBar() {
         title={t("deleteModal.title")}
       >
         <div className="space-y-3">
-          <p className="text-sm">
+          <p className="text-sm text-white drop-shadow">
             {t("deleteModal.question")}{" "}
-            <strong>{currentItem ? currentItem.displayTitle : current}</strong> ?
+            <strong className="text-emerald-400">{currentItem ? currentItem.displayTitle : current}</strong> ?
           </p>
-          <p className="text-xs opacity-70">
-            {t("deleteModal.warning")} <strong>{t("deleteModal.irreversible")}</strong>.
+          <p className="text-xs text-white/70 drop-shadow">
+            {t("deleteModal.warning")} <strong className="text-red-400">{t("deleteModal.irreversible")}</strong>.
           </p>
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setOpenDelete(false)}
-              className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-white/30 transition-all duration-200"
             >
               {t("deleteModal.no")}
             </button>
             <button
               onClick={deleteCurrent}
-              className="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+              className="rounded-lg border-2 border-red-400/50 bg-red-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-red-500/40 transition-all duration-200"
             >
               {t("deleteModal.yes")}
             </button>
@@ -2081,11 +2083,11 @@ export default function TopBar() {
       >
         <div className="space-y-4">
           <div>
-            <label className="text-sm block mb-1">
-              {t("newCvModal.fullName")}<span className="text-red-500" aria-hidden="true"> {t("newCvModal.required")}</span>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow block mb-1">
+              {t("newCvModal.fullName")}<span className="text-red-400" aria-hidden="true"> {t("newCvModal.required")}</span>
             </label>
             <input
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
               value={newCvFullName}
               onChange={(e) => setNewCvFullName(e.target.value)}
               placeholder="Ex: Jean Dupont"
@@ -2093,11 +2095,11 @@ export default function TopBar() {
             />
           </div>
           <div>
-            <label className="text-sm block mb-1">
-              {t("newCvModal.currentTitle")}<span className="text-red-500" aria-hidden="true"> {t("newCvModal.required")}</span>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow block mb-1">
+              {t("newCvModal.currentTitle")}<span className="text-red-400" aria-hidden="true"> {t("newCvModal.required")}</span>
             </label>
             <input
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
               value={newCvCurrentTitle}
               onChange={(e) => setNewCvCurrentTitle(e.target.value)}
               placeholder="Ex: Développeur Full-Stack"
@@ -2105,16 +2107,16 @@ export default function TopBar() {
             />
           </div>
           <div>
-            <label className="text-sm block mb-1">{t("newCvModal.email")}</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow block mb-1">{t("newCvModal.email")}</label>
             <input
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
               value={newCvEmail}
               onChange={(e) => setNewCvEmail(e.target.value)}
               placeholder="email@exemple.com"
             />
           </div>
           {newCvError ? (
-            <div className="text-sm text-red-600">{String(newCvError)}</div>
+            <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{String(newCvError)}</div>
           ) : null}
           <div className="flex gap-2">
             <button
@@ -2125,19 +2127,19 @@ export default function TopBar() {
                 setNewCvEmail("");
                 setNewCvError(null);
               }}
-              className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-white/30 transition-all duration-200"
             >
               {t("newCvModal.cancel")}
             </button>
             <button
               onClick={createNewCv}
               disabled={newCvBusy || !newCvFullName.trim() || !newCvCurrentTitle.trim()}
-              className="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500/40 transition-all duration-200 disabled:opacity-60"
             >
               {newCvBusy ? t("newCvModal.creating") : t("newCvModal.create")}
             </button>
           </div>
-          <p className="text-xs opacity-70">
+          <p className="text-xs text-white/70 drop-shadow">
             {t("newCvModal.hint")}
           </p>
         </div>

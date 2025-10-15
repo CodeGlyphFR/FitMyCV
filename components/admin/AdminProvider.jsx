@@ -91,15 +91,16 @@ export default function AdminProvider(props){
           className={`
             fixed bottom-6 right-6 z-50 no-print
             w-10 h-10 rounded-full
-            shadow-lg hover:shadow-xl
+            shadow-2xl hover:shadow-xl
             flex items-center justify-center
             transition-all duration-200
             hover:scale-110
-            border
+            border-2
             pointer-events-auto
+            backdrop-blur-xl
             ${editing
-              ? 'bg-blue-50 border-blue-300'
-              : 'bg-white border-neutral-300'
+              ? 'bg-emerald-500/30 border-emerald-400/60'
+              : 'bg-white/20 border-white/30'
             }
           `}
           title={editing ? t("editMode.on") : t("editMode.off")}
@@ -112,9 +113,11 @@ export default function AdminProvider(props){
             willChange: 'transform'
           }}
         >
-          <span className={`text-xl ${editing ? '' : 'grayscale opacity-70'}`}>
-            📝
-          </span>
+          <img
+            src="/icons/edit_mode.png"
+            alt={editing ? t("editMode.on") : t("editMode.off")}
+            className={`h-5 w-5 drop-shadow-lg ${editing ? '' : 'grayscale opacity-70'}`}
+          />
         </button>
       ) : null}
 

@@ -183,6 +183,28 @@ export default function MatchScore({
     return "text-red-700";
   };
 
+  const getBorderColor = () => {
+    if (status === "error") return "border-red-600";
+    if (score === null) return "border-white/30";
+
+    // Score exceptionnel > 90 : or
+    if (score > 90) return "border-yellow-600";
+
+    // 80-90 : vert
+    if (score >= 80) return "border-green-600";
+
+    // 50-80 : orange
+    if (score >= 50) return "border-orange-500";
+
+    // 10-50 : dégradé rouge -> orange
+    if (score >= 40) return "border-orange-600";
+    if (score >= 30) return "border-red-500";
+    if (score >= 20) return "border-red-600";
+
+    // 0-10 : rouge foncé
+    return "border-red-700";
+  };
+
   const isDisabled = shouldShowLoading || !canRefresh;
 
   // refreshCount représente maintenant directement les tokens restants
@@ -230,10 +252,10 @@ export default function MatchScore({
       <div
         className={`
           relative w-12 h-12 rounded-full flex items-center justify-center
-          bg-white shadow-[0_0_15px_rgba(0,0,0,0.2)]
+          bg-white/20 backdrop-blur-xl border-4 ${getBorderColor()} shadow-2xl
           ${!isDisabled && !isLoading ? "cursor-pointer" : "cursor-not-allowed"}
           transition-all duration-300
-          ${showSuccessEffect ? "ring-4 ring-green-300" : ""}
+          ${showSuccessEffect ? "ring-4 ring-emerald-300" : ""}
         `}
         onClick={handleRefresh}
         onMouseEnter={() => setIsHovered(true)}
@@ -251,10 +273,10 @@ export default function MatchScore({
           {score !== null && (
             <div className="relative flex items-center justify-center">
               <span
-                className={`text-base font-bold ${
+                className={`text-base font-bold drop-shadow-lg ${
                   score > 90 && status !== "loading"
                     ? "bg-gold-gradient bg-[length:200%_100%] animate-gold-shimmer text-transparent bg-clip-text"
-                    : getScoreColor()
+                    : getScoreColor() + " text-white"
                 }`}
               >
                 {getDisplayText()}
@@ -267,7 +289,7 @@ export default function MatchScore({
         {isHovered && !isDisabled && !shouldShowLoading && score !== null && (
           <div className="absolute inset-0 flex items-center justify-center">
             <RefreshCw
-              className="w-5 h-5 text-gray-600 opacity-60"
+              className="w-5 h-5 text-white opacity-80 drop-shadow"
               strokeWidth={2.5}
             />
           </div>
@@ -277,7 +299,7 @@ export default function MatchScore({
         {shouldShowLoading && (
           <div className={`absolute inset-0 flex items-center justify-center animate-spin-slow shimmer`}>
             <RefreshCw
-              className="w-5 h-5 text-gray-600 opacity-60"
+              className="w-5 h-5 text-white opacity-80 drop-shadow"
               strokeWidth={2.5}
             />
           </div>
@@ -287,7 +309,7 @@ export default function MatchScore({
         {score === null && !shouldShowLoading && status !== "error" && (
           <div className="absolute inset-0 flex items-center justify-center">
             <RefreshCw
-              className="w-5 h-5 text-gray-600 opacity-60"
+              className="w-5 h-5 text-white opacity-80 drop-shadow"
               strokeWidth={2.5}
             />
           </div>

@@ -109,12 +109,12 @@ function TaskItem({ task, onCancel, compact = false }) {
   const hasSourceInfo = (task.type === 'generation' || task.type === 'import') && sourceInfo;
 
   return (
-    <div className={`flex items-center justify-between ${compact ? 'p-2' : 'p-3'} border-b border-gray-100 last:border-b-0 hover:bg-gray-50`}>
+    <div className={`flex items-center justify-between ${compact ? 'p-2' : 'p-3'} border-b border-white/10 last:border-b-0 hover:bg-white/20 transition-colors duration-200`}>
       <div className="flex-1 min-w-0 mr-2">
-        <div className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-gray-900 truncate`}>
+        <div className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-white truncate drop-shadow`}>
           {description}
         </div>
-        <div className="flex items-center gap-1 text-xs text-gray-500">
+        <div className="flex items-center gap-1 text-xs text-white/60">
           <span>{createdAt}</span>
           {hasSourceInfo && (
             <>
@@ -128,13 +128,13 @@ function TaskItem({ task, onCancel, compact = false }) {
       </div>
       <div className="flex items-center gap-2">
         {task.status === 'running' && <LoadingSpinner />}
-        <span className={`text-xs font-medium ${statusDisplay.color}`}>
+        <span className={`text-xs font-medium ${statusDisplay.color} drop-shadow`}>
           {statusDisplay.label}
         </span>
         {canCancel && (
           <button
             onClick={() => onCancel(task.id)}
-            className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-1 py-0.5 rounded"
+            className="text-xs text-red-400 hover:text-red-300 hover:bg-red-500/20 px-1 py-0.5 rounded transition-colors duration-200"
             title={t("taskQueue.cancelTask")}
           >
             ✕
@@ -196,7 +196,7 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
 
       {/* Dropdown content */}
       <div
-        className={`fixed w-96 bg-white border border-gray-200 rounded-lg shadow-xl z-[10001] ${className}`}
+        className={`fixed w-96 bg-white/15 backdrop-blur-xl border-2 border-white/30 rounded-lg shadow-2xl z-[10001] ${className}`}
         style={{
           top: `${dropdownPosition.top}px`,
           left: `${dropdownPosition.left}px`
@@ -204,17 +204,17 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
       >
         <div className="max-h-80 overflow-y-auto">
           {sortedTasks.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              <div className="text-sm">{t("taskQueue.noTasks")}</div>
+            <div className="p-6 text-center text-white/70">
+              <div className="text-sm drop-shadow">{t("taskQueue.noTasks")}</div>
             </div>
           ) : (
             <>
               {completedTasksCount > 0 && (
-                <div className="p-3 pb-0 border-b border-gray-100">
+                <div className="p-3 pb-0 border-b border-white/10">
                   <div className="flex justify-end">
                     <button
                       onClick={clearCompletedTasks}
-                      className="text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded"
+                      className="text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 px-2 py-1 rounded transition-colors duration-200"
                     >
                       {t("taskQueue.clearCompleted")} ({completedTasksCount})
                     </button>
@@ -236,8 +236,8 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
           )}
         </div>
 
-        <div className="p-3 border-t border-gray-200 bg-gray-50 rounded-b-lg">
-          <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="p-3 border-t border-white/20 bg-white/10 rounded-b-lg">
+          <div className="flex items-center justify-between text-xs text-white/70 drop-shadow">
             <div className="flex items-center gap-1">
               <div
                 className={`w-2 h-2 rounded-full ${isApiSyncEnabled ? 'bg-green-500' : 'bg-orange-500'}`}

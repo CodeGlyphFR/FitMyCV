@@ -51,7 +51,7 @@ export default function Modal({ open, onClose, title, children, size = "default"
   return createPortal(
     <div className="fixed inset-0 z-[10002] overflow-y-auto" style={{ touchAction: 'none' }}>
       <div
-        className="fixed inset-0 bg-black/30"
+        className="fixed inset-0 backdrop-blur-md bg-black/40"
         onClick={onClose}
         onTouchEnd={(e) => {
           // Prevent both touchend and click from firing
@@ -61,15 +61,15 @@ export default function Modal({ open, onClose, title, children, size = "default"
       ></div>
       <div className="relative min-h-full flex items-start sm:items-center justify-center p-4">
         <div
-          className={`relative z-10 w-full ${maxWidthClass} rounded-2xl border bg-white p-4 shadow-lg`}
+          className={`relative z-10 w-full ${maxWidthClass} rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-xl p-4 shadow-2xl`}
           onClick={(e) => e.stopPropagation()}
           onTouchEnd={(e) => e.stopPropagation()}
           style={{ touchAction: 'auto' }}
         >
           <div className="flex items-center justify-between mb-2">
-            <div className="font-semibold">{title || t("common.confirmation")}</div>
+            <div className="font-semibold text-white drop-shadow-lg">{title || t("common.confirmation")}</div>
           </div>
-          <div>{children}</div>
+          <div className="text-white/90">{children}</div>
         </div>
       </div>
     </div>,
