@@ -7,6 +7,7 @@ export const viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
+  themeColor: "#020617", // rgb(2, 6, 23) en hex - couleur des barres iOS
 };
 
 export default function AuthLayout({ children }) {

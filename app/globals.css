@@ -82,6 +82,15 @@ a,
   cursor: pointer;
 }
 
+/* iOS-specific auth layout - Position form at top with margin */
+@supports (-webkit-touch-callout: none) {
+  .ios-auth-container {
+    align-items: flex-start !important;
+    padding-top: max(2rem, env(safe-area-inset-top, 0) + 1rem) !important;
+    padding-bottom: max(2rem, env(safe-area-inset-bottom, 0) + 1rem) !important;
+  }
+}
+
 /* Ensure input and textarea can be selected */
 input,
 textarea {
