@@ -339,10 +339,7 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
         `}</style>
 
         <div className="space-y-4">
-          {/* Header avec gradient animé */}
-          <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 pointer-events-none" />
-
-          <div className={`relative space-y-4 transition-all duration-300 ${!isAnimationReady && !loading ? 'blur-sm opacity-0' : 'blur-0 opacity-100'}`}>
+          <div className={`space-y-4 transition-all duration-300 ${!isAnimationReady && !loading ? 'blur-sm opacity-0' : 'blur-0 opacity-100'}`}>
             {loading && (
               <div className="text-center py-12 text-white/70 text-sm">
                 <div className="inline-block w-8 h-8 border-4 border-white/30 border-t-blue-500 rounded-full animate-spin mb-3" />
