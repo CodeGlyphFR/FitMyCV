@@ -2,6 +2,7 @@
 
 import React from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -12,7 +13,7 @@ function LoadingSpinner() {
   );
 }
 
-function TaskItem({ task, onCancel, compact = false }) {
+function TaskItem({ task, onCancel, onTaskClick, compact = false }) {
   const { t } = useLanguage();
 
   const getStatusDisplay = (status) => {
@@ -108,8 +109,47 @@ function TaskItem({ task, onCancel, compact = false }) {
   }
   const hasSourceInfo = (task.type === 'generation' || task.type === 'import') && sourceInfo;
 
+  // Déterminer si la tâche a un CV associé
+  let cvFileName = null;
+
+  // Vérifier d'abord le champ cvFile (pour calculate-match-score et improve-cv)
+  try {
+    if (task.cvFile) {
+      cvFileName = task.cvFile;
+    }
+    // Sinon vérifier le result (pour generation, import, template-creation)
+    else if (task.result && task.status === 'completed') {
+      // task.result est déjà un objet (parsé par l'API)
+      const result = typeof task.result === 'string' ? JSON.parse(task.result) : task.result;
+      cvFileName = result.file || (result.files && result.files.length > 0 ? result.files[0] : null);
+    }
+  } catch (err) {
+    console.error('[TaskItem Dropdown] Erreur extraction cvFileName:', err);
+  }
+
+  const isClickable = task.status === 'completed' && !!cvFileName;
+
+  const handleClick = () => {
+    console.log('[TaskItem Dropdown] Click détecté:', {
+      isClickable,
+      cvFileName,
+      taskStatus: task.status,
+      taskType: task.type,
+      hasCvFile: !!task.cvFile,
+      cvFileValue: task.cvFile,
+      hasResult: !!task.result,
+      resultValue: task.result
+    });
+    if (isClickable && onTaskClick) {
+      onTaskClick(cvFileName);
+    }
+  };
+
   return (
-    <div className={`flex items-center justify-between ${compact ? 'p-2' : 'p-3'} border-b border-white/10 last:border-b-0 hover:bg-white/20 transition-colors duration-200`}>
+    <div
+      className={`flex items-center justify-between ${compact ? 'p-2' : 'p-3'} border-b border-white/10 last:border-b-0 hover:bg-white/20 transition-colors duration-200 ${isClickable ? 'cursor-pointer hover:border-l-2 hover:border-emerald-400' : ''}`}
+      onClick={handleClick}
+    >
       <div className="flex-1 min-w-0 mr-2">
         <div className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-white truncate drop-shadow`}>
           {description}
@@ -133,7 +173,10 @@ function TaskItem({ task, onCancel, compact = false }) {
         </span>
         {canCancel && (
           <button
-            onClick={() => onCancel(task.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCancel(task.id);
+            }}
             className="text-xs text-red-400 hover:text-red-300 hover:bg-red-500/20 px-1 py-0.5 rounded transition-colors duration-200"
             title={t("taskQueue.cancelTask")}
           >
@@ -147,6 +190,7 @@ function TaskItem({ task, onCancel, compact = false }) {
 
 export default function TaskQueueDropdown({ isOpen, onClose, className = "", buttonRef }) {
   const { t } = useLanguage();
+  const router = useRouter();
   const { tasks, clearCompletedTasks, cancelTask, isApiSyncEnabled } = useBackgroundTasks();
   const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0 });
 
@@ -159,6 +203,40 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
   const completedTasksCount = visibleTasks.filter(task =>
     task.status === 'completed' || task.status === 'failed' || task.status === 'cancelled'
   ).length;
+
+  const handleTaskClick = async (cvFile) => {
+    console.log('[TaskQueueDropdown] Click sur tâche avec CV:', cvFile);
+
+    if (!cvFile) {
+      console.warn('[TaskQueueDropdown] Pas de fichier CV associé');
+      return;
+    }
+
+    // Définir le cookie pour le CV sélectionné
+    document.cookie = "cvFile=" + encodeURIComponent(cvFile) + "; path=/; max-age=31536000";
+    console.log('[TaskQueueDropdown] Cookie défini:', cvFile);
+
+    try {
+      localStorage.setItem("admin:cv", cvFile);
+    } catch (_err) {}
+
+    // Rafraîchir Next.js sans recharger toute la page
+    router.refresh();
+
+    // Déclencher les événements pour mettre à jour l'UI
+    if (typeof window !== "undefined") {
+      // Petit délai pour laisser router.refresh() se propager
+      setTimeout(() => {
+        window.dispatchEvent(new Event("cv:list:changed"));
+        window.dispatchEvent(new CustomEvent("cv:selected", { detail: { file: cvFile, source: 'task-queue' } }));
+      }, 50);
+    }
+
+    console.log('[TaskQueueDropdown] CV chargé sans rechargement complet');
+
+    // Fermer le dropdown après le chargement
+    onClose();
+  };
 
   // Calculate position when dropdown opens
   React.useEffect(() => {
@@ -228,6 +306,7 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
                     key={task.id}
                     task={task}
                     onCancel={cancelTask}
+                    onTaskClick={handleTaskClick}
                     compact={true}
                   />
                 ))}
