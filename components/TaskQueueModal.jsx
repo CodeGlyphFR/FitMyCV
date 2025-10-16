@@ -8,7 +8,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 function LoadingSpinner() {
   return (
-    <div className="animate-apple-spin h-4 w-4 border-2 border-gray-300 border-t-blue-600 rounded-full"></div>
+    <div className="animate-apple-spin h-4 w-4 border-2 border-white/30 border-t-blue-300 rounded-full drop-shadow"></div>
   );
 }
 
@@ -23,16 +23,16 @@ function TaskItem({ task, onCancel }) {
 
   const getStatusDisplay = (status) => {
     const colors = {
-      'queued': 'text-gray-600',
-      'running': 'text-blue-600',
-      'completed': 'text-green-600',
-      'failed': 'text-red-600',
-      'cancelled': 'text-orange-600'
+      'queued': 'text-white/70 drop-shadow',
+      'running': 'text-blue-300 drop-shadow',
+      'completed': 'text-green-400 drop-shadow',
+      'failed': 'text-red-400 drop-shadow',
+      'cancelled': 'text-red-300 drop-shadow'
     };
 
     return {
       label: t(`taskQueue.status.${status}`) || t("taskQueue.status.unknown"),
-      color: colors[status] || 'text-gray-400'
+      color: colors[status] || 'text-white/60 drop-shadow'
     };
   };
 
@@ -107,18 +107,18 @@ function TaskItem({ task, onCancel }) {
   const hasSourceInfo = (task.type === 'generation' || task.type === 'template-creation' || task.type === 'import') && sourceInfo;
 
   return (
-    <div className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+    <div className="flex items-center justify-between p-3 border-2 border-white/30 rounded-lg bg-white/10 backdrop-blur-sm">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <div className="text-sm font-medium text-gray-900 truncate">
+          <div className="text-sm font-medium text-white drop-shadow truncate">
             {description}
           </div>
         </div>
-        <div className="flex items-center gap-1 text-xs text-gray-500">
+        <div className="flex items-center gap-1 text-xs text-white/60 drop-shadow">
           <span>{createdAt}</span>
           {hasSourceInfo && (
             <>
-              <span className="text-gray-400">•</span>
+              <span className="text-white/40">•</span>
               <span className="truncate" title={sourceInfo}>
                 {sourceInfo}
               </span>
@@ -135,7 +135,7 @@ function TaskItem({ task, onCancel }) {
           <button
             type="button"
             onClick={() => onCancel(task.id)}
-            className="ml-2 text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded"
+            className="ml-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/20 px-2 py-1 rounded transition-all duration-200 drop-shadow"
             title={t("taskQueue.cancelTask")}
           >
             ✕
@@ -164,19 +164,19 @@ export default function TaskQueueModal({ open, onClose }) {
     <Modal open={open} onClose={onClose} title={t("taskQueue.title")}>
       <div className="space-y-4">
         {sortedTasks.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-white/60 drop-shadow">
             <div className="text-sm">{t("taskQueue.noTasks")}</div>
           </div>
         ) : (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <div className="text-sm font-medium text-gray-700">
+              <div className="text-sm font-medium text-white drop-shadow">
                 {t("taskQueue.tasks")} ({sortedTasks.length}{visibleTasks.length > 8 ? ` ${t("taskQueue.of")} ${visibleTasks.length}` : ''})
               </div>
               {completedTasksCount > 0 && (
                 <button
                   onClick={clearCompletedTasks}
-                  className="text-xs text-blue-600 hover:text-blue-800"
+                  className="text-xs text-emerald-400 hover:text-emerald-300 drop-shadow transition-colors duration-200"
                 >
                   {t("taskQueue.clearCompleted")} ({completedTasksCount})
                 </button>
@@ -190,10 +190,10 @@ export default function TaskQueueModal({ open, onClose }) {
           </div>
         )}
 
-        <div className="flex justify-between items-center pt-4 border-t text-xs text-gray-500">
+        <div className="flex justify-between items-center pt-4 border-t border-white/30 text-xs text-white/70 drop-shadow">
           <div className="flex items-center gap-1">
             <div
-              className={`w-2 h-2 rounded-full ${isApiSyncEnabled ? 'bg-green-500' : 'bg-orange-500'}`}
+              className={`w-2 h-2 rounded-full drop-shadow ${isApiSyncEnabled ? 'bg-green-400' : 'bg-orange-400'}`}
               title={isApiSyncEnabled ? t("taskQueue.cloudSyncActive") : t("taskQueue.localSyncOnly")}
             />
             <span>{isApiSyncEnabled ? t("taskQueue.cloud") : t("taskQueue.localStorage")}</span>
@@ -201,7 +201,7 @@ export default function TaskQueueModal({ open, onClose }) {
           <div>{t("taskQueue.total")}: {tasks.length}</div>
           <button
             onClick={onClose}
-            className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="px-3 py-1 text-sm font-medium text-white bg-white/20 border-2 border-white/40 rounded-lg hover:bg-white/30 backdrop-blur-sm transition-all duration-200 drop-shadow"
           >
             {t("common.close")}
           </button>

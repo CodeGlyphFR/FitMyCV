@@ -7,6 +7,7 @@ import CookieBanner from "@/components/cookies/CookieBanner";
 import FeedbackButton from "@/components/feedback/FeedbackButton";
 import RootProviders from "@/components/RootProviders";
 import LoadingOverlay from "@/components/LoadingOverlay";
+import GlobalBackground from "@/components/GlobalBackground";
 import { auth } from "@/lib/auth/session";
 import { SITE_TITLE } from "@/lib/site";
 
@@ -20,6 +21,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover",
 };
 
 export default async function RootLayout(props){
@@ -51,18 +53,21 @@ export default async function RootLayout(props){
       </head>
       <body className="min-h-screen antialiased flex flex-col">
         <RootProviders session={session}>
-          <LoadingOverlay />
-          {/* TopBar sans wrapper pour éviter l'espace vide */}
-          <ConditionalTopBar />
-          <ConditionalMainWrapper
-            footerPlaceholder={
-              <div className="footer-placeholder h-[56px]">
-                <ConditionalFooter />
-              </div>
-            }
-          >
-            {props.children}
-          </ConditionalMainWrapper>
+          <GlobalBackground />
+          <div className="relative z-10 flex flex-col min-h-screen">
+            <LoadingOverlay />
+            {/* TopBar sans wrapper pour éviter l'espace vide */}
+            <ConditionalTopBar />
+            <ConditionalMainWrapper
+              footerPlaceholder={
+                <div className="footer-placeholder h-[56px]">
+                  <ConditionalFooter />
+                </div>
+              }
+            >
+              {props.children}
+            </ConditionalMainWrapper>
+          </div>
           <CookieBanner />
           <FeedbackButton />
         </RootProviders>

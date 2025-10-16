@@ -438,11 +438,11 @@ export default function Header(props){
   }
 
   return (
-    <header className="page mb-6 flex items-start justify-between gap-4 bg-gradient-to-r from-zinc-100 to-zinc-50 p-4 rounded-2xl border relative">
-      <div>
-        <h1 className="text-2xl font-bold">{header.full_name || ""}</h1>
-        <p className="text-sm opacity-80">{header.current_title || ""}</p>
-        <div className="mt-2 text-sm opacity-90">
+    <header className="page mb-6 flex items-start justify-between gap-4 bg-white/15 backdrop-blur-xl p-4 rounded-2xl shadow-2xl relative overflow-visible">
+      <div className="pr-24">
+        <h1 className="text-2xl font-bold text-white drop-shadow-lg">{header.full_name || ""}</h1>
+        <p className="text-sm text-white/80 drop-shadow">{header.current_title || ""}</p>
+        <div className="mt-2 text-sm text-white/90 drop-shadow">
           <div>{header.contact?.email || ""}</div>
           <div>{header.contact?.phone || ""}</div>
           {header.contact?.location ? (
@@ -460,7 +460,7 @@ export default function Header(props){
                   href={/^https?:\/\//i.test(l.url||"") ? l.url : `https://${l.url||""}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline decoration-dotted"
+                  className="underline decoration-dotted text-white/90 hover:text-white transition-colors duration-200"
                 >
                   {l.label || l.url}
                 </a>
@@ -470,47 +470,54 @@ export default function Header(props){
         </div>
       </div>
 
-      {/* Score et Info en haut à droite */}
-      <div className={`flex items-start gap-4 transition-opacity duration-200 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}>
-        {/* Container pour le bouton Optimiser + Score avec positionnement relatif */}
-        <div className="relative">
-          {/* Bouton Optimiser - uniquement si le CV a un scoreBreakdown */}
+      {/* Boîte des boutons en haut à droite */}
+      <div className={`no-print absolute top-2 right-2 z-30 transition-opacity duration-200 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}>
+        <div className="relative w-20 h-20">
+          {/* Icône info en haut à droite */}
+          <div className="absolute top-0 right-0">
+            <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />
+          </div>
+
+          {/* Bouton Score au milieu à gauche */}
+          <div className="absolute top-1/2 -left-1 -translate-y-1/2">
+            <MatchScore
+              sourceType={sourceInfo.sourceType}
+              sourceValue={sourceInfo.sourceValue}
+              score={matchScore}
+              status={matchScoreStatus === 'inprogress' ? 'loading' : matchScoreStatus}
+              isLoading={isLoadingMatchScore}
+              canRefresh={canRefreshScore}
+              refreshCount={refreshCount}
+              hoursUntilReset={hoursUntilReset}
+              minutesUntilReset={minutesUntilReset}
+              onRefresh={handleRefreshMatchScore}
+              currentCvFile={currentCvFile}
+              hasExtractedJobOffer={hasExtractedJobOffer}
+              isOptimizeButtonReady={isOptimizeButtonReady}
+              optimiseStatus={optimiseStatus}
+            />
+          </div>
+
+          {/* Bouton Optimiser en bas à droite */}
           {hasScoreBreakdown && currentCvFile && (
-            <div className="absolute -bottom-6 -right-11 z-10">
+            <div className="absolute bottom-0 right-2">
               <CVImprovementPanel
                 cvFile={currentCvFile}
                 canRefresh={canRefreshScore}
               />
             </div>
           )}
-          <MatchScore
-            sourceType={sourceInfo.sourceType}
-            sourceValue={sourceInfo.sourceValue}
-            score={matchScore}
-            status={matchScoreStatus === 'inprogress' ? 'loading' : matchScoreStatus}
-            isLoading={isLoadingMatchScore}
-            canRefresh={canRefreshScore}
-            refreshCount={refreshCount}
-            hoursUntilReset={hoursUntilReset}
-            minutesUntilReset={minutesUntilReset}
-            onRefresh={handleRefreshMatchScore}
-            currentCvFile={currentCvFile}
-            hasExtractedJobOffer={hasExtractedJobOffer}
-            isOptimizeButtonReady={isOptimizeButtonReady}
-            optimiseStatus={optimiseStatus}
-          />
         </div>
-        <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />
       </div>
 
       {/* Bouton d'édition du header en mode édition */}
       {editing ? (
         <button
           onClick={()=>setOpen(true)}
-          className="no-print absolute bottom-3 right-3 rounded border px-2 py-1 text-sm hover:shadow"
+          className="no-print absolute bottom-3 right-3 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-xs hover:bg-white/30 hover:shadow-xl transition-all duration-200"
           type="button"
         >
-          🖊️
+          <img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " />
         </button>
       ) : null}
 
@@ -540,10 +547,10 @@ export default function Header(props){
                   onClick={() => executeTranslation(lang.code)}
                   className={`
                     w-8 h-8 rounded-full
-                    bg-white shadow-lg border border-neutral-200
+                    bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl
                     flex items-center justify-center
                     overflow-hidden
-                    hover:shadow-xl
+                    hover:shadow-xl hover:bg-white/30
                     transition-all duration-200
                     cursor-pointer
                     p-0.5
@@ -571,12 +578,11 @@ export default function Header(props){
               onClick={() => setIsTranslateDropdownOpen(!isTranslateDropdownOpen)}
               className={`
                 w-8 h-8 rounded-full
-                bg-white shadow-lg border border-neutral-300
-                inline-flex items-center justify-center
-                hover:shadow-xl
-                transition-all duration-200
+                bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl
+                flex items-center justify-center
+                hover:shadow-xl hover:bg-white/30
+                transition-all duration-300
                 cursor-pointer
-                text-sm leading-none
                 ${isTranslateDropdownOpen ? 'shadow-xl' : ''}
               `}
               title={t("translate.buttonTitle")}
@@ -584,7 +590,7 @@ export default function Header(props){
               aria-expanded={isTranslateDropdownOpen}
               type="button"
             >
-              <span className="block">🌐</span>
+              <img src="/icons/translate.png" alt="Translate" className="h-4 w-4 " />
             </button>
           </div>
         </div>
@@ -593,43 +599,43 @@ export default function Header(props){
       <Modal open={open} onClose={()=>setOpen(false)} title={t("header.modalTitle")}>
         <div className="grid gap-3 md:grid-cols-2">
           <FormRow label={t("header.fullName")}>
-            <input className="rounded border px-2 py-1 text-sm w-full" value={f.full_name} onChange={e=>setF({...f,full_name:e.target.value})} />
+            <input className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 w-full focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.full_name} onChange={e=>setF({...f,full_name:e.target.value})} />
           </FormRow>
           <FormRow label={t("header.currentTitle")}>
-            <input className="rounded border px-2 py-1 text-sm w-full" value={f.current_title} onChange={e=>setF({...f,current_title:e.target.value})} />
+            <input className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 w-full focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.current_title} onChange={e=>setF({...f,current_title:e.target.value})} />
           </FormRow>
           <FormRow label={t("header.email")}>
-            <input className="rounded border px-2 py-1 text-sm w-full" value={f.email} onChange={e=>setF({...f,email:e.target.value})} />
+            <input className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 w-full focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.email} onChange={e=>setF({...f,email:e.target.value})} />
           </FormRow>
           <FormRow label={t("header.phone")}>
-            <input className="rounded border px-2 py-1 text-sm w-full" value={f.phone} onChange={e=>setF({...f,phone:e.target.value})} />
+            <input className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 w-full focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.phone} onChange={e=>setF({...f,phone:e.target.value})} />
           </FormRow>
 
           <div className="md:col-span-2 grid grid-cols-3 gap-3">
             <FormRow label={t("header.city")}>
-              <input className="rounded border px-2 py-1 text-sm w-full" value={f.city} onChange={e=>setF({...f,city:e.target.value})} />
+              <input className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 w-full focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.city} onChange={e=>setF({...f,city:e.target.value})} />
             </FormRow>
             <FormRow label={t("header.region")}>
-              <input className="rounded border px-2 py-1 text-sm w-full" value={f.region} onChange={e=>setF({...f,region:e.target.value})} />
+              <input className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 w-full focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.region} onChange={e=>setF({...f,region:e.target.value})} />
             </FormRow>
             <FormRow label={t("header.countryCode")}>
-              <input className="rounded border px-2 py-1 text-sm w-full" value={f.country_code} onChange={e=>setF({...f,country_code:e.target.value})} />
+              <input className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 w-full focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.country_code} onChange={e=>setF({...f,country_code:e.target.value})} />
             </FormRow>
           </div>
 
           {/* Liens */}
           <div className="md:col-span-2">
-            <div className="text-sm font-medium mb-2">{t("header.links")}</div>
+            <div className="text-xs font-medium mb-2 uppercase tracking-wide text-white drop-shadow">{t("header.links")}</div>
             <div className="space-y-2">
               {linksLocal.length === 0 && (
-                <div className="rounded border px-2 py-1 text-xs opacity-60">
+                <div className="rounded border border-white/40 bg-white/20 px-2 py-1 text-xs text-white/60">
                   {t("header.noLinks")}
                 </div>
               )}
               {linksLocal.map((row, idx) => (
                 <div key={idx} className="grid grid-cols-7 gap-2 items-center">
                   <input
-                    className="col-span-2 rounded border px-2 py-1 text-sm"
+                    className="col-span-2 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-sm text-white placeholder:text-white/50 focus:bg-white/30 focus:border-emerald-400 focus:outline-none transition-all duration-200"
                     placeholder={t("header.labelPlaceholder")}
                     value={row.label}
                     onChange={e=>{
@@ -637,7 +643,7 @@ export default function Header(props){
                     }}
                   />
                   <input
-                    className="col-span-4 rounded border px-2 py-1 text-sm"
+                    className="col-span-4 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-sm text-white placeholder:text-white/50 focus:bg-white/30 focus:border-emerald-400 focus:outline-none transition-all duration-200"
                     placeholder={t("header.urlPlaceholder")}
                     value={row.url}
                     onChange={e=>{
@@ -649,10 +655,10 @@ export default function Header(props){
                     onClick={()=>{
                       const arr=[...linksLocal]; arr.splice(idx,1); setLinksLocal(arr);
                     }}
-                    className="text-xs rounded border px-2 py-1"
+                    className="text-xs rounded border-2 border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-all duration-200"
                     title={t("common.delete")}
                   >
-                    ❌
+                    <img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " />
                   </button>
                 </div>
               ))}
@@ -660,17 +666,17 @@ export default function Header(props){
                 <button
                   type="button"
                   onClick={()=>setLinksLocal([...(linksLocal||[]), {label:"", url:""}])}
-                  className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-2 py-1 text-xs font-medium text-white bg-white/20 border-2 border-white/40 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-all duration-200 inline-flex items-center gap-1"
                 >
-                  ➕ {t("header.addLink")}
+                  <img src="/icons/add.png" alt="" className="h-3 w-3 " /> {t("header.addLink")}
                 </button>
               </div>
             </div>
           </div>
 
           <div className="md:col-span-2 flex justify-end gap-2">
-            <button onClick={()=>setOpen(false)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50" type="button">{t("common.cancel")}</button>
-            <button onClick={save} className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700" type="button">{t("common.save")}</button>
+            <button onClick={()=>setOpen(false)} className="px-3 py-2 text-sm font-medium text-white bg-white/20 border-2 border-white/40 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-all duration-200" type="button">{t("common.cancel")}</button>
+            <button onClick={save} className="px-3 py-2 text-sm font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-all duration-200" type="button">{t("common.save")}</button>
           </div>
         </div>
       </Modal>

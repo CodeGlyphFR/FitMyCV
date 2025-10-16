@@ -102,12 +102,20 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
     }
   };
 
-  // Fonction pour obtenir la couleur du score
+  // Fonction pour obtenir la couleur du score (texte)
   const getScoreColor = (score) => {
     if (score >= 80) return 'text-green-600';
     if (score >= 65) return 'text-yellow-600';
     if (score >= 50) return 'text-orange-600';
     return 'text-red-600';
+  };
+
+  // Fonction pour obtenir la couleur de fond du score
+  const getScoreBgColor = (score) => {
+    if (score >= 80) return 'bg-green-500';
+    if (score >= 65) return 'bg-yellow-500';
+    if (score >= 50) return 'bg-orange-500';
+    return 'bg-red-500';
   };
 
   // Fonction pour lancer l'amélioration automatique
@@ -232,10 +240,11 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
         disabled={shouldDisableButton}
         className={`
           relative w-9 h-9 rounded-full flex items-center justify-center
-          bg-white shadow-lg border border-neutral-200 transition-all duration-300
+          bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl
+          transition-all duration-300
           ${shouldDisableButton
             ? 'cursor-not-allowed'
-            : 'cursor-pointer hover:shadow-xl'
+            : 'cursor-pointer hover:shadow-xl hover:bg-white/30'
           }
         `}
         title={shouldDisableButton
@@ -245,18 +254,18 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
         {/* Icône principale avec blur pendant le chargement */}
         <span
           className={`
-            text-base leading-none transition-all duration-300
+            transition-all duration-300
             ${shouldDisableButton ? 'blur-sm' : 'blur-0'}
           `}
         >
-          🎯
+          <img src="/icons/analyzer.png" alt="Analyzer" className="h-4 w-4" />
         </span>
 
         {/* Icône de chargement en rotation pendant le chargement */}
         {shouldDisableButton && (
           <div className="absolute inset-0 flex items-center justify-center animate-spin-slow">
             <RefreshCw
-              className="w-4 h-4 text-gray-600 opacity-60"
+              className="w-4 h-4 text-white opacity-80 drop-shadow"
               strokeWidth={2.5}
             />
           </div>
@@ -337,21 +346,18 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
           }
         `}</style>
 
-        <div className="relative -mx-4 mt-0">
-          {/* Header avec gradient animé */}
-          <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10" />
-
-          <div className={`relative px-4 pt-4 space-y-4 transition-all duration-300 ${!isAnimationReady && !loading ? 'blur-sm opacity-0' : 'blur-0 opacity-100'}`}>
+        <div className="space-y-4">
+          <div className={`space-y-4 transition-all duration-300 ${!isAnimationReady && !loading ? 'blur-sm opacity-0' : 'blur-0 opacity-100'}`}>
             {loading && (
-              <div className="text-center py-12 text-gray-500 text-sm">
-                <div className="inline-block w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin mb-3" />
-                <div>{labels.loading}</div>
+              <div className="text-center py-12 text-white/70 text-sm">
+                <div className="inline-block w-8 h-8 border-4 border-white/30 border-t-blue-500 rounded-full animate-spin mb-3" />
+                <div className="drop-shadow">{labels.loading}</div>
               </div>
             )}
 
             {error && (
               <div className="text-center py-12">
-                <div className="text-red-500 text-sm bg-red-50 rounded-lg p-4">
+                <div className="text-white drop-shadow text-sm bg-red-500/30 backdrop-blur-sm rounded-lg p-4 border-2 border-red-400/50">
                   {error}
                 </div>
               </div>
@@ -364,9 +370,9 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                   <div className="space-y-4 animate-slide-in-left">
                     {/* Score principal avec cercle animé */}
                     {cvData.matchScore !== null && (
-                      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-100">
+                      <div className="bg-white/15 backdrop-blur-xl rounded-2xl p-6 shadow-lg border-2 border-white/30">
                         <div className="text-center">
-                          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                          <div className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-4 drop-shadow">
                             {labels.matchScore}
                           </div>
                           <div className="flex items-center justify-center gap-2">
@@ -412,12 +418,17 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                                   filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
                                 />
                               </svg>
-                              {/* Score au centre avec animation */}
+                              {/* Score au centre avec animation et fond coloré */}
                               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className={`text-4xl font-bold transition-colors duration-300 ${getScoreColor(animatedScore)}`}>
-                                  {animatedScore}
-                                </span>
-                                <span className="text-sm text-gray-400 font-medium">/100</span>
+                                {/* Cercle de fond coloré selon le score */}
+                                <div className={`absolute w-24 h-24 rounded-full ${getScoreBgColor(animatedScore)} shadow-lg transition-colors duration-300`} />
+                                {/* Contenu du score */}
+                                <div className="relative flex flex-col items-center justify-center">
+                                  <span className="text-4xl font-bold text-white drop-shadow-lg transition-all duration-300">
+                                    {animatedScore}
+                                  </span>
+                                  <span className="text-sm text-white/80 font-medium drop-shadow">/100</span>
+                                </div>
                               </div>
                               {/* Effet shimmer sur score élevé */}
                               {cvData.matchScore >= 90 && (
@@ -431,8 +442,8 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
 
                     {/* Détail du score avec barres de progression animées */}
                     {Object.keys(scoreBreakdown).length > 0 && (
-                      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-100">
-                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                      <div className="bg-white/15 backdrop-blur-xl rounded-2xl p-6 shadow-lg border-2 border-white/30">
+                        <h3 className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-4 drop-shadow">
                           {labels.scoreBreakdown}
                         </h3>
                         <div className="space-y-3">
@@ -441,13 +452,13 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                             <div className="flex items-center justify-between mb-1.5">
                               <div className="flex items-center gap-2">
                                 <span className="text-lg">💻</span>
-                                <span className="text-xs font-medium text-gray-700">{labels.technicalSkills}</span>
+                                <span className="text-xs font-medium text-white drop-shadow">{labels.technicalSkills}</span>
                               </div>
-                              <span className="text-xs font-bold text-gray-900">
+                              <span className="text-xs font-bold text-white drop-shadow">
                                 {normalizeScore(scoreBreakdown.technical_skills, 35)}/35
                               </span>
                             </div>
-                            <div className="w-full bg-gradient-to-r from-gray-100 to-gray-200 rounded-full h-2 overflow-hidden">
+                            <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
                               <div
                                 className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full shadow-sm transition-all duration-1000 ease-out"
                                 style={{
@@ -463,13 +474,13 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                             <div className="flex items-center justify-between mb-1.5">
                               <div className="flex items-center gap-2">
                                 <span className="text-lg">💼</span>
-                                <span className="text-xs font-medium text-gray-700">{labels.experience}</span>
+                                <span className="text-xs font-medium text-white drop-shadow">{labels.experience}</span>
                               </div>
-                              <span className="text-xs font-bold text-gray-900">
+                              <span className="text-xs font-bold text-white drop-shadow">
                                 {normalizeScore(scoreBreakdown.experience, 30)}/30
                               </span>
                             </div>
-                            <div className="w-full bg-gradient-to-r from-gray-100 to-gray-200 rounded-full h-2 overflow-hidden">
+                            <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
                               <div
                                 className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full shadow-sm transition-all duration-1000 ease-out"
                                 style={{
@@ -485,13 +496,13 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                             <div className="flex items-center justify-between mb-1.5">
                               <div className="flex items-center gap-2">
                                 <span className="text-lg">🎓</span>
-                                <span className="text-xs font-medium text-gray-700">{labels.education}</span>
+                                <span className="text-xs font-medium text-white drop-shadow">{labels.education}</span>
                               </div>
-                              <span className="text-xs font-bold text-gray-900">
+                              <span className="text-xs font-bold text-white drop-shadow">
                                 {normalizeScore(scoreBreakdown.education, 20)}/20
                               </span>
                             </div>
-                            <div className="w-full bg-gradient-to-r from-gray-100 to-gray-200 rounded-full h-2 overflow-hidden">
+                            <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
                               <div
                                 className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full shadow-sm transition-all duration-1000 ease-out"
                                 style={{
@@ -507,13 +518,13 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                             <div className="flex items-center justify-between mb-1.5">
                               <div className="flex items-center gap-2">
                                 <span className="text-lg">💬</span>
-                                <span className="text-xs font-medium text-gray-700">{labels.softSkills}</span>
+                                <span className="text-xs font-medium text-white drop-shadow">{labels.softSkills}</span>
                               </div>
-                              <span className="text-xs font-bold text-gray-900">
+                              <span className="text-xs font-bold text-white drop-shadow">
                                 {normalizeScore(scoreBreakdown.soft_skills_languages || scoreBreakdown.soft_skills, 15)}/15
                               </span>
                             </div>
-                            <div className="w-full bg-gradient-to-r from-gray-100 to-gray-200 rounded-full h-2 overflow-hidden">
+                            <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
                               <div
                                 className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full shadow-sm transition-all duration-1000 ease-out"
                                 style={{
@@ -528,22 +539,16 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                     )}
                   </div>
 
-                  {/* COLONNE DROITE : Suggestions (full height) */}
-                  <div className="animate-slide-in-right flex flex-col">
-                    {/* Suggestions d'amélioration étendues */}
+                  {/* COLONNE DROITE : Suggestions */}
+                  <div className="animate-slide-in-right">
+                    {/* Suggestions d'amélioration */}
                     {suggestions.length > 0 && (
-                      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-100 flex flex-col h-full">
-                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+                      <div className="bg-white/15 backdrop-blur-xl rounded-2xl p-6 shadow-lg border-2 border-white/30">
+                        <h3 className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-4 flex items-center gap-2 drop-shadow">
                           <span>💡</span>
                           {labels.suggestions}
                         </h3>
-                        <div
-                          className="space-y-2 overflow-y-auto pr-2 flex-1"
-                          style={{
-                            scrollbarWidth: 'thin',
-                            scrollbarColor: '#d1d5db #f3f4f6'
-                          }}
-                        >
+                        <div className="space-y-2">
                           {suggestions.map((suggestion, index) => (
                             <div
                               key={index}
@@ -551,22 +556,22 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                               className={`
                                 p-3 rounded-xl border-l-4 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5
                                 ${suggestion.priority?.toLowerCase() === 'high'
-                                  ? 'bg-red-50/80 border-red-500 hover:bg-red-50'
+                                  ? 'bg-red-500/20 border-red-500 hover:bg-red-500/30'
                                   : suggestion.priority?.toLowerCase() === 'medium'
-                                  ? 'bg-yellow-50/80 border-yellow-500 hover:bg-yellow-50'
-                                  : 'bg-green-50/80 border-green-500 hover:bg-green-50'
+                                  ? 'bg-yellow-500/20 border-yellow-500 hover:bg-yellow-500/30'
+                                  : 'bg-green-500/20 border-green-500 hover:bg-green-500/30'
                                 }
-                                animate-scale-in
+                                animate-scale-in backdrop-blur-sm
                               `}
                             >
                               <div className="flex items-start justify-between mb-1.5 gap-2">
                                 <span className={`
                                   inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full whitespace-nowrap
                                   ${suggestion.priority?.toLowerCase() === 'high'
-                                    ? 'bg-red-200 text-red-800 animate-pulse'
+                                    ? 'bg-red-500/40 text-white drop-shadow animate-pulse'
                                     : suggestion.priority?.toLowerCase() === 'medium'
-                                    ? 'bg-yellow-200 text-yellow-800'
-                                    : 'bg-green-200 text-green-800'
+                                    ? 'bg-yellow-500/40 text-white drop-shadow'
+                                    : 'bg-green-500/40 text-white drop-shadow'
                                   }
                                 `}>
                                   {suggestion.priority?.toLowerCase() === 'high' ? '🔥' :
@@ -574,17 +579,17 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                                   {labels[suggestion.priority?.toLowerCase()] || suggestion.priority}
                                 </span>
                                 {suggestion.impact && (
-                                  <span className="text-[10px] font-semibold text-gray-600 whitespace-nowrap bg-white/50 px-2 py-0.5 rounded-full">
+                                  <span className="text-[10px] font-semibold text-white drop-shadow whitespace-nowrap bg-white/20 px-2 py-0.5 rounded-full">
                                     {suggestion.impact}
                                   </span>
                                 )}
                               </div>
                               {suggestion.title && (
-                                <h4 className="text-sm font-semibold text-gray-800 mb-1">
+                                <h4 className="text-sm font-semibold text-white drop-shadow mb-1">
                                   {suggestion.title}
                                 </h4>
                               )}
-                              <p className="text-xs leading-relaxed text-gray-700 break-words">
+                              <p className="text-xs leading-relaxed text-white/90 drop-shadow break-words">
                                 {suggestion.suggestion}
                               </p>
                             </div>
@@ -600,8 +605,8 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
                   {/* Compétences manquantes (bas gauche) */}
                   {missingSkills.length > 0 && (
-                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-100 animate-scale-in">
-                      <h3 className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <div className="bg-white/15 backdrop-blur-xl rounded-2xl p-6 shadow-lg border-2 border-white/30 animate-scale-in">
+                      <h3 className="text-xs font-semibold text-red-400 uppercase tracking-wide mb-3 flex items-center gap-2 drop-shadow">
                         <span>❌</span>
                         {labels.missingSkills}
                       </h3>
@@ -611,10 +616,10 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                             key={index}
                             style={{ animationDelay: `${index * 0.05}s` }}
                             className="
-                              px-3 py-1 bg-gradient-to-r from-red-50 to-red-100 text-red-700
-                              rounded-full text-xs font-medium border border-red-200
-                              hover:shadow-md hover:scale-105 transition-all duration-200
-                              animate-scale-in
+                              px-3 py-1 bg-red-500/30 text-white drop-shadow
+                              rounded-full text-xs font-medium border-2 border-red-400/50
+                              hover:shadow-md hover:scale-105 hover:bg-red-500/40 transition-all duration-200
+                              animate-scale-in backdrop-blur-sm
                             "
                           >
                             {skill}
@@ -626,8 +631,8 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
 
                   {/* Compétences correspondantes (bas droite) */}
                   {matchingSkills.length > 0 && (
-                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-100 animate-scale-in">
-                      <h3 className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <div className="bg-white/15 backdrop-blur-xl rounded-2xl p-6 shadow-lg border-2 border-white/30 animate-scale-in">
+                      <h3 className="text-xs font-semibold text-green-400 uppercase tracking-wide mb-3 flex items-center gap-2 drop-shadow">
                         <span>✅</span>
                         {labels.matchingSkills}
                       </h3>
@@ -637,13 +642,13 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                             key={index}
                             style={{ animationDelay: `${index * 0.05}s` }}
                             className="
-                              px-3 py-1 bg-gradient-to-r from-green-50 to-green-100 text-green-700
-                              rounded-full text-xs font-medium border border-green-200
-                              hover:shadow-md hover:scale-105 transition-all duration-200
-                              animate-scale-in inline-flex items-center gap-1
+                              px-3 py-1 bg-green-500/30 text-white drop-shadow
+                              rounded-full text-xs font-medium border-2 border-green-400/50
+                              hover:shadow-md hover:scale-105 hover:bg-green-500/40 transition-all duration-200
+                              animate-scale-in inline-flex items-center gap-1 backdrop-blur-sm
                             "
                           >
-                            <span className="text-green-500">✓</span>
+                            <span className="text-green-300">✓</span>
                             {skill}
                           </span>
                         ))}
@@ -658,16 +663,16 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
             {/* Message si aucune donnée */}
             {!loading && !error && cvData && !cvData.matchScore && suggestions.length === 0 && (
               <div className="text-center py-12">
-                <div className="text-gray-400 text-5xl mb-4">📊</div>
-                <div className="text-gray-500 text-sm font-medium">{labels.noData}</div>
+                <div className="text-white/40 text-5xl mb-4">📊</div>
+                <div className="text-white/70 text-sm font-medium drop-shadow">{labels.noData}</div>
               </div>
             )}
           </div>
         </div>
 
         {/* Boutons d'action avec design amélioré */}
-        <div className="sticky bottom-0 bg-gradient-to-t from-white via-white to-transparent pt-6 pb-2 px-4">
-          <div className="flex justify-center items-center gap-3">
+        <div className="mt-6 pt-4 border-t border-white/20">
+          <div className="flex justify-center items-center gap-3 flex-wrap">
             {/* Bouton amélioration automatique */}
             {suggestions.length > 0 && (
               <>
@@ -675,7 +680,7 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                   // Amélioration ou calcul en cours
                   <button
                     disabled
-                    className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-gray-300 to-gray-400 text-white cursor-not-allowed animate-pulse inline-flex items-center gap-2"
+                    className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-white/20 backdrop-blur-sm text-white/60 cursor-not-allowed animate-pulse inline-flex items-center gap-2 border-2 border-white/30"
                   >
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     {cvData?.optimiseStatus === 'inprogress'
@@ -689,14 +694,14 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                     className="
                       group px-4 py-2.5 rounded-xl text-sm font-semibold
                       bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600
-                      text-white shadow-lg hover:shadow-xl
+                      text-white shadow-lg hover:shadow-xl border-2 border-blue-400/50
                       transform hover:scale-105 active:scale-95
                       transition-all duration-200
                       relative overflow-hidden
                     "
                   >
                     <span className="absolute inset-0 shimmer-bg opacity-30" />
-                    <span className="relative">{labels.autoImprove}</span>
+                    <span className="relative drop-shadow">{labels.autoImprove}</span>
                   </button>
                 )}
               </>
@@ -707,8 +712,9 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
               onClick={() => setIsOpen(false)}
               className="
                 px-4 py-2.5 rounded-xl text-sm font-semibold
-                bg-gray-100 text-gray-700
-                hover:bg-gray-200 hover:text-gray-900
+                bg-white/20 backdrop-blur-sm text-white drop-shadow
+                border-2 border-white/40
+                hover:bg-white/30 hover:border-white/60
                 transform hover:scale-105 active:scale-95
                 transition-all duration-200
               "

@@ -427,30 +427,47 @@ export default function EmptyState() {
         title={t("pdfImport.title")}
       >
         <form onSubmit={submitPdfImport} className="space-y-4">
-          <div className="text-sm text-neutral-700">
+          <div className="text-sm text-white/90 drop-shadow">
             {t("pdfImport.description")}
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">{t("pdfImport.pdfFile")}</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("pdfImport.pdfFile")}</div>
             <input
               ref={pdfFileInputRef}
-              className="w-full rounded border px-2 py-1 text-sm"
+              className="hidden"
               type="file"
               accept=".pdf"
               onChange={onPdfFileChanged}
             />
+            <button
+              type="button"
+              onClick={() => pdfFileInputRef.current?.click()}
+              className="w-full rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-4 py-3 text-sm text-white hover:bg-white/30 hover:border-white/60 transition-all duration-200 flex items-center justify-center gap-2 group"
+            >
+              <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <span className="font-medium">
+                {pdfFile ? pdfFile.name : t("pdfImport.selectFile")}
+              </span>
+            </button>
             {pdfFile ? (
-              <div className="rounded border bg-neutral-50 px-3 py-2 text-xs">
-                <div className="font-medium">{t("pdfImport.fileSelected")}</div>
-                <div className="truncate">{pdfFile.name}</div>
+              <div className="rounded-lg border border-emerald-400/50 bg-emerald-500/20 px-3 py-2 text-xs text-white flex items-center gap-2">
+                <svg className="w-4 h-4 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                <div className="flex-1">
+                  <div className="font-medium">{t("pdfImport.fileSelected")}</div>
+                  <div className="truncate opacity-80">{pdfFile.name}</div>
+                </div>
               </div>
             ) : null}
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">{t("pdfImport.analysisQuality")}</div>
-            <div className="grid grid-cols-3 gap-1 rounded-lg border bg-neutral-50 p-1 text-xs sm:text-sm">
+            <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("pdfImport.analysisQuality")}</div>
+            <div className="grid grid-cols-3 gap-1 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm p-1 text-xs sm:text-sm">
               {ANALYSIS_OPTIONS(t).map((option) => {
                 const active = option.id === pdfAnalysisLevel;
                 return (
@@ -458,7 +475,7 @@ export default function EmptyState() {
                     key={option.id}
                     type="button"
                     onClick={() => setPdfAnalysisLevel(option.id)}
-                    className={`rounded-md px-2 py-1 font-medium transition ${active ? "bg-white text-blue-600 shadow" : "text-neutral-600 hover:bg-white"}`}
+                    className={`rounded-md px-2 py-1 font-medium transition ${active ? "bg-emerald-400 text-white shadow" : "text-white/70 hover:bg-white/25"}`}
                     aria-pressed={active}
                   >
                     {option.label}
@@ -466,7 +483,7 @@ export default function EmptyState() {
                 );
               })}
             </div>
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-white/60 drop-shadow">
               {ANALYSIS_OPTIONS(t).find(o => o.id === pdfAnalysisLevel)?.hint}
             </p>
           </div>
@@ -475,13 +492,13 @@ export default function EmptyState() {
             <button
               type="button"
               onClick={closePdfImport}
-              className="rounded border px-3 py-1 text-sm"
+              className="rounded border-2 border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white hover:bg-white/30 transition-all duration-200"
             >
               {t("pdfImport.cancel")}
             </button>
             <button
               type="submit"
-              className="rounded border px-3 py-1 text-sm"
+              className="rounded border-2 border-emerald-500 bg-emerald-500 px-3 py-2 text-sm text-white hover:bg-emerald-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!pdfFile}
             >
               {t("pdfImport.import")}
@@ -500,11 +517,11 @@ export default function EmptyState() {
       >
         <div className="space-y-4">
           <div>
-            <label className="text-sm block mb-1">
-              {t("newCvModal.fullName")}<span className="text-red-500" aria-hidden="true"> {t("newCvModal.required")}</span>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow block mb-2">
+              {t("newCvModal.fullName")}<span className="text-red-400" aria-hidden="true"> {t("newCvModal.required")}</span>
             </label>
             <input
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-white placeholder:text-white/50 focus:bg-white/30 focus:border-emerald-400 focus:outline-none transition-all duration-200"
               value={newCvFullName}
               onChange={(event) => setNewCvFullName(event.target.value)}
               placeholder="Ex: Jean Dupont"
@@ -512,11 +529,11 @@ export default function EmptyState() {
             />
           </div>
           <div>
-            <label className="text-sm block mb-1">
-              {t("newCvModal.currentTitle")}<span className="text-red-500" aria-hidden="true"> {t("newCvModal.required")}</span>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow block mb-2">
+              {t("newCvModal.currentTitle")}<span className="text-red-400" aria-hidden="true"> {t("newCvModal.required")}</span>
             </label>
             <input
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-white placeholder:text-white/50 focus:bg-white/30 focus:border-emerald-400 focus:outline-none transition-all duration-200"
               value={newCvCurrentTitle}
               onChange={(event) => setNewCvCurrentTitle(event.target.value)}
               placeholder="Ex: Développeur Full-Stack"
@@ -524,22 +541,22 @@ export default function EmptyState() {
             />
           </div>
           <div>
-            <label className="text-sm block mb-1">{t("newCvModal.email")}</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow block mb-2">{t("newCvModal.email")}</label>
             <input
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-white placeholder:text-white/50 focus:bg-white/30 focus:border-emerald-400 focus:outline-none transition-all duration-200"
               value={newCvEmail}
               onChange={(event) => setNewCvEmail(event.target.value)}
               placeholder="email@exemple.com"
             />
           </div>
           {newCvError ? (
-            <div className="text-sm text-red-600">{String(newCvError)}</div>
+            <div className="text-sm text-red-400 drop-shadow">{String(newCvError)}</div>
           ) : null}
           <div className="flex gap-2">
             <button
               onClick={createNewCv}
               disabled={newCvBusy || !newCvFullName.trim() || !newCvCurrentTitle.trim()}
-              className="rounded border px-3 py-2 hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded border-2 border-emerald-500 bg-emerald-500 px-3 py-2 text-white hover:bg-emerald-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {newCvBusy ? t("newCvModal.creating") : t("newCvModal.create")}
             </button>
@@ -548,12 +565,12 @@ export default function EmptyState() {
                 setOpenNewCv(false);
                 resetNewCvForm();
               }}
-              className="rounded border px-3 py-2"
+              className="rounded border-2 border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-white hover:bg-white/30 transition-all duration-200"
             >
               {t("newCvModal.cancel")}
             </button>
           </div>
-          <p className="text-xs opacity-70">
+          <p className="text-xs text-white/70 drop-shadow">
             {t("newCvModal.hint")}
           </p>
         </div>

@@ -49,27 +49,63 @@ export default function Modal({ open, onClose, title, children, size = "default"
 
   if(!open || !mounted) return null;
   return createPortal(
-    <div className="fixed inset-0 z-[10002] overflow-y-auto" style={{ touchAction: 'none' }}>
+    <div
+      className="fixed z-[10002]"
+      style={{
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        overflow: 'hidden',
+        touchAction: 'none'
+      }}
+    >
+      {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/30"
+        className="absolute inset-0 backdrop-blur-md bg-black/40"
         onClick={onClose}
         onTouchEnd={(e) => {
-          // Prevent both touchend and click from firing
           e.preventDefault();
           onClose();
         }}
       ></div>
-      <div className="relative min-h-full flex items-start sm:items-center justify-center p-4">
+
+      {/* Modal container - évite les safe-area */}
+      <div
+        className="absolute flex items-center justify-center"
+        style={{
+          top: 'env(safe-area-inset-top)',
+          left: 'env(safe-area-inset-left)',
+          right: 'env(safe-area-inset-right)',
+          bottom: 'env(safe-area-inset-bottom)',
+          padding: '1rem',
+          pointerEvents: 'none'
+        }}
+      >
         <div
-          className={`relative z-10 w-full ${maxWidthClass} rounded-2xl border bg-white p-4 shadow-lg`}
+          className={`relative z-10 w-full ${maxWidthClass} rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl`}
           onClick={(e) => e.stopPropagation()}
           onTouchEnd={(e) => e.stopPropagation()}
-          style={{ touchAction: 'auto' }}
+          style={{
+            pointerEvents: 'auto',
+            maxHeight: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            touchAction: 'auto'
+          }}
         >
-          <div className="flex items-center justify-between mb-2">
-            <div className="font-semibold">{title || t("common.confirmation")}</div>
+          <div className="flex items-center justify-between p-4 pb-2 flex-shrink-0">
+            <div className="font-semibold text-emerald-300 drop-shadow-lg">{title || t("common.confirmation")}</div>
           </div>
-          <div>{children}</div>
+          <div
+            className="text-white/90 overflow-y-auto overflow-x-hidden flex-1 px-4 pb-4"
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehavior: 'contain'
+            }}
+          >
+            {children}
+          </div>
         </div>
       </div>
     </div>,

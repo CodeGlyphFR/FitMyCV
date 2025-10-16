@@ -1,41 +1,33 @@
 "use client";
 import Link from 'next/link';
-import { signOut } from 'next-auth/react';
 import packageInfo from '../package.json';
-import { useLanguage } from '@/lib/i18n/LanguageContext';
 
-export default function Footer({ showLogout = false }) {
-  const { t } = useLanguage();
-
+export default function Footer() {
   return (
-    <footer className="w-full text-center text-gray-500 text-sm pt-4 pb-8 min-h-[56px] flex items-center justify-center">
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <span>Version {packageInfo.version}</span>
-        <span className="hidden sm:inline">•</span>
-        <Link
-          href="/cookies"
-          className="hover:text-gray-700 dark:hover:text-gray-300 underline transition-colors"
-        >
-          {t("footer.cookieManagement")}
-        </Link>
-        <span className="hidden sm:inline">•</span>
-        <Link
-          href="/privacy"
-          className="hover:text-gray-700 dark:hover:text-gray-300 underline transition-colors"
-        >
-          Confidentialité
-        </Link>
-        {showLogout && (
-          <>
-            <span className="hidden sm:inline">•</span>
-            <button
-              onClick={() => signOut({ callbackUrl: '/auth' })}
-              className="hover:text-gray-700 dark:hover:text-gray-300 underline transition-colors"
-            >
-              {t("topbar.logout")}
-            </button>
-          </>
-        )}
+    <footer className="w-full text-center text-xs pt-4 pb-20 min-h-[56px] flex items-center justify-center">
+      <div className="text-white/70 space-y-2">
+        <div>© 2025 FitMyCv.ai (v{packageInfo.version})</div>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-0 sm:gap-1 leading-none -space-y-3 sm:space-y-0">
+          <div className="flex items-baseline justify-center gap-1 leading-none">
+            <Link href="/about" className="hover:text-white transition-colors">
+              À propos
+            </Link>
+            <span className="text-white/40">•</span>
+            <Link href="/cookies" className="hover:text-white transition-colors">
+              Cookies
+            </Link>
+            <span className="text-white/40 hidden sm:inline">•</span>
+          </div>
+          <div className="flex items-baseline justify-center gap-1 leading-none">
+            <Link href="/terms" className="hover:text-white transition-colors">
+              Conditions générales
+            </Link>
+            <span className="text-white/40">•</span>
+            <Link href="/privacy" className="hover:text-white transition-colors">
+              Politique de confidentialité
+            </Link>
+          </div>
+        </div>
       </div>
     </footer>
   );

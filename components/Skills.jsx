@@ -126,11 +126,11 @@ export default function Skills(props){
             <>
               {/* Compétences techniques */}
               {!hideHardBecauseOthersFull && showHard && (
-                <div className="w-full rounded-2xl border p-3">
+                <div className="w-full rounded-2xl border border-white/15 p-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold mb-2">{t("cvSections.hardSkills")}</h3>
                     {editing && (
-                      <button onClick={() => setOpenHard(true)} className="text-[11px] px-2 py-0.5">🖊️</button>
+                      <button onClick={() => setOpenHard(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
                     )}
                   </div>
 
@@ -158,11 +158,11 @@ export default function Skills(props){
               <div className={twoColsToolsMethods ? "grid md:grid-cols-2 gap-4" : "grid grid-cols-1 gap-4"}>
                 {/* Outils */}
                 {(hasTools || editing) && (
-                  <div className="w-full rounded-2xl border p-3">
+                  <div className="w-full rounded-2xl border border-white/15 p-3">
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold mb-2">{t("cvSections.tools")}</h3>
                       {editing && (
-                        <button onClick={() => setOpenTools(true)} className="text-[11px] px-2 py-0.5">🖊️</button>
+                        <button onClick={() => setOpenTools(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
                       )}
                     </div>
 
@@ -188,11 +188,11 @@ export default function Skills(props){
 
                 {/* Méthodologies */}
                 {(hasMethods || editing) && (
-                  <div className="w-full rounded-2xl border p-3">
+                  <div className="w-full rounded-2xl border border-white/15 p-3">
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold mb-2">{t("cvSections.methodologies")}</h3>
                       {editing && (
-                        <button onClick={() => setOpenMeth(true)} className="text-[11px] px-2 py-0.5">🖊️</button>
+                        <button onClick={() => setOpenMeth(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
                       )}
                     </div>
 
@@ -201,7 +201,7 @@ export default function Skills(props){
                         {methods.map((m, i) => {
                           const lab = typeof m === "string" ? m : (m?.name || m?.label || m?.title || m?.value || "");
                           return (
-                            <span key={i} className="inline-block rounded border px-1.5 py-0.5 text-[11px] opacity-90">
+                            <span key={i} className="inline-block rounded border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
                               {lab}
                             </span>
                           );
@@ -221,22 +221,22 @@ export default function Skills(props){
                     {soft.map((m, i) => {
                       const lab = typeof m === "string" ? m : (m?.name || m?.label || m?.title || m?.value || "");
                       return (
-                        <span key={i} className="inline-block rounded border px-1.5 py-0.5 text-[11px] opacity-90">
+                        <span key={i} className="inline-block rounded border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
                           {lab}
                         </span>
                       );
                     })}
                     {editing && (
-                      <button onClick={() => setOpenSoft(true)} className="text-[11px] px-2 py-0.5">🖊️</button>
+                      <button onClick={() => setOpenSoft(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
                     )}
                   </div>
                 </div>
               ) : (
                 editing && (
-                  <div className="rounded-2xl border p-3">
+                  <div className="rounded-2xl border border-white/15 p-3">
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold mb-2">{t("cvSections.softSkills")}</h3>
-                      <button onClick={() => setOpenSoft(true)} className="text-[11px] px-2 py-0.5">🖊️</button>
+                      <button onClick={() => setOpenSoft(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
                     </div>
                     <div className="text-sm opacity-60">{t("cvSections.noSoftSkills")}</div>
                   </div>
@@ -251,10 +251,10 @@ export default function Skills(props){
       <Modal open={openHard} onClose={()=>setOpenHard(false)} title={t("cvSections.editSkills")}>
         <div className="space-y-2">
           {hardLocal.map((row,idx)=>(
-            <div key={idx} className="grid grid-cols-7 gap-2 items-center">
-              <input className="col-span-3 rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...hardLocal]; arr[idx]={...arr[idx], name:e.target.value}; setHardLocal(arr); }} />
+            <div key={idx} className="flex gap-2 items-center">
+              <input className="flex-1 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...hardLocal]; arr[idx]={...arr[idx], name:e.target.value}; setHardLocal(arr); }} />
               <select
-                className="col-span-3 rounded border px-2 py-1 text-sm"
+                className="flex-1 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/50 focus:outline-none appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
                 value={row.proficiency ?? ""}
                 onChange={e => { const arr=[...hardLocal]; arr[idx]={ ...arr[idx], proficiency:e.target.value }; setHardLocal(arr); }}
               >
@@ -263,13 +263,13 @@ export default function Skills(props){
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-              <button onClick={()=>{ const arr=[...hardLocal]; arr.splice(idx,1); setHardLocal(arr); }} className="text-xs rounded border px-2 py-1">❌</button>
+              <button onClick={()=>{ const arr=[...hardLocal]; arr.splice(idx,1); setHardLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm p-1.5 text-white hover:bg-red-500/40 transition-all duration-200 shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
             </div>
           ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setHardLocal([...(hardLocal||[]),{name:"",proficiency:""}])} className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.add")}</button></div>
+          <div className="flex justify-end gap-2"><button onClick={()=>setHardLocal([...(hardLocal||[]),{name:"",proficiency:""}])} className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs font-medium text-white hover:bg-white/30 transition-all duration-200">{t("common.add")}</button></div>
           <div className="flex justify-end gap-2">
-            <button onClick={()=>setOpenHard(false)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
-            <button onClick={saveHard} className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">{t("common.save")}</button>
+            <button onClick={()=>setOpenHard(false)} className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs font-medium text-white hover:bg-white/30 transition-all duration-200">{t("common.cancel")}</button>
+            <button onClick={saveHard} className="rounded-lg border border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-2 py-1 text-xs font-medium text-white hover:bg-emerald-500/40 transition-all duration-200">{t("common.save")}</button>
           </div>
         </div>
       </Modal>
@@ -277,10 +277,10 @@ export default function Skills(props){
       <Modal open={openTools} onClose={()=>setOpenTools(false)} title={t("cvSections.editTools")}>
         <div className="space-y-2">
           {toolsLocal.map((row,idx)=>(
-            <div key={idx} className="grid grid-cols-7 gap-2 items-center">
-              <input className="col-span-3 rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...toolsLocal]; arr[idx]={...arr[idx], name:e.target.value}; setToolsLocal(arr); }} />
+            <div key={idx} className="flex gap-2 items-center">
+              <input className="flex-1 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...toolsLocal]; arr[idx]={...arr[idx], name:e.target.value}; setToolsLocal(arr); }} />
               <select
-                className="col-span-3 rounded border px-2 py-1 text-sm"
+                className="flex-1 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/50 focus:outline-none appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
                 value={row.proficiency ?? ""}
                 onChange={e => { const arr=[...toolsLocal]; arr[idx]={ ...arr[idx], proficiency:e.target.value }; setToolsLocal(arr); }}
               >
@@ -289,13 +289,13 @@ export default function Skills(props){
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-              <button onClick={()=>{ const arr=[...toolsLocal]; arr.splice(idx,1); setToolsLocal(arr); }} className="text-xs rounded border px-2 py-1">❌</button>
+              <button onClick={()=>{ const arr=[...toolsLocal]; arr.splice(idx,1); setToolsLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm p-1.5 text-white hover:bg-red-500/40 transition-all duration-200 shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
             </div>
           ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setToolsLocal([...(toolsLocal||[]),{name:"",proficiency:""}])} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.add")}</button></div>
+          <div className="flex justify-end gap-2"><button onClick={()=>setToolsLocal([...(toolsLocal||[]),{name:"",proficiency:""}])} className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs font-medium text-white hover:bg-white/30 transition-all duration-200">{t("common.add")}</button></div>
           <div className="flex justify-end gap-2">
-            <button onClick={()=>setOpenTools(false)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
-            <button onClick={saveTools} className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">{t("common.save")}</button>
+            <button onClick={()=>setOpenTools(false)} className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs font-medium text-white hover:bg-white/30 transition-all duration-200">{t("common.cancel")}</button>
+            <button onClick={saveTools} className="rounded-lg border border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-2 py-1 text-xs font-medium text-white hover:bg-emerald-500/40 transition-all duration-200">{t("common.save")}</button>
           </div>
         </div>
       </Modal>
@@ -303,15 +303,15 @@ export default function Skills(props){
       <Modal open={openMeth} onClose={()=>setOpenMeth(false)} title={t("cvSections.editMethodologies")}>
         <div className="space-y-2">
           {methLocal.map((row,idx)=>(
-            <div key={idx} className="grid grid-cols-6 gap-2 items-center">
-              <input className="col-span-5 rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...methLocal]; arr[idx]=e.target.value; setMethLocal(arr); }} />
-              <button onClick={()=>{ const arr=[...methLocal]; arr.splice(idx,1); setMethLocal(arr); }} className="text-xs rounded border px-2 py-1">❌</button>
+            <div key={idx} className="flex gap-2 items-center">
+              <input className="flex-1 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...methLocal]; arr[idx]=e.target.value; setMethLocal(arr); }} />
+              <button onClick={()=>{ const arr=[...methLocal]; arr.splice(idx,1); setMethLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm p-1.5 text-white hover:bg-red-500/40 transition-all duration-200 shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
             </div>
           ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setMethLocal([...(methLocal||[]), ""])} className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.add")}</button></div>
+          <div className="flex justify-end gap-2"><button onClick={()=>setMethLocal([...(methLocal||[]), ""])} className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs font-medium text-white hover:bg-white/30 transition-all duration-200">{t("common.add")}</button></div>
           <div className="flex justify-end gap-2">
-            <button onClick={()=>setOpenMeth(false)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
-            <button onClick={saveMeth} className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">{t("common.save")}</button>
+            <button onClick={()=>setOpenMeth(false)} className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs font-medium text-white hover:bg-white/30 transition-all duration-200">{t("common.cancel")}</button>
+            <button onClick={saveMeth} className="rounded-lg border border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-2 py-1 text-xs font-medium text-white hover:bg-emerald-500/40 transition-all duration-200">{t("common.save")}</button>
           </div>
         </div>
       </Modal>
@@ -319,15 +319,15 @@ export default function Skills(props){
       <Modal open={openSoft} onClose={()=>setOpenSoft(false)} title={t("cvSections.editSoftSkills")}>
         <div className="space-y-2">
           {softLocal.map((row,idx)=>(
-            <div key={idx} className="grid grid-cols-6 gap-2 items-center">
-              <input className="col-span-5 rounded border px-2 py-1 text-sm" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...softLocal]; arr[idx]=e.target.value; setSoftLocal(arr); }} />
-              <button onClick={()=>{ const arr=[...softLocal]; arr.splice(idx,1); setSoftLocal(arr); }} className="text-xs rounded border px-2 py-1">❌</button>
+            <div key={idx} className="flex gap-2 items-center">
+              <input className="flex-1 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...softLocal]; arr[idx]=e.target.value; setSoftLocal(arr); }} />
+              <button onClick={()=>{ const arr=[...softLocal]; arr.splice(idx,1); setSoftLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm p-1.5 text-white hover:bg-red-500/40 transition-all duration-200 shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
             </div>
           ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setSoftLocal([...(softLocal||[]), ""])} className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.add")}</button></div>
+          <div className="flex justify-end gap-2"><button onClick={()=>setSoftLocal([...(softLocal||[]), ""])} className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs font-medium text-white hover:bg-white/30 transition-all duration-200">{t("common.add")}</button></div>
           <div className="flex justify-end gap-2">
-            <button onClick={()=>setOpenSoft(false)} className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
-            <button onClick={saveSoft} className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">{t("common.save")}</button>
+            <button onClick={()=>setOpenSoft(false)} className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs font-medium text-white hover:bg-white/30 transition-all duration-200">{t("common.cancel")}</button>
+            <button onClick={saveSoft} className="rounded-lg border border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-2 py-1 text-xs font-medium text-white hover:bg-emerald-500/40 transition-all duration-200">{t("common.save")}</button>
           </div>
         </div>
       </Modal>
