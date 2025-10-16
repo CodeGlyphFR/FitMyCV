@@ -3,11 +3,12 @@
 import { COOKIE_REGISTRY, getCookiesByCategory } from '@/lib/cookies/registry';
 import { COOKIE_CATEGORIES } from '@/lib/cookies/consent';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 export default function CookieRegistry() {
   const { t } = useLanguage();
   const [expandedCategory, setExpandedCategory] = useState(null);
+  const scrollPositionRef = useRef(0);
 
   const categories = [
     { key: COOKIE_CATEGORIES.NECESSARY, icon: '🔒' },
@@ -17,7 +18,12 @@ export default function CookieRegistry() {
   ];
 
   const toggleCategory = (category) => {
+    scrollPositionRef.current = window.scrollY;
     setExpandedCategory(expandedCategory === category ? null : category);
+    // Restaurer la position après le re-render
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' });
+    });
   };
 
   const getCategoryLabel = (category) => {
@@ -31,11 +37,11 @@ export default function CookieRegistry() {
   };
 
   return (
-    <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6">
-      <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+    <div className="mt-8 bg-white/15 backdrop-blur-xl rounded-lg shadow-2xl p-6">
+      <h2 className="text-xl font-semibold mb-4 text-emerald-300 drop-shadow">
         📋 Registre détaillé des cookies
       </h2>
-      <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+      <p className="text-sm text-white/90 mb-4 drop-shadow">
         Liste complète de tous les cookies susceptibles d'être utilisés sur ce site, par catégorie.
       </p>
 
@@ -45,24 +51,24 @@ export default function CookieRegistry() {
           const isExpanded = expandedCategory === key;
 
           return (
-            <div key={key} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <div key={key} className="rounded-lg overflow-hidden backdrop-blur-sm">
               <button
                 onClick={() => toggleCategory(key)}
-                className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="w-full flex items-center justify-between p-4 bg-white/10 hover:bg-white/20 transition-all duration-200"
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{icon}</span>
+                  <span className="text-2xl drop-shadow">{icon}</span>
                   <div className="text-left">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                    <h3 className="font-semibold text-white drop-shadow">
                       {getCategoryLabel(key)}
                     </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-white/60 drop-shadow">
                       {cookies.length} cookie{cookies.length > 1 ? 's' : ''}
                     </p>
                   </div>
                 </div>
                 <svg
-                  className={`w-5 h-5 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                  className={`w-5 h-5 text-white/70 transition-transform drop-shadow ${isExpanded ? 'rotate-180' : ''}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -72,29 +78,29 @@ export default function CookieRegistry() {
               </button>
 
               {isExpanded && (
-                <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+                <div className="p-4 bg-white/5 backdrop-blur-sm">
                   <div className="space-y-4">
                     {cookies.map((cookie, index) => (
                       <div
                         key={index}
-                        className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded border border-gray-200 dark:border-gray-700"
+                        className="p-3 bg-white/10 backdrop-blur-sm rounded"
                       >
                         <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-mono text-sm font-semibold text-gray-900 dark:text-white">
+                          <h4 className="font-mono text-sm font-semibold text-emerald-300 drop-shadow">
                             {cookie.name}
                           </h4>
-                          <span className={`text-xs px-2 py-0.5 rounded ${
+                          <span className={`text-xs px-2 py-0.5 rounded drop-shadow ${
                             cookie.provider.toLowerCase().includes('third-party')
-                              ? 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200'
-                              : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+                              ? 'bg-orange-500/20 text-white'
+                              : 'bg-emerald-500/20 text-white'
                           }`}>
                             {cookie.provider}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                        <p className="text-sm text-white/90 mb-2 drop-shadow">
                           {cookie.purpose}
                         </p>
-                        <div className="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="flex flex-wrap gap-3 text-xs text-white/70 drop-shadow">
                           <div className="flex items-center gap-1">
                             <span className="font-semibold">⏱️ Durée:</span>
                             <span>{cookie.duration}</span>
@@ -114,8 +120,8 @@ export default function CookieRegistry() {
         })}
       </div>
 
-      <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-sm">
-        <p className="text-blue-800 dark:text-blue-300">
+      <div className="mt-4 p-3 bg-emerald-500/20 backdrop-blur-sm rounded text-sm">
+        <p className="text-white drop-shadow">
           <strong>ℹ️ Note:</strong> Les cookies tiers ne seront déposés que si vous donnez votre consentement explicite.
           Les cookies nécessaires sont essentiels au fonctionnement du site et ne peuvent être refusés.
         </p>

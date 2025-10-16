@@ -148,68 +148,68 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
 
   return (
     <div className="space-y-8">
-      <section className="rounded-2xl border bg-white/80 backdrop-blur p-6 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">Informations du profil</h2>
+      <section className="rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-xl p-6 shadow-2xl">
+        <h2 className="text-lg font-semibold mb-4 text-emerald-300 drop-shadow">Informations du profil</h2>
         <form onSubmit={updateProfile} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-neutral-600">Nom complet</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Nom complet</label>
             <input
               type="text"
               value={name}
               onChange={event => setName(event.target.value)}
-              className="w-full rounded border px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
               placeholder="Prénom Nom"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-neutral-600">Adresse email</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Adresse email</label>
             <input
               type="email"
               value={email}
               onChange={event => setEmail(event.target.value)}
-              className={`w-full rounded border px-3 py-2 text-sm ${isOAuthUser ? 'bg-neutral-100 cursor-not-allowed' : ''}`}
+              className={`w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none ${isOAuthUser ? 'opacity-50 cursor-not-allowed' : ''}`}
               placeholder="prenom@exemple.com"
               disabled={isOAuthUser}
             />
             {isOAuthUser && (
-              <p className="text-xs text-neutral-500">
+              <p className="text-xs text-white/60 drop-shadow">
                 Votre email est lié à votre compte {oauthProviders.length > 0 ? oauthProviders.join(', ') : 'OAuth'} et ne peut pas être modifié ici.
               </p>
             )}
           </div>
-          {profileError ? <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{profileError}</div> : null}
-          {profileMessage ? <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{profileMessage}</div> : null}
+          {profileError ? <div className="rounded-lg border-2 border-red-400/50 bg-red-500/20 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow">{profileError}</div> : null}
+          {profileMessage ? <div className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/20 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow">{profileMessage}</div> : null}
           <button
             type="submit"
             disabled={profileLoading}
-            className="rounded border border-emerald-500 bg-emerald-500 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60"
+            className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500/40 transition-all duration-200 disabled:opacity-60 drop-shadow"
           >
             {profileLoading ? "Enregistrement…" : "Enregistrer les modifications"}
           </button>
         </form>
       </section>
 
-      <section className="rounded-2xl border bg-white/80 backdrop-blur p-6 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">Sécurité</h2>
+      <section className="rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-xl p-6 shadow-2xl">
+        <h2 className="text-lg font-semibold mb-4 text-emerald-300 drop-shadow">Sécurité</h2>
         <form onSubmit={updatePassword} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-neutral-600">Mot de passe actuel</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Mot de passe actuel</label>
             <input
               type="password"
               value={currentPassword}
               onChange={event => setCurrentPassword(event.target.value)}
-              className="w-full rounded border px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
               placeholder="••••••••"
             />
-            <p className="text-xs text-neutral-500">Laissez vide si vous n'avez jamais défini de mot de passe.</p>
+            <p className="text-xs text-white/60 drop-shadow">Laissez vide si vous n'avez jamais défini de mot de passe.</p>
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-neutral-600">Nouveau mot de passe</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Nouveau mot de passe</label>
             <input
               type="password"
               value={newPassword}
               onChange={event => setNewPassword(event.target.value)}
-              className="w-full rounded border px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
               placeholder="••••••••"
             />
             {/* Indicateur de force du mot de passe (adapté pour fond blanc) */}
@@ -218,12 +218,12 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                 {/* Barre de progression */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-neutral-600">Force du mot de passe</span>
+                    <span className="text-white/70 drop-shadow">Force du mot de passe</span>
                     <span className={`font-medium ${getStrengthColor(newPassword)}`}>
                       {getStrengthLabel(newPassword)}
                     </span>
                   </div>
-                  <div className="h-1.5 bg-neutral-200 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
                     <div
                       className={`h-full ${getStrengthBgColor(newPassword)} transition-all duration-300`}
                       style={{ width: getStrengthWidth(newPassword) }}
@@ -233,7 +233,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
 
                 {/* Liste des règles */}
                 <div className="space-y-1.5">
-                  <p className="text-xs font-medium text-neutral-600">Règles de sécurité</p>
+                  <p className="text-xs font-medium text-white/70 drop-shadow">Règles de sécurité</p>
                   <PasswordRule
                     valid={newPassword.length >= 12}
                     text="Au moins 12 caractères"
@@ -259,53 +259,53 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
             )}
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-neutral-600">Confirmation</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Confirmation</label>
             <input
               type="password"
               value={confirmPassword}
               onChange={event => setConfirmPassword(event.target.value)}
-              className="w-full rounded border px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
               placeholder="••••••••"
             />
           </div>
-          {passwordError ? <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{passwordError}</div> : null}
-          {passwordMessage ? <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{passwordMessage}</div> : null}
+          {passwordError ? <div className="rounded-lg border-2 border-red-400/50 bg-red-500/20 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow">{passwordError}</div> : null}
+          {passwordMessage ? <div className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/20 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow">{passwordMessage}</div> : null}
           <button
             type="submit"
             disabled={passwordLoading}
-            className="rounded border border-neutral-900 bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-60"
+            className="rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-white/30 transition-all duration-200 disabled:opacity-60 drop-shadow"
           >
             {passwordLoading ? "Mise à jour…" : "Mettre à jour le mot de passe"}
           </button>
         </form>
       </section>
 
-      <section className="rounded-2xl border border-red-300 bg-red-50 p-6 shadow-sm">
-        <h2 className="text-lg font-semibold mb-2 text-red-700">Supprimer le compte</h2>
-        <p className="text-sm text-red-700 mb-3">
+      <section className="rounded-2xl border-2 border-red-400/50 bg-red-500/20 backdrop-blur-xl p-6 shadow-2xl">
+        <h2 className="text-lg font-semibold mb-2 text-red-300 drop-shadow">Supprimer le compte</h2>
+        <p className="text-sm text-white drop-shadow mb-3">
           Cette action est définitive : tous vos CV et données seront effacés. Tapez votre mot de passe pour confirmer.
         </p>
         <form onSubmit={deleteAccount} className="space-y-3">
           <div className="space-y-1">
-            <label className="text-xs font-medium uppercase tracking-wide text-red-700">Mot de passe</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Mot de passe</label>
             <input
               type="password"
               value={deletePassword}
               onChange={event => setDeletePassword(event.target.value)}
-              className="w-full rounded border px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-red-400 focus:ring-2 focus:ring-red-400/50 focus:outline-none"
               placeholder="••••••••"
             />
           </div>
           {deleteError ? (
-            <div className="rounded border border-red-200 bg-white px-3 py-2 text-sm text-red-700">{deleteError}</div>
+            <div className="rounded-lg border-2 border-red-400/50 bg-red-500/30 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow">{deleteError}</div>
           ) : null}
-          <div className="text-xs text-red-600">
+          <div className="text-xs text-white/70 drop-shadow">
             Tous vos CV (dossier utilisateur inclus) seront supprimés. Cette opération est irréversible. Si vous avez créé le compte via un fournisseur externe, définissez d'abord un mot de passe dans la section Sécurité.
           </div>
           <button
             type="submit"
             disabled={deleteLoading}
-            className="rounded border border-red-600 bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
+            className="rounded-lg border-2 border-red-400/50 bg-red-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-red-500/40 transition-all duration-200 disabled:opacity-60 drop-shadow"
           >
             {deleteLoading ? "Suppression…" : "Supprimer mon compte"}
           </button>
@@ -367,11 +367,11 @@ function PasswordRule({ valid, text }) {
   return (
     <div className="flex items-center gap-2 text-xs">
       {valid ? (
-        <span className="text-emerald-500 font-bold">✓</span>
+        <span className="text-emerald-300 font-bold drop-shadow">✓</span>
       ) : (
-        <span className="text-neutral-400">○</span>
+        <span className="text-white/40">○</span>
       )}
-      <span className={valid ? "text-emerald-600 font-medium" : "text-neutral-600"}>
+      <span className={valid ? "text-emerald-300 font-medium drop-shadow" : "text-white/60 drop-shadow"}>
         {text}
       </span>
     </div>

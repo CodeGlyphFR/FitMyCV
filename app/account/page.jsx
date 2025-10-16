@@ -31,25 +31,62 @@ export default async function AccountPage(){
   const oauthProviders = dbUser?.accounts?.map(acc => acc.provider) || [];
 
   return (
-    <main className="max-w-3xl mx-auto p-6 space-y-6">
-      <div className="space-y-1">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 mb-4 transition-colors"
-        >
-          <span>←</span>
-          <span>Retour aux CVs</span>
-        </Link>
-        <h1 className="text-2xl font-semibold">Mon compte</h1>
-        <p className="text-sm text-neutral-600">Gérez vos informations personnelles et vos préférences de sécurité.</p>
+    <main className="min-h-screen bg-slate-950 relative overflow-hidden">
+      {/* Animated background blobs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-32 -left-40 h-80 w-80 rounded-full bg-gradient-to-br from-emerald-400/90 via-sky-500/70 to-transparent blur-2xl animate-auth-blob-fast"/>
+        <div className="absolute top-[20%] right-[-140px] h-96 w-96 rounded-full bg-gradient-to-br from-sky-500/70 via-emerald-400/50 to-transparent blur-3xl animate-auth-blob animation-delay-1500"/>
+        <div className="absolute bottom-[-180px] left-[10%] h-[420px] w-[420px] rounded-full bg-gradient-to-br from-emerald-500/55 via-sky-400/35 to-transparent blur-[150px] animate-auth-blob-slow animation-delay-6000"/>
+        <div className="absolute top-[55%] right-[15%] h-56 w-56 rounded-full bg-gradient-to-br from-sky-400/50 via-emerald-300/40 to-transparent blur-2xl animate-auth-blob-fast animation-delay-3000"/>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(126,207,244,0.25),_transparent_65%)]"/>
       </div>
-      <Suspense fallback={<div className="text-center py-4">Chargement...</div>}>
-        <AccountSettings
-          user={session.user}
-          isOAuthUser={isOAuthUser}
-          oauthProviders={oauthProviders}
-        />
-      </Suspense>
+
+      <div className="relative z-10 max-w-3xl mx-auto px-6 pt-6 pb-2 space-y-6">
+        <div className="space-y-1">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-white mb-4 transition-colors drop-shadow"
+          >
+            <span>←</span>
+            <span>Retour aux CVs</span>
+          </Link>
+          <h1 className="text-2xl font-semibold text-white drop-shadow-lg">Mon compte</h1>
+          <p className="text-sm text-white/70 drop-shadow">Gérez vos informations personnelles et vos préférences de sécurité.</p>
+        </div>
+        <Suspense fallback={<div className="text-center py-4 text-white/70">Chargement...</div>}>
+          <AccountSettings
+            user={session.user}
+            isOAuthUser={isOAuthUser}
+            oauthProviders={oauthProviders}
+          />
+        </Suspense>
+
+        {/* Footer */}
+        <div className="mt-2 mb-0 text-xs text-white/70 text-center space-y-2">
+          <div>© 2025 FitMyCv.ai (v1.0.8)</div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-0 sm:gap-1 leading-none -space-y-3 sm:space-y-0">
+            <div className="flex items-baseline justify-center gap-1 leading-none">
+              <a href="/about" className="hover:text-white transition-colors">
+                À propos
+              </a>
+              <span className="text-white/40">•</span>
+              <a href="/cookies" className="hover:text-white transition-colors">
+                Cookies
+              </a>
+              <span className="text-white/40 hidden sm:inline">•</span>
+            </div>
+            <div className="flex items-baseline justify-center gap-1 leading-none">
+              <a href="/terms" className="hover:text-white transition-colors">
+                Conditions générales
+              </a>
+              <span className="text-white/40">•</span>
+              <a href="/privacy" className="hover:text-white transition-colors">
+                Politique de confidentialité
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }

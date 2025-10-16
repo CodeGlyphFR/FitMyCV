@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export default function ConsentHistory() {
@@ -9,6 +9,7 @@ export default function ConsentHistory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expanded, setExpanded] = useState(false);
+  const scrollPositionRef = useRef(0);
 
   useEffect(() => {
     loadHistory();
@@ -57,11 +58,11 @@ export default function ConsentHistory() {
 
   const getActionColor = (action) => {
     const colors = {
-      created: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
-      updated: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
-      revoked: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
+      created: 'bg-emerald-500/20 text-white',
+      updated: 'bg-sky-500/20 text-white',
+      revoked: 'bg-red-500/20 text-white',
     };
-    return colors[action] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+    return colors[action] || 'bg-white/20 text-white';
   };
 
   const getCategoryLabel = (key) => {
@@ -76,10 +77,10 @@ export default function ConsentHistory() {
 
   if (loading) {
     return (
-      <div className="mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+      <div className="mt-8 p-6 bg-white/15 backdrop-blur-xl rounded-lg shadow-2xl">
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+          <div className="h-6 bg-white/20 rounded w-1/3 mb-4"></div>
+          <div className="h-4 bg-white/20 rounded w-2/3"></div>
         </div>
       </div>
     );
@@ -87,8 +88,8 @@ export default function ConsentHistory() {
 
   if (error) {
     return (
-      <div className="mt-8 p-6 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-        <p className="text-sm text-red-800 dark:text-red-300">
+      <div className="mt-8 p-6 bg-red-500/20 backdrop-blur-xl rounded-lg">
+        <p className="text-sm text-white drop-shadow">
           ⚠️ {error}
         </p>
       </div>
@@ -97,8 +98,8 @@ export default function ConsentHistory() {
 
   if (history.length === 0) {
     return (
-      <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+      <div className="mt-8 p-6 bg-white/15 backdrop-blur-xl rounded-lg">
+        <p className="text-sm text-white/90 drop-shadow">
           📝 Aucun historique de consentement disponible. Vos préférences futures seront enregistrées ici.
         </p>
       </div>
@@ -106,21 +107,28 @@ export default function ConsentHistory() {
   }
 
   return (
-    <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+    <div className="mt-8 bg-white/15 backdrop-blur-xl rounded-lg shadow-2xl">
       <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        onClick={() => {
+          scrollPositionRef.current = window.scrollY;
+          setExpanded(!expanded);
+          // Restaurer la position après le re-render
+          requestAnimationFrame(() => {
+            window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' });
+          });
+        }}
+        className="w-full flex items-center justify-between p-6 hover:bg-white/10 transition-all duration-200"
       >
         <div className="text-left">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+          <h2 className="text-xl font-semibold text-emerald-300 mb-1 drop-shadow">
             📜 Historique de vos consentements
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-white/70 drop-shadow">
             {history.length} enregistrement{history.length > 1 ? 's' : ''} • Conforme RGPD
           </p>
         </div>
         <svg
-          className={`w-6 h-6 text-gray-500 transition-transform ${expanded ? 'rotate-180' : ''}`}
+          className={`w-6 h-6 text-white/70 transition-transform drop-shadow ${expanded ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -130,20 +138,20 @@ export default function ConsentHistory() {
       </button>
 
       {expanded && (
-        <div className="px-6 pb-6 border-t border-gray-200 dark:border-gray-700">
+        <div className="px-6 pb-6">
           <div className="mt-4 space-y-3">
             {history.map((log, index) => (
               <div
                 key={log.id}
-                className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700"
+                className="p-4 bg-white/10 backdrop-blur-sm rounded-lg"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <span className={`inline-block text-xs px-2 py-1 rounded font-semibold ${getActionColor(log.action)}`}>
+                    <span className={`inline-block text-xs px-2 py-1 rounded font-semibold drop-shadow ${getActionColor(log.action)}`}>
                       {getActionLabel(log.action)}
                     </span>
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-xs text-white/60 drop-shadow">
                     {formatDate(log.createdAt)}
                   </span>
                 </div>
@@ -151,10 +159,10 @@ export default function ConsentHistory() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {Object.entries(log.preferences).filter(([key]) => key !== 'timestamp' && key !== 'version').map(([key, value]) => (
                     <div key={key} className="flex items-center gap-2">
-                      <span className={`text-xs ${value ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                      <span className={`text-xs drop-shadow ${value ? 'text-emerald-300' : 'text-white/40'}`}>
                         {value ? '✓' : '✗'}
                       </span>
-                      <span className="text-xs text-gray-700 dark:text-gray-300">
+                      <span className="text-xs text-white/90 drop-shadow">
                         {getCategoryLabel(key)}
                       </span>
                     </div>
@@ -162,8 +170,8 @@ export default function ConsentHistory() {
                 </div>
 
                 {log.userAgent && (
-                  <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  <div className="mt-2 pt-2">
+                    <p className="text-xs text-white/60 truncate drop-shadow">
                       <span className="font-semibold">Navigateur :</span> {log.userAgent}
                     </p>
                   </div>
@@ -172,8 +180,8 @@ export default function ConsentHistory() {
             ))}
           </div>
 
-          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-xs">
-            <p className="text-blue-800 dark:text-blue-300">
+          <div className="mt-4 p-3 bg-emerald-500/20 backdrop-blur-sm rounded text-xs">
+            <p className="text-white drop-shadow">
               <strong>ℹ️ Conformité RGPD :</strong> Cet historique prouve que vous avez donné (ou refusé) votre consentement de manière éclairée. Ces données sont conservées pour audit et peuvent être supprimées en supprimant votre compte.
             </p>
           </div>
