@@ -355,7 +355,7 @@ export default function TopBar() {
   const { setCurrentFile } = useAdmin();
   const { data: session, status } = useSession();
   const isAuthenticated = !!session?.user?.id;
-  const { localDeviceId, refreshTasks, addOptimisticTask, removeOptimisticTask } = useBackgroundTasks();
+  const { tasks, localDeviceId, refreshTasks, addOptimisticTask, removeOptimisticTask } = useBackgroundTasks();
   const { addNotification } = useNotifications();
   const { t, language } = useLanguage();
 
@@ -481,6 +481,11 @@ export default function TopBar() {
 
     return null;
   }, [currentItem, current, items]);
+
+  // Calculate active tasks count for badge
+  const activeTasksCount = React.useMemo(() => {
+    return tasks.filter(t => t.status === 'running' || t.status === 'queued').length;
+  }, [tasks]);
   const emitListChanged = React.useCallback(() => {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("cv:list:changed"));
@@ -1611,6 +1616,14 @@ export default function TopBar() {
             title={t("topbar.taskQueue")}
           >
             <img src="/icons/task.png" alt={t("topbar.taskQueue")} className="h-4 w-4 " />
+            {/* Badge indicateur de tâches en cours */}
+            {activeTasksCount > 0 && (
+              <span
+                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-300 border-2 border-white flex items-center justify-center text-gray-900 text-[10px] font-bold drop-shadow-lg animate-pulse"
+              >
+                {activeTasksCount}
+              </span>
+            )}
           </button>
 
           {/* Desktop Dropdown */}

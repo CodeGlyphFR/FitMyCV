@@ -8,7 +8,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 function LoadingSpinner() {
   return (
-    <div className="animate-apple-spin h-3 w-3 border-2 border-gray-300 border-t-blue-600 rounded-full"></div>
+    <div className="animate-apple-spin h-3 w-3 border-2 border-white/30 border-t-amber-300 rounded-full drop-shadow"></div>
   );
 }
 
@@ -17,16 +17,16 @@ function TaskItem({ task, onCancel, compact = false }) {
 
   const getStatusDisplay = (status) => {
     const colors = {
-      'queued': 'text-gray-600',
-      'running': 'text-blue-600',
-      'completed': 'text-green-600',
-      'failed': 'text-red-600',
-      'cancelled': 'text-orange-600'
+      'queued': 'text-white/70',
+      'running': 'text-amber-300',
+      'completed': 'text-green-400',
+      'failed': 'text-red-400',
+      'cancelled': 'text-orange-400'
     };
 
     return {
       label: t(`taskQueue.status.${status}`) || t("taskQueue.status.unknown"),
-      color: colors[status] || 'text-gray-400'
+      color: colors[status] || 'text-white/60'
     };
   };
 
@@ -114,11 +114,11 @@ function TaskItem({ task, onCancel, compact = false }) {
         <div className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-white truncate drop-shadow`}>
           {description}
         </div>
-        <div className="flex items-center gap-1 text-xs text-white/60">
+        <div className="flex items-center gap-1 text-xs text-white/60 drop-shadow">
           <span>{createdAt}</span>
           {hasSourceInfo && (
             <>
-              <span className="text-gray-400">•</span>
+              <span className="text-white/40">•</span>
               <span className="truncate" title={sourceInfo}>
                 {sourceInfo}
               </span>
@@ -240,7 +240,7 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
           <div className="flex items-center justify-between text-xs text-white/70 drop-shadow">
             <div className="flex items-center gap-1">
               <div
-                className={`w-2 h-2 rounded-full ${isApiSyncEnabled ? 'bg-green-500' : 'bg-orange-500'}`}
+                className={`w-2 h-2 rounded-full drop-shadow ${isApiSyncEnabled ? 'bg-green-400' : 'bg-orange-400'}`}
                 title={isApiSyncEnabled ? t("taskQueue.cloudSyncActive") : t("taskQueue.localSyncOnly")}
               />
               <span>{isApiSyncEnabled ? t("taskQueue.cloud") : t("taskQueue.localStorage")}</span>
