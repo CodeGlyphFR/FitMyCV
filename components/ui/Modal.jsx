@@ -95,7 +95,7 @@ export default function Modal({ open, onClose, title, children, size = "default"
           }}
         >
           <div className="flex items-center justify-between p-4 pb-2 flex-shrink-0">
-            <div className="font-semibold text-white drop-shadow-lg">{title || t("common.confirmation")}</div>
+            <div className="font-semibold text-emerald-300 drop-shadow-lg">{title || t("common.confirmation")}</div>
           </div>
           <div
             className="text-white/90 overflow-y-auto overflow-x-hidden flex-1 px-4 pb-4"

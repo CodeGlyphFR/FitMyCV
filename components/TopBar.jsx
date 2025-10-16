@@ -1937,7 +1937,7 @@ export default function TopBar() {
                     key={option.id}
                     type="button"
                     onClick={() => setAnalysisLevel(option.id)}
-                    className={`rounded-md px-2 py-1 font-medium transition-all duration-200 ${active ? "bg-white/30 text-emerald-400 shadow border-2 border-emerald-400/50" : "text-white/80 hover:bg-white/20"}`}
+                    className={`rounded-md px-2 py-1 font-medium transition-all duration-200 ${active ? "bg-emerald-400 text-white shadow" : "text-white/80 hover:bg-white/20"}`}
                     aria-pressed={active}
                   >
                     {option.label}
@@ -2013,7 +2013,7 @@ export default function TopBar() {
                     key={option.id}
                     type="button"
                     onClick={() => setPdfAnalysisLevel(option.id)}
-                    className={`rounded-md px-2 py-1 font-medium transition-all duration-200 ${active ? "bg-white/30 text-emerald-400 shadow border-2 border-emerald-400/50" : "text-white/80 hover:bg-white/20"}`}
+                    className={`rounded-md px-2 py-1 font-medium transition-all duration-200 ${active ? "bg-emerald-400 text-white shadow" : "text-white/80 hover:bg-white/20"}`}
                     aria-pressed={active}
                   >
                     {option.label}

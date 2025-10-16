@@ -458,7 +458,7 @@ export default function EmptyState() {
                     key={option.id}
                     type="button"
                     onClick={() => setPdfAnalysisLevel(option.id)}
-                    className={`rounded-md px-2 py-1 font-medium transition ${active ? "bg-white/30 text-emerald-400 shadow" : "text-white/70 hover:bg-white/25"}`}
+                    className={`rounded-md px-2 py-1 font-medium transition ${active ? "bg-emerald-400 text-white shadow" : "text-white/70 hover:bg-white/25"}`}
                     aria-pressed={active}
                   >
                     {option.label}
