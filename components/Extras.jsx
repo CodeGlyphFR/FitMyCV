@@ -70,7 +70,7 @@ export default function Extras(props){
                   </div>
                   {editing && (
                     <div className="no-print absolute top-1/2 -translate-y-1/2 right-0 flex">
-                      <button onClick={()=>openEdit(originalIndex)} className="text-sm hover:scale-110 transition-transform -mr-1"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
+                      <button onClick={()=>openEdit(originalIndex)} className="text-sm hover:scale-110 transition-transform -mr-[0.8rem]"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
                       <button onClick={()=>setDelIndex(originalIndex)} className="text-sm hover:scale-110 transition-transform"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
                     </div>
                   )}
@@ -91,7 +91,7 @@ export default function Extras(props){
                     </div>
                     {editing && (
                       <div className="no-print absolute top-2 right-0 z-20 flex">
-                        <button onClick={()=>openEdit(originalIndex)} className="text-sm hover:scale-110 transition-transform -mr-1"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
+                        <button onClick={()=>openEdit(originalIndex)} className="text-sm hover:scale-110 transition-transform -mr-[0.8rem]"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
                         <button onClick={()=>setDelIndex(originalIndex)} className="text-sm hover:scale-110 transition-transform"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
                       </div>
                     )}

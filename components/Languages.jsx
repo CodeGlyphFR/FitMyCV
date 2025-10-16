@@ -67,7 +67,7 @@ export default function Languages(props){
               </div>
               {editing && (
                 <div className="no-print absolute top-1/2 -translate-y-1/2 right-0 flex">
-                  <button onClick={()=>openEdit(i)} className="text-sm hover:scale-110 transition-transform -mr-1"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
+                  <button onClick={()=>openEdit(i)} className="text-sm hover:scale-110 transition-transform -mr-[0.8rem]"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
                   <button onClick={()=>setDelIndex(i)} className="text-sm hover:scale-110 transition-transform"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
                 </div>
               )}
