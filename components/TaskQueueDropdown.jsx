@@ -8,7 +8,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 function LoadingSpinner() {
   return (
-    <div className="animate-apple-spin h-3 w-3 border-2 border-white/30 border-t-amber-300 rounded-full drop-shadow"></div>
+    <div className="animate-apple-spin h-3 w-3 border-2 border-white/30 border-t-blue-300 rounded-full drop-shadow"></div>
   );
 }
 
@@ -18,10 +18,10 @@ function TaskItem({ task, onCancel, compact = false }) {
   const getStatusDisplay = (status) => {
     const colors = {
       'queued': 'text-white/70',
-      'running': 'text-amber-300',
+      'running': 'text-blue-300',
       'completed': 'text-green-400',
       'failed': 'text-red-400',
-      'cancelled': 'text-orange-400'
+      'cancelled': 'text-red-300'
     };
 
     return {
