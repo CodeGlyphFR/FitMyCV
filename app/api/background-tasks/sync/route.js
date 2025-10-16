@@ -35,6 +35,7 @@ function serializeTask(record) {
     deviceId: record.deviceId ?? null,
     error: record.error ?? null,
     updatedAt: record.updatedAt?.getTime?.() ?? Date.now(),
+    cvFile: record.cvFile ?? null,
   };
 
   if (record.result) {

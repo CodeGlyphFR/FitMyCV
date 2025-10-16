@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import Modal from "./ui/Modal";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
@@ -18,7 +19,7 @@ function extractQuotedName(text) {
   return match ? match[1] : '';
 }
 
-function TaskItem({ task, onCancel }) {
+function TaskItem({ task, onCancel, onTaskClick }) {
   const { t } = useLanguage();
 
   const getStatusDisplay = (status) => {
@@ -106,8 +107,47 @@ function TaskItem({ task, onCancel }) {
   }
   const hasSourceInfo = (task.type === 'generation' || task.type === 'template-creation' || task.type === 'import') && sourceInfo;
 
+  // Déterminer si la tâche a un CV associé
+  let cvFileName = null;
+
+  // Vérifier d'abord le champ cvFile (pour calculate-match-score et improve-cv)
+  try {
+    if (task.cvFile) {
+      cvFileName = task.cvFile;
+    }
+    // Sinon vérifier le result (pour generation, import, template-creation)
+    else if (task.result && task.status === 'completed') {
+      // task.result est déjà un objet (parsé par l'API)
+      const result = typeof task.result === 'string' ? JSON.parse(task.result) : task.result;
+      cvFileName = result.file || (result.files && result.files.length > 0 ? result.files[0] : null);
+    }
+  } catch (err) {
+    console.error('[TaskItem] Erreur extraction cvFileName:', err);
+  }
+
+  const isClickable = task.status === 'completed' && !!cvFileName;
+
+  const handleClick = () => {
+    console.log('[TaskItem] Click détecté:', {
+      isClickable,
+      cvFileName,
+      taskStatus: task.status,
+      taskType: task.type,
+      hasCvFile: !!task.cvFile,
+      cvFileValue: task.cvFile,
+      hasResult: !!task.result,
+      resultValue: task.result
+    });
+    if (isClickable && onTaskClick) {
+      onTaskClick(cvFileName);
+    }
+  };
+
   return (
-    <div className="flex items-center justify-between p-3 border-2 border-white/30 rounded-lg bg-white/10 backdrop-blur-sm">
+    <div
+      className={`flex items-center justify-between p-3 border-2 border-white/30 rounded-lg bg-white/10 backdrop-blur-sm ${isClickable ? 'cursor-pointer hover:bg-white/20 transition-all duration-200' : ''}`}
+      onClick={handleClick}
+    >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <div className="text-sm font-medium text-white drop-shadow truncate">
@@ -134,7 +174,10 @@ function TaskItem({ task, onCancel }) {
         {canCancel && (
           <button
             type="button"
-            onClick={() => onCancel(task.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCancel(task.id);
+            }}
             className="ml-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/20 px-2 py-1 rounded transition-all duration-200 drop-shadow"
             title={t("taskQueue.cancelTask")}
           >
@@ -148,6 +191,7 @@ function TaskItem({ task, onCancel }) {
 
 export default function TaskQueueModal({ open, onClose }) {
   const { t } = useLanguage();
+  const router = useRouter();
   const { tasks, clearCompletedTasks, cancelTask, isApiSyncEnabled } = useBackgroundTasks();
 
   // Filtrer les tâches de calcul de match score (elles ne doivent apparaître que dans l'animation du bouton)
@@ -159,6 +203,40 @@ export default function TaskQueueModal({ open, onClose }) {
   const completedTasksCount = visibleTasks.filter(task =>
     task.status === 'completed' || task.status === 'failed' || task.status === 'cancelled'
   ).length;
+
+  const handleTaskClick = async (cvFile) => {
+    console.log('[TaskQueueModal] Click sur tâche avec CV:', cvFile);
+
+    if (!cvFile) {
+      console.warn('[TaskQueueModal] Pas de fichier CV associé');
+      return;
+    }
+
+    // Définir le cookie pour le CV sélectionné
+    document.cookie = "cvFile=" + encodeURIComponent(cvFile) + "; path=/; max-age=31536000";
+    console.log('[TaskQueueModal] Cookie défini:', cvFile);
+
+    try {
+      localStorage.setItem("admin:cv", cvFile);
+    } catch (_err) {}
+
+    // Rafraîchir Next.js sans recharger toute la page
+    router.refresh();
+
+    // Déclencher les événements pour mettre à jour l'UI
+    if (typeof window !== "undefined") {
+      // Petit délai pour laisser router.refresh() se propager
+      setTimeout(() => {
+        window.dispatchEvent(new Event("cv:list:changed"));
+        window.dispatchEvent(new CustomEvent("cv:selected", { detail: { file: cvFile, source: 'task-queue' } }));
+      }, 50);
+    }
+
+    console.log('[TaskQueueModal] CV chargé sans rechargement complet');
+
+    // Fermer le modal après le chargement
+    onClose();
+  };
 
   return (
     <Modal open={open} onClose={onClose} title={t("taskQueue.title")}>
@@ -184,7 +262,7 @@ export default function TaskQueueModal({ open, onClose }) {
             </div>
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {sortedTasks.map(task => (
-                <TaskItem key={task.id} task={task} onCancel={cancelTask} />
+                <TaskItem key={task.id} task={task} onCancel={cancelTask} onTaskClick={handleTaskClick} />
               ))}
             </div>
           </div>

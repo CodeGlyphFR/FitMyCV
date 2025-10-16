@@ -386,6 +386,7 @@ export default function TopBar() {
   const [userMenuRect, setUserMenuRect] = React.useState(null);
   const userMenuRef = React.useRef(null);
   const userMenuButtonRef = React.useRef(null);
+  const [cvSelectorGlow, setCvSelectorGlow] = React.useState(false);
 
   const [linkInputs, setLinkInputs] = React.useState([""]);
   const [fileSelection, setFileSelection] = React.useState([]);
@@ -621,6 +622,24 @@ export default function TopBar() {
       window.removeEventListener("focus", onChanged);
     };
   }, [isAuthenticated, reload]);
+
+  // Animation d'illumination du sélecteur de CV (uniquement depuis le gestionnaire de tâches)
+  React.useEffect(() => {
+    const handleCvSelected = (event) => {
+      // Activer l'effet vert uniquement si le CV est sélectionné depuis le gestionnaire de tâches
+      if (event.detail?.source === 'task-queue') {
+        setCvSelectorGlow(true);
+        setTimeout(() => {
+          setCvSelectorGlow(false);
+        }, 800); // L'effet dure 0.8 seconde
+      }
+    };
+
+    window.addEventListener("cv:selected", handleCvSelected);
+    return () => {
+      window.removeEventListener("cv:selected", handleCvSelected);
+    };
+  }, []);
 
   async function selectFile(file) {
     // Clear the cached reference to avoid stale data
@@ -1454,7 +1473,11 @@ export default function TopBar() {
               e.stopPropagation();
               setListOpen((prev) => !prev);
             }}
-            className="w-full min-w-0 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-1 text-sm flex items-center justify-between gap-3 hover:bg-white/30 hover:shadow-xl overflow-hidden transition-all duration-200 text-white"
+            className={`w-full min-w-0 rounded-lg border backdrop-blur-sm px-3 py-1 text-sm flex items-center justify-between gap-3 overflow-hidden transition-all duration-500 text-white ${
+              cvSelectorGlow
+                ? 'border-emerald-400 bg-emerald-500/40 shadow-[0_0_20px_rgba(52,211,153,0.6)] hover:bg-emerald-500/50'
+                : 'border-white/40 bg-white/20 hover:bg-white/30 hover:shadow-xl'
+            }`}
             ref={triggerRef}
           >
             <span className="flex items-center gap-3 min-w-0 overflow-hidden">
