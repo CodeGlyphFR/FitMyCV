@@ -147,7 +147,7 @@ function TaskItem({ task, onCancel, onTaskClick, compact = false }) {
 
   return (
     <div
-      className={`flex items-center justify-between ${compact ? 'p-2' : 'p-3'} border-b border-white/10 last:border-b-0 hover:bg-white/20 transition-colors duration-200 ${isClickable ? 'cursor-pointer hover:border-l-2 hover:border-emerald-400' : ''}`}
+      className={`flex items-center justify-between ${compact ? 'p-2' : 'p-3'} border-b border-white/10 last:border-b-0 hover:bg-white/20 transition-colors duration-200 ${isClickable ? 'cursor-pointer' : ''}`}
       onClick={handleClick}
     >
       <div className="flex-1 min-w-0 mr-2">

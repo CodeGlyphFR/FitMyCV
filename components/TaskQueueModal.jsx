@@ -145,7 +145,7 @@ function TaskItem({ task, onCancel, onTaskClick }) {
 
   return (
     <div
-      className={`flex items-center justify-between p-3 border-2 border-white/30 rounded-lg bg-white/10 backdrop-blur-sm ${isClickable ? 'cursor-pointer hover:bg-white/20 hover:border-emerald-400 transition-all duration-200' : ''}`}
+      className={`flex items-center justify-between p-3 border-2 border-white/30 rounded-lg bg-white/10 backdrop-blur-sm ${isClickable ? 'cursor-pointer hover:bg-white/20 transition-all duration-200' : ''}`}
       onClick={handleClick}
     >
       <div className="flex-1 min-w-0">
