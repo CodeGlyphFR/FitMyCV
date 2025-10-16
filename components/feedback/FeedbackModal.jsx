@@ -97,7 +97,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
       <div className="space-y-6">
         {/* Section notation */}
         <div className="flex flex-col items-center gap-2">
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-white drop-shadow">
             {t("feedback.ratingLabel")}
           </label>
           <StarRating rating={rating} setRating={setRating} />
@@ -105,7 +105,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
 
         {/* Section commentaire avec bouton bug */}
         <div className="relative">
-          <label className="text-sm font-medium text-gray-700 block mb-2">
+          <label className="text-sm font-medium text-white drop-shadow block mb-2">
             {t("feedback.commentLabel")}
           </label>
           <div className="relative">
@@ -113,7 +113,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder={t("feedback.commentPlaceholder")}
-              className="w-full h-32 px-3 py-2 pr-14 pb-12 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full h-32 px-3 py-2 pr-14 pb-12 border-2 border-white/30 rounded-lg resize-none bg-white/10 text-white placeholder-white/50 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 backdrop-blur-sm transition-all duration-200"
               maxLength={500}
             />
 
@@ -123,31 +123,36 @@ export default function FeedbackModal({ isOpen, onClose }) {
               onClick={() => setIsBugReport(!isBugReport)}
               className={`
                 absolute right-2 bottom-3
-                w-9 h-9 rounded-full
+                w-8 h-8 rounded-full
                 flex items-center justify-center
                 transition-all duration-200
                 hover:scale-110
+                backdrop-blur-sm
+                shadow-lg
                 ${isBugReport
-                  ? 'bg-red-100 shadow-md'
-                  : 'bg-gray-100'
+                  ? 'bg-red-500/80 border-2 border-red-400 drop-shadow-lg ring-2 ring-red-300/70 animate-pulse'
+                  : 'bg-amber-400/70 border-2 border-amber-300 hover:bg-amber-500/80 hover:border-amber-200'
                 }
               `}
               title={isBugReport ? t("feedback.markedAsBug") : t("feedback.markAsBug")}
             >
-              <span className={`text-lg ${isBugReport ? '' : 'grayscale opacity-50'}`}>
-                🐛
-              </span>
+              <img
+                src="/icons/bug.png"
+                alt="Bug report"
+                className="w-5 h-5 drop-shadow-md"
+              />
             </button>
           </div>
 
           {/* Compteur de caractères */}
           <div className="flex justify-between items-center mt-1">
-            <span className={`text-xs ${comment.length > 500 ? 'text-red-500' : 'text-gray-500'}`}>
+            <span className={`text-xs drop-shadow ${comment.length > 500 ? 'text-red-400' : 'text-white/60'}`}>
               {t("feedback.charactersCount", { count: comment.length })}
             </span>
             {isBugReport && (
-              <span className="text-xs text-red-600 font-medium">
-                🐛 {t("feedback.bugReportLabel")}
+              <span className="text-xs text-red-400 font-medium drop-shadow flex items-center gap-1">
+                <img src="/icons/bug.png" alt="Bug" className="w-3 h-3" />
+                {t("feedback.bugReportLabel")}
               </span>
             )}
           </div>
@@ -159,7 +164,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
             type="button"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-white bg-white/20 border-2 border-white/40 rounded-lg hover:bg-white/30 backdrop-blur-sm transition-all duration-200 drop-shadow disabled:opacity-50"
           >
             {t("feedback.cancel")}
           </button>
@@ -167,7 +172,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-white bg-emerald-400 border-2 border-emerald-300 rounded-lg hover:bg-emerald-500 backdrop-blur-sm transition-all duration-200 drop-shadow disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? t("feedback.submitting") : t("feedback.submit")}
           </button>

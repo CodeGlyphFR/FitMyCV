@@ -18,8 +18,8 @@ export default function StarRating({ rating, setRating }) {
         >
           <span className={
             star <= (hoverRating || rating)
-              ? "text-yellow-400"
-              : "text-gray-300"
+              ? "text-amber-300 drop-shadow"
+              : "text-white/30 drop-shadow"
           }>
             ★
           </span>
