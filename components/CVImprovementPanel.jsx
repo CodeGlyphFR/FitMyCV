@@ -102,12 +102,20 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
     }
   };
 
-  // Fonction pour obtenir la couleur du score
+  // Fonction pour obtenir la couleur du score (texte)
   const getScoreColor = (score) => {
     if (score >= 80) return 'text-green-600';
     if (score >= 65) return 'text-yellow-600';
     if (score >= 50) return 'text-orange-600';
     return 'text-red-600';
+  };
+
+  // Fonction pour obtenir la couleur de fond du score
+  const getScoreBgColor = (score) => {
+    if (score >= 80) return 'bg-green-500';
+    if (score >= 65) return 'bg-yellow-500';
+    if (score >= 50) return 'bg-orange-500';
+    return 'bg-red-500';
   };
 
   // Fonction pour lancer l'amélioration automatique
@@ -410,12 +418,17 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                                   filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
                                 />
                               </svg>
-                              {/* Score au centre avec animation */}
+                              {/* Score au centre avec animation et fond coloré */}
                               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className={`text-4xl font-bold transition-colors duration-300 ${getScoreColor(animatedScore)}`}>
-                                  {animatedScore}
-                                </span>
-                                <span className="text-sm text-gray-400 font-medium">/100</span>
+                                {/* Cercle de fond coloré selon le score */}
+                                <div className={`absolute w-24 h-24 rounded-full ${getScoreBgColor(animatedScore)} shadow-lg transition-colors duration-300`} />
+                                {/* Contenu du score */}
+                                <div className="relative flex flex-col items-center justify-center">
+                                  <span className="text-4xl font-bold text-white drop-shadow-lg transition-all duration-300">
+                                    {animatedScore}
+                                  </span>
+                                  <span className="text-sm text-white/80 font-medium drop-shadow">/100</span>
+                                </div>
                               </div>
                               {/* Effet shimmer sur score élevé */}
                               {cvData.matchScore >= 90 && (
