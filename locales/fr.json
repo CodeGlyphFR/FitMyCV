@@ -128,6 +128,7 @@
     "description": "Importez un CV au format PDF pour le convertir automatiquement en utilisant l'intelligence artificielle et le schéma de votre CV raw.",
     "pdfFile": "Fichier PDF",
     "fileSelected": "Fichier sélectionné :",
+    "selectFile": "Choisir un fichier PDF",
     "analysisQuality": "Qualité de l'analyse",
     "cancel": "Annuler",
     "import": "Importer",

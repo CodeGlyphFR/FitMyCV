@@ -1760,7 +1760,8 @@ export default function TopBar() {
                 {baseSelectorOpen ? (
                   <div
                     ref={baseDropdownRef}
-                    className="absolute z-10 mt-1 w-full rounded-lg border-2 border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl max-h-60 overflow-y-auto"
+                    className="absolute z-10 mt-1 w-full rounded-lg border-2 border-white/30 bg-slate-900/95 backdrop-blur-3xl shadow-2xl max-h-60 overflow-y-auto"
+                    style={{ backdropFilter: 'blur(40px)' }}
                   >
                     <ul className="py-1">
                       {/* Option spéciale : Créer un nouveau modèle de CV */}
@@ -1776,7 +1777,7 @@ export default function TopBar() {
                           <span className="flex h-6 w-6 items-center justify-center shrink-0">
                             <span className="text-lg">✨</span>
                           </span>
-                          <span className="font-medium text-blue-600">
+                          <span className="font-medium text-emerald-300">
                             {t("cvGenerator.createTemplateOption")}
                           </span>
                         </button>
@@ -1843,7 +1844,7 @@ export default function TopBar() {
                     📋
                   </button>
                   {linkHistoryDropdowns[index] && linkHistory.length > 0 && (
-                    <div className="absolute left-0 top-full mt-1 w-80 max-h-60 overflow-y-auto bg-white/15 backdrop-blur-xl border-2 border-white/30 rounded-lg shadow-2xl z-10">
+                    <div className="absolute left-0 top-full mt-1 w-80 max-h-60 overflow-y-auto bg-slate-900/95 backdrop-blur-3xl border-2 border-white/30 rounded-lg shadow-2xl z-10" style={{ backdropFilter: 'blur(40px)' }}>
                       <div className="p-2 border-b border-white/20 bg-white/10 text-xs font-medium text-white drop-shadow">
                         {t("cvGenerator.recentLinks")}
                       </div>
@@ -1901,17 +1902,34 @@ export default function TopBar() {
             <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("cvGenerator.files")}</div>
             <input
               ref={fileInputRef}
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+              className="hidden"
               type="file"
               accept=".pdf,.doc,.docx"
               multiple
               onChange={onFilesChanged}
             />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-4 py-3 text-sm text-white hover:bg-white/30 hover:border-white/60 transition-all duration-200 flex items-center justify-center gap-2 group"
+            >
+              <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <span className="font-medium">
+                {(fileSelection || []).length > 0 ? `${(fileSelection || []).length} fichier${(fileSelection || []).length > 1 ? 's' : ''} sélectionné${(fileSelection || []).length > 1 ? 's' : ''}` : t("pdfImport.selectFile")}
+              </span>
+            </button>
             {(fileSelection || []).length ? (
-              <div className="rounded-lg border-2 border-white/30 bg-white/10 backdrop-blur-sm px-3 py-2 text-xs space-y-1">
-                <div className="font-medium text-white drop-shadow">{t("cvGenerator.selection")}</div>
+              <div className="rounded-lg border border-emerald-400/50 bg-emerald-500/20 px-3 py-2 text-xs space-y-1">
+                <div className="font-medium text-white drop-shadow flex items-center gap-2">
+                  <svg className="w-4 h-4 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  {t("cvGenerator.selection")}
+                </div>
                 {(fileSelection || []).map((file, idx) => (
-                  <div key={idx} className="truncate text-white/80">
+                  <div key={idx} className="truncate text-white/90">
                     {file.name}
                   </div>
                 ))}
@@ -1989,15 +2007,32 @@ export default function TopBar() {
             <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("pdfImport.pdfFile")}</div>
             <input
               ref={pdfFileInputRef}
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+              className="hidden"
               type="file"
               accept=".pdf"
               onChange={onPdfFileChanged}
             />
+            <button
+              type="button"
+              onClick={() => pdfFileInputRef.current?.click()}
+              className="w-full rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-4 py-3 text-sm text-white hover:bg-white/30 hover:border-white/60 transition-all duration-200 flex items-center justify-center gap-2 group"
+            >
+              <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <span className="font-medium">
+                {pdfFile ? pdfFile.name : t("pdfImport.selectFile")}
+              </span>
+            </button>
             {pdfFile ? (
-              <div className="rounded-lg border-2 border-white/30 bg-white/10 backdrop-blur-sm px-3 py-2 text-xs">
-                <div className="font-medium text-white drop-shadow">{t("pdfImport.fileSelected")}</div>
-                <div className="truncate text-white/80">{pdfFile.name}</div>
+              <div className="rounded-lg border border-emerald-400/50 bg-emerald-500/20 px-3 py-2 text-xs text-white flex items-center gap-2">
+                <svg className="w-4 h-4 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                <div className="flex-1">
+                  <div className="font-medium">{t("pdfImport.fileSelected")}</div>
+                  <div className="truncate opacity-80">{pdfFile.name}</div>
+                </div>
               </div>
             ) : null}
           </div>
