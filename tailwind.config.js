@@ -2,6 +2,10 @@ module.exports = {
   content: ["./app/**/*.{js,jsx}", "./components/**/*.{js,jsx}"],
   theme: {
     extend: {
+      backdropBlur: {
+        '4xl': '80px',
+        '5xl': '120px',
+      },
       keyframes: {
         'spin-slow': {
           from: { transform: 'rotate(0deg)' },
