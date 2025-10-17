@@ -269,3 +269,10 @@ select:-moz-autofill:focus {
   filter: none !important;
   border-color: rgba(255, 255, 255, 0.4) !important;
 }
+
+/* Cacher le badge reCAPTCHA */
+.grecaptcha-badge {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

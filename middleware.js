@@ -145,11 +145,12 @@ export async function middleware(request) {
     // Content Security Policy
     'Content-Security-Policy': [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js nécessite unsafe-eval et unsafe-inline
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com", // Next.js + reCAPTCHA
       "style-src 'self' 'unsafe-inline'", // Tailwind nécessite unsafe-inline
       "img-src 'self' data: https:",
       "font-src 'self' data:",
-      "connect-src 'self' https://api.openai.com",
+      "connect-src 'self' https://api.openai.com https://www.google.com https://www.gstatic.com",
+      "frame-src https://www.google.com", // reCAPTCHA frames
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
