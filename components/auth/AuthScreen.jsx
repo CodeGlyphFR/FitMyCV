@@ -9,6 +9,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
 import AuthBackground from "./AuthBackground";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 const getProviders = (t) => [
   { id: "google", label: t("auth.continueWithGoogle"), image: "/icons/g_logo.png", width: 28, height: 28 },
@@ -19,6 +20,7 @@ const getProviders = (t) => [
 export default function AuthScreen({ initialMode = "login", providerAvailability = {}, registrationEnabled = true }){
   const router = useRouter();
   const { t } = useLanguage();
+  const { executeAndVerify } = useRecaptcha();
   const [mode, setMode] = React.useState(initialMode);
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -80,10 +82,18 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           return;
         }
 
+        // Vérification reCAPTCHA avant l'inscription
+        const recaptchaResult = await executeAndVerify('signup');
+        if (!recaptchaResult || !recaptchaResult.success) {
+          setError(t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.");
+          setLoading(false);
+          return;
+        }
+
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ firstName, lastName, email, password }),
+          body: JSON.stringify({ firstName, lastName, email, password, recaptchaToken: recaptchaResult.success }),
         });
 
         if (!res.ok){

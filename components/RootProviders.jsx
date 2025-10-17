@@ -11,6 +11,7 @@ import RealtimeRefreshProvider from "@/components/RealtimeRefreshProvider";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { SettingsProvider } from "@/lib/settings/SettingsContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import RecaptchaProvider from "@/components/RecaptchaProvider";
 
 export default function RootProviders({ session, initialSettings, children }){
   const pathname = usePathname();
@@ -18,7 +19,8 @@ export default function RootProviders({ session, initialSettings, children }){
 
   return (
     <SessionProvider session={session}>
-      <SettingsProvider initialSettings={initialSettings}>
+      <RecaptchaProvider>
+        <SettingsProvider initialSettings={initialSettings}>
         <LanguageProvider>
         <AdminProvider>
           <NotificationProvider>
@@ -41,6 +43,7 @@ export default function RootProviders({ session, initialSettings, children }){
         </AdminProvider>
         </LanguageProvider>
       </SettingsProvider>
+      </RecaptchaProvider>
     </SessionProvider>
   );
 }
