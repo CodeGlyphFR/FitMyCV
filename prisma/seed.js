@@ -53,9 +53,39 @@ async function main() {
     }
   ];
 
+  // Seed des settings de rate limiting
+  const rateLimitSettings = [
+    {
+      settingName: 'token_default_limit',
+      value: '5',
+      category: 'rate_limiting',
+      description: 'Nombre de tokens par défaut pour le rate limiting'
+    },
+    {
+      settingName: 'token_reset_hours',
+      value: '24',
+      category: 'rate_limiting',
+      description: 'Délai en heures avant le reset des tokens'
+    }
+  ];
+
   console.log('📝 Création des settings de modèles IA...');
 
   for (const setting of aiModelSettings) {
+    await prisma.setting.upsert({
+      where: { settingName: setting.settingName },
+      update: {
+        value: setting.value,
+        description: setting.description,
+      },
+      create: setting,
+    });
+    console.log(`  ✅ ${setting.settingName} = ${setting.value}`);
+  }
+
+  console.log('📝 Création des settings de rate limiting...');
+
+  for (const setting of rateLimitSettings) {
     await prisma.setting.upsert({
       where: { settingName: setting.settingName },
       update: {
