@@ -3,6 +3,11 @@ import AuthScreen from "@/components/auth/AuthScreen";
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 
+export const metadata = {
+  title: "Connexion - FitMyCv.ai",
+  description: "Connectez-vous ou créez un compte pour accéder à vos CV personnalisés",
+};
+
 export const runtime = "nodejs";
 
 export default async function AuthPage({ searchParams }){

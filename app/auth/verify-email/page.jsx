@@ -4,6 +4,11 @@ import { createAutoSignInToken } from '@/lib/auth/autoSignIn';
 import EmailVerificationError from '@/components/auth/EmailVerificationError';
 import logger from '@/lib/security/secureLogger';
 
+export const metadata = {
+  title: "Vérification d'email - FitMyCv.ai",
+  description: "Vérification de votre adresse email",
+};
+
 /**
  * Server Component pour vérification email
  * Aucun JavaScript client ne se charge = pas de loading visible

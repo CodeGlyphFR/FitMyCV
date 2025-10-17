@@ -17,6 +17,11 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/session";
 import { ensureUserCvDir, listUserCvFiles, readUserCvFile } from "@/lib/cv/storage";
 
+export const metadata = {
+  title: "Mes CVs - FitMyCv.ai",
+  description: "Visualisez et gérez vos CV personnalisés",
+};
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 

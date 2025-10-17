@@ -1,6 +1,6 @@
 const { version } = require("./package.json");
 
-const SITE_NAME = "CV Builder";
+const SITE_NAME = "FitMyCv.ai";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

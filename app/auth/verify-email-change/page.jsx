@@ -4,6 +4,11 @@ import EmailVerificationError from '@/components/auth/EmailVerificationError';
 import logger from '@/lib/security/secureLogger';
 import prisma from '@/lib/prisma';
 
+export const metadata = {
+  title: "Vérification de changement d'email - FitMyCv.ai",
+  description: "Confirmation de votre nouvelle adresse email",
+};
+
 /**
  * Server Component pour vérification du changement d'email
  */

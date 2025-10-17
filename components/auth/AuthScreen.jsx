@@ -155,10 +155,17 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
       <div className="relative z-10 min-h-screen flex items-center justify-center px-6 py-8 ios-auth-container">
         <div className="w-full max-w-lg">
           <div className="rounded-3xl border-2 border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl p-6 space-y-6">
-        <div className="space-y-1 text-aligned">
-          <h1 className="text-2xl font-semibold text-center text-white drop-shadow-lg">
-            {isRegister ? t("auth.title") : t("auth.siteTitle")}
-          </h1>
+        <div className="flex justify-center mb-4">
+          <Image
+            src="/icons/logo.png"
+            alt="FitMyCv.ai"
+            width={250}
+            height={75}
+            className="object-contain"
+            priority
+          />
+        </div>
+        <div className="text-center">
           <p className="text-sm text-slate-100 drop-shadow">
             {t("auth.welcome")}
           </p>

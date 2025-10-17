@@ -1,8 +1,8 @@
 {
   "auth": {
     "title": "Create an account",
-    "siteTitle": "CV Builder",
-    "welcome": "Welcome! With CV Builder, create tailored CVs for each opportunity using AI.",
+    "siteTitle": "FitMyCv.ai",
+    "welcome": "Create tailored CVs for each opportunity using AI.",
     "continueWithGoogle": "Continue with Google",
     "continueWithApple": "Continue with Apple",
     "continueWithGithub": "Continue with GitHub",

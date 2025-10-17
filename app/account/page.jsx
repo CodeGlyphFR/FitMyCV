@@ -5,6 +5,11 @@ import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { Suspense } from "react";
 
+export const metadata = {
+  title: "Mon compte - FitMyCv.ai",
+  description: "Gérez vos informations personnelles et vos préférences",
+};
+
 export const runtime = "nodejs";
 
 export default async function AccountPage(){

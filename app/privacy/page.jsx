@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Politique de confidentialité - CV Builder',
+  title: 'Politique de confidentialité - FitMyCv.ai',
   description: 'Politique de confidentialité et protection des données personnelles',
 };
 
@@ -29,7 +29,7 @@ export default function PrivacyPage() {
               1. Introduction
             </h2>
             <p className="text-sm text-white/90 mb-2 drop-shadow">
-              La présente politique de confidentialité décrit comment CV Builder collecte, utilise, stocke et protège vos données personnelles conformément au Règlement Général sur la Protection des Données (RGPD) et à la législation française en vigueur.
+              La présente politique de confidentialité décrit comment FitMyCv.ai collecte, utilise, stocke et protège vos données personnelles conformément au Règlement Général sur la Protection des Données (RGPD) et à la législation française en vigueur.
             </p>
             <p className="text-sm text-white/90 drop-shadow">
               Nous nous engageons à protéger votre vie privée et à traiter vos données personnelles de manière transparente, sécurisée et conforme aux réglementations applicables.
@@ -42,7 +42,7 @@ export default function PrivacyPage() {
             </h2>
             <div className="bg-white/10 backdrop-blur-sm p-3 rounded-lg">
               <p className="text-sm text-white/90 drop-shadow">
-                <strong>Responsable du traitement :</strong> CV Builder<br />
+                <strong>Responsable du traitement :</strong> FitMyCv.ai<br />
                 <strong>Contact :</strong> [À compléter avec votre adresse email]
               </p>
             </div>
