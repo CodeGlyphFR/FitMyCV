@@ -146,11 +146,7 @@ const ItemLabel = React.memo(function ItemLabel({
         if (!metricsChanged) {
           if (!scrollActiveRef.current) {
             clearScheduledToggle();
-            rafRef.current = window.requestAnimationFrame(() => {
-              if (cancelled) return;
-              setScrollActive(true);
-              rafRef.current = null;
-            });
+            setScrollActive(true);
           }
           return;
         }
@@ -159,15 +155,11 @@ const ItemLabel = React.memo(function ItemLabel({
         inner.style.setProperty("--cv-ticker-duration", `${duration}s`);
         if (!scrollActiveRef.current) {
           clearScheduledToggle();
-          rafRef.current = window.requestAnimationFrame(() => {
-            if (cancelled) return;
-            setScrollActive(true);
-            rafRef.current = null;
-          });
+          setScrollActive(true);
         } else {
           clearScheduledToggle();
         }
-      }, 50); // 50ms debounce
+      }, 10); // 10ms debounce - réduit pour un démarrage plus rapide
     };
 
     measure();
@@ -212,23 +204,17 @@ const ItemLabel = React.memo(function ItemLabel({
 
   return (
     <span className={rootClass}>
-      <span className="hidden sm:inline-flex flex-shrink-0 text-xs sm:text-sm opacity-60 whitespace-nowrap">
+      <span className="flex-shrink-0 text-xs sm:text-sm opacity-60 whitespace-nowrap">
         {prefix}
       </span>
       {withHyphen ? (
-        <span className="hidden sm:inline-flex flex-shrink-0 opacity-30 text-xs sm:text-sm" aria-hidden="true">
+        <span className="flex-shrink-0 opacity-30 text-xs sm:text-sm" aria-hidden="true">
           –
         </span>
       ) : null}
       <span
-        ref={ellipsisRef}
-        className={`hidden sm:block truncate ${titleClass}`}
-      >
-        {displayTitleWithLevel}
-      </span>
-      <span
         ref={containerRef}
-        className={`cv-ticker sm:hidden ${titleClass} ${scrollActive ? "cv-ticker--active" : ""}`}
+        className={`cv-ticker ${titleClass} ${scrollActive ? "cv-ticker--active" : ""}`}
       >
         <span ref={innerRef} className="cv-ticker__inner">
           <span className="cv-ticker__chunk">{displayTitleWithLevel}</span>

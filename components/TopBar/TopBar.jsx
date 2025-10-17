@@ -913,6 +913,9 @@ export default function TopBar() {
       <style jsx global>{`
         .cv-ticker {
           max-width: 100%;
+          position: relative;
+          display: block;
+          overflow: hidden;
         }
 
         .cv-ticker__inner {
@@ -929,16 +932,8 @@ export default function TopBar() {
           white-space: nowrap;
         }
 
-        @media (max-width: 639px) {
-          .cv-ticker {
-            position: relative;
-            display: block;
-            overflow: hidden;
-          }
-
-          .cv-ticker--active .cv-ticker__inner {
-            animation: cv-ticker-scroll var(--cv-ticker-duration) linear infinite;
-          }
+        .cv-ticker--active .cv-ticker__inner {
+          animation: cv-ticker-scroll var(--cv-ticker-duration) linear infinite;
         }
 
         @keyframes cv-ticker-scroll {
