@@ -66,7 +66,7 @@ export default function CvGeneratorModal({
                     <span className="flex h-6 w-6 items-center justify-center shrink-0">
                       <span className="text-lg">✨</span>
                     </span>
-                    <span className="font-medium text-blue-600">
+                    <span className="font-medium text-emerald-300">
                       {t("cvGenerator.createTemplateOption")}
                     </span>
                   </>
