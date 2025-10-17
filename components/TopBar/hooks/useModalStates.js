@@ -1,10 +1,12 @@
 import React from "react";
 import { getAnalysisOption } from "../utils/cvUtils";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 /**
  * Hook pour gérer tous les états de modals et UI
  */
 export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, refreshTasks, addNotification, localDeviceId, reload, router }) {
+  const { executeAndVerify } = useRecaptcha();
   // Delete modal
   const [openDelete, setOpenDelete] = React.useState(false);
 
@@ -57,10 +59,23 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     closePdfImport();
 
     try {
+      // Vérification reCAPTCHA avant l'import de PDF
+      const recaptchaResult = await executeAndVerify('import_pdf');
+      if (!recaptchaResult || !recaptchaResult.success) {
+        removeOptimisticTask(optimisticTaskId);
+        addNotification({
+          type: "error",
+          message: t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.",
+          duration: 4000,
+        });
+        return;
+      }
+
       const formData = new FormData();
       formData.append("pdfFile", pdfFile);
       formData.append("analysisLevel", selectedPdfAnalysis.id);
       formData.append("model", selectedPdfAnalysis.model);
+      formData.append("recaptchaToken", recaptchaResult.success);
       if (localDeviceId) {
         formData.append("deviceId", localDeviceId);
       }
