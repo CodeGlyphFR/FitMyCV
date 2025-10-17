@@ -2,13 +2,20 @@
 import React from "react";
 import { usePathname } from "next/navigation";
 import FeedbackModal from "./FeedbackModal";
+import { useSettings } from "@/lib/settings/SettingsContext";
 
 export default function FeedbackButton() {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const pathname = usePathname();
+  const { settings } = useSettings();
 
   // Masquer sur la page d'authentification
   if (pathname === "/auth") {
+    return null;
+  }
+
+  // Ne pas afficher si la feature est désactivée
+  if (!settings.feature_feedback) {
     return null;
   }
 

@@ -10,6 +10,7 @@ import LoadingOverlay from "@/components/LoadingOverlay";
 import GlobalBackground from "@/components/GlobalBackground";
 import { auth } from "@/lib/auth/session";
 import { SITE_TITLE } from "@/lib/site";
+import prisma from "@/lib/prisma";
 
 export const metadata = {
   title: SITE_TITLE,
@@ -26,6 +27,36 @@ export const viewport = {
 
 export default async function RootLayout(props){
   const session = await auth();
+
+  // Récupérer les settings côté serveur pour éviter le flash de contenu incorrect
+  let initialSettings = {
+    registration_enabled: true,
+    feature_manual_cv: true,
+    feature_ai_generation: true,
+    feature_import: true,
+    feature_export: true,
+    feature_match_score: true,
+    feature_optimize: true,
+    feature_history: true,
+    feature_search_bar: true,
+    feature_translate: true,
+    feature_language_switcher: true,
+    feature_edit_mode: true,
+    feature_feedback: true,
+  };
+
+  try {
+    const allSettings = await prisma.setting.findMany();
+    const settingsObject = {};
+    allSettings.forEach((setting) => {
+      settingsObject[setting.settingName] = setting.value === '1';
+    });
+    initialSettings = { ...initialSettings, ...settingsObject };
+  } catch (error) {
+    console.error('Error fetching settings in layout:', error);
+    // On garde les valeurs par défaut en cas d'erreur
+  }
+
   return (
     <html lang="fr">
       <head>
@@ -52,7 +83,7 @@ export default async function RootLayout(props){
         `}} />
       </head>
       <body className="min-h-screen antialiased flex flex-col">
-        <RootProviders session={session}>
+        <RootProviders session={session} initialSettings={initialSettings}>
           <GlobalBackground />
           <div className="relative z-10 flex flex-col min-h-screen">
             <LoadingOverlay />

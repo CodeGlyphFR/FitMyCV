@@ -15,7 +15,7 @@ const getProviders = (t) => [
   { id: "github", label: t("auth.continueWithGithub"), image: "/icons/github.png", width: 28, height: 28 },
 ];
 
-export default function AuthScreen({ initialMode = "login", providerAvailability = {} }){
+export default function AuthScreen({ initialMode = "login", providerAvailability = {}, registrationEnabled = true }){
   const router = useRouter();
   const { t } = useLanguage();
   const [mode, setMode] = React.useState(initialMode);
@@ -43,6 +43,10 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
   }, []);
 
   function switchMode(next){
+    // Empêcher le passage en mode "register" si les inscriptions sont désactivées
+    if (next === "register" && !registrationEnabled) {
+      return;
+    }
     setMode(next);
     setError("");
   }
@@ -186,6 +190,18 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           <div className="h-px bg-white/30 w-full"></div>
         </div>
 
+        {/* Bandeau de maintenance si les inscriptions sont désactivées */}
+        {!registrationEnabled && (
+          <div className="rounded-lg border-2 border-yellow-400/50 bg-yellow-500/20 backdrop-blur-sm px-4 py-3 text-sm">
+            <div className="flex items-start gap-2">
+              <span className="text-yellow-400 text-lg">⚠️</span>
+              <p className="text-white drop-shadow flex-1">
+                {t("maintenance.registrationDisabled")}
+              </p>
+            </div>
+          </div>
+        )}
+
         <form key={mode} onSubmit={handleCredentialsSubmit} method="post" className="space-y-3">
           {isRegister ? (
             <>
@@ -301,13 +317,15 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
               </button>
             </span>
           ) : (
-            <span>
-              {t("auth.new")}
-              {" "}
-              <button type="button" onClick={()=>switchMode("register")} className="font-medium text-emerald-300 hover:text-emerald-200 hover:underline">
-                {t("auth.createAccountLink")}
-              </button>
-            </span>
+            registrationEnabled && (
+              <span>
+                {t("auth.new")}
+                {" "}
+                <button type="button" onClick={()=>switchMode("register")} className="font-medium text-emerald-300 hover:text-emerald-200 hover:underline">
+                  {t("auth.createAccountLink")}
+                </button>
+              </span>
+            )
           )}
         </div>
 

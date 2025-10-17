@@ -49,6 +49,9 @@
       "oauthUnavailable": "Login via this provider unavailable. Configure OAuth credentials."
     }
   },
+  "maintenance": {
+    "registrationDisabled": "Maintenance in progress, registrations will be available again soon."
+  },
   "topbar": {
     "loading": "Loading…",
     "userMenu": "User menu",

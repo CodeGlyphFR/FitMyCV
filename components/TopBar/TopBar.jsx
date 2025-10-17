@@ -8,6 +8,7 @@ import { useAdmin } from "@/components/admin/AdminProvider";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useSettings } from "@/lib/settings/SettingsContext";
 import { useLinkHistory } from "@/hooks/useLinkHistory";
 import GptLogo from "@/components/ui/GptLogo";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
@@ -43,6 +44,7 @@ export default function TopBar() {
   const { tasks, localDeviceId, refreshTasks, addOptimisticTask, removeOptimisticTask } = useBackgroundTasks();
   const { addNotification } = useNotifications();
   const { t, language } = useLanguage();
+  const { settings } = useSettings();
   const { history: linkHistory, addLinksToHistory } = useLinkHistory();
 
   // Main state hook
@@ -738,71 +740,81 @@ export default function TopBar() {
           <div className="w-full md:hidden order-5"></div>
 
           {/* Job Title Input */}
-          <div className="w-auto flex-1 order-6 md:order-9 md:flex-none flex justify-start md:justify-end px-4 py-1 min-w-0">
-            <div className="relative w-full md:w-[400px] flex items-center group job-title-input-wrapper">
-              {/* Token Counter - haut droite de la search bar */}
-              <div className="absolute -right-2 -top-2 z-10">
-                <TokenCounter refreshCount={userRefreshCount} isLoading={isLoadingTokens} />
-              </div>
+          {settings.feature_search_bar && (
+            <div className="w-auto flex-1 order-6 md:order-9 md:flex-none flex justify-start md:justify-end px-4 py-1 min-w-0">
+              <div className="relative w-full md:w-[400px] flex items-center group job-title-input-wrapper">
+                {/* Token Counter - haut droite de la search bar */}
+                <div className="absolute -right-2 -top-2 z-10">
+                  <TokenCounter refreshCount={userRefreshCount} isLoading={isLoadingTokens} />
+                </div>
 
-              <span className="absolute left-0 text-white/70 drop-shadow flex items-center justify-center w-6 h-6">
-                <img src="/icons/search.png" alt="Search" className="h-4 w-4" />
-              </span>
-              <input
-                type="text"
-                value={modals.jobTitleInput}
-                onChange={(e) => modals.setJobTitleInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (!canUseSearchBar) {
-                    e.preventDefault();
-                    return;
-                  }
-                  modals.handleJobTitleSubmit(e, language);
-                }}
-                placeholder={state.isMobile ? t("topbar.jobTitlePlaceholderMobile") : t("topbar.jobTitlePlaceholder")}
-                disabled={!canUseSearchBar}
-                className={`w-full bg-transparent border-0 border-b-2 pl-8 pr-2 py-1 text-sm italic text-white placeholder-white/50 focus:outline-none transition-colors duration-200 ${
-                  canUseSearchBar
-                    ? 'border-white/30 focus:border-emerald-400 cursor-text'
-                    : 'border-white/10 cursor-not-allowed opacity-50'
-                }`}
-                style={{ caretColor: '#10b981' }}
-                title={!canUseSearchBar ? "Plus de tokens disponibles" : ""}
-              />
+                <span className="absolute left-0 text-white/70 drop-shadow flex items-center justify-center w-6 h-6">
+                  <img src="/icons/search.png" alt="Search" className="h-4 w-4" />
+                </span>
+                <input
+                  type="text"
+                  value={modals.jobTitleInput}
+                  onChange={(e) => modals.setJobTitleInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (!canUseSearchBar) {
+                      e.preventDefault();
+                      return;
+                    }
+                    modals.handleJobTitleSubmit(e, language);
+                  }}
+                  placeholder={state.isMobile ? t("topbar.jobTitlePlaceholderMobile") : t("topbar.jobTitlePlaceholder")}
+                  disabled={!canUseSearchBar}
+                  className={`w-full bg-transparent border-0 border-b-2 pl-8 pr-2 py-1 text-sm italic text-white placeholder-white/50 focus:outline-none transition-colors duration-200 ${
+                    canUseSearchBar
+                      ? 'border-white/30 focus:border-emerald-400 cursor-text'
+                      : 'border-white/10 cursor-not-allowed opacity-50'
+                  }`}
+                  style={{ caretColor: '#10b981' }}
+                  title={!canUseSearchBar ? "Plus de tokens disponibles" : ""}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Action Buttons */}
-          <button
-            onClick={generator.openGeneratorModal}
-            className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-4 transition-all duration-200"
-            type="button"
-          >
-            <GptLogo className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => modals.setOpenNewCv(true)}
-            className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center h-8 w-8 order-7 md:order-5 transition-all duration-200"
-            type="button"
-          >
-            <img src="/icons/add.png" alt="Add" className="h-4 w-4 " />
-          </button>
-          <button
-            onClick={() => modals.setOpenPdfImport(true)}
-            className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-9 md:order-6 transition-all duration-200"
-            type="button"
-            title={t("pdfImport.title")}
-          >
-            <img src="/icons/import.png" alt="Import" className="h-4 w-4 " />
-          </button>
-          <button
-            onClick={operations.exportToPdf}
-            className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7 transition-all duration-200"
-            type="button"
-            title="Exporter en PDF"
-          >
-            <img src="/icons/export.png" alt="Export" className="h-4 w-4 " />
-          </button>
+          {settings.feature_ai_generation && (
+            <button
+              onClick={generator.openGeneratorModal}
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-4 transition-all duration-200"
+              type="button"
+            >
+              <GptLogo className="h-4 w-4" />
+            </button>
+          )}
+          {settings.feature_manual_cv && (
+            <button
+              onClick={() => modals.setOpenNewCv(true)}
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center h-8 w-8 order-7 md:order-5 transition-all duration-200"
+              type="button"
+            >
+              <img src="/icons/add.png" alt="Add" className="h-4 w-4 " />
+            </button>
+          )}
+          {settings.feature_import && (
+            <button
+              onClick={() => modals.setOpenPdfImport(true)}
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-9 md:order-6 transition-all duration-200"
+              type="button"
+              title={t("pdfImport.title")}
+            >
+              <img src="/icons/import.png" alt="Import" className="h-4 w-4 " />
+            </button>
+          )}
+          {settings.feature_export && (
+            <button
+              onClick={operations.exportToPdf}
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7 transition-all duration-200"
+              type="button"
+              title="Exporter en PDF"
+            >
+              <img src="/icons/export.png" alt="Export" className="h-4 w-4 " />
+            </button>
+          )}
           <button
             onClick={() => modals.setOpenDelete(true)}
             className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center h-8 w-8 order-4 md:order-8 transition-all duration-200"
