@@ -122,13 +122,22 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     setNewCvBusy(true);
     setNewCvError(null);
     try {
+      // Vérification reCAPTCHA avant la création de CV manuel
+      const recaptchaResult = await executeAndVerify('create_cv');
+      if (!recaptchaResult || !recaptchaResult.success) {
+        setNewCvError(t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.");
+        setNewCvBusy(false);
+        return;
+      }
+
       const res = await fetch("/api/cvs/create", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           full_name: trimmedName,
           current_title: trimmedTitle,
-          email: newCvEmail.trim()
+          email: newCvEmail.trim(),
+          recaptchaToken: recaptchaResult.success
         }),
       });
       const data = await res.json();
