@@ -1,6 +1,7 @@
 import React from "react";
 import { CREATE_TEMPLATE_OPTION } from "../utils/constants";
 import { getAnalysisOption } from "../utils/cvUtils";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 /**
  * Hook pour gérer le modal de génération de CV
@@ -18,6 +19,7 @@ export function useGeneratorModal({
   t,
   addLinksToHistory,
 }) {
+  const { executeAndVerify } = useRecaptcha();
   const [openGenerator, setOpenGenerator] = React.useState(false);
   const [linkInputs, setLinkInputs] = React.useState([""]);
   const [fileSelection, setFileSelection] = React.useState([]);
@@ -198,8 +200,21 @@ export function useGeneratorModal({
     closeGenerator();
 
     try {
+      // Vérification reCAPTCHA avant la génération de CV
+      const recaptchaResult = await executeAndVerify('generate_cv');
+      if (!recaptchaResult || !recaptchaResult.success) {
+        removeOptimisticTask(optimisticTaskId);
+        addNotification({
+          type: "error",
+          message: t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.",
+          duration: 4000,
+        });
+        return;
+      }
+
       const formData = new FormData();
       formData.append("links", JSON.stringify(cleanedLinks));
+      formData.append("recaptchaToken", recaptchaResult.success);
 
       if (!isTemplateCreation) {
         const baseCvName = generatorBaseItem?.displayTitle || generatorBaseItem?.title || generatorBaseFile;
