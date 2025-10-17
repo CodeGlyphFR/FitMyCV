@@ -3,8 +3,6 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { scheduleCalculateMatchScoreJob } from "@/lib/backgroundTasks/calculateMatchScoreJob";
 
-const TOKEN_LIMIT = 5;
-
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -36,6 +34,16 @@ export async function POST(request) {
 
     const userId = session.user.id;
 
+    // Récupérer les settings de rate limiting depuis la DB
+    const [tokenLimitSetting, resetHoursSetting] = await Promise.all([
+      prisma.setting.findUnique({ where: { settingName: 'token_default_limit' }, select: { value: true } }),
+      prisma.setting.findUnique({ where: { settingName: 'token_reset_hours' }, select: { value: true } })
+    ]);
+
+    const TOKEN_LIMIT = parseInt(tokenLimitSetting?.value || '5', 10);
+    const RESET_HOURS = parseInt(resetHoursSetting?.value || '24', 10);
+    const RESET_MS = RESET_HOURS * 60 * 60 * 1000;
+
     // Récupérer les métadonnées du CV depuis la DB
     const cvRecord = await prisma.cvFile.findUnique({
       where: {
@@ -64,7 +72,7 @@ export async function POST(request) {
     // Rate limiting GLOBAL (au niveau utilisateur, pas par CV)
     if (!isAutomatic) {
       const now = new Date();
-      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const resetAgo = new Date(now.getTime() - RESET_MS);
 
       // Récupérer l'utilisateur avec ses compteurs de refresh
       const user = await prisma.user.findUnique({
@@ -78,8 +86,8 @@ export async function POST(request) {
       let refreshCount = user?.matchScoreRefreshCount || 0;
       let tokenLastUsage = user?.tokenLastUsage;
 
-      // Reset UNIQUEMENT si tokens à 0 ET 24h écoulées
-      if (refreshCount === 0 && tokenLastUsage && tokenLastUsage < oneDayAgo) {
+      // Reset UNIQUEMENT si tokens à 0 ET délai écoulé
+      if (refreshCount === 0 && tokenLastUsage && tokenLastUsage < resetAgo) {
         await prisma.user.update({
           where: { id: userId },
           data: {
@@ -89,13 +97,13 @@ export async function POST(request) {
         });
         refreshCount = TOKEN_LIMIT;
         tokenLastUsage = null;
-        console.log(`[calculate-match-score] ✅ Reset des tokens après 24h: ${TOKEN_LIMIT}/${TOKEN_LIMIT}`);
+        console.log(`[calculate-match-score] ✅ Reset des tokens après ${RESET_HOURS}h: ${TOKEN_LIMIT}/${TOKEN_LIMIT}`);
       }
 
       // Vérifier si plus de tokens disponibles (GLOBAL pour tous les CVs)
       if (refreshCount === 0) {
         const timeUntilReset = tokenLastUsage
-          ? new Date(tokenLastUsage.getTime() + 24 * 60 * 60 * 1000)
+          ? new Date(tokenLastUsage.getTime() + RESET_MS)
           : new Date();
         const totalMinutesLeft = Math.ceil((timeUntilReset - now) / (60 * 1000));
         const hoursLeft = Math.floor(totalMinutesLeft / 60);
