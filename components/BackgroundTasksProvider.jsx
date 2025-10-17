@@ -99,6 +99,10 @@ export default function BackgroundTasksProvider({ children }) {
     const result = await cancelTaskOnServer?.(taskId);
     if (result?.success) {
       await refreshTasks();
+      // Émettre l'événement pour rafraîchir les compteurs de tokens
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('tokens:updated'));
+      }
       return;
     }
 

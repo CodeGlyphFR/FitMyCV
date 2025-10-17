@@ -222,16 +222,23 @@ export default function Header(props){
       fetchSourceInfo();
     };
 
+    // Écouter les mises à jour des tokens (depuis la search bar)
+    const handleTokensUpdated = (event) => {
+      fetchMatchScore();
+    };
+
     window.addEventListener('realtime:cv:updated', handleRealtimeCvUpdate);
     window.addEventListener('realtime:cv:metadata:updated', handleRealtimeCvMetadataUpdate);
     window.addEventListener('matchscore:force-refresh', handleForceRefresh);
     window.addEventListener('cv:selected', handleCvSelected);
+    window.addEventListener('tokens:updated', handleTokensUpdated);
 
     return () => {
       window.removeEventListener('realtime:cv:updated', handleRealtimeCvUpdate);
       window.removeEventListener('realtime:cv:metadata:updated', handleRealtimeCvMetadataUpdate);
       window.removeEventListener('matchscore:force-refresh', handleForceRefresh);
       window.removeEventListener('cv:selected', handleCvSelected);
+      window.removeEventListener('tokens:updated', handleTokensUpdated);
     };
   }, [fetchMatchScore, fetchSourceInfo]);
 
@@ -314,7 +321,10 @@ export default function Header(props){
         throw new Error(errorMessage);
       }
 
-      // Succès - pas de notification
+      // Succès - émettre l'événement pour mettre à jour les compteurs de tokens
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('tokens:updated'));
+      }
     } catch (error) {
 
       // En cas d'erreur, réinitialiser le status
