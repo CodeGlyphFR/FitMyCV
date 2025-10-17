@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAdmin } from "@/components/admin/AdminProvider";
@@ -483,9 +482,12 @@ export default function TopBar() {
           position: '-webkit-sticky',
           paddingTop: 'env(safe-area-inset-top)',
           marginTop: 'calc(-1 * env(safe-area-inset-top))',
-          transform: state.isScrollingDown ? 'translateY(-100%)' : 'translateY(0)',
-          transition: 'transform 0.15s ease-out',
-          willChange: 'transform',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden',
+          WebkitPerspective: 1000,
+          perspective: 1000,
+          WebkitTransform: 'translate3d(0, 0, 0)',
+          transform: 'translate3d(0, 0, 0)',
           pointerEvents: 'auto'
         }}
       >
@@ -515,9 +517,12 @@ export default function TopBar() {
           position: '-webkit-sticky',
           paddingTop: 'env(safe-area-inset-top)',
           marginTop: 'calc(-1 * env(safe-area-inset-top))',
-          transform: state.isScrollingDown ? 'translateY(-100%)' : 'translateY(0)',
-          transition: 'transform 0.15s ease-out',
-          willChange: 'transform',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden',
+          WebkitPerspective: 1000,
+          perspective: 1000,
+          WebkitTransform: 'translate3d(0, 0, 0)',
+          transform: 'translate3d(0, 0, 0)',
           pointerEvents: 'auto'
         }}
       >
@@ -531,12 +536,10 @@ export default function TopBar() {
               className="h-8 w-8 flex items-center justify-center rounded-full border border-white/40 bg-white/20 backdrop-blur-sm hover:bg-white/30 hover:shadow-xl transition-all duration-200"
               aria-label={t("topbar.userMenu")}
             >
-              <Image
+              <img
                 src="/icons/user.png"
                 alt={t("topbar.userMenu")}
-                width={20}
-                height={20}
-                className="object-contain "
+                className="h-5 w-5"
               />
             </button>
           </div>
@@ -549,7 +552,7 @@ export default function TopBar() {
                 e.stopPropagation();
                 modals.setListOpen((prev) => !prev);
               }}
-              className={`w-full min-w-0 rounded-lg border backdrop-blur-sm px-3 py-1 text-sm flex items-center justify-between gap-3 overflow-hidden transition-all duration-500 text-white ${
+              className={`cv-selector-trigger w-full min-w-0 rounded-lg border backdrop-blur-sm px-3 py-1 text-sm flex items-center justify-between gap-3 overflow-hidden transition-all duration-500 text-white ${
                 state.cvSelectorGlow
                   ? 'border-emerald-400 bg-emerald-500/40 shadow-[0_0_20px_rgba(52,211,153,0.6)] hover:bg-emerald-500/50'
                   : 'border-white/40 bg-white/20 hover:bg-white/30 hover:shadow-xl'
@@ -588,7 +591,7 @@ export default function TopBar() {
           {modals.listOpen && state.portalReady && modals.dropdownRect
             ? createPortal(
                 <>
-                  <div className="fixed inset-0 z-[10001] bg-transparent" onClick={() => modals.setListOpen(false)} />
+                  <div className="fixed inset-0 z-[10001] bg-transparent cv-dropdown-no-animation" onClick={() => modals.setListOpen(false)} />
                   <div
                     ref={dropdownPortalRef}
                     style={{
@@ -597,8 +600,9 @@ export default function TopBar() {
                       left: modals.dropdownRect.left,
                       width: modals.dropdownRect.width,
                       zIndex: 10002,
+                      opacity: 1,
                     }}
-                    className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl"
+                    className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl cv-dropdown-no-animation"
                   >
                     <ul
                       className="max-h-[240px] overflow-y-auto py-1"
@@ -905,8 +909,23 @@ export default function TopBar() {
 
       {/* Styles */}
       <style jsx global>{`
+        .cv-selector-trigger:active {
+          opacity: 1 !important;
+          transform: none !important;
+        }
+
+        .cv-dropdown-no-animation {
+          animation: none !important;
+          transition: none !important;
+          transform: none !important;
+          will-change: auto !important;
+        }
+
         .cv-ticker {
           max-width: 100%;
+          position: relative;
+          display: block;
+          overflow: hidden;
         }
 
         .cv-ticker__inner {
@@ -923,16 +942,8 @@ export default function TopBar() {
           white-space: nowrap;
         }
 
-        @media (max-width: 639px) {
-          .cv-ticker {
-            position: relative;
-            display: block;
-            overflow: hidden;
-          }
-
-          .cv-ticker--active .cv-ticker__inner {
-            animation: cv-ticker-scroll var(--cv-ticker-duration) linear infinite;
-          }
+        .cv-ticker--active .cv-ticker__inner {
+          animation: cv-ticker-scroll var(--cv-ticker-duration) linear infinite;
         }
 
         @keyframes cv-ticker-scroll {
