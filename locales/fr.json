@@ -49,6 +49,9 @@
       "oauthUnavailable": "Connexion via ce fournisseur indisponible. Configurez les identifiants OAuth."
     }
   },
+  "maintenance": {
+    "registrationDisabled": "Maintenance en cours, les inscriptions seront de nouveaux disponibles prochainement."
+  },
   "topbar": {
     "loading": "Chargement…",
     "userMenu": "Menu utilisateur",

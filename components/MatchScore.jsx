@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useSettings } from "@/lib/settings/SettingsContext";
 import { RefreshCw } from "lucide-react";
 
 export default function MatchScore({
@@ -20,6 +21,7 @@ export default function MatchScore({
   optimiseStatus = "idle"
 }) {
   const { t } = useLanguage();
+  const { settings } = useSettings();
   const [isHovered, setIsHovered] = React.useState(false);
   const [showSuccessEffect, setShowSuccessEffect] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
@@ -118,8 +120,8 @@ export default function MatchScore({
   const shouldShowLoading = (isActuallyLoading && !isStuckLoading) || isDelayedLoading;
 
 
-  // Afficher le composant uniquement si le CV a une analyse d'offre d'emploi en base
-  if (!hasExtractedJobOffer || !sourceValue) {
+  // Afficher le composant uniquement si le CV a une analyse d'offre d'emploi en base ET si la feature est activée
+  if (!hasExtractedJobOffer || !sourceValue || !settings.feature_match_score) {
     return null;
   }
 

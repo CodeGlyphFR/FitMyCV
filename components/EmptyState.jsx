@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useSettings } from "@/lib/settings/SettingsContext";
 import { ANALYSIS_OPTIONS } from "@/lib/i18n/cvLabels";
 
 export default function EmptyState() {
   const router = useRouter();
   const { data: session } = useSession();
   const { t } = useLanguage();
+  const { settings } = useSettings();
   const [openPdfImport, setOpenPdfImport] = React.useState(false);
   const [pdfFile, setPdfFile] = React.useState(null);
   const [pdfAnalysisLevel, setPdfAnalysisLevel] = React.useState("medium");
@@ -346,62 +348,66 @@ export default function EmptyState() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className={`grid ${(settings.feature_import && settings.feature_manual_cv) ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-6 ${!(settings.feature_import || settings.feature_manual_cv) ? 'hidden' : ''}`}>
           {/* Import CV Card */}
-          <button
-            onClick={() => setOpenPdfImport(true)}
-            className="group bg-white/15 backdrop-blur-xl rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/30 hover:border-blue-400 hover:bg-blue-500/25 text-left"
-          >
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <Image
-                  src="/icons/import.png"
-                  alt="Import"
-                  width={40}
-                  height={40}
-                  className="w-10 h-10"
-                  priority
-                />
+          {settings.feature_import && (
+            <button
+              onClick={() => setOpenPdfImport(true)}
+              className="group bg-white/15 backdrop-blur-xl rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/30 hover:border-blue-400 hover:bg-blue-500/25 text-left"
+            >
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <Image
+                    src="/icons/import.png"
+                    alt="Import"
+                    width={40}
+                    height={40}
+                    className="w-10 h-10"
+                    priority
+                  />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-semibold text-white drop-shadow-lg mb-2">
+                    {t("emptyState.importCard.title")}
+                  </h2>
+                  <p className="text-slate-100 drop-shadow">
+                    {t("emptyState.importCard.description")}
+                  </p>
+                </div>
+                <div className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg group-hover:bg-blue-600 transition-colors shadow-md">
+                  {t("emptyState.importCard.button")}
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl font-semibold text-white drop-shadow-lg mb-2">
-                  {t("emptyState.importCard.title")}
-                </h2>
-                <p className="text-slate-100 drop-shadow">
-                  {t("emptyState.importCard.description")}
-                </p>
-              </div>
-              <div className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg group-hover:bg-blue-600 transition-colors shadow-md">
-                {t("emptyState.importCard.button")}
-              </div>
-            </div>
-          </button>
+            </button>
+          )}
 
           {/* Create New CV Card */}
-          <button
-            onClick={() => {
-              resetNewCvForm();
-              setOpenNewCv(true);
-            }}
-            className="group bg-white/15 backdrop-blur-xl rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/30 hover:border-emerald-400 hover:bg-emerald-500/25 text-left"
-          >
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <span className="text-4xl">✨</span>
+          {settings.feature_manual_cv && (
+            <button
+              onClick={() => {
+                resetNewCvForm();
+                setOpenNewCv(true);
+              }}
+              className="group bg-white/15 backdrop-blur-xl rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/30 hover:border-emerald-400 hover:bg-emerald-500/25 text-left"
+            >
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-4xl">✨</span>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-semibold text-white drop-shadow-lg mb-2">
+                    {t("emptyState.createCard.title")}
+                  </h2>
+                  <p className="text-slate-100 drop-shadow">
+                    {t("emptyState.createCard.description")}
+                  </p>
+                </div>
+                <div className="mt-4 px-6 py-2 bg-emerald-500 text-white rounded-lg group-hover:bg-emerald-600 transition-colors shadow-md">
+                  {t("emptyState.createCard.button")}
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl font-semibold text-white drop-shadow-lg mb-2">
-                  {t("emptyState.createCard.title")}
-                </h2>
-                <p className="text-slate-100 drop-shadow">
-                  {t("emptyState.createCard.description")}
-                </p>
-              </div>
-              <div className="mt-4 px-6 py-2 bg-emerald-500 text-white rounded-lg group-hover:bg-emerald-600 transition-colors shadow-md">
-                {t("emptyState.createCard.button")}
-              </div>
-            </div>
-          </button>
+            </button>
+          )}
         </div>
 
         <div className="mt-12 text-center">

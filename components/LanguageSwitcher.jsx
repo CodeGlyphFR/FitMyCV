@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useSettings } from "@/lib/settings/SettingsContext";
 
 const languages = [
   { code: "fr", flag: "/icons/fr.svg", label: "Français" },
@@ -11,10 +12,16 @@ const languages = [
 
 export default function LanguageSwitcher() {
   const { language, changeLanguage } = useLanguage();
+  const { settings } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
   const currentLanguage = languages.find((lang) => lang.code === language);
+
+  // Ne pas afficher si la feature est désactivée
+  if (!settings.feature_language_switcher) {
+    return null;
+  }
 
   // Close dropdown when clicking outside
   useEffect(() => {

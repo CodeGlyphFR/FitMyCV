@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import Modal from "@/components/ui/Modal";
 import { ANALYSIS_OPTIONS } from "@/lib/i18n/cvLabels";

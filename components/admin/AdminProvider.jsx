@@ -3,11 +3,13 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useSettings } from "@/lib/settings/SettingsContext";
 var Ctx = React.createContext(null);
 export function useAdmin(){ var c=React.useContext(Ctx); if(!c) throw new Error("useAdmin outside"); return c; }
 export default function AdminProvider(props){
   const { data: session } = useSession();
   const { t } = useLanguage();
+  const { settings } = useSettings();
   const [editing, setEditingState] = React.useState(false);
   const [currentFile, setCurrentFile] = React.useState("");
   const [hasAnyCv, setHasAnyCv] = React.useState(false);
@@ -85,7 +87,7 @@ export default function AdminProvider(props){
   return (
     <Ctx.Provider value={{ editing, setEditing, setCurrentFile }}>
       {props.children}
-      {session?.user?.id && pathname !== "/admin/new" && hasAnyCv ? (
+      {session?.user?.id && pathname !== "/admin/new" && hasAnyCv && settings.feature_edit_mode ? (
         <button
           onClick={()=>setEditing(!editing)}
           className={`

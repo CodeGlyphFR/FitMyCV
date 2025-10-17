@@ -9,6 +9,7 @@ import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import FormRow from "./ui/FormRow";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useSettings } from "@/lib/settings/SettingsContext";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
 
@@ -18,6 +19,7 @@ export default function Header(props){
   const { editing } = useAdmin();
   const { mutate } = useMutate();
   const { t, language } = useLanguage();
+  const { settings } = useSettings();
   const [open, setOpen] = React.useState(false);
   const [isTranslateDropdownOpen, setIsTranslateDropdownOpen] = React.useState(false);
   const [sourceInfo, setSourceInfo] = React.useState({ sourceType: null, sourceValue: null });
@@ -521,7 +523,7 @@ export default function Header(props){
       </div>
 
       {/* Bouton d'édition du header en mode édition */}
-      {editing ? (
+      {(editing && settings.feature_edit_mode) ? (
         <button
           onClick={()=>setOpen(true)}
           className="no-print absolute bottom-3 right-3 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-xs hover:bg-white/30 hover:shadow-xl transition-all duration-200"
@@ -532,7 +534,7 @@ export default function Header(props){
       ) : null}
 
       {/* Bouton de traduction en bas à droite */}
-      {!editing ? (
+      {(!editing && settings.feature_translate) ? (
         <div className="no-print absolute bottom-3 right-3 flex items-center gap-2">
           {/* Bouton de traduction avec dropdown */}
           <div

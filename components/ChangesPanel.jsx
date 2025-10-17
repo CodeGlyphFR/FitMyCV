@@ -3,11 +3,18 @@ import React, { useState } from "react";
 import Modal from "./ui/Modal";
 import { useHighlight } from "./HighlightProvider";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useSettings } from "@/lib/settings/SettingsContext";
 
 export default function ChangesPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const { changesMade, isImprovedCv } = useHighlight();
   const { language } = useLanguage();
+  const { settings } = useSettings();
+
+  // Ne pas afficher si la feature est désactivée
+  if (!settings.feature_history) {
+    return null;
+  }
 
   // Ne pas afficher si ce n'est pas un CV amélioré ou s'il n'y a pas de changements
   if (!isImprovedCv || !changesMade || changesMade.length === 0) {

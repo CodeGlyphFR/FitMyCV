@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useSettings } from "@/lib/settings/SettingsContext";
 import { RefreshCw } from "lucide-react";
 
 export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
@@ -12,6 +13,7 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
   const [animatedScore, setAnimatedScore] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
   const { t, language } = useLanguage();
+  const { settings } = useSettings();
   const animationRef = useRef(null);
 
   // Fonction pour charger les données
@@ -227,8 +229,13 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
     }
   }, [isOpen, cvData?.matchScore]);
 
-  // Condition ultime d'affichage: afficher uniquement si scoreBreakdown existe dans la base
+  // Condition ultime d'affichage: afficher uniquement si scoreBreakdown existe dans la base ET si la feature est activée
   if (!loading && cvData && !cvData.scoreBreakdown) {
+    return null;
+  }
+
+  // Ne pas afficher si la feature optimize est désactivée
+  if (!settings.feature_optimize) {
     return null;
   }
 

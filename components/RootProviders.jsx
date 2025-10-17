@@ -9,15 +9,17 @@ import NotificationContainer from "@/components/notifications/NotificationContai
 import BackgroundTasksProvider from "@/components/BackgroundTasksProvider";
 import RealtimeRefreshProvider from "@/components/RealtimeRefreshProvider";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
+import { SettingsProvider } from "@/lib/settings/SettingsContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
-export default function RootProviders({ session, children }){
+export default function RootProviders({ session, initialSettings, children }){
   const pathname = usePathname();
   const isAuthPage = pathname === "/auth";
 
   return (
     <SessionProvider session={session}>
-      <LanguageProvider>
+      <SettingsProvider initialSettings={initialSettings}>
+        <LanguageProvider>
         <AdminProvider>
           <NotificationProvider>
             {isAuthPage ? (
@@ -37,7 +39,8 @@ export default function RootProviders({ session, children }){
             )}
           </NotificationProvider>
         </AdminProvider>
-      </LanguageProvider>
+        </LanguageProvider>
+      </SettingsProvider>
     </SessionProvider>
   );
 }
