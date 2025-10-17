@@ -86,7 +86,6 @@ export default async function RootLayout(props){
         <RootProviders session={session} initialSettings={initialSettings}>
           <GlobalBackground />
           <div className="relative z-10 flex flex-col min-h-screen">
-            <LoadingOverlay />
             {/* TopBar sans wrapper pour éviter l'espace vide */}
             <ConditionalTopBar />
             <ConditionalMainWrapper
@@ -101,6 +100,7 @@ export default async function RootLayout(props){
           </div>
           <CookieBanner />
           <FeedbackButton />
+          <LoadingOverlay />
         </RootProviders>
       </body>
     </html>

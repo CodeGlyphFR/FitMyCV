@@ -1,11 +1,52 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { usePathname } from "next/navigation";
 
 export default function LoadingOverlay() {
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
+
+  // useLayoutEffect pour appliquer les styles AVANT le paint (synchrone)
+  useLayoutEffect(() => {
+    // Bloquer le scroll du body pendant le loading - appliqué immédiatement
+    if (isLoading) {
+      const htmlElement = document.documentElement;
+      const bodyElement = document.body;
+
+      // Bloquer html et body
+      htmlElement.style.overflow = 'hidden';
+      htmlElement.style.position = 'fixed';
+      htmlElement.style.width = '100%';
+      htmlElement.style.height = '100%';
+      htmlElement.style.top = '0';
+      htmlElement.style.left = '0';
+
+      bodyElement.style.overflow = 'hidden';
+      bodyElement.style.position = 'fixed';
+      bodyElement.style.width = '100%';
+      bodyElement.style.height = '100%';
+      bodyElement.style.top = '0';
+      bodyElement.style.left = '0';
+    } else {
+      const htmlElement = document.documentElement;
+      const bodyElement = document.body;
+
+      htmlElement.style.overflow = '';
+      htmlElement.style.position = '';
+      htmlElement.style.width = '';
+      htmlElement.style.height = '';
+      htmlElement.style.top = '';
+      htmlElement.style.left = '';
+
+      bodyElement.style.overflow = '';
+      bodyElement.style.position = '';
+      bodyElement.style.width = '';
+      bodyElement.style.height = '';
+      bodyElement.style.top = '';
+      bodyElement.style.left = '';
+    }
+  }, [isLoading]);
 
   // IMPORTANT: useEffect doit être appelé avant tout return conditionnel
   useEffect(() => {
@@ -72,24 +113,45 @@ export default function LoadingOverlay() {
     return () => {
       clearTimeout(maxTimeout);
     };
-  }, [pathname]);
+  }, [pathname, isLoading]);
 
   if (!isLoading) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-white/80 backdrop-blur-md transition-opacity duration-300"
       style={{
+        position: 'fixed',
+        top: '-100px',
+        left: '-100px',
+        right: '-100px',
+        bottom: '-100px',
+        width: 'calc(100vw + 200px)',
+        height: 'calc(100vh + 200px)',
+        maxHeight: 'calc(100dvh + 200px)',
+        backgroundColor: 'rgb(2, 6, 23)',
         opacity: isLoading ? 1 : 0,
-        height: '100vh',
-        height: '100dvh',
-        paddingBottom: 'env(safe-area-inset-bottom)'
+        zIndex: 999999999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'opacity 300ms',
+        overflow: 'hidden',
+        overscrollBehavior: 'none',
+        WebkitOverflowScrolling: 'touch',
       }}
     >
-      <div className="flex flex-col items-center gap-4">
-        {/* Loading spinner */}
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
-        <p className="text-sm text-gray-600">Chargement...</p>
+      <div className="flex flex-col items-center gap-6">
+        {/* Loading spinner with elegant animation */}
+        <div className="relative h-16 w-16">
+          {/* Outer ring */}
+          <div className="absolute inset-0 rounded-full border-4 border-white/20"></div>
+          {/* Spinning ring */}
+          <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-white border-r-white"></div>
+          {/* Inner pulsing dot */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-3 w-3 rounded-full bg-white animate-pulse"></div>
+          </div>
+        </div>
       </div>
     </div>
   );
