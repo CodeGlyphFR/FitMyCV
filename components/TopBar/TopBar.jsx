@@ -483,9 +483,12 @@ export default function TopBar() {
           position: '-webkit-sticky',
           paddingTop: 'env(safe-area-inset-top)',
           marginTop: 'calc(-1 * env(safe-area-inset-top))',
-          transform: state.isScrollingDown ? 'translateY(-100%)' : 'translateY(0)',
-          transition: 'transform 0.15s ease-out',
-          willChange: 'transform',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden',
+          WebkitPerspective: 1000,
+          perspective: 1000,
+          WebkitTransform: 'translate3d(0, 0, 0)',
+          transform: 'translate3d(0, 0, 0)',
           pointerEvents: 'auto'
         }}
       >
@@ -515,9 +518,12 @@ export default function TopBar() {
           position: '-webkit-sticky',
           paddingTop: 'env(safe-area-inset-top)',
           marginTop: 'calc(-1 * env(safe-area-inset-top))',
-          transform: state.isScrollingDown ? 'translateY(-100%)' : 'translateY(0)',
-          transition: 'transform 0.15s ease-out',
-          willChange: 'transform',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden',
+          WebkitPerspective: 1000,
+          perspective: 1000,
+          WebkitTransform: 'translate3d(0, 0, 0)',
+          transform: 'translate3d(0, 0, 0)',
           pointerEvents: 'auto'
         }}
       >
