@@ -9,6 +9,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
 import AuthBackground from "./AuthBackground";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 const getProviders = (t) => [
   { id: "google", label: t("auth.continueWithGoogle"), image: "/icons/g_logo.png", width: 28, height: 28 },
@@ -19,6 +20,7 @@ const getProviders = (t) => [
 export default function AuthScreen({ initialMode = "login", providerAvailability = {}, registrationEnabled = true }){
   const router = useRouter();
   const { t } = useLanguage();
+  const { executeRecaptcha } = useRecaptcha();
   const [mode, setMode] = React.useState(initialMode);
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -80,10 +82,18 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           return;
         }
 
+        // Obtenir le token reCAPTCHA (vérification côté serveur uniquement)
+        const recaptchaToken = await executeRecaptcha('signup');
+        if (!recaptchaToken) {
+          setError(t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.");
+          setLoading(false);
+          return;
+        }
+
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ firstName, lastName, email, password }),
+          body: JSON.stringify({ firstName, lastName, email, password, recaptchaToken }),
         });
 
         if (!res.ok){
@@ -336,7 +346,10 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         </div>
 
         <div className="text-center text-xs text-slate-200 drop-shadow">
-          {t("auth.termsText")}
+          Ce site est protégé par reCAPTCHA. Consultez notre{" "}
+          <a href="/privacy" className="text-emerald-300 underline hover:text-emerald-200 transition-colors">
+            politique de confidentialité
+          </a>.
         </div>
           </div>
         </div>

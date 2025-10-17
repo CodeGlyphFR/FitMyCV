@@ -12,6 +12,51 @@ export async function POST(req){
     }
 
     var body=await req.json(); var full_name=(body.full_name||"").trim(); var current_title=(body.current_title||"").trim(); var email=(body.email||"").trim();
+    var recaptchaToken=body.recaptchaToken;
+
+    // Vérification reCAPTCHA (optionnelle pour compatibilité, mais recommandée)
+    if (recaptchaToken) {
+      try {
+        const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+        if (!secretKey) {
+          console.error('[create-cv] RECAPTCHA_SECRET_KEY not configured');
+          return NextResponse.json({ error: "Configuration serveur manquante" }, { status: 500 });
+        }
+
+        const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify';
+        const verificationData = new URLSearchParams({
+          secret: secretKey,
+          response: recaptchaToken,
+        });
+
+        const verificationResponse = await fetch(verificationUrl, {
+          method: 'POST',
+          body: verificationData,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        });
+
+        const verificationResult = await verificationResponse.json();
+
+        if (!verificationResult.success || (verificationResult.score && verificationResult.score < 0.5)) {
+          console.warn('[create-cv] reCAPTCHA verification failed', {
+            success: verificationResult.success,
+            score: verificationResult.score,
+          });
+          return NextResponse.json(
+            { error: "Échec de la vérification anti-spam. Veuillez réessayer." },
+            { status: 403 }
+          );
+        }
+      } catch (error) {
+        console.error('[create-cv] Error verifying reCAPTCHA:', error);
+        return NextResponse.json(
+          { error: "Erreur lors de la vérification anti-spam" },
+          { status: 500 }
+        );
+      }
+    }
     var now=new Date();
     var isoNow=now.toISOString();
     var generated_at=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");

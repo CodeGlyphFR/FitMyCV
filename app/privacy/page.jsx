@@ -167,7 +167,14 @@ export default function PrivacyPage() {
             <li><strong>Protection CSRF</strong> : tokens anti-falsification</li>
             <li><strong>Cookies sécurisés</strong> : HttpOnly, Secure, SameSite</li>
             <li><strong>Authentification sécurisée</strong> : JWT, session tokens</li>
+            <li><strong>Protection anti-spam</strong> : Google reCAPTCHA v3 pour prévenir les abus</li>
           </ul>
+
+          <div className="mt-3 p-3 bg-sky-500/20 backdrop-blur-sm rounded">
+            <p className="text-sm text-white drop-shadow">
+              <strong>🛡️ Protection reCAPTCHA :</strong> Ce site est protégé par reCAPTCHA et la <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-emerald-300 underline hover:text-emerald-200 transition-colors">Politique de confidentialité</a> et les <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="text-emerald-300 underline hover:text-emerald-200 transition-colors">Conditions d'utilisation</a> de Google s'appliquent.
+            </p>
+          </div>
         </section>
 
         <section className="mb-4 bg-white/15 backdrop-blur-xl p-4 rounded-lg shadow-2xl">

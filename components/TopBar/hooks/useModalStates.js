@@ -1,10 +1,12 @@
 import React from "react";
 import { getAnalysisOption } from "../utils/cvUtils";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 /**
  * Hook pour gérer tous les états de modals et UI
  */
 export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, refreshTasks, addNotification, localDeviceId, reload, router }) {
+  const { executeRecaptcha } = useRecaptcha();
   // Delete modal
   const [openDelete, setOpenDelete] = React.useState(false);
 
@@ -57,10 +59,23 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     closePdfImport();
 
     try {
+      // Obtenir le token reCAPTCHA (vérification côté serveur uniquement)
+      const recaptchaToken = await executeRecaptcha('import_pdf');
+      if (!recaptchaToken) {
+        removeOptimisticTask(optimisticTaskId);
+        addNotification({
+          type: "error",
+          message: t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.",
+          duration: 4000,
+        });
+        return;
+      }
+
       const formData = new FormData();
       formData.append("pdfFile", pdfFile);
       formData.append("analysisLevel", selectedPdfAnalysis.id);
       formData.append("model", selectedPdfAnalysis.model);
+      formData.append("recaptchaToken", recaptchaToken);
       if (localDeviceId) {
         formData.append("deviceId", localDeviceId);
       }
@@ -107,13 +122,22 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     setNewCvBusy(true);
     setNewCvError(null);
     try {
+      // Obtenir le token reCAPTCHA (vérification côté serveur uniquement)
+      const recaptchaToken = await executeRecaptcha('create_cv');
+      if (!recaptchaToken) {
+        setNewCvError(t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.");
+        setNewCvBusy(false);
+        return;
+      }
+
       const res = await fetch("/api/cvs/create", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           full_name: trimmedName,
           current_title: trimmedTitle,
-          email: newCvEmail.trim()
+          email: newCvEmail.trim(),
+          recaptchaToken: recaptchaToken
         }),
       });
       const data = await res.json();
