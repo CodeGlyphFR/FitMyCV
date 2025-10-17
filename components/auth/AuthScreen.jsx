@@ -346,7 +346,10 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         </div>
 
         <div className="text-center text-xs text-slate-200 drop-shadow">
-          {t("auth.termsText")}
+          Ce site est protégé par reCAPTCHA. Consultez notre{" "}
+          <a href="/privacy" className="text-emerald-300 underline hover:text-emerald-200 transition-colors">
+            politique de confidentialité
+          </a>.
         </div>
           </div>
         </div>
