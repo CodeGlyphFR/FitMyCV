@@ -93,7 +93,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ firstName, lastName, email, password, recaptchaToken: recaptchaResult.success }),
+          body: JSON.stringify({ firstName, lastName, email, password, recaptchaToken: recaptchaResult.token }),
         });
 
         if (!res.ok){

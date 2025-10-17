@@ -75,7 +75,7 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
       formData.append("pdfFile", pdfFile);
       formData.append("analysisLevel", selectedPdfAnalysis.id);
       formData.append("model", selectedPdfAnalysis.model);
-      formData.append("recaptchaToken", recaptchaResult.success);
+      formData.append("recaptchaToken", recaptchaResult.token);
       if (localDeviceId) {
         formData.append("deviceId", localDeviceId);
       }
@@ -137,7 +137,7 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
           full_name: trimmedName,
           current_title: trimmedTitle,
           email: newCvEmail.trim(),
-          recaptchaToken: recaptchaResult.success
+          recaptchaToken: recaptchaResult.token
         }),
       });
       const data = await res.json();

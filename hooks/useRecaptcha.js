@@ -67,14 +67,16 @@ export function useRecaptcha() {
   /**
    * Exécute et vérifie reCAPTCHA en une seule étape
    * @param {string} action - L'action effectuée
-   * @returns {Promise<{success: boolean, score?: number, error?: string}>}
+   * @returns {Promise<{success: boolean, score?: number, token?: string, error?: string}>}
    */
   const executeAndVerify = useCallback(async (action = 'submit') => {
     const token = await executeRecaptcha(action);
     if (!token) {
       return { success: false, error: 'Failed to get reCAPTCHA token' };
     }
-    return await verifyRecaptcha(token, action);
+    const result = await verifyRecaptcha(token, action);
+    // Retourner le token en plus du résultat de vérification
+    return { ...result, token };
   }, [executeRecaptcha, verifyRecaptcha]);
 
   return {

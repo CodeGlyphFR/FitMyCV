@@ -214,7 +214,7 @@ export function useGeneratorModal({
 
       const formData = new FormData();
       formData.append("links", JSON.stringify(cleanedLinks));
-      formData.append("recaptchaToken", recaptchaResult.success);
+      formData.append("recaptchaToken", recaptchaResult.token);
 
       if (!isTemplateCreation) {
         const baseCvName = generatorBaseItem?.displayTitle || generatorBaseItem?.title || generatorBaseFile;
