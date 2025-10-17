@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAdmin } from "@/components/admin/AdminProvider";
@@ -537,12 +536,10 @@ export default function TopBar() {
               className="h-8 w-8 flex items-center justify-center rounded-full border border-white/40 bg-white/20 backdrop-blur-sm hover:bg-white/30 hover:shadow-xl transition-all duration-200"
               aria-label={t("topbar.userMenu")}
             >
-              <Image
+              <img
                 src="/icons/user.png"
                 alt={t("topbar.userMenu")}
-                width={20}
-                height={20}
-                className="object-contain "
+                className="h-5 w-5"
               />
             </button>
           </div>
