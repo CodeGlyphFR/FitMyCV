@@ -8,6 +8,7 @@ import { SITE_TITLE } from "@/lib/site";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
 import AuthBackground from "./AuthBackground";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 const getProviders = (t) => [
   { id: "google", label: t("auth.continueWithGoogle"), image: "/icons/g_logo.png", width: 28, height: 28 },
@@ -260,10 +261,9 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
 
           <div className="space-y-2">
             <label htmlFor="password" className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("auth.password")}</label>
-            <input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               value={password}
               onChange={event => setPassword(event.target.value)}
               className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
@@ -276,10 +276,9 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           {isRegister ? (
             <div className="space-y-2">
               <label htmlFor="confirmPassword" className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("auth.confirmPassword")}</label>
-              <input
+              <PasswordInput
                 id="confirmPassword"
                 name="confirmPassword"
-                type="password"
                 value={confirmPassword}
                 onChange={event => setConfirmPassword(event.target.value)}
                 className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"

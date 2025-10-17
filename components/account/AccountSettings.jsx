@@ -4,6 +4,7 @@ import React from "react";
 import { signOut } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import PasswordStrengthIndicator from "@/components/auth/PasswordStrengthIndicator";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function AccountSettings({ user, isOAuthUser = false, oauthProviders = [] }){
   const searchParams = useSearchParams();
@@ -194,23 +195,27 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
         <form onSubmit={updatePassword} className="space-y-4">
           <div className="space-y-2">
             <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Mot de passe actuel</label>
-            <input
-              type="password"
+            <PasswordInput
+              id="currentPassword"
+              name="currentPassword"
               value={currentPassword}
               onChange={event => setCurrentPassword(event.target.value)}
               className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
               placeholder="••••••••"
+              autoComplete="current-password"
             />
             <p className="text-xs text-white/60 drop-shadow">Laissez vide si vous n'avez jamais défini de mot de passe.</p>
           </div>
           <div className="space-y-2">
             <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Nouveau mot de passe</label>
-            <input
-              type="password"
+            <PasswordInput
+              id="newPassword"
+              name="newPassword"
               value={newPassword}
               onChange={event => setNewPassword(event.target.value)}
               className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
               placeholder="••••••••"
+              autoComplete="new-password"
             />
             {/* Indicateur de force du mot de passe (adapté pour fond blanc) */}
             {newPassword && (
@@ -260,12 +265,14 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
           </div>
           <div className="space-y-2">
             <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Confirmation</label>
-            <input
-              type="password"
+            <PasswordInput
+              id="confirmPassword"
+              name="confirmPassword"
               value={confirmPassword}
               onChange={event => setConfirmPassword(event.target.value)}
               className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
               placeholder="••••••••"
+              autoComplete="new-password"
             />
           </div>
           {passwordError ? <div className="rounded-lg border-2 border-red-400/50 bg-red-500/20 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow">{passwordError}</div> : null}
@@ -288,12 +295,14 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
         <form onSubmit={deleteAccount} className="space-y-3">
           <div className="space-y-1">
             <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Mot de passe</label>
-            <input
-              type="password"
+            <PasswordInput
+              id="deletePassword"
+              name="deletePassword"
               value={deletePassword}
               onChange={event => setDeletePassword(event.target.value)}
               className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-red-400 focus:ring-2 focus:ring-red-400/50 focus:outline-none"
               placeholder="••••••••"
+              autoComplete="current-password"
             />
           </div>
           {deleteError ? (
