@@ -55,31 +55,31 @@ export async function POST(request) {
         where: { id: userId },
         select: {
           matchScoreRefreshCount: true,
-          matchScoreFirstRefreshAt: true,
+          tokenLastUsage: true,
         },
       });
 
       let refreshCount = user?.matchScoreRefreshCount || 0;
-      let firstRefreshAt = user?.matchScoreFirstRefreshAt;
+      let tokenLastUsage = user?.tokenLastUsage;
 
       // Reset UNIQUEMENT si tokens à 0 ET 24h écoulées
-      if (refreshCount === 0 && firstRefreshAt && firstRefreshAt < oneDayAgo) {
+      if (refreshCount === 0 && tokenLastUsage && tokenLastUsage < oneDayAgo) {
         await prisma.user.update({
           where: { id: userId },
           data: {
             matchScoreRefreshCount: TOKEN_LIMIT,
-            matchScoreFirstRefreshAt: null,
+            tokenLastUsage: null,
           },
         });
         refreshCount = TOKEN_LIMIT;
-        firstRefreshAt = null;
+        tokenLastUsage = null;
         console.log(`[match-score] ✅ Reset des tokens après 24h: ${TOKEN_LIMIT}/${TOKEN_LIMIT}`);
       }
 
       // Vérifier si plus de tokens disponibles (GLOBAL pour tous les CVs)
       if (refreshCount === 0) {
-        const timeUntilReset = firstRefreshAt
-          ? new Date(firstRefreshAt.getTime() + 24 * 60 * 60 * 1000)
+        const timeUntilReset = tokenLastUsage
+          ? new Date(tokenLastUsage.getTime() + 24 * 60 * 60 * 1000)
           : new Date();
         const totalMinutesLeft = Math.ceil((timeUntilReset - now) / (60 * 1000));
         const hoursLeft = Math.floor(totalMinutesLeft / 60);
@@ -153,7 +153,7 @@ export async function POST(request) {
 
     let finalRefreshCount = 0;
 
-    // Si c'est un refresh manuel, décrémenter le compteur GLOBAL de l'utilisateur
+    // Si c'est un refresh manuel, décrémenter le compteur GLOBAL et mettre à jour tokenLastUsage
     if (!isAutomatic) {
       const now = new Date();
 
@@ -162,29 +162,18 @@ export async function POST(request) {
         where: { id: userId },
         select: {
           matchScoreRefreshCount: true,
-          matchScoreFirstRefreshAt: true,
         },
       });
 
-      // Si c'est la première utilisation ever, initialiser firstRefreshAt
-      if (!user?.matchScoreFirstRefreshAt) {
-        await prisma.user.update({
-          where: { id: userId },
-          data: {
-            matchScoreFirstRefreshAt: now,
-            matchScoreRefreshCount: TOKEN_LIMIT - 1,
-          },
-        });
-        finalRefreshCount = TOKEN_LIMIT - 1;
-      } else {
-        await prisma.user.update({
-          where: { id: userId },
-          data: {
-            matchScoreRefreshCount: user.matchScoreRefreshCount - 1,
-          },
-        });
-        finalRefreshCount = user.matchScoreRefreshCount - 1;
-      }
+      // TOUJOURS mettre à jour tokenLastUsage à chaque utilisation
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          tokenLastUsage: now,
+          matchScoreRefreshCount: user.matchScoreRefreshCount - 1,
+        },
+      });
+      finalRefreshCount = user.matchScoreRefreshCount - 1;
 
       console.log(`[match-score] ✅ Calcul réussi - Tokens restants: ${finalRefreshCount}/${TOKEN_LIMIT}`);
     } else {
@@ -256,7 +245,7 @@ export async function GET(request) {
       where: { id: userId },
       select: {
         matchScoreRefreshCount: true,
-        matchScoreFirstRefreshAt: true,
+        tokenLastUsage: true,
       },
     });
 
@@ -265,11 +254,11 @@ export async function GET(request) {
     let minutesUntilReset = 0;
     let refreshCount = user?.matchScoreRefreshCount || 0;
 
-    if (user?.matchScoreFirstRefreshAt && user.matchScoreFirstRefreshAt > oneDayAgo) {
+    if (user?.tokenLastUsage && user.tokenLastUsage > oneDayAgo) {
       // On est dans la fenêtre de 24h
       if (refreshCount === 0) {
         canRefresh = false;
-        const resetTime = new Date(user.matchScoreFirstRefreshAt.getTime() + 24 * 60 * 60 * 1000);
+        const resetTime = new Date(user.tokenLastUsage.getTime() + 24 * 60 * 60 * 1000);
         const totalMinutesLeft = Math.ceil((resetTime - now) / (60 * 1000));
         hoursUntilReset = Math.floor(totalMinutesLeft / 60);
         minutesUntilReset = totalMinutesLeft % 60;

@@ -241,7 +241,7 @@ export async function POST(request) {
                 select: { matchScoreRefreshCount: true }
               });
 
-              // Incrémenter le compteur de 1 - Ne JAMAIS toucher à matchScoreFirstRefreshAt
+              // Incrémenter le compteur de 1 - Ne JAMAIS toucher à tokenLastUsage
               // Ne PAS limiter à TOKEN_LIMIT pour ne pas "voler" des tokens en cas de bug
               const newCount = (user?.matchScoreRefreshCount || 0) + 1;
 
@@ -417,7 +417,7 @@ export async function DELETE(request) {
               select: { matchScoreRefreshCount: true }
             });
 
-            // Incrémenter le compteur de 1 - Ne JAMAIS toucher à matchScoreFirstRefreshAt
+            // Incrémenter le compteur de 1 - Ne JAMAIS toucher à tokenLastUsage
             // Ne PAS limiter à TOKEN_LIMIT pour ne pas "voler" des tokens en cas de bug
             const newCount = (user?.matchScoreRefreshCount || 0) + 1;
 

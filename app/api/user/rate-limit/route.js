@@ -20,7 +20,7 @@ export async function GET(request) {
       where: { id: userId },
       select: {
         matchScoreRefreshCount: true,
-        matchScoreFirstRefreshAt: true,
+        tokenLastUsage: true,
       },
     });
 
@@ -30,23 +30,23 @@ export async function GET(request) {
     let refreshCount = user?.matchScoreRefreshCount || 0;
 
     // Vérifier si on doit reset les tokens (UNIQUEMENT après 24h)
-    if (refreshCount === 0 && user?.matchScoreFirstRefreshAt && user.matchScoreFirstRefreshAt < oneDayAgo) {
+    if (refreshCount === 0 && user?.tokenLastUsage && user.tokenLastUsage < oneDayAgo) {
       // Reset des tokens après 24h
       await prisma.user.update({
         where: { id: userId },
         data: {
           matchScoreRefreshCount: TOKEN_LIMIT,
-          matchScoreFirstRefreshAt: null,
+          tokenLastUsage: null,
         },
       });
       refreshCount = TOKEN_LIMIT;
       canRefresh = true;
       console.log(`[rate-limit] ✅ Reset des tokens après 24h: ${TOKEN_LIMIT}/${TOKEN_LIMIT}`);
-    } else if (user?.matchScoreFirstRefreshAt && user.matchScoreFirstRefreshAt > oneDayAgo) {
+    } else if (user?.tokenLastUsage && user.tokenLastUsage > oneDayAgo) {
       // On est dans la fenêtre de 24h
       if (refreshCount === 0) {
         canRefresh = false;
-        const resetTime = new Date(user.matchScoreFirstRefreshAt.getTime() + 24 * 60 * 60 * 1000);
+        const resetTime = new Date(user.tokenLastUsage.getTime() + 24 * 60 * 60 * 1000);
         const totalMinutesLeft = Math.ceil((resetTime - now) / (60 * 1000));
         hoursUntilReset = Math.floor(totalMinutesLeft / 60);
         minutesUntilReset = totalMinutesLeft % 60;

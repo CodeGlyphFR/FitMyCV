@@ -71,31 +71,31 @@ export async function POST(request) {
         where: { id: userId },
         select: {
           matchScoreRefreshCount: true,
-          matchScoreFirstRefreshAt: true,
+          tokenLastUsage: true,
         },
       });
 
       let refreshCount = user?.matchScoreRefreshCount || 0;
-      let firstRefreshAt = user?.matchScoreFirstRefreshAt;
+      let tokenLastUsage = user?.tokenLastUsage;
 
-      // Reset UNIQUEMENT si tokens à 0 ET 24h écoulées (ou pas de firstRefreshAt)
-      if (refreshCount === 0 && (!firstRefreshAt || firstRefreshAt < oneDayAgo)) {
+      // Reset UNIQUEMENT si tokens à 0 ET 24h écoulées
+      if (refreshCount === 0 && tokenLastUsage && tokenLastUsage < oneDayAgo) {
         await prisma.user.update({
           where: { id: userId },
           data: {
             matchScoreRefreshCount: TOKEN_LIMIT,
-            matchScoreFirstRefreshAt: null,
+            tokenLastUsage: null,
           },
         });
         refreshCount = TOKEN_LIMIT;
-        firstRefreshAt = null;
-        console.log(`[calculate-match-score] ✅ Reset des tokens: ${TOKEN_LIMIT}/${TOKEN_LIMIT}`);
+        tokenLastUsage = null;
+        console.log(`[calculate-match-score] ✅ Reset des tokens après 24h: ${TOKEN_LIMIT}/${TOKEN_LIMIT}`);
       }
 
       // Vérifier si plus de tokens disponibles (GLOBAL pour tous les CVs)
       if (refreshCount === 0) {
-        const timeUntilReset = firstRefreshAt
-          ? new Date(firstRefreshAt.getTime() + 24 * 60 * 60 * 1000)
+        const timeUntilReset = tokenLastUsage
+          ? new Date(tokenLastUsage.getTime() + 24 * 60 * 60 * 1000)
           : new Date();
         const totalMinutesLeft = Math.ceil((timeUntilReset - now) / (60 * 1000));
         const hoursLeft = Math.floor(totalMinutesLeft / 60);
@@ -110,26 +110,15 @@ export async function POST(request) {
         }, { status: 429 });
       }
 
-      // ✅ DÉCRÉMENTER LE COMPTEUR IMMÉDIATEMENT (anti-fraude)
-      // Si la tâche échoue, le job l'incrémentera pour restituer le token
-      if (!firstRefreshAt || refreshCount === TOKEN_LIMIT) {
-        await prisma.user.update({
-          where: { id: userId },
-          data: {
-            matchScoreFirstRefreshAt: now,
-            matchScoreRefreshCount: TOKEN_LIMIT - 1,
-          },
-        });
-        console.log(`[calculate-match-score] ✅ Token consommé immédiatement: ${TOKEN_LIMIT - 1}/${TOKEN_LIMIT} restants`);
-      } else {
-        await prisma.user.update({
-          where: { id: userId },
-          data: {
-            matchScoreRefreshCount: refreshCount - 1,
-          },
-        });
-        console.log(`[calculate-match-score] ✅ Token consommé immédiatement: ${refreshCount - 1}/${TOKEN_LIMIT} restants`);
-      }
+      // ✅ DÉCRÉMENTER LE COMPTEUR IMMÉDIATEMENT et TOUJOURS mettre à jour tokenLastUsage
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          tokenLastUsage: now,
+          matchScoreRefreshCount: refreshCount - 1,
+        },
+      });
+      console.log(`[calculate-match-score] ✅ Token consommé immédiatement: ${refreshCount - 1}/${TOKEN_LIMIT} restants`);
     }
 
     const jobOfferUrl = cvRecord.sourceValue;
