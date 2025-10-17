@@ -19,7 +19,7 @@ export function useGeneratorModal({
   t,
   addLinksToHistory,
 }) {
-  const { executeAndVerify } = useRecaptcha();
+  const { executeRecaptcha } = useRecaptcha();
   const [openGenerator, setOpenGenerator] = React.useState(false);
   const [linkInputs, setLinkInputs] = React.useState([""]);
   const [fileSelection, setFileSelection] = React.useState([]);
@@ -200,9 +200,9 @@ export function useGeneratorModal({
     closeGenerator();
 
     try {
-      // Vérification reCAPTCHA avant la génération de CV
-      const recaptchaResult = await executeAndVerify('generate_cv');
-      if (!recaptchaResult || !recaptchaResult.success) {
+      // Obtenir le token reCAPTCHA (vérification côté serveur uniquement)
+      const recaptchaToken = await executeRecaptcha('generate_cv');
+      if (!recaptchaToken) {
         removeOptimisticTask(optimisticTaskId);
         addNotification({
           type: "error",
@@ -214,7 +214,7 @@ export function useGeneratorModal({
 
       const formData = new FormData();
       formData.append("links", JSON.stringify(cleanedLinks));
-      formData.append("recaptchaToken", recaptchaResult.token);
+      formData.append("recaptchaToken", recaptchaToken);
 
       if (!isTemplateCreation) {
         const baseCvName = generatorBaseItem?.displayTitle || generatorBaseItem?.title || generatorBaseFile;

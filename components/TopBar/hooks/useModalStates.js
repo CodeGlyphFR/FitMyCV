@@ -6,7 +6,7 @@ import { useRecaptcha } from "@/hooks/useRecaptcha";
  * Hook pour gérer tous les états de modals et UI
  */
 export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, refreshTasks, addNotification, localDeviceId, reload, router }) {
-  const { executeAndVerify } = useRecaptcha();
+  const { executeRecaptcha } = useRecaptcha();
   // Delete modal
   const [openDelete, setOpenDelete] = React.useState(false);
 
@@ -59,9 +59,9 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     closePdfImport();
 
     try {
-      // Vérification reCAPTCHA avant l'import de PDF
-      const recaptchaResult = await executeAndVerify('import_pdf');
-      if (!recaptchaResult || !recaptchaResult.success) {
+      // Obtenir le token reCAPTCHA (vérification côté serveur uniquement)
+      const recaptchaToken = await executeRecaptcha('import_pdf');
+      if (!recaptchaToken) {
         removeOptimisticTask(optimisticTaskId);
         addNotification({
           type: "error",
@@ -75,7 +75,7 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
       formData.append("pdfFile", pdfFile);
       formData.append("analysisLevel", selectedPdfAnalysis.id);
       formData.append("model", selectedPdfAnalysis.model);
-      formData.append("recaptchaToken", recaptchaResult.token);
+      formData.append("recaptchaToken", recaptchaToken);
       if (localDeviceId) {
         formData.append("deviceId", localDeviceId);
       }
@@ -122,9 +122,9 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     setNewCvBusy(true);
     setNewCvError(null);
     try {
-      // Vérification reCAPTCHA avant la création de CV manuel
-      const recaptchaResult = await executeAndVerify('create_cv');
-      if (!recaptchaResult || !recaptchaResult.success) {
+      // Obtenir le token reCAPTCHA (vérification côté serveur uniquement)
+      const recaptchaToken = await executeRecaptcha('create_cv');
+      if (!recaptchaToken) {
         setNewCvError(t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.");
         setNewCvBusy(false);
         return;
@@ -137,7 +137,7 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
           full_name: trimmedName,
           current_title: trimmedTitle,
           email: newCvEmail.trim(),
-          recaptchaToken: recaptchaResult.token
+          recaptchaToken: recaptchaToken
         }),
       });
       const data = await res.json();
