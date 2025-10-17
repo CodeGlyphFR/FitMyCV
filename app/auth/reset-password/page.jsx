@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import AuthBackground from "@/components/auth/AuthBackground";
 import PasswordStrengthIndicator from "@/components/auth/PasswordStrengthIndicator";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -214,10 +215,9 @@ export default function ResetPasswordPage() {
                 <label htmlFor="password" className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">
                   Nouveau mot de passe
                 </label>
-                <input
+                <PasswordInput
                   id="password"
                   name="password"
-                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
@@ -232,10 +232,9 @@ export default function ResetPasswordPage() {
                 <label htmlFor="confirmPassword" className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">
                   Confirmer le mot de passe
                 </label>
-                <input
+                <PasswordInput
                   id="confirmPassword"
                   name="confirmPassword"
-                  type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={loading}
