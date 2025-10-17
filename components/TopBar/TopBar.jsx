@@ -552,7 +552,7 @@ export default function TopBar() {
                 e.stopPropagation();
                 modals.setListOpen((prev) => !prev);
               }}
-              className={`w-full min-w-0 rounded-lg border backdrop-blur-sm px-3 py-1 text-sm flex items-center justify-between gap-3 overflow-hidden transition-all duration-500 text-white ${
+              className={`cv-selector-trigger w-full min-w-0 rounded-lg border backdrop-blur-sm px-3 py-1 text-sm flex items-center justify-between gap-3 overflow-hidden transition-all duration-500 text-white ${
                 state.cvSelectorGlow
                   ? 'border-emerald-400 bg-emerald-500/40 shadow-[0_0_20px_rgba(52,211,153,0.6)] hover:bg-emerald-500/50'
                   : 'border-white/40 bg-white/20 hover:bg-white/30 hover:shadow-xl'
@@ -591,7 +591,7 @@ export default function TopBar() {
           {modals.listOpen && state.portalReady && modals.dropdownRect
             ? createPortal(
                 <>
-                  <div className="fixed inset-0 z-[10001] bg-transparent" onClick={() => modals.setListOpen(false)} />
+                  <div className="fixed inset-0 z-[10001] bg-transparent cv-dropdown-no-animation" onClick={() => modals.setListOpen(false)} />
                   <div
                     ref={dropdownPortalRef}
                     style={{
@@ -600,8 +600,9 @@ export default function TopBar() {
                       left: modals.dropdownRect.left,
                       width: modals.dropdownRect.width,
                       zIndex: 10002,
+                      opacity: 1,
                     }}
-                    className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl"
+                    className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl cv-dropdown-no-animation"
                   >
                     <ul
                       className="max-h-[240px] overflow-y-auto py-1"
@@ -908,6 +909,18 @@ export default function TopBar() {
 
       {/* Styles */}
       <style jsx global>{`
+        .cv-selector-trigger:active {
+          opacity: 1 !important;
+          transform: none !important;
+        }
+
+        .cv-dropdown-no-animation {
+          animation: none !important;
+          transition: none !important;
+          transform: none !important;
+          will-change: auto !important;
+        }
+
         .cv-ticker {
           max-width: 100%;
           position: relative;
