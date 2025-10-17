@@ -22,8 +22,8 @@ model User {
   linkHistory   LinkHistory[]
   feedbacks     Feedback[]
   consentLogs   ConsentLog[]
-  matchScoreRefreshCount Int @default(0) // Number of manual refreshes in current window (global for all CVs)
-  matchScoreFirstRefreshAt DateTime? // Timestamp of first refresh in current window (for rate limiting)
+  matchScoreRefreshCount Int @default(0) // Number of tokens remaining (global for all CVs, reset to 5 after 24h at 0)
+  tokenLastUsage DateTime? // Timestamp of last token usage (for 24h rate limiting window)
   resetToken    String?       // Token for password reset
   resetTokenExpiry DateTime?  // Expiration date for reset token
   createdAt     DateTime      @default(now())

@@ -177,6 +177,11 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
 
     setJobTitleInput("");
 
+    // Émettre un événement pour décrémenter optimistiquement le compteur
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('tokens:optimistic-decrement'));
+    }
+
     try {
       const formData = new FormData();
       formData.append("jobTitle", trimmedJobTitle);
@@ -192,14 +197,31 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
       });
 
       const data = await response.json().catch(() => ({}));
+
+      // Gérer le rate limit (429)
+      if (response.status === 429) {
+        const hours = data.hoursLeft || 0;
+        const minutes = data.minutesLeft || 0;
+        throw new Error(t("matchScore.rateLimitExceeded", { hours, minutes }) || `Plus de tokens disponibles. Réessayez dans ${hours}h${minutes}m.`);
+      }
+
       if (!response.ok || !data?.success) {
         throw new Error(data?.error || "Impossible de mettre la tâche en file.");
       }
 
       removeOptimisticTask(optimisticTaskId);
       await refreshTasks();
+
+      // Émettre l'événement pour mettre à jour les compteurs de tokens
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('tokens:updated'));
+      }
     } catch (error) {
       removeOptimisticTask(optimisticTaskId);
+      // Restaurer le compteur en cas d'erreur
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('tokens:updated'));
+      }
       addNotification({
         type: "error",
         message: error?.message || t("jobTitleGenerator.notifications.error"),

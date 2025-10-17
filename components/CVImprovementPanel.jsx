@@ -85,8 +85,8 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
     cvData?.matchScoreStatus === 'inprogress' ||
     cvData?.optimiseStatus === 'inprogress';
 
-  // Bouton Optimiser est cliquable uniquement si optimiseStatus === 'idle'
-  const canOptimize = cvData?.optimiseStatus === 'idle';
+  // Bouton Optimiser est cliquable sauf si optimiseStatus === 'inprogress'
+  const canOptimize = cvData?.optimiseStatus !== 'inprogress';
 
   // Fonction pour obtenir la couleur selon la priorité
   const getPriorityColor = (priority) => {

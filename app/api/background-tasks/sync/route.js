@@ -205,6 +205,9 @@ export async function POST(request) {
         if (task.status === 'cancelled' && existing.status !== 'cancelled') {
           console.log(`[sync] Tâche ${task.id} (${existing.type}) passée à 'cancelled'`);
 
+          // Ne rembourser le token que si la tâche était en attente ou en cours
+          const shouldRefundToken = existing.status === 'queued' || existing.status === 'running';
+
           try {
             const payload = existing.payload ? JSON.parse(existing.payload) : null;
             const cvFile = payload?.cvFile;
@@ -229,6 +232,25 @@ export async function POST(request) {
               }
             } else {
               console.warn(`[sync] ⚠️ Pas de cvFile dans le payload pour ${task.id}`);
+            }
+
+            // Rembourser le token pour les tâches qui consomment des tokens
+            if (shouldRefundToken && (existing.type === 'job-title-generation' || existing.type === 'calculate-match-score')) {
+              const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { matchScoreRefreshCount: true }
+              });
+
+              // Incrémenter le compteur de 1 - Ne JAMAIS toucher à tokenLastUsage
+              // Ne PAS limiter à TOKEN_LIMIT pour ne pas "voler" des tokens en cas de bug
+              const newCount = (user?.matchScoreRefreshCount || 0) + 1;
+
+              await prisma.user.update({
+                where: { id: userId },
+                data: { matchScoreRefreshCount: newCount }
+              });
+
+              console.log(`[sync] ✅ Token remboursé pour ${existing.type} (${newCount})`);
             }
           } catch (err) {
             console.error('[sync] ❌ Erreur réinitialisation statuts CV:', err);
@@ -337,8 +359,11 @@ export async function DELETE(request) {
       // Récupérer la tâche pour savoir quel CV elle concerne
       const task = await prisma.backgroundTask.findUnique({
         where: { id: taskId },
-        select: { type: true, cvFile: true, userId: true }
+        select: { type: true, cvFile: true, userId: true, status: true }
       });
+
+      // Ne rembourser le token que si la tâche était en attente ou en cours (pas déjà terminée)
+      const shouldRefundToken = task && (task.status === 'queued' || task.status === 'running');
 
       const updateResult = await prisma.backgroundTask.updateMany({
         where: { id: taskId, userId },
@@ -380,6 +405,30 @@ export async function DELETE(request) {
             console.log(`[cancel] ✅ matchScoreStatus remis à 'idle' pour ${task.cvFile}`);
           } catch (error) {
             console.error(`[cancel] ❌ Erreur mise à jour matchScoreStatus:`, error);
+          }
+        }
+
+        // Rembourser le token pour les tâches qui consomment des tokens
+        if (shouldRefundToken && (task.type === 'job-title-generation' || task.type === 'calculate-match-score')) {
+          try {
+            // Récupérer le compteur actuel de l'utilisateur
+            const user = await prisma.user.findUnique({
+              where: { id: userId },
+              select: { matchScoreRefreshCount: true }
+            });
+
+            // Incrémenter le compteur de 1 - Ne JAMAIS toucher à tokenLastUsage
+            // Ne PAS limiter à TOKEN_LIMIT pour ne pas "voler" des tokens en cas de bug
+            const newCount = (user?.matchScoreRefreshCount || 0) + 1;
+
+            await prisma.user.update({
+              where: { id: userId },
+              data: { matchScoreRefreshCount: newCount }
+            });
+
+            console.log(`[cancel] ✅ Token remboursé pour ${task.type} (${newCount})`);
+          } catch (error) {
+            console.error(`[cancel] ❌ Erreur remboursement token:`, error);
           }
         }
       }
