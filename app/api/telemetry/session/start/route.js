@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
-import { startSession } from '@/lib/telemetry/server';
+import { findOrCreateSession } from '@/lib/telemetry/server';
 
 /**
  * POST /api/telemetry/session/start
- * Start a new user session
+ * Find an active session or start a new user session
+ * Reuses sessions that are still active (< 10 minutes inactive)
  */
 export async function POST(request) {
   try {
@@ -23,7 +24,7 @@ export async function POST(request) {
     const forwarded = request.headers.get('x-forwarded-for');
     const ip = forwarded ? forwarded.split(',')[0] : request.headers.get('x-real-ip') || null;
 
-    const userSession = await startSession({
+    const userSession = await findOrCreateSession({
       userId,
       deviceId: deviceId || null,
       userAgent: userAgent || request.headers.get('user-agent') || null,

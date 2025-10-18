@@ -24,6 +24,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || '7d';
     const limit = Math.min(parseInt(searchParams.get('limit') || '100', 10), 500);
+    const userId = searchParams.get('userId');
 
     // Calculate date range
     const now = new Date();
@@ -47,6 +48,7 @@ export async function GET(request) {
     const whereClause = {
       status: 'error',
       ...(startDate ? { timestamp: { gte: startDate } } : {}),
+      ...(userId ? { userId } : {}),
     };
 
     // Get error statistics

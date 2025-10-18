@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
+import { getAdminSessionIds } from '@/lib/analytics/filters';
 
 /**
  * GET /api/analytics/sessions
@@ -24,6 +25,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || '30d';
     const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 500);
+    const userId = searchParams.get('userId');
 
     // Calculate date range
     const now = new Date();
@@ -44,7 +46,10 @@ export async function GET(request) {
         startDate = null;
     }
 
-    const whereClause = startDate ? { startedAt: { gte: startDate } } : {};
+    const whereClause = {
+      ...(startDate ? { startedAt: { gte: startDate } } : {}),
+      ...(userId ? { userId } : {}),
+    };
 
     // Get session statistics
     const [
@@ -60,6 +65,7 @@ export async function GET(request) {
           endedAt: { not: null },
         },
         select: {
+          id: true,
           startedAt: true,
           endedAt: true,
           eventsCount: true,
@@ -83,8 +89,17 @@ export async function GET(request) {
       }),
     ]);
 
-    // Calculate statistics from completed sessions
-    const durations = completedSessions
+    // Get admin session IDs to exclude
+    const adminSessionIds = await getAdminSessionIds(whereClause, prisma);
+
+    // Filter out admin sessions
+    const filteredCompletedSessions = completedSessions.filter(s => !adminSessionIds.has(s.id));
+
+    const filteredRecentSessions = recentSessions.filter(s => !adminSessionIds.has(s.id));
+    const filteredTotalSessions = totalSessions - adminSessionIds.size;
+
+    // Calculate statistics from completed sessions (excluding admin)
+    const durations = filteredCompletedSessions
       .map(s => new Date(s.endedAt).getTime() - new Date(s.startedAt).getTime())
       .filter(d => d > 0);
 
@@ -96,16 +111,16 @@ export async function GET(request) {
       ? durations.sort((a, b) => a - b)[Math.floor(durations.length / 2)]
       : 0;
 
-    const avgEventsPerSession = completedSessions.length > 0
-      ? completedSessions.reduce((sum, s) => sum + s.eventsCount, 0) / completedSessions.length
+    const avgEventsPerSession = filteredCompletedSessions.length > 0
+      ? filteredCompletedSessions.reduce((sum, s) => sum + s.eventsCount, 0) / filteredCompletedSessions.length
       : 0;
 
-    const avgPagesPerSession = completedSessions.length > 0
-      ? completedSessions.reduce((sum, s) => sum + s.pagesViewed, 0) / completedSessions.length
+    const avgPagesPerSession = filteredCompletedSessions.length > 0
+      ? filteredCompletedSessions.reduce((sum, s) => sum + s.pagesViewed, 0) / filteredCompletedSessions.length
       : 0;
 
-    // Format recent sessions with duration
-    const formattedRecentSessions = recentSessions.map(s => ({
+    // Format recent sessions with duration (excluding admin)
+    const formattedRecentSessions = filteredRecentSessions.map(s => ({
       ...s,
       duration: s.endedAt
         ? new Date(s.endedAt).getTime() - new Date(s.startedAt).getTime()
@@ -115,9 +130,9 @@ export async function GET(request) {
     return NextResponse.json({
       period,
       statistics: {
-        totalSessions,
-        completedSessions: completedSessions.length,
-        activeSessions: totalSessions - completedSessions.length,
+        totalSessions: filteredTotalSessions,
+        completedSessions: filteredCompletedSessions.length,
+        activeSessions: filteredTotalSessions - filteredCompletedSessions.length,
         avgDuration: Math.round(avgDuration / 1000), // seconds
         medianDuration: Math.round(medianDuration / 1000), // seconds
         avgEventsPerSession: Math.round(avgEventsPerSession * 10) / 10,

@@ -1,23 +1,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { KPICard } from './KPICard';
+import {
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis,
+  CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
+} from 'recharts';
+import { FEATURE_CONFIG } from '@/lib/analytics/featureConfig';
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
-
-export function OverviewTab({ period }) {
+export function OverviewTab({ period, userId }) {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchSummary();
-  }, [period]);
+  }, [period, userId]);
 
   async function fetchSummary() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/analytics/summary?period=${period}`);
+      const url = `/api/analytics/summary?period=${period}${userId ? `&userId=${userId}` : ''}`;
+      const res = await fetch(url);
       const data = await res.json();
       setSummary(data);
     } catch (error) {
@@ -28,129 +30,367 @@ export function OverviewTab({ period }) {
   }
 
   if (loading || !summary) {
-    return <div className="p-8 text-center">Chargement...</div>;
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-white/60">Chargement du dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
-  const { kpis, topFeatures } = summary;
+  const { kpis, topFeatures, timeline } = summary;
 
-  // Prepare data for charts
-  const featureData = topFeatures.map(f => ({
-    name: f.featureName.replace('_', ' '),
-    usage: f.usageCount,
-  }));
+  // Calculate health status
+  const getHealthStatus = (score) => {
+    if (score >= 90) return { label: 'Excellent', color: 'green', icon: '✅', gradient: 'from-green-500/20 to-green-600/10', border: 'border-green-400/30' };
+    if (score >= 70) return { label: 'Bon', color: 'blue', icon: '👍', gradient: 'from-blue-500/20 to-blue-600/10', border: 'border-blue-400/30' };
+    if (score >= 50) return { label: 'Moyen', color: 'yellow', icon: '⚠️', gradient: 'from-yellow-500/20 to-yellow-600/10', border: 'border-yellow-400/30' };
+    return { label: 'Critique', color: 'red', icon: '❌', gradient: 'from-red-500/20 to-red-600/10', border: 'border-red-400/30' };
+  };
+
+  const healthStatus = getHealthStatus(kpis.healthScore);
+
+  // Format bestHour
+  const bestHourFormatted = kpis.bestHour !== null ? `${kpis.bestHour}h` : 'N/A';
+
+  // Calculate user activity percentage
+  const userActivityPercent = kpis.totalUsers > 0
+    ? ((kpis.activeUsers / kpis.totalUsers) * 100).toFixed(0)
+    : 0;
+
+  // Prepare feature data for chart
+  const featureData = topFeatures.map(f => {
+    const config = FEATURE_CONFIG[f.featureName] || { icon: '📌', name: f.featureName, colors: { solid: '#6B7280' } };
+    return {
+      name: config.name,
+      icon: config.icon,
+      usage: f.usageCount,
+      fill: config.colors.solid,
+    };
+  });
 
   return (
     <div className="space-y-6">
-      {/* KPIs Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KPICard
-          title="Utilisateurs actifs"
-          value={kpis.activeUsers}
-          subtitle={`Sur ${kpis.totalUsers} au total`}
-        />
-        <KPICard
-          title="CVs générés"
-          value={kpis.cvGenerated}
-          subtitle="Avec IA"
-        />
-        <KPICard
-          title="CVs exportés"
-          value={kpis.cvExported}
-          subtitle="En PDF"
-        />
-        <KPICard
-          title="Taux de conversion"
-          value={`${kpis.conversionRate}%`}
-          subtitle="Génération → Export"
-        />
+      {/* Section 1: Main KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Active Users */}
+        <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-blue-400/30 hover:scale-105 transition-transform">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-blue-200">Utilisateurs Actifs</p>
+              <p className="text-3xl font-bold text-white mt-2">{kpis.activeUsers}</p>
+              <p className="text-xs text-blue-300/60 mt-2">
+                {userActivityPercent}% de {kpis.totalUsers} utilisateurs
+              </p>
+            </div>
+            <div className="text-4xl">👥</div>
+          </div>
+        </div>
+
+        {/* CVs Generated */}
+        <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-purple-400/30 hover:scale-105 transition-transform">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-purple-200">CVs Générés IA</p>
+              <p className="text-3xl font-bold text-white mt-2">{kpis.cvGenerated}</p>
+              <p className="text-xs text-purple-300/60 mt-2">
+                Sur {kpis.totalCvs} CVs au total
+              </p>
+            </div>
+            <div className="text-4xl">🤖</div>
+          </div>
+        </div>
+
+        {/* Conversion Rate */}
+        <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-green-400/30 hover:scale-105 transition-transform">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-green-200">Taux de Conversion</p>
+              <p className="text-3xl font-bold text-white mt-2">{kpis.conversionRate}%</p>
+              <p className="text-xs text-green-300/60 mt-2">
+                Génération → Export
+              </p>
+            </div>
+            <div className="text-4xl">📈</div>
+          </div>
+        </div>
+
+        {/* Health Score */}
+        <div className={`bg-gradient-to-br ${healthStatus.gradient} backdrop-blur-xl rounded-lg shadow-lg p-6 border ${healthStatus.border} hover:scale-105 transition-transform`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-white/80">Santé du Système</p>
+              <p className="text-3xl font-bold text-white mt-2">{kpis.healthScore}</p>
+              <p className="text-xs text-white/60 mt-2">
+                {healthStatus.label}
+              </p>
+            </div>
+            <div className="text-4xl">{healthStatus.icon}</div>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KPICard
-          title="Sessions"
-          value={kpis.totalSessions}
-          subtitle={`${Math.round(kpis.avgSessionDuration / 60)} min en moyenne`}
-        />
-        <KPICard
-          title="Événements"
-          value={kpis.totalEvents}
-          subtitle="Total trackés"
-        />
-        <KPICard
-          title="Erreurs"
-          value={kpis.errorCount}
-          subtitle={kpis.totalEvents > 0 ? `${((kpis.errorCount / kpis.totalEvents) * 100).toFixed(2)}% du total` : ''}
-        />
-        <KPICard
-          title="Durée session moy."
-          value={`${Math.round(kpis.avgSessionDuration / 60)}m`}
-          subtitle={`${kpis.avgSessionDuration}s exactement`}
-        />
-      </div>
-
-      {/* Top Features Chart */}
-      <div className="bg-white/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-white/20">
-        <h3 className="text-lg font-semibold text-white mb-4">Top 5 Features</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={featureData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="usage" fill="#3B82F6" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Analysis Level Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Section 2: Timeline Chart */}
+      {timeline && timeline.length > 0 && (
         <div className="bg-white/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-white/20">
-          <h3 className="text-lg font-semibold text-white mb-4">Répartition des features</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">📊 Évolution sur 14 jours</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={featureData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={(entry) => entry.name}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="usage"
-              >
+            <AreaChart data={timeline}>
+              <defs>
+                <linearGradient id="colorCvs" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis
+                dataKey="date"
+                stroke="rgba(255,255,255,0.6)"
+                tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 11 }}
+              />
+              <YAxis
+                stroke="rgba(255,255,255,0.6)"
+                tick={{ fill: 'rgba(255,255,255,0.6)' }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(0,0,0,0.9)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: '8px',
+                  color: '#fff'
+                }}
+              />
+              <Legend />
+              <Area
+                type="monotone"
+                dataKey="cvGenerated"
+                name="CVs Générés"
+                stroke="#3B82F6"
+                fillOpacity={1}
+                fill="url(#colorCvs)"
+              />
+              <Area
+                type="monotone"
+                dataKey="activeUsers"
+                name="Utilisateurs Actifs"
+                stroke="#10B981"
+                fillOpacity={1}
+                fill="url(#colorUsers)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Section 3: Quick Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Sessions */}
+        <div className="bg-white/5 backdrop-blur-xl rounded-lg shadow-lg p-4 border border-white/10 hover:bg-white/10 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="text-3xl">🕐</div>
+            <div>
+              <p className="text-xs text-white/60">Sessions</p>
+              <p className="text-xl font-bold text-white">{kpis.totalSessions}</p>
+              <p className="text-xs text-white/40">{Math.round(kpis.avgSessionDuration / 60)} min moy.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Pages per Session */}
+        <div className="bg-white/5 backdrop-blur-xl rounded-lg shadow-lg p-4 border border-white/10 hover:bg-white/10 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="text-3xl">📄</div>
+            <div>
+              <p className="text-xs text-white/60">Pages / Session</p>
+              <p className="text-xl font-bold text-white">{kpis.avgPagesPerSession}</p>
+              <p className="text-xs text-white/40">pages en moyenne</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Bounce Rate */}
+        <div className="bg-white/5 backdrop-blur-xl rounded-lg shadow-lg p-4 border border-white/10 hover:bg-white/10 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="text-3xl">🔄</div>
+            <div>
+              <p className="text-xs text-white/60">Taux de Rebond</p>
+              <p className="text-xl font-bold text-white">{kpis.bounceRate}%</p>
+              <p className="text-xs text-white/40">≤ 1 page visitée</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Total Events */}
+        <div className="bg-white/5 backdrop-blur-xl rounded-lg shadow-lg p-4 border border-white/10 hover:bg-white/10 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="text-3xl">📍</div>
+            <div>
+              <p className="text-xs text-white/60">Total Événements</p>
+              <p className="text-xl font-bold text-white">{kpis.totalEvents}</p>
+              <p className="text-xs text-white/40">trackés sur la période</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Job Success Rate */}
+        <div className="bg-white/5 backdrop-blur-xl rounded-lg shadow-lg p-4 border border-white/10 hover:bg-white/10 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="text-3xl">⚙️</div>
+            <div>
+              <p className="text-xs text-white/60">Taux Succès Jobs</p>
+              <p className="text-xl font-bold text-white">{kpis.jobSuccessRate}%</p>
+              <p className="text-xs text-white/40">{kpis.completedJobs}/{kpis.totalJobs} réussis</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Best Hour */}
+        <div className="bg-white/5 backdrop-blur-xl rounded-lg shadow-lg p-4 border border-white/10 hover:bg-white/10 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="text-3xl">⏰</div>
+            <div>
+              <p className="text-xs text-white/60">Meilleure Heure</p>
+              <p className="text-xl font-bold text-white">{bestHourFormatted}</p>
+              <p className="text-xs text-white/40">période la plus active</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 4: Features & Top 3 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Features Chart */}
+        <div className="bg-white/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-white/20">
+          <h3 className="text-lg font-semibold text-white mb-4">🎯 Top Features</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={featureData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis
+                dataKey="name"
+                stroke="rgba(255,255,255,0.6)"
+                tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 11 }}
+                angle={-15}
+                textAnchor="end"
+                height={80}
+              />
+              <YAxis
+                stroke="rgba(255,255,255,0.6)"
+                tick={{ fill: 'rgba(255,255,255,0.6)' }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(0,0,0,0.9)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: '8px',
+                  color: '#fff'
+                }}
+                cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
+                formatter={(value, name, props) => {
+                  return [
+                    <span key="value" style={{ color: '#fff', fontWeight: 'bold' }}>
+                      {value} {value > 1 ? 'utilisations' : 'utilisation'}
+                    </span>,
+                    <span key="label" style={{ color: '#60A5FA' }}>
+                      {props.payload.icon} {props.payload.name}
+                    </span>
+                  ];
+                }}
+                labelFormatter={(label) => ''}
+              />
+              <Bar dataKey="usage" radius={[8, 8, 0, 0]}>
                 {featureData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </div>
 
+        {/* Top 3 Features Cards */}
         <div className="bg-white/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-white/20">
-          <h3 className="text-lg font-semibold text-white mb-4">Statistiques générales</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center py-3 border-b border-white/10">
-              <span className="text-white/60">Utilisateurs totaux</span>
-              <span className="font-semibold text-white">{kpis.totalUsers}</span>
+          <h3 className="text-lg font-semibold text-white mb-4">⭐ Top 3 Features</h3>
+          <div className="space-y-3">
+            {featureData.slice(0, 3).map((feature, idx) => {
+              const medals = ['🥇', '🥈', '🥉'];
+              return (
+                <div
+                  key={idx}
+                  className="bg-white/5 rounded-lg p-4 border border-white/10 hover:bg-white/10 transition-all"
+                  style={{ borderLeftWidth: '4px', borderLeftColor: feature.fill }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{medals[idx]}</span>
+                      <span className="text-2xl">{feature.icon}</span>
+                      <div>
+                        <p className="font-semibold text-white">{feature.name}</p>
+                        <p className="text-xs text-white/60">{feature.usage} utilisations</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-white">{feature.usage}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Section 5: System Health Summary */}
+      <div className="bg-white/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-white/20">
+        <h3 className="text-lg font-semibold text-white mb-4">💚 Santé du Système</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Health Score */}
+          <div className="text-center">
+            <div className="text-6xl mb-2">{healthStatus.icon}</div>
+            <p className="text-3xl font-bold text-white">{kpis.healthScore}</p>
+            <p className="text-sm text-white/60 mt-1">{healthStatus.label}</p>
+          </div>
+
+          {/* Error Stats */}
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-white/60">Taux d'erreur</span>
+              <span className="font-semibold text-orange-400">{kpis.errorRate}%</span>
             </div>
-            <div className="flex justify-between items-center py-3 border-b border-white/10">
-              <span className="text-white/60">Utilisateurs actifs</span>
-              <span className="font-semibold text-white">{kpis.activeUsers}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-white/60">Total erreurs</span>
+              <span className="font-semibold text-red-400">{kpis.errorCount}</span>
             </div>
-            <div className="flex justify-between items-center py-3 border-b border-white/10">
-              <span className="text-white/60">CVs générés</span>
-              <span className="font-semibold text-white">{kpis.cvGenerated}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-white/60">Taux succès jobs</span>
+              <span className="font-semibold text-green-400">{kpis.jobSuccessRate}%</span>
             </div>
-            <div className="flex justify-between items-center py-3 border-b border-white/10">
-              <span className="text-white/60">CVs exportés</span>
-              <span className="font-semibold text-white">{kpis.cvExported}</span>
-            </div>
-            <div className="flex justify-between items-center py-3">
-              <span className="text-white/60">Taux de conversion</span>
-              <span className="font-semibold text-green-400">{kpis.conversionRate}%</span>
-            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="flex flex-col justify-center gap-2">
+            {kpis.healthScore < 70 && (
+              <div className="bg-yellow-500/20 border border-yellow-400/30 rounded-lg p-3">
+                <p className="text-sm text-yellow-200">⚠️ Attention requise</p>
+                <p className="text-xs text-yellow-300/60 mt-1">Consultez l'onglet Erreurs</p>
+              </div>
+            )}
+            {kpis.errorCount > 10 && (
+              <div className="bg-red-500/20 border border-red-400/30 rounded-lg p-3">
+                <p className="text-sm text-red-200">🚨 Erreurs critiques détectées</p>
+                <p className="text-xs text-red-300/60 mt-1">{kpis.errorCount} erreurs à traiter</p>
+              </div>
+            )}
+            {kpis.healthScore >= 90 && (
+              <div className="bg-green-500/20 border border-green-400/30 rounded-lg p-3">
+                <p className="text-sm text-green-200">✅ Système en excellent état</p>
+                <p className="text-xs text-green-300/60 mt-1">Aucune action requise</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

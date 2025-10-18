@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { CustomSelect } from './CustomSelect';
 
-export function ExportsTab() {
+export function ExportsTab({ userId }) {
   const [exporting, setExporting] = useState(false);
   const [format, setFormat] = useState('json');
   const [dataType, setDataType] = useState('events');
@@ -13,22 +13,23 @@ export function ExportsTab() {
     setExporting(true);
     try {
       // Fetch data based on type
+      const userParam = userId ? `&userId=${userId}` : '';
       let url = '';
       switch (dataType) {
         case 'events':
-          url = `/api/analytics/events?period=${period}&limit=10000`;
+          url = `/api/analytics/events?period=${period}&limit=10000${userParam}`;
           break;
         case 'features':
-          url = '/api/analytics/features';
+          url = `/api/analytics/features${userId ? `?userId=${userId}` : ''}`;
           break;
         case 'sessions':
-          url = `/api/analytics/sessions?period=${period}&limit=10000`;
+          url = `/api/analytics/sessions?period=${period}&limit=10000${userParam}`;
           break;
         case 'errors':
-          url = `/api/analytics/errors?period=${period}&limit=10000`;
+          url = `/api/analytics/errors?period=${period}&limit=10000${userParam}`;
           break;
         default:
-          url = `/api/analytics/summary?period=${period}`;
+          url = `/api/analytics/summary?period=${period}${userParam}`;
       }
 
       const res = await fetch(url);

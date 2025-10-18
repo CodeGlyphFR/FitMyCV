@@ -34,6 +34,7 @@ export async function GET(request) {
     const type = searchParams.get('type');
     const category = searchParams.get('category');
     const status = searchParams.get('status');
+    const period = searchParams.get('period');
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const limit = Math.min(parseInt(searchParams.get('limit') || '100', 10), 1000);
@@ -47,7 +48,30 @@ export async function GET(request) {
     if (category) where.category = category;
     if (status) where.status = status;
 
-    if (startDate || endDate) {
+    // Handle period parameter (for exports compatibility)
+    if (period && !startDate && !endDate) {
+      const now = new Date();
+      let periodStartDate = null;
+
+      switch (period) {
+        case '24h':
+          periodStartDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          break;
+        case '7d':
+          periodStartDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '30d':
+          periodStartDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        case 'all':
+        default:
+          periodStartDate = null;
+      }
+
+      if (periodStartDate) {
+        where.timestamp = { gte: periodStartDate };
+      }
+    } else if (startDate || endDate) {
       where.timestamp = {};
       if (startDate) where.timestamp.gte = new Date(startDate);
       if (endDate) where.timestamp.lte = new Date(endDate);
