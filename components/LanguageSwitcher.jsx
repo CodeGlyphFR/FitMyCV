@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 
@@ -11,12 +12,18 @@ const languages = [
 ];
 
 export default function LanguageSwitcher() {
+  const pathname = usePathname();
   const { language, changeLanguage } = useLanguage();
   const { settings } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
   const currentLanguage = languages.find((lang) => lang.code === language);
+
+  // Ne pas afficher sur les pages admin
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
 
   // Ne pas afficher si la feature est désactivée
   if (!settings.feature_language_switcher) {

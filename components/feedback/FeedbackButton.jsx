@@ -9,8 +9,8 @@ export default function FeedbackButton() {
   const pathname = usePathname();
   const { settings } = useSettings();
 
-  // Masquer sur la page d'authentification
-  if (pathname === "/auth") {
+  // Masquer sur les pages d'authentification et admin
+  if (pathname === "/auth" || pathname?.startsWith("/admin")) {
     return null;
   }
 

@@ -1,0 +1,99 @@
+/* Styles globaux pour le dashboard admin */
+
+/* Classes pour les cartes glassmorphism */
+.admin-card {
+  @apply bg-white/10 backdrop-blur-xl rounded-lg shadow-lg border border-white/20;
+}
+
+.admin-card-header {
+  @apply px-6 py-4 border-b border-white/10;
+}
+
+.admin-card-body {
+  @apply p-6;
+}
+
+/* Styles pour les tableaux */
+.admin-table {
+  @apply min-w-full divide-y divide-white/10;
+}
+
+.admin-table thead {
+  @apply bg-white/5;
+}
+
+.admin-table th {
+  @apply px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider;
+}
+
+.admin-table td {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-white/80;
+}
+
+.admin-table tr:hover {
+  @apply bg-white/5;
+}
+
+/* Styles pour les boutons */
+.admin-button-primary {
+  @apply px-4 py-2 bg-blue-500/20 text-blue-300 rounded-lg border border-blue-400/30 hover:bg-blue-500/30 transition backdrop-blur-xl;
+}
+
+.admin-button-secondary {
+  @apply px-4 py-2 bg-white/10 text-white/80 rounded-lg border border-white/20 hover:bg-white/20 transition backdrop-blur-xl;
+}
+
+.admin-button-danger {
+  @apply px-4 py-2 bg-red-500/20 text-red-300 rounded-lg border border-red-400/30 hover:bg-red-500/30 transition backdrop-blur-xl;
+}
+
+/* Styles pour les inputs */
+.admin-input {
+  @apply w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-400 backdrop-blur-xl;
+}
+
+.admin-select {
+  @apply px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-400 backdrop-blur-xl;
+}
+
+/* Styles pour les badges */
+.admin-badge {
+  @apply px-2 py-1 rounded text-xs font-medium;
+}
+
+.admin-badge-success {
+  @apply admin-badge bg-green-500/20 text-green-300 border border-green-400/30;
+}
+
+.admin-badge-error {
+  @apply admin-badge bg-red-500/20 text-red-300 border border-red-400/30;
+}
+
+.admin-badge-info {
+  @apply admin-badge bg-blue-500/20 text-blue-300 border border-blue-400/30;
+}
+
+.admin-badge-warning {
+  @apply admin-badge bg-yellow-500/20 text-yellow-300 border border-yellow-400/30;
+}
+
+/* Options de select avec fond sombre */
+.admin-select option {
+  @apply bg-gray-900 text-white;
+}
+
+/* Masquer la scrollbar pour les onglets et autres éléments */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE et Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Support du scroll tactile horizontal sur iOS */
+.touch-pan-x {
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+}

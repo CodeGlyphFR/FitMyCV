@@ -16,12 +16,16 @@ model User {
   emailVerified DateTime?
   passwordHash  String?
   image         String?
+  role          String        @default("USER") // USER or ADMIN
   accounts      Account[]
   sessions      Session[]
   cvs           CvFile[]
   linkHistory   LinkHistory[]
   feedbacks     Feedback[]
   consentLogs   ConsentLog[]
+  telemetryEvents TelemetryEvent[]
+  userSessions  UserSession[]
+  featureUsage  FeatureUsage[]
   matchScoreRefreshCount Int @default(0) // Number of tokens remaining (global for all CVs, reset to 5 after 24h at 0)
   tokenLastUsage DateTime? // Timestamp of last token usage (for 24h rate limiting window)
   resetToken    String?       // Token for password reset
@@ -216,4 +220,81 @@ model EmailChangeRequest {
   @@index([userId])
   @@index([token])
   @@index([expires])
+}
+
+model TelemetryEvent {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type        String   // CV_GENERATED, CV_IMPORTED, CV_EXPORTED, CV_EDITED, etc.
+  category    String   // cv_management, auth, job_processing, navigation, interaction
+
+  metadata    String?  // JSON: { analysisLevel, fileSize, score, section, operation, etc. }
+
+  deviceId    String?  // Device identifier for cross-device tracking
+  sessionId   String?  // Link to UserSession
+
+  duration    Int?     // Duration in milliseconds (for jobs, page views, etc.)
+  status      String?  // success, error, cancelled
+  error       String?  // Error message if status=error
+
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([category])
+  @@index([sessionId])
+  @@index([deviceId])
+  @@index([timestamp])
+  @@index([userId, type])
+  @@index([type, timestamp])
+}
+
+model UserSession {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  deviceId        String?
+  userAgent       String?
+  ip              String?
+
+  startedAt       DateTime @default(now())
+  endedAt         DateTime?
+  lastActivityAt  DateTime @default(now())
+
+  eventsCount     Int      @default(0)
+  pagesViewed     Int      @default(0)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([deviceId])
+  @@index([startedAt])
+  @@index([userId, startedAt])
+}
+
+model FeatureUsage {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  featureName   String   // generate_cv, import_pdf, export_pdf, calculate_match_score, optimize_cv, etc.
+
+  usageCount    Int      @default(0)
+  lastUsedAt    DateTime @default(now())
+  totalDuration Int      @default(0) // Total duration in milliseconds
+
+  metadata      String?  // JSON: { rapid: 5, medium: 2, deep: 1 } for analysis levels, etc.
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, featureName])
+  @@index([userId])
+  @@index([featureName])
+  @@index([lastUsedAt])
 }
