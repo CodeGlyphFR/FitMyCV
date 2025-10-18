@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { OverviewTab } from '@/components/admin/OverviewTab';
 import { FeaturesTab } from '@/components/admin/FeaturesTab';
 import { SessionsTab } from '@/components/admin/SessionsTab';
@@ -30,15 +29,15 @@ export default function AnalyticsDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <Link
-                href="/"
-                className="text-white/60 hover:text-white transition-colors flex items-center gap-2"
+              <button
+                onClick={() => window.location.href = '/'}
+                className="text-white/60 hover:text-white transition-colors flex items-center gap-2 cursor-pointer"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
                 Retour
-              </Link>
+              </button>
               <div className="h-6 w-px bg-white/10"></div>
               <div>
                 <h1 className="text-xl font-bold text-white">Analytics Dashboard</h1>
