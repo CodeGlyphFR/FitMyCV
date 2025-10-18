@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { KPICard } from './KPICard';
+import { CustomSelect } from './CustomSelect';
 
 export function OpenAICostsTab({ period }) {
   const [data, setData] = useState(null);
@@ -554,17 +555,15 @@ export function OpenAICostsTab({ period }) {
             <form onSubmit={handleSaveAlert} className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-white/60 text-sm">Type d'alerte</label>
-                  <select
+                  <label className="text-white/60 text-sm mb-1 block">Type d'alerte</label>
+                  <CustomSelect
                     value={alertForm.type}
-                    onChange={(e) => setAlertForm({ ...alertForm, type: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white text-sm"
-                    required
-                  >
-                    {Object.entries(alertTypeLabels).map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
-                    ))}
-                  </select>
+                    onChange={(value) => setAlertForm({ ...alertForm, type: value })}
+                    options={Object.entries(alertTypeLabels).map(([value, label]) => ({
+                      value,
+                      label,
+                    }))}
+                  />
                 </div>
                 <div>
                   <label className="text-white/60 text-sm">Seuil ($)</label>
