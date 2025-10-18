@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 /**
  * Toast notification component
@@ -48,7 +49,7 @@ export function Toast({ toast, onClose }) {
 
   const style = styles[toast.type] || styles.info;
 
-  return (
+  return createPortal(
     <div className="fixed top-4 right-4 z-[9999] animate-slide-in">
       <div
         className={`${style.bg} ${style.border} ${style.text} backdrop-blur-xl rounded-lg border px-4 py-3 shadow-lg max-w-md`}
@@ -64,6 +65,7 @@ export function Toast({ toast, onClose }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

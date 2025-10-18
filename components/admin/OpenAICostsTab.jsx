@@ -417,41 +417,47 @@ export function OpenAICostsTab({ period }) {
 
             {/* Pricing List */}
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {pricings.map((pricing) => (
-                <div key={pricing.modelName} className="flex items-center justify-between p-3 bg-white/5 rounded">
-                  <div className="flex-1">
-                    <div className="text-white font-medium">{pricing.modelName}</div>
-                    <div className="text-white/60 text-sm">
-                      Input: ${pricing.inputPricePerMToken}/MTok • Output: ${pricing.outputPricePerMToken}/MTok
-                      {pricing.description && <span> • {pricing.description}</span>}
+              {pricings.length === 0 ? (
+                <div className="text-center py-4 text-white/60 text-sm">
+                  Aucun tarif configuré
+                </div>
+              ) : (
+                pricings.map((pricing) => (
+                  <div key={pricing.modelName} className="flex items-center justify-between p-3 bg-white/5 rounded">
+                    <div className="flex-1">
+                      <div className="text-white font-medium">{pricing.modelName}</div>
+                      <div className="text-white/60 text-sm">
+                        Input: ${pricing.inputPricePerMToken}/MTok • Output: ${pricing.outputPricePerMToken}/MTok
+                        {pricing.description && <span> • {pricing.description}</span>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-1 text-xs rounded ${pricing.isActive ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
+                        {pricing.isActive ? 'Actif' : 'Inactif'}
+                      </span>
+                      <button
+                        onClick={() => handleEditPricing(pricing)}
+                        className="px-2 py-1 text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded"
+                      >
+                        Éditer
+                      </button>
+                      <button
+                        onClick={() => handleDeletePricing(pricing.modelName)}
+                        className="px-2 py-1 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded"
+                      >
+                        Supprimer
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 text-xs rounded ${pricing.isActive ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
-                      {pricing.isActive ? 'Actif' : 'Inactif'}
-                    </span>
-                    <button
-                      onClick={() => handleEditPricing(pricing)}
-                      className="px-2 py-1 text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded"
-                    >
-                      Éditer
-                    </button>
-                    <button
-                      onClick={() => handleDeletePricing(pricing.modelName)}
-                      className="px-2 py-1 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded"
-                    >
-                      Supprimer
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Table */}
-          <div className="overflow-x-auto">
+          <div className="lg:col-span-2 overflow-x-auto">
             <table className="w-full">
             <thead>
               <tr className="text-left text-white/60 text-sm border-b border-white/10">
@@ -501,7 +507,7 @@ export function OpenAICostsTab({ period }) {
 
           {/* Pie Chart */}
           <div className="flex items-center justify-center">
-            <ResponsiveContainer width="100%" height={350}>
+            <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie
                   data={data.byFeature.map((feature) => ({
@@ -515,7 +521,7 @@ export function OpenAICostsTab({ period }) {
                   cy="50%"
                   labelLine={false}
                   label={({ percentage }) => `${percentage}%`}
-                  outerRadius={120}
+                  outerRadius={90}
                   fill="#8884d8"
                   dataKey="value"
                 >
@@ -526,17 +532,25 @@ export function OpenAICostsTab({ period }) {
                   })}
                 </Pie>
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(0, 0, 0, 0.95)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '8px',
-                    color: 'white',
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0];
+                      return (
+                        <div className="bg-black/95 backdrop-blur-xl border border-white/20 rounded-lg p-3 shadow-2xl">
+                          <p className="text-white font-semibold mb-2">{data.name}</p>
+                          <div className="space-y-1">
+                            <p className="text-sm text-blue-300">
+                              Coût: <span className="font-bold text-white">{formatCurrency(data.value)}</span>
+                            </p>
+                            <p className="text-sm text-green-300">
+                              Part: <span className="font-bold text-white">{data.payload.percentage}%</span>
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
                   }}
-                  formatter={(value, name, props) => [
-                    formatCurrency(value),
-                    `${props.payload.percentage}% du total`
-                  ]}
-                  labelFormatter={(name) => `Feature: ${name}`}
                 />
                 <Legend
                   verticalAlign="bottom"

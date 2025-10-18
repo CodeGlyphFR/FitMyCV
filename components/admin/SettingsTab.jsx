@@ -19,14 +19,35 @@ export function SettingsTab() {
   const [modifiedSettings, setModifiedSettings] = useState({});
   const [hasChanges, setHasChanges] = useState(false);
   const [toast, setToast] = useState(null);
+  const [availableModels, setAvailableModels] = useState(AVAILABLE_AI_MODELS);
 
   useEffect(() => {
     fetchSettings();
+    fetchAvailableModels();
   }, []);
 
   useEffect(() => {
     setHasChanges(Object.keys(modifiedSettings).length > 0);
   }, [modifiedSettings]);
+
+  async function fetchAvailableModels() {
+    try {
+      const res = await fetch('/api/admin/openai-pricing');
+      const data = await res.json();
+      if (data.pricings && data.pricings.length > 0) {
+        // Extract active model names from pricing data
+        const models = data.pricings
+          .filter(p => p.isActive)
+          .map(p => p.modelName);
+        if (models.length > 0) {
+          setAvailableModels(models);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching available models:', error);
+      // Keep using default AVAILABLE_AI_MODELS on error
+    }
+  }
 
   async function fetchSettings() {
     setLoading(true);
@@ -115,8 +136,8 @@ export function SettingsTab() {
     const isAIModel = setting.category === 'ai_models';
     const isModified = modifiedSettings[setting.id] !== undefined;
 
-    // Options pour le select des modèles IA
-    const modelOptions = AVAILABLE_AI_MODELS.map(model => ({
+    // Options pour le select des modèles IA (depuis OpenAI Pricing)
+    const modelOptions = availableModels.map(model => ({
       value: model,
       label: model,
     }));
