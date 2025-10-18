@@ -51,7 +51,9 @@ export default function AnalyticsDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <UserFilter value={selectedUserId} onChange={setSelectedUserId} />
+              {activeTab !== 'settings' && (
+                <UserFilter value={selectedUserId} onChange={setSelectedUserId} />
+              )}
               {['overview', 'features', 'sessions', 'errors', 'openai-costs', 'feedback'].includes(activeTab) && (
                 <DateRangePicker value={period} onChange={setPeriod} />
               )}
@@ -107,11 +109,13 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* User Filter - Mobile only (below tabs) */}
-      <div className="md:hidden bg-gray-900/98 backdrop-blur-xl border-b border-white/10 sticky top-[5.5rem] z-40 will-change-transform">
-        <div className="px-4 py-3">
-          <UserFilter value={selectedUserId} onChange={setSelectedUserId} />
+      {activeTab !== 'settings' && (
+        <div className="md:hidden bg-gray-900/98 backdrop-blur-xl border-b border-white/10 sticky top-[5.5rem] z-40 will-change-transform">
+          <div className="px-4 py-3">
+            <UserFilter value={selectedUserId} onChange={setSelectedUserId} />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-0">

@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { KPICard } from './KPICard';
 import { CustomSelect } from './CustomSelect';
+import { Toast } from './Toast';
+import { ConfirmDialog } from './ConfirmDialog';
 
 export function FeedbackTab({ period, userId }) {
   const [data, setData] = useState(null);
@@ -11,6 +13,8 @@ export function FeedbackTab({ period, userId }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [bugFilter, setBugFilter] = useState('all');
   const [selectedFeedback, setSelectedFeedback] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -56,8 +60,34 @@ export function FeedbackTab({ period, userId }) {
       await fetchData();
     } catch (err) {
       console.error('Error updating feedback status:', err);
-      alert('Erreur lors de la mise à jour du statut');
+      setToast({ type: 'error', message: 'Erreur lors de la mise à jour du statut' });
     }
+  };
+
+  const handleDeleteFeedback = async (feedbackId) => {
+    setConfirmDialog({
+      title: 'Supprimer ce feedback ?',
+      message: 'Cette action est irréversible.',
+      type: 'danger',
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/analytics/feedbacks?id=${encodeURIComponent(feedbackId)}`, {
+            method: 'DELETE',
+          });
+
+          if (!response.ok) throw new Error('Failed to delete feedback');
+
+          setToast({ type: 'success', message: 'Feedback supprimé avec succès' });
+          // Refresh data
+          await fetchData();
+        } catch (err) {
+          console.error('Error deleting feedback:', err);
+          setToast({ type: 'error', message: 'Erreur lors de la suppression du feedback' });
+        }
+      }
+    });
   };
 
   if (loading) {
@@ -326,6 +356,12 @@ export function FeedbackTab({ period, userId }) {
                       ]}
                     />
                   </div>
+                  <button
+                    onClick={() => handleDeleteFeedback(feedback.id)}
+                    className="px-3 py-1.5 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded transition w-28"
+                  >
+                    Supprimer
+                  </button>
                 </div>
               </div>
             </div>
@@ -371,6 +407,10 @@ export function FeedbackTab({ period, userId }) {
           })}
         </div>
       </div>
+
+      {/* Toast and Confirm Dialog */}
+      <Toast toast={toast} onClose={() => setToast(null)} />
+      <ConfirmDialog dialog={confirmDialog} onClose={() => setConfirmDialog(null)} />
     </div>
   );
 }

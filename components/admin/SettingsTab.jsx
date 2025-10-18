@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ToggleSwitch } from './ToggleSwitch';
 import { CustomSelect } from './CustomSelect';
+import { Toast } from './Toast';
 import {
   getCategoryLabel,
   getSettingLabel,
@@ -17,6 +18,7 @@ export function SettingsTab() {
   const [saving, setSaving] = useState(false);
   const [modifiedSettings, setModifiedSettings] = useState({});
   const [hasChanges, setHasChanges] = useState(false);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     fetchSettings();
@@ -73,15 +75,15 @@ export function SettingsTab() {
       const allSuccess = results.every(res => res.ok);
 
       if (allSuccess) {
-        alert('Paramètres sauvegardés avec succès !');
+        setToast({ type: 'success', message: 'Paramètres sauvegardés avec succès !' });
         setModifiedSettings({});
         await fetchSettings();
       } else {
-        alert('Erreur lors de la sauvegarde de certains paramètres');
+        setToast({ type: 'error', message: 'Erreur lors de la sauvegarde de certains paramètres' });
       }
     } catch (error) {
       console.error('Error saving settings:', error);
-      alert('Erreur lors de la sauvegarde');
+      setToast({ type: 'error', message: 'Erreur lors de la sauvegarde' });
     } finally {
       setSaving(false);
     }
@@ -308,6 +310,9 @@ export function SettingsTab() {
           Aucun paramètre trouvé
         </div>
       )}
+
+      {/* Toast */}
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
   );
 }

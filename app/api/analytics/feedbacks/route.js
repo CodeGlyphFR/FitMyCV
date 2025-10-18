@@ -320,3 +320,57 @@ export async function PATCH(request) {
     );
   }
 }
+
+/**
+ * DELETE /api/analytics/feedbacks
+ * Delete a feedback (admin only)
+ *
+ * Query params:
+ * - id: feedback ID to delete
+ */
+export async function DELETE(request) {
+  try {
+    // Check authentication and admin role
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const feedbackId = searchParams.get('id');
+
+    // Validate
+    if (!feedbackId) {
+      return NextResponse.json(
+        { error: 'Missing feedback ID' },
+        { status: 400 }
+      );
+    }
+
+    // Delete feedback
+    await prisma.feedback.delete({
+      where: { id: feedbackId },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('[API /analytics/feedbacks DELETE] Error:', error);
+
+    // Handle not found error
+    if (error.code === 'P2025') {
+      return NextResponse.json(
+        { error: 'Feedback not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

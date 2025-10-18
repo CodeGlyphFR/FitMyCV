@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react';
 import { KPICard } from './KPICard';
 import { CustomSelect } from './CustomSelect';
+import { Toast } from './Toast';
+import { ConfirmDialog } from './ConfirmDialog';
+import { getFeatureConfig } from '@/lib/analytics/featureConfig';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 export function OpenAICostsTab({ period }) {
   const [data, setData] = useState(null);
@@ -10,6 +14,8 @@ export function OpenAICostsTab({ period }) {
   const [error, setError] = useState(null);
   const [showPricing, setShowPricing] = useState(false);
   const [showAlerts, setShowAlerts] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   // Pricing management state
   const [pricings, setPricings] = useState([]);
@@ -115,26 +121,35 @@ export function OpenAICostsTab({ period }) {
         description: '',
         isActive: true,
       });
+      setToast({ type: 'success', message: 'Tarif sauvegardé avec succès' });
     } catch (err) {
       console.error('Error saving pricing:', err);
-      alert('Erreur lors de la sauvegarde du tarif');
+      setToast({ type: 'error', message: 'Erreur lors de la sauvegarde du tarif' });
     }
   };
 
   const handleDeletePricing = async (modelName) => {
-    if (!confirm(`Supprimer le tarif pour ${modelName} ?`)) return;
+    setConfirmDialog({
+      title: 'Supprimer ce tarif ?',
+      message: `Êtes-vous sûr de vouloir supprimer le tarif pour ${modelName} ?`,
+      type: 'danger',
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/admin/openai-pricing?modelName=${encodeURIComponent(modelName)}`, {
+            method: 'DELETE',
+          });
 
-    try {
-      const response = await fetch(`/api/admin/openai-pricing?modelName=${encodeURIComponent(modelName)}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) throw new Error('Failed to delete pricing');
-      await fetchPricings();
-    } catch (err) {
-      console.error('Error deleting pricing:', err);
-      alert('Erreur lors de la suppression du tarif');
-    }
+          if (!response.ok) throw new Error('Failed to delete pricing');
+          await fetchPricings();
+          setToast({ type: 'success', message: 'Tarif supprimé avec succès' });
+        } catch (err) {
+          console.error('Error deleting pricing:', err);
+          setToast({ type: 'error', message: 'Erreur lors de la suppression du tarif' });
+        }
+      }
+    });
   };
 
   const handleEditPricing = (pricing) => {
@@ -177,26 +192,35 @@ export function OpenAICostsTab({ period }) {
         name: '',
         description: '',
       });
+      setToast({ type: 'success', message: 'Alerte sauvegardée avec succès' });
     } catch (err) {
       console.error('Error saving alert:', err);
-      alert('Erreur lors de la sauvegarde de l\'alerte');
+      setToast({ type: 'error', message: 'Erreur lors de la sauvegarde de l\'alerte' });
     }
   };
 
   const handleDeleteAlert = async (id) => {
-    if (!confirm('Supprimer cette alerte ?')) return;
+    setConfirmDialog({
+      title: 'Supprimer cette alerte ?',
+      message: 'Cette action est irréversible.',
+      type: 'danger',
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/admin/openai-alerts?id=${encodeURIComponent(id)}`, {
+            method: 'DELETE',
+          });
 
-    try {
-      const response = await fetch(`/api/admin/openai-alerts?id=${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) throw new Error('Failed to delete alert');
-      await fetchAlerts();
-    } catch (err) {
-      console.error('Error deleting alert:', err);
-      alert('Erreur lors de la suppression de l\'alerte');
-    }
+          if (!response.ok) throw new Error('Failed to delete alert');
+          await fetchAlerts();
+          setToast({ type: 'success', message: 'Alerte supprimée avec succès' });
+        } catch (err) {
+          console.error('Error deleting alert:', err);
+          setToast({ type: 'error', message: 'Erreur lors de la suppression de l\'alerte' });
+        }
+      }
+    });
   };
 
   const handleEditAlert = (alert) => {
@@ -246,6 +270,9 @@ export function OpenAICostsTab({ period }) {
 
   // Find most expensive feature
   const topFeature = data.byFeature[0] || { feature: 'N/A', cost: 0 };
+  const topFeatureLabel = topFeature.feature !== 'N/A'
+    ? (getFeatureConfig(topFeature.feature).name || topFeature.feature)
+    : 'N/A';
 
   const alertTypeLabels = {
     user_daily: 'Utilisateur - Journalier',
@@ -264,24 +291,28 @@ export function OpenAICostsTab({ period }) {
           label="Coût total"
           value={formatCurrency(data.total.cost)}
           trend={null}
+          description="Coût total des appels OpenAI pour la période sélectionnée, incluant tous les modèles et features"
         />
         <KPICard
           icon="🎯"
           label="Total tokens"
           value={formatNumber(data.total.totalTokens)}
           subtitle={`${formatNumber(data.total.calls)} appels`}
+          description="Nombre total de tokens consommés (input + output) pour tous les appels OpenAI"
         />
         <KPICard
           icon="📊"
           label="Coût moyen/appel"
           value={formatCurrency(avgCostPerCall)}
           trend={null}
+          description="Coût moyen par appel à l'API OpenAI, calculé en divisant le coût total par le nombre d'appels"
         />
         <KPICard
           icon="⭐"
           label="Feature #1"
-          value={topFeature.feature}
+          value={topFeatureLabel}
           subtitle={formatCurrency(topFeature.cost)}
+          description="La feature qui a généré le plus de coûts OpenAI sur la période"
         />
       </div>
 
@@ -418,14 +449,17 @@ export function OpenAICostsTab({ period }) {
           </div>
         )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
             <thead>
               <tr className="text-left text-white/60 text-sm border-b border-white/10">
                 <th className="pb-3">Feature</th>
                 <th className="pb-3 text-right">Appels</th>
                 <th className="pb-3 text-right">Tokens</th>
                 <th className="pb-3 text-right">Coût</th>
+                <th className="pb-3 text-right">Coût/appel</th>
                 <th className="pb-3 text-right">%</th>
               </tr>
             </thead>
@@ -434,11 +468,14 @@ export function OpenAICostsTab({ period }) {
                 const percentage = data.total.cost > 0
                   ? ((feature.cost / data.total.cost) * 100).toFixed(1)
                   : 0;
+                const avgCost = feature.calls > 0 ? feature.cost / feature.calls : 0;
+                const featureConfig = getFeatureConfig(feature.feature);
+                const featureLabel = featureConfig.name || feature.feature;
 
                 return (
                   <tr key={index} className="border-b border-white/5 text-white">
                     <td className="py-3">
-                      <span className="font-medium">{feature.feature}</span>
+                      <span className="font-medium">{featureLabel}</span>
                     </td>
                     <td className="py-3 text-right text-white/80">
                       {formatNumber(feature.calls)}
@@ -449,6 +486,9 @@ export function OpenAICostsTab({ period }) {
                     <td className="py-3 text-right font-medium">
                       {formatCurrency(feature.cost)}
                     </td>
+                    <td className="py-3 text-right text-white/80">
+                      {formatCurrency(avgCost)}
+                    </td>
                     <td className="py-3 text-right text-white/60">
                       {percentage}%
                     </td>
@@ -457,81 +497,133 @@ export function OpenAICostsTab({ period }) {
               })}
             </tbody>
           </table>
+          </div>
+
+          {/* Pie Chart */}
+          <div className="flex items-center justify-center">
+            <ResponsiveContainer width="100%" height={350}>
+              <PieChart>
+                <Pie
+                  data={data.byFeature.map((feature) => ({
+                    name: getFeatureConfig(feature.feature).name || feature.feature,
+                    value: feature.cost,
+                    percentage: data.total.cost > 0
+                      ? ((feature.cost / data.total.cost) * 100).toFixed(1)
+                      : 0,
+                  }))}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ percentage }) => `${percentage}%`}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {data.byFeature.map((feature, index) => {
+                    const featureConfig = getFeatureConfig(feature.feature);
+                    const color = featureConfig.colors?.solid || '#6B7280';
+                    return <Cell key={`cell-${index}`} fill={color} />;
+                  })}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '8px',
+                    color: 'white',
+                  }}
+                  formatter={(value, name, props) => [
+                    formatCurrency(value),
+                    `${props.payload.percentage}% du total`
+                  ]}
+                  labelFormatter={(name) => `Feature: ${name}`}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  wrapperStyle={{ color: 'white' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
-      {/* Top Users Table */}
-      {data.topUsers && data.topUsers.length > 0 && (
-        <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Top 10 utilisateurs par coût</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left text-white/60 text-sm border-b border-white/10">
-                  <th className="pb-3">Utilisateur</th>
-                  <th className="pb-3 text-right">Appels</th>
-                  <th className="pb-3 text-right">Tokens</th>
-                  <th className="pb-3 text-right">Coût total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.topUsers.map((user, index) => (
-                  <tr key={index} className="border-b border-white/5 text-white">
-                    <td className="py-3">
-                      <div>
-                        <span className="font-medium">{user.email}</span>
-                        {user.name && (
-                          <span className="block text-sm text-white/60">{user.name}</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 text-right text-white/80">
-                      {formatNumber(user.totalCalls)}
-                    </td>
-                    <td className="py-3 text-right text-white/80">
-                      {formatNumber(user.totalTokens)}
-                    </td>
-                    <td className="py-3 text-right font-medium">
-                      {formatCurrency(user.totalCost)}
-                    </td>
+      {/* Top Users and Models - Side by Side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Users Table */}
+        {data.topUsers && data.topUsers.length > 0 && (
+          <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Top 10 utilisateurs par coût</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left text-white/60 text-sm border-b border-white/10">
+                    <th className="pb-3">Utilisateur</th>
+                    <th className="pb-3 text-right">Appels</th>
+                    <th className="pb-3 text-right">Tokens</th>
+                    <th className="pb-3 text-right">Coût total</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {data.topUsers.map((user, index) => (
+                    <tr key={index} className="border-b border-white/5 text-white">
+                      <td className="py-3">
+                        <div>
+                          <span className="font-medium">{user.email}</span>
+                          {user.name && (
+                            <span className="block text-sm text-white/60">{user.name}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 text-right text-white/80">
+                        {formatNumber(user.totalCalls)}
+                      </td>
+                      <td className="py-3 text-right text-white/80">
+                        {formatNumber(user.totalTokens)}
+                      </td>
+                      <td className="py-3 text-right font-medium">
+                        {formatCurrency(user.totalCost)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Models Breakdown */}
-      <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Répartition par modèle</h3>
-        <div className="space-y-3">
-          {data.byModel.map((model, index) => {
-            const percentage = data.total.cost > 0
-              ? ((model.cost / data.total.cost) * 100).toFixed(1)
-              : 0;
+        {/* Models Breakdown */}
+        <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Répartition par modèle</h3>
+          <div className="space-y-3">
+            {data.byModel.map((model, index) => {
+              const percentage = data.total.cost > 0
+                ? ((model.cost / data.total.cost) * 100).toFixed(1)
+                : 0;
 
-            return (
-              <div key={index} className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-white font-medium">{model.model}</span>
-                    <span className="text-white/60 text-sm">{percentage}%</span>
+              return (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-white font-medium">{model.model}</span>
+                      <span className="text-white/60 text-sm">{percentage}%</span>
+                    </div>
+                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
-                      style={{ width: `${percentage}%` }}
-                    />
+                  <div className="ml-4 text-right">
+                    <div className="text-white font-medium">{formatCurrency(model.cost)}</div>
+                    <div className="text-white/60 text-sm">{formatNumber(model.tokens)} tokens</div>
                   </div>
                 </div>
-                <div className="ml-4 text-right">
-                  <div className="text-white font-medium">{formatCurrency(model.cost)}</div>
-                  <div className="text-white/60 text-sm">{formatNumber(model.tokens)} tokens</div>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -667,6 +759,10 @@ export function OpenAICostsTab({ period }) {
           </div>
         )}
       </div>
+
+      {/* Toast and Confirm Dialog */}
+      <Toast toast={toast} onClose={() => setToast(null)} />
+      <ConfirmDialog dialog={confirmDialog} onClose={() => setConfirmDialog(null)} />
     </div>
   );
 }

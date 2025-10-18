@@ -3,12 +3,17 @@
 /**
  * KPI Card component for displaying key metrics
  */
-export function KPICard({ title, value, subtitle, icon, trend }) {
+export function KPICard({ title, label, value, subtitle, icon, trend, description }) {
+  const displayTitle = title || label; // Support both title and label props
+
   return (
-    <div className="bg-white/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-white/20 hover:bg-white/15 transition-all">
+    <div
+      className="bg-white/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-white/20 hover:bg-white/15 transition-all cursor-help"
+      title={description}
+    >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-white/60">{title}</p>
+          <p className="text-sm font-medium text-white/60">{displayTitle}</p>
           <p className="text-3xl font-bold text-white mt-2">{value}</p>
           {subtitle && (
             <p className="text-sm text-white/50 mt-1">{subtitle}</p>

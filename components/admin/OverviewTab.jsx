@@ -74,7 +74,7 @@ export function OverviewTab({ period, userId }) {
   return (
     <div className="space-y-6">
       {/* Section 1: Main KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Active Users */}
         <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-blue-400/30 hover:scale-105 transition-transform">
           <div className="flex items-center justify-between">
@@ -89,6 +89,20 @@ export function OverviewTab({ period, userId }) {
           </div>
         </div>
 
+        {/* Total CVs */}
+        <div className="bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-cyan-400/30 hover:scale-105 transition-transform">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-cyan-200">Total CVs</p>
+              <p className="text-3xl font-bold text-white mt-2">{kpis.totalCvs}</p>
+              <p className="text-xs text-cyan-300/60 mt-2">
+                CVs créés au total
+              </p>
+            </div>
+            <div className="text-4xl">📄</div>
+          </div>
+        </div>
+
         {/* CVs Generated */}
         <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-purple-400/30 hover:scale-105 transition-transform">
           <div className="flex items-center justify-between">
@@ -96,7 +110,7 @@ export function OverviewTab({ period, userId }) {
               <p className="text-sm font-medium text-purple-200">CVs Générés IA</p>
               <p className="text-3xl font-bold text-white mt-2">{kpis.cvGenerated}</p>
               <p className="text-xs text-purple-300/60 mt-2">
-                Sur {kpis.totalCvs} CVs au total
+                {((kpis.cvGenerated / kpis.totalCvs) * 100).toFixed(1)}% du total
               </p>
             </div>
             <div className="text-4xl">🤖</div>

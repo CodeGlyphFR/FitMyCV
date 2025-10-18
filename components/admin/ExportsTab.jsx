@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import { CustomSelect } from './CustomSelect';
+import { Toast } from './Toast';
 
 export function ExportsTab({ userId }) {
   const [exporting, setExporting] = useState(false);
   const [format, setFormat] = useState('json');
   const [dataType, setDataType] = useState('events');
   const [period, setPeriod] = useState('30d');
+  const [toast, setToast] = useState(null);
 
   async function handleExport() {
     setExporting(true);
@@ -97,10 +99,10 @@ export function ExportsTab({ userId }) {
         }
       }
 
-      alert('Export réussi !');
+      setToast({ type: 'success', message: 'Export réussi !' });
     } catch (error) {
       console.error('Error exporting:', error);
-      alert('Erreur lors de l\'export');
+      setToast({ type: 'error', message: 'Erreur lors de l\'export' });
     } finally {
       setExporting(false);
     }
@@ -217,6 +219,9 @@ export function ExportsTab({ userId }) {
           </div>
         </div>
       </div>
+
+      {/* Toast */}
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
   );
 }
