@@ -7,6 +7,7 @@ import { SessionsTab } from '@/components/admin/SessionsTab';
 import { ErrorsTab } from '@/components/admin/ErrorsTab';
 import { ExportsTab } from '@/components/admin/ExportsTab';
 import { SettingsTab } from '@/components/admin/SettingsTab';
+import { OpenAICostsTab } from '@/components/admin/OpenAICostsTab';
 import { DateRangePicker } from '@/components/admin/DateRangePicker';
 import { UserFilter } from '@/components/admin/UserFilter';
 
@@ -16,6 +17,7 @@ const TABS = [
   { id: 'sessions', label: 'Sessions', icon: '👥' },
   { id: 'errors', label: 'Erreurs', icon: '🐛' },
   { id: 'exports', label: 'Exports', icon: '📥' },
+  { id: 'openai-costs', label: 'OpenAI Costs', icon: '💰' },
   { id: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
@@ -48,7 +50,7 @@ export default function AnalyticsDashboard() {
             </div>
             <div className="flex items-center gap-4">
               <UserFilter value={selectedUserId} onChange={setSelectedUserId} />
-              {['overview', 'features', 'sessions', 'errors'].includes(activeTab) && (
+              {['overview', 'features', 'sessions', 'errors', 'openai-costs'].includes(activeTab) && (
                 <DateRangePicker value={period} onChange={setPeriod} />
               )}
             </div>
@@ -70,7 +72,7 @@ export default function AnalyticsDashboard() {
               <span className="text-sm">Retour</span>
             </button>
             <h1 className="text-sm font-bold text-white">Analytics Dashboard</h1>
-            {['overview', 'features', 'sessions', 'errors'].includes(activeTab) && (
+            {['overview', 'features', 'sessions', 'errors', 'openai-costs'].includes(activeTab) && (
               <DateRangePicker value={period} onChange={setPeriod} />
             )}
           </div>
@@ -116,6 +118,7 @@ export default function AnalyticsDashboard() {
         {activeTab === 'sessions' && <SessionsTab period={period} userId={selectedUserId} />}
         {activeTab === 'errors' && <ErrorsTab period={period} userId={selectedUserId} />}
         {activeTab === 'exports' && <ExportsTab userId={selectedUserId} />}
+        {activeTab === 'openai-costs' && <OpenAICostsTab period={period} />}
         {activeTab === 'settings' && <SettingsTab />}
       </div>
     </div>

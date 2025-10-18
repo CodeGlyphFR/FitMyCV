@@ -14,9 +14,15 @@ npm start                # Démarre le serveur de production
 ### Prisma
 ```bash
 npx prisma migrate deploy    # Applique les migrations (DATABASE_URL depuis .env.local)
+npx prisma migrate dev       # Créer une migration en dev
 npx prisma studio            # Interface graphique pour la base de données
 npx prisma generate          # Génère le client Prisma
 ```
+
+**IMPORTANT - Base de données** :
+- La base SQLite est dans `prisma/dev.db`
+- Le chemin dans `.env.local` est `DATABASE_URL="file:./dev.db"` (relatif au dossier `prisma/`)
+- **NE JAMAIS** modifier ce chemin en `file:./prisma/dev.db` car Prisma lit depuis le dossier `prisma/`
 
 ## Architecture
 
