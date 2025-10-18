@@ -92,6 +92,29 @@ export async function GET(request) {
       },
     });
 
+    // Get last cost for each feature (from individual call records)
+    const lastCostByFeature = await Promise.all(
+      byFeature.map(async (feature) => {
+        const lastCall = await prisma.openAICall.findFirst({
+          where: {
+            featureName: feature.featureName,
+            ...(userId && { userId }),
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          select: {
+            estimatedCost: true,
+          },
+        });
+
+        return {
+          featureName: feature.featureName,
+          lastCost: lastCall?.estimatedCost || 0,
+        };
+      })
+    );
+
     // Get breakdown by model
     const byModel = await prisma.openAIUsage.groupBy({
       by: ['model'],
@@ -181,12 +204,16 @@ export async function GET(request) {
         totalTokens: totalStats._sum.totalTokens || 0,
         calls: totalStats._sum.callsCount || 0,
       },
-      byFeature: byFeature.map(f => ({
-        feature: f.featureName,
-        cost: f._sum.estimatedCost || 0,
-        tokens: f._sum.totalTokens || 0,
-        calls: f._sum.callsCount || 0,
-      })),
+      byFeature: byFeature.map(f => {
+        const lastCostData = lastCostByFeature.find(lc => lc.featureName === f.featureName);
+        return {
+          feature: f.featureName,
+          cost: f._sum.estimatedCost || 0,
+          tokens: f._sum.totalTokens || 0,
+          calls: f._sum.callsCount || 0,
+          lastCost: lastCostData?.lastCost || 0,
+        };
+      }),
       byModel: byModel.map(m => ({
         model: m.model,
         cost: m._sum.estimatedCost || 0,

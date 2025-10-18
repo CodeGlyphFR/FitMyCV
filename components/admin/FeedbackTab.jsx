@@ -153,24 +153,28 @@ export function FeedbackTab({ period, userId }) {
           label="Total feedbacks"
           value={data.total.count}
           trend={null}
+          description="Nombre total de retours utilisateurs reçus sur la période sélectionnée"
         />
         <KPICard
           icon="⭐"
           label="Note moyenne"
           value={data.total.avgRating.toFixed(1) + '/5'}
           trend={null}
+          description="Note de satisfaction moyenne attribuée par les utilisateurs sur une échelle de 1 à 5"
         />
         <KPICard
           icon="🐛"
           label="Bugs reportés"
           value={data.total.bugReports}
           subtitle={`${((data.total.bugReports / data.total.count) * 100 || 0).toFixed(0)}% des feedbacks`}
+          description="Nombre de feedbacks marqués comme bug ou problème technique, nécessitant une investigation"
         />
         <KPICard
           icon="🔔"
           label="Non traités"
           value={newFeedbacksCount}
           subtitle="À traiter"
+          description="Feedbacks avec le statut 'nouveau' qui n'ont pas encore été examinés ou traités par l'équipe"
         />
       </div>
 

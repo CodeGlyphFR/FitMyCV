@@ -6,6 +6,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   AreaChart, Area
 } from 'recharts';
+import { KPICard } from './KPICard';
 
 const COLORS = {
   primary: '#3B82F6',
@@ -178,63 +179,34 @@ export function SessionsTab({ period, userId }) {
     <div className="space-y-6">
       {/* KPIs Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Sessions totales */}
-        <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-blue-400/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-blue-200">Sessions totales</p>
-              <p className="text-3xl font-bold text-white mt-2">{statistics.totalSessions}</p>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-xs text-blue-300">{activeSessions} actives</span>
-                <span className="text-xs text-blue-400/60">•</span>
-                <span className="text-xs text-blue-300/60">{completedSessions} terminées</span>
-              </div>
-            </div>
-            <div className="text-4xl">👥</div>
-          </div>
-        </div>
-
-        {/* Durée moyenne */}
-        <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-purple-400/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-purple-200">Durée moyenne</p>
-              <p className="text-3xl font-bold text-white mt-2">
-                {Math.round(statistics.avgDuration / 60)}m
-              </p>
-              <p className="text-xs text-purple-300/60 mt-2">
-                Médiane: {Math.round(statistics.medianDuration / 60)}min
-              </p>
-            </div>
-            <div className="text-4xl">⏱️</div>
-          </div>
-        </div>
-
-        {/* Engagement moyen */}
-        <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-green-400/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-green-200">Pages par session</p>
-              <p className="text-3xl font-bold text-white mt-2">
-                {statistics.avgPagesPerSession.toFixed(1)}
-              </p>
-              <p className="text-xs text-green-300/60 mt-2">pages vues en moyenne</p>
-            </div>
-            <div className="text-4xl">📄</div>
-          </div>
-        </div>
-
-        {/* Taux de rebond */}
-        <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-orange-400/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-orange-200">Taux de rebond</p>
-              <p className="text-3xl font-bold text-white mt-2">{bounceRate}%</p>
-              <p className="text-xs text-orange-300/60 mt-2">≤ 1 page visitée</p>
-            </div>
-            <div className="text-4xl">📉</div>
-          </div>
-        </div>
+        <KPICard
+          icon="👥"
+          label="Sessions totales"
+          value={statistics.totalSessions}
+          subtitle={`${activeSessions} actives • ${completedSessions} terminées`}
+          description="Nombre total de sessions utilisateurs avec répartition entre sessions actives (en cours) et terminées"
+        />
+        <KPICard
+          icon="⏱️"
+          label="Durée moyenne"
+          value={`${Math.round(statistics.avgDuration / 60)}m`}
+          subtitle={`Médiane: ${Math.round(statistics.medianDuration / 60)}min`}
+          description="Temps moyen passé par session et médiane pour mieux comprendre la distribution des durées"
+        />
+        <KPICard
+          icon="📄"
+          label="Pages par session"
+          value={statistics.avgPagesPerSession.toFixed(1)}
+          subtitle="pages vues en moyenne"
+          description="Nombre moyen de pages consultées par session, indicateur de l'engagement et de l'exploration utilisateur"
+        />
+        <KPICard
+          icon="📉"
+          label="Taux de rebond"
+          value={`${bounceRate}%`}
+          subtitle="≤ 1 page visitée"
+          description="Pourcentage d'utilisateurs n'ayant consulté qu'une seule page avant de quitter le site"
+        />
       </div>
 
       {/* Graphiques principaux */}

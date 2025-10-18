@@ -5,7 +5,6 @@ import { OverviewTab } from '@/components/admin/OverviewTab';
 import { FeaturesTab } from '@/components/admin/FeaturesTab';
 import { SessionsTab } from '@/components/admin/SessionsTab';
 import { ErrorsTab } from '@/components/admin/ErrorsTab';
-import { ExportsTab } from '@/components/admin/ExportsTab';
 import { SettingsTab } from '@/components/admin/SettingsTab';
 import { OpenAICostsTab } from '@/components/admin/OpenAICostsTab';
 import { FeedbackTab } from '@/components/admin/FeedbackTab';
@@ -17,7 +16,6 @@ const TABS = [
   { id: 'features', label: 'Features', icon: '⚡' },
   { id: 'sessions', label: 'Sessions', icon: '👥' },
   { id: 'errors', label: 'Erreurs', icon: '🐛' },
-  { id: 'exports', label: 'Exports', icon: '📥' },
   { id: 'openai-costs', label: 'OpenAI Costs', icon: '💰' },
   { id: 'feedback', label: 'Feedback', icon: '💬' },
   { id: 'settings', label: 'Settings', icon: '⚙️' },
@@ -123,7 +121,6 @@ export default function AnalyticsDashboard() {
         {activeTab === 'features' && <FeaturesTab period={period} userId={selectedUserId} />}
         {activeTab === 'sessions' && <SessionsTab period={period} userId={selectedUserId} />}
         {activeTab === 'errors' && <ErrorsTab period={period} userId={selectedUserId} />}
-        {activeTab === 'exports' && <ExportsTab userId={selectedUserId} />}
         {activeTab === 'openai-costs' && <OpenAICostsTab period={period} />}
         {activeTab === 'feedback' && <FeedbackTab period={period} userId={selectedUserId} />}
         {activeTab === 'settings' && <SettingsTab />}

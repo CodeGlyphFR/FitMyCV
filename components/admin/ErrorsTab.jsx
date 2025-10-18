@@ -5,6 +5,7 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { KPICard } from './KPICard';
 
 const ERROR_SEVERITY = {
   CRITICAL: { color: '#EF4444', label: 'Critique', icon: '🔴' },
@@ -77,53 +78,34 @@ export function ErrorsTab({ period, userId }) {
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Errors */}
-        <div className="bg-gradient-to-br from-red-500/20 to-red-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-red-400/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-red-200">Total Erreurs</p>
-              <p className="text-3xl font-bold text-white mt-2">{statistics.totalErrors}</p>
-              <p className="text-xs text-red-300/60 mt-2">Sur la période</p>
-            </div>
-            <div className="text-4xl">❌</div>
-          </div>
-        </div>
-
-        {/* Error Rate */}
-        <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-orange-400/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-orange-200">Taux d'Erreur</p>
-              <p className="text-3xl font-bold text-white mt-2">{statistics.errorRate}%</p>
-              <p className="text-xs text-orange-300/60 mt-2">Erreurs / Total événements</p>
-            </div>
-            <div className="text-4xl">📊</div>
-          </div>
-        </div>
-
-        {/* Health Score */}
-        <div className={`bg-gradient-to-br from-${healthStatus.color}-500/20 to-${healthStatus.color}-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-${healthStatus.color}-400/30`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-white/80">Santé du Système</p>
-              <p className="text-3xl font-bold text-white mt-2">{Math.round(healthScore)}</p>
-              <p className={`text-xs text-${healthStatus.color}-300/60 mt-2`}>{healthStatus.label}</p>
-            </div>
-            <div className="text-4xl">{healthStatus.icon}</div>
-          </div>
-        </div>
-
-        {/* Unique Error Types */}
-        <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-purple-400/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-purple-200">Types d'Erreurs</p>
-              <p className="text-3xl font-bold text-white mt-2">{uniqueErrorTypes}</p>
-              <p className="text-xs text-purple-300/60 mt-2">Types différents</p>
-            </div>
-            <div className="text-4xl">🏷️</div>
-          </div>
-        </div>
+        <KPICard
+          icon="❌"
+          label="Total Erreurs"
+          value={statistics.totalErrors}
+          subtitle="Sur la période"
+          description="Nombre total d'erreurs enregistrées sur la période sélectionnée, tous types confondus"
+        />
+        <KPICard
+          icon="📊"
+          label="Taux d'Erreur"
+          value={`${statistics.errorRate}%`}
+          subtitle="Erreurs / Total événements"
+          description="Pourcentage d'événements ayant généré une erreur par rapport au total d'événements trackés"
+        />
+        <KPICard
+          icon={healthStatus.icon}
+          label="Santé du Système"
+          value={Math.round(healthScore)}
+          subtitle={healthStatus.label}
+          description="Score de santé calculé en fonction du taux d'erreur (100 = aucune erreur, 0 = critique)"
+        />
+        <KPICard
+          icon="🏷️"
+          label="Types d'Erreurs"
+          value={uniqueErrorTypes}
+          subtitle="Types différents"
+          description="Nombre de types d'erreurs uniques détectés, utile pour identifier la diversité des problèmes"
+        />
       </div>
 
       {/* Main Charts */}

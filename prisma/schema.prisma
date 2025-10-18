@@ -362,3 +362,23 @@ model OpenAIAlert {
   @@index([type])
   @@index([enabled])
 }
+
+model OpenAICall {
+  id               String   @id @default(cuid())
+  userId           String
+  featureName      String   // generate_cv, match_score, optimize_cv, translate_cv, import_pdf, etc.
+  model            String   // gpt-5-nano-2025-08-07, gpt-5-mini-2025-08-07, etc.
+
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  totalTokens      Int      @default(0)
+  estimatedCost    Float    @default(0)
+
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+  @@index([featureName])
+  @@index([featureName, createdAt])
+  @@index([userId, featureName])
+  @@index([createdAt])
+}

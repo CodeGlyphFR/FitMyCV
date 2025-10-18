@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { KPICard } from './KPICard';
 import { CustomSelect } from './CustomSelect';
 import { Toast } from './Toast';
 import { ConfirmDialog } from './ConfirmDialog';
 import { getFeatureConfig } from '@/lib/analytics/featureConfig';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 export function OpenAICostsTab({ period }) {
   const [data, setData] = useState(null);
@@ -16,6 +16,8 @@ export function OpenAICostsTab({ period }) {
   const [showAlerts, setShowAlerts] = useState(false);
   const [toast, setToast] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
+  const pricingScrollRef = useRef(null);
+  const alertsScrollRef = useRef(null);
 
   // Pricing management state
   const [pricings, setPricings] = useState([]);
@@ -53,6 +55,54 @@ export function OpenAICostsTab({ period }) {
     if (showAlerts) {
       fetchAlerts();
     }
+  }, [showAlerts]);
+
+  // Empêcher le scroll chaining pour la liste de pricing
+  useEffect(() => {
+    const scrollContainer = pricingScrollRef.current;
+    if (!showPricing || !scrollContainer) return;
+
+    function preventScrollChaining(e) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+      const isAtTop = scrollTop <= 1;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+
+      // Bloquer seulement aux limites
+      if ((isAtTop && e.deltaY < 0) || (isAtBottom && e.deltaY > 0)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
+
+    scrollContainer.addEventListener('wheel', preventScrollChaining, { passive: false });
+
+    return () => {
+      scrollContainer.removeEventListener('wheel', preventScrollChaining);
+    };
+  }, [showPricing]);
+
+  // Empêcher le scroll chaining pour la liste d'alertes
+  useEffect(() => {
+    const scrollContainer = alertsScrollRef.current;
+    if (!showAlerts || !scrollContainer) return;
+
+    function preventScrollChaining(e) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+      const isAtTop = scrollTop <= 1;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+
+      // Bloquer seulement aux limites
+      if ((isAtTop && e.deltaY < 0) || (isAtBottom && e.deltaY > 0)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
+
+    scrollContainer.addEventListener('wheel', preventScrollChaining, { passive: false });
+
+    return () => {
+      scrollContainer.removeEventListener('wheel', preventScrollChaining);
+    };
   }, [showAlerts]);
 
   const fetchData = async () => {
@@ -316,6 +366,62 @@ export function OpenAICostsTab({ period }) {
         />
       </div>
 
+      {/* Last Cost Comparison Chart */}
+      <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Comparaison des derniers coûts par feature</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart
+            data={data.byFeature.map((feature) => {
+              const featureConfig = getFeatureConfig(feature.feature);
+              return {
+                name: featureConfig.name || feature.feature,
+                lastCost: feature.lastCost || 0,
+                fill: featureConfig.colors?.solid || '#3B82F6',
+              };
+            })}
+            layout="vertical"
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+            <XAxis
+              type="number"
+              stroke="rgba(255,255,255,0.6)"
+              tick={{ fill: 'rgba(255,255,255,0.6)' }}
+              tickFormatter={(value) => formatCurrency(value)}
+            />
+            <YAxis
+              type="category"
+              dataKey="name"
+              width={150}
+              stroke="rgba(255,255,255,0.6)"
+              tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 12 }}
+            />
+            <Tooltip
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  const data = payload[0].payload;
+                  return (
+                    <div className="bg-black/95 backdrop-blur-xl border border-white/20 rounded-lg p-3 shadow-2xl">
+                      <p className="text-white font-semibold mb-2">{data.name}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-green-300">Dernier coût:</span>
+                        <span className="text-white font-bold">{formatCurrency(data.lastCost)}</span>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
+            <Bar dataKey="lastCost" radius={[0, 4, 4, 0]}>
+              {data.byFeature.map((feature, index) => {
+                const featureConfig = getFeatureConfig(feature.feature);
+                return <Cell key={`cell-${index}`} fill={featureConfig.colors?.solid || '#3B82F6'} />;
+              })}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
       {/* Feature Breakdown Table */}
       <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-6">
         <div className="flex items-center justify-between mb-4">
@@ -416,7 +522,7 @@ export function OpenAICostsTab({ period }) {
             </form>
 
             {/* Pricing List */}
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div ref={pricingScrollRef} className="space-y-2 max-h-64 overflow-y-auto [overscroll-behavior:contain]">
               {pricings.length === 0 ? (
                 <div className="text-center py-4 text-white/60 text-sm">
                   Aucun tarif configuré
@@ -465,6 +571,7 @@ export function OpenAICostsTab({ period }) {
                 <th className="pb-3 text-right">Appels</th>
                 <th className="pb-3 text-right">Tokens</th>
                 <th className="pb-3 text-right">Coût</th>
+                <th className="pb-3 text-right">Dernier coût</th>
                 <th className="pb-3 text-right">Coût/appel</th>
                 <th className="pb-3 text-right">%</th>
               </tr>
@@ -491,6 +598,9 @@ export function OpenAICostsTab({ period }) {
                     </td>
                     <td className="py-3 text-right font-medium">
                       {formatCurrency(feature.cost)}
+                    </td>
+                    <td className="py-3 text-right text-green-400">
+                      {formatCurrency(feature.lastCost || 0)}
                     </td>
                     <td className="py-3 text-right text-white/80">
                       {formatCurrency(avgCost)}
@@ -740,7 +850,7 @@ export function OpenAICostsTab({ period }) {
             </form>
 
             {/* Alert List */}
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div ref={alertsScrollRef} className="space-y-2 max-h-64 overflow-y-auto [overscroll-behavior:contain]">
               {alerts.map((alert) => (
                 <div key={alert.id} className="flex items-center justify-between p-3 bg-white/5 rounded">
                   <div className="flex-1">

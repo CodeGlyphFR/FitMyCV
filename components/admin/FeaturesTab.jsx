@@ -6,6 +6,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { FEATURE_CONFIG } from '@/lib/analytics/featureConfig';
+import { KPICard } from './KPICard';
 
 // Extract colors for pie chart from shared config
 const PIE_COLORS = Object.values(FEATURE_CONFIG).map(f => f.colors.solid);
@@ -139,59 +140,34 @@ export function FeaturesTab({ period, userId }) {
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Utilisations */}
-        <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-blue-400/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-blue-200">Total Utilisations</p>
-              <p className="text-3xl font-bold text-white mt-2">{totalUsage}</p>
-              <p className="text-xs text-blue-300/60 mt-2">Toutes features</p>
-            </div>
-            <div className="text-4xl">📊</div>
-          </div>
-        </div>
-
-        {/* Utilisateurs Actifs */}
-        <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-purple-400/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-purple-200">Utilisateurs</p>
-              <p className="text-3xl font-bold text-white mt-2">{totalUsers}</p>
-              <p className="text-xs text-purple-300/60 mt-2">Actifs</p>
-            </div>
-            <div className="text-4xl">👥</div>
-          </div>
-        </div>
-
-        {/* Feature Populaire */}
-        <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-orange-400/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-orange-200">Plus populaire</p>
-              <p className="text-3xl font-bold text-white mt-2">
-                {mostPopular ? FEATURE_CONFIG[mostPopular.featureName]?.icon || '⭐' : '-'}
-              </p>
-              <p className="text-xs text-orange-300/60 mt-2">
-                {mostPopular ? `${mostPopular.totalUsage} fois` : 'N/A'}
-              </p>
-            </div>
-            <div className="text-4xl">⭐</div>
-          </div>
-        </div>
-
-        {/* Durée Moyenne */}
-        <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-green-400/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-green-200">Durée moy.</p>
-              <p className="text-3xl font-bold text-white mt-2">
-                {avgDuration > 0 ? `${Math.round(avgDuration / 1000)}s` : '-'}
-              </p>
-              <p className="text-xs text-green-300/60 mt-2">Par utilisation</p>
-            </div>
-            <div className="text-4xl">⏱️</div>
-          </div>
-        </div>
+        <KPICard
+          icon="📊"
+          label="Total Utilisations"
+          value={totalUsage}
+          subtitle="Toutes features"
+          description="Nombre total d'utilisations de toutes les fonctionnalités combinées sur la période"
+        />
+        <KPICard
+          icon="👥"
+          label="Utilisateurs"
+          value={totalUsers}
+          subtitle="Actifs"
+          description="Nombre maximum d'utilisateurs uniques ayant utilisé au moins une feature"
+        />
+        <KPICard
+          icon={mostPopular ? FEATURE_CONFIG[mostPopular.featureName]?.icon || '⭐' : '⭐'}
+          label="Plus populaire"
+          value={mostPopular ? FEATURE_CONFIG[mostPopular.featureName]?.name || mostPopular.featureName : '-'}
+          subtitle={mostPopular ? `${mostPopular.totalUsage} fois` : 'N/A'}
+          description="Feature la plus utilisée sur la période, avec son nombre total d'utilisations"
+        />
+        <KPICard
+          icon="⏱️"
+          label="Durée moy."
+          value={avgDuration > 0 ? `${Math.round(avgDuration / 1000)}s` : '-'}
+          subtitle="Par utilisation"
+          description="Temps moyen d'exécution des features qui trackent leur durée"
+        />
       </div>
 
       {/* Main Charts */}
@@ -217,7 +193,6 @@ export function FeaturesTab({ period, userId }) {
               <Tooltip content={<CustomBarTooltip />} />
               <Legend />
               <Bar dataKey="usage" fill="#3B82F6" name="Utilisations" radius={[0, 4, 4, 0]} />
-              <Bar dataKey="users" fill="#10B981" name="Utilisateurs" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

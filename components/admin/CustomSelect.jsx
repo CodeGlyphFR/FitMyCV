@@ -9,6 +9,7 @@ export function CustomSelect({ value, onChange, options, className = '', placeho
   const [portalReady, setPortalReady] = useState(false);
   const containerRef = useRef(null);
   const dropdownRef = useRef(null);
+  const scrollContainerRef = useRef(null);
 
   const selectedOption = options.find(opt => opt.value === value);
 
@@ -52,6 +53,29 @@ export function CustomSelect({ value, onChange, options, className = '', placeho
     };
   }, [isOpen]);
 
+  // Bloquer le scroll du body quand le dropdown est ouvert
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Sauvegarder la position de scroll actuelle
+    const scrollY = window.scrollY;
+
+    // Bloquer le scroll du body
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+
+    return () => {
+      // Restaurer le scroll du body
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, scrollY);
+    };
+  }, [isOpen]);
+
   return (
     <>
       <div className="relative" ref={containerRef}>
@@ -69,7 +93,10 @@ export function CustomSelect({ value, onChange, options, className = '', placeho
 
       {isOpen && portalReady && dropdownRect && createPortal(
         <div
-          ref={dropdownRef}
+          ref={(node) => {
+            dropdownRef.current = node;
+            scrollContainerRef.current = node;
+          }}
           style={{
             position: 'fixed',
             top: dropdownRect.bottom + 4,
@@ -77,7 +104,7 @@ export function CustomSelect({ value, onChange, options, className = '', placeho
             width: dropdownRect.width,
             zIndex: 10003,
           }}
-          className="rounded-lg border border-white/30 bg-gray-900/95 backdrop-blur-xl backdrop-saturate-150 shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-h-60 overflow-y-auto"
+          className="rounded-lg border border-white/30 bg-gray-900/95 backdrop-blur-xl backdrop-saturate-150 shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-h-60 overflow-y-auto [overscroll-behavior:contain]"
         >
           {options.map((option) => (
             <button

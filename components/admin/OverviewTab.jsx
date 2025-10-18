@@ -6,6 +6,7 @@ import {
   CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
 } from 'recharts';
 import { FEATURE_CONFIG } from '@/lib/analytics/featureConfig';
+import { KPICard } from './KPICard';
 
 export function OverviewTab({ period, userId }) {
   const [summary, setSummary] = useState(null);
@@ -75,75 +76,41 @@ export function OverviewTab({ period, userId }) {
     <div className="space-y-6">
       {/* Section 1: Main KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {/* Active Users */}
-        <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-blue-400/30 hover:scale-105 transition-transform">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-blue-200">Utilisateurs Actifs</p>
-              <p className="text-3xl font-bold text-white mt-2">{kpis.activeUsers}</p>
-              <p className="text-xs text-blue-300/60 mt-2">
-                {userActivityPercent}% de {kpis.totalUsers} utilisateurs
-              </p>
-            </div>
-            <div className="text-4xl">👥</div>
-          </div>
-        </div>
-
-        {/* Total CVs */}
-        <div className="bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-cyan-400/30 hover:scale-105 transition-transform">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-cyan-200">Total CVs</p>
-              <p className="text-3xl font-bold text-white mt-2">{kpis.totalCvs}</p>
-              <p className="text-xs text-cyan-300/60 mt-2">
-                CVs créés au total
-              </p>
-            </div>
-            <div className="text-4xl">📄</div>
-          </div>
-        </div>
-
-        {/* CVs Generated */}
-        <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-purple-400/30 hover:scale-105 transition-transform">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-purple-200">CVs Générés IA</p>
-              <p className="text-3xl font-bold text-white mt-2">{kpis.cvGenerated}</p>
-              <p className="text-xs text-purple-300/60 mt-2">
-                {((kpis.cvGenerated / kpis.totalCvs) * 100).toFixed(1)}% du total
-              </p>
-            </div>
-            <div className="text-4xl">🤖</div>
-          </div>
-        </div>
-
-        {/* Conversion Rate */}
-        <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-green-400/30 hover:scale-105 transition-transform">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-green-200">Taux de Conversion</p>
-              <p className="text-3xl font-bold text-white mt-2">{kpis.conversionRate}%</p>
-              <p className="text-xs text-green-300/60 mt-2">
-                Génération → Export
-              </p>
-            </div>
-            <div className="text-4xl">📈</div>
-          </div>
-        </div>
-
-        {/* Health Score */}
-        <div className={`bg-gradient-to-br ${healthStatus.gradient} backdrop-blur-xl rounded-lg shadow-lg p-6 border ${healthStatus.border} hover:scale-105 transition-transform`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-white/80">Santé du Système</p>
-              <p className="text-3xl font-bold text-white mt-2">{kpis.healthScore}</p>
-              <p className="text-xs text-white/60 mt-2">
-                {healthStatus.label}
-              </p>
-            </div>
-            <div className="text-4xl">{healthStatus.icon}</div>
-          </div>
-        </div>
+        <KPICard
+          icon="👥"
+          label="Utilisateurs Actifs"
+          value={kpis.activeUsers}
+          subtitle={`${userActivityPercent}% de ${kpis.totalUsers} utilisateurs`}
+          description="Nombre d'utilisateurs ayant effectué au moins une action sur la période sélectionnée"
+        />
+        <KPICard
+          icon="📄"
+          label="Total CVs"
+          value={kpis.totalCvs}
+          subtitle="CVs créés au total"
+          description="Nombre total de CV créés par tous les utilisateurs depuis le début"
+        />
+        <KPICard
+          icon="🤖"
+          label="CVs Générés IA"
+          value={kpis.cvGenerated}
+          subtitle={`${((kpis.cvGenerated / kpis.totalCvs) * 100).toFixed(1)}% du total`}
+          description="Nombre de CV générés automatiquement par l'IA à partir d'offres d'emploi"
+        />
+        <KPICard
+          icon="📈"
+          label="Taux de Conversion"
+          value={`${kpis.conversionRate}%`}
+          subtitle="Génération → Export"
+          description="Pourcentage d'utilisateurs ayant exporté un CV après l'avoir généré avec l'IA"
+        />
+        <KPICard
+          icon={healthStatus.icon}
+          label="Santé du Système"
+          value={kpis.healthScore}
+          subtitle={healthStatus.label}
+          description="Score de santé global du système basé sur les erreurs, la performance et l'utilisation des features"
+        />
       </div>
 
       {/* Section 2: Timeline Chart */}
@@ -204,77 +171,48 @@ export function OverviewTab({ period, userId }) {
 
       {/* Section 3: Quick Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Sessions */}
-        <div className="bg-white/5 backdrop-blur-xl rounded-lg shadow-lg p-4 border border-white/10 hover:bg-white/10 transition-colors">
-          <div className="flex items-center gap-3">
-            <div className="text-3xl">🕐</div>
-            <div>
-              <p className="text-xs text-white/60">Sessions</p>
-              <p className="text-xl font-bold text-white">{kpis.totalSessions}</p>
-              <p className="text-xs text-white/40">{Math.round(kpis.avgSessionDuration / 60)} min moy.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Pages per Session */}
-        <div className="bg-white/5 backdrop-blur-xl rounded-lg shadow-lg p-4 border border-white/10 hover:bg-white/10 transition-colors">
-          <div className="flex items-center gap-3">
-            <div className="text-3xl">📄</div>
-            <div>
-              <p className="text-xs text-white/60">Pages / Session</p>
-              <p className="text-xl font-bold text-white">{kpis.avgPagesPerSession}</p>
-              <p className="text-xs text-white/40">pages en moyenne</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Bounce Rate */}
-        <div className="bg-white/5 backdrop-blur-xl rounded-lg shadow-lg p-4 border border-white/10 hover:bg-white/10 transition-colors">
-          <div className="flex items-center gap-3">
-            <div className="text-3xl">🔄</div>
-            <div>
-              <p className="text-xs text-white/60">Taux de Rebond</p>
-              <p className="text-xl font-bold text-white">{kpis.bounceRate}%</p>
-              <p className="text-xs text-white/40">≤ 1 page visitée</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Total Events */}
-        <div className="bg-white/5 backdrop-blur-xl rounded-lg shadow-lg p-4 border border-white/10 hover:bg-white/10 transition-colors">
-          <div className="flex items-center gap-3">
-            <div className="text-3xl">📍</div>
-            <div>
-              <p className="text-xs text-white/60">Total Événements</p>
-              <p className="text-xl font-bold text-white">{kpis.totalEvents}</p>
-              <p className="text-xs text-white/40">trackés sur la période</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Job Success Rate */}
-        <div className="bg-white/5 backdrop-blur-xl rounded-lg shadow-lg p-4 border border-white/10 hover:bg-white/10 transition-colors">
-          <div className="flex items-center gap-3">
-            <div className="text-3xl">⚙️</div>
-            <div>
-              <p className="text-xs text-white/60">Taux Succès Jobs</p>
-              <p className="text-xl font-bold text-white">{kpis.jobSuccessRate}%</p>
-              <p className="text-xs text-white/40">{kpis.completedJobs}/{kpis.totalJobs} réussis</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Best Hour */}
-        <div className="bg-white/5 backdrop-blur-xl rounded-lg shadow-lg p-4 border border-white/10 hover:bg-white/10 transition-colors">
-          <div className="flex items-center gap-3">
-            <div className="text-3xl">⏰</div>
-            <div>
-              <p className="text-xs text-white/60">Meilleure Heure</p>
-              <p className="text-xl font-bold text-white">{bestHourFormatted}</p>
-              <p className="text-xs text-white/40">période la plus active</p>
-            </div>
-          </div>
-        </div>
+        <KPICard
+          icon="🕐"
+          label="Sessions"
+          value={kpis.totalSessions}
+          subtitle={`${Math.round(kpis.avgSessionDuration / 60)} min moy.`}
+          description="Nombre total de sessions utilisateurs enregistrées, avec une durée moyenne de session calculée"
+        />
+        <KPICard
+          icon="📄"
+          label="Pages / Session"
+          value={kpis.avgPagesPerSession}
+          subtitle="pages en moyenne"
+          description="Nombre moyen de pages consultées par session, indicateur d'engagement utilisateur"
+        />
+        <KPICard
+          icon="🔄"
+          label="Taux de Rebond"
+          value={`${kpis.bounceRate}%`}
+          subtitle="≤ 1 page visitée"
+          description="Pourcentage de sessions où l'utilisateur n'a consulté qu'une seule page avant de quitter"
+        />
+        <KPICard
+          icon="📍"
+          label="Total Événements"
+          value={kpis.totalEvents}
+          subtitle="trackés sur la période"
+          description="Nombre total d'événements utilisateurs trackés (clics, actions, interactions) sur la période"
+        />
+        <KPICard
+          icon="⚙️"
+          label="Taux Succès Jobs"
+          value={`${kpis.jobSuccessRate}%`}
+          subtitle={`${kpis.completedJobs}/${kpis.totalJobs} réussis`}
+          description="Taux de réussite des tâches en arrière-plan (génération CV, traduction, etc.)"
+        />
+        <KPICard
+          icon="⏰"
+          label="Meilleure Heure"
+          value={bestHourFormatted}
+          subtitle="période la plus active"
+          description="Heure de la journée où l'activité utilisateur est la plus élevée"
+        />
       </div>
 
       {/* Section 4: Features & Top 3 */}

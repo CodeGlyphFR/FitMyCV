@@ -1,29 +1,86 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 
 export function UserFilter({ value, onChange }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [dropdownRect, setDropdownRect] = useState(null);
+  const [portalReady, setPortalReady] = useState(false);
+  const containerRef = useRef(null);
   const dropdownRef = useRef(null);
+  const scrollContainerRef = useRef(null);
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  // Close dropdown when clicking outside
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setDropdownRect(rect);
+    }
+  }, [isOpen]);
+
+  // Close dropdown when clicking outside or pressing Escape
   useEffect(() => {
     function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
         setIsOpen(false);
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    function handleEscape(event) {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen]);
+
+  // Bloquer le scroll du body quand le dropdown est ouvert
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Sauvegarder la position de scroll actuelle
+    const scrollY = window.scrollY;
+
+    // Bloquer le scroll du body
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+
+    return () => {
+      // Restaurer le scroll du body
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, scrollY);
+    };
+  }, [isOpen]);
 
   async function fetchUsers() {
     setLoading(true);
@@ -56,35 +113,47 @@ export function UserFilter({ value, onChange }) {
   const selectedUser = users.find(u => u.id === value);
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      {/* Trigger Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full md:w-auto flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 rounded-lg border border-white/20 transition-colors text-white text-sm md:min-w-[220px]"
-      >
-        <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-        <span className="flex-1 text-left truncate">
-          {selectedUser ? (
-            <span className="font-medium">{selectedUser.name || selectedUser.email}</span>
-          ) : (
-            'Tous les utilisateurs'
-          )}
-        </span>
-        <svg
-          className={`w-4 h-4 text-white/60 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+    <>
+      <div className="relative" ref={containerRef}>
+        {/* Trigger Button */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full md:w-auto flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 rounded-lg border border-white/20 transition-colors text-white text-sm md:min-w-[220px]"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
+          <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          <span className="flex-1 text-left truncate">
+            {selectedUser ? (
+              <span className="font-medium">{selectedUser.name || selectedUser.email}</span>
+            ) : (
+              'Tous les utilisateurs'
+            )}
+          </span>
+          <svg
+            className={`w-4 h-4 text-white/60 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
 
       {/* Dropdown Menu */}
-      {isOpen && (
-        <div className="absolute top-full mt-2 w-full md:w-80 bg-gray-900 border border-white/20 rounded-lg shadow-xl z-50 overflow-hidden">
+      {isOpen && portalReady && dropdownRect && createPortal(
+        <div
+          ref={dropdownRef}
+          style={{
+            position: 'fixed',
+            top: dropdownRect.bottom + 8,
+            left: dropdownRect.left,
+            width: Math.max(dropdownRect.width, 320),
+            zIndex: 10003,
+          }}
+          className="bg-gray-900 border border-white/20 rounded-lg shadow-xl overflow-hidden"
+        >
           {/* Search Input */}
           <div className="p-3 border-b border-white/10">
             <div className="relative">
@@ -119,7 +188,7 @@ export function UserFilter({ value, onChange }) {
           </div>
 
           {/* User List */}
-          <div className="max-h-80 overflow-y-auto custom-scrollbar">
+          <div ref={scrollContainerRef} className="max-h-80 overflow-y-auto custom-scrollbar [overscroll-behavior:contain]">
             {loading ? (
               <div className="p-8 text-center text-white/60 text-sm">
                 Chargement...
@@ -212,7 +281,8 @@ export function UserFilter({ value, onChange }) {
               </>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <style jsx>{`
@@ -230,6 +300,6 @@ export function UserFilter({ value, onChange }) {
           background: rgba(255, 255, 255, 0.3);
         }
       `}</style>
-    </div>
+    </>
   );
 }
