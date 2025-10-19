@@ -5,6 +5,7 @@ import { stripHtml, sanitizeEmail } from "@/lib/security/xssSanitization";
 import { validatePassword } from "@/lib/security/passwordPolicy";
 import { createVerificationToken, sendVerificationEmail } from "@/lib/email/emailService";
 import logger from "@/lib/security/secureLogger";
+import { getDefaultTokenLimit } from "@/lib/settings/settingsUtils";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -116,12 +117,16 @@ export async function POST(request){
 
   const passwordHash = await bcrypt.hash(password, 10);
 
+  // Récupérer le nombre de tokens par défaut depuis les settings
+  const defaultTokenLimit = await getDefaultTokenLimit();
+
   const user = await prisma.user.create({
     data: {
       name: cleanName,
       email: normalizedEmail,
       passwordHash,
       emailVerified: null, // Email non vérifié à l'inscription
+      matchScoreRefreshCount: defaultTokenLimit, // Initialiser avec le nombre de tokens par défaut
     },
   });
 
