@@ -252,6 +252,34 @@ export async function GET(request) {
       prisma
     );
 
+    // Get user IDs associated with admin sessions
+    const adminUserSessions = await prisma.userSession.findMany({
+      where: {
+        id: { in: Array.from(adminSessionIds) },
+      },
+      select: {
+        userId: true,
+      },
+    });
+    const adminUserIds = new Set(adminUserSessions.map(s => s.userId));
+
+    // Recalculate active users excluding admin users
+    const filteredActiveUsers = userId
+      ? (adminUserIds.has(userId) ? 0 : 1)
+      : (startDate
+          ? await prisma.telemetryEvent.groupBy({
+              by: ['userId'],
+              where: {
+                ...whereClause,
+                userId: { not: null, notIn: Array.from(adminUserIds) },
+              },
+            }).then(r => r.length)
+          : await prisma.user.count({
+              where: {
+                id: { notIn: Array.from(adminUserIds) },
+              },
+            }));
+
     // Filter out admin sessions from session data
     const filteredSessionData = sessionData.filter(s => !adminSessionIds.has(s.id));
 
@@ -365,7 +393,8 @@ export async function GET(request) {
       if (event.type === 'CV_DELETED' && event.status === 'success') {
         acc[date].cvDeleted++;
       }
-      if (event.userId) {
+      // Only count active users who don't have admin sessions
+      if (event.userId && !adminUserIds.has(event.userId)) {
         acc[date].activeUsers.add(event.userId);
       }
       return acc;
@@ -389,7 +418,7 @@ export async function GET(request) {
       period,
       kpis: {
         totalUsers,
-        activeUsers,
+        activeUsers: filteredActiveUsers,
         totalEvents: filteredTotalEvents,
         totalCvs,
         cvGenerated,

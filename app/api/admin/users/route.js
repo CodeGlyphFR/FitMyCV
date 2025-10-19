@@ -165,7 +165,7 @@ export async function GET(request) {
 /**
  * POST /api/admin/users
  * Crée un utilisateur manuellement
- * Body: { email, name?, role }
+ * Body: { email, name, password, role }
  */
 export async function POST(request) {
   try {
@@ -180,9 +180,9 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { email, name, role } = body;
+    const { email, name, password, role } = body;
 
-    // Validation basique
+    // Validation email
     if (!email || typeof email !== 'string') {
       return NextResponse.json(
         { error: 'Email requis' },
@@ -190,6 +190,39 @@ export async function POST(request) {
       );
     }
 
+    // Validation format email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return NextResponse.json(
+        { error: 'Format email invalide' },
+        { status: 400 }
+      );
+    }
+
+    // Validation nom
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return NextResponse.json(
+        { error: 'Nom requis' },
+        { status: 400 }
+      );
+    }
+
+    // Validation password
+    if (!password || typeof password !== 'string' || !password.trim()) {
+      return NextResponse.json(
+        { error: 'Mot de passe requis' },
+        { status: 400 }
+      );
+    }
+
+    if (password.trim().length < 8) {
+      return NextResponse.json(
+        { error: 'Le mot de passe doit contenir au moins 8 caractères' },
+        { status: 400 }
+      );
+    }
+
+    // Validation rôle
     if (!role || !['USER', 'ADMIN'].includes(role)) {
       return NextResponse.json(
         { error: 'Rôle invalide (USER ou ADMIN attendu)' },
@@ -198,7 +231,7 @@ export async function POST(request) {
     }
 
     // Créer l'utilisateur
-    const result = await createManualUser({ email, name, role });
+    const result = await createManualUser({ email, name, password, role });
 
     if (!result.success) {
       return NextResponse.json(

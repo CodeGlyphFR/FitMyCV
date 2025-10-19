@@ -31,6 +31,7 @@ export function UsersTab() {
   // Formulaire ajout utilisateur
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserName, setNewUserName] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserRole, setNewUserRole] = useState('USER');
 
   // Formulaire édition email
@@ -273,8 +274,33 @@ export function UsersTab() {
 
   // Ajouter un utilisateur manuellement
   async function handleAddUser() {
+    // Validation email
     if (!newUserEmail.trim()) {
       setToast({ type: 'error', message: 'Email requis' });
+      return;
+    }
+
+    // Validation format email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newUserEmail.trim())) {
+      setToast({ type: 'error', message: 'Format email invalide' });
+      return;
+    }
+
+    // Validation nom
+    if (!newUserName.trim()) {
+      setToast({ type: 'error', message: 'Nom requis' });
+      return;
+    }
+
+    // Validation password
+    if (!newUserPassword.trim()) {
+      setToast({ type: 'error', message: 'Mot de passe requis' });
+      return;
+    }
+
+    if (newUserPassword.trim().length < 8) {
+      setToast({ type: 'error', message: 'Le mot de passe doit contenir au moins 8 caractères' });
       return;
     }
 
@@ -287,7 +313,8 @@ export function UsersTab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: newUserEmail.trim(),
-          name: newUserName.trim() || null,
+          name: newUserName.trim(),
+          password: newUserPassword.trim(),
           role: newUserRole,
         }),
       });
@@ -301,6 +328,7 @@ export function UsersTab() {
       setShowAddUserModal(false);
       setNewUserEmail('');
       setNewUserName('');
+      setNewUserPassword('');
       setNewUserRole('USER');
       await new Promise(resolve => setTimeout(resolve, 1000));
       await fetchData();
@@ -659,13 +687,24 @@ export function UsersTab() {
               </div>
 
               <div>
-                <label className="text-white/60 text-sm mb-2 block">Nom (optionnel)</label>
+                <label className="text-white/60 text-sm mb-2 block">Nom complet *</label>
                 <input
                   type="text"
                   value={newUserName}
                   onChange={(e) => setNewUserName(e.target.value)}
                   className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
                   placeholder="John Doe"
+                />
+              </div>
+
+              <div>
+                <label className="text-white/60 text-sm mb-2 block">Mot de passe *</label>
+                <input
+                  type="password"
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+                  placeholder="Minimum 8 caractères"
                 />
               </div>
 
@@ -682,7 +721,7 @@ export function UsersTab() {
               </div>
 
               <div className="text-xs text-white/40 bg-white/5 p-3 rounded border border-white/10">
-                ℹ️ L'email sera automatiquement marqué comme vérifié. Un mot de passe aléatoire sera généré.
+                ℹ️ L'email sera automatiquement marqué comme vérifié.
               </div>
             </div>
 
@@ -692,6 +731,7 @@ export function UsersTab() {
                   setShowAddUserModal(false);
                   setNewUserEmail('');
                   setNewUserName('');
+                  setNewUserPassword('');
                   setNewUserRole('USER');
                 }}
                 disabled={updating}

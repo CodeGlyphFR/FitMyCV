@@ -89,14 +89,39 @@ export async function GET(request) {
       }),
     ]);
 
-    // Get admin session IDs to exclude
+    // Get admin session IDs to exclude (sessions that visited /admin pages)
     const adminSessionIds = await getAdminSessionIds(whereClause, prisma);
 
-    // Filter out admin sessions
-    const filteredCompletedSessions = completedSessions.filter(s => !adminSessionIds.has(s.id));
+    // Also exclude ALL sessions from users with ADMIN role (to catch current session before PAGE_VIEW is tracked)
+    const adminUsers = await prisma.user.findMany({
+      where: { role: 'ADMIN' },
+      select: { id: true },
+    });
+    const adminUserIds = new Set(adminUsers.map(u => u.id));
 
-    const filteredRecentSessions = recentSessions.filter(s => !adminSessionIds.has(s.id));
-    const filteredTotalSessions = totalSessions - adminSessionIds.size;
+    // Get all sessions to properly count exclusions
+    const allSessionsToCheck = await prisma.userSession.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        userId: true,
+      },
+    });
+
+    // Build combined exclusion set (admin pages OR admin users)
+    const sessionsToExclude = new Set();
+    allSessionsToCheck.forEach(s => {
+      if (adminSessionIds.has(s.id) || adminUserIds.has(s.userId)) {
+        sessionsToExclude.add(s.id);
+      }
+    });
+
+    // Filter out admin sessions
+    const filteredCompletedSessions = completedSessions.filter(s => !sessionsToExclude.has(s.id));
+
+    const filteredRecentSessions = recentSessions.filter(s => !sessionsToExclude.has(s.id));
+
+    const filteredTotalSessions = totalSessions - sessionsToExclude.size;
 
     // Calculate statistics from completed sessions (excluding admin)
     const durations = filteredCompletedSessions
