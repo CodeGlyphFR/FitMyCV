@@ -8,6 +8,7 @@ import { ErrorsTab } from '@/components/admin/ErrorsTab';
 import { SettingsTab } from '@/components/admin/SettingsTab';
 import { OpenAICostsTab } from '@/components/admin/OpenAICostsTab';
 import { FeedbackTab } from '@/components/admin/FeedbackTab';
+import { UsersTab } from '@/components/admin/UsersTab';
 import { DateRangePicker } from '@/components/admin/DateRangePicker';
 import { UserFilter } from '@/components/admin/UserFilter';
 
@@ -18,6 +19,7 @@ const TABS = [
   { id: 'errors', label: 'Erreurs', icon: '🐛' },
   { id: 'openai-costs', label: 'OpenAI Costs', icon: '💰' },
   { id: 'feedback', label: 'Feedback', icon: '💬' },
+  { id: 'users', label: 'Utilisateurs', icon: '👨‍💼' },
   { id: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
@@ -49,7 +51,7 @@ export default function AnalyticsDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              {activeTab !== 'settings' && (
+              {!['settings', 'users'].includes(activeTab) && (
                 <UserFilter value={selectedUserId} onChange={setSelectedUserId} />
               )}
               {['overview', 'features', 'sessions', 'errors', 'openai-costs', 'feedback'].includes(activeTab) && (
@@ -107,7 +109,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* User Filter - Mobile only (below tabs) */}
-      {activeTab !== 'settings' && (
+      {!['settings', 'users'].includes(activeTab) && (
         <div className="md:hidden bg-gray-900/98 backdrop-blur-xl border-b border-white/10 sticky top-[5.5rem] z-40 will-change-transform">
           <div className="px-4 py-3">
             <UserFilter value={selectedUserId} onChange={setSelectedUserId} />
@@ -123,6 +125,7 @@ export default function AnalyticsDashboard() {
         {activeTab === 'errors' && <ErrorsTab period={period} userId={selectedUserId} />}
         {activeTab === 'openai-costs' && <OpenAICostsTab period={period} />}
         {activeTab === 'feedback' && <FeedbackTab period={period} userId={selectedUserId} />}
+        {activeTab === 'users' && <UsersTab />}
         {activeTab === 'settings' && <SettingsTab />}
       </div>
     </div>

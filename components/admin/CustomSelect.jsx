@@ -111,7 +111,7 @@ export function CustomSelect({ value, onChange, options, className = '', placeho
               key={option.value}
               type="button"
               onClick={() => {
-                onChange({ target: { value: option.value } });
+                onChange(option.value);
                 setIsOpen(false);
               }}
               className={`w-full px-4 py-2 text-left text-sm hover:bg-white/25 text-white transition-colors ${

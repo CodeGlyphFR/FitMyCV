@@ -120,7 +120,7 @@ export function ExportsTab({ userId }) {
             </label>
             <CustomSelect
               value={dataType}
-              onChange={(e) => setDataType(e.target.value)}
+              onChange={setDataType}
               options={[
                 { value: 'events', label: 'Événements' },
                 { value: 'features', label: 'Features' },
@@ -137,7 +137,7 @@ export function ExportsTab({ userId }) {
             </label>
             <CustomSelect
               value={period}
-              onChange={(e) => setPeriod(e.target.value)}
+              onChange={setPeriod}
               options={[
                 { value: '24h', label: 'Dernières 24h' },
                 { value: '7d', label: '7 derniers jours' },
@@ -153,7 +153,7 @@ export function ExportsTab({ userId }) {
             </label>
             <CustomSelect
               value={format}
-              onChange={(e) => setFormat(e.target.value)}
+              onChange={setFormat}
               options={[
                 { value: 'json', label: 'JSON' },
                 { value: 'csv', label: 'CSV' },

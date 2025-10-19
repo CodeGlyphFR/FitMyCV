@@ -7,7 +7,8 @@ const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = {
   '/api/auth/register': 5,
   '/api/auth/signin': 10,
-  '/api/admin': 20,
+  '/api/admin/users': 60, // Limite plus haute pour l'admin des utilisateurs
+  '/api/admin': 40, // Augmenté pour les autres routes admin
   '/api/background-tasks': 30,
   '/api/feedback': 10,
   '/api/cv': 60,

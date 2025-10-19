@@ -17,7 +17,7 @@ export function DateRangePicker({ value, onChange }) {
     <div className="w-20 md:w-auto">
       <CustomSelect
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
         options={options}
       />
     </div>
