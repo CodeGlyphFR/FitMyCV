@@ -4,6 +4,7 @@ import path from "path";
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { ensureUserCvDir, listUserCvFiles, readUserCvFile, writeUserCvFile } from "@/lib/cv/storage";
+import { trackEvent, EventTypes } from "@/lib/telemetry/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -130,6 +131,19 @@ export async function POST(req){
         where: { userId_filename: { userId: session.user.id, filename: file } },
       });
     } catch (_err) {}
+
+    // Track CV deletion
+    try {
+      await trackEvent({
+        type: EventTypes.CV_DELETED,
+        userId: session.user.id,
+        metadata: { filename: file },
+        status: 'success',
+      });
+    } catch (trackError) {
+      console.error('[delete-cv] Erreur tracking télémétrie:', trackError);
+    }
+
     // choose next file
     const all = await listUserCvFiles(session.user.id);
     let nextFile = await pickNextFile(session.user.id, dir, all);

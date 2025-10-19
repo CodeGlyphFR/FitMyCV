@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis,
+  BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
 } from 'recharts';
 import { FEATURE_CONFIG } from '@/lib/analytics/featureConfig';
@@ -42,6 +42,34 @@ export function OverviewTab({ period, userId }) {
   }
 
   const { kpis, topFeatures, timeline } = summary;
+
+  // Calculate average values to determine bar order (descending)
+  const avgValues = {
+    cvCreated: 0,
+    cvTranslated: 0,
+    cvDeleted: 0,
+    activeUsers: 0,
+  };
+
+  if (timeline && timeline.length > 0) {
+    timeline.forEach(day => {
+      avgValues.cvCreated += day.cvCreated || 0;
+      avgValues.cvTranslated += day.cvTranslated || 0;
+      avgValues.cvDeleted += day.cvDeleted || 0;
+      avgValues.activeUsers += day.activeUsers || 0;
+    });
+    Object.keys(avgValues).forEach(key => {
+      avgValues[key] /= timeline.length;
+    });
+  }
+
+  // Sort bars by average value (descending)
+  const sortedBars = [
+    { key: 'cvCreated', label: 'CVs Créés', color: '#3B82F6', avg: avgValues.cvCreated },
+    { key: 'cvTranslated', label: 'CVs Traduits', color: '#A855F7', avg: avgValues.cvTranslated },
+    { key: 'cvDeleted', label: 'CVs Supprimés', color: '#EF4444', avg: avgValues.cvDeleted },
+    { key: 'activeUsers', label: 'Utilisateurs Actifs', color: '#10B981', avg: avgValues.activeUsers },
+  ].sort((a, b) => b.avg - a.avg).filter(bar => bar.avg > 0); // Remove bars that are always 0
 
   // Calculate health status
   const getHealthStatus = (score) => {
@@ -118,17 +146,7 @@ export function OverviewTab({ period, userId }) {
         <div className="bg-white/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-white/20">
           <h3 className="text-lg font-semibold text-white mb-4">📊 Évolution sur 14 jours</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={timeline}>
-              <defs>
-                <linearGradient id="colorCvs" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
+            <BarChart data={timeline}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis
                 dataKey="date"
@@ -148,23 +166,16 @@ export function OverviewTab({ period, userId }) {
                 }}
               />
               <Legend />
-              <Area
-                type="monotone"
-                dataKey="cvGenerated"
-                name="CVs Générés"
-                stroke="#3B82F6"
-                fillOpacity={1}
-                fill="url(#colorCvs)"
-              />
-              <Area
-                type="monotone"
-                dataKey="activeUsers"
-                name="Utilisateurs Actifs"
-                stroke="#10B981"
-                fillOpacity={1}
-                fill="url(#colorUsers)"
-              />
-            </AreaChart>
+              {sortedBars.map(bar => (
+                <Bar
+                  key={bar.key}
+                  dataKey={bar.key}
+                  name={bar.label}
+                  fill={bar.color}
+                  radius={[4, 4, 0, 0]}
+                />
+              ))}
+            </BarChart>
           </ResponsiveContainer>
         </div>
       )}

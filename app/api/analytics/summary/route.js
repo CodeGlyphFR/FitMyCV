@@ -334,9 +334,11 @@ export async function GET(request) {
       ? parseInt(Object.entries(sessionsByHour).sort((a, b) => b[1] - a[1])[0][0])
       : null;
 
-    // Calculate timeline data (CVs generated + active users per day, last 14 days)
+    // Calculate timeline data (CVs created, translated, deleted + active users per day, last 14 days)
     // Filter admin events from timeline
     const filteredTimelineEvents = filterAdminEvents(recentTelemetryEvents);
+    const CV_CREATION_TYPES = ['CV_GENERATED', 'CV_IMPORTED', 'CV_CREATED_MANUAL'];
+
     const timelineByDay = filteredTimelineEvents.reduce((acc, event) => {
       const date = new Date(event.timestamp).toLocaleDateString('fr-FR', {
         day: '2-digit',
@@ -345,12 +347,23 @@ export async function GET(request) {
       if (!acc[date]) {
         acc[date] = {
           date,
-          cvGenerated: 0,
+          cvCreated: 0,
+          cvTranslated: 0,
+          cvDeleted: 0,
           activeUsers: new Set(),
         };
       }
-      if (event.type === 'CV_GENERATED' && event.status === 'success') {
-        acc[date].cvGenerated++;
+      // Count CV creation (generated, imported, manual - NOT translated)
+      if (CV_CREATION_TYPES.includes(event.type) && event.status === 'success') {
+        acc[date].cvCreated++;
+      }
+      // Count CV translations separately
+      if (event.type === 'CV_TRANSLATED' && event.status === 'success') {
+        acc[date].cvTranslated++;
+      }
+      // Count CV deletions
+      if (event.type === 'CV_DELETED' && event.status === 'success') {
+        acc[date].cvDeleted++;
       }
       if (event.userId) {
         acc[date].activeUsers.add(event.userId);
@@ -361,7 +374,9 @@ export async function GET(request) {
     const timeline = Object.values(timelineByDay)
       .map(day => ({
         date: day.date,
-        cvGenerated: day.cvGenerated,
+        cvCreated: day.cvCreated,
+        cvTranslated: day.cvTranslated,
+        cvDeleted: day.cvDeleted,
         activeUsers: day.activeUsers.size,
       }))
       .sort((a, b) => {
