@@ -376,6 +376,10 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
               return {
                 name: featureConfig.name || feature.feature,
                 lastCost: feature.lastCost || 0,
+                lastModel: feature.lastModel || 'N/A',
+                lastTokens: feature.lastTokens || 0,
+                lastCallDate: feature.lastCallDate || null,
+                lastDuration: feature.lastDuration || null,
                 fill: featureConfig.colors?.solid || '#3B82F6',
               };
             })}
@@ -399,12 +403,49 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   const data = payload[0].payload;
+
+                  const formatDate = (dateStr) => {
+                    if (!dateStr) return 'N/A';
+                    const date = new Date(dateStr);
+                    return new Intl.DateTimeFormat('fr-FR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    }).format(date);
+                  };
+
+                  const formatDuration = (ms) => {
+                    if (!ms) return 'N/A';
+                    if (ms < 1000) return `${ms}ms`;
+                    return `${(ms / 1000).toFixed(2)}s`;
+                  };
+
                   return (
                     <div className="bg-black/95 backdrop-blur-xl border border-white/20 rounded-lg p-3 shadow-2xl">
                       <p className="text-white font-semibold mb-2">{data.name}</p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-green-300">Dernier coût:</span>
-                        <span className="text-white font-bold">{formatCurrency(data.lastCost)}</span>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-green-300">Dernier coût:</span>
+                          <span className="text-white font-bold">{formatCurrency(data.lastCost)}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-blue-300">Modèle:</span>
+                          <span className="text-white text-sm">{data.lastModel}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-purple-300">Tokens:</span>
+                          <span className="text-white text-sm">{formatNumber(data.lastTokens)}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-orange-300">Durée:</span>
+                          <span className="text-white text-sm">{formatDuration(data.lastDuration)}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-yellow-300">Date:</span>
+                          <span className="text-white text-sm">{formatDate(data.lastCallDate)}</span>
+                        </div>
                       </div>
                     </div>
                   );

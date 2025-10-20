@@ -279,11 +279,23 @@ export function SessionsTab({ period, userId, refreshKey, isInitialLoad }) {
                 ))}
               </Pie>
               <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(0,0,0,0.9)',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  borderRadius: '8px',
-                  color: '#fff'
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0];
+                    return (
+                      <div className="bg-black/95 backdrop-blur-xl border border-white/20 rounded-lg p-3 shadow-2xl">
+                        <p className="text-white font-semibold mb-1">{data.name}</p>
+                        <p className="text-white/80 text-sm">{data.value} sessions</p>
+                        <p className="text-white/60 text-xs mt-1">
+                          {data.name === 'Rebond' && '≤1 page'}
+                          {data.name === 'Faible' && '2-3 pages'}
+                          {data.name === 'Moyen' && '4-7 pages'}
+                          {data.name === 'Fort' && '>7 pages'}
+                        </p>
+                      </div>
+                    );
+                  }
+                  return null;
                 }}
               />
             </PieChart>

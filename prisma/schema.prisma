@@ -373,6 +373,7 @@ model OpenAICall {
   completionTokens Int      @default(0)
   totalTokens      Int      @default(0)
   estimatedCost    Float    @default(0)
+  duration         Int?     // Durée d'exécution en millisecondes
 
   createdAt        DateTime @default(now())
 

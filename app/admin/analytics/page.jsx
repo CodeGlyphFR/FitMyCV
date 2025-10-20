@@ -103,7 +103,7 @@ export default function AnalyticsDashboard() {
       {/* Tabs */}
       <div className="bg-gray-900/98 backdrop-blur-xl border-b border-white/10 sticky top-12 md:top-[73px] z-40 md:z-30 will-change-transform">
         <div className="max-w-7xl mx-auto md:px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-4 md:space-x-6 overflow-x-auto scrollbar-hide touch-pan-x px-4 md:px-0">
+          <div className="flex space-x-4 md:space-x-6 overflow-x-auto max-md:scrollbar-hide touch-pan-x px-4 md:px-0">
             {TABS.map((tab) => (
               <button
                 key={tab.id}

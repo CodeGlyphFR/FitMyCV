@@ -105,12 +105,20 @@ export async function GET(request) {
           },
           select: {
             estimatedCost: true,
+            model: true,
+            totalTokens: true,
+            createdAt: true,
+            duration: true,
           },
         });
 
         return {
           featureName: feature.featureName,
           lastCost: lastCall?.estimatedCost || 0,
+          lastModel: lastCall?.model || null,
+          lastTokens: lastCall?.totalTokens || 0,
+          lastCallDate: lastCall?.createdAt || null,
+          lastDuration: lastCall?.duration || null,
         };
       })
     );
@@ -212,6 +220,10 @@ export async function GET(request) {
           tokens: f._sum.totalTokens || 0,
           calls: f._sum.callsCount || 0,
           lastCost: lastCostData?.lastCost || 0,
+          lastModel: lastCostData?.lastModel || null,
+          lastTokens: lastCostData?.lastTokens || 0,
+          lastCallDate: lastCostData?.lastCallDate || null,
+          lastDuration: lastCostData?.lastDuration || null,
         };
       }),
       byModel: byModel.map(m => ({
