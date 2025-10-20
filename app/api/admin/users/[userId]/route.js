@@ -5,11 +5,12 @@ import { deleteUserCompletely, validateUserEmailManually } from '@/lib/admin/use
 
 /**
  * PATCH /api/admin/users/[userId]
- * Modifie un utilisateur (rôle, email, ou validation manuelle d'email)
+ * Modifie un utilisateur (rôle, email, validation manuelle d'email, ou tokens)
  * Body:
  * - { action: 'updateRole', role: 'USER' | 'ADMIN' }
  * - { action: 'updateEmail', email: 'new@email.com' }
  * - { action: 'validateEmail' }
+ * - { action: 'updateTokens', tokens: number }
  */
 export async function PATCH(request, { params }) {
   try {
@@ -25,7 +26,7 @@ export async function PATCH(request, { params }) {
 
     const { userId } = params;
     const body = await request.json();
-    const { action, role, email } = body;
+    const { action, role, email, tokens } = body;
 
     // Vérifier que l'utilisateur existe
     const user = await prisma.user.findUnique({
@@ -139,9 +140,37 @@ export async function PATCH(request, { params }) {
       });
     }
 
+    // Action: Modifier le nombre de tokens
+    if (action === 'updateTokens') {
+      if (typeof tokens !== 'number' || tokens < 0) {
+        return NextResponse.json(
+          { error: 'Nombre de tokens invalide (doit être un nombre positif ou zéro)' },
+          { status: 400 }
+        );
+      }
+
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: { matchScoreRefreshCount: tokens },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          emailVerified: true,
+          matchScoreRefreshCount: true,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        user: updatedUser,
+      });
+    }
+
     // Action inconnue
     return NextResponse.json(
-      { error: 'Action invalide (updateRole, updateEmail, ou validateEmail attendu)' },
+      { error: 'Action invalide (updateRole, updateEmail, validateEmail, ou updateTokens attendu)' },
       { status: 400 }
     );
 

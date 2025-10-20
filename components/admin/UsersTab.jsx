@@ -23,7 +23,7 @@ export function UsersTab() {
 
   // Modals
   const [showAddUserModal, setShowAddUserModal] = useState(false);
-  const [showEditEmailModal, setShowEditEmailModal] = useState(false);
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
   const [selectedUserForEdit, setSelectedUserForEdit] = useState(null);
   const [toast, setToast] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
@@ -34,8 +34,9 @@ export function UsersTab() {
   const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserRole, setNewUserRole] = useState('USER');
 
-  // Formulaire édition email
+  // Formulaire édition utilisateur
   const [editedEmail, setEditedEmail] = useState('');
+  const [editedTokens, setEditedTokens] = useState(0);
 
   // Ref pour le scroll chaining
   const scrollContainerRef = useRef(null);
@@ -229,17 +230,28 @@ export function UsersTab() {
     });
   }
 
-  // Ouvrir modal édition email
-  function openEditEmailModal(user) {
+  // Ouvrir modal édition utilisateur
+  function openEditUserModal(user) {
     setSelectedUserForEdit(user);
     setEditedEmail(user.email);
-    setShowEditEmailModal(true);
+    setEditedTokens(user.matchScoreRefreshCount || 0);
+    setShowEditUserModal(true);
   }
 
-  // Modifier l'email
-  async function handleUpdateEmail() {
-    if (!selectedUserForEdit || !editedEmail.trim()) {
+  // Modifier l'utilisateur (email et/ou tokens)
+  async function handleUpdateUser() {
+    if (!selectedUserForEdit) {
+      setToast({ type: 'error', message: 'Utilisateur invalide' });
+      return;
+    }
+
+    if (!editedEmail.trim()) {
       setToast({ type: 'error', message: 'Email invalide' });
+      return;
+    }
+
+    if (typeof editedTokens !== 'number' || editedTokens < 0) {
+      setToast({ type: 'error', message: 'Nombre de tokens invalide' });
       return;
     }
 
@@ -247,25 +259,44 @@ export function UsersTab() {
 
     try {
       setUpdating(true);
-      const response = await fetch(`/api/admin/users/${selectedUserForEdit.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'updateEmail', email: editedEmail.trim() }),
-      });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Erreur serveur' }));
-        throw new Error(errorData.error || 'Erreur lors de la modification de l\'email');
+      // Modifier l'email si changé
+      if (editedEmail.trim() !== selectedUserForEdit.email) {
+        const emailResponse = await fetch(`/api/admin/users/${selectedUserForEdit.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'updateEmail', email: editedEmail.trim() }),
+        });
+
+        if (!emailResponse.ok) {
+          const errorData = await emailResponse.json().catch(() => ({ error: 'Erreur serveur' }));
+          throw new Error(errorData.error || 'Erreur lors de la modification de l\'email');
+        }
       }
 
-      setToast({ type: 'success', message: 'Email modifié avec succès' });
-      setShowEditEmailModal(false);
+      // Modifier les tokens si changés
+      if (editedTokens !== selectedUserForEdit.matchScoreRefreshCount) {
+        const tokensResponse = await fetch(`/api/admin/users/${selectedUserForEdit.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'updateTokens', tokens: editedTokens }),
+        });
+
+        if (!tokensResponse.ok) {
+          const errorData = await tokensResponse.json().catch(() => ({ error: 'Erreur serveur' }));
+          throw new Error(errorData.error || 'Erreur lors de la modification des tokens');
+        }
+      }
+
+      setToast({ type: 'success', message: 'Utilisateur modifié avec succès' });
+      setShowEditUserModal(false);
       setSelectedUserForEdit(null);
       setEditedEmail('');
+      setEditedTokens(0);
       await new Promise(resolve => setTimeout(resolve, 1000));
       await fetchData();
     } catch (err) {
-      console.error('Error updating email:', err);
+      console.error('Error updating user:', err);
       setToast({ type: 'error', message: err.message });
     } finally {
       setUpdating(false);
@@ -578,6 +609,7 @@ export function UsersTab() {
 
                       <div className="flex items-center gap-4 text-xs text-white/40 flex-wrap">
                         <span>📄 {user.cvCount} CV{user.cvCount > 1 ? 's' : ''}</span>
+                        <span>🪙 {user.matchScoreRefreshCount || 0} token{user.matchScoreRefreshCount > 1 ? 's' : ''}</span>
                         <span>📅 Inscrit le {formatDate(user.createdAt)}</span>
                         <span>🕐 Dernière activité : {formatDateTime(user.lastActivity)}</span>
                       </div>
@@ -598,13 +630,13 @@ export function UsersTab() {
                       />
                     </div>
 
-                    {/* Modifier email */}
+                    {/* Éditer utilisateur */}
                     <button
-                      onClick={() => !updating && openEditEmailModal(user)}
+                      onClick={() => !updating && openEditUserModal(user)}
                       disabled={updating}
                       className="px-3 py-1.5 text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded transition w-28 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Modifier email
+                      Éditer
                     </button>
 
                     {/* Valider email (si non vérifié) */}
@@ -751,32 +783,49 @@ export function UsersTab() {
         </div>
       )}
 
-      {/* Modal Modifier Email */}
-      {showEditEmailModal && selectedUserForEdit && (
+      {/* Modal Éditer Utilisateur */}
+      {showEditUserModal && selectedUserForEdit && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-gray-900 border border-white/20 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-white mb-4">Modifier l'email</h3>
+            <h3 className="text-xl font-bold text-white mb-4">Éditer l'utilisateur</h3>
 
-            <div className="mb-4">
-              <label className="text-white/60 text-sm mb-2 block">Nouvel email</label>
-              <input
-                type="email"
-                value={editedEmail}
-                onChange={(e) => setEditedEmail(e.target.value)}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
-              />
+            <div className="space-y-4">
+              {/* Email */}
+              <div>
+                <label className="text-white/60 text-sm mb-2 block">Email</label>
+                <input
+                  type="email"
+                  value={editedEmail}
+                  onChange={(e) => setEditedEmail(e.target.value)}
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+                />
+              </div>
+
+              {/* Tokens */}
+              <div>
+                <label className="text-white/60 text-sm mb-2 block">Nombre de tokens</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={editedTokens}
+                  onChange={(e) => setEditedTokens(parseInt(e.target.value, 10) || 0)}
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-yellow-400/50 transition"
+                />
+              </div>
             </div>
 
-            <div className="text-xs text-white/40 bg-orange-500/10 p-3 rounded border border-orange-500/20 mb-4">
-              ⚠️ La modification de l'email réinitialisera le statut de vérification.
+            <div className="text-xs text-white/40 bg-white/5 p-3 rounded border border-white/10 mt-4 mb-4">
+              <div className="mb-1">⚠️ La modification de l'email réinitialisera le statut de vérification.</div>
+              <div>ℹ️ Les tokens permettent à l'utilisateur de recalculer le score de correspondance de ses CV.</div>
             </div>
 
             <div className="flex gap-3">
               <button
                 onClick={() => {
-                  setShowEditEmailModal(false);
+                  setShowEditUserModal(false);
                   setSelectedUserForEdit(null);
                   setEditedEmail('');
+                  setEditedTokens(0);
                 }}
                 disabled={updating}
                 className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/15 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
@@ -784,7 +833,7 @@ export function UsersTab() {
                 Annuler
               </button>
               <button
-                onClick={handleUpdateEmail}
+                onClick={handleUpdateUser}
                 disabled={updating}
                 className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
