@@ -12,7 +12,7 @@ import {
   AVAILABLE_AI_MODELS,
 } from '@/lib/admin/settingsConfig';
 
-export function SettingsTab() {
+export function SettingsTab({ refreshKey }) {
   const [settings, setSettings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -24,7 +24,7 @@ export function SettingsTab() {
   useEffect(() => {
     fetchSettings();
     fetchAvailableModels();
-  }, []);
+  }, [refreshKey]);
 
   useEffect(() => {
     setHasChanges(Object.keys(modifiedSettings).length > 0);

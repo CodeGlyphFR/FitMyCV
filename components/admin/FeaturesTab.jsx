@@ -11,14 +11,14 @@ import { KPICard } from './KPICard';
 // Extract colors for pie chart from shared config
 const PIE_COLORS = Object.values(FEATURE_CONFIG).map(f => f.colors.solid);
 
-export function FeaturesTab({ period, userId }) {
+export function FeaturesTab({ period, userId, refreshKey }) {
   const [features, setFeatures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showTable, setShowTable] = useState(false);
 
   useEffect(() => {
     fetchFeatures();
-  }, [period, userId]);
+  }, [period, userId, refreshKey]);
 
   async function fetchFeatures() {
     setLoading(true);

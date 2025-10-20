@@ -8,13 +8,13 @@ import {
 import { FEATURE_CONFIG } from '@/lib/analytics/featureConfig';
 import { KPICard } from './KPICard';
 
-export function OverviewTab({ period, userId }) {
+export function OverviewTab({ period, userId, refreshKey }) {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchSummary();
-  }, [period, userId]);
+  }, [period, userId, refreshKey]);
 
   async function fetchSummary() {
     setLoading(true);

@@ -6,7 +6,7 @@ import { CustomSelect } from './CustomSelect';
 import { Toast } from './Toast';
 import { ConfirmDialog } from './ConfirmDialog';
 
-export function UsersTab() {
+export function UsersTab({ refreshKey }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -58,7 +58,7 @@ export function UsersTab() {
     if (!fetchingRef.current) {
       fetchData();
     }
-  }, [roleFilter, emailStatusFilter, sortBy, debouncedSearch, limit, page]);
+  }, [roleFilter, emailStatusFilter, sortBy, debouncedSearch, limit, page, refreshKey]);
 
   // Gestion du scroll chaining pour la liste des utilisateurs
   useEffect(() => {

@@ -6,7 +6,7 @@ import { CustomSelect } from './CustomSelect';
 import { Toast } from './Toast';
 import { ConfirmDialog } from './ConfirmDialog';
 
-export function FeedbackTab({ period, userId }) {
+export function FeedbackTab({ period, userId, refreshKey }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,7 +18,7 @@ export function FeedbackTab({ period, userId }) {
 
   useEffect(() => {
     fetchData();
-  }, [period, userId, statusFilter, bugFilter]);
+  }, [period, userId, statusFilter, bugFilter, refreshKey]);
 
   const fetchData = async () => {
     try {

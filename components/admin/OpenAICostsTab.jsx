@@ -8,7 +8,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { getFeatureConfig } from '@/lib/analytics/featureConfig';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
-export function OpenAICostsTab({ period }) {
+export function OpenAICostsTab({ period, refreshKey }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,7 +43,7 @@ export function OpenAICostsTab({ period }) {
 
   useEffect(() => {
     fetchData();
-  }, [period]);
+  }, [period, refreshKey]);
 
   useEffect(() => {
     if (showPricing) {

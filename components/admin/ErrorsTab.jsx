@@ -16,14 +16,14 @@ const ERROR_SEVERITY = {
 
 const PIE_COLORS = ['#EF4444', '#F59E0B', '#FBBF24', '#3B82F6', '#8B5CF6', '#EC4899'];
 
-export function ErrorsTab({ period, userId }) {
+export function ErrorsTab({ period, userId, refreshKey }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showRecentTable, setShowRecentTable] = useState(false);
 
   useEffect(() => {
     fetchErrors();
-  }, [period, userId]);
+  }, [period, userId, refreshKey]);
 
   async function fetchErrors() {
     setLoading(true);

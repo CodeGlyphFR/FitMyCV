@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { OverviewTab } from '@/components/admin/OverviewTab';
 import { FeaturesTab } from '@/components/admin/FeaturesTab';
 import { SessionsTab } from '@/components/admin/SessionsTab';
@@ -27,6 +27,16 @@ export default function AnalyticsDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [period, setPeriod] = useState('30d');
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Auto-refresh every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshKey(prev => prev + 1);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -119,14 +129,14 @@ export default function AnalyticsDashboard() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-0">
-        {activeTab === 'overview' && <OverviewTab period={period} userId={selectedUserId} />}
-        {activeTab === 'features' && <FeaturesTab period={period} userId={selectedUserId} />}
-        {activeTab === 'sessions' && <SessionsTab period={period} userId={selectedUserId} />}
-        {activeTab === 'errors' && <ErrorsTab period={period} userId={selectedUserId} />}
-        {activeTab === 'openai-costs' && <OpenAICostsTab period={period} />}
-        {activeTab === 'feedback' && <FeedbackTab period={period} userId={selectedUserId} />}
-        {activeTab === 'users' && <UsersTab />}
-        {activeTab === 'settings' && <SettingsTab />}
+        {activeTab === 'overview' && <OverviewTab period={period} userId={selectedUserId} refreshKey={refreshKey} />}
+        {activeTab === 'features' && <FeaturesTab period={period} userId={selectedUserId} refreshKey={refreshKey} />}
+        {activeTab === 'sessions' && <SessionsTab period={period} userId={selectedUserId} refreshKey={refreshKey} />}
+        {activeTab === 'errors' && <ErrorsTab period={period} userId={selectedUserId} refreshKey={refreshKey} />}
+        {activeTab === 'openai-costs' && <OpenAICostsTab period={period} refreshKey={refreshKey} />}
+        {activeTab === 'feedback' && <FeedbackTab period={period} userId={selectedUserId} refreshKey={refreshKey} />}
+        {activeTab === 'users' && <UsersTab refreshKey={refreshKey} />}
+        {activeTab === 'settings' && <SettingsTab refreshKey={refreshKey} />}
       </div>
     </div>
   );

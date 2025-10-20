@@ -17,14 +17,14 @@ const COLORS = {
   info: '#06B6D4',
 };
 
-export function SessionsTab({ period, userId }) {
+export function SessionsTab({ period, userId, refreshKey }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showTable, setShowTable] = useState(false);
 
   useEffect(() => {
     fetchSessions();
-  }, [period, userId]);
+  }, [period, userId, refreshKey]);
 
   async function fetchSessions() {
     setLoading(true);
