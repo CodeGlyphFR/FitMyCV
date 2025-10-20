@@ -16,7 +16,7 @@ const ERROR_SEVERITY = {
 
 const PIE_COLORS = ['#EF4444', '#F59E0B', '#FBBF24', '#3B82F6', '#8B5CF6', '#EC4899'];
 
-export function ErrorsTab({ period, userId, refreshKey }) {
+export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showRecentTable, setShowRecentTable] = useState(false);
@@ -137,7 +137,7 @@ export function ErrorsTab({ period, userId, refreshKey }) {
                     color: '#fff'
                   }}
                 />
-                <Bar dataKey="count" fill="#EF4444" name="Nombre d'erreurs" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="count" fill="#EF4444" name="Nombre d'erreurs" radius={[0, 4, 4, 0]} isAnimationActive={isInitialLoad} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -158,6 +158,7 @@ export function ErrorsTab({ period, userId, refreshKey }) {
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
+                  isAnimationActive={isInitialLoad}
                 >
                   {pieChartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />

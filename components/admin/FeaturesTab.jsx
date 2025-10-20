@@ -11,7 +11,7 @@ import { KPICard } from './KPICard';
 // Extract colors for pie chart from shared config
 const PIE_COLORS = Object.values(FEATURE_CONFIG).map(f => f.colors.solid);
 
-export function FeaturesTab({ period, userId, refreshKey }) {
+export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
   const [features, setFeatures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showTable, setShowTable] = useState(false);
@@ -192,7 +192,7 @@ export function FeaturesTab({ period, userId, refreshKey }) {
               />
               <Tooltip content={<CustomBarTooltip />} />
               <Legend />
-              <Bar dataKey="usage" fill="#3B82F6" name="Utilisations" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="usage" fill="#3B82F6" name="Utilisations" radius={[0, 4, 4, 0]} isAnimationActive={isInitialLoad} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -211,6 +211,7 @@ export function FeaturesTab({ period, userId, refreshKey }) {
                 outerRadius={100}
                 fill="#8884d8"
                 dataKey="value"
+                isAnimationActive={isInitialLoad}
               >
                 {pieChartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />

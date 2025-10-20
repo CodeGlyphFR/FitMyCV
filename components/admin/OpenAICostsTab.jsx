@@ -8,7 +8,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { getFeatureConfig } from '@/lib/analytics/featureConfig';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
-export function OpenAICostsTab({ period, refreshKey }) {
+export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -412,7 +412,7 @@ export function OpenAICostsTab({ period, refreshKey }) {
                 return null;
               }}
             />
-            <Bar dataKey="lastCost" radius={[0, 4, 4, 0]}>
+            <Bar dataKey="lastCost" radius={[0, 4, 4, 0]} isAnimationActive={isInitialLoad}>
               {data.byFeature.map((feature, index) => {
                 const featureConfig = getFeatureConfig(feature.feature);
                 return <Cell key={`cell-${index}`} fill={featureConfig.colors?.solid || '#3B82F6'} />;
@@ -634,6 +634,7 @@ export function OpenAICostsTab({ period, refreshKey }) {
                   outerRadius={90}
                   fill="#8884d8"
                   dataKey="value"
+                  isAnimationActive={isInitialLoad}
                 >
                   {data.byFeature.map((feature, index) => {
                     const featureConfig = getFeatureConfig(feature.feature);

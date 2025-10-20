@@ -8,7 +8,7 @@ import {
 import { FEATURE_CONFIG } from '@/lib/analytics/featureConfig';
 import { KPICard } from './KPICard';
 
-export function OverviewTab({ period, userId, refreshKey }) {
+export function OverviewTab({ period, userId, refreshKey, isInitialLoad }) {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -173,6 +173,7 @@ export function OverviewTab({ period, userId, refreshKey }) {
                   name={bar.label}
                   fill={bar.color}
                   radius={[4, 4, 0, 0]}
+                  isAnimationActive={isInitialLoad}
                 />
               ))}
             </BarChart>
@@ -266,7 +267,7 @@ export function OverviewTab({ period, userId, refreshKey }) {
                 }}
                 labelFormatter={(label) => ''}
               />
-              <Bar dataKey="usage" radius={[8, 8, 0, 0]}>
+              <Bar dataKey="usage" radius={[8, 8, 0, 0]} isAnimationActive={isInitialLoad}>
                 {featureData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}

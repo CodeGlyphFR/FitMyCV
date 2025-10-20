@@ -28,11 +28,13 @@ export default function AnalyticsDashboard() {
   const [period, setPeriod] = useState('30d');
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Auto-refresh every 10 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setRefreshKey(prev => prev + 1);
+      setIsInitialLoad(false); // Disable animations after first load
     }, 10000);
 
     return () => clearInterval(interval);
@@ -129,12 +131,12 @@ export default function AnalyticsDashboard() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-0">
-        {activeTab === 'overview' && <OverviewTab period={period} userId={selectedUserId} refreshKey={refreshKey} />}
-        {activeTab === 'features' && <FeaturesTab period={period} userId={selectedUserId} refreshKey={refreshKey} />}
-        {activeTab === 'sessions' && <SessionsTab period={period} userId={selectedUserId} refreshKey={refreshKey} />}
-        {activeTab === 'errors' && <ErrorsTab period={period} userId={selectedUserId} refreshKey={refreshKey} />}
-        {activeTab === 'openai-costs' && <OpenAICostsTab period={period} refreshKey={refreshKey} />}
-        {activeTab === 'feedback' && <FeedbackTab period={period} userId={selectedUserId} refreshKey={refreshKey} />}
+        {activeTab === 'overview' && <OverviewTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
+        {activeTab === 'features' && <FeaturesTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
+        {activeTab === 'sessions' && <SessionsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
+        {activeTab === 'errors' && <ErrorsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
+        {activeTab === 'openai-costs' && <OpenAICostsTab period={period} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
+        {activeTab === 'feedback' && <FeedbackTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'users' && <UsersTab refreshKey={refreshKey} />}
         {activeTab === 'settings' && <SettingsTab refreshKey={refreshKey} />}
       </div>

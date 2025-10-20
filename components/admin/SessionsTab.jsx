@@ -17,7 +17,7 @@ const COLORS = {
   info: '#06B6D4',
 };
 
-export function SessionsTab({ period, userId, refreshKey }) {
+export function SessionsTab({ period, userId, refreshKey, isInitialLoad }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showTable, setShowTable] = useState(false);
@@ -250,6 +250,7 @@ export function SessionsTab({ period, userId, refreshKey }) {
                 fillOpacity={1}
                 fill="url(#colorSessions)"
                 name="Sessions"
+                isAnimationActive={isInitialLoad}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -269,6 +270,7 @@ export function SessionsTab({ period, userId, refreshKey }) {
                 outerRadius={100}
                 fill="#8884d8"
                 dataKey="value"
+                isAnimationActive={isInitialLoad}
               >
                 {engagementData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
@@ -329,7 +331,7 @@ export function SessionsTab({ period, userId, refreshKey }) {
                     color: '#fff'
                   }}
                 />
-                <Bar dataKey="sessions" fill={COLORS.info} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="sessions" fill={COLORS.info} radius={[4, 4, 0, 0]} isAnimationActive={isInitialLoad} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -359,7 +361,7 @@ export function SessionsTab({ period, userId, refreshKey }) {
                     color: '#fff'
                   }}
                 />
-                <Bar dataKey="sessions" fill={COLORS.secondary} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="sessions" fill={COLORS.secondary} radius={[4, 4, 0, 0]} isAnimationActive={isInitialLoad} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -389,7 +391,7 @@ export function SessionsTab({ period, userId, refreshKey }) {
                     color: '#fff'
                   }}
                 />
-                <Bar dataKey="value" fill={COLORS.success} radius={[0, 4, 4, 0]} />
+                <Bar dataKey="value" fill={COLORS.success} radius={[0, 4, 4, 0]} isAnimationActive={isInitialLoad} />
               </BarChart>
             </ResponsiveContainer>
           </div>
