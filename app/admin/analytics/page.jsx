@@ -30,11 +30,16 @@ export default function AnalyticsDashboard() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
+  // Reset animations when changing tabs
+  useEffect(() => {
+    setIsInitialLoad(true);
+  }, [activeTab]);
+
   // Auto-refresh every 10 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setRefreshKey(prev => prev + 1);
-      setIsInitialLoad(false); // Disable animations after first load
+      setIsInitialLoad(false); // Disable animations for auto-refresh only
     }, 10000);
 
     return () => clearInterval(interval);

@@ -30,7 +30,7 @@ export function OverviewTab({ period, userId, refreshKey, isInitialLoad }) {
     }
   }
 
-  if (loading || !summary) {
+  if (loading && !summary) {
     return (
       <div className="flex items-center justify-center p-12">
         <div className="flex flex-col items-center gap-4">
@@ -40,6 +40,8 @@ export function OverviewTab({ period, userId, refreshKey, isInitialLoad }) {
       </div>
     );
   }
+
+  if (!summary) return null;
 
   const { kpis, topFeatures, timeline } = summary;
 

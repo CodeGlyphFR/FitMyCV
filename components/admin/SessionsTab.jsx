@@ -40,7 +40,7 @@ export function SessionsTab({ period, userId, refreshKey, isInitialLoad }) {
     }
   }
 
-  if (loading || !data) {
+  if (loading && !data) {
     return (
       <div className="flex items-center justify-center p-12">
         <div className="flex flex-col items-center gap-4">
@@ -50,6 +50,8 @@ export function SessionsTab({ period, userId, refreshKey, isInitialLoad }) {
       </div>
     );
   }
+
+  if (!data) return null;
 
   const { statistics, recentSessions } = data;
 

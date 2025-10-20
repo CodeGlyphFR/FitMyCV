@@ -90,7 +90,7 @@ export function FeedbackTab({ period, userId, refreshKey }) {
     });
   };
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-white/60">Chargement des feedbacks...</div>

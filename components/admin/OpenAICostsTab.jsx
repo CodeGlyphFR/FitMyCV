@@ -284,7 +284,7 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
     });
   };
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-white/60">Chargement des données...</div>
