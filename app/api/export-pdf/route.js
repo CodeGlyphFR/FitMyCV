@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth/session";
 import { readUserCvFile } from "@/lib/cv/storage";
 import frTranslations from "@/locales/fr.json";
 import enTranslations from "@/locales/en.json";
+import { trackCvExport } from "@/lib/telemetry/server";
 
 const translations = {
   fr: frTranslations,
@@ -77,6 +78,8 @@ function getSectionTitle(sectionKey, customTitle, language) {
 
 export async function POST(request) {
   console.log('[PDF Export] Request received'); // Log pour debug
+  const startTime = Date.now();
+
   try {
     // Vérifier l'authentification
     const session = await auth();
@@ -159,6 +162,20 @@ export async function POST(request) {
 
     await browser.close();
 
+    // Tracking télémétrie - Succès
+    const duration = Date.now() - startTime;
+    try {
+      await trackCvExport({
+        userId: session.user.id,
+        deviceId: null,
+        language,
+        duration,
+        status: 'success',
+      });
+    } catch (trackError) {
+      console.error('[PDF Export] Erreur tracking télémétrie:', trackError);
+    }
+
     // Retourner le PDF
     return new NextResponse(pdfBuffer, {
       headers: {
@@ -170,6 +187,24 @@ export async function POST(request) {
   } catch (error) {
     console.error("Erreur lors de la génération PDF:", error);
     console.error("Stack trace:", error.stack);
+
+    // Tracking télémétrie - Erreur
+    const duration = Date.now() - startTime;
+    try {
+      const session = await auth();
+      if (session?.user?.id) {
+        await trackCvExport({
+          userId: session.user.id,
+          deviceId: null,
+          language: 'fr', // Valeur par défaut si la langue n'est pas disponible
+          duration,
+          status: 'error',
+          error: error.message,
+        });
+      }
+    } catch (trackError) {
+      console.error('[PDF Export] Erreur tracking télémétrie:', trackError);
+    }
 
     // Erreurs spécifiques de Puppeteer
     if (error.message.includes('Could not find expected browser')) {

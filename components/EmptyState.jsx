@@ -229,44 +229,44 @@ export default function EmptyState() {
           <div className="absolute top-[55%] right-[15%] h-56 w-56 rounded-full bg-gradient-to-br from-sky-400/50 via-emerald-300/40 to-transparent blur-2xl animate-auth-blob-fast animation-delay-3000"/>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(126,207,244,0.25),_transparent_65%)]"/>
         </div>
-        <div className="relative z-10 max-w-xl w-full">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 border border-white/20">
+        <div className="relative z-10 max-w-xl w-full mt-12">
+          <div className="bg-white/15 backdrop-blur-xl rounded-2xl shadow-2xl p-8 border-2 border-white/30">
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-blue-100 mb-4 animate-pulse">
-                <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 mb-4 animate-pulse">
+                <svg className="w-10 h-10 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
               </div>
-              <h2 className="text-3xl font-bold text-slate-800 mb-2">
+              <h2 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">
                 {t("emptyState.importing.title")}
               </h2>
-              <p className="text-slate-600 min-h-[1.5rem] transition-all duration-300">
+              <p className="text-slate-100 min-h-[1.5rem] transition-all duration-300 drop-shadow">
                 {loadingMessage}
               </p>
             </div>
 
             <div className="space-y-4">
-              <div className="bg-slate-50 rounded-lg p-4">
+              <div className="bg-white/10 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-2">
-                  <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm font-medium text-slate-700 truncate">{importFileName}</span>
+                  <span className="text-sm font-medium text-white truncate">{importFileName}</span>
                 </div>
-                <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
                   <div
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
+                    className="bg-gradient-to-r from-emerald-400 to-emerald-500 h-3 rounded-full transition-all duration-500 ease-out"
                     style={{ width: `${importProgress}%` }}
                   />
                 </div>
                 <div className="text-right mt-2">
-                  <span className="text-xs font-medium text-blue-600">{Math.round(importProgress)}%</span>
+                  <span className="text-xs font-medium text-emerald-300">{Math.round(importProgress)}%</span>
                 </div>
               </div>
 
-              <div className="space-y-3 text-sm text-slate-600">
+              <div className="space-y-3 text-sm text-slate-100">
                 <div className="flex items-start gap-2">
-                  <div className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center ${importProgress > 20 ? 'bg-green-500' : 'bg-slate-300'}`}>
+                  <div className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center ${importProgress > 20 ? 'bg-emerald-500' : 'bg-white/20'}`}>
                     {importProgress > 20 && (
                       <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -276,7 +276,7 @@ export default function EmptyState() {
                   <span>{t("emptyState.importing.steps.reading")}</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center ${importProgress > 50 ? 'bg-green-500' : 'bg-slate-300'}`}>
+                  <div className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center ${importProgress > 50 ? 'bg-emerald-500' : 'bg-white/20'}`}>
                     {importProgress > 50 && (
                       <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -286,7 +286,7 @@ export default function EmptyState() {
                   <span>{t("emptyState.importing.steps.analyzing")}</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center ${importProgress > 80 ? 'bg-green-500' : 'bg-slate-300'}`}>
+                  <div className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center ${importProgress > 80 ? 'bg-emerald-500' : 'bg-white/20'}`}>
                     {importProgress > 80 && (
                       <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -296,7 +296,7 @@ export default function EmptyState() {
                   <span>{t("emptyState.importing.steps.structuring")}</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center ${importProgress >= 100 ? 'bg-green-500' : 'bg-slate-300'}`}>
+                  <div className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center ${importProgress >= 100 ? 'bg-emerald-500' : 'bg-white/20'}`}>
                     {importProgress >= 100 && (
                       <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -309,7 +309,7 @@ export default function EmptyState() {
             </div>
 
             <div className="mt-6 text-center">
-              <p className="text-xs text-slate-500 animate-pulse">
+              <p className="text-xs text-slate-300 animate-pulse drop-shadow">
                 {importProgress >= 100 ? t("emptyState.importing.redirect") : t("emptyState.importing.timeout")}
               </p>
             </div>
@@ -356,7 +356,7 @@ export default function EmptyState() {
               className="group bg-white/15 backdrop-blur-xl rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/30 hover:border-blue-400 hover:bg-blue-500/25 text-left"
             >
               <div className="flex flex-col items-center text-center space-y-4">
-                <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center group-hover:scale-110 group-hover:bg-white/30 transition-all duration-300">
                   <Image
                     src="/icons/import.png"
                     alt="Import"
@@ -391,7 +391,7 @@ export default function EmptyState() {
               className="group bg-white/15 backdrop-blur-xl rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/30 hover:border-emerald-400 hover:bg-emerald-500/25 text-left"
             >
               <div className="flex flex-col items-center text-center space-y-4">
-                <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center group-hover:scale-110 group-hover:bg-white/30 transition-all duration-300">
                   <span className="text-4xl">✨</span>
                 </div>
                 <div>

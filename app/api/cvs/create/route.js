@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/session";
 import { ensureUserCvDir, listUserCvFiles, writeUserCvFile } from "@/lib/cv/storage";
+import { trackCvCreation } from "@/lib/telemetry/server";
 
 export const runtime="nodejs"; export const dynamic="force-dynamic";
 export async function POST(req){
@@ -93,6 +94,17 @@ await prisma.cvFile.upsert({
       update: {},
       create: { userId: session.user.id, filename: file },
     });
+
+// Tracking télémétrie - Création manuelle CV
+try {
+  await trackCvCreation({
+    userId: session.user.id,
+    deviceId: null,
+    status: 'success',
+  });
+} catch (trackError) {
+  console.error('[create-cv] Erreur tracking télémétrie:', trackError);
+}
 
 // Définir le cookie côté serveur pour qu'il soit immédiatement disponible
 const response = NextResponse.json({ ok:true, file });

@@ -87,7 +87,32 @@ export default function AdminProvider(props){
   return (
     <Ctx.Provider value={{ editing, setEditing, setCurrentFile }}>
       {props.children}
-      {session?.user?.id && pathname !== "/admin/new" && hasAnyCv && settings.feature_edit_mode ? (
+
+      {/* Analytics button for ADMIN users */}
+      {session?.user?.role === 'ADMIN' && pathname !== "/admin/analytics" ? (
+        <button
+          onClick={() => window.location.href = '/admin/analytics'}
+          className="fixed bottom-[4.5rem] right-6 z-50 no-print w-10 h-10 rounded-full shadow-2xl hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-110 border-2 pointer-events-auto backdrop-blur-xl bg-white/20 border-white/30"
+          title="Analytics Dashboard"
+          aria-label="Analytics Dashboard"
+          style={{
+            transform: 'translateZ(0)',
+            backfaceVisibility: 'hidden',
+            WebkitTransform: 'translateZ(0)',
+            WebkitBackfaceVisibility: 'hidden',
+            willChange: 'transform'
+          }}
+        >
+          <img
+            src="/dashboard.png"
+            alt="Analytics Dashboard"
+            className="h-5 w-5 drop-shadow-lg"
+          />
+        </button>
+      ) : null}
+
+      {/* Edit mode button */}
+      {session?.user?.id && pathname !== "/admin/new" && pathname !== "/admin/analytics" && hasAnyCv && settings.feature_edit_mode ? (
         <button
           onClick={()=>setEditing(!editing)}
           className={`

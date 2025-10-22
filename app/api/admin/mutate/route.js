@@ -5,6 +5,7 @@ import { listUserCvFiles, readUserCvFile, writeUserCvFile } from "@/lib/cv/stora
 import { sanitizeInMemory } from "@/lib/sanitize";
 import { validateCv } from "@/lib/cv/validation";
 import prisma from "@/lib/prisma";
+import { trackCvEdit } from "@/lib/telemetry/server";
 
 export const runtime="nodejs"; export const dynamic="force-dynamic";
 function parsePath(p){ var out=[]; var re=/([^\[.]+)|\[(\d+)\]/g; var m; while((m=re.exec(p))!==null){ if(m[1]!=null) out.push(m[1]); else if(m[2]!=null) out.push(Number(m[2])); } return out; }
@@ -93,6 +94,24 @@ export async function POST(req){
           updatedAt: new Date()
         }
       });
+    }
+
+    // Tracking télémétrie - Édition CV
+    try {
+      // Extraire section et field depuis fieldPath
+      const tokens = parsePath(fieldPath);
+      const section = tokens.length > 0 ? String(tokens[0]) : 'unknown';
+      const field = tokens.length > 1 ? String(tokens[1]) : null;
+
+      await trackCvEdit({
+        userId,
+        deviceId: null,
+        operation: op,
+        section,
+        field,
+      });
+    } catch (trackError) {
+      console.error('[mutate] Erreur tracking télémétrie:', trackError);
     }
 
     return NextResponse.json({ ok:true });

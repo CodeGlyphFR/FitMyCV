@@ -16,12 +16,15 @@ model User {
   emailVerified DateTime?
   passwordHash  String?
   image         String?
+  role          String        @default("USER") // USER or ADMIN
   accounts      Account[]
-  sessions      Session[]
   cvs           CvFile[]
   linkHistory   LinkHistory[]
   feedbacks     Feedback[]
   consentLogs   ConsentLog[]
+  telemetryEvents TelemetryEvent[]
+  featureUsage  FeatureUsage[]
+  openaiUsage   OpenAIUsage[]
   matchScoreRefreshCount Int @default(0) // Number of tokens remaining (global for all CVs, reset to 5 after 24h at 0)
   tokenLastUsage DateTime? // Timestamp of last token usage (for 24h rate limiting window)
   resetToken    String?       // Token for password reset
@@ -48,16 +51,6 @@ model Account {
   updatedAt         DateTime @updatedAt
 
   @@unique([provider, providerAccountId])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
 }
 
 model VerificationToken {
@@ -216,4 +209,142 @@ model EmailChangeRequest {
   @@index([userId])
   @@index([token])
   @@index([expires])
+}
+
+model TelemetryEvent {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type        String   // CV_GENERATED, CV_IMPORTED, CV_EXPORTED, CV_EDITED, etc.
+  category    String   // cv_management, auth, job_processing, navigation, interaction
+
+  metadata    String?  // JSON: { analysisLevel, fileSize, score, section, operation, etc. }
+
+  deviceId    String?  // Device identifier for cross-device tracking
+
+  duration    Int?     // Duration in milliseconds (for jobs, page views, etc.)
+  status      String?  // success, error, cancelled
+  error       String?  // Error message if status=error
+
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([category])
+  @@index([deviceId])
+  @@index([timestamp])
+  @@index([userId, type])
+  @@index([type, timestamp])
+}
+
+model FeatureUsage {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  featureName   String   // generate_cv, import_pdf, export_pdf, calculate_match_score, optimize_cv, etc.
+
+  usageCount    Int      @default(0)
+  lastUsedAt    DateTime @default(now())
+  totalDuration Int      @default(0) // Total duration in milliseconds
+
+  metadata      String?  // JSON: { rapid: 5, medium: 2, deep: 1 } for analysis levels, etc.
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, featureName])
+  @@index([userId])
+  @@index([featureName])
+  @@index([lastUsedAt])
+}
+
+model OpenAIUsage {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  featureName     String   // generate_cv, match_score, optimize_cv, translate_cv, import_pdf, etc.
+  model           String   // gpt-5-nano-2025-08-07, gpt-5-mini-2025-08-07, etc.
+  date            DateTime // Date du jour (agrégation quotidienne)
+
+  promptTokens    Int      @default(0)
+  cachedTokens    Int      @default(0) // Cached tokens (prompt caching)
+  completionTokens Int     @default(0)
+  totalTokens     Int      @default(0)
+
+  estimatedCost   Float    @default(0) // Coût estimé en dollars (calculé selon tarifs)
+
+  callsCount      Int      @default(0) // Nombre d'appels OpenAI ce jour
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, featureName, model, date])
+  @@index([userId])
+  @@index([featureName])
+  @@index([model])
+  @@index([date])
+  @@index([userId, date])
+  @@index([featureName, date])
+}
+
+model OpenAIPricing {
+  id                    String   @id @default(cuid())
+  modelName             String   @unique // Ex: "gpt-5-nano-2025-08-07"
+
+  inputPricePerMToken   Float    // Prix par million de tokens en entrée (ex: 0.10)
+  outputPricePerMToken  Float    // Prix par million de tokens en sortie (ex: 0.40)
+  cachePricePerMToken   Float    @default(0) // Prix par million de tokens en cache (prompt caching)
+
+  description           String?  // Description du modèle
+  isActive              Boolean  @default(true)
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([modelName])
+  @@index([isActive])
+}
+
+model OpenAIAlert {
+  id          String   @id @default(cuid())
+
+  type        String   // "user_daily", "user_monthly", "global_daily", "global_monthly", "feature_daily"
+  threshold   Float    // Seuil en dollars
+  enabled     Boolean  @default(true)
+
+  name        String   // Nom de l'alerte (ex: "Limite utilisateur journalière")
+  description String?  // Description optionnelle
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+  @@index([enabled])
+}
+
+model OpenAICall {
+  id               String   @id @default(cuid())
+  userId           String
+  featureName      String   // generate_cv, match_score, optimize_cv, translate_cv, import_pdf, etc.
+  model            String   // gpt-5-nano-2025-08-07, gpt-5-mini-2025-08-07, etc.
+
+  promptTokens     Int      @default(0)
+  cachedTokens     Int      @default(0) // Cached tokens (prompt caching)
+  completionTokens Int      @default(0)
+  totalTokens      Int      @default(0)
+  estimatedCost    Float    @default(0)
+  duration         Int?     // Durée d'exécution en millisecondes
+  metadata         String?  // JSON: { analysisLevel, etc. }
+
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+  @@index([featureName])
+  @@index([featureName, createdAt])
+  @@index([userId, featureName])
+  @@index([createdAt])
 }

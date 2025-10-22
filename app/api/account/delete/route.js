@@ -48,8 +48,16 @@ export async function DELETE(request){
     await prisma.consentLog.deleteMany({ where: { userId: user.id } });
     await prisma.cvFile.deleteMany({ where: { userId: user.id } });
     await prisma.backgroundTask.deleteMany({ where: { userId: user.id } });
-    await prisma.session.deleteMany({ where: { userId: user.id } });
+
+    // Supprimer les données de télémétrie
+    await prisma.telemetryEvent.deleteMany({ where: { userId: user.id } });
+    await prisma.featureUsage.deleteMany({ where: { userId: user.id } });
+    await prisma.openAIUsage.deleteMany({ where: { userId: user.id } });
+
+    // Supprimer les comptes OAuth
     await prisma.account.deleteMany({ where: { userId: user.id } });
+
+    // Supprimer l'utilisateur
     await prisma.user.delete({ where: { id: user.id } });
 
     logger.context('DELETE account', 'info', `✅ Utilisateur ${user.id} supprimé de la DB`);

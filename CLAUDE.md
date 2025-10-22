@@ -13,10 +13,17 @@ npm start                # Démarre le serveur de production
 
 ### Prisma
 ```bash
-npx prisma migrate deploy    # Applique les migrations (DATABASE_URL depuis .env.local)
+npx prisma migrate deploy    # Applique les migrations
+npx prisma migrate dev       # Créer une migration en dev
 npx prisma studio            # Interface graphique pour la base de données
 npx prisma generate          # Génère le client Prisma
 ```
+
+**IMPORTANT - Base de données** :
+- La base SQLite est dans `prisma/dev.db`
+- Pour les **migrations Prisma** : DATABASE_URL doit être dans `.env` (pas `.env.local`) avec la valeur `DATABASE_URL="file:./dev.db"` car Prisma s'exécute depuis le dossier `prisma/`
+- Pour **Next.js** : DATABASE_URL peut être dans `.env.local` avec la même valeur `DATABASE_URL="file:./dev.db"`
+- **NE JAMAIS** utiliser `file:./prisma/dev.db` - le chemin est toujours `file:./dev.db` car relatif au dossier `prisma/`
 
 ## Architecture
 
@@ -235,6 +242,78 @@ import { getSession } from '@/lib/auth/session';
 const session = await getSession();
 const userId = session?.user?.id;
 ```
+
+### Gestion du scroll chaining dans les dropdowns
+
+**IMPORTANT** : Pour éviter le scroll de la page quand on scrolle dans un dropdown (ce qui décale les dropdowns en position fixed), utiliser les approches suivantes :
+
+#### 1. Dropdowns avec portals (position: fixed)
+Pour les dropdowns rendus via `createPortal` (CustomSelect, UserFilter, etc.) :
+
+```javascript
+useEffect(() => {
+  if (!isOpen) return;
+
+  // Sauvegarder la position de scroll actuelle
+  const scrollY = window.scrollY;
+
+  // Bloquer le scroll du body
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${scrollY}px`;
+  document.body.style.width = '100%';
+
+  return () => {
+    // Restaurer le scroll du body
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    window.scrollTo(0, scrollY);
+  };
+}, [isOpen]);
+```
+
+- Le dropdown peut scroller normalement grâce à `overscroll-behavior: contain`
+- La page reste figée à sa position, pas de décalage
+
+#### 2. Listes scrollables in-page (non-portals)
+Pour les listes directement dans le DOM (OpenAICostsTab, etc.) :
+
+```javascript
+useEffect(() => {
+  const scrollContainer = scrollContainerRef.current;
+  if (!isVisible || !scrollContainer) return;
+
+  function preventScrollChaining(e) {
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+    const isAtTop = scrollTop <= 1;
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+
+    // Bloquer UNIQUEMENT aux limites pour éviter le scroll chaining
+    if ((isAtTop && e.deltaY < 0) || (isAtBottom && e.deltaY > 0)) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }
+
+  scrollContainer.addEventListener('wheel', preventScrollChaining, { passive: false });
+
+  return () => {
+    scrollContainer.removeEventListener('wheel', preventScrollChaining);
+  };
+}, [isVisible]);
+```
+
+- Le scroll fonctionne normalement dans la liste
+- Se bloque aux limites pour empêcher la propagation à la page
+- Nécessite `[overscroll-behavior:contain]` sur le conteneur
+
+**Références d'implémentation** :
+- CustomSelect : `components/admin/CustomSelect.jsx:57-77`
+- UserFilter : `components/admin/UserFilter.jsx:63-83`
+- OpenAICostsTab : `components/admin/OpenAICostsTab.jsx:61-106`
+
 ## Project Rules
 - Ne merge jamais sans une demande explicite. Si un merge est demandé il faudra merge avec main avec l'option `--no-ff`
 - Ne commit jamais sans une demande explicite
@@ -248,3 +327,4 @@ const userId = session?.user?.id;
 - Quand je veux corriger un petit bug, créer une branche
   hotfix/name_of_the_feature, si elle existe déjà incrémente là
 - N'utilise jamais "🤖 Generated with" dans un commit, ne fait aucune mention de Claude Code
+- A chaque fois que tu termines une réponse ou une tache, je veux que tu executes le code 'echo -e '\a''
