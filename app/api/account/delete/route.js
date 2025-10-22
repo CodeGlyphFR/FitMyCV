@@ -50,13 +50,11 @@ export async function DELETE(request){
     await prisma.backgroundTask.deleteMany({ where: { userId: user.id } });
 
     // Supprimer les données de télémétrie
-    await prisma.userSession.deleteMany({ where: { userId: user.id } });
     await prisma.telemetryEvent.deleteMany({ where: { userId: user.id } });
     await prisma.featureUsage.deleteMany({ where: { userId: user.id } });
     await prisma.openAIUsage.deleteMany({ where: { userId: user.id } });
 
-    // Supprimer les sessions NextAuth et comptes OAuth
-    await prisma.session.deleteMany({ where: { userId: user.id } });
+    // Supprimer les comptes OAuth
     await prisma.account.deleteMany({ where: { userId: user.id } });
 
     // Supprimer l'utilisateur

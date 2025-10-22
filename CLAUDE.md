@@ -327,3 +327,4 @@ useEffect(() => {
 - Quand je veux corriger un petit bug, créer une branche
   hotfix/name_of_the_feature, si elle existe déjà incrémente là
 - N'utilise jamais "🤖 Generated with" dans un commit, ne fait aucune mention de Claude Code
+- A chaque fois que tu termines une réponse ou une tache, je veux que tu executes le code 'echo -e '\a''

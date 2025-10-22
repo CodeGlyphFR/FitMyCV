@@ -83,14 +83,6 @@ export function OverviewTab({ period, userId, refreshKey, isInitialLoad }) {
 
   const healthStatus = getHealthStatus(kpis.healthScore);
 
-  // Format bestHour
-  const bestHourFormatted = kpis.bestHour !== null ? `${kpis.bestHour}h` : 'N/A';
-
-  // Calculate user activity percentage
-  const userActivityPercent = kpis.totalUsers > 0
-    ? ((kpis.activeUsers / kpis.totalUsers) * 100).toFixed(0)
-    : 0;
-
   // Prepare feature data for chart
   const featureData = topFeatures.map(f => {
     const config = FEATURE_CONFIG[f.featureName] || { icon: '📌', name: f.featureName, colors: { solid: '#6B7280' } };
@@ -108,10 +100,10 @@ export function OverviewTab({ period, userId, refreshKey, isInitialLoad }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <KPICard
           icon="👥"
-          label="Utilisateurs Actifs"
-          value={kpis.activeUsers}
-          subtitle={`${userActivityPercent}% de ${kpis.totalUsers} utilisateurs`}
-          description="Nombre d'utilisateurs ayant effectué au moins une action sur la période sélectionnée"
+          label="Utilisateurs inscrits"
+          value={kpis.totalUsers}
+          subtitle="inscrits au total"
+          description="Nombre total d'utilisateurs inscrits sur la plateforme depuis le début"
         />
         <KPICard
           icon="📄"
@@ -125,7 +117,7 @@ export function OverviewTab({ period, userId, refreshKey, isInitialLoad }) {
           label="CVs Générés IA"
           value={kpis.cvGenerated}
           subtitle={`${((kpis.cvGenerated / kpis.totalCvs) * 100).toFixed(1)}% du total`}
-          description="Nombre de CV générés automatiquement par l'IA à partir d'offres d'emploi"
+          description="Nombre de CV créés ou modifiés via l'intelligence artificielle (génération, import, optimisation, traduction)"
         />
         <KPICard
           icon="📈"
@@ -183,53 +175,7 @@ export function OverviewTab({ period, userId, refreshKey, isInitialLoad }) {
         </div>
       )}
 
-      {/* Section 3: Quick Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <KPICard
-          icon="🕐"
-          label="Sessions"
-          value={kpis.totalSessions}
-          subtitle={`${Math.round(kpis.avgSessionDuration / 60)} min moy.`}
-          description="Nombre total de sessions utilisateurs enregistrées, avec une durée moyenne de session calculée"
-        />
-        <KPICard
-          icon="📄"
-          label="Pages / Session"
-          value={kpis.avgPagesPerSession}
-          subtitle="pages en moyenne"
-          description="Nombre moyen de pages consultées par session, indicateur d'engagement utilisateur"
-        />
-        <KPICard
-          icon="🔄"
-          label="Taux de Rebond"
-          value={`${kpis.bounceRate}%`}
-          subtitle="≤ 1 page visitée"
-          description="Pourcentage de sessions où l'utilisateur n'a consulté qu'une seule page avant de quitter"
-        />
-        <KPICard
-          icon="📍"
-          label="Total Événements"
-          value={kpis.totalEvents}
-          subtitle="trackés sur la période"
-          description="Nombre total d'événements utilisateurs trackés (clics, actions, interactions) sur la période"
-        />
-        <KPICard
-          icon="⚙️"
-          label="Taux Succès Jobs"
-          value={`${kpis.jobSuccessRate}%`}
-          subtitle={`${kpis.completedJobs}/${kpis.totalJobs} réussis`}
-          description="Taux de réussite des tâches en arrière-plan (génération CV, traduction, etc.)"
-        />
-        <KPICard
-          icon="⏰"
-          label="Meilleure Heure"
-          value={bestHourFormatted}
-          subtitle="période la plus active"
-          description="Heure de la journée où l'activité utilisateur est la plus élevée"
-        />
-      </div>
-
-      {/* Section 4: Features & Top 3 */}
+      {/* Section 3: Features & Top 3 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Features Chart */}
         <div className="bg-white/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-white/20">
@@ -310,7 +256,7 @@ export function OverviewTab({ period, userId, refreshKey, isInitialLoad }) {
         </div>
       </div>
 
-      {/* Section 5: System Health Summary */}
+      {/* Section 4: System Health Summary */}
       <div className="bg-white/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-white/20">
         <h3 className="text-lg font-semibold text-white mb-4">💚 Santé du Système</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

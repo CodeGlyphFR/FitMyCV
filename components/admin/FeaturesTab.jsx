@@ -58,13 +58,13 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
   // Prepare chart data
   const barChartData = features
     .map(f => ({
-      name: FEATURE_CONFIG[f.featureName]?.name || f.featureName.replace(/_/g, ' '),
+      name: FEATURE_CONFIG[f.featureName]?.name || 'Feature non configurée',
       fullName: f.featureName,
       usage: f.totalUsage,
       users: f.userCount,
       avgDuration: f.avgDuration,
-      icon: FEATURE_CONFIG[f.featureName]?.icon || '📦',
-      fill: FEATURE_CONFIG[f.featureName]?.colors.from || '#3B82F6'
+      icon: FEATURE_CONFIG[f.featureName]?.icon || '📊',
+      fill: FEATURE_CONFIG[f.featureName]?.colors.from || '#6B7280'
     }))
     .sort((a, b) => b.usage - a.usage);
 
@@ -80,7 +80,6 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
             <span className="text-2xl">{data.icon}</span>
             <div>
               <p className="text-white font-semibold">{data.name}</p>
-              <p className="text-xs text-white/40">{data.fullName}</p>
             </div>
           </div>
 
@@ -121,7 +120,7 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
   const pieChartData = features
     .filter(f => f.totalUsage > 0)
     .map(f => ({
-      name: FEATURE_CONFIG[f.featureName]?.name || f.featureName.replace(/_/g, ' '),
+      name: FEATURE_CONFIG[f.featureName]?.name || 'Feature non configurée',
       value: f.totalUsage
     }))
     .sort((a, b) => b.value - a.value);
@@ -272,9 +271,9 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
             .sort((a, b) => b.totalUsage - a.totalUsage)
             .map((feature) => {
               const config = FEATURE_CONFIG[feature.featureName] || {
-                icon: '📦',
-                name: feature.featureName.replace(/_/g, ' '),
-                colors: { from: '#3B82F6', to: '#2563EB', light: '#60A5FA', solid: '#3B82F6' }
+                icon: '📊',
+                name: 'Feature non configurée',
+                colors: { from: '#6B7280', to: '#4B5563', light: '#D1D5DB', solid: '#6B7280' }
               };
 
               const usagePercent = totalUsage > 0 ? (feature.totalUsage / totalUsage) * 100 : 0;
@@ -295,7 +294,6 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
                       <div className="text-4xl">{config.icon}</div>
                       <div>
                         <h4 className="text-white font-semibold">{config.name}</h4>
-                        <p className="text-xs text-white/40">{feature.featureName}</p>
                       </div>
                     </div>
                     {popularityStars && (
@@ -423,13 +421,17 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
                 {features
                   .sort((a, b) => b.totalUsage - a.totalUsage)
                   .map((feature) => {
-                    const config = FEATURE_CONFIG[feature.featureName];
+                    const config = FEATURE_CONFIG[feature.featureName] || {
+                      icon: '📊',
+                      name: 'Feature non configurée',
+                      colors: { from: '#6B7280', to: '#4B5563' }
+                    };
                     return (
                       <tr key={feature.featureName} className="hover:bg-white/5 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                           <div className="flex items-center gap-2">
-                            <span>{config?.icon || '📦'}</span>
-                            <span>{config?.name || feature.featureName.replace(/_/g, ' ')}</span>
+                            <span>{config.icon}</span>
+                            <span>{config.name}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-white/80">

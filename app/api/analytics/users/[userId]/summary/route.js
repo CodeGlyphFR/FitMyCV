@@ -48,7 +48,6 @@ export async function GET(request, { params }) {
     const [
       featureUsage,
       eventCounts,
-      sessions,
       lastActivity,
     ] = await Promise.all([
       // Feature usage
@@ -70,19 +69,6 @@ export async function GET(request, { params }) {
         _count: true,
       }),
 
-      // Session stats
-      prisma.userSession.findMany({
-        where: { userId },
-        select: {
-          startedAt: true,
-          endedAt: true,
-          eventsCount: true,
-          pagesViewed: true,
-        },
-        orderBy: { startedAt: 'desc' },
-        take: 10,
-      }),
-
       // Last activity
       prisma.telemetryEvent.findFirst({
         where: { userId },
@@ -93,16 +79,6 @@ export async function GET(request, { params }) {
         },
       }),
     ]);
-
-    // Calculate session statistics
-    const completedSessions = sessions.filter(s => s.endedAt);
-    const totalSessionTime = completedSessions.reduce((sum, s) => {
-      return sum + (new Date(s.endedAt).getTime() - new Date(s.startedAt).getTime());
-    }, 0);
-
-    const avgSessionDuration = completedSessions.length > 0
-      ? totalSessionTime / completedSessions.length
-      : 0;
 
     // Parse feature metadata
     const featuresWithParsedMetadata = featureUsage.map(f => ({
@@ -128,15 +104,10 @@ export async function GET(request, { params }) {
         cvEdited,
         matchScoreCalculated,
         cvOptimized,
-        totalSessions: sessions.length,
-        completedSessions: completedSessions.length,
-        totalSessionTime: Math.round(totalSessionTime / 1000), // seconds
-        avgSessionDuration: Math.round(avgSessionDuration / 1000), // seconds
         lastActivity: lastActivity?.timestamp || null,
         lastFeature: lastActivity?.type || null,
       },
       featureUsage: featuresWithParsedMetadata,
-      recentSessions: sessions,
       eventCounts: eventCounts.map(e => ({
         type: e.type,
         count: e._count,

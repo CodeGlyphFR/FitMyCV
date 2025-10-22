@@ -20,6 +20,8 @@ export function SettingsTab({ refreshKey }) {
   const [hasChanges, setHasChanges] = useState(false);
   const [toast, setToast] = useState(null);
   const [availableModels, setAvailableModels] = useState(AVAILABLE_AI_MODELS);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchSettings();
@@ -112,6 +114,35 @@ export function SettingsTab({ refreshKey }) {
 
   function handleCancel() {
     setModifiedSettings({});
+  }
+
+  async function handleDeleteAllData() {
+    setDeleting(true);
+    try {
+      const response = await fetch('/api/admin/telemetry/cleanup', {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete data');
+      }
+
+      const result = await response.json();
+      setToast({
+        type: 'success',
+        message: `${result.deleted.total} enregistrements supprimés avec succès`
+      });
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      console.error('Error deleting telemetry data:', error);
+      setToast({
+        type: 'error',
+        message: `Erreur lors de la suppression: ${error.message}`
+      });
+    } finally {
+      setDeleting(false);
+    }
   }
 
   if (loading) {
@@ -329,6 +360,63 @@ export function SettingsTab({ refreshKey }) {
       {settings.length === 0 && (
         <div className="text-center text-white/60 py-8 bg-white/10 backdrop-blur-xl rounded-lg">
           Aucun paramètre trouvé
+        </div>
+      )}
+
+      {/* Danger Zone - Delete All Analytics Data */}
+      <div className="bg-red-500/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-red-500/30">
+        <h3 className="text-lg font-semibold text-red-400 mb-2">⚠️ Zone de danger</h3>
+        <p className="text-white/60 text-sm mb-4">
+          Cette action supprimera définitivement <strong className="text-white">toutes</strong> les données analytics :
+          événements de télémétrie, utilisations de features, appels OpenAI et statistiques d'usage.
+          <br />
+          <strong className="text-red-400">Cette opération est irréversible.</strong>
+        </p>
+        <button
+          onClick={() => setShowDeleteConfirm(true)}
+          className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg hover:bg-red-500/30 transition backdrop-blur-xl font-medium"
+        >
+          🗑️ Supprimer toutes les données analytics
+        </button>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900/95 backdrop-blur-xl rounded-lg shadow-2xl border border-red-500/30 p-6 max-w-md w-full">
+            <h3 className="text-xl font-semibold text-red-400 mb-4">⚠️ Confirmation requise</h3>
+            <p className="text-white/80 mb-2">
+              Êtes-vous absolument certain de vouloir supprimer <strong className="text-white">toutes</strong> les données analytics ?
+            </p>
+            <p className="text-white/60 text-sm mb-6">
+              Cette action va supprimer :
+            </p>
+            <ul className="text-sm text-white/60 mb-6 space-y-1 list-disc list-inside">
+              <li>Tous les événements de télémétrie (TelemetryEvent)</li>
+              <li>Toutes les utilisations de features (FeatureUsage)</li>
+              <li>Tous les appels OpenAI (OpenAICall)</li>
+              <li>Toutes les statistiques d'usage OpenAI (OpenAIUsage)</li>
+            </ul>
+            <p className="text-red-400 font-semibold mb-6 text-sm">
+              ⚠️ Cette action est définitive et ne peut pas être annulée.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="px-4 py-2 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleDeleteAllData}
+                disabled={deleting}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deleting ? 'Suppression...' : 'Oui, supprimer tout'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

@@ -262,6 +262,10 @@ export function UsersTab({ refreshKey }) {
 
       // Modifier l'email si changé
       if (editedEmail.trim() !== selectedUserForEdit.email) {
+        if (selectedUserForEdit.hasOAuth) {
+          throw new Error('Impossible de modifier l\'email d\'un utilisateur OAuth');
+        }
+
         const emailResponse = await fetch(`/api/admin/users/${selectedUserForEdit.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -448,6 +452,25 @@ export function UsersTab({ refreshKey }) {
     );
   };
 
+  const getOAuthBadge = (oauthProviders) => {
+    if (!oauthProviders || oauthProviders.length === 0) return null;
+
+    const icons = {
+      google: '🔵',
+      github: '⚫',
+      apple: '🍎'
+    };
+
+    const providerIcons = oauthProviders.map(p => icons[p] || '🔑').join(' ');
+
+    return (
+      <span className="px-2 py-1 text-xs bg-indigo-500/20 text-indigo-400 rounded font-medium flex items-center gap-1">
+        <span>{providerIcons}</span>
+        OAuth
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-6 pb-8">
       {/* KPI Cards avec tooltips */}
@@ -600,6 +623,7 @@ export function UsersTab({ refreshKey }) {
                           {user.name || 'Sans nom'}
                         </span>
                         {getRoleBadge(user.role)}
+                        {getOAuthBadge(user.oauthProviders)}
                         {getEmailStatusBadge(user.emailVerified)}
                       </div>
 
@@ -797,8 +821,15 @@ export function UsersTab({ refreshKey }) {
                   type="email"
                   value={editedEmail}
                   onChange={(e) => setEditedEmail(e.target.value)}
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+                  disabled={selectedUserForEdit?.hasOAuth}
+                  className={`w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition ${selectedUserForEdit?.hasOAuth ? 'opacity-50 cursor-not-allowed' : ''}`}
                 />
+                {selectedUserForEdit?.hasOAuth && (
+                  <p className="text-xs text-orange-400 mt-1 flex items-center gap-1">
+                    <span>🔒</span>
+                    L'email ne peut pas être modifié pour un compte OAuth (géré par {selectedUserForEdit.oauthProviders.join('/')})
+                  </p>
+                )}
               </div>
 
               {/* Tokens */}

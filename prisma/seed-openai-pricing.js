@@ -6,12 +6,14 @@ const prisma = new PrismaClient();
 
 // Official OpenAI pricing (as of January 2025)
 // Prices are per million tokens (MTok)
+// Cache prices are typically 50% of input prices (prompt caching feature)
 const pricingData = [
   // GPT-5 family
   {
     modelName: 'gpt-5-nano-2025-08-07',
     inputPricePerMToken: 0.10,
     outputPricePerMToken: 0.40,
+    cachePricePerMToken: 0.05,
     description: 'GPT-5 Nano - Fast and economical model',
     isActive: true,
   },
@@ -19,6 +21,7 @@ const pricingData = [
     modelName: 'gpt-5-mini-2025-08-07',
     inputPricePerMToken: 0.40,
     outputPricePerMToken: 1.60,
+    cachePricePerMToken: 0.20,
     description: 'GPT-5 Mini - Standard model for most tasks',
     isActive: true,
   },
@@ -26,6 +29,7 @@ const pricingData = [
     modelName: 'gpt-5-2025-08-07',
     inputPricePerMToken: 1.00,
     outputPricePerMToken: 4.00,
+    cachePricePerMToken: 0.50,
     description: 'GPT-5 - Advanced model with extended context',
     isActive: true,
   },
@@ -35,6 +39,7 @@ const pricingData = [
     modelName: 'gpt-4o-mini',
     inputPricePerMToken: 0.15,
     outputPricePerMToken: 0.60,
+    cachePricePerMToken: 0.075,
     description: 'GPT-4o Mini - Affordable and intelligent small model',
     isActive: true,
   },
@@ -42,6 +47,7 @@ const pricingData = [
     modelName: 'gpt-4o',
     inputPricePerMToken: 2.50,
     outputPricePerMToken: 10.00,
+    cachePricePerMToken: 1.25,
     description: 'GPT-4o - Multimodal flagship model',
     isActive: true,
   },
@@ -49,6 +55,7 @@ const pricingData = [
     modelName: 'gpt-4o-mini-tts',
     inputPricePerMToken: 0.15,
     outputPricePerMToken: 0.60,
+    cachePricePerMToken: 0.075,
     description: 'GPT-4o Mini TTS - Text-to-speech model',
     isActive: true,
   },
@@ -56,6 +63,7 @@ const pricingData = [
     modelName: 'gpt-4o-mini-transcribe',
     inputPricePerMToken: 0.15,
     outputPricePerMToken: 0.60,
+    cachePricePerMToken: 0.075,
     description: 'GPT-4o Mini Transcribe - Audio transcription model',
     isActive: true,
   },
@@ -65,6 +73,7 @@ const pricingData = [
     modelName: 'gpt-4.1-2025-04-14',
     inputPricePerMToken: 2.00,
     outputPricePerMToken: 8.00,
+    cachePricePerMToken: 1.00,
     description: 'GPT-4.1 - Improved reasoning model',
     isActive: true,
   },
@@ -74,6 +83,7 @@ const pricingData = [
     modelName: 'o4-mini-deep-research-2025-06-26',
     inputPricePerMToken: 1.50,
     outputPricePerMToken: 6.00,
+    cachePricePerMToken: 0.75,
     description: 'o4 Mini - Compact deep research reasoning model',
     isActive: true,
   },
@@ -81,6 +91,7 @@ const pricingData = [
     modelName: 'o3-deep-research-2025-06-26',
     inputPricePerMToken: 5.00,
     outputPricePerMToken: 20.00,
+    cachePricePerMToken: 2.50,
     description: 'o3 - Advanced deep research reasoning model',
     isActive: true,
   },
@@ -90,6 +101,7 @@ const pricingData = [
     modelName: 'gpt-oss-20b',
     inputPricePerMToken: 0.05,
     outputPricePerMToken: 0.20,
+    cachePricePerMToken: 0.025,
     description: 'GPT OSS 20B - Open source 20B parameter model',
     isActive: true,
   },
@@ -97,6 +109,7 @@ const pricingData = [
     modelName: 'gpt-oss-120b',
     inputPricePerMToken: 0.30,
     outputPricePerMToken: 1.20,
+    cachePricePerMToken: 0.15,
     description: 'GPT OSS 120B - Open source 120B parameter model',
     isActive: true,
   },
@@ -111,13 +124,14 @@ async function main() {
       update: {
         inputPricePerMToken: pricing.inputPricePerMToken,
         outputPricePerMToken: pricing.outputPricePerMToken,
+        cachePricePerMToken: pricing.cachePricePerMToken,
         description: pricing.description,
         isActive: pricing.isActive,
       },
       create: pricing,
     });
 
-    console.log(`  ✓ ${result.modelName}: $${result.inputPricePerMToken}/$${result.outputPricePerMToken} per MTok`);
+    console.log(`  ✓ ${result.modelName}: $${result.inputPricePerMToken}/$${result.outputPricePerMToken}/$${result.cachePricePerMToken} per MTok (input/output/cache)`);
   }
 
   // Create default alerts

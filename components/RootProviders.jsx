@@ -12,7 +12,6 @@ import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { SettingsProvider } from "@/lib/settings/SettingsContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import RecaptchaProvider from "@/components/RecaptchaProvider";
-import { TelemetryProvider } from "@/components/TelemetryProvider";
 
 export default function RootProviders({ session, initialSettings, children }){
   const pathname = usePathname();
@@ -24,25 +23,23 @@ export default function RootProviders({ session, initialSettings, children }){
         <SettingsProvider initialSettings={initialSettings}>
         <LanguageProvider>
         <AdminProvider>
-          <TelemetryProvider>
-            <NotificationProvider>
-              {isAuthPage ? (
-                <>
+          <NotificationProvider>
+            {isAuthPage ? (
+              <>
+                {children}
+                <NotificationContainer />
+                <LanguageSwitcher />
+              </>
+            ) : (
+              <RealtimeRefreshProvider>
+                <BackgroundTasksProvider>
                   {children}
                   <NotificationContainer />
                   <LanguageSwitcher />
-                </>
-              ) : (
-                <RealtimeRefreshProvider>
-                  <BackgroundTasksProvider>
-                    {children}
-                    <NotificationContainer />
-                    <LanguageSwitcher />
-                  </BackgroundTasksProvider>
-                </RealtimeRefreshProvider>
-              )}
-            </NotificationProvider>
-          </TelemetryProvider>
+                </BackgroundTasksProvider>
+              </RealtimeRefreshProvider>
+            )}
+          </NotificationProvider>
         </AdminProvider>
         </LanguageProvider>
       </SettingsProvider>

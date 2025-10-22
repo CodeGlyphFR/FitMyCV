@@ -100,7 +100,6 @@ try {
   await trackCvCreation({
     userId: session.user.id,
     deviceId: null,
-    sessionId: null,
     status: 'success',
   });
 } catch (trackError) {

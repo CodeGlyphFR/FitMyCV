@@ -75,6 +75,11 @@ export async function GET(request) {
               cvs: true,
             },
           },
+          accounts: {
+            select: {
+              provider: true,
+            },
+          },
         },
       }),
 
@@ -126,7 +131,7 @@ export async function GET(request) {
       lastActivities.map(a => [a.userId, a._max.timestamp])
     );
 
-    // Enrichir les utilisateurs avec la dernière activité
+    // Enrichir les utilisateurs avec la dernière activité et les infos OAuth
     const usersWithActivity = users.map(user => ({
       id: user.id,
       name: user.name,
@@ -137,6 +142,8 @@ export async function GET(request) {
       matchScoreRefreshCount: user.matchScoreRefreshCount,
       cvCount: user._count.cvs,
       lastActivity: activityMap.get(user.id) || user.createdAt,
+      oauthProviders: user.accounts.map(a => a.provider),
+      hasOAuth: user.accounts.length > 0,
     }));
 
     return NextResponse.json({

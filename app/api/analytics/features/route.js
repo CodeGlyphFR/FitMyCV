@@ -46,7 +46,12 @@ export async function GET(request) {
 
     // Event type to feature name mapping
     const EVENT_TO_FEATURE = {
-      'CV_GENERATED': 'generate_cv',
+      'CV_GENERATED_URL': 'generate_cv_url',
+      'CV_GENERATED_PDF': 'generate_cv_pdf',
+      'CV_TEMPLATE_CREATED_URL': 'create_template_cv_url',
+      'CV_TEMPLATE_CREATED_PDF': 'create_template_cv_pdf',
+      'CV_GENERATED_FROM_JOB_TITLE': 'generate_from_job_title',
+      'CV_CREATED_MANUAL': 'create_cv_manual',
       'CV_IMPORTED': 'import_cv',
       'CV_EXPORTED': 'export_cv',
       'CV_TRANSLATED': 'translate_cv',
@@ -75,6 +80,15 @@ export async function GET(request) {
         timestamp: true,
       },
     });
+
+    // DEBUG: Log event types found
+    const eventTypeCounts = events.reduce((acc, e) => {
+      acc[e.type] = (acc[e.type] || 0) + 1;
+      return acc;
+    }, {});
+    console.log('[Features API] Event types found:', eventTypeCounts);
+    console.log('[Features API] Total events:', events.length);
+    console.log('[Features API] Period:', period, 'Start date:', startDate?.toISOString());
 
     // Aggregate data by feature
     const featureStats = {};
@@ -135,6 +149,9 @@ export async function GET(request) {
 
     // Sort by total usage
     features.sort((a, b) => b.totalUsage - a.totalUsage);
+
+    // DEBUG: Log features returned
+    console.log('[Features API] Features returned:', features.map(f => `${f.featureName} (${f.totalUsage})`).join(', '));
 
     return NextResponse.json({
       period,

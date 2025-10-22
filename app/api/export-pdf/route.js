@@ -168,7 +168,6 @@ export async function POST(request) {
       await trackCvExport({
         userId: session.user.id,
         deviceId: null,
-        sessionId: null,
         language,
         duration,
         status: 'success',
@@ -197,7 +196,6 @@ export async function POST(request) {
         await trackCvExport({
           userId: session.user.id,
           deviceId: null,
-          sessionId: null,
           language: 'fr', // Valeur par défaut si la langue n'est pas disponible
           duration,
           status: 'error',

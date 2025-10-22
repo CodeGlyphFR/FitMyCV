@@ -28,7 +28,6 @@ export async function POST(request) {
           type: event.type,
           userId,
           deviceId: event.deviceId || null,
-          sessionId: event.sessionId || null,
           metadata: event.metadata || null,
           duration: event.duration || null,
           status: event.status || 'success',

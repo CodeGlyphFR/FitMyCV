@@ -35,6 +35,7 @@ export async function GET(request) {
  *   modelName: string,
  *   inputPricePerMToken: number,
  *   outputPricePerMToken: number,
+ *   cachePricePerMToken?: number,
  *   description?: string,
  *   isActive?: boolean
  * }
@@ -47,7 +48,7 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { modelName, inputPricePerMToken, outputPricePerMToken, description, isActive } = body;
+    const { modelName, inputPricePerMToken, outputPricePerMToken, cachePricePerMToken, description, isActive } = body;
 
     // Validate required fields
     if (!modelName || inputPricePerMToken === undefined || outputPricePerMToken === undefined) {
@@ -65,12 +66,21 @@ export async function POST(request) {
       );
     }
 
+    // Validate cache price if provided
+    if (cachePricePerMToken !== undefined && cachePricePerMToken < 0) {
+      return NextResponse.json(
+        { error: 'Cache price must be a positive number' },
+        { status: 400 }
+      );
+    }
+
     // Upsert pricing
     const pricing = await prisma.openAIPricing.upsert({
       where: { modelName },
       update: {
         inputPricePerMToken,
         outputPricePerMToken,
+        cachePricePerMToken: cachePricePerMToken !== undefined ? cachePricePerMToken : 0,
         description: description || null,
         isActive: isActive !== undefined ? isActive : true,
       },
@@ -78,6 +88,7 @@ export async function POST(request) {
         modelName,
         inputPricePerMToken,
         outputPricePerMToken,
+        cachePricePerMToken: cachePricePerMToken !== undefined ? cachePricePerMToken : 0,
         description: description || null,
         isActive: isActive !== undefined ? isActive : true,
       },

@@ -26,6 +26,7 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
     modelName: '',
     inputPricePerMToken: '',
     outputPricePerMToken: '',
+    cachePricePerMToken: '',
     description: '',
     isActive: true,
   });
@@ -43,6 +44,7 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
 
   useEffect(() => {
     fetchData();
+    fetchPricings(); // Fetch pricing data for tooltip calculations
   }, [period, refreshKey]);
 
   useEffect(() => {
@@ -150,6 +152,7 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
         modelName: pricingForm.modelName,
         inputPricePerMToken: parseFloat(pricingForm.inputPricePerMToken),
         outputPricePerMToken: parseFloat(pricingForm.outputPricePerMToken),
+        cachePricePerMToken: pricingForm.cachePricePerMToken ? parseFloat(pricingForm.cachePricePerMToken) : 0,
         description: pricingForm.description || null,
         isActive: pricingForm.isActive,
       };
@@ -168,6 +171,7 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
         modelName: '',
         inputPricePerMToken: '',
         outputPricePerMToken: '',
+        cachePricePerMToken: '',
         description: '',
         isActive: true,
       });
@@ -208,6 +212,7 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
       modelName: pricing.modelName,
       inputPricePerMToken: pricing.inputPricePerMToken.toString(),
       outputPricePerMToken: pricing.outputPricePerMToken.toString(),
+      cachePricePerMToken: pricing.cachePricePerMToken?.toString() || '0',
       description: pricing.description || '',
       isActive: pricing.isActive,
     });
@@ -315,6 +320,16 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
     return new Intl.NumberFormat('fr-FR').format(value);
   };
 
+  const formatAnalysisLevel = (level) => {
+    const levelLabels = {
+      'rapid': 'Rapide',
+      'medium': 'Normal',
+      'deep': 'Approffondi',
+      'unknown': 'Non spécifié',
+    };
+    return levelLabels[level] || level;
+  };
+
   // Calculate average cost per call
   const avgCostPerCall = data.total.calls > 0 ? data.total.cost / data.total.calls : 0;
 
@@ -348,7 +363,7 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
           label="Total tokens"
           value={formatNumber(data.total.totalTokens)}
           subtitle={`${formatNumber(data.total.calls)} appels`}
-          description="Nombre total de tokens consommés (input + output) pour tous les appels OpenAI"
+          description={`Nombre total de tokens consommés (input + output). Input: ${formatNumber(data.total.promptTokens)} (dont ${formatNumber(data.total.cachedTokens)} en cache), Output: ${formatNumber(data.total.completionTokens)}`}
         />
         <KPICard
           icon="📊"
@@ -374,13 +389,16 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
             data={data.byFeature.map((feature) => {
               const featureConfig = getFeatureConfig(feature.feature);
               return {
-                name: featureConfig.name || feature.feature,
+                name: featureConfig.name || 'Feature non configurée',
                 lastCost: feature.lastCost || 0,
                 lastModel: feature.lastModel || 'N/A',
+                lastPromptTokens: feature.lastPromptTokens || 0,
+                lastCachedTokens: feature.lastCachedTokens || 0,
+                lastCompletionTokens: feature.lastCompletionTokens || 0,
                 lastTokens: feature.lastTokens || 0,
                 lastCallDate: feature.lastCallDate || null,
                 lastDuration: feature.lastDuration || null,
-                fill: featureConfig.colors?.solid || '#3B82F6',
+                fill: featureConfig.colors?.solid || '#6B7280',
               };
             })}
             layout="vertical"
@@ -422,29 +440,66 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
                     return `${(ms / 1000).toFixed(2)}s`;
                   };
 
+                  // Find pricing for this model
+                  const pricing = pricings.find(p => p.modelName === data.lastModel);
+
+                  // Calculate individual costs
+                  let inputCost = 0;
+                  let cachedCost = 0;
+                  let outputCost = 0;
+
+                  if (pricing) {
+                    inputCost = (data.lastPromptTokens / 1_000_000) * pricing.inputPricePerMToken;
+                    cachedCost = (data.lastCachedTokens / 1_000_000) * pricing.cachePricePerMToken;
+                    outputCost = (data.lastCompletionTokens / 1_000_000) * pricing.outputPricePerMToken;
+                  }
+
                   return (
                     <div className="bg-black/95 backdrop-blur-xl border border-white/20 rounded-lg p-3 shadow-2xl">
                       <p className="text-white font-semibold mb-2">{data.name}</p>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-green-300">Dernier coût:</span>
-                          <span className="text-white font-bold">{formatCurrency(data.lastCost)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
                           <span className="text-sm text-blue-300">Modèle:</span>
                           <span className="text-white text-sm">{data.lastModel}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-purple-300">Tokens:</span>
-                          <span className="text-white text-sm">{formatNumber(data.lastTokens)}</span>
+
+                        {/* Token breakdown with costs */}
+                        <div className="border-t border-white/10 pt-1 mt-1">
+                          <p className="text-xs text-white/60 mb-1">Détail des tokens:</p>
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-xs text-cyan-300">Input:</span>
+                            <span className="text-white text-xs">{formatNumber(data.lastPromptTokens)} ({formatCurrency(inputCost)})</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-xs text-indigo-300">Cache:</span>
+                            <span className="text-white text-xs">{formatNumber(data.lastCachedTokens)} ({formatCurrency(cachedCost)})</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-xs text-purple-300">Output:</span>
+                            <span className="text-white text-xs">{formatNumber(data.lastCompletionTokens)} ({formatCurrency(outputCost)})</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-orange-300">Durée:</span>
-                          <span className="text-white text-sm">{formatDuration(data.lastDuration)}</span>
+
+                        <div className="border-t border-white/10 pt-1 mt-1">
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-sm text-white/80 font-medium">Total:</span>
+                            <span className="text-white text-sm font-medium">{formatNumber(data.lastTokens)} tokens</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-sm text-green-300 font-medium">Coût:</span>
+                            <span className="text-white font-bold">{formatCurrency(data.lastCost)}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-yellow-300">Date:</span>
-                          <span className="text-white text-sm">{formatDate(data.lastCallDate)}</span>
+
+                        <div className="border-t border-white/10 pt-1 mt-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-orange-300">Durée:</span>
+                            <span className="text-white text-xs">{formatDuration(data.lastDuration)}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-yellow-300">Date:</span>
+                            <span className="text-white text-xs">{formatDate(data.lastCallDate)}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -516,6 +571,17 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
                   />
                 </div>
                 <div>
+                  <label className="text-white/60 text-sm">Prix cache ($/MTok)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={pricingForm.cachePricePerMToken}
+                    onChange={(e) => setPricingForm({ ...pricingForm, cachePricePerMToken: e.target.value })}
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white text-sm"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
                   <label className="text-white/60 text-sm">Description</label>
                   <input
                     type="text"
@@ -550,6 +616,7 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
                         modelName: '',
                         inputPricePerMToken: '',
                         outputPricePerMToken: '',
+                        cachePricePerMToken: '',
                         description: '',
                         isActive: true,
                       });
@@ -575,6 +642,7 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
                       <div className="text-white font-medium">{pricing.modelName}</div>
                       <div className="text-white/60 text-sm">
                         Input: ${pricing.inputPricePerMToken}/MTok • Output: ${pricing.outputPricePerMToken}/MTok
+                        {pricing.cachePricePerMToken > 0 && <span> • Cache: ${pricing.cachePricePerMToken}/MTok</span>}
                         {pricing.description && <span> • {pricing.description}</span>}
                       </div>
                     </div>
@@ -624,32 +692,70 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
                   : 0;
                 const avgCost = feature.calls > 0 ? feature.cost / feature.calls : 0;
                 const featureConfig = getFeatureConfig(feature.feature);
-                const featureLabel = featureConfig.name || feature.feature;
+                const featureLabel = featureConfig.name || 'Feature non configurée';
+                const hasLevelBreakdown = feature.levelBreakdown && feature.levelBreakdown.length > 0;
 
                 return (
-                  <tr key={index} className="border-b border-white/5 text-white">
-                    <td className="py-3">
-                      <span className="font-medium">{featureLabel}</span>
-                    </td>
-                    <td className="py-3 text-right text-white/80">
-                      {formatNumber(feature.calls)}
-                    </td>
-                    <td className="py-3 text-right text-white/80">
-                      {formatNumber(feature.tokens)}
-                    </td>
-                    <td className="py-3 text-right font-medium">
-                      {formatCurrency(feature.cost)}
-                    </td>
-                    <td className="py-3 text-right text-green-400">
-                      {formatCurrency(feature.lastCost || 0)}
-                    </td>
-                    <td className="py-3 text-right text-white/80">
-                      {formatCurrency(avgCost)}
-                    </td>
-                    <td className="py-3 text-right text-white/60">
-                      {percentage}%
-                    </td>
-                  </tr>
+                  <>
+                    {/* Main feature row */}
+                    <tr key={index} className="border-b border-white/5 text-white">
+                      <td className="py-3">
+                        <span className="font-medium">{featureLabel}</span>
+                      </td>
+                      <td className="py-3 text-right text-white/80">
+                        {formatNumber(feature.calls)}
+                      </td>
+                      <td className="py-3 text-right text-white/80">
+                        {formatNumber(feature.tokens)}
+                      </td>
+                      <td className="py-3 text-right font-medium">
+                        {formatCurrency(feature.cost)}
+                      </td>
+                      <td className="py-3 text-right text-green-400">
+                        {formatCurrency(feature.lastCost || 0)}
+                      </td>
+                      <td className="py-3 text-right text-white/80">
+                        {formatCurrency(avgCost)}
+                      </td>
+                      <td className="py-3 text-right text-white/60">
+                        {percentage}%
+                      </td>
+                    </tr>
+
+                    {/* Level breakdown sub-rows */}
+                    {hasLevelBreakdown && feature.levelBreakdown.map((levelData, levelIndex) => {
+                      const levelPercentage = feature.cost > 0
+                        ? ((levelData.cost / feature.cost) * 100).toFixed(1)
+                        : 0;
+                      const levelAvgCost = levelData.calls > 0 ? levelData.cost / levelData.calls : 0;
+
+                      return (
+                        <tr key={`${index}-level-${levelIndex}`} className="border-b border-white/5 text-white/70 bg-white/[0.02]">
+                          <td className="py-2 pl-8">
+                            <span className="text-sm">└─ {formatAnalysisLevel(levelData.level)}</span>
+                          </td>
+                          <td className="py-2 text-right text-sm">
+                            {formatNumber(levelData.calls)}
+                          </td>
+                          <td className="py-2 text-right text-sm">
+                            {formatNumber(levelData.tokens)}
+                          </td>
+                          <td className="py-2 text-right text-sm">
+                            {formatCurrency(levelData.cost)}
+                          </td>
+                          <td className="py-2 text-right text-sm text-white/40">
+                            —
+                          </td>
+                          <td className="py-2 text-right text-sm">
+                            {formatCurrency(levelAvgCost)}
+                          </td>
+                          <td className="py-2 text-right text-sm">
+                            {levelPercentage}%
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </>
                 );
               })}
             </tbody>
@@ -662,7 +768,7 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
               <PieChart>
                 <Pie
                   data={data.byFeature.map((feature) => ({
-                    name: getFeatureConfig(feature.feature).name || feature.feature,
+                    name: getFeatureConfig(feature.feature).name || 'Feature non configurée',
                     value: feature.cost,
                     percentage: data.total.cost > 0
                       ? ((feature.cost / data.total.cost) * 100).toFixed(1)

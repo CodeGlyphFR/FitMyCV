@@ -18,13 +18,11 @@ model User {
   image         String?
   role          String        @default("USER") // USER or ADMIN
   accounts      Account[]
-  sessions      Session[]
   cvs           CvFile[]
   linkHistory   LinkHistory[]
   feedbacks     Feedback[]
   consentLogs   ConsentLog[]
   telemetryEvents TelemetryEvent[]
-  userSessions  UserSession[]
   featureUsage  FeatureUsage[]
   openaiUsage   OpenAIUsage[]
   matchScoreRefreshCount Int @default(0) // Number of tokens remaining (global for all CVs, reset to 5 after 24h at 0)
@@ -53,16 +51,6 @@ model Account {
   updatedAt         DateTime @updatedAt
 
   @@unique([provider, providerAccountId])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
 }
 
 model VerificationToken {
@@ -234,7 +222,6 @@ model TelemetryEvent {
   metadata    String?  // JSON: { analysisLevel, fileSize, score, section, operation, etc. }
 
   deviceId    String?  // Device identifier for cross-device tracking
-  sessionId   String?  // Link to UserSession
 
   duration    Int?     // Duration in milliseconds (for jobs, page views, etc.)
   status      String?  // success, error, cancelled
@@ -246,36 +233,10 @@ model TelemetryEvent {
   @@index([userId])
   @@index([type])
   @@index([category])
-  @@index([sessionId])
   @@index([deviceId])
   @@index([timestamp])
   @@index([userId, type])
   @@index([type, timestamp])
-}
-
-model UserSession {
-  id              String   @id @default(cuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  deviceId        String?
-  userAgent       String?
-  ip              String?
-
-  startedAt       DateTime @default(now())
-  endedAt         DateTime?
-  lastActivityAt  DateTime @default(now())
-
-  eventsCount     Int      @default(0)
-  pagesViewed     Int      @default(0)
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@index([userId])
-  @@index([deviceId])
-  @@index([startedAt])
-  @@index([userId, startedAt])
 }
 
 model FeatureUsage {
@@ -310,6 +271,7 @@ model OpenAIUsage {
   date            DateTime // Date du jour (agrégation quotidienne)
 
   promptTokens    Int      @default(0)
+  cachedTokens    Int      @default(0) // Cached tokens (prompt caching)
   completionTokens Int     @default(0)
   totalTokens     Int      @default(0)
 
@@ -335,6 +297,7 @@ model OpenAIPricing {
 
   inputPricePerMToken   Float    // Prix par million de tokens en entrée (ex: 0.10)
   outputPricePerMToken  Float    // Prix par million de tokens en sortie (ex: 0.40)
+  cachePricePerMToken   Float    @default(0) // Prix par million de tokens en cache (prompt caching)
 
   description           String?  // Description du modèle
   isActive              Boolean  @default(true)
@@ -370,10 +333,12 @@ model OpenAICall {
   model            String   // gpt-5-nano-2025-08-07, gpt-5-mini-2025-08-07, etc.
 
   promptTokens     Int      @default(0)
+  cachedTokens     Int      @default(0) // Cached tokens (prompt caching)
   completionTokens Int      @default(0)
   totalTokens      Int      @default(0)
   estimatedCost    Float    @default(0)
   duration         Int?     // Durée d'exécution en millisecondes
+  metadata         String?  // JSON: { analysisLevel, etc. }
 
   createdAt        DateTime @default(now())
 

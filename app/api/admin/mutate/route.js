@@ -106,7 +106,6 @@ export async function POST(req){
       await trackCvEdit({
         userId,
         deviceId: null,
-        sessionId: null,
         operation: op,
         section,
         field,

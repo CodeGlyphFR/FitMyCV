@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
-import { filterAdminEvents, getAdminSessionIds } from '@/lib/analytics/filters';
+import { filterAdminEvents } from '@/lib/analytics/filters';
 
 /**
  * GET /api/analytics/summary
@@ -58,14 +58,10 @@ export async function GET(request) {
       cvImported,
       cvTranslated,
       cvExported,
-      totalSessions,
-      avgSessionDuration,
       errorCount,
       featureEvents,
-      sessionData,
       backgroundTasks,
       recentTelemetryEvents,
-      recentSessionsForTimeline,
     ] = await Promise.all([
       // Total users (if filtering by user, return 1, otherwise total)
       userId ? Promise.resolve(1) : prisma.user.count(),
@@ -88,11 +84,22 @@ export async function GET(request) {
         where: userId ? { userId } : {},
       }),
 
-      // CVs generated (by AI)
+      // CVs generated or modified by AI (all AI-powered features)
       prisma.telemetryEvent.count({
         where: {
           ...whereClause,
-          type: 'CV_GENERATED',
+          type: {
+            in: [
+              'CV_GENERATED_URL',
+              'CV_GENERATED_PDF',
+              'CV_TEMPLATE_CREATED_URL',
+              'CV_TEMPLATE_CREATED_PDF',
+              'CV_GENERATED_FROM_JOB_TITLE',
+              'CV_IMPORTED',
+              'CV_OPTIMIZED',
+              'CV_TRANSLATED'
+            ]
+          },
           status: 'success',
         },
       }),
@@ -124,28 +131,6 @@ export async function GET(request) {
         },
       }),
 
-      // Total sessions
-      prisma.userSession.count({
-        where: {
-          ...(startDate ? { startedAt: { gte: startDate } } : {}),
-          ...(userId ? { userId } : {}),
-        },
-      }),
-
-      // Average session duration
-      prisma.userSession.findMany({
-        where: {
-          ...(startDate ? { startedAt: { gte: startDate } } : {}),
-          ...(userId ? { userId } : {}),
-          endedAt: { not: null },
-        },
-        select: { startedAt: true, endedAt: true },
-      }).then(sessions => {
-        if (sessions.length === 0) return 0;
-        const durations = sessions.map(s => s.endedAt - s.startedAt);
-        return durations.reduce((a, b) => a + b, 0) / durations.length;
-      }),
-
       // Error count
       prisma.telemetryEvent.count({
         where: {
@@ -164,18 +149,6 @@ export async function GET(request) {
         select: {
           type: true,
           userId: true,
-        },
-      }),
-
-      // Session data for engagement metrics (pagesViewed, bounce rate)
-      prisma.userSession.findMany({
-        where: {
-          ...(startDate ? { startedAt: { gte: startDate } } : {}),
-          ...(userId ? { userId } : {}),
-        },
-        select: {
-          id: true,
-          pagesViewed: true,
         },
       }),
 
@@ -204,18 +177,6 @@ export async function GET(request) {
           metadata: true,
         },
         orderBy: { timestamp: 'asc' },
-      }),
-
-      // Recent sessions for hourly distribution (last 14 days)
-      prisma.userSession.findMany({
-        where: {
-          startedAt: { gte: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000) },
-          ...(userId ? { userId } : {}),
-        },
-        select: {
-          id: true,
-          startedAt: true,
-        },
       }),
     ]);
 
@@ -246,59 +207,18 @@ export async function GET(request) {
       .sort((a, b) => b.usageCount - a.usageCount)
       .slice(0, 5);
 
-    // Get admin session IDs to exclude
-    const adminSessionIds = await getAdminSessionIds(
-      { ...(startDate ? { startedAt: { gte: startDate } } : {}) },
-      prisma
-    );
-
-    // Get user IDs associated with admin sessions
-    const adminUserSessions = await prisma.userSession.findMany({
-      where: {
-        id: { in: Array.from(adminSessionIds) },
-      },
-      select: {
-        userId: true,
-      },
-    });
-    const adminUserIds = new Set(adminUserSessions.map(s => s.userId));
-
-    // Recalculate active users excluding admin users
-    const filteredActiveUsers = userId
-      ? (adminUserIds.has(userId) ? 0 : 1)
-      : (startDate
-          ? await prisma.telemetryEvent.groupBy({
-              by: ['userId'],
-              where: {
-                ...whereClause,
-                userId: { not: null, notIn: Array.from(adminUserIds) },
-              },
-            }).then(r => r.length)
-          : await prisma.user.count({
-              where: {
-                id: { notIn: Array.from(adminUserIds) },
-              },
-            }));
-
-    // Filter out admin sessions from session data
-    const filteredSessionData = sessionData.filter(s => !adminSessionIds.has(s.id));
-
     // Get all events to filter admin pages
     const allEvents = await prisma.telemetryEvent.findMany({
       where: whereClause,
       select: {
         type: true,
         metadata: true,
-        sessionId: true,
       },
     });
 
     // Filter out admin page events
     const filteredEvents = filterAdminEvents(allEvents);
     const filteredTotalEvents = filteredEvents.length;
-
-    // Filter sessions that visited admin pages
-    const filteredSessionCount = totalSessions - adminSessionIds.size;
 
     // Calculate conversion rate (users who generated → exported)
     const usersWhoGenerated = startDate
@@ -329,16 +249,6 @@ export async function GET(request) {
       ? ((usersWhoExported / usersWhoGenerated) * 100).toFixed(2)
       : 0;
 
-    // Calculate engagement metrics - using filtered sessions (excluding admin)
-    const avgPagesPerSession = filteredSessionData.length > 0
-      ? filteredSessionData.reduce((sum, s) => sum + (s.pagesViewed || 0), 0) / filteredSessionData.length
-      : 0;
-
-    const bouncedSessions = filteredSessionData.filter(s => (s.pagesViewed || 0) <= 1).length;
-    const bounceRate = filteredSessionData.length > 0
-      ? ((bouncedSessions / filteredSessionData.length) * 100).toFixed(2)
-      : 0;
-
     // Calculate background task stats
     const totalJobs = backgroundTasks.length;
     const completedJobs = backgroundTasks.filter(t => t.status === 'completed').length;
@@ -350,17 +260,6 @@ export async function GET(request) {
     // Calculate health score (based on error rate) - using filtered events
     const errorRate = filteredTotalEvents > 0 ? ((errorCount / filteredTotalEvents) * 100) : 0;
     const healthScore = Math.max(0, Math.round(100 - errorRate * 10));
-
-    // Calculate best hour (hour with most sessions) - excluding admin sessions
-    const filteredSessions = recentSessionsForTimeline.filter(s => !adminSessionIds.has(s.id));
-    const sessionsByHour = filteredSessions.reduce((acc, session) => {
-      const hour = new Date(session.startedAt).getHours();
-      acc[hour] = (acc[hour] || 0) + 1;
-      return acc;
-    }, {});
-    const bestHour = Object.keys(sessionsByHour).length > 0
-      ? parseInt(Object.entries(sessionsByHour).sort((a, b) => b[1] - a[1])[0][0])
-      : null;
 
     // Calculate timeline data (CVs created, translated, deleted + active users per day, last 14 days)
     // Filter admin events from timeline
@@ -393,8 +292,8 @@ export async function GET(request) {
       if (event.type === 'CV_DELETED' && event.status === 'success') {
         acc[date].cvDeleted++;
       }
-      // Only count active users who don't have admin sessions
-      if (event.userId && !adminUserIds.has(event.userId)) {
+      // Count active users
+      if (event.userId) {
         acc[date].activeUsers.add(event.userId);
       }
       return acc;
@@ -418,33 +317,24 @@ export async function GET(request) {
       period,
       kpis: {
         totalUsers,
-        activeUsers: filteredActiveUsers,
+        activeUsers,
         totalEvents: filteredTotalEvents,
         totalCvs,
         cvGenerated,
         cvImported,
         cvTranslated,
         cvExported,
-        totalSessions: filteredSessionCount,
-        avgSessionDuration: Math.round(avgSessionDuration / 1000), // Convert to seconds
         errorCount,
         conversionRate: parseFloat(conversionRate),
         healthScore,
         errorRate: errorRate.toFixed(2),
-        avgPagesPerSession: avgPagesPerSession.toFixed(1),
-        bounceRate: parseFloat(bounceRate),
         totalJobs,
         completedJobs,
         failedJobs,
         jobSuccessRate: parseFloat(jobSuccessRate),
-        bestHour,
       },
       topFeatures: processedTopFeatures,
       timeline,
-      engagement: {
-        avgPagesPerSession: avgPagesPerSession.toFixed(1),
-        bounceRate: parseFloat(bounceRate),
-      },
       jobs: {
         total: totalJobs,
         completed: completedJobs,

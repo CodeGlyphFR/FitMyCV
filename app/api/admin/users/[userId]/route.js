@@ -76,6 +76,18 @@ export async function PATCH(request, { params }) {
         );
       }
 
+      // Vérifier si l'utilisateur a un compte OAuth
+      const oauthAccount = await prisma.account.findFirst({
+        where: { userId },
+      });
+
+      if (oauthAccount) {
+        return NextResponse.json(
+          { error: 'Impossible de modifier l\'email d\'un utilisateur OAuth. L\'email est géré par le fournisseur (Google/GitHub/Apple).' },
+          { status: 400 }
+        );
+      }
+
       const emailLower = email.toLowerCase().trim();
 
       // Vérifier que le nouvel email n'est pas déjà utilisé

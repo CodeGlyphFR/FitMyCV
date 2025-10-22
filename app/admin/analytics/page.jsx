@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { OverviewTab } from '@/components/admin/OverviewTab';
 import { FeaturesTab } from '@/components/admin/FeaturesTab';
-import { SessionsTab } from '@/components/admin/SessionsTab';
 import { ErrorsTab } from '@/components/admin/ErrorsTab';
 import { SettingsTab } from '@/components/admin/SettingsTab';
 import { OpenAICostsTab } from '@/components/admin/OpenAICostsTab';
@@ -15,7 +14,6 @@ import { UserFilter } from '@/components/admin/UserFilter';
 const TABS = [
   { id: 'overview', label: 'Vue d\'ensemble', icon: '📊' },
   { id: 'features', label: 'Features', icon: '⚡' },
-  { id: 'sessions', label: 'Sessions', icon: '👥' },
   { id: 'errors', label: 'Erreurs', icon: '🐛' },
   { id: 'openai-costs', label: 'OpenAI Costs', icon: '💰' },
   { id: 'feedback', label: 'Feedback', icon: '💬' },
@@ -35,15 +33,18 @@ export default function AnalyticsDashboard() {
     setIsInitialLoad(true);
   }, [activeTab]);
 
-  // Auto-refresh every 10 seconds
+  // Auto-refresh every 10 seconds (skip for Settings tab)
   useEffect(() => {
+    // Don't auto-refresh the Settings tab
+    if (activeTab === 'settings') return;
+
     const interval = setInterval(() => {
       setRefreshKey(prev => prev + 1);
       setIsInitialLoad(false); // Disable animations for auto-refresh only
     }, 10000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [activeTab]);
 
   return (
     <div className="min-h-screen">
@@ -138,7 +139,6 @@ export default function AnalyticsDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-0">
         {activeTab === 'overview' && <OverviewTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'features' && <FeaturesTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
-        {activeTab === 'sessions' && <SessionsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'errors' && <ErrorsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'openai-costs' && <OpenAICostsTab period={period} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'feedback' && <FeedbackTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
