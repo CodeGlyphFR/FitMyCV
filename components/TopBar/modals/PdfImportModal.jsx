@@ -1,6 +1,5 @@
 import React from "react";
 import Modal from "@/components/ui/Modal";
-import { ANALYSIS_OPTIONS } from "@/lib/i18n/cvLabels";
 
 /**
  * Modal d'import de CV depuis un fichier PDF
@@ -12,9 +11,6 @@ export default function PdfImportModal({
   pdfFile,
   onPdfFileChanged,
   pdfFileInputRef,
-  pdfAnalysisLevel,
-  setPdfAnalysisLevel,
-  currentPdfAnalysisOption,
   t,
 }) {
   return (
@@ -60,29 +56,6 @@ export default function PdfImportModal({
               </div>
             </div>
           ) : null}
-        </div>
-
-        <div className="space-y-2">
-          <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("pdfImport.analysisQuality")}</div>
-          <div className="grid grid-cols-3 gap-1 rounded-lg border-2 border-white/30 bg-white/10 backdrop-blur-sm p-1 text-xs sm:text-sm">
-            {ANALYSIS_OPTIONS(t).map((option) => {
-              const active = option.id === pdfAnalysisLevel;
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => setPdfAnalysisLevel(option.id)}
-                  className={`rounded-md px-2 py-1 font-medium transition-all duration-200 ${active ? "bg-emerald-400 text-white shadow" : "text-white/80 hover:bg-white/20"}`}
-                  aria-pressed={active}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
-          <p className="text-xs text-white/70 drop-shadow">
-            {currentPdfAnalysisOption.hint}
-          </p>
         </div>
 
         <div className="flex justify-end gap-2">

@@ -1,5 +1,4 @@
 import React from "react";
-import { getAnalysisOption } from "../utils/cvUtils";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 /**
@@ -13,17 +12,10 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
   // PDF Import modal
   const [openPdfImport, setOpenPdfImport] = React.useState(false);
   const [pdfFile, setPdfFile] = React.useState(null);
-  const [pdfAnalysisLevel, setPdfAnalysisLevel] = React.useState("medium");
   const pdfFileInputRef = React.useRef(null);
-
-  const currentPdfAnalysisOption = React.useMemo(
-    () => getAnalysisOption(pdfAnalysisLevel, t),
-    [pdfAnalysisLevel, t]
-  );
 
   function resetPdfImportState() {
     setPdfFile(null);
-    setPdfAnalysisLevel("medium");
     if (pdfFileInputRef.current) pdfFileInputRef.current.value = "";
   }
 
@@ -41,13 +33,12 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     event.preventDefault();
     if (!pdfFile) return;
 
-    const selectedPdfAnalysis = currentPdfAnalysisOption;
     const fileName = pdfFile.name;
 
     const optimisticTaskId = addOptimisticTask({
       type: 'import-pdf',
       label: `Import '${fileName}'`,
-      metadata: { fileName, analysisLevel: selectedPdfAnalysis.id },
+      metadata: { fileName },
       shouldUpdateCvList: true,
     });
 
@@ -73,8 +64,6 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
 
       const formData = new FormData();
       formData.append("pdfFile", pdfFile);
-      formData.append("analysisLevel", selectedPdfAnalysis.id);
-      formData.append("model", selectedPdfAnalysis.model);
       formData.append("recaptchaToken", recaptchaToken);
       if (localDeviceId) {
         formData.append("deviceId", localDeviceId);
@@ -272,10 +261,7 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     setOpenPdfImport,
     pdfFile,
     setPdfFile,
-    pdfAnalysisLevel,
-    setPdfAnalysisLevel,
     pdfFileInputRef,
-    currentPdfAnalysisOption,
     closePdfImport,
     onPdfFileChanged,
     submitPdfImport,

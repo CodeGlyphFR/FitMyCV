@@ -6,7 +6,6 @@ import { useSession, signOut } from "next-auth/react";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
-import { ANALYSIS_OPTIONS } from "@/lib/i18n/cvLabels";
 
 export default function EmptyState() {
   const router = useRouter();
@@ -15,7 +14,6 @@ export default function EmptyState() {
   const { settings } = useSettings();
   const [openPdfImport, setOpenPdfImport] = React.useState(false);
   const [pdfFile, setPdfFile] = React.useState(null);
-  const [pdfAnalysisLevel, setPdfAnalysisLevel] = React.useState("medium");
   const [isImporting, setIsImporting] = React.useState(false);
   const [importProgress, setImportProgress] = React.useState(0);
   const [importFileName, setImportFileName] = React.useState("");
@@ -105,12 +103,9 @@ export default function EmptyState() {
     event.preventDefault();
     if (!pdfFile) return;
 
-    const selectedPdfAnalysis = ANALYSIS_OPTIONS(t).find(o => o.id === pdfAnalysisLevel);
     try {
       const formData = new FormData();
       formData.append("pdfFile", pdfFile);
-      formData.append("analysisLevel", selectedPdfAnalysis.id);
-      formData.append("model", selectedPdfAnalysis.model);
 
       const response = await fetch("/api/background-tasks/import-pdf", {
         method: "POST",
@@ -469,29 +464,6 @@ export default function EmptyState() {
                 </div>
               </div>
             ) : null}
-          </div>
-
-          <div className="space-y-2">
-            <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("pdfImport.analysisQuality")}</div>
-            <div className="grid grid-cols-3 gap-1 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm p-1 text-xs sm:text-sm">
-              {ANALYSIS_OPTIONS(t).map((option) => {
-                const active = option.id === pdfAnalysisLevel;
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => setPdfAnalysisLevel(option.id)}
-                    className={`rounded-md px-2 py-1 font-medium transition ${active ? "bg-emerald-400 text-white shadow" : "text-white/70 hover:bg-white/25"}`}
-                    aria-pressed={active}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="text-xs text-white/60 drop-shadow">
-              {ANALYSIS_OPTIONS(t).find(o => o.id === pdfAnalysisLevel)?.hint}
-            </p>
           </div>
 
           <div className="flex justify-end gap-2">

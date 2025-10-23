@@ -868,9 +868,6 @@ export default function TopBar() {
         pdfFile={modals.pdfFile}
         onPdfFileChanged={modals.onPdfFileChanged}
         pdfFileInputRef={modals.pdfFileInputRef}
-        pdfAnalysisLevel={modals.pdfAnalysisLevel}
-        setPdfAnalysisLevel={modals.setPdfAnalysisLevel}
-        currentPdfAnalysisOption={modals.currentPdfAnalysisOption}
         t={t}
       />
 

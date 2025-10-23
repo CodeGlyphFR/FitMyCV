@@ -33,6 +33,17 @@ export default function AnalyticsDashboard() {
     setIsInitialLoad(true);
   }, [activeTab]);
 
+  // Update browser tab title based on active tab
+  useEffect(() => {
+    const tab = TABS.find(t => t.id === activeTab);
+    const tabLabel = tab?.label || 'Analytics Dashboard';
+    document.title = `${tabLabel} - Analytics Dashboard`;
+
+    return () => {
+      document.title = 'CV Site';
+    };
+  }, [activeTab]);
+
   // Auto-refresh every 10 seconds (skip for Settings tab)
   useEffect(() => {
     // Don't auto-refresh the Settings tab

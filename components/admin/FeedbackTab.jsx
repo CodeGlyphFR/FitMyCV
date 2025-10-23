@@ -22,7 +22,10 @@ export function FeedbackTab({ period, userId, refreshKey }) {
 
   const fetchData = async () => {
     try {
-      setLoading(true);
+      // Only show loader if no data yet (initial load)
+      if (!data) {
+        setLoading(true);
+      }
       const params = new URLSearchParams({
         period,
         status: statusFilter,

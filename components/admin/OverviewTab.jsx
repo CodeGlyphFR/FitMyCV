@@ -17,7 +17,10 @@ export function OverviewTab({ period, userId, refreshKey, isInitialLoad }) {
   }, [period, userId, refreshKey]);
 
   async function fetchSummary() {
-    setLoading(true);
+    // Only show loader if no data yet (initial load)
+    if (!summary) {
+      setLoading(true);
+    }
     try {
       const url = `/api/analytics/summary?period=${period}${userId ? `&userId=${userId}` : ''}`;
       const res = await fetch(url);

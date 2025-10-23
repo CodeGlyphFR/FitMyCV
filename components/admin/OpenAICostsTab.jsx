@@ -6,7 +6,7 @@ import { CustomSelect } from './CustomSelect';
 import { Toast } from './Toast';
 import { ConfirmDialog } from './ConfirmDialog';
 import { getFeatureConfig } from '@/lib/analytics/featureConfig';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList } from 'recharts';
 
 export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
   const [data, setData] = useState(null);
@@ -16,6 +16,7 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
   const [showAlerts, setShowAlerts] = useState(false);
   const [toast, setToast] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
+  const [stableTopFeature, setStableTopFeature] = useState({ feature: 'N/A', cost: 0 });
   const pricingScrollRef = useRef(null);
   const alertsScrollRef = useRef(null);
 
@@ -58,6 +59,21 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
       fetchAlerts();
     }
   }, [showAlerts]);
+
+  // Stabiliser la top feature pour éviter les scintillements lors des refreshes
+  useEffect(() => {
+    if (data?.byFeature && data.byFeature.length > 0) {
+      // Trier explicitement par coût TOTAL décroissant pour garantir le bon ordre
+      const sortedByTotalCost = [...data.byFeature].sort((a, b) => (b.cost || 0) - (a.cost || 0));
+      const newTopFeature = sortedByTotalCost[0];
+
+      // Ne mettre à jour que si la feature change réellement (pas juste un re-order temporaire)
+      if (newTopFeature.feature !== stableTopFeature.feature ||
+          Math.abs(newTopFeature.cost - stableTopFeature.cost) > 0.01) {
+        setStableTopFeature(newTopFeature);
+      }
+    }
+  }, [data?.byFeature, stableTopFeature.feature, stableTopFeature.cost]);
 
   // Empêcher le scroll chaining pour la liste de pricing
   useEffect(() => {
@@ -109,7 +125,10 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
 
   const fetchData = async () => {
     try {
-      setLoading(true);
+      // Only show loader if no data yet (initial load)
+      if (!data) {
+        setLoading(true);
+      }
       const response = await fetch(`/api/analytics/openai-usage?period=${period}`);
       if (!response.ok) throw new Error('Failed to fetch data');
       const result = await response.json();
@@ -333,8 +352,9 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
   // Calculate average cost per call
   const avgCostPerCall = data.total.calls > 0 ? data.total.cost / data.total.calls : 0;
 
-  // Find most expensive feature
-  const topFeature = data.byFeature[0] || { feature: 'N/A', cost: 0 };
+  // Utiliser la top feature stabilisée pour éviter les scintillements
+  const topFeature = stableTopFeature;
+
   const topFeatureLabel = topFeature.feature !== 'N/A'
     ? (getFeatureConfig(topFeature.feature).name || topFeature.feature)
     : 'N/A';
@@ -386,21 +406,23 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
         <h3 className="text-lg font-semibold text-white mb-4">Comparaison des derniers coûts par feature</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart
-            data={data.byFeature.map((feature) => {
-              const featureConfig = getFeatureConfig(feature.feature);
-              return {
-                name: featureConfig.name || 'Feature non configurée',
-                lastCost: feature.lastCost || 0,
-                lastModel: feature.lastModel || 'N/A',
-                lastPromptTokens: feature.lastPromptTokens || 0,
-                lastCachedTokens: feature.lastCachedTokens || 0,
-                lastCompletionTokens: feature.lastCompletionTokens || 0,
-                lastTokens: feature.lastTokens || 0,
-                lastCallDate: feature.lastCallDate || null,
-                lastDuration: feature.lastDuration || null,
-                fill: featureConfig.colors?.solid || '#6B7280',
-              };
-            })}
+            data={data.byFeature
+              .sort((a, b) => (b.lastCost || 0) - (a.lastCost || 0))
+              .map((feature) => {
+                const featureConfig = getFeatureConfig(feature.feature);
+                return {
+                  name: featureConfig.name || 'Feature non configurée',
+                  lastCost: feature.lastCost || 0,
+                  lastModel: feature.lastModel || 'N/A',
+                  lastPromptTokens: feature.lastPromptTokens || 0,
+                  lastCachedTokens: feature.lastCachedTokens || 0,
+                  lastCompletionTokens: feature.lastCompletionTokens || 0,
+                  lastTokens: feature.lastTokens || 0,
+                  lastCallDate: feature.lastCallDate || null,
+                  lastDuration: feature.lastDuration || null,
+                  fill: featureConfig.colors?.solid || '#6B7280',
+                };
+              })}
             layout="vertical"
           >
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
@@ -509,10 +531,18 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
               }}
             />
             <Bar dataKey="lastCost" radius={[0, 4, 4, 0]} isAnimationActive={isInitialLoad}>
-              {data.byFeature.map((feature, index) => {
-                const featureConfig = getFeatureConfig(feature.feature);
-                return <Cell key={`cell-${index}`} fill={featureConfig.colors?.solid || '#3B82F6'} />;
-              })}
+              {data.byFeature
+                .sort((a, b) => (b.lastCost || 0) - (a.lastCost || 0))
+                .map((feature, index) => {
+                  const featureConfig = getFeatureConfig(feature.feature);
+                  return <Cell key={`cell-${index}`} fill={featureConfig.colors?.solid || '#3B82F6'} />;
+                })}
+              <LabelList
+                dataKey="lastCost"
+                position="right"
+                formatter={(value) => formatCurrency(value)}
+                style={{ fill: 'rgba(255,255,255,0.9)', fontSize: '12px', fontWeight: '600' }}
+              />
             </Bar>
           </BarChart>
         </ResponsiveContainer>
@@ -686,7 +716,9 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
               </tr>
             </thead>
             <tbody>
-              {data.byFeature.map((feature, index) => {
+              {[...data.byFeature]
+                .sort((a, b) => (b.cost || 0) - (a.cost || 0))
+                .map((feature, index) => {
                 const percentage = data.total.cost > 0
                   ? ((feature.cost / data.total.cost) * 100).toFixed(1)
                   : 0;

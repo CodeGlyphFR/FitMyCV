@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
+import { clearAiModelCache } from '@/lib/settings/aiModels';
 
 /**
  * PUT /api/admin/settings/[id]
@@ -44,6 +45,12 @@ export async function PUT(request, { params }) {
       where: { id },
       data: updateData,
     });
+
+    // Vider le cache des modèles IA si on modifie un setting de modèle
+    if (existing.category === 'ai_models') {
+      clearAiModelCache();
+      console.log(`[Settings API] Cache des modèles IA vidé après modification de ${existing.settingName}`);
+    }
 
     return NextResponse.json({ setting });
 

@@ -11,7 +11,7 @@ export async function POST(request) {
   }
 
   try {
-    const { cvFile, analysisLevel = 'medium', replaceExisting = false } = await request.json();
+    const { cvFile, replaceExisting = false } = await request.json();
 
     if (!cvFile) {
       return NextResponse.json({ error: "CV file missing" }, { status: 400 });
@@ -83,7 +83,6 @@ export async function POST(request) {
         cvFile, // Lien direct vers le CV
         payload: JSON.stringify({
           cvFile,
-          analysisLevel,
           jobOfferUrl: cvRecord.sourceValue,
           currentScore: cvRecord.matchScore || 0,
           suggestions,
@@ -101,7 +100,6 @@ export async function POST(request) {
       jobOfferUrl: cvRecord.sourceValue, // Gardé pour les métadonnées uniquement
       currentScore: cvRecord.matchScore || 0,
       suggestions,
-      analysisLevel,
       replaceExisting,
       deviceId: request.headers.get('x-device-id') || 'unknown'
     });

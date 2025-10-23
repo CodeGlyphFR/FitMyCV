@@ -450,7 +450,7 @@ export default function Header(props){
   }
 
   return (
-    <header className="page mb-6 flex items-start justify-between gap-4 bg-white/15 backdrop-blur-xl p-4 rounded-2xl shadow-2xl relative overflow-visible">
+    <header className="page mb-6 flex items-start justify-between gap-4 bg-white/15 backdrop-blur-xl p-4 rounded-2xl shadow-2xl relative overflow-visible min-h-[120px]">
       <div className="pr-24">
         <h1 className="text-2xl font-bold text-white drop-shadow-lg">{header.full_name || ""}</h1>
         <p className="text-sm text-white/80 drop-shadow">{header.current_title || ""}</p>
