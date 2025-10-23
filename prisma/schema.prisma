@@ -348,3 +348,50 @@ model OpenAICall {
   @@index([userId, featureName])
   @@index([createdAt])
 }
+
+model SubscriptionPlan {
+  id                    Int      @id @default(autoincrement())
+  name                  String   @unique // "Gratuit", "Pro", "Premium"
+  description           String?  // Description du plan
+
+  // Prix structuré (mensuel/annuel)
+  priceMonthly          Float    @default(0) // Prix mensuel (ex: 9.99)
+  priceYearly           Float    @default(0) // Prix annuel (ex: 99.99)
+  yearlyDiscountPercent Float    @default(0) // % de réduction annuelle (pour info)
+  priceCurrency         String   @default("EUR") // EUR, USD, GBP
+
+  // Limitations globales
+  maxCvCount            Int      @default(-1) // -1 = illimité
+  tokenCount            Int      @default(5)  // Nombre de tokens par défaut
+
+  // Relations
+  featureLimits         SubscriptionPlanFeatureLimit[]
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([name])
+}
+
+model SubscriptionPlanFeatureLimit {
+  id                    String   @id @default(cuid())
+  planId                Int
+  plan                  SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  featureName           String   // generate_cv, import_pdf, export_cv, etc.
+  isEnabled             Boolean  @default(true)  // Feature activée ou non pour ce plan
+  usageLimit            Int      @default(-1)    // -1 = illimité, sinon nombre max d'utilisations
+
+  // Mode Token (pour features IA)
+  requiresToken         Boolean  @default(false) // Si true, consomme un token au lieu d'une limite
+
+  // Niveaux d'analyse (pour features avec analyse IA)
+  allowedAnalysisLevels String?  // JSON array: ["rapid", "medium", "deep"] ou null
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([planId, featureName])
+  @@index([planId])
+  @@index([featureName])
+}
