@@ -98,7 +98,7 @@ export default function Modal({ open, onClose, title, children, size = "default"
             <div className="font-semibold text-emerald-300 drop-shadow-lg">{title || t("common.confirmation")}</div>
           </div>
           <div
-            className="text-white/90 overflow-y-auto overflow-x-hidden flex-1 px-4 pb-4"
+            className="text-white/90 overflow-y-auto overflow-x-hidden flex-1 px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             style={{
               WebkitOverflowScrolling: 'touch',
               overscrollBehavior: 'contain'

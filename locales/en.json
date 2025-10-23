@@ -157,6 +157,53 @@
       "exportFailed": "Error exporting PDF. Please try again."
     }
   },
+  "exportModal": {
+    "title": "Customize and Export to PDF",
+    "filename": "File name",
+    "filenameHint": "The file will be exported with the .pdf extension",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "experienceColumn": "Experience",
+    "includeDeliverables": "Include deliverables",
+    "export": "Export",
+    "exporting": "Exporting...",
+    "cancel": "Cancel",
+    "sectionsTitle": "Select sections to include",
+    "showOptions": "Show options",
+    "hideOptions": "Hide options",
+    "sections": {
+      "header": "Header",
+      "summary": "Summary",
+      "skills": "Skills",
+      "experience": "Experience",
+      "education": "Education",
+      "languages": "Languages",
+      "projects": "Projects",
+      "extras": "Additional Information"
+    },
+    "subsections": {
+      "header": {
+        "contact": "Contact",
+        "links": "Links"
+      },
+      "summary": {
+        "description": "Description"
+      },
+      "skills": {
+        "hard_skills": "Hard Skills",
+        "soft_skills": "Soft Skills",
+        "tools": "Tools",
+        "methodologies": "Methodologies"
+      }
+    },
+    "counters": {
+      "always": "Always included",
+      "empty": "Empty",
+      "item": "item",
+      "items": "items",
+      "selected": "selected"
+    }
+  },
   "newCvModal": {
     "title": "Create new CV",
     "fullName": "Full name",
