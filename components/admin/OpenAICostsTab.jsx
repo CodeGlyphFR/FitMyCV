@@ -476,6 +476,7 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
               stroke="rgba(255,255,255,0.6)"
               tick={{ fill: 'rgba(255,255,255,0.6)' }}
               tickFormatter={(value) => formatCurrency(value)}
+              domain={[0, (dataMax) => dataMax * 1.1]}
             />
             <YAxis
               type="category"
@@ -755,7 +756,6 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
                 <th className="pb-3 text-right">Appels</th>
                 <th className="pb-3 text-right">Tokens</th>
                 <th className="pb-3 text-right">Coût</th>
-                <th className="pb-3 text-right">Dernier coût</th>
                 <th className="pb-3 text-right">Coût/appel</th>
                 <th className="pb-3 text-right">%</th>
               </tr>
@@ -788,9 +788,6 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
                       <td className="py-3 text-right font-medium">
                         {formatCurrency(feature.cost)}
                       </td>
-                      <td className="py-3 text-right text-green-400">
-                        {formatCurrency(feature.lastCost || 0)}
-                      </td>
                       <td className="py-3 text-right text-white/80">
                         {formatCurrency(avgCost)}
                       </td>
@@ -819,9 +816,6 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
                           </td>
                           <td className="py-2 text-right text-sm">
                             {formatCurrency(levelData.cost)}
-                          </td>
-                          <td className="py-2 text-right text-sm text-white/40">
-                            —
                           </td>
                           <td className="py-2 text-right text-sm">
                             {formatCurrency(levelAvgCost)}
