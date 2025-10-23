@@ -533,6 +533,7 @@
   "feedback": {
     "title": "Votre retour nous aide à améliorer !",
     "ratingLabel": "Comment évaluez-vous votre expérience ?",
+    "optional": "optionnel",
     "commentLabel": "Votre retour (optionnel)",
     "commentPlaceholder": "Partagez votre retour, proposez de nouvelles fonctionnalités ou signalez des bugs...",
     "bugReportLabel": "Signalement de bug",

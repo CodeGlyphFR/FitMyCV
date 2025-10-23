@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom';
 /**
  * KPI Card component for displaying key metrics
  */
-export function KPICard({ title, label, value, subtitle, icon, trend, description }) {
+export function KPICard({ title, label, value, subtitle, subtitleClassName, icon, trend, description }) {
   const displayTitle = title || label; // Support both title and label props
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipRect, setTooltipRect] = useState(null);
@@ -37,7 +37,7 @@ export function KPICard({ title, label, value, subtitle, icon, trend, descriptio
           <p className="text-sm font-medium text-white/60">{displayTitle}</p>
           <p className="text-3xl font-bold text-white mt-2">{value}</p>
           {subtitle && (
-            <p className="text-sm text-white/50 mt-1">{subtitle}</p>
+            <p className={`text-sm mt-1 ${subtitleClassName || 'text-white/50'}`}>{subtitle}</p>
           )}
         </div>
         {icon && (

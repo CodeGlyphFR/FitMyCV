@@ -14,8 +14,8 @@ export default function FeedbackModal({ isOpen, onClose }) {
   const { addNotification } = useNotifications();
 
   const handleSubmit = async () => {
-    // Validation
-    if (rating === 0) {
+    // Validation - rating is optional for bug reports
+    if (!isBugReport && rating === 0) {
       addNotification({
         type: "error",
         message: t("feedback.errors.ratingRequired"),
@@ -96,9 +96,10 @@ export default function FeedbackModal({ isOpen, onClose }) {
     <Modal open={isOpen} onClose={handleClose} title={t("feedback.title")}>
       <div className="space-y-6">
         {/* Section notation */}
-        <div className="flex flex-col items-center gap-2">
+        <div className={`flex flex-col items-center gap-2 transition-opacity duration-200 ${isBugReport ? 'opacity-50' : 'opacity-100'}`}>
           <label className="text-sm font-medium text-white drop-shadow">
             {t("feedback.ratingLabel")}
+            {isBugReport && <span className="text-white/60 ml-1">({t("feedback.optional")})</span>}
           </label>
           <StarRating rating={rating} setRating={setRating} />
         </div>
@@ -113,7 +114,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder={t("feedback.commentPlaceholder")}
-              className="w-full h-32 px-3 py-2 pr-14 pb-12 border-2 border-white/30 rounded-lg resize-none bg-white/10 text-white placeholder-white/50 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 backdrop-blur-sm transition-all duration-200"
+              className="w-full h-32 px-3 py-2 pr-14 pb-12 border-2 border-white/30 rounded-lg resize-none bg-white/10 text-white placeholder-white/50 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 backdrop-blur-sm transition-all duration-200 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
               maxLength={500}
             />
 

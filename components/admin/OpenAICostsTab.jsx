@@ -17,6 +17,8 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
   const [toast, setToast] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [stableTopFeature, setStableTopFeature] = useState({ feature: 'N/A', cost: 0 });
+  const [balance, setBalance] = useState(null);
+  const [balanceLoading, setBalanceLoading] = useState(true);
   const pricingScrollRef = useRef(null);
   const alertsScrollRef = useRef(null);
 
@@ -46,6 +48,7 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
   useEffect(() => {
     fetchData();
     fetchPricings(); // Fetch pricing data for tooltip calculations
+    fetchBalance(); // Fetch OpenAI account balance
   }, [period, refreshKey]);
 
   useEffect(() => {
@@ -161,6 +164,21 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
       setAlerts(result.alerts || []);
     } catch (err) {
       console.error('Error fetching alerts:', err);
+    }
+  };
+
+  const fetchBalance = async () => {
+    try {
+      setBalanceLoading(true);
+      const response = await fetch('/api/admin/openai-balance');
+      if (!response.ok) throw new Error('Failed to fetch balance');
+      const result = await response.json();
+      setBalance(result.balance);
+    } catch (err) {
+      console.error('Error fetching balance:', err);
+      setBalance(null);
+    } finally {
+      setBalanceLoading(false);
     }
   };
 
@@ -367,6 +385,31 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
     feature_daily: 'Feature - Journalier',
   };
 
+  // Format balance subtitle with color
+  const getBalanceSubtitle = () => {
+    if (balanceLoading) {
+      return { text: 'Chargement du solde...', color: 'text-white/60' };
+    }
+
+    // Don't show anything if balance is not available (personal accounts don't have access to billing API)
+    if (balance === null || balance === undefined) {
+      return null;
+    }
+
+    const balanceText = `Solde: ${formatCurrency(balance)}`;
+
+    // Color based on amount
+    if (balance < 5) {
+      return { text: balanceText, color: 'text-red-400' };
+    } else if (balance < 10) {
+      return { text: balanceText, color: 'text-orange-400' };
+    } else {
+      return { text: balanceText, color: 'text-green-400' };
+    }
+  };
+
+  const balanceSubtitle = getBalanceSubtitle();
+
   return (
     <div className="space-y-6 pb-8">
       {/* KPI Cards */}
@@ -375,6 +418,8 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
           icon="💰"
           label="Coût total"
           value={formatCurrency(data.total.cost)}
+          subtitle={balanceSubtitle?.text}
+          subtitleClassName={balanceSubtitle?.color}
           trend={null}
           description="Coût total des appels OpenAI pour la période sélectionnée, incluant tous les modèles et features"
         />
