@@ -55,8 +55,6 @@ export async function POST(request) {
   try {
     const formData = await request.formData();
     const pdfFile = formData.get("pdfFile");
-    const rawAnalysisLevel = formData.get("analysisLevel");
-    const rawModel = formData.get("model");
     const taskId = formData.get("taskId");
     const deviceId = formData.get("deviceId") || "unknown-device";
     const recaptchaToken = formData.get("recaptchaToken");
@@ -120,9 +118,6 @@ export async function POST(request) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const requestedAnalysisLevel = typeof rawAnalysisLevel === "string" ? rawAnalysisLevel.trim().toLowerCase() : "medium";
-    const requestedModel = typeof rawModel === "string" ? rawModel.trim() : "";
-
     const { directory, saved } = await savePdfUpload(pdfFile, validation.buffer);
     if (!saved) {
       return NextResponse.json({ error: "Impossible d'enregistrer le fichier PDF." }, { status: 500 });
@@ -135,8 +130,6 @@ export async function POST(request) {
 
     const existingTask = await prisma.backgroundTask.findUnique({ where: { id: taskIdentifier } });
     const payload = {
-      analysisLevel: requestedAnalysisLevel,
-      model: requestedModel,
       savedName: saved.name,
     };
 
@@ -169,8 +162,6 @@ export async function POST(request) {
       taskId: taskIdentifier,
       user: { id: userId, name: session.user?.name || "" },
       upload: { directory, saved },
-      analysisLevel: requestedAnalysisLevel,
-      requestedModel,
       deviceId,
     });
 

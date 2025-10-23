@@ -53,6 +53,7 @@ export async function GET(request) {
       'CV_GENERATED_FROM_JOB_TITLE': 'generate_from_job_title',
       'CV_CREATED_MANUAL': 'create_cv_manual',
       'CV_IMPORTED': 'import_cv',
+      'CV_FIRST_IMPORTED': 'first_import_pdf',
       'CV_EXPORTED': 'export_cv',
       'CV_TRANSLATED': 'translate_cv',
       'MATCH_SCORE_CALCULATED': 'match_score',

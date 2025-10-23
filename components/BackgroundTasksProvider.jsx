@@ -195,11 +195,46 @@ export default function BackgroundTasksProvider({ children }) {
       }
 
       if (task.status === 'completed') {
-        addNotification({
-          type: 'success',
-          message: task.successMessage || 'Tâche terminée',
-          duration: 3000,
-        });
+        // Pour les tâches de création/import de CV, vérifier si c'est le premier CV
+        // Si oui, ne pas notifier car l'utilisateur voit déjà la barre de progression
+        const isImportOrCreateTask = task.type === 'import' || task.type === 'create-manual';
+
+        if (isImportOrCreateTask) {
+          // Vérifier combien de CV l'utilisateur a maintenant
+          const checkFirstCv = async () => {
+            try {
+              const res = await fetch('/api/cvs');
+              if (res.ok) {
+                const data = await res.json();
+                const cvCount = data.items?.length || 0;
+
+                // Ne notifier que si ce n'est PAS le premier CV (cvCount > 1)
+                if (cvCount > 1) {
+                  addNotification({
+                    type: 'success',
+                    message: task.successMessage || 'Tâche terminée',
+                    duration: 3000,
+                  });
+                }
+              }
+            } catch (err) {
+              // En cas d'erreur, notifier quand même pour ne pas perdre l'info
+              addNotification({
+                type: 'success',
+                message: task.successMessage || 'Tâche terminée',
+                duration: 3000,
+              });
+            }
+          };
+          checkFirstCv();
+        } else {
+          // Pour les autres types de tâches, notifier normalement
+          addNotification({
+            type: 'success',
+            message: task.successMessage || 'Tâche terminée',
+            duration: 3000,
+          });
+        }
         didTrigger = true;
       } else if (task.status === 'failed') {
         const errorMessage = task.error || 'Échec de la tâche';

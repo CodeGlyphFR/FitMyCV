@@ -9,7 +9,8 @@ const RATE_LIMIT_MAX_REQUESTS = {
   '/api/auth/signin': 10,
   '/api/admin/users': 60, // Limite plus haute pour l'admin des utilisateurs
   '/api/admin': 40, // Augmenté pour les autres routes admin
-  '/api/background-tasks': 30,
+  '/api/background-tasks/sync': 120, // Polling fréquent + événements temps réel
+  '/api/background-tasks': 30, // Autres endpoints de création de tâches
   '/api/feedback': 10,
   '/api/cv': 60,
   default: 100,

@@ -50,6 +50,18 @@ async function main() {
       value: 'gpt-5-mini-2025-08-07',
       category: 'ai_models',
       description: 'Modèle pour génération de CV depuis titre de poste'
+    },
+    {
+      settingName: 'model_import_pdf',
+      value: 'gpt-5-nano-2025-08-07',
+      category: 'ai_models',
+      description: 'Modèle pour import de CV depuis PDF'
+    },
+    {
+      settingName: 'model_optimize_cv',
+      value: 'gpt-5-mini-2025-08-07',
+      category: 'ai_models',
+      description: 'Modèle pour optimisation de CV'
     }
   ];
 

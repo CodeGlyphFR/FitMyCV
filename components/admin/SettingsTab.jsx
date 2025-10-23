@@ -237,7 +237,7 @@ export function SettingsTab({ refreshKey }) {
                 {isAIModel ? (
                   <CustomSelect
                     value={currentValue}
-                    onChange={(e) => handleValueChange(setting.id, e.target.value)}
+                    onChange={(value) => handleValueChange(setting.id, value)}
                     options={modelOptions}
                     className="md:w-64"
                   />

@@ -6,7 +6,6 @@ import { useSession, signOut } from "next-auth/react";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
-import { ANALYSIS_OPTIONS } from "@/lib/i18n/cvLabels";
 
 export default function EmptyState() {
   const router = useRouter();
@@ -15,7 +14,6 @@ export default function EmptyState() {
   const { settings } = useSettings();
   const [openPdfImport, setOpenPdfImport] = React.useState(false);
   const [pdfFile, setPdfFile] = React.useState(null);
-  const [pdfAnalysisLevel, setPdfAnalysisLevel] = React.useState("medium");
   const [isImporting, setIsImporting] = React.useState(false);
   const [importProgress, setImportProgress] = React.useState(0);
   const [importFileName, setImportFileName] = React.useState("");
@@ -105,12 +103,9 @@ export default function EmptyState() {
     event.preventDefault();
     if (!pdfFile) return;
 
-    const selectedPdfAnalysis = ANALYSIS_OPTIONS(t).find(o => o.id === pdfAnalysisLevel);
     try {
       const formData = new FormData();
       formData.append("pdfFile", pdfFile);
-      formData.append("analysisLevel", selectedPdfAnalysis.id);
-      formData.append("model", selectedPdfAnalysis.model);
 
       const response = await fetch("/api/background-tasks/import-pdf", {
         method: "POST",
@@ -136,9 +131,23 @@ export default function EmptyState() {
     }
   }
 
-  function startPollingForCompletion() {
-    let progress = 0;
+  async function startPollingForCompletion() {
     let messageIndex = 0;
+
+    // Fetch estimated duration from telemetry
+    let estimatedDuration = 60000; // Default: 1 minute
+    try {
+      const durationRes = await fetch("/api/telemetry/first-import-duration");
+      if (durationRes.ok) {
+        const durationData = await durationRes.json();
+        if (durationData.success && durationData.estimatedDuration) {
+          estimatedDuration = durationData.estimatedDuration;
+          console.log(`[EmptyState] Using estimated duration: ${estimatedDuration}ms`);
+        }
+      }
+    } catch (error) {
+      console.error("[EmptyState] Failed to fetch estimated duration:", error);
+    }
 
     // Set initial message
     setLoadingMessage(loadingMessages[0]);
@@ -149,11 +158,73 @@ export default function EmptyState() {
       setLoadingMessage(loadingMessages[messageIndex]);
     }, 2500);
 
+    // Define progression phases (non-linear)
+    // Each phase: { targetProgress, durationPercent, speed }
+    const phases = [
+      { target: 20, duration: 0.15, speed: 'fast' },    // Reading PDF - 15% of time
+      { target: 50, duration: 0.40, speed: 'slow' },    // AI Analysis - 40% of time
+      { target: 80, duration: 0.35, speed: 'medium' },  // Structuring - 35% of time
+      { target: 85, duration: 0.10, speed: 'fast' },    // Finalizing - 10% of time
+    ];
+
+    let currentPhaseIndex = 0;
+    let currentProgress = 0;
+    let elapsedTime = 0;
+    const updateInterval = 100; // Update every 100ms for smooth animation
+
+    let isCompleted = false;
+
     progressIntervalRef.current = setInterval(() => {
-      progress += Math.random() * 15;
-      if (progress > 85) progress = 85; // Cap at 85% until real completion
-      setImportProgress(Math.min(progress, 85));
-    }, 800);
+      if (isCompleted) return;
+
+      elapsedTime += updateInterval;
+      const currentPhase = phases[currentPhaseIndex];
+
+      // Calculate time allocated to current phase
+      const phaseStartTime = phases
+        .slice(0, currentPhaseIndex)
+        .reduce((sum, p) => sum + p.duration * estimatedDuration, 0);
+      const phaseDuration = currentPhase.duration * estimatedDuration;
+      const phaseProgress = Math.min((elapsedTime - phaseStartTime) / phaseDuration, 1);
+
+      // Calculate target progress for this phase with easing
+      const phaseStart = currentPhaseIndex > 0 ? phases[currentPhaseIndex - 1].target : 0;
+      const phaseTarget = currentPhase.target;
+
+      // Apply easing curve based on speed
+      let easedProgress;
+      if (currentPhase.speed === 'fast') {
+        // Fast: accelerate quickly then decelerate
+        easedProgress = phaseProgress < 0.5
+          ? 2 * phaseProgress * phaseProgress
+          : 1 - Math.pow(-2 * phaseProgress + 2, 2) / 2;
+      } else if (currentPhase.speed === 'slow') {
+        // Slow: linear progression (no randomness to avoid oscillation)
+        easedProgress = phaseProgress;
+      } else {
+        // Medium: smooth ease-in-out
+        easedProgress = phaseProgress < 0.5
+          ? 4 * phaseProgress * phaseProgress * phaseProgress
+          : 1 - Math.pow(-2 * phaseProgress + 2, 3) / 2;
+      }
+
+      currentProgress = phaseStart + (phaseTarget - phaseStart) * easedProgress;
+
+      // Ensure progress stays within bounds and never goes backwards
+      currentProgress = Math.max(0, Math.min(currentProgress, currentPhase.target));
+
+      setImportProgress(Math.round(currentProgress * 10) / 10);
+
+      // Move to next phase if current is complete
+      if (phaseProgress >= 1 && currentPhaseIndex < phases.length - 1) {
+        currentPhaseIndex++;
+      }
+
+      // If reached 85%, slow down and wait for real completion
+      if (currentProgress >= 85) {
+        clearInterval(progressIntervalRef.current);
+      }
+    }, updateInterval);
 
     pollIntervalRef.current = setInterval(async () => {
       try {
@@ -162,25 +233,43 @@ export default function EmptyState() {
           const data = await res.json();
           if (data.items && data.items.length > 0) {
             // CV created! Stop polling
+            isCompleted = true;
             clearInterval(pollIntervalRef.current);
             clearInterval(progressIntervalRef.current);
             clearInterval(messageIntervalRef.current);
             clearTimeout(timeoutRef.current);
-            setImportProgress(100);
-            setLoadingMessage(t("emptyState.importing.ready"));
 
-            // Select the new CV
-            const newCv = data.items[0];
-            if (newCv.file) {
-              document.cookie = `cvFile=${encodeURIComponent(newCv.file)}; path=/; max-age=31536000`;
-              localStorage.setItem("admin:cv", newCv.file);
-            }
+            // Animate to 100% smoothly
+            const currentProgressValue = currentProgress;
+            const animationDuration = 600;
+            const animationSteps = 30;
+            const stepDuration = animationDuration / animationSteps;
+            let step = 0;
 
-            // Wait a bit to show 100% then redirect
-            setTimeout(() => {
-              router.push("/");
-              router.refresh();
-            }, 1000);
+            const animateToComplete = setInterval(() => {
+              step++;
+              const progress = currentProgressValue + ((100 - currentProgressValue) * (step / animationSteps));
+              setImportProgress(Math.round(progress * 10) / 10);
+
+              if (step >= animationSteps) {
+                clearInterval(animateToComplete);
+                setImportProgress(100);
+                setLoadingMessage(t("emptyState.importing.ready"));
+
+                // Select the new CV
+                const newCv = data.items[0];
+                if (newCv.file) {
+                  document.cookie = `cvFile=${encodeURIComponent(newCv.file)}; path=/; max-age=31536000`;
+                  localStorage.setItem("admin:cv", newCv.file);
+                }
+
+                // Wait a bit to show 100% then redirect
+                setTimeout(() => {
+                  router.push("/");
+                  router.refresh();
+                }, 1000);
+              }
+            }, stepDuration);
           }
         }
       } catch (error) {
@@ -469,29 +558,6 @@ export default function EmptyState() {
                 </div>
               </div>
             ) : null}
-          </div>
-
-          <div className="space-y-2">
-            <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("pdfImport.analysisQuality")}</div>
-            <div className="grid grid-cols-3 gap-1 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm p-1 text-xs sm:text-sm">
-              {ANALYSIS_OPTIONS(t).map((option) => {
-                const active = option.id === pdfAnalysisLevel;
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => setPdfAnalysisLevel(option.id)}
-                    className={`rounded-md px-2 py-1 font-medium transition ${active ? "bg-emerald-400 text-white shadow" : "text-white/70 hover:bg-white/25"}`}
-                    aria-pressed={active}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="text-xs text-white/60 drop-shadow">
-              {ANALYSIS_OPTIONS(t).find(o => o.id === pdfAnalysisLevel)?.hint}
-            </p>
           </div>
 
           <div className="flex justify-end gap-2">

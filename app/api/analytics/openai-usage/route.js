@@ -97,11 +97,16 @@ export async function GET(request) {
         totalTokens: true,
         callsCount: true,
       },
-      orderBy: {
-        _sum: {
-          estimatedCost: 'desc',
+      orderBy: [
+        {
+          _sum: {
+            estimatedCost: 'desc',
+          },
         },
-      },
+        {
+          featureName: 'asc', // Tri secondaire par nom pour stabilité quand coûts égaux
+        },
+      ],
     });
 
     // Get last cost for each feature (from individual call records)

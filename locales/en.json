@@ -533,6 +533,7 @@
   "feedback": {
     "title": "Your feedback helps us improve!",
     "ratingLabel": "How would you rate your experience?",
+    "optional": "optional",
     "commentLabel": "Your feedback (optional)",
     "commentPlaceholder": "Share your feedback, suggest new features, or report bugs...",
     "bugReportLabel": "Bug report",

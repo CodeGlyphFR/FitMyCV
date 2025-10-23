@@ -26,7 +26,10 @@ export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
   }, [period, userId, refreshKey]);
 
   async function fetchErrors() {
-    setLoading(true);
+    // Only show loader if no data yet (initial load)
+    if (!data) {
+      setLoading(true);
+    }
     try {
       const url = `/api/analytics/errors?period=${period}${userId ? `&userId=${userId}` : ''}`;
       const res = await fetch(url);

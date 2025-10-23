@@ -13,9 +13,14 @@ export async function POST(request) {
   try {
     const { rating, comment, isBugReport, currentCvFile, userAgent, pageUrl } = await request.json();
 
-    // Validations
-    if (!rating || rating < 1 || rating > 5) {
+    // Validations - rating is optional for bug reports
+    if (!isBugReport && (!rating || rating < 1 || rating > 5)) {
       return NextResponse.json({ error: "Note invalide (1-5 requise)" }, { status: 400 });
+    }
+
+    // If rating is provided (even for bug reports), validate range
+    if (rating && (rating < 1 || rating > 5)) {
+      return NextResponse.json({ error: "Note invalide (1-5)" }, { status: 400 });
     }
 
     // Sanitization XSS du commentaire
@@ -51,7 +56,7 @@ export async function POST(request) {
     const feedback = await prisma.feedback.create({
       data: {
         userId,
-        rating: parseInt(rating),
+        rating: rating ? parseInt(rating) : 0, // 0 if no rating provided (for bug reports)
         comment: trimmedComment,
         isBugReport: Boolean(isBugReport),
         currentCvFile: currentCvFile || null,

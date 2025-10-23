@@ -93,7 +93,10 @@ export function UsersTab({ refreshKey }) {
 
     try {
       fetchingRef.current = true;
-      setLoading(true);
+      // Only show loader if no data yet (initial load)
+      if (!data) {
+        setLoading(true);
+      }
       setError(null);
 
       const params = new URLSearchParams({

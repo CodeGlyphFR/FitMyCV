@@ -21,7 +21,10 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
   }, [period, userId, refreshKey]);
 
   async function fetchFeatures() {
-    setLoading(true);
+    // Only show loader if no data yet (initial load)
+    if (features.length === 0) {
+      setLoading(true);
+    }
     try {
       const url = `/api/analytics/features?period=${period}${userId ? `&userId=${userId}` : ''}`;
       const res = await fetch(url);
