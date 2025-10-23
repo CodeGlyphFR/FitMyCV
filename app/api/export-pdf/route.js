@@ -90,6 +90,8 @@ export async function POST(request) {
     const requestData = await request.json();
     let filename = requestData.filename;
     const language = requestData.language || 'fr';
+    const selections = requestData.selections || null;
+    const customFilename = requestData.customFilename || null;
 
     // Si filename est un objet, extraire le nom du fichier
     if (typeof filename === 'object' && filename !== null) {
@@ -138,8 +140,8 @@ export async function POST(request) {
 
     const page = await browser.newPage();
 
-    // Générer le HTML du CV
-    const htmlContent = generateCvHtml(cvData, language);
+    // Générer le HTML du CV avec les sélections
+    const htmlContent = generateCvHtml(cvData, language, selections);
 
     await page.setContent(htmlContent, {
       waitUntil: 'networkidle0',
@@ -177,10 +179,11 @@ export async function POST(request) {
     }
 
     // Retourner le PDF
+    const pdfFilename = customFilename || filename.replace('.json', '');
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="CV_${filename.replace('.json', '')}.pdf"`
+        'Content-Disposition': `attachment; filename="${pdfFilename}.pdf"`
       }
     });
 
@@ -225,8 +228,33 @@ export async function POST(request) {
   }
 }
 
-function generateCvHtml(cvData, language = 'fr') {
+function generateCvHtml(cvData, language = 'fr', selections = null) {
   const t = (path) => getTranslation(language, path);
+
+  // Fonction helper pour vérifier si une section est activée
+  const isSectionEnabled = (sectionKey) => {
+    if (!selections || !selections.sections) return true;
+    return selections.sections[sectionKey]?.enabled !== false;
+  };
+
+  // Fonction helper pour vérifier si une sous-section est activée
+  const isSubsectionEnabled = (sectionKey, subsectionKey) => {
+    if (!selections || !selections.sections) return true;
+    const section = selections.sections[sectionKey];
+    if (!section || !section.subsections) return true;
+    return section.subsections[subsectionKey] !== false;
+  };
+
+  // Fonction helper pour filtrer les éléments d'une liste selon les sélections
+  const filterItems = (items, sectionKey) => {
+    if (!selections || !selections.sections) return items;
+    const section = selections.sections[sectionKey];
+    if (!section || !section.items) return items;
+    // Retourner les items avec leur index original pour pouvoir accéder aux options
+    return items
+      .map((item, originalIndex) => ({ ...item, _originalIndex: originalIndex }))
+      .filter((item) => section.items.includes(item._originalIndex));
+  };
 
   const {
     header = {},
@@ -234,25 +262,32 @@ function generateCvHtml(cvData, language = 'fr') {
     skills = {},
     experience: rawExperience = [],
     education: rawEducation = [],
-    languages = [],
-    projects = [],
-    extras = [],
+    languages: rawLanguages = [],
+    projects: rawProjects = [],
+    extras: rawExtras = [],
     section_titles = {}
   } = cvData;
 
-  // Tri des expériences par date décroissante (plus récent en premier)
-  const experience = [...rawExperience].sort((a, b) => {
+  // Tri des expériences par date décroissante (plus récent en premier), puis filtre selon sélections
+  const sortedExperience = [...rawExperience].sort((a, b) => {
     const dateA = a.end_date === "present" ? "9999-99" : (a.end_date || a.start_date || "");
     const dateB = b.end_date === "present" ? "9999-99" : (b.end_date || b.start_date || "");
     return dateB.localeCompare(dateA);
   });
+  const experience = filterItems(sortedExperience, 'experience');
 
-  // Tri des formations par date décroissante (plus récent en premier)
-  const education = [...rawEducation].sort((a, b) => {
+  // Tri des formations par date décroissante (plus récent en premier), puis filtre selon sélections
+  const sortedEducation = [...rawEducation].sort((a, b) => {
     const dateA = a.end_date || a.start_date || "";
     const dateB = b.end_date || b.start_date || "";
     return dateB.localeCompare(dateA);
   });
+  const education = filterItems(sortedEducation, 'education');
+
+  // Filtrer les autres listes selon les sélections
+  const languages = filterItems(rawLanguages, 'languages');
+  const projects = filterItems(rawProjects, 'projects');
+  const extras = filterItems(rawExtras, 'extras');
 
   const contact = header.contact || {};
 
@@ -639,14 +674,14 @@ function generateCvHtml(cvData, language = 'fr') {
     <header class="header">
       <h1>${header.full_name || ''}</h1>
       ${header.current_title ? `<div class="title">${header.current_title}</div>` : ''}
-      ${contact.email || contact.phone || contact.location ? `
+      ${isSubsectionEnabled('header', 'contact') && (contact.email || contact.phone || contact.location) ? `
         <div class="contact-info">
           ${contact.email ? `<span class="contact-item">${contact.email}</span>` : ''}
           ${contact.phone ? `<span class="contact-item">${formatPhone(contact.phone, contact.location)}</span>` : ''}
           ${contact.location ? `<span class="contact-item">${formatLocation(contact.location)}</span>` : ''}
         </div>
       ` : ''}
-      ${contact.links && contact.links.length > 0 ? `
+      ${isSubsectionEnabled('header', 'links') && contact.links && contact.links.length > 0 ? `
         <div class="contact-links">
           ${contact.links.map(link => `<a href="${link.url}" target="_blank">${link.label || link.url}</a>`).join('')}
         </div>
@@ -654,7 +689,7 @@ function generateCvHtml(cvData, language = 'fr') {
     </header>
 
     <!-- Summary -->
-    ${summary.description && summary.description.trim() ? `
+    ${isSectionEnabled('summary') && isSubsectionEnabled('summary', 'description') && summary.description && summary.description.trim() ? `
       <section class="section">
         <h2 class="section-title">${getSectionTitle('summary', section_titles.summary, language)}</h2>
         <div class="summary-content">${summary.description}</div>
@@ -662,11 +697,11 @@ function generateCvHtml(cvData, language = 'fr') {
     ` : ''}
 
     <!-- Skills -->
-    ${Object.values(skills).some(skillArray => Array.isArray(skillArray) && skillArray.length > 0) ? `
+    ${isSectionEnabled('skills') && Object.values(skills).some(skillArray => Array.isArray(skillArray) && skillArray.length > 0) ? `
       <section class="section">
         <h2 class="section-title">${getSectionTitle('skills', section_titles.skills, language)}</h2>
         <div class="skills-grid">
-          ${skills.hard_skills && skills.hard_skills.filter(skill => skill.name && skill.proficiency).length > 0 ? `
+          ${isSubsectionEnabled('skills', 'hard_skills') && skills.hard_skills && skills.hard_skills.filter(skill => skill.name && skill.proficiency).length > 0 ? `
             <div class="skill-category">
               <h3>${t('cvSections.hardSkills')}</h3>
               <div class="skill-list">
@@ -675,7 +710,7 @@ function generateCvHtml(cvData, language = 'fr') {
             </div>
           ` : ''}
 
-          ${skills.tools && skills.tools.filter(tool => tool.name && tool.proficiency).length > 0 ? `
+          ${isSubsectionEnabled('skills', 'tools') && skills.tools && skills.tools.filter(tool => tool.name && tool.proficiency).length > 0 ? `
             <div class="skill-category">
               <h3>${t('cvSections.tools')}</h3>
               <div class="skill-list">
@@ -684,7 +719,7 @@ function generateCvHtml(cvData, language = 'fr') {
             </div>
           ` : ''}
 
-          ${skills.soft_skills && skills.soft_skills.filter(s => s && s.trim()).length > 0 ? `
+          ${isSubsectionEnabled('skills', 'soft_skills') && skills.soft_skills && skills.soft_skills.filter(s => s && s.trim()).length > 0 ? `
             <div class="skill-category">
               <h3>${t('cvSections.softSkills')}</h3>
               <div class="skill-list">
@@ -693,7 +728,7 @@ function generateCvHtml(cvData, language = 'fr') {
             </div>
           ` : ''}
 
-          ${skills.methodologies && skills.methodologies.filter(m => m && m.trim()).length > 0 ? `
+          ${isSubsectionEnabled('skills', 'methodologies') && skills.methodologies && skills.methodologies.filter(m => m && m.trim()).length > 0 ? `
             <div class="skill-category">
               <h3>${t('cvSections.methodologies')}</h3>
               <div class="skill-list">
@@ -706,7 +741,7 @@ function generateCvHtml(cvData, language = 'fr') {
     ` : ''}
 
     <!-- Experience -->
-    ${experience && experience.length > 0 ? `
+    ${isSectionEnabled('experience') && experience && experience.length > 0 ? `
       <section class="section">
         <h2 class="section-title">${getSectionTitle('experience', section_titles.experience, language)}</h2>
         ${experience.map((exp, index) => `
@@ -732,7 +767,7 @@ function generateCvHtml(cvData, language = 'fr') {
                   </div>
                 ` : ''}
 
-                ${exp.deliverables && exp.deliverables.length > 0 ? `
+                ${exp.deliverables && exp.deliverables.length > 0 && (selections?.sections?.experience?.itemsOptions?.[exp._originalIndex]?.includeDeliverables !== false) ? `
                   <div class="deliverables">
                     <h4>${t('cvSections.deliverables')}</h4>
                     <ul>
@@ -754,7 +789,7 @@ function generateCvHtml(cvData, language = 'fr') {
     ` : ''}
 
     <!-- Education -->
-    ${education && education.length > 0 ? `
+    ${isSectionEnabled('education') && education && education.length > 0 ? `
       <section class="section">
         <h2 class="section-title">${getSectionTitle('education', section_titles.education, language)}</h2>
         ${education.map(edu => `
@@ -772,7 +807,7 @@ function generateCvHtml(cvData, language = 'fr') {
     ` : ''}
 
     <!-- Languages -->
-    ${languages && languages.filter(lang => lang.name && lang.level).length > 0 ? `
+    ${isSectionEnabled('languages') && languages && languages.filter(lang => lang.name && lang.level).length > 0 ? `
       <section class="section">
         <h2 class="section-title">${getSectionTitle('languages', section_titles.languages, language)}</h2>
         <div class="languages-grid">
@@ -786,7 +821,7 @@ function generateCvHtml(cvData, language = 'fr') {
     ` : ''}
 
     <!-- Projects -->
-    ${projects && projects.length > 0 ? `
+    ${isSectionEnabled('projects') && projects && projects.length > 0 ? `
       <section class="section">
         <h2 class="section-title">${getSectionTitle('projects', section_titles.projects, language)}</h2>
         ${projects.map(project => `
@@ -812,7 +847,7 @@ function generateCvHtml(cvData, language = 'fr') {
     ` : ''}
 
     <!-- Extras -->
-    ${extras && extras.filter(extra => extra.name && extra.summary).length > 0 ? `
+    ${isSectionEnabled('extras') && extras && extras.filter(extra => extra.name && extra.summary).length > 0 ? `
       <section class="section">
         <h2 class="section-title">${getSectionTitle('extras', section_titles.extras, language)}</h2>
         <div class="extras-grid">

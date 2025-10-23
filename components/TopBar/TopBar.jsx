@@ -21,6 +21,7 @@ import { useCvOperations } from "./hooks/useCvOperations";
 import { useGeneratorModal } from "./hooks/useGeneratorModal";
 import { useScrollBehavior } from "./hooks/useScrollBehavior";
 import { useModalStates } from "./hooks/useModalStates";
+import { useExportModal } from "./hooks/useExportModal";
 
 // Components
 import ItemLabel from "./components/ItemLabel";
@@ -28,6 +29,7 @@ import CvGeneratorModal from "./modals/CvGeneratorModal";
 import PdfImportModal from "./modals/PdfImportModal";
 import DeleteCvModal from "./modals/DeleteCvModal";
 import NewCvModal from "./modals/NewCvModal";
+import ExportPdfModal from "./modals/ExportPdfModal";
 
 // Utils
 import { getCvIcon } from "./utils/cvUtils";
@@ -91,6 +93,12 @@ export default function TopBar() {
     localDeviceId,
     t,
     addLinksToHistory,
+  });
+
+  // Export modal hook
+  const exportModal = useExportModal({
+    currentItem: state.currentItem,
+    language,
   });
 
   // Refs
@@ -811,7 +819,7 @@ export default function TopBar() {
           )}
           {settings.feature_export && (
             <button
-              onClick={operations.exportToPdf}
+              onClick={exportModal.openModal}
               className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7 transition-all duration-200"
               type="button"
               title="Exporter en PDF"
@@ -902,6 +910,26 @@ export default function TopBar() {
       <TaskQueueModal
         open={modals.openTaskQueue}
         onClose={() => modals.setOpenTaskQueue(false)}
+      />
+
+      <ExportPdfModal
+        isOpen={exportModal.isOpen}
+        onClose={exportModal.closeModal}
+        filename={exportModal.filename}
+        setFilename={exportModal.setFilename}
+        selections={exportModal.selections}
+        toggleSection={exportModal.toggleSection}
+        toggleSubsection={exportModal.toggleSubsection}
+        toggleItem={exportModal.toggleItem}
+        toggleItemOption={exportModal.toggleItemOption}
+        selectAll={exportModal.selectAll}
+        deselectAll={exportModal.deselectAll}
+        exportPdf={exportModal.exportPdf}
+        counters={exportModal.counters}
+        subCounters={exportModal.subCounters}
+        cvData={exportModal.cvData}
+        isExporting={exportModal.isExporting}
+        t={t}
       />
 
       {/* Styles */}

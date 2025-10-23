@@ -157,6 +157,53 @@
       "exportFailed": "Erreur lors de l'export PDF. Veuillez réessayer."
     }
   },
+  "exportModal": {
+    "title": "Personnaliser et exporter en PDF",
+    "filename": "Nom du fichier",
+    "filenameHint": "Le fichier sera exporté avec l'extension .pdf",
+    "selectAll": "Tout sélectionner",
+    "deselectAll": "Tout désélectionner",
+    "export": "Exporter",
+    "exporting": "Export en cours...",
+    "cancel": "Annuler",
+    "sectionsTitle": "Sélectionnez les sections à inclure",
+    "showOptions": "Afficher les options",
+    "hideOptions": "Masquer les options",
+    "experienceColumn": "Expérience",
+    "includeDeliverables": "Inclure livrables",
+    "sections": {
+      "header": "En-tête",
+      "summary": "Résumé",
+      "skills": "Compétences",
+      "experience": "Expérience",
+      "education": "Formation",
+      "languages": "Langues",
+      "projects": "Projets",
+      "extras": "Informations complémentaires"
+    },
+    "subsections": {
+      "header": {
+        "contact": "Contact",
+        "links": "Liens"
+      },
+      "summary": {
+        "description": "Description"
+      },
+      "skills": {
+        "hard_skills": "Compétences techniques",
+        "soft_skills": "Compétences comportementales",
+        "tools": "Outils",
+        "methodologies": "Méthodologies"
+      }
+    },
+    "counters": {
+      "always": "Toujours inclus",
+      "empty": "Vide",
+      "item": "élément",
+      "items": "éléments",
+      "selected": "sélectionné(s)"
+    }
+  },
   "newCvModal": {
     "title": "Créer un nouveau CV",
     "fullName": "Nom complet",

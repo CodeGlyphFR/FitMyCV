@@ -151,49 +151,10 @@ export function useCvOperations({
     }
   }
 
-  async function exportToPdf() {
-    if (!currentItem) {
-      alert(t("export.noCvSelected"));
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/export-pdf", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          filename: currentItem,
-          language: language,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Erreur lors de l'export PDF");
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.style.display = "none";
-      a.href = url;
-      const filename = currentItem.file || currentItem.name || currentItem.filename || currentItem;
-      a.download = `CV_${filename.replace ? filename.replace(".json", "") : filename}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      alert(t("export.errors.exportFailed"));
-    }
-  }
-
   return {
     reload,
     selectFile,
     deleteCurrent,
-    exportToPdf,
     emitListChanged,
   };
 }
