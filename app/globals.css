@@ -307,3 +307,13 @@ select:-moz-autofill:focus {
 .animate-scale-in {
   animation: scale-in 0.2s ease-out;
 }
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hidden {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}

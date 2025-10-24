@@ -11,6 +11,7 @@ import { UsersTab } from '@/components/admin/UsersTab';
 import { SubscriptionPlansTab } from '@/components/admin/SubscriptionPlansTab';
 import { DateRangePicker } from '@/components/admin/DateRangePicker';
 import { UserFilter } from '@/components/admin/UserFilter';
+import { TabsBar } from '@/components/admin/TabsBar';
 
 const TABS = [
   { id: 'overview', label: 'Vue d\'ensemble', icon: '📊' },
@@ -117,25 +118,7 @@ export default function AnalyticsDashboard() {
       {/* Tabs */}
       <div className="bg-gray-900/98 backdrop-blur-xl border-b border-white/10 sticky top-12 md:top-[73px] z-40 md:z-30 will-change-transform">
         <div className="max-w-7xl mx-auto md:px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-4 md:space-x-6 overflow-x-auto max-md:scrollbar-hide touch-pan-x px-4 md:px-0">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`
-                  flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 border-b-2 font-medium text-xs md:text-sm transition whitespace-nowrap flex-shrink-0
-                  ${
-                    activeTab === tab.id
-                      ? 'border-blue-400 text-white'
-                      : 'border-transparent text-white/60 hover:text-white hover:border-white/20'
-                  }
-                `}
-              >
-                <span className="text-base md:text-lg">{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </div>
+          <TabsBar tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
       </div>
 

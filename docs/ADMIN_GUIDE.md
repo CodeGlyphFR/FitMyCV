@@ -70,6 +70,18 @@ http://localhost:3001/admin/analytics
 | **Settings** | Configuration globale |
 | **Subscription Plans** | Gestion des plans d'abonnement |
 
+### Navigation entre les onglets
+
+**Amélioration UX** :
+
+- **Drag-to-scroll** : Cliquez et glissez sur la barre d'onglets pour scroller horizontalement
+- **Scrollbar masquée** : La scrollbar horizontale est invisible pour un rendu plus épuré
+- **Curseur visuel** : Le curseur change en main (`grab`/`grabbing`) pour indiquer l'action de drag
+- **Support mobile** : Fonctionne aussi au doigt sur tablette/smartphone (swipe horizontal)
+- **Responsive** : S'adapte à toutes les tailles d'écran
+
+**Composant** : `TabsBar` (`components/admin/TabsBar.jsx`)
+
 ### KPIs principaux
 
 **Overview Tab** affiche :

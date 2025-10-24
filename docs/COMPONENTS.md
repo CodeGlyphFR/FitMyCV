@@ -580,6 +580,65 @@ Sélecteur de plage de dates.
 
 ---
 
+### TabsBar.jsx
+
+Barre d'onglets avec drag-to-scroll pour le dashboard admin.
+
+**Localisation** : `components/admin/TabsBar.jsx`
+
+**Props** :
+
+```javascript
+{
+  tabs: Array<{
+    id: string,
+    label: string,
+    icon: string
+  }>,
+  activeTab: string,
+  onTabChange: (tabId: string) => void
+}
+```
+
+**Features** :
+
+- **Drag-to-scroll** : Clic glissé pour scroller horizontalement
+- **Scrollbar masquée** : Classe `.scrollbar-hidden` (visible uniquement au hover si navigateur le supporte)
+- **Curseur visuel** : `grab` au repos, `grabbing` pendant le drag
+- **Protection des clics** : Empêche l'activation des onglets pendant le drag
+- **Support tactile** : Fonctionne au doigt sur mobile (`touch-pan-x`)
+- **Vitesse de scroll** : Multipliée par 2 pour un meilleur ressenti
+
+**Usage** :
+
+```jsx
+<TabsBar
+  tabs={TABS}
+  activeTab={activeTab}
+  onTabChange={setActiveTab}
+/>
+```
+
+**Implémentation** :
+
+```javascript
+// Gestion du drag
+const handleMouseDown = (e) => {
+  setIsDragging(true);
+  setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
+  setScrollLeft(scrollContainerRef.current.scrollLeft);
+};
+
+const handleMouseMove = (e) => {
+  if (!isDragging) return;
+  const x = e.pageX - scrollContainerRef.current.offsetLeft;
+  const walk = (x - startX) * 2; // Vitesse x2
+  scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+};
+```
+
+---
+
 ### Toast.jsx
 
 Notifications toast.
