@@ -90,9 +90,6 @@ export async function GET(request) {
         acc[e.type] = (acc[e.type] || 0) + 1;
         return acc;
       }, {});
-      console.log('[Features API] Event types found:', eventTypeCounts);
-      console.log('[Features API] Total events:', events.length);
-      console.log('[Features API] Period:', period, 'Start date:', startDate?.toISOString());
     }
 
     // Aggregate data by feature
@@ -154,11 +151,6 @@ export async function GET(request) {
 
     // Sort by total usage
     features.sort((a, b) => b.totalUsage - a.totalUsage);
-
-    // DEBUG: Log features returned (dev only)
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[Features API] Features returned:', features.map(f => `${f.featureName} (${f.totalUsage})`).join(', '));
-    }
 
     return NextResponse.json({
       period,
