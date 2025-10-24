@@ -98,6 +98,7 @@ export default function TopBar() {
   const exportModal = useExportModal({
     currentItem: state.currentItem,
     language,
+    addNotification,
   });
 
   // Refs
@@ -592,6 +593,15 @@ export default function TopBar() {
                       }}
                     >
                       {t("topbar.myAccount")}
+                    </button>
+                    <button
+                      className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
+                      onClick={() => {
+                        modals.setUserMenuOpen(false);
+                        router.push("/account/subscriptions");
+                      }}
+                    >
+                      Abonnements & Crédits
                     </button>
                     <button
                       className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"

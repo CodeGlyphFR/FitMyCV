@@ -195,7 +195,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
       priceYearly: '0',
       yearlyDiscountPercent: '0',
       priceCurrency: 'EUR',
-      maxCvCount: -1,
     });
 
     // Initialiser les features avec des valeurs par défaut
@@ -225,7 +224,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
       priceYearly: plan.priceYearly,
       yearlyDiscountPercent: plan.yearlyDiscountPercent,
       priceCurrency: plan.priceCurrency,
-      maxCvCount: plan.maxCvCount,
     });
 
     // Charger les features existantes
@@ -630,7 +628,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {plans.map((plan) => {
           const enabledFeatures = plan.featureLimits.filter((fl) => fl.isEnabled).length;
-          const unlimitedCvs = plan.maxCvCount === -1;
 
           return (
             <div
@@ -666,12 +663,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
 
               {/* Limitations */}
               <div className="space-y-3 mb-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">CV maximum</span>
-                  <span className="text-white font-medium">
-                    {unlimitedCvs ? 'Illimité' : plan.maxCvCount}
-                  </span>
-                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-white/60">Features activées</span>
                   <span className="text-white font-medium">
@@ -972,28 +963,6 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
             </div>
           </div>
 
-          {/* Section: Limitations globales */}
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold text-white border-b border-white/10 pb-2">
-              Limitations globales
-            </h4>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-white/60 text-sm mb-2 block">
-                  Nombre max de CV (-1 = illimité) *
-                </label>
-                <input
-                  type="number"
-                  min="-1"
-                  value={formData.maxCvCount}
-                  onChange={(e) => setFormData({ ...formData, maxCvCount: parseInt(e.target.value, 10) || 0 })}
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
-                />
-              </div>
-
-            </div>
-          </div>
 
           {/* Section: Features (Macro-features) */}
           <div className="space-y-4">

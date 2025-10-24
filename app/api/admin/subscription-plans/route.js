@@ -77,7 +77,6 @@ export async function POST(request) {
       priceYearly,
       yearlyDiscountPercent,
       priceCurrency,
-      maxCvCount,
       tokenCount,
       featureLimits,
     } = body;
@@ -118,13 +117,6 @@ export async function POST(request) {
       );
     }
 
-    if (typeof maxCvCount !== 'number') {
-      return NextResponse.json(
-        { error: 'Nombre max de CV invalide' },
-        { status: 400 }
-      );
-    }
-
     if (typeof tokenCount !== 'number' || tokenCount < 0) {
       return NextResponse.json(
         { error: 'Nombre de tokens invalide' },
@@ -153,7 +145,6 @@ export async function POST(request) {
         priceYearly,
         yearlyDiscountPercent,
         priceCurrency,
-        maxCvCount,
         tokenCount,
         featureLimits: {
           create: featureLimits?.map((fl) => ({

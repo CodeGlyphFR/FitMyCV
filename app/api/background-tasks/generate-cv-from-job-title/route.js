@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { ensureUserCvDir } from "@/lib/cv/storage";
 import { scheduleGenerateCvFromJobTitleJob } from "@/lib/backgroundTasks/generateCvFromJobTitleJob";
+import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 
 export async function POST(request) {
   const session = await auth();
@@ -29,6 +30,19 @@ export async function POST(request) {
     const requestedModel = typeof rawModel === "string" ? rawModel.trim() : "";
 
     const userId = session.user.id;
+
+    // Vérifier les limites ET incrémenter le compteur/débiter le crédit
+    const usageResult = await incrementFeatureCounter(userId, 'generate_cv_from_job_title', {
+      analysisLevel: requestedAnalysisLevel,
+    });
+
+    if (!usageResult.success) {
+      return NextResponse.json({
+        error: usageResult.error,
+        actionRequired: usageResult.actionRequired,
+        redirectUrl: usageResult.redirectUrl
+      }, { status: 403 });
+    }
 
     await ensureUserCvDir(userId);
 
@@ -59,6 +73,10 @@ export async function POST(request) {
         result: null,
         deviceId,
         payload: JSON.stringify(taskPayload),
+        creditUsed: usageResult.usedCredit,
+        creditTransactionId: usageResult.transactionId || null,
+        featureName: usageResult.featureName || null,
+        featureCounterPeriodStart: usageResult.periodStart || null,
       },
     });
 

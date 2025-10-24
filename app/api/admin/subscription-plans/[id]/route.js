@@ -107,13 +107,6 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    if (maxCvCount !== undefined && typeof maxCvCount !== 'number') {
-      return NextResponse.json(
-        { error: 'Nombre max de CV invalide' },
-        { status: 400 }
-      );
-    }
-
     if (tokenCount !== undefined && (typeof tokenCount !== 'number' || tokenCount < 0)) {
       return NextResponse.json(
         { error: 'Nombre de tokens invalide' },
@@ -129,7 +122,6 @@ export async function PATCH(request, { params }) {
     if (priceYearly !== undefined) updateData.priceYearly = priceYearly;
     if (yearlyDiscountPercent !== undefined) updateData.yearlyDiscountPercent = yearlyDiscountPercent;
     if (priceCurrency !== undefined) updateData.priceCurrency = priceCurrency;
-    if (maxCvCount !== undefined) updateData.maxCvCount = maxCvCount;
     if (tokenCount !== undefined) updateData.tokenCount = tokenCount;
 
     // Si des featureLimits sont fournis, les mettre à jour en cascade

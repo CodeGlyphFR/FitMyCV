@@ -106,11 +106,72 @@ Flux principal dans `lib/openai/generateCv.js`:
 - Session strategy: JWT
 
 **Models Prisma clés**:
-- `User`: utilisateurs avec relations (cvs, accounts, sessions, feedbacks)
-- `CvFile`: métadonnées des CV (sourceType, createdBy, matchScore, isTranslated)
-- `BackgroundTask`: suivi des jobs asynchrones
+- `User`: utilisateurs avec relations (cvs, accounts, sessions, feedbacks, subscription)
+- `CvFile`: métadonnées des CV (sourceType, createdBy, matchScore, isTranslated, createdWithCredit, blocked)
+- `BackgroundTask`: suivi des jobs asynchrones (creditUsed, creditTransactionId)
 - `LinkHistory`: historique des URLs utilisées
 - `Feedback`: retours utilisateurs
+
+### Système d'Abonnements et Crédits
+**Architecture hybride** : Abonnements mensuels + micro-transactions (crédits)
+
+**Nouveaux modèles** (`prisma/schema.prisma`):
+- `Subscription`: Abonnement utilisateur avec lien Stripe
+- `CreditBalance`: Balance de crédits par utilisateur
+- `CreditTransaction`: Historique des transactions de crédits
+- `FeatureUsageCounter`: Compteurs mensuels par feature/user
+- `StripeWebhookLog`: Logging webhooks Stripe
+- `Referral`: Système de parrainage
+- `PromoCode`: Codes promotionnels
+
+**9 Macro-features trackées** avec limites mensuelles:
+1. `gpt_cv_generation` - Génération CV avec IA
+2. `import_pdf` - Import CV depuis PDF
+3. `translate_cv` - Traduction de CV
+4. `calculate_match_score` - Score de correspondance
+5. `improve_cv` - Optimisation automatique
+6. `generate_from_job_title` - Génération depuis titre
+7. `export_pdf` - Export PDF
+8. `edit_cv` - Édition de CV
+9. `create_manual_cv` - Création manuelle
+
+**Règles métier** :
+- Plan par défaut : **Gratuit** (attribué automatiquement à l'inscription)
+- Compteurs mensuels reset à date anniversaire abonnement
+- Limite atteinte → utilisation crédit (1 crédit = 1 feature)
+- CV créés avec crédits : flag `createdWithCredit: true`, badge 💎
+- Downgrade : blocage automatique des CV en excès (priorité CV avec crédits)
+- Échec paiement : downgrade immédiat vers Gratuit
+
+**Modules core** (`lib/subscription/`):
+- `credits.js`: Gestion crédits (debit, refund, grant)
+- `featureUsage.js`: Vérification limites + compteurs
+- `cvLimits.js`: Limites CV avec crédits
+- `subscriptions.js`: Gestion abonnements (upgrade, downgrade, cancel)
+
+**Intégration jobs** :
+- `generateCvJob.js` : Débite compteur/crédit au début, rembourse si échec/annulation
+- Autres jobs : À intégrer de la même manière
+
+**API Routes** :
+- `/api/checkout/subscription` - Session Stripe abonnement
+- `/api/checkout/credits` - Session Stripe pack crédits
+- `/api/webhooks/stripe` - Handler webhooks Stripe
+- `/api/subscription/current` - Abonnement + compteurs
+- `/api/subscription/change` - Changer de plan
+- `/api/subscription/cancel` - Annuler abonnement
+- `/api/credits/balance` - Balance crédits
+- `/api/credits/transactions` - Historique
+- `/api/cv/can-create` - Vérifier si peut créer CV
+
+**Scripts maintenance** :
+- `scripts/sync-stripe-products.js` - Synchroniser produits/prix Stripe depuis DB
+- `scripts/reset-feature-counters.js` - Reset compteurs expirés (cron quotidien)
+
+**Documentation** :
+- `docs/SUBSCRIPTION.md` - Documentation complète du système
+- `docs/STRIPE_SETUP.md` - Guide configuration Stripe
+- `docs/CRON_SETUP.md` - Configuration tâches planifiées
 
 ### Match Score
 Score de correspondance (0-100) entre CV et offre d'emploi:

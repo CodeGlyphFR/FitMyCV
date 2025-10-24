@@ -5,6 +5,7 @@ import { stripHtml, sanitizeEmail } from "@/lib/security/xssSanitization";
 import { validatePassword } from "@/lib/security/passwordPolicy";
 import { createVerificationToken, sendVerificationEmail } from "@/lib/email/emailService";
 import logger from "@/lib/security/secureLogger";
+import { assignDefaultPlan } from "@/lib/subscription/subscriptions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -124,6 +125,20 @@ export async function POST(request){
       emailVerified: null, // Email non vérifié à l'inscription
     },
   });
+
+  // Attribuer le plan Gratuit par défaut
+  try {
+    const subscriptionResult = await assignDefaultPlan(user.id);
+    if (subscriptionResult.success) {
+      logger.context('register', 'info', `Plan Gratuit attribué à user ${user.id}`);
+    } else {
+      logger.warn('[register] Échec attribution plan Gratuit:', subscriptionResult.error);
+      // Ne pas bloquer l'inscription si l'attribution du plan échoue
+    }
+  } catch (error) {
+    logger.error('[register] Erreur attribution plan:', error);
+    // Ne pas bloquer l'inscription
+  }
 
   // Créer un token de vérification
   try {

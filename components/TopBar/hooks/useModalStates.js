@@ -1,5 +1,6 @@
 import React from "react";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
+import { parseApiError } from "@/lib/utils/errorHandler";
 
 /**
  * Hook pour gérer tous les états de modals et UI
@@ -35,25 +36,10 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
 
     const fileName = pdfFile.name;
 
-    const optimisticTaskId = addOptimisticTask({
-      type: 'import-pdf',
-      label: `Import '${fileName}'`,
-      metadata: { fileName },
-      shouldUpdateCvList: true,
-    });
-
-    addNotification({
-      type: "info",
-      message: t("pdfImport.notifications.scheduled", { fileName }),
-      duration: 2500,
-    });
-    closePdfImport();
-
     try {
       // Obtenir le token reCAPTCHA (vérification côté serveur uniquement)
       const recaptchaToken = await executeRecaptcha('import_pdf');
       if (!recaptchaToken) {
-        removeOptimisticTask(optimisticTaskId);
         addNotification({
           type: "error",
           message: t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.",
@@ -76,18 +62,49 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data?.success) {
-        throw new Error(data?.error || "Impossible de mettre la tâche en file.");
+        const apiError = parseApiError(response, data);
+        const errorObj = { message: apiError.message };
+        if (apiError.actionRequired && apiError.redirectUrl) {
+          errorObj.actionRequired = true;
+          errorObj.redirectUrl = apiError.redirectUrl;
+        }
+        throw errorObj;
       }
 
-      removeOptimisticTask(optimisticTaskId);
-      await refreshTasks();
-    } catch (error) {
-      removeOptimisticTask(optimisticTaskId);
+      // ✅ Succès confirmé par l'API -> créer la tâche optimiste et notifier
+      const optimisticTaskId = addOptimisticTask({
+        type: 'import-pdf',
+        label: `Import '${fileName}'`,
+        metadata: { fileName },
+        shouldUpdateCvList: true,
+      });
+
       addNotification({
+        type: "info",
+        message: t("pdfImport.notifications.scheduled", { fileName }),
+        duration: 2500,
+      });
+      closePdfImport();
+
+      await refreshTasks();
+      removeOptimisticTask(optimisticTaskId);
+    } catch (error) {
+      // Fermer le modal avant d'afficher l'erreur
+      closePdfImport();
+
+      const notification = {
         type: "error",
         message: error?.message || t("pdfImport.notifications.error"),
-        duration: 4000,
-      });
+        duration: 10000,
+      };
+
+      // Add redirect info if actionRequired
+      if (error?.actionRequired && error?.redirectUrl) {
+        notification.redirectUrl = error.redirectUrl;
+        notification.linkText = 'Voir les options';
+      }
+
+      addNotification(notification);
     }
   }
 
@@ -130,7 +147,15 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Erreur");
+      if (!res.ok) {
+        const apiError = parseApiError(res, data);
+        const errorObj = new Error(apiError.message);
+        if (apiError.actionRequired && apiError.redirectUrl) {
+          errorObj.actionRequired = true;
+          errorObj.redirectUrl = apiError.redirectUrl;
+        }
+        throw errorObj;
+      }
 
       document.cookie = "cvFile=" + encodeURIComponent(data.file) + "; path=/; max-age=31536000";
       try {
@@ -157,7 +182,20 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
 
       router.refresh();
     } catch (e) {
-      setNewCvError(e?.message || "Erreur");
+      // Check if action is required (limits exceeded)
+      if (e?.actionRequired && e?.redirectUrl) {
+        // Close modal and show notification with action button
+        setOpenNewCv(false);
+        addNotification({
+          type: "error",
+          message: e.message,
+          redirectUrl: e.redirectUrl,
+          linkText: 'Voir les options',
+          duration: 10000,
+        });
+      } else {
+        setNewCvError(e?.message || "Erreur");
+      }
     }
     setNewCvBusy(false);
   }
@@ -174,19 +212,6 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
 
     const trimmedJobTitle = jobTitleInput.trim();
     if (!trimmedJobTitle) return;
-
-    const optimisticTaskId = addOptimisticTask({
-      type: 'job-title-generation',
-      label: t("jobTitleGenerator.notifications.scheduled", { jobTitle: trimmedJobTitle }),
-      metadata: { jobTitle: trimmedJobTitle },
-      shouldUpdateCvList: true,
-    });
-
-    addNotification({
-      type: "info",
-      message: t("jobTitleGenerator.notifications.scheduled", { jobTitle: trimmedJobTitle }),
-      duration: 2500,
-    });
 
     setJobTitleInput("");
 
@@ -219,27 +244,55 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
       }
 
       if (!response.ok || !data?.success) {
-        throw new Error(data?.error || "Impossible de mettre la tâche en file.");
+        const apiError = parseApiError(response, data);
+        const errorObj = { message: apiError.message };
+        if (apiError.actionRequired && apiError.redirectUrl) {
+          errorObj.actionRequired = true;
+          errorObj.redirectUrl = apiError.redirectUrl;
+        }
+        throw errorObj;
       }
 
-      removeOptimisticTask(optimisticTaskId);
+      // ✅ Succès confirmé par l'API -> créer la tâche optimiste et notifier
+      const optimisticTaskId = addOptimisticTask({
+        type: 'job-title-generation',
+        label: t("jobTitleGenerator.notifications.scheduled", { jobTitle: trimmedJobTitle }),
+        metadata: { jobTitle: trimmedJobTitle },
+        shouldUpdateCvList: true,
+      });
+
+      addNotification({
+        type: "info",
+        message: t("jobTitleGenerator.notifications.scheduled", { jobTitle: trimmedJobTitle }),
+        duration: 2500,
+      });
+
       await refreshTasks();
+      removeOptimisticTask(optimisticTaskId);
 
       // Émettre l'événement pour mettre à jour les compteurs de tokens
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('tokens:updated'));
       }
     } catch (error) {
-      removeOptimisticTask(optimisticTaskId);
       // Restaurer le compteur en cas d'erreur
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('tokens:updated'));
       }
-      addNotification({
+
+      const notification = {
         type: "error",
         message: error?.message || t("jobTitleGenerator.notifications.error"),
-        duration: 4000,
-      });
+        duration: 10000,
+      };
+
+      // Add redirect info if actionRequired
+      if (error?.actionRequired && error?.redirectUrl) {
+        notification.redirectUrl = error.redirectUrl;
+        notification.linkText = 'Voir les options';
+      }
+
+      addNotification(notification);
     }
   }
 

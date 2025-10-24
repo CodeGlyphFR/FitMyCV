@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth/session";
 import { listUserCvFiles, readUserCvFile, writeUserCvFile } from "@/lib/cv/storage";
 import { sanitizeInMemory } from "@/lib/sanitize";
 import { validateCv } from "@/lib/cv/validation";
+import { incrementFeatureCounter, canUseFeature } from "@/lib/subscription/featureUsage";
 
 export const runtime="nodejs"; export const dynamic="force-dynamic";
 function parsePath(p){ var out=[]; var re=/([^\[.]+)|\[(\d+)\]/g; var m; while((m=re.exec(p))!==null){ if(m[1]!=null) out.push(m[1]); else if(m[2]!=null) out.push(Number(m[2])); } return out; }
@@ -22,6 +23,28 @@ export async function POST(req){
     var selected = files.includes(currentCookie) ? currentCookie : (files[0] || null);
     if (!selected) return NextResponse.json({ error: "Aucun CV disponible" }, { status: 404 });
     var cv=JSON.parse(await readUserCvFile(userId, selected));
+
+    // Tracker l'édition seulement si c'est la première fois qu'on édite ce CV
+    // (c'est-à-dire si le generator n'est pas encore "manual")
+    const isFirstEdit = cv.meta?.generator && cv.meta.generator !== "manual";
+    if (isFirstEdit) {
+      // Vérifier les limites
+      const check = await canUseFeature(userId, 'edit_cv');
+      if (!check.canUse) {
+        return NextResponse.json({ error: check.reason }, { status: 403 });
+      }
+
+      // Incrémenter le compteur/débiter le crédit
+      const usageResult = await incrementFeatureCounter(userId, 'edit_cv', {});
+      if (!usageResult.success) {
+        return NextResponse.json({
+          error: usageResult.error,
+          actionRequired: usageResult.actionRequired,
+          redirectUrl: usageResult.redirectUrl
+        }, { status: 403 });
+      }
+    }
+
     setByPath(cv, parsePath(fieldPath), value);
     const sanitized = sanitizeInMemory(cv);
 

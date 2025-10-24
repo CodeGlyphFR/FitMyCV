@@ -12,6 +12,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
+import { parseApiError } from "@/lib/utils/errorHandler";
 
 export default function Header(props){
   const header = props.header || {};
@@ -287,8 +288,13 @@ export default function Header(props){
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        const errorMessage = data.details || data.error || "Impossible de lancer le calcul.";
-        throw new Error(errorMessage);
+        const apiError = parseApiError(response, data);
+        const errorObj = new Error(apiError.message);
+        if (apiError.actionRequired && apiError.redirectUrl) {
+          errorObj.actionRequired = true;
+          errorObj.redirectUrl = apiError.redirectUrl;
+        }
+        throw errorObj;
       }
     } catch (error) {
 
@@ -296,11 +302,19 @@ export default function Header(props){
       setMatchScoreStatus('idle');
       setIsLoadingMatchScore(false);
 
-      addNotification({
+      const notification = {
         type: "error",
         message: error.message,
-        duration: 6000,
-      });
+        duration: 10000,
+      };
+
+      // Add redirect info if actionRequired
+      if (error?.actionRequired && error?.redirectUrl) {
+        notification.redirectUrl = error.redirectUrl;
+        notification.linkText = 'Voir les options';
+      }
+
+      addNotification(notification);
     }
   }, [t, addNotification, localDeviceId]);
 
@@ -366,21 +380,6 @@ export default function Header(props){
 
     const targetLangName = targetLanguage === 'fr' ? 'français' : 'anglais';
 
-    // Créer la tâche optimiste immédiatement
-    const optimisticTaskId = addOptimisticTask({
-      type: 'translate-cv',
-      label: `Traduction en ${targetLangName}`,
-      metadata: { sourceFile: currentFile, targetLanguage },
-      shouldUpdateCvList: true,
-    });
-
-    // Notifier immédiatement
-    addNotification({
-      type: "info",
-      message: t("translate.notifications.scheduled", { targetLangName }),
-      duration: 2500,
-    });
-
     // Envoyer la requête en arrière-plan
     try {
       const response = await fetch("/api/background-tasks/translate-cv", {
@@ -395,20 +394,47 @@ export default function Header(props){
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data?.success) {
-        throw new Error(data?.error || "Impossible de mettre la tâche en file.");
+        const apiError = parseApiError(response, data);
+        const errorObj = { message: apiError.message };
+        if (apiError.actionRequired && apiError.redirectUrl) {
+          errorObj.actionRequired = true;
+          errorObj.redirectUrl = apiError.redirectUrl;
+        }
+        throw errorObj;
       }
 
-      // Succès : supprimer la tâche optimiste et rafraîchir
-      removeOptimisticTask(optimisticTaskId);
-      await refreshTasks();
-    } catch (error) {
-      // Échec : supprimer la tâche optimiste et notifier
-      removeOptimisticTask(optimisticTaskId);
+      // ✅ Succès confirmé par l'API -> créer la tâche optimiste et notifier
+      const optimisticTaskId = addOptimisticTask({
+        type: 'translate-cv',
+        label: `Traduction en ${targetLangName}`,
+        metadata: { sourceFile: currentFile, targetLanguage },
+        shouldUpdateCvList: true,
+      });
+
       addNotification({
+        type: "info",
+        message: t("translate.notifications.scheduled", { targetLangName }),
+        duration: 2500,
+      });
+
+      // Rafraîchir et supprimer la tâche optimiste
+      await refreshTasks();
+      removeOptimisticTask(optimisticTaskId);
+    } catch (error) {
+      // Échec : notifier l'erreur
+      const notification = {
         type: "error",
         message: error?.message || t("translate.notifications.error"),
-        duration: 4000,
-      });
+        duration: 10000,
+      };
+
+      // Add redirect info if actionRequired
+      if (error?.actionRequired && error?.redirectUrl) {
+        notification.redirectUrl = error.redirectUrl;
+        notification.linkText = 'Voir les options';
+      }
+
+      addNotification(notification);
     }
   }
 

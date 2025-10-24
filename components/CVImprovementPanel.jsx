@@ -1,9 +1,12 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
+import { useNotifications } from "@/components/notifications/NotificationProvider";
 import { RefreshCw } from "lucide-react";
+import { parseApiError } from "@/lib/utils/errorHandler";
 
 export default function CVImprovementPanel({ cvFile }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,7 +17,9 @@ export default function CVImprovementPanel({ cvFile }) {
   const [isAnimationReady, setIsAnimationReady] = useState(false);
   const { t, language } = useLanguage();
   const { settings } = useSettings();
+  const { addNotification } = useNotifications();
   const animationRef = useRef(null);
+  const router = useRouter();
 
   // Fonction pour charger les données
   const fetchCvData = React.useCallback(async () => {
@@ -142,22 +147,40 @@ export default function CVImprovementPanel({ cvFile }) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const errorData = await response.json();
+        const apiError = parseApiError(response, errorData);
 
         // Gestion spéciale pour la limite de rate
         if (response.status === 429) {
-          alert(`⏱️ ${error.details || error.error}`);
+          alert(`⏱️ ${errorData.details || apiError.message}`);
           return;
         }
 
-        throw new Error(error.error || "Erreur lors de l'amélioration");
+        // Check if action is required (e.g., need to buy credits)
+        if (apiError.actionRequired && apiError.redirectUrl) {
+          setIsOpen(false);
+          addNotification({
+            type: 'error',
+            message: apiError.message,
+            redirectUrl: apiError.redirectUrl,
+            linkText: 'Voir les options',
+            duration: 10000,
+          });
+          return;
+        }
+
+        throw new Error(apiError.message || "Erreur lors de l'amélioration");
       }
 
       // Fermer la modal immédiatement - le job mettra à jour optimiseStatus dans Prisma
       setIsOpen(false);
     } catch (err) {
       console.error("Erreur amélioration:", err);
-      alert(err.message);
+      addNotification({
+        type: 'error',
+        message: err.message || "Erreur lors de l'amélioration",
+        duration: 5000,
+      });
     }
   };
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { scheduleCalculateMatchScoreJob } from "@/lib/backgroundTasks/calculateMatchScoreJob";
+import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,6 +65,17 @@ export async function POST(request) {
       return NextResponse.json({ error: "Job offer URL not found" }, { status: 400 });
     }
 
+    // Vérifier les limites ET incrémenter le compteur/débiter le crédit
+    const usageResult = await incrementFeatureCounter(userId, 'calculate_match_score', {});
+
+    if (!usageResult.success) {
+      return NextResponse.json({
+        error: usageResult.error,
+        actionRequired: usageResult.actionRequired,
+        redirectUrl: usageResult.redirectUrl
+      }, { status: 403 });
+    }
+
     // Créer un identifiant de tâche
     const taskIdentifier = typeof taskId === "string" && taskId.trim()
       ? taskId.trim()
@@ -88,6 +100,10 @@ export async function POST(request) {
       deviceId: deviceId || "unknown-device",
       cvFile, // Lien direct vers le CV
       payload: JSON.stringify(payload),
+      creditUsed: usageResult.usedCredit,
+      creditTransactionId: usageResult.transactionId || null,
+      featureName: usageResult.featureName || null,
+      featureCounterPeriodStart: usageResult.periodStart || null,
     };
 
     if (!existingTask) {

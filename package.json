@@ -31,7 +31,8 @@
     "react-dom": "18.2.0",
     "react-google-recaptcha-v3": "^1.11.0",
     "recharts": "^3.3.0",
-    "resend": "^6.1.2"
+    "resend": "^6.1.2",
+    "stripe": "^19.1.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.19",

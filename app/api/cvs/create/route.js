@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/session";
 import { ensureUserCvDir, listUserCvFiles, writeUserCvFile } from "@/lib/cv/storage";
 import { trackCvCreation } from "@/lib/telemetry/server";
+import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 
 export const runtime="nodejs"; export const dynamic="force-dynamic";
 export async function POST(req){
@@ -14,6 +15,8 @@ export async function POST(req){
 
     var body=await req.json(); var full_name=(body.full_name||"").trim(); var current_title=(body.current_title||"").trim(); var email=(body.email||"").trim();
     var recaptchaToken=body.recaptchaToken;
+
+    const userId = session.user.id;
 
     // Vérification reCAPTCHA (optionnelle pour compatibilité, mais recommandée)
     if (recaptchaToken) {
@@ -58,6 +61,17 @@ export async function POST(req){
         );
       }
     }
+
+    // Vérifier les limites ET incrémenter le compteur/débiter le crédit (APRÈS reCAPTCHA)
+    const usageResult = await incrementFeatureCounter(userId, 'create_cv_manual', {});
+    if (!usageResult.success) {
+      return NextResponse.json({
+        error: usageResult.error,
+        actionRequired: usageResult.actionRequired,
+        redirectUrl: usageResult.redirectUrl
+      }, { status: 403 });
+    }
+
     var now=new Date();
     var isoNow=now.toISOString();
     var generated_at=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
@@ -66,8 +80,8 @@ export async function POST(req){
       order_hint:["header","summary","skills","experience","education","languages","extras","projects"], section_titles:{ summary:"Résumé", skills:"Compétences", experience:"Expérience", education:"Éducation", languages:"Langues", extras:"Informations complémentaires", projects:"Projets personnels" },
       meta:{ generator:"manual", source:"manual", created_at:isoNow, updated_at:isoNow }
     };
-    await ensureUserCvDir(session.user.id);
-    const existingFiles = await listUserCvFiles(session.user.id).catch(() => []);
+    await ensureUserCvDir(userId);
+    const existingFiles = await listUserCvFiles(userId).catch(() => []);
     let baseName = String(Date.now());
     var file = baseName+".json";
     while (existingFiles.includes(file)){
@@ -87,18 +101,18 @@ export async function POST(req){
       if (!Array.isArray(cv.extras)) cv.extras = [];
       if (!Array.isArray(cv.projects)) cv.projects = [];
     }catch{}
-    
-await writeUserCvFile(session.user.id, file, JSON.stringify(cv,null,2));
+
+await writeUserCvFile(userId, file, JSON.stringify(cv,null,2));
 await prisma.cvFile.upsert({
-      where: { userId_filename: { userId: session.user.id, filename: file } },
+      where: { userId_filename: { userId, filename: file } },
       update: {},
-      create: { userId: session.user.id, filename: file },
+      create: { userId, filename: file },
     });
 
 // Tracking télémétrie - Création manuelle CV
 try {
   await trackCvCreation({
-    userId: session.user.id,
+    userId,
     deviceId: null,
     status: 'success',
   });

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 
 /**
  * Génère les initiales à partir d'un nom complet
@@ -21,9 +22,11 @@ function generateInitials(fullName) {
  * Hook pour gérer le modal d'export PDF
  * @param {Object} currentItem - Le CV actuellement sélectionné
  * @param {string} language - Langue courante
+ * @param {Function} addNotification - Fonction pour afficher les notifications
  * @returns {Object} État et fonctions pour le modal d'export
  */
-export function useExportModal({ currentItem, language }) {
+export function useExportModal({ currentItem, language, addNotification }) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [filename, setFilename] = useState('');
   const [cvData, setCvData] = useState(null);
@@ -379,7 +382,47 @@ export function useExportModal({ currentItem, language }) {
       });
 
       if (!response.ok) {
-        throw new Error('Erreur lors de l\'export PDF');
+        console.log('[useExportModal] Erreur API, status:', response.status);
+
+        // Arrêter le loading immédiatement
+        setIsExporting(false);
+
+        // Parser l'erreur de l'API avec gestion d'erreur
+        let errorData = {};
+        try {
+          errorData = await response.json();
+          console.log('[useExportModal] Error data:', errorData);
+        } catch (parseError) {
+          console.error('[useExportModal] Erreur parsing JSON:', parseError);
+          errorData = { error: 'Erreur lors de l\'export PDF' };
+        }
+
+        // Fermer le modal immédiatement
+        closeModal();
+
+        // Si l'API retourne actionRequired et redirectUrl (quota/feature désactivée)
+        if (errorData.actionRequired && errorData.redirectUrl) {
+          console.log('[useExportModal] Action required, affichage notification avec redirect');
+
+          addNotification({
+            type: 'error',
+            message: errorData.error || 'Accès à cette fonctionnalité limité',
+            redirectUrl: errorData.redirectUrl,
+            linkText: 'Voir les options',
+            duration: 10000, // 10 secondes pour laisser le temps de lire
+          });
+
+          // Pas de redirection automatique, l'utilisateur clique sur le bouton
+        } else {
+          // Notification d'erreur simple sans redirect
+          addNotification({
+            type: 'error',
+            message: errorData.error || 'Erreur lors de l\'export PDF',
+            duration: 4000,
+          });
+        }
+
+        return;
       }
 
       // Télécharger le PDF
@@ -397,12 +440,22 @@ export function useExportModal({ currentItem, language }) {
       // Fermer le modal
       closeModal();
     } catch (error) {
-      console.error('[useExportModal] Erreur export:', error);
-      alert('Erreur lors de l\'export PDF');
+      console.error('[useExportModal] Erreur catch générale:', error);
+
+      // Arrêter le loading et fermer le modal
+      setIsExporting(false);
+      closeModal();
+
+      // Notification d'erreur
+      addNotification({
+        type: 'error',
+        message: error.message || 'Erreur lors de l\'export PDF',
+        duration: 4000,
+      });
     } finally {
       setIsExporting(false);
     }
-  }, [currentItem, filename, selections, language, closeModal]);
+  }, [currentItem, filename, selections, language, closeModal, addNotification, router]);
 
   return {
     isOpen,

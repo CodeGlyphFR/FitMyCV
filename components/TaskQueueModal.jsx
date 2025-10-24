@@ -52,9 +52,23 @@ function TaskItem({ task, onCancel, onTaskClick }) {
   const generationName = payload?.baseFileLabel || payload?.baseFile || extractQuotedName(task.title);
 
   let description = task.title || t("taskQueue.messages.task");
+  let errorRedirectUrl = null;
 
   if (task.status === 'failed' && task.error) {
-    description = task.error;
+    // Try to parse error for actionRequired/redirectUrl
+    try {
+      const errorData = typeof task.error === 'string' ? JSON.parse(task.error) : task.error;
+      if (errorData?.error) {
+        description = errorData.error;
+        if (errorData.actionRequired && errorData.redirectUrl) {
+          errorRedirectUrl = errorData.redirectUrl;
+        }
+      } else {
+        description = task.error;
+      }
+    } catch {
+      description = task.error;
+    }
   } else if (task.type === 'import') {
     if (task.status === 'running') {
       description = t("taskQueue.messages.importInProgress");
@@ -165,6 +179,19 @@ function TaskItem({ task, onCancel, onTaskClick }) {
             </>
           )}
         </div>
+        {/* Show action button if error has redirectUrl */}
+        {task.status === 'failed' && errorRedirectUrl && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(errorRedirectUrl);
+            }}
+            className="mt-2 px-3 py-1 rounded-lg text-xs font-semibold bg-red-500/40 hover:bg-red-500/60 border-2 border-red-400/70 text-white drop-shadow transition-all duration-200 inline-flex items-center gap-1 shadow-sm hover:shadow-md"
+          >
+            {t("subscription.viewOptions") || "Voir les options"}
+            <span className="text-base">→</span>
+          </button>
+        )}
       </div>
       <div className="flex items-center gap-2 ml-4">
         {task.status === 'running' && <LoadingSpinner />}

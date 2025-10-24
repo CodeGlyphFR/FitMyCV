@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { ensureUserCvDir } from "@/lib/cv/storage";
 import { scheduleCreateTemplateCvJob } from "@/lib/backgroundTasks/createTemplateCvJob";
+import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 
 function sanitizeLinks(raw) {
   if (!Array.isArray(raw)) return [];
@@ -130,6 +131,24 @@ export async function POST(request) {
     // Créer une tâche par lien
     for (let i = 0; i < links.length; i++) {
       const link = links[i];
+
+      // Vérifier les limites ET incrémenter le compteur/débiter le crédit
+      const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation', {
+        analysisLevel: requestedAnalysisLevel,
+      });
+
+      if (!usageResult.success) {
+        if (i === 0 && links.length === 1 && savedUploads.length === 0) {
+          return NextResponse.json({
+            error: usageResult.error,
+            actionRequired: usageResult.actionRequired,
+            redirectUrl: usageResult.redirectUrl
+          }, { status: 403 });
+        }
+        console.warn(`[create-template-cv] Limite atteinte pour le lien ${i}, ignoré: ${usageResult.error}`);
+        continue;
+      }
+
       const linkTaskId = `task_template_link_${now}_${i}_${Math.random().toString(36).substr(2, 9)}`;
 
       // Extraire un nom court du lien pour l'affichage
@@ -166,6 +185,10 @@ export async function POST(request) {
           result: null,
           deviceId,
           payload: JSON.stringify(taskPayload),
+          creditUsed: usageResult.usedCredit,
+          creditTransactionId: usageResult.transactionId || null,
+          featureName: usageResult.featureName || null,
+          featureCounterPeriodStart: usageResult.periodStart || null,
         },
       });
 
@@ -183,6 +206,24 @@ export async function POST(request) {
     const linkOffset = links.length;
     for (let i = 0; i < savedUploads.length; i++) {
       const upload = savedUploads[i];
+
+      // Vérifier les limites ET incrémenter le compteur/débiter le crédit
+      const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation', {
+        analysisLevel: requestedAnalysisLevel,
+      });
+
+      if (!usageResult.success) {
+        if (createdTasks.length === 0 && i === 0 && savedUploads.length === 1) {
+          return NextResponse.json({
+            error: usageResult.error,
+            actionRequired: usageResult.actionRequired,
+            redirectUrl: usageResult.redirectUrl
+          }, { status: 403 });
+        }
+        console.warn(`[create-template-cv] Limite atteinte pour le fichier ${i}, ignoré: ${usageResult.error}`);
+        continue;
+      }
+
       const attachmentTaskId = `task_template_file_${now}_${i}_${Math.random().toString(36).substr(2, 9)}`;
       const title = `Création de CV modèle depuis ${upload.name} ...`;
       const successMessage = `CV modèle créé avec succès (${upload.name})`;
@@ -209,6 +250,10 @@ export async function POST(request) {
           result: null,
           deviceId,
           payload: JSON.stringify(taskPayload),
+          creditUsed: usageResult.usedCredit,
+          creditTransactionId: usageResult.transactionId || null,
+          featureName: usageResult.featureName || null,
+          featureCounterPeriodStart: usageResult.periodStart || null,
         },
       });
 
