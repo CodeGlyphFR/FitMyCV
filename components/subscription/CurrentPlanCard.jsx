@@ -2,8 +2,9 @@
 
 import React from "react";
 import { Crown, Calendar, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import Modal from "@/components/ui/Modal";
 
-export default function CurrentPlanCard({ subscription, plan, cvStats }) {
+export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelSubscription }) {
   if (!subscription || !plan) {
     return null;
   }
@@ -51,6 +52,89 @@ export default function CurrentPlanCard({ subscription, plan, cvStats }) {
     return "🎯";
   };
 
+  // Identifier le plan gratuit de manière robuste (par prix = 0 OU nom = "Gratuit")
+  const isFreeplan = plan.priceMonthly === 0 || plan.name === 'Gratuit';
+  const [showCancelModal, setShowCancelModal] = React.useState(false);
+  const [isCanceling, setIsCanceling] = React.useState(false);
+  const [showReactivateModal, setShowReactivateModal] = React.useState(false);
+  const [isReactivating, setIsReactivating] = React.useState(false);
+
+  const handleCancelClick = () => {
+    setShowCancelModal(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    setIsCanceling(true);
+    try {
+      if (onCancelSubscription) {
+        await onCancelSubscription();
+      }
+      setShowCancelModal(false);
+    } catch (error) {
+      console.error('Erreur annulation:', error);
+    } finally {
+      setIsCanceling(false);
+    }
+  };
+
+  const handleReactivateClick = () => {
+    setShowReactivateModal(true);
+  };
+
+  const handleConfirmReactivate = async () => {
+    setIsReactivating(true);
+    try {
+      const response = await fetch('/api/subscription/reactivate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Erreur lors de la réactivation');
+      }
+
+      setShowReactivateModal(false);
+
+      // Rafraîchir la page pour afficher les nouvelles données
+      window.location.reload();
+    } catch (error) {
+      console.error('Erreur réactivation:', error);
+      alert(error.message);
+    } finally {
+      setIsReactivating(false);
+    }
+  };
+
+  const handleSwitchBillingPeriod = async (newPeriod) => {
+    try {
+      const response = await fetch('/api/checkout/subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          planId: plan.id,
+          billingPeriod: newPeriod,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Erreur lors du changement de période');
+      }
+
+      const { url, updated } = await response.json();
+
+      // Si l'abonnement a été mis à jour directement (pas de checkout Stripe)
+      // La DB est déjà mise à jour, pas besoin d'attendre
+
+      // Rediriger vers la page appropriée
+      window.location.href = url;
+    } catch (error) {
+      console.error('Erreur changement période:', error);
+      alert(error.message);
+    }
+  };
+
   return (
     <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6 shadow-lg">
       <div className="flex items-start justify-between mb-4">
@@ -61,13 +145,15 @@ export default function CurrentPlanCard({ subscription, plan, cvStats }) {
               Plan {plan.name}
               {getStatusBadge(subscription.status)}
             </h2>
-            <p className="text-sm text-white/60 mt-0.5">
-              {subscription.billingPeriod === "yearly" ? "Facturation annuelle" : "Facturation mensuelle"}
-            </p>
+            {!isFreeplan && (
+              <p className="text-sm text-white/60 mt-0.5">
+                {subscription.billingPeriod === "yearly" ? "Facturation annuelle" : "Facturation mensuelle"}
+              </p>
+            )}
           </div>
         </div>
 
-        {plan.id !== 1 && (
+        {!isFreeplan && (
           <div className="text-right">
             <div className="text-2xl font-bold text-white">
               {subscription.billingPeriod === "yearly"
@@ -81,41 +167,171 @@ export default function CurrentPlanCard({ subscription, plan, cvStats }) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-        {/* Période actuelle */}
-        <div className="space-y-1">
-          <div className="text-xs text-white/60 uppercase tracking-wider flex items-center gap-1">
-            <Calendar size={12} />
-            Période actuelle
-          </div>
-          <div className="text-sm text-white">
-            Du {formatDate(subscription.currentPeriodStart)}
-          </div>
-          <div className="text-sm text-white">
-            au {formatDate(subscription.currentPeriodEnd)}
-          </div>
-        </div>
-
-        {/* Renouvellement */}
-        <div className="space-y-1">
-          <div className="text-xs text-white/60 uppercase tracking-wider">Renouvellement</div>
-          {subscription.cancelAtPeriodEnd ? (
-            <div className="text-sm text-orange-300">
-              Annulé le {formatDate(subscription.currentPeriodEnd)}
+      {!isFreeplan && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            {/* Période actuelle */}
+            <div className="space-y-1">
+              <div className="text-xs text-white/60 uppercase tracking-wider flex items-center gap-1">
+                <Calendar size={12} />
+                Période actuelle
+              </div>
+              <div className="text-sm text-white">
+                Du {formatDate(subscription.currentPeriodStart)}
+              </div>
+              <div className="text-sm text-white">
+                au {formatDate(subscription.currentPeriodEnd)}
+              </div>
             </div>
-          ) : (
-            <div className="text-sm text-white">
-              {subscription.status === "active" ? "Automatique" : "Inactif"}
+
+            {/* Renouvellement */}
+            <div className="space-y-1">
+              <div className="text-xs text-white/60 uppercase tracking-wider">Renouvellement</div>
+              {subscription.cancelAtPeriodEnd ? (
+                <div className="text-sm text-orange-300">
+                  Annulé le {formatDate(subscription.currentPeriodEnd)}
+                </div>
+              ) : (
+                <div className="text-sm text-white">
+                  {subscription.status === "active" ? "Automatique" : "Inactif"}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {subscription.cancelAtPeriodEnd && (
+            <div className="mt-4 p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg text-sm text-orange-200">
+              ⚠️ Votre abonnement sera annulé le {formatDate(subscription.currentPeriodEnd)}. Vous conserverez l'accès jusqu'à cette date.
             </div>
           )}
-        </div>
-      </div>
 
-      {subscription.cancelAtPeriodEnd && (
-        <div className="mt-4 p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg text-sm text-orange-200">
-          ⚠️ Votre abonnement sera annulé le {formatDate(subscription.currentPeriodEnd)}. Vous conserverez l'accès jusqu'à cette date.
-        </div>
+          {/* Bouton de changement de période de facturation */}
+          {!subscription.cancelAtPeriodEnd && plan.priceYearly && plan.priceYearly !== plan.priceMonthly && (
+            <div className="mt-4">
+              {subscription.billingPeriod === 'monthly' ? (
+                <button
+                  onClick={() => handleSwitchBillingPeriod('yearly')}
+                  className="w-full px-4 py-2.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 hover:border-blue-500/50 text-blue-300 hover:text-blue-200 text-sm font-medium transition-all"
+                >
+                  🎁 Passer à la facturation annuelle ({plan.priceYearly}€/an - économisez {Math.round(((plan.priceMonthly * 12 - plan.priceYearly) / (plan.priceMonthly * 12)) * 100)}%)
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleSwitchBillingPeriod('monthly')}
+                  className="w-full px-4 py-2.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 hover:border-blue-500/50 text-blue-300 hover:text-blue-200 text-sm font-medium transition-all"
+                >
+                  Passer à la facturation mensuelle ({plan.priceMonthly}€/mois)
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Bouton d'annulation ou de réactivation */}
+          <div className="mt-6 pt-4 border-t border-white/10">
+            {subscription.cancelAtPeriodEnd ? (
+              <button
+                onClick={handleReactivateClick}
+                className="w-full px-4 py-2.5 rounded-lg bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 hover:border-green-500/50 text-green-300 hover:text-green-200 text-sm font-medium transition-all"
+              >
+                Réactiver le renouvellement
+              </button>
+            ) : (
+              <button
+                onClick={handleCancelClick}
+                className="w-full px-4 py-2.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 text-red-300 hover:text-red-200 text-sm font-medium transition-all"
+              >
+                Annuler l'abonnement
+              </button>
+            )}
+          </div>
+        </>
       )}
+
+      {/* Modal de confirmation d'annulation */}
+      <Modal
+        open={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        title="Annuler votre abonnement ?"
+      >
+        <div className="space-y-4">
+          <p className="text-white/90">
+            Si vous annulez votre abonnement :
+          </p>
+          <ul className="space-y-2 text-white/80">
+            <li className="flex items-start gap-2">
+              <span className="text-emerald-400 mt-0.5">•</span>
+              <span>Vous conserverez l'accès jusqu'au <strong className="text-white">{formatDate(subscription.currentPeriodEnd)}</strong></span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-emerald-400 mt-0.5">•</span>
+              <span>Vous repasserez automatiquement au <strong className="text-white">plan Gratuit</strong></span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-emerald-400 mt-0.5">•</span>
+              <span>Vous pourrez réactiver à tout moment</span>
+            </li>
+          </ul>
+          <div className="flex gap-3 pt-4">
+            <button
+              onClick={() => setShowCancelModal(false)}
+              disabled={isCanceling}
+              className="flex-1 px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors disabled:opacity-50 font-medium"
+            >
+              Conserver
+            </button>
+            <button
+              onClick={handleConfirmCancel}
+              disabled={isCanceling}
+              className="flex-1 px-4 py-2.5 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors disabled:opacity-50 font-medium"
+            >
+              {isCanceling ? 'Annulation...' : 'Confirmer'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de confirmation de réactivation */}
+      <Modal
+        open={showReactivateModal}
+        onClose={() => setShowReactivateModal(false)}
+        title="Réactiver votre abonnement ?"
+      >
+        <div className="space-y-4">
+          <p className="text-white/90">
+            Si vous réactivez votre abonnement :
+          </p>
+          <ul className="space-y-2 text-white/80">
+            <li className="flex items-start gap-2">
+              <span className="text-emerald-400 mt-0.5">•</span>
+              <span>Le renouvellement automatique sera rétabli</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-emerald-400 mt-0.5">•</span>
+              <span>Vous conserverez votre <strong className="text-white">plan {plan.name}</strong> après le <strong className="text-white">{formatDate(subscription.currentPeriodEnd)}</strong></span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-emerald-400 mt-0.5">•</span>
+              <span>Vous pourrez annuler à nouveau à tout moment</span>
+            </li>
+          </ul>
+          <div className="flex gap-3 pt-4">
+            <button
+              onClick={() => setShowReactivateModal(false)}
+              disabled={isReactivating}
+              className="flex-1 px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors disabled:opacity-50 font-medium"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleConfirmReactivate}
+              disabled={isReactivating}
+              className="flex-1 px-4 py-2.5 rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors disabled:opacity-50 font-medium"
+            >
+              {isReactivating ? 'Réactivation...' : 'Confirmer'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

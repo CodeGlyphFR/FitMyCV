@@ -221,13 +221,75 @@ model FeatureUsageCounter {
 - `GET /api/subscription/current` - Abonnement + compteurs
 - `POST /api/subscription/change` - Changer de plan
 - `POST /api/subscription/cancel` - Annuler abonnement
+- `POST /api/subscription/reactivate` - Réactiver abonnement annulé
+- `GET /api/subscription/plans` - Liste des plans disponibles
+- `GET /api/subscription/invoices` - Historique factures Stripe
 
 ### Gestion crédits
 - `GET /api/credits/balance` - Balance crédits
-- `GET /api/credits/transactions` - Historique
+- `GET /api/credits/transactions` - Historique transactions
 
 ### CV
 - `GET /api/cv/can-create` - Vérifier si peut créer
+
+---
+
+## Historique et Facturation
+
+### API Factures (`/api/subscription/invoices`)
+
+Récupère l'historique complet des transactions Stripe en fusionnant :
+
+**Sources de données** :
+1. **Invoices Stripe** : Factures d'abonnements (avec PDF téléchargeable)
+2. **PaymentIntents Stripe** : Paiements one-time pour packs de crédits
+
+**Récupération automatique du customer ID** :
+
+Si l'utilisateur a un `stripeCustomerId` local (commence par `local_`), l'API :
+1. Récupère un `PaymentIntent` récent depuis `CreditTransaction`
+2. Interroge Stripe pour obtenir le vrai `customer` ID
+3. Met à jour `Subscription.stripeCustomerId` avec la vraie valeur
+4. Permet ainsi d'afficher l'historique même pour les comptes créés en local
+
+**Format de réponse** :
+```json
+{
+  "invoices": [
+    {
+      "id": "in_xxx",
+      "date": "2025-01-24T10:30:00.000Z",
+      "amount": 9.99,
+      "currency": "EUR",
+      "status": "paid",
+      "description": "Plan Pro - Mensuel",
+      "pdfUrl": "https://...",
+      "hostedUrl": "https://...",
+      "type": "subscription"
+    },
+    {
+      "id": "pi_xxx",
+      "date": "2025-01-20T15:00:00.000Z",
+      "amount": 5.00,
+      "currency": "EUR",
+      "status": "paid",
+      "description": "Pack de 5 crédits",
+      "pdfUrl": null,
+      "hostedUrl": null,
+      "type": "credit_pack"
+    }
+  ]
+}
+```
+
+### Composant InvoicesTable
+
+Affiche l'historique avec :
+- **Badge Type** : 👑 Abonnement (violet) ou 💎 Crédits (bleu)
+- **Badge Statut** : Payé (vert), En attente (orange), Annulé (rouge)
+- **Téléchargement PDF** : Pour les factures d'abonnement
+- **Responsive** : Table desktop + cards mobile
+- **Tri** : Plus récent en premier
 
 ---
 

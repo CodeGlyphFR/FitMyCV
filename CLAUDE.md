@@ -160,13 +160,34 @@ Flux principal dans `lib/openai/generateCv.js`:
 - `/api/subscription/current` - Abonnement + compteurs
 - `/api/subscription/change` - Changer de plan
 - `/api/subscription/cancel` - Annuler abonnement
+- `/api/subscription/reactivate` - Réactiver abonnement annulé
+- `/api/subscription/plans` - Liste des plans disponibles
+- `/api/subscription/invoices` - Historique factures Stripe (invoices + PaymentIntents)
 - `/api/credits/balance` - Balance crédits
-- `/api/credits/transactions` - Historique
+- `/api/credits/transactions` - Historique transactions crédits
 - `/api/cv/can-create` - Vérifier si peut créer CV
 
 **Scripts maintenance** :
 - `scripts/sync-stripe-products.js` - Synchroniser produits/prix Stripe depuis DB
 - `scripts/reset-feature-counters.js` - Reset compteurs expirés (cron quotidien)
+
+**Composants UI** (`components/subscription/`):
+- `SubscriptionsPage.jsx` - Page principale avec 3 onglets (Abonnement, Crédits, Historique)
+- `CurrentPlanCard.jsx` - Affichage plan actuel + annulation/réactivation
+- `PlanComparisonCards.jsx` - Cartes de comparaison des plans avec upgrade/downgrade
+- `FeatureCountersCard.jsx` - Compteurs d'utilisation par feature
+- `CreditBalanceCard.jsx` - Balance de crédits
+- `CreditPacksCards.jsx` - Packs de crédits achetables
+- `CreditTransactionsTable.jsx` - Historique transactions crédits
+- `InvoicesTable.jsx` - Historique factures Stripe (invoices + PaymentIntents)
+
+**Historique factures** (`InvoicesTable.jsx`):
+- Fusionne **Invoices Stripe** (abonnements) et **PaymentIntents** (packs de crédits)
+- Récupération automatique du `stripeCustomerId` depuis les PaymentIntents si customer local
+- Badge type : 👑 Abonnement (violet) ou 💎 Crédits (bleu)
+- Badge statut : Payé (vert), En attente (orange), Annulé (rouge)
+- Téléchargement PDF pour les factures d'abonnement
+- Responsive : Table desktop + cards mobile
 
 **Documentation** :
 - `docs/SUBSCRIPTION.md` - Documentation complète du système

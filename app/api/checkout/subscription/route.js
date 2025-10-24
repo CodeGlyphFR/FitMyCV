@@ -62,7 +62,84 @@ export async function POST(request) {
       );
     }
 
-    // Récupérer ou créer le customer Stripe
+    // Vérifier si l'utilisateur a déjà un abonnement Stripe actif
+    const existingSubscription = await prisma.subscription.findUnique({
+      where: { userId },
+      select: {
+        stripeSubscriptionId: true,
+        stripePriceId: true,
+        status: true,
+      },
+    });
+
+    // Si l'utilisateur a un abonnement Stripe actif, mettre à jour au lieu de créer un nouveau
+    if (existingSubscription?.stripeSubscriptionId && existingSubscription.status === 'active') {
+      try {
+        // Récupérer l'abonnement Stripe existant
+        const stripeSubscription = await stripe.subscriptions.retrieve(existingSubscription.stripeSubscriptionId);
+
+        // Mettre à jour avec le nouveau prix
+        const updatedSubscription = await stripe.subscriptions.update(existingSubscription.stripeSubscriptionId, {
+          items: [{
+            id: stripeSubscription.items.data[0].id,
+            price: stripePriceId,
+          }],
+          proration_behavior: 'create_prorations', // Calcul prorata automatique
+          metadata: {
+            userId,
+            planId: planId.toString(),
+          },
+        });
+
+        console.log(`[Checkout Subscription] Abonnement mis à jour pour user ${userId}: ${existingSubscription.stripeSubscriptionId}`);
+
+        // Mettre à jour immédiatement la base de données
+        // Déterminer le planId depuis le stripePriceId (même logique que le webhook)
+        const interval = updatedSubscription.items.data[0]?.price?.recurring?.interval;
+        const newBillingPeriod = interval === 'year' ? 'yearly' : 'monthly';
+        const newStripePriceId = updatedSubscription.items.data[0]?.price?.id;
+
+        // Trouver le plan correspondant au stripePriceId
+        const priceField = newBillingPeriod === 'yearly' ? 'stripePriceIdYearly' : 'stripePriceIdMonthly';
+        const newPlan = await prisma.subscriptionPlan.findFirst({
+          where: { [priceField]: newStripePriceId }
+        });
+
+        if (newPlan) {
+          // Mettre à jour la DB immédiatement
+          await prisma.subscription.update({
+            where: { userId },
+            data: {
+              planId: newPlan.id,
+              stripePriceId: newStripePriceId,
+              billingPeriod: newBillingPeriod,
+              status: updatedSubscription.status,
+              currentPeriodStart: new Date(updatedSubscription.current_period_start * 1000),
+              currentPeriodEnd: new Date(updatedSubscription.current_period_end * 1000),
+            },
+          });
+
+          console.log(`[Checkout Subscription] DB mise à jour immédiatement : plan ${newPlan.name}, période ${newBillingPeriod}`);
+        } else {
+          console.error('[Checkout Subscription] Plan introuvable pour stripePriceId:', newStripePriceId);
+        }
+
+        // Rediriger l'utilisateur vers la page de succès
+        return NextResponse.json({
+          updated: true,
+          subscriptionId: updatedSubscription.id,
+          url: `${process.env.NEXT_PUBLIC_SITE_URL}/account/subscriptions?success=true&updated=true`,
+        });
+      } catch (error) {
+        console.error('[Checkout Subscription] Erreur mise à jour abonnement:', error);
+        return NextResponse.json(
+          { error: error.message || 'Erreur lors de la mise à jour de l\'abonnement' },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Sinon, créer une nouvelle session de checkout (nouvel abonnement)
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { email: true, name: true, stripeCustomerId: true },

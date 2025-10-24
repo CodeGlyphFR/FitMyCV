@@ -133,13 +133,6 @@ async function handleSubscriptionUpdate(subscriptionData) {
     return;
   }
 
-  const planId = parseInt(subscriptionData.metadata?.planId, 10);
-
-  if (!planId) {
-    console.error('[Webhook] planId manquant dans metadata subscription');
-    return;
-  }
-
   // Récupérer l'objet subscription complet depuis Stripe API
   // car le webhook peut envoyer des données incomplètes
   let subscription;
@@ -153,6 +146,27 @@ async function handleSubscriptionUpdate(subscriptionData) {
   // Déterminer la période de facturation
   const interval = subscription.items.data[0]?.price?.recurring?.interval;
   const billingPeriod = interval === 'year' ? 'yearly' : 'monthly';
+
+  // Récupérer le stripePriceId pour identifier le plan
+  const stripePriceId = subscription.items.data[0]?.price?.id;
+
+  if (!stripePriceId) {
+    console.error('[Webhook] stripePriceId manquant dans subscription');
+    return;
+  }
+
+  // Trouver le plan correspondant au stripePriceId
+  const priceField = billingPeriod === 'yearly' ? 'stripePriceIdYearly' : 'stripePriceIdMonthly';
+  const plan = await prisma.subscriptionPlan.findFirst({
+    where: { [priceField]: stripePriceId }
+  });
+
+  if (!plan) {
+    console.error('[Webhook] Plan introuvable pour stripePriceId:', stripePriceId, 'billingPeriod:', billingPeriod);
+    return;
+  }
+
+  const planId = plan.id;
 
   // Vérifier les dates
   if (!subscription.current_period_start || !subscription.current_period_end) {

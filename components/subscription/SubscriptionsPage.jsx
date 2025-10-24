@@ -11,6 +11,7 @@ import FeatureCountersCard from "./FeatureCountersCard";
 import CreditBalanceCard from "./CreditBalanceCard";
 import CreditPacksCards from "./CreditPacksCards";
 import CreditTransactionsTable from "./CreditTransactionsTable";
+import InvoicesTable from "./InvoicesTable";
 
 export default function SubscriptionsPage({ user }) {
   const searchParams = useSearchParams();
@@ -43,7 +44,12 @@ export default function SubscriptionsPage({ user }) {
   // Gérer les messages de succès après paiement Stripe
   React.useEffect(() => {
     if (searchParams.get('success') === 'true') {
-      setSuccessMessage("✅ Abonnement activé avec succès !");
+      const isUpdated = searchParams.get('updated') === 'true';
+      if (isUpdated) {
+        setSuccessMessage("✅ Abonnement mis à jour avec succès !");
+      } else {
+        setSuccessMessage("✅ Abonnement activé avec succès !");
+      }
       setTimeout(() => setSuccessMessage(""), 5000);
       // Rafraîchir les données après un petit délai pour laisser le webhook se traiter
       setTimeout(() => refreshData(), 1000);
@@ -102,6 +108,33 @@ export default function SubscriptionsPage({ user }) {
     }, [refreshData]),
     enabled: true,
   });
+
+  // Fonction pour annuler l'abonnement
+  const handleCancelSubscription = React.useCallback(async () => {
+    try {
+      const response = await fetch('/api/subscription/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ immediate: false }), // Annulation à la fin de la période
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Erreur lors de l\'annulation');
+      }
+
+      const data = await response.json();
+      setSuccessMessage("✅ Votre abonnement sera annulé à la fin de la période actuelle.");
+      setTimeout(() => setSuccessMessage(""), 5000);
+
+      // Rafraîchir les données pour afficher le nouveau status
+      await refreshData();
+    } catch (err) {
+      console.error('Error canceling subscription:', err);
+      setError(err.message || 'Erreur lors de l\'annulation');
+      setTimeout(() => setError(null), 5000);
+    }
+  }, [refreshData]);
 
   const tabs = [
     { id: "subscription", label: "Abonnement", icon: Crown },
@@ -186,6 +219,7 @@ export default function SubscriptionsPage({ user }) {
                 subscription={subscriptionData.subscription}
                 plan={subscriptionData.subscription?.plan}
                 cvStats={subscriptionData.cvStats}
+                onCancelSubscription={handleCancelSubscription}
               />
               <FeatureCountersCard
                 featureCounters={subscriptionData.featureCounters}
@@ -207,7 +241,10 @@ export default function SubscriptionsPage({ user }) {
           )}
 
           {activeTab === "history" && (
-            <CreditTransactionsTable />
+            <div className="space-y-6">
+              <CreditTransactionsTable />
+              <InvoicesTable />
+            </div>
           )}
         </div>
 
