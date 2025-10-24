@@ -341,25 +341,18 @@ sequenceDiagram
 
     User->>MatchScore: Click "Actualiser le score"
     MatchScore->>API: POST {filename}
-    API->>DB: Check token limit (matchScoreRefreshCount)
-    alt Tokens available
-        API->>DB: Decrement token (-1)
-        API->>DB: Create BackgroundTask
-        API->>JobQueue: Enqueue calculateMatchScoreJob
-        API-->>MatchScore: {taskId}
+    API->>DB: Create BackgroundTask
+    API->>JobQueue: Enqueue calculateMatchScoreJob
+    API-->>MatchScore: {taskId}
 
-        JobQueue->>JobQueue: Read CV + job offer
-        JobQueue->>OpenAI: Calculate match score + analysis
-        OpenAI-->>JobQueue: {score, breakdown, suggestions, skills}
-        JobQueue->>DB: Update CvFile (matchScore, suggestions, etc.)
-        JobQueue->>DB: Update task (completed)
+    JobQueue->>JobQueue: Read CV + job offer
+    JobQueue->>OpenAI: Calculate match score + analysis
+    OpenAI-->>JobQueue: {score, breakdown, suggestions, skills}
+    JobQueue->>DB: Update CvFile (matchScore, suggestions, etc.)
+    JobQueue->>DB: Update task (completed)
 
-        MatchScore->>MatchScore: Poll until completed
-        MatchScore->>MatchScore: Display score + suggestions
-    else No tokens
-        API-->>MatchScore: {error: "No tokens"}
-        MatchScore->>User: Show token limit message
-    end
+    MatchScore->>MatchScore: Poll until completed
+    MatchScore->>MatchScore: Display score + suggestions
 ```
 
 ### 3. Optimisation de CV

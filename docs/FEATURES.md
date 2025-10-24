@@ -249,22 +249,6 @@ Calcule un score de correspondance (0-100) entre un CV et une offre d'emploi, av
 }
 ```
 
-### Rate Limiting Tokens
-
-Chaque utilisateur dispose de **5 tokens** (configurable via settings).
-
-**Règles** :
-
-- 1 token = 1 calcul de match score
-- Reset à 5 après 24h d'inactivité
-- Admin peut modifier la limite globale
-
-**Affichage** :
-
-- Tokens restants dans TopBar
-- Message d'alerte à 0 tokens
-- Compteur avec barre de progression
-
 ### API
 
 ```javascript

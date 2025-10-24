@@ -92,7 +92,7 @@ La documentation est organisée en plusieurs fichiers thématiques :
   - Configuration des modèles
   - Stratégies de prompts
   - Gestion des coûts
-  - Rate limiting tokens
+  - Télémétrie OpenAI
 
 - **[SECURITY.md](./SECURITY.md)** - Guide de sécurité
   - Chiffrement AES-256-GCM

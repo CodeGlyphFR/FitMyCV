@@ -61,10 +61,6 @@ model User {
   image         String?
   role          String        @default("USER") // USER | ADMIN
 
-  // Rate limiting tokens
-  matchScoreRefreshCount Int       @default(0)  // Tokens restants (reset après 24h)
-  tokenLastUsage        DateTime? // Dernière utilisation d'un token
-
   // Password reset
   resetToken       String?
   resetTokenExpiry DateTime?
@@ -93,7 +89,6 @@ model User {
 | `emailVerified` | DateTime | Date de vérification email |
 | `passwordHash` | String | Hash bcrypt (null pour OAuth) |
 | `role` | String | USER ou ADMIN |
-| `matchScoreRefreshCount` | Int | Tokens pour match score (défaut: 5) |
 
 ---
 
@@ -683,19 +678,7 @@ const task = await prisma.backgroundTask.create({
 });
 ```
 
-### 4. Décrémenter les tokens match score
-
-```javascript
-await prisma.user.update({
-  where: { id: userId },
-  data: {
-    matchScoreRefreshCount: { decrement: 1 },
-    tokenLastUsage: new Date(),
-  }
-});
-```
-
-### 5. Logger un événement télémétrie
+### 4. Logger un événement télémétrie
 
 ```javascript
 await prisma.telemetryEvent.create({
@@ -711,7 +694,7 @@ await prisma.telemetryEvent.create({
 });
 ```
 
-### 6. Agrégation usage OpenAI par jour
+### 5. Agrégation usage OpenAI par jour
 
 ```javascript
 const usage = await prisma.openAIUsage.groupBy({

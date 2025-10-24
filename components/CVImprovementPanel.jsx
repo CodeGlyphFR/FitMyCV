@@ -5,7 +5,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { RefreshCw } from "lucide-react";
 
-export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
+export default function CVImprovementPanel({ cvFile }) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cvData, setCvData] = useState(null);

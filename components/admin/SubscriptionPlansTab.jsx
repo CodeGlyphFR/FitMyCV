@@ -124,7 +124,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
     yearlyDiscountPercent: 0,
     priceCurrency: 'EUR',
     maxCvCount: -1,
-    tokenCount: 5,
   });
   const [featureLimits, setFeatureLimits] = useState({});
 
@@ -164,7 +163,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
       yearlyDiscountPercent: 0,
       priceCurrency: 'EUR',
       maxCvCount: -1,
-      tokenCount: 5,
     });
 
     // Initialiser les features avec des valeurs par défaut
@@ -174,7 +172,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
       defaultFeatures[featureName] = {
         isEnabled: true,
         usageLimit: -1,
-        requiresToken: false,
         allowedAnalysisLevels: config.hasAnalysisLevels
           ? ['rapid', 'medium', 'deep']
           : null,
@@ -196,7 +193,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
       yearlyDiscountPercent: plan.yearlyDiscountPercent,
       priceCurrency: plan.priceCurrency,
       maxCvCount: plan.maxCvCount,
-      tokenCount: plan.tokenCount,
     });
 
     // Charger les features existantes
@@ -205,7 +201,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
       existingFeatures[fl.featureName] = {
         isEnabled: fl.isEnabled,
         usageLimit: fl.usageLimit,
-        requiresToken: fl.requiresToken,
         allowedAnalysisLevels: fl.allowedAnalysisLevels
           ? JSON.parse(fl.allowedAnalysisLevels)
           : null,
@@ -219,7 +214,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
         existingFeatures[featureName] = {
           isEnabled: true,
           usageLimit: -1,
-          requiresToken: false,
           allowedAnalysisLevels: config.hasAnalysisLevels
             ? ['rapid', 'medium', 'deep']
             : null,
@@ -253,7 +247,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
             featureName,
             isEnabled: config.isEnabled,
             usageLimit: config.usageLimit,
-            requiresToken: config.requiresToken,
             allowedAnalysisLevels: config.allowedAnalysisLevels,
           })),
         }),
@@ -297,7 +290,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
             featureName,
             isEnabled: config.isEnabled,
             usageLimit: config.usageLimit,
-            requiresToken: config.requiresToken,
             allowedAnalysisLevels: config.allowedAnalysisLevels,
           })),
         }),
@@ -412,7 +404,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
         {plans.map((plan) => {
           const enabledFeatures = plan.featureLimits.filter((fl) => fl.isEnabled).length;
           const unlimitedCvs = plan.maxCvCount === -1;
-          const tokenFeatures = plan.featureLimits.filter((fl) => fl.requiresToken).length;
 
           return (
             <div
@@ -455,18 +446,10 @@ export function SubscriptionPlansTab({ refreshKey }) {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Tokens</span>
-                  <span className="text-white font-medium">{plan.tokenCount}</span>
-                </div>
-                <div className="flex items-center justify-between">
                   <span className="text-sm text-white/60">Features activées</span>
                   <span className="text-white font-medium">
                     {enabledFeatures} / {Object.keys(MACRO_FEATURES).length}
                   </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Features avec tokens</span>
-                  <span className="text-yellow-400 font-medium">{tokenFeatures}</span>
                 </div>
               </div>
 
@@ -673,16 +656,6 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                 />
               </div>
 
-              <div>
-                <label className="text-white/60 text-sm mb-2 block">Nombre de tokens *</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={formData.tokenCount}
-                  onChange={(e) => setFormData({ ...formData, tokenCount: parseInt(e.target.value, 10) || 0 })}
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
-                />
-              </div>
             </div>
           </div>
 
@@ -704,9 +677,6 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                         Activée
                       </th>
                       <th className="px-4 py-3 text-center text-xs font-medium text-white/60 uppercase">
-                        Mode Token
-                      </th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-white/60 uppercase">
                         Limite
                       </th>
                       <th className="px-4 py-3 text-center text-xs font-medium text-white/60 uppercase">
@@ -719,7 +689,6 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                       const limit = featureLimits[featureName] || {
                         isEnabled: true,
                         usageLimit: -1,
-                        requiresToken: false,
                         allowedAnalysisLevels: null,
                       };
 
@@ -756,29 +725,6 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                             </div>
                           </td>
 
-                          {/* Mode Token */}
-                          <td className="px-4 py-3 text-center">
-                            {isAIFeature && (
-                              <div className="flex justify-center">
-                                <ToggleSwitch
-                                  enabled={limit.requiresToken}
-                                  onChange={(enabled) =>
-                                    setFeatureLimits({
-                                      ...featureLimits,
-                                      [featureName]: {
-                                        ...limit,
-                                        requiresToken: enabled,
-                                        // Si mode token activé, mettre la limite à -1 automatiquement
-                                        usageLimit: enabled ? -1 : limit.usageLimit,
-                                      },
-                                    })
-                                  }
-                                  disabled={!limit.isEnabled}
-                                />
-                              </div>
-                            )}
-                          </td>
-
                           {/* Limite */}
                           <td className="px-4 py-3">
                             <input
@@ -794,13 +740,8 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                                   },
                                 })
                               }
-                              disabled={!limit.isEnabled || limit.requiresToken}
+                              disabled={!limit.isEnabled}
                               className="w-24 mx-auto block px-3 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm text-center focus:outline-none focus:border-blue-400/50 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-white/5"
-                              title={
-                                limit.requiresToken
-                                  ? 'Limite désactivée en mode Token (géré par le nombre de tokens)'
-                                  : ''
-                              }
                             />
                           </td>
 

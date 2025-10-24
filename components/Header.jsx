@@ -28,10 +28,6 @@ export default function Header(props){
   const [matchScoreStatus, setMatchScoreStatus] = React.useState("idle");
   const [optimiseStatus, setOptimiseStatus] = React.useState("idle");
   const [isLoadingMatchScore, setIsLoadingMatchScore] = React.useState(false);
-  const [canRefreshScore, setCanRefreshScore] = React.useState(true);
-  const [refreshCount, setRefreshCount] = React.useState(0);
-  const [hoursUntilReset, setHoursUntilReset] = React.useState(0);
-  const [minutesUntilReset, setMinutesUntilReset] = React.useState(0);
   const [currentCvFile, setCurrentCvFile] = React.useState(null);
   const [hasExtractedJobOffer, setHasExtractedJobOffer] = React.useState(false);
   const [hasScoreBreakdown, setHasScoreBreakdown] = React.useState(false);
@@ -130,10 +126,6 @@ export default function Header(props){
         setMatchScore(data.score);
         setMatchScoreStatus(finalStatus);
         setOptimiseStatus(finalOptimiseStatus);
-        setCanRefreshScore(data.canRefresh ?? true);
-        setRefreshCount(data.refreshCount || 0);
-        setHoursUntilReset(data.hoursUntilReset || 0);
-        setMinutesUntilReset(data.minutesUntilReset || 0);
         setHasExtractedJobOffer(data.hasExtractedJobOffer || false);
         setHasScoreBreakdown(data.hasScoreBreakdown || false);
 
@@ -181,10 +173,6 @@ export default function Header(props){
           setMatchScore(null);
           setMatchScoreStatus('idle');
           setOptimiseStatus('idle');
-          setCanRefreshScore(true);
-          setRefreshCount(0);
-          setHoursUntilReset(0);
-          setMinutesUntilReset(0);
           setHasExtractedJobOffer(false);
           setHasScoreBreakdown(false);
           setIsLoadingMatchScore(false);
@@ -271,16 +259,6 @@ export default function Header(props){
   // Pas de SSE - l'utilisateur rafraîchira manuellement pour voir le résultat
 
   const handleRefreshMatchScore = React.useCallback(async () => {
-    // Vérifier le rate limit avant de commencer
-    if (!canRefreshScore) {
-      addNotification({
-        type: "error",
-        message: t("matchScore.rateLimitExceeded", { hours: hoursUntilReset, minutes: minutesUntilReset }),
-        duration: 5000,
-      });
-      return;
-    }
-
     // Mise à jour optimiste : passer immédiatement le status en loading
     setMatchScoreStatus('inprogress');
     setIsLoadingMatchScore(true);
@@ -309,23 +287,8 @@ export default function Header(props){
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        // Gestion spéciale pour le rate limit
-        if (response.status === 429) {
-          setCanRefreshScore(false);
-          const hours = data.hoursLeft || 24;
-          const minutes = data.minutesLeft || 0;
-          setHoursUntilReset(hours);
-          setMinutesUntilReset(minutes);
-          throw new Error(t("matchScore.rateLimitExceeded", { hours, minutes }));
-        }
-
         const errorMessage = data.details || data.error || "Impossible de lancer le calcul.";
         throw new Error(errorMessage);
-      }
-
-      // Succès - émettre l'événement pour mettre à jour les compteurs de tokens
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('tokens:updated'));
       }
     } catch (error) {
 
@@ -339,7 +302,7 @@ export default function Header(props){
         duration: 6000,
       });
     }
-  }, [t, addNotification, canRefreshScore, hoursUntilReset, minutesUntilReset, localDeviceId]);
+  }, [t, addNotification, localDeviceId]);
 
   // Si le CV est vide (pas de header), ne pas afficher le composant
   const isEmpty = !header.full_name && !header.current_title && !header.contact?.email;
@@ -498,10 +461,6 @@ export default function Header(props){
               score={matchScore}
               status={matchScoreStatus === 'inprogress' ? 'loading' : matchScoreStatus}
               isLoading={isLoadingMatchScore}
-              canRefresh={canRefreshScore}
-              refreshCount={refreshCount}
-              hoursUntilReset={hoursUntilReset}
-              minutesUntilReset={minutesUntilReset}
               onRefresh={handleRefreshMatchScore}
               currentCvFile={currentCvFile}
               hasExtractedJobOffer={hasExtractedJobOffer}
@@ -515,7 +474,6 @@ export default function Header(props){
             <div className="absolute bottom-0 right-2">
               <CVImprovementPanel
                 cvFile={currentCvFile}
-                canRefresh={canRefreshScore}
               />
             </div>
           )}

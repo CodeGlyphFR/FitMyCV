@@ -757,11 +757,6 @@ Calculer le score de correspondance entre un CV et une offre.
 }
 ```
 
-**Token requis** : Consomme 1 token de `matchScoreRefreshCount`
-
-**Erreurs** :
-- `429` : Pas de tokens disponibles
-
 ---
 
 ### POST `/api/background-tasks/test`
@@ -839,7 +834,6 @@ Détails d'un utilisateur (admin only).
     "name": "John Doe",
     "role": "USER",
     "emailVerified": "2025-01-15T10:00:00.000Z",
-    "matchScoreRefreshCount": 3,
     "createdAt": "2025-01-15T09:00:00.000Z",
     "cvs": [...],
     "feedbacks": [...],
@@ -1201,7 +1195,6 @@ Récupérer le profil de l'utilisateur connecté.
     "email": "user@example.com",
     "name": "John Doe",
     "emailVerified": "2025-01-15T10:00:00.000Z",
-    "matchScoreRefreshCount": 3,
     "createdAt": "2025-01-15T09:00:00.000Z"
   }
 }
@@ -1401,23 +1394,6 @@ Settings publics (non-admin).
     "registration_enabled": "1",
     "maintenance_mode": "0"
   }
-}
-```
-
----
-
-### GET `/api/user/rate-limit`
-
-Informations sur le rate limit de l'utilisateur.
-
-**Auth** : Requise
-
-**Réponse (200)** :
-
-```json
-{
-  "matchScoreRefreshCount": 3,
-  "tokenLastUsage": "2025-01-15T10:00:00.000Z"
 }
 ```
 

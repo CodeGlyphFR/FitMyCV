@@ -145,7 +145,6 @@ export async function PATCH(request, { params }) {
           featureName: fl.featureName,
           isEnabled: fl.isEnabled ?? true,
           usageLimit: fl.usageLimit ?? -1,
-          requiresToken: fl.requiresToken ?? false,
           allowedAnalysisLevels: fl.allowedAnalysisLevels ? JSON.stringify(fl.allowedAnalysisLevels) : null,
         })),
       };

@@ -10,10 +10,6 @@ export default function MatchScore({
   score,
   status,
   isLoading = false,
-  canRefresh,
-  refreshCount,
-  hoursUntilReset,
-  minutesUntilReset,
   onRefresh,
   currentCvFile,
   hasExtractedJobOffer = false,
@@ -126,9 +122,8 @@ export default function MatchScore({
   }
 
   const handleRefresh = async () => {
-    // Vérifier avec le ref pour bloquer immédiatement (avant que l'état ne se mette à jour)
-    // Aussi bloquer si une optimisation est en cours
-    if (!canRefresh || status === "loading" || isRefreshing || isRefreshingRef.current || optimiseStatus === "inprogress") {
+    // Bloquer si chargement en cours ou optimisation en cours
+    if (status === "loading" || isRefreshing || isRefreshingRef.current || optimiseStatus === "inprogress") {
       return;
     }
 
@@ -207,10 +202,7 @@ export default function MatchScore({
     return "border-red-700";
   };
 
-  const isDisabled = shouldShowLoading || !canRefresh;
-
-  // refreshCount représente maintenant directement les tokens restants
-  const refreshesLeft = refreshCount;
+  const isDisabled = shouldShowLoading;
 
   const getScoreTooltip = () => {
     // Si optimisation en cours
@@ -223,29 +215,12 @@ export default function MatchScore({
     }
     // WORKAROUND iOS: Si on a un score, montrer le score même si status=loading
     if (score !== null && score !== undefined) {
-      if (!canRefresh) {
-        // Si plus de tokens disponibles (refreshesLeft === 0)
-        if (refreshesLeft === 0) {
-          return t("matchScore.noTokensLeft");
-        }
-        return t("matchScore.resetIn", { hours: hoursUntilReset, minutes: minutesUntilReset });
-      }
       return `Score: ${score}`;
     }
     if (status === "error") {
       return t("matchScore.failed");
     }
     return t("matchScore.notCalculated");
-  };
-
-  // Déterminer la couleur de la petite bulle selon les refresh restants
-  const getBadgeColor = () => {
-    if (refreshesLeft === 0) return "bg-gray-400";
-    if (refreshesLeft === 1) return "bg-red-500";
-    if (refreshesLeft === 2) return "bg-orange-500";
-    if (refreshesLeft === 3) return "bg-yellow-500";
-    if (refreshesLeft === 4) return "bg-lime-500";
-    return "bg-green-500";
   };
 
   return (
@@ -317,22 +292,6 @@ export default function MatchScore({
           </div>
         )}
       </div>
-
-      {/* Petite bulle avec le nombre de refresh restants */}
-      {refreshCount >= 0 && !shouldShowLoading && (
-        <div
-          className={`
-            absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full
-            ${getBadgeColor()}
-            flex items-center justify-center
-            text-white text-[10px] font-bold
-            shadow-md border-2 border-white
-            transition-all duration-300
-          `}
-        >
-          {refreshesLeft}
-        </div>
-      )}
     </div>
   );
 }

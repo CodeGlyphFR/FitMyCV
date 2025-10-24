@@ -218,7 +218,6 @@ export async function DELETE(request, { params }) {
 |-------------|-------|-------------|
 | `registration_enabled` | 1 | Autoriser les inscriptions (0 = fermé) |
 | `maintenance_mode` | 0 | Mode maintenance (1 = activé) |
-| `default_token_limit` | 5 | Nombre de tokens par défaut |
 
 #### Actions
 
@@ -346,7 +345,6 @@ Affiche :
 - **Price Yearly** : Prix annuel (€)
 - **Yearly Discount** : % de réduction annuelle
 - **Max CV Count** : Nombre max de CVs (-1 = illimité)
-- **Token Count** : Tokens de match score par défaut
 
 #### Feature Limits
 
@@ -354,13 +352,13 @@ Chaque plan a des limites par feature :
 
 **SubscriptionPlanFeatureLimit** :
 
-| Feature | Enabled | Usage Limit | Requires Token | Allowed Analysis Levels |
-|---------|---------|-------------|----------------|-------------------------|
-| `generate_cv` | ✅ | -1 (illimité) | ❌ | ["rapid", "medium", "deep"] |
-| `import_pdf` | ✅ | 10/mois | ❌ | ["medium"] |
-| `translate_cv` | ✅ | 5/mois | ❌ | - |
-| `calculate_match_score` | ✅ | - | ✅ (1 token/call) | - |
-| `export_cv` | ✅ | -1 | ❌ | - |
+| Feature | Enabled | Usage Limit | Allowed Analysis Levels |
+|---------|---------|-------------|-------------------------|
+| `generate_cv` | ✅ | -1 (illimité) | ["rapid", "medium", "deep"] |
+| `import_pdf` | ✅ | 10/mois | ["medium"] |
+| `translate_cv` | ✅ | 5/mois | - |
+| `calculate_match_score` | ✅ | -1 | - |
+| `export_cv` | ✅ | -1 | - |
 
 **Exemple : Plan Gratuit**
 
@@ -371,20 +369,17 @@ Chaque plan a des limites par feature :
   "priceMonthly": 0,
   "priceYearly": 0,
   "maxCvCount": 3,
-  "tokenCount": 5,
   "featureLimits": [
     {
       "featureName": "generate_cv",
       "isEnabled": true,
       "usageLimit": 3,  // 3 générations/mois
-      "requiresToken": false,
       "allowedAnalysisLevels": ["rapid"]
     },
     {
       "featureName": "import_pdf",
       "isEnabled": false,
-      "usageLimit": 0,
-      "requiresToken": false
+      "usageLimit": 0
     }
   ]
 }
@@ -403,8 +398,7 @@ POST /api/admin/subscription-plans
   "priceYearly": 99.99,
   "yearlyDiscountPercent": 16.7,
   "priceCurrency": "EUR",
-  "maxCvCount": -1,  // Illimité
-  "tokenCount": 20
+  "maxCvCount": -1  // Illimité
 }
 ```
 

@@ -69,7 +69,6 @@ export async function GET(request) {
           role: true,
           emailVerified: true,
           createdAt: true,
-          matchScoreRefreshCount: true,
           _count: {
             select: {
               cvs: true,
@@ -139,7 +138,6 @@ export async function GET(request) {
       role: user.role,
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
-      matchScoreRefreshCount: user.matchScoreRefreshCount,
       cvCount: user._count.cvs,
       lastActivity: activityMap.get(user.id) || user.createdAt,
       oauthProviders: user.accounts.map(a => a.provider),
