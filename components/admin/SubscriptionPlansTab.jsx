@@ -103,32 +103,49 @@ const ANALYSIS_LEVEL_FEATURES = Object.entries(MACRO_FEATURES)
 
 export function SubscriptionPlansTab({ refreshKey }) {
   const [plans, setPlans] = useState([]);
+  const [packs, setPacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
-  // Modals
+  // Modals Plans
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
+
+  // Modals Packs
+  const [showCreatePackModal, setShowCreatePackModal] = useState(false);
+  const [showEditPackModal, setShowEditPackModal] = useState(false);
+  const [selectedPack, setSelectedPack] = useState(null);
 
   // Toast et Confirm
   const [toast, setToast] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
 
-  // Formulaire
+  // Formulaire Plans
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    priceMonthly: 0,
-    priceYearly: 0,
-    yearlyDiscountPercent: 0,
+    priceMonthly: '0',
+    priceYearly: '0',
+    yearlyDiscountPercent: '0',
     priceCurrency: 'EUR',
     maxCvCount: -1,
   });
   const [featureLimits, setFeatureLimits] = useState({});
 
+  // Formulaire Packs
+  const [packFormData, setPackFormData] = useState({
+    name: '',
+    description: '',
+    creditAmount: 0,
+    price: '0',
+    priceCurrency: 'EUR',
+    isActive: true,
+  });
+
   useEffect(() => {
     fetchPlans();
+    fetchPacks();
   }, [refreshKey]);
 
   async function fetchPlans() {
@@ -153,14 +170,30 @@ export function SubscriptionPlansTab({ refreshKey }) {
     }
   }
 
+  async function fetchPacks() {
+    try {
+      const response = await fetch('/api/admin/credit-packs');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Erreur serveur' }));
+        throw new Error(errorData.error || 'Failed to fetch packs');
+      }
+
+      const data = await response.json();
+      setPacks(data.packs || []);
+    } catch (error) {
+      console.error('Error fetching credit packs:', error);
+      setToast({ type: 'error', message: `Erreur: ${error.message}` });
+    }
+  }
+
   // Ouvrir modal de création
   function openCreateModal() {
     setFormData({
       name: '',
       description: '',
-      priceMonthly: 0,
-      priceYearly: 0,
-      yearlyDiscountPercent: 0,
+      priceMonthly: '0',
+      priceYearly: '0',
+      yearlyDiscountPercent: '0',
       priceCurrency: 'EUR',
       maxCvCount: -1,
     });
@@ -243,6 +276,9 @@ export function SubscriptionPlansTab({ refreshKey }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          priceMonthly: parseFloat(formData.priceMonthly) || 0,
+          priceYearly: parseFloat(formData.priceYearly) || 0,
+          yearlyDiscountPercent: parseFloat(formData.yearlyDiscountPercent) || 0,
           featureLimits: Object.entries(featureLimits).map(([featureName, config]) => ({
             featureName,
             isEnabled: config.isEnabled,
@@ -286,6 +322,9 @@ export function SubscriptionPlansTab({ refreshKey }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          priceMonthly: parseFloat(formData.priceMonthly) || 0,
+          priceYearly: parseFloat(formData.priceYearly) || 0,
+          yearlyDiscountPercent: parseFloat(formData.yearlyDiscountPercent) || 0,
           featureLimits: Object.entries(featureLimits).map(([featureName, config]) => ({
             featureName,
             isEnabled: config.isEnabled,
@@ -347,6 +386,157 @@ export function SubscriptionPlansTab({ refreshKey }) {
     });
   }
 
+  // ========== CREDIT PACKS FUNCTIONS ==========
+
+  // Ouvrir modal de création de pack
+  function openCreatePackModal() {
+    setPackFormData({
+      name: '',
+      description: '',
+      creditAmount: 10,
+      price: '5',
+      priceCurrency: 'EUR',
+      isActive: true,
+    });
+    setShowCreatePackModal(true);
+  }
+
+  // Ouvrir modal d'édition de pack
+  function openEditPackModal(pack) {
+    setSelectedPack(pack);
+    setPackFormData({
+      name: pack.name,
+      description: pack.description || '',
+      creditAmount: pack.creditAmount,
+      price: pack.price,
+      priceCurrency: pack.priceCurrency,
+      isActive: pack.isActive,
+    });
+    setShowEditPackModal(true);
+  }
+
+  // Créer un pack
+  async function handleCreatePack() {
+    if (updating) return;
+
+    // Validation
+    if (!packFormData.name.trim()) {
+      setToast({ type: 'error', message: 'Nom du pack requis' });
+      return;
+    }
+
+    if (packFormData.creditAmount <= 0) {
+      setToast({ type: 'error', message: 'Le nombre de crédits doit être supérieur à 0' });
+      return;
+    }
+
+    try {
+      setUpdating(true);
+
+      const response = await fetch('/api/admin/credit-packs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...packFormData,
+          price: parseFloat(packFormData.price) || 0,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Erreur serveur' }));
+        throw new Error(errorData.error || 'Erreur lors de la création du pack');
+      }
+
+      setToast({ type: 'success', message: 'Pack créé avec succès' });
+      setShowCreatePackModal(false);
+      await fetchPacks();
+    } catch (error) {
+      console.error('Error creating pack:', error);
+      setToast({ type: 'error', message: error.message });
+    } finally {
+      setUpdating(false);
+    }
+  }
+
+  // Modifier un pack
+  async function handleUpdatePack() {
+    if (updating || !selectedPack) return;
+
+    // Validation
+    if (!packFormData.name.trim()) {
+      setToast({ type: 'error', message: 'Nom du pack requis' });
+      return;
+    }
+
+    if (packFormData.creditAmount <= 0) {
+      setToast({ type: 'error', message: 'Le nombre de crédits doit être supérieur à 0' });
+      return;
+    }
+
+    try {
+      setUpdating(true);
+
+      const response = await fetch(`/api/admin/credit-packs/${selectedPack.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...packFormData,
+          price: parseFloat(packFormData.price) || 0,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Erreur serveur' }));
+        throw new Error(errorData.error || 'Erreur lors de la mise à jour du pack');
+      }
+
+      setToast({ type: 'success', message: 'Pack mis à jour avec succès' });
+      setShowEditPackModal(false);
+      setSelectedPack(null);
+      await fetchPacks();
+    } catch (error) {
+      console.error('Error updating pack:', error);
+      setToast({ type: 'error', message: error.message });
+    } finally {
+      setUpdating(false);
+    }
+  }
+
+  // Supprimer un pack
+  function handleDeletePack(pack) {
+    if (updating) return;
+
+    setConfirmDialog({
+      title: 'Supprimer ce pack de crédits ?',
+      message: `Êtes-vous sûr de vouloir supprimer le pack "${pack.name}" ? Cette action est irréversible.`,
+      type: 'danger',
+      confirmText: 'Supprimer définitivement',
+      cancelText: 'Annuler',
+      onConfirm: async () => {
+        try {
+          setUpdating(true);
+
+          const response = await fetch(`/api/admin/credit-packs/${pack.id}`, {
+            method: 'DELETE',
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Erreur serveur' }));
+            throw new Error(errorData.error || 'Erreur lors de la suppression du pack');
+          }
+
+          setToast({ type: 'success', message: 'Pack supprimé avec succès' });
+          await fetchPacks();
+        } catch (error) {
+          console.error('Error deleting pack:', error);
+          setToast({ type: 'error', message: error.message });
+        } finally {
+          setUpdating(false);
+        }
+      },
+    });
+  }
+
   if (loading && plans.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -357,8 +547,9 @@ export function SubscriptionPlansTab({ refreshKey }) {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* KPI Cards - Plans & Packs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* KPI Plans */}
         <KPICard
           icon="💳"
           label="Plans disponibles"
@@ -384,6 +575,37 @@ export function SubscriptionPlansTab({ refreshKey }) {
           subtitle="disponibles"
           description="Nombre de plans avec un tarif gratuit"
         />
+
+        {/* KPI Packs */}
+        <KPICard
+          icon="🎫"
+          label="Packs disponibles"
+          value={packs.length}
+          subtitle="au total"
+          description="Nombre total de packs de crédits configurés"
+        />
+        <KPICard
+          icon="💵"
+          label="Pack le plus cher"
+          value={
+            packs.length > 0
+              ? `${Math.max(...packs.map((p) => p.price)).toFixed(2)} €`
+              : '-'
+          }
+          subtitle="prix maximum"
+          description="Prix le plus élevé parmi les packs disponibles"
+        />
+        <KPICard
+          icon="⚡"
+          label="Crédits moyens/pack"
+          value={
+            packs.length > 0
+              ? Math.round(packs.reduce((sum, p) => sum + p.creditAmount, 0) / packs.length)
+              : 0
+          }
+          subtitle="crédits"
+          description="Nombre moyen de crédits par pack"
+        />
       </div>
 
       {/* Bouton créer plan */}
@@ -398,6 +620,11 @@ export function SubscriptionPlansTab({ refreshKey }) {
           Créer un plan
         </button>
       </div>
+
+      {/* Titre Section Plans */}
+      <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+        <span>💳</span> Plans d'abonnement
+      </h2>
 
       {/* Liste des plans */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -475,6 +702,89 @@ export function SubscriptionPlansTab({ refreshKey }) {
         })}
       </div>
 
+      {/* ========== CREDIT PACKS SECTION ========== */}
+      <div className="mt-12 pt-8 border-t border-white/20">
+        {/* Titre Section Packs */}
+        <h2 className="text-2xl font-bold text-white flex items-center gap-2 mb-6">
+          <span>🎫</span> Packs de crédits
+        </h2>
+
+        {/* Bouton créer pack */}
+        <div className="flex justify-end mb-6">
+          <button
+            onClick={openCreatePackModal}
+            className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Créer un pack
+          </button>
+        </div>
+
+        {/* Liste des packs */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {packs.map((pack) => (
+            <div
+              key={pack.id}
+              className={`bg-white/5 backdrop-blur-xl rounded-lg border p-6 hover:border-white/30 hover:bg-white/10 transition-all flex flex-col ${
+                pack.isActive ? 'border-white/10' : 'border-red-500/30 opacity-60'
+              }`}
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-xl font-bold text-white">{pack.name}</h3>
+                  {pack.description && (
+                    <p className="text-sm text-white/60 mt-1">{pack.description}</p>
+                  )}
+                  {!pack.isActive && (
+                    <span className="inline-block mt-2 px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded">
+                      Désactivé
+                    </span>
+                  )}
+                </div>
+                <div className="text-2xl">🎫</div>
+              </div>
+
+              {/* Prix et Crédits */}
+              <div className="mb-4 pb-4 border-b border-white/10">
+                <div className="flex items-baseline gap-1 mb-2">
+                  <span className="text-3xl font-bold text-white">
+                    {pack.price.toFixed(2)}
+                  </span>
+                  <span className="text-white/60">{pack.priceCurrency}</span>
+                </div>
+                <div className="text-sm text-green-400">
+                  {pack.creditAmount} crédits
+                </div>
+                <div className="text-xs text-white/40 mt-1">
+                  {(pack.price / pack.creditAmount).toFixed(2)} {pack.priceCurrency}/crédit
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 mt-auto">
+                <button
+                  onClick={() => openEditPackModal(pack)}
+                  disabled={updating}
+                  className="flex-1 px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Éditer
+                </button>
+                <button
+                  onClick={() => handleDeletePack(pack)}
+                  disabled={updating}
+                  className="flex-1 px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Supprimer
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Modal Créer Plan */}
       {showCreateModal && (
         <PlanModal
@@ -506,6 +816,33 @@ export function SubscriptionPlansTab({ refreshKey }) {
         />
       )}
 
+      {/* Modal Créer Pack */}
+      {showCreatePackModal && (
+        <PackModal
+          title="Créer un pack de crédits"
+          formData={packFormData}
+          setFormData={setPackFormData}
+          onSave={handleCreatePack}
+          onCancel={() => setShowCreatePackModal(false)}
+          updating={updating}
+        />
+      )}
+
+      {/* Modal Éditer Pack */}
+      {showEditPackModal && selectedPack && (
+        <PackModal
+          title={`Éditer le pack "${selectedPack.name}"`}
+          formData={packFormData}
+          setFormData={setPackFormData}
+          onSave={handleUpdatePack}
+          onCancel={() => {
+            setShowEditPackModal(false);
+            setSelectedPack(null);
+          }}
+          updating={updating}
+        />
+      )}
+
       {/* Toast et Confirm Dialog */}
       <Toast toast={toast} onClose={() => setToast(null)} />
       <ConfirmDialog dialog={confirmDialog} onClose={() => setConfirmDialog(null)} />
@@ -516,11 +853,13 @@ export function SubscriptionPlansTab({ refreshKey }) {
 // Composant Modal pour créer/éditer un plan
 function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimits, onSave, onCancel, updating }) {
   // Calculer le prix annuel estimé en temps réel
-  const estimatedYearlyPrice = formData.priceMonthly * 12 * (1 - formData.yearlyDiscountPercent / 100);
+  const priceMonthly = parseFloat(formData.priceMonthly) || 0;
+  const discountPercent = parseFloat(formData.yearlyDiscountPercent) || 0;
+  const estimatedYearlyPrice = priceMonthly * 12 * (1 - discountPercent / 100);
 
   // Appliquer la réduction calculée au prix annuel
   function applyCalculatedDiscount() {
-    setFormData({ ...formData, priceYearly: estimatedYearlyPrice });
+    setFormData({ ...formData, priceYearly: estimatedYearlyPrice.toString() });
   }
 
   return (
@@ -564,11 +903,10 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                 <div>
                   <label className="text-white/60 text-sm mb-2 block">Prix mensuel *</label>
                   <input
-                    type="number"
-                    step="0.01"
-                    min="0"
+                    type="text"
+                    inputMode="decimal"
                     value={formData.priceMonthly}
-                    onChange={(e) => setFormData({ ...formData, priceMonthly: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => setFormData({ ...formData, priceMonthly: e.target.value })}
                     className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
                   />
                 </div>
@@ -579,12 +917,10 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                     <span className="text-xs text-white/40" title="Pourcentage de réduction pour l'abonnement annuel">ℹ️</span>
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="100"
+                    type="text"
+                    inputMode="decimal"
                     value={formData.yearlyDiscountPercent}
-                    onChange={(e) => setFormData({ ...formData, yearlyDiscountPercent: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => setFormData({ ...formData, yearlyDiscountPercent: e.target.value })}
                     className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
                   />
                 </div>
@@ -812,6 +1148,121 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
             onClick={onSave}
             disabled={updating}
             className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {updating ? 'Enregistrement...' : 'Enregistrer'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Composant Modal pour créer/éditer un pack de crédits
+function PackModal({ title, formData, setFormData, onSave, onCancel, updating }) {
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-[9999] p-4 pt-32 overflow-y-auto">
+      <div className="bg-gray-900 border border-white/20 rounded-lg p-6 max-w-2xl w-full my-8">
+        <h3 className="text-xl font-bold text-white mb-6">{title}</h3>
+
+        <div className="space-y-6">
+          {/* Nom du pack */}
+          <div>
+            <label className="text-white/60 text-sm mb-2 block">Nom du pack *</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+              placeholder="Pack Starter, Pack Pro..."
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="text-white/60 text-sm mb-2 block">Description</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition resize-none"
+              placeholder="Description du pack..."
+              rows={3}
+            />
+          </div>
+
+          {/* Nombre de crédits */}
+          <div>
+            <label className="text-white/60 text-sm mb-2 block">Nombre de crédits *</label>
+            <input
+              type="number"
+              min="1"
+              value={formData.creditAmount}
+              onChange={(e) => setFormData({ ...formData, creditAmount: parseInt(e.target.value, 10) || 0 })}
+              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+            />
+          </div>
+
+          {/* Prix et Devise */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-white/60 text-sm mb-2 block">Prix *</label>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+              />
+            </div>
+
+            <div>
+              <label className="text-white/60 text-sm mb-2 block">Devise *</label>
+              <CustomSelect
+                value={formData.priceCurrency}
+                onChange={(value) => setFormData({ ...formData, priceCurrency: value })}
+                options={[
+                  { value: 'EUR', label: 'EUR (€)' },
+                  { value: 'USD', label: 'USD ($)' },
+                  { value: 'GBP', label: 'GBP (£)' },
+                ]}
+              />
+            </div>
+          </div>
+
+          {/* Prix unitaire calculé */}
+          {formData.creditAmount > 0 && formData.price > 0 && (
+            <div className="text-sm text-white/40 bg-white/5 p-3 rounded border border-white/10">
+              Prix par crédit : <strong className="text-white/60">{(formData.price / formData.creditAmount).toFixed(2)} {formData.priceCurrency}</strong>
+            </div>
+          )}
+
+          {/* Statut actif */}
+          <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10">
+            <div>
+              <div className="text-white font-medium">Pack actif</div>
+              <div className="text-xs text-white/40 mt-1">
+                Les packs désactivés ne sont pas affichés aux utilisateurs
+              </div>
+            </div>
+            <ToggleSwitch
+              enabled={formData.isActive}
+              onChange={(enabled) => setFormData({ ...formData, isActive: enabled })}
+            />
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3 mt-6 pt-4 border-t border-white/10">
+          <button
+            onClick={onCancel}
+            disabled={updating}
+            className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/15 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={onSave}
+            disabled={updating}
+            className="flex-1 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {updating ? 'Enregistrement...' : 'Enregistrer'}
           </button>

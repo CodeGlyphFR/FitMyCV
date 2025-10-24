@@ -329,3 +329,4 @@ useEffect(() => {
 - N'utilise jamais "🤖 Generated with" dans un commit, ne fait aucune mention de Claude Code
 - A chaque fois que tu termines une réponse ou une tache, je veux que tu executes le code 'echo -e '\a''
 - Avant chaque commit tu dois vérifier la documentation dans le dossier @docs/ et la mettre à jour si nécéssaire
+- A chaque changement du code utilise 'npm run build'

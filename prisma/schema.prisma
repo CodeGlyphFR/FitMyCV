@@ -389,3 +389,18 @@ model SubscriptionPlanFeatureLimit {
   @@index([planId])
   @@index([featureName])
 }
+
+model CreditPack {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique // "Pack Starter", "Pack Pro", etc.
+  description   String?  // Description du pack
+  creditAmount  Int      // Nombre de crédits dans ce pack
+  price         Float    // Prix fixe du pack
+  priceCurrency String   @default("EUR") // EUR, USD, GBP
+  isActive      Boolean  @default(true)  // Pack actif ou désactivé
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([name])
+  @@index([isActive])
+}

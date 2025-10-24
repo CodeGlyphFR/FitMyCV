@@ -22,8 +22,8 @@ Documentation complète du schéma Prisma et des modèles de données.
 - **ORM** : Prisma 6.16.2
 - **Database (dev)** : SQLite 3
 - **Database (prod)** : PostgreSQL ou MySQL (recommandé)
-- **Modèles** : 23 tables
-- **Migrations** : 15 migrations appliquées
+- **Modèles** : 24 tables
+- **Migrations** : 16 migrations appliquées
 
 ### Configuration
 
@@ -491,6 +491,45 @@ model OpenAICall {
 **18. OpenAIAlert** : Alertes de coûts OpenAI
 **19. SubscriptionPlan** : Plans d'abonnement
 **20. SubscriptionPlanFeatureLimit** : Limites par plan
+
+---
+
+### 21. CreditPack (Packs de crédits)
+
+Packs de crédits achetables par les utilisateurs (micro-transactions).
+
+```prisma
+model CreditPack {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique // "Pack Starter", "Pack Pro", etc.
+  description   String?  // Description du pack
+  creditAmount  Int      // Nombre de crédits dans ce pack
+  price         Float    // Prix fixe du pack
+  priceCurrency String   @default("EUR") // EUR, USD, GBP
+  isActive      Boolean  @default(true)  // Pack actif ou désactivé
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([name])
+  @@index([isActive])
+}
+```
+
+**Champs clés** :
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `name` | String | Nom unique du pack (ex: "Pack 10 crédits") |
+| `creditAmount` | Int | Nombre de crédits inclus dans le pack |
+| `price` | Float | Prix fixe du pack |
+| `priceCurrency` | String | Devise (EUR, USD, GBP) |
+| `isActive` | Boolean | Si false, le pack n'est pas affiché aux utilisateurs |
+
+**Notes** :
+- Crédits universels (utilisables pour toutes features IA)
+- Crédits permanents (pas d'expiration)
+- Prix fixe par pack (ex: 10 crédits = 5€)
+- Gestion admin via `/admin/analytics` onglet "Abonnements"
 
 ---
 

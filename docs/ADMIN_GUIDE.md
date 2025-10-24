@@ -13,6 +13,7 @@ Guide complet du dashboard admin et de la gestion de FitMyCv.ai.
 - [Settings](#settings)
 - [Monitoring OpenAI](#monitoring-openai)
 - [Plans d'abonnement](#plans-dabonnement)
+- [Packs de crédits](#credit-packs-management)
 - [Maintenance](#maintenance)
 
 ---
@@ -428,6 +429,92 @@ PUT /api/admin/subscription-plans/[id]
 ```javascript
 DELETE /api/admin/subscription-plans/[id]
 ```
+
+---
+
+### Credit Packs Management
+
+#### Structure
+
+Les **Credit Packs** sont des packs de crédits achetables par micro-transaction :
+
+**CreditPack** :
+
+- **Name** : Nom du pack (ex: "Pack Starter", "Pack Pro")
+- **Description** : Description du pack (optionnel)
+- **Credit Amount** : Nombre de crédits dans le pack
+- **Price** : Prix fixe du pack
+- **Price Currency** : Devise (EUR, USD, GBP)
+- **Is Active** : Statut du pack (actif/désactivé)
+
+#### Logique des Packs
+
+- **Crédits universels** : Utilisables pour toutes les features IA
+- **Crédits permanents** : Pas de date d'expiration
+- **Prix fixe** : Chaque pack a un prix fixe (ex: 10 crédits = 5€)
+- **Désactivation** : Les packs désactivés (`isActive: false`) ne sont pas affichés aux utilisateurs
+
+**Exemple : Pack 10 crédits**
+
+```javascript
+{
+  "name": "Pack Starter",
+  "description": "Idéal pour débuter",
+  "creditAmount": 10,
+  "price": 5.00,
+  "priceCurrency": "EUR",
+  "isActive": true
+}
+```
+
+**Prix par crédit calculé** : `5.00 / 10 = 0.50 €/crédit`
+
+#### CRUD Credit Packs
+
+**Créer pack** :
+
+```javascript
+POST /api/admin/credit-packs
+{
+  "name": "Pack 50 crédits",
+  "description": "Pack populaire",
+  "creditAmount": 50,
+  "price": 20.00,
+  "priceCurrency": "EUR",
+  "isActive": true
+}
+```
+
+**Modifier pack** :
+
+```javascript
+PATCH /api/admin/credit-packs/[id]
+{
+  "price": 18.00,
+  "isActive": false
+}
+```
+
+**Supprimer pack** :
+
+```javascript
+DELETE /api/admin/credit-packs/[id]
+```
+
+#### Interface Admin
+
+L'onglet **Abonnements** dans le dashboard admin (`/admin/analytics`) affiche deux sections :
+
+1. **Plans d'abonnement** (section supérieure)
+   - KPI Cards : Plans disponibles, Plan le plus cher, Plans gratuits
+   - Liste des plans avec boutons Éditer/Supprimer
+   - Modal de création/édition avec configuration des features
+
+2. **Packs de crédits** (section inférieure, séparée visuellement)
+   - KPI Cards : Packs disponibles, Pack le plus cher, Crédits moyens/pack
+   - Liste des packs avec indication du statut actif/désactivé
+   - Modal de création/édition simplifié (sans configuration de features)
+   - Prix unitaire par crédit calculé automatiquement
 
 ---
 
