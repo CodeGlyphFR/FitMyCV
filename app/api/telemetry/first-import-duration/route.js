@@ -31,7 +31,9 @@ export async function GET() {
       ? Math.round(averageDuration)
       : 60000;
 
-    console.log(`[first-import-duration] Average duration: ${estimatedDuration}ms (from ${callCount} calls)`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[first-import-duration] Average duration: ${estimatedDuration}ms (from ${callCount} calls)`);
+    }
 
     return NextResponse.json({
       success: true,
@@ -40,7 +42,9 @@ export async function GET() {
       hasData: callCount > 0,
     });
   } catch (error) {
-    console.error('[first-import-duration] Error calculating average:', error);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('[first-import-duration] Error calculating average:', error);
+    }
 
     // Return default duration on error
     return NextResponse.json({

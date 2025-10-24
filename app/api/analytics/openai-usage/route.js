@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/analytics/openai-usage
  * Retrieve OpenAI usage statistics for analytics dashboard (admin only)

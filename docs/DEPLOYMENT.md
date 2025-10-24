@@ -322,6 +322,74 @@ module.exports = {
 };
 ```
 
+#### Process Manager avec systemd
+
+**Alternative à PM2** : Service systemd natif
+
+**Créer** `/etc/systemd/system/cv-site.service` :
+
+```ini
+[Unit]
+Description=CV Builder Website
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=votre-utilisateur
+Group=votre-groupe
+WorkingDirectory=/var/www/fitmycv
+
+Environment=HOME=/home/votre-utilisateur
+Environment=NODE_ENV=production
+
+# Lancer uniquement npm start (build doit être fait manuellement avant)
+ExecStart=/usr/bin/env bash -lc 'export NVM_DIR="$HOME/.nvm"; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; cd /var/www/fitmycv; exec npm start'
+
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+KillMode=mixed
+TimeoutStopSec=30
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**Commandes** :
+
+```bash
+# Copier le fichier
+sudo cp cv-site.service /etc/systemd/system/
+
+# Recharger systemd
+sudo systemctl daemon-reload
+
+# Build (une seule fois, ne sera plus refait à chaque démarrage)
+npm run build
+
+# Activer au démarrage
+sudo systemctl enable cv-site.service
+
+# Démarrer le service
+sudo systemctl start cv-site.service
+
+# Vérifier le statut
+sudo systemctl status cv-site.service
+
+# Logs
+sudo journalctl -u cv-site.service -f
+```
+
+**Avantages systemd vs PM2** :
+- ✅ Graceful shutdown (pas de timeout/SIGKILL)
+- ✅ Intégré au système (pas de dépendance npm global)
+- ✅ Logs centralisés (journalctl)
+- ✅ Build séparé du démarrage (plus rapide)
+
 ---
 
 ### Option 2 : Vercel (Recommandé pour Next.js)

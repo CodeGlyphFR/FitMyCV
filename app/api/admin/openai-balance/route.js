@@ -17,7 +17,9 @@ export async function GET() {
   try {
     // Check cache first
     if (cachedBalance !== null && cacheTimestamp && Date.now() - cacheTimestamp < CACHE_DURATION_MS) {
-      console.log('[openai-balance] Returning cached balance');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[openai-balance] Returning cached balance');
+      }
       return NextResponse.json({
         success: true,
         balance: cachedBalance,
@@ -31,7 +33,9 @@ export async function GET() {
     }
 
     // ===== OPTION 1: Try credit_grants first (Pay-as-you-go accounts) =====
-    console.log('[openai-balance] Attempting credit_grants (Pay-as-you-go)...');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[openai-balance] Attempting credit_grants (Pay-as-you-go)...');
+    }
     try {
       const creditGrantsResponse = await fetch('https://api.openai.com/v1/dashboard/billing/credit_grants', {
         method: 'GET',
@@ -42,7 +46,9 @@ export async function GET() {
 
       if (creditGrantsResponse.ok) {
         const creditGrantsData = await creditGrantsResponse.json();
-        console.log('[openai-balance] Credit grants response:', JSON.stringify(creditGrantsData, null, 2));
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[openai-balance] Credit grants response:', JSON.stringify(creditGrantsData, null, 2));
+        }
 
         let totalBalance = 0;
 
@@ -60,13 +66,17 @@ export async function GET() {
 
               if (remaining > 0) {
                 totalBalance += remaining;
-                console.log(`[openai-balance] Grant ${grant.id}: $${grantAmount.toFixed(2)} - $${usedAmount.toFixed(2)} = $${remaining.toFixed(2)}`);
+                if (process.env.NODE_ENV !== 'production') {
+                  console.log(`[openai-balance] Grant ${grant.id}: $${grantAmount.toFixed(2)} - $${usedAmount.toFixed(2)} = $${remaining.toFixed(2)}`);
+                }
               }
             }
           }
         }
 
-        console.log(`[openai-balance] ✅ Pay-as-you-go credit balance: $${totalBalance.toFixed(2)}`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`[openai-balance] ✅ Pay-as-you-go credit balance: $${totalBalance.toFixed(2)}`);
+        }
 
         // Cache and return
         cachedBalance = totalBalance;
@@ -79,16 +89,22 @@ export async function GET() {
           accountType: 'pay-as-you-go',
         });
       } else {
-        console.log(`[openai-balance] Credit grants not available (${creditGrantsResponse.status}), trying subscription fallback...`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`[openai-balance] Credit grants not available (${creditGrantsResponse.status}), trying subscription fallback...`);
+        }
       }
     } catch (creditError) {
-      console.log('[openai-balance] Credit grants error:', creditError.message, '- trying subscription fallback...');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[openai-balance] Credit grants error:', creditError.message, '- trying subscription fallback...');
+      }
     }
 
     // ===== OPTION 2: Fallback to subscription/usage (Monthly subscription accounts) =====
 
     // Get subscription info (hard limit)
-    console.log('[openai-balance] Fetching subscription info...');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[openai-balance] Fetching subscription info...');
+    }
     const subscriptionResponse = await fetch('https://api.openai.com/v1/dashboard/billing/subscription', {
       method: 'GET',
       headers: {
@@ -98,7 +114,9 @@ export async function GET() {
 
     if (!subscriptionResponse.ok) {
       const errorText = await subscriptionResponse.text();
-      console.error('[openai-balance] Subscription API error:', subscriptionResponse.status, errorText);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('[openai-balance] Subscription API error:', subscriptionResponse.status, errorText);
+      }
 
       // Return null balance if billing API not accessible (not a critical error)
       return NextResponse.json({
@@ -111,7 +129,9 @@ export async function GET() {
     const subscriptionData = await subscriptionResponse.json();
     const hardLimit = subscriptionData.hard_limit_usd || 0;
 
-    console.log('[openai-balance] Hard limit:', hardLimit);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[openai-balance] Hard limit:', hardLimit);
+    }
 
     // Get current month usage
     const now = new Date();
@@ -121,7 +141,9 @@ export async function GET() {
     const startDateStr = startDate.toISOString().split('T')[0];
     const endDateStr = endDate.toISOString().split('T')[0];
 
-    console.log('[openai-balance] Fetching usage from', startDateStr, 'to', endDateStr);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[openai-balance] Fetching usage from', startDateStr, 'to', endDateStr);
+    }
 
     const usageResponse = await fetch(
       `https://api.openai.com/v1/dashboard/billing/usage?start_date=${startDateStr}&end_date=${endDateStr}`,
@@ -135,7 +157,9 @@ export async function GET() {
 
     if (!usageResponse.ok) {
       const errorText = await usageResponse.text();
-      console.error('[openai-balance] Usage API error:', usageResponse.status, errorText);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('[openai-balance] Usage API error:', usageResponse.status, errorText);
+      }
 
       // Fallback: return hard limit as balance if we can't get usage
       const fallbackBalance = hardLimit;
@@ -153,12 +177,16 @@ export async function GET() {
     const usageData = await usageResponse.json();
     const totalUsage = (usageData.total_usage || 0) / 100; // Convert from cents to dollars
 
-    console.log('[openai-balance] Total usage this month:', totalUsage);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[openai-balance] Total usage this month:', totalUsage);
+    }
 
     // Calculate remaining balance
     const remainingBalance = Math.max(0, hardLimit - totalUsage);
 
-    console.log(`[openai-balance] Calculated balance: $${remainingBalance.toFixed(2)} (${hardLimit} - ${totalUsage})`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[openai-balance] Calculated balance: $${remainingBalance.toFixed(2)} (${hardLimit} - ${totalUsage})`);
+    }
 
     // Cache the result
     cachedBalance = remainingBalance;
@@ -175,7 +203,9 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('[openai-balance] Error fetching balance:', error);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('[openai-balance] Error fetching balance:', error);
+    }
 
     // Return graceful error - don't fail the whole dashboard
     return NextResponse.json({

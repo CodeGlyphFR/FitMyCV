@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 import { filterAdminEvents } from '@/lib/analytics/filters';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/analytics/summary
  * Get overview KPIs and statistics

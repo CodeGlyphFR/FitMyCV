@@ -437,6 +437,110 @@ npm run build
 
 ---
 
+### ❌ Erreur: `DYNAMIC_SERVER_USAGE` pendant le build
+
+**Cause** : Routes API tentent d'utiliser `headers()` ou `request.url` pendant le rendu statique
+
+**Symptômes** :
+
+```
+Error: Route /api/analytics/events couldn't be rendered statically because it used `headers`.
+```
+
+**Solution** :
+
+Ajouter `export const dynamic = 'force-dynamic'` dans les routes API concernées :
+
+```javascript
+// app/api/analytics/events/route.js
+import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';  // ← Ajouter cette ligne
+
+export async function GET(request) {
+  // ...
+}
+```
+
+**Routes concernées** (déjà corrigé) :
+- `/api/admin/settings/history`
+- `/api/analytics/*` (events, errors, features, openai-usage, summary, users)
+- `/api/auth/verify-reset-token`
+- `/api/cvs/read`
+
+---
+
+### ⚠️ Logs verbeux pendant le build
+
+**Cause** : `console.log()` s'affichent pendant `Generating static pages`
+
+**Symptômes** :
+
+```
+[openai-balance] Attempting credit_grants...
+[first-import-duration] Average duration: 45879ms
+```
+
+**Solution** :
+
+Conditionner les logs au mode development :
+
+```javascript
+// N'afficher les logs qu'en dev
+if (process.env.NODE_ENV !== 'production') {
+  console.log('[debug] Message de debug');
+}
+```
+
+**Fichiers concernés** (déjà corrigé) :
+- `/api/admin/openai-balance/route.js`
+- `/api/telemetry/first-import-duration/route.js`
+
+---
+
+### ❌ systemd service timeout au shutdown
+
+**Cause** : Service systemd ne s'arrête pas proprement (timeout → SIGKILL)
+
+**Symptômes** :
+
+```
+cv-site.service: State 'stop-sigterm' timed out. Killing.
+cv-site.service: Killing process with signal SIGKILL.
+cv-site.service: Failed with result 'timeout'.
+```
+
+**Solution** :
+
+Configurer systemd pour graceful shutdown :
+
+```ini
+[Service]
+# Utiliser SIGTERM au lieu de SIGINT
+KillSignal=SIGTERM
+
+# Tuer tous les processus enfants (npm, node, next-server)
+KillMode=mixed
+
+# Augmenter le timeout
+TimeoutStopSec=30
+
+# Ne PAS rebuilder à chaque démarrage
+ExecStart=/usr/bin/env bash -lc 'exec npm start'
+```
+
+**Fichier** : `cv-site.service` (déjà corrigé)
+
+**Redémarrage requis** :
+
+```bash
+sudo cp cv-site.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl restart cv-site.service
+```
+
+---
+
 ### ⚠️ Page lente à charger
 
 **Cause** : Composants non optimisés, images lourdes

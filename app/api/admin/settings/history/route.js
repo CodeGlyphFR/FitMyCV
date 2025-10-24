@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/admin/settings/history
  * Get settings modification history
