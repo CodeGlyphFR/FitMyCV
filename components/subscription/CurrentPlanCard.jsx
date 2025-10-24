@@ -58,6 +58,8 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
   const [isCanceling, setIsCanceling] = React.useState(false);
   const [showReactivateModal, setShowReactivateModal] = React.useState(false);
   const [isReactivating, setIsReactivating] = React.useState(false);
+  const [showYearlyWarningModal, setShowYearlyWarningModal] = React.useState(false);
+  const [isSwitchingPeriod, setIsSwitchingPeriod] = React.useState(false);
 
   const handleCancelClick = () => {
     setShowCancelModal(true);
@@ -106,14 +108,25 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
     }
   };
 
-  const handleSwitchBillingPeriod = async (newPeriod) => {
+  const handleSwitchBillingPeriodClick = (newPeriod) => {
+    // Si passage de mensuel à annuel, afficher le modal d'avertissement
+    if (subscription.billingPeriod === 'monthly' && newPeriod === 'yearly') {
+      setShowYearlyWarningModal(true);
+    } else {
+      // Ne devrait jamais arriver (annuel → mensuel est bloqué)
+      alert('Impossible de revenir au paiement mensuel. Veuillez annuler votre abonnement si nécessaire.');
+    }
+  };
+
+  const handleConfirmSwitchToYearly = async () => {
+    setIsSwitchingPeriod(true);
     try {
       const response = await fetch('/api/checkout/subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planId: plan.id,
-          billingPeriod: newPeriod,
+          billingPeriod: 'yearly',
         }),
       });
 
@@ -124,14 +137,13 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
 
       const { url, updated } = await response.json();
 
-      // Si l'abonnement a été mis à jour directement (pas de checkout Stripe)
-      // La DB est déjà mise à jour, pas besoin d'attendre
-
       // Rediriger vers la page appropriée
       window.location.href = url;
     } catch (error) {
       console.error('Erreur changement période:', error);
       alert(error.message);
+      setIsSwitchingPeriod(false);
+      setShowYearlyWarningModal(false);
     }
   };
 
@@ -210,18 +222,15 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
             <div className="mt-4">
               {subscription.billingPeriod === 'monthly' ? (
                 <button
-                  onClick={() => handleSwitchBillingPeriod('yearly')}
+                  onClick={() => handleSwitchBillingPeriodClick('yearly')}
                   className="w-full px-4 py-2.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 hover:border-blue-500/50 text-blue-300 hover:text-blue-200 text-sm font-medium transition-all"
                 >
                   🎁 Passer à la facturation annuelle ({plan.priceYearly}€/an - économisez {Math.round(((plan.priceMonthly * 12 - plan.priceYearly) / (plan.priceMonthly * 12)) * 100)}%)
                 </button>
               ) : (
-                <button
-                  onClick={() => handleSwitchBillingPeriod('monthly')}
-                  className="w-full px-4 py-2.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 hover:border-blue-500/50 text-blue-300 hover:text-blue-200 text-sm font-medium transition-all"
-                >
-                  Passer à la facturation mensuelle ({plan.priceMonthly}€/mois)
-                </button>
+                <div className="w-full px-4 py-2.5 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-300 text-sm text-center">
+                  ℹ️ Pour revenir au paiement mensuel, veuillez annuler votre abonnement annuel ci-dessous
+                </div>
               )}
             </div>
           )}
@@ -328,6 +337,53 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
               className="flex-1 px-4 py-2.5 rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors disabled:opacity-50 font-medium"
             >
               {isReactivating ? 'Réactivation...' : 'Confirmer'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal d'avertissement pour passage en facturation annuelle */}
+      <Modal
+        open={showYearlyWarningModal}
+        onClose={() => !isSwitchingPeriod && setShowYearlyWarningModal(false)}
+        title="⚠️ Passer à la facturation annuelle ?"
+      >
+        <div className="space-y-4">
+          <p className="text-white/90 font-medium">
+            Attention : Ce changement est <strong className="text-orange-300">irréversible</strong>
+          </p>
+          <ul className="space-y-2 text-white/80 text-sm">
+            <li className="flex items-start gap-2">
+              <span className="text-orange-400 mt-0.5">⚠️</span>
+              <span>Une fois passé en <strong className="text-white">facturation annuelle</strong>, vous ne pourrez <strong className="text-white">plus revenir au paiement mensuel</strong></span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-400 mt-0.5">💰</span>
+              <span>Vous économisez <strong className="text-white">{Math.round(((plan.priceMonthly * 12 - plan.priceYearly) / (plan.priceMonthly * 12)) * 100)}%</strong> par rapport au paiement mensuel ({plan.priceYearly}€/an au lieu de {plan.priceMonthly * 12}€/an)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-orange-400 mt-0.5">🔒</span>
+              <span>Si vous souhaitez annuler plus tard, l'annulation prendra effet <strong className="text-white">à la fin de votre période annuelle</strong></span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-400 mt-0.5">✓</span>
+              <span>Vous serez facturé dès maintenant au prorata pour la période restante</span>
+            </li>
+          </ul>
+          <div className="flex gap-3 pt-4">
+            <button
+              onClick={() => setShowYearlyWarningModal(false)}
+              disabled={isSwitchingPeriod}
+              className="flex-1 px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors disabled:opacity-50 font-medium"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleConfirmSwitchToYearly}
+              disabled={isSwitchingPeriod}
+              className="flex-1 px-4 py-2.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors disabled:opacity-50 font-medium"
+            >
+              {isSwitchingPeriod ? 'Changement...' : 'Confirmer le passage en annuel'}
             </button>
           </div>
         </div>

@@ -65,6 +65,7 @@ PromoCode              - Codes promotionnels
 - `lib/subscription/featureUsage.js` - Limites features
 - `lib/subscription/cvLimits.js` - Limites CV
 - `lib/subscription/subscriptions.js` - Gestion abonnements
+- `lib/subscription/stripeSync.js` - Synchronisation automatique Stripe
 
 ---
 
@@ -84,7 +85,7 @@ PromoCode              - Codes promotionnels
 - **Reset mensuel** automatique à la date anniversaire
 
 #### Upgrade
-- Changement **immédiat** (pas de prorata)
+- Changement **immédiat** avec calcul prorata automatique
 - Utilisateur hérite des nouvelles limites
 - Compteurs conservés jusqu'au prochain reset
 
@@ -92,6 +93,28 @@ PromoCode              - Codes promotionnels
 - Si nombre de CV > nouvelle limite → **Modal de sélection**
 - CV bloqués = `blocked: true` (invisibles mais sauvegardés)
 - Suggérer en priorité les CV créés avec crédits
+
+#### Changement de période de facturation
+
+**Restrictions importantes** :
+
+✅ **Mensuel → Annuel** : Autorisé avec avertissement
+- Modal d'avertissement obligatoire expliquant l'irréversibilité
+- Utilisateur doit confirmer explicitement
+- Calcul prorata automatique pour la période restante
+- Économies affichées clairement
+
+❌ **Annuel → Mensuel** : **BLOQUÉ**
+- Interface affiche message informatif : "Pour revenir au paiement mensuel, veuillez annuler votre abonnement annuel"
+- Validation côté serveur retourne erreur 400
+- Seule option : annuler l'abonnement (effet en fin de période)
+- Prévient les pertes de revenus dues aux changements fréquents
+
+**Raisons du blocage annuel → mensuel** :
+- Évite que les utilisateurs abusent de la réduction annuelle
+- Protège le modèle économique
+- Force l'engagement annuel une fois choisi
+- Utilisateur averti **avant** le passage en annuel
 
 #### Échec de paiement
 - **Pas de période de grâce**
@@ -293,6 +316,68 @@ Affiche l'historique avec :
 
 ---
 
+## Synchronisation Automatique Stripe
+
+### Principe
+
+Toute modification de prix dans l'interface admin (plans d'abonnement ou packs de crédits) déclenche automatiquement une synchronisation avec Stripe.
+
+### Fonctionnement
+
+**Déclencheurs** :
+- Création d'un plan ou pack (`POST /api/admin/subscription-plans`, `/api/admin/credit-packs`)
+- Modification d'un plan ou pack (`PATCH /api/admin/subscription-plans/[id]`, `/api/admin/credit-packs/[id]`)
+- Suppression d'un plan ou pack (`DELETE /api/admin/subscription-plans/[id]`, `/api/admin/credit-packs/[id]`)
+
+**Processus** :
+1. Opération CRUD dans la base de données
+2. Appel **non-bloquant** de `syncStripeProductsInternal()`
+3. Synchronisation en arrière-plan
+
+### Archivage automatique des prix
+
+**Problème Stripe** : Les prix sont **immuables** - impossible de modifier le montant d'un prix existant.
+
+**Solution implémentée** :
+
+Lors de la modification du montant d'un prix :
+
+1. **Créer** le nouveau prix avec le nouveau montant
+2. **Définir** le nouveau prix comme `default_price` sur le produit (libère l'ancien)
+3. **Archiver** l'ancien prix (`active: false`)
+
+**Résultat** :
+- ✅ Un seul prix actif par produit/période
+- ✅ Ancien prix archivé mais visible dans l'historique
+- ✅ Pas de confusion pour les utilisateurs
+- ✅ Historique complet conservé
+
+**Exemple de logs** :
+```
+[Sync] Produit Stripe trouvé pour pack 5 Crédits
+[Sync] Prix défini comme default_price pour pack 5 Crédits
+[Sync] Ancien prix archivé pour pack 5 Crédits
+[Sync] Synchronisation terminée: { plans: { updated: 0 }, packs: { updated: 1 } }
+```
+
+### API de synchronisation
+
+**Route HTTP** : `POST /api/admin/sync-stripe`
+- Requiert authentification admin
+- Appelle `syncStripeProductsInternal()` et retourne les résultats
+
+**Fonction interne** : `syncStripeProductsInternal()`
+- Appelée directement par les routes admin (pas via HTTP)
+- Pas de vérification auth requise (déjà faite en amont)
+- Retourne : `{ success: boolean, results: object, message: string }`
+
+**Gestion des erreurs** :
+- Échec non-bloquant : L'opération BDD réussit même si la sync Stripe échoue
+- Logs console pour debugging
+- Tableau `results.plans.errors[]` et `results.packs.errors[]` avec détails
+
+---
+
 ## Modules métier
 
 ### credits.js
@@ -365,6 +450,33 @@ await cancelSubscription(userId, immediate = false);
 // Résumé complet
 const summary = await getSubscriptionSummary(userId);
 ```
+
+### stripeSync.js
+```javascript
+// Synchroniser tous les produits et prix avec Stripe
+const result = await syncStripeProductsInternal();
+
+// Retourne:
+// {
+//   success: true,
+//   results: {
+//     plans: { created: 0, updated: 1, skipped: 2, errors: [] },
+//     packs: { created: 0, updated: 1, skipped: 0, errors: [] }
+//   },
+//   message: "Synchronisation réussie : 2 plans, 1 packs"
+// }
+```
+
+**Comportement** :
+- Pour chaque plan/pack en BDD :
+  - Crée le produit Stripe si nécessaire
+  - Compare les montants des prix
+  - Si changement détecté :
+    1. Crée nouveau prix
+    2. Définit comme default_price (packs uniquement)
+    3. Archive l'ancien prix
+- Gère les erreurs par produit (continue même si un produit échoue)
+- Retourne statistiques détaillées
 
 ---
 

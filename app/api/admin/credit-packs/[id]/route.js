@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
+import { syncStripeProductsInternal } from '@/lib/subscription/stripeSync';
 
 /**
  * PATCH /api/admin/credit-packs/[id]
@@ -110,6 +111,9 @@ export async function PATCH(request, { params }) {
       data: updateData,
     });
 
+    // Synchroniser avec Stripe (non-bloquant)
+    syncStripeProductsInternal().catch(err => console.warn('[Admin] Stripe sync failed:', err));
+
     return NextResponse.json({ pack: updatedPack });
 
   } catch (error) {
@@ -161,6 +165,9 @@ export async function DELETE(request, { params }) {
     await prisma.creditPack.delete({
       where: { id: packId },
     });
+
+    // Synchroniser avec Stripe (non-bloquant)
+    syncStripeProductsInternal().catch(err => console.warn('[Admin] Stripe sync failed:', err));
 
     return NextResponse.json({ success: true });
 

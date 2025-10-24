@@ -78,6 +78,18 @@ export async function POST(request) {
         // Récupérer l'abonnement Stripe existant
         const stripeSubscription = await stripe.subscriptions.retrieve(existingSubscription.stripeSubscriptionId);
 
+        // Vérifier la période de facturation actuelle
+        const currentInterval = stripeSubscription.items.data[0]?.price?.recurring?.interval;
+        const currentBillingPeriod = currentInterval === 'year' ? 'yearly' : 'monthly';
+
+        // BLOQUER le passage de annuel → mensuel
+        if (currentBillingPeriod === 'yearly' && billingPeriod === 'monthly') {
+          return NextResponse.json(
+            { error: 'Impossible de passer d\'un abonnement annuel à mensuel. Pour revenir au paiement mensuel, veuillez annuler votre abonnement annuel. L\'annulation prendra effet à la fin de votre période annuelle.' },
+            { status: 400 }
+          );
+        }
+
         // Mettre à jour avec le nouveau prix
         const updatedSubscription = await stripe.subscriptions.update(existingSubscription.stripeSubscriptionId, {
           items: [{

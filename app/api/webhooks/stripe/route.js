@@ -3,9 +3,14 @@
  * Handler unifié pour tous les webhooks Stripe
  *
  * Events gérés :
- * - customer.subscription.created/updated/deleted
- * - payment_intent.succeeded (achat crédits)
+ * - customer.subscription.created/updated/deleted (abonnements)
+ * - checkout.session.completed (achat crédits - PRIMARY)
+ * - payment_intent.succeeded (achat crédits - FALLBACK)
  * - invoice.payment_failed (échec paiement abonnement)
+ *
+ * Note : checkout.session.completed est privilégié pour les achats de crédits
+ * car il contient toujours les métadonnées du checkout, contrairement à
+ * payment_intent.succeeded qui peut avoir un metadata vide.
  */
 
 import { NextResponse } from 'next/server';
@@ -81,6 +86,10 @@ export async function POST(request) {
 
       case 'customer.subscription.deleted':
         await handleSubscriptionDeleted(event.data.object);
+        break;
+
+      case 'checkout.session.completed':
+        await handleCheckoutCompleted(event.data.object);
         break;
 
       case 'payment_intent.succeeded':
@@ -239,7 +248,51 @@ async function handleSubscriptionDeleted(subscription) {
 }
 
 /**
- * Gère le succès d'un paiement (achat de crédits)
+ * Gère la completion d'une session Checkout (achat de crédits)
+ */
+async function handleCheckoutCompleted(session) {
+  // Vérifier si c'est un achat de crédits (paiement one-time)
+  if (session.mode !== 'payment' || session.metadata?.type !== 'credit_purchase') {
+    return; // Abonnement (mode: subscription), géré par customer.subscription.*
+  }
+
+  const userId = session.metadata?.userId;
+  const creditAmount = parseInt(session.metadata?.creditAmount, 10);
+  const paymentIntentId = session.payment_intent;
+
+  if (!userId || !creditAmount) {
+    console.error('[Webhook] Métadonnées manquantes dans checkout.session');
+    return;
+  }
+
+  // Vérifier si les crédits n'ont pas déjà été attribués (idempotence)
+  const existingTransaction = await prisma.creditTransaction.findFirst({
+    where: { stripePaymentIntentId: paymentIntentId },
+  });
+
+  if (existingTransaction) {
+    console.log(`[Webhook] Crédits déjà attribués pour PaymentIntent ${paymentIntentId}`);
+    return;
+  }
+
+  // Attribuer les crédits
+  const result = await grantCredits(userId, creditAmount, 'purchase', {
+    stripePaymentIntentId: paymentIntentId,
+    source: 'credit_pack_purchase',
+  });
+
+  if (!result.success) {
+    console.error('[Webhook] Erreur attribution crédits:', result.error);
+    return;
+  }
+
+  console.log(`[Webhook] ${creditAmount} crédits attribués à user ${userId} (checkout.session.completed)`);
+
+  // TODO: Envoyer email de confirmation via Resend
+}
+
+/**
+ * Gère le succès d'un paiement (FALLBACK - préférer checkout.session.completed)
  */
 async function handlePaymentSuccess(paymentIntent) {
   // Vérifier si c'est un achat de crédits (pas un abonnement)
@@ -251,7 +304,17 @@ async function handlePaymentSuccess(paymentIntent) {
   const creditAmount = parseInt(paymentIntent.metadata?.creditAmount, 10);
 
   if (!userId || !creditAmount) {
-    console.error('[Webhook] Métadonnées manquantes dans payment_intent');
+    console.log('[Webhook] Métadonnées manquantes dans payment_intent (normal si checkout.session.completed a été traité)');
+    return;
+  }
+
+  // Vérifier si les crédits n'ont pas déjà été attribués par checkout.session.completed
+  const existingTransaction = await prisma.creditTransaction.findFirst({
+    where: { stripePaymentIntentId: paymentIntent.id },
+  });
+
+  if (existingTransaction) {
+    console.log(`[Webhook] Crédits déjà attribués pour PaymentIntent ${paymentIntent.id}`);
     return;
   }
 
@@ -266,7 +329,7 @@ async function handlePaymentSuccess(paymentIntent) {
     return;
   }
 
-  console.log(`[Webhook] ${creditAmount} crédits attribués à user ${userId}`);
+  console.log(`[Webhook] ${creditAmount} crédits attribués à user ${userId} (payment_intent.succeeded fallback)`);
 
   // TODO: Envoyer email de confirmation via Resend
 }

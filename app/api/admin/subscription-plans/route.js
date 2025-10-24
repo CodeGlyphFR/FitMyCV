@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
+import { syncStripeProductsInternal } from '@/lib/subscription/stripeSync';
 
 /**
  * GET /api/admin/subscription-plans
@@ -159,6 +160,9 @@ export async function POST(request) {
         featureLimits: true,
       },
     });
+
+    // Synchroniser avec Stripe (non-bloquant)
+    syncStripeProductsInternal().catch(err => console.warn('[Admin] Stripe sync failed:', err));
 
     return NextResponse.json({ plan }, { status: 201 });
 

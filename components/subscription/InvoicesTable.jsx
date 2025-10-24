@@ -1,12 +1,15 @@
 "use client";
 
 import React from "react";
-import { FileText, Download, Loader2 } from "lucide-react";
+import { FileText, Download, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function InvoicesTable() {
   const [invoices, setInvoices] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
+  const [page, setPage] = React.useState(0);
+  const [typeFilter, setTypeFilter] = React.useState('all'); // 'all', 'subscription', 'credit_pack'
+  const limit = 20;
 
   React.useEffect(() => {
     async function fetchInvoices() {
@@ -84,6 +87,31 @@ export default function InvoicesTable() {
     });
   };
 
+  // Filtrer les factures selon le type sélectionné
+  const filteredInvoices = React.useMemo(() => {
+    if (typeFilter === 'all') return invoices;
+    return invoices.filter(inv => inv.type === typeFilter);
+  }, [invoices, typeFilter]);
+
+  // Calculer pagination
+  const totalPages = Math.ceil(filteredInvoices.length / limit);
+  const displayedInvoices = filteredInvoices.slice(page * limit, (page + 1) * limit);
+  const startIndex = page * limit + 1;
+  const endIndex = Math.min((page + 1) * limit, filteredInvoices.length);
+
+  // Reset page quand le filtre change
+  React.useEffect(() => {
+    setPage(0);
+  }, [typeFilter]);
+
+  const handlePreviousPage = () => {
+    setPage(prev => Math.max(0, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setPage(prev => Math.min(totalPages - 1, prev + 1));
+  };
+
   if (loading) {
     return (
       <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6 shadow-lg">
@@ -122,6 +150,40 @@ export default function InvoicesTable() {
         Factures
       </h2>
 
+      {/* Filtres par type */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <button
+          onClick={() => setTypeFilter('all')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            typeFilter === 'all'
+              ? 'bg-white/20 text-white border border-white/30'
+              : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-white/10'
+          }`}
+        >
+          Tout ({invoices.length})
+        </button>
+        <button
+          onClick={() => setTypeFilter('subscription')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            typeFilter === 'subscription'
+              ? 'bg-purple-500/20 text-purple-200 border border-purple-500/50'
+              : 'bg-white/5 text-white/60 hover:bg-purple-500/10 hover:text-purple-200 border border-white/10'
+          }`}
+        >
+          👑 Abonnements ({invoices.filter(i => i.type === 'subscription').length})
+        </button>
+        <button
+          onClick={() => setTypeFilter('credit_pack')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            typeFilter === 'credit_pack'
+              ? 'bg-blue-500/20 text-blue-200 border border-blue-500/50'
+              : 'bg-white/5 text-white/60 hover:bg-blue-500/10 hover:text-blue-200 border border-white/10'
+          }`}
+        >
+          💎 Crédits ({invoices.filter(i => i.type === 'credit_pack').length})
+        </button>
+      </div>
+
       {/* Table Desktop */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full">
@@ -136,7 +198,7 @@ export default function InvoicesTable() {
             </tr>
           </thead>
           <tbody>
-            {invoices.map((invoice) => (
+            {displayedInvoices.map((invoice) => (
               <tr key={invoice.id} className="border-b border-white/10 last:border-0">
                 <td className="py-3 px-2 text-sm text-white">
                   {formatDate(invoice.date)}
@@ -174,7 +236,7 @@ export default function InvoicesTable() {
 
       {/* Cards Mobile */}
       <div className="md:hidden space-y-3">
-        {invoices.map((invoice) => (
+        {displayedInvoices.map((invoice) => (
           <div
             key={invoice.id}
             className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2"
@@ -212,6 +274,48 @@ export default function InvoicesTable() {
           </div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {filteredInvoices.length > 0 && (
+        <div className="mt-6 pt-4 border-t border-white/10">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Info pagination */}
+            <div className="text-sm text-white/60">
+              Affichage de <span className="text-white font-medium">{startIndex}</span> à{' '}
+              <span className="text-white font-medium">{endIndex}</span> sur{' '}
+              <span className="text-white font-medium">{filteredInvoices.length}</span> facture{filteredInvoices.length > 1 ? 's' : ''}
+            </div>
+
+            {/* Boutons pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePreviousPage}
+                  disabled={page === 0}
+                  className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/10 flex items-center gap-1"
+                >
+                  <ChevronLeft size={16} />
+                  Précédent
+                </button>
+
+                <div className="px-4 py-2 text-sm text-white/80">
+                  Page <span className="font-medium text-white">{page + 1}</span> sur{' '}
+                  <span className="font-medium text-white">{totalPages}</span>
+                </div>
+
+                <button
+                  onClick={handleNextPage}
+                  disabled={page === totalPages - 1}
+                  className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/10 flex items-center gap-1"
+                >
+                  Suivant
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
