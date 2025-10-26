@@ -2,41 +2,23 @@ EXTRACTION D'OFFRE D'EMPLOI
 
 Analyse le contenu ci-dessous et extrait TOUTES les informations de l'offre d'emploi au format structuré suivant :
 
-## 📋 TITRE DU POSTE
+📋 TITRE DU POSTE: [titre exact du poste]
 
-[titre exact du poste]
+📝 DESCRIPTION ET MISSIONS: [description complète des missions, responsabilités et contexte du poste]
 
-## 📝 DESCRIPTION ET MISSIONS
+🎯 COMPÉTENCES TECHNIQUES REQUISES: [liste exhaustive des technologies, langages, frameworks, outils demandés]
 
-[description complète des missions, responsabilités et contexte du poste]
+🎯 COMPÉTENCES NON-TECHNIQUES: [soft skills, qualités personnelles, compétences relationnelles]
 
-## 🎯 COMPÉTENCES TECHNIQUES REQUISES
+💼 EXPÉRIENCE: [niveau d'expérience requis, nombre d'années]
 
-[liste exhaustive des technologies, langages, frameworks, outils demandés]
+🎓 FORMATION: [diplômes ou formations requis]
 
-## 🎯 COMPÉTENCES NON-TECHNIQUES
+🏢 ENTREPRISE: [nom de l'entreprise et informations disponibles]
 
-[soft skills, qualités personnelles, compétences relationnelles]
+📍 LOCALISATION: [lieu de travail, mode (présentiel/télétravail/hybride)]
 
-## 💼 EXPÉRIENCE
-
-[niveau d'expérience requis, nombre d'années]
-
-## 🎓 FORMATION
-
-[diplômes ou formations requis]
-
-## 🏢 ENTREPRISE
-
-[nom de l'entreprise et informations disponibles]
-
-## 📍 LOCALISATION
-
-[lieu de travail, mode (présentiel/télétravail/hybride)]
-
-## 💰 SALAIRE/CONTRAT
-
-[fourchette salariale, type de contrat si mentionné]
+💰 SALAIRE/CONTRAT: [fourchette salariale, type de contrat si mentionné]
 
 ---
 
