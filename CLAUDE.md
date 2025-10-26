@@ -183,12 +183,12 @@ Flux principal dans `lib/openai/generateCv.js`:
 1. `gpt_cv_generation` - Génération CV avec IA
 2. `import_pdf` - Import CV depuis PDF
 3. `translate_cv` - Traduction de CV
-4. `calculate_match_score` - Score de correspondance
-5. `improve_cv` - Optimisation automatique
+4. `match_score` - Score de correspondance
+5. `optimize_cv` - Optimisation automatique
 6. `generate_from_job_title` - Génération depuis titre
-7. `export_pdf` - Export PDF
+7. `export_cv` - Export PDF
 8. `edit_cv` - Édition de CV
-9. `create_manual_cv` - Création manuelle
+9. `create_cv_manual` - Création manuelle
 
 **Règles métier** :
 - Plan par défaut : **Gratuit** (attribué automatiquement à l'inscription)

@@ -107,7 +107,7 @@ export async function POST(request) {
     }
 
     // Vérifier les limites et incrémenter le compteur
-    const usageResult = await incrementFeatureCounter(session.user.id, 'export_pdf', {});
+    const usageResult = await incrementFeatureCounter(session.user.id, 'export_cv', {});
     if (!usageResult.success) {
       return NextResponse.json({
         error: usageResult.error,

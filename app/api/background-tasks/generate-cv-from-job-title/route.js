@@ -32,7 +32,7 @@ export async function POST(request) {
     const userId = session.user.id;
 
     // Vérifier les limites ET incrémenter le compteur/débiter le crédit
-    const usageResult = await incrementFeatureCounter(userId, 'generate_cv_from_job_title', {
+    const usageResult = await incrementFeatureCounter(userId, 'generate_from_job_title', {
       analysisLevel: requestedAnalysisLevel,
     });
 

@@ -66,7 +66,7 @@ export async function POST(request) {
     }
 
     // Vérifier les limites ET incrémenter le compteur/débiter le crédit
-    const usageResult = await incrementFeatureCounter(userId, 'calculate_match_score', {});
+    const usageResult = await incrementFeatureCounter(userId, 'match_score', {});
 
     if (!usageResult.success) {
       return NextResponse.json({
