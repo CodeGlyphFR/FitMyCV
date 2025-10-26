@@ -6,9 +6,8 @@ import { syncStripeProductsInternal } from '@/lib/subscription/stripeSync';
 /**
  * PATCH /api/admin/credit-packs/[id]
  * Modifie un pack de crédits
+ * Le nom est automatiquement régénéré si creditAmount est modifié
  * Body: {
- *   name?,
- *   description?,
  *   creditAmount?,
  *   price?,
  *   priceCurrency?,
@@ -49,8 +48,6 @@ export async function PATCH(request, { params }) {
 
     const body = await request.json();
     const {
-      name,
-      description,
       creditAmount,
       price,
       priceCurrency,
@@ -58,35 +55,28 @@ export async function PATCH(request, { params }) {
     } = body;
 
     // Validation optionnelle des champs fournis
-    if (name !== undefined) {
-      if (typeof name !== 'string' || !name.trim()) {
+    if (creditAmount !== undefined) {
+      if (typeof creditAmount !== 'number' || creditAmount <= 0) {
         return NextResponse.json(
-          { error: 'Nom du pack invalide' },
+          { error: 'Le nombre de crédits doit être supérieur à 0' },
           { status: 400 }
         );
       }
 
-      // Vérifier l'unicité du nom (sauf pour le pack actuel)
-      const nameExists = await prisma.creditPack.findFirst({
+      // Vérifier l'unicité du creditAmount (sauf pour le pack actuel)
+      const creditAmountExists = await prisma.creditPack.findFirst({
         where: {
-          name,
+          creditAmount,
           NOT: { id: packId },
         },
       });
 
-      if (nameExists) {
+      if (creditAmountExists) {
         return NextResponse.json(
-          { error: 'Un pack avec ce nom existe déjà' },
+          { error: `Un pack avec ${creditAmount} crédits existe déjà` },
           { status: 409 }
         );
       }
-    }
-
-    if (creditAmount !== undefined && (typeof creditAmount !== 'number' || creditAmount <= 0)) {
-      return NextResponse.json(
-        { error: 'Le nombre de crédits doit être supérieur à 0' },
-        { status: 400 }
-      );
     }
 
     if (price !== undefined && (typeof price !== 'number' || price < 0)) {
@@ -98,9 +88,11 @@ export async function PATCH(request, { params }) {
 
     // Construire les données de mise à jour
     const updateData = {};
-    if (name !== undefined) updateData.name = name;
-    if (description !== undefined) updateData.description = description || null;
-    if (creditAmount !== undefined) updateData.creditAmount = creditAmount;
+    if (creditAmount !== undefined) {
+      updateData.creditAmount = creditAmount;
+      // Régénérer automatiquement le nom
+      updateData.name = `${creditAmount} Crédits`;
+    }
     if (price !== undefined) updateData.price = price;
     if (priceCurrency !== undefined) updateData.priceCurrency = priceCurrency;
     if (isActive !== undefined) updateData.isActive = isActive;

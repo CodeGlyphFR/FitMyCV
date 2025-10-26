@@ -2,8 +2,10 @@
 
 import React from "react";
 import { Zap, Loader2, Sparkles } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function CreditPacksCards({ onPurchaseSuccess }) {
+  const { t } = useLanguage();
   const [packs, setPacks] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [processingPackId, setProcessingPackId] = React.useState(null);
@@ -80,12 +82,12 @@ export default function CreditPacksCards({ onPurchaseSuccess }) {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-white mb-4 drop-shadow-lg flex items-center gap-2">
-        <Sparkles size={24} />
-        Acheter des crédits
+      <h2 className="text-lg font-semibold text-white mb-3 drop-shadow-lg flex items-center gap-2">
+        <Sparkles size={20} />
+        {t('subscription.packs.title')}
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {packs.map((pack) => {
           const colorClass = getPackColor(pack.name);
           const icon = getPackIcon(pack.creditAmount);
@@ -96,29 +98,33 @@ export default function CreditPacksCards({ onPurchaseSuccess }) {
               key={pack.id}
               className={`
                 backdrop-blur-md bg-gradient-to-br ${colorClass}
-                border rounded-xl p-6 shadow-lg transition-all hover:scale-105
+                border rounded-xl p-4 shadow-lg transition-all md:hover:scale-105
               `}
             >
               {/* Header */}
-              <div className="text-center mb-4">
-                <div className="text-4xl mb-3">{icon}</div>
-                <h3 className="text-xl font-bold text-white mb-1">{pack.name}</h3>
-                <div className="text-sm text-white/70">{pack.description}</div>
+              <div className="text-center mb-3">
+                <div className="text-3xl mb-2">{icon}</div>
+                <h3 className="text-lg font-bold text-white mb-0.5">
+                  {pack.creditAmount} {t('subscription.packs.credits')}
+                </h3>
+                {pack.description && (
+                  <div className="text-xs text-white/70">{pack.description}</div>
+                )}
               </div>
 
               {/* Credits */}
-              <div className="text-center mb-4">
-                <div className="text-5xl font-bold text-white mb-1">
+              <div className="text-center mb-3">
+                <div className="text-4xl font-bold text-white mb-0.5">
                   {pack.creditAmount}
                 </div>
-                <div className="text-sm text-white/60">crédits</div>
+                <div className="text-xs text-white/60">{t('subscription.packs.credits')}</div>
               </div>
 
               {/* Price */}
-              <div className="text-center mb-4">
-                <div className="text-3xl font-bold text-white">{pack.price}€</div>
-                <div className="text-xs text-white/60 mt-1">
-                  soit {unitPrice}€ par crédit
+              <div className="text-center mb-3">
+                <div className="text-2xl font-bold text-white">{pack.price}€</div>
+                <div className="text-xs text-white/60 mt-0.5">
+                  {t('subscription.packs.pricePerCredit', { price: unitPrice })}
                 </div>
               </div>
 
@@ -126,17 +132,17 @@ export default function CreditPacksCards({ onPurchaseSuccess }) {
               <button
                 onClick={() => handlePurchase(pack.id)}
                 disabled={processingPackId === pack.id}
-                className="w-full py-3 px-4 rounded-lg bg-white hover:bg-white/90 text-gray-900 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-2 px-3 rounded-lg bg-white hover:bg-white/90 text-gray-900 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {processingPackId === pack.id ? (
                   <>
-                    <Loader2 className="animate-spin" size={16} />
-                    Redirection...
+                    <Loader2 className="animate-spin" size={14} />
+                    {t('subscription.packs.redirecting')}
                   </>
                 ) : (
                   <>
-                    <Zap size={16} />
-                    Acheter
+                    <Zap size={14} />
+                    {t('subscription.packs.buyButton')}
                   </>
                 )}
               </button>
@@ -145,8 +151,8 @@ export default function CreditPacksCards({ onPurchaseSuccess }) {
         })}
       </div>
 
-      <div className="mt-6 text-sm text-white/60 text-center">
-        💳 Paiement sécurisé via Stripe • Crédits permanents
+      <div className="mt-4 text-xs text-white/60 text-center">
+        {t('subscription.packs.securePayment')}
       </div>
     </div>
   );

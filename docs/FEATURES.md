@@ -6,18 +6,21 @@ Guide complet des fonctionnalités de FitMyCv.ai.
 
 ## Table des matières
 
-- [Génération de CV par IA](#génération-de-cv-par-ia)
-- [Import PDF](#import-pdf)
-- [Traduction de CV](#traduction-de-cv)
-- [Match Score](#match-score)
-- [Optimisation de CV](#optimisation-de-cv)
-- [Export PDF](#export-pdf)
+- [🤖 Adaptation de CV par IA](#-adaptation-de-cv-par-ia)
+- [📥 Import de CV](#-import-de-cv)
+- [🌍 Traduction de CV](#-traduction-de-cv)
+- [🎯 Score de match](#-score-de-match)
+- [✨ Optimisation](#-optimisation)
+- [💼 Création de CV fictif](#-création-de-cv-fictif)
+- [💾 Export de CV](#-export-de-cv)
+- [✏️ Edition de CV](#️-edition-de-cv)
+- [📝 Création de CV](#-création-de-cv)
 - [Système de tâches background](#système-de-tâches-background)
 - [Authentification multi-provider](#authentification-multi-provider)
 
 ---
 
-## Génération de CV par IA
+## 🤖 Adaptation de CV par IA
 
 ### Description
 
@@ -83,7 +86,7 @@ Génère automatiquement un CV personnalisé à partir d'une offre d'emploi (URL
 
 ---
 
-## Import PDF
+## 📥 Import de CV
 
 ### Description
 
@@ -132,7 +135,7 @@ Convertit un CV PDF en JSON structuré utilisable par l'application.
 
 ---
 
-## Traduction de CV
+## 🌍 Traduction de CV
 
 ### Description
 
@@ -178,7 +181,7 @@ Traduit un CV existant vers une autre langue.
 
 ---
 
-## Match Score
+## 🎯 Score de match
 
 ### Description
 
@@ -266,7 +269,7 @@ Calcule un score de correspondance (0-100) entre un CV et une offre d'emploi, av
 
 ---
 
-## Optimisation de CV
+## ✨ Optimisation
 
 ### Description
 
@@ -323,7 +326,49 @@ Améliore automatiquement un CV basé sur les suggestions du match score.
 
 ---
 
-## Export PDF
+## 💼 Création de CV fictif
+
+### Description
+
+Génère un CV fictif professionnel basé uniquement sur un titre de poste, sans offre d'emploi existante.
+
+### Processus
+
+```
+1. Utilisateur saisit un titre de poste (ex: "Développeur Full Stack")
+2. Appel OpenAI pour générer un CV adapté à ce poste
+3. Génération d'un profil fictif mais crédible
+4. Validation du JSON généré
+5. Chiffrement et sauvegarde
+6. Métadonnées avec createdBy: 'generate-from-job-title'
+```
+
+### Use cases
+
+- **Exploration de carrière** : Découvrir les compétences requises pour un poste
+- **Préparation d'entretien** : Comprendre les attentes d'un rôle
+- **Tests et prototypage** : Créer rapidement des CV de test
+- **Formation** : Exemples pour apprendre la structure d'un CV
+
+### API
+
+```javascript
+// POST /api/background-tasks/generate-cv-from-job-title
+{
+  "jobTitle": "Développeur Full Stack",
+  "analysisLevel": "medium",
+  "deviceId": "device_uuid"
+}
+```
+
+### Code
+
+**Job** : `lib/backgroundTasks/generateCvFromJobTitleJob.js`
+**Fonction IA** : `lib/openai/generateCvFromJobTitle.js`
+
+---
+
+## 💾 Export de CV
 
 ### Description
 
@@ -386,6 +431,155 @@ Exporte un CV au format PDF professionnel avec options personnalisables.
 ### Code
 
 **Route** : `app/api/export-pdf/route.js`
+
+---
+
+## ✏️ Edition de CV
+
+### Description
+
+Mode édition pour modifier manuellement un CV existant.
+
+### Fonctionnalités
+
+**Édition de sections** :
+
+- ✅ Header (nom, titre, contact)
+- ✅ Summary (résumé professionnel)
+- ✅ Skills (compétences techniques, soft skills, outils)
+- ✅ Experience (expériences professionnelles)
+- ✅ Education (formation)
+- ✅ Languages (langues)
+- ✅ Projects (projets)
+- ✅ Extras (informations complémentaires)
+
+**Options** :
+
+- Édition en temps réel
+- Validation automatique des champs
+- Auto-sauvegarde (toutes les 2 secondes)
+- Annulation/Rétablissement (Ctrl+Z / Ctrl+Y)
+- Prévisualisation en direct
+
+### UI
+
+**Mode édition** :
+
+- Bouton "✏️ Éditer" dans TopBar
+- Champs de formulaire pour chaque section
+- Toggle entre mode vue et mode édition
+- Bouton "Sauvegarder" (sauvegarde immédiate)
+- Bouton "Annuler" (restaure version précédente)
+
+**Validation** :
+
+- Email valide (regex)
+- Téléphone valide (format international)
+- Dates cohérentes (début < fin)
+- Champs requis (nom, titre)
+
+### API
+
+```javascript
+// POST /api/cv/edit
+{
+  "filename": "cv_1234567890.json",
+  "cvData": { /* CV JSON */ }
+}
+```
+
+### Code
+
+**Route** : `app/api/cv/edit/route.js`
+**Validation** : `lib/cv/validation.js`
+
+---
+
+## 📝 Création de CV
+
+### Description
+
+Crée un nouveau CV vierge manuellement, section par section.
+
+### Processus
+
+```
+1. Utilisateur clique sur "Nouveau CV" (bouton +)
+2. Formulaire de création étape par étape
+3. Saisie manuelle de toutes les sections
+4. Validation en temps réel
+5. Génération du JSON
+6. Chiffrement et sauvegarde
+7. Métadonnées avec createdBy: 'create-manual-cv'
+```
+
+### Étapes de création
+
+**Étape 1 - Informations personnelles** :
+
+- Nom complet
+- Titre professionnel
+- Email, téléphone
+- Adresse (optionnel)
+- LinkedIn, GitHub, portfolio (optionnels)
+
+**Étape 2 - Résumé professionnel** :
+
+- Description courte (2-3 phrases)
+- Domaines d'expertise
+
+**Étape 3 - Compétences** :
+
+- Hard skills (techniques)
+- Soft skills (comportementales)
+- Outils et technologies
+- Méthodologies
+
+**Étape 4 - Expériences** :
+
+- Postes occupés
+- Entreprises
+- Dates (début - fin)
+- Responsabilités
+- Réalisations
+
+**Étape 5 - Formation** :
+
+- Diplômes
+- Établissements
+- Dates
+- Spécialisations
+
+**Étape 6 - Langues, Projets, Extras** (optionnels)
+
+### UI
+
+**Wizard multi-étapes** :
+
+- Navigation étape par étape
+- Barre de progression
+- Boutons "Précédent" / "Suivant"
+- Bouton "Sauvegarder le brouillon"
+- Validation à chaque étape
+
+**Preview en temps réel** :
+
+- Aperçu du CV pendant la saisie
+- Toggle entre formulaire et preview
+
+### API
+
+```javascript
+// POST /api/cv/create-manual
+{
+  "cvData": { /* CV JSON complet */ }
+}
+```
+
+### Code
+
+**Route** : `app/api/cv/create-manual/route.js`
+**Composant** : `components/CreateCvWizard.jsx`
 
 ---
 
@@ -560,4 +754,4 @@ APPLE_PRIVATE_KEY="..."
 
 ---
 
-**8 fonctionnalités majeures** | Powered by OpenAI & Puppeteer
+**9 fonctionnalités majeures** | Powered by OpenAI & Puppeteer

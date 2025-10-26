@@ -3,8 +3,9 @@
 import React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CreditCard, Zap, History, Crown } from "lucide-react";
+import { CreditCard, Zap, History, Crown, CheckCircle, XCircle, X } from "lucide-react";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import CurrentPlanCard from "./CurrentPlanCard";
 import PlanComparisonCards from "./PlanComparisonCards";
 import FeatureCountersCard from "./FeatureCountersCard";
@@ -12,8 +13,14 @@ import CreditBalanceCard from "./CreditBalanceCard";
 import CreditPacksCards from "./CreditPacksCards";
 import CreditTransactionsTable from "./CreditTransactionsTable";
 import InvoicesTable from "./InvoicesTable";
+import {
+  SkeletonCurrentPlanCard,
+  SkeletonFeatureCounters,
+  SkeletonPlanCard,
+} from "@/components/ui/SkeletonLoader";
 
 export default function SubscriptionsPage({ user }) {
+  const { t } = useLanguage();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = React.useState("subscription");
   const [subscriptionData, setSubscriptionData] = React.useState(null);
@@ -46,24 +53,24 @@ export default function SubscriptionsPage({ user }) {
     if (searchParams.get('success') === 'true') {
       const isUpdated = searchParams.get('updated') === 'true';
       if (isUpdated) {
-        setSuccessMessage("✅ Abonnement mis à jour avec succès !");
+        setSuccessMessage(t('subscription.page.messages.subscriptionUpdated'));
       } else {
-        setSuccessMessage("✅ Abonnement activé avec succès !");
+        setSuccessMessage(t('subscription.page.messages.subscriptionActivated'));
       }
       setTimeout(() => setSuccessMessage(""), 5000);
       // Rafraîchir les données après un petit délai pour laisser le webhook se traiter
       setTimeout(() => refreshData(), 1000);
     } else if (searchParams.get('credits_success') === 'true') {
-      setSuccessMessage("✅ Crédits achetés avec succès !");
+      setSuccessMessage(t('subscription.page.messages.creditsPurchased'));
       setActiveTab("credits");
       setTimeout(() => setSuccessMessage(""), 5000);
       // Rafraîchir les données après un petit délai
       setTimeout(() => refreshData(), 1000);
     } else if (searchParams.get('canceled') === 'true') {
-      setError("Paiement annulé.");
+      setError(t('subscription.page.messages.paymentCanceled'));
       setTimeout(() => setError(null), 5000);
     }
-  }, [searchParams, refreshData]);
+  }, [searchParams, refreshData, t]);
 
   // Charger les données d'abonnement et crédits
   React.useEffect(() => {
@@ -78,7 +85,7 @@ export default function SubscriptionsPage({ user }) {
         ]);
 
         if (!subRes.ok || !creditsRes.ok) {
-          throw new Error('Erreur lors du chargement des données');
+          throw new Error(t('subscription.page.messages.loadingError'));
         }
 
         const subData = await subRes.json();
@@ -106,7 +113,7 @@ export default function SubscriptionsPage({ user }) {
         refreshData();
       }
     }, [refreshData]),
-    enabled: true,
+    enabled: false,
   });
 
   // Fonction pour annuler l'abonnement
@@ -124,31 +131,72 @@ export default function SubscriptionsPage({ user }) {
       }
 
       const data = await response.json();
-      setSuccessMessage("✅ Votre abonnement sera annulé à la fin de la période actuelle.");
+      setSuccessMessage(t('subscription.page.messages.cancelScheduled'));
       setTimeout(() => setSuccessMessage(""), 5000);
 
       // Rafraîchir les données pour afficher le nouveau status
       await refreshData();
     } catch (err) {
       console.error('Error canceling subscription:', err);
-      setError(err.message || 'Erreur lors de l\'annulation');
+      setError(err.message || t('subscription.page.messages.cancelError'));
       setTimeout(() => setError(null), 5000);
     }
-  }, [refreshData]);
+  }, [refreshData, t]);
 
   const tabs = [
-    { id: "subscription", label: "Abonnement", icon: Crown },
-    { id: "credits", label: "Crédits", icon: Zap },
-    { id: "history", label: "Historique", icon: History },
+    { id: "subscription", label: t('subscription.page.tabs.subscription'), icon: Crown },
+    { id: "credits", label: t('subscription.page.tabs.credits'), icon: Zap },
+    { id: "history", label: t('subscription.page.tabs.history'), icon: History },
   ];
+
+  // Gestion navigation clavier des onglets
+  const handleTabKeyDown = React.useCallback((e, tabIndex) => {
+    const tabCount = tabs.length;
+
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const prevIndex = (tabIndex - 1 + tabCount) % tabCount;
+      setActiveTab(tabs[prevIndex].id);
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      const nextIndex = (tabIndex + 1) % tabCount;
+      setActiveTab(tabs[nextIndex].id);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setActiveTab(tabs[0].id);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setActiveTab(tabs[tabCount - 1].id);
+    }
+  }, [tabs]);
 
   if (loading) {
     return (
       <main className="min-h-screen">
         <div className="max-w-7xl mx-auto px-6 pt-6 pb-12 space-y-6">
-          <div className="text-center text-white/70 py-12">
-            <div className="animate-spin inline-block w-8 h-8 border-4 border-white/20 border-t-white/80 rounded-full"></div>
-            <p className="mt-4">Chargement...</p>
+          {/* Header skeleton */}
+          <div className="space-y-1">
+            <div className="h-4 bg-white/20 rounded w-32 mb-4 animate-pulse"></div>
+            <div className="h-8 bg-white/20 rounded w-64 mb-2 animate-pulse"></div>
+            <div className="h-4 bg-white/20 rounded w-96 animate-pulse"></div>
+          </div>
+
+          {/* Tabs skeleton */}
+          <div className="flex gap-2 border-b border-white/20">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-12 bg-white/20 rounded-t-lg w-32 animate-pulse"></div>
+            ))}
+          </div>
+
+          {/* Content skeleton */}
+          <div className="space-y-6">
+            <SkeletonCurrentPlanCard />
+            <SkeletonFeatureCounters />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <SkeletonPlanCard />
+              <SkeletonPlanCard />
+              <SkeletonPlanCard />
+            </div>
           </div>
         </div>
       </main>
@@ -157,7 +205,7 @@ export default function SubscriptionsPage({ user }) {
 
   return (
     <main className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-6 pt-6 pb-12 space-y-6">
+      <div className="max-w-5xl mx-auto px-6 pt-6 pb-12 space-y-4">
         {/* Header */}
         <div className="space-y-1">
           <Link
@@ -165,46 +213,87 @@ export default function SubscriptionsPage({ user }) {
             className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-white mb-4 transition-colors drop-shadow"
           >
             <span>←</span>
-            <span>Retour aux CV</span>
+            <span>{t('subscription.page.backToCvs')}</span>
           </Link>
           <h1 className="text-2xl font-semibold text-white drop-shadow-lg">
-            Abonnements & Crédits
+            {t('subscription.page.title')}
           </h1>
           <p className="text-sm text-white/70 drop-shadow">
-            Gérez votre abonnement, achetez des crédits et consultez votre historique.
+            {t('subscription.page.description')}
           </p>
         </div>
 
         {/* Messages de succès/erreur */}
         {successMessage && (
-          <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 text-white backdrop-blur-md">
-            {successMessage}
+          <div
+            className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50 rounded-xl p-4 text-white backdrop-blur-md shadow-lg shadow-green-500/10 animate-in fade-in slide-in-from-top-2 duration-300"
+            role="alert"
+          >
+            <div className="flex items-start gap-3">
+              <CheckCircle className="flex-shrink-0 text-green-400 mt-0.5" size={20} />
+              <div className="flex-1">
+                <p className="font-medium text-green-100">{successMessage}</p>
+              </div>
+              <button
+                onClick={() => setSuccessMessage("")}
+                className="flex-shrink-0 text-green-300 hover:text-green-100 transition-colors p-1 hover:bg-green-500/20 rounded"
+                aria-label={t('subscription.page.close')}
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
         )}
         {error && (
-          <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 text-white backdrop-blur-md">
-            ❌ {error}
+          <div
+            className="bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/50 rounded-xl p-4 text-white backdrop-blur-md shadow-lg shadow-red-500/10 animate-in fade-in slide-in-from-top-2 duration-300"
+            role="alert"
+          >
+            <div className="flex items-start gap-3">
+              <XCircle className="flex-shrink-0 text-red-400 mt-0.5" size={20} />
+              <div className="flex-1">
+                <p className="font-medium text-red-100">{error}</p>
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="flex-shrink-0 text-red-300 hover:text-red-100 transition-colors p-1 hover:bg-red-500/20 rounded"
+                aria-label={t('subscription.page.close')}
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
         )}
 
         {/* Onglets */}
-        <div className="flex gap-2 border-b border-white/20 overflow-x-auto">
-          {tabs.map((tab) => {
+        <div
+          role="tablist"
+          aria-label={t('subscription.page.tabsAriaLabel')}
+          className="flex gap-2 border-b border-white/20 overflow-x-auto"
+        >
+          {tabs.map((tab, index) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
+                role="tab"
+                id={`tab-${tab.id}`}
+                aria-selected={isActive}
+                aria-controls={`tabpanel-${tab.id}`}
+                tabIndex={isActive ? 0 : -1}
                 onClick={() => setActiveTab(tab.id)}
+                onKeyDown={(e) => handleTabKeyDown(e, index)}
                 className={`
                   flex items-center gap-2 px-4 py-3 font-medium transition-all whitespace-nowrap
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-t-lg
                   ${isActive
                     ? 'text-white border-b-2 border-white'
                     : 'text-white/60 hover:text-white/80'
                   }
                 `}
               >
-                <Icon size={18} />
+                <Icon size={18} aria-hidden="true" />
                 {tab.label}
               </button>
             );
@@ -214,7 +303,12 @@ export default function SubscriptionsPage({ user }) {
         {/* Contenu des onglets */}
         <div className="space-y-6">
           {activeTab === "subscription" && subscriptionData && (
-            <>
+            <div
+              role="tabpanel"
+              id="tabpanel-subscription"
+              aria-labelledby="tab-subscription"
+              className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300"
+            >
               <CurrentPlanCard
                 subscription={subscriptionData.subscription}
                 plan={subscriptionData.subscription?.plan}
@@ -230,48 +324,34 @@ export default function SubscriptionsPage({ user }) {
                 subscription={subscriptionData.subscription}
                 onUpgradeSuccess={refreshData}
               />
-            </>
+            </div>
           )}
 
           {activeTab === "credits" && creditData && (
-            <>
+            <div
+              role="tabpanel"
+              id="tabpanel-credits"
+              aria-labelledby="tab-credits"
+              className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300"
+            >
               <CreditBalanceCard balance={creditData} />
               <CreditPacksCards onPurchaseSuccess={refreshData} />
-            </>
+            </div>
           )}
 
           {activeTab === "history" && (
-            <div className="space-y-6">
-              <CreditTransactionsTable />
-              <InvoicesTable />
+            <div
+              role="tabpanel"
+              id="tabpanel-history"
+              aria-labelledby="tab-history"
+              className="animate-in fade-in slide-in-from-bottom-4 duration-300"
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <CreditTransactionsTable />
+                <InvoicesTable />
+              </div>
             </div>
           )}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-8 text-xs text-white/70 text-center space-y-2">
-          <div>© 2025 FitMyCv.ai (v1.0.8)</div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-0 sm:gap-1 leading-none -space-y-3 sm:space-y-0">
-            <div className="flex items-baseline justify-center gap-1 leading-none">
-              <a href="/about" className="hover:text-white transition-colors">
-                À propos
-              </a>
-              <span className="text-white/40">•</span>
-              <a href="/cookies" className="hover:text-white transition-colors">
-                Cookies
-              </a>
-              <span className="text-white/40 hidden sm:inline">•</span>
-            </div>
-            <div className="flex items-baseline justify-center gap-1 leading-none">
-              <a href="/terms" className="hover:text-white transition-colors">
-                Conditions générales
-              </a>
-              <span className="text-white/40">•</span>
-              <a href="/privacy" className="hover:text-white transition-colors">
-                Politique de confidentialité
-              </a>
-            </div>
-          </div>
         </div>
       </div>
     </main>

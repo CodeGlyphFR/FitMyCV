@@ -601,7 +601,7 @@ export default function TopBar() {
                         router.push("/account/subscriptions");
                       }}
                     >
-                      Abonnements & Crédits
+                      {t("topbar.subscriptions")}
                     </button>
                     <button
                       className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"

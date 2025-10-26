@@ -2,14 +2,7 @@
 
 import React from "react";
 import { History, Loader2, ChevronLeft, ChevronRight, ArrowUpCircle, ArrowDownCircle, RotateCcw, Gift, Plus } from "lucide-react";
-
-const TYPE_LABELS = {
-  purchase: "Achat",
-  usage: "Utilisation",
-  refund: "Remboursement",
-  gift: "Bonus",
-  cv_creation: "Création CV",
-};
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const TYPE_ICONS = {
   purchase: ArrowUpCircle,
@@ -28,6 +21,7 @@ const TYPE_COLORS = {
 };
 
 export default function CreditTransactionsTable() {
+  const { t } = useLanguage();
   const [transactions, setTransactions] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [page, setPage] = React.useState(0);
@@ -84,12 +78,12 @@ export default function CreditTransactionsTable() {
     <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6 shadow-lg">
       <div className="flex items-center gap-2 mb-6">
         <History className="text-white" size={24} />
-        <h2 className="text-xl font-semibold text-white">Historique des transactions</h2>
+        <h2 className="text-xl font-semibold text-white">{t('subscription.transactions.title')}</h2>
       </div>
 
       {transactions.length === 0 ? (
         <div className="text-center text-white/60 py-8">
-          Aucune transaction pour le moment.
+          {t('subscription.transactions.noTransactions')}
         </div>
       ) : (
         <>
@@ -98,17 +92,17 @@ export default function CreditTransactionsTable() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/20">
-                  <th className="text-left py-3 px-2 text-sm font-medium text-white/70">Type</th>
-                  <th className="text-left py-3 px-2 text-sm font-medium text-white/70">Détails</th>
-                  <th className="text-right py-3 px-2 text-sm font-medium text-white/70">Montant</th>
-                  <th className="text-right py-3 px-2 text-sm font-medium text-white/70">Date</th>
+                  <th className="text-left py-3 px-2 text-sm font-medium text-white/70">{t('subscription.transactions.columns.type')}</th>
+                  <th className="text-left py-3 px-2 text-sm font-medium text-white/70">{t('subscription.transactions.columns.details')}</th>
+                  <th className="text-right py-3 px-2 text-sm font-medium text-white/70">{t('subscription.transactions.columns.amount')}</th>
+                  <th className="text-right py-3 px-2 text-sm font-medium text-white/70">{t('subscription.transactions.columns.date')}</th>
                 </tr>
               </thead>
               <tbody>
                 {transactions.map((transaction) => {
                   const TypeIcon = TYPE_ICONS[transaction.type] || ArrowDownCircle;
                   const typeColor = TYPE_COLORS[transaction.type] || "text-gray-300";
-                  const typeLabel = TYPE_LABELS[transaction.type] || transaction.type;
+                  const typeLabel = t(`subscription.transactions.types.${transaction.type}`, transaction.type);
 
                   return (
                     <tr
@@ -127,7 +121,7 @@ export default function CreditTransactionsTable() {
                             <div>{transaction.featureName}</div>
                           )}
                           {transaction.refunded && (
-                            <span className="text-xs text-purple-300">(Remboursé)</span>
+                            <span className="text-xs text-purple-300">{t('subscription.transactions.refunded')}</span>
                           )}
                           {transaction.metadata && transaction.metadata.reason && (
                             <div className="text-xs text-white/50">{transaction.metadata.reason}</div>
@@ -163,11 +157,11 @@ export default function CreditTransactionsTable() {
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft size={16} />
-              Précédent
+              {t('subscription.transactions.pagination.previous')}
             </button>
 
             <span className="text-sm text-white/70">
-              Page {page + 1}
+              {t('subscription.transactions.pagination.page', { page: page + 1 })}
             </span>
 
             <button
@@ -175,7 +169,7 @@ export default function CreditTransactionsTable() {
               disabled={!hasMore}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Suivant
+              {t('subscription.transactions.pagination.next')}
               <ChevronRight size={16} />
             </button>
           </div>

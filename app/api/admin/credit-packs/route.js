@@ -40,9 +40,8 @@ export async function GET(request) {
 /**
  * POST /api/admin/credit-packs
  * Crée un nouveau pack de crédits
+ * Le nom est généré automatiquement: "{creditAmount} Crédits"
  * Body: {
- *   name,
- *   description,
  *   creditAmount,
  *   price,
  *   priceCurrency,
@@ -63,8 +62,6 @@ export async function POST(request) {
 
     const body = await request.json();
     const {
-      name,
-      description,
       creditAmount,
       price,
       priceCurrency,
@@ -72,13 +69,6 @@ export async function POST(request) {
     } = body;
 
     // Validation
-    if (!name || typeof name !== 'string') {
-      return NextResponse.json(
-        { error: 'Nom du pack requis' },
-        { status: 400 }
-      );
-    }
-
     if (typeof creditAmount !== 'number' || creditAmount <= 0) {
       return NextResponse.json(
         { error: 'Le nombre de crédits doit être supérieur à 0' },
@@ -100,23 +90,26 @@ export async function POST(request) {
       );
     }
 
-    // Vérifier que le nom n'existe pas déjà
+    // Vérifier que le creditAmount n'existe pas déjà (contrainte unique)
     const existing = await prisma.creditPack.findUnique({
-      where: { name },
+      where: { creditAmount },
     });
 
     if (existing) {
       return NextResponse.json(
-        { error: 'Un pack avec ce nom existe déjà' },
+        { error: `Un pack avec ${creditAmount} crédits existe déjà` },
         { status: 409 }
       );
     }
+
+    // Générer automatiquement le nom
+    const name = `${creditAmount} Crédits`;
 
     // Créer le pack
     const pack = await prisma.creditPack.create({
       data: {
         name,
-        description: description || null,
+        description: null,
         creditAmount,
         price,
         priceCurrency,

@@ -58,6 +58,7 @@
     "user": "Utilisateur",
     "myCvs": "Mes CVs",
     "myAccount": "Mon compte",
+    "subscriptions": "Abonnements & Crédits",
     "logout": "Déconnexion",
     "loadingInProgress": "Chargement en cours ...",
     "taskQueue": "File d'attente des tâches",
@@ -598,5 +599,244 @@
   },
   "cvImprovement": {
     "improving": "Amélioration en cours..."
+  },
+  "admin": {
+    "subscriptionPlans": {
+      "tiers": {
+        "0": "Gratuit",
+        "1": "Pro",
+        "2": "Premium",
+        "3": "Business",
+        "4": "Enterprise"
+      }
+    }
+  },
+  "subscription": {
+    "page": {
+      "title": "Abonnements & Crédits",
+      "description": "Gérez votre abonnement, achetez des crédits et consultez votre historique.",
+      "backToCvs": "Retour aux CV",
+      "loadingTitle": "Chargement...",
+      "errorLoading": "Erreur lors du chargement des données",
+      "tabs": {
+        "subscription": "Abonnement",
+        "credits": "Crédits",
+        "history": "Historique"
+      },
+      "tabsAriaLabel": "Gestion de l'abonnement",
+      "close": "Fermer"
+    },
+    "messages": {
+      "subscriptionUpdated": "✅ Abonnement mis à jour avec succès !",
+      "subscriptionActivated": "✅ Abonnement activé avec succès !",
+      "creditsPurchased": "✅ Crédits achetés avec succès !",
+      "paymentCanceled": "❌ Paiement annulé.",
+      "loadingError": "Erreur lors du chargement des données",
+      "cancelScheduled": "✅ Votre abonnement sera annulé à la fin de la période actuelle.",
+      "cancelError": "Erreur lors de l'annulation de l'abonnement"
+    },
+    "currentPlan": {
+      "title": "Plan {planName}",
+      "billingMonthly": "Facturation mensuelle",
+      "billingYearly": "Facturation annuelle",
+      "perMonth": "mois",
+      "perYear": "an",
+      "status": {
+        "active": "Actif",
+        "canceled": "Annulé",
+        "pastDue": "Paiement échoué"
+      },
+      "currentPeriod": "Période actuelle",
+      "periodFrom": "Du {date}",
+      "periodTo": "au {date}",
+      "renewal": "Renouvellement",
+      "renewalAutomatic": "Automatique",
+      "renewalInactive": "Inactif",
+      "canceledOn": "Annulé le {date}",
+      "canceledWarning": "Votre abonnement sera annulé le {date}. Vous conserverez l'accès jusqu'à cette date.",
+      "switchToYearly": "Passer à la facturation annuelle ({price}€/an - économisez {discount}%)",
+      "cancelButton": "Annuler l'abonnement",
+      "reactivateButton": "Réactiver le renouvellement",
+      "switchPeriodInfo": "Pour revenir au paiement mensuel, veuillez annuler votre abonnement annuel",
+      "cancelModal": {
+        "title": "Annuler votre abonnement ?",
+        "description": "Si vous annulez votre abonnement :",
+        "keepAccessUntil": "Vous conserverez l'accès jusqu'au {date}",
+        "downgradePlan": "Vous repasserez automatiquement au plan Gratuit",
+        "canReactivate": "Vous pourrez réactiver à tout moment",
+        "keepButton": "Conserver",
+        "confirmButton": "Confirmer",
+        "canceling": "Annulation..."
+      },
+      "reactivateModal": {
+        "title": "Réactiver votre abonnement ?",
+        "description": "Si vous réactivez votre abonnement :",
+        "renewalRestored": "Le renouvellement automatique sera rétabli",
+        "keepPlan": "Vous conserverez votre plan {planName} après le {date}",
+        "canCancelAgain": "Vous pourrez annuler à nouveau à tout moment",
+        "cancelButton": "Annuler",
+        "confirmButton": "Confirmer",
+        "reactivating": "Réactivation..."
+      },
+      "yearlyWarningModal": {
+        "title": "Passer à la facturation annuelle ?",
+        "warningTitle": "Attention : Ce changement est irréversible",
+        "cannotGoBackMonthly": "Une fois passé en facturation annuelle, vous ne pourrez plus revenir au paiement mensuel",
+        "savingsInfo": "Vous économisez {discount}% par rapport au paiement mensuel ({yearlyPrice}€/an au lieu de {monthlyTotal}€/an)",
+        "cancellationInfo": "Si vous souhaitez annuler plus tard, l'annulation prendra effet à la fin de votre période annuelle",
+        "prorataInfo": "Vous serez facturé dès maintenant au prorata pour la période restante",
+        "cancelButton": "Annuler",
+        "confirmButton": "Confirmer le passage en annuel",
+        "switching": "Changement..."
+      }
+    },
+    "comparison": {
+      "title": "Plans disponibles",
+      "badges": {
+        "current": "Plan actuel",
+        "recommended": "⭐ Recommandé"
+      },
+      "pricing": {
+        "free": "Gratuit",
+        "forever": "Pour toujours",
+        "perMonth": "par mois",
+        "saveYearly": "💰 Économisez {percent}% en annuel"
+      },
+      "features": {
+        "unlimited": "illimité",
+        "notAccessible": "❌ Features non accessibles :",
+        "showMore": "+ {count} autres features",
+        "showLess": "− Voir moins"
+      },
+      "buttons": {
+        "currentPlan": "Plan actuel",
+        "downgradeScheduled": "Downgrade déjà programmé",
+        "upgradeTo": "Passer à {planName}",
+        "downgradeTo": "Revenir à {planName}",
+        "monthly": "Mensuel",
+        "orYearly": "ou Annuel",
+        "scheduling": "Programmation...",
+        "redirecting": "Redirection..."
+      },
+      "securePayment": "💳 Paiement sécurisé via Stripe • Annulable à tout moment",
+      "errors": {
+        "checkoutError": "Erreur lors de la création de la session de paiement",
+        "changePlanError": "Erreur lors du changement de plan",
+        "cancelError": "Erreur lors de l'annulation"
+      },
+      "downgradeModal": {
+        "title": "Downgrade vers le plan Gratuit ?",
+        "description": "Si vous passez au plan Gratuit :",
+        "keepAccessUntil": "Vous conserverez l'accès à votre plan actuel jusqu'au <strong>{date}</strong>",
+        "switchToFree": "Vous passerez automatiquement au <strong>plan Gratuit</strong> à cette date",
+        "canUpgrade": "Vous pourrez upgrader à tout moment",
+        "cancel": "Annuler",
+        "confirm": "Confirmer",
+        "scheduling": "Programmation..."
+      }
+    },
+    "features": {
+      "title": "Utilisation mensuelle",
+      "resetInfo": "Les compteurs se réinitialisent à la date anniversaire de votre abonnement",
+      "disabled": "Désactivée",
+      "unlimited": "∞",
+      "unlimitedTooltip": "Utilisation illimitée pour cette feature",
+      "limitReached": "Limite atteinte - utilisez vos crédits",
+      "limitAlmost": "Limite presque atteinte ({percentage}%)",
+      "limitAlmostTooltip": "Au-delà de la limite, vous pourrez utiliser vos crédits (1 crédit = 1 utilisation)",
+      "needMore": "Besoin de plus ?",
+      "needMoreInfo": "Achetez des crédits pour dépasser vos limites mensuelles sans changer de plan.",
+      "labels": {
+        "gpt_cv_generation": "🤖 Adaptation de CV par IA",
+        "import_pdf": "📥 Import de CV",
+        "translate_cv": "🌍 Traduction de CV",
+        "match_score": "🎯 Score de match",
+        "calculate_match_score": "🎯 Score de match",
+        "optimize_cv": "✨ Optimisation",
+        "generate_from_job_title": "💼 Création de CV fictif",
+        "export_cv": "💾 Export de CV",
+        "edit_cv": "✏️ Edition de CV",
+        "create_cv_manual": "📝 Création de CV"
+      }
+    },
+    "credits": {
+      "title": "Balance de crédits",
+      "available": "crédits disponibles",
+      "purchased": "Achetés",
+      "used": "Utilisés",
+      "refunded": "Remboursés",
+      "gifted": "Bonus reçus",
+      "howItWorks": "Comment ça marche ?",
+      "rule1": "1 crédit = 1 utilisation de n'importe quelle feature",
+      "rule2": "Les crédits sont permanents (pas d'expiration)",
+      "rule3": "Remboursement automatique si une tâche échoue",
+      "rule4": "Utilisez vos crédits pour dépasser les limites mensuelles"
+    },
+    "packs": {
+      "title": "Acheter des crédits",
+      "credits": "crédits",
+      "pricePerCredit": "soit {price}€ par crédit",
+      "buyButton": "Acheter",
+      "redirecting": "Redirection...",
+      "securePayment": "Paiement sécurisé via Stripe • Crédits permanents",
+      "loading": "Chargement..."
+    },
+    "transactions": {
+      "title": "Historique des transactions",
+      "noTransactions": "Aucune transaction pour le moment.",
+      "columns": {
+        "type": "Type",
+        "details": "Détails",
+        "amount": "Montant",
+        "date": "Date"
+      },
+      "types": {
+        "purchase": "Achat",
+        "usage": "Utilisation",
+        "refund": "Remboursement",
+        "gift": "Bonus",
+        "cv_creation": "Création CV"
+      },
+      "refunded": "(Remboursé)",
+      "pagination": {
+        "previous": "Précédent",
+        "next": "Suivant",
+        "page": "Page {page}"
+      }
+    },
+    "invoices": {
+      "title": "Factures",
+      "noInvoices": "Aucune facture pour le moment",
+      "errorLoading": "Erreur lors du chargement des factures",
+      "filters": {
+        "all": "Tout ({count})",
+        "subscriptions": "Abonnements ({count})",
+        "credits": "Crédits ({count})"
+      },
+      "columns": {
+        "date": "Date",
+        "type": "Type",
+        "description": "Description",
+        "amount": "Montant",
+        "status": "Statut",
+        "action": "Action"
+      },
+      "types": {
+        "subscription": "👑 Abonnement",
+        "creditPack": "💎 Crédits"
+      },
+      "status": {
+        "paid": "Payé",
+        "open": "En attente",
+        "canceled": "Annulé"
+      },
+      "downloadPdf": "PDF",
+      "pagination": {
+        "showing": "Affichage de {start} à {end} sur {total} facture{plural}",
+        "previous": "Précédent",
+        "next": "Suivant",
+        "page": "Page {current} sur {total}"
+      }
+    }
   }
 }

@@ -4,16 +4,31 @@ import prisma from '@/lib/prisma';
 import { syncStripeProductsInternal } from '@/lib/subscription/stripeSync';
 
 /**
+ * Génère le nom d'un plan à partir de son tier
+ * @param {number} tier - Niveau du plan (0=Gratuit, 1=Pro, 2=Premium, etc.)
+ * @returns {string} Nom du plan
+ */
+function generatePlanName(tier) {
+  const TIER_NAMES = {
+    0: 'Gratuit',
+    1: 'Pro',
+    2: 'Premium',
+    3: 'Business',
+    4: 'Enterprise'
+  };
+  return TIER_NAMES[tier] || `Niveau ${tier}`;
+}
+
+/**
  * PATCH /api/admin/subscription-plans/[id]
  * Modifie un plan d'abonnement et ses limitations de features
  * Body: {
- *   name?,
- *   description?,
- *   priceAmount?,
+ *   tier?,
+ *   priceMonthly?,
+ *   priceYearly?,
  *   priceCurrency?,
- *   pricePeriod?,
- *   maxCvCount?,
- *   tokenCount?,
+ *   isFree?,
+ *   isPopular?,
  *   featureLimits?: [{ featureName, isEnabled, usageLimit }]
  * }
  */
@@ -51,37 +66,36 @@ export async function PATCH(request, { params }) {
 
     const body = await request.json();
     const {
-      name,
-      description,
       priceMonthly,
       priceYearly,
-      yearlyDiscountPercent,
       priceCurrency,
-      maxCvCount,
-      tokenCount,
       featureLimits,
+      // Nouveaux champs robustes
+      isFree,
+      tier,
+      isPopular,
     } = body;
 
     // Validation optionnelle des champs fournis
-    if (name !== undefined) {
-      if (typeof name !== 'string' || !name.trim()) {
+    if (tier !== undefined) {
+      if (typeof tier !== 'number' || tier < 0) {
         return NextResponse.json(
-          { error: 'Nom du plan invalide' },
+          { error: 'Niveau (tier) invalide' },
           { status: 400 }
         );
       }
 
-      // Vérifier l'unicité du nom (sauf pour le plan actuel)
-      const nameExists = await prisma.subscriptionPlan.findFirst({
+      // Vérifier l'unicité du tier (sauf pour le plan actuel)
+      const tierExists = await prisma.subscriptionPlan.findFirst({
         where: {
-          name,
+          tier,
           NOT: { id: planId },
         },
       });
 
-      if (nameExists) {
+      if (tierExists) {
         return NextResponse.json(
-          { error: 'Un plan avec ce nom existe déjà' },
+          { error: `Un plan avec le niveau ${tier} existe déjà : "${tierExists.name}"` },
           { status: 409 }
         );
       }
@@ -97,20 +111,6 @@ export async function PATCH(request, { params }) {
     if (priceYearly !== undefined && (typeof priceYearly !== 'number' || priceYearly < 0)) {
       return NextResponse.json(
         { error: 'Prix annuel invalide' },
-        { status: 400 }
-      );
-    }
-
-    if (yearlyDiscountPercent !== undefined && (typeof yearlyDiscountPercent !== 'number' || yearlyDiscountPercent < 0 || yearlyDiscountPercent > 100)) {
-      return NextResponse.json(
-        { error: 'Pourcentage de réduction annuelle invalide' },
-        { status: 400 }
-      );
-    }
-
-    if (tokenCount !== undefined && (typeof tokenCount !== 'number' || tokenCount < 0)) {
-      return NextResponse.json(
-        { error: 'Nombre de tokens invalide' },
         { status: 400 }
       );
     }
@@ -140,13 +140,31 @@ export async function PATCH(request, { params }) {
 
     // Construire les données de mise à jour
     const updateData = {};
-    if (name !== undefined) updateData.name = name;
-    if (description !== undefined) updateData.description = description || null;
+
+    // Générer automatiquement le nom si le tier change
+    if (tier !== undefined) {
+      updateData.tier = tier;
+      updateData.name = generatePlanName(tier);
+    }
+
     if (priceMonthly !== undefined) updateData.priceMonthly = priceMonthly;
     if (priceYearly !== undefined) updateData.priceYearly = priceYearly;
-    if (yearlyDiscountPercent !== undefined) updateData.yearlyDiscountPercent = yearlyDiscountPercent;
     if (priceCurrency !== undefined) updateData.priceCurrency = priceCurrency;
-    if (tokenCount !== undefined) updateData.tokenCount = tokenCount;
+    if (isFree !== undefined) updateData.isFree = isFree;
+    if (isPopular !== undefined) updateData.isPopular = isPopular;
+
+    // Calculer automatiquement la réduction annuelle si les prix changent
+    const finalPriceMonthly = priceMonthly !== undefined ? priceMonthly : existingPlan.priceMonthly;
+    const finalPriceYearly = priceYearly !== undefined ? priceYearly : existingPlan.priceYearly;
+
+    if (priceMonthly !== undefined || priceYearly !== undefined) {
+      updateData.yearlyDiscountPercent = finalPriceMonthly > 0 && finalPriceYearly > 0
+        ? ((finalPriceMonthly * 12 - finalPriceYearly) / (finalPriceMonthly * 12)) * 100
+        : 0;
+    }
+
+    // Description toujours null (supprimée)
+    updateData.description = null;
 
     // Si des featureLimits sont fournis, les mettre à jour en cascade
     if (featureLimits && Array.isArray(featureLimits)) {

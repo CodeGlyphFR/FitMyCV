@@ -25,6 +25,8 @@ model User {
   telemetryEvents TelemetryEvent[]
   featureUsage  FeatureUsage[]
   openaiUsage   OpenAIUsage[]
+  backgroundTasks BackgroundTask[] // Tâches en arrière-plan
+  openaiCalls   OpenAICall[]       // Appels OpenAI individuels
   resetToken    String?       // Token for password reset
   resetTokenExpiry DateTime?  // Expiration date for reset token
 
@@ -123,6 +125,7 @@ model BackgroundTask {
   payload           String?
   deviceId          String
   userId            String?  // Optional - for user-specific tasks
+  user              User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   cvFile            String?  // CV filename linked to this task (for improve-cv, calculate-match-score)
 
   // Credit system
@@ -361,6 +364,7 @@ model OpenAIAlert {
 model OpenAICall {
   id               String   @id @default(cuid())
   userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   featureName      String   // generate_cv, match_score, optimize_cv, translate_cv, import_pdf, etc.
   model            String   // gpt-5-nano-2025-08-07, gpt-5-mini-2025-08-07, etc.
 
@@ -386,6 +390,11 @@ model SubscriptionPlan {
   name                  String   @unique // "Gratuit", "Pro", "Premium"
   description           String?  // Description du plan
 
+  // Identification robuste
+  isFree                Boolean  @default(false) // true uniquement pour le plan gratuit
+  tier                  Int      @default(0)     // 0=Gratuit, 1=Pro, 2=Premium (pour logique upgrade/downgrade)
+  isPopular             Boolean  @default(false) // true pour afficher badge "Recommandé"
+
   // Prix structuré (mensuel/annuel)
   priceMonthly          Float    @default(0) // Prix mensuel (ex: 9.99)
   priceYearly           Float    @default(0) // Prix annuel (ex: 99.99)
@@ -405,6 +414,7 @@ model SubscriptionPlan {
   updatedAt             DateTime @updatedAt
 
   @@index([name])
+  @@index([tier])
 }
 
 model SubscriptionPlanFeatureLimit {
@@ -429,9 +439,9 @@ model SubscriptionPlanFeatureLimit {
 
 model CreditPack {
   id            Int      @id @default(autoincrement())
-  name          String   @unique // "Pack Starter", "Pack Pro", etc.
+  name          String   // Généré automatiquement: "{creditAmount} Crédits"
   description   String?  // Description du pack
-  creditAmount  Int      // Nombre de crédits dans ce pack
+  creditAmount  Int      @unique // Nombre de crédits dans ce pack (unique)
   price         Float    // Prix fixe du pack
   priceCurrency String   @default("EUR") // EUR, USD, GBP
   isActive      Boolean  @default(true)  // Pack actif ou désactivé
@@ -443,7 +453,7 @@ model CreditPack {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  @@index([name])
+  @@index([creditAmount])
   @@index([isActive])
 }
 

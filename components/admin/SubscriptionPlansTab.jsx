@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { getPlanNameByTier } from '@/lib/i18n/cvLabels';
 import { KPICard } from './KPICard';
 import { CustomSelect } from './CustomSelect';
 import { Toast } from './Toast';
@@ -11,7 +13,7 @@ import { ToggleSwitch } from './ToggleSwitch';
 // Chaque macro-feature regroupe plusieurs micro-features de tracking OpenAI
 const MACRO_FEATURES = {
   gpt_cv_generation: {
-    name: 'Génération de CV (GPT)',
+    name: 'Adaptation de CV par IA',
     icon: '🤖',
     description: 'Bouton GPT - Adaptation CV, Analyse offre, Modèle CV (URL + PDF)',
     microFeatures: [
@@ -26,23 +28,23 @@ const MACRO_FEATURES = {
     isAIFeature: true
   },
   import_pdf: {
-    name: 'Import PDF',
-    icon: '📄',
+    name: 'Import de CV',
+    icon: '📥',
     description: 'Import de CV depuis PDF',
     microFeatures: ['import_pdf', 'first_import_pdf', 'import_cv'],
     hasAnalysisLevels: false,
     isAIFeature: true
   },
   translate_cv: {
-    name: 'Traduction',
-    icon: '🌐',
+    name: 'Traduction de CV',
+    icon: '🌍',
     description: 'Traduction de CV',
     microFeatures: ['translate_cv'],
     hasAnalysisLevels: false,
     isAIFeature: true
   },
   match_score: {
-    name: 'Score de correspondance',
+    name: 'Score de match',
     icon: '🎯',
     description: 'Calcul du score de match avec l\'offre',
     microFeatures: ['match_score'],
@@ -50,7 +52,7 @@ const MACRO_FEATURES = {
     isAIFeature: true
   },
   optimize_cv: {
-    name: 'Optimisation CV',
+    name: 'Optimisation',
     icon: '✨',
     description: 'Optimisation automatique du CV',
     microFeatures: ['optimize_cv'],
@@ -58,23 +60,23 @@ const MACRO_FEATURES = {
     isAIFeature: true
   },
   generate_from_job_title: {
-    name: 'Barre de recherche',
-    icon: '🔍',
+    name: 'Création de CV fictif',
+    icon: '💼',
     description: 'Génération depuis un titre de poste',
     microFeatures: ['generate_from_job_title'],
     hasAnalysisLevels: false,
     isAIFeature: true
   },
   export_cv: {
-    name: 'Export PDF',
-    icon: '📥',
+    name: 'Export de CV',
+    icon: '💾',
     description: 'Export du CV en PDF',
     microFeatures: ['export_cv'],
     hasAnalysisLevels: false,
     isAIFeature: false
   },
   edit_cv: {
-    name: 'Édition CV',
+    name: 'Edition de CV',
     icon: '✏️',
     description: 'Mode édition du CV',
     microFeatures: ['edit_cv'],
@@ -82,8 +84,8 @@ const MACRO_FEATURES = {
     isAIFeature: false
   },
   create_cv_manual: {
-    name: 'Création manuelle',
-    icon: '✍️',
+    name: 'Création de CV',
+    icon: '📝',
     description: 'Création manuelle de CV (bouton +)',
     microFeatures: ['create_cv_manual'],
     hasAnalysisLevels: false,
@@ -130,13 +132,15 @@ export function SubscriptionPlansTab({ refreshKey }) {
     yearlyDiscountPercent: '0',
     priceCurrency: 'EUR',
     maxCvCount: -1,
+    // Nouveaux champs pour identification robuste
+    isFree: false,
+    tier: 0,
+    isPopular: false,
   });
   const [featureLimits, setFeatureLimits] = useState({});
 
   // Formulaire Packs
   const [packFormData, setPackFormData] = useState({
-    name: '',
-    description: '',
     creditAmount: 0,
     price: '0',
     priceCurrency: 'EUR',
@@ -195,6 +199,9 @@ export function SubscriptionPlansTab({ refreshKey }) {
       priceYearly: '0',
       yearlyDiscountPercent: '0',
       priceCurrency: 'EUR',
+      tier: 0,
+      isFree: false,
+      isPopular: false,
     });
 
     // Initialiser les features avec des valeurs par défaut
@@ -224,6 +231,10 @@ export function SubscriptionPlansTab({ refreshKey }) {
       priceYearly: plan.priceYearly,
       yearlyDiscountPercent: plan.yearlyDiscountPercent,
       priceCurrency: plan.priceCurrency,
+      // Charger les nouveaux champs
+      isFree: plan.isFree || false,
+      tier: plan.tier || 0,
+      isPopular: plan.isPopular || false,
     });
 
     // Charger les features existantes
@@ -261,8 +272,8 @@ export function SubscriptionPlansTab({ refreshKey }) {
     if (updating) return;
 
     // Validation
-    if (!formData.name.trim()) {
-      setToast({ type: 'error', message: 'Nom du plan requis' });
+    if (formData.tier === undefined || formData.tier < 0) {
+      setToast({ type: 'error', message: 'Niveau (tier) requis' });
       return;
     }
 
@@ -276,7 +287,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
           ...formData,
           priceMonthly: parseFloat(formData.priceMonthly) || 0,
           priceYearly: parseFloat(formData.priceYearly) || 0,
-          yearlyDiscountPercent: parseFloat(formData.yearlyDiscountPercent) || 0,
           featureLimits: Object.entries(featureLimits).map(([featureName, config]) => ({
             featureName,
             isEnabled: config.isEnabled,
@@ -307,8 +317,8 @@ export function SubscriptionPlansTab({ refreshKey }) {
     if (updating || !selectedPlan) return;
 
     // Validation
-    if (!formData.name.trim()) {
-      setToast({ type: 'error', message: 'Nom du plan requis' });
+    if (formData.tier === undefined || formData.tier < 0) {
+      setToast({ type: 'error', message: 'Niveau (tier) requis' });
       return;
     }
 
@@ -322,7 +332,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
           ...formData,
           priceMonthly: parseFloat(formData.priceMonthly) || 0,
           priceYearly: parseFloat(formData.priceYearly) || 0,
-          yearlyDiscountPercent: parseFloat(formData.yearlyDiscountPercent) || 0,
           featureLimits: Object.entries(featureLimits).map(([featureName, config]) => ({
             featureName,
             isEnabled: config.isEnabled,
@@ -389,8 +398,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
   // Ouvrir modal de création de pack
   function openCreatePackModal() {
     setPackFormData({
-      name: '',
-      description: '',
       creditAmount: 10,
       price: '5',
       priceCurrency: 'EUR',
@@ -403,8 +410,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
   function openEditPackModal(pack) {
     setSelectedPack(pack);
     setPackFormData({
-      name: pack.name,
-      description: pack.description || '',
       creditAmount: pack.creditAmount,
       price: pack.price,
       priceCurrency: pack.priceCurrency,
@@ -418,11 +423,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
     if (updating) return;
 
     // Validation
-    if (!packFormData.name.trim()) {
-      setToast({ type: 'error', message: 'Nom du pack requis' });
-      return;
-    }
-
     if (packFormData.creditAmount <= 0) {
       setToast({ type: 'error', message: 'Le nombre de crédits doit être supérieur à 0' });
       return;
@@ -435,8 +435,10 @@ export function SubscriptionPlansTab({ refreshKey }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...packFormData,
+          creditAmount: packFormData.creditAmount,
           price: parseFloat(packFormData.price) || 0,
+          priceCurrency: packFormData.priceCurrency,
+          isActive: packFormData.isActive,
         }),
       });
 
@@ -461,11 +463,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
     if (updating || !selectedPack) return;
 
     // Validation
-    if (!packFormData.name.trim()) {
-      setToast({ type: 'error', message: 'Nom du pack requis' });
-      return;
-    }
-
     if (packFormData.creditAmount <= 0) {
       setToast({ type: 'error', message: 'Le nombre de crédits doit être supérieur à 0' });
       return;
@@ -478,8 +475,10 @@ export function SubscriptionPlansTab({ refreshKey }) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...packFormData,
+          creditAmount: packFormData.creditAmount,
           price: parseFloat(packFormData.price) || 0,
+          priceCurrency: packFormData.priceCurrency,
+          isActive: packFormData.isActive,
         }),
       });
 
@@ -843,149 +842,161 @@ export function SubscriptionPlansTab({ refreshKey }) {
 
 // Composant Modal pour créer/éditer un plan
 function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimits, onSave, onCancel, updating }) {
-  // Calculer le prix annuel estimé en temps réel
-  const priceMonthly = parseFloat(formData.priceMonthly) || 0;
-  const discountPercent = parseFloat(formData.yearlyDiscountPercent) || 0;
-  const estimatedYearlyPrice = priceMonthly * 12 * (1 - discountPercent / 100);
+  const { t } = useLanguage();
 
-  // Appliquer la réduction calculée au prix annuel
-  function applyCalculatedDiscount() {
-    setFormData({ ...formData, priceYearly: estimatedYearlyPrice.toString() });
-  }
+  // Calculer la réduction annuelle en temps réel
+  const priceMonthly = parseFloat(formData.priceMonthly) || 0;
+  const priceYearly = parseFloat(formData.priceYearly) || 0;
+  const calculatedDiscount = priceMonthly > 0 && priceYearly > 0
+    ? ((priceMonthly * 12 - priceYearly) / (priceMonthly * 12)) * 100
+    : 0;
+
+  // Obtenir le nom du plan en temps réel selon le tier
+  const planName = getPlanNameByTier(formData.tier || 0, t);
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-[9999] p-4 pt-32 overflow-y-auto">
-      <div className="bg-gray-900 border border-white/20 rounded-lg p-6 max-w-4xl w-full my-8">
-        <h3 className="text-xl font-bold text-white mb-6">{title}</h3>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-[9999] p-4 pt-24 overflow-y-auto">
+      <div className="bg-gray-900 border border-white/20 rounded-lg p-4 max-w-3xl w-full my-6">
+        <h3 className="text-lg font-bold text-white mb-4">{title}</h3>
 
-        <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2 scrollbar-hide">
-          {/* Section: Informations générales */}
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold text-white border-b border-white/10 pb-2">
-              Informations générales
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 scrollbar-hide">
+          {/* Section: Identification */}
+          <div className="space-y-3">
+            <h4 className="text-base font-semibold text-white border-b border-white/10 pb-2">
+              Identification
             </h4>
 
+            {/* Niveau (Tier) avec aperçu du nom */}
             <div>
-              <label className="text-white/60 text-sm mb-2 block">Nom du plan *</label>
+              <label className="text-white/60 text-sm mb-2 block">
+                Niveau (Tier) *
+              </label>
               <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
-                placeholder="Gratuit, Pro, Premium..."
+                type="number"
+                min="0"
+                value={formData.tier}
+                onChange={(e) => setFormData({ ...formData, tier: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:border-blue-400/50 transition"
+                placeholder="0, 1, 2, 3, 4..."
               />
+              <div className="mt-2 px-3 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <span className="text-xs text-blue-300">Nom du plan : </span>
+                <span className="text-sm text-blue-400 font-semibold">{planName}</span>
+              </div>
+              <p className="text-xs text-white/40 mt-1">
+                0=Gratuit, 1=Pro, 2=Premium, 3=Business, 4=Enterprise
+              </p>
             </div>
 
-            <div>
-              <label className="text-white/60 text-sm mb-2 block">Description</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition resize-none"
-                placeholder="Description du plan..."
-                rows={3}
-              />
-            </div>
-
-            {/* Grille des prix - 2 lignes */}
-            <div className="space-y-3">
-              {/* Ligne 1: Prix mensuel, Réduction, Devise */}
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="text-white/60 text-sm mb-2 block">Prix mensuel *</label>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={formData.priceMonthly}
-                    onChange={(e) => setFormData({ ...formData, priceMonthly: e.target.value })}
-                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-white/60 text-sm mb-2 block flex items-center gap-1">
-                    Réduction annuelle (%) *
-                    <span className="text-xs text-white/40" title="Pourcentage de réduction pour l'abonnement annuel">ℹ️</span>
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={formData.yearlyDiscountPercent}
-                    onChange={(e) => setFormData({ ...formData, yearlyDiscountPercent: e.target.value })}
-                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-white/60 text-sm mb-2 block">Devise *</label>
-                  <CustomSelect
-                    value={formData.priceCurrency}
-                    onChange={(value) => setFormData({ ...formData, priceCurrency: value })}
-                    options={[
-                      { value: 'EUR', label: 'EUR (€)' },
-                      { value: 'USD', label: 'USD ($)' },
-                      { value: 'GBP', label: 'GBP (£)' },
-                    ]}
-                  />
-                </div>
+            {/* Toggles Plan Gratuit et Plan Recommandé */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                <label className="text-white text-sm">Plan gratuit ?</label>
+                <ToggleSwitch
+                  enabled={formData.isFree}
+                  onChange={(enabled) => setFormData({ ...formData, isFree: enabled })}
+                />
               </div>
 
-              {/* Ligne 2: Prix annuel estimé + Bouton Appliquer */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-2">
-                  <label className="text-white/60 text-sm mb-2 block">Prix annuel estimé (calculé automatiquement)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={estimatedYearlyPrice.toFixed(2)}
-                    disabled
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white/60 text-sm cursor-not-allowed"
-                  />
-                </div>
-
-                <div className="flex items-end">
-                  <button
-                    type="button"
-                    onClick={applyCalculatedDiscount}
-                    className="w-full px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg transition text-sm border border-green-500/30"
-                    title="Appliquer le prix calculé comme prix annuel officiel"
-                  >
-                    Appliquer
-                  </button>
-                </div>
-              </div>
-
-              <div className="text-xs text-white/40 bg-white/5 p-3 rounded border border-white/10">
-                ℹ️ Le prix annuel estimé est calculé automatiquement : <strong>prix mensuel × 12 × (1 - réduction%)</strong>.
-                Cliquez sur "Appliquer" pour l'utiliser comme prix annuel officiel.
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                <label className="text-white text-sm">Plan recommandé ?</label>
+                <ToggleSwitch
+                  enabled={formData.isPopular}
+                  onChange={(enabled) => setFormData({ ...formData, isPopular: enabled })}
+                />
               </div>
             </div>
+
+            {/* Avertissements */}
+            {formData.isFree && parseFloat(formData.priceMonthly) !== 0 && (
+              <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-2 text-orange-300 text-xs">
+                ⚠️ Un plan gratuit devrait avoir un prix de 0€
+              </div>
+            )}
           </div>
 
+          {/* Section: Tarification */}
+          <div className="space-y-3">
+            <h4 className="text-base font-semibold text-white border-b border-white/10 pb-2">
+              Tarification
+            </h4>
+
+            {/* Grille de prix compacte */}
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="text-white/60 text-sm mb-2 block">Prix mensuel *</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={formData.priceMonthly}
+                  onChange={(e) => setFormData({ ...formData, priceMonthly: e.target.value })}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+                  placeholder="9.99"
+                />
+              </div>
+
+              <div>
+                <label className="text-white/60 text-sm mb-2 block">Prix annuel *</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={formData.priceYearly}
+                  onChange={(e) => setFormData({ ...formData, priceYearly: e.target.value })}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+                  placeholder="99.99"
+                />
+              </div>
+
+              <div>
+                <label className="text-white/60 text-sm mb-2 block">Devise *</label>
+                <CustomSelect
+                  value={formData.priceCurrency}
+                  onChange={(value) => setFormData({ ...formData, priceCurrency: value })}
+                  options={[
+                    { value: 'EUR', label: 'EUR (€)' },
+                    { value: 'USD', label: 'USD ($)' },
+                    { value: 'GBP', label: 'GBP (£)' },
+                  ]}
+                />
+              </div>
+            </div>
+
+            {/* Réduction calculée automatiquement */}
+            {calculatedDiscount > 0 && (
+              <div className="px-3 py-2 bg-green-500/10 border border-green-500/30 rounded-lg">
+                <span className="text-xs text-green-300">Réduction annuelle : </span>
+                <span className="text-sm text-green-400 font-semibold">
+                  {calculatedDiscount.toFixed(1)}%
+                </span>
+              </div>
+            )}
+          </div>
 
           {/* Section: Features (Macro-features) */}
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold text-white border-b border-white/10 pb-2">
+          <div className="space-y-3">
+            <h4 className="text-base font-semibold text-white border-b border-white/10 pb-2">
               Configuration des features
             </h4>
 
             <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
               <div className="overflow-x-auto scrollbar-hide">
-                <table className="min-w-full divide-y divide-white/10">
+                <table className="min-w-full divide-y divide-white/10 text-sm">
                   <thead className="bg-white/5">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">
+                      <th className="px-3 py-2 text-left text-xs font-medium text-white/60 uppercase">
                         Feature
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-white/60 uppercase">
+                      <th className="px-3 py-2 text-center text-xs font-medium text-white/60 uppercase">
                         Activée
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-white/60 uppercase">
+                      <th className="px-3 py-2 text-center text-xs font-medium text-white/60 uppercase">
                         Limite
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-white/60 uppercase">
-                        Niveaux d'analyse
+                      <th className="px-3 py-2 text-center text-xs font-medium text-white/60 uppercase">
+                        Illimité
+                      </th>
+                      <th className="px-3 py-2 text-center text-xs font-medium text-white/60 uppercase">
+                        Niveaux
                       </th>
                     </tr>
                   </thead>
@@ -997,33 +1008,32 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                         allowedAnalysisLevels: null,
                       };
 
-                      const isAIFeature = AI_FEATURES.includes(featureName);
+                      const isUnlimited = limit.usageLimit === -1;
                       const hasAnalysisLevels = ANALYSIS_LEVEL_FEATURES.includes(featureName);
 
                       return (
                         <tr key={featureName} className="hover:bg-white/5 transition">
                           {/* Feature name */}
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-white">
+                          <td className="px-3 py-2 text-xs text-white">
                             <div className="flex items-center gap-2">
-                              <span className="text-lg">{config.icon}</span>
-                              <div>
-                                <div className="font-medium">{config.name}</div>
-                                {config.description && (
-                                  <div className="text-xs text-white/40">{config.description}</div>
-                                )}
-                              </div>
+                              <span className="text-base">{config.icon}</span>
+                              <div className="font-medium">{config.name}</div>
                             </div>
                           </td>
 
                           {/* Activée */}
-                          <td className="px-4 py-3 text-center">
+                          <td className="px-3 py-2 text-center">
                             <div className="flex justify-center">
                               <ToggleSwitch
                                 enabled={limit.isEnabled}
                                 onChange={(enabled) =>
                                   setFeatureLimits({
                                     ...featureLimits,
-                                    [featureName]: { ...limit, isEnabled: enabled },
+                                    [featureName]: {
+                                      ...limit,
+                                      isEnabled: enabled,
+                                      usageLimit: enabled ? limit.usageLimit : 0
+                                    },
                                   })
                                 }
                               />
@@ -1031,11 +1041,11 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                           </td>
 
                           {/* Limite */}
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-2">
                             <input
                               type="number"
-                              min="-1"
-                              value={limit.usageLimit}
+                              min="0"
+                              value={isUnlimited ? '' : limit.usageLimit}
                               onChange={(e) =>
                                 setFeatureLimits({
                                   ...featureLimits,
@@ -1045,27 +1055,49 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                                   },
                                 })
                               }
+                              disabled={!limit.isEnabled || isUnlimited}
+                              placeholder={isUnlimited ? '∞' : '0'}
+                              className="w-16 mx-auto block px-2 py-1 bg-white/10 border border-white/20 rounded text-white text-xs text-center focus:outline-none focus:border-blue-400/50 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-white/5"
+                            />
+                          </td>
+
+                          {/* Illimité */}
+                          <td className="px-3 py-2 text-center">
+                            <input
+                              type="checkbox"
+                              checked={isUnlimited}
+                              onChange={(e) =>
+                                setFeatureLimits({
+                                  ...featureLimits,
+                                  [featureName]: {
+                                    ...limit,
+                                    usageLimit: e.target.checked ? -1 : 0,
+                                  },
+                                })
+                              }
                               disabled={!limit.isEnabled}
-                              className="w-24 mx-auto block px-3 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm text-center focus:outline-none focus:border-blue-400/50 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-white/5"
+                              className="w-4 h-4 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                           </td>
 
                           {/* Niveaux d'analyse */}
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-2">
                             {hasAnalysisLevels && (
-                              <div className="flex gap-2 justify-center items-center flex-wrap">
+                              <div className="flex gap-1 justify-center items-center flex-wrap">
                                 {['rapid', 'medium', 'deep'].map((level) => {
                                   const isChecked = limit.allowedAnalysisLevels?.includes(level) || false;
+                                  const levelLabels = { rapid: 'R', medium: 'M', deep: 'D' };
                                   return (
                                     <label
                                       key={level}
-                                      className={`flex items-center gap-1 px-2 py-1 rounded text-xs cursor-pointer transition ${
+                                      className={`flex items-center justify-center w-6 h-6 rounded text-xs cursor-pointer transition ${
                                         !limit.isEnabled
-                                          ? 'opacity-50 cursor-not-allowed'
+                                          ? 'opacity-50 cursor-not-allowed bg-white/5 text-white/40'
                                           : isChecked
-                                          ? 'bg-blue-500/20 text-blue-400 border border-blue-400/30'
+                                          ? 'bg-blue-500/30 text-blue-300 border border-blue-400/50'
                                           : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10'
                                       }`}
+                                      title={level}
                                     >
                                       <input
                                         type="checkbox"
@@ -1085,9 +1117,9 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                                           });
                                         }}
                                         disabled={!limit.isEnabled}
-                                        className="w-3 h-3"
+                                        className="sr-only"
                                       />
-                                      <span className="capitalize">{level}</span>
+                                      {levelLabels[level]}
                                     </label>
                                   );
                                 })}
@@ -1105,18 +1137,18 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 mt-6 pt-4 border-t border-white/10">
+        <div className="flex gap-3 mt-4 pt-3 border-t border-white/10">
           <button
             onClick={onCancel}
             disabled={updating}
-            className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/15 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/15 text-white rounded-lg transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Annuler
           </button>
           <button
             onClick={onSave}
             disabled={updating}
-            className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {updating ? 'Enregistrement...' : 'Enregistrer'}
           </button>
@@ -1134,29 +1166,13 @@ function PackModal({ title, formData, setFormData, onSave, onCancel, updating })
         <h3 className="text-xl font-bold text-white mb-6">{title}</h3>
 
         <div className="space-y-6">
-          {/* Nom du pack */}
-          <div>
-            <label className="text-white/60 text-sm mb-2 block">Nom du pack *</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
-              placeholder="Pack Starter, Pack Pro..."
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="text-white/60 text-sm mb-2 block">Description</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition resize-none"
-              placeholder="Description du pack..."
-              rows={3}
-            />
-          </div>
+          {/* Aperçu du nom généré */}
+          {formData.creditAmount > 0 && (
+            <div className="px-4 py-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <div className="text-xs text-blue-300 mb-1">Nom du pack (généré automatiquement) :</div>
+              <div className="text-lg text-blue-400 font-semibold">{formData.creditAmount} Crédits</div>
+            </div>
+          )}
 
           {/* Nombre de crédits */}
           <div>

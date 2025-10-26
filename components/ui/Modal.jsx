@@ -3,10 +3,20 @@ import React from "react";
 import { createPortal } from "react-dom";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-export default function Modal({ open, onClose, title, children, size = "default" }){
+export default function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  size = "default",
+  disableEscapeKey = false, // Permet de bloquer Escape pendant traitement
+  disableBackdropClick = false // Permet de bloquer clic backdrop pendant traitement
+}){
   const { t } = useLanguage();
   const [mounted, setMounted] = React.useState(false);
   const scrollYRef = React.useRef(0);
+  const modalRef = React.useRef(null);
+  const previousFocusRef = React.useRef(null);
 
   React.useEffect(()=>{ setMounted(true); },[]);
 
@@ -47,7 +57,86 @@ export default function Modal({ open, onClose, title, children, size = "default"
     }
   }, [open, mounted]);
 
+  // Gestion du focus initial et restauration
+  React.useEffect(() => {
+    if (open && mounted && modalRef.current) {
+      // Sauvegarder l'élément qui avait le focus
+      previousFocusRef.current = document.activeElement;
+
+      // Déplacer le focus vers le premier élément focusable de la modal
+      const focusableElements = modalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusableElements.length > 0) {
+        focusableElements[0].focus();
+      } else {
+        modalRef.current.focus();
+      }
+
+      return () => {
+        // Restaurer le focus à l'élément précédent
+        if (previousFocusRef.current && previousFocusRef.current.focus) {
+          previousFocusRef.current.focus();
+        }
+      };
+    }
+  }, [open, mounted]);
+
+  // Focus trap
+  React.useEffect(() => {
+    if (!open || !mounted || !modalRef.current) return;
+
+    const handleTab = (e) => {
+      if (e.key !== 'Tab') return;
+
+      const focusableElements = modalRef.current.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey) {
+        // Shift + Tab
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        // Tab
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleTab);
+    return () => document.removeEventListener('keydown', handleTab);
+  }, [open, mounted]);
+
+  // Fermeture avec Escape
+  React.useEffect(() => {
+    if (!open || !mounted || disableEscapeKey) return;
+
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [open, mounted, disableEscapeKey, onClose]);
+
   if(!open || !mounted) return null;
+
+  const handleBackdropClick = () => {
+    if (!disableBackdropClick) {
+      onClose();
+    }
+  };
+
   return createPortal(
     <div
       className="fixed z-[10002]"
@@ -59,15 +148,17 @@ export default function Modal({ open, onClose, title, children, size = "default"
         overflow: 'hidden',
         touchAction: 'none'
       }}
+      role="presentation"
     >
       {/* Backdrop */}
       <div
         className="absolute inset-0 backdrop-blur-md bg-black/40"
-        onClick={onClose}
+        onClick={handleBackdropClick}
         onTouchEnd={(e) => {
           e.preventDefault();
-          onClose();
+          handleBackdropClick();
         }}
+        aria-hidden="true"
       ></div>
 
       {/* Modal container - évite les safe-area */}
@@ -83,6 +174,11 @@ export default function Modal({ open, onClose, title, children, size = "default"
         }}
       >
         <div
+          ref={modalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+          tabIndex={-1}
           className={`relative z-10 w-full ${maxWidthClass} rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl`}
           onClick={(e) => e.stopPropagation()}
           onTouchEnd={(e) => e.stopPropagation()}
@@ -95,7 +191,12 @@ export default function Modal({ open, onClose, title, children, size = "default"
           }}
         >
           <div className="flex items-center justify-between p-4 pb-2 flex-shrink-0">
-            <div className="font-semibold text-emerald-300 drop-shadow-lg">{title || t("common.confirmation")}</div>
+            <div
+              id="modal-title"
+              className="font-semibold text-emerald-300 drop-shadow-lg"
+            >
+              {title || t("common.confirmation")}
+            </div>
           </div>
           <div
             className="text-white/90 overflow-y-auto overflow-x-hidden flex-1 px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"

@@ -4,6 +4,22 @@ import prisma from '@/lib/prisma';
 import { syncStripeProductsInternal } from '@/lib/subscription/stripeSync';
 
 /**
+ * Génère le nom d'un plan à partir de son tier
+ * @param {number} tier - Niveau du plan (0=Gratuit, 1=Pro, 2=Premium, etc.)
+ * @returns {string} Nom du plan
+ */
+function generatePlanName(tier) {
+  const TIER_NAMES = {
+    0: 'Gratuit',
+    1: 'Pro',
+    2: 'Premium',
+    3: 'Business',
+    4: 'Enterprise'
+  };
+  return TIER_NAMES[tier] || `Niveau ${tier}`;
+}
+
+/**
  * GET /api/admin/subscription-plans
  * Récupère la liste de tous les plans d'abonnement avec leurs limitations
  */
@@ -72,20 +88,20 @@ export async function POST(request) {
 
     const body = await request.json();
     const {
-      name,
-      description,
       priceMonthly,
       priceYearly,
-      yearlyDiscountPercent,
       priceCurrency,
-      tokenCount,
       featureLimits,
+      // Nouveaux champs robustes
+      isFree = false,
+      tier = 0,
+      isPopular = false,
     } = body;
 
     // Validation
-    if (!name || typeof name !== 'string') {
+    if (typeof tier !== 'number' || tier < 0) {
       return NextResponse.json(
-        { error: 'Nom du plan requis' },
+        { error: 'Niveau (tier) invalide' },
         { status: 400 }
       );
     }
@@ -104,13 +120,6 @@ export async function POST(request) {
       );
     }
 
-    if (typeof yearlyDiscountPercent !== 'number' || yearlyDiscountPercent < 0 || yearlyDiscountPercent > 100) {
-      return NextResponse.json(
-        { error: 'Pourcentage de réduction annuelle invalide' },
-        { status: 400 }
-      );
-    }
-
     if (!priceCurrency || typeof priceCurrency !== 'string') {
       return NextResponse.json(
         { error: 'Devise du prix requise' },
@@ -118,21 +127,17 @@ export async function POST(request) {
       );
     }
 
-    if (typeof tokenCount !== 'number' || tokenCount < 0) {
-      return NextResponse.json(
-        { error: 'Nombre de tokens invalide' },
-        { status: 400 }
-      );
-    }
+    // Générer automatiquement le nom à partir du tier
+    const name = generatePlanName(tier);
 
-    // Vérifier que le nom n'existe pas déjà
-    const existing = await prisma.subscriptionPlan.findUnique({
-      where: { name },
+    // Vérifier qu'il n'existe pas déjà un plan avec ce tier
+    const existingTier = await prisma.subscriptionPlan.findFirst({
+      where: { tier },
     });
 
-    if (existing) {
+    if (existingTier) {
       return NextResponse.json(
-        { error: 'Un plan avec ce nom existe déjà' },
+        { error: `Un plan avec le niveau ${tier} existe déjà : "${existingTier.name}"` },
         { status: 409 }
       );
     }
@@ -156,16 +161,24 @@ export async function POST(request) {
       }
     }
 
+    // Calculer la réduction annuelle automatiquement
+    const yearlyDiscountPercent = priceMonthly > 0 && priceYearly > 0
+      ? ((priceMonthly * 12 - priceYearly) / (priceMonthly * 12)) * 100
+      : 0;
+
     // Créer le plan avec ses features
     const plan = await prisma.subscriptionPlan.create({
       data: {
         name,
-        description: description || null,
+        description: null, // Description supprimée
         priceMonthly,
         priceYearly,
         yearlyDiscountPercent,
         priceCurrency,
-        tokenCount,
+        // Nouveaux champs
+        isFree,
+        tier,
+        isPopular,
         featureLimits: {
           create: featureLimits?.map((fl) => ({
             featureName: fl.featureName,

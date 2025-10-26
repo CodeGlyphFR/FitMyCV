@@ -88,6 +88,7 @@ export async function POST(request) {
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
       mode: 'payment', // Paiement unique (pas abonnement)
+      billing_address_collection: 'required',
       payment_method_types: ['card'],
       line_items: [
         {

@@ -2,8 +2,10 @@
 
 import React from "react";
 import { FileText, Download, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function InvoicesTable() {
+  const { t } = useLanguage();
   const [invoices, setInvoices] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
@@ -18,7 +20,7 @@ export default function InvoicesTable() {
         const res = await fetch('/api/subscription/invoices');
 
         if (!res.ok) {
-          throw new Error('Erreur lors du chargement des factures');
+          throw new Error(t('subscription.invoices.errorLoading'));
         }
 
         const data = await res.json();
@@ -32,27 +34,27 @@ export default function InvoicesTable() {
     }
 
     fetchInvoices();
-  }, []);
+  }, [t]);
 
   const getStatusBadge = (status) => {
     switch (status) {
       case 'paid':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-500/20 border border-green-500/50 text-green-200 text-xs">
-            Payé
+            {t('subscription.invoices.status.paid')}
           </span>
         );
       case 'open':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-orange-500/20 border border-orange-500/50 text-orange-200 text-xs">
-            En attente
+            {t('subscription.invoices.status.open')}
           </span>
         );
       case 'void':
       case 'uncollectible':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/20 border border-red-500/50 text-red-200 text-xs">
-            Annulé
+            {t('subscription.invoices.status.canceled')}
           </span>
         );
       default:
@@ -68,13 +70,13 @@ export default function InvoicesTable() {
     if (type === 'credit_pack') {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/20 border border-blue-500/50 text-blue-200 text-xs">
-          💎 Crédits
+          💎 {t('subscription.invoices.types.creditPack')}
         </span>
       );
     }
     return (
       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-purple-500/20 border border-purple-500/50 text-purple-200 text-xs">
-        👑 Abonnement
+        👑 {t('subscription.invoices.types.subscription')}
       </span>
     );
   };
@@ -137,7 +139,7 @@ export default function InvoicesTable() {
       <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6 shadow-lg">
         <div className="text-center text-white/60 py-8">
           <FileText className="mx-auto mb-3 opacity-50" size={48} />
-          <p>Aucune facture pour le moment</p>
+          <p>{t('subscription.invoices.noInvoices')}</p>
         </div>
       </div>
     );
@@ -147,7 +149,7 @@ export default function InvoicesTable() {
     <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6 shadow-lg">
       <h2 className="text-xl font-semibold text-white mb-4 drop-shadow-lg flex items-center gap-2">
         <FileText size={24} />
-        Factures
+        {t('subscription.invoices.title')}
       </h2>
 
       {/* Filtres par type */}
@@ -160,7 +162,7 @@ export default function InvoicesTable() {
               : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-white/10'
           }`}
         >
-          Tout ({invoices.length})
+          {t('subscription.invoices.filters.all', { count: invoices.length })}
         </button>
         <button
           onClick={() => setTypeFilter('subscription')}
@@ -170,7 +172,7 @@ export default function InvoicesTable() {
               : 'bg-white/5 text-white/60 hover:bg-purple-500/10 hover:text-purple-200 border border-white/10'
           }`}
         >
-          👑 Abonnements ({invoices.filter(i => i.type === 'subscription').length})
+          👑 {t('subscription.invoices.filters.subscriptions', { count: invoices.filter(i => i.type === 'subscription').length })}
         </button>
         <button
           onClick={() => setTypeFilter('credit_pack')}
@@ -180,7 +182,7 @@ export default function InvoicesTable() {
               : 'bg-white/5 text-white/60 hover:bg-blue-500/10 hover:text-blue-200 border border-white/10'
           }`}
         >
-          💎 Crédits ({invoices.filter(i => i.type === 'credit_pack').length})
+          💎 {t('subscription.invoices.filters.credits', { count: invoices.filter(i => i.type === 'credit_pack').length })}
         </button>
       </div>
 
@@ -189,12 +191,12 @@ export default function InvoicesTable() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-white/20">
-              <th className="text-left text-sm font-medium text-white/70 pb-3 px-2">Date</th>
-              <th className="text-left text-sm font-medium text-white/70 pb-3 px-2">Type</th>
-              <th className="text-left text-sm font-medium text-white/70 pb-3 px-2">Description</th>
-              <th className="text-right text-sm font-medium text-white/70 pb-3 px-2">Montant</th>
-              <th className="text-center text-sm font-medium text-white/70 pb-3 px-2">Statut</th>
-              <th className="text-center text-sm font-medium text-white/70 pb-3 px-2">Action</th>
+              <th className="text-left text-sm font-medium text-white/70 pb-3 px-2">{t('subscription.invoices.columns.date')}</th>
+              <th className="text-left text-sm font-medium text-white/70 pb-3 px-2">{t('subscription.invoices.columns.type')}</th>
+              <th className="text-left text-sm font-medium text-white/70 pb-3 px-2">{t('subscription.invoices.columns.description')}</th>
+              <th className="text-right text-sm font-medium text-white/70 pb-3 px-2">{t('subscription.invoices.columns.amount')}</th>
+              <th className="text-center text-sm font-medium text-white/70 pb-3 px-2">{t('subscription.invoices.columns.status')}</th>
+              <th className="text-center text-sm font-medium text-white/70 pb-3 px-2">{t('subscription.invoices.columns.action')}</th>
             </tr>
           </thead>
           <tbody>
@@ -224,7 +226,7 @@ export default function InvoicesTable() {
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/50 text-blue-200 text-xs transition-colors"
                     >
                       <Download size={14} />
-                      PDF
+                      {t('subscription.invoices.downloadPdf')}
                     </a>
                   )}
                 </td>
@@ -267,7 +269,7 @@ export default function InvoicesTable() {
                   className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/50 text-blue-200 text-xs transition-colors"
                 >
                   <Download size={14} />
-                  PDF
+                  {t('subscription.invoices.downloadPdf')}
                 </a>
               )}
             </div>
@@ -281,9 +283,12 @@ export default function InvoicesTable() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             {/* Info pagination */}
             <div className="text-sm text-white/60">
-              Affichage de <span className="text-white font-medium">{startIndex}</span> à{' '}
-              <span className="text-white font-medium">{endIndex}</span> sur{' '}
-              <span className="text-white font-medium">{filteredInvoices.length}</span> facture{filteredInvoices.length > 1 ? 's' : ''}
+              {t('subscription.invoices.pagination.showing', {
+                start: startIndex,
+                end: endIndex,
+                total: filteredInvoices.length,
+                plural: filteredInvoices.length > 1 ? 's' : ''
+              })}
             </div>
 
             {/* Boutons pagination */}
@@ -295,12 +300,11 @@ export default function InvoicesTable() {
                   className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/10 flex items-center gap-1"
                 >
                   <ChevronLeft size={16} />
-                  Précédent
+                  {t('subscription.invoices.pagination.previous')}
                 </button>
 
                 <div className="px-4 py-2 text-sm text-white/80">
-                  Page <span className="font-medium text-white">{page + 1}</span> sur{' '}
-                  <span className="font-medium text-white">{totalPages}</span>
+                  {t('subscription.invoices.pagination.page', { current: page + 1, total: totalPages })}
                 </div>
 
                 <button
@@ -308,7 +312,7 @@ export default function InvoicesTable() {
                   disabled={page === totalPages - 1}
                   className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/10 flex items-center gap-1"
                 >
-                  Suivant
+                  {t('subscription.invoices.pagination.next')}
                   <ChevronRight size={16} />
                 </button>
               </div>

@@ -42,11 +42,9 @@ async function syncSubscriptionPlans() {
 
   for (const plan of plans) {
     try {
-      // IMPORTANT: Les plans gratuits (0€) ne doivent PAS être synchronisés avec Stripe
+      // IMPORTANT: Les plans gratuits ne doivent PAS être synchronisés avec Stripe
       // Ils restent uniquement en local dans notre base de données
-      const isFreeplan = plan.priceMonthly === 0 && plan.priceYearly === 0;
-
-      if (isFreeplan) {
+      if (plan.isFree) {
         console.log(`⏭️  Plan gratuit détecté: ${plan.name} - Pas de synchronisation Stripe nécessaire`);
         skipped++;
         continue;
