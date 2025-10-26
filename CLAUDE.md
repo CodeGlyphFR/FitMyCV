@@ -39,6 +39,41 @@ stripe listen --forward-to localhost:3001/api/webhooks/stripe
 stripe trigger payment_intent.succeeded
 ```
 
+### MCP Puppeteer (Browser Automation pour Claude Code)
+
+Le serveur MCP Puppeteer permet à Claude Code d'interagir avec des navigateurs web pour l'analyse UX, les tests automatisés et le debugging visuel.
+
+**Installation rapide** :
+```bash
+claude mcp add-json "puppeteer" '{"command":"npx","args":["-y","@modelcontextprotocol/server-puppeteer"]}'
+claude mcp list  # Vérifier l'installation
+# Redémarrer Claude Code pour activer
+```
+
+**7 outils disponibles** : `navigate`, `screenshot`, `click`, `fill`, `evaluate`, `hover`, `select`
+
+**Configuration Linux** : Ajouter `allowDangerous: true` et `args: ["--no-sandbox", "--disable-setuid-sandbox"]`
+
+**Documentation complète** : Voir `docs/MCP_PUPPETEER.md` pour :
+- Guide d'installation détaillé
+- Workflow d'analyse UX
+- Gestion du reCAPTCHA (bypass temporaire)
+- Exemples concrets
+- Pièges à éviter
+- Bonnes pratiques
+
+**Exemple minimal** :
+```javascript
+// Naviguer et capturer
+await puppeteer_navigate({
+  url: "https://176.136.226.121.nip.io",
+  allowDangerous: true,
+  launchOptions: { headless: true, args: ["--no-sandbox"] }
+});
+
+await puppeteer_screenshot({ name: "homepage", width: 1920, height: 1080 });
+```
+
 **IMPORTANT - Base de données** :
 - La base SQLite est dans `prisma/dev.db`
 - Pour les **migrations Prisma** : DATABASE_URL doit être dans `.env.local` avec la valeur `DATABASE_URL="file:./dev.db"` car Prisma s'exécute depuis le dossier `prisma/`
@@ -434,6 +469,7 @@ docs/
 ├── STRIPE_SETUP.md         # Configuration Stripe
 ├── SUBSCRIPTION.md         # Système abonnements
 ├── CRON_SETUP.md           # Configuration tâches planifiées
+├── MCP_PUPPETEER.md        # Guide complet MCP Puppeteer (analyse UX, tests)
 └── ...                     # Autres documentations
 ```
 
@@ -637,6 +673,17 @@ node prisma/seed.js
   -d '{"olderThan":"90d"}' \
   -H "Authorization: Bearer ADMIN_TOKEN"
 ```
+
+## Identifiants de test
+
+Pour les tests automatisés (MCP Puppeteer, scripts, etc.), utiliser ce compte de test :
+
+```
+Email: tests@claude.com
+Password: qwertyuiOP93300
+```
+
+**Note** : Ces identifiants sont documentés ici car il s'agit d'un environnement de développement privé. En production, utiliser des variables d'environnement sécurisées.
 
 ## Project Rules
 - Ne merge jamais sans une demande explicite. Si un merge est demandé il faudra merge avec main avec l'option `--no-ff`

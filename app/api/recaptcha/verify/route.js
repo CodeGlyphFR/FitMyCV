@@ -11,6 +11,16 @@ export async function POST(request) {
   try {
     const { token, action } = await request.json();
 
+    // TEMPORARY: Bypass reCAPTCHA for testing with Puppeteer MCP
+    // TODO: Remove this bypass after UX analysis
+    if (process.env.BYPASS_RECAPTCHA === 'true') {
+      console.log('[reCAPTCHA] BYPASS MODE ENABLED - Skipping verification');
+      return NextResponse.json({
+        success: true,
+        score: 1.0,
+      });
+    }
+
     if (!token) {
       return NextResponse.json(
         { success: false, error: 'Token manquant' },
