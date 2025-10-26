@@ -115,6 +115,29 @@ export async function PATCH(request, { params }) {
       );
     }
 
+    // IMPORTANT: Vérifier qu'il n'y a pas déjà un autre plan gratuit si on modifie ce plan vers 0€
+    // Un seul plan gratuit est autorisé dans le système
+    const updatedPriceMonthly = priceMonthly !== undefined ? priceMonthly : existingPlan.priceMonthly;
+    const updatedPriceYearly = priceYearly !== undefined ? priceYearly : existingPlan.priceYearly;
+    const wouldBecomeFree = updatedPriceMonthly === 0 && updatedPriceYearly === 0;
+
+    if (wouldBecomeFree) {
+      const existingFreePlan = await prisma.subscriptionPlan.findFirst({
+        where: {
+          priceMonthly: 0,
+          priceYearly: 0,
+          NOT: { id: planId }, // Exclure le plan actuel
+        },
+      });
+
+      if (existingFreePlan) {
+        return NextResponse.json(
+          { error: `Un autre plan gratuit existe déjà : "${existingFreePlan.name}". Vous ne pouvez avoir qu'un seul plan gratuit dans le système.` },
+          { status: 409 }
+        );
+      }
+    }
+
     // Construire les données de mise à jour
     const updateData = {};
     if (name !== undefined) updateData.name = name;

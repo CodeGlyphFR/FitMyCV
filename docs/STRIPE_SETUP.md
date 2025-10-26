@@ -44,7 +44,12 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_VOTRE_CLE_PUBLIQUE"
 
 Les webhooks permettent à Stripe de notifier votre application des événements (paiements, abonnements, etc.).
 
-### 3.1 Installer Stripe CLI (Développement local)
+**⚠️ IMPORTANT : Deux méthodes selon votre configuration**
+
+- **Serveur LOCAL non accessible** (localhost) → Utiliser Stripe CLI (section 3.1)
+- **Serveur PUBLIC accessible** (reverse proxy, tunnel, VPS) → Configurer webhook permanent (section 3.2)
+
+### 3.1 Option A : Stripe CLI (Développement local uniquement)
 
 ```bash
 # macOS/Linux
@@ -58,7 +63,12 @@ scoop install stripe
 stripe version
 ```
 
-### 3.2 Se connecter avec Stripe CLI
+**Quand utiliser cette option ?**
+- Serveur sur `localhost` non accessible depuis Internet
+- Développement et tests locaux uniquement
+- Webhook secret change à chaque lancement (temporaire)
+
+#### Se connecter avec Stripe CLI
 
 ```bash
 stripe login
@@ -66,7 +76,7 @@ stripe login
 
 Suivez les instructions pour autoriser le CLI.
 
-### 3.3 Transférer les webhooks en local
+#### Transférer les webhooks en local
 
 ```bash
 # Terminal 1 : Démarrer Next.js
@@ -78,13 +88,15 @@ stripe listen --forward-to localhost:3000/api/webhooks/stripe
 
 Vous obtiendrez un **webhook signing secret** (commence par `whsec_...`).
 
-### 3.4 Ajouter le secret dans `.env.local`
+**⚠️ Note** : Ce secret est temporaire et change à chaque lancement de `stripe listen`.
+
+#### Ajouter le secret dans `.env.local`
 
 ```bash
 STRIPE_WEBHOOK_SECRET="whsec_VOTRE_SECRET_WEBHOOK"
 ```
 
-### 3.5 Tester les webhooks
+#### Tester les webhooks
 
 ```bash
 # Simuler un paiement réussi
@@ -95,6 +107,87 @@ stripe trigger customer.subscription.created
 ```
 
 Vérifiez les logs dans votre terminal Next.js et dans la table `StripeWebhookLog`.
+
+### 3.2 Option B : Webhook permanent (Serveur accessible publiquement) ⭐ RECOMMANDÉ
+
+**Quand utiliser cette option ?**
+- Serveur accessible depuis Internet (reverse proxy, tunnel, VPS)
+- Exemple : `https://176.136.226.121.nip.io`, `https://yourdomain.com`
+- Configuration permanente (pas besoin de `stripe listen`)
+- Webhook secret permanent (ne change jamais)
+
+#### Créer le webhook endpoint dans Stripe Dashboard
+
+1. **Aller sur le Stripe Dashboard** :
+   - Mode Test : [https://dashboard.stripe.com/test/webhooks](https://dashboard.stripe.com/test/webhooks)
+   - Mode Live : [https://dashboard.stripe.com/webhooks](https://dashboard.stripe.com/webhooks)
+
+2. **Cliquer sur "Add endpoint"**
+
+3. **Configurer l'endpoint** :
+   - **Endpoint URL** : `https://votre-domaine.com/api/webhooks/stripe`
+     - Exemple : `https://176.136.226.121.nip.io/api/webhooks/stripe`
+   - **Description** : "FitMyCv.ai Webhooks"
+
+4. **Sélectionner les événements** (UNIQUEMENT ces 6 événements nécessaires) :
+
+   **Abonnements** :
+   - ✅ `customer.subscription.created`
+   - ✅ `customer.subscription.updated`
+   - ✅ `customer.subscription.deleted`
+   - ✅ `invoice.payment_failed`
+
+   **Paiements crédits** :
+   - ✅ `checkout.session.completed`
+   - ✅ `payment_intent.succeeded`
+
+   **❌ NE PAS sélectionner** :
+   - ❌ `product.*` (produits gérés uniquement via Admin)
+   - ❌ `price.*` (prix gérés uniquement via Admin)
+   - ❌ Autres événements non utilisés
+
+5. **Cliquer sur "Add endpoint"**
+
+6. **Récupérer le signing secret** :
+   - Cliquer sur l'endpoint créé
+   - Section "Signing secret" → Cliquer sur "Reveal"
+   - Copier le secret (commence par `whsec_...`)
+
+#### Ajouter le secret permanent dans `.env.local`
+
+```bash
+# Webhook permanent (ne change jamais)
+STRIPE_WEBHOOK_SECRET="whsec_VOTRE_SECRET_PERMANENT"
+```
+
+**✅ Avantages** :
+- Pas besoin de `stripe listen` (fonctionne automatiquement 24/7)
+- Webhook secret permanent (ne change jamais)
+- Configuration identique dev/test/prod
+- Plus fiable et production-ready
+
+#### Tester les webhooks permanents
+
+**Option 1 : Test réel via l'application**
+```bash
+# Démarrer le serveur
+npm start  # ou npm run dev
+
+# Effectuer un paiement test dans l'app
+# Les webhooks seront envoyés automatiquement par Stripe
+```
+
+**Option 2 : Envoyer un webhook de test depuis Stripe Dashboard**
+1. Aller sur [Webhooks](https://dashboard.stripe.com/test/webhooks)
+2. Cliquer sur votre endpoint
+3. Onglet "Événements envoyés" → "Envoyer un événement de test"
+4. Sélectionner `customer.subscription.created`
+5. Cliquer sur "Envoyer l'événement de test"
+
+**Vérification** :
+- Logs serveur : `[Webhook] Reçu: customer.subscription.created`
+- Table `StripeWebhookLog` : Nouvel enregistrement avec `processed: true`
+- Dashboard Stripe : Événement marqué comme "Succeeded" (code 200)
 
 ---
 
@@ -236,9 +329,90 @@ node scripts/sync-stripe-products.js
 
 ---
 
-## Étape 7 : Configuration avancée
+## Étape 7 : Best Practices et Politique de Gestion
 
-### 7.1 Branding Stripe Checkout
+### 7.1 Politique "Stripe Read-Only" ⚠️ IMPORTANT
+
+**Règle d'or : La base de données est la source de vérité unique**
+
+Pour éviter les conflits de synchronisation, les boucles infinies et les incohérences de données, suivez strictement cette politique :
+
+#### ✅ À FAIRE
+- **Modifier les plans uniquement via l'interface Admin** (`/admin/analytics` → onglet "Subscription Plans")
+- La synchronisation BDD → Stripe est automatique (`syncStripeProductsInternal()`)
+- Utiliser Stripe Dashboard uniquement pour :
+  - Consulter les paiements et abonnements
+  - Voir les événements webhook
+  - Générer des rapports
+  - Gérer les remboursements
+
+#### ❌ NE JAMAIS FAIRE
+- ❌ Créer/modifier/supprimer des produits directement dans Stripe Dashboard
+- ❌ Créer/modifier/supprimer des prix directement dans Stripe Dashboard
+- ❌ Modifier les métadonnées des produits/prix dans Stripe
+- ❌ Configurer les webhooks `product.*` ou `price.*` (non nécessaires)
+
+#### Pourquoi cette politique ?
+
+**Sans synchronisation bidirectionnelle** (BDD ↔ Stripe), modifier dans Stripe Dashboard crée des incohérences :
+
+1. **Perte de données** :
+   ```
+   Admin crée plan "Enterprise" → Stripe synchronisé ✅
+   Quelqu'un modifie le prix dans Stripe Dashboard → BDD non synchronisée ❌
+   Admin met à jour le plan → Stripe écrasé avec anciennes données ❌
+   ```
+
+2. **Complexité évitée** :
+   - Pas de gestion des conflits de modification simultanée
+   - Pas de boucles infinies (webhook → BDD → sync → webhook)
+   - Pas de logique de résolution de conflits
+   - Logs et debugging simplifiés
+
+3. **Traçabilité garantie** :
+   - Toutes les modifications tracées dans les logs Admin
+   - Historique complet dans la base de données
+   - Audit trail clair
+
+#### Comment ça marche ?
+
+```
+┌─────────────┐
+│   Admin UI  │ ← Source de vérité (modifications ici uniquement)
+└──────┬──────┘
+       │ POST/PATCH/DELETE
+       ▼
+┌─────────────┐
+│     BDD     │ ← Base de données (source unique)
+└──────┬──────┘
+       │ syncStripeProductsInternal() (automatique)
+       ▼
+┌─────────────┐
+│   Stripe    │ ← Lecture seule (ne jamais modifier manuellement)
+└─────────────┘
+```
+
+#### Et si j'ai vraiment besoin de modifier dans Stripe ?
+
+**Solution** : Modifier dans Admin, puis resynchroniser :
+
+```bash
+# 1. Modifier dans Admin UI
+# 2. Si la sync automatique échoue, forcer manuellement :
+node scripts/sync-stripe-products.js
+```
+
+**Cas d'exception** (très rare) : Si vous devez absolument modifier dans Stripe :
+1. Noter exactement ce qui a été modifié
+2. Reporter immédiatement les changements dans Admin UI
+3. Vérifier que la prochaine sync n'écrase pas vos changements
+4. Documenter l'incident pour traçabilité
+
+---
+
+## Étape 8 : Configuration avancée
+
+### 8.1 Branding Stripe Checkout
 
 1. **Settings → Branding**
 2. Ajouter :
@@ -246,7 +420,7 @@ node scripts/sync-stripe-products.js
    - Couleur principale
    - Favicon
 
-### 7.2 Emails Stripe
+### 8.2 Emails Stripe
 
 1. **Settings → Emails**
 2. Personnaliser les emails de :
@@ -255,13 +429,13 @@ node scripts/sync-stripe-products.js
    - Échecs de paiement
    - Factures
 
-### 7.3 Gestion des taxes
+### 8.3 Gestion des taxes
 
 1. **Produits → Tax rates**
 2. Ajouter la TVA selon votre pays (ex: 20% France)
 3. Activer **Stripe Tax** pour calcul automatique
 
-### 7.4 Customer Portal
+### 8.4 Customer Portal
 
 Permet aux clients de gérer leur abonnement directement :
 

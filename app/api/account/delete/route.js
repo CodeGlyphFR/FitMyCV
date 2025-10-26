@@ -38,29 +38,18 @@ export async function DELETE(request){
     return NextResponse.json({ error: "Mot de passe incorrect." }, { status: 400 });
   }
 
-  // Supprimer toutes les données liées dans l'ordre (contraintes FK)
+  // Supprimer l'utilisateur de la DB (les foreign keys avec onDelete: Cascade supprimeront automatiquement toutes les données liées)
   try {
-    logger.context('DELETE account', 'info', `Suppression des données pour l'utilisateur ${user.id}`);
+    logger.context('DELETE account', 'info', `Suppression de l'utilisateur ${user.id} (cascade automatique activé)`);
 
-    // Supprimer toutes les relations (ordre important pour les contraintes FK)
-    await prisma.linkHistory.deleteMany({ where: { userId: user.id } });
-    await prisma.feedback.deleteMany({ where: { userId: user.id } });
-    await prisma.consentLog.deleteMany({ where: { userId: user.id } });
-    await prisma.cvFile.deleteMany({ where: { userId: user.id } });
-    await prisma.backgroundTask.deleteMany({ where: { userId: user.id } });
-
-    // Supprimer les données de télémétrie
-    await prisma.telemetryEvent.deleteMany({ where: { userId: user.id } });
-    await prisma.featureUsage.deleteMany({ where: { userId: user.id } });
-    await prisma.openAIUsage.deleteMany({ where: { userId: user.id } });
-
-    // Supprimer les comptes OAuth
-    await prisma.account.deleteMany({ where: { userId: user.id } });
-
-    // Supprimer l'utilisateur
+    // La suppression de l'utilisateur supprimera automatiquement via cascade :
+    // - Accounts, CvFiles, BackgroundTasks, LinkHistory, Feedbacks
+    // - ConsentLogs, TelemetryEvents, FeatureUsage, OpenAIUsage, OpenAICalls
+    // - Subscriptions, CreditBalance, CreditTransactions, FeatureUsageCounters
+    // - Referrals, EmailVerificationTokens, AutoSignInTokens, EmailChangeRequests
     await prisma.user.delete({ where: { id: user.id } });
 
-    logger.context('DELETE account', 'info', `✅ Utilisateur ${user.id} supprimé de la DB`);
+    logger.context('DELETE account', 'info', `✅ Utilisateur ${user.id} supprimé avec succès (+ toutes données liées via cascade)`);
   } catch (error) {
     logger.context('DELETE account', 'error', "❌ Erreur lors de la suppression:", error);
     return NextResponse.json({

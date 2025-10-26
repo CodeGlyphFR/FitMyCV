@@ -1,10 +1,136 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+// Macro-features pour la gestion des abonnements
+const MACRO_FEATURES = [
+  'gpt_cv_generation',
+  'import_pdf',
+  'translate_cv',
+  'calculate_match_score',
+  'improve_cv',
+  'generate_cv_from_job_title',
+  'export_pdf',
+  'edit_cv',
+  'create_cv_manual',
+];
+
+// Plans d'abonnement par défaut
+const DEFAULT_PLANS = [
+  {
+    name: 'Gratuit',
+    description: 'Plan gratuit avec fonctionnalités de base',
+    priceMonthly: 0,
+    priceYearly: 0,
+    yearlyDiscountPercent: 0,
+    priceCurrency: 'EUR',
+    features: {
+      gpt_cv_generation: { enabled: true, limit: 3, analysisLevels: ['rapid'] },
+      import_pdf: { enabled: true, limit: 2 },
+      generate_cv_from_job_title: { enabled: true, limit: 5 },
+      export_pdf: { enabled: true, limit: 5 },
+      translate_cv: { enabled: false, limit: 0 },
+      calculate_match_score: { enabled: true, limit: 3 },
+      improve_cv: { enabled: false, limit: 0 },
+      edit_cv: { enabled: true, limit: -1 },
+      create_cv_manual: { enabled: true, limit: -1 },
+    },
+  },
+  {
+    name: 'Pro',
+    description: 'Plan professionnel avec toutes les fonctionnalités',
+    priceMonthly: 9.99,
+    priceYearly: 99.99,
+    yearlyDiscountPercent: 16.67,
+    priceCurrency: 'EUR',
+    features: {
+      gpt_cv_generation: { enabled: true, limit: -1, analysisLevels: ['rapid', 'medium'] },
+      import_pdf: { enabled: true, limit: -1 },
+      generate_cv_from_job_title: { enabled: true, limit: -1 },
+      export_pdf: { enabled: true, limit: 100 },
+      translate_cv: { enabled: true, limit: -1 },
+      calculate_match_score: { enabled: true, limit: -1 },
+      improve_cv: { enabled: true, limit: -1 },
+      edit_cv: { enabled: true, limit: -1 },
+      create_cv_manual: { enabled: true, limit: -1 },
+    },
+  },
+  {
+    name: 'Premium',
+    description: 'Plan premium avec accès illimité à toutes les fonctionnalités',
+    priceMonthly: 29.99,
+    priceYearly: 299.99,
+    yearlyDiscountPercent: 16.67,
+    priceCurrency: 'EUR',
+    features: {
+      gpt_cv_generation: { enabled: true, limit: -1, analysisLevels: ['rapid', 'medium', 'deep'] },
+      import_pdf: { enabled: true, limit: -1 },
+      generate_cv_from_job_title: { enabled: true, limit: -1 },
+      export_pdf: { enabled: true, limit: -1 },
+      translate_cv: { enabled: true, limit: -1 },
+      calculate_match_score: { enabled: true, limit: -1 },
+      improve_cv: { enabled: true, limit: -1 },
+      edit_cv: { enabled: true, limit: -1 },
+      create_cv_manual: { enabled: true, limit: -1 },
+    },
+  },
+];
+
 async function main() {
   console.log('🌱 Début du seeding...');
 
-  // Seed des settings de modèles IA
+  // ===== 1. Seed des plans d'abonnement (CRITIQUE pour le fonctionnement) =====
+  console.log('\n💳 Création des plans d\'abonnement...');
+
+  let plansCreated = 0;
+  let plansSkipped = 0;
+
+  for (const planData of DEFAULT_PLANS) {
+    try {
+      // Vérifier si le plan existe déjà
+      const existingPlan = await prisma.subscriptionPlan.findUnique({
+        where: { name: planData.name },
+      });
+
+      if (existingPlan) {
+        console.log(`  ⏭️  Plan "${planData.name}" existe déjà (ID: ${existingPlan.id})`);
+        plansSkipped++;
+        continue;
+      }
+
+      // Créer le plan avec ses features
+      const plan = await prisma.subscriptionPlan.create({
+        data: {
+          name: planData.name,
+          description: planData.description,
+          priceMonthly: planData.priceMonthly,
+          priceYearly: planData.priceYearly,
+          yearlyDiscountPercent: planData.yearlyDiscountPercent,
+          priceCurrency: planData.priceCurrency,
+          featureLimits: {
+            create: Object.entries(planData.features).map(([featureName, config]) => ({
+              featureName,
+              isEnabled: config.enabled,
+              usageLimit: config.limit,
+              allowedAnalysisLevels: config.analysisLevels ? JSON.stringify(config.analysisLevels) : null,
+            })),
+          },
+        },
+        include: {
+          featureLimits: true,
+        },
+      });
+
+      console.log(`  ✅ Plan "${planData.name}" créé (ID: ${plan.id}, ${plan.featureLimits.length} features)`);
+      plansCreated++;
+    } catch (error) {
+      console.error(`  ❌ Erreur plan "${planData.name}":`, error.message);
+    }
+  }
+
+  console.log(`\n  📊 Plans: ${plansCreated} créés, ${plansSkipped} ignorés (${DEFAULT_PLANS.length} total)`);
+
+  // ===== 2. Seed des settings de modèles IA =====
+  console.log('\n🤖 Création des settings de modèles IA...');
   const aiModelSettings = [
     // Niveaux d'analyse partagés (utilisés par generateCv, improveCv, importPdf, createTemplate)
     {
@@ -65,8 +191,6 @@ async function main() {
     }
   ];
 
-  console.log('📝 Création des settings de modèles IA...');
-
   for (const setting of aiModelSettings) {
     await prisma.setting.upsert({
       where: { settingName: setting.settingName },
@@ -79,7 +203,10 @@ async function main() {
     console.log(`  ✅ ${setting.settingName} = ${setting.value}`);
   }
 
-  console.log('✨ Seeding terminé avec succès !');
+  console.log('\n✨ Seeding terminé avec succès !');
+  console.log('\n📝 Résumé :');
+  console.log(`   - Plans d'abonnement : ${plansCreated} créés, ${plansSkipped} ignorés`);
+  console.log(`   - Settings IA : ${aiModelSettings.length} configurés`);
 }
 
 main()

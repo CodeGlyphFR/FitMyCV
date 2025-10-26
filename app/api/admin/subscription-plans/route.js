@@ -137,6 +137,25 @@ export async function POST(request) {
       );
     }
 
+    // IMPORTANT: Vérifier qu'il n'y a pas déjà un plan gratuit (priceMonthly === 0)
+    // Un seul plan gratuit est autorisé dans le système
+    const isFreeplan = priceMonthly === 0 && priceYearly === 0;
+    if (isFreeplan) {
+      const existingFreePlan = await prisma.subscriptionPlan.findFirst({
+        where: {
+          priceMonthly: 0,
+          priceYearly: 0,
+        },
+      });
+
+      if (existingFreePlan) {
+        return NextResponse.json(
+          { error: `Un plan gratuit existe déjà : "${existingFreePlan.name}". Vous ne pouvez avoir qu'un seul plan gratuit dans le système.` },
+          { status: 409 }
+        );
+      }
+    }
+
     // Créer le plan avec ses features
     const plan = await prisma.subscriptionPlan.create({
       data: {

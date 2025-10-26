@@ -136,7 +136,7 @@ export default function AnalyticsDashboard() {
         {activeTab === 'overview' && <OverviewTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'features' && <FeaturesTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'errors' && <ErrorsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
-        {activeTab === 'openai-costs' && <OpenAICostsTab period={period} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
+        {activeTab === 'openai-costs' && <OpenAICostsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'feedback' && <FeedbackTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'users' && <UsersTab refreshKey={refreshKey} />}
         {activeTab === 'subscriptions' && <SubscriptionPlansTab refreshKey={refreshKey} />}

@@ -8,7 +8,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { getFeatureConfig } from '@/lib/analytics/featureConfig';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList } from 'recharts';
 
-export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
+export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -49,7 +49,7 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
     fetchData();
     fetchPricings(); // Fetch pricing data for tooltip calculations
     fetchBalance(); // Fetch OpenAI account balance
-  }, [period, refreshKey]);
+  }, [period, userId, refreshKey]);
 
   useEffect(() => {
     if (showPricing) {
@@ -132,7 +132,12 @@ export function OpenAICostsTab({ period, refreshKey, isInitialLoad }) {
       if (!data) {
         setLoading(true);
       }
-      const response = await fetch(`/api/analytics/openai-usage?period=${period}`);
+      const url = new URL('/api/analytics/openai-usage', window.location.origin);
+      url.searchParams.set('period', period);
+      if (userId) {
+        url.searchParams.set('userId', userId);
+      }
+      const response = await fetch(url.toString());
       if (!response.ok) throw new Error('Failed to fetch data');
       const result = await response.json();
       setData(result);
