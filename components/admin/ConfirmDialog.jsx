@@ -59,14 +59,14 @@ export function ConfirmDialog({ dialog, onClose }) {
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      {/* Backdrop */}
+      {/* Backdrop - no blur for better iOS performance */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70"
         onClick={onClose}
       />
 
       {/* Dialog */}
-      <div className="relative bg-gray-900/95 backdrop-blur-xl border border-white/20 rounded-lg shadow-2xl max-w-md w-full p-6 animate-scale-in">
+      <div className="relative bg-gray-900/95 backdrop-blur-xl ios-optimized-blur gpu-accelerate border border-white/20 rounded-lg shadow-2xl max-w-md w-full p-6 animate-scale-in">
         {/* Icon */}
         <div className="text-4xl mb-4 text-center">{style.icon}</div>
 

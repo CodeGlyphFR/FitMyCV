@@ -274,7 +274,7 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
 
       {/* Dropdown content */}
       <div
-        className={`fixed w-96 bg-white/15 backdrop-blur-xl border-2 border-white/30 rounded-lg shadow-2xl z-[10001] ${className}`}
+        className={`fixed w-96 bg-white/15 backdrop-blur-md border-2 border-white/30 rounded-lg shadow-2xl z-[10001] gpu-accelerate ${className}`}
         style={{
           top: `${dropdownPosition.top}px`,
           left: `${dropdownPosition.left}px`

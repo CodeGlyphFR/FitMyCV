@@ -159,7 +159,7 @@ function TaskItem({ task, onCancel, onTaskClick }) {
 
   return (
     <div
-      className={`flex items-center justify-between p-3 border-2 border-white/30 rounded-lg bg-white/10 backdrop-blur-sm ${isClickable ? 'cursor-pointer hover:bg-white/20 transition-all duration-200' : ''}`}
+      className={`flex items-center justify-between p-3 border-2 border-white/30 rounded-lg bg-white/10 backdrop-blur-sm ios-blur-light ${isClickable ? 'cursor-pointer hover:bg-white/20 transition-all duration-200' : ''}`}
       onClick={handleClick}
     >
       <div className="flex-1 min-w-0">
@@ -306,7 +306,7 @@ export default function TaskQueueModal({ open, onClose }) {
           <div>{t("taskQueue.total")}: {tasks.length}</div>
           <button
             onClick={onClose}
-            className="px-3 py-1 text-sm font-medium text-white bg-white/20 border-2 border-white/40 rounded-lg hover:bg-white/30 backdrop-blur-sm transition-all duration-200 drop-shadow"
+            className="px-3 py-1 text-sm font-medium text-white bg-white/20 border-2 border-white/40 rounded-lg hover:bg-white/30 backdrop-blur-sm ios-blur-light transition-all duration-200 drop-shadow"
           >
             {t("common.close")}
           </button>

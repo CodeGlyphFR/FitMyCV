@@ -150,15 +150,19 @@ export default function Modal({
       }}
       role="presentation"
     >
-      {/* Backdrop */}
+      {/* Backdrop - no blur for better iOS performance */}
       <div
-        className="absolute inset-0 backdrop-blur-md bg-black/40"
+        className="absolute inset-0 bg-black/50"
         onClick={handleBackdropClick}
         onTouchEnd={(e) => {
           e.preventDefault();
           handleBackdropClick();
         }}
         aria-hidden="true"
+        style={{
+          transform: 'translateZ(0)',
+          WebkitTransform: 'translateZ(0)'
+        }}
       ></div>
 
       {/* Modal container - évite les safe-area */}
@@ -179,7 +183,7 @@ export default function Modal({
           aria-modal="true"
           aria-labelledby="modal-title"
           tabIndex={-1}
-          className={`relative z-10 w-full ${maxWidthClass} rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl`}
+          className={`relative z-10 w-full ${maxWidthClass} rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-md ios-blur-medium gpu-accelerate shadow-2xl`}
           onClick={(e) => e.stopPropagation()}
           onTouchEnd={(e) => e.stopPropagation()}
           style={{
@@ -187,7 +191,8 @@ export default function Modal({
             maxHeight: '100%',
             display: 'flex',
             flexDirection: 'column',
-            touchAction: 'auto'
+            touchAction: 'auto',
+            willChange: open ? 'transform, opacity' : 'auto'
           }}
         >
           <div className="flex items-center justify-between p-4 pb-2 flex-shrink-0">

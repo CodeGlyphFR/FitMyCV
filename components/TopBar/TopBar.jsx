@@ -379,15 +379,11 @@ export default function TopBar() {
   if (status === "loading") {
     return (
       <div
-        className="no-print sticky top-0 inset-x-0 z-[10001] w-full bg-white/15 backdrop-blur-xl border-b border-white/20 min-h-[60px]"
+        className="no-print fixed top-0 left-0 right-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
         style={{
-          position: '-webkit-sticky',
           paddingTop: 'env(safe-area-inset-top)',
-          marginTop: 'calc(-1 * env(safe-area-inset-top))',
           WebkitBackfaceVisibility: 'hidden',
           backfaceVisibility: 'hidden',
-          WebkitPerspective: 1000,
-          perspective: 1000,
           WebkitTransform: 'translate3d(0, 0, 0)',
           transform: 'translate3d(0, 0, 0)',
           pointerEvents: 'auto'
@@ -414,15 +410,11 @@ export default function TopBar() {
     <>
       <div
         ref={barRef}
-        className="no-print sticky top-0 inset-x-0 z-[10001] w-full bg-white/15 backdrop-blur-xl border-b border-white/20 min-h-[60px]"
+        className="no-print fixed top-0 left-0 right-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
         style={{
-          position: '-webkit-sticky',
           paddingTop: 'env(safe-area-inset-top)',
-          marginTop: 'calc(-1 * env(safe-area-inset-top))',
           WebkitBackfaceVisibility: 'hidden',
           backfaceVisibility: 'hidden',
-          WebkitPerspective: 1000,
-          perspective: 1000,
           WebkitTransform: 'translate3d(0, 0, 0)',
           transform: 'translate3d(0, 0, 0)',
           pointerEvents: 'auto'
@@ -504,7 +496,7 @@ export default function TopBar() {
                       zIndex: 10002,
                       opacity: 1,
                     }}
-                    className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl cv-dropdown-no-animation"
+                    className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-md shadow-2xl cv-dropdown-no-animation"
                   >
                     <ul
                       className="max-h-[240px] overflow-y-auto py-1"
@@ -571,7 +563,7 @@ export default function TopBar() {
                       left: modals.userMenuRect.left,
                       zIndex: 10002,
                     }}
-                    className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl p-2 text-sm space-y-1 min-w-[10rem] max-w-[16rem]"
+                    className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-md shadow-2xl p-2 text-sm space-y-1 min-w-[10rem] max-w-[16rem]"
                   >
                     <div className="px-2 py-1 text-xs uppercase text-white/70 drop-shadow truncate">
                       {session?.user?.name || t("topbar.user")}

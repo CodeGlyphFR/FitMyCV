@@ -1,6 +1,7 @@
 import "./globals.css";
 import React from "react";
 import ConditionalTopBar from "@/components/ConditionalTopBar";
+import ConditionalTopBarSpacer from "@/components/ConditionalTopBarSpacer";
 import ConditionalFooter from "@/components/ConditionalFooter";
 import ConditionalMainWrapper from "@/components/ConditionalMainWrapper";
 import CookieBanner from "@/components/cookies/CookieBanner";
@@ -8,6 +9,7 @@ import FeedbackButton from "@/components/feedback/FeedbackButton";
 import RootProviders from "@/components/RootProviders";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import GlobalBackground from "@/components/GlobalBackground";
+import IconPreloader from "@/components/IconPreloader";
 import { auth } from "@/lib/auth/session";
 import { SITE_TITLE } from "@/lib/site";
 import prisma from "@/lib/prisma";
@@ -63,6 +65,8 @@ export default async function RootLayout(props){
         {/* Préchargement des ressources critiques pour LCP */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Pré-chargement des icônes du dropdown CV pour iOS */}
+        <IconPreloader />
         {/* CSS critique inline pour éviter le blocage */}
         <style dangerouslySetInnerHTML={{__html: `
           /* Fonts system fallback pour éviter FOIT */
@@ -86,8 +90,10 @@ export default async function RootLayout(props){
         <RootProviders session={session} initialSettings={initialSettings}>
           <GlobalBackground />
           <div className="relative z-10 flex flex-col min-h-screen">
-            {/* TopBar sans wrapper pour éviter l'espace vide */}
+            {/* TopBar en position fixed */}
             <ConditionalTopBar />
+            {/* Spacer pour compenser la TopBar retirée du flux */}
+            <ConditionalTopBarSpacer />
             <ConditionalMainWrapper
               footerPlaceholder={
                 <div className="footer-placeholder h-[56px]">
