@@ -53,21 +53,21 @@ export default function SubscriptionsPage({ user }) {
     if (searchParams.get('success') === 'true') {
       const isUpdated = searchParams.get('updated') === 'true';
       if (isUpdated) {
-        setSuccessMessage(t('subscription.page.messages.subscriptionUpdated'));
+        setSuccessMessage(t('subscription.messages.subscriptionUpdated'));
       } else {
-        setSuccessMessage(t('subscription.page.messages.subscriptionActivated'));
+        setSuccessMessage(t('subscription.messages.subscriptionActivated'));
       }
       setTimeout(() => setSuccessMessage(""), 5000);
-      // Rafraîchir les données après un petit délai pour laisser le webhook se traiter
-      setTimeout(() => refreshData(), 1000);
+      // Rafraîchir les données après un délai pour laisser le webhook se traiter
+      setTimeout(() => refreshData(), 2000);
     } else if (searchParams.get('credits_success') === 'true') {
-      setSuccessMessage(t('subscription.page.messages.creditsPurchased'));
+      setSuccessMessage(t('subscription.messages.creditsPurchased'));
       setActiveTab("credits");
       setTimeout(() => setSuccessMessage(""), 5000);
-      // Rafraîchir les données après un petit délai
-      setTimeout(() => refreshData(), 1000);
+      // Rafraîchir les données après un délai
+      setTimeout(() => refreshData(), 2000);
     } else if (searchParams.get('canceled') === 'true') {
-      setError(t('subscription.page.messages.paymentCanceled'));
+      setError(t('subscription.messages.paymentCanceled'));
       setTimeout(() => setError(null), 5000);
     }
   }, [searchParams, refreshData, t]);
@@ -85,7 +85,7 @@ export default function SubscriptionsPage({ user }) {
         ]);
 
         if (!subRes.ok || !creditsRes.ok) {
-          throw new Error(t('subscription.page.messages.loadingError'));
+          throw new Error(t('subscription.messages.loadingError'));
         }
 
         const subData = await subRes.json();
@@ -131,14 +131,14 @@ export default function SubscriptionsPage({ user }) {
       }
 
       const data = await response.json();
-      setSuccessMessage(t('subscription.page.messages.cancelScheduled'));
+      setSuccessMessage(t('subscription.messages.cancelScheduled'));
       setTimeout(() => setSuccessMessage(""), 5000);
 
       // Rafraîchir les données pour afficher le nouveau status
       await refreshData();
     } catch (err) {
       console.error('Error canceling subscription:', err);
-      setError(err.message || t('subscription.page.messages.cancelError'));
+      setError(err.message || t('subscription.messages.cancelError'));
       setTimeout(() => setError(null), 5000);
     }
   }, [refreshData, t]);
