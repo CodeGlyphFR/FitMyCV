@@ -525,6 +525,7 @@ model CreditTransaction {
   cvFile                CvFile?
 
   stripePaymentIntentId String?  // Pour les achats
+  stripeInvoiceId       String?  // Facture Stripe associée
   refunded              Boolean  @default(false)
   relatedTransactionId  String?  // Transaction d'origine (pour refund)
 
@@ -537,6 +538,7 @@ model CreditTransaction {
   @@index([featureName])
   @@index([createdAt])
   @@index([userId, createdAt])
+  @@unique([stripePaymentIntentId])
 }
 
 // Compteurs d'utilisation mensuels par feature

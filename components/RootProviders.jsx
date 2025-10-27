@@ -22,8 +22,8 @@ export default function RootProviders({ session, initialSettings, children }){
       <RecaptchaProvider>
         <SettingsProvider initialSettings={initialSettings}>
         <LanguageProvider>
-        <AdminProvider>
-          <NotificationProvider>
+        <NotificationProvider>
+          <AdminProvider>
             {isAuthPage ? (
               <>
                 {children}
@@ -39,8 +39,8 @@ export default function RootProviders({ session, initialSettings, children }){
                 </BackgroundTasksProvider>
               </RealtimeRefreshProvider>
             )}
-          </NotificationProvider>
-        </AdminProvider>
+          </AdminProvider>
+        </NotificationProvider>
         </LanguageProvider>
       </SettingsProvider>
       </RecaptchaProvider>

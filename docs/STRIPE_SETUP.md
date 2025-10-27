@@ -274,9 +274,62 @@ Utilisez ces numéros de cartes de test :
 3. Cliquer sur "Acheter 10 crédits"
 4. Payer avec carte test
 5. Vérifier :
-   - Webhook `payment_intent.succeeded` reçu
-   - Balance crédits mise à jour
-   - Transaction enregistrée
+   - Webhooks reçus : `checkout.session.completed` et `payment_intent.succeeded`
+   - Balance crédits mise à jour (+10 crédits, PAS +20)
+   - Transaction enregistrée UNIQUE dans `CreditTransaction`
+   - **Facture Stripe créée** avec PDF téléchargeable
+   - Facture visible dans `/account/subscriptions` → Onglet "Historique"
+
+**Vérification anti-duplication** (important) :
+```sql
+-- Vérifier qu'il n'y a qu'une seule transaction par PaymentIntent
+SELECT stripePaymentIntentId, COUNT(*) as count
+FROM CreditTransaction
+WHERE stripePaymentIntentId IS NOT NULL
+GROUP BY stripePaymentIntentId
+HAVING COUNT(*) > 1;
+
+-- Résultat attendu : 0 lignes (aucun doublon)
+```
+
+**Vérification facture Stripe** :
+```sql
+-- Vérifier que chaque transaction a une facture
+SELECT id, amount, stripePaymentIntentId, stripeInvoiceId, createdAt
+FROM CreditTransaction
+WHERE type = 'purchase'
+ORDER BY createdAt DESC
+LIMIT 5;
+
+-- Résultat attendu : stripeInvoiceId renseigné pour chaque ligne
+```
+
+**Dashboard Stripe** :
+1. Aller sur [Invoices](https://dashboard.stripe.com/test/invoices)
+2. Vérifier que la facture de crédits apparaît
+3. Télécharger le PDF pour vérifier son contenu
+
+### 5.4 Protection contre la duplication (bug corrigé)
+
+Le système inclut plusieurs couches de protection contre la duplication de crédits :
+
+**1. Contrainte unique en base de données**
+- `CreditTransaction` a une contrainte unique sur `stripePaymentIntentId`
+- Empêche physiquement les doublons au niveau DB
+
+**2. Vérification d'événement déjà traité**
+- Le webhook vérifie si `event.id` a déjà été traité (via `StripeWebhookLog`)
+- Retourne immédiatement si l'événement a déjà été traité
+
+**3. Gestion des race conditions**
+- Si deux webhooks arrivent simultanément (`checkout.session.completed` + `payment_intent.succeeded`)
+- La contrainte unique empêche le second de créer un doublon
+- L'erreur de contrainte est gérée proprement (log + return)
+
+**Tests de non-régression** :
+- Tester l'achat de crédits plusieurs fois
+- Vérifier que le compte reçoit toujours le bon nombre de crédits
+- Surveiller les logs du webhook pour détecter les tentatives de duplication
 
 ---
 
@@ -412,7 +465,37 @@ node scripts/sync-stripe-products.js
 
 ## Étape 8 : Configuration avancée
 
-### 8.1 Branding Stripe Checkout
+### 8.1 Gestion des factures
+
+Le système génère automatiquement des factures Stripe avec PDF téléchargeable pour tous les paiements.
+
+#### Abonnements
+- **Génération automatique** : Stripe crée automatiquement une Invoice à chaque renouvellement
+- **PDF disponible** : Téléchargeable depuis Stripe Dashboard ou via API
+- **Webhook** : `invoice.paid` notifie l'application
+
+#### Achats de crédits (packs one-time)
+- **Génération programmatique** : Le webhook `checkout.session.completed` crée une Invoice Stripe
+- **Processus** :
+  1. Paiement réussi via Checkout Session
+  2. Webhook reçu → Attribution des crédits
+  3. Création automatique de l'Invoice Stripe
+  4. Finalisation de l'Invoice → Génération du PDF
+  5. Marquage comme payée (`paid_out_of_band`)
+- **Traçabilité** : `CreditTransaction.stripeInvoiceId` stocke l'ID de la facture
+
+#### Accès aux factures
+Les utilisateurs peuvent consulter et télécharger leurs factures depuis :
+- **Application** : `/account/subscriptions` → Onglet "Historique"
+- **Stripe Dashboard** : [Invoices](https://dashboard.stripe.com/invoices)
+
+#### Informations de facturation
+Les deux checkout sessions collectent automatiquement l'adresse de facturation :
+- `billing_address_collection: 'required'` activé
+- Informations sauvegardées dans le Customer Stripe
+- Affichées sur toutes les factures
+
+### 8.2 Branding Stripe Checkout
 
 1. **Settings → Branding**
 2. Ajouter :
@@ -420,7 +503,7 @@ node scripts/sync-stripe-products.js
    - Couleur principale
    - Favicon
 
-### 8.2 Emails Stripe
+### 8.3 Emails Stripe
 
 1. **Settings → Emails**
 2. Personnaliser les emails de :
@@ -429,13 +512,13 @@ node scripts/sync-stripe-products.js
    - Échecs de paiement
    - Factures
 
-### 8.3 Gestion des taxes
+### 8.4 Gestion des taxes
 
 1. **Produits → Tax rates**
 2. Ajouter la TVA selon votre pays (ex: 20% France)
 3. Activer **Stripe Tax** pour calcul automatique
 
-### 8.4 Customer Portal
+### 8.5 Customer Portal
 
 Permet aux clients de gérer leur abonnement directement :
 

@@ -98,18 +98,24 @@ export async function GET(request) {
       console.error('[Invoices] Erreur lors de la récupération des PaymentIntents:', error.message);
     }
 
-    // Formater les factures (abonnements)
-    const formattedInvoices = invoices.data.map(invoice => ({
-      id: invoice.id,
-      date: new Date(invoice.created * 1000).toISOString(),
-      amount: invoice.amount_paid / 100, // Convertir centimes en euros
-      currency: invoice.currency.toUpperCase(),
-      status: invoice.status,
-      description: invoice.lines.data[0]?.description || 'Abonnement',
-      pdfUrl: invoice.invoice_pdf,
-      hostedUrl: invoice.hosted_invoice_url,
-      type: 'subscription',
-    }));
+    // Formater les factures (abonnements ET crédits)
+    const formattedInvoices = invoices.data.map(invoice => {
+      // Différencier les factures de crédits des abonnements via metadata
+      const isCreditPurchase = invoice.metadata?.source === 'credit_pack_purchase';
+
+      return {
+        id: invoice.id,
+        date: new Date(invoice.created * 1000).toISOString(),
+        // Utiliser total au lieu de amount_paid pour les invoices paid_out_of_band
+        amount: invoice.total / 100, // Convertir centimes en euros
+        currency: invoice.currency.toUpperCase(),
+        status: invoice.status,
+        description: invoice.lines.data[0]?.description || (isCreditPurchase ? 'Pack de crédits' : 'Abonnement'),
+        pdfUrl: invoice.invoice_pdf,
+        hostedUrl: invoice.hosted_invoice_url,
+        type: isCreditPurchase ? 'credit_pack' : 'subscription',
+      };
+    });
 
     // Formater les PaymentIntents (packs de crédits)
     const formattedPayments = paymentIntents.data

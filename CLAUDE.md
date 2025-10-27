@@ -270,6 +270,36 @@ Optimisation automatique des CV basée sur les suggestions d'amélioration:
 - Anti-spam: Bouton désactivé pendant l'optimisation
 - Le bouton "Optimiser" est grisé si `matchScoreStatus === 'inprogress'` OU `optimiseStatus === 'inprogress'`
 
+### CV Edit Mode (Feature: edit_cv)
+Système de contrôle d'accès au mode édition manuelle des CV avec gestion des limites d'abonnement.
+
+**Workflow de session d'édition** :
+1. **Clic sur "Mode édition"** → Vérification préalable via `/api/cv/can-edit` (GET)
+   - Si refusé (limite atteinte + pas de crédits) : notification d'erreur + redirection vers `/account/subscriptions`
+   - Si autorisé : activation du mode édition (aucun débit à ce stade)
+
+2. **Première modification dans la session** → Débit automatique via `/api/cv/debit-edit` (POST)
+   - Appel depuis `useMutate` après succès de la mutation
+   - Débite 1 compteur d'abonnement OU 1 crédit (selon limite atteinte)
+   - Flag `hasDebitedEditSession` mis à `true` pour bloquer les débits suivants
+
+3. **Modifications suivantes** → Gratuites (même session d'édition)
+
+4. **Sortie du mode édition** → Reset du flag `hasDebitedEditSession`
+
+**Composants clés** :
+- `AdminProvider` : gère les states `editing` et `hasDebitedEditSession`, vérifie les limites avant activation
+- `useMutate` : débite UNE SEULE FOIS par session à la première modification réussie
+- Routes API :
+  - `/api/cv/can-edit` : vérification sans débit (utilisé avant activation du mode)
+  - `/api/cv/debit-edit` : débit unique par session (appelé à la première modification)
+  - `/api/admin/mutate` : mutations du CV (sans vérification de limites, déléguée à useMutate)
+
+**Règles de facturation** :
+- 1 session d'édition = 1 usage de `edit_cv` (peu importe le nombre de modifications)
+- Le débit se fait à la **première modification effective**, pas à l'activation du mode
+- Les utilisateurs peuvent activer le mode édition sans consommer de crédit (pour consulter)
+
 ### Validation & Sanitization
 - **Validation**: AJV avec `data/schema.json` (`lib/cv/validation.js`)
 - **Sanitization**: Nettoyage des entrées (`lib/sanitize.js`)

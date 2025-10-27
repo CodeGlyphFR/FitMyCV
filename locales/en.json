@@ -822,8 +822,8 @@
         "action": "Action"
       },
       "types": {
-        "subscription": "👑 Subscription",
-        "creditPack": "💎 Credits"
+        "subscription": "Subscription",
+        "creditPack": "Credits"
       },
       "status": {
         "paid": "Paid",

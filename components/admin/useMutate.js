@@ -1,10 +1,12 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
+import { useAdmin } from "@/components/admin/AdminProvider";
 
 export default function useMutate(){
   const router = useRouter();
   const { addNotification } = useNotifications();
+  const { hasDebitedEditSession, markEditAsDebited } = useAdmin();
 
   async function mutate(args){
     try {
@@ -40,6 +42,27 @@ export default function useMutate(){
 
         // Ne pas throw pour permettre aux modaux de se fermer
         return null;
+      }
+
+      // Mutation réussie → Débiter UNE SEULE FOIS par session d'édition
+      if (!hasDebitedEditSession) {
+        try {
+          const debitRes = await fetch('/api/cv/debit-edit', { method: 'POST' });
+          const debitData = await debitRes.json();
+
+          if (debitRes.ok && debitData.success) {
+            console.log('[useMutate] ✅ Débit de la session d\'édition réussi');
+            markEditAsDebited();
+          } else {
+            // Afficher erreur mais ne pas bloquer (mutation déjà effectuée)
+            console.error('[useMutate] ⚠️ Erreur débit edit session:', debitData.error);
+            // On ne bloque pas ici car la modification est déjà faite
+            // L'utilisateur sera bloqué à la prochaine activation du mode édition
+          }
+        } catch (debitError) {
+          console.error('[useMutate] ⚠️ Erreur lors du débit:', debitError);
+          // Idem, on ne bloque pas
+        }
       }
 
       router.refresh();

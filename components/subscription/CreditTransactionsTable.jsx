@@ -26,7 +26,7 @@ export default function CreditTransactionsTable() {
   const [loading, setLoading] = React.useState(true);
   const [page, setPage] = React.useState(0);
   const [hasMore, setHasMore] = React.useState(false);
-  const limit = 20;
+  const limit = 10;
 
   const loadTransactions = React.useCallback(async (offset = 0) => {
     try {
@@ -118,7 +118,14 @@ export default function CreditTransactionsTable() {
                       <td className="py-3 px-2">
                         <div className="text-sm text-white/70">
                           {transaction.featureName && (
-                            <div>{transaction.featureName}</div>
+                            <div>
+                              {t(`subscription.features.labels.${transaction.featureName}`,
+                                transaction.featureName
+                                  .split('_')
+                                  .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                                  .join(' ')
+                              )}
+                            </div>
                           )}
                           {transaction.refunded && (
                             <span className="text-xs text-purple-300">{t('subscription.transactions.refunded')}</span>

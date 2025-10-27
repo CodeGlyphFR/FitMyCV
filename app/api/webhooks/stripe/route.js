@@ -11,6 +11,15 @@
  * Note : checkout.session.completed est privilégié pour les achats de crédits
  * car il contient toujours les métadonnées du checkout, contrairement à
  * payment_intent.succeeded qui peut avoir un metadata vide.
+ *
+ * Protection contre duplication :
+ * - Vérification si événement déjà traité (via StripeWebhookLog)
+ * - Contrainte unique sur stripePaymentIntentId (CreditTransaction)
+ * - Gestion des erreurs de contrainte unique (race condition)
+ *
+ * Factures :
+ * - Abonnements : factures générées automatiquement par Stripe
+ * - Crédits : factures créées programmatiquement après paiement
  */
 
 import { NextResponse } from 'next/server';
@@ -77,6 +86,19 @@ export async function POST(request) {
   console.log(`[Webhook] Reçu: ${event.type} (${event.id})`);
 
   try {
+    // Vérifier si cet événement a déjà été traité (idempotence renforcée)
+    const alreadyProcessed = await prisma.stripeWebhookLog.findFirst({
+      where: {
+        eventId: event.id,
+        processed: true,
+      },
+    });
+
+    if (alreadyProcessed) {
+      console.log(`[Webhook] Événement ${event.id} déjà traité, ignoré`);
+      return NextResponse.json({ received: true, message: 'Already processed' });
+    }
+
     // Router selon le type d'event
     switch (event.type) {
       case 'customer.subscription.created':
@@ -248,6 +270,84 @@ async function handleSubscriptionDeleted(subscription) {
 }
 
 /**
+ * Crée une facture Stripe pour un achat de crédits
+ * @param {object} params - {customer, amount, currency, creditAmount, userId, paymentIntentId, session}
+ * @param {string} transactionId - ID de la CreditTransaction à mettre à jour
+ * @returns {Promise<string|null>} - ID de la facture créée ou null en cas d'erreur
+ */
+async function createInvoiceForCreditPurchase({ customer, amount, currency, creditAmount, userId, paymentIntentId, session }, transactionId) {
+  try {
+    // Récupérer les informations de facturation depuis la Checkout Session
+    // (c'est là que billing_address_collection: 'required' collecte les infos)
+    const customerDetails = session.customer_details;
+
+    console.log(`[Webhook] → Récupération des billing details depuis checkout session:`, {
+      name: customerDetails?.name || 'N/A',
+      email: customerDetails?.email || 'N/A',
+      address: customerDetails?.address ? `${customerDetails.address.city}, ${customerDetails.address.country}` : 'N/A',
+    });
+
+    // Mettre à jour le Customer Stripe avec les informations de facturation
+    // (L'Invoice récupérera automatiquement ces infos du Customer)
+    if (customerDetails) {
+      await stripe.customers.update(customer, {
+        name: customerDetails.name || undefined,
+        email: customerDetails.email || undefined,
+        address: customerDetails.address || undefined,
+      });
+      console.log(`[Webhook] ✓ Customer ${customer} mis à jour avec les billing details`);
+    }
+
+    // Créer un draft invoice (récupère automatiquement les infos du Customer)
+    const invoice = await stripe.invoices.create({
+      customer: customer,
+      auto_advance: false, // Ne pas envoyer automatiquement
+      collection_method: 'charge_automatically',
+      description: `Achat de ${creditAmount} crédits FitMyCv.ai`,
+      metadata: {
+        userId: userId,
+        creditAmount: creditAmount.toString(),
+        paymentIntentId: paymentIntentId,
+        source: 'credit_pack_purchase',
+      },
+    });
+
+    // Ajouter l'item à la facture
+    await stripe.invoiceItems.create({
+      customer: customer,
+      invoice: invoice.id,
+      amount: amount,
+      currency: currency,
+      description: `Pack de ${creditAmount} crédits`,
+    });
+
+    // Finaliser la facture (génère le PDF immédiatement)
+    const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+
+    console.log(`[Webhook] ✓ Facture Stripe créée: ${finalizedInvoice.id} pour PaymentIntent ${paymentIntentId}`);
+    console.log(`[Webhook]   → PDF URL: ${finalizedInvoice.invoice_pdf || 'NULL - PDF non généré'}`);
+
+    // Marquer la facture comme payée (le paiement a déjà été effectué via checkout)
+    const paidInvoice = await stripe.invoices.pay(finalizedInvoice.id, {
+      paid_out_of_band: true,
+    });
+
+    console.log(`[Webhook] ✓ Facture ${paidInvoice.id} marquée comme payée (status: ${paidInvoice.status})`);
+
+    // Mettre à jour la transaction avec l'ID de la facture
+    await prisma.creditTransaction.update({
+      where: { id: transactionId },
+      data: { stripeInvoiceId: paidInvoice.id },
+    });
+
+    return paidInvoice.id;
+  } catch (invoiceError) {
+    console.error('[Webhook] Erreur lors de la création de la facture:', invoiceError);
+    return null;
+  }
+}
+
+/**
  * Gère la completion d'une session Checkout (achat de crédits)
  */
 async function handleCheckoutCompleted(session) {
@@ -271,22 +371,60 @@ async function handleCheckoutCompleted(session) {
   });
 
   if (existingTransaction) {
-    console.log(`[Webhook] Crédits déjà attribués pour PaymentIntent ${paymentIntentId}`);
+    console.log(`[Webhook] ✓ Anti-duplication: crédits déjà attribués par payment_intent.succeeded pour PaymentIntent ${paymentIntentId}`);
+
+    // Si pas de facture, la créer maintenant (cas où payment_intent.succeeded est arrivé avant)
+    if (!existingTransaction.stripeInvoiceId) {
+      console.log(`[Webhook] → Création de la facture Stripe avec billing details (checkout.session a accès aux infos de facturation)`);
+      await createInvoiceForCreditPurchase({
+        customer: session.customer,
+        amount: session.amount_total,
+        currency: session.currency,
+        creditAmount,
+        userId,
+        paymentIntentId,
+        session, // Passer la session pour récupérer customer_details
+      }, existingTransaction.id);
+    } else {
+      console.log(`[Webhook] Facture déjà créée: ${existingTransaction.stripeInvoiceId}`);
+    }
+
     return;
   }
 
   // Attribuer les crédits
-  const result = await grantCredits(userId, creditAmount, 'purchase', {
-    stripePaymentIntentId: paymentIntentId,
-    source: 'credit_pack_purchase',
-  });
+  let result;
+  try {
+    result = await grantCredits(userId, creditAmount, 'purchase', {
+      stripePaymentIntentId: paymentIntentId,
+      source: 'credit_pack_purchase',
+    });
 
-  if (!result.success) {
-    console.error('[Webhook] Erreur attribution crédits:', result.error);
-    return;
+    if (!result.success) {
+      console.error('[Webhook] Erreur attribution crédits:', result.error);
+      return;
+    }
+  } catch (error) {
+    // Gérer l'erreur de contrainte unique (race condition)
+    if (error.code === 'P2002' && error.meta?.target?.includes('stripePaymentIntentId')) {
+      console.log(`[Webhook] Contrainte unique violation pour PaymentIntent ${paymentIntentId} (race condition détectée)`);
+      return;
+    }
+    throw error;
   }
 
   console.log(`[Webhook] ${creditAmount} crédits attribués à user ${userId} (checkout.session.completed)`);
+
+  // Créer une facture Stripe pour l'achat de crédits
+  await createInvoiceForCreditPurchase({
+    customer: session.customer,
+    amount: session.amount_total,
+    currency: session.currency,
+    creditAmount,
+    userId,
+    paymentIntentId,
+    session, // Passer la session pour récupérer customer_details
+  }, result.transaction.id);
 
   // TODO: Envoyer email de confirmation via Resend
 }
@@ -314,19 +452,29 @@ async function handlePaymentSuccess(paymentIntent) {
   });
 
   if (existingTransaction) {
-    console.log(`[Webhook] Crédits déjà attribués pour PaymentIntent ${paymentIntent.id}`);
+    console.log(`[Webhook] ✓ Anti-duplication: crédits déjà attribués par checkout.session.completed pour PaymentIntent ${paymentIntent.id}`);
     return;
   }
 
   // Attribuer les crédits
-  const result = await grantCredits(userId, creditAmount, 'purchase', {
-    stripePaymentIntentId: paymentIntent.id,
-    source: 'credit_pack_purchase',
-  });
+  let result;
+  try {
+    result = await grantCredits(userId, creditAmount, 'purchase', {
+      stripePaymentIntentId: paymentIntent.id,
+      source: 'credit_pack_purchase',
+    });
 
-  if (!result.success) {
-    console.error('[Webhook] Erreur attribution crédits:', result.error);
-    return;
+    if (!result.success) {
+      console.error('[Webhook] Erreur attribution crédits:', result.error);
+      return;
+    }
+  } catch (error) {
+    // Gérer l'erreur de contrainte unique (race condition)
+    if (error.code === 'P2002' && error.meta?.target?.includes('stripePaymentIntentId')) {
+      console.log(`[Webhook] Contrainte unique violation pour PaymentIntent ${paymentIntent.id} (race condition détectée - checkout.session.completed a déjà traité)`);
+      return;
+    }
+    throw error;
   }
 
   console.log(`[Webhook] ${creditAmount} crédits attribués à user ${userId} (payment_intent.succeeded fallback)`);

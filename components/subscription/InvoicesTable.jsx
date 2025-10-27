@@ -11,7 +11,7 @@ export default function InvoicesTable() {
   const [error, setError] = React.useState(null);
   const [page, setPage] = React.useState(0);
   const [typeFilter, setTypeFilter] = React.useState('all'); // 'all', 'subscription', 'credit_pack'
-  const limit = 20;
+  const limit = 10;
 
   React.useEffect(() => {
     async function fetchInvoices() {

@@ -346,7 +346,7 @@ export default function SubscriptionsPage({ user }) {
               aria-labelledby="tab-history"
               className="animate-in fade-in slide-in-from-bottom-4 duration-300"
             >
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <CreditTransactionsTable />
                 <InvoicesTable />
               </div>

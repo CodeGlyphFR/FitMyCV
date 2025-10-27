@@ -4,15 +4,19 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
+import { useNotifications } from "@/components/notifications/NotificationProvider";
+
 var Ctx = React.createContext(null);
 export function useAdmin(){ var c=React.useContext(Ctx); if(!c) throw new Error("useAdmin outside"); return c; }
 export default function AdminProvider(props){
   const { data: session } = useSession();
   const { t } = useLanguage();
   const { settings } = useSettings();
+  const { addNotification } = useNotifications();
   const [editing, setEditingState] = React.useState(false);
   const [currentFile, setCurrentFile] = React.useState("");
   const [hasAnyCv, setHasAnyCv] = React.useState(false);
+  const [hasDebitedEditSession, setHasDebitedEditSession] = React.useState(false);
   const pathname = usePathname();
 
   React.useEffect(function(){
@@ -76,16 +80,61 @@ export default function AdminProvider(props){
     }
   }, [session?.user?.id]);
 
-  function setEditing(next){
+  async function setEditing(next){
     if (!session?.user?.id){
       setEditingState(false);
       return;
     }
-    setEditingState(next);
+
+    if (next === true) {
+      // Vérifier si l'utilisateur peut activer le mode édition (sans débiter)
+      try {
+        const res = await fetch('/api/cv/can-edit');
+        const data = await res.json();
+
+        if (!data.canEdit) {
+          // Bloquer + afficher notification d'erreur avec bouton d'action
+          const notification = {
+            type: 'error',
+            message: data.reason || 'Vous ne pouvez pas activer le mode édition',
+            duration: 10000 // Plus long car il y a une action à faire
+          };
+
+          // Ajouter le bouton d'action si nécessaire
+          if (data.redirectUrl) {
+            notification.redirectUrl = data.redirectUrl;
+            notification.linkText = 'Voir mes options';
+          }
+
+          addNotification(notification);
+
+          return; // Ne pas activer le mode édition
+        }
+
+        // OK → Activer le mode édition (sans débiter)
+        setHasDebitedEditSession(false);
+        setEditingState(true);
+      } catch (error) {
+        console.error('[AdminProvider] Erreur vérification can-edit:', error);
+        addNotification({
+          type: 'error',
+          message: 'Erreur lors de la vérification',
+          duration: 4000
+        });
+      }
+    } else {
+      // Sortie du mode édition → Reset du flag
+      setHasDebitedEditSession(false);
+      setEditingState(false);
+    }
+  }
+
+  function markEditAsDebited() {
+    setHasDebitedEditSession(true);
   }
 
   return (
-    <Ctx.Provider value={{ editing, setEditing, setCurrentFile }}>
+    <Ctx.Provider value={{ editing, setEditing, setCurrentFile, hasDebitedEditSession, markEditAsDebited }}>
       {props.children}
 
       {/* Analytics button for ADMIN users */}
