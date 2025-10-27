@@ -89,7 +89,16 @@ export async function POST(request) {
       customer: stripeCustomerId,
       mode: 'payment', // Paiement unique (pas abonnement)
       billing_address_collection: 'required',
+      allow_promotion_codes: true, // Permettre les codes promo
       payment_method_types: ['card'],
+      consent_collection: {
+        terms_of_service: 'required', // Acceptation obligatoire des CGV
+      },
+      custom_text: {
+        terms_of_service_acceptance: {
+          message: `J'accepte les [Conditions Générales de Vente](${process.env.NEXT_PUBLIC_SITE_URL}/terms).`,
+        },
+      },
       line_items: [
         {
           price: pack.stripePriceId,

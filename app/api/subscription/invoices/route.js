@@ -67,6 +67,68 @@ export async function GET(request) {
       }
     }
 
+    // Fallback 2 : Essayer de récupérer le customer via l'email de l'utilisateur
+    if (!stripeCustomerId || stripeCustomerId.startsWith('local_')) {
+      console.log('[Invoices] Tentative de récupération via email utilisateur');
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true },
+      });
+
+      if (user?.email) {
+        try {
+          // Rechercher un customer Stripe avec cet email
+          const customers = await stripe.customers.list({
+            email: user.email,
+            limit: 1,
+          });
+
+          if (customers.data.length > 0) {
+            stripeCustomerId = customers.data[0].id;
+            console.log('[Invoices] Customer Stripe trouvé via email:', stripeCustomerId);
+
+            // Mettre à jour la subscription avec le vrai customer ID
+            await prisma.subscription.update({
+              where: { userId },
+              data: { stripeCustomerId },
+            });
+          }
+        } catch (error) {
+          console.error('[Invoices] Erreur lors de la recherche par email:', error);
+        }
+      }
+    }
+
+    // Fallback 3 : Chercher dans la table User (pour les utilisateurs qui ont acheté des crédits mais n'ont jamais eu d'abonnement)
+    if (!stripeCustomerId || stripeCustomerId.startsWith('local_')) {
+      console.log('[Invoices] Tentative de récupération depuis table User');
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { stripeCustomerId: true },
+      });
+
+      if (user?.stripeCustomerId && !user.stripeCustomerId.startsWith('local_')) {
+        stripeCustomerId = user.stripeCustomerId;
+        console.log('[Invoices] Customer Stripe trouvé dans User:', stripeCustomerId);
+
+        // Mettre à jour la subscription pour la prochaine fois (s'il y a une subscription)
+        const existingSub = await prisma.subscription.findUnique({
+          where: { userId },
+          select: { id: true },
+        });
+
+        if (existingSub) {
+          await prisma.subscription.update({
+            where: { userId },
+            data: { stripeCustomerId },
+          });
+          console.log('[Invoices] Subscription mise à jour avec customer Stripe');
+        }
+      }
+    }
+
     // Si toujours pas de customer Stripe valide, retourner tableau vide
     if (!stripeCustomerId || stripeCustomerId.startsWith('local_')) {
       console.log('[Invoices] Aucun customer Stripe valide trouvé');
@@ -117,9 +179,21 @@ export async function GET(request) {
       };
     });
 
+    // Créer un Set des PaymentIntent IDs qui ont déjà une Invoice associée
+    const paymentIntentsWithInvoice = new Set(
+      invoices.data
+        .filter(inv => inv.metadata?.paymentIntentId)
+        .map(inv => inv.metadata.paymentIntentId)
+    );
+
     // Formater les PaymentIntents (packs de crédits)
+    // Filtrer pour ne garder QUE les achats de crédits et exclure ceux qui ont déjà une Invoice
     const formattedPayments = paymentIntents.data
-      .filter(pi => pi.status === 'succeeded') // Ne garder que les paiements réussis
+      .filter(pi =>
+        pi.status === 'succeeded' && // Ne garder que les paiements réussis
+        pi.metadata?.type === 'credit_purchase' && // Ne garder que les achats de crédits
+        !paymentIntentsWithInvoice.has(pi.id) // Exclure ceux qui ont déjà une Invoice
+      )
       .map(pi => ({
         id: pi.id,
         date: new Date(pi.created * 1000).toISOString(),
