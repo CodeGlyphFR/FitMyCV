@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Crown, Calendar, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { Crown, Calendar, CheckCircle, XCircle, AlertTriangle, Loader2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import { isFreePlan, getPlanIcon, getYearlyDiscount } from "@/lib/subscription/planUtils";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -61,6 +61,9 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
   const [isReactivating, setIsReactivating] = React.useState(false);
   const [showYearlyWarningModal, setShowYearlyWarningModal] = React.useState(false);
   const [isSwitchingPeriod, setIsSwitchingPeriod] = React.useState(false);
+  const [acceptedYearlyTerms, setAcceptedYearlyTerms] = React.useState(false);
+  const [yearlyUpgradePreview, setYearlyUpgradePreview] = React.useState(null);
+  const [loadingYearlyPreview, setLoadingYearlyPreview] = React.useState(false);
 
   const handleCancelClick = () => {
     setShowCancelModal(true);
@@ -109,10 +112,33 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
     }
   };
 
-  const handleSwitchBillingPeriodClick = (newPeriod) => {
+  const handleSwitchBillingPeriodClick = async (newPeriod) => {
     // Si passage de mensuel à annuel, afficher le modal d'avertissement
     if (subscription.billingPeriod === 'monthly' && newPeriod === 'yearly') {
+      setAcceptedYearlyTerms(false); // Reset checkbox
+      setLoadingYearlyPreview(true);
       setShowYearlyWarningModal(true);
+
+      // Appeler l'API pour calculer le prorata
+      try {
+        const res = await fetch('/api/subscription/preview-upgrade', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            planId: plan.id,
+            billingPeriod: 'yearly'
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setYearlyUpgradePreview(data);
+        }
+      } catch (error) {
+        console.error('Erreur preview:', error);
+      } finally {
+        setLoadingYearlyPreview(false);
+      }
     } else {
       // Ne devrait jamais arriver (annuel → mensuel est bloqué)
       alert('Impossible de revenir au paiement mensuel. Veuillez annuler votre abonnement si nécessaire.');
@@ -120,6 +146,12 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
   };
 
   const handleConfirmSwitchToYearly = async () => {
+    // Vérifier que les CGV sont acceptées
+    if (!acceptedYearlyTerms) {
+      alert(t('subscription.currentPlan.yearlyWarningModal.termsRequired', 'Vous devez accepter les CGV'));
+      return;
+    }
+
     setIsSwitchingPeriod(true);
     try {
       const response = await fetch('/api/checkout/subscription', {
@@ -136,10 +168,17 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
         throw new Error(data.error || 'Erreur lors du changement de période');
       }
 
-      const { url, updated } = await response.json();
+      const data = await response.json();
 
-      // Rediriger vers la page appropriée
-      window.location.href = url;
+      // Si upgrade réussi (pas d'URL Stripe), recharger la page
+      if (data.success || data.upgraded) {
+        window.location.reload();
+      } else if (data.url) {
+        // Sinon redirection vers Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error('Réponse invalide du serveur');
+      }
     } catch (error) {
       console.error('Erreur changement période:', error);
       alert(error.message);
@@ -230,6 +269,36 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
                 className="w-full px-3 py-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 hover:border-blue-500/50 text-blue-300 hover:text-blue-200 text-xs font-medium transition-all"
               >
                 🎁 {t('subscription.currentPlan.switchToYearly', { price: plan.priceYearly, discount: yearlyDiscount })}
+              </button>
+            </div>
+          )}
+
+          {/* Bouton Gérer ma carte bancaire */}
+          {!subscription.cancelAtPeriodEnd && (
+            <div className="mt-3">
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch('/api/subscription/billing-portal', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                    });
+
+                    if (!response.ok) {
+                      const data = await response.json();
+                      throw new Error(data.error || 'Erreur lors de l\'ouverture du portail');
+                    }
+
+                    const { url } = await response.json();
+                    window.location.href = url;
+                  } catch (error) {
+                    console.error('Erreur Billing Portal:', error);
+                    alert(error.message);
+                  }
+                }}
+                className="w-full px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/30 text-white text-xs font-medium transition-all"
+              >
+                💳 Gérer ma carte bancaire
               </button>
             </div>
           )}
@@ -370,6 +439,63 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
         disableBackdropClick={isSwitchingPeriod}
       >
         <div className="space-y-4">
+          {/* Montant du prorata */}
+          {loadingYearlyPreview ? (
+            <div className="bg-white/5 border border-white/10 rounded-lg p-4 text-center">
+              <Loader2 className="animate-spin mx-auto mb-2" size={24} />
+              <p className="text-white/60 text-sm">
+                {t('subscription.comparison.upgradeModal.calculatingProrata', 'Calcul du prorata...')}
+              </p>
+            </div>
+          ) : yearlyUpgradePreview && (
+            <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-400/30 rounded-lg p-4 space-y-3">
+              {/* Si customer balance existe, afficher le détail */}
+              {yearlyUpgradePreview.customerBalance && yearlyUpgradePreview.customerBalance < 0 ? (
+                <>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-white/70">Montant du prorata</span>
+                    <span className="text-white">
+                      {yearlyUpgradePreview.prorataAmountBeforeBalance.toFixed(2)} €
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-emerald-400">Solde créditeur</span>
+                    <span className="text-emerald-400">
+                      {yearlyUpgradePreview.customerBalance.toFixed(2)} €
+                    </span>
+                  </div>
+                  <div className="border-t border-white/20 pt-3">
+                    <div className="text-center">
+                      <p className="text-white/70 text-sm mb-1 font-medium">
+                        {t('subscription.comparison.upgradeModal.prorataAmount', 'Montant à payer')}
+                      </p>
+                      <p className="text-3xl font-bold text-white">
+                        {yearlyUpgradePreview.prorataAmount.toFixed(2)} €
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-white/60 text-xs text-center">
+                    {t('subscription.comparison.upgradeModal.prorataInfo', 'Montant calculé pour la période restante (prorata automatique)')}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="text-center">
+                    <p className="text-white/70 text-sm mb-1">
+                      {t('subscription.comparison.upgradeModal.prorataAmount', 'Montant à payer')}
+                    </p>
+                    <p className="text-3xl font-bold text-white">
+                      {yearlyUpgradePreview.prorataAmount.toFixed(2)} €
+                    </p>
+                    <p className="text-white/60 text-xs mt-1">
+                      {t('subscription.comparison.upgradeModal.prorataInfo', 'Montant calculé pour la période restante (prorata automatique)')}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
           <p className="text-white/90 font-medium">
             {t('subscription.currentPlan.yearlyWarningModal.warningTitle')}
           </p>
@@ -391,6 +517,31 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
               <span>{t('subscription.currentPlan.yearlyWarningModal.prorataInfo')}</span>
             </li>
           </ul>
+
+          {/* Checkbox CGV */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={acceptedYearlyTerms}
+                onChange={(e) => setAcceptedYearlyTerms(e.target.checked)}
+                className="mt-1 w-4 h-4 rounded border-white/20 bg-white/10 text-blue-500 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
+              />
+              <span className="text-sm text-white/80 group-hover:text-white transition-colors">
+                {t('subscription.currentPlan.yearlyWarningModal.termsLabel', 'J\'accepte les')}{' '}
+                <a
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {t('subscription.currentPlan.yearlyWarningModal.termsLink', 'Conditions Générales de Vente')}
+                </a>
+              </span>
+            </label>
+          </div>
+
           <div className="flex gap-3 pt-4">
             <button
               onClick={() => setShowYearlyWarningModal(false)}
@@ -401,10 +552,10 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
             </button>
             <button
               onClick={handleConfirmSwitchToYearly}
-              disabled={isSwitchingPeriod}
+              disabled={isSwitchingPeriod || !acceptedYearlyTerms}
               className="flex-1 px-4 py-2.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors disabled:opacity-50 font-medium"
             >
-              {isSwitchingPeriod ? t('subscription.currentPlan.yearlyWarningModal.switching') : t('subscription.currentPlan.yearlyWarningModal.confirmButton')}
+              {isSwitchingPeriod ? t('subscription.currentPlan.yearlyWarningModal.switching', 'Traitement...') : t('subscription.currentPlan.yearlyWarningModal.confirm', 'Confirmer')}
             </button>
           </div>
         </div>

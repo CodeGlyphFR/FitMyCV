@@ -94,27 +94,105 @@ PromoCode              - Codes promotionnels
 - CV bloqués = `blocked: true` (invisibles mais sauvegardés)
 - Suggérer en priorité les CV créés avec crédits
 
-#### Changement de période de facturation
+#### Logique de détection upgrade/downgrade
 
-**Restrictions importantes** :
+**UPGRADE** si :
+- Tier supérieur (peu importe la période de facturation)
+- **OU** même tier ET mensuel → annuel
 
-✅ **Mensuel → Annuel** : Autorisé avec avertissement
-- Modal d'avertissement obligatoire expliquant l'irréversibilité
-- Utilisateur doit confirmer explicitement
-- Calcul prorata automatique pour la période restante
-- Économies affichées clairement
+**DOWNGRADE** si :
+- Tier inférieur (peu importe la période de facturation)
+- **OU** même tier ET annuel → mensuel
 
-❌ **Annuel → Mensuel** : **BLOQUÉ**
-- Interface affiche message informatif : "Pour revenir au paiement mensuel, veuillez annuler votre abonnement annuel"
-- Validation côté serveur retourne erreur 400
-- Seule option : annuler l'abonnement (effet en fin de période)
-- Prévient les pertes de revenus dues aux changements fréquents
+**Création d'abonnement** (checkout Stripe) si :
+- Pas d'abonnement Stripe actif (utilisateur sur plan Gratuit local)
 
-**Raisons du blocage annuel → mensuel** :
-- Évite que les utilisateurs abusent de la réduction annuelle
-- Protège le modèle économique
-- Force l'engagement annuel une fois choisi
-- Utilisateur averti **avant** le passage en annuel
+**Comportements** :
+- **Upgrades** : Prorata ✅ | Date d'effet : Immédiate | Billing cycle anchor : now
+- **Downgrades** : Prorata ❌ | Date d'effet : Fin de période actuelle | Schedule update
+
+#### Tableau exhaustif des cas
+
+| Depuis | Vers | Type | Prorata | Date d'effet | Avertissement modal |
+|--------|------|------|---------|--------------|---------------------|
+| **Depuis Gratuit (création abonnement)** |
+| Gratuit | Pro mensuel | Création | N/A | Immédiate | Checkout Stripe avec CGV |
+| Gratuit | Pro annuel | Création | N/A | Immédiate | Checkout Stripe avec CGV |
+| Gratuit | Premium mensuel | Création | N/A | Immédiate | Checkout Stripe avec CGV |
+| Gratuit | Premium annuel | Création | N/A | Immédiate | Checkout Stripe avec CGV |
+| Gratuit | Business mensuel | Création | N/A | Immédiate | Checkout Stripe avec CGV |
+| Gratuit | Business annuel | Création | N/A | Immédiate | Checkout Stripe avec CGV |
+| **Depuis Pro mensuel** |
+| Pro mensuel | Pro annuel | **Upgrade** | ✅ Oui | Immédiate | ⚠️ Engagement annuel irréversible |
+| Pro mensuel | Premium mensuel | **Upgrade** | ✅ Oui | Immédiate | Montant prorata à payer immédiatement |
+| Pro mensuel | Premium annuel | **Upgrade** | ✅ Oui | Immédiate | ⚠️ Engagement annuel irréversible |
+| Pro mensuel | Business mensuel | **Upgrade** | ✅ Oui | Immédiate | Montant prorata à payer immédiatement |
+| Pro mensuel | Business annuel | **Upgrade** | ✅ Oui | Immédiate | ⚠️ Engagement annuel irréversible |
+| Pro mensuel | Gratuit | **Downgrade** | ❌ Non | Fin de période | Date d'effet + sélection CV à conserver |
+| **Depuis Pro annuel** |
+| Pro annuel | Pro mensuel | **Downgrade** | ❌ Non | Fin de période | Date d'effet + passage mensuel après période annuelle |
+| Pro annuel | Premium mensuel | **Upgrade** ✨ | ✅ Oui | Immédiate | ✨ **X mois offerts** grâce au crédit annuel restant |
+| Pro annuel | Premium annuel | **Upgrade** | ✅ Oui | Immédiate | ℹ️ Vous resterez en facturation annuelle jusqu'au [date] |
+| Pro annuel | Business mensuel | **Upgrade** ✨ | ✅ Oui | Immédiate | ✨ **X mois offerts** grâce au crédit annuel restant |
+| Pro annuel | Business annuel | **Upgrade** | ✅ Oui | Immédiate | ℹ️ Vous resterez en facturation annuelle jusqu'au [date] |
+| Pro annuel | Gratuit | **Downgrade** | ❌ Non | Fin de période | Date d'effet + sélection CV à conserver |
+| **Depuis Premium mensuel** |
+| Premium mensuel | Pro mensuel | **Downgrade** | ❌ Non | Fin de période | Date d'effet + sélection CV à conserver |
+| Premium mensuel | Pro annuel | **Downgrade** | ❌ Non | Fin de période | Date d'effet + passage annuel après période mensuelle |
+| Premium mensuel | Premium annuel | **Upgrade** | ✅ Oui | Immédiate | ⚠️ Engagement annuel irréversible |
+| Premium mensuel | Business mensuel | **Upgrade** | ✅ Oui | Immédiate | Montant prorata à payer immédiatement |
+| Premium mensuel | Business annuel | **Upgrade** | ✅ Oui | Immédiate | ⚠️ Engagement annuel irréversible |
+| Premium mensuel | Gratuit | **Downgrade** | ❌ Non | Fin de période | Date d'effet + sélection CV à conserver |
+| **Depuis Premium annuel** |
+| Premium annuel | Pro mensuel | **Downgrade** | ❌ Non | Fin de période | Date d'effet + passage mensuel après période annuelle |
+| Premium annuel | Pro annuel | **Downgrade** | ❌ Non | Fin de période | Date d'effet + maintien facturation annuelle |
+| Premium annuel | Premium mensuel | **Downgrade** | ❌ Non | Fin de période | Date d'effet + passage mensuel après période annuelle |
+| Premium annuel | Business mensuel | **Upgrade** ✨ | ✅ Oui | Immédiate | ✨ **X mois offerts** grâce au crédit annuel restant |
+| Premium annuel | Business annuel | **Upgrade** | ✅ Oui | Immédiate | ℹ️ Vous resterez en facturation annuelle jusqu'au [date] |
+| Premium annuel | Gratuit | **Downgrade** | ❌ Non | Fin de période | Date d'effet + sélection CV à conserver |
+| **Depuis Business mensuel** |
+| Business mensuel | Pro mensuel | **Downgrade** | ❌ Non | Fin de période | Date d'effet + sélection CV à conserver |
+| Business mensuel | Pro annuel | **Downgrade** | ❌ Non | Fin de période | Date d'effet + passage annuel après période mensuelle |
+| Business mensuel | Premium mensuel | **Downgrade** | ❌ Non | Fin de période | Date d'effet + sélection CV à conserver |
+| Business mensuel | Premium annuel | **Downgrade** | ❌ Non | Fin de période | Date d'effet + passage annuel après période mensuelle |
+| Business mensuel | Business annuel | **Upgrade** | ✅ Oui | Immédiate | ⚠️ Engagement annuel irréversible |
+| Business mensuel | Gratuit | **Downgrade** | ❌ Non | Fin de période | Date d'effet + sélection CV à conserver |
+| **Depuis Business annuel** |
+| Business annuel | Pro mensuel | **Downgrade** | ❌ Non | Fin de période | Date d'effet + passage mensuel après période annuelle |
+| Business annuel | Pro annuel | **Downgrade** | ❌ Non | Fin de période | Date d'effet + maintien facturation annuelle |
+| Business annuel | Premium mensuel | **Downgrade** | ❌ Non | Fin de période | Date d'effet + passage mensuel après période annuelle |
+| Business annuel | Premium annuel | **Downgrade** | ❌ Non | Fin de période | Date d'effet + maintien facturation annuelle |
+| Business annuel | Business mensuel | **Downgrade** | ❌ Non | Fin de période | Date d'effet + passage mensuel après période annuelle |
+| Business annuel | Gratuit | **Downgrade** | ❌ Non | Fin de période | Date d'effet + sélection CV à conserver |
+
+**Légende** :
+- ✨ **Upgrade avec crédit** : Passage d'un tier supérieur avec annuel → mensuel applique le crédit de la période annuelle restante
+- ⚠️ **Engagement annuel** : Mensuel → annuel ne peut plus revenir en mensuel (sauf downgrade de tier en fin de période)
+- ℹ️ **Maintien annuel** : Upgrade tier en restant annuel, l'utilisateur reste engagé jusqu'à la fin de sa période
+
+#### Solde créditeur Stripe (Customer Balance)
+
+Le calcul du prorata **prend en compte automatiquement** le solde créditeur du customer Stripe :
+
+**Exemple** :
+```
+User balance: -69.99€ (crédit)
+Prorata calculé: 120.00€
+Montant final à payer: 120.00 + (-69.99) = 50.01€
+```
+
+**Affichage dans le modal** :
+```
+Montant du prorata:     120.00€
+Solde créditeur:        -69.99€
+─────────────────────────────
+Montant à payer:         50.01€
+```
+
+**Implémentation** :
+- Route `/api/subscription/preview-upgrade` récupère `customer.balance` via Stripe
+- Calcul : `finalAmount = Math.max(0, prorataAmount + customerBalance)`
+- Affichage conditionnel si `customerBalance < 0`
 
 #### Échec de paiement
 - **Pas de période de grâce**

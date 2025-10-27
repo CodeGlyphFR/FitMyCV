@@ -82,66 +82,104 @@ export async function POST(request) {
         const currentInterval = stripeSubscription.items.data[0]?.price?.recurring?.interval;
         const currentBillingPeriod = currentInterval === 'year' ? 'yearly' : 'monthly';
 
-        // BLOQUER le passage de annuel → mensuel
-        if (currentBillingPeriod === 'yearly' && billingPeriod === 'monthly') {
-          return NextResponse.json(
-            { error: 'Impossible de passer d\'un abonnement annuel à mensuel. Pour revenir au paiement mensuel, veuillez annuler votre abonnement annuel. L\'annulation prendra effet à la fin de votre période annuelle.' },
-            { status: 400 }
+        // Récupérer le plan actuel depuis la DB pour comparer les tiers
+        const currentDbSubscription = await prisma.subscription.findUnique({
+          where: { userId },
+          include: { plan: true },
+        });
+
+        const currentTier = currentDbSubscription?.plan?.tier || 0;
+        const newTier = plan.tier;
+
+        // Déterminer si c'est un upgrade ou downgrade
+        // UPGRADE si : tier supérieur (peu importe période) OU (même tier ET mensuel → annuel)
+        const isUpgrade = (
+          newTier > currentTier ||
+          (newTier === currentTier && currentBillingPeriod === 'monthly' && billingPeriod === 'yearly')
+        );
+
+        // DOWNGRADE si : tier inférieur (peu importe période) OU (même tier ET annuel → mensuel)
+        const isDowngrade = (
+          newTier < currentTier ||
+          (newTier === currentTier && currentBillingPeriod === 'yearly' && billingPeriod === 'monthly')
+        );
+
+        console.log(`[Checkout Subscription] Changement: tier ${currentTier} → ${newTier}, ${currentBillingPeriod} → ${billingPeriod}, isUpgrade=${isUpgrade}, isDowngrade=${isDowngrade}`);
+
+        // Pour UPGRADES : Modifier l'abonnement directement (prorata automatique)
+        if (isUpgrade) {
+          console.log(`[Checkout Subscription] Upgrade détecté, modification directe de l'abonnement avec prorata`);
+
+          // Import de la fonction changeSubscription
+          const { changeSubscription } = await import('@/lib/subscription/subscriptions');
+
+          // Modifier l'abonnement Stripe (prorata automatique)
+          const updatedSubscription = await stripe.subscriptions.update(
+            existingSubscription.stripeSubscriptionId,
+            {
+              items: [{
+                id: stripeSubscription.items.data[0].id,
+                price: stripePriceId,
+              }],
+              proration_behavior: 'create_prorations', // Prorata automatique
+              billing_cycle_anchor: 'now', // Nouveau cycle immédiatement
+              metadata: {
+                userId,
+                planId: planId.toString(),
+              },
+            }
           );
-        }
 
-        // Mettre à jour avec le nouveau prix
-        const updatedSubscription = await stripe.subscriptions.update(existingSubscription.stripeSubscriptionId, {
-          items: [{
-            id: stripeSubscription.items.data[0].id,
-            price: stripePriceId,
-          }],
-          proration_behavior: 'create_prorations', // Calcul prorata automatique
-          metadata: {
-            userId,
-            planId: planId.toString(),
-          },
-        });
-
-        console.log(`[Checkout Subscription] Abonnement mis à jour pour user ${userId}: ${existingSubscription.stripeSubscriptionId}`);
-
-        // Mettre à jour immédiatement la base de données
-        // Déterminer le planId depuis le stripePriceId (même logique que le webhook)
-        const interval = updatedSubscription.items.data[0]?.price?.recurring?.interval;
-        const newBillingPeriod = interval === 'year' ? 'yearly' : 'monthly';
-        const newStripePriceId = updatedSubscription.items.data[0]?.price?.id;
-
-        // Trouver le plan correspondant au stripePriceId
-        const priceField = newBillingPeriod === 'yearly' ? 'stripePriceIdYearly' : 'stripePriceIdMonthly';
-        const newPlan = await prisma.subscriptionPlan.findFirst({
-          where: { [priceField]: newStripePriceId }
-        });
-
-        if (newPlan) {
           // Mettre à jour la DB immédiatement
-          await prisma.subscription.update({
-            where: { userId },
-            data: {
-              planId: newPlan.id,
-              stripePriceId: newStripePriceId,
-              billingPeriod: newBillingPeriod,
-              status: updatedSubscription.status,
-              currentPeriodStart: new Date(updatedSubscription.current_period_start * 1000),
-              currentPeriodEnd: new Date(updatedSubscription.current_period_end * 1000),
-            },
-          });
+          await changeSubscription(userId, planId, billingPeriod);
 
-          console.log(`[Checkout Subscription] DB mise à jour immédiatement : plan ${newPlan.name}, période ${newBillingPeriod}`);
-        } else {
-          console.error('[Checkout Subscription] Plan introuvable pour stripePriceId:', newStripePriceId);
+          console.log(`[Checkout Subscription] Upgrade effectué avec prorata, nouvel abonnement : ${updatedSubscription.id}`);
+
+          return NextResponse.json({
+            success: true,
+            upgraded: true,
+            subscriptionId: updatedSubscription.id,
+            message: 'Abonnement upgradé avec succès',
+          });
         }
 
-        // Rediriger l'utilisateur vers la page de succès
-        return NextResponse.json({
-          updated: true,
-          subscriptionId: updatedSubscription.id,
-          url: `${process.env.NEXT_PUBLIC_SITE_URL}/account/subscriptions?success=true&updated=true`,
-        });
+        // Pour DOWNGRADES : Modifier l'abonnement directement (sans prorata, effectif au prochain cycle)
+        if (isDowngrade) {
+          const updateParams = {
+            items: [{
+              id: stripeSubscription.items.data[0].id,
+              price: stripePriceId,
+            }],
+            proration_behavior: 'none',
+            metadata: {
+              userId,
+              planId: planId.toString(),
+            },
+          };
+
+          const updatedSubscription = await stripe.subscriptions.update(
+            existingSubscription.stripeSubscriptionId,
+            updateParams
+          );
+
+          console.log(`[Checkout Subscription] Downgrade : changement effectif le ${new Date(updatedSubscription.current_period_end * 1000).toLocaleDateString('fr-FR')}`);
+
+          return NextResponse.json({
+            success: true,
+            scheduled: true,
+            downgrade: true,
+            effectiveDate: new Date(updatedSubscription.current_period_end * 1000).toISOString(),
+            subscriptionId: updatedSubscription.id,
+            message: `Downgrade programmé pour le ${new Date(updatedSubscription.current_period_end * 1000).toLocaleDateString('fr-FR')}`,
+          });
+        }
+
+        // Si ni upgrade ni downgrade (changement de plan au même tier), ne devrait pas arriver
+        console.error('[Checkout Subscription] Cas non géré: ni upgrade ni downgrade');
+        return NextResponse.json(
+          { error: 'Changement de plan non supporté' },
+          { status: 400 }
+        );
       } catch (error) {
         console.error('[Checkout Subscription] Erreur mise à jour abonnement:', error);
         return NextResponse.json(
@@ -183,7 +221,16 @@ export async function POST(request) {
       customer: stripeCustomerId,
       mode: 'subscription',
       billing_address_collection: 'required',
+      allow_promotion_codes: true, // Permettre les codes promo
       payment_method_types: ['card'],
+      consent_collection: {
+        terms_of_service: 'required', // Acceptation obligatoire des CGV
+      },
+      custom_text: {
+        terms_of_service_acceptance: {
+          message: `J'accepte les [Conditions Générales de Vente](${process.env.NEXT_PUBLIC_SITE_URL}/terms).`,
+        },
+      },
       line_items: [
         {
           price: stripePriceId,

@@ -685,9 +685,13 @@
         "savingsInfo": "Vous économisez {discount}% par rapport au paiement mensuel ({yearlyPrice}€/an au lieu de {monthlyTotal}€/an)",
         "cancellationInfo": "Si vous souhaitez annuler plus tard, l'annulation prendra effet à la fin de votre période annuelle",
         "prorataInfo": "Vous serez facturé dès maintenant au prorata pour la période restante",
+        "termsLabel": "J'accepte les",
+        "termsLink": "Conditions Générales de Vente",
+        "termsRequired": "Vous devez accepter les CGV",
         "cancelButton": "Annuler",
+        "confirm": "Confirmer",
         "confirmButton": "Confirmer le passage en annuel",
-        "switching": "Changement..."
+        "switching": "Traitement..."
       }
     },
     "comparison": {
@@ -700,6 +704,7 @@
         "free": "Gratuit",
         "forever": "Pour toujours",
         "perMonth": "par mois",
+        "perYear": "par an",
         "saveYearly": "💰 Économisez {percent}% en annuel"
       },
       "features": {
@@ -722,17 +727,51 @@
       "errors": {
         "checkoutError": "Erreur lors de la création de la session de paiement",
         "changePlanError": "Erreur lors du changement de plan",
-        "cancelError": "Erreur lors de l'annulation"
+        "cancelError": "Erreur lors de l'annulation",
+        "previewError": "Erreur lors du calcul du prorata"
       },
-      "downgradeModal": {
-        "title": "Downgrade vers le plan Gratuit ?",
-        "description": "Si vous passez au plan Gratuit :",
+      "downgradeToFreeModal": {
+        "title": "Passer au plan Gratuit",
+        "description": "Vous êtes sur le point d'annuler votre abonnement.",
         "keepAccessUntil": "Vous conserverez l'accès à votre plan actuel jusqu'au <strong>{date}</strong>",
         "switchToFree": "Vous passerez automatiquement au <strong>plan Gratuit</strong> à cette date",
-        "canUpgrade": "Vous pourrez upgrader à tout moment",
+        "canUpgrade": "Vous pourrez upgrader à nouveau à tout moment",
         "cancel": "Annuler",
-        "confirm": "Confirmer",
+        "confirm": "Confirmer le downgrade",
         "scheduling": "Programmation..."
+      },
+      "downgradePaidModal": {
+        "title": "Confirmer le downgrade",
+        "description": "Votre abonnement sera modifié à la fin de votre période en cours.",
+        "effectiveDate": "Date d'effet",
+        "keepCurrentPlan": "Vous conservez votre plan actuel jusqu'à la fin de votre période",
+        "noRefund": "Aucun remboursement ne sera effectué",
+        "newInvoice": "Une nouvelle facture sera émise à la date d'effet",
+        "canCancel": "Vous pouvez annuler ce changement à tout moment avant la date d'effet",
+        "termsLabel": "J'accepte les",
+        "termsLink": "Conditions Générales de Vente",
+        "termsRequired": "Vous devez accepter les CGV",
+        "cancel": "Annuler",
+        "confirm": "Confirmer le downgrade",
+        "scheduling": "Programmation..."
+      },
+      "upgradeModal": {
+        "title": "Confirmer l'upgrade",
+        "calculatingProrata": "Calcul du prorata...",
+        "prorataAmount": "Montant à payer",
+        "prorataInfo": "Montant calculé pour la période restante (prorata automatique)",
+        "immediate": "Votre nouveau plan sera activé immédiatement",
+        "invoiceInfo": "La facture sera disponible dans l'onglet Historique",
+        "secure": "Paiement 100% sécurisé via Stripe",
+        "yearlyWarning": "Une fois passé en facturation annuelle, vous ne pourrez plus revenir au paiement mensuel",
+        "stayYearly": "Vous resterez en facturation annuelle jusqu'au {date}",
+        "creditApplied": "{months} mois offerts grâce à votre crédit",
+        "termsLabel": "J'accepte les",
+        "termsLink": "Conditions Générales de Vente",
+        "termsRequired": "Vous devez accepter les CGV",
+        "cancel": "Annuler",
+        "confirm": "Confirmer l'upgrade",
+        "processing": "Traitement..."
       }
     },
     "features": {
