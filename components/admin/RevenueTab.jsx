@@ -16,7 +16,10 @@ export function RevenueTab({ refreshKey }) {
 
   async function fetchData() {
     try {
-      setLoading(true);
+      // Only show loader if no data yet (initial load)
+      if (!data) {
+        setLoading(true);
+      }
       setError(null);
 
       const response = await fetch('/api/admin/revenue');
