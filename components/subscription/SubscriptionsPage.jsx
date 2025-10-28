@@ -315,14 +315,14 @@ export default function SubscriptionsPage({ user }) {
                 cvStats={subscriptionData.cvStats}
                 onCancelSubscription={handleCancelSubscription}
               />
-              <FeatureCountersCard
-                featureCounters={subscriptionData.featureCounters}
-                plan={subscriptionData.subscription?.plan}
-              />
               <PlanComparisonCards
                 currentPlan={subscriptionData.subscription?.plan}
                 subscription={subscriptionData.subscription}
                 onUpgradeSuccess={refreshData}
+              />
+              <FeatureCountersCard
+                featureCounters={subscriptionData.featureCounters}
+                plan={subscriptionData.subscription?.plan}
               />
             </div>
           )}

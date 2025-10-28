@@ -5,6 +5,7 @@ import { KPICard } from './KPICard';
 import { CustomSelect } from './CustomSelect';
 import { Toast } from './Toast';
 import { ConfirmDialog } from './ConfirmDialog';
+import { getPlanColor } from '@/lib/admin/planColors';
 
 export function UsersTab({ refreshKey }) {
   const [data, setData] = useState(null);
@@ -452,6 +453,30 @@ export function UsersTab({ refreshKey }) {
     );
   };
 
+  const getPlanBadge = (subscription) => {
+    if (!subscription?.plan) {
+      return <span className="px-2 py-0.5 text-xs rounded bg-gray-500/20 text-gray-300">🆓 Gratuit</span>;
+    }
+
+    const style = getPlanColor(subscription.plan.tier);
+
+    return (
+      <span className={`px-2 py-0.5 text-xs rounded ${style.bg} ${style.text}`}>
+        {style.icon} {subscription.plan.name}
+      </span>
+    );
+  };
+
+  const getBillingPeriodBadge = (subscription) => {
+    if (!subscription?.billingPeriod) return null;
+
+    return (
+      <span className="px-2 py-0.5 text-xs rounded bg-emerald-500/20 text-emerald-400">
+        {subscription.billingPeriod === 'monthly' ? '📅 Mensuel' : '📅 Annuel'}
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-6 pb-8">
       {/* KPI Cards avec tooltips */}
@@ -606,6 +631,17 @@ export function UsersTab({ refreshKey }) {
                         {getRoleBadge(user.role)}
                         {getOAuthBadge(user.oauthProviders)}
                         {getEmailStatusBadge(user.emailVerified)}
+                      </div>
+
+                      {/* Abonnement et crédits */}
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        {getPlanBadge(user.subscription)}
+                        {getBillingPeriodBadge(user.subscription)}
+                        {user.credits > 0 && (
+                          <span className="px-2 py-0.5 text-xs rounded bg-yellow-500/20 text-yellow-400">
+                            💎 {user.credits} crédit{user.credits > 1 ? 's' : ''}
+                          </span>
+                        )}
                       </div>
 
                       <div className="text-white/60 text-sm truncate mb-1">

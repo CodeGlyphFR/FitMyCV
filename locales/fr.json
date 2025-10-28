@@ -716,9 +716,12 @@
       "buttons": {
         "currentPlan": "Plan actuel",
         "downgradeScheduled": "Downgrade déjà programmé",
+        "upgrade": "Upgrade",
+        "downgrade": "Downgrade",
         "upgradeTo": "Passer à {planName}",
         "downgradeTo": "Revenir à {planName}",
         "monthly": "Mensuel",
+        "yearly": "Annuel",
         "orYearly": "ou Annuel",
         "scheduling": "Programmation...",
         "redirecting": "Redirection..."
@@ -737,7 +740,7 @@
         "switchToFree": "Vous passerez automatiquement au <strong>plan Gratuit</strong> à cette date",
         "canUpgrade": "Vous pourrez upgrader à nouveau à tout moment",
         "cancel": "Annuler",
-        "confirm": "Confirmer le downgrade",
+        "confirm": "Confirmer",
         "scheduling": "Programmation..."
       },
       "downgradePaidModal": {
@@ -752,7 +755,7 @@
         "termsLink": "Conditions Générales de Vente",
         "termsRequired": "Vous devez accepter les CGV",
         "cancel": "Annuler",
-        "confirm": "Confirmer le downgrade",
+        "confirm": "Confirmer",
         "scheduling": "Programmation..."
       },
       "upgradeModal": {
@@ -770,7 +773,7 @@
         "termsLink": "Conditions Générales de Vente",
         "termsRequired": "Vous devez accepter les CGV",
         "cancel": "Annuler",
-        "confirm": "Confirmer l'upgrade",
+        "confirm": "Confirmer",
         "processing": "Traitement..."
       }
     },

@@ -79,6 +79,27 @@ export async function GET(request) {
               provider: true,
             },
           },
+          subscription: {
+            select: {
+              id: true,
+              status: true,
+              billingPeriod: true,
+              plan: {
+                select: {
+                  id: true,
+                  name: true,
+                  tier: true,
+                  priceMonthly: true,
+                  priceYearly: true,
+                },
+              },
+            },
+          },
+          creditBalance: {
+            select: {
+              balance: true,
+            },
+          },
         },
       }),
 
@@ -142,6 +163,8 @@ export async function GET(request) {
       lastActivity: activityMap.get(user.id) || user.createdAt,
       oauthProviders: user.accounts.map(a => a.provider),
       hasOAuth: user.accounts.length > 0,
+      subscription: user.subscription,
+      credits: user.creditBalance?.balance || 0,
     }));
 
     return NextResponse.json({

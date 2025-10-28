@@ -57,6 +57,30 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
     );
   };
 
+  // Helper pour déterminer les couleurs des boutons selon période et type d'action
+  const getButtonStyles = (billingPeriod, isUpgrade, isDowngrade, isFreeplan) => {
+    const isMensuel = billingPeriod === 'monthly';
+
+    if (isUpgrade) {
+      return isMensuel
+        ? 'bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white shadow-lg shadow-blue-500/20'
+        : 'bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white shadow-lg shadow-purple-500/20';
+    }
+
+    if (isDowngrade) {
+      return isMensuel
+        ? 'bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white shadow-lg shadow-blue-400/20'
+        : 'bg-gradient-to-r from-purple-400 to-pink-500 hover:from-purple-500 hover:to-pink-600 text-white shadow-lg shadow-purple-400/20';
+    }
+
+    // Création (ni upgrade ni downgrade)
+    if (isFreeplan) return 'bg-white hover:bg-white/90 text-gray-900';
+
+    return isMensuel
+      ? 'bg-blue-500 hover:bg-blue-600 text-white'
+      : 'bg-purple-500 hover:bg-purple-600 text-white';
+  };
+
   const handlePlanChange = async (planId, billingPeriod) => {
     try {
       // Trouver le plan sélectionné
@@ -318,8 +342,33 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
           const Icon = planTier === 2 ? Crown : planTier === 1 ? Zap : Target;
 
           const isCurrentPlan = currentPlan?.id === plan.id;
-          const isDowngrade = currentTier > planTier;
-          const isUpgrade = currentTier < planTier;
+
+          // Vérifier si l'utilisateur a un abonnement Stripe actif
+          const hasActiveStripeSubscription = subscription?.stripeSubscriptionId && subscription?.status === 'active';
+
+          // Calculer isUpgrade/isDowngrade séparément pour mensuel et annuel
+          // UPGRADE si : tier supérieur (peu importe période) OU (même tier ET mensuel → annuel)
+          const isUpgradeMonthly = hasActiveStripeSubscription && (
+            planTier > currentTier ||
+            (planTier === currentTier && currentBillingPeriod === 'monthly' && 'monthly' === 'yearly')
+          );
+          const isUpgradeYearly = hasActiveStripeSubscription && (
+            planTier > currentTier ||
+            (planTier === currentTier && currentBillingPeriod === 'monthly' && 'yearly' === 'yearly')
+          );
+
+          // DOWNGRADE si : tier inférieur (peu importe période) OU (même tier ET annuel → mensuel)
+          const isDowngradeMonthly = hasActiveStripeSubscription && (
+            planTier < currentTier ||
+            (planTier === currentTier && currentBillingPeriod === 'yearly' && 'monthly' === 'monthly')
+          );
+          const isDowngradeYearly = hasActiveStripeSubscription && (
+            planTier < currentTier ||
+            (planTier === currentTier && currentBillingPeriod === 'yearly' && 'yearly' === 'monthly')
+          );
+
+          // Pour compatibilité avec code existant (bloquer downgrade vers Gratuit)
+          const isDowngrade = planTier < currentTier;
 
           // Bloquer le downgrade vers Gratuit si l'annulation est déjà programmée
           const isDowngradeToFree = isFreeplan && isDowngrade;
@@ -472,28 +521,25 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
                       w-full py-2 px-3 rounded-lg text-xs font-medium transition-colors
                       disabled:opacity-50 disabled:cursor-not-allowed
                       flex items-center justify-center gap-1.5
-                      ${isUpgrade
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg shadow-green-500/20'
-                        : isDowngrade
-                          ? 'bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white shadow-lg shadow-orange-500/20'
-                          : 'bg-white hover:bg-white/90 text-gray-900'
-                      }
+                      ${getButtonStyles('monthly', isUpgradeMonthly, isDowngradeMonthly, isFreeplan)}
                     `}
                   >
                     {processingPlanId === plan.id ? (
                       <>
                         <Loader2 className="animate-spin" size={14} />
-                        {isFreeplan ? t('subscription.comparison.buttons.scheduling') : t('subscription.comparison.buttons.redirecting')}
+                        <span>{isFreeplan ? t('subscription.comparison.buttons.scheduling') : t('subscription.comparison.buttons.redirecting')}</span>
                       </>
                     ) : (
                       <>
-                        {isUpgrade && <TrendingUp size={14} />}
-                        {isDowngrade && <TrendingDown size={14} />}
-                        {isUpgrade
-                          ? t('subscription.comparison.buttons.upgradeTo', { planName: translatePlanName(plan.name, language) })
-                          : isDowngrade
-                            ? t('subscription.comparison.buttons.downgradeTo', { planName: translatePlanName(plan.name, language) })
-                            : `${translatePlanName(plan.name, language)} ${!isFreeplan ? t('subscription.comparison.buttons.monthly') : ''}`}
+                        {isUpgradeMonthly && <TrendingUp size={14} />}
+                        {isDowngradeMonthly && <TrendingDown size={14} />}
+                        <span>
+                          {isUpgradeMonthly
+                            ? `${t('subscription.comparison.buttons.upgrade', 'Upgrade')} - ${t('subscription.comparison.buttons.monthly', 'Mensuel')}`
+                            : isDowngradeMonthly
+                              ? `${t('subscription.comparison.buttons.downgrade', 'Downgrade')} - ${t('subscription.comparison.buttons.monthly', 'Mensuel')}`
+                              : t('subscription.comparison.buttons.monthly', 'Mensuel')}
+                        </span>
                       </>
                     )}
                   </button>
@@ -504,42 +550,28 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
                       onClick={() => handlePlanChange(plan.id, 'yearly')}
                       disabled={processingPlanId === plan.id}
                       className={`
-                        w-full px-3 rounded-lg text-xs font-medium transition-colors
+                        w-full py-2 px-3 rounded-lg text-xs font-medium transition-colors
                         disabled:opacity-50 disabled:cursor-not-allowed
-                        flex items-center justify-center gap-1
-                        ${currentBillingPeriod === 'yearly'
-                          ? `py-2 ${isUpgrade
-                              ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg shadow-green-500/20'
-                              : isDowngrade
-                                ? 'bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white shadow-lg shadow-orange-500/20'
-                                : 'bg-white hover:bg-white/90 text-gray-900'
-                            }`
-                          : 'py-1.5 bg-white/20 hover:bg-white/30 text-white'
-                        }
+                        flex items-center justify-center gap-1.5
+                        ${getButtonStyles('yearly', isUpgradeYearly, isDowngradeYearly, isFreeplan)}
                       `}
                     >
-                      {currentBillingPeriod === 'yearly' ? (
+                      {processingPlanId === plan.id ? (
                         <>
-                          {processingPlanId === plan.id ? (
-                            <>
-                              <Loader2 className="animate-spin" size={14} />
-                              {isFreeplan ? t('subscription.comparison.buttons.scheduling') : t('subscription.comparison.buttons.redirecting')}
-                            </>
-                          ) : (
-                            <>
-                              {isUpgrade && <TrendingUp size={14} />}
-                              {isDowngrade && <TrendingDown size={14} />}
-                              {isUpgrade
-                                ? t('subscription.comparison.buttons.upgradeTo', { planName: translatePlanName(plan.name, language) })
-                                : isDowngrade
-                                  ? t('subscription.comparison.buttons.downgradeTo', { planName: translatePlanName(plan.name, language) })
-                                  : `${translatePlanName(plan.name, language)} ${t('subscription.comparison.buttons.yearly', 'Annuel')}`}
-                            </>
-                          )}
+                          <Loader2 className="animate-spin" size={14} />
+                          <span>{isFreeplan ? t('subscription.comparison.buttons.scheduling') : t('subscription.comparison.buttons.redirecting')}</span>
                         </>
                       ) : (
                         <>
-                          <span>{t('subscription.comparison.buttons.orYearly')}</span>
+                          {isUpgradeYearly && <TrendingUp size={14} />}
+                          {isDowngradeYearly && <TrendingDown size={14} />}
+                          <span>
+                            {isUpgradeYearly
+                              ? `${t('subscription.comparison.buttons.upgrade', 'Upgrade')} - ${t('subscription.comparison.buttons.yearly', 'Annuel')}`
+                              : isDowngradeYearly
+                                ? `${t('subscription.comparison.buttons.downgrade', 'Downgrade')} - ${t('subscription.comparison.buttons.yearly', 'Annuel')}`
+                                : t('subscription.comparison.buttons.yearly', 'Annuel')}
+                          </span>
                           {getYearlyDiscount(plan) > 0 && (
                             <span className="inline-flex items-center px-1 py-0.5 bg-green-500/30 rounded text-green-200 text-xs font-semibold">
                               -{getYearlyDiscount(plan)}%
@@ -594,24 +626,34 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
                 {/* Détails */}
                 <ul className="space-y-2 text-white/80">
                   <li className="flex items-start gap-2">
-                    <span className="text-orange-400 mt-0.5">•</span>
-                    <span>{t('subscription.comparison.downgradePaidModal.keepCurrentPlan',
-                      'Vous conservez votre plan actuel jusqu\'à la fin de votre période')}</span>
+                    <span className="text-emerald-400 mt-0.5">•</span>
+                    <span>
+                      Vous conservez votre plan actuel jusqu'au <strong className="text-white">{new Date(subscription?.currentPeriodEnd).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}</strong>
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-orange-400 mt-0.5">•</span>
+                    <span className="text-emerald-400 mt-0.5">•</span>
                     <span>{t('subscription.comparison.downgradePaidModal.noRefund',
                       'Aucun remboursement ne sera effectué')}</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-orange-400 mt-0.5">•</span>
+                    <span className="text-emerald-400 mt-0.5">•</span>
                     <span>{t('subscription.comparison.downgradePaidModal.newInvoice',
                       'Une nouvelle facture sera émise à la date d\'effet')}</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-orange-400 mt-0.5">•</span>
-                    <span>{t('subscription.comparison.downgradePaidModal.canCancel',
-                      'Vous pouvez annuler ce changement à tout moment avant la date d\'effet')}</span>
+                    <span className="text-emerald-400 mt-0.5">•</span>
+                    <span>
+                      Vous pouvez annuler ce changement jusqu'au <strong className="text-white">{new Date(subscription?.currentPeriodEnd).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}</strong>
+                    </span>
                   </li>
                 </ul>
 
@@ -622,7 +664,7 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
                       type="checkbox"
                       checked={acceptedDowngradeTerms}
                       onChange={(e) => setAcceptedDowngradeTerms(e.target.checked)}
-                      className="mt-1 w-4 h-4 rounded border-white/20 bg-white/10 text-orange-500 focus:ring-orange-500 focus:ring-offset-0 cursor-pointer"
+                      className="mt-1 w-4 h-4 rounded-sm border-2 border-white/30 bg-white/5 appearance-none cursor-pointer transition-all checked:bg-gradient-to-br checked:from-emerald-500/40 checked:to-emerald-600/40 checked:border-emerald-400/60 focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-0 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
                     />
                     <span className="text-sm text-white/80 group-hover:text-white transition-colors">
                       {t('subscription.comparison.downgradePaidModal.termsLabel', 'J\'accepte les')}{' '}
@@ -630,7 +672,7 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
                         href="/terms"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-orange-400 hover:text-orange-300 underline"
+                        className="text-emerald-400 hover:text-emerald-300 underline"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {t('subscription.comparison.downgradePaidModal.termsLink', 'Conditions Générales de Vente')}
@@ -651,9 +693,9 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
                   <button
                     onClick={handleConfirmDowngrade}
                     disabled={isDowngrading || !acceptedDowngradeTerms}
-                    className="flex-1 px-4 py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white transition-colors disabled:opacity-50 font-medium shadow-lg shadow-orange-500/20"
+                    className="flex-1 px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white transition-colors disabled:opacity-50 font-medium shadow-lg shadow-emerald-500/20"
                   >
-                    {isDowngrading ? t('subscription.comparison.downgradePaidModal.scheduling', 'Programmation...') : t('subscription.comparison.downgradePaidModal.confirm', 'Confirmer le downgrade')}
+                    {isDowngrading ? t('subscription.comparison.downgradePaidModal.scheduling', 'Programmation...') : t('subscription.comparison.downgradePaidModal.confirm', 'Confirmer')}
                   </button>
                 </div>
               </>
@@ -703,9 +745,9 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
             <button
               onClick={handleConfirmDowngradeToFree}
               disabled={isDowngrading}
-              className="flex-1 px-4 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white transition-colors disabled:opacity-50 font-medium"
+              className="flex-1 px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white transition-colors disabled:opacity-50 font-medium shadow-lg shadow-emerald-500/20"
             >
-              {isDowngrading ? t('subscription.comparison.downgradeToFreeModal.scheduling', 'Programmation...') : t('subscription.comparison.downgradeToFreeModal.confirm', 'Confirmer le downgrade')}
+              {isDowngrading ? t('subscription.comparison.downgradeToFreeModal.scheduling', 'Programmation...') : t('subscription.comparison.downgradeToFreeModal.confirm', 'Confirmer')}
             </button>
           </div>
         </div>
@@ -811,18 +853,31 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
               )}
 
               {/* Crédit appliqué (si upgrade tier avec annuel → mensuel) */}
-              {subscription?.billingPeriod === 'yearly' && upgradeBillingPeriod === 'monthly' && upgradePreview?.monthsOffered > 0 && (
-                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3">
-                  <p className="text-sm text-emerald-300 flex items-start gap-2">
-                    <span>✨</span>
-                    <span>
-                      {t('subscription.comparison.upgradeModal.creditApplied', {
-                        months: upgradePreview.monthsOffered
-                      })}
-                    </span>
-                  </p>
-                </div>
-              )}
+              {subscription?.billingPeriod === 'yearly' && upgradeBillingPeriod === 'monthly' && upgradePreview?.monthsOffered > 0 && (() => {
+                const nextBillingDate = new Date();
+                nextBillingDate.setMonth(nextBillingDate.getMonth() + upgradePreview.monthsOffered);
+                const formattedDate = nextBillingDate.toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric'
+                });
+
+                return (
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 space-y-1">
+                    <p className="text-sm text-emerald-300 flex items-start gap-2">
+                      <span>✨</span>
+                      <span>
+                        {t('subscription.comparison.upgradeModal.creditApplied', {
+                          months: upgradePreview.monthsOffered
+                        })}
+                      </span>
+                    </p>
+                    <p className="text-sm text-emerald-300/80 ml-6">
+                      {language === 'fr' ? `Prochaine facturation : ${formattedDate}` : `Next billing date: ${formattedDate}`}
+                    </p>
+                  </div>
+                );
+              })()}
 
               {/* Checkbox CGV */}
               <div className="bg-white/5 border border-white/10 rounded-lg p-4">
@@ -831,7 +886,7 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
                     type="checkbox"
                     checked={acceptedTerms}
                     onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    className="mt-1 w-4 h-4 rounded border-white/20 bg-white/10 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0 cursor-pointer"
+                    className="mt-1 w-4 h-4 rounded-sm border-2 border-white/30 bg-white/5 appearance-none cursor-pointer transition-all checked:bg-gradient-to-br checked:from-emerald-500/40 checked:to-emerald-600/40 checked:border-emerald-400/60 focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-0 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
                   />
                   <span className="text-sm text-white/80 group-hover:text-white transition-colors">
                     {t('subscription.comparison.upgradeModal.termsLabel', 'J\'accepte les')}{' '}
@@ -862,7 +917,7 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
                   disabled={processingPlanId !== null || !acceptedTerms}
                   className="flex-1 px-4 py-2.5 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white transition-colors disabled:opacity-50 font-medium shadow-lg shadow-green-500/20"
                 >
-                  {processingPlanId !== null ? t('subscription.comparison.upgradeModal.processing', 'Traitement...') : t('subscription.comparison.upgradeModal.confirm', 'Confirmer l\'upgrade')}
+                  {processingPlanId !== null ? t('subscription.comparison.upgradeModal.processing', 'Traitement...') : t('subscription.comparison.upgradeModal.confirm', 'Confirmer')}
                 </button>
               </div>
             </>

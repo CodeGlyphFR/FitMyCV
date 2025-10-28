@@ -9,6 +9,7 @@ import { OpenAICostsTab } from '@/components/admin/OpenAICostsTab';
 import { FeedbackTab } from '@/components/admin/FeedbackTab';
 import { UsersTab } from '@/components/admin/UsersTab';
 import { SubscriptionPlansTab } from '@/components/admin/SubscriptionPlansTab';
+import { RevenueTab } from '@/components/admin/RevenueTab';
 import { DateRangePicker } from '@/components/admin/DateRangePicker';
 import { UserFilter } from '@/components/admin/UserFilter';
 import { TabsBar } from '@/components/admin/TabsBar';
@@ -20,6 +21,7 @@ const TABS = [
   { id: 'openai-costs', label: 'OpenAI Costs', icon: '💰' },
   { id: 'feedback', label: 'Feedback', icon: '💬' },
   { id: 'users', label: 'Utilisateurs', icon: '👨‍💼' },
+  { id: 'revenue', label: 'Revenus', icon: '💵' },
   { id: 'subscriptions', label: 'Abonnements', icon: '💳' },
   { id: 'settings', label: 'Settings', icon: '⚙️' },
 ];
@@ -83,7 +85,7 @@ export default function AnalyticsDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              {!['settings', 'users', 'subscriptions'].includes(activeTab) && (
+              {!['settings', 'users', 'subscriptions', 'revenue'].includes(activeTab) && (
                 <UserFilter value={selectedUserId} onChange={setSelectedUserId} />
               )}
               {['overview', 'features', 'sessions', 'errors', 'openai-costs', 'feedback'].includes(activeTab) && (
@@ -123,7 +125,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* User Filter - Mobile only (below tabs) */}
-      {!['settings', 'users', 'subscriptions'].includes(activeTab) && (
+      {!['settings', 'users', 'subscriptions', 'revenue'].includes(activeTab) && (
         <div className="md:hidden bg-gray-900/98 backdrop-blur-xl border-b border-white/10 sticky top-[5.5rem] z-40 will-change-transform">
           <div className="px-4 py-3">
             <UserFilter value={selectedUserId} onChange={setSelectedUserId} />
@@ -139,6 +141,7 @@ export default function AnalyticsDashboard() {
         {activeTab === 'openai-costs' && <OpenAICostsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'feedback' && <FeedbackTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'users' && <UsersTab refreshKey={refreshKey} />}
+        {activeTab === 'revenue' && <RevenueTab refreshKey={refreshKey} />}
         {activeTab === 'subscriptions' && <SubscriptionPlansTab refreshKey={refreshKey} />}
         {activeTab === 'settings' && <SettingsTab refreshKey={refreshKey} />}
       </div>

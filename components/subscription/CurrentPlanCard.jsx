@@ -448,7 +448,7 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
               </p>
             </div>
           ) : yearlyUpgradePreview && (
-            <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-400/30 rounded-lg p-4 space-y-3">
+            <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
               {/* Si customer balance existe, afficher le détail */}
               {yearlyUpgradePreview.customerBalance && yearlyUpgradePreview.customerBalance < 0 ? (
                 <>
@@ -464,14 +464,14 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
                       {yearlyUpgradePreview.customerBalance.toFixed(2)} €
                     </span>
                   </div>
-                  <div className="border-t border-white/20 pt-3">
-                    <div className="text-center">
-                      <p className="text-white/70 text-sm mb-1 font-medium">
+                  <div className="border-t border-white/10 pt-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-white/70 font-medium">
                         {t('subscription.comparison.upgradeModal.prorataAmount', 'Montant à payer')}
-                      </p>
-                      <p className="text-3xl font-bold text-white">
+                      </span>
+                      <span className="text-2xl font-bold text-emerald-400">
                         {yearlyUpgradePreview.prorataAmount.toFixed(2)} €
-                      </p>
+                      </span>
                     </div>
                   </div>
                   <p className="text-white/60 text-xs text-center">
@@ -480,17 +480,17 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
                 </>
               ) : (
                 <>
-                  <div className="text-center">
-                    <p className="text-white/70 text-sm mb-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/70">
                       {t('subscription.comparison.upgradeModal.prorataAmount', 'Montant à payer')}
-                    </p>
-                    <p className="text-3xl font-bold text-white">
+                    </span>
+                    <span className="text-2xl font-bold text-emerald-400">
                       {yearlyUpgradePreview.prorataAmount.toFixed(2)} €
-                    </p>
-                    <p className="text-white/60 text-xs mt-1">
-                      {t('subscription.comparison.upgradeModal.prorataInfo', 'Montant calculé pour la période restante (prorata automatique)')}
-                    </p>
+                    </span>
                   </div>
+                  <p className="text-sm text-white/50">
+                    {t('subscription.comparison.upgradeModal.prorataInfo', 'Montant calculé pour la période restante (prorata automatique)')}
+                  </p>
                 </>
               )}
             </div>
@@ -501,19 +501,19 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
           </p>
           <ul className="space-y-2 text-white/80 text-sm">
             <li className="flex items-start gap-2">
-              <span className="text-orange-400 mt-0.5">⚠️</span>
+              <span className="text-emerald-400 mt-0.5">•</span>
               <span>{t('subscription.currentPlan.yearlyWarningModal.cannotGoBackMonthly')}</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-blue-400 mt-0.5">💰</span>
+              <span className="text-emerald-400 mt-0.5">•</span>
               <span>{t('subscription.currentPlan.yearlyWarningModal.savingsInfo', { discount: yearlyDiscount, yearlyPrice: plan.priceYearly, monthlyTotal: plan.priceMonthly * 12 })}</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-orange-400 mt-0.5">🔒</span>
+              <span className="text-emerald-400 mt-0.5">•</span>
               <span>{t('subscription.currentPlan.yearlyWarningModal.cancellationInfo')}</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-blue-400 mt-0.5">✓</span>
+              <span className="text-emerald-400 mt-0.5">•</span>
               <span>{t('subscription.currentPlan.yearlyWarningModal.prorataInfo')}</span>
             </li>
           </ul>
@@ -525,7 +525,7 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
                 type="checkbox"
                 checked={acceptedYearlyTerms}
                 onChange={(e) => setAcceptedYearlyTerms(e.target.checked)}
-                className="mt-1 w-4 h-4 rounded border-white/20 bg-white/10 text-blue-500 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
+                className="mt-1 w-4 h-4 rounded-sm border-2 border-white/30 bg-white/5 appearance-none cursor-pointer transition-all checked:bg-gradient-to-br checked:from-emerald-500/40 checked:to-emerald-600/40 checked:border-emerald-400/60 focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-0 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
               />
               <span className="text-sm text-white/80 group-hover:text-white transition-colors">
                 {t('subscription.currentPlan.yearlyWarningModal.termsLabel', 'J\'accepte les')}{' '}
@@ -533,7 +533,7 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
                   href="/terms"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-400 hover:text-blue-300 underline"
+                  className="text-emerald-400 hover:text-emerald-300 underline"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {t('subscription.currentPlan.yearlyWarningModal.termsLink', 'Conditions Générales de Vente')}
@@ -553,7 +553,7 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
             <button
               onClick={handleConfirmSwitchToYearly}
               disabled={isSwitchingPeriod || !acceptedYearlyTerms}
-              className="flex-1 px-4 py-2.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors disabled:opacity-50 font-medium"
+              className="flex-1 px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white transition-colors disabled:opacity-50 font-medium shadow-lg shadow-emerald-500/20"
             >
               {isSwitchingPeriod ? t('subscription.currentPlan.yearlyWarningModal.switching', 'Traitement...') : t('subscription.currentPlan.yearlyWarningModal.confirm', 'Confirmer')}
             </button>
