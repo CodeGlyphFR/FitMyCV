@@ -126,12 +126,14 @@ export default function TopBar() {
     setDropdownRect: modals.setDropdownRect,
   });
 
-  // Portal ready
+  // ===== CRITICAL useEffect for initial render =====
+
+  // Portal ready (critical for dropdown rendering)
   React.useEffect(() => {
     state.setPortalReady(true);
   }, [state]);
 
-  // Reload CV list
+  // Reload CV list (critical for displaying CVs)
   React.useEffect(() => {
     if (!isAuthenticated) return;
     operations.reload();
