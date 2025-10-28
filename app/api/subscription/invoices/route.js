@@ -206,12 +206,25 @@ export async function GET(request) {
         type: 'credit_pack',
       }));
 
+    // Récupérer le customer balance (crédit de facturation)
+    let creditBalance = 0;
+    try {
+      const customer = await stripe.customers.retrieve(stripeCustomerId);
+      // Le balance est en centimes et négatif = crédit (ex: -4599 = 45,99€ de crédit)
+      // On inverse le signe pour avoir un montant positif
+      creditBalance = customer.balance < 0 ? Math.abs(customer.balance) / 100 : 0;
+    } catch (error) {
+      console.error('[Invoices] Erreur lors de la récupération du customer balance:', error);
+      // On continue sans balance si erreur
+    }
+
     // Fusionner et trier par date (plus récent en premier)
     const allTransactions = [...formattedInvoices, ...formattedPayments]
       .sort((a, b) => new Date(b.date) - new Date(a.date));
 
     return NextResponse.json({
       invoices: allTransactions,
+      creditBalance,
     });
 
   } catch (error) {

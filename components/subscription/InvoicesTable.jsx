@@ -3,10 +3,12 @@
 import React from "react";
 import { FileText, Download, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import CreditBalanceBanner from "./CreditBalanceBanner";
 
-export default function InvoicesTable() {
+export default function InvoicesTable({ creditBalance: creditBalanceProp, currentPlan }) {
   const { t } = useLanguage();
   const [invoices, setInvoices] = React.useState([]);
+  const [creditBalance, setCreditBalance] = React.useState(creditBalanceProp || 0);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [page, setPage] = React.useState(0);
@@ -25,6 +27,7 @@ export default function InvoicesTable() {
 
         const data = await res.json();
         setInvoices(data.invoices || []);
+        setCreditBalance(data.creditBalance || 0);
       } catch (err) {
         console.error('Error fetching invoices:', err);
         setError(err.message);
@@ -151,6 +154,9 @@ export default function InvoicesTable() {
         <FileText size={24} />
         {t('subscription.invoices.title')}
       </h2>
+
+      {/* Banner de crédit de facturation */}
+      <CreditBalanceBanner creditBalance={creditBalance} currentPlan={currentPlan} />
 
       {/* Filtres par type */}
       <div className="flex flex-wrap gap-2 mb-4">

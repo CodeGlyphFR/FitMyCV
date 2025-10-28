@@ -850,6 +850,13 @@
       "title": "Factures",
       "noInvoices": "Aucune facture pour le moment",
       "errorLoading": "Erreur lors du chargement des factures",
+      "creditBanner": {
+        "title": "💰 Crédit de facturation disponible",
+        "amount": "Solde actuel : {amount}€",
+        "explanation": "Ce crédit sera automatiquement déduit de vos prochaines factures.",
+        "estimatedMonths": "Soit environ {months} mois gratuits 🎉",
+        "lessThanOneMonth": "Ce crédit couvrira une partie de votre prochaine facture."
+      },
       "filters": {
         "all": "Tout ({count})",
         "subscriptions": "Abonnements ({count})",

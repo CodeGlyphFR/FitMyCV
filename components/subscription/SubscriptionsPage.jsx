@@ -348,7 +348,7 @@ export default function SubscriptionsPage({ user }) {
             >
               <div className="space-y-4">
                 <CreditTransactionsTable />
-                <InvoicesTable />
+                <InvoicesTable currentPlan={subscriptionData?.subscription} />
               </div>
             </div>
           )}
