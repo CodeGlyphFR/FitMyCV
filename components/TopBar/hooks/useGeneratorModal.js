@@ -29,6 +29,8 @@ export function useGeneratorModal({
   const [baseSelectorOpen, setBaseSelectorOpen] = React.useState(false);
   const [analysisLevel, setAnalysisLevel] = React.useState("medium");
   const [linkHistoryDropdowns, setLinkHistoryDropdowns] = React.useState({});
+  const [allowedAnalysisLevels, setAllowedAnalysisLevels] = React.useState(['rapid', 'medium', 'deep']); // Par défaut tous autorisés
+  const [plans, setPlans] = React.useState([]); // Liste des plans pour calculer les badges
 
   const fileInputRef = React.useRef(null);
 
@@ -66,6 +68,48 @@ export function useGeneratorModal({
       return preferred ? preferred.file : prev;
     });
   }, [generatorSourceItems, current]);
+
+  // Récupérer les niveaux d'analyse autorisés et les plans depuis l'API quand le modal s'ouvre
+  React.useEffect(() => {
+    if (!openGenerator) return;
+
+    async function fetchSubscriptionData() {
+      try {
+        // Fetch en parallèle des niveaux autorisés et des plans
+        const [currentResponse, plansResponse] = await Promise.all([
+          fetch('/api/subscription/current'),
+          fetch('/api/subscription/plans')
+        ]);
+
+        if (!currentResponse.ok) throw new Error('Erreur lors de la récupération des niveaux autorisés');
+        if (!plansResponse.ok) throw new Error('Erreur lors de la récupération des plans');
+
+        const currentData = await currentResponse.json();
+        const plansData = await plansResponse.json();
+
+        const levels = currentData.allowedAnalysisLevels || ['rapid', 'medium', 'deep'];
+        setAllowedAnalysisLevels(levels);
+        setPlans(plansData.plans || []);
+
+        // Auto-sélectionner le meilleur niveau autorisé si le niveau actuel n'est pas autorisé
+        setAnalysisLevel((currentLevel) => {
+          if (levels.includes(currentLevel)) {
+            return currentLevel;
+          }
+          // Priorité : deep > medium > rapid
+          if (levels.includes('deep')) return 'deep';
+          if (levels.includes('medium')) return 'medium';
+          if (levels.includes('rapid')) return 'rapid';
+          return currentLevel;
+        });
+      } catch (error) {
+        console.error('[Generator Modal] Erreur fetch subscription data:', error);
+        // En cas d'erreur, garder les valeurs par défaut
+      }
+    }
+
+    fetchSubscriptionData();
+  }, [openGenerator]);
 
   const openGeneratorModal = React.useCallback(() => {
     setBaseSelectorOpen(false);
@@ -284,6 +328,8 @@ export function useGeneratorModal({
     currentAnalysisOption,
     linkHistoryDropdowns,
     setLinkHistoryDropdowns,
+    allowedAnalysisLevels,
+    plans,
     fileInputRef,
     generatorSourceItems,
     generatorBaseItem,

@@ -37,7 +37,7 @@ export default async function AccountPage(){
 
   return (
     <main className="min-h-screen">
-      <div className="max-w-3xl mx-auto px-6 pt-6 pb-2 space-y-6">
+      <div className="max-w-5xl mx-auto px-6 pt-6 pb-2 space-y-6">
         <div className="space-y-1">
           <Link
             href="/"

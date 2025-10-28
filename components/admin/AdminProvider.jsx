@@ -134,7 +134,7 @@ export default function AdminProvider(props){
   }
 
   return (
-    <Ctx.Provider value={{ editing, setEditing, setCurrentFile, hasDebitedEditSession, markEditAsDebited }}>
+    <Ctx.Provider value={{ editing, setEditing, setCurrentFile, hasDebitedEditSession, markEditAsDebited, hasAnyCv }}>
       {props.children}
 
       {/* Analytics button for ADMIN users */}

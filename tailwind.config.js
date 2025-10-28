@@ -2,6 +2,9 @@ module.exports = {
   content: ["./app/**/*.{js,jsx}", "./components/**/*.{js,jsx}"],
   theme: {
     extend: {
+      screens: {
+        'topbar': '976px',
+      },
       backdropBlur: {
         '4xl': '80px',
         '5xl': '120px',

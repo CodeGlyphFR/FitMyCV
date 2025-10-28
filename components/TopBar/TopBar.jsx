@@ -729,6 +729,8 @@ export default function TopBar() {
         generatorBaseItem={generator.generatorBaseItem}
         analysisLevel={generator.analysisLevel}
         setAnalysisLevel={generator.setAnalysisLevel}
+        allowedAnalysisLevels={generator.allowedAnalysisLevels}
+        plans={generator.plans}
         currentAnalysisOption={generator.currentAnalysisOption}
         generatorError={generator.generatorError}
         linkHistory={linkHistory}
