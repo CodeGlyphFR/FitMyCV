@@ -29,25 +29,26 @@ export function useTopBarState(language) {
   const [lastScrollY, setLastScrollY] = React.useState(0);
   const [isScrollingInDropdown, setIsScrollingInDropdown] = React.useState(false);
 
-  // Animation triggers
-  const [tickerResetKey, setTickerResetKey] = React.useState(() => Date.now());
-  const [iconRefreshKey, setIconRefreshKey] = React.useState(() => Date.now());
+  // Animation triggers - Initialized with 0 to avoid hydration mismatch, updated in useEffect
+  const [tickerResetKey, setTickerResetKey] = React.useState(0);
+  const [iconRefreshKey, setIconRefreshKey] = React.useState(0);
 
-  // Logout URL
-  const defaultLogout = React.useMemo(() => {
-    if (
-      typeof window !== "undefined" &&
-      window.location &&
-      window.location.origin
-    ) {
-      return `${window.location.origin.replace(/\/$/, "")}/auth?mode=login`;
+  // Logout URL - Default value to avoid hydration mismatch, updated in useEffect
+  const [logoutTarget, setLogoutTarget] = React.useState("/auth?mode=login");
+
+  // Update client-only values after mount to avoid hydration mismatch
+  React.useEffect(() => {
+    // Update animation keys with current timestamp
+    setTickerResetKey(Date.now());
+    setIconRefreshKey(Date.now());
+
+    // Update logout target with window.location if available
+    if (typeof window !== "undefined" && window.location?.origin) {
+      setLogoutTarget(`${window.location.origin.replace(/\/$/, "")}/auth?mode=login`);
+    } else if (process.env.NEXT_PUBLIC_SITE_URL) {
+      setLogoutTarget(`${process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "")}/auth?mode=login`);
     }
-    if (process.env.NEXT_PUBLIC_SITE_URL) {
-      return `${process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "")}/auth?mode=login`;
-    }
-    return "/auth?mode=login";
   }, []);
-  const [logoutTarget, setLogoutTarget] = React.useState(defaultLogout);
 
   // Refs
   const titleCacheRef = React.useRef(new Map());

@@ -131,17 +131,6 @@ export default function TopBar() {
     state.setPortalReady(true);
   }, [state]);
 
-  // Logout target
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        state.setLogoutTarget(
-          `${window.location.origin.replace(/\/$/, "")}/auth?mode=login`
-        );
-      } catch (_err) {}
-    }
-  }, [state]);
-
   // Reload CV list
   React.useEffect(() => {
     if (!isAuthenticated) return;

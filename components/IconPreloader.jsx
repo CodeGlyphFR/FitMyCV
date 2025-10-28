@@ -15,15 +15,6 @@ export default function IconPreloader() {
       <link rel="preload" href="/icons/search.png" as="image" />
       <link rel="preload" href="/icons/translate.png" as="image" />
       <link rel="preload" href="/icons/openai-symbol.png" as="image" />
-
-      {/* Images invisibles pour forcer le cache navigateur (fallback) */}
-      <div style={{ display: 'none', position: 'absolute', pointerEvents: 'none' }}>
-        <img src="/icons/add.png" alt="" />
-        <img src="/icons/import.png" alt="" />
-        <img src="/icons/search.png" alt="" />
-        <img src="/icons/translate.png" alt="" />
-        <img src="/icons/openai-symbol.png" alt="" />
-      </div>
     </>
   );
 }

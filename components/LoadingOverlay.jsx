@@ -5,7 +5,15 @@ import { usePathname } from "next/navigation";
 
 export default function LoadingOverlay() {
   const pathname = usePathname();
+
+  // État pour détecter si on est monté côté client (évite hydration mismatch)
+  const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Détecter le montage côté client pour éviter l'hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // useLayoutEffect pour appliquer les styles AVANT le paint (synchrone)
   useLayoutEffect(() => {
@@ -115,6 +123,10 @@ export default function LoadingOverlay() {
     };
   }, [pathname, isLoading]);
 
+  // Ne pas rendre côté serveur pour éviter l'hydration mismatch
+  if (!isMounted) return null;
+
+  // Ne pas rendre si pas en chargement
   if (!isLoading) return null;
 
   return (
