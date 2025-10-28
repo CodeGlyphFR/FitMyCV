@@ -1,11 +1,14 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
+import { useNotifications } from "@/components/notifications/NotificationProvider";
 import { RefreshCw } from "lucide-react";
+import { parseApiError } from "@/lib/utils/errorHandler";
 
-export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
+export default function CVImprovementPanel({ cvFile }) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cvData, setCvData] = useState(null);
@@ -14,7 +17,9 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
   const [isAnimationReady, setIsAnimationReady] = useState(false);
   const { t, language } = useLanguage();
   const { settings } = useSettings();
+  const { addNotification } = useNotifications();
   const animationRef = useRef(null);
+  const router = useRouter();
 
   // Fonction pour charger les données
   const fetchCvData = React.useCallback(async () => {
@@ -142,22 +147,40 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const errorData = await response.json();
+        const apiError = parseApiError(response, errorData);
 
         // Gestion spéciale pour la limite de rate
         if (response.status === 429) {
-          alert(`⏱️ ${error.details || error.error}`);
+          alert(`⏱️ ${errorData.details || apiError.message}`);
           return;
         }
 
-        throw new Error(error.error || "Erreur lors de l'amélioration");
+        // Check if action is required (e.g., need to buy credits)
+        if (apiError.actionRequired && apiError.redirectUrl) {
+          setIsOpen(false);
+          addNotification({
+            type: 'error',
+            message: apiError.message,
+            redirectUrl: apiError.redirectUrl,
+            linkText: 'Voir les options',
+            duration: 10000,
+          });
+          return;
+        }
+
+        throw new Error(apiError.message || "Erreur lors de l'amélioration");
       }
 
       // Fermer la modal immédiatement - le job mettra à jour optimiseStatus dans Prisma
       setIsOpen(false);
     } catch (err) {
       console.error("Erreur amélioration:", err);
-      alert(err.message);
+      addNotification({
+        type: 'error',
+        message: err.message || "Erreur lors de l'amélioration",
+        duration: 5000,
+      });
     }
   };
 
@@ -247,7 +270,7 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
         disabled={shouldDisableButton}
         className={`
           relative w-9 h-9 rounded-full flex items-center justify-center
-          bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl
+          bg-white/20 backdrop-blur-md ios-blur-medium border-2 border-white/30 shadow-2xl gpu-accelerate
           transition-all duration-300
           ${shouldDisableButton
             ? 'cursor-not-allowed'
@@ -377,7 +400,7 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                   <div className="space-y-4 animate-slide-in-left">
                     {/* Score principal avec cercle animé */}
                     {cvData.matchScore !== null && (
-                      <div className="bg-white/15 backdrop-blur-xl rounded-2xl p-6 shadow-lg border-2 border-white/30">
+                      <div className="bg-white/15 backdrop-blur-md ios-blur-medium rounded-2xl p-6 shadow-lg border-2 border-white/30 gpu-accelerate">
                         <div className="text-center">
                           <div className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-4 drop-shadow">
                             {labels.matchScore}
@@ -449,7 +472,7 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
 
                     {/* Détail du score avec barres de progression animées */}
                     {Object.keys(scoreBreakdown).length > 0 && (
-                      <div className="bg-white/15 backdrop-blur-xl rounded-2xl p-6 shadow-lg border-2 border-white/30">
+                      <div className="bg-white/15 backdrop-blur-md ios-blur-medium rounded-2xl p-6 shadow-lg border-2 border-white/30 gpu-accelerate">
                         <h3 className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-4 drop-shadow">
                           {labels.scoreBreakdown}
                         </h3>
@@ -550,7 +573,7 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                   <div className="animate-slide-in-right">
                     {/* Suggestions d'amélioration */}
                     {suggestions.length > 0 && (
-                      <div className="bg-white/15 backdrop-blur-xl rounded-2xl p-6 shadow-lg border-2 border-white/30">
+                      <div className="bg-white/15 backdrop-blur-md ios-blur-medium rounded-2xl p-6 shadow-lg border-2 border-white/30 gpu-accelerate">
                         <h3 className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-4 flex items-center gap-2 drop-shadow">
                           <span>💡</span>
                           {labels.suggestions}
@@ -568,7 +591,7 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                                   ? 'bg-yellow-500/20 border-yellow-500 hover:bg-yellow-500/30'
                                   : 'bg-green-500/20 border-green-500 hover:bg-green-500/30'
                                 }
-                                animate-scale-in backdrop-blur-sm
+                                animate-scale-in backdrop-blur-sm ios-blur-light
                               `}
                             >
                               <div className="flex items-start justify-between mb-1.5 gap-2">
@@ -612,7 +635,7 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
                   {/* Compétences manquantes (bas gauche) */}
                   {missingSkills.length > 0 && (
-                    <div className="bg-white/15 backdrop-blur-xl rounded-2xl p-6 shadow-lg border-2 border-white/30 animate-scale-in">
+                    <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 shadow-lg border-2 border-white/30 animate-scale-in gpu-accelerate">
                       <h3 className="text-xs font-semibold text-red-400 uppercase tracking-wide mb-3 flex items-center gap-2 drop-shadow">
                         <span>❌</span>
                         {labels.missingSkills}
@@ -626,7 +649,7 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
                               px-3 py-1 bg-red-500/30 text-white drop-shadow
                               rounded-full text-xs font-medium border-2 border-red-400/50
                               hover:shadow-md hover:scale-105 hover:bg-red-500/40 transition-all duration-200
-                              animate-scale-in backdrop-blur-sm
+                              animate-scale-in backdrop-blur-sm ios-blur-light
                             "
                           >
                             {skill}
@@ -638,7 +661,7 @@ export default function CVImprovementPanel({ cvFile, canRefresh = true }) {
 
                   {/* Compétences correspondantes (bas droite) */}
                   {matchingSkills.length > 0 && (
-                    <div className="bg-white/15 backdrop-blur-xl rounded-2xl p-6 shadow-lg border-2 border-white/30 animate-scale-in">
+                    <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 shadow-lg border-2 border-white/30 animate-scale-in gpu-accelerate">
                       <h3 className="text-xs font-semibold text-green-400 uppercase tracking-wide mb-3 flex items-center gap-2 drop-shadow">
                         <span>✅</span>
                         {labels.matchingSkills}

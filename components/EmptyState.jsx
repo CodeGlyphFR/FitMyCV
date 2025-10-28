@@ -319,7 +319,7 @@ export default function EmptyState() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(126,207,244,0.25),_transparent_65%)]"/>
         </div>
         <div className="relative z-10 max-w-xl w-full mt-12">
-          <div className="bg-white/15 backdrop-blur-xl rounded-2xl shadow-2xl p-8 border-2 border-white/30">
+          <div className="bg-white/15 backdrop-blur-md rounded-2xl shadow-2xl p-8 border-2 border-white/30 gpu-accelerate">
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 mb-4 animate-pulse">
                 <svg className="w-10 h-10 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -442,7 +442,7 @@ export default function EmptyState() {
           {settings.feature_import && (
             <button
               onClick={() => setOpenPdfImport(true)}
-              className="group bg-white/15 backdrop-blur-xl rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/30 hover:border-blue-400 hover:bg-blue-500/25 text-left"
+              className="group bg-white/15 backdrop-blur-md rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/30 hover:border-blue-400 hover:bg-blue-500/25 text-left gpu-accelerate"
             >
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center group-hover:scale-110 group-hover:bg-white/30 transition-all duration-300">
@@ -477,7 +477,7 @@ export default function EmptyState() {
                 resetNewCvForm();
                 setOpenNewCv(true);
               }}
-              className="group bg-white/15 backdrop-blur-xl rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/30 hover:border-emerald-400 hover:bg-emerald-500/25 text-left"
+              className="group bg-white/15 backdrop-blur-md rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/30 hover:border-emerald-400 hover:bg-emerald-500/25 text-left gpu-accelerate"
             >
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center group-hover:scale-110 group-hover:bg-white/30 transition-all duration-300">

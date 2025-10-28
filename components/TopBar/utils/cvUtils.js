@@ -54,22 +54,22 @@ export function getCvIcon(createdBy, originalCreatedBy, className) {
   // createdBy = 'import-pdf' => Import icon (importé depuis PDF)
   // createdBy = null => Add icon (créé manuellement)
   if (createdBy === 'translate-cv') {
-    return <img src="/icons/translate.png" alt="Translate" className={className} />;
+    return <img src="/icons/translate.png" alt="Translate" className={className} loading="eager" />;
   }
   if (createdBy === 'improve-cv') {
     return <span className={className}>🚀</span>; // Icône fusée pour CV amélioré
   }
   if (createdBy === 'generate-cv-job-title') {
-    return <img src="/icons/search.png" alt="Search" className={className} />;
+    return <img src="/icons/search.png" alt="Search" className={className} loading="eager" />;
   }
   if (createdBy === 'generate-cv' || createdBy === 'create-template') {
     return <GptLogo className={className} />;
   }
   if (createdBy === 'import-pdf') {
-    return <img src="/icons/import.png" alt="Import" className={className} />;
+    return <img src="/icons/import.png" alt="Import" className={className} loading="eager" />;
   }
   // CVs manuels (créés from scratch)
-  return <img src="/icons/add.png" alt="Add" className={className} />;
+  return <img src="/icons/add.png" alt="Add" className={className} loading="eager" />;
 }
 
 /**

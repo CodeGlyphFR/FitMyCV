@@ -12,6 +12,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
+import { parseApiError } from "@/lib/utils/errorHandler";
 
 export default function Header(props){
   const header = props.header || {};
@@ -28,10 +29,6 @@ export default function Header(props){
   const [matchScoreStatus, setMatchScoreStatus] = React.useState("idle");
   const [optimiseStatus, setOptimiseStatus] = React.useState("idle");
   const [isLoadingMatchScore, setIsLoadingMatchScore] = React.useState(false);
-  const [canRefreshScore, setCanRefreshScore] = React.useState(true);
-  const [refreshCount, setRefreshCount] = React.useState(0);
-  const [hoursUntilReset, setHoursUntilReset] = React.useState(0);
-  const [minutesUntilReset, setMinutesUntilReset] = React.useState(0);
   const [currentCvFile, setCurrentCvFile] = React.useState(null);
   const [hasExtractedJobOffer, setHasExtractedJobOffer] = React.useState(false);
   const [hasScoreBreakdown, setHasScoreBreakdown] = React.useState(false);
@@ -130,10 +127,6 @@ export default function Header(props){
         setMatchScore(data.score);
         setMatchScoreStatus(finalStatus);
         setOptimiseStatus(finalOptimiseStatus);
-        setCanRefreshScore(data.canRefresh ?? true);
-        setRefreshCount(data.refreshCount || 0);
-        setHoursUntilReset(data.hoursUntilReset || 0);
-        setMinutesUntilReset(data.minutesUntilReset || 0);
         setHasExtractedJobOffer(data.hasExtractedJobOffer || false);
         setHasScoreBreakdown(data.hasScoreBreakdown || false);
 
@@ -181,10 +174,6 @@ export default function Header(props){
           setMatchScore(null);
           setMatchScoreStatus('idle');
           setOptimiseStatus('idle');
-          setCanRefreshScore(true);
-          setRefreshCount(0);
-          setHoursUntilReset(0);
-          setMinutesUntilReset(0);
           setHasExtractedJobOffer(false);
           setHasScoreBreakdown(false);
           setIsLoadingMatchScore(false);
@@ -271,16 +260,6 @@ export default function Header(props){
   // Pas de SSE - l'utilisateur rafraîchira manuellement pour voir le résultat
 
   const handleRefreshMatchScore = React.useCallback(async () => {
-    // Vérifier le rate limit avant de commencer
-    if (!canRefreshScore) {
-      addNotification({
-        type: "error",
-        message: t("matchScore.rateLimitExceeded", { hours: hoursUntilReset, minutes: minutesUntilReset }),
-        duration: 5000,
-      });
-      return;
-    }
-
     // Mise à jour optimiste : passer immédiatement le status en loading
     setMatchScoreStatus('inprogress');
     setIsLoadingMatchScore(true);
@@ -309,23 +288,13 @@ export default function Header(props){
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        // Gestion spéciale pour le rate limit
-        if (response.status === 429) {
-          setCanRefreshScore(false);
-          const hours = data.hoursLeft || 24;
-          const minutes = data.minutesLeft || 0;
-          setHoursUntilReset(hours);
-          setMinutesUntilReset(minutes);
-          throw new Error(t("matchScore.rateLimitExceeded", { hours, minutes }));
+        const apiError = parseApiError(response, data);
+        const errorObj = new Error(apiError.message);
+        if (apiError.actionRequired && apiError.redirectUrl) {
+          errorObj.actionRequired = true;
+          errorObj.redirectUrl = apiError.redirectUrl;
         }
-
-        const errorMessage = data.details || data.error || "Impossible de lancer le calcul.";
-        throw new Error(errorMessage);
-      }
-
-      // Succès - émettre l'événement pour mettre à jour les compteurs de tokens
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('tokens:updated'));
+        throw errorObj;
       }
     } catch (error) {
 
@@ -333,13 +302,21 @@ export default function Header(props){
       setMatchScoreStatus('idle');
       setIsLoadingMatchScore(false);
 
-      addNotification({
+      const notification = {
         type: "error",
         message: error.message,
-        duration: 6000,
-      });
+        duration: 10000,
+      };
+
+      // Add redirect info if actionRequired
+      if (error?.actionRequired && error?.redirectUrl) {
+        notification.redirectUrl = error.redirectUrl;
+        notification.linkText = 'Voir les options';
+      }
+
+      addNotification(notification);
     }
-  }, [t, addNotification, canRefreshScore, hoursUntilReset, minutesUntilReset, localDeviceId]);
+  }, [t, addNotification, localDeviceId]);
 
   // Si le CV est vide (pas de header), ne pas afficher le composant
   const isEmpty = !header.full_name && !header.current_title && !header.contact?.email;
@@ -403,21 +380,6 @@ export default function Header(props){
 
     const targetLangName = targetLanguage === 'fr' ? 'français' : 'anglais';
 
-    // Créer la tâche optimiste immédiatement
-    const optimisticTaskId = addOptimisticTask({
-      type: 'translate-cv',
-      label: `Traduction en ${targetLangName}`,
-      metadata: { sourceFile: currentFile, targetLanguage },
-      shouldUpdateCvList: true,
-    });
-
-    // Notifier immédiatement
-    addNotification({
-      type: "info",
-      message: t("translate.notifications.scheduled", { targetLangName }),
-      duration: 2500,
-    });
-
     // Envoyer la requête en arrière-plan
     try {
       const response = await fetch("/api/background-tasks/translate-cv", {
@@ -432,20 +394,47 @@ export default function Header(props){
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data?.success) {
-        throw new Error(data?.error || "Impossible de mettre la tâche en file.");
+        const apiError = parseApiError(response, data);
+        const errorObj = { message: apiError.message };
+        if (apiError.actionRequired && apiError.redirectUrl) {
+          errorObj.actionRequired = true;
+          errorObj.redirectUrl = apiError.redirectUrl;
+        }
+        throw errorObj;
       }
 
-      // Succès : supprimer la tâche optimiste et rafraîchir
-      removeOptimisticTask(optimisticTaskId);
-      await refreshTasks();
-    } catch (error) {
-      // Échec : supprimer la tâche optimiste et notifier
-      removeOptimisticTask(optimisticTaskId);
+      // ✅ Succès confirmé par l'API -> créer la tâche optimiste et notifier
+      const optimisticTaskId = addOptimisticTask({
+        type: 'translate-cv',
+        label: `Traduction en ${targetLangName}`,
+        metadata: { sourceFile: currentFile, targetLanguage },
+        shouldUpdateCvList: true,
+      });
+
       addNotification({
+        type: "info",
+        message: t("translate.notifications.scheduled", { targetLangName }),
+        duration: 2500,
+      });
+
+      // Rafraîchir et supprimer la tâche optimiste
+      await refreshTasks();
+      removeOptimisticTask(optimisticTaskId);
+    } catch (error) {
+      // Échec : notifier l'erreur
+      const notification = {
         type: "error",
         message: error?.message || t("translate.notifications.error"),
-        duration: 4000,
-      });
+        duration: 10000,
+      };
+
+      // Add redirect info if actionRequired
+      if (error?.actionRequired && error?.redirectUrl) {
+        notification.redirectUrl = error.redirectUrl;
+        notification.linkText = 'Voir les options';
+      }
+
+      addNotification(notification);
     }
   }
 
@@ -498,10 +487,6 @@ export default function Header(props){
               score={matchScore}
               status={matchScoreStatus === 'inprogress' ? 'loading' : matchScoreStatus}
               isLoading={isLoadingMatchScore}
-              canRefresh={canRefreshScore}
-              refreshCount={refreshCount}
-              hoursUntilReset={hoursUntilReset}
-              minutesUntilReset={minutesUntilReset}
               onRefresh={handleRefreshMatchScore}
               currentCvFile={currentCvFile}
               hasExtractedJobOffer={hasExtractedJobOffer}
@@ -515,7 +500,6 @@ export default function Header(props){
             <div className="absolute bottom-0 right-2">
               <CVImprovementPanel
                 cvFile={currentCvFile}
-                canRefresh={canRefreshScore}
               />
             </div>
           )}

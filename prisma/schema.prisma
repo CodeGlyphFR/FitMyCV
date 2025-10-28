@@ -25,10 +25,22 @@ model User {
   telemetryEvents TelemetryEvent[]
   featureUsage  FeatureUsage[]
   openaiUsage   OpenAIUsage[]
-  matchScoreRefreshCount Int @default(0) // Number of tokens remaining (global for all CVs, reset to 5 after 24h at 0)
-  tokenLastUsage DateTime? // Timestamp of last token usage (for 24h rate limiting window)
+  backgroundTasks BackgroundTask[] // Tâches en arrière-plan
+  openaiCalls   OpenAICall[]       // Appels OpenAI individuels
   resetToken    String?       // Token for password reset
   resetTokenExpiry DateTime?  // Expiration date for reset token
+
+  // Subscription system
+  stripeCustomerId String?     @unique
+  subscription     Subscription?
+  creditBalance    CreditBalance?
+  creditTransactions CreditTransaction[]
+  featureCounters  FeatureUsageCounter[]
+  referralCode     String?     @unique
+  referredBy       String?     // userId du parrain
+  referrals        Referral[]  @relation("Referrer")
+  referredUsers    Referral[]  @relation("Referred")
+
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -81,6 +93,18 @@ model CvFile {
   matchingSkills   String?  // JSON: ["React", "Node.js"]
   optimiseStatus   String? @default("idle") // Status of CV optimization: 'idle', 'inprogress', 'failed'
   optimiseUpdatedAt DateTime? // Last time the optimization status was updated
+
+  // Credit system
+  createdWithCredit   Boolean  @default(false)  // CV créé avec un crédit
+  creditUsedAt        DateTime?
+  creditTransactionId String?  @unique
+  creditTransaction   CreditTransaction? @relation(fields: [creditTransactionId], references: [id])
+
+  // CV blocking (downgrade)
+  blocked             Boolean  @default(false)
+  blockedAt           DateTime?
+  blockedReason       String?
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -101,7 +125,18 @@ model BackgroundTask {
   payload           String?
   deviceId          String
   userId            String?  // Optional - for user-specific tasks
+  user              User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   cvFile            String?  // CV filename linked to this task (for improve-cv, calculate-match-score)
+
+  // Credit system
+  creditUsed          Boolean  @default(false)
+  creditTransactionId String?  @unique
+  creditTransaction   CreditTransaction? @relation(fields: [creditTransactionId], references: [id])
+
+  // Feature counter refund metadata
+  featureName                String?   // Nom de la feature utilisée (pour remboursement)
+  featureCounterPeriodStart  DateTime? // Period start pour remboursement compteur
+
   updatedAt         DateTime @default(now()) @updatedAt
 
   @@index([deviceId])
@@ -329,6 +364,7 @@ model OpenAIAlert {
 model OpenAICall {
   id               String   @id @default(cuid())
   userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   featureName      String   // generate_cv, match_score, optimize_cv, translate_cv, import_pdf, etc.
   model            String   // gpt-5-nano-2025-08-07, gpt-5-mini-2025-08-07, etc.
 
@@ -347,4 +383,262 @@ model OpenAICall {
   @@index([featureName, createdAt])
   @@index([userId, featureName])
   @@index([createdAt])
+}
+
+model SubscriptionPlan {
+  id                    Int      @id @default(autoincrement())
+  name                  String   @unique // "Gratuit", "Pro", "Premium"
+  description           String?  // Description du plan
+
+  // Identification robuste
+  isFree                Boolean  @default(false) // true uniquement pour le plan gratuit
+  tier                  Int      @default(0)     // 0=Gratuit, 1=Pro, 2=Premium (pour logique upgrade/downgrade)
+  isPopular             Boolean  @default(false) // true pour afficher badge "Recommandé"
+
+  // Prix structuré (mensuel/annuel)
+  priceMonthly          Float    @default(0) // Prix mensuel (ex: 9.99)
+  priceYearly           Float    @default(0) // Prix annuel (ex: 99.99)
+  yearlyDiscountPercent Float    @default(0) // % de réduction annuelle (pour info)
+  priceCurrency         String   @default("EUR") // EUR, USD, GBP
+
+  // Stripe IDs
+  stripeProductId       String?  @unique
+  stripePriceIdMonthly  String?  @unique
+  stripePriceIdYearly   String?  @unique
+
+  // Relations
+  featureLimits         SubscriptionPlanFeatureLimit[]
+  subscriptions         Subscription[]
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([name])
+  @@index([tier])
+}
+
+model SubscriptionPlanFeatureLimit {
+  id                    String   @id @default(cuid())
+  planId                Int
+  plan                  SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  featureName           String   // generate_cv, import_pdf, export_cv, etc.
+  isEnabled             Boolean  @default(true)  // Feature activée ou non pour ce plan
+  usageLimit            Int      @default(-1)    // -1 = illimité, sinon nombre max d'utilisations
+
+  // Niveaux d'analyse (pour features avec analyse IA)
+  allowedAnalysisLevels String?  // JSON array: ["rapid", "medium", "deep"] ou null
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([planId, featureName])
+  @@index([planId])
+  @@index([featureName])
+}
+
+model CreditPack {
+  id            Int      @id @default(autoincrement())
+  name          String   // Généré automatiquement: "{creditAmount} Crédits"
+  description   String?  // Description du pack
+  creditAmount  Int      @unique // Nombre de crédits dans ce pack (unique)
+  price         Float    // Prix fixe du pack
+  priceCurrency String   @default("EUR") // EUR, USD, GBP
+  isActive      Boolean  @default(true)  // Pack actif ou désactivé
+
+  // Stripe IDs
+  stripeProductId String? @unique
+  stripePriceId   String? @unique
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([creditAmount])
+  @@index([isActive])
+}
+
+// ========== SUBSCRIPTION SYSTEM MODELS ==========
+
+// Abonnement utilisateur
+model Subscription {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  stripeCustomerId      String   @unique
+  stripeSubscriptionId  String?  @unique
+  stripePriceId         String?  // Prix actuel (monthly ou yearly)
+
+  planId                Int
+  plan                  SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  status                String   // active, canceled, past_due, incomplete
+  billingPeriod         String   // monthly, yearly
+
+  currentPeriodStart    DateTime
+  currentPeriodEnd      DateTime
+
+  cancelAtPeriodEnd     Boolean  @default(false)
+  canceledAt            DateTime?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+}
+
+// Balance de crédits utilisateur
+model CreditBalance {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  balance         Int      @default(0) // Crédits disponibles
+  totalPurchased  Int      @default(0) // Total acheté (historique)
+  totalUsed       Int      @default(0) // Total consommé
+  totalRefunded   Int      @default(0) // Total remboursé
+  totalGifted     Int      @default(0) // Total reçu (parrainage, bonus, promo)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// Transactions crédits (historique complet)
+model CreditTransaction {
+  id                    String   @id @default(cuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  amount                Int      // + pour achat/bonus, - pour consommation
+  type                  String   // purchase, usage, refund, gift, cv_creation
+  featureName           String?  // Feature consommée (si type=usage)
+
+  taskId                String?  // ID BackgroundTask lié
+  task                  BackgroundTask?
+
+  cvFileId              String?  // ID CvFile si type=cv_creation
+  cvFile                CvFile?
+
+  stripePaymentIntentId String?  // Pour les achats
+  stripeInvoiceId       String?  // Facture Stripe associée
+  refunded              Boolean  @default(false)
+  relatedTransactionId  String?  // Transaction d'origine (pour refund)
+
+  metadata              String?  // JSON pour données additionnelles
+
+  createdAt             DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([featureName])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@unique([stripePaymentIntentId])
+}
+
+// Compteurs d'utilisation mensuels par feature
+model FeatureUsageCounter {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  featureName String   // generate_cv, import_pdf, etc.
+  count       Int      @default(0)
+
+  periodStart DateTime // Début de la période (date anniversaire abonnement ou reset)
+  periodEnd   DateTime // Fin de la période
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, featureName, periodStart])
+  @@index([userId])
+  @@index([featureName])
+  @@index([periodStart])
+  @@index([periodEnd])
+}
+
+// Logging des webhooks Stripe
+model StripeWebhookLog {
+  id        String   @id @default(cuid())
+  eventId   String   @unique // Stripe event ID
+  eventType String   // customer.subscription.updated, etc.
+  payload   String   // JSON complet de l'event
+  processed Boolean  @default(false)
+  error     String?  // Erreur si traitement échoué
+
+  createdAt DateTime @default(now())
+
+  @@index([eventId])
+  @@index([eventType])
+  @@index([processed])
+  @@index([createdAt])
+}
+
+// Système de parrainage
+model Referral {
+  id              String   @id @default(cuid())
+
+  referrerId      String   // Utilisateur qui parraine
+  referrer        User     @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+
+  referredUserId  String   @unique // Utilisateur parrainé
+  referredUser    User     @relation("Referred", fields: [referredUserId], references: [id], onDelete: Cascade)
+
+  referralCode    String   // Code utilisé pour le parrainage
+
+  status          String   // pending, completed
+  referrerReward  Int      @default(0) // Crédits donnés au parrain
+  referredReward  Int      @default(0) // Crédits donnés au filleul
+
+  rewardsGrantedAt DateTime? // Date d'attribution des récompenses
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([referrerId])
+  @@index([referredUserId])
+  @@index([referralCode])
+  @@index([status])
+}
+
+// Codes promotionnels
+model PromoCode {
+  id            String   @id @default(cuid())
+  code          String   @unique // Code promo (ex: "LAUNCH2025")
+  name          String   // Nom interne
+
+  type          String   // subscription_discount, credit_bonus
+
+  // Pour réduction abonnement
+  discountType  String?  // percentage, fixed_amount
+  discountValue Float?   // 20 (%), ou 5.00 (€)
+
+  // Pour bonus crédits
+  creditBonus   Int?     // Nombre de crédits offerts
+
+  applicableTo  String   // JSON array: planIds ou "all"
+
+  maxUses       Int?     // Nombre max d'utilisations (null = illimité)
+  currentUses   Int      @default(0)
+
+  validFrom     DateTime
+  validUntil    DateTime?
+
+  isActive      Boolean  @default(true)
+
+  stripeCouponId String? @unique // ID du coupon Stripe associé
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+  @@index([validFrom])
+  @@index([validUntil])
 }

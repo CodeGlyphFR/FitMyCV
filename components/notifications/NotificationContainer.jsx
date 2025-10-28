@@ -1,10 +1,15 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { useNotifications } from "./NotificationProvider";
 
 function NotificationItem({ notification, onRemove }) {
-  const { id, type, message, isRemoving } = notification;
+  const { id, type, message, isRemoving, redirectUrl, linkText } = notification;
+  const router = useRouter();
+
+  // Debug: vérifier si redirectUrl est présent
+  console.log('[NotificationItem] notification:', { id, type, message, redirectUrl, linkText });
 
   const styles = {
     success: {
@@ -12,40 +17,61 @@ function NotificationItem({ notification, onRemove }) {
       border: "border-2 border-emerald-400/50",
       text: "text-white drop-shadow",
       icon: "text-emerald-300",
-      button: "text-emerald-200 hover:text-white hover:bg-emerald-500/30"
+      button: "text-emerald-200 hover:text-white hover:bg-emerald-500/30",
+      actionButton: "bg-emerald-500/40 hover:bg-emerald-500/60 border-emerald-400/70"
     },
     error: {
       bg: "bg-red-500/20 backdrop-blur-xl",
       border: "border-2 border-red-400/50",
       text: "text-white drop-shadow",
       icon: "text-red-300",
-      button: "text-red-200 hover:text-white hover:bg-red-500/30"
+      button: "text-red-200 hover:text-white hover:bg-red-500/30",
+      actionButton: "bg-red-500/40 hover:bg-red-500/60 border-red-400/70"
     },
     info: {
       bg: "bg-white/15 backdrop-blur-xl",
       border: "border-2 border-white/40",
       text: "text-white drop-shadow",
       icon: "text-white/80",
-      button: "text-white/70 hover:text-white hover:bg-white/30"
+      button: "text-white/70 hover:text-white hover:bg-white/30",
+      actionButton: "bg-white/30 hover:bg-white/40 border-white/60"
     }
   }[type] || {
     bg: "bg-white/15 backdrop-blur-xl",
     border: "border-2 border-white/40",
     text: "text-white drop-shadow",
     icon: "text-white/80",
-    button: "text-white/70 hover:text-white hover:bg-white/30"
+    button: "text-white/70 hover:text-white hover:bg-white/30",
+    actionButton: "bg-white/30 hover:bg-white/40 border-white/60"
   };
 
   const animationClass = isRemoving ? "animate-notification-out" : "animate-notification-in";
 
+  const handleActionClick = (e) => {
+    e.stopPropagation();
+    if (redirectUrl) {
+      router.push(redirectUrl);
+      onRemove(id);
+    }
+  };
+
   return (
     <div
-      className={`${styles.bg} ${styles.border} ${styles.text} p-4 rounded-xl shadow-2xl mb-2 min-w-80 max-w-96 ${animationClass} cursor-pointer hover:scale-[1.02] transition-all duration-200`}
-      onClick={() => onRemove(id)}
+      className={`${styles.bg} ${styles.border} ${styles.text} p-4 rounded-xl shadow-2xl mb-2 min-w-80 max-w-96 ${animationClass} ${!redirectUrl ? 'cursor-pointer hover:scale-[1.02]' : ''} transition-all duration-200`}
+      onClick={!redirectUrl ? () => onRemove(id) : undefined}
     >
       <div className="flex justify-between items-start gap-3">
         <div className="flex-1">
-          <div className="text-sm font-medium">{message}</div>
+          <div className="text-sm font-medium mb-2">{message}</div>
+          {redirectUrl && (
+            <button
+              onClick={handleActionClick}
+              className={`mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold ${styles.actionButton} border-2 transition-all duration-200 inline-flex items-center gap-1 shadow-sm hover:shadow-md`}
+            >
+              {linkText || "Voir les options"}
+              <span className="text-base">→</span>
+            </button>
+          )}
         </div>
         <button
           onClick={(e) => {

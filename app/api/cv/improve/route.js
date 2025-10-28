@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { v4 as uuidv4 } from "uuid";
 import { scheduleImproveCvJob } from "@/lib/backgroundTasks/improveCvJob";
+import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 
 export async function POST(request) {
   const session = await auth();
@@ -64,8 +65,16 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    // ✅ L'optimisation ne consomme PAS de tokens (seul le calcul de score consomme des tokens)
-    console.log(`[improve-cv] ✅ Optimisation autorisée (pas de rate limit pour l'optimisation)`);
+    // Vérifier les limites ET incrémenter le compteur/débiter le crédit
+    const usageResult = await incrementFeatureCounter(userId, 'optimize_cv', {});
+
+    if (!usageResult.success) {
+      return NextResponse.json({
+        error: usageResult.error,
+        actionRequired: usageResult.actionRequired,
+        redirectUrl: usageResult.redirectUrl
+      }, { status: 403 });
+    }
 
     // Créer une tâche d'amélioration
     const taskId = uuidv4();
@@ -87,7 +96,11 @@ export async function POST(request) {
           currentScore: cvRecord.matchScore || 0,
           suggestions,
           replaceExisting
-        })
+        }),
+        creditUsed: usageResult.usedCredit,
+        creditTransactionId: usageResult.transactionId || null,
+        featureName: usageResult.featureName || null,
+        featureCounterPeriodStart: usageResult.periodStart || null,
       }
     });
 

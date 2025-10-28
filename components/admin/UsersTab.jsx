@@ -5,6 +5,7 @@ import { KPICard } from './KPICard';
 import { CustomSelect } from './CustomSelect';
 import { Toast } from './Toast';
 import { ConfirmDialog } from './ConfirmDialog';
+import { getPlanColor } from '@/lib/admin/planColors';
 
 export function UsersTab({ refreshKey }) {
   const [data, setData] = useState(null);
@@ -36,7 +37,6 @@ export function UsersTab({ refreshKey }) {
 
   // Formulaire édition utilisateur
   const [editedEmail, setEditedEmail] = useState('');
-  const [editedTokens, setEditedTokens] = useState(0);
 
   // Ref pour le scroll chaining
   const scrollContainerRef = useRef(null);
@@ -237,7 +237,6 @@ export function UsersTab({ refreshKey }) {
   function openEditUserModal(user) {
     setSelectedUserForEdit(user);
     setEditedEmail(user.email);
-    setEditedTokens(user.matchScoreRefreshCount || 0);
     setShowEditUserModal(true);
   }
 
@@ -250,11 +249,6 @@ export function UsersTab({ refreshKey }) {
 
     if (!editedEmail.trim()) {
       setToast({ type: 'error', message: 'Email invalide' });
-      return;
-    }
-
-    if (typeof editedTokens !== 'number' || editedTokens < 0) {
-      setToast({ type: 'error', message: 'Nombre de tokens invalide' });
       return;
     }
 
@@ -281,25 +275,10 @@ export function UsersTab({ refreshKey }) {
         }
       }
 
-      // Modifier les tokens si changés
-      if (editedTokens !== selectedUserForEdit.matchScoreRefreshCount) {
-        const tokensResponse = await fetch(`/api/admin/users/${selectedUserForEdit.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'updateTokens', tokens: editedTokens }),
-        });
-
-        if (!tokensResponse.ok) {
-          const errorData = await tokensResponse.json().catch(() => ({ error: 'Erreur serveur' }));
-          throw new Error(errorData.error || 'Erreur lors de la modification des tokens');
-        }
-      }
-
       setToast({ type: 'success', message: 'Utilisateur modifié avec succès' });
       setShowEditUserModal(false);
       setSelectedUserForEdit(null);
       setEditedEmail('');
-      setEditedTokens(0);
       await new Promise(resolve => setTimeout(resolve, 1000));
       await fetchData();
     } catch (err) {
@@ -474,6 +453,30 @@ export function UsersTab({ refreshKey }) {
     );
   };
 
+  const getPlanBadge = (subscription) => {
+    if (!subscription?.plan) {
+      return <span className="px-2 py-0.5 text-xs rounded bg-gray-500/20 text-gray-300">🆓 Gratuit</span>;
+    }
+
+    const style = getPlanColor(subscription.plan.tier);
+
+    return (
+      <span className={`px-2 py-0.5 text-xs rounded ${style.bg} ${style.text}`}>
+        {style.icon} {subscription.plan.name}
+      </span>
+    );
+  };
+
+  const getBillingPeriodBadge = (subscription) => {
+    if (!subscription?.billingPeriod) return null;
+
+    return (
+      <span className="px-2 py-0.5 text-xs rounded bg-emerald-500/20 text-emerald-400">
+        {subscription.billingPeriod === 'monthly' ? '📅 Mensuel' : '📅 Annuel'}
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-6 pb-8">
       {/* KPI Cards avec tooltips */}
@@ -630,13 +633,23 @@ export function UsersTab({ refreshKey }) {
                         {getEmailStatusBadge(user.emailVerified)}
                       </div>
 
+                      {/* Abonnement et crédits */}
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        {getPlanBadge(user.subscription)}
+                        {getBillingPeriodBadge(user.subscription)}
+                        {user.credits > 0 && (
+                          <span className="px-2 py-0.5 text-xs rounded bg-yellow-500/20 text-yellow-400">
+                            💎 {user.credits} crédit{user.credits > 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+
                       <div className="text-white/60 text-sm truncate mb-1">
                         {user.email}
                       </div>
 
                       <div className="flex items-center gap-4 text-xs text-white/40 flex-wrap">
                         <span>📄 {user.cvCount} CV{user.cvCount > 1 ? 's' : ''}</span>
-                        <span>🪙 {user.matchScoreRefreshCount || 0} token{user.matchScoreRefreshCount > 1 ? 's' : ''}</span>
                         <span>📅 Inscrit le {formatDate(user.createdAt)}</span>
                         <span>🕐 Dernière activité : {formatDateTime(user.lastActivity)}</span>
                       </div>
@@ -834,23 +847,10 @@ export function UsersTab({ refreshKey }) {
                   </p>
                 )}
               </div>
-
-              {/* Tokens */}
-              <div>
-                <label className="text-white/60 text-sm mb-2 block">Nombre de tokens</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={editedTokens}
-                  onChange={(e) => setEditedTokens(parseInt(e.target.value, 10) || 0)}
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-yellow-400/50 transition"
-                />
-              </div>
             </div>
 
             <div className="text-xs text-white/40 bg-white/5 p-3 rounded border border-white/10 mt-4 mb-4">
-              <div className="mb-1">⚠️ La modification de l'email réinitialisera le statut de vérification.</div>
-              <div>ℹ️ Les tokens permettent à l'utilisateur de recalculer le score de correspondance de ses CV.</div>
+              <div>⚠️ La modification de l'email réinitialisera le statut de vérification.</div>
             </div>
 
             <div className="flex gap-3">
@@ -859,7 +859,6 @@ export function UsersTab({ refreshKey }) {
                   setShowEditUserModal(false);
                   setSelectedUserForEdit(null);
                   setEditedEmail('');
-                  setEditedTokens(0);
                 }}
                 disabled={updating}
                 className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/15 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"

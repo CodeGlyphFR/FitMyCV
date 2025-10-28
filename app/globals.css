@@ -148,17 +148,14 @@ a:active,
 
 .animate-auth-blob {
   animation: auth-blob 18s ease-in-out infinite;
-  will-change: transform, opacity;
 }
 
 .animate-auth-blob-fast {
   animation: auth-blob 14s ease-in-out infinite;
-  will-change: transform, opacity;
 }
 
 .animate-auth-blob-slow {
   animation: auth-blob 26s ease-in-out infinite;
-  will-change: transform, opacity;
 }
 
 .animation-delay-1500 {
@@ -306,4 +303,45 @@ select:-moz-autofill:focus {
 
 .animate-scale-in {
   animation: scale-in 0.2s ease-out;
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hidden {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* GPU Acceleration utility class for better backdrop-blur performance on iOS */
+.gpu-accelerate {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+/* iOS-optimized blur: reduce backdrop-blur intensity on iOS to prevent performance issues */
+@supports (-webkit-touch-callout: none) {
+  /* For backdrop-blur-sm (original 4px) → 2px on iOS */
+  .ios-blur-light {
+    backdrop-filter: blur(2px) !important;
+    -webkit-backdrop-filter: blur(2px) !important;
+  }
+
+  /* For backdrop-blur-md (original 12px) → 6px on iOS */
+  .ios-blur-medium {
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+  }
+
+  /* For backdrop-blur-xl (original 16px) → 4px on iOS */
+  .ios-optimized-blur {
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+  }
 }

@@ -6,6 +6,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import os from "os";
 import { validateUploadedFile, sanitizeFilename } from "@/lib/security/fileValidation";
+import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -126,6 +127,24 @@ export async function POST(request) {
     tempDirectory = directory;
 
     const userId = session.user.id;
+
+    // Vérifier les limites ET incrémenter le compteur/débiter le crédit
+    const usageResult = await incrementFeatureCounter(userId, 'import_pdf', {});
+
+    if (!usageResult.success) {
+      // Nettoyer le fichier temporaire
+      if (tempDirectory) {
+        try {
+          await fs.rm(tempDirectory, { recursive: true, force: true });
+        } catch (_err) {}
+      }
+      return NextResponse.json({
+        error: usageResult.error,
+        actionRequired: usageResult.actionRequired,
+        redirectUrl: usageResult.redirectUrl
+      }, { status: 403 });
+    }
+
     const taskIdentifier = typeof taskId === "string" && taskId.trim() ? taskId.trim() : `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     const existingTask = await prisma.backgroundTask.findUnique({ where: { id: taskIdentifier } });
@@ -143,6 +162,10 @@ export async function POST(request) {
       result: null,
       deviceId,
       payload: JSON.stringify(payload),
+      creditUsed: usageResult.usedCredit,
+      creditTransactionId: usageResult.transactionId || null,
+      featureName: usageResult.featureName || null,
+      featureCounterPeriodStart: usageResult.periodStart || null,
     };
 
     if (!existingTask) {

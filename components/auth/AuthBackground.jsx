@@ -50,22 +50,20 @@ export default function AuthBackground() {
       overflow: hidden;
     `;
 
-    // Créer les blobs animés - Version subtile pour iOS, mieux répartis
+    // Créer les blobs animés - Version optimisée pour iOS (moins de blobs, blur réduit, opacités basses)
     const blobs = isIOS ? [
-      { top: '-5rem', left: '-8rem', width: '24rem', height: '24rem', colors: 'from-emerald-400/25 via-sky-500/15 to-transparent', animation: 'animate-auth-blob-fast', delay: '' },
-      { top: '10%', right: '-100px', width: '22rem', height: '22rem', colors: 'from-sky-500/20 via-emerald-400/12 to-transparent', animation: 'animate-auth-blob', delay: 'animation-delay-1500' },
-      { bottom: '-8rem', left: '8%', width: '28rem', height: '28rem', colors: 'from-emerald-500/18 via-sky-400/10 to-transparent', animation: 'animate-auth-blob-slow', delay: 'animation-delay-6000' },
-      { top: '45%', right: '12%', width: '16rem', height: '16rem', colors: 'from-sky-400/15 via-emerald-300/8 to-transparent', animation: 'animate-auth-blob-fast', delay: 'animation-delay-3000' },
-      { bottom: '15%', right: '-4rem', width: '22rem', height: '22rem', colors: 'from-sky-500/20 via-emerald-400/12 to-transparent', animation: 'animate-auth-blob', delay: 'animation-delay-1500' },
-      { top: '25%', left: '-5rem', width: '18rem', height: '18rem', colors: 'from-emerald-400/18 via-sky-500/10 to-transparent', animation: 'animate-auth-blob-fast', delay: 'animation-delay-3000' },
+      { top: '-5rem', left: '-8rem', width: '24rem', height: '24rem', colors: 'from-emerald-400/20 via-sky-500/12 to-transparent', animation: 'animate-auth-blob-fast', delay: '', blur: '40px' },
+      { bottom: '-8rem', left: '8%', width: '28rem', height: '28rem', colors: 'from-emerald-500/15 via-sky-400/8 to-transparent', animation: 'animate-auth-blob-slow', delay: 'animation-delay-6000', blur: '50px' },
+      { top: '45%', right: '12%', width: '16rem', height: '16rem', colors: 'from-sky-400/12 via-emerald-300/6 to-transparent', animation: 'animate-auth-blob-fast', delay: 'animation-delay-3000', blur: '35px' },
+      { bottom: '15%', right: '-4rem', width: '22rem', height: '22rem', colors: 'from-sky-500/18 via-emerald-400/10 to-transparent', animation: 'animate-auth-blob', delay: 'animation-delay-1500', blur: '40px' },
     ] : [
-      { top: '-8rem', left: '-10rem', width: '20rem', height: '20rem', colors: 'from-emerald-400/90 via-sky-500/70 to-transparent', animation: 'animate-auth-blob-fast', delay: '' },
-      { top: '20%', right: '-140px', width: '24rem', height: '24rem', colors: 'from-sky-500/70 via-emerald-400/50 to-transparent', animation: 'animate-auth-blob', delay: 'animation-delay-1500' },
-      { bottom: '-180px', left: '10%', width: '420px', height: '420px', colors: 'from-emerald-500/55 via-sky-400/35 to-transparent', animation: 'animate-auth-blob-slow', delay: 'animation-delay-6000' },
-      { top: '55%', right: '15%', width: '14rem', height: '14rem', colors: 'from-sky-400/50 via-emerald-300/40 to-transparent', animation: 'animate-auth-blob-fast', delay: 'animation-delay-3000' },
+      { top: '-8rem', left: '-10rem', width: '20rem', height: '20rem', colors: 'from-emerald-400/90 via-sky-500/70 to-transparent', animation: 'animate-auth-blob-fast', delay: '', blur: '48px' },
+      { top: '20%', right: '-140px', width: '24rem', height: '24rem', colors: 'from-sky-500/70 via-emerald-400/50 to-transparent', animation: 'animate-auth-blob', delay: 'animation-delay-1500', blur: '48px' },
+      { bottom: '-180px', left: '10%', width: '420px', height: '420px', colors: 'from-emerald-500/55 via-sky-400/35 to-transparent', animation: 'animate-auth-blob-slow', delay: 'animation-delay-6000', blur: '60px' },
+      { top: '55%', right: '15%', width: '14rem', height: '14rem', colors: 'from-sky-400/50 via-emerald-300/40 to-transparent', animation: 'animate-auth-blob-fast', delay: 'animation-delay-3000', blur: '40px' },
     ];
 
-    blobs.forEach((blob, index) => {
+    blobs.forEach((blob) => {
       const blobDiv = document.createElement('div');
       blobDiv.style.cssText = `
         position: absolute;
@@ -77,8 +75,8 @@ export default function AuthBackground() {
         height: ${blob.height};
         border-radius: 9999px;
         background: linear-gradient(to bottom right, var(--tw-gradient-stops));
-        filter: blur(${index === 2 ? '150px' : index === 1 ? '3rem' : '2rem'});
-        will-change: transform, opacity;
+        filter: blur(${blob.blur});
+        transform: translateZ(0);
       `;
       blobDiv.className = `bg-gradient-to-br ${blob.colors} ${blob.animation} ${blob.delay}`;
       bgContainer.appendChild(blobDiv);

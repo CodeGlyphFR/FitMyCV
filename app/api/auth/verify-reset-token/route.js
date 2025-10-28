@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { verifyPasswordResetToken } from '@/lib/email/emailService';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 /**
  * Vérifie si un token de réinitialisation est valide sans le consommer

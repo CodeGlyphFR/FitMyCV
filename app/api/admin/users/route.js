@@ -69,7 +69,6 @@ export async function GET(request) {
           role: true,
           emailVerified: true,
           createdAt: true,
-          matchScoreRefreshCount: true,
           _count: {
             select: {
               cvs: true,
@@ -78,6 +77,27 @@ export async function GET(request) {
           accounts: {
             select: {
               provider: true,
+            },
+          },
+          subscription: {
+            select: {
+              id: true,
+              status: true,
+              billingPeriod: true,
+              plan: {
+                select: {
+                  id: true,
+                  name: true,
+                  tier: true,
+                  priceMonthly: true,
+                  priceYearly: true,
+                },
+              },
+            },
+          },
+          creditBalance: {
+            select: {
+              balance: true,
             },
           },
         },
@@ -139,11 +159,12 @@ export async function GET(request) {
       role: user.role,
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
-      matchScoreRefreshCount: user.matchScoreRefreshCount,
       cvCount: user._count.cvs,
       lastActivity: activityMap.get(user.id) || user.createdAt,
       oauthProviders: user.accounts.map(a => a.provider),
       hasOAuth: user.accounts.length > 0,
+      subscription: user.subscription,
+      credits: user.creditBalance?.balance || 0,
     }));
 
     return NextResponse.json({

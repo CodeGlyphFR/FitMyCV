@@ -1,0 +1,28 @@
+[Unit]
+Description=CV Builder Website
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=erickdesmet
+Group=erickdesmet
+WorkingDirectory=/home/erickdesmet/Documents/cv-site
+
+Environment=HOME=/home/erickdesmet
+Environment=NODE_ENV=production
+
+# Lancer uniquement npm start (build doit être fait manuellement avant)
+ExecStart=/usr/bin/env bash -lc 'export NVM_DIR="$HOME/.nvm"; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; cd /home/erickdesmet/Documents/cv-site; exec npm start'
+
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+KillMode=mixed
+TimeoutStopSec=30
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

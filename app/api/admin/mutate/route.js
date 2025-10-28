@@ -25,6 +25,7 @@ export async function POST(req){
     var selected = files.includes(currentCookie) ? currentCookie : (files[0] || null);
     if (!selected) return NextResponse.json({ error: "Aucun CV disponible" }, { status: 404 });
     var cv=JSON.parse(await readUserCvFile(userId, selected));
+
     var tokens=parsePath(fieldPath); var parentPath=tokens.slice(0,-1); var key=tokens[tokens.length-1]; var targetParent=getByPath(cv,parentPath);
     switch(op){
       case "set": setByPath(cv, tokens, value); break;

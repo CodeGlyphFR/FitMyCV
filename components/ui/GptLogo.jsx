@@ -9,7 +9,7 @@ export default function GptLogo({ className = "", size = 16 }){
       width={size}
       height={size}
       className={className}
-      loading="lazy"
+      loading="eager"
     />
   );
 }

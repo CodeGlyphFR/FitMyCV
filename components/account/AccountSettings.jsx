@@ -33,6 +33,8 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
   const [deletePassword, setDeletePassword] = React.useState("");
   const [deleteError, setDeleteError] = React.useState("");
   const [deleteLoading, setDeleteLoading] = React.useState(false);
+  const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+  const [acceptedDeleteTerms, setAcceptedDeleteTerms] = React.useState(false);
 
   async function updateProfile(event){
     event.preventDefault();
@@ -113,7 +115,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
     }
   }
 
-  async function deleteAccount(event){
+  function openDeleteModal(event){
     event.preventDefault();
     setDeleteError("");
 
@@ -122,9 +124,11 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       return;
     }
 
-    const confirmed = window.confirm("Cette action est irréversible. Confirmez la suppression de votre compte ?");
-    if (!confirmed) return;
+    // Ouvrir le modal de confirmation
+    setShowDeleteModal(true);
+  }
 
+  async function confirmDeleteAccount(){
     try {
       setDeleteLoading(true);
       const res = await fetch("/api/account/delete", {
@@ -135,6 +139,8 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       const payload = await res.json().catch(() => ({}));
       if (!res.ok){
         setDeleteError(payload?.error || "Suppression impossible. Réessayez.");
+        setShowDeleteModal(false);
+        setDeleteLoading(false);
         return;
       }
 
@@ -142,7 +148,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
     } catch (error) {
       console.error(error);
       setDeleteError("Erreur inattendue lors de la suppression du compte.");
-    } finally {
+      setShowDeleteModal(false);
       setDeleteLoading(false);
     }
   }
@@ -290,9 +296,9 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       <section className="rounded-2xl border-2 border-red-400/50 bg-red-500/20 backdrop-blur-xl p-6 shadow-2xl">
         <h2 className="text-lg font-semibold mb-2 text-red-300 drop-shadow">Supprimer le compte</h2>
         <p className="text-sm text-white drop-shadow mb-3">
-          Cette action est définitive : tous vos CV et données seront effacés. Tapez votre mot de passe pour confirmer.
+          ⚠️ Cette action est définitive et <strong>sans remboursement</strong>. Tous vos CV, crédits et données seront effacés. Votre abonnement sera immédiatement annulé et vos données bancaires seront supprimées. Tapez votre mot de passe pour continuer.
         </p>
-        <form onSubmit={deleteAccount} className="space-y-3">
+        <form onSubmit={openDeleteModal} className="space-y-3">
           <div className="space-y-1">
             <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Mot de passe</label>
             <PasswordInput
@@ -320,6 +326,86 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
           </button>
         </form>
       </section>
+
+      {/* Modal de confirmation de suppression */}
+      {showDeleteModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={() => !deleteLoading && setShowDeleteModal(false)}
+        >
+          <div
+            className="bg-gradient-to-br from-red-500/20 to-orange-500/20 border-2 border-red-400/50 rounded-2xl backdrop-blur-xl p-6 max-w-md w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-semibold text-red-300 drop-shadow mb-4">
+              ⚠️ Confirmer la suppression du compte
+            </h3>
+
+            <div className="space-y-3 mb-6">
+              <p className="text-sm text-white/90 drop-shadow">
+                Vous êtes sur le point de supprimer définitivement votre compte. Cette action est irréversible.
+              </p>
+
+              <ul className="space-y-2 text-sm text-white/80">
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-0.5">•</span>
+                  <span><strong className="text-white">Aucun remboursement</strong> ne sera effectué</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-0.5">•</span>
+                  <span>Vous perdrez <strong className="text-white">tous vos crédits restants</strong></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-0.5">•</span>
+                  <span>Votre <strong className="text-white">abonnement sera immédiatement annulé</strong></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-0.5">•</span>
+                  <span><strong className="text-white">Tous vos CV</strong> seront définitivement supprimés</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-0.5">•</span>
+                  <span>Vos <strong className="text-white">données bancaires</strong> seront supprimées de nos serveurs</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Checkbox de confirmation */}
+            <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-6">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={acceptedDeleteTerms}
+                  onChange={(e) => setAcceptedDeleteTerms(e.target.checked)}
+                  className="mt-1 w-4 h-4 rounded-sm border-2 border-white/30 bg-white/5 appearance-none cursor-pointer transition-all checked:bg-gradient-to-br checked:from-red-500/40 checked:to-red-600/40 checked:border-red-400/60 focus:ring-2 focus:ring-red-500/50 focus:ring-offset-0 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
+                  disabled={deleteLoading}
+                />
+                <span className="text-sm text-white/80 group-hover:text-white transition-colors">
+                  J'ai compris que cette action est <strong className="text-red-300">irréversible</strong> et que je ne serai <strong className="text-red-300">pas remboursé</strong>
+                </span>
+              </label>
+            </div>
+
+            {/* Boutons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleteLoading}
+                className="flex-1 px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors disabled:opacity-50 font-medium"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmDeleteAccount}
+                disabled={deleteLoading || !acceptedDeleteTerms}
+                className="flex-1 px-4 py-2.5 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white transition-colors disabled:opacity-50 font-medium shadow-lg shadow-red-500/20"
+              >
+                {deleteLoading ? "Suppression..." : "Supprimer définitivement"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { ensureUserCvDir } from "@/lib/cv/storage";
 import { scheduleGenerateCvFromJobTitleJob } from "@/lib/backgroundTasks/generateCvFromJobTitleJob";
+import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 
 export async function POST(request) {
   const session = await auth();
@@ -30,62 +31,17 @@ export async function POST(request) {
 
     const userId = session.user.id;
 
-    // Récupérer les settings de rate limiting depuis la DB
-    const [tokenLimitSetting, resetHoursSetting] = await Promise.all([
-      prisma.setting.findUnique({ where: { settingName: 'token_default_limit' }, select: { value: true } }),
-      prisma.setting.findUnique({ where: { settingName: 'token_reset_hours' }, select: { value: true } })
-    ]);
-
-    const TOKEN_LIMIT = parseInt(tokenLimitSetting?.value || '5', 10);
-    const RESET_HOURS = parseInt(resetHoursSetting?.value || '24', 10);
-    const RESET_MS = RESET_HOURS * 60 * 60 * 1000;
-
-    // Rate limiting GLOBAL (au niveau utilisateur)
-    const now = new Date();
-    const resetAgo = new Date(now.getTime() - RESET_MS);
-
-    // Récupérer l'utilisateur avec ses compteurs de refresh
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        matchScoreRefreshCount: true,
-        tokenLastUsage: true,
-      },
+    // Vérifier les limites ET incrémenter le compteur/débiter le crédit
+    const usageResult = await incrementFeatureCounter(userId, 'generate_from_job_title', {
+      analysisLevel: requestedAnalysisLevel,
     });
 
-    let refreshCount = user?.matchScoreRefreshCount || 0;
-    let tokenLastUsage = user?.tokenLastUsage;
-
-    // Reset UNIQUEMENT si tokens à 0 ET délai écoulé
-    if (refreshCount === 0 && tokenLastUsage && tokenLastUsage < resetAgo) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          matchScoreRefreshCount: TOKEN_LIMIT,
-          tokenLastUsage: null,
-        },
-      });
-      refreshCount = TOKEN_LIMIT;
-      tokenLastUsage = null;
-      console.log(`[generate-cv-from-job-title] ✅ Reset des tokens après ${RESET_HOURS}h: ${TOKEN_LIMIT}/${TOKEN_LIMIT}`);
-    }
-
-    // Vérifier si plus de tokens disponibles (GLOBAL pour tous les CVs)
-    if (refreshCount === 0) {
-      const timeUntilReset = tokenLastUsage
-        ? new Date(tokenLastUsage.getTime() + RESET_MS)
-        : new Date();
-      const totalMinutesLeft = Math.ceil((timeUntilReset - now) / (60 * 1000));
-      const hoursLeft = Math.floor(totalMinutesLeft / 60);
-      const minutesLeft = totalMinutesLeft % 60;
-
-      console.log("[generate-cv-from-job-title] Plus de tokens disponibles pour l'utilisateur", userId);
+    if (!usageResult.success) {
       return NextResponse.json({
-        error: "No tokens available",
-        details: `Vous n'avez plus de tokens disponibles. Réessayez dans ${hoursLeft}h${minutesLeft}m.`,
-        hoursLeft,
-        minutesLeft,
-      }, { status: 429 });
+        error: usageResult.error,
+        actionRequired: usageResult.actionRequired,
+        redirectUrl: usageResult.redirectUrl
+      }, { status: 403 });
     }
 
     await ensureUserCvDir(userId);
@@ -117,6 +73,10 @@ export async function POST(request) {
         result: null,
         deviceId,
         payload: JSON.stringify(taskPayload),
+        creditUsed: usageResult.usedCredit,
+        creditTransactionId: usageResult.transactionId || null,
+        featureName: usageResult.featureName || null,
+        featureCounterPeriodStart: usageResult.periodStart || null,
       },
     });
 
@@ -127,30 +87,12 @@ export async function POST(request) {
       deviceId,
     });
 
-    // Décrémenter le compteur GLOBAL et mettre à jour tokenLastUsage
-    const currentUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        matchScoreRefreshCount: true,
-      },
-    });
-
-    // TOUJOURS mettre à jour tokenLastUsage à chaque utilisation
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        tokenLastUsage: new Date(),
-        matchScoreRefreshCount: currentUser.matchScoreRefreshCount - 1,
-      },
-    });
-    console.log(`[generate-cv-from-job-title] ✅ Génération lancée - Tokens restants: ${currentUser.matchScoreRefreshCount - 1}/${TOKEN_LIMIT}`);
+    console.log(`[generate-cv-from-job-title] ✅ Génération lancée pour l'utilisateur ${userId}`);
 
     return NextResponse.json({
       success: true,
       queued: true,
       taskId,
-      refreshCount: currentUser?.matchScoreRefreshCount ? currentUser.matchScoreRefreshCount - 1 : TOKEN_LIMIT - 1,
-      refreshLimit: TOKEN_LIMIT,
     }, { status: 202 });
   } catch (error) {
     console.error('Erreur lors de la mise en file de la génération de CV depuis titre:', error);

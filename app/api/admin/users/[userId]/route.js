@@ -10,7 +10,6 @@ import { deleteUserCompletely, validateUserEmailManually } from '@/lib/admin/use
  * - { action: 'updateRole', role: 'USER' | 'ADMIN' }
  * - { action: 'updateEmail', email: 'new@email.com' }
  * - { action: 'validateEmail' }
- * - { action: 'updateTokens', tokens: number }
  */
 export async function PATCH(request, { params }) {
   try {
@@ -152,37 +151,9 @@ export async function PATCH(request, { params }) {
       });
     }
 
-    // Action: Modifier le nombre de tokens
-    if (action === 'updateTokens') {
-      if (typeof tokens !== 'number' || tokens < 0) {
-        return NextResponse.json(
-          { error: 'Nombre de tokens invalide (doit être un nombre positif ou zéro)' },
-          { status: 400 }
-        );
-      }
-
-      const updatedUser = await prisma.user.update({
-        where: { id: userId },
-        data: { matchScoreRefreshCount: tokens },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          emailVerified: true,
-          matchScoreRefreshCount: true,
-        },
-      });
-
-      return NextResponse.json({
-        success: true,
-        user: updatedUser,
-      });
-    }
-
     // Action inconnue
     return NextResponse.json(
-      { error: 'Action invalide (updateRole, updateEmail, validateEmail, ou updateTokens attendu)' },
+      { error: 'Action invalide (updateRole, updateEmail, ou validateEmail attendu)' },
       { status: 400 }
     );
 

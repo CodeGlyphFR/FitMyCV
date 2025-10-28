@@ -11,7 +11,6 @@ import { useSettings } from "@/lib/settings/SettingsContext";
 import { useLinkHistory } from "@/hooks/useLinkHistory";
 import GptLogo from "@/components/ui/GptLogo";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
-import TokenCounter from "@/components/ui/TokenCounter";
 import TaskQueueModal from "@/components/TaskQueueModal";
 import TaskQueueDropdown from "@/components/TaskQueueDropdown";
 
@@ -99,6 +98,7 @@ export default function TopBar() {
   const exportModal = useExportModal({
     currentItem: state.currentItem,
     language,
+    addNotification,
   });
 
   // Refs
@@ -115,41 +115,6 @@ export default function TopBar() {
   const activeTasksCount = React.useMemo(() => {
     return tasks.filter(t => t.status === 'running' || t.status === 'queued').length;
   }, [tasks]);
-
-  // Token state for search bar
-  const [userRefreshCount, setUserRefreshCount] = React.useState(5);
-  const [canUseSearchBar, setCanUseSearchBar] = React.useState(true);
-  const [isLoadingTokens, setIsLoadingTokens] = React.useState(false);
-
-  // Fetch user tokens
-  const fetchUserTokens = React.useCallback(async () => {
-    if (!isAuthenticated) return;
-
-    setIsLoadingTokens(true);
-    try {
-      const response = await fetch('/api/user/rate-limit', {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-
-      if (!response.ok) {
-        console.error('[TopBar] Failed to fetch tokens');
-        setIsLoadingTokens(false);
-        return;
-      }
-
-      const data = await response.json();
-      setUserRefreshCount(data.refreshCount || 0);
-      setCanUseSearchBar(data.canRefresh ?? true);
-      setIsLoadingTokens(false);
-    } catch (error) {
-      console.error('[TopBar] Error fetching tokens:', error);
-      setIsLoadingTokens(false);
-    }
-  }, [isAuthenticated]);
 
   // Scroll behavior hook
   useScrollBehavior({
@@ -405,77 +370,6 @@ export default function TopBar() {
     return () => window.removeEventListener('resize', handleResize);
   }, [modals]);
 
-  // Fetch tokens on mount
-  React.useEffect(() => {
-    fetchUserTokens();
-  }, [fetchUserTokens]);
-
-  // Listen for token updates
-  React.useEffect(() => {
-    const handleTokensUpdated = () => {
-      fetchUserTokens();
-    };
-    window.addEventListener('tokens:updated', handleTokensUpdated);
-    return () => window.removeEventListener('tokens:updated', handleTokensUpdated);
-  }, [fetchUserTokens]);
-
-  // Listen for optimistic token decrement
-  React.useEffect(() => {
-    const handleOptimisticDecrement = () => {
-      setUserRefreshCount(prev => Math.max(0, prev - 1));
-    };
-    window.addEventListener('tokens:optimistic-decrement', handleOptimisticDecrement);
-    return () => window.removeEventListener('tokens:optimistic-decrement', handleOptimisticDecrement);
-  }, []);
-
-  // Listen for realtime task updates (which affect token count)
-  React.useEffect(() => {
-    const handleRealtimeTaskUpdate = () => {
-      fetchUserTokens();
-    };
-    const handleRealtimeCvUpdate = () => {
-      fetchUserTokens();
-    };
-    const handleRealtimeCvMetadataUpdate = () => {
-      fetchUserTokens();
-    };
-
-    window.addEventListener('realtime:task:updated', handleRealtimeTaskUpdate);
-    window.addEventListener('realtime:cv:updated', handleRealtimeCvUpdate);
-    window.addEventListener('realtime:cv:metadata:updated', handleRealtimeCvMetadataUpdate);
-
-    return () => {
-      window.removeEventListener('realtime:task:updated', handleRealtimeTaskUpdate);
-      window.removeEventListener('realtime:cv:updated', handleRealtimeCvUpdate);
-      window.removeEventListener('realtime:cv:metadata:updated', handleRealtimeCvMetadataUpdate);
-    };
-  }, [fetchUserTokens]);
-
-  // Polling de backup pour les tokens (toutes les 10 secondes)
-  React.useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const interval = setInterval(() => {
-      fetchUserTokens().catch(err => {
-        console.error('[TopBar] Error polling tokens:', err);
-      });
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, [isAuthenticated, fetchUserTokens]);
-
-  // Rafraîchir les tokens quand la fenêtre redevient active
-  React.useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const handleFocus = () => {
-      fetchUserTokens();
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [isAuthenticated, fetchUserTokens]);
-
   // Don't render on auth page
   if (pathname === "/auth") {
     return null;
@@ -485,15 +379,11 @@ export default function TopBar() {
   if (status === "loading") {
     return (
       <div
-        className="no-print sticky top-0 inset-x-0 z-[10001] w-full bg-white/15 backdrop-blur-xl border-b border-white/20 min-h-[60px]"
+        className="no-print fixed top-0 left-0 right-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
         style={{
-          position: '-webkit-sticky',
           paddingTop: 'env(safe-area-inset-top)',
-          marginTop: 'calc(-1 * env(safe-area-inset-top))',
           WebkitBackfaceVisibility: 'hidden',
           backfaceVisibility: 'hidden',
-          WebkitPerspective: 1000,
-          perspective: 1000,
           WebkitTransform: 'translate3d(0, 0, 0)',
           transform: 'translate3d(0, 0, 0)',
           pointerEvents: 'auto'
@@ -520,15 +410,11 @@ export default function TopBar() {
     <>
       <div
         ref={barRef}
-        className="no-print sticky top-0 inset-x-0 z-[10001] w-full bg-white/15 backdrop-blur-xl border-b border-white/20 min-h-[60px]"
+        className="no-print fixed top-0 left-0 right-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
         style={{
-          position: '-webkit-sticky',
           paddingTop: 'env(safe-area-inset-top)',
-          marginTop: 'calc(-1 * env(safe-area-inset-top))',
           WebkitBackfaceVisibility: 'hidden',
           backfaceVisibility: 'hidden',
-          WebkitPerspective: 1000,
-          perspective: 1000,
           WebkitTransform: 'translate3d(0, 0, 0)',
           transform: 'translate3d(0, 0, 0)',
           pointerEvents: 'auto'
@@ -610,7 +496,7 @@ export default function TopBar() {
                       zIndex: 10002,
                       opacity: 1,
                     }}
-                    className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl cv-dropdown-no-animation"
+                    className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-md shadow-2xl cv-dropdown-no-animation"
                   >
                     <ul
                       className="max-h-[240px] overflow-y-auto py-1"
@@ -677,7 +563,7 @@ export default function TopBar() {
                       left: modals.userMenuRect.left,
                       zIndex: 10002,
                     }}
-                    className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl p-2 text-sm space-y-1 min-w-[10rem] max-w-[16rem]"
+                    className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-md shadow-2xl p-2 text-sm space-y-1 min-w-[10rem] max-w-[16rem]"
                   >
                     <div className="px-2 py-1 text-xs uppercase text-white/70 drop-shadow truncate">
                       {session?.user?.name || t("topbar.user")}
@@ -699,6 +585,15 @@ export default function TopBar() {
                       }}
                     >
                       {t("topbar.myAccount")}
+                    </button>
+                    <button
+                      className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
+                      onClick={() => {
+                        modals.setUserMenuOpen(false);
+                        router.push("/account/subscriptions");
+                      }}
+                    >
+                      {t("topbar.subscriptions")}
                     </button>
                     <button
                       className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
@@ -755,11 +650,6 @@ export default function TopBar() {
           {settings.feature_search_bar && (
             <div className="w-auto flex-1 order-6 md:order-9 md:flex-none flex justify-start md:justify-end px-4 py-1 min-w-0">
               <div className="relative w-full md:w-[400px] flex items-center group job-title-input-wrapper">
-                {/* Token Counter - haut droite de la search bar */}
-                <div className="absolute -right-2 -top-2 z-10">
-                  <TokenCounter refreshCount={userRefreshCount} isLoading={isLoadingTokens} />
-                </div>
-
                 <span className="absolute left-0 text-white/70 drop-shadow flex items-center justify-center w-6 h-6">
                   <img src="/icons/search.png" alt="Search" className="h-4 w-4" />
                 </span>
@@ -768,21 +658,11 @@ export default function TopBar() {
                   value={modals.jobTitleInput}
                   onChange={(e) => modals.setJobTitleInput(e.target.value)}
                   onKeyDown={(e) => {
-                    if (!canUseSearchBar) {
-                      e.preventDefault();
-                      return;
-                    }
                     modals.handleJobTitleSubmit(e, language);
                   }}
                   placeholder={state.isMobile ? t("topbar.jobTitlePlaceholderMobile") : t("topbar.jobTitlePlaceholder")}
-                  disabled={!canUseSearchBar}
-                  className={`w-full bg-transparent border-0 border-b-2 pl-8 pr-2 py-1 text-sm italic text-white placeholder-white/50 focus:outline-none transition-colors duration-200 ${
-                    canUseSearchBar
-                      ? 'border-white/30 focus:border-emerald-400 cursor-text'
-                      : 'border-white/10 cursor-not-allowed opacity-50'
-                  }`}
+                  className="w-full bg-transparent border-0 border-b-2 pl-8 pr-2 py-1 text-sm italic text-white placeholder-white/50 focus:outline-none transition-colors duration-200 border-white/30 focus:border-emerald-400 cursor-text"
                   style={{ caretColor: '#10b981' }}
-                  title={!canUseSearchBar ? "Plus de tokens disponibles" : ""}
                 />
               </div>
             </div>

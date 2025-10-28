@@ -2,6 +2,7 @@ import React from "react";
 import { CREATE_TEMPLATE_OPTION } from "../utils/constants";
 import { getAnalysisOption } from "../utils/cvUtils";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
+import { parseApiError } from "@/lib/utils/errorHandler";
 
 /**
  * Hook pour gérer le modal de génération de CV
@@ -160,50 +161,25 @@ export function useGeneratorModal({
 
     const selectedAnalysis = currentAnalysisOption;
 
-    let optimisticTaskId, notificationMessage, endpoint;
+    let endpoint, taskType, taskLabel, notificationMessage;
 
     if (isTemplateCreation) {
-      optimisticTaskId = addOptimisticTask({
-        type: 'create-template-cv',
-        label: t("cvGenerator.templateCreationLabel"),
-        metadata: {
-          analysisLevel: selectedAnalysis.id,
-          linksCount: cleanedLinks.length,
-          filesCount: (fileSelection || []).length,
-        },
-        shouldUpdateCvList: true,
-      });
+      taskType = 'create-template-cv';
+      taskLabel = t("cvGenerator.templateCreationLabel");
       notificationMessage = t("cvGenerator.notifications.templateScheduled");
       endpoint = "/api/background-tasks/create-template-cv";
     } else {
       const baseCvName = generatorBaseItem?.displayTitle || generatorBaseItem?.title || generatorBaseFile;
-      optimisticTaskId = addOptimisticTask({
-        type: 'generate-cv',
-        label: `Adaptation du CV '${baseCvName}'`,
-        metadata: {
-          baseFile: generatorBaseFile,
-          analysisLevel: selectedAnalysis.id,
-          linksCount: cleanedLinks.length,
-          filesCount: (fileSelection || []).length,
-        },
-        shouldUpdateCvList: true,
-      });
+      taskType = 'generate-cv';
+      taskLabel = `Adaptation du CV '${baseCvName}'`;
       notificationMessage = t("cvGenerator.notifications.scheduled", { baseCvName });
       endpoint = "/api/background-tasks/generate-cv";
     }
-
-    addNotification({
-      type: "info",
-      message: notificationMessage,
-      duration: 2500,
-    });
-    closeGenerator();
 
     try {
       // Obtenir le token reCAPTCHA (vérification côté serveur uniquement)
       const recaptchaToken = await executeRecaptcha('generate_cv');
       if (!recaptchaToken) {
-        removeOptimisticTask(optimisticTaskId);
         addNotification({
           type: "error",
           message: t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.",
@@ -239,18 +215,54 @@ export function useGeneratorModal({
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data?.success) {
-        throw new Error(data?.error || "Impossible de mettre la tâche en file.");
+        const apiError = parseApiError(response, data);
+        const errorObj = { message: apiError.message };
+        if (apiError.actionRequired && apiError.redirectUrl) {
+          errorObj.actionRequired = true;
+          errorObj.redirectUrl = apiError.redirectUrl;
+        }
+        throw errorObj;
       }
 
-      removeOptimisticTask(optimisticTaskId);
-      await refreshTasks();
-    } catch (error) {
-      removeOptimisticTask(optimisticTaskId);
+      // ✅ Succès confirmé par l'API -> créer la tâche optimiste et notifier
+      const optimisticTaskId = addOptimisticTask({
+        type: taskType,
+        label: taskLabel,
+        metadata: {
+          baseFile: isTemplateCreation ? undefined : generatorBaseFile,
+          analysisLevel: selectedAnalysis.id,
+          linksCount: cleanedLinks.length,
+          filesCount: (fileSelection || []).length,
+        },
+        shouldUpdateCvList: true,
+      });
+
       addNotification({
+        type: "info",
+        message: notificationMessage,
+        duration: 2500,
+      });
+      closeGenerator();
+
+      await refreshTasks();
+      removeOptimisticTask(optimisticTaskId);
+    } catch (error) {
+      // Fermer le modal avant d'afficher l'erreur
+      closeGenerator();
+
+      const notification = {
         type: "error",
         message: error?.message || t("cvGenerator.notifications.error"),
-        duration: 4000,
-      });
+        duration: 10000,
+      };
+
+      // Add redirect info if actionRequired
+      if (error?.actionRequired && error?.redirectUrl) {
+        notification.redirectUrl = error.redirectUrl;
+        notification.linkText = 'Voir les options';
+      }
+
+      addNotification(notification);
     }
   }
 

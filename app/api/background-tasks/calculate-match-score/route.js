@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { scheduleCalculateMatchScoreJob } from "@/lib/backgroundTasks/calculateMatchScoreJob";
+import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,16 +35,6 @@ export async function POST(request) {
 
     const userId = session.user.id;
 
-    // Récupérer les settings de rate limiting depuis la DB
-    const [tokenLimitSetting, resetHoursSetting] = await Promise.all([
-      prisma.setting.findUnique({ where: { settingName: 'token_default_limit' }, select: { value: true } }),
-      prisma.setting.findUnique({ where: { settingName: 'token_reset_hours' }, select: { value: true } })
-    ]);
-
-    const TOKEN_LIMIT = parseInt(tokenLimitSetting?.value || '5', 10);
-    const RESET_HOURS = parseInt(resetHoursSetting?.value || '24', 10);
-    const RESET_MS = RESET_HOURS * 60 * 60 * 1000;
-
     // Récupérer les métadonnées du CV depuis la DB
     const cvRecord = await prisma.cvFile.findUnique({
       where: {
@@ -69,69 +60,20 @@ export async function POST(request) {
       return NextResponse.json({ error: "CV does not have a job offer analysis" }, { status: 400 });
     }
 
-    // Rate limiting GLOBAL (au niveau utilisateur, pas par CV)
-    if (!isAutomatic) {
-      const now = new Date();
-      const resetAgo = new Date(now.getTime() - RESET_MS);
-
-      // Récupérer l'utilisateur avec ses compteurs de refresh
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          matchScoreRefreshCount: true,
-          tokenLastUsage: true,
-        },
-      });
-
-      let refreshCount = user?.matchScoreRefreshCount || 0;
-      let tokenLastUsage = user?.tokenLastUsage;
-
-      // Reset UNIQUEMENT si tokens à 0 ET délai écoulé
-      if (refreshCount === 0 && tokenLastUsage && tokenLastUsage < resetAgo) {
-        await prisma.user.update({
-          where: { id: userId },
-          data: {
-            matchScoreRefreshCount: TOKEN_LIMIT,
-            tokenLastUsage: null,
-          },
-        });
-        refreshCount = TOKEN_LIMIT;
-        tokenLastUsage = null;
-        console.log(`[calculate-match-score] ✅ Reset des tokens après ${RESET_HOURS}h: ${TOKEN_LIMIT}/${TOKEN_LIMIT}`);
-      }
-
-      // Vérifier si plus de tokens disponibles (GLOBAL pour tous les CVs)
-      if (refreshCount === 0) {
-        const timeUntilReset = tokenLastUsage
-          ? new Date(tokenLastUsage.getTime() + RESET_MS)
-          : new Date();
-        const totalMinutesLeft = Math.ceil((timeUntilReset - now) / (60 * 1000));
-        const hoursLeft = Math.floor(totalMinutesLeft / 60);
-        const minutesLeft = totalMinutesLeft % 60;
-
-        console.log("[calculate-match-score] Plus de tokens disponibles pour l'utilisateur", userId);
-        return NextResponse.json({
-          error: "No tokens available",
-          details: `Vous n'avez plus de tokens disponibles. Réessayez dans ${hoursLeft}h${minutesLeft}m.`,
-          hoursLeft,
-          minutesLeft,
-        }, { status: 429 });
-      }
-
-      // ✅ DÉCRÉMENTER LE COMPTEUR IMMÉDIATEMENT et TOUJOURS mettre à jour tokenLastUsage
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          tokenLastUsage: now,
-          matchScoreRefreshCount: refreshCount - 1,
-        },
-      });
-      console.log(`[calculate-match-score] ✅ Token consommé immédiatement: ${refreshCount - 1}/${TOKEN_LIMIT} restants`);
-    }
-
     const jobOfferUrl = cvRecord.sourceValue;
     if (!jobOfferUrl) {
       return NextResponse.json({ error: "Job offer URL not found" }, { status: 400 });
+    }
+
+    // Vérifier les limites ET incrémenter le compteur/débiter le crédit
+    const usageResult = await incrementFeatureCounter(userId, 'match_score', {});
+
+    if (!usageResult.success) {
+      return NextResponse.json({
+        error: usageResult.error,
+        actionRequired: usageResult.actionRequired,
+        redirectUrl: usageResult.redirectUrl
+      }, { status: 403 });
     }
 
     // Créer un identifiant de tâche
@@ -158,6 +100,10 @@ export async function POST(request) {
       deviceId: deviceId || "unknown-device",
       cvFile, // Lien direct vers le CV
       payload: JSON.stringify(payload),
+      creditUsed: usageResult.usedCredit,
+      creditTransactionId: usageResult.transactionId || null,
+      featureName: usageResult.featureName || null,
+      featureCounterPeriodStart: usageResult.periodStart || null,
     };
 
     if (!existingTask) {

@@ -7,6 +7,7 @@ import { readUserCvFile } from "@/lib/cv/storage";
 import frTranslations from "@/locales/fr.json";
 import enTranslations from "@/locales/en.json";
 import { trackCvExport } from "@/lib/telemetry/server";
+import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 
 const translations = {
   fr: frTranslations,
@@ -103,6 +104,16 @@ export async function POST(request) {
 
     if (!filename || filename === 'undefined') {
       return NextResponse.json({ error: "Nom de fichier manquant" }, { status: 400 });
+    }
+
+    // Vérifier les limites et incrémenter le compteur
+    const usageResult = await incrementFeatureCounter(session.user.id, 'export_cv', {});
+    if (!usageResult.success) {
+      return NextResponse.json({
+        error: usageResult.error,
+        actionRequired: usageResult.actionRequired,
+        redirectUrl: usageResult.redirectUrl
+      }, { status: 403 });
     }
 
     // Charger les données du CV via le système de stockage utilisateur
