@@ -162,7 +162,7 @@ Flux principal dans `lib/openai/generateCv.js`:
 
 **Models Prisma clés**:
 - `User`: utilisateurs avec relations (cvs, accounts, sessions, feedbacks, subscription)
-- `CvFile`: métadonnées des CV (sourceType, createdBy, matchScore, isTranslated, createdWithCredit, blocked)
+- `CvFile`: métadonnées des CV (sourceType, createdBy, matchScore, isTranslated, createdWithCredit, creditUsedAt, creditTransactionId, blocked)
 - `BackgroundTask`: suivi des jobs asynchrones (creditUsed, creditTransactionId)
 - `LinkHistory`: historique des URLs utilisées
 - `Feedback`: retours utilisateurs
@@ -172,12 +172,15 @@ Flux principal dans `lib/openai/generateCv.js`:
 
 **Nouveaux modèles** (`prisma/schema.prisma`):
 - `Subscription`: Abonnement utilisateur avec lien Stripe
+- `SubscriptionPlan`: Plans d'abonnement disponibles
+- `SubscriptionPlanFeatureLimit`: Limites par feature et par plan
 - `CreditBalance`: Balance de crédits par utilisateur
 - `CreditTransaction`: Historique des transactions de crédits
+- `CreditPack`: Packs de crédits achetables
 - `FeatureUsageCounter`: Compteurs mensuels par feature/user
 - `StripeWebhookLog`: Logging webhooks Stripe
 - `Referral`: Système de parrainage
-- `PromoCode`: Codes promotionnels
+- `PromoCode`: Codes promotionnels (🚧 planifié - non implémenté)
 
 **9 Macro-features trackées** avec limites mensuelles:
 1. `gpt_cv_generation` - Génération CV avec IA
@@ -203,6 +206,9 @@ Flux principal dans `lib/openai/generateCv.js`:
 - `featureUsage.js`: Vérification limites + compteurs
 - `cvLimits.js`: Limites CV avec crédits
 - `subscriptions.js`: Gestion abonnements (upgrade, downgrade, cancel)
+- `stripeSync.js`: Synchronisation automatique produits Stripe
+- `planUtils.js`: Utilitaires et helpers pour les plans
+- `planTranslations.js`: Traductions des noms/descriptions de plans
 
 **Intégration jobs** :
 - `generateCvJob.js` : Débite compteur/crédit au début, rembourse si échec/annulation
@@ -216,6 +222,7 @@ Flux principal dans `lib/openai/generateCv.js`:
 - `/api/subscription/change` - Changer de plan
 - `/api/subscription/cancel` - Annuler abonnement
 - `/api/subscription/reactivate` - Réactiver abonnement annulé
+- `/api/subscription/preview-upgrade` - Prévisualisation changement de plan (prorata)
 - `/api/subscription/plans` - Liste des plans disponibles
 - `/api/subscription/invoices` - Historique factures Stripe (invoices + PaymentIntents)
 - `/api/credits/balance` - Balance crédits
@@ -232,6 +239,8 @@ Flux principal dans `lib/openai/generateCv.js`:
 - `PlanComparisonCards.jsx` - Cartes de comparaison des plans avec upgrade/downgrade
 - `FeatureCountersCard.jsx` - Compteurs d'utilisation par feature
 - `CreditBalanceCard.jsx` - Balance de crédits
+- `CreditBalanceBanner.jsx` - Bannière crédits dans TopBar
+- `NegativeBalanceBanner.jsx` - Alerte balance Stripe négative
 - `CreditPacksCards.jsx` - Packs de crédits achetables
 - `CreditTransactionsTable.jsx` - Historique transactions crédits
 - `InvoicesTable.jsx` - Historique factures Stripe (invoices + PaymentIntents)
@@ -459,6 +468,8 @@ components/
 │   ├── SubscriptionsPage.jsx
 │   ├── PlanComparisonCards.jsx
 │   ├── CreditBalanceCard.jsx
+│   ├── CreditBalanceBanner.jsx
+│   ├── NegativeBalanceBanner.jsx
 │   └── InvoicesTable.jsx
 ├── TopBar.jsx              # Barre de navigation principale
 ├── EmptyState.jsx          # État vide avec onboarding

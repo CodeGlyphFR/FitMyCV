@@ -56,8 +56,10 @@ CreditTransaction      - Historique transactions
 FeatureUsageCounter    - Compteurs mensuels par feature
 StripeWebhookLog       - Logging webhooks Stripe
 Referral               - Système de parrainage
-PromoCode              - Codes promotionnels
+PromoCode              - Codes promotionnels (🚧 À venir - non implémenté)
 ```
+
+**Note** : Le modèle `PromoCode` existe dans le schema Prisma mais n'est pas encore utilisé dans l'application. Il sera implémenté dans une future version pour permettre la gestion de codes promotionnels (réductions, offres spéciales).
 
 ### Modules métier
 
