@@ -419,7 +419,7 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
                     </div>
 
                     {/* Prix annuel (si existe) */}
-                    {plan.priceYearly && (
+                    {(plan.priceYearly > 0) && !isFreeplan && (
                       <div className="pt-2 border-t border-white/10">
                         <div className="text-xl font-semibold text-white/90">{plan.priceYearly}€</div>
                         <div className="text-xs text-white/60">{t('subscription.comparison.pricing.perYear')}</div>
@@ -559,7 +559,7 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
                   </button>
 
                   {/* Bouton annuel */}
-                  {plan.priceYearly && (
+                  {(plan.priceYearly > 0) && !isFreeplan && (
                     <button
                       onClick={() => handlePlanChange(plan.id, 'yearly')}
                       disabled={processingPlanId === plan.id}
