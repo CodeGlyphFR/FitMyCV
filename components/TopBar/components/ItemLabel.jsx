@@ -195,7 +195,7 @@ const ItemLabel = React.memo(function ItemLabel({
     };
   }, [item.displayTitle, item.analysisLevel, item.createdBy, item.isTranslated, tickerKey]);
 
-  const shouldShowLevel = (item.createdBy === 'generate-cv' || item.createdBy === 'import-pdf' || item.createdBy === 'generate-cv-job-title') && levelLabel;
+  const shouldShowLevel = (item.createdBy === 'generate-cv' || item.createdBy === 'import-pdf') && levelLabel;
 
   let displayTitleWithLevel = item.displayTitle;
   if (shouldShowLevel) {
