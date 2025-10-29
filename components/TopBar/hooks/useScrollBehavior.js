@@ -12,8 +12,8 @@ export function useScrollBehavior({ lastScrollY, setIsScrollingDown, setLastScro
     let isScrolling = false;
 
     function handleScroll() {
-      // Only on mobile (width < 768px)
-      if (window.innerWidth >= 768) {
+      // Only on mobile (width <= 990px)
+      if (window.innerWidth > 990) {
         setIsScrollingDown(false);
         return;
       }

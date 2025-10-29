@@ -3,7 +3,9 @@ module.exports = {
   theme: {
     extend: {
       screens: {
-        'topbar': '976px',
+        'sm': '991px',
+        'md': '991px',
+        'topbar': '991px',
       },
       backdropBlur: {
         '4xl': '80px',

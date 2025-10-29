@@ -21,6 +21,7 @@ import { useGeneratorModal } from "./hooks/useGeneratorModal";
 import { useScrollBehavior } from "./hooks/useScrollBehavior";
 import { useModalStates } from "./hooks/useModalStates";
 import { useExportModal } from "./hooks/useExportModal";
+import { useSubscriptionData } from "./hooks/useSubscriptionData";
 
 // Components
 import ItemLabel from "./components/ItemLabel";
@@ -100,6 +101,9 @@ export default function TopBar() {
     language,
     addNotification,
   });
+
+  // Subscription data hook
+  const { planName, planIcon, creditBalance, loading: subscriptionLoading } = useSubscriptionData();
 
   // Refs
   const triggerRef = React.useRef(null);
@@ -181,7 +185,7 @@ export default function TopBar() {
   // Detect mobile
   React.useEffect(() => {
     const checkMobile = () => {
-      state.setIsMobile(window.innerWidth < 768);
+      state.setIsMobile(window.innerWidth <= 990);
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -556,9 +560,12 @@ export default function TopBar() {
                     }}
                     className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-md shadow-2xl p-2 text-sm space-y-1 min-w-[10rem] max-w-[16rem]"
                   >
+                    {/* Header - User name */}
                     <div className="px-2 py-1 text-xs uppercase text-white/70 drop-shadow truncate">
                       {session?.user?.name || t("topbar.user")}
                     </div>
+
+                    {/* Main navigation */}
                     <button
                       className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
                       onClick={() => {
@@ -568,6 +575,46 @@ export default function TopBar() {
                     >
                       {t("topbar.myCvs")}
                     </button>
+
+                    {/* Coming Soon Features */}
+                    <button
+                      className="w-full text-left rounded px-2 py-1 text-white/50 cursor-not-allowed flex items-center justify-between"
+                      disabled
+                    >
+                      <span>{t("topbar.analyzeOffers")}</span>
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/50 text-emerald-200 text-[10px] uppercase font-semibold">
+                        {t("topbar.soon")}
+                      </span>
+                    </button>
+                    <button
+                      className="w-full text-left rounded px-2 py-1 text-white/50 cursor-not-allowed flex items-center justify-between"
+                      disabled
+                    >
+                      <span>{t("topbar.coverLetters")}</span>
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/50 text-emerald-200 text-[10px] uppercase font-semibold">
+                        {t("topbar.soon")}
+                      </span>
+                    </button>
+                    <button
+                      className="w-full text-left rounded px-2 py-1 text-white/50 cursor-not-allowed flex items-center justify-between"
+                      disabled
+                    >
+                      <span>{t("topbar.interviewPrep")}</span>
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/50 text-emerald-200 text-[10px] uppercase font-semibold">
+                        {t("topbar.soon")}
+                      </span>
+                    </button>
+                    <button
+                      className="w-full text-left rounded px-2 py-1 text-white/50 cursor-not-allowed flex items-center justify-between"
+                      disabled
+                    >
+                      <span>{t("topbar.applicationTracking")}</span>
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/50 text-emerald-200 text-[10px] uppercase font-semibold">
+                        {t("topbar.soon")}
+                      </span>
+                    </button>
+
+                    {/* Account settings */}
                     <button
                       className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
                       onClick={() => {
@@ -595,6 +642,15 @@ export default function TopBar() {
                     >
                       {t("topbar.logout")}
                     </button>
+
+                    {/* Footer - Plan & Credits */}
+                    {!subscriptionLoading && planName && (
+                      <div className="border-t border-white/20 mt-2 pt-2">
+                        <div className="text-center text-[11px] text-white/60 drop-shadow">
+                          {planIcon} {planName} • {creditBalance} {t("topbar.credits")}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </>,
                 document.body,
@@ -606,7 +662,7 @@ export default function TopBar() {
             <button
               ref={taskQueueButtonRef}
               onClick={() => {
-                if (window.innerWidth < 768) {
+                if (window.innerWidth <= 990) {
                   modals.setOpenTaskQueue(true);
                 } else {
                   modals.setOpenTaskDropdown(!modals.openTaskDropdown);
