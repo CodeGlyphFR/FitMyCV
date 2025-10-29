@@ -50,7 +50,7 @@ FitMyCv.ai est construite sur une architecture moderne basée sur **Next.js 14**
 ┌──────────▼─────┐  ┌──────▼──────┐  ┌───▼──────────┐
 │   PRISMA ORM   │  │  OPENAI API │  │  PUPPETEER   │
 │   SQLite/PG    │  │  GPT-5      │  │  Scraping    │
-│   23 Models    │  │  Models     │  │  PDF Export  │
+│   28 Models    │  │  Models     │  │  PDF Export  │
 └────────────────┘  └─────────────┘  └──────────────┘
 ```
 
@@ -157,7 +157,7 @@ cv-site/
 │   │   └── export-pdf/         # PDF export
 │   └── [pages]/                # Pages Next.js
 │
-├── components/                   # React Components (89 fichiers)
+├── components/                   # React Components (100+ fichiers)
 │   ├── TopBar/                  # Navigation principale
 │   │   ├── TopBar.jsx          # Composant principal
 │   │   ├── modals/             # Modals (generator, export, etc.)
@@ -166,6 +166,7 @@ cv-site/
 │   ├── ui/                      # Composants UI réutilisables
 │   ├── admin/                   # Composants admin/analytics
 │   ├── auth/                    # Composants authentification
+│   ├── subscription/            # Composants abonnements/crédits (10 composants)
 │   ├── feedback/                # Système feedback
 │   ├── cookies/                 # Gestion cookies RGPD
 │   ├── account/                 # Paramètres compte
@@ -241,13 +242,22 @@ cv-site/
 │   │   └── deletion.js         # User deletion
 │   ├── i18n/                    # Internationalization
 │   │   └── cvLabels.js         # CV labels translation
+│   ├── subscription/            # Subscription & Credits System
+│   │   ├── credits.js          # Credit management (debit, refund, grant)
+│   │   ├── featureUsage.js     # Feature limits & counters
+│   │   ├── cvLimits.js         # CV limits with credits
+│   │   ├── subscriptions.js    # Subscription management
+│   │   ├── stripeSync.js       # Stripe products synchronization
+│   │   ├── planUtils.js        # Plan utilities and helpers
+│   │   └── planTranslations.js # Plan name/description translations
+│   ├── stripe.js                # Stripe client singleton
 │   ├── prisma.js                # Prisma client singleton
 │   ├── sanitize.js              # Generic sanitization
 │   ├── site.js                  # Site constants
 │   └── utils.js                 # Generic utilities
 │
 ├── prisma/                       # Database
-│   ├── schema.prisma            # Prisma schema (23 models)
+│   ├── schema.prisma            # Prisma schema (28 models)
 │   ├── migrations/              # Database migrations (15)
 │   ├── dev.db                   # SQLite database (dev)
 │   └── seed.js                  # Database seeding

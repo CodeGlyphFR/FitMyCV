@@ -13,6 +13,7 @@ Documentation complète des 60+ routes API de FitMyCv.ai.
 - [Admin](#admin)
 - [Analytics](#analytics)
 - [Account](#account)
+- [Subscription & Billing](#subscription--billing)
 - [Autres routes](#autres-routes)
 - [Codes d'erreur](#codes-derreur)
 
@@ -538,6 +539,89 @@ Améliorer un CV basé sur les suggestions.
 - `400` : Match score non calculé
 - `400` : Pas de suggestions disponibles
 - `409` : Optimisation déjà en cours
+
+---
+
+### GET `/api/cv/can-edit?filename={filename}`
+
+Vérifier si l'utilisateur peut activer le mode édition (sans débiter).
+
+**Auth** : Requise
+
+**Query params** :
+
+```
+filename: string (required) - Nom du fichier CV
+```
+
+**Réponse (200)** :
+
+```json
+{
+  "allowed": true,
+  "reason": null
+}
+```
+
+**Réponse (403)** :
+
+```json
+{
+  "allowed": false,
+  "reason": "limit_reached",
+  "message": "Limite d'édition atteinte. Passez à un plan supérieur ou utilisez vos crédits.",
+  "needsCredit": true
+}
+```
+
+**Erreurs** :
+- `401` : Non authentifié
+- `403` : Limite atteinte + pas de crédits
+- `404` : CV non trouvé
+
+---
+
+### POST `/api/cv/debit-edit`
+
+Débiter 1 usage de la feature `edit_cv` (une fois par session d'édition).
+
+**Auth** : Requise
+
+**Body** :
+
+```json
+{
+  "filename": "cv_1234567890.json"
+}
+```
+
+**Réponse (200)** :
+
+```json
+{
+  "success": true,
+  "message": "Usage débité",
+  "usedCredit": false
+}
+```
+
+**Réponse (200 avec crédit)** :
+
+```json
+{
+  "success": true,
+  "message": "1 crédit utilisé",
+  "usedCredit": true,
+  "remainingCredits": 9
+}
+```
+
+**Erreurs** :
+- `401` : Non authentifié
+- `403` : Limite atteinte + pas de crédits
+- `404` : CV non trouvé
+
+**Note** : Cette route est appelée automatiquement à la première modification dans une session d'édition. Elle débite 1 compteur d'abonnement OU 1 crédit si la limite mensuelle est atteinte.
 
 ---
 
@@ -1279,6 +1363,187 @@ Supprimer son compte.
   "message": "Compte supprimé"
 }
 ```
+
+---
+
+## Subscription & Billing
+
+### GET `/api/subscription/current`
+
+Récupérer l'abonnement actuel et les compteurs d'utilisation.
+
+**Auth** : Requise
+
+**Réponse (200)** :
+
+```json
+{
+  "subscription": {
+    "planName": "Pro",
+    "status": "active",
+    "billingCycle": "monthly",
+    "currentPeriodEnd": "2025-02-15T00:00:00.000Z",
+    "cancelAtPeriodEnd": false
+  },
+  "counters": {
+    "gpt_cv_generation": { "used": 8, "limit": 20 },
+    "import_pdf": { "used": 3, "limit": 10 },
+    "edit_cv": { "used": 15, "limit": 50 }
+  },
+  "credits": {
+    "balance": 5
+  }
+}
+```
+
+---
+
+### GET `/api/subscription/preview-upgrade?planName={planName}`
+
+Prévisualiser le changement de plan (calcul prorata, coût immédiat).
+
+**Auth** : Requise
+
+**Query params** :
+
+```
+planName: string (required) - Nom du plan cible (ex: "Pro", "Enterprise")
+```
+
+**Réponse (200)** :
+
+```json
+{
+  "preview": {
+    "currentPlan": "Starter",
+    "targetPlan": "Pro",
+    "prorataCredit": 5.50,
+    "immediateCharge": 14.50,
+    "newMonthlyPrice": 20.00,
+    "effectiveDate": "2025-01-20T00:00:00.000Z",
+    "nextBillingDate": "2025-02-15T00:00:00.000Z"
+  }
+}
+```
+
+**Erreurs** :
+- `401` : Non authentifié
+- `400` : Plan invalide ou identique au plan actuel
+- `404` : Aucun abonnement actif
+
+**Note** : Cette route permet de calculer le coût d'un upgrade/downgrade avant de le confirmer. Le prorata est calculé sur la période restante.
+
+---
+
+### POST `/api/subscription/change`
+
+Changer de plan d'abonnement.
+
+**Auth** : Requise
+
+**Body** :
+
+```json
+{
+  "planName": "Pro",
+  "billingCycle": "monthly"
+}
+```
+
+**Réponse (200)** :
+
+```json
+{
+  "success": true,
+  "message": "Abonnement mis à jour",
+  "subscription": { ... }
+}
+```
+
+---
+
+### GET `/api/subscription/invoices`
+
+Récupérer l'historique des factures (abonnements + packs de crédits).
+
+**Auth** : Requise
+
+**Réponse (200)** :
+
+```json
+{
+  "invoices": [
+    {
+      "id": "in_xxx",
+      "type": "subscription",
+      "amount": 2000,
+      "currency": "eur",
+      "status": "paid",
+      "date": "2025-01-15T00:00:00.000Z",
+      "pdfUrl": "https://..."
+    },
+    {
+      "id": "pi_xxx",
+      "type": "credit_pack",
+      "amount": 500,
+      "currency": "eur",
+      "status": "paid",
+      "date": "2025-01-10T00:00:00.000Z",
+      "creditAmount": 10
+    }
+  ]
+}
+```
+
+---
+
+### GET `/api/credits/balance`
+
+Récupérer la balance de crédits.
+
+**Auth** : Requise
+
+**Réponse (200)** :
+
+```json
+{
+  "balance": 15
+}
+```
+
+---
+
+### GET `/api/credits/transactions`
+
+Historique des transactions de crédits.
+
+**Auth** : Requise
+
+**Réponse (200)** :
+
+```json
+{
+  "transactions": [
+    {
+      "id": "cltxxx...",
+      "type": "purchase",
+      "amount": 10,
+      "reason": "Pack 10 crédits",
+      "createdAt": "2025-01-15T10:00:00.000Z"
+    },
+    {
+      "id": "cltyyy...",
+      "type": "debit",
+      "amount": -1,
+      "reason": "Génération CV",
+      "featureName": "gpt_cv_generation",
+      "createdAt": "2025-01-15T11:00:00.000Z"
+    }
+  ]
+}
+```
+
+**Note** : Pour plus de détails sur le système d'abonnement et de crédits, consultez `docs/SUBSCRIPTION.md`.
 
 ---
 

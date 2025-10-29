@@ -1,6 +1,6 @@
 # Composants React - FitMyCv.ai
 
-Catalogue complet des 89 composants React de l'application.
+Catalogue complet des 100+ composants React de l'application.
 
 ---
 
@@ -13,6 +13,7 @@ Catalogue complet des 89 composants React de l'application.
 - [Authentication](#authentication)
 - [UI Components](#ui-components)
 - [Providers & Context](#providers--context)
+- [Subscription & Billing Components](#subscription--billing-components)
 - [Autres composants](#autres-composants)
 
 ---
@@ -28,6 +29,7 @@ components/
 ├── TopBar/           # Navigation principale (1 composant + sous-composants)
 ├── admin/            # Admin et analytics (20+ composants)
 ├── auth/             # Authentification (4 composants)
+├── subscription/     # Abonnements et crédits (10 composants)
 ├── ui/               # UI réutilisables (10+ composants)
 ├── cookies/          # Gestion cookies RGPD (4 composants)
 ├── feedback/         # Système de feedback (3 composants)
@@ -863,6 +865,217 @@ showNotification({
 ### RealtimeRefreshProvider.jsx
 
 Provider de rafraîchissement en temps réel (SSE).
+
+---
+
+## Subscription & Billing Components
+
+Composants de la page abonnements (`/account/subscriptions`).
+
+### SubscriptionsPage.jsx
+
+Page principale avec 3 onglets : Abonnement, Crédits, Historique.
+
+**Onglets** :
+
+- **Abonnement** : Plan actuel, comparaison plans, compteurs features
+- **Crédits** : Balance crédits, packs achetables, transactions
+- **Historique** : Factures Stripe (abonnements + crédits)
+
+---
+
+### CurrentPlanCard.jsx
+
+Affiche le plan d'abonnement actuel.
+
+**Props** :
+
+```javascript
+{
+  subscription: {
+    planName: string,
+    status: 'active' | 'canceled' | 'trialing',
+    currentPeriodEnd: Date,
+    cancelAtPeriodEnd: boolean
+  }
+}
+```
+
+**Actions** :
+
+- Annuler l'abonnement
+- Réactiver un abonnement annulé
+
+---
+
+### PlanComparisonCards.jsx
+
+Cartes de comparaison des plans disponibles.
+
+**Features** :
+
+- Affichage grille responsive
+- Badge plan actuel
+- Boutons upgrade/downgrade
+- Prévisualisation prorata
+
+---
+
+### FeatureCountersCard.jsx
+
+Compteurs d'utilisation des features mensuelles.
+
+**Affichage** :
+
+```javascript
+{
+  featureName: "Génération CV IA",
+  used: 8,
+  limit: 20,
+  icon: "🤖"
+}
+```
+
+**Indicateur** :
+
+- Barre de progression
+- Couleur selon utilisation (vert/jaune/rouge)
+- Indication dépassement avec crédits
+
+---
+
+### CreditBalanceCard.jsx
+
+Affiche la balance de crédits disponibles.
+
+**Props** :
+
+```javascript
+{
+  balance: number,
+  onPurchase: () => void
+}
+```
+
+**Affichage** :
+
+- 💎 Icône crédit
+- Balance actuelle
+- Bouton "Acheter des crédits"
+
+---
+
+### CreditBalanceBanner.jsx
+
+Bannière affichant les crédits disponibles dans la TopBar.
+
+**Props** :
+
+```javascript
+{
+  balance: number,
+  compact: boolean  // Mode mobile
+}
+```
+
+**Comportement** :
+
+- Affichage conditionnel (si balance > 0)
+- Clic → Redirection vers /account/subscriptions?tab=credits
+- Animation pulse si nouveaux crédits achetés
+
+---
+
+### NegativeBalanceBanner.jsx
+
+Bannière d'alerte pour balance Stripe négative.
+
+**Props** :
+
+```javascript
+{
+  balance: number,  // Négatif (ex: -500 = -5.00€)
+  currency: 'eur' | 'usd'
+}
+```
+
+**Affichage** :
+
+- Alerte rouge avec icône ⚠️
+- Message : "Votre compte a une balance négative de X.XX€"
+- Bouton "Régler maintenant" → Portal Stripe
+
+**Cas d'usage** : Paiement échoué, charge impayée, dispute
+
+---
+
+### CreditPacksCards.jsx
+
+Grille des packs de crédits achetables.
+
+**Props** :
+
+```javascript
+{
+  packs: Array<{
+    id: string,
+    name: string,
+    creditAmount: number,
+    price: number,
+    stripePriceId: string
+  }>,
+  onPurchase: (packId) => void
+}
+```
+
+**Affichage** :
+
+- Cartes responsive
+- Badge "Meilleur prix" si économie > 15%
+- Prix par crédit calculé
+
+---
+
+### CreditTransactionsTable.jsx
+
+Historique des transactions de crédits.
+
+**Colonnes** :
+
+- Date
+- Type (Achat / Débit / Remboursement)
+- Montant (+/-)
+- Raison / Feature
+- Balance après transaction
+
+**Filtres** :
+
+- Par type
+- Par période
+
+---
+
+### InvoicesTable.jsx
+
+Historique des factures Stripe (abonnements + packs crédits).
+
+**Sources** :
+
+- Invoices Stripe (abonnements)
+- PaymentIntents Stripe (packs crédits)
+
+**Colonnes** :
+
+- Date
+- Type (👑 Abonnement / 💎 Crédits)
+- Montant
+- Statut (Payé / En attente / Annulé)
+- Actions (Télécharger PDF pour abonnements)
+
+**Responsive** :
+
+- Table desktop
+- Cards mobile
 
 ---
 

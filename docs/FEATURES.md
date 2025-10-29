@@ -478,19 +478,73 @@ Mode édition pour modifier manuellement un CV existant.
 - Dates cohérentes (début < fin)
 - Champs requis (nom, titre)
 
+### Système de facturation (feature: edit_cv)
+
+**Macro-feature d'abonnement** : Chaque session d'édition consomme 1 usage de la feature `edit_cv`.
+
+#### Workflow de session d'édition
+
+```
+1. Clic sur "Mode édition"
+   → Vérification préalable via GET /api/cv/can-edit
+   → Si limite atteinte + pas de crédits : redirection vers /account/subscriptions
+   → Si autorisé : activation du mode édition (aucun débit)
+
+2. Première modification dans la session
+   → Débit automatique via POST /api/cv/debit-edit
+   → Débite 1 compteur d'abonnement OU 1 crédit (selon limite)
+   → Flag hasDebitedEditSession = true (bloque débits suivants)
+
+3. Modifications suivantes
+   → Gratuites (même session d'édition)
+
+4. Sortie du mode édition
+   → Reset du flag hasDebitedEditSession
+```
+
+#### Règles de facturation
+
+- **1 session d'édition = 1 usage** de `edit_cv` (peu importe le nombre de modifications)
+- Le débit se fait à la **première modification effective**, pas à l'activation du mode
+- Les utilisateurs peuvent activer le mode édition sans consommer de crédit (pour consulter)
+
+#### Composants clés
+
+- **AdminProvider** : Gère les states `editing` et `hasDebitedEditSession`, vérifie limites avant activation
+- **useMutate** : Débite UNE SEULE FOIS par session à la première modification réussie
+
 ### API
 
 ```javascript
-// POST /api/cv/edit
+// Vérifier si l'utilisateur peut éditer (sans débiter)
+GET /api/cv/can-edit?filename=cv_1234567890.json
+
+// Débiter 1 usage edit_cv (une fois par session)
+POST /api/cv/debit-edit
+{
+  "filename": "cv_1234567890.json"
+}
+
+// Sauvegarder les modifications (mutations)
+POST /api/admin/mutate
 {
   "filename": "cv_1234567890.json",
-  "cvData": { /* CV JSON */ }
+  "path": "header.name",
+  "value": "John Doe"
 }
 ```
 
 ### Code
 
-**Route** : `app/api/cv/edit/route.js`
+**Routes API** :
+- `app/api/cv/can-edit/route.js` - Vérification sans débit
+- `app/api/cv/debit-edit/route.js` - Débit unique par session
+- `app/api/admin/mutate/route.js` - Mutations du CV
+
+**Composants** :
+- `contexts/AdminProvider.jsx` - Gestion session d'édition
+- `hooks/useMutate.js` - Logique de débit à la première modification
+
 **Validation** : `lib/cv/validation.js`
 
 ---
@@ -567,6 +621,34 @@ Crée un nouveau CV vierge manuellement, section par section.
 - Aperçu du CV pendant la saisie
 - Toggle entre formulaire et preview
 
+### Système de facturation (feature: create_cv_manual)
+
+**Macro-feature d'abonnement** : Chaque création manuelle de CV consomme 1 usage de la feature `create_cv_manual`.
+
+#### Workflow de création
+
+```
+1. Utilisateur clique sur "Nouveau CV"
+   → Vérification automatique via checkFeatureLimit('create_cv_manual')
+   → Si limite atteinte + pas de crédits : affichage erreur + proposition upgrade
+   → Si autorisé : ouverture du wizard de création
+
+2. Remplissage du formulaire
+   → Aucun débit pendant la saisie
+   → Sauvegarde brouillon possible (gratuite)
+
+3. Soumission finale
+   → Débit 1 compteur d'abonnement OU 1 crédit (selon limite)
+   → Création du CV chiffré
+   → Enregistrement métadonnées avec createdBy: 'create-manual-cv'
+```
+
+#### Règles de facturation
+
+- **1 CV créé manuellement = 1 usage** de `create_cv_manual`
+- Le débit se fait uniquement à la **soumission finale**, pas pendant la saisie
+- Les brouillons n'entraînent pas de débit
+
 ### API
 
 ```javascript
@@ -574,12 +656,15 @@ Crée un nouveau CV vierge manuellement, section par section.
 {
   "cvData": { /* CV JSON complet */ }
 }
+
+// Vérification des limites effectuée automatiquement dans la route
 ```
 
 ### Code
 
 **Route** : `app/api/cv/create-manual/route.js`
 **Composant** : `components/CreateCvWizard.jsx`
+**Vérification limites** : `lib/subscription/featureUsage.js`
 
 ---
 

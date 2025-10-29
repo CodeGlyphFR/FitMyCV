@@ -22,8 +22,8 @@ Documentation complète du schéma Prisma et des modèles de données.
 - **ORM** : Prisma 6.16.2
 - **Database (dev)** : SQLite 3
 - **Database (prod)** : PostgreSQL ou MySQL (recommandé)
-- **Modèles** : 24 tables
-- **Migrations** : 16 migrations appliquées
+- **Modèles** : 28 tables
+- **Migrations** : 16+ migrations appliquées
 
 ### Configuration
 
@@ -157,6 +157,12 @@ model CvFile {
   // Optimisation
   optimiseStatus   String?  @default("idle") // 'idle' | 'inprogress' | 'failed'
   optimiseUpdatedAt DateTime?
+
+  // Système de crédits
+  createdWithCredit   Boolean  @default(false) // CV créé avec un crédit
+  creditUsedAt        DateTime? // Date d'utilisation du crédit
+  creditTransactionId String?  @unique // ID de la transaction crédit liée
+  blocked             Boolean  @default(false) // Bloqué en cas de downgrade
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -755,4 +761,23 @@ const usage = await prisma.openAIUsage.groupBy({
 
 ---
 
-**Base de données robuste et optimisée** | 23 modèles, 15 migrations
+## Modèles d'abonnement
+
+Les 10 modèles liés au système d'abonnement et de crédits sont documentés en détail dans **[docs/SUBSCRIPTION.md](/docs/SUBSCRIPTION.md)** :
+
+- `Subscription` - Abonnements utilisateurs
+- `SubscriptionPlan` - Plans d'abonnement disponibles
+- `SubscriptionPlanFeatureLimit` - Limites par feature et par plan
+- `CreditBalance` - Balance de crédits par utilisateur
+- `CreditTransaction` - Historique transactions de crédits
+- `CreditPack` - Packs de crédits achetables
+- `FeatureUsageCounter` - Compteurs mensuels par feature/user
+- `StripeWebhookLog` - Logs des webhooks Stripe
+- `Referral` - Système de parrainage
+- `PromoCode` - Codes promotionnels (🚧 planifié)
+
+Pour une documentation complète de l'architecture d'abonnement, des règles métier et des workflows, consultez `docs/SUBSCRIPTION.md`.
+
+---
+
+**Base de données robuste et optimisée** | 28 modèles, 16+ migrations
