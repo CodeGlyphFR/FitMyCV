@@ -62,19 +62,19 @@ async function debug() {
   }
   console.log();
 
-  // 3. Vérifier export_pdf spécifiquement
-  const exportPdfFeature = subscription.plan.featureLimits.find(f => f.featureName === 'export_pdf');
+  // 3. Vérifier export_cv spécifiquement
+  const exportCvFeature = subscription.plan.featureLimits.find(f => f.featureName === 'export_cv');
 
-  if (!exportPdfFeature) {
-    console.log('⚠️  PROBLÈME: export_pdf n\'existe PAS dans les features du plan !');
+  if (!exportCvFeature) {
+    console.log('⚠️  PROBLÈME: export_cv n\'existe PAS dans les features du plan !');
   } else {
-    console.log('✅ Feature export_pdf trouvée:');
+    console.log('✅ Feature export_cv trouvée:');
     console.log({
-      id: exportPdfFeature.id,
-      featureName: exportPdfFeature.featureName,
-      isEnabled: exportPdfFeature.isEnabled,
-      usageLimit: exportPdfFeature.usageLimit,
-      allowedAnalysisLevels: exportPdfFeature.allowedAnalysisLevels,
+      id: exportCvFeature.id,
+      featureName: exportCvFeature.featureName,
+      isEnabled: exportCvFeature.isEnabled,
+      usageLimit: exportCvFeature.usageLimit,
+      allowedAnalysisLevels: exportCvFeature.allowedAnalysisLevels,
     });
   }
   console.log();

@@ -279,7 +279,7 @@ model FeatureUsage {
   userId        String
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  featureName   String   // generate_cv, import_pdf, export_pdf, calculate_match_score, optimize_cv, etc.
+  featureName   String   // generate_cv, import_pdf, export_cv, match_score, optimize_cv, etc.
 
   usageCount    Int      @default(0)
   lastUsedAt    DateTime @default(now())
