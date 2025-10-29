@@ -392,6 +392,41 @@ Affiche l'historique avec :
 - **Responsive** : Table desktop + cards mobile
 - **Tri** : Plus récent en premier
 
+### Banner de Crédit de Facturation
+
+**Composant** : `CreditBalanceBanner.jsx`
+
+Affiche le crédit de facturation Stripe (customer balance) quand l'utilisateur a un solde positif suite à un downgrade (ex: annuel → mensuel).
+
+**Fonctionnement** :
+
+L'API `/api/subscription/invoices` récupère automatiquement le `customer.balance` depuis Stripe :
+```javascript
+const customer = await stripe.customers.retrieve(stripeCustomerId);
+// Balance négatif = crédit (ex: -4599 = 45,99€ de crédit)
+creditBalance = customer.balance < 0 ? Math.abs(customer.balance) / 100 : 0;
+```
+
+**Affichage conditionnel** :
+- ✅ Affiché si `creditBalance > 0`
+- ❌ Masqué si `creditBalance === 0`
+
+**Calcul des mois gratuits** :
+```javascript
+const nextInvoicePrice = plan.billingPeriod === 'yearly'
+  ? plan.priceYearly
+  : plan.priceMonthly;
+const estimatedMonths = Math.floor(creditBalance / nextInvoicePrice);
+```
+
+**Messages affichés** :
+- Si crédit ≥ 1 facture : "Soit environ X mois gratuits 🎉"
+- Si crédit < 1 facture : "Ce crédit couvrira une partie de votre prochaine facture"
+
+**Position** : En haut de l'onglet Factures, avant les filtres
+
+**Style** : Banner vert avec icône Info, responsive (stack vertical sur mobile)
+
 ---
 
 ## Synchronisation Automatique Stripe

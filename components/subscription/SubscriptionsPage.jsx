@@ -173,7 +173,7 @@ export default function SubscriptionsPage({ user }) {
   if (loading) {
     return (
       <main className="min-h-screen">
-        <div className="max-w-7xl mx-auto px-6 pt-6 pb-12 space-y-6">
+        <div className="max-w-5xl mx-auto px-6 pt-6 pb-12 space-y-6">
           {/* Header skeleton */}
           <div className="space-y-1">
             <div className="h-4 bg-white/20 rounded w-32 mb-4 animate-pulse"></div>
@@ -348,7 +348,7 @@ export default function SubscriptionsPage({ user }) {
             >
               <div className="space-y-4">
                 <CreditTransactionsTable />
-                <InvoicesTable />
+                <InvoicesTable currentPlan={subscriptionData?.subscription} />
               </div>
             </div>
           )}

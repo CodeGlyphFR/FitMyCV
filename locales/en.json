@@ -60,6 +60,12 @@
     "myAccount": "My account",
     "subscriptions": "Subscriptions & Credits",
     "logout": "Log out",
+    "analyzeOffers": "Offer Analysis",
+    "coverLetters": "Cover Letters",
+    "interviewPrep": "HR Preparation",
+    "applicationTracking": "Application Tracking",
+    "soon": "Soon",
+    "credits": "credits",
     "loadingInProgress": "Loading in progress ...",
     "taskQueue": "Task queue",
     "delete": "Delete",
@@ -850,6 +856,13 @@
       "title": "Invoices",
       "noInvoices": "No invoices yet",
       "errorLoading": "Error loading invoices",
+      "creditBanner": {
+        "title": "💰 Billing credit available",
+        "amount": "Current balance: {amount}€",
+        "explanation": "This credit will be automatically deducted from your future invoices.",
+        "estimatedMonths": "Approximately {months} free months 🎉",
+        "lessThanOneMonth": "This credit will cover part of your next invoice."
+      },
       "filters": {
         "all": "All ({count})",
         "subscriptions": "Subscriptions ({count})",

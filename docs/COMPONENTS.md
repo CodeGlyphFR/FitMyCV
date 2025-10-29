@@ -287,12 +287,13 @@ Barre de navigation principale de l'application.
 
 ```javascript
 // components/TopBar/hooks/
-- useCvOperations.js    // Opérations CV (delete, etc.)
-- useExportModal.js     // Modal export
-- useGeneratorModal.js  // Modal générateur
-- useModalStates.js     // États modals
-- useScrollBehavior.js  // Comportement scroll
-- useTopBarState.js     // État global TopBar
+- useCvOperations.js      // Opérations CV (delete, etc.)
+- useExportModal.js       // Modal export
+- useGeneratorModal.js    // Modal générateur
+- useModalStates.js       // États modals
+- useScrollBehavior.js    // Comportement scroll
+- useTopBarState.js       // État global TopBar
+- useSubscriptionData.js  // Données abonnement et crédits
 ```
 
 **Modals** :

@@ -419,13 +419,13 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
                     </div>
 
                     {/* Prix annuel (si existe) */}
-                    {plan.priceYearly && (
+                    {(plan.priceYearly > 0) && !isFreeplan && (
                       <div className="pt-2 border-t border-white/10">
                         <div className="text-xl font-semibold text-white/90">{plan.priceYearly}€</div>
                         <div className="text-xs text-white/60">{t('subscription.comparison.pricing.perYear')}</div>
                         {getYearlyDiscount(plan) > 0 && (
-                          <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 bg-green-500/20 border border-green-500/40 rounded-full">
-                            <span className="text-green-300 text-xs font-semibold">
+                          <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 bg-green-500/30 border border-green-400/60 rounded-full shadow-lg shadow-green-500/30">
+                            <span className="text-white text-xs font-bold drop-shadow-md">
                               -{getYearlyDiscount(plan)}%
                             </span>
                           </div>
@@ -440,8 +440,22 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
               <div className="space-y-2 mb-4">
                 {(() => {
                   const isExpanded = expandedPlan === plan.id;
-                  const includedFeatures = plan.featureLimits?.filter(f => f.usageLimit !== 0) || [];
-                  const excludedFeatures = plan.featureLimits?.filter(f => f.usageLimit === 0) || [];
+
+                  // Trier les features par ordre alphabétique (sans émojis)
+                  const includedFeatures = (plan.featureLimits?.filter(f => f.usageLimit !== 0) || [])
+                    .sort((a, b) => {
+                      const labelA = getFeatureLabel(a.featureName).replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+                      const labelB = getFeatureLabel(b.featureName).replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+                      return labelA.localeCompare(labelB, language, { sensitivity: 'base' });
+                    });
+
+                  const excludedFeatures = (plan.featureLimits?.filter(f => f.usageLimit === 0) || [])
+                    .sort((a, b) => {
+                      const labelA = getFeatureLabel(a.featureName).replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+                      const labelB = getFeatureLabel(b.featureName).replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+                      return labelA.localeCompare(labelB, language, { sensitivity: 'base' });
+                    });
+
                   const visibleIncludedFeatures = isExpanded ? includedFeatures : includedFeatures.slice(0, 4);
 
                   return (
@@ -545,7 +559,7 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
                   </button>
 
                   {/* Bouton annuel */}
-                  {plan.priceYearly && (
+                  {(plan.priceYearly > 0) && !isFreeplan && (
                     <button
                       onClick={() => handlePlanChange(plan.id, 'yearly')}
                       disabled={processingPlanId === plan.id}
@@ -573,7 +587,7 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
                                 : t('subscription.comparison.buttons.yearly', 'Annuel')}
                           </span>
                           {getYearlyDiscount(plan) > 0 && (
-                            <span className="inline-flex items-center px-1 py-0.5 bg-green-500/30 rounded text-green-200 text-xs font-semibold">
+                            <span className="inline-flex items-center px-1.5 py-0.5 bg-green-500/40 border border-green-400/50 rounded text-white text-xs font-bold shadow-sm">
                               -{getYearlyDiscount(plan)}%
                             </span>
                           )}

@@ -9,21 +9,16 @@ import React from "react";
 export default function IconPreloader() {
   return (
     <>
-      {/* Pré-charger les icônes critiques du dropdown CV */}
+      {/* Pré-charger toutes les icônes critiques de la TopBar */}
       <link rel="preload" href="/icons/add.png" as="image" />
       <link rel="preload" href="/icons/import.png" as="image" />
       <link rel="preload" href="/icons/search.png" as="image" />
       <link rel="preload" href="/icons/translate.png" as="image" />
       <link rel="preload" href="/icons/openai-symbol.png" as="image" />
-
-      {/* Images invisibles pour forcer le cache navigateur (fallback) */}
-      <div style={{ display: 'none', position: 'absolute', pointerEvents: 'none' }}>
-        <img src="/icons/add.png" alt="" />
-        <img src="/icons/import.png" alt="" />
-        <img src="/icons/search.png" alt="" />
-        <img src="/icons/translate.png" alt="" />
-        <img src="/icons/openai-symbol.png" alt="" />
-      </div>
+      <link rel="preload" href="/icons/delete.png" as="image" />
+      <link rel="preload" href="/icons/export.png" as="image" />
+      <link rel="preload" href="/icons/task.png" as="image" />
+      <link rel="preload" href="/icons/user.png" as="image" />
     </>
   );
 }

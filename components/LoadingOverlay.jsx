@@ -5,7 +5,15 @@ import { usePathname } from "next/navigation";
 
 export default function LoadingOverlay() {
   const pathname = usePathname();
+
+  // État pour détecter si on est monté côté client (évite hydration mismatch)
+  const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Détecter le montage côté client pour éviter l'hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // useLayoutEffect pour appliquer les styles AVANT le paint (synchrone)
   useLayoutEffect(() => {
@@ -57,7 +65,7 @@ export default function LoadingOverlay() {
     }
 
     let attempts = 0;
-    const maxAttempts = 60; // 60 tentatives * 100ms = 6 secondes max
+    const maxAttempts = 40; // 40 tentatives * 50ms = 2 secondes max
 
     // Attendre que le composant TopBar soit monté et réellement rendu
     const checkTopBarReady = () => {
@@ -75,27 +83,20 @@ export default function LoadingOverlay() {
       const topBar = document.querySelector('.sticky.top-0');
 
       if (topBar) {
-        // Vérifier que la TopBar contient des boutons (signe qu'elle est complètement chargée)
+        // Vérification simplifiée : TopBar visible + boutons présents
         const hasButtons = topBar.querySelector('button');
-        // Vérifier qu'il n'y a pas de texte "loading" ou "chargement"
-        const isNotLoading = !topBar.textContent.toLowerCase().includes('loading') &&
-                            !topBar.textContent.toLowerCase().includes('chargement');
-
-        // Vérifier que la TopBar a une hauteur réelle (est visible)
         const isVisible = topBar.offsetHeight > 0;
 
-        if (hasButtons && isNotLoading && isVisible) {
-          // Petit délai pour s'assurer que le rendu visuel est complet
-          setTimeout(() => {
-            setIsLoading(false);
-          }, 200);
+        if (hasButtons && isVisible) {
+          // Masquer immédiatement sans délai supplémentaire
+          setIsLoading(false);
           return;
         }
       }
 
       // Continuer à vérifier si pas encore prêt et pas dépassé le max
       if (attempts < maxAttempts) {
-        setTimeout(checkTopBarReady, 100);
+        setTimeout(checkTopBarReady, 50);
       } else {
         // Timeout atteint, masquer quand même
         setIsLoading(false);
@@ -105,16 +106,20 @@ export default function LoadingOverlay() {
     // Lancer la vérification
     checkTopBarReady();
 
-    // Timeout de sécurité absolu : masquer le loader après 7 secondes maximum
+    // Timeout de sécurité absolu : masquer le loader après 3 secondes maximum
     const maxTimeout = setTimeout(() => {
       setIsLoading(false);
-    }, 7000);
+    }, 3000);
 
     return () => {
       clearTimeout(maxTimeout);
     };
   }, [pathname, isLoading]);
 
+  // Ne pas rendre côté serveur pour éviter l'hydration mismatch
+  if (!isMounted) return null;
+
+  // Ne pas rendre si pas en chargement
   if (!isLoading) return null;
 
   return (

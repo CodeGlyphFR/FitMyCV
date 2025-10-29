@@ -139,6 +139,13 @@ export function useCvOperations({
         document.cookie = "cvFile=; path=/; max-age=0";
         setCurrent("");
       }
+
+      // Si plus aucun CV, forcer un hard reload
+      if (!next) {
+        window.location.href = '/';
+        return;
+      }
+
       try {
         await reload();
       } catch (reloadError) {}
