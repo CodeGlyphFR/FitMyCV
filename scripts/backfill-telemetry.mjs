@@ -306,10 +306,10 @@ async function updateFeatureUsage(userId, eventType, metadata, timestamp) {
   const featureMapping = {
     [EventTypes.CV_GENERATED]: 'generate_cv',
     [EventTypes.CV_IMPORTED]: 'import_pdf',
-    [EventTypes.CV_EXPORTED]: 'export_pdf',
+    [EventTypes.CV_EXPORTED]: 'export_cv',
     [EventTypes.CV_CREATED_MANUAL]: 'create_cv_manual',
     [EventTypes.CV_EDITED]: 'edit_cv',
-    [EventTypes.MATCH_SCORE_CALCULATED]: 'calculate_match_score',
+    [EventTypes.MATCH_SCORE_CALCULATED]: 'match_score',
     [EventTypes.CV_OPTIMIZED]: 'optimize_cv',
     [EventTypes.CV_TRANSLATED]: 'translate_cv',
   };

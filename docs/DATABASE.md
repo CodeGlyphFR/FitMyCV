@@ -394,7 +394,7 @@ Agrégation de l'usage par feature et par utilisateur.
 model FeatureUsage {
   id            String   @id @default(cuid())
   userId        String
-  featureName   String   // 'generate_cv' | 'import_pdf' | 'export_pdf' | ...
+  featureName   String   // 'generate_cv' | 'import_pdf' | 'export_cv' | ...
 
   usageCount    Int      @default(0)
   lastUsedAt    DateTime @default(now())

@@ -370,7 +370,7 @@ Chaque plan a des limites par feature :
 | `generate_cv` | ✅ | -1 (illimité) | ["rapid", "medium", "deep"] |
 | `import_pdf` | ✅ | 10/mois | ["medium"] |
 | `translate_cv` | ✅ | 5/mois | - |
-| `calculate_match_score` | ✅ | -1 | - |
+| `match_score` | ✅ | -1 | - |
 | `export_cv` | ✅ | -1 | - |
 
 **Exemple : Plan Gratuit**
