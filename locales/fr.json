@@ -722,6 +722,9 @@
       "buttons": {
         "currentPlan": "Plan actuel",
         "downgradeScheduled": "Downgrade déjà programmé",
+        "downgradeScheduledOn": "Downgrade prévu le {date}",
+        "cancelDowngrade": "Annuler le downgrade",
+        "cancelingDowngrade": "Annulation...",
         "upgrade": "Upgrade",
         "downgrade": "Downgrade",
         "upgradeTo": "Passer à {planName}",
@@ -742,7 +745,9 @@
       "downgradeToFreeModal": {
         "title": "Passer au plan Gratuit",
         "description": "Vous êtes sur le point d'annuler votre abonnement.",
+        "scheduledCancelled": "Votre downgrade programmé vers {planName} sera annulé.",
         "keepAccessUntil": "Vous conserverez l'accès à votre plan actuel jusqu'au <strong>{date}</strong>",
+        "effectiveDate": "Downgrade prévu le {date}",
         "switchToFree": "Vous passerez automatiquement au <strong>plan Gratuit</strong> à cette date",
         "canUpgrade": "Vous pourrez upgrader à nouveau à tout moment",
         "cancel": "Annuler",

@@ -39,6 +39,21 @@ export async function POST(request) {
     // Si abonnement Stripe, annuler dans Stripe également
     if (subscription.stripeSubscriptionId && !subscription.stripeSubscriptionId.startsWith('local_')) {
       try {
+        // Récupérer l'abonnement Stripe pour vérifier si un schedule existe
+        const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripeSubscriptionId);
+
+        // Si un schedule existe, le libérer avant d'annuler
+        if (stripeSubscription.schedule) {
+          try {
+            await stripe.subscriptionSchedules.release(stripeSubscription.schedule);
+            console.log(`[Subscription Cancel] Schedule ${stripeSubscription.schedule} libéré avant annulation`);
+          } catch (scheduleError) {
+            // Log l'erreur mais continue (le schedule expirera de toute façon à la fin de période)
+            console.error('[Subscription Cancel] Erreur libération schedule:', scheduleError);
+          }
+        }
+
+        // Procéder à l'annulation
         if (immediate) {
           // Annulation immédiate
           await stripe.subscriptions.cancel(subscription.stripeSubscriptionId);

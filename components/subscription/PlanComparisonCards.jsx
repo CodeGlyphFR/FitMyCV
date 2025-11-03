@@ -14,7 +14,7 @@ import { SkeletonPlanCard } from "@/components/ui/SkeletonLoader";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { translatePlanName } from "@/lib/subscription/planTranslations";
 
-export default function PlanComparisonCards({ currentPlan, subscription, onUpgradeSuccess }) {
+export default function PlanComparisonCards({ currentPlan, subscription, scheduledDowngrade, onUpgradeSuccess }) {
   const { t, language } = useLanguage();
   const [plans, setPlans] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
@@ -32,6 +32,7 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
   const [acceptedTerms, setAcceptedTerms] = React.useState(false);
   const [acceptedDowngradeTerms, setAcceptedDowngradeTerms] = React.useState(false);
   const [expandedPlan, setExpandedPlan] = React.useState(null);
+  const [cancelingDowngrade, setCancelingDowngrade] = React.useState(false);
 
   // Charger les plans disponibles
   React.useEffect(() => {
@@ -248,10 +249,8 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
 
       // Downgrade programmé avec succès
       if (data.success || data.scheduled) {
-        // Recharger les données
-        if (onUpgradeSuccess) {
-          onUpgradeSuccess();
-        }
+        // Rediriger vers la même page avec paramètres de succès pour refresh complet
+        window.location.href = '/account/subscriptions?success=true&updated=true';
       } else {
         alert(t('subscription.comparison.errors.changePlanError'));
         setIsDowngrading(false);
@@ -292,11 +291,8 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
 
       // Upgrade réussi
       if (data.success || data.upgraded) {
-        // Recharger les données
-        if (onUpgradeSuccess) {
-          onUpgradeSuccess();
-        }
-        // Pas de redirection, l'upgrade est fait immédiatement
+        // Rediriger vers la même page avec paramètres de succès pour refresh complet
+        window.location.href = '/account/subscriptions?success=true&updated=true';
       } else {
         alert(t('subscription.comparison.errors.changePlanError'));
         setProcessingPlanId(null);
@@ -305,6 +301,32 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
       console.error('Error upgrading:', error);
       alert(t('subscription.comparison.errors.changePlanError'));
       setProcessingPlanId(null);
+    }
+  };
+
+  const handleCancelDowngrade = async () => {
+    setCancelingDowngrade(true);
+    try {
+      const res = await fetch('/api/subscription/cancel-downgrade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        alert(error.error || 'Erreur lors de l\'annulation du downgrade');
+        setCancelingDowngrade(false);
+        return;
+      }
+
+      // Recharger les données après annulation
+      if (onUpgradeSuccess) {
+        onUpgradeSuccess();
+      }
+    } catch (error) {
+      console.error('Error canceling downgrade:', error);
+      alert('Erreur lors de l\'annulation du downgrade');
+      setCancelingDowngrade(false);
     }
   };
 
@@ -374,6 +396,12 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
           const isDowngradeToFree = isFreeplan && isDowngrade;
           const isAlreadyCanceled = subscription?.cancelAtPeriodEnd;
           const shouldBlockDowngrade = isDowngradeToFree && isAlreadyCanceled;
+
+          // Vérifier si ce plan est la cible d'un downgrade programmé
+          const isScheduledDowngradePlan = scheduledDowngrade?.targetPlanId === plan.id;
+          const scheduledDate = scheduledDowngrade?.effectiveDate
+            ? new Date(scheduledDowngrade.effectiveDate)
+            : null;
 
           return (
             <div
@@ -525,6 +553,34 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
                 >
                   {t('subscription.comparison.buttons.downgradeScheduled')}
                 </button>
+              ) : isScheduledDowngradePlan ? (
+                <div className="space-y-2">
+                  {/* Badge downgrade programmé */}
+                  <div className="w-full py-2.5 px-3 rounded-lg bg-orange-500/20 border border-orange-500/50 text-orange-300 text-xs text-center font-medium">
+                    📅 {t('subscription.comparison.buttons.downgradeScheduledOn', {
+                      date: scheduledDate?.toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                      })
+                    })}
+                  </div>
+                  {/* Bouton annuler */}
+                  <button
+                    onClick={handleCancelDowngrade}
+                    disabled={cancelingDowngrade}
+                    className="w-full py-2 px-3 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 hover:border-red-500/70 text-red-300 hover:text-red-200 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                  >
+                    {cancelingDowngrade ? (
+                      <>
+                        <Loader2 className="animate-spin" size={14} />
+                        <span>{t('subscription.comparison.buttons.cancelingDowngrade')}</span>
+                      </>
+                    ) : (
+                      <span>{t('subscription.comparison.buttons.cancelDowngrade')}</span>
+                    )}
+                  </button>
+                </div>
               ) : (
                 <div className="space-y-1.5">
                   {/* Bouton mensuel */}
@@ -728,6 +784,18 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
           <p className="text-white/90">
             {t('subscription.comparison.downgradeToFreeModal.description', 'Vous êtes sur le point d\'annuler votre abonnement.')}
           </p>
+
+          {/* Warning si un downgrade est déjà programmé */}
+          {scheduledDowngrade && (
+            <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+              <p className="text-sm text-orange-300">
+                ℹ️ {t('subscription.comparison.downgradeToFreeModal.scheduledCancelled', {
+                  planName: plans.find(p => p.id === scheduledDowngrade.targetPlanId)?.name || 'votre futur plan'
+                })}
+              </p>
+            </div>
+          )}
+
           <ul className="space-y-2 text-white/80">
             <li className="flex items-start gap-2">
               <span className="text-emerald-400 mt-0.5">•</span>
@@ -736,6 +804,18 @@ export default function PlanComparisonCards({ currentPlan, subscription, onUpgra
                   date: new Date(subscription?.currentPeriodEnd).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })
                 })
               }} />
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-emerald-400 mt-0.5">•</span>
+              <span>
+                {t('subscription.comparison.downgradeToFreeModal.effectiveDate', {
+                  date: new Date(subscription?.currentPeriodEnd).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                  })
+                })}
+              </span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-emerald-400 mt-0.5">•</span>

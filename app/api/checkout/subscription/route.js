@@ -143,34 +143,63 @@ export async function POST(request) {
           });
         }
 
-        // Pour DOWNGRADES : Modifier l'abonnement directement (sans prorata, effectif au prochain cycle)
+        // Pour DOWNGRADES : Programmer le changement pour la fin de la période actuelle
         if (isDowngrade) {
-          const updateParams = {
-            items: [{
-              id: stripeSubscription.items.data[0].id,
-              price: stripePriceId,
-            }],
-            proration_behavior: 'none',
+          // Vérifier si l'abonnement a déjà un schedule
+          let schedule;
+          if (stripeSubscription.schedule) {
+            // Un schedule existe déjà, le récupérer
+            schedule = await stripe.subscriptionSchedules.retrieve(stripeSubscription.schedule);
+            console.log(`[Checkout Subscription] Schedule existant trouvé: ${schedule.id}`);
+          } else {
+            // Pas de schedule, en créer un à partir de l'abonnement existant
+            schedule = await stripe.subscriptionSchedules.create({
+              from_subscription: existingSubscription.stripeSubscriptionId,
+            });
+            console.log(`[Checkout Subscription] Nouveau schedule créé: ${schedule.id}`);
+          }
+
+          // Mettre à jour le schedule pour ajouter/modifier la phase de downgrade
+          const updatedSchedule = await stripe.subscriptionSchedules.update(schedule.id, {
+            end_behavior: 'release', // Libérer l'abonnement après le schedule
+            phases: [
+              {
+                // Phase 1 : Garder le plan actuel jusqu'à la fin de période
+                start_date: schedule.phases[0].start_date,
+                end_date: stripeSubscription.current_period_end,
+                items: [{
+                  price: stripeSubscription.items.data[0].price.id,
+                  quantity: 1,
+                }],
+                proration_behavior: 'none',
+              },
+              {
+                // Phase 2 : Nouveau plan (downgrade) après la fin de période
+                start_date: stripeSubscription.current_period_end,
+                items: [{
+                  price: stripePriceId,
+                  quantity: 1,
+                }],
+                proration_behavior: 'none',
+              },
+            ],
             metadata: {
               userId,
               planId: planId.toString(),
+              isDowngrade: 'true',
             },
-          };
+          });
 
-          const updatedSubscription = await stripe.subscriptions.update(
-            existingSubscription.stripeSubscriptionId,
-            updateParams
-          );
-
-          console.log(`[Checkout Subscription] Downgrade : changement effectif le ${new Date(updatedSubscription.current_period_end * 1000).toLocaleDateString('fr-FR')}`);
+          console.log(`[Checkout Subscription] Downgrade programmé pour le ${new Date(stripeSubscription.current_period_end * 1000).toLocaleDateString('fr-FR')}`);
 
           return NextResponse.json({
             success: true,
             scheduled: true,
             downgrade: true,
-            effectiveDate: new Date(updatedSubscription.current_period_end * 1000).toISOString(),
-            subscriptionId: updatedSubscription.id,
-            message: `Downgrade programmé pour le ${new Date(updatedSubscription.current_period_end * 1000).toLocaleDateString('fr-FR')}`,
+            effectiveDate: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
+            subscriptionId: updatedSchedule.subscription,
+            scheduleId: updatedSchedule.id,
+            message: `Downgrade programmé pour le ${new Date(stripeSubscription.current_period_end * 1000).toLocaleDateString('fr-FR')}`,
           });
         }
 

@@ -318,6 +318,7 @@ export default function SubscriptionsPage({ user }) {
               <PlanComparisonCards
                 currentPlan={subscriptionData.subscription?.plan}
                 subscription={subscriptionData.subscription}
+                scheduledDowngrade={subscriptionData.scheduledDowngrade}
                 onUpgradeSuccess={refreshData}
               />
               <FeatureCountersCard
