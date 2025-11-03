@@ -661,14 +661,43 @@ async function handleChargeSucceeded(charge) {
     return;
   }
 
-  // Vérifier si la transaction existe (doit déjà exister, créée par checkout.session ou payment_intent)
-  const existingTransaction = await prisma.creditTransaction.findFirst({
+  // Vérifier si la transaction existe (peut ne pas exister si charge.succeeded arrive avant checkout.session)
+  let existingTransaction = await prisma.creditTransaction.findFirst({
     where: { stripePaymentIntentId: paymentIntentId },
   });
 
+  // Si la transaction n'existe pas, la créer (cas où charge.succeeded arrive avant checkout.session)
   if (!existingTransaction) {
-    console.error(`[Webhook] Transaction introuvable pour PaymentIntent ${paymentIntentId} dans charge.succeeded`);
-    return;
+    console.log(`[Webhook] Transaction inexistante pour PaymentIntent ${paymentIntentId}, création dans charge.succeeded`);
+
+    try {
+      const result = await grantCredits(userId, creditAmount, 'purchase', {
+        stripePaymentIntentId: paymentIntentId,
+        source: 'credit_pack_purchase',
+      });
+
+      if (!result.success) {
+        console.error('[Webhook] Erreur attribution crédits dans charge.succeeded:', result.error);
+        return;
+      }
+
+      // Récupérer la transaction créée
+      existingTransaction = await prisma.creditTransaction.findFirst({
+        where: { stripePaymentIntentId: paymentIntentId },
+      });
+
+      console.log(`[Webhook] ${creditAmount} crédits attribués à user ${userId} (charge.succeeded - ordre inversé)`);
+    } catch (error) {
+      // Gérer l'erreur de contrainte unique (race condition avec checkout.session)
+      if (error.code === 'P2002' && error.meta?.target?.includes('stripePaymentIntentId')) {
+        console.log(`[Webhook] Race condition détectée, transaction créée par un autre webhook, récupération...`);
+        existingTransaction = await prisma.creditTransaction.findFirst({
+          where: { stripePaymentIntentId: paymentIntentId },
+        });
+      } else {
+        throw error;
+      }
+    }
   }
 
   // Si facture déjà créée, ne rien faire (idempotence)
@@ -688,7 +717,7 @@ async function handleChargeSucceeded(charge) {
     },
   };
 
-  await createInvoiceForCreditPurchase({
+  const invoiceId = await createInvoiceForCreditPurchase({
     customer: paymentIntent.customer,
     amount: paymentIntent.amount,
     currency: paymentIntent.currency,
@@ -696,6 +725,13 @@ async function handleChargeSucceeded(charge) {
     userId,
     paymentIntent: paymentIntentWithCharge,
   }, existingTransaction.id);
+
+  // Vérifier que la facture a bien été créée
+  if (!invoiceId) {
+    throw new Error(`Échec création facture pour PaymentIntent ${paymentIntentId} - voir logs ci-dessus pour détails`);
+  }
+
+  console.log(`[Webhook] ✅ Facture ${invoiceId} créée et associée à la transaction ${existingTransaction.id}`);
 
   // TODO: Envoyer email de confirmation via Resend
 }
