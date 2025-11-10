@@ -87,6 +87,33 @@ La documentation est organisée en plusieurs fichiers thématiques :
   - Match Score & Optimisation
   - Système de tâches background
 
+### 💻 Références Développement
+- **[COMMANDS_REFERENCE.md](./COMMANDS_REFERENCE.md)** - Référence commandes complète
+  - Commandes Next.js, Prisma, Stripe
+  - Scripts de maintenance
+  - Tâches CRON
+  - Workflow quotidien
+
+- **[CODE_PATTERNS.md](./CODE_PATTERNS.md)** - Patterns de code réutilisables
+  - Accès CV chiffrés
+  - Gestion job queue
+  - Patterns Stripe & abonnements
+  - Vérification limites features
+
+- **[ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md)** - Variables d'environnement
+  - Configuration complète .env.local
+  - Variables OpenAI, Stripe, NextAuth
+  - Génération des secrets
+  - Best practices sécurité
+
+- **[DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)** - Système de design complet
+  - Philosophie glassmorphism
+  - Palette de couleurs & gradients
+  - Composants UI (buttons, cards, inputs, modals)
+  - Animations & transitions
+  - Responsive design & optimisations iOS
+  - Accessibilité (WCAG, ARIA)
+
 ### 🤖 IA & Sécurité
 - **[AI_INTEGRATION.md](./AI_INTEGRATION.md)** - Intégration OpenAI
   - Configuration des modèles
@@ -108,6 +135,13 @@ La documentation est organisée en plusieurs fichiers thématiques :
   - Configuration settings
   - Monitoring OpenAI
   - Plans d'abonnement
+
+- **[TELEMETRY.md](./TELEMETRY.md)** - Système de télémétrie
+  - Session lifecycle (ACTIVE/PAUSED/ENDED)
+  - Dashboard admin usage
+  - API endpoints télémétrie
+  - Testing procedures
+  - Troubleshooting
 
 - **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Guide de déploiement
   - Déploiement production

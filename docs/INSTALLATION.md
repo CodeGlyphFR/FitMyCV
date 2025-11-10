@@ -1,5 +1,8 @@
 # Guide d'installation - FitMyCv.ai
 
+> **Part of FitMyCv.ai technical documentation**
+> Quick reference: [CLAUDE.md](../CLAUDE.md) | Environment Variables: [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md) | Commands: [COMMANDS_REFERENCE.md](./COMMANDS_REFERENCE.md)
+
 Ce guide vous accompagne pas à pas dans l'installation et la configuration de FitMyCv.ai.
 
 ---

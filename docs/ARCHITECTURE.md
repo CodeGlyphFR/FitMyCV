@@ -1,5 +1,8 @@
 # Architecture - FitMyCv.ai
 
+> **Part of FitMyCv.ai technical documentation**
+> Quick reference: [CLAUDE.md](../CLAUDE.md) | Design System: [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) | Code Patterns: [CODE_PATTERNS.md](./CODE_PATTERNS.md)
+
 Ce document décrit en détail l'architecture de l'application FitMyCv.ai.
 
 ---
