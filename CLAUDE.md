@@ -1,530 +1,198 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> **This file provides guidance to Claude Code AI assistant when working with this repository.**
+>
+> **For human developers:** Start with [README.md](./README.md) for project overview, then consult [docs/](./docs/) for detailed documentation.
 
-## Development Commands
+---
 
-### Next.js
+## 📚 Documentation Complète
+
+Toute la documentation technique est disponible dans le dossier **`docs/`**. Ce fichier est un **quick reference** pour Claude Code avec des liens vers la documentation détaillée.
+
+### Installation & Configuration
+- **[Installation complète](./docs/INSTALLATION.md)** - Setup initial, prérequis, premiers pas
+- **[Variables d'environnement](./docs/ENVIRONMENT_VARIABLES.md)** - Configuration .env détaillée
+- **[Déploiement](./docs/DEPLOYMENT.md)** - Production deployment guide
+- **[Configuration CRON](./docs/CRON_SETUP.md)** - Tâches planifiées
+
+### Architecture & Développement
+- **[Architecture complète](./docs/ARCHITECTURE.md)** - Vue d'ensemble système, background tasks, télémétrie
+- **[Guide développement](./docs/DEVELOPMENT.md)** - Workflow développeur, best practices
+- **[Base de données](./docs/DATABASE.md)** - Schéma Prisma, migrations, models
+- **[Référence API](./docs/API_REFERENCE.md)** - Tous les endpoints avec exemples
+- **[Composants](./docs/COMPONENTS.md)** - Structure composants React
+- **[Features](./docs/FEATURES.md)** - Fonctionnalités détaillées
+
+### Systèmes Spécialisés
+- **[Intégration IA](./docs/AI_INTEGRATION.md)** - OpenAI, prompts, modèles, analyse levels
+- **[Système d'abonnements](./docs/SUBSCRIPTION.md)** - Plans, crédits, Stripe, limites features
+- **[Dashboard Admin](./docs/ADMIN_GUIDE.md)** - Interface admin, analytics, monitoring
+- **[Télémétrie & Analytics](./docs/TELEMETRY.md)** - Système télémétrie, sessions, dashboard analytics
+- **[Sécurité](./docs/SECURITY.md)** - Best practices, chiffrement CV, sanitization
+
+### Configuration Externe
+- **[Setup Stripe](./docs/STRIPE_SETUP.md)** - Configuration Stripe complète (webhooks, test mode)
+- **[MCP Puppeteer](./docs/MCP_PUPPETEER.md)** - Browser automation pour tests et analyse UX
+
+### Développement & Patterns
+- **[Référence commandes](./docs/COMMANDS_REFERENCE.md)** - Toutes les commandes (Next.js, Prisma, Stripe, scripts)
+- **[Patterns de code](./docs/CODE_PATTERNS.md)** - Exemples réutilisables (CV, job queue, Stripe, limites)
+- **[Design System](./docs/DESIGN_SYSTEM.md)** - UI/UX guidelines complets (glassmorphism, composants, animations)
+
+### Guides Pratiques
+- **[Usage](./docs/USAGE.md)** - Guide utilisateur
+- **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Résolution problèmes communs
+- **[Tests MVP](./docs/MVP_TESTING.md)** - Tests et validation
+
+### Documentation Projet
+- **[README](./docs/README.md)** - Index documentation
+- **[Refactoring Stripe](./docs/STRIPE_REFACTORING.md)** - Notes refactoring système paiements
+
+---
+
+## ⚡ Quick Start
+
+### Ports de développement
+- **Dev**: `3001` (npm run dev)
+- **Prod**: `3000` (npm start)
+
+### Commandes essentielles
+
 ```bash
-npm run dev              # Démarre le serveur de développement (port 3001)
-npm run build            # Build de production
-npm start                # Démarre le serveur de production (port 3000)
-npm run backfill:telemetry   # Backfill des données de télémétrie
-```
+# Développement
+npm run dev                      # Serveur développement (port 3001)
+npm run build                    # Build production
+npm start                        # Serveur production (port 3000)
 
-**Ports** :
-- Développement : `3001` (configuré dans package.json)
-- Production : `3000`
+# Database
+npx prisma migrate deploy        # Appliquer migrations
+npx prisma generate              # Générer client Prisma
+npx prisma studio                # Interface DB graphique
 
-### Prisma
-```bash
-npx prisma migrate deploy    # Applique les migrations
-npx prisma migrate dev       # Créer une migration en dev
-npx prisma studio            # Interface graphique pour la base de données
-npx prisma generate          # Génère le client Prisma
-```
-
-### Stripe (développement local)
-```bash
-# Installer Stripe CLI (macOS)
-brew install stripe/stripe-cli/stripe
-
-# Se connecter
-stripe login
-
-# Transférer webhooks en local (terminal séparé)
+# Stripe (terminal séparé)
 stripe listen --forward-to localhost:3001/api/webhooks/stripe
-
-# Tester un webhook
-stripe trigger payment_intent.succeeded
 ```
 
-### MCP Puppeteer (Browser Automation pour Claude Code)
+→ **[Toutes les commandes](./docs/COMMANDS_REFERENCE.md)**
 
-Le serveur MCP Puppeteer permet à Claude Code d'interagir avec des navigateurs web pour l'analyse UX, les tests automatisés et le debugging visuel.
-
-**Installation rapide** :
-```bash
-claude mcp add-json "puppeteer" '{"command":"npx","args":["-y","@modelcontextprotocol/server-puppeteer"]}'
-claude mcp list  # Vérifier l'installation
-# Redémarrer Claude Code pour activer
-```
-
-**7 outils disponibles** : `navigate`, `screenshot`, `click`, `fill`, `evaluate`, `hover`, `select`
-
-**Configuration Linux** : Ajouter `allowDangerous: true` et `args: ["--no-sandbox", "--disable-setuid-sandbox"]`
-
-**Documentation complète** : Voir `docs/MCP_PUPPETEER.md` pour :
-- Guide d'installation détaillé
-- Workflow d'analyse UX
-- Gestion du reCAPTCHA (bypass temporaire)
-- Exemples concrets
-- Pièges à éviter
-- Bonnes pratiques
-
-**Exemple minimal** :
-```javascript
-// Naviguer et capturer
-await puppeteer_navigate({
-  url: "https://176.136.226.121.nip.io",
-  allowDangerous: true,
-  launchOptions: { headless: true, args: ["--no-sandbox"] }
-});
-
-await puppeteer_screenshot({ name: "homepage", width: 1920, height: 1080 });
-```
-
-**IMPORTANT - Base de données** :
-- La base SQLite est dans `prisma/dev.db`
-- Pour les **migrations Prisma** : DATABASE_URL doit être dans `.env.local` avec la valeur `DATABASE_URL="file:./dev.db"` car Prisma s'exécute depuis le dossier `prisma/`
-- Pour **Next.js** : DATABASE_URL peut être dans `.env.local` avec la même valeur `DATABASE_URL="file:./dev.db"`
-- **NE JAMAIS** utiliser `file:./prisma/dev.db` - le chemin est toujours `file:./dev.db` car relatif au dossier `prisma/`
-
-## Architecture
-
-### Vue d'ensemble
-Application Next.js 14 (App Router) pour créer des CV personnalisés par offre d'emploi avec IA.
-- **Frontend**: React 18 + Tailwind CSS
-- **Backend**: Next.js API Routes + NextAuth
-- **Database**: Prisma + SQLite (par défaut)
-- **IA**: OpenAI API pour génération et optimisation ATS des CV
-- **Sécurité**: CV chiffrés en AES-256-GCM côté serveur
-
-### Structure des données CV
-Les CV sont stockés au format JSON validé par le template dans `data/template.json`. Structure principale:
-- `header`: nom, titre, contact
-- `summary`: description, domaines
-- `skills`: hard_skills, soft_skills, tools, methodologies
-- `experience`: expériences professionnelles
-- `education`, `languages`, `extras`, `projects`
-- `order_hint`: ordre d'affichage des sections
-- `section_titles`: titres personnalisés
-
-### Chiffrement des CV
-Les fichiers CV sont chiffrés avant stockage avec AES-256-GCM (`lib/cv/crypto.js`):
-- Clé: `CV_ENCRYPTION_KEY` (32 octets base64 dans .env.local)
-- Format: `cv1` prefix + IV (12 bytes) + authTag (16 bytes) + ciphertext
-- Fonctions: `encryptString()`, `decryptString()`
-
-### Système de tâches en arrière-plan
-Architecture de job queue pour les opérations longues (génération IA, import PDF, traductions). Il existe un job queue pour un affichage sur mobile et un job queue pour un affichage sur desktop:
-
-**Job Queue** (`lib/backgroundTasks/jobQueue.js`):
-- Max 3 jobs concurrents (`MAX_CONCURRENT_JOBS`)
-- `enqueueJob(jobRunner)`: ajoute un job
-- `getQueueSnapshot()`: état de la queue
-
-**Types de tâches** (stockées dans `BackgroundTask` model):
-- `generate-cv`: Génère un CV à partir d'une offre (lien/PDF)
-- `import-pdf`: Import d'un CV depuis PDF
-- `translate-cv`: Traduction d'un CV
-- `create-template-cv`: Création d'un CV template
-- `generate-cv-from-job-title`: Génération depuis un titre de poste
-- `calculate-match-score`: Calcul du score de correspondance
-
-**Processus de job**:
-1. Route API (`app/api/background-tasks/{type}/route.js`) reçoit la requête
-2. Job spécifique (`lib/backgroundTasks/{type}Job.js`) est enqueué
-3. Fonction OpenAI (`lib/openai/{type}.js`) exécute la logique métier
-4. État synchronisé via polling (`app/api/background-tasks/sync/route.js`)
-
-**État des tâches**:
-- `queued`: en attente
-- `running`: en cours
-- `completed`: terminée
-- `failed`: échouée
-- `cancelled`: annulée
-
-### Génération de CV par IA
-Flux principal dans `lib/openai/generateCv.js`:
-1. Extraction du contenu de l'offre (URL scraping avec Puppeteer stealth ou PDF parsing)
-2. Récupération du CV de référence de l'utilisateur
-3. **Appel OpenAI** qui génère un CV adapté à l'offre
-4. Validation du JSON retourné contre `data/template.json`
-5. Stockage chiffré du nouveau CV avec métadonnées enrichies
-
-**Niveaux d'analyse** (`analysisLevel`):
-- `rapid`: modèle rapide (économique) - `gpt-5-nano-2025-08-07`
-- `medium`: modèle standard - `gpt-5-mini-2025-08-07`
-- `deep`: modèle avancé (plus de contexte) - `gpt-5-2025-08-07`
-
-**Extraction web optimisée**:
-- Puppeteer + Stealth plugin pour contourner blocages (Indeed, etc.)
-- Détection automatique du titre d'offre (H/F patterns)
-- Optimisation HTML (réduction contexte inutile)
-- Cache de l'extraction dans `CvFile.extractedJobOffer`
-
-### Auth & User Management
-**NextAuth** (`lib/auth/options.js`):
-- Providers: credentials (email/password), Google, GitHub, Apple
-- Adapter Prisma pour persistence
-- Session strategy: JWT
-
-**Models Prisma clés**:
-- `User`: utilisateurs avec relations (cvs, accounts, sessions, feedbacks, subscription)
-- `CvFile`: métadonnées des CV (sourceType, createdBy, matchScore, isTranslated, createdWithCredit, creditUsedAt, creditTransactionId, blocked)
-- `BackgroundTask`: suivi des jobs asynchrones (creditUsed, creditTransactionId)
-- `LinkHistory`: historique des URLs utilisées
-- `Feedback`: retours utilisateurs
-
-### Système d'Abonnements et Crédits
-**Architecture hybride** : Abonnements mensuels + micro-transactions (crédits)
-
-**Nouveaux modèles** (`prisma/schema.prisma`):
-- `Subscription`: Abonnement utilisateur avec lien Stripe
-- `SubscriptionPlan`: Plans d'abonnement disponibles
-- `SubscriptionPlanFeatureLimit`: Limites par feature et par plan
-- `CreditBalance`: Balance de crédits par utilisateur
-- `CreditTransaction`: Historique des transactions de crédits
-- `CreditPack`: Packs de crédits achetables
-- `FeatureUsageCounter`: Compteurs mensuels par feature/user
-- `StripeWebhookLog`: Logging webhooks Stripe
-- `Referral`: Système de parrainage
-- `PromoCode`: Codes promotionnels (🚧 planifié - non implémenté)
-
-**9 Macro-features trackées** avec limites mensuelles:
-1. `gpt_cv_generation` - Génération CV avec IA
-2. `import_pdf` - Import CV depuis PDF
-3. `translate_cv` - Traduction de CV
-4. `match_score` - Score de correspondance
-5. `optimize_cv` - Optimisation automatique
-6. `generate_from_job_title` - Génération depuis titre
-7. `export_cv` - Export PDF
-8. `edit_cv` - Édition de CV
-9. `create_cv_manual` - Création manuelle
-
-**Règles métier** :
-- Plan par défaut : **Gratuit** (attribué automatiquement à l'inscription)
-- Compteurs mensuels reset à date anniversaire abonnement
-- Limite atteinte → utilisation crédit (1 crédit = 1 feature)
-- CV créés avec crédits : flag `createdWithCredit: true`, badge 💎
-- Downgrade : blocage automatique des CV en excès (priorité CV avec crédits)
-- Échec paiement : downgrade immédiat vers Gratuit
-
-**Modules core** (`lib/subscription/`):
-- `credits.js`: Gestion crédits (debit, refund, grant)
-- `featureUsage.js`: Vérification limites + compteurs
-- `cvLimits.js`: Limites CV avec crédits
-- `subscriptions.js`: Gestion abonnements (upgrade, downgrade, cancel)
-- `stripeSync.js`: Synchronisation automatique produits Stripe
-- `planUtils.js`: Utilitaires et helpers pour les plans
-- `planTranslations.js`: Traductions des noms/descriptions de plans
-
-**Intégration jobs** :
-- `generateCvJob.js` : Débite compteur/crédit au début, rembourse si échec/annulation
-- Autres jobs : À intégrer de la même manière
-
-**API Routes** :
-- `/api/checkout/subscription` - Session Stripe abonnement
-- `/api/checkout/credits` - Session Stripe pack crédits
-- `/api/webhooks/stripe` - Handler webhooks Stripe
-- `/api/subscription/current` - Abonnement + compteurs
-- `/api/subscription/change` - Changer de plan
-- `/api/subscription/cancel` - Annuler abonnement
-- `/api/subscription/reactivate` - Réactiver abonnement annulé
-- `/api/subscription/preview-upgrade` - Prévisualisation changement de plan (prorata)
-- `/api/subscription/plans` - Liste des plans disponibles
-- `/api/subscription/invoices` - Historique factures Stripe (invoices + PaymentIntents)
-- `/api/credits/balance` - Balance crédits
-- `/api/credits/transactions` - Historique transactions crédits
-- `/api/cv/can-create` - Vérifier si peut créer CV
-
-**Scripts maintenance** :
-- `scripts/sync-stripe-products.js` - Synchroniser produits/prix Stripe depuis DB
-- `scripts/reset-feature-counters.js` - Reset compteurs expirés (cron quotidien)
-
-**Composants UI** (`components/subscription/`):
-- `SubscriptionsPage.jsx` - Page principale avec 3 onglets (Abonnement, Crédits, Historique)
-- `CurrentPlanCard.jsx` - Affichage plan actuel + annulation/réactivation
-- `PlanComparisonCards.jsx` - Cartes de comparaison des plans avec upgrade/downgrade
-- `FeatureCountersCard.jsx` - Compteurs d'utilisation par feature
-- `CreditBalanceCard.jsx` - Balance de crédits
-- `CreditBalanceBanner.jsx` - Bannière crédits dans TopBar
-- `NegativeBalanceBanner.jsx` - Alerte balance Stripe négative
-- `CreditPacksCards.jsx` - Packs de crédits achetables
-- `CreditTransactionsTable.jsx` - Historique transactions crédits
-- `InvoicesTable.jsx` - Historique factures Stripe (invoices + PaymentIntents)
-
-**Historique factures** (`InvoicesTable.jsx`):
-- Fusionne **Invoices Stripe** (abonnements) et **PaymentIntents** (packs de crédits)
-- Récupération automatique du `stripeCustomerId` depuis les PaymentIntents si customer local
-- Badge type : 👑 Abonnement (violet) ou 💎 Crédits (bleu)
-- Badge statut : Payé (vert), En attente (orange), Annulé (rouge)
-- Téléchargement PDF pour les factures d'abonnement
-- Responsive : Table desktop + cards mobile
-
-**Documentation** :
-- `docs/SUBSCRIPTION.md` - Documentation complète du système
-- `docs/STRIPE_SETUP.md` - Guide configuration Stripe
-- `docs/CRON_SETUP.md` - Configuration tâches planifiées
-
-### Match Score
-Score de correspondance (0-100) entre CV et offre d'emploi:
-- Calculé via OpenAI (`lib/openai/calculateMatchScoreWithAnalysis.js`)
-- Stocké dans `CvFile.matchScore`
-- Rate limiting: `User.matchScoreRefreshCount` et `matchScoreFirstRefreshAt`
-- États: `idle`, `inprogress`, `failed` (`matchScoreStatus`)
-- Retourne aussi: scoreBreakdown, suggestions, missingSkills, matchingSkills
-
-### CV Optimization
-Optimisation automatique des CV basée sur les suggestions d'amélioration:
-- Route: `/api/cv/improve` (POST)
-- Fonction OpenAI: `lib/openai/improveCv.js`
-- États: `idle`, `inprogress`, `failed` (`optimiseStatus`)
-- Workflow:
-  1. Vérification de `matchScoreStatus === 'idle'` et suggestions disponibles
-  2. Lancement: `optimiseStatus → 'inprogress'`
-  3. Amélioration en arrière-plan (remplace le CV existant)
-  4. Fin: `optimiseStatus → 'idle'` et rechargement automatique de la page
-- Anti-spam: Bouton désactivé pendant l'optimisation
-- Le bouton "Optimiser" est grisé si `matchScoreStatus === 'inprogress'` OU `optimiseStatus === 'inprogress'`
-
-### CV Edit Mode (Feature: edit_cv)
-Système de contrôle d'accès au mode édition manuelle des CV avec gestion des limites d'abonnement.
-
-**Workflow de session d'édition** :
-1. **Clic sur "Mode édition"** → Vérification préalable via `/api/cv/can-edit` (GET)
-   - Si refusé (limite atteinte + pas de crédits) : notification d'erreur + redirection vers `/account/subscriptions`
-   - Si autorisé : activation du mode édition (aucun débit à ce stade)
-
-2. **Première modification dans la session** → Débit automatique via `/api/cv/debit-edit` (POST)
-   - Appel depuis `useMutate` après succès de la mutation
-   - Débite 1 compteur d'abonnement OU 1 crédit (selon limite atteinte)
-   - Flag `hasDebitedEditSession` mis à `true` pour bloquer les débits suivants
-
-3. **Modifications suivantes** → Gratuites (même session d'édition)
-
-4. **Sortie du mode édition** → Reset du flag `hasDebitedEditSession`
-
-**Composants clés** :
-- `AdminProvider` : gère les states `editing` et `hasDebitedEditSession`, vérifie les limites avant activation
-- `useMutate` : débite UNE SEULE FOIS par session à la première modification réussie
-- Routes API :
-  - `/api/cv/can-edit` : vérification sans débit (utilisé avant activation du mode)
-  - `/api/cv/debit-edit` : débit unique par session (appelé à la première modification)
-  - `/api/admin/mutate` : mutations du CV (sans vérification de limites, déléguée à useMutate)
-
-**Règles de facturation** :
-- 1 session d'édition = 1 usage de `edit_cv` (peu importe le nombre de modifications)
-- Le débit se fait à la **première modification effective**, pas à l'activation du mode
-- Les utilisateurs peuvent activer le mode édition sans consommer de crédit (pour consulter)
-
-### Validation & Sanitization
-- **Validation**: AJV avec `data/schema.json` (`lib/cv/validation.js`)
-- **Sanitization**: Nettoyage des entrées (`lib/sanitize.js`)
-- Correction automatique de structure avant rendu
-
-### Export PDF
-Une méthodes:
-- `export-pdf`: Export complet avec Puppeteer
-
-### Internationalisation
-- Labels traduits dans `lib/i18n/cvLabels.js`
-- LanguageSwitcher pour changer la langue d'affichage
-
-### Admin System
-Dashboard d'administration complet avec analytics, monitoring et gestion.
-
-**Accès** :
-- URL: `/admin/analytics`
-- Protection: Middleware vérifie `session.user.role === 'ADMIN'`
-- Promotion admin: `node scripts/make-admin.js <email>`
-
-**8 onglets principaux** :
-1. **Overview** - KPIs globaux, graphiques timeline, métriques utilisateurs
-2. **Users** - Gestion utilisateurs (CRUD, recherche, filtres, détails)
-3. **Features** - Analytics par feature (usage, durée, taux de succès)
-4. **Errors** - Logs d'erreurs avec stack traces et filtres
-5. **Feedback** - Feedbacks utilisateurs avec gestion de statut
-6. **OpenAI Costs** - Monitoring coûts OpenAI (évolution, répartition, alertes)
-7. **Exports** - Analytics exports PDF
-8. **Subscription Plans** - Gestion plans et packs de crédits
-9. **Settings** - Configuration globale (modèles IA, features, maintenance)
-
-**Composants UI spécialisés** (`components/admin/`):
-- `TabsBar.jsx` - Navigation drag-to-scroll
-- `CustomSelect.jsx` - Dropdown avec scroll chaining prevention
-- `DateRangePicker.jsx` - Sélection de période
-- `KPICard.jsx` - Cartes de métriques
-- `ConfirmDialog.jsx` - Confirmations actions destructives
-
-**API Routes admin** (`/api/admin/*`):
-- `/users` - CRUD utilisateurs + recherche/filtres
-- `/settings` - Configuration globale avec historique
-- `/subscription-plans` - Gestion plans d'abonnement
-- `/credit-packs` - Gestion packs de crédits
-- `/openai-balance` - Balance compte OpenAI
-- `/openai-pricing` - Tarification modèles
-- `/openai-alerts` - Alertes de coûts
-- `/sync-stripe` - Synchronisation produits Stripe
-- `/telemetry/cleanup` - Nettoyage données anciennes
-
-**Sécurité** :
-- Toutes les routes admin vérifient `role === 'ADMIN'` → 403 si non autorisé
-- Prévention auto-suppression admin
-- Confirmations pour actions destructives
-
-**Documentation complète** : `docs/ADMIN_GUIDE.md`
-
-**Gestion des plans gratuits (0€)** :
-- **Un seul plan gratuit autorisé** : Le système ne permet qu'un seul plan avec `priceMonthly: 0` et `priceYearly: 0`
-- **Pas de synchronisation Stripe** : Les plans gratuits ne sont jamais synchronisés avec Stripe (ils restent locaux uniquement)
-- **Attribution automatique** : Les nouveaux utilisateurs reçoivent automatiquement le plan gratuit via `assignDefaultPlan()`
-- **Recherche par prix** : La détection du plan gratuit se fait par prix (0€) et non par nom, pour plus de robustesse
-- **Visible dans UI** : Le plan gratuit reste affiché dans l'interface utilisateur pour permettre la comparaison des plans
-- **Scripts de sync** : `sync-stripe-products.js` et `stripeSync.js` ignorent automatiquement les plans gratuits
-
-### Telemetry & Monitoring
-Système de tracking et analytics pour monitoring de l'application.
-
-**Models Prisma** :
-- `TelemetryEvent` - Événements utilisateurs (login, logout, actions)
-- `FeatureUsage` - Compteurs d'utilisation par feature
-- `OpenAICall` - Logs appels OpenAI individuels (tokens, coût, durée)
-- `OpenAIUsage` - Agrégations usage OpenAI (par user/feature/modèle)
-- `ErrorLog` - Logs d'erreurs avec stack traces
-
-**Scripts de maintenance** :
-- `scripts/backfill-telemetry.mjs` - Backfill données manquantes
-- `scripts/recalculate-telemetry.js` - Recalcul agrégations
-- `scripts/generate-missing-telemetry-events.js` - Génération événements
-
-**Nettoyage automatique** :
-- Endpoint: `POST /api/admin/telemetry/cleanup`
-- Paramètre: `olderThan` (ex: "90d")
-- Supprime TelemetryEvent, FeatureUsage, OpenAICall anciens
-- Conserve OpenAIUsage (agrégations) indéfiniment
-
-**Initialisation serveur** (`instrumentation.js`):
-- Marquage automatique des tâches orphelines (running/queued → failed)
-- Exécuté au redémarrage du serveur
-
-## Variables d'environnement essentielles
+### Variables d'environnement critiques
 
 ```bash
-# OpenAI
-OPENAI_API_KEY="sk-..."
-OPENAI_MODEL="gpt-4.1-mini"
-
-# Database (chemin dans .env.local pour Prisma)
-DATABASE_URL="file:./prisma/dev.db"
-
-# NextAuth
-NEXTAUTH_SECRET="..."
-NEXTAUTH_URL="http://localhost:3000"
-NEXT_PUBLIC_SITE_URL="http://localhost:3000"
-
-# Chiffrement CV (32 octets base64: openssl rand -base64 32)
-CV_ENCRYPTION_KEY="..."
-
-# OAuth providers (optionnels)
-GOOGLE_CLIENT_ID="..."
-GOOGLE_CLIENT_SECRET="..."
-GITHUB_ID="..."
-GITHUB_SECRET="..."
-
-# Stripe (paiements et abonnements)
-STRIPE_SECRET_KEY="sk_test_..."  # Test: sk_test_... | Live: sk_live_...
-STRIPE_WEBHOOK_SECRET="whsec_..."
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."  # Test: pk_test_... | Live: pk_live_...
+DATABASE_URL="file:./dev.db"                    # Toujours relatif à prisma/
+CV_ENCRYPTION_KEY="..."                         # openssl rand -base64 32
+NEXTAUTH_SECRET="..."                           # openssl rand -base64 32
+OPENAI_API_KEY="sk-..."                         # OpenAI API
+STRIPE_SECRET_KEY="sk_test_..."                 # Stripe API (test mode)
+NEXT_PUBLIC_SITE_URL="http://localhost:3001"   # URL publique
 ```
 
-**Notes** :
-- DATABASE_URL : Toujours `file:./dev.db` (relatif au dossier `prisma/`)
-- CV_ENCRYPTION_KEY : Générer avec `openssl rand -base64 32`
-- STRIPE_SECRET_KEY : Mode Test pour développement, Live pour production
-- Voir `docs/STRIPE_SETUP.md` pour configuration complète Stripe
+**Important DATABASE_URL** :
+- Le chemin est TOUJOURS `file:./dev.db` (relatif au dossier `prisma/`)
+- ❌ **Incorrect** : `file:./prisma/dev.db`
+- ✅ **Correct** : `file:./dev.db`
 
-## Organisation des fichiers
+→ **[Toutes les variables](./docs/ENVIRONMENT_VARIABLES.md)**
 
-```
-app/
-├── api/                    # API Routes
-│   ├── admin/              # Routes admin (users, settings, monitoring)
-│   ├── background-tasks/   # Endpoints pour jobs asynchrones
-│   ├── cv/                 # CRUD des CV
-│   ├── cvs/                # Liste et gestion des CV
-│   ├── auth/               # NextAuth endpoints
-│   ├── checkout/           # Stripe checkout (subscription, credits)
-│   ├── subscription/       # Gestion abonnements
-│   ├── credits/            # Gestion crédits
-│   ├── webhooks/           # Webhooks Stripe
-│   └── feedback/           # Système de feedback
-├── admin/                  # Pages admin
-│   └── analytics/          # Dashboard analytics
-├── account/                # Pages compte utilisateur
-│   └── subscriptions/      # Page abonnements et crédits
-└── page.jsx                # Page d'accueil (viewer CV)
+---
 
-components/
-├── admin/                  # Composants dashboard admin
-│   ├── TabsBar.jsx         # Navigation avec drag-to-scroll
-│   ├── OverviewTab.jsx     # KPIs et graphiques
-│   ├── UsersTab.jsx        # Gestion utilisateurs
-│   ├── OpenAICostsTab.jsx  # Monitoring coûts OpenAI
-│   ├── SettingsTab.jsx     # Configuration globale
-│   └── ...                 # Autres onglets et composants UI
-├── subscription/           # Composants abonnements et crédits
-│   ├── SubscriptionsPage.jsx
-│   ├── PlanComparisonCards.jsx
-│   ├── CreditBalanceCard.jsx
-│   ├── CreditBalanceBanner.jsx
-│   ├── NegativeBalanceBanner.jsx
-│   └── InvoicesTable.jsx
-├── TopBar.jsx              # Barre de navigation principale
-├── EmptyState.jsx          # État vide avec onboarding
-├── TaskQueueModal.jsx      # Modal de suivi des tâches
-├── Header.jsx              # En-tête du CV
-├── Summary.jsx, Skills.jsx, Experience.jsx, etc.
-├── feedback/               # Composants feedback
-└── ui/                     # Composants UI réutilisables
+## 🏗️ Architecture (Quick Reference)
 
-lib/
-├── admin/                  # Logique admin (userManagement, settings)
-├── auth/                   # NextAuth config et session
-├── backgroundTasks/        # Job queue et jobs
-├── cv/                     # Crypto, storage, validation, source
-├── openai/                 # Intégrations OpenAI
-├── subscription/           # Gestion abonnements, crédits, limites
-├── i18n/                   # Traductions
-├── stripe.js               # Client Stripe
-└── prisma.js               # Client Prisma singleton
+### Stack
+- **Frontend**: React 18 + Tailwind CSS (glassmorphism design)
+- **Backend**: Next.js 14 (App Router) + API Routes
+- **Database**: Prisma + SQLite (dev) / PostgreSQL (prod)
+- **IA**: OpenAI API (génération, match score, optimisation ATS)
+- **Paiements**: Stripe (abonnements + packs crédits)
+- **Sécurité**: CV chiffrés AES-256-GCM côté serveur
 
-prisma/
-├── schema.prisma           # Modèles de données
-└── dev.db                  # Base SQLite (dev)
+### Systèmes clés
 
-scripts/
-├── make-admin.js           # Promouvoir utilisateur en admin
-├── sync-stripe-products.js # Synchroniser produits Stripe
-├── reset-feature-counters.js # Reset compteurs expirés (cron)
-├── backfill-telemetry.mjs  # Backfill télémétrie
-└── ...                     # Autres scripts maintenance
+| Système | Description | Documentation |
+|---------|-------------|---------------|
+| **CV chiffrés** | AES-256-GCM avec IV de 12 bytes | [SECURITY.md](./docs/SECURITY.md) |
+| **Job queue** | 3 jobs concurrents max (génération, import, traduction) | [ARCHITECTURE.md](./docs/ARCHITECTURE.md#background-tasks) |
+| **Abonnements** | Hybride : plans mensuels + micro-transactions (crédits) | [SUBSCRIPTION.md](./docs/SUBSCRIPTION.md) |
+| **Dashboard admin** | Analytics, monitoring, gestion users/plans | [ADMIN_GUIDE.md](./docs/ADMIN_GUIDE.md) |
+| **IA OpenAI** | Génération CV, match score, optimisation ATS | [AI_INTEGRATION.md](./docs/AI_INTEGRATION.md) |
 
-data/
-├── schema.json             # Schéma JSON validation CV
-└── template.json           # Template CV
+### Structure de données
 
-docs/
-├── ADMIN_GUIDE.md          # Guide dashboard admin
-├── STRIPE_SETUP.md         # Configuration Stripe
-├── SUBSCRIPTION.md         # Système abonnements
-├── CRON_SETUP.md           # Configuration tâches planifiées
-├── MCP_PUPPETEER.md        # Guide complet MCP Puppeteer (analyse UX, tests)
-└── ...                     # Autres documentations
+- **Database schema** : [DATABASE.md](./docs/DATABASE.md)
+- **CV JSON structure** : [ARCHITECTURE.md - Structure CV](./docs/ARCHITECTURE.md#structure-des-données-cv)
+- **API Routes** : [API_REFERENCE.md](./docs/API_REFERENCE.md)
+- **Composants React** : [COMPONENTS.md](./docs/COMPONENTS.md)
+
+---
+
+## 🎨 Design System (Quick Reference)
+
+**Approche** : Glassmorphism + Deep dark blue background (`rgb(2, 6, 23)`) + Emerald primary color
+
+### Couleurs principales
+```css
+/* Primary */
+emerald-500: #10B981    /* Boutons primaires, focus states */
+emerald-400: #34D399    /* Éléments interactifs */
+
+/* Secondary */
+sky-500: #0EA5E9        /* Actions secondaires */
+
+/* Background */
+--bg-base: rgb(2, 6, 23)  /* Deep dark blue */
 ```
 
-## Patterns importants
+### Patterns de base
 
-### Accès aux CV chiffrés
+```jsx
+/* Glass card standard */
+<div className="bg-white/15 backdrop-blur-md rounded-2xl border-2 border-white/30" />
+
+/* Glass input */
+<input className="bg-white/20 backdrop-blur-sm border border-white/40 rounded-lg" />
+
+/* Button primary */
+<button className="bg-emerald-500 hover:bg-emerald-600 rounded-lg px-4 py-2 text-white" />
+```
+
+### Responsive & iOS
+
+- **Breakpoint** : `md:` = `991px` (mobile-first approach)
+- **Safe areas** : `env(safe-area-inset-top)` pour notch iOS
+- **Touch targets** : Minimum 32px hauteur/largeur
+- **iOS blur optimization** : `.ios-blur-medium` pour performance
+
+### Z-Index Layering
+
+```css
+z-0:       Background (GlobalBackground)
+z-10:      Main content
+z-[10001]: TopBar, Notification backdrop
+z-[10002]: Dropdown menus, User menu
+z-[10003]: Notifications, Custom selects
+z-[10004]: Tooltips
+```
+
+→ **[Design System complet](./docs/DESIGN_SYSTEM.md)**
+
+---
+
+## 💻 Patterns de Code Courants
+
+### 1. Accès CV chiffrés
+
 ```javascript
 import { readCv, writeCv } from '@/lib/cv/storage';
 
-const cvData = await readCv(userId, filename);  // Déchiffre automatiquement
-await writeCv(userId, filename, cvData);        // Chiffre automatiquement
+// Déchiffre automatiquement
+const cvData = await readCv(userId, filename);
+
+// Chiffre automatiquement
+await writeCv(userId, filename, cvData);
 ```
 
-### Enqueuer un job
+### 2. Enqueuer un job
+
 ```javascript
 import { enqueueJob } from '@/lib/backgroundTasks/jobQueue';
 import { runGenerateCvJob } from '@/lib/backgroundTasks/generateCvJob';
@@ -532,14 +200,24 @@ import { runGenerateCvJob } from '@/lib/backgroundTasks/generateCvJob';
 enqueueJob(() => runGenerateCvJob(task));
 ```
 
-### Validation de CV
-```javascript
-import { validateCvData } from '@/lib/cv/validation';
+### 3. Vérifier limites features
 
-const { valid, data, errors } = validateCvData(cvJson);
+```javascript
+import { checkFeatureLimit } from '@/lib/subscription/featureUsage';
+
+const { allowed, needsCredit } = await checkFeatureLimit(
+  userId,
+  'gpt_cv_generation',
+  { analysisLevel: 'medium' }
+);
+
+if (!allowed) {
+  // Proposer upgrade ou utilisation crédit
+}
 ```
 
-### Session utilisateur
+### 4. Session utilisateur
+
 ```javascript
 import { getSession } from '@/lib/auth/session';
 
@@ -547,28 +225,19 @@ const session = await getSession();
 const userId = session?.user?.id;
 ```
 
-### Gestion du scroll chaining dans les dropdowns
-
-**IMPORTANT** : Pour éviter le scroll de la page quand on scrolle dans un dropdown (ce qui décale les dropdowns en position fixed), utiliser les approches suivantes :
-
-#### 1. Dropdowns avec portals (position: fixed)
-Pour les dropdowns rendus via `createPortal` (CustomSelect, UserFilter, etc.) :
+### 5. Prévention scroll chaining (dropdowns)
 
 ```javascript
 useEffect(() => {
   if (!isOpen) return;
-
-  // Sauvegarder la position de scroll actuelle
   const scrollY = window.scrollY;
 
-  // Bloquer le scroll du body
   document.body.style.overflow = 'hidden';
   document.body.style.position = 'fixed';
   document.body.style.top = `-${scrollY}px`;
   document.body.style.width = '100%';
 
   return () => {
-    // Restaurer le scroll du body
     document.body.style.overflow = '';
     document.body.style.position = '';
     document.body.style.top = '';
@@ -578,167 +247,114 @@ useEffect(() => {
 }, [isOpen]);
 ```
 
-- Le dropdown peut scroller normalement grâce à `overscroll-behavior: contain`
-- La page reste figée à sa position, pas de décalage
+→ **[Tous les patterns](./docs/CODE_PATTERNS.md)**
 
-#### 2. Listes scrollables in-page (non-portals)
-Pour les listes directement dans le DOM (OpenAICostsTab, etc.) :
+---
 
-```javascript
-useEffect(() => {
-  const scrollContainer = scrollContainerRef.current;
-  if (!isVisible || !scrollContainer) return;
+## 🧪 Tests & Debug
 
-  function preventScrollChaining(e) {
-    const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
-    const isAtTop = scrollTop <= 1;
-    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+### Compte de test
 
-    // Bloquer UNIQUEMENT aux limites pour éviter le scroll chaining
-    if ((isAtTop && e.deltaY < 0) || (isAtBottom && e.deltaY > 0)) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  }
-
-  scrollContainer.addEventListener('wheel', preventScrollChaining, { passive: false });
-
-  return () => {
-    scrollContainer.removeEventListener('wheel', preventScrollChaining);
-  };
-}, [isVisible]);
-```
-
-- Le scroll fonctionne normalement dans la liste
-- Se bloque aux limites pour empêcher la propagation à la page
-- Nécessite `[overscroll-behavior:contain]` sur le conteneur
-
-**Références d'implémentation** :
-- CustomSelect : `components/admin/CustomSelect.jsx:57-77`
-- UserFilter : `components/admin/UserFilter.jsx:63-83`
-- OpenAICostsTab : `components/admin/OpenAICostsTab.jsx:61-106`
-
-### Gestion Stripe et abonnements
-```javascript
-import { stripe } from '@/lib/stripe';
-
-// Créer une session de checkout pour abonnement
-const session = await stripe.checkout.sessions.create({
-  mode: 'subscription',
-  customer: stripeCustomerId,
-  line_items: [{ price: stripePriceId, quantity: 1 }],
-  success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/account/subscriptions?success=true`,
-  cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/account/subscriptions`,
-});
-
-// Créer une session de checkout pour crédits
-const session = await stripe.checkout.sessions.create({
-  mode: 'payment',
-  line_items: [{ price: stripePriceId, quantity: 1 }],
-  metadata: { creditAmount: '10', userId },
-  // ...
-});
-```
-
-### Vérification de limites feature
-```javascript
-import { checkFeatureLimit } from '@/lib/subscription/featureUsage';
-
-// Vérifier si l'utilisateur peut utiliser une feature
-const { allowed, reason, needsCredit } = await checkFeatureLimit(
-  userId,
-  'gpt_cv_generation',
-  { analysisLevel: 'medium' }
-);
-
-if (!allowed) {
-  if (needsCredit) {
-    // Proposer d'utiliser un crédit
-  } else {
-    // Proposer upgrade
-  }
-}
-```
-
-## Scripts de maintenance
-
-### Scripts principaux
-```bash
-# Promouvoir un utilisateur en admin
-node scripts/make-admin.js user@example.com
-
-# Synchroniser produits/prix Stripe depuis la DB
-node scripts/sync-stripe-products.js
-
-# Reset compteurs features expirés (à exécuter quotidiennement)
-node scripts/reset-feature-counters.js
-
-# Backfill données de télémétrie manquantes
-npm run backfill:telemetry
-
-# Recalculer les agrégations télémétrie
-node scripts/recalculate-telemetry.js
-
-# Test API abonnements
-node scripts/test-subscription-api.js
-
-# Debug abonnement utilisateur
-node scripts/debug-user-subscription.js <userId>
-```
-
-### Scripts de développement
-```bash
-# Générer client Prisma après modification schema
-npx prisma generate
-
-# Créer une migration
-npx prisma migrate dev --name description_migration
-
-# Ouvrir Prisma Studio (interface graphique DB)
-npx prisma studio
-
-# Seed base de données (plans d'abonnement par défaut)
-node prisma/seed.js
-```
-
-### Tâches planifiées (CRON)
-À configurer en production (voir `docs/CRON_SETUP.md`) :
-
-```bash
-# Quotidien à 00:00 - Reset compteurs expirés
-0 0 * * * cd /path/to/app && node scripts/reset-feature-counters.js
-
-# Hebdomadaire - Nettoyage télémétrie ancienne (optionnel)
-0 2 * * 0 cd /path/to/app && curl -X POST https://domain.com/api/admin/telemetry/cleanup \
-  -H "Content-Type: application/json" \
-  -d '{"olderThan":"90d"}' \
-  -H "Authorization: Bearer ADMIN_TOKEN"
-```
-
-## Identifiants de test
-
-Pour les tests automatisés (MCP Puppeteer, scripts, etc.), utiliser ce compte de test :
+Pour les tests automatisés (MCP Puppeteer, scripts) :
 
 ```
 Email: tests@claude.com
 Password: qwertyuiOP93300
 ```
 
-**Note** : Ces identifiants sont documentés ici car il s'agit d'un environnement de développement privé. En production, utiliser des variables d'environnement sécurisées.
+**Note** : Environnement de développement privé. En production, utiliser des variables d'environnement sécurisées.
 
-## Project Rules
-- Ne merge jamais sans une demande explicite. Si un merge est demandé il faudra merge avec main avec l'option `--no-ff`
-- Ne commit jamais sans une demande explicite
-- Si tu dois utiliser npm, utilise le port 3001
-- Pour les migrations Prisma, le chemin DATABASE_URL se trouve dans .env.local
-- Quand je veux créer ou ajouter une feature, créer une branche feature/name_of_the_feature
-- Quand je veux ajouter ou modifier une feature, créer une branche
-  improvement/name_of_the_feature, si elle existe déjà incrémente là
-- Quand je veux corriger un gros bug, créer une branche
-  bug/name_of_the_feature, si elle existe déjà incrémente là
-- Quand je veux corriger un petit bug, créer une branche
-  hotfix/name_of_the_feature, si elle existe déjà incrémente là
-- N'utilise jamais "🤖 Generated with" dans un commit, ne fait aucune mention de Claude Code
-- A chaque fois que tu termines une réponse ou une tache, je veux que tu executes le code 'echo -e '\a''
-- Avant chaque commit tu dois vérifier la documentation dans le dossier @docs/ et la mettre à jour si nécéssaire
-- A chaque changement du code utilise 'npm run build'
+### Troubleshooting
+
+- **Erreur Prisma** : `npx prisma generate && npx prisma migrate deploy`
+- **Port occupé** : `lsof -i :3001` puis `kill -9 <PID>`
+- **Stripe webhooks** : Vérifier `stripe listen` en cours
+- **Build échoue** : Vérifier imports, types TypeScript, variables env
+
+→ **[Guide dépannage complet](./docs/TROUBLESHOOTING.md)**
+
+---
+
+## 📜 Project Rules (IMPORTANT pour Claude Code)
+
+### Workflow Git
+
+- ❌ **Ne merge JAMAIS sans demande explicite** (utiliser `--no-ff`)
+- ❌ **Ne commit JAMAIS sans demande explicite**
+- ✅ **Feature** : `feature/name_of_the_feature`
+- ✅ **Amélioration** : `improvement/name_of_the_feature`
+- ✅ **Bug majeur** : `bug/name_of_the_feature`
+- ✅ **Hotfix** : `hotfix/name_of_the_feature`
+
+### Commits
+
+- ❌ **Jamais de "🤖 Generated with"** ou mention de Claude Code
+- ✅ **Vérifier et mettre à jour docs/** avant commit
+- ✅ **Exécuter `npm run build`** après changement code
+
+### Développement
+
+- ✅ **npm run dev utilise port 3001**
+- ✅ **DATABASE_URL toujours `file:./dev.db`** (relatif à prisma/)
+- ✅ **Exécuter `echo -e '\a'`** après complétion de tâche
+
+### Documentation
+
+Pour toute question sur :
+
+| Sujet | Documentation |
+|-------|---------------|
+| Installation | [INSTALLATION.md](./docs/INSTALLATION.md) |
+| Architecture | [ARCHITECTURE.md](./docs/ARCHITECTURE.md) |
+| API | [API_REFERENCE.md](./docs/API_REFERENCE.md) |
+| Stripe | [STRIPE_SETUP.md](./docs/STRIPE_SETUP.md) |
+| Admin | [ADMIN_GUIDE.md](./docs/ADMIN_GUIDE.md) |
+| Télémétrie | [TELEMETRY.md](./docs/TELEMETRY.md) |
+| Variables env | [ENVIRONMENT_VARIABLES.md](./docs/ENVIRONMENT_VARIABLES.md) |
+| Commandes | [COMMANDS_REFERENCE.md](./docs/COMMANDS_REFERENCE.md) |
+| Patterns code | [CODE_PATTERNS.md](./docs/CODE_PATTERNS.md) |
+| Design System | [DESIGN_SYSTEM.md](./docs/DESIGN_SYSTEM.md) |
+| Troubleshooting | [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) |
+
+---
+
+## 🔗 Index Documentation
+
+### Core Documentation (Must Read)
+1. [README](./docs/README.md) - Index général
+2. [ARCHITECTURE](./docs/ARCHITECTURE.md) - Architecture système
+3. [DEVELOPMENT](./docs/DEVELOPMENT.md) - Guide développement
+4. [API_REFERENCE](./docs/API_REFERENCE.md) - Référence API
+
+### Setup & Configuration
+5. [INSTALLATION](./docs/INSTALLATION.md) - Installation initiale
+6. [ENVIRONMENT_VARIABLES](./docs/ENVIRONMENT_VARIABLES.md) - Variables env
+7. [STRIPE_SETUP](./docs/STRIPE_SETUP.md) - Configuration Stripe
+8. [DEPLOYMENT](./docs/DEPLOYMENT.md) - Déploiement production
+9. [CRON_SETUP](./docs/CRON_SETUP.md) - Tâches planifiées
+
+### Technical Deep Dives
+10. [DATABASE](./docs/DATABASE.md) - Schéma, migrations
+11. [AI_INTEGRATION](./docs/AI_INTEGRATION.md) - OpenAI intégration
+12. [SUBSCRIPTION](./docs/SUBSCRIPTION.md) - Système abonnements
+13. [SECURITY](./docs/SECURITY.md) - Sécurité, chiffrement
+14. [COMPONENTS](./docs/COMPONENTS.md) - Structure composants
+15. [FEATURES](./docs/FEATURES.md) - Fonctionnalités détaillées
+
+### Guides & References
+16. [COMMANDS_REFERENCE](./docs/COMMANDS_REFERENCE.md) - Toutes les commandes
+17. [CODE_PATTERNS](./docs/CODE_PATTERNS.md) - Patterns réutilisables
+18. [DESIGN_SYSTEM](./docs/DESIGN_SYSTEM.md) - UI/UX guidelines
+19. [ADMIN_GUIDE](./docs/ADMIN_GUIDE.md) - Dashboard admin
+20. [TELEMETRY](./docs/TELEMETRY.md) - Système télémétrie
+21. [MCP_PUPPETEER](./docs/MCP_PUPPETEER.md) - Browser automation
+
+### Practical Guides
+22. [USAGE](./docs/USAGE.md) - Guide utilisateur
+23. [TROUBLESHOOTING](./docs/TROUBLESHOOTING.md) - Résolution problèmes
+24. [MVP_TESTING](./docs/MVP_TESTING.md) - Tests et validation
+25. [STRIPE_REFACTORING](./docs/STRIPE_REFACTORING.md) - Notes refactoring
+
+---
+
+**📝 Note** : Ce fichier est un **quick reference**. Pour toute information détaillée, consulter la **[documentation complète dans docs/](./docs/README.md)**.
