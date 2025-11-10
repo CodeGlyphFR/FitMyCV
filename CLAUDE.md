@@ -296,7 +296,7 @@ Password: qwertyuiOP93300
 
 - ✅ **npm run dev utilise port 3001**
 - ✅ **DATABASE_URL toujours `file:./dev.db`** (relatif à prisma/)
-- ✅ **Exécuter `echo -e '\a'`** après complétion de tâche
+- ✅ **Mettre à jour la documentation dans le dossier `docs/` et `CLAUDE.md`** Apres chaque modification de la codebase, vérifier la documentation et documenter la modification. Puis tenir à jour le fichier CLAUDE.md
 
 ### Documentation
 

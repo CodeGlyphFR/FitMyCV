@@ -39,9 +39,5 @@ data/background-tasks.json
 !README.md
 !CLAUDE.md
 
-# Fichiers texte d'analyse temporaires
-FEATURES_WORKFLOW.txt
-PROMPTS_ANALYSIS.txt
-
 # Base de données de développement
 dev.db
