@@ -23,7 +23,7 @@ Documentation complète du schéma Prisma et des modèles de données.
 - **Database (dev)** : SQLite 3
 - **Database (prod)** : PostgreSQL ou MySQL (recommandé)
 - **Modèles** : 28 tables
-- **Migrations** : 16+ migrations appliquées
+- **Migrations** : 19 migrations appliquées
 
 ### Configuration
 
@@ -653,22 +653,28 @@ npx prisma studio
 
 ```
 prisma/migrations/
-├── 20240101000000_init/
-├── 20240102000000_add_cv_metadata/
-├── 20240103000000_add_background_tasks/
-├── 20240104000000_add_feedback/
-├── 20240105000000_add_consent_logs/
-├── 20240106000000_add_telemetry/
-├── 20240107000000_add_feature_usage/
-├── 20240108000000_add_openai_usage/
-├── 20240109000000_add_settings/
-├── 20240110000000_add_match_score/
-├── 20240111000000_add_email_verification/
-├── 20240112000000_add_subscription_plans/
-├── 20240113000000_add_openai_pricing/
-├── 20240114000000_add_optimise_status/
-└── 20240115000000_add_token_last_usage/
+├── 20251003154937_init/
+├── 20251003164423_add_consent_log/
+├── 20251003173317_add_cv_improvement_fields/
+├── 20251003200001_add_cvfile_to_background_task/
+├── 20251004073853_standardize_status_and_add_optimise/
+├── 20251005222847_add_extracted_job_offer/
+├── 20251008100421_add_settings_table/
+├── 20251017121724_rename_matchScoreFirstRefreshAt_to_tokenLastUsage/
+├── 20251018094209_baseline_add_telemetry_and_auth_tables/
+├── 20251021143510_remove_user_session_add_openai_tables/
+├── 20251021150201_remove_session_table/
+├── 20251022084729_add_metadata_to_openai_call/
+├── 20251022094057_add_cache_price_to_openai_pricing/
+├── 20251022102016_add_cached_tokens_to_openai_tables/
+├── 20251023085505_add_model_first_import_pdf_setting/
+├── 20251023141905_add_subscription_plans/
+├── 20251023151000_update_subscription_plans_pricing_and_tokens/
+├── 20251024112105_add_credit_packs/
+└── 20251024_remove_cv_limit_system/
 ```
+
+**Total : 19 migrations**
 
 ---
 
@@ -780,4 +786,4 @@ Pour une documentation complète de l'architecture d'abonnement, des règles mé
 
 ---
 
-**Base de données robuste et optimisée** | 28 modèles, 16+ migrations
+**Base de données robuste et optimisée** | 28 modèles, 19 migrations

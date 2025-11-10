@@ -39,7 +39,7 @@ FitMyCv.ai est construite sur une architecture moderne basée sur **Next.js 14**
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
 │  │ Pages (SSR)  │  │ API Routes   │  │ Middleware   │      │
-│  │ App Router   │  │ 60+ endpoints│  │ Auth, Rate   │      │
+│  │ App Router   │  │ 75+ endpoints│  │ Auth, Rate   │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐  │
@@ -146,7 +146,7 @@ app/
 ```
 cv-site/
 ├── app/                          # Next.js App Router
-│   ├── api/                     # API Routes (60+ endpoints)
+│   ├── api/                     # API Routes (75+ endpoints)
 │   │   ├── auth/               # Authentication
 │   │   ├── cv/                 # CV management
 │   │   ├── cvs/                # CVs CRUD
@@ -581,33 +581,23 @@ export async function getData(userId) {
 
 ### 1. Next.js Optimizations
 
-**Code Splitting** (next.config.js:34-83):
+**Code Splitting** :
+
+Next.js 14 gère automatiquement le code splitting via l'App Router :
+
+- Chaque page est un bundle séparé
+- Les composants clients ('use client') sont split automatiquement
+- Les Server Components sont optimisés côté serveur
+- Les imports dynamiques avec `dynamic()` permettent du lazy loading
 
 ```javascript
-webpack: (config, { isServer }) => {
-  if (!isServer) {
-    config.optimization = {
-      splitChunks: {
-        chunks: 'all',
-        cacheGroups: {
-          framework: {      // React, Next.js
-            priority: 40,
-          },
-          auth: {           // NextAuth
-            priority: 35,
-          },
-          lib: {            // Autres node_modules
-            priority: 30,
-          },
-          commons: {        // Code partagé
-            minChunks: 2,
-            priority: 20,
-          },
-        },
-      },
-    };
-  }
-}
+// Exemple de code splitting manuel avec dynamic imports
+import dynamic from 'next/dynamic';
+
+const HeavyComponent = dynamic(() => import('./HeavyComponent'), {
+  loading: () => <p>Loading...</p>,
+  ssr: false // Désactiver SSR si nécessaire
+});
 ```
 
 **Image Optimization** (next.config.js:18-23):

@@ -763,27 +763,6 @@ Icône queue de tâches.
 
 ---
 
-### TokenCounter.jsx
-
-Compteur de tokens.
-
-**Props** :
-
-```javascript
-{
-  count: number,
-  max: number
-}
-```
-
-**Rendu** :
-
-- Jetons restants
-- Barre de progression
-- Couleur selon le niveau
-
----
-
 ### FormRow.jsx
 
 Ligne de formulaire.
@@ -1187,4 +1166,4 @@ Scroll automatique en haut au montage.
 
 ---
 
-**89 composants React documentés** | Architecture modulaire et réutilisable
+**100+ composants React documentés** | Architecture modulaire et réutilisable

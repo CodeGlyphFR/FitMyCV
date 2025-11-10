@@ -247,7 +247,7 @@ node scripts/cleanup-orphaned-records.js
 - Tous les scripts sont dans le dossier `scripts/`
 - Certains scripts nécessitent des arguments (userId, email, etc.)
 - Toujours exécuter depuis la racine du projet
-- Voir `scripts/README.md` pour la documentation complète de chaque script
+- Consulter le code source de chaque script pour plus de détails sur son utilisation
 
 ---
 

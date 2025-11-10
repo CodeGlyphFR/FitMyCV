@@ -70,15 +70,34 @@ OPENAI_MODEL="gpt-4.1-mini"
 ```
 
 **Valeurs possibles** :
-- `gpt-4.1-mini` (par défaut) - Économique
-- `gpt-4.1` - Standard
-- `gpt-5-nano-2025-08-07` - Rapid (niveau analysis)
-- `gpt-5-mini-2025-08-07` - Medium (niveau analysis)
-- `gpt-5-2025-08-07` - Deep (niveau analysis)
+- `gpt-4.1-mini` (par défaut) - Économique et rapide
+- `gpt-4.1` - Standard, plus performant
+- `gpt-4o-mini` - Version mini de GPT-4o
+- `gpt-4o` - Modèle multimodal avancé
 
-**Note** : Les niveaux d'analyse (`rapid`, `medium`, `deep`) dans l'admin override ce modèle.
+**Note** : Les niveaux d'analyse (`rapid`, `medium`, `deep`) configurés dans l'admin peuvent override ce modèle pour les opérations IA spécifiques.
 
 **Documentation** : [AI_INTEGRATION.md](./AI_INTEGRATION.md)
+
+### GPT_MATCH_SCORE_SYSTEM_PROMPT (Optionnel)
+
+Prompt système personnalisé pour le calcul du match score.
+
+```bash
+GPT_MATCH_SCORE_SYSTEM_PROMPT="Your custom system prompt here..."
+```
+
+**Usage** : Permet de personnaliser le comportement du modèle pour le calcul de score de correspondance CV/offre.
+
+### GPT_MATCH_SCORE_USER_PROMPT (Optionnel)
+
+Prompt utilisateur personnalisé pour le calcul du match score.
+
+```bash
+GPT_MATCH_SCORE_USER_PROMPT="Your custom user prompt here..."
+```
+
+**Usage** : Template de prompt envoyé au modèle avec les données CV et offre.
 
 ---
 
@@ -254,6 +273,38 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_live_51..."
 
 ---
 
+## Variables Email
+
+### RESEND_API_KEY (Obligatoire)
+
+Clé API Resend pour l'envoi d'emails transactionnels (vérification email, reset mot de passe, etc.).
+
+```bash
+RESEND_API_KEY="re_..."
+```
+
+**Obtenir** :
+1. Aller sur [resend.com](https://resend.com)
+2. Créer un compte / Se connecter
+3. API Keys → Create API Key
+4. Copier la clé
+
+**Note** : Les emails ne seront pas envoyés si cette variable n'est pas configurée (mode dev: logs console uniquement).
+
+### EMAIL_FROM (Optionnel)
+
+Adresse email expéditrice pour les emails transactionnels.
+
+```bash
+EMAIL_FROM="noreply@your-domain.com"
+```
+
+**Par défaut** : `onboarding@resend.dev` (domaine de test Resend)
+
+**Production** : Configurer un domaine vérifié dans Resend et utiliser une adresse de ce domaine.
+
+---
+
 ## Variables OAuth
 
 Variables pour l'authentification OAuth (Google, GitHub, Apple). **Toutes optionnelles**.
@@ -329,9 +380,27 @@ openssl rand -base64 32
 
 ## Variables Optionnelles
 
+### Variables Application
+
+```bash
+# Version de l'application (affichée dans l'UI)
+NEXT_PUBLIC_APP_VERSION="1.0.8"
+
+# Nom du site (utilisé dans le titre)
+NEXT_PUBLIC_SITE_NAME="FitMyCv.ai"
+
+# Dossier de stockage des CV chiffrés (défaut: data/users)
+CV_BASE_DIR="data/users"
+```
+
+**Note** : `NEXT_PUBLIC_APP_VERSION` et `NEXT_PUBLIC_SITE_NAME` sont affichés dans la TopBar et le titre de la page.
+
 ### Variables de Développement
 
 ```bash
+# Environnement d'exécution
+NODE_ENV="development"  # development | production
+
 # Désactiver télémétrie Next.js
 NEXT_TELEMETRY_DISABLED=1
 
@@ -347,15 +416,21 @@ LOG_LEVEL="debug"  # debug, info, warn, error
 ```bash
 # URL base de données de production
 DATABASE_URL="postgresql://user:password@host:5432/db"
+```
 
-# URL Redis (cache, sessions)
-REDIS_URL="redis://localhost:6379"
+### Variables Planifiées (Non Implémentées)
 
-# Sentry DSN (monitoring erreurs)
-SENTRY_DSN="https://..."
+Les variables suivantes sont documentées pour une utilisation future mais ne sont **pas encore implémentées** dans le code :
 
-# Analytics
-NEXT_PUBLIC_GA_MEASUREMENT_ID="G-..."
+```bash
+# 🚧 Redis (cache, sessions) - Planifié
+# REDIS_URL="redis://localhost:6379"
+
+# 🚧 Sentry (monitoring erreurs) - Planifié
+# SENTRY_DSN="https://..."
+
+# 🚧 Google Analytics - Planifié
+# NEXT_PUBLIC_GA_MEASUREMENT_ID="G-..."
 ```
 
 ---
@@ -476,6 +551,10 @@ openssl rand -base64 64
 OPENAI_API_KEY="sk-proj-..."
 OPENAI_MODEL="gpt-4.1-mini"
 
+# Prompts personnalisés (optionnel)
+# GPT_MATCH_SCORE_SYSTEM_PROMPT="..."
+# GPT_MATCH_SCORE_USER_PROMPT="..."
+
 # ============================================
 # Database
 # ============================================
@@ -508,6 +587,12 @@ STRIPE_WEBHOOK_SECRET="whsec_..."
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
 
 # ============================================
+# Email (Resend)
+# ============================================
+RESEND_API_KEY="re_..."
+EMAIL_FROM="noreply@your-domain.com"
+
+# ============================================
 # OAuth Providers (Optionnel)
 # ============================================
 # Google
@@ -523,8 +608,16 @@ APPLE_ID="..."
 APPLE_SECRET="..."
 
 # ============================================
-# Optionnel
+# Application
 # ============================================
+NEXT_PUBLIC_APP_VERSION="1.0.8"
+NEXT_PUBLIC_SITE_NAME="FitMyCv.ai"
+CV_BASE_DIR="data/users"
+
+# ============================================
+# Environnement
+# ============================================
+NODE_ENV="development"
 NEXT_TELEMETRY_DISABLED=1
 DEBUG=true
 ```
@@ -547,7 +640,8 @@ const requiredEnvVars = [
   'CV_ENCRYPTION_KEY',
   'STRIPE_SECRET_KEY',
   'STRIPE_WEBHOOK_SECRET',
-  'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY'
+  'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
+  'RESEND_API_KEY'
 ];
 
 const missing = requiredEnvVars.filter(v => !process.env[v]);

@@ -1,6 +1,6 @@
 # Référence API - FitMyCv.ai
 
-Documentation complète des 60+ routes API de FitMyCv.ai.
+Documentation complète des 75+ routes API de FitMyCv.ai.
 
 ---
 
@@ -693,9 +693,11 @@ Générer un CV depuis une offre d'emploi.
 ```
 
 **Options analysisLevel** :
-- `rapid` : Modèle rapide (gpt-5-nano-2025-08-07) - ~0.01$
-- `medium` : Modèle standard (gpt-5-mini-2025-08-07) - ~0.05$
-- `deep` : Modèle avancé (gpt-5-2025-08-07) - ~0.20$
+- `rapid` : Modèle rapide (configuré dans admin) - ~0.01$
+- `medium` : Modèle standard (configuré dans admin) - ~0.05$
+- `deep` : Modèle avancé (configuré dans admin) - ~0.20$
+
+**Note** : Les modèles OpenAI utilisés pour chaque niveau sont configurables via l'interface admin (Settings → AI Models).
 
 **Réponse (200)** :
 
@@ -1799,4 +1801,4 @@ Logger la durée du premier import (onboarding).
 
 ---
 
-**Documentation complète de l'API FitMyCv.ai** | 60+ endpoints documentés
+**Documentation complète de l'API FitMyCv.ai** | 75+ endpoints documentés

@@ -59,7 +59,7 @@ Referral               - Système de parrainage
 PromoCode              - Codes promotionnels (🚧 À venir - non implémenté)
 ```
 
-**Note** : Le modèle `PromoCode` existe dans le schema Prisma mais n'est pas encore utilisé dans l'application. Il sera implémenté dans une future version pour permettre la gestion de codes promotionnels (réductions, offres spéciales).
+**Note** : Le modèle `PromoCode` existe dans le schema Prisma pour une utilisation future mais n'est **pas encore intégré dans l'application**. Aucune route API, composant ou logique métier n'utilise actuellement ce modèle. Il sera implémenté dans une future version pour permettre la gestion de codes promotionnels (réductions, offres spéciales, campagnes marketing).
 
 ### Modules métier
 
