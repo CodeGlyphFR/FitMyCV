@@ -51,11 +51,49 @@ Toute la documentation technique est disponible dans le dossier **`docs/`**. Ce 
 
 ---
 
+## 🔧 Environnements de Développement
+
+**Ce projet utilise une architecture DUAL avec 2 dossiers distincts :**
+
+### Dossier PRODUCTION (`~/Documents/cv-site/`)
+- **Branche** : `main` uniquement (lecture seule, pull only)
+- **Base de données** : PostgreSQL `fitmycv_prod`
+- **Port** : `3000` (production)
+- **Usage** : Production uniquement, jamais de développement
+
+### Dossier DÉVELOPPEMENT (`~/Documents/cv-site-dev/`)
+- **Branche** : `release` (branche de développement)
+- **Base de données** : SQLite `dev.db`
+- **Port** : `3001` (développement)
+- **Usage** : Développement, features, tests
+
+### Workflow Git
+```bash
+# Développement (dans cv-site-dev/)
+cd ~/Documents/cv-site-dev
+git checkout release
+# ... développement, commits ...
+git push origin release
+
+# Déploiement (merge manuel vers main)
+git checkout main
+git merge release
+git push origin main
+
+# Production (dans cv-site/)
+cd ~/Documents/cv-site
+git pull origin main
+npm run build
+npm start
+```
+
+---
+
 ## ⚡ Quick Start
 
 ### Ports de développement
-- **Dev**: `3001` (npm run dev)
-- **Prod**: `3000` (npm start)
+- **Dev** (`cv-site-dev/`): `3001` (npm run dev) - SQLite
+- **Prod** (`cv-site/`): `3000` (npm start) - PostgreSQL
 
 ### Commandes essentielles
 
@@ -78,8 +116,11 @@ stripe listen --forward-to localhost:3001/api/webhooks/stripe
 
 ### Variables d'environnement critiques
 
+**Pour DÉVELOPPEMENT** (`cv-site-dev/.env`) :
 ```bash
-DATABASE_URL="file:./dev.db"                    # Toujours relatif à prisma/
+DATABASE_URL="file:./dev.db"                    # SQLite (relatif à prisma/)
+NODE_ENV=development
+PORT=3001
 CV_ENCRYPTION_KEY="..."                         # openssl rand -base64 32
 NEXTAUTH_SECRET="..."                           # openssl rand -base64 32
 OPENAI_API_KEY="sk-..."                         # OpenAI API
@@ -87,10 +128,24 @@ STRIPE_SECRET_KEY="sk_test_..."                 # Stripe API (test mode)
 NEXT_PUBLIC_SITE_URL="http://localhost:3001"   # URL publique
 ```
 
+**Pour PRODUCTION** (`cv-site/.env`) :
+```bash
+DATABASE_URL="postgresql://erickdesmet:PASSWORD@localhost:5432/fitmycv_prod?schema=public"
+NODE_ENV=production
+PORT=3000
+CV_ENCRYPTION_KEY="..."                         # ⚠️ IDENTIQUE à dev
+NEXTAUTH_SECRET="..."                           # openssl rand -base64 32
+OPENAI_API_KEY="sk-..."                         # OpenAI API
+STRIPE_SECRET_KEY="sk_live_..."                 # Stripe API (live mode)
+NEXT_PUBLIC_SITE_URL="https://votre-domaine.com" # URL production
+```
+
 **Important DATABASE_URL** :
-- Le chemin est TOUJOURS `file:./dev.db` (relatif au dossier `prisma/`)
-- ❌ **Incorrect** : `file:./prisma/dev.db`
-- ✅ **Correct** : `file:./dev.db`
+- **Dev (SQLite)** : Le chemin est TOUJOURS `file:./dev.db` (relatif au dossier `prisma/`)
+  - ❌ **Incorrect** : `file:./prisma/dev.db`
+  - ✅ **Correct** : `file:./dev.db`
+- **Prod (PostgreSQL)** : Format PostgreSQL standard avec credentials
+  - ✅ `postgresql://user:password@host:port/database?schema=public`
 
 → **[Toutes les variables](./docs/ENVIRONMENT_VARIABLES.md)**
 
@@ -101,10 +156,17 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3001"   # URL publique
 ### Stack
 - **Frontend**: React 18 + Tailwind CSS (glassmorphism design)
 - **Backend**: Next.js 14 (App Router) + API Routes
-- **Database**: Prisma + SQLite (dev) / PostgreSQL (prod)
+- **Database**:
+  - **Dev** (`cv-site-dev/`) : Prisma + SQLite `dev.db`
+  - **Prod** (`cv-site/`) : Prisma + PostgreSQL `fitmycv_prod`
 - **IA**: OpenAI API (génération, match score, optimisation ATS)
 - **Paiements**: Stripe (abonnements + packs crédits)
 - **Sécurité**: CV chiffrés AES-256-GCM côté serveur
+
+**⚠️ Important Prisma Schema :**
+- Le fichier `prisma/schema.prisma` dans `cv-site/` (prod) utilise `provider = "postgresql"`
+- Le fichier `prisma/schema.prisma` dans `cv-site-dev/` (dev) peut utiliser `provider = "postgresql"` **car Prisma utilise automatiquement la DATABASE_URL** du `.env`
+- Pas besoin de modifier le provider entre dev et prod, seule la `DATABASE_URL` change
 
 ### Systèmes clés
 
