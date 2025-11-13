@@ -173,7 +173,7 @@ Analyser l'UX de votre application en capturant des screenshots des principales 
    **C. Rebuild et redémarrer**
    ```bash
    npm run build
-   sudo systemctl restart cv-site  # ou npm start
+   sudo systemctl restart fitmycv  # ou npm start
    ```
 
    ⚠️ **Important** : Ne déployez jamais `BYPASS_RECAPTCHA=true` en production publique !

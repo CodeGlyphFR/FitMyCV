@@ -26,7 +26,7 @@ Guide complet pour développer sur FitMyCv.ai.
 ```bash
 # 1. Cloner le projet
 git clone <repository-url>
-cd cv-site
+cd fitmycv
 
 # 2. Installer les dépendances
 npm install

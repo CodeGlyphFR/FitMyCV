@@ -384,7 +384,7 @@ openssl rand -base64 32
 
 ```bash
 # Version de l'application (affichée dans l'UI)
-NEXT_PUBLIC_APP_VERSION="1.0.8"
+NEXT_PUBLIC_APP_VERSION="1.0.9"
 
 # Nom du site (utilisé dans le titre)
 NEXT_PUBLIC_SITE_NAME="FitMyCv.ai"
@@ -610,7 +610,7 @@ APPLE_SECRET="..."
 # ============================================
 # Application
 # ============================================
-NEXT_PUBLIC_APP_VERSION="1.0.8"
+NEXT_PUBLIC_APP_VERSION="1.0.9"
 NEXT_PUBLIC_SITE_NAME="FitMyCv.ai"
 CV_BASE_DIR="data/users"
 

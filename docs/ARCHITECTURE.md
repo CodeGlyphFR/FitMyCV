@@ -144,7 +144,7 @@ app/
 ### Vue complète
 
 ```
-cv-site/
+fitmycv/
 ├── app/                          # Next.js App Router
 │   ├── api/                     # API Routes (75+ endpoints)
 │   │   ├── auth/               # Authentication
