@@ -122,6 +122,7 @@ DATABASE_URL="file:./dev.db"                    # SQLite (relatif à prisma/)
 NODE_ENV=development
 PORT=3001
 CV_ENCRYPTION_KEY="..."                         # openssl rand -base64 32
+CV_BASE_DIR="data/users"                        # Chemin vers dossier users (relatif ou absolu)
 NEXTAUTH_SECRET="..."                           # openssl rand -base64 32
 OPENAI_API_KEY="sk-..."                         # OpenAI API
 STRIPE_SECRET_KEY="sk_test_..."                 # Stripe API (test mode)
@@ -134,6 +135,7 @@ DATABASE_URL="postgresql://erickdesmet:PASSWORD@localhost:5432/fitmycv_prod?sche
 NODE_ENV=production
 PORT=3000
 CV_ENCRYPTION_KEY="..."                         # ⚠️ IDENTIQUE à dev
+CV_BASE_DIR="/mnt/DATA/PROD/users"              # Chemin vers dossier users (disque externe)
 NEXTAUTH_SECRET="..."                           # openssl rand -base64 32
 OPENAI_API_KEY="sk-..."                         # OpenAI API
 STRIPE_SECRET_KEY="sk_live_..."                 # Stripe API (live mode)
@@ -241,7 +243,25 @@ z-[10004]: Tooltips
 
 ## 💻 Patterns de Code Courants
 
-### 1. Accès CV chiffrés
+### 1. Résolution de chemins utilisateurs
+
+```javascript
+import { resolveCvBaseDir, getUserCvPath, getUserRootPath } from '@/lib/utils/paths';
+
+// Résoudre CV_BASE_DIR (supporte chemins absolus et relatifs)
+const baseDir = resolveCvBaseDir();
+// -> /mnt/DATA/PROD/users (si absolu) ou /home/.../cv-site/data/users (si relatif)
+
+// Chemin vers dossier CVs d'un utilisateur
+const cvPath = getUserCvPath(userId);
+// -> /mnt/DATA/PROD/users/{userId}/cvs
+
+// Chemin vers dossier racine d'un utilisateur
+const rootPath = getUserRootPath(userId);
+// -> /mnt/DATA/PROD/users/{userId}
+```
+
+### 2. Accès CV chiffrés
 
 ```javascript
 import { readCv, writeCv } from '@/lib/cv/storage';
@@ -253,7 +273,7 @@ const cvData = await readCv(userId, filename);
 await writeCv(userId, filename, cvData);
 ```
 
-### 2. Enqueuer un job
+### 3. Enqueuer un job
 
 ```javascript
 import { enqueueJob } from '@/lib/backgroundTasks/jobQueue';

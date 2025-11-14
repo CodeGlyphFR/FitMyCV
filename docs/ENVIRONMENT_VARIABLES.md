@@ -378,6 +378,69 @@ openssl rand -base64 32
 
 ---
 
+### CV_BASE_DIR (Optionnel)
+
+Chemin vers le dossier contenant les données utilisateurs (CVs chiffrés).
+
+```bash
+CV_BASE_DIR="data/users"  # Chemin relatif (par défaut)
+# ou
+CV_BASE_DIR="/mnt/DATA/PROD/users"  # Chemin absolu
+```
+
+**Comportement** :
+- **Non défini** : Utilise `data/users` (relatif au dossier du projet)
+- **Chemin relatif** : Résolu depuis `process.cwd()` (racine du projet)
+- **Chemin absolu** : Utilisé tel quel (recommandé pour stockage externe)
+
+**Cas d'usage** :
+- Stocker les CVs sur un disque externe (HDD, SSD, NAS)
+- Séparer les données du code source
+- Faciliter les backups et migrations
+
+**Structure attendue** :
+```
+{CV_BASE_DIR}/
+├── {userId1}/
+│   └── cvs/
+│       ├── cv1.json (chiffré)
+│       └── cv2.json (chiffré)
+└── {userId2}/
+    └── cvs/
+        └── cv1.json (chiffré)
+```
+
+**Module de résolution de chemins** : `lib/utils/paths.js`
+
+Fonctions utilitaires disponibles :
+```javascript
+import { resolveCvBaseDir, getUserCvPath, getUserRootPath } from "@/lib/utils/paths";
+
+// Résoudre CV_BASE_DIR (absolu ou relatif)
+const baseDir = resolveCvBaseDir();
+
+// Chemin vers le dossier CVs d'un user
+const cvPath = getUserCvPath("user123");
+// -> /mnt/DATA/PROD/users/user123/cvs
+
+// Chemin vers le dossier racine d'un user
+const rootPath = getUserRootPath("user123");
+// -> /mnt/DATA/PROD/users/user123
+```
+
+**Fichiers utilisant cette variable** :
+- `lib/utils/paths.js` - Résolution centralisée des chemins
+- `lib/cv/storage.js` - Lecture/écriture CVs
+- `lib/user/deletion.js` - Suppression dossiers utilisateurs
+- `lib/auth/options.js` - Création workspace utilisateur
+- `lib/admin/userManagement.js` - Gestion admin
+
+**Tests** : `lib/utils/__tests__/paths.test.js`
+
+**Documentation** : [ARCHITECTURE.md - Structure des données](./ARCHITECTURE.md#structure-des-données-cv)
+
+---
+
 ## Variables Optionnelles
 
 ### Variables Application
