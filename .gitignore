@@ -41,3 +41,6 @@ data/background-tasks.json
 
 # Base de données de développement
 dev.db
+
+# Backups SQL de production
+backup_*.sql
