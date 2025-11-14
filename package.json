@@ -1,7 +1,7 @@
 {
-  "name": "cv-site-v4-1",
+  "name": "fitmycv-v4-1",
   "private": true,
-  "version": "1.0.8",
+  "version": "1.0.9",
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
@@ -17,6 +17,7 @@
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "bcryptjs": "^3.0.2",
+    "better-sqlite3": "^12.4.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.544.0",
     "luxon": "^3.7.2",

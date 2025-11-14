@@ -2,7 +2,7 @@
 
 > **Application Next.js 14 pour la création de CV personnalisés optimisés par IA**
 
-Version: **1.0.8**
+Version: **1.0.9**
 
 ---
 
@@ -162,7 +162,7 @@ La documentation est organisée en plusieurs fichiers thématiques :
 ```bash
 # 1. Cloner le projet
 git clone <repository-url>
-cd cv-site
+cd fitmycv
 
 # 2. Installer les dépendances
 npm install
@@ -206,7 +206,7 @@ Pour plus de détails, consultez [INSTALLATION.md](./INSTALLATION.md)
 ### Structure des dossiers
 
 ```
-cv-site/
+fitmycv/
 ├── app/                    # Next.js App Router
 │   ├── api/               # API Routes (60+ endpoints)
 │   ├── auth/              # Pages authentification
@@ -336,4 +336,4 @@ Propriétaire - Tous droits réservés
 
 ---
 
-**Développé avec Next.js 14 et OpenAI** | Version 1.0.8
+**Développé avec Next.js 14 et OpenAI** | Version 1.0.9

@@ -326,7 +326,7 @@ module.exports = {
 
 **Alternative à PM2** : Service systemd natif
 
-**Créer** `/etc/systemd/system/cv-site.service` :
+**Créer** `/etc/systemd/system/fitmycv.service` :
 
 ```ini
 [Unit]
@@ -363,7 +363,7 @@ WantedBy=multi-user.target
 
 ```bash
 # Copier le fichier
-sudo cp cv-site.service /etc/systemd/system/
+sudo cp fitmycv.service /etc/systemd/system/
 
 # Recharger systemd
 sudo systemctl daemon-reload
@@ -372,16 +372,16 @@ sudo systemctl daemon-reload
 npm run build
 
 # Activer au démarrage
-sudo systemctl enable cv-site.service
+sudo systemctl enable fitmycv.service
 
 # Démarrer le service
-sudo systemctl start cv-site.service
+sudo systemctl start fitmycv.service
 
 # Vérifier le statut
-sudo systemctl status cv-site.service
+sudo systemctl status fitmycv.service
 
 # Logs
-sudo journalctl -u cv-site.service -f
+sudo journalctl -u fitmycv.service -f
 ```
 
 **Avantages systemd vs PM2** :

@@ -1,11 +1,11 @@
-// Prisma schema for cv-site user management
+// Prisma schema for fitmycv user management
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

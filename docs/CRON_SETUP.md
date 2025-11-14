@@ -25,12 +25,12 @@ crontab -e
 Ajoutez cette ligne pour exécuter le script tous les jours à 3h du matin :
 
 ```bash
-0 3 * * * cd /home/erickdesmet/Documents/cv-site && /usr/bin/node scripts/reset-feature-counters.js >> /var/log/fitmycv-cron.log 2>&1
+0 3 * * * cd /home/erickdesmet/Documents/fitmycv && /usr/bin/node scripts/reset-feature-counters.js >> /var/log/fitmycv-cron.log 2>&1
 ```
 
 **Explication** :
 - `0 3 * * *` : Tous les jours à 3h00
-- `cd /home/erickdesmet/Documents/cv-site` : Se placer dans le dossier du projet
+- `cd /home/erickdesmet/Documents/fitmycv` : Se placer dans le dossier du projet
 - `/usr/bin/node scripts/reset-feature-counters.js` : Exécuter le script
 - `>> /var/log/fitmycv-cron.log 2>&1` : Logger la sortie dans un fichier
 
@@ -41,7 +41,7 @@ Ajoutez cette ligne pour exécuter le script tous les jours à 3h du matin :
 crontab -l
 
 # Tester manuellement le script
-cd /home/erickdesmet/Documents/cv-site
+cd /home/erickdesmet/Documents/fitmycv
 node scripts/reset-feature-counters.js
 ```
 
@@ -68,9 +68,9 @@ After=network.target
 [Service]
 Type=oneshot
 User=erickdesmet
-WorkingDirectory=/home/erickdesmet/Documents/cv-site
+WorkingDirectory=/home/erickdesmet/Documents/fitmycv
 Environment="NODE_ENV=production"
-ExecStart=/usr/bin/node /home/erickdesmet/Documents/cv-site/scripts/reset-feature-counters.js
+ExecStart=/usr/bin/node /home/erickdesmet/Documents/fitmycv/scripts/reset-feature-counters.js
 StandardOutput=journal
 StandardError=journal
 

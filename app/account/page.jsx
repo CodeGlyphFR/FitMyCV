@@ -59,7 +59,7 @@ export default async function AccountPage(){
 
         {/* Footer */}
         <div className="mt-2 mb-0 text-xs text-white/70 text-center space-y-2">
-          <div>© 2025 FitMyCv.ai (v1.0.8)</div>
+          <div>© 2025 FitMyCv.ai (v1.0.9)</div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-0 sm:gap-1 leading-none -space-y-3 sm:space-y-0">
             <div className="flex items-baseline justify-center gap-1 leading-none">
               <a href="/about" className="hover:text-white transition-colors">

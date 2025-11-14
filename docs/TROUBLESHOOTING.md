@@ -505,9 +505,9 @@ if (process.env.NODE_ENV !== 'production') {
 **Symptômes** :
 
 ```
-cv-site.service: State 'stop-sigterm' timed out. Killing.
-cv-site.service: Killing process with signal SIGKILL.
-cv-site.service: Failed with result 'timeout'.
+fitmycv.service: State 'stop-sigterm' timed out. Killing.
+fitmycv.service: Killing process with signal SIGKILL.
+fitmycv.service: Failed with result 'timeout'.
 ```
 
 **Solution** :
@@ -529,14 +529,14 @@ TimeoutStopSec=30
 ExecStart=/usr/bin/env bash -lc 'exec npm start'
 ```
 
-**Fichier** : `cv-site.service` (déjà corrigé)
+**Fichier** : `fitmycv.service` (déjà corrigé)
 
 **Redémarrage requis** :
 
 ```bash
-sudo cp cv-site.service /etc/systemd/system/
+sudo cp fitmycv.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl restart cv-site.service
+sudo systemctl restart fitmycv.service
 ```
 
 ---

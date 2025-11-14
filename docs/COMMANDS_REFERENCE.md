@@ -268,7 +268,7 @@ crontab -e
 
 ```bash
 # Tous les jours à 00:00
-0 0 * * * cd /path/to/app && node scripts/reset-feature-counters.js >> /var/log/cv-site/cron-reset-counters.log 2>&1
+0 0 * * * cd /path/to/app && node scripts/reset-feature-counters.js >> /var/log/fitmycv/cron-reset-counters.log 2>&1
 ```
 
 **Pourquoi** : Reset les compteurs d'utilisation des features expirés (mensuels)
@@ -281,7 +281,7 @@ crontab -e
   -H "Content-Type: application/json" \
   -d '{"olderThan":"90d"}' \
   -H "Authorization: Bearer ADMIN_TOKEN" \
-  >> /var/log/cv-site/cron-telemetry-cleanup.log 2>&1
+  >> /var/log/fitmycv/cron-telemetry-cleanup.log 2>&1
 ```
 
 **Pourquoi** : Supprime les données de télémétrie anciennes (TelemetryEvent, FeatureUsage, OpenAICall > 90 jours)
@@ -290,7 +290,7 @@ crontab -e
 
 ```bash
 # Tous les lundis à 03:00
-0 3 * * 1 cd /path/to/app && node scripts/cleanup-orphaned-records.js >> /var/log/cv-site/cron-cleanup-orphaned.log 2>&1
+0 3 * * 1 cd /path/to/app && node scripts/cleanup-orphaned-records.js >> /var/log/fitmycv/cron-cleanup-orphaned.log 2>&1
 ```
 
 **Pourquoi** : Nettoie les enregistrements orphelins dans la base de données
@@ -299,8 +299,8 @@ crontab -e
 
 ```bash
 # Vérifier les logs
-tail -f /var/log/cv-site/cron-reset-counters.log
-tail -f /var/log/cv-site/cron-telemetry-cleanup.log
+tail -f /var/log/fitmycv/cron-reset-counters.log
+tail -f /var/log/fitmycv/cron-telemetry-cleanup.log
 
 # Vérifier l'exécution des tâches CRON
 grep CRON /var/log/syslog
@@ -324,7 +324,7 @@ grep CRON /var/log/syslog
 ```bash
 # Cloner le repo
 git clone <repo-url>
-cd cv-site
+cd fitmycv
 
 # Installer dépendances
 npm install

@@ -13,6 +13,7 @@ require('dotenv').config({ path: '.env.local' });
 const { PrismaClient } = require('@prisma/client');
 const fs = require('fs').promises;
 const path = require('path');
+const { getUserCvPath } = require('../lib/utils/paths.js');
 
 const prisma = new PrismaClient();
 
@@ -80,10 +81,11 @@ async function cleanupOrphanedRecords(tableName, queryFn, deleteFn, customCleanu
 async function deleteCvFiles(cvFiles) {
   for (const cvFile of cvFiles) {
     try {
-      const cvPath = path.join(process.cwd(), 'cvs', cvFile.userId, cvFile.filename);
+      const cvDir = getUserCvPath(cvFile.userId);
+      const cvPath = path.join(cvDir, cvFile.filename);
       await fs.unlink(cvPath);
       stats.filesDeleted++;
-      console.log(`      - Fichier supprimé: cvs/${cvFile.userId}/${cvFile.filename}`);
+      console.log(`      - Fichier supprimé: ${cvPath}`);
     } catch (error) {
       // Ignore si le fichier n'existe pas
       if (error.code !== 'ENOENT') {

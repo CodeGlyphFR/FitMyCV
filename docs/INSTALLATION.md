@@ -55,7 +55,7 @@ Ce guide vous accompagne pas à pas dans l'installation et la configuration de F
 
 ```bash
 git clone <repository-url>
-cd cv-site
+cd fitmycv
 ```
 
 ### 2. Installer les dépendances
