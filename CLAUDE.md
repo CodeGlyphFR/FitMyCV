@@ -129,19 +129,6 @@ STRIPE_SECRET_KEY="sk_test_..."                 # Stripe API (test mode)
 NEXT_PUBLIC_SITE_URL="http://localhost:3001"   # URL publique
 ```
 
-**Pour PRODUCTION** (`cv-site/.env`) :
-```bash
-DATABASE_URL="postgresql://erickdesmet:PASSWORD@localhost:5432/fitmycv_prod?schema=public"
-NODE_ENV=production
-PORT=3000
-CV_ENCRYPTION_KEY="..."                         # ⚠️ IDENTIQUE à dev
-CV_BASE_DIR="/mnt/DATA/PROD/users"              # Chemin vers dossier users (disque externe)
-NEXTAUTH_SECRET="..."                           # openssl rand -base64 32
-OPENAI_API_KEY="sk-..."                         # OpenAI API
-STRIPE_SECRET_KEY="sk_live_..."                 # Stripe API (live mode)
-NEXT_PUBLIC_SITE_URL="https://votre-domaine.com" # URL production
-```
-
 **Important DATABASE_URL** :
 - **Dev (SQLite)** : Le chemin est TOUJOURS `file:./dev.db` (relatif au dossier `prisma/`)
   - ❌ **Incorrect** : `file:./prisma/dev.db`
