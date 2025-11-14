@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/session";
-import { getUserCvDir } from "@/lib/cv/storage";
+import { getUserCvPath } from "@/lib/utils/paths";
 import fs from "fs/promises";
 import path from "path";
 import logger from "@/lib/security/secureLogger";
@@ -105,7 +105,7 @@ export async function DELETE(request){
   }
 
   // Supprimer le dossier utilisateur
-  const userDir = getUserCvDir(user.id);
+  const userDir = getUserCvPath(user.id);
   try {
     await fs.rm(userDir, { recursive: true, force: true });
     const parentDir = path.dirname(userDir);
