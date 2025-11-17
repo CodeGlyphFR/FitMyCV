@@ -479,12 +479,23 @@ La fonction retourne différents types d'erreurs :
 
 ### Références d'Implémentation
 
-Routes utilisant `verifyRecaptcha()` :
-- `app/api/background-tasks/import-pdf/route.js:66`
-- `app/api/background-tasks/generate-cv/route.js:107`
-- `app/api/background-tasks/create-template-cv/route.js:63`
-- `app/api/auth/register/route.js:22`
-- `app/api/cvs/create/route.js:24`
+Routes utilisant `verifyRecaptcha()` (10 au total) :
+
+**Auth Routes** :
+- `app/api/auth/register/route.js:22` - Création compte
+- `app/api/auth/request-reset/route.js:14` - Demande reset password
+- `app/api/auth/resend-verification/route.js:33` - Renvoi email vérification
+
+**Background Tasks** :
+- `app/api/background-tasks/import-pdf/route.js:66` - Import CV PDF
+- `app/api/background-tasks/generate-cv/route.js:107` - Génération CV avec IA
+- `app/api/background-tasks/create-template-cv/route.js:63` - Création CV template
+- `app/api/background-tasks/translate-cv/route.js:34` - Traduction CV
+- `app/api/background-tasks/calculate-match-score/route.js:35` - Score match
+- `app/api/background-tasks/generate-cv-from-job-title/route.js:27` - Génération depuis job title
+
+**CV Operations** :
+- `app/api/cvs/create/route.js:24` - Création CV manuelle
 
 **Documentation** : [SECURITY.md](./SECURITY.md) | [MCP_PUPPETEER.md - Bypass reCAPTCHA](./MCP_PUPPETEER.md)
 

@@ -377,6 +377,18 @@ if (!recaptchaResult.success) {
 // Bypass en développement : ajouter BYPASS_RECAPTCHA=true dans .env
 ```
 
+**Routes protégées par reCAPTCHA** (10 au total) :
+- `app/api/auth/register` - Création compte
+- `app/api/auth/request-reset` - Demande reset password
+- `app/api/auth/resend-verification` - Renvoi email vérification
+- `app/api/background-tasks/import-pdf` - Import CV PDF
+- `app/api/background-tasks/generate-cv` - Génération CV avec IA
+- `app/api/background-tasks/create-template-cv` - Création CV template
+- `app/api/background-tasks/translate-cv` - Traduction CV
+- `app/api/background-tasks/calculate-match-score` - Score match
+- `app/api/background-tasks/generate-cv-from-job-title` - Génération depuis job title
+- `app/api/cvs/create` - Création CV manuelle
+
 ### 6. Prévention scroll chaining (dropdowns)
 
 ```javascript
