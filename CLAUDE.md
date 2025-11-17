@@ -446,6 +446,7 @@ Password: qwertyuiOP93300
 **Règles générales :**
 - ❌ **Ne merge JAMAIS sans demande explicite** (utiliser `--no-ff`)
 - ❌ **Ne commit JAMAIS sans demande explicite**
+- ❌ **Ne commit JAMAIS sans code review préalable** - Toujours utiliser l'agent code-review-expert AVANT de créer un commit
 - ❌ **Ne push JAMAIS sans demande explicite**
 - ✅ **Toujours créer des PRs** pour dev→release et release→main
 - ✅ **Taguer les versions** : -rc sur release, final sur main
