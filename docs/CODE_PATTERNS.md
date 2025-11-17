@@ -13,7 +13,8 @@ Ce document contient des exemples de code réutilisables et des patterns communs
 4. [Session Utilisateur](#session-utilisateur)
 5. [Gestion Scroll Chaining](#gestion-scroll-chaining)
 6. [Gestion Stripe et Abonnements](#gestion-stripe-et-abonnements)
-7. [Vérification Limites Features](#vérification-limites-features)
+7. [React useEffect et Dépendances Stables](#react-useeffect-et-dépendances-stables)
+8. [Vérification Limites Features](#vérification-limites-features)
 
 ---
 
@@ -609,6 +610,174 @@ export async function POST(request) {
 ```
 
 **Documentation** : [STRIPE_SETUP.md](./STRIPE_SETUP.md) | [SUBSCRIPTION.md](./SUBSCRIPTION.md)
+
+---
+
+## React useEffect et Dépendances Stables
+
+Patterns pour éviter les boucles infinies causées par des objets recréés à chaque render.
+
+### Problème : Boucles Infinies avec Objets
+
+Les hooks custom qui retournent des objets (state, operations, modals, etc.) créent de nouvelles références à chaque render. Si on les met dans les dépendances d'un `useEffect`, cela déclenche une boucle infinie.
+
+### Pourquoi setState est Stable
+
+React **garantit** que les fonctions `setState` ont une identité stable entre les renders. Cela signifie que `state.setSomething` est toujours la même fonction, même si l'objet `state` change.
+
+**Référence officielle** : [React docs - useState](https://react.dev/reference/react/useState#setstate-is-stable)
+
+### Pattern de Base
+
+```javascript
+// ❌ INCORRECT - Boucle infinie
+React.useEffect(() => {
+  state.setSomething(value);
+}, [state]); // 'state' est recréé à chaque render
+
+// ✅ CORRECT - Stable
+React.useEffect(() => {
+  state.setSomething(value);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []); // setState est garanti stable par React
+```
+
+### Cas d'Usage
+
+#### 1. setState Simple
+
+```javascript
+const [isOpen, setIsOpen] = React.useState(false);
+
+// ✅ Pas besoin d'ajouter setIsOpen aux dépendances
+React.useEffect(() => {
+  if (someCondition) {
+    setIsOpen(true);
+  }
+}, [someCondition]); // setIsOpen omis (stable)
+```
+
+#### 2. Custom Hook avec Setters
+
+```javascript
+// Hook custom qui retourne un objet
+function useModalState() {
+  const [isOpen, setIsOpen] = React.useState(false);
+  return {
+    isOpen,
+    open: () => setIsOpen(true),
+    close: () => setIsOpen(false)
+  };
+}
+
+// Utilisation
+function MyComponent() {
+  const modal = useModalState(); // Nouvel objet à chaque render
+
+  // ✅ On n'a besoin que de modal.isOpen (primitive)
+  React.useEffect(() => {
+    if (modal.isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  }, [modal.isOpen]); // Seulement la primitive
+
+  // ✅ Si on doit appeler modal.close(), omettre 'modal'
+  React.useEffect(() => {
+    function handleEscape(e) {
+      if (e.key === 'Escape') {
+        modal.close(); // Stable via setState
+      }
+    }
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // modal.close omis (stable)
+}
+```
+
+#### 3. Multiples Hooks Custom
+
+```javascript
+function ComplexComponent() {
+  const state = useComponentState(); // { items, setItems, current, setCurrent }
+  const modals = useModalState();    // { listOpen, setListOpen, ... }
+  const operations = useOperations(); // { reload, delete, ... }
+
+  // ✅ N'inclure QUE les primitives nécessaires
+  React.useEffect(() => {
+    // On écoute les changements de listOpen et items
+    if (modals.listOpen && state.items.length > 0) {
+      calculateDropdownPosition();
+    }
+  }, [modals.listOpen, state.items]); // Seulement les primitives
+
+  // ✅ Si on appelle uniquement des setters, tableau vide
+  React.useEffect(() => {
+    const unsubscribe = subscribeToEvents((event) => {
+      state.setItems(event.items);
+      modals.setListOpen(false);
+    });
+    return unsubscribe;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Setters omis (stables)
+}
+```
+
+### Quand Désactiver le Linter
+
+Utiliser `eslint-disable-next-line react-hooks/exhaustive-deps` quand :
+
+1. **setState functions** - Garantis stables par React
+2. **Fonctions wrappant setState** - Si elles ne font QUE du setState
+3. **Callbacks stables** - Fonctions passées qui ne changent jamais
+
+```javascript
+// Bon usage de eslint-disable
+React.useEffect(() => {
+  // Appelle uniquement des setters stables
+  modal.open();
+  state.reset();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [triggerCondition]); // Seulement la condition trigger
+```
+
+**⚠️ Attention** : Si la fonction lit des valeurs (props, state), elle doit être dans les dépendances OU recréée avec `useCallback`.
+
+### Anti-Patterns à Éviter
+
+```javascript
+// ❌ Inclure tout l'objet
+React.useEffect(() => {
+  if (state.isOpen) {
+    doSomething();
+  }
+}, [state]); // Boucle infinie
+
+// ❌ Mettre les setters explicitement
+React.useEffect(() => {
+  state.setIsOpen(true);
+}, [state.setIsOpen]); // Inutile et verbeux
+
+// ❌ Omettre des primitives nécessaires
+React.useEffect(() => {
+  if (props.userId) { // Lit une valeur
+    fetchUser(props.userId);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []); // INCORRECT - manque props.userId
+```
+
+### Références d'Implémentation
+
+Fixes appliqués dans TopBar.jsx (14 useEffect) :
+- `components/TopBar/TopBar.jsx:138` - Portal ready
+- `components/TopBar/TopBar.jsx:146` - CV list reload
+- `components/TopBar/TopBar.jsx:161` - Event listeners
+- `components/TopBar/TopBar.jsx:300` - Outside click handlers
+
+**Documentation** : [React Docs - useState](https://react.dev/reference/react/useState) | [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
 
 ---
 

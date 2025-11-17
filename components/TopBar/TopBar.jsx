@@ -135,13 +135,16 @@ export default function TopBar() {
   // Portal ready (critical for dropdown rendering)
   React.useEffect(() => {
     state.setPortalReady(true);
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Reload CV list (critical for displaying CVs)
   React.useEffect(() => {
     if (!isAuthenticated) return;
     operations.reload();
-  }, [isAuthenticated, pathname, searchParams?.toString(), operations.reload]);
+    // operations.reload is memoized with useCallback and recreates when isAuthenticated changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, pathname, searchParams?.toString()]);
 
   // Listen for CV list changes
   React.useEffect(() => {
@@ -155,7 +158,8 @@ export default function TopBar() {
       window.removeEventListener("realtime:cv:list:changed", onChanged);
       window.removeEventListener("focus", onChanged);
     };
-  }, [isAuthenticated, operations.reload]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   // Listen for import event
   React.useEffect(() => {
@@ -164,7 +168,8 @@ export default function TopBar() {
     };
     window.addEventListener("cv:open-import", handleOpenImport);
     return () => window.removeEventListener("cv:open-import", handleOpenImport);
-  }, [modals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // CV selector glow animation
   React.useEffect(() => {
@@ -180,7 +185,8 @@ export default function TopBar() {
     return () => {
       window.removeEventListener("cv:selected", handleCvSelected);
     };
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Detect mobile
   React.useEffect(() => {
@@ -190,20 +196,23 @@ export default function TopBar() {
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Dropdown position updates
   React.useEffect(() => {
     if (modals.listOpen && triggerRef.current) {
       modals.setDropdownRect(triggerRef.current.getBoundingClientRect());
     }
-  }, [modals.listOpen, state.items, state.current, modals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modals.listOpen, state.items, state.current]);
 
   React.useEffect(() => {
     if (modals.userMenuOpen && userMenuButtonRef.current) {
       modals.setUserMenuRect(userMenuButtonRef.current.getBoundingClientRect());
     }
-  }, [modals.userMenuOpen, modals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modals.userMenuOpen]);
 
   // User menu outside click handler
   React.useEffect(() => {
@@ -241,7 +250,8 @@ export default function TopBar() {
       document.removeEventListener("keydown", handleKey);
       if (touchTimeout) clearTimeout(touchTimeout);
     };
-  }, [modals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modals.userMenuOpen]);
 
   // CV dropdown outside click handler
   React.useEffect(() => {
@@ -287,7 +297,8 @@ export default function TopBar() {
       document.removeEventListener("keydown", handleKey);
       if (touchTimeout) clearTimeout(touchTimeout);
     };
-  }, [modals.listOpen, state.isScrollingInDropdown, modals, state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modals.listOpen, state.isScrollingInDropdown]);
 
   // Base selector outside click handler
   React.useEffect(() => {
@@ -326,7 +337,8 @@ export default function TopBar() {
       document.removeEventListener("keydown", handleKey);
       if (touchTimeout) clearTimeout(touchTimeout);
     };
-  }, [generator.baseSelectorOpen, generator]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generator.baseSelectorOpen]);
 
   // Ticker reset on visibility change
   React.useEffect(() => {
@@ -338,7 +350,8 @@ export default function TopBar() {
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Ticker reset on intersection
   React.useEffect(() => {
@@ -354,7 +367,8 @@ export default function TopBar() {
     }, { threshold: 0.6 });
     observer.observe(barRef.current);
     return () => observer.disconnect();
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Close dropdown on resize
   React.useEffect(() => {
@@ -363,7 +377,8 @@ export default function TopBar() {
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [modals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Don't render on auth page
   if (pathname === "/auth") {

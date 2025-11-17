@@ -44,3 +44,7 @@ dev.db
 
 # Backups SQL de production
 backup_*.sql
+CaddyFile.txt
+.gitignore
+.gitignore
+env.txt
