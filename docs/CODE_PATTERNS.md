@@ -11,10 +11,11 @@ Ce document contient des exemples de code réutilisables et des patterns communs
 2. [Gestion Job Queue](#gestion-job-queue)
 3. [Validation de CV](#validation-de-cv)
 4. [Session Utilisateur](#session-utilisateur)
-5. [Gestion Scroll Chaining](#gestion-scroll-chaining)
-6. [Gestion Stripe et Abonnements](#gestion-stripe-et-abonnements)
-7. [React useEffect et Dépendances Stables](#react-useeffect-et-dépendances-stables)
-8. [Vérification Limites Features](#vérification-limites-features)
+5. [Vérification reCAPTCHA](#vérification-recaptcha)
+6. [Gestion Scroll Chaining](#gestion-scroll-chaining)
+7. [Gestion Stripe et Abonnements](#gestion-stripe-et-abonnements)
+8. [React useEffect et Dépendances Stables](#react-useeffect-et-dépendances-stables)
+9. [Vérification Limites Features](#vérification-limites-features)
 
 ---
 
@@ -343,6 +344,149 @@ export default async function MyServerComponent() {
 ```
 
 **Documentation** : [Features - Authentication](./FEATURES.md#authentification-multi-provider)
+
+---
+
+## Vérification reCAPTCHA
+
+Fonction centralisée pour vérifier les tokens reCAPTCHA v3 avec support du bypass pour tests/développement.
+
+### Utilisation de Base
+
+```javascript
+import { verifyRecaptcha } from '@/lib/recaptcha/verifyRecaptcha';
+
+// Vérifier un token
+const result = await verifyRecaptcha(recaptchaToken, {
+  callerName: 'import-pdf',  // Nom pour les logs
+  scoreThreshold: 0.5,        // Score minimum (0.0 = bot, 1.0 = humain)
+});
+
+if (!result.success) {
+  // Vérification échouée
+  console.error(result.error);
+  return Response.json({ error: result.error }, { status: 403 });
+}
+
+// Vérification réussie (ou bypassée)
+console.log('Score:', result.score);
+console.log('Bypassed:', result.bypassed); // true si BYPASS_RECAPTCHA=true
+```
+
+### Pattern dans API Route
+
+```javascript
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth/session";
+import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
+
+export async function POST(request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  }
+
+  const formData = await request.formData();
+  const recaptchaToken = formData.get("recaptchaToken");
+
+  // Vérification reCAPTCHA (optionnelle pour compatibilité)
+  if (recaptchaToken) {
+    const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
+      callerName: 'import-pdf',
+      scoreThreshold: 0.5,
+    });
+
+    if (!recaptchaResult.success) {
+      return NextResponse.json(
+        { error: recaptchaResult.error || "Échec de la vérification anti-spam." },
+        { status: recaptchaResult.error?.includes('Configuration') ? 500 : 403 }
+      );
+    }
+  }
+
+  // Suite de la logique métier
+  // ...
+}
+```
+
+### Bypass pour Tests/Développement
+
+Pour désactiver la vérification reCAPTCHA en développement ou lors de tests automatisés (MCP Puppeteer, etc.) :
+
+**1. Ajouter dans `.env` :**
+```bash
+BYPASS_RECAPTCHA=true
+```
+
+**2. La fonction retourne automatiquement success :**
+```javascript
+// Avec BYPASS_RECAPTCHA=true dans .env
+const result = await verifyRecaptcha(token, { callerName: 'test' });
+
+// result = {
+//   success: true,
+//   score: 1.0,
+//   bypassed: true
+// }
+```
+
+**3. Les logs affichent le bypass :**
+```
+[import-pdf] BYPASS MODE ENABLED - Skipping reCAPTCHA verification
+```
+
+### Options Disponibles
+
+```javascript
+await verifyRecaptcha(token, {
+  // Nom du caller pour les logs (obligatoire pour debug)
+  callerName: 'register',
+
+  // Seuil minimum de score (défaut: 0.5)
+  // 0.0 = certainement un bot
+  // 0.5 = seuil recommandé par Google
+  // 1.0 = certainement un humain
+  scoreThreshold: 0.5,
+
+  // Action attendue (optionnel, vérifie que le token correspond)
+  expectedAction: 'submit_form',
+});
+```
+
+### Codes d'Erreur
+
+La fonction retourne différents types d'erreurs :
+
+```javascript
+// Token manquant
+{ success: false, error: 'Token reCAPTCHA manquant' }
+
+// Configuration serveur manquante
+{ success: false, error: 'Configuration serveur manquante' }
+
+// Vérification échouée
+{ success: false, error: 'Échec de la vérification reCAPTCHA', errorCodes: [...] }
+
+// Action non correspondante
+{ success: false, error: 'Action reCAPTCHA non correspondante' }
+
+// Score trop faible
+{ success: false, score: 0.3, error: 'Score reCAPTCHA trop faible (0.3 < 0.5)' }
+
+// Erreur réseau/serveur
+{ success: false, error: 'Erreur serveur lors de la vérification reCAPTCHA' }
+```
+
+### Références d'Implémentation
+
+Routes utilisant `verifyRecaptcha()` :
+- `app/api/background-tasks/import-pdf/route.js:66`
+- `app/api/background-tasks/generate-cv/route.js:107`
+- `app/api/background-tasks/create-template-cv/route.js:63`
+- `app/api/auth/register/route.js:22`
+- `app/api/cvs/create/route.js:24`
+
+**Documentation** : [SECURITY.md](./SECURITY.md) | [MCP_PUPPETEER.md - Bypass reCAPTCHA](./MCP_PUPPETEER.md)
 
 ---
 

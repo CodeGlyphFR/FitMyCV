@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { scheduleTranslateCvJob } from "@/lib/backgroundTasks/translateCvJob";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
+import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +28,22 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const { sourceFile, targetLanguage, taskId, deviceId } = body;
+    const { sourceFile, targetLanguage, taskId, deviceId, recaptchaToken } = body;
+
+    // Vérification reCAPTCHA (optionnelle pour compatibilité, mais recommandée)
+    if (recaptchaToken) {
+      const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
+        callerName: 'translate-cv',
+        scoreThreshold: 0.5,
+      });
+
+      if (!recaptchaResult.success) {
+        return NextResponse.json(
+          { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
+          { status: recaptchaResult.statusCode || 403 }
+        );
+      }
+    }
 
     if (!sourceFile) {
       return NextResponse.json({ error: "Aucun CV source fourni." }, { status: 400 });

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { scheduleCalculateMatchScoreJob } from "@/lib/backgroundTasks/calculateMatchScoreJob";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
+import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +28,22 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const { cvFile, isAutomatic = false, taskId, deviceId } = body;
+    const { cvFile, isAutomatic = false, taskId, deviceId, recaptchaToken } = body;
+
+    // Vérification reCAPTCHA (optionnelle pour compatibilité, mais recommandée)
+    if (recaptchaToken) {
+      const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
+        callerName: 'calculate-match-score',
+        scoreThreshold: 0.5,
+      });
+
+      if (!recaptchaResult.success) {
+        return NextResponse.json(
+          { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
+          { status: recaptchaResult.statusCode || 403 }
+        );
+      }
+    }
 
     if (!cvFile) {
       return NextResponse.json({ error: "CV file missing" }, { status: 400 });

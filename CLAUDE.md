@@ -359,7 +359,25 @@ const session = await getSession();
 const userId = session?.user?.id;
 ```
 
-### 5. Prévention scroll chaining (dropdowns)
+### 5. Vérification reCAPTCHA
+
+```javascript
+import { verifyRecaptcha } from '@/lib/recaptcha/verifyRecaptcha';
+
+// Vérifier token reCAPTCHA
+const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
+  callerName: 'import-pdf',
+  scoreThreshold: 0.5,
+});
+
+if (!recaptchaResult.success) {
+  return NextResponse.json({ error: recaptchaResult.error }, { status: 403 });
+}
+
+// Bypass en développement : ajouter BYPASS_RECAPTCHA=true dans .env
+```
+
+### 6. Prévention scroll chaining (dropdowns)
 
 ```javascript
 useEffect(() => {
