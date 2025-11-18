@@ -1036,12 +1036,16 @@ Historique des transactions de crédits.
 
 ### InvoicesTable.jsx
 
-Historique des factures Stripe (abonnements + packs crédits).
+Historique des factures Stripe avec PDF disponible.
+
+**Filtrage automatique** :
+- Affiche uniquement les factures avec PDF (filtre les PaymentIntents sans Invoice)
+- Compteurs de filtres optimisés avec `useMemo` pour les performances
 
 **Sources** :
 
-- Invoices Stripe (abonnements)
-- PaymentIntents Stripe (packs crédits)
+- Invoices Stripe (abonnements) - ont toujours un PDF
+- PaymentIntents Stripe avec Invoice créée (packs crédits) - ont un PDF si Invoice générée
 
 **Colonnes** :
 
@@ -1049,7 +1053,11 @@ Historique des factures Stripe (abonnements + packs crédits).
 - Type (👑 Abonnement / 💎 Crédits)
 - Montant
 - Statut (Payé / En attente / Annulé)
-- Actions (Télécharger PDF pour abonnements)
+- Actions (Télécharger PDF - présent pour toutes les factures affichées)
+
+**États vides intelligents** :
+- Aucune facture : "Aucune facture pour le moment"
+- Factures sans PDF : "Aucune facture PDF disponible" + explication
 
 **Responsive** :
 

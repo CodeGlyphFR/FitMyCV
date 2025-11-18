@@ -92,11 +92,42 @@ export default function InvoicesTable({ creditBalance: creditBalanceProp, curren
     });
   };
 
-  // Filtrer les factures selon le type sélectionné
+  // Prédicat pour vérifier si une facture a un PDF disponible
+  const hasPdfUrl = React.useCallback((invoice) => Boolean(invoice.pdfUrl), []);
+
+  /**
+   * Filtrer les factures selon le type sélectionné et uniquement celles avec PDF.
+   *
+   * IMPORTANT: Seules les factures avec `pdfUrl` sont affichées car:
+   * - Les Stripe Invoices (abonnements) ont toujours invoice_pdf
+   * - Les PaymentIntents (packs de crédits) ne génèrent PAS de facture par défaut
+   * - Les utilisateurs s'attendent à télécharger des PDFs dans l'onglet "Historique"
+   *
+   * @see app/api/subscription/invoices/route.js lignes 176, 204
+   */
   const filteredInvoices = React.useMemo(() => {
-    if (typeFilter === 'all') return invoices;
-    return invoices.filter(inv => inv.type === typeFilter);
-  }, [invoices, typeFilter]);
+    let result = invoices;
+
+    // Filtrer par type
+    if (typeFilter !== 'all') {
+      result = result.filter(inv => inv.type === typeFilter);
+    }
+
+    // Filtrer uniquement les factures avec PDF
+    result = result.filter(hasPdfUrl);
+
+    return result;
+  }, [invoices, typeFilter, hasPdfUrl]);
+
+  // Calculer les compteurs pour les boutons de filtre (memoized pour performance)
+  const filterCounts = React.useMemo(() => {
+    const withPdf = invoices.filter(hasPdfUrl);
+    return {
+      all: withPdf.length,
+      subscription: withPdf.filter(i => i.type === 'subscription').length,
+      credit_pack: withPdf.filter(i => i.type === 'credit_pack').length,
+    };
+  }, [invoices, hasPdfUrl]);
 
   // Calculer pagination
   const totalPages = Math.ceil(filteredInvoices.length / limit);
@@ -137,7 +168,24 @@ export default function InvoicesTable({ creditBalance: creditBalanceProp, curren
     );
   }
 
-  if (invoices.length === 0) {
+  // Gestion de l'état vide : distinguer "aucune facture" vs "aucune facture avec PDF"
+  if (filteredInvoices.length === 0) {
+    // Cas 1: Il y a des factures brutes mais aucune n'a de PDF
+    if (invoices.length > 0) {
+      return (
+        <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6 shadow-lg">
+          <div className="text-center text-white/60 py-8">
+            <FileText className="mx-auto mb-3 opacity-50" size={48} />
+            <p className="text-white/80 font-medium mb-2">{t('subscription.invoices.noPdfInvoices')}</p>
+            <p className="text-sm text-white/40">
+              {t('subscription.invoices.noPdfInvoicesHint')}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // Cas 2: Aucune facture brute du tout
     return (
       <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6 shadow-lg">
         <div className="text-center text-white/60 py-8">
@@ -168,7 +216,7 @@ export default function InvoicesTable({ creditBalance: creditBalanceProp, curren
               : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-white/10'
           }`}
         >
-          {t('subscription.invoices.filters.all', { count: invoices.length })}
+          {t('subscription.invoices.filters.all', { count: filterCounts.all })}
         </button>
         <button
           onClick={() => setTypeFilter('subscription')}
@@ -178,7 +226,7 @@ export default function InvoicesTable({ creditBalance: creditBalanceProp, curren
               : 'bg-white/5 text-white/60 hover:bg-purple-500/10 hover:text-purple-200 border border-white/10'
           }`}
         >
-          👑 {t('subscription.invoices.filters.subscriptions', { count: invoices.filter(i => i.type === 'subscription').length })}
+          👑 {t('subscription.invoices.filters.subscriptions', { count: filterCounts.subscription })}
         </button>
         <button
           onClick={() => setTypeFilter('credit_pack')}
@@ -188,7 +236,7 @@ export default function InvoicesTable({ creditBalance: creditBalanceProp, curren
               : 'bg-white/5 text-white/60 hover:bg-blue-500/10 hover:text-blue-200 border border-white/10'
           }`}
         >
-          💎 {t('subscription.invoices.filters.credits', { count: invoices.filter(i => i.type === 'credit_pack').length })}
+          💎 {t('subscription.invoices.filters.credits', { count: filterCounts.credit_pack })}
         </button>
       </div>
 
