@@ -5,15 +5,17 @@ import { KPICard } from './KPICard';
 import { CustomSelect } from './CustomSelect';
 import { Toast } from './Toast';
 import { ConfirmDialog } from './ConfirmDialog';
+import EditAlertModal from './EditAlertModal';
 import { getFeatureConfig } from '@/lib/analytics/featureConfig';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList } from 'recharts';
 
-export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad }) {
+export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, triggeredAlerts }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showPricing, setShowPricing] = useState(false);
-  const [showAlerts, setShowAlerts] = useState(false);
+  const [showAlertForm, setShowAlertForm] = useState(false);
+  const [alertsFilter, setAlertsFilter] = useState('all'); // 'all', 'active', 'inactive'
   const [toast, setToast] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [stableTopFeature, setStableTopFeature] = useState({ feature: 'N/A', cost: 0 });
@@ -36,19 +38,14 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad }) {
 
   // Alerts management state
   const [alerts, setAlerts] = useState([]);
-  const [editingAlert, setEditingAlert] = useState(null);
-  const [alertForm, setAlertForm] = useState({
-    type: 'user_daily',
-    threshold: '',
-    enabled: true,
-    name: '',
-    description: '',
-  });
+  const [selectedAlertForEdit, setSelectedAlertForEdit] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     fetchData();
     fetchPricings(); // Fetch pricing data for tooltip calculations
     fetchBalance(); // Fetch OpenAI account balance
+    fetchAlerts(); // Fetch alerts on mount
   }, [period, userId, refreshKey]);
 
   useEffect(() => {
@@ -58,10 +55,10 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad }) {
   }, [showPricing]);
 
   useEffect(() => {
-    if (showAlerts) {
-      fetchAlerts();
+    if (showAlertForm) {
+      fetchAlerts(); // Refresh alerts when form is shown
     }
-  }, [showAlerts]);
+  }, [showAlertForm]);
 
   // Stabiliser la top feature pour éviter les scintillements lors des refreshes
   useEffect(() => {
@@ -105,7 +102,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad }) {
   // Empêcher le scroll chaining pour la liste d'alertes
   useEffect(() => {
     const scrollContainer = alertsScrollRef.current;
-    if (!showAlerts || !scrollContainer) return;
+    if (!showAlertForm || !scrollContainer) return;
 
     function preventScrollChaining(e) {
       const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
@@ -124,7 +121,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad }) {
     return () => {
       scrollContainer.removeEventListener('wheel', preventScrollChaining);
     };
-  }, [showAlerts]);
+  }, [showAlertForm]);
 
   const fetchData = async () => {
     try {
@@ -260,42 +257,6 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad }) {
     });
   };
 
-  const handleSaveAlert = async (e) => {
-    e.preventDefault();
-    try {
-      const payload = {
-        id: editingAlert?.id || undefined,
-        type: alertForm.type,
-        threshold: parseFloat(alertForm.threshold),
-        enabled: alertForm.enabled,
-        name: alertForm.name,
-        description: alertForm.description || null,
-      };
-
-      const response = await fetch('/api/admin/openai-alerts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) throw new Error('Failed to save alert');
-
-      await fetchAlerts();
-      setEditingAlert(null);
-      setAlertForm({
-        type: 'user_daily',
-        threshold: '',
-        enabled: true,
-        name: '',
-        description: '',
-      });
-      setToast({ type: 'success', message: 'Alerte sauvegardée avec succès' });
-    } catch (err) {
-      console.error('Error saving alert:', err);
-      setToast({ type: 'error', message: 'Erreur lors de la sauvegarde de l\'alerte' });
-    }
-  };
-
   const handleDeleteAlert = async (id) => {
     setConfirmDialog({
       title: 'Supprimer cette alerte ?',
@@ -321,14 +282,52 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad }) {
   };
 
   const handleEditAlert = (alert) => {
-    setEditingAlert(alert);
-    setAlertForm({
-      type: alert.type,
-      threshold: alert.threshold.toString(),
-      enabled: alert.enabled,
-      name: alert.name,
-      description: alert.description || '',
-    });
+    setSelectedAlertForEdit(alert);
+    setShowEditModal(true);
+  };
+
+  const handleSaveAlertFromModal = async (alertData) => {
+    try {
+      // Only include id if it exists (edit mode vs create mode)
+      const payload = {
+        ...(alertData.id && { id: alertData.id }),
+        type: alertData.type,
+        threshold: alertData.threshold,
+        enabled: alertData.enabled,
+        name: alertData.name,
+        description: alertData.description || null,
+      };
+
+      const response = await fetch('/api/admin/openai-alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save alert');
+      }
+
+      await fetchAlerts();
+      setShowEditModal(false);
+      setSelectedAlertForEdit(null);
+
+      // Different success message based on mode
+      const successMessage = alertData.id
+        ? 'Alerte mise à jour avec succès'
+        : 'Alerte créée avec succès';
+      setToast({ type: 'success', message: successMessage });
+    } catch (err) {
+      console.error('Error saving alert:', err);
+      // Re-throw for modal to handle
+      throw err;
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setSelectedAlertForEdit(null);
   };
 
   if (loading && !data) {
@@ -914,27 +913,50 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.topUsers.map((user, index) => (
-                    <tr key={index} className="border-b border-white/5 text-white">
-                      <td className="py-3">
-                        <div>
-                          <span className="font-medium">{user.email}</span>
-                          {user.name && (
-                            <span className="block text-sm text-white/60">{user.name}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3 text-right text-white/80">
-                        {formatNumber(user.totalCalls)}
-                      </td>
-                      <td className="py-3 text-right text-white/80">
-                        {formatNumber(user.totalTokens)}
-                      </td>
-                      <td className="py-3 text-right font-medium">
-                        {formatCurrency(user.totalCost)}
-                      </td>
-                    </tr>
-                  ))}
+                  {data.topUsers.map((user, index) => {
+                    // Check if user has exceeded any threshold
+                    const userAlerts = triggeredAlerts?.triggeredAlerts?.filter(alert =>
+                      (alert.type === 'user_daily' || alert.type === 'user_monthly') &&
+                      alert.affectedUsers?.some(u => u.email === user.email)
+                    ) || [];
+                    const hasExceededThreshold = userAlerts.length > 0;
+
+                    return (
+                      <tr key={index} className="border-b border-white/5 text-white">
+                        <td className="py-3">
+                          <div className="flex items-center gap-2">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className={`font-medium ${hasExceededThreshold ? 'text-orange-400' : ''}`}>
+                                  {user.email}
+                                </span>
+                                {hasExceededThreshold && (
+                                  <span
+                                    className="text-orange-400 cursor-help"
+                                    title={`Alerte(s) déclenchée(s): ${userAlerts.map(a => a.name).join(', ')}`}
+                                  >
+                                    ⚠️
+                                  </span>
+                                )}
+                              </div>
+                              {user.name && (
+                                <span className="block text-sm text-white/60">{user.name}</span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 text-right text-white/80">
+                          {formatNumber(user.totalCalls)}
+                        </td>
+                        <td className="py-3 text-right text-white/80">
+                          {formatNumber(user.totalTokens)}
+                        </td>
+                        <td className="py-3 text-right font-medium">
+                          {formatCurrency(user.totalCost)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -979,130 +1001,117 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad }) {
       <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-white">Alertes de seuils</h3>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setSelectedAlertForEdit(null);
+                setShowEditModal(true);
+              }}
+              className="px-3 py-1 text-sm bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-md transition"
+            >
+              + Nouvelle alerte
+            </button>
+            <button
+              onClick={() => setShowAlertForm(!showAlertForm)}
+              className="px-3 py-1 text-sm bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 rounded-md transition"
+            >
+              {showAlertForm ? 'Masquer guide' : 'Guide'}
+            </button>
+          </div>
+        </div>
+
+        {/* Filter Toggle */}
+        <div className="flex gap-2 mb-4">
           <button
-            onClick={() => setShowAlerts(!showAlerts)}
-            className="px-3 py-1 text-sm bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 rounded-md transition"
+            onClick={() => setAlertsFilter('all')}
+            className={`px-3 py-1 text-sm rounded-md transition ${
+              alertsFilter === 'all'
+                ? 'bg-blue-500/30 text-blue-400 border border-blue-400/50'
+                : 'bg-white/5 text-white/60 hover:bg-white/10'
+            }`}
           >
-            {showAlerts ? 'Masquer' : 'Configurer'}
+            Toutes ({alerts.length})
+          </button>
+          <button
+            onClick={() => setAlertsFilter('active')}
+            className={`px-3 py-1 text-sm rounded-md transition ${
+              alertsFilter === 'active'
+                ? 'bg-green-500/30 text-green-400 border border-green-400/50'
+                : 'bg-white/5 text-white/60 hover:bg-white/10'
+            }`}
+          >
+            Actives ({alerts.filter(a => a.enabled).length})
+          </button>
+          <button
+            onClick={() => setAlertsFilter('inactive')}
+            className={`px-3 py-1 text-sm rounded-md transition ${
+              alertsFilter === 'inactive'
+                ? 'bg-gray-500/30 text-gray-400 border border-gray-400/50'
+                : 'bg-white/5 text-white/60 hover:bg-white/10'
+            }`}
+          >
+            Inactives ({alerts.filter(a => !a.enabled).length})
           </button>
         </div>
 
-        {showAlerts && (
-          <div className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20 space-y-4">
-            <h4 className="text-white font-semibold">Configuration des alertes</h4>
-
-            {/* Alert Form */}
-            <form onSubmit={handleSaveAlert} className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-white/60 text-sm mb-1 block">Type d'alerte</label>
-                  <CustomSelect
-                    value={alertForm.type}
-                    onChange={(value) => setAlertForm({ ...alertForm, type: value })}
-                    options={Object.entries(alertTypeLabels).map(([value, label]) => ({
-                      value,
-                      label,
-                    }))}
-                  />
+        {/* Alert List - Always visible */}
+        <div className="space-y-2 mb-4">
+          {alerts
+            .filter(alert => {
+              if (alertsFilter === 'active') return alert.enabled;
+              if (alertsFilter === 'inactive') return !alert.enabled;
+              return true;
+            })
+            .map((alert) => (
+              <div key={alert.id} className="flex items-center justify-between p-3 bg-white/5 rounded border border-white/10">
+                <div className="flex-1">
+                  <div className="text-white font-medium">{alert.name}</div>
+                  <div className="text-white/60 text-sm">
+                    {alertTypeLabels[alert.type]} • Seuil: ${alert.threshold}
+                    {alert.description && <span> • {alert.description}</span>}
+                  </div>
                 </div>
-                <div>
-                  <label className="text-white/60 text-sm">Seuil ($)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={alertForm.threshold}
-                    onChange={(e) => setAlertForm({ ...alertForm, threshold: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-white/60 text-sm">Nom de l'alerte</label>
-                  <input
-                    type="text"
-                    value={alertForm.name}
-                    onChange={(e) => setAlertForm({ ...alertForm, name: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-white/60 text-sm">Description</label>
-                  <input
-                    type="text"
-                    value={alertForm.description}
-                    onChange={(e) => setAlertForm({ ...alertForm, description: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white text-sm"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={alertForm.enabled}
-                  onChange={(e) => setAlertForm({ ...alertForm, enabled: e.target.checked })}
-                  className="w-4 h-4"
-                />
-                <label className="text-white/60 text-sm">Activée</label>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded text-sm transition"
-                >
-                  {editingAlert ? 'Mettre à jour' : 'Ajouter'}
-                </button>
-                {editingAlert && (
+                <div className="flex items-center gap-2">
+                  <span className={`px-2 py-1 text-xs rounded ${alert.enabled ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
+                    {alert.enabled ? 'Activée' : 'Désactivée'}
+                  </span>
                   <button
-                    type="button"
-                    onClick={() => {
-                      setEditingAlert(null);
-                      setAlertForm({
-                        type: 'user_daily',
-                        threshold: '',
-                        enabled: true,
-                        name: '',
-                        description: '',
-                      });
-                    }}
-                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded text-sm transition"
+                    onClick={() => handleEditAlert(alert)}
+                    className="px-2 py-1 text-xs bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 rounded"
                   >
-                    Annuler
+                    Éditer
                   </button>
-                )}
-              </div>
-            </form>
-
-            {/* Alert List */}
-            <div ref={alertsScrollRef} className="space-y-2 max-h-64 overflow-y-auto [overscroll-behavior:contain]">
-              {alerts.map((alert) => (
-                <div key={alert.id} className="flex items-center justify-between p-3 bg-white/5 rounded">
-                  <div className="flex-1">
-                    <div className="text-white font-medium">{alert.name}</div>
-                    <div className="text-white/60 text-sm">
-                      {alertTypeLabels[alert.type]} • Seuil: ${alert.threshold}
-                      {alert.description && <span> • {alert.description}</span>}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 text-xs rounded ${alert.enabled ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
-                      {alert.enabled ? 'Activée' : 'Désactivée'}
-                    </span>
-                    <button
-                      onClick={() => handleEditAlert(alert)}
-                      className="px-2 py-1 text-xs bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 rounded"
-                    >
-                      Éditer
-                    </button>
-                    <button
-                      onClick={() => handleDeleteAlert(alert.id)}
-                      className="px-2 py-1 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded"
-                    >
-                      Supprimer
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => handleDeleteAlert(alert.id)}
+                    className="px-2 py-1 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded"
+                  >
+                    Supprimer
+                  </button>
                 </div>
-              ))}
+              </div>
+            ))}
+          {alerts.filter(alert => {
+            if (alertsFilter === 'active') return alert.enabled;
+            if (alertsFilter === 'inactive') return !alert.enabled;
+            return true;
+          }).length === 0 && (
+            <div className="text-center text-white/40 py-4">
+              Aucune alerte {alertsFilter === 'active' ? 'active' : alertsFilter === 'inactive' ? 'inactive' : ''}
+            </div>
+          )}
+        </div>
+
+        {/* Alert Configuration Info - Collapsible */}
+        {showAlertForm && (
+          <div className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
+            <h4 className="text-white font-semibold mb-2">📖 Guide d'utilisation des alertes</h4>
+            <div className="text-white/70 text-sm space-y-2">
+              <p>• <strong>Utilisateur - Journalier</strong> : Alerte si un utilisateur dépasse le seuil par jour</p>
+              <p>• <strong>Utilisateur - Mensuel</strong> : Alerte si un utilisateur dépasse le seuil par mois (hybride Stripe/calendrier)</p>
+              <p>• <strong>Global - Journalier</strong> : Alerte si le total global dépasse le seuil par jour</p>
+              <p>• <strong>Global - Mensuel</strong> : Alerte si le total global dépasse le seuil par mois</p>
+              <p>• <strong>Feature - Journalier</strong> : Alerte si une feature dépasse le seuil par jour</p>
+              <p className="mt-3 text-emerald-400">💡 Cliquez sur "Éditer" pour modifier une alerte existante</p>
             </div>
           </div>
         )}
@@ -1111,6 +1120,15 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad }) {
       {/* Toast and Confirm Dialog */}
       <Toast toast={toast} onClose={() => setToast(null)} />
       <ConfirmDialog dialog={confirmDialog} onClose={() => setConfirmDialog(null)} />
+
+      {/* Edit Alert Modal */}
+      <EditAlertModal
+        open={showEditModal}
+        onClose={handleCloseEditModal}
+        alert={selectedAlertForEdit}
+        onSave={handleSaveAlertFromModal}
+        alertTypeLabels={alertTypeLabels}
+      />
     </div>
   );
 }
