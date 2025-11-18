@@ -555,3 +555,4 @@ Pour toute question sur :
 
 **📝 Note** : Ce fichier est un **quick reference**. Pour toute information détaillée, consulter la **[documentation complète dans docs/](./docs/README.md)**.
 - Ne pas lire le fichier .env, chercher un fichier env.txt à la place (copie accéssible) ou demander à l'utilisateur de copier coller le contenu du .env sinon.
+- A chaque demande de commit, de PR, de merge etc... ne pas lancer les stop hooks
