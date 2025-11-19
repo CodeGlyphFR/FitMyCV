@@ -266,6 +266,7 @@ export default function CVImprovementPanel({ cvFile }) {
     <>
       {/* Bouton d'ouverture en petite bulle circulaire */}
       <button
+        data-onboarding="optimize"
         onClick={() => setIsOpen(true)}
         disabled={shouldDisableButton}
         className={`

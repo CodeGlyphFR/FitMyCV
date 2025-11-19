@@ -3,6 +3,7 @@ import { CREATE_TEMPLATE_OPTION } from "../utils/constants";
 import { getAnalysisOption } from "../utils/cvUtils";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { parseApiError } from "@/lib/utils/errorHandler";
+import { TASK_TYPES } from "@/lib/backgroundTasks/taskTypes";
 
 /**
  * Hook pour gérer le modal de génération de CV
@@ -135,6 +136,16 @@ export function useGeneratorModal({
     setOpenGenerator(true);
   }, [currentItem, generatorSourceItems, lastSelectedMetaRef]);
 
+  // Écouter l'événement d'onboarding pour ouvrir le modal automatiquement (étape 2)
+  React.useEffect(() => {
+    const handleOnboardingOpen = () => {
+      openGeneratorModal();
+    };
+
+    window.addEventListener('onboarding:open-generator', handleOnboardingOpen);
+    return () => window.removeEventListener('onboarding:open-generator', handleOnboardingOpen);
+  }, [openGeneratorModal]);
+
   function resetGeneratorState() {
     setLinkInputs([""]);
     setFileSelection([]);
@@ -208,13 +219,13 @@ export function useGeneratorModal({
     let endpoint, taskType, taskLabel, notificationMessage;
 
     if (isTemplateCreation) {
-      taskType = 'create-template-cv';
+      taskType = TASK_TYPES.TEMPLATE_CREATION;
       taskLabel = t("cvGenerator.templateCreationLabel");
       notificationMessage = t("cvGenerator.notifications.templateScheduled");
       endpoint = "/api/background-tasks/create-template-cv";
     } else {
       const baseCvName = generatorBaseItem?.displayTitle || generatorBaseItem?.title || generatorBaseFile;
-      taskType = 'generate-cv';
+      taskType = TASK_TYPES.GENERATION;
       taskLabel = `Adaptation du CV '${baseCvName}'`;
       notificationMessage = t("cvGenerator.notifications.scheduled", { baseCvName });
       endpoint = "/api/background-tasks/generate-cv";
@@ -280,6 +291,9 @@ export function useGeneratorModal({
         },
         shouldUpdateCvList: true,
       });
+
+      // NOTE : L'événement task:added est émis automatiquement par le wrapper
+      // setTasks dans BackgroundTasksProvider.jsx (détection de nouvelles tâches)
 
       addNotification({
         type: "info",

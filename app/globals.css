@@ -69,11 +69,11 @@ select {
 }
 
 /* iOS touch optimizations */
-button,
-a,
-[role="button"],
-[onclick],
-.clickable {
+button:not(.swiper-button-prev):not(.swiper-button-next):not(.swiper-pagination-bullet),
+a:not(.swiper-button-prev):not(.swiper-button-next):not(.swiper-pagination-bullet),
+[role="button"]:not(.swiper-button-prev):not(.swiper-button-next):not(.swiper-pagination-bullet),
+[onclick]:not(.swiper-button-prev):not(.swiper-button-next):not(.swiper-pagination-bullet),
+.clickable:not(.swiper-button-prev):not(.swiper-button-next):not(.swiper-pagination-bullet) {
   /* Remove 300ms delay on mobile */
   touch-action: manipulation;
   /* Remove iOS tap highlight */
@@ -344,4 +344,35 @@ select:-moz-autofill:focus {
     backdrop-filter: blur(4px) !important;
     -webkit-backdrop-filter: blur(4px) !important;
   }
+}
+
+/* Custom scrollbar styling for glassmorphism design */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(16, 185, 129, 0.5) rgba(255, 255, 255, 0.1);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.5);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.7);
+}
+
+/* Prevent horizontal scroll/drag while allowing vertical scroll */
+.touch-pan-y {
+  touch-action: pan-y !important;
 }

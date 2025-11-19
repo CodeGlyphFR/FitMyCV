@@ -287,7 +287,7 @@ export default function TaskQueueModal({ open, onClose }) {
                 </button>
               )}
             </div>
-            <div className="space-y-2 max-h-96 overflow-y-auto">
+            <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
               {sortedTasks.map(task => (
                 <TaskItem key={task.id} task={task} onCancel={cancelTask} onTaskClick={handleTaskClick} />
               ))}

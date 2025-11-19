@@ -1,0 +1,606 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useOnboarding } from '@/hooks/useOnboarding';
+import { useAdmin } from '@/components/admin/AdminProvider';
+import { getStepById } from '@/lib/onboarding/onboardingSteps';
+import { isAiGenerationTask } from '@/lib/backgroundTasks/taskTypes';
+import OnboardingModal from './OnboardingModal';
+import OnboardingHighlight from './OnboardingHighlight';
+import PulsingDot from './PulsingDot';
+import OnboardingTooltip from './OnboardingTooltip';
+import confetti from 'canvas-confetti';
+
+/**
+ * Orchestrateur des 7 étapes d'onboarding (optimisé v2)
+ *
+ * Changements :
+ * - Étape 1 : Interception clic bouton mode édition (modal AVANT activation)
+ * - Étape 2 : Fusion Génération IA (invitation + modal)
+ * - Étape 6 : Fusion Optimisation (invitation + modal)
+ * - Total 7 étapes au lieu de 9
+ */
+
+// Constantes
+const MODAL_CLOSE_ANIMATION_DURATION = 300; // ms - durée de l'animation CSS du modal
+const BUTTON_POLLING_INTERVAL = 200; // ms - intervalle de polling pour trouver les boutons
+const BUTTON_POLLING_TIMEOUT = 10000; // ms - timeout max pour trouver un bouton (10s)
+
+export default function OnboardingOrchestrator() {
+  const {
+    currentStep,
+    isActive,
+    markStepComplete,
+    goToNextStep,
+    completeOnboarding,
+  } = useOnboarding();
+
+  const { setEditing } = useAdmin();
+
+  // État local pour les modals
+  const [modalOpen, setModalOpen] = useState(false);
+  const [currentScreen, setCurrentScreen] = useState(0);
+
+  // État pour gérer les 2 phases du step 7 (ancien 9)
+  const [step7Phase, setStep7Phase] = useState(1);
+
+  // État pour gérer la fermeture individuelle des tooltips
+  const [tooltipClosed, setTooltipClosed] = useState(false);
+
+  // Réinitialiser step7Phase quand on entre dans le step 7
+  useEffect(() => {
+    if (currentStep === 7) {
+      setStep7Phase(1);
+    }
+  }, [currentStep]);
+
+  // Réinitialiser tooltipClosed à chaque changement d'étape
+  useEffect(() => {
+    setTooltipClosed(false);
+  }, [currentStep]);
+
+  // ========== ÉTAPE 1 : INTERCEPTION CLIC BOUTON MODE ÉDITION ==========
+  useEffect(() => {
+    if (currentStep !== 1) return;
+
+    /**
+     * Intercepter le clic pour ouvrir le modal AVANT l'activation du mode édition
+     */
+    const handleEditModeButtonClick = (e) => {
+      e.preventDefault(); // Empêcher l'activation du mode édition
+      e.stopPropagation();
+
+      // Ouvrir le modal onboarding
+      setModalOpen(true);
+      setCurrentScreen(0);
+    };
+
+    // Retry mechanism : polling pour trouver le bouton
+    let attempts = 0;
+    const maxAttempts = Math.ceil(BUTTON_POLLING_TIMEOUT / BUTTON_POLLING_INTERVAL);
+    let editModeButton = null;
+
+    const attachListener = () => {
+      editModeButton = document.querySelector('[data-onboarding="edit-mode-button"]');
+
+      if (editModeButton) {
+        // Bouton trouvé → attacher le listener
+        editModeButton.addEventListener('click', handleEditModeButtonClick, { capture: true });
+        return true; // Stop polling
+      }
+
+      attempts++;
+      if (attempts >= maxAttempts) {
+        console.error(`[Onboarding] Étape 1 : Bouton mode édition non trouvé après ${BUTTON_POLLING_TIMEOUT}ms`);
+        return true; // Stop polling après timeout
+      }
+
+      return false; // Continue polling
+    };
+
+    // Polling
+    const interval = setInterval(() => {
+      const attached = attachListener();
+      if (attached) clearInterval(interval);
+    }, BUTTON_POLLING_INTERVAL);
+
+    return () => {
+      clearInterval(interval);
+      if (editModeButton) {
+        editModeButton.removeEventListener('click', handleEditModeButtonClick, { capture: true });
+      }
+    };
+  }, [currentStep]);
+
+  // ========== ÉTAPE 2 : INTERCEPTION CLIC BOUTON AI GENERATE + VALIDATION ==========
+  useEffect(() => {
+    if (currentStep !== 2) return;
+
+    let aiGenerateButton = null;
+    let buttonInterval = null;
+    let isCleanedUp = false; // Track cleanup state pour éviter les actions après unmount
+
+    /**
+     * Intercepter le clic sur le bouton AI Generate pour ouvrir le modal explicatif
+     * AVANT de permettre la génération
+     */
+    const handleAiGenerateButtonClick = (e) => {
+      if (isCleanedUp) return; // Prevent execution after cleanup
+
+      // Si le modal n'a pas encore été vu (modalOpen === false), on l'ouvre
+      if (!modalOpen) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Ouvrir le modal explicatif
+        setModalOpen(true);
+        setCurrentScreen(0);
+      }
+      // Sinon, laisser le clic normal se produire (génération IA)
+    };
+
+    // Retry mechanism : polling pour trouver le bouton
+    let attempts = 0;
+    const maxAttempts = Math.ceil(BUTTON_POLLING_TIMEOUT / BUTTON_POLLING_INTERVAL);
+
+    const attachListener = () => {
+      if (isCleanedUp) return true; // Stop if cleaned up
+
+      aiGenerateButton = document.querySelector('[data-onboarding="ai-generate"]');
+
+      if (aiGenerateButton) {
+        // Bouton trouvé → attacher le listener
+        aiGenerateButton.addEventListener('click', handleAiGenerateButtonClick, { capture: true });
+        return true; // Stop polling
+      }
+
+      attempts++;
+      if (attempts >= maxAttempts) {
+        console.error(`[Onboarding] Étape 2 : Bouton AI Generate non trouvé après ${BUTTON_POLLING_TIMEOUT}ms`);
+        return true; // Stop polling après timeout
+      }
+
+      return false; // Continue polling
+    };
+
+    // Polling
+    buttonInterval = setInterval(() => {
+      const attached = attachListener();
+      if (attached) clearInterval(buttonInterval);
+    }, BUTTON_POLLING_INTERVAL);
+
+    // Écouter l'événement task:added pour détecter la génération IA
+    const handleTaskAdded = (event) => {
+      if (isCleanedUp) return;
+
+      const task = event.detail?.task;
+
+      // Vérifier que c'est bien une tâche de génération IA
+      // Utilise les constantes centralisées pour éviter les erreurs de typage
+      if (isAiGenerationTask(task)) {
+        console.log('[Onboarding] Step 2 : Génération IA détectée, validation du step');
+        markStepComplete(2);
+      }
+    };
+
+    window.addEventListener('task:added', handleTaskAdded);
+
+    // Cleanup function
+    return () => {
+      isCleanedUp = true; // Mark as cleaned up
+
+      if (buttonInterval) clearInterval(buttonInterval);
+      if (aiGenerateButton) {
+        aiGenerateButton.removeEventListener('click', handleAiGenerateButtonClick, { capture: true });
+      }
+      window.removeEventListener('task:added', handleTaskAdded);
+    };
+  }, [currentStep, modalOpen, markStepComplete]);
+
+  // Ne rien afficher si pas actif
+  if (!isActive || currentStep === 0) return null;
+
+  // Récupérer config de l'étape actuelle
+  const step = getStepById(currentStep);
+  if (!step) return null;
+
+  /**
+   * Handlers modal
+   */
+  const handleOpenModal = () => {
+    if (step.modal) {
+      setModalOpen(true);
+      setCurrentScreen(0);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+  };
+
+  const handleModalNext = () => {
+    if (currentScreen < (step.modal?.screens?.length || 0) - 1) {
+      setCurrentScreen(prev => prev + 1);
+    }
+  };
+
+  const handleModalPrev = () => {
+    if (currentScreen > 0) {
+      setCurrentScreen(prev => prev - 1);
+    }
+  };
+
+  const handleModalJumpTo = (screenIndex) => {
+    // Validate bounds
+    if (typeof screenIndex !== 'number' || screenIndex < 0) {
+      console.warn('[Onboarding] Invalid screen index:', screenIndex);
+      return;
+    }
+
+    const maxScreen = (step.modal?.screens?.length || 0) - 1;
+    if (screenIndex > maxScreen) {
+      console.warn('[Onboarding] Screen index out of bounds:', screenIndex, 'max:', maxScreen);
+      return;
+    }
+
+    setCurrentScreen(screenIndex);
+  };
+
+  const handleModalComplete = () => {
+    setModalOpen(false);
+
+    // Étape 1 : Activer le mode édition après fermeture du modal
+    if (currentStep === 1) {
+      // Attendre que l'animation CSS du modal soit terminée
+      setTimeout(async () => {
+        try {
+          await setEditing(true);
+
+          // Validation : vérifier que le mode édition a bien été activé
+          const editingState = localStorage.getItem('admin:editing');
+          if (editingState !== '1') {
+            console.error('[Onboarding] Étape 1 : Mode édition non activé après complétion');
+            // Note : En production, afficher une notification à l'utilisateur
+          }
+        } catch (error) {
+          console.error('[Onboarding] Étape 1 : Erreur activation mode édition:', error);
+          // Note : En production, afficher une notification d'erreur à l'utilisateur
+        }
+      }, MODAL_CLOSE_ANIMATION_DURATION);
+    }
+
+    // Étape 2 : Ouvrir automatiquement le panel de génération IA
+    // Raison : Après avoir vu le modal éducatif, on ouvre directement le panel
+    // Validation se fait via MutationObserver (lignes 169-204) quand tâche créée
+    if (currentStep === 2) {
+      // Ouvrir le panel après fermeture du modal explicatif
+      // IMPORTANT : On utilise un custom event au lieu d'un clic simulé pour éviter
+      // que le listener d'onboarding (lignes 128-141) n'intercepte le clic et ré-ouvre le modal
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('onboarding:open-generator'));
+        console.log('[Onboarding] Step 2 : Event émis pour ouverture automatique du panel');
+      }, MODAL_CLOSE_ANIMATION_DURATION); // 300ms - attendre fin animation modal
+
+      return; // Ne pas valider l'étape (validation lors de la génération réelle)
+    }
+
+    // Autres étapes (1, 6) : Marquer comme complétée après modal
+    markStepComplete(currentStep);
+  };
+
+  const handleModalSkip = () => {
+    setModalOpen(false);
+    markStepComplete(currentStep);
+  };
+
+  /**
+   * Déclenche l'animation de confetti pour célébrer la complétion
+   * Utilisé uniquement pour l'étape 7 Phase 2 (fin de l'onboarding)
+   */
+  const triggerCompletionConfetti = () => {
+    try {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#10B981', '#34D399', '#6EE7B7'],
+      });
+
+      setTimeout(() => {
+        confetti({
+          particleCount: 50,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#10B981', '#34D399', '#6EE7B7'],
+        });
+      }, 250);
+
+      setTimeout(() => {
+        confetti({
+          particleCount: 50,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#10B981', '#34D399', '#6EE7B7'],
+        });
+      }, 400);
+    } catch (error) {
+      console.error('[Onboarding] Erreur confetti:', error);
+    }
+  };
+
+  /**
+   * Handler tooltip close
+   * Gère la fermeture individuelle des tooltips avec validation conditionnelle
+   */
+  const handleTooltipClose = async () => {
+    try {
+      // Étape 3 : Fermer tooltip = valider l'étape
+      if (currentStep === 3) {
+        await markStepComplete(currentStep);
+        return;
+      }
+
+      // Étape 7 Phase 1 : Fermer tooltip historique = passer à Phase 2
+      if (currentStep === 7 && step7Phase === 1) {
+        setStep7Phase(2);
+        setTooltipClosed(false); // Réinitialiser pour afficher tooltip Phase 2
+        return;
+      }
+
+      // Étape 7 Phase 2 : Fermer tooltip export = valider PUIS confetti
+      if (currentStep === 7 && step7Phase === 2) {
+        await markStepComplete(currentStep);
+        // Confetti seulement si validation réussie
+        triggerCompletionConfetti();
+        return;
+      }
+
+      // Autres étapes (2, 4, 5, 6) : simplement masquer le tooltip
+      setTooltipClosed(true);
+    } catch (error) {
+      console.error('[Onboarding] Erreur fermeture tooltip:', error);
+      // En cas d'erreur de validation, on cache quand même le tooltip
+      setTooltipClosed(true);
+    }
+  };
+
+  /**
+   * Render des composants selon l'étape
+   */
+  const renderStep = () => {
+    // ========== ÉTAPE 1 : MODE ÉDITION ==========
+    if (currentStep === 1) {
+      return (
+        <>
+          {/* Pulsing dot : disparaît quand modal ouvert */}
+          <PulsingDot
+            show={!modalOpen}
+            targetSelector={step.targetSelector}
+          />
+
+          {/* Tooltip : disparaît quand modal ouvert */}
+          <OnboardingTooltip
+            show={!modalOpen}
+            targetSelector={step.targetSelector}
+            content={step.tooltip.content}
+            position={step.tooltip.position}
+          />
+
+          {/* Modal carousel (5 écrans) - s'ouvre via event listener clic bouton */}
+          <OnboardingModal
+            open={modalOpen}
+            screens={step.modal.screens}
+            currentScreen={currentScreen}
+            onNext={handleModalNext}
+            onPrev={handleModalPrev}
+            onJumpTo={handleModalJumpTo}
+            onComplete={handleModalComplete}
+            onSkip={handleModalSkip}
+            onClose={handleCloseModal}
+            showSkipButton={true}
+            size="large"
+          />
+        </>
+      );
+    }
+
+    // ========== ÉTAPE 2 : GÉNÉRATION IA (FUSION 2+3) ==========
+    if (currentStep === 2) {
+      return (
+        <>
+          {/* Pulsing dot */}
+          <PulsingDot
+            show={true}
+            targetSelector={step.targetSelector}
+          />
+
+          {/* Tooltip invitation - closable pour permettre de fermer */}
+          <OnboardingTooltip
+            show={!modalOpen && !tooltipClosed}
+            targetSelector={step.targetSelector}
+            content={step.tooltip.content}
+            position={step.tooltip.position}
+            closable={true}
+            onClose={handleTooltipClose}
+          />
+
+          {/* Modal explicatif (3 écrans IA) */}
+          <OnboardingModal
+            open={modalOpen}
+            screens={step.modal.screens}
+            currentScreen={currentScreen}
+            onNext={handleModalNext}
+            onPrev={handleModalPrev}
+            onJumpTo={handleModalJumpTo}
+            onComplete={handleModalComplete}
+            onClose={handleCloseModal}
+            showSkipButton={false}
+            size="large"
+          />
+        </>
+      );
+    }
+
+    // ========== ÉTAPE 3 : TASK MANAGER (ANCIEN 4) ==========
+    if (currentStep === 3) {
+      return (
+        <>
+          <PulsingDot
+            show={true}
+            targetSelector={step.targetSelector}
+          />
+
+          <OnboardingTooltip
+            show={!tooltipClosed}
+            targetSelector={step.targetSelector}
+            content={step.tooltip.content}
+            position={step.tooltip.position}
+            closable={true}
+            persistent={true}
+            onClose={handleTooltipClose}
+          />
+        </>
+      );
+    }
+
+    // ========== ÉTAPE 4 : OUVERTURE DU CV GÉNÉRÉ (ANCIEN 5, RENOMMÉ) ==========
+    if (currentStep === 4) {
+      return (
+        <>
+          {/* Highlight glow sur sélecteur CV */}
+          <OnboardingHighlight
+            show={true}
+            targetSelector={step.targetSelector}
+          />
+
+          <PulsingDot
+            show={true}
+            targetSelector={step.targetSelector}
+          />
+
+          <OnboardingTooltip
+            show={!tooltipClosed}
+            targetSelector={step.targetSelector}
+            content={step.tooltip.content}
+            position={step.tooltip.position}
+            closable={true}
+            onClose={handleTooltipClose}
+          />
+        </>
+      );
+    }
+
+    // ========== ÉTAPE 5 : SCORE DE MATCH (ANCIEN 6) ==========
+    if (currentStep === 5) {
+      return (
+        <>
+          <PulsingDot
+            show={true}
+            targetSelector={step.targetSelector}
+          />
+
+          <OnboardingTooltip
+            show={!tooltipClosed}
+            targetSelector={step.targetSelector}
+            content={step.tooltip.content}
+            position={step.tooltip.position}
+            closable={true}
+            onClose={handleTooltipClose}
+          />
+        </>
+      );
+    }
+
+    // ========== ÉTAPE 6 : OPTIMISATION (FUSION 7+8) ==========
+    if (currentStep === 6) {
+      return (
+        <>
+          {/* Pulsing dot */}
+          <PulsingDot
+            show={true}
+            targetSelector={step.targetSelector}
+          />
+
+          {/* Tooltip invitation - closable pour permettre de fermer */}
+          <OnboardingTooltip
+            show={!modalOpen && !tooltipClosed}
+            targetSelector={step.targetSelector}
+            content={step.tooltip.content}
+            position={step.tooltip.position}
+            closable={true}
+            onClose={handleTooltipClose}
+          />
+
+          {/* Modal explicatif (3 écrans Optimisation) */}
+          <OnboardingModal
+            open={modalOpen}
+            screens={step.modal.screens}
+            currentScreen={currentScreen}
+            onNext={handleModalNext}
+            onPrev={handleModalPrev}
+            onJumpTo={handleModalJumpTo}
+            onComplete={handleModalComplete}
+            onClose={handleCloseModal}
+            showSkipButton={false}
+            size="large"
+          />
+        </>
+      );
+    }
+
+    // ========== ÉTAPE 7 : HISTORIQUE + EXPORT (ANCIEN 9, 2 PHASES) ==========
+    if (currentStep === 7) {
+      return (
+        <>
+          {/* Phase 1 : Historique */}
+          {step7Phase === 1 && (
+            <>
+              <PulsingDot
+                show={true}
+                targetSelector='[data-onboarding="history"]'
+              />
+
+              <OnboardingTooltip
+                show={!tooltipClosed}
+                targetSelector='[data-onboarding="history"]'
+                content="📝 Découvrez toutes les modifications apportées par l'IA"
+                position="left"
+                closable={true}
+                onClose={handleTooltipClose}
+              />
+            </>
+          )}
+
+          {/* Phase 2 : Export */}
+          {step7Phase === 2 && (
+            <>
+              <PulsingDot
+                show={true}
+                targetSelector='[data-onboarding="export"]'
+              />
+
+              <OnboardingTooltip
+                show={!tooltipClosed}
+                targetSelector='[data-onboarding="export"]'
+                content="📄 Téléchargez votre CV optimisé au format PDF !"
+                position="left"
+                closable={true}
+                onClose={handleTooltipClose}
+              />
+            </>
+          )}
+        </>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <>
+      {renderStep()}
+    </>
+  );
+}

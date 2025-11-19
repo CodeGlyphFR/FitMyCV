@@ -451,6 +451,7 @@ export default function TopBar() {
           {/* CV Selector */}
           <div className="flex-1 min-w-[120px] md:min-w-[200px] md:max-w-none order-3 md:order-3">
             <button
+              data-onboarding="cv-selector"
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
@@ -509,7 +510,7 @@ export default function TopBar() {
                     className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-md shadow-2xl cv-dropdown-no-animation"
                   >
                     <ul
-                      className="max-h-[240px] overflow-y-auto py-1"
+                      className="max-h-[240px] overflow-y-auto custom-scrollbar py-1"
                       onScroll={() => {
                         state.setIsScrollingInDropdown(true);
                       }}
@@ -675,6 +676,7 @@ export default function TopBar() {
           {/* Task Manager */}
           <div className="relative order-2 md:order-2">
             <button
+              data-onboarding="task-manager"
               ref={taskQueueButtonRef}
               onClick={() => {
                 if (window.innerWidth <= 990) {
@@ -733,6 +735,7 @@ export default function TopBar() {
           {/* Action Buttons */}
           {settings.feature_ai_generation && (
             <button
+              data-onboarding="ai-generate"
               onClick={generator.openGeneratorModal}
               className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-4 transition-all duration-200"
               type="button"
@@ -761,6 +764,7 @@ export default function TopBar() {
           )}
           {settings.feature_export && (
             <button
+              data-onboarding="export"
               onClick={exportModal.openModal}
               className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7 transition-all duration-200"
               type="button"
