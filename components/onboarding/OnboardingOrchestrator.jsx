@@ -37,7 +37,7 @@ export default function OnboardingOrchestrator() {
     completeOnboarding,
   } = useOnboarding();
 
-  const { setEditing } = useAdmin();
+  const { editing, setEditing } = useAdmin();
 
   // État local pour les modals
   const [modalOpen, setModalOpen] = useState(false);
@@ -60,6 +60,15 @@ export default function OnboardingOrchestrator() {
   const [cvGenerated, setCvGenerated] = useState(false);
   const [generatedCvFilename, setGeneratedCvFilename] = useState(null);
 
+  // Ref pour tracker l'état précédent du mode édition (étape 1)
+  const prevEditingRef = useRef(editing);
+
+  // Ref pour tracker si le modal step 1 a été complété (empêche tooltip de réapparaître)
+  const step1ModalCompletedRef = useRef(false);
+
+  // Ref pour tracker si le modal step 1 a été montré (permet toggle normal du bouton après)
+  const step1ModalShownRef = useRef(false);
+
   // Réinitialiser step7Phase quand on entre dans le step 7
   useEffect(() => {
     if (currentStep === 7) {
@@ -67,9 +76,28 @@ export default function OnboardingOrchestrator() {
     }
   }, [currentStep]);
 
-  // Réinitialiser tooltipClosed à chaque changement d'étape
+  // Réinitialiser tooltipClosed et prevEditingRef à chaque changement d'étape
   useEffect(() => {
-    setTooltipClosed(false);
+    // Only reset tooltipClosed if modal wasn't completed for step 1
+    if (currentStep === 1 && step1ModalCompletedRef.current) {
+      // Keep tooltipClosed = true to prevent reappearing after modal completion
+      console.log('[Onboarding] Step 1: Modal completed, keeping tooltip closed');
+    } else {
+      setTooltipClosed(false);
+    }
+
+    // Réinitialiser prevEditingRef pour éviter des validations incorrectes si on revient à step 1
+    if (currentStep === 1) {
+      prevEditingRef.current = editing;
+    }
+  }, [currentStep]); // REMOVED 'editing' from deps to prevent re-triggering on edit mode change
+
+  // Cleanup : Reset step 1 refs when leaving the step
+  useEffect(() => {
+    if (currentStep !== 1) {
+      step1ModalShownRef.current = false;
+      step1ModalCompletedRef.current = false;
+    }
   }, [currentStep]);
 
   // ========== ÉTAPE 1 : INTERCEPTION CLIC BOUTON MODE ÉDITION ==========
@@ -78,10 +106,24 @@ export default function OnboardingOrchestrator() {
 
     /**
      * Intercepter le clic pour ouvrir le modal AVANT l'activation du mode édition
+     * ONLY on the first click (before modal is shown)
      */
     const handleEditModeButtonClick = (e) => {
+      // If modal was already shown, let the normal click behavior proceed
+      if (step1ModalShownRef.current) {
+        console.log('[Onboarding] Step 1: Modal already shown, allowing normal button behavior');
+        return; // Don't prevent default, let the button toggle edit mode normally
+      }
+
+      // First click: prevent default and open modal
       e.preventDefault(); // Empêcher l'activation du mode édition
       e.stopPropagation();
+
+      // Mark modal as shown
+      step1ModalShownRef.current = true;
+
+      // Fermer le tooltip immédiatement
+      setTooltipClosed(true);
 
       // Ouvrir le modal onboarding
       setModalOpen(true);
@@ -124,6 +166,22 @@ export default function OnboardingOrchestrator() {
       }
     };
   }, [currentStep]);
+
+  // ========== ÉTAPE 1 : VALIDATION QUAND L'UTILISATEUR QUITTE LE MODE ÉDITION ==========
+  useEffect(() => {
+    if (currentStep !== 1 || modalOpen) return;
+
+    // Détecter la transition editing: true → false (utilisateur quitte le mode édition)
+    // La validation se déclenche uniquement sur true → false, donc pas de faux positifs
+    // lors de l'activation du mode édition (false → true)
+    if (prevEditingRef.current === true && editing === false) {
+      console.log('[Onboarding] Step 1 : Utilisateur a quitté le mode édition, validation du step');
+      markStepComplete(1);
+    }
+
+    // Mettre à jour la ref pour la prochaine vérification
+    prevEditingRef.current = editing;
+  }, [currentStep, editing, modalOpen, markStepComplete]);
 
   // ========== ÉTAPE 2 : INTERCEPTION CLIC BOUTON AI GENERATE + VALIDATION ==========
   useEffect(() => {
@@ -403,7 +461,11 @@ export default function OnboardingOrchestrator() {
     setModalOpen(false);
 
     // Étape 1 : Activer le mode édition après fermeture du modal
+    // NOTE: Step 1 validation happens when user EXITS edit mode (see validation useEffect lines 170-183)
     if (currentStep === 1) {
+      // Marquer le modal comme complété (empêche tooltip de réapparaître)
+      step1ModalCompletedRef.current = true;
+
       // Attendre que l'animation CSS du modal soit terminée
       setTimeout(async () => {
         try {
@@ -437,8 +499,10 @@ export default function OnboardingOrchestrator() {
       return; // Ne pas valider l'étape (validation lors de la génération réelle)
     }
 
-    // Autres étapes (1, 6) : Marquer comme complétée après modal
-    markStepComplete(currentStep);
+    // Étape 6 : Marquer comme complétée après modal
+    if (currentStep === 6) {
+      markStepComplete(currentStep);
+    }
   };
 
   const handleModalSkip = () => {
@@ -489,6 +553,13 @@ export default function OnboardingOrchestrator() {
    */
   const handleTooltipClose = async () => {
     try {
+      // Étape 1 : Fermer tooltip = masquer simplement le tooltip
+      // La validation se fera quand l'utilisateur quittera le mode édition
+      if (currentStep === 1) {
+        setTooltipClosed(true);
+        return;
+      }
+
       // Étape 3 : Fermer tooltip = marquer la condition tooltip_closed
       // La validation se fera automatiquement quand les 3 conditions seront remplies
       if (currentStep === 3) {
@@ -509,10 +580,17 @@ export default function OnboardingOrchestrator() {
 
       // Étape 7 Phase 2 : Fermer tooltip export = valider PUIS confetti
       if (currentStep === 7 && step7Phase === 2) {
-        await markStepComplete(currentStep);
-        // Confetti seulement si validation réussie
-        triggerCompletionConfetti();
-        return;
+        try {
+          await markStepComplete(currentStep);
+          // Confetti seulement si validation réussie
+          triggerCompletionConfetti();
+          return;
+        } catch (error) {
+          console.error('[Onboarding] Step 7 validation failed:', error);
+          setTooltipClosed(true); // Fermer le tooltip même en cas d'erreur
+          // TODO: Afficher une notification d'erreur à l'utilisateur en production
+          return;
+        }
       }
 
       // Autres étapes (2, 4, 5, 6) : simplement masquer le tooltip
@@ -538,12 +616,14 @@ export default function OnboardingOrchestrator() {
             targetSelector={step.targetSelector}
           />
 
-          {/* Tooltip : disparaît quand modal ouvert */}
+          {/* Tooltip : disparaît quand modal ouvert ou fermé manuellement */}
           <OnboardingTooltip
-            show={!modalOpen}
+            show={!modalOpen && !tooltipClosed}
             targetSelector={step.targetSelector}
             content={step.tooltip.content}
             position={step.tooltip.position}
+            closable={true}
+            onClose={handleTooltipClose}
           />
 
           {/* Modal carousel (5 écrans) - s'ouvre via event listener clic bouton */}
