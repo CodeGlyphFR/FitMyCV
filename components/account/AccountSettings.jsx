@@ -2,12 +2,13 @@
 
 import React from "react";
 import { signOut } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import PasswordStrengthIndicator from "@/components/auth/PasswordStrengthIndicator";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { useOnboarding } from "@/hooks/useOnboarding";
 
 export default function AccountSettings({ user, isOAuthUser = false, oauthProviders = [] }){
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { resetOnboarding } = useOnboarding();
 
@@ -171,9 +172,9 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       // Show success message briefly
       setOnboardingMessage("Le tutoriel a été réinitialisé. Redirection...");
 
-      // Auto-reload after 1.5 seconds
+      // Redirect to CVs page where onboarding will auto-restart (currentStep === 0)
       setTimeout(() => {
-        window.location.reload();
+        router.push('/');
       }, 1500);
     } catch (error) {
       console.error('[AccountSettings] Reset onboarding error:', error);
