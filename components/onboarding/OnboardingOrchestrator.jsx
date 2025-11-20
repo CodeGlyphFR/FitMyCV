@@ -27,6 +27,7 @@ import confetti from 'canvas-confetti';
 const MODAL_CLOSE_ANIMATION_DURATION = 300; // ms - durée de l'animation CSS du modal
 const BUTTON_POLLING_INTERVAL = 200; // ms - intervalle de polling pour trouver les boutons
 const BUTTON_POLLING_TIMEOUT = 10000; // ms - timeout max pour trouver un bouton (10s)
+const STEP_VALIDATION_DELAY = 500; // ms - délai pour permettre aux animations et requêtes async de se terminer avant validation
 
 export default function OnboardingOrchestrator() {
   const {
@@ -69,6 +70,18 @@ export default function OnboardingOrchestrator() {
   // Ref pour tracker si le modal step 1 a été montré (permet toggle normal du bouton après)
   const step1ModalShownRef = useRef(false);
 
+  // Ref pour tracker si le modal step 2 a été complété (empêche tooltip de réapparaître)
+  const step2ModalCompletedRef = useRef(false);
+
+  // Ref pour tracker si le modal step 2 a été montré (permet ouverture normale du generator après)
+  const step2ModalShownRef = useRef(false);
+
+  // Ref pour tracker si le modal step 6 a été complété (empêche tooltip de réapparaître)
+  const step6ModalCompletedRef = useRef(false);
+
+  // Ref pour tracker si le modal step 6 a été montré
+  const step6ModalShownRef = useRef(false);
+
   // Réinitialiser step7Phase quand on entre dans le step 7
   useEffect(() => {
     if (currentStep === 7) {
@@ -78,10 +91,16 @@ export default function OnboardingOrchestrator() {
 
   // Réinitialiser tooltipClosed et prevEditingRef à chaque changement d'étape
   useEffect(() => {
-    // Only reset tooltipClosed if modal wasn't completed for step 1
+    // Only reset tooltipClosed if modal wasn't completed for step 1, 2, or 6
     if (currentStep === 1 && step1ModalCompletedRef.current) {
       // Keep tooltipClosed = true to prevent reappearing after modal completion
       console.log('[Onboarding] Step 1: Modal completed, keeping tooltip closed');
+    } else if (currentStep === 2 && step2ModalCompletedRef.current) {
+      // Keep tooltipClosed = true to prevent reappearing after modal completion
+      console.log('[Onboarding] Step 2: Modal completed, keeping tooltip closed');
+    } else if (currentStep === 6 && step6ModalCompletedRef.current) {
+      // Keep tooltipClosed = true to prevent reappearing after modal completion
+      console.log('[Onboarding] Step 6: Modal completed, keeping tooltip closed');
     } else {
       setTooltipClosed(false);
     }
@@ -97,6 +116,22 @@ export default function OnboardingOrchestrator() {
     if (currentStep !== 1) {
       step1ModalShownRef.current = false;
       step1ModalCompletedRef.current = false;
+    }
+  }, [currentStep]);
+
+  // Cleanup : Reset step 2 refs when leaving the step
+  useEffect(() => {
+    if (currentStep !== 2) {
+      step2ModalShownRef.current = false;
+      step2ModalCompletedRef.current = false;
+    }
+  }, [currentStep]);
+
+  // Cleanup : Reset step 6 refs when leaving the step
+  useEffect(() => {
+    if (currentStep !== 6) {
+      step6ModalShownRef.current = false;
+      step6ModalCompletedRef.current = false;
     }
   }, [currentStep]);
 
@@ -198,16 +233,25 @@ export default function OnboardingOrchestrator() {
     const handleAiGenerateButtonClick = (e) => {
       if (isCleanedUp) return; // Prevent execution after cleanup
 
-      // Si le modal n'a pas encore été vu (modalOpen === false), on l'ouvre
-      if (!modalOpen) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        // Ouvrir le modal explicatif
-        setModalOpen(true);
-        setCurrentScreen(0);
+      // If modal was already shown, let the normal click behavior proceed
+      if (step2ModalShownRef.current) {
+        console.log('[Onboarding] Step 2: Modal already shown, allowing normal button behavior');
+        return; // Don't prevent default, let the button open generator normally
       }
-      // Sinon, laisser le clic normal se produire (génération IA)
+
+      // First click: prevent default and open modal
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Mark modal as shown
+      step2ModalShownRef.current = true;
+
+      // Fermer le tooltip immédiatement
+      setTooltipClosed(true);
+
+      // Ouvrir le modal explicatif
+      setModalOpen(true);
+      setCurrentScreen(0);
     };
 
     // Retry mechanism : polling pour trouver le bouton
@@ -250,7 +294,14 @@ export default function OnboardingOrchestrator() {
       // Utilise les constantes centralisées pour éviter les erreurs de typage
       if (isAiGenerationTask(task)) {
         console.log('[Onboarding] Step 2 : Génération IA détectée, validation du step');
-        markStepComplete(2);
+
+        // Ajouter un délai pour permettre à toutes les opérations async de se terminer
+        // avant de valider le step et déclencher la transition
+        setTimeout(() => {
+          if (!isCleanedUp) {
+            markStepComplete(2);
+          }
+        }, STEP_VALIDATION_DELAY);
       }
     };
 
@@ -266,7 +317,7 @@ export default function OnboardingOrchestrator() {
       }
       window.removeEventListener('task:added', handleTaskAdded);
     };
-  }, [currentStep, modalOpen, markStepComplete]);
+  }, [currentStep, markStepComplete]);
 
   // ========== STEP 3 : ÉCOUTER task:completed POUR DÉTECTER FIN DE GÉNÉRATION ==========
   // IMPORTANT: Utilisation de useRef pour éviter la re-registration lors des changements de isActive
@@ -488,6 +539,9 @@ export default function OnboardingOrchestrator() {
     // Raison : Après avoir vu le modal éducatif, on ouvre directement le panel
     // Validation se fait via MutationObserver (lignes 169-204) quand tâche créée
     if (currentStep === 2) {
+      // Marquer le modal comme complété (empêche tooltip de réapparaître)
+      step2ModalCompletedRef.current = true;
+
       // Ouvrir le panel après fermeture du modal explicatif
       // IMPORTANT : On utilise un custom event au lieu d'un clic simulé pour éviter
       // que le listener d'onboarding (lignes 128-141) n'intercepte le clic et ré-ouvre le modal
@@ -501,12 +555,23 @@ export default function OnboardingOrchestrator() {
 
     // Étape 6 : Marquer comme complétée après modal
     if (currentStep === 6) {
+      step6ModalCompletedRef.current = true;
       markStepComplete(currentStep);
     }
   };
 
   const handleModalSkip = () => {
     setModalOpen(false);
+
+    // Mark modal as completed for steps with tracking refs
+    if (currentStep === 1) {
+      step1ModalCompletedRef.current = true;
+    } else if (currentStep === 2) {
+      step2ModalCompletedRef.current = true;
+    } else if (currentStep === 6) {
+      step6ModalCompletedRef.current = true;
+    }
+
     markStepComplete(currentStep);
   };
 
@@ -650,7 +715,7 @@ export default function OnboardingOrchestrator() {
         <>
           {/* Pulsing dot */}
           <PulsingDot
-            show={true}
+            show={!modalOpen}
             targetSelector={step.targetSelector}
           />
 
@@ -674,7 +739,7 @@ export default function OnboardingOrchestrator() {
             onJumpTo={handleModalJumpTo}
             onComplete={handleModalComplete}
             onClose={handleCloseModal}
-            showSkipButton={false}
+            showSkipButton={true}
             size="large"
           />
         </>
@@ -787,7 +852,7 @@ export default function OnboardingOrchestrator() {
             onJumpTo={handleModalJumpTo}
             onComplete={handleModalComplete}
             onClose={handleCloseModal}
-            showSkipButton={false}
+            showSkipButton={true}
             size="large"
           />
         </>
