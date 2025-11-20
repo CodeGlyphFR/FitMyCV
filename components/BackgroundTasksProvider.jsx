@@ -223,6 +223,13 @@ export default function BackgroundTasksProvider({ children }) {
       }
 
       if (task.status === 'completed') {
+        // Émettre l'événement task:completed pour l'onboarding
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('task:completed', {
+            detail: { task }
+          }));
+        }
+
         // Pour les tâches de création/import de CV, vérifier si c'est le premier CV
         // Si oui, ne pas notifier car l'utilisateur voit déjà la barre de progression
         const isImportOrCreateTask = task.type === 'import' || task.type === 'create-manual';

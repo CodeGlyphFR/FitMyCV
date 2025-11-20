@@ -4,6 +4,7 @@ import { getAnalysisOption } from "../utils/cvUtils";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { parseApiError } from "@/lib/utils/errorHandler";
 import { TASK_TYPES } from "@/lib/backgroundTasks/taskTypes";
+import { ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
 
 /**
  * Hook pour gérer le modal de génération de CV
@@ -34,6 +35,14 @@ export function useGeneratorModal({
   const [plans, setPlans] = React.useState([]); // Liste des plans pour calculer les badges
 
   const fileInputRef = React.useRef(null);
+  const isMountedRef = React.useRef(true);
+
+  // Cleanup on unmount pour prévenir les race conditions
+  React.useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const generatorSourceItems = React.useMemo(
     () => items.filter((it) => !it.isGenerated),
@@ -138,12 +147,23 @@ export function useGeneratorModal({
 
   // Écouter l'événement d'onboarding pour ouvrir le modal automatiquement (étape 2)
   React.useEffect(() => {
+    let isMounted = true;
+
     const handleOnboardingOpen = () => {
-      openGeneratorModal();
+      if (!isMounted) return;
+
+      try {
+        openGeneratorModal();
+      } catch (error) {
+        console.error('[useGeneratorModal] Error in handleOnboardingOpen:', error);
+      }
     };
 
-    window.addEventListener('onboarding:open-generator', handleOnboardingOpen);
-    return () => window.removeEventListener('onboarding:open-generator', handleOnboardingOpen);
+    window.addEventListener(ONBOARDING_EVENTS.OPEN_GENERATOR, handleOnboardingOpen);
+    return () => {
+      isMounted = false;
+      window.removeEventListener(ONBOARDING_EVENTS.OPEN_GENERATOR, handleOnboardingOpen);
+    };
   }, [openGeneratorModal]);
 
   function resetGeneratorState() {
@@ -234,6 +254,13 @@ export function useGeneratorModal({
     try {
       // Obtenir le token reCAPTCHA (vérification côté serveur uniquement)
       const recaptchaToken = await executeRecaptcha('generate_cv');
+
+      // Vérifier si le composant est toujours monté après l'opération async
+      if (!isMountedRef.current) {
+        console.log('[Generator] Component unmounted, aborting');
+        return;
+      }
+
       if (!recaptchaToken) {
         addNotification({
           type: "error",
@@ -268,6 +295,12 @@ export function useGeneratorModal({
         body: formData,
       });
 
+      // Vérifier si le composant est toujours monté après fetch
+      if (!isMountedRef.current) {
+        console.log('[Generator] Component unmounted after fetch, aborting');
+        return;
+      }
+
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data?.success) {
         const apiError = parseApiError(response, data);
@@ -278,6 +311,9 @@ export function useGeneratorModal({
         }
         throw errorObj;
       }
+
+      // Vérifier avant les state updates
+      if (!isMountedRef.current) return;
 
       // ✅ Succès confirmé par l'API -> créer la tâche optimiste et notifier
       const optimisticTaskId = addOptimisticTask({
@@ -303,8 +339,15 @@ export function useGeneratorModal({
       closeGenerator();
 
       await refreshTasks();
-      removeOptimisticTask(optimisticTaskId);
+
+      // Vérifier avant de supprimer la tâche optimiste
+      if (isMountedRef.current) {
+        removeOptimisticTask(optimisticTaskId);
+      }
     } catch (error) {
+      // Vérifier avant les state updates dans le error handler
+      if (!isMountedRef.current) return;
+
       // Fermer le modal avant d'afficher l'erreur
       closeGenerator();
 

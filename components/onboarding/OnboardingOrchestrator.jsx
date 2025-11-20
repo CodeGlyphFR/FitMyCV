@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useAdmin } from '@/components/admin/AdminProvider';
 import { getStepById } from '@/lib/onboarding/onboardingSteps';
 import { isAiGenerationTask } from '@/lib/backgroundTasks/taskTypes';
+import { extractCvFilename } from '@/lib/onboarding/cvFilenameUtils';
+import { ONBOARDING_EVENTS, emitOnboardingEvent } from '@/lib/onboarding/onboardingEvents';
 import OnboardingModal from './OnboardingModal';
 import OnboardingHighlight from './OnboardingHighlight';
 import PulsingDot from './PulsingDot';
@@ -46,6 +48,17 @@ export default function OnboardingOrchestrator() {
 
   // État pour gérer la fermeture individuelle des tooltips
   const [tooltipClosed, setTooltipClosed] = useState(false);
+
+  // États pour les validations du step 3 (multi-conditions)
+  const [step3Validations, setStep3Validations] = useState({
+    generationCompleted: false,
+    task_manager_opened: false,
+    tooltip_closed: false,
+  });
+
+  // État pour la précondition du step 4
+  const [cvGenerated, setCvGenerated] = useState(false);
+  const [generatedCvFilename, setGeneratedCvFilename] = useState(null);
 
   // Réinitialiser step7Phase quand on entre dans le step 7
   useEffect(() => {
@@ -197,6 +210,146 @@ export default function OnboardingOrchestrator() {
     };
   }, [currentStep, modalOpen, markStepComplete]);
 
+  // ========== STEP 3 : ÉCOUTER task:completed POUR DÉTECTER FIN DE GÉNÉRATION ==========
+  // IMPORTANT: Utilisation de useRef pour éviter la re-registration lors des changements de isActive
+  const handleTaskCompletedRef = useRef();
+
+  // Mettre à jour la ref quand les dépendances changent
+  useEffect(() => {
+    handleTaskCompletedRef.current = (event) => {
+      if (!isActive) return; // Filtrer par isActive
+
+      try {
+        const task = event.detail?.task;
+        if (!task) {
+          console.warn('[Onboarding] task:completed event missing task detail');
+          return;
+        }
+
+        // Vérifier si c'est une tâche de génération IA
+        if (isAiGenerationTask(task)) {
+          console.log('[Onboarding] Tâche de génération IA terminée, émission cvGenerated');
+
+          // Marquer la validation "generationCompleted" pour le step 3
+          setStep3Validations(prev => ({
+            ...prev,
+            generationCompleted: true,
+          }));
+
+          // Extraire le nom du fichier CV généré de manière cohérente
+          const cvFilename = extractCvFilename(task.result);
+          if (!cvFilename) {
+            console.warn('[Onboarding] Tâche IA terminée mais pas de fichier CV trouvé');
+            return;
+          }
+
+          // Émettre l'événement cvGenerated pour déclencher le step 4
+          setCvGenerated(true);
+          setGeneratedCvFilename(cvFilename);
+
+          // Émettre l'événement global pour les autres composants
+          emitOnboardingEvent(ONBOARDING_EVENTS.CV_GENERATED, { cvFilename });
+        }
+      } catch (error) {
+        console.error('[Onboarding] Error in handleTaskCompleted:', error);
+      }
+    };
+  }, [isActive]);
+
+  // Enregistrer le listener une seule fois avec un wrapper stable
+  useEffect(() => {
+    const stableHandler = (event) => handleTaskCompletedRef.current?.(event);
+
+    window.addEventListener('task:completed', stableHandler);
+    return () => {
+      window.removeEventListener('task:completed', stableHandler);
+    };
+  }, []); // Empty deps - register once
+
+  // ========== STEP 3 : ÉCOUTER task_manager_opened ==========
+  // Utilisation de useRef pour éviter la re-registration
+  const handleTaskManagerOpenedRef = useRef();
+
+  // Mettre à jour la ref quand currentStep change
+  useEffect(() => {
+    handleTaskManagerOpenedRef.current = () => {
+      if (currentStep !== 3) return; // Filtrer dans le handler
+
+      try {
+        console.log('[Onboarding] Step 3 : Task manager ouvert, marquage de la validation');
+        setStep3Validations(prev => ({
+          ...prev,
+          task_manager_opened: true,
+        }));
+      } catch (error) {
+        console.error('[Onboarding] Error in handleTaskManagerOpened:', error);
+      }
+    };
+  }, [currentStep]);
+
+  // Enregistrer le listener une seule fois
+  useEffect(() => {
+    const stableHandler = () => handleTaskManagerOpenedRef.current?.();
+
+    window.addEventListener(ONBOARDING_EVENTS.TASK_MANAGER_OPENED, stableHandler);
+    return () => {
+      window.removeEventListener(ONBOARDING_EVENTS.TASK_MANAGER_OPENED, stableHandler);
+    };
+  }, []); // Empty deps - register once
+
+  // ========== STEP 3 : VÉRIFIER SI TOUTES LES VALIDATIONS SONT REMPLIES ==========
+  useEffect(() => {
+    if (currentStep !== 3) return;
+
+    const { generationCompleted, task_manager_opened, tooltip_closed } = step3Validations;
+
+    // Si les 3 conditions sont remplies, valider le step
+    if (generationCompleted && task_manager_opened && tooltip_closed) {
+      console.log('[Onboarding] Step 3 : Toutes les validations remplies, validation du step');
+      markStepComplete(3);
+    }
+  }, [currentStep, step3Validations, markStepComplete]);
+
+  // ========== STEP 4 : NE DÉCLENCHER QUE SI cvGenerated EST TRUE ==========
+  useEffect(() => {
+    // Si on est sur le step 4 mais que cvGenerated n'est pas true,
+    // on ne doit PAS afficher le step 4 (précondition non remplie)
+    if (currentStep === 4 && !cvGenerated) {
+      console.log('[Onboarding] Step 4 : Précondition cvGenerated non remplie, step ignoré');
+    }
+  }, [currentStep, cvGenerated]);
+
+  // ========== STEP 4 : ÉCOUTER generatedCvOpened POUR VALIDER ==========
+  // Utilisation de useRef pour éviter la re-registration
+  const handleGeneratedCvOpenedRef = useRef();
+
+  // Mettre à jour la ref quand les dépendances changent
+  useEffect(() => {
+    handleGeneratedCvOpenedRef.current = (event) => {
+      if (currentStep !== 4) return; // Filtrer dans le handler
+
+      try {
+        const cvFilename = event.detail?.cvFilename;
+        console.log('[Onboarding] Step 4 : CV récemment généré sélectionné:', cvFilename);
+
+        // Valider le step 4
+        markStepComplete(4);
+      } catch (error) {
+        console.error('[Onboarding] Error in handleGeneratedCvOpened:', error);
+      }
+    };
+  }, [currentStep, markStepComplete]);
+
+  // Enregistrer le listener une seule fois
+  useEffect(() => {
+    const stableHandler = (event) => handleGeneratedCvOpenedRef.current?.(event);
+
+    window.addEventListener(ONBOARDING_EVENTS.GENERATED_CV_OPENED, stableHandler);
+    return () => {
+      window.removeEventListener(ONBOARDING_EVENTS.GENERATED_CV_OPENED, stableHandler);
+    };
+  }, []); // Empty deps - register once
+
   // Ne rien afficher si pas actif
   if (!isActive || currentStep === 0) return null;
 
@@ -277,7 +430,7 @@ export default function OnboardingOrchestrator() {
       // IMPORTANT : On utilise un custom event au lieu d'un clic simulé pour éviter
       // que le listener d'onboarding (lignes 128-141) n'intercepte le clic et ré-ouvre le modal
       setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('onboarding:open-generator'));
+        emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_GENERATOR);
         console.log('[Onboarding] Step 2 : Event émis pour ouverture automatique du panel');
       }, MODAL_CLOSE_ANIMATION_DURATION); // 300ms - attendre fin animation modal
 
@@ -336,9 +489,14 @@ export default function OnboardingOrchestrator() {
    */
   const handleTooltipClose = async () => {
     try {
-      // Étape 3 : Fermer tooltip = valider l'étape
+      // Étape 3 : Fermer tooltip = marquer la condition tooltip_closed
+      // La validation se fera automatiquement quand les 3 conditions seront remplies
       if (currentStep === 3) {
-        await markStepComplete(currentStep);
+        setStep3Validations(prev => ({
+          ...prev,
+          tooltip_closed: true,
+        }));
+        setTooltipClosed(true);
         return;
       }
 
@@ -467,6 +625,12 @@ export default function OnboardingOrchestrator() {
 
     // ========== ÉTAPE 4 : OUVERTURE DU CV GÉNÉRÉ (ANCIEN 5, RENOMMÉ) ==========
     if (currentStep === 4) {
+      // Vérifier la précondition : ne s'affiche QUE si un CV a été généré
+      if (!cvGenerated) {
+        console.log('[Onboarding] Step 4 : En attente de la génération d\'un CV...');
+        return null;
+      }
+
       return (
         <>
           {/* Highlight glow sur sélecteur CV */}

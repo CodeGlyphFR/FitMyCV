@@ -34,6 +34,7 @@ import ExportPdfModal from "./modals/ExportPdfModal";
 // Utils
 import { getCvIcon } from "./utils/cvUtils";
 import { CREATE_TEMPLATE_OPTION } from "./utils/constants";
+import { ONBOARDING_EVENTS, emitOnboardingEvent } from "@/lib/onboarding/onboardingEvents";
 
 export default function TopBar() {
   const router = useRouter();
@@ -120,6 +121,9 @@ export default function TopBar() {
     return tasks.filter(t => t.status === 'running' || t.status === 'queued').length;
   }, [tasks]);
 
+  // État pour l'onboarding : CV récemment généré à mettre en surbrillance
+  const [recentlyGeneratedCv, setRecentlyGeneratedCv] = React.useState(null);
+
   // Scroll behavior hook
   useScrollBehavior({
     lastScrollY: state.lastScrollY,
@@ -169,6 +173,31 @@ export default function TopBar() {
     window.addEventListener("cv:open-import", handleOpenImport);
     return () => window.removeEventListener("cv:open-import", handleOpenImport);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Listen for onboarding CV generation event
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const handleCvGenerated = (event) => {
+      if (!isMounted) return; // Prevent state updates after unmount
+
+      try {
+        const cvFilename = event.detail?.cvFilename;
+        if (cvFilename) {
+          console.log('[TopBar] CV généré pour onboarding:', cvFilename);
+          setRecentlyGeneratedCv(cvFilename);
+        }
+      } catch (error) {
+        console.error('[TopBar] Error in handleCvGenerated:', error);
+      }
+    };
+
+    window.addEventListener(ONBOARDING_EVENTS.CV_GENERATED, handleCvGenerated);
+    return () => {
+      isMounted = false;
+      window.removeEventListener(ONBOARDING_EVENTS.CV_GENERATED, handleCvGenerated);
+    };
   }, []);
 
   // CV selector glow animation
@@ -528,15 +557,35 @@ export default function TopBar() {
                         e.stopPropagation();
                       }}
                     >
-                      {state.items.map((it) => (
+                      {state.items.map((it) => {
+                        const isRecentlyGenerated = recentlyGeneratedCv && it.file === recentlyGeneratedCv;
+                        return (
                         <li key={it.file}>
                           <button
                             type="button"
                             onClick={async () => {
+                              // Si c'est le CV récemment généré, émettre l'événement pour l'onboarding
+                              if (isRecentlyGenerated) {
+                                console.log('[TopBar] CV récemment généré sélectionné, émission generatedCvOpened');
+                                emitOnboardingEvent(ONBOARDING_EVENTS.GENERATED_CV_OPENED, {
+                                  cvFilename: it.file
+                                });
+                                // Nettoyer l'état de surbrillance
+                                setRecentlyGeneratedCv(null);
+                              }
+
                               await operations.selectFile(it.file);
                               modals.setListOpen(false);
                             }}
-                            className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-white/25 text-white transition-colors duration-200 ${it.file === state.current ? "bg-white/20 border-l-2 border-emerald-400" : ""}`}
+                            className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-white/25 text-white transition-colors duration-200 ${
+                              it.file === state.current
+                                ? "bg-white/20 border-l-2 border-emerald-400"
+                                : ""
+                            } ${
+                              isRecentlyGenerated
+                                ? "bg-emerald-500/30 border border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)] animate-pulse"
+                                : ""
+                            }`}
                           >
                             <span
                               key={`dropdown-icon-${it.file}-${it.createdBy}`}
@@ -553,7 +602,8 @@ export default function TopBar() {
                             />
                           </button>
                         </li>
-                      ))}
+                        );
+                      })}
                     </ul>
                   </div>
                 </>,
