@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { ONBOARDING_STEPS, getStepById, isCompositeStep, getCompositeFeature } from '@/lib/onboarding/onboardingSteps';
 import ChecklistPanel from './ChecklistPanel';
 import OnboardingOrchestrator from './OnboardingOrchestrator';
+import WelcomeModal from './WelcomeModal';
 
 /**
  * Context pour l'onboarding
@@ -34,6 +35,7 @@ export default function OnboardingProvider({ children }) {
 
   // UI state
   const [checklistExpanded, setChecklistExpanded] = useState(true);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   // Timestamps pour tracking
   const [onboardingStartTime, setOnboardingStartTime] = useState(null);
@@ -423,6 +425,8 @@ export default function OnboardingProvider({ children }) {
    * - currentStep === 0 (jamais démarré)
    * - !hasCompleted et !hasSkipped
    * - Interface prête (TopBar monté, CV chargé, pas de loading)
+   *
+   * Affiche d'abord le WelcomeModal avant de lancer l'onboarding
    */
   useEffect(() => {
     if (isLoading) return; // Attendre chargement de l'état
@@ -432,11 +436,12 @@ export default function OnboardingProvider({ children }) {
       currentStep === 0 &&
       !hasCompleted &&
       !hasSkipped &&
-      !isActive;
+      !isActive &&
+      !showWelcomeModal;
 
     if (!shouldAutoStart) return;
 
-    // Vérifier que l'interface est prête avant de démarrer
+    // Vérifier que l'interface est prête avant d'afficher le welcome modal
     let checkCount = 0;
     const maxChecks = 50; // 10 secondes max (200ms * 50)
 
@@ -450,16 +455,16 @@ export default function OnboardingProvider({ children }) {
                                  !document.querySelector('[data-loading="true"]');
 
       if (topbarReady && noLoadingSpinners) {
-        // Interface prête → démarrer onboarding
-        console.log('[OnboardingProvider] Interface prête, auto-start onboarding');
-        setTimeout(() => startOnboarding(), 500); // Petit délai final pour la stabilité
+        // Interface prête → afficher le welcome modal
+        console.log('[OnboardingProvider] Interface prête, affichage du welcome modal');
+        setTimeout(() => setShowWelcomeModal(true), 500); // Petit délai final pour la stabilité
         return true;
       }
 
       if (checkCount >= maxChecks) {
-        // Timeout : démarrer quand même après 10s
-        console.warn('[OnboardingProvider] Timeout, auto-start onboarding sans vérification complète');
-        startOnboarding();
+        // Timeout : afficher quand même après 10s
+        console.warn('[OnboardingProvider] Timeout, affichage du welcome modal sans vérification complète');
+        setShowWelcomeModal(true);
         return true;
       }
 
@@ -476,7 +481,20 @@ export default function OnboardingProvider({ children }) {
 
     // Cleanup
     return () => clearInterval(interval);
-  }, [currentStep, hasCompleted, hasSkipped, isActive, isLoading, startOnboarding]);
+  }, [currentStep, hasCompleted, hasSkipped, isActive, isLoading, showWelcomeModal]);
+
+  /**
+   * Handlers pour le WelcomeModal
+   */
+  const handleWelcomeComplete = useCallback(() => {
+    setShowWelcomeModal(false);
+    startOnboarding();
+  }, [startOnboarding]);
+
+  const handleWelcomeSkip = useCallback(() => {
+    setShowWelcomeModal(false);
+    skipOnboarding();
+  }, [skipOnboarding]);
 
   /**
    * Context value
@@ -521,6 +539,12 @@ export default function OnboardingProvider({ children }) {
   return (
     <OnboardingContext.Provider value={value}>
       {children}
+      {/* Modal de bienvenue (avant l'onboarding) */}
+      <WelcomeModal
+        open={showWelcomeModal}
+        onComplete={handleWelcomeComplete}
+        onSkip={handleWelcomeSkip}
+      />
       {/* Checklist flottante (affichée si onboarding actif ou complété) */}
       <ChecklistPanel />
       {/* Orchestrateur gérant l'affichage des 9 étapes */}

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Search, Upload, FileText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles, Edit3, Zap } from 'lucide-react';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -16,44 +16,82 @@ import {
 } from '@/lib/animations/variants';
 
 /**
- * Modal de complétion de l'onboarding avec carousel (3 écrans)
- * Affiché quand l'utilisateur termine le tutoriel (step 7)
+ * Modal de bienvenue affiché avant le début de l'onboarding
  *
  * Props:
  * - open: boolean - État d'ouverture du modal
- * - onComplete: function - Callback quand le modal est complété/fermé
+ * - onComplete: function - Callback quand l'utilisateur clique "Commencer"
+ * - onSkip: function - Callback pour skip le tutorial
  */
 
-const COMPLETION_SCREENS = [
+const WELCOME_SCREENS = [
   {
-    icon: Search,
-    title: 'Générez des CV par métier',
+    title: 'Bienvenue sur FitMyCV !',
     description:
-      'Utilisez la barre de recherche pour générer instantanément un template de CV adapté à n\'importe quel poste. Tapez simplement le titre du poste (ex: "Développeur React", "Chef de projet") et laissez l\'IA créer un CV professionnel pour vous.',
-    emoji: '🔍',
+      "Nous sommes ravis de vous accompagner dans la création de CV parfaitement adaptés à chaque offre d'emploi. Notre plateforme utilise l'IA pour vous aider à décrocher plus d'entretiens.",
+    icon: Sparkles,
+    iconBg: 'bg-emerald-500/20',
+    iconColor: 'text-emerald-400',
   },
   {
-    icon: Upload,
-    title: 'Importez vos CV existants',
+    title: 'Découvrez les fonctionnalités clés',
     description:
-      'Vous avez déjà un CV ? Importez-le au format PDF ! L\'IA analysera son contenu et l\'optimisera automatiquement. Vous pourrez ensuite le personnaliser et l\'adapter à chaque offre d\'emploi.',
-    emoji: '📤',
+      "Ce court tutoriel vous guidera à travers les outils essentiels de FitMyCV. Nous commencerons par le mode édition — une fonctionnalité discrète mais puissante qui vous permet de personnaliser chaque détail de votre CV en un clic.",
+    icon: Edit3,
+    iconBg: 'bg-sky-500/20',
+    iconColor: 'text-sky-400',
   },
   {
-    icon: FileText,
-    title: 'Créez un CV de zéro',
+    title: 'Prêt à optimiser vos candidatures ?',
     description:
-      'Préférez partir d\'une page blanche ? Créez un CV manuellement et ajoutez vos expériences, formations et compétences section par section. L\'IA vous assistera pour optimiser chaque élément.',
-    emoji: '📝',
+      "En quelques minutes, vous maîtriserez les outils qui font la différence : génération IA, score de compatibilité, optimisation ATS... Commençons l'aventure !",
+    icon: Zap,
+    iconBg: 'bg-amber-500/20',
+    iconColor: 'text-amber-400',
   },
 ];
 
-export default function OnboardingCompletionModal({
+// Configuration de l'animation morphing
+const MORPH_DURATION = 0.7; // secondes
+const CHECKLIST_POSITION = {
+  bottom: 24, // bottom-6 = 24px
+  right: 80,  // right-20 = 80px
+  width: 320, // w-80 = 320px
+  height: 56, // Hauteur header ChecklistPanel approximative
+};
+
+/**
+ * Calcule le déplacement nécessaire pour aller du centre vers le coin inférieur droit
+ */
+const calculateMorphTransform = () => {
+  if (typeof window === 'undefined') return { x: 0, y: 0 };
+
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  // Position du modal centré
+  const centerX = viewportWidth / 2;
+  const centerY = viewportHeight / 2;
+
+  // Position cible (coin inférieur droit, centre du ChecklistPanel)
+  const targetX = viewportWidth - CHECKLIST_POSITION.right - CHECKLIST_POSITION.width / 2;
+  const targetY = viewportHeight - CHECKLIST_POSITION.bottom - CHECKLIST_POSITION.height / 2;
+
+  return {
+    x: targetX - centerX,
+    y: targetY - centerY,
+  };
+};
+
+export default function WelcomeModal({
   open = false,
   onComplete,
+  onSkip,
 }) {
   const [currentScreen, setCurrentScreen] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [isMorphing, setIsMorphing] = useState(false);
+  const [morphTransform, setMorphTransform] = useState({ x: 0, y: 0 });
   const shouldReduceMotion = useReducedMotion();
 
   // Reset screen when modal opens
@@ -61,19 +99,38 @@ export default function OnboardingCompletionModal({
     if (open) {
       setCurrentScreen(0);
       setDirection(0);
+      setIsMorphing(false);
     }
   }, [open]);
 
+  // Handler pour démarrer l'animation morphing
+  const startMorphAnimation = useCallback(() => {
+    if (shouldReduceMotion) {
+      // Si réduction de mouvement, skip l'animation
+      if (onComplete) onComplete();
+      return;
+    }
+    // Calculer la transformation avant de démarrer
+    const transform = calculateMorphTransform();
+    setMorphTransform(transform);
+    setIsMorphing(true);
+  }, [onComplete, shouldReduceMotion]);
+
+  // Handler appelé à la fin de l'animation morphing
+  const handleMorphComplete = useCallback(() => {
+    if (onComplete) onComplete();
+  }, [onComplete]);
+
   // Handlers boutons
   const handleNext = useCallback(() => {
-    if (currentScreen >= COMPLETION_SCREENS.length - 1) {
-      // Dernier écran → compléter
-      if (onComplete) onComplete();
+    if (currentScreen >= WELCOME_SCREENS.length - 1) {
+      // Dernier écran → lancer l'animation morphing
+      startMorphAnimation();
     } else {
       setDirection(1);
       setCurrentScreen((prev) => prev + 1);
     }
-  }, [currentScreen, onComplete]);
+  }, [currentScreen, startMorphAnimation]);
 
   const handlePrev = useCallback(() => {
     if (currentScreen > 0) {
@@ -81,6 +138,16 @@ export default function OnboardingCompletionModal({
       setCurrentScreen((prev) => prev - 1);
     }
   }, [currentScreen]);
+
+  // Handler bullet click
+  const handleBulletClick = useCallback(
+    (idx) => {
+      if (idx === currentScreen) return;
+      setDirection(idx > currentScreen ? 1 : -1);
+      setCurrentScreen(idx);
+    },
+    [currentScreen]
+  );
 
   // Gestion du scroll body
   useEffect(() => {
@@ -116,9 +183,6 @@ export default function OnboardingCompletionModal({
     if (!open) return;
 
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        if (onComplete) onComplete();
-      }
       if (e.key === 'ArrowRight') {
         handleNext();
       }
@@ -129,24 +193,7 @@ export default function OnboardingCompletionModal({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, handleNext, handlePrev, onComplete]);
-
-  // Handler backdrop click
-  const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget && onComplete) {
-      onComplete();
-    }
-  };
-
-  // Handler bullet click
-  const handleBulletClick = useCallback(
-    (idx) => {
-      if (idx === currentScreen) return;
-      setDirection(idx > currentScreen ? 1 : -1);
-      setCurrentScreen(idx);
-    },
-    [currentScreen]
-  );
+  }, [open, handleNext, handlePrev]);
 
   // Handler mobile swipe/drag
   const handleDragEnd = (e, { offset, velocity }) => {
@@ -161,78 +208,91 @@ export default function OnboardingCompletionModal({
 
   if (!open) return null;
 
-  const currentScreenData = COMPLETION_SCREENS[currentScreen];
-  const IconComponent = currentScreenData?.icon;
+  const currentScreenData = WELCOME_SCREENS[currentScreen];
+  const IconComponent = currentScreenData.icon;
+  const isLastScreen = currentScreen >= WELCOME_SCREENS.length - 1;
 
   const modalContent = (
     <div
       className="fixed inset-0 z-[10002] flex items-center justify-center p-4"
-      onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="completion-modal-title"
+      aria-labelledby="welcome-modal-title"
     >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm pointer-events-none" />
+      {/* Backdrop - fade out pendant le morphing */}
+      <motion.div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm pointer-events-none"
+        animate={{ opacity: isMorphing ? 0 : 1 }}
+        transition={{ duration: MORPH_DURATION * 0.5 }}
+      />
 
-      {/* Modal */}
-      <div
-        className="
-          relative w-full max-w-4xl
-          bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl
+      {/* Modal avec animation morphing */}
+      <motion.div
+        initial={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+        animate={isMorphing ? {
+          // Animation vers le coin inférieur droit
+          x: morphTransform.x,
+          y: morphTransform.y,
+          width: CHECKLIST_POSITION.width,
+          height: CHECKLIST_POSITION.height,
+          opacity: 0,
+          scale: 0.98,
+        } : {
+          // Position initiale (centré)
+          x: 0,
+          y: 0,
+          opacity: 1,
+          scale: 1,
+        }}
+        transition={{
+          duration: MORPH_DURATION,
+          ease: [0.4, 0, 0.2, 1], // cubic-bezier pour un mouvement naturel
+          opacity: { duration: MORPH_DURATION * 0.4, delay: MORPH_DURATION * 0.5 },
+          width: { duration: MORPH_DURATION * 0.8 },
+          height: { duration: MORPH_DURATION * 0.8 },
+        }}
+        onAnimationComplete={() => {
+          if (isMorphing) {
+            handleMorphComplete();
+          }
+        }}
+        className={`
+          relative bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl
           overflow-hidden
-        "
+          ${isMorphing ? '' : 'w-full max-w-2xl'}
+        `}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Contenu avec fade-out pendant le morphing */}
+        <motion.div
+          animate={{ opacity: isMorphing ? 0 : 1 }}
+          transition={{ duration: MORPH_DURATION * 0.3 }}
+        >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <span className="text-2xl">🎉</span>
+            <div className={`w-10 h-10 rounded-full ${currentScreenData.iconBg} flex items-center justify-center`}>
+              <IconComponent className={`w-5 h-5 ${currentScreenData.iconColor}`} />
             </div>
             <div>
               <h2
-                id="completion-modal-title"
+                id="welcome-modal-title"
                 className="text-xl font-bold text-white"
               >
-                Félicitations !
+                Bienvenue
               </h2>
               <p className="text-sm text-slate-400">
-                Découvrez encore plus de fonctionnalités
+                {currentScreen + 1} / {WELCOME_SCREENS.length}
               </p>
             </div>
           </div>
-
-          {/* Bouton fermeture */}
-          <button
-            onClick={onComplete}
-            className="
-              p-2 rounded-lg
-              text-slate-400 hover:text-white hover:bg-white/10
-              transition-colors
-            "
-            aria-label="Fermer le modal"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
         </div>
 
         {/* Carousel Container */}
-        <div className="relative min-h-[400px] overflow-hidden" role="tabpanel" aria-live="polite">
+        <div className="relative min-h-[320px] overflow-hidden" role="tabpanel" aria-live="polite">
           <AnimatePresence initial={true} custom={direction} mode="wait">
             <motion.div
+              id="welcome-carousel-content"
               key={currentScreen}
               custom={direction}
               variants={slideVariants}
@@ -247,30 +307,23 @@ export default function OnboardingCompletionModal({
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={1}
               onDragEnd={handleDragEnd}
-              className="absolute inset-0 p-6 pb-20 cursor-grab active:cursor-grabbing"
+              className="absolute inset-0 p-6 pb-16 cursor-grab active:cursor-grabbing"
             >
-              <div className="flex flex-col items-center justify-center space-y-6 h-full">
-                {/* Icône */}
-                <div className="w-24 h-24 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  {IconComponent && (
-                    <IconComponent className="w-12 h-12 text-emerald-400" />
-                  )}
+              <div className="flex flex-col items-center justify-center h-full space-y-6 text-center">
+                {/* Icône décorative */}
+                <div className={`w-20 h-20 rounded-full ${currentScreenData.iconBg} flex items-center justify-center`}>
+                  <IconComponent className={`w-10 h-10 ${currentScreenData.iconColor}`} />
                 </div>
 
                 {/* Titre */}
-                <h3 className="text-2xl font-bold text-white text-center">
-                  {currentScreenData?.title}
+                <h3 className="text-2xl font-bold text-white">
+                  {currentScreenData.title}
                 </h3>
 
                 {/* Description */}
-                <p className="text-white/90 text-lg leading-relaxed text-center max-w-2xl">
-                  {currentScreenData?.description}
+                <p className="text-white/80 text-lg leading-relaxed max-w-lg">
+                  {currentScreenData.description}
                 </p>
-
-                {/* Emoji décoratif */}
-                <div className="text-6xl opacity-20">
-                  {currentScreenData?.emoji}
-                </div>
               </div>
             </motion.div>
           </AnimatePresence>
@@ -300,10 +353,10 @@ export default function OnboardingCompletionModal({
 
           <motion.button
             onClick={handleNext}
-            disabled={currentScreen >= COMPLETION_SCREENS.length - 1}
+            disabled={isLastScreen}
             {...createChevronAnimations(shouldReduceMotion, 'right')}
             animate={{
-              opacity: currentScreen >= COMPLETION_SCREENS.length - 1 ? 0.3 : 1,
+              opacity: isLastScreen ? 0.3 : 1,
             }}
             transition={transitions.default}
             className="
@@ -328,12 +381,13 @@ export default function OnboardingCompletionModal({
             initial="hidden"
             animate="visible"
           >
-            {COMPLETION_SCREENS.map((_, idx) => (
+            {WELCOME_SCREENS.map((_, idx) => (
               <motion.button
                 key={idx}
                 onClick={() => handleBulletClick(idx)}
                 role="tab"
                 aria-selected={idx === currentScreen}
+                aria-controls="welcome-carousel-content"
                 variants={paginationDot}
                 animate={idx === currentScreen ? 'active' : 'inactive'}
                 {...createDotAnimations(shouldReduceMotion)}
@@ -342,7 +396,7 @@ export default function OnboardingCompletionModal({
                   relative w-8 h-8
                   flex items-center justify-center
                 "
-                aria-label={`Aller à l'écran ${idx + 1} sur ${COMPLETION_SCREENS.length}`}
+                aria-label={`Aller à l'écran ${idx + 1} sur ${WELCOME_SCREENS.length}`}
               >
                 <span
                   className={`
@@ -361,10 +415,17 @@ export default function OnboardingCompletionModal({
 
         {/* Footer */}
         <div className="flex items-center justify-between p-6 border-t border-white/10">
-          {/* Indicateur de progression */}
-          <p className="text-sm text-slate-400">
-            {currentScreen + 1} / {COMPLETION_SCREENS.length}
-          </p>
+          {/* Bouton Skip */}
+          <button
+            onClick={onSkip}
+            className="
+              px-4 py-2 text-sm
+              text-slate-400 hover:text-white
+              transition-colors
+            "
+          >
+            Passer le tutoriel
+          </button>
 
           {/* Bouton principal */}
           <button
@@ -376,12 +437,11 @@ export default function OnboardingCompletionModal({
               transition-colors
             "
           >
-            {currentScreen >= COMPLETION_SCREENS.length - 1
-              ? 'Commencer !'
-              : 'Suivant'}
+            {isLastScreen ? 'Commencer le tutoriel' : 'Suivant'}
           </button>
         </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 
