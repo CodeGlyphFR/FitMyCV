@@ -55,6 +55,17 @@ export default function CVImprovementPanel({ cvFile }) {
     return () => window.removeEventListener('realtime:cv:metadata:updated', handleRealtimeCvUpdate);
   }, [fetchCvData]);
 
+  // Écouter l'événement onboarding pour ouvrir automatiquement le panel
+  useEffect(() => {
+    const handleOpenOptimizer = () => {
+      console.log('[CVImprovementPanel] Événement onboarding:open-optimizer reçu, ouverture du panel');
+      setIsOpen(true);
+    };
+
+    window.addEventListener('onboarding:open-optimizer', handleOpenOptimizer);
+    return () => window.removeEventListener('onboarding:open-optimizer', handleOpenOptimizer);
+  }, []);
+
   // Gérer le blur initial pour éviter le flicker
   useEffect(() => {
     if (isOpen) {

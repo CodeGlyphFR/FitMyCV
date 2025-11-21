@@ -218,17 +218,20 @@ export default function BackgroundTasksProvider({ children }) {
         return;
       }
 
+      // Émettre task:completed pour l'onboarding (toutes les tâches complétées)
+      // Important: doit être avant le check shouldUpdateCvList car les tâches match score
+      // n'ont pas ce flag mais ont besoin de déclencher la validation de l'onboarding
+      if (task.status === 'completed' && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('task:completed', {
+          detail: { task }
+        }));
+      }
+
       if (!task?.shouldUpdateCvList) {
         return;
       }
 
       if (task.status === 'completed') {
-        // Émettre l'événement task:completed pour l'onboarding
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('task:completed', {
-            detail: { task }
-          }));
-        }
 
         // Pour les tâches de création/import de CV, vérifier si c'est le premier CV
         // Si oui, ne pas notifier car l'utilisateur voit déjà la barre de progression

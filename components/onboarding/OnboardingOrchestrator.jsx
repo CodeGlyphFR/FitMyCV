@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useAdmin } from '@/components/admin/AdminProvider';
 import { getStepById } from '@/lib/onboarding/onboardingSteps';
-import { isAiGenerationTask } from '@/lib/backgroundTasks/taskTypes';
+import { isAiGenerationTask, isMatchScoreTask, isImprovementTask } from '@/lib/backgroundTasks/taskTypes';
 import { extractCvFilename } from '@/lib/onboarding/cvFilenameUtils';
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from '@/lib/onboarding/onboardingEvents';
 import OnboardingModal from './OnboardingModal';
@@ -349,11 +349,23 @@ export default function OnboardingOrchestrator() {
 
           console.log('[Onboarding] Tâche complétée, en attente de validation step 3');
         }
+
+        // Vérifier si c'est une tâche de calcul de match score (step 5)
+        if (isMatchScoreTask(task) && currentStep === 5) {
+          console.log('[Onboarding] Step 5 : Calcul de match score terminé, validation du step');
+
+          // Délai pour permettre aux animations et requêtes async de se terminer
+          setTimeout(() => {
+            markStepComplete(5);
+            // Émettre l'événement pour la précondition du step 6
+            emitOnboardingEvent(ONBOARDING_EVENTS.MATCH_SCORE_CALCULATED);
+          }, STEP_VALIDATION_DELAY);
+        }
       } catch (error) {
         console.error('[Onboarding] Error in handleTaskCompleted:', error);
       }
     };
-  }, [isActive]);
+  }, [isActive, currentStep, markStepComplete]);
 
   // Enregistrer le listener une seule fois avec un wrapper stable
   useEffect(() => {
@@ -462,6 +474,107 @@ export default function OnboardingOrchestrator() {
     };
   }, []); // Empty deps - register once
 
+  // ========== STEP 5 : VÉRIFIER SI SCORE DÉJÀ CALCULÉ (AUTO-VALIDATION) ==========
+  useEffect(() => {
+    if (currentStep !== 5) return;
+
+    // Vérifier si le match score est déjà calculé (ex: session précédente)
+    const checkExistingScore = () => {
+      const matchScoreElement = document.querySelector('[data-onboarding="match-score"]');
+      if (matchScoreElement && matchScoreElement.textContent?.includes('%')) {
+        console.log('[Onboarding] Step 5 : Score déjà calculé, auto-validation');
+        setTimeout(() => {
+          markStepComplete(5);
+          emitOnboardingEvent(ONBOARDING_EVENTS.MATCH_SCORE_CALCULATED);
+        }, STEP_VALIDATION_DELAY);
+        return true;
+      }
+      return false;
+    };
+
+    // Polling pour attendre que le DOM soit prêt
+    let attempts = 0;
+    const maxAttempts = 10;
+    const interval = setInterval(() => {
+      attempts++;
+      if (checkExistingScore() || attempts >= maxAttempts) {
+        clearInterval(interval);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [currentStep, markStepComplete]);
+
+  // ========== ÉTAPE 6 : INTERCEPTION CLIC BOUTON OPTIMIZE + VALIDATION ==========
+  useEffect(() => {
+    if (currentStep !== 6) return;
+
+    let isCleanedUp = false;
+
+    /**
+     * Intercepter le clic sur le bouton Optimize pour ouvrir le modal explicatif
+     * AVANT de permettre l'optimisation
+     * Utilise event delegation sur document pour gérer les re-renders du composant
+     */
+    const handleOptimizeButtonClick = (e) => {
+      if (isCleanedUp) return;
+
+      // Vérifier si le clic est sur le bouton optimize (ou un de ses enfants)
+      const optimizeButton = e.target.closest('[data-onboarding="optimize"]');
+      if (!optimizeButton) return;
+
+      // If modal was already shown, let the normal click behavior proceed
+      if (step6ModalShownRef.current) {
+        console.log('[Onboarding] Step 6: Modal already shown, allowing normal button behavior');
+        return;
+      }
+
+      // First click: prevent default and open modal
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Mark modal as shown
+      step6ModalShownRef.current = true;
+
+      // Fermer le tooltip immédiatement
+      setTooltipClosed(true);
+
+      // Ouvrir le modal explicatif
+      setModalOpen(true);
+      setCurrentScreen(0);
+    };
+
+    // Utiliser event delegation sur document (capture phase)
+    // Cela fonctionne même si le bouton est re-rendu par React
+    document.addEventListener('click', handleOptimizeButtonClick, { capture: true });
+
+    // Écouter l'événement task:completed pour détecter la fin de l'optimisation
+    const handleTaskCompleted = (event) => {
+      if (isCleanedUp) return;
+
+      const task = event.detail?.task;
+
+      if (isImprovementTask(task)) {
+        console.log('[Onboarding] Step 6 : Optimisation terminée, validation du step');
+
+        setTimeout(() => {
+          if (!isCleanedUp) {
+            markStepComplete(6);
+          }
+        }, STEP_VALIDATION_DELAY);
+      }
+    };
+
+    window.addEventListener('task:completed', handleTaskCompleted);
+
+    // Cleanup function
+    return () => {
+      isCleanedUp = true;
+      document.removeEventListener('click', handleOptimizeButtonClick, { capture: true });
+      window.removeEventListener('task:completed', handleTaskCompleted);
+    };
+  }, [currentStep, markStepComplete]);
+
   // Ne rien afficher si pas actif
   if (!isActive || currentStep === 0) return null;
 
@@ -556,10 +669,19 @@ export default function OnboardingOrchestrator() {
       return; // Ne pas valider l'étape (validation lors de la génération réelle)
     }
 
-    // Étape 6 : Marquer comme complétée après modal
+    // Étape 6 : Ouvrir automatiquement le panel d'optimisation
+    // Raison : Après avoir vu le modal éducatif, on ouvre directement le panel
+    // Validation se fait via task:completed quand l'optimisation est terminée
     if (currentStep === 6) {
       step6ModalCompletedRef.current = true;
-      markStepComplete(currentStep);
+
+      // Ouvrir le panel après fermeture du modal explicatif
+      setTimeout(() => {
+        emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_OPTIMIZER);
+        console.log('[Onboarding] Step 6 : Event émis pour ouverture automatique du panel optimisation');
+      }, MODAL_CLOSE_ANIMATION_DURATION);
+
+      return; // Ne pas valider l'étape (validation lors de l'optimisation réelle)
     }
   };
 

@@ -364,6 +364,12 @@ export default function OnboardingProvider({ children }) {
           const taskButton = document.querySelector('[data-onboarding="task-manager"]');
           return taskButton && taskButton.querySelector('.animate-pulse');
         }
+        if (condition.key === 'matchScoreCalculated') {
+          // Vérifier si le match score a été calculé (présence du score visible)
+          const matchScoreElement = document.querySelector('[data-onboarding="match-score"]');
+          // Le score est calculé si l'élément existe et contient un pourcentage
+          return matchScoreElement && matchScoreElement.textContent?.includes('%');
+        }
         return true; // Par défaut on considère la condition remplie
 
       case 'data_check':

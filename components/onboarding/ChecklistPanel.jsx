@@ -24,8 +24,12 @@ export default function ChecklistPanel() {
   // Ne pas afficher si onboarding pas actif et pas complété
   if (!isActive && !hasCompleted) return null;
 
-  // Calculer progression
-  const progress = Math.round((completedSteps.length / 9) * 100);
+  // Calculer le nombre effectif d'étapes complétées
+  // Inclut les steps explicitement complétés ET les steps implicitement complétés (avant currentStep)
+  const effectiveCompletedCount = Math.max(completedSteps.length, currentStep - 1);
+
+  // Calculer progression sur 7 étapes
+  const progress = Math.round((effectiveCompletedCount / 7) * 100);
 
   /**
    * Handler skip avec confirmation
@@ -80,7 +84,7 @@ export default function ChecklistPanel() {
                   Votre progression
                 </h3>
                 <p className="text-white/70 text-xs">
-                  {completedSteps.length}/7 étapes
+                  {effectiveCompletedCount}/7 étapes
                 </p>
               </div>
             </>
@@ -137,7 +141,9 @@ export default function ChecklistPanel() {
           <ul className="space-y-2 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
             {ONBOARDING_STEPS.map((step, idx) => {
               const stepNumber = idx + 1;
-              const isCompleted = completedSteps.includes(stepNumber);
+              // Considérer les étapes précédentes comme complétées même si pas dans completedSteps
+              // (au cas où l'état n'est pas restauré après rechargement)
+              const isCompleted = completedSteps.includes(stepNumber) || stepNumber < currentStep;
               const isCurrent = currentStep === stepNumber;
               const isUpcoming = stepNumber > currentStep;
 
