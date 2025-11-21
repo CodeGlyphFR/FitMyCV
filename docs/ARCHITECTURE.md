@@ -207,11 +207,12 @@ fitmycv/
 │   │   ├── client.js           # OpenAI client (rate limiting)
 │   │   ├── promptLoader.js     # Prompt management
 │   │   ├── [functions]/        # AI functions
-│   │   │   ├── generateCv.js
+│   │   │   ├── generateCv.js              # + extractJobOfferWithGPT (shared)
 │   │   │   ├── importPdf.js
 │   │   │   ├── translateCv.js
 │   │   │   ├── improveCv.js
-│   │   │   ├── calculateMatchScore.js
+│   │   │   ├── calculateMatchScoreWithAnalysis.js
+│   │   │   ├── createTemplateCv.js
 │   │   │   └── ...
 │   │   └── prompts/            # Prompt templates organized by feature
 │   ├── security/                # Security utilities
