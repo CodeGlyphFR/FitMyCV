@@ -51,6 +51,38 @@ const WELCOME_SCREENS = [
   },
 ];
 
+// Configuration de l'animation morphing
+const MORPH_DURATION = 0.7; // secondes
+const CHECKLIST_POSITION = {
+  bottom: 24, // bottom-6 = 24px
+  right: 80,  // right-20 = 80px
+  width: 320, // w-80 = 320px
+  height: 56, // Hauteur header ChecklistPanel approximative
+};
+
+/**
+ * Calcule le déplacement nécessaire pour aller du centre vers le coin inférieur droit
+ */
+const calculateMorphTransform = () => {
+  if (typeof window === 'undefined') return { x: 0, y: 0 };
+
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  // Position du modal centré
+  const centerX = viewportWidth / 2;
+  const centerY = viewportHeight / 2;
+
+  // Position cible (coin inférieur droit, centre du ChecklistPanel)
+  const targetX = viewportWidth - CHECKLIST_POSITION.right - CHECKLIST_POSITION.width / 2;
+  const targetY = viewportHeight - CHECKLIST_POSITION.bottom - CHECKLIST_POSITION.height / 2;
+
+  return {
+    x: targetX - centerX,
+    y: targetY - centerY,
+  };
+};
+
 export default function WelcomeModal({
   open = false,
   onComplete,
@@ -58,6 +90,8 @@ export default function WelcomeModal({
 }) {
   const [currentScreen, setCurrentScreen] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [isMorphing, setIsMorphing] = useState(false);
+  const [morphTransform, setMorphTransform] = useState({ x: 0, y: 0 });
   const shouldReduceMotion = useReducedMotion();
 
   // Reset screen when modal opens
@@ -65,19 +99,38 @@ export default function WelcomeModal({
     if (open) {
       setCurrentScreen(0);
       setDirection(0);
+      setIsMorphing(false);
     }
   }, [open]);
+
+  // Handler pour démarrer l'animation morphing
+  const startMorphAnimation = useCallback(() => {
+    if (shouldReduceMotion) {
+      // Si réduction de mouvement, skip l'animation
+      if (onComplete) onComplete();
+      return;
+    }
+    // Calculer la transformation avant de démarrer
+    const transform = calculateMorphTransform();
+    setMorphTransform(transform);
+    setIsMorphing(true);
+  }, [onComplete, shouldReduceMotion]);
+
+  // Handler appelé à la fin de l'animation morphing
+  const handleMorphComplete = useCallback(() => {
+    if (onComplete) onComplete();
+  }, [onComplete]);
 
   // Handlers boutons
   const handleNext = useCallback(() => {
     if (currentScreen >= WELCOME_SCREENS.length - 1) {
-      // Dernier écran → lancer le tutorial
-      if (onComplete) onComplete();
+      // Dernier écran → lancer l'animation morphing
+      startMorphAnimation();
     } else {
       setDirection(1);
       setCurrentScreen((prev) => prev + 1);
     }
-  }, [currentScreen, onComplete]);
+  }, [currentScreen, startMorphAnimation]);
 
   const handlePrev = useCallback(() => {
     if (currentScreen > 0) {
@@ -166,18 +219,55 @@ export default function WelcomeModal({
       aria-modal="true"
       aria-labelledby="welcome-modal-title"
     >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm pointer-events-none" />
+      {/* Backdrop - fade out pendant le morphing */}
+      <motion.div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm pointer-events-none"
+        animate={{ opacity: isMorphing ? 0 : 1 }}
+        transition={{ duration: MORPH_DURATION * 0.5 }}
+      />
 
-      {/* Modal */}
-      <div
-        className="
-          relative w-full max-w-2xl
-          bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl
+      {/* Modal avec animation morphing */}
+      <motion.div
+        initial={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+        animate={isMorphing ? {
+          // Animation vers le coin inférieur droit
+          x: morphTransform.x,
+          y: morphTransform.y,
+          width: CHECKLIST_POSITION.width,
+          height: CHECKLIST_POSITION.height,
+          opacity: 0,
+          scale: 0.98,
+        } : {
+          // Position initiale (centré)
+          x: 0,
+          y: 0,
+          opacity: 1,
+          scale: 1,
+        }}
+        transition={{
+          duration: MORPH_DURATION,
+          ease: [0.4, 0, 0.2, 1], // cubic-bezier pour un mouvement naturel
+          opacity: { duration: MORPH_DURATION * 0.4, delay: MORPH_DURATION * 0.5 },
+          width: { duration: MORPH_DURATION * 0.8 },
+          height: { duration: MORPH_DURATION * 0.8 },
+        }}
+        onAnimationComplete={() => {
+          if (isMorphing) {
+            handleMorphComplete();
+          }
+        }}
+        className={`
+          relative bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl
           overflow-hidden
-        "
+          ${isMorphing ? '' : 'w-full max-w-2xl'}
+        `}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Contenu avec fade-out pendant le morphing */}
+        <motion.div
+          animate={{ opacity: isMorphing ? 0 : 1 }}
+          transition={{ duration: MORPH_DURATION * 0.3 }}
+        >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/10">
           <div className="flex items-center gap-3">
@@ -350,7 +440,8 @@ export default function WelcomeModal({
             {isLastScreen ? 'Commencer le tutoriel' : 'Suivant'}
           </button>
         </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 

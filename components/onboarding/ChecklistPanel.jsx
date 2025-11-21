@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { ONBOARDING_STEPS } from '@/lib/onboarding/onboardingSteps';
 
@@ -71,8 +72,14 @@ export default function ChecklistPanel() {
   );
 
   return (
-    <div
-      className="fixed bottom-3 right-20 w-80 bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl z-[10001] overflow-hidden"
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{
+        duration: 0.3,
+        ease: [0.4, 0, 0.2, 1],
+      }}
+      className="fixed bottom-6 right-20 w-80 bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl z-[10001] overflow-hidden"
       role="region"
       aria-label="Progression du tutoriel"
       aria-live="polite"
@@ -201,6 +208,6 @@ export default function ChecklistPanel() {
           background: rgba(16, 185, 129, 0.6);
         }
       `}</style>
-    </div>
+    </motion.div>
   );
 }
