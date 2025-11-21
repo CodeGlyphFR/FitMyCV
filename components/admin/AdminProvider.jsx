@@ -163,6 +163,7 @@ export default function AdminProvider(props){
       {/* Edit mode button */}
       {session?.user?.id && pathname !== "/admin/new" && pathname !== "/admin/analytics" && hasAnyCv && settings.feature_edit_mode ? (
         <button
+          data-onboarding="edit-mode-button"
           onClick={()=>setEditing(!editing)}
           className={`
             fixed bottom-6 right-6 z-50 no-print

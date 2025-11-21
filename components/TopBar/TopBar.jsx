@@ -34,6 +34,7 @@ import ExportPdfModal from "./modals/ExportPdfModal";
 // Utils
 import { getCvIcon } from "./utils/cvUtils";
 import { CREATE_TEMPLATE_OPTION } from "./utils/constants";
+import { ONBOARDING_EVENTS, emitOnboardingEvent } from "@/lib/onboarding/onboardingEvents";
 
 export default function TopBar() {
   const router = useRouter();
@@ -120,6 +121,9 @@ export default function TopBar() {
     return tasks.filter(t => t.status === 'running' || t.status === 'queued').length;
   }, [tasks]);
 
+  // État pour l'onboarding : CV récemment généré à mettre en surbrillance
+  const [recentlyGeneratedCv, setRecentlyGeneratedCv] = React.useState(null);
+
   // Scroll behavior hook
   useScrollBehavior({
     lastScrollY: state.lastScrollY,
@@ -135,13 +139,16 @@ export default function TopBar() {
   // Portal ready (critical for dropdown rendering)
   React.useEffect(() => {
     state.setPortalReady(true);
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Reload CV list (critical for displaying CVs)
   React.useEffect(() => {
     if (!isAuthenticated) return;
     operations.reload();
-  }, [isAuthenticated, pathname, searchParams?.toString(), operations.reload]);
+    // operations.reload is memoized with useCallback and recreates when isAuthenticated changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, pathname, searchParams?.toString()]);
 
   // Listen for CV list changes
   React.useEffect(() => {
@@ -155,7 +162,8 @@ export default function TopBar() {
       window.removeEventListener("realtime:cv:list:changed", onChanged);
       window.removeEventListener("focus", onChanged);
     };
-  }, [isAuthenticated, operations.reload]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   // Listen for import event
   React.useEffect(() => {
@@ -164,7 +172,33 @@ export default function TopBar() {
     };
     window.addEventListener("cv:open-import", handleOpenImport);
     return () => window.removeEventListener("cv:open-import", handleOpenImport);
-  }, [modals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Listen for onboarding CV generation event
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const handleCvGenerated = (event) => {
+      if (!isMounted) return; // Prevent state updates after unmount
+
+      try {
+        const cvFilename = event.detail?.cvFilename;
+        if (cvFilename) {
+          console.log('[TopBar] CV généré pour onboarding:', cvFilename);
+          setRecentlyGeneratedCv(cvFilename);
+        }
+      } catch (error) {
+        console.error('[TopBar] Error in handleCvGenerated:', error);
+      }
+    };
+
+    window.addEventListener(ONBOARDING_EVENTS.CV_GENERATED, handleCvGenerated);
+    return () => {
+      isMounted = false;
+      window.removeEventListener(ONBOARDING_EVENTS.CV_GENERATED, handleCvGenerated);
+    };
+  }, []);
 
   // CV selector glow animation
   React.useEffect(() => {
@@ -180,7 +214,8 @@ export default function TopBar() {
     return () => {
       window.removeEventListener("cv:selected", handleCvSelected);
     };
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Detect mobile
   React.useEffect(() => {
@@ -190,20 +225,23 @@ export default function TopBar() {
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Dropdown position updates
   React.useEffect(() => {
     if (modals.listOpen && triggerRef.current) {
       modals.setDropdownRect(triggerRef.current.getBoundingClientRect());
     }
-  }, [modals.listOpen, state.items, state.current, modals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modals.listOpen, state.items, state.current]);
 
   React.useEffect(() => {
     if (modals.userMenuOpen && userMenuButtonRef.current) {
       modals.setUserMenuRect(userMenuButtonRef.current.getBoundingClientRect());
     }
-  }, [modals.userMenuOpen, modals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modals.userMenuOpen]);
 
   // User menu outside click handler
   React.useEffect(() => {
@@ -241,7 +279,8 @@ export default function TopBar() {
       document.removeEventListener("keydown", handleKey);
       if (touchTimeout) clearTimeout(touchTimeout);
     };
-  }, [modals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modals.userMenuOpen]);
 
   // CV dropdown outside click handler
   React.useEffect(() => {
@@ -287,7 +326,8 @@ export default function TopBar() {
       document.removeEventListener("keydown", handleKey);
       if (touchTimeout) clearTimeout(touchTimeout);
     };
-  }, [modals.listOpen, state.isScrollingInDropdown, modals, state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modals.listOpen, state.isScrollingInDropdown]);
 
   // Base selector outside click handler
   React.useEffect(() => {
@@ -326,7 +366,8 @@ export default function TopBar() {
       document.removeEventListener("keydown", handleKey);
       if (touchTimeout) clearTimeout(touchTimeout);
     };
-  }, [generator.baseSelectorOpen, generator]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generator.baseSelectorOpen]);
 
   // Ticker reset on visibility change
   React.useEffect(() => {
@@ -338,7 +379,8 @@ export default function TopBar() {
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Ticker reset on intersection
   React.useEffect(() => {
@@ -354,7 +396,8 @@ export default function TopBar() {
     }, { threshold: 0.6 });
     observer.observe(barRef.current);
     return () => observer.disconnect();
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Close dropdown on resize
   React.useEffect(() => {
@@ -363,7 +406,8 @@ export default function TopBar() {
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [modals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Don't render on auth page
   if (pathname === "/auth") {
@@ -436,6 +480,7 @@ export default function TopBar() {
           {/* CV Selector */}
           <div className="flex-1 min-w-[120px] md:min-w-[200px] md:max-w-none order-3 md:order-3">
             <button
+              data-onboarding="cv-selector"
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
@@ -494,7 +539,7 @@ export default function TopBar() {
                     className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-md shadow-2xl cv-dropdown-no-animation"
                   >
                     <ul
-                      className="max-h-[240px] overflow-y-auto py-1"
+                      className="max-h-[240px] overflow-y-auto custom-scrollbar py-1"
                       onScroll={() => {
                         state.setIsScrollingInDropdown(true);
                       }}
@@ -512,15 +557,35 @@ export default function TopBar() {
                         e.stopPropagation();
                       }}
                     >
-                      {state.items.map((it) => (
+                      {state.items.map((it) => {
+                        const isRecentlyGenerated = recentlyGeneratedCv && it.file === recentlyGeneratedCv;
+                        return (
                         <li key={it.file}>
                           <button
                             type="button"
                             onClick={async () => {
+                              // Si c'est le CV récemment généré, émettre l'événement pour l'onboarding
+                              if (isRecentlyGenerated) {
+                                console.log('[TopBar] CV récemment généré sélectionné, émission generatedCvOpened');
+                                emitOnboardingEvent(ONBOARDING_EVENTS.GENERATED_CV_OPENED, {
+                                  cvFilename: it.file
+                                });
+                                // Nettoyer l'état de surbrillance
+                                setRecentlyGeneratedCv(null);
+                              }
+
                               await operations.selectFile(it.file);
                               modals.setListOpen(false);
                             }}
-                            className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-white/25 text-white transition-colors duration-200 ${it.file === state.current ? "bg-white/20 border-l-2 border-emerald-400" : ""}`}
+                            className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-white/25 text-white transition-colors duration-200 ${
+                              it.file === state.current
+                                ? "bg-white/20 border-l-2 border-emerald-400"
+                                : ""
+                            } ${
+                              isRecentlyGenerated
+                                ? "bg-emerald-500/30 border border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)] animate-pulse"
+                                : ""
+                            }`}
                           >
                             <span
                               key={`dropdown-icon-${it.file}-${it.createdBy}`}
@@ -537,7 +602,8 @@ export default function TopBar() {
                             />
                           </button>
                         </li>
-                      ))}
+                        );
+                      })}
                     </ul>
                   </div>
                 </>,
@@ -660,6 +726,7 @@ export default function TopBar() {
           {/* Task Manager */}
           <div className="relative order-2 md:order-2">
             <button
+              data-onboarding="task-manager"
               ref={taskQueueButtonRef}
               onClick={() => {
                 if (window.innerWidth <= 990) {
@@ -718,6 +785,7 @@ export default function TopBar() {
           {/* Action Buttons */}
           {settings.feature_ai_generation && (
             <button
+              data-onboarding="ai-generate"
               onClick={generator.openGeneratorModal}
               className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-4 transition-all duration-200"
               type="button"
@@ -746,6 +814,7 @@ export default function TopBar() {
           )}
           {settings.feature_export && (
             <button
+              data-onboarding="export"
               onClick={exportModal.openModal}
               className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7 transition-all duration-200"
               type="button"

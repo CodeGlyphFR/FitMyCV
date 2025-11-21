@@ -1,12 +1,28 @@
 import { NextResponse } from 'next/server';
 import { createPasswordResetToken, sendPasswordResetEmail } from '@/lib/email/emailService';
 import prisma from '@/lib/prisma';
+import { verifyRecaptcha } from '@/lib/recaptcha/verifyRecaptcha';
 
 export const runtime = 'nodejs';
 
 export async function POST(request) {
   try {
-    const { email } = await request.json();
+    const { email, recaptchaToken } = await request.json();
+
+    // Vérification reCAPTCHA (optionnelle pour compatibilité, mais recommandée)
+    if (recaptchaToken) {
+      const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
+        callerName: 'request-reset',
+        scoreThreshold: 0.5,
+      });
+
+      if (!recaptchaResult.success) {
+        return NextResponse.json(
+          { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
+          { status: recaptchaResult.statusCode || 403 }
+        );
+      }
+    }
 
     // Validation basique
     if (!email || typeof email !== 'string') {

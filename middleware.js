@@ -63,6 +63,12 @@ function checkRateLimit(ip, pathname) {
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
+  // ⚡ CRITICAL: Bypass ALL middleware logic for WebSocket HMR
+  // WebSocket upgrade requests cannot handle redirects or extra headers
+  if (pathname.startsWith('/_next/webpack-hmr')) {
+    return NextResponse.next();
+  }
+
   // Obtenir l'IP du client (compatible avec proxies)
   const ip =
     request.headers.get('x-forwarded-for')?.split(',')[0] ||
@@ -127,6 +133,25 @@ export async function middleware(request) {
 
   const response = NextResponse.next();
 
+  // Construction du connect-src CSP selon l'environnement
+  const connectSrcSources = ["'self'"];
+
+  if (process.env.NODE_ENV === 'development') {
+    // WebSocket pour HMR en développement
+    const customDevDomain = process.env.NEXT_PUBLIC_DEV_WS_DOMAIN;
+    if (customDevDomain) {
+      connectSrcSources.push(customDevDomain);
+    }
+    connectSrcSources.push('ws://localhost:3001', 'wss://localhost:3001');
+  }
+
+  // Sources communes (API externes)
+  connectSrcSources.push(
+    'https://api.openai.com',
+    'https://www.google.com',
+    'https://www.gstatic.com'
+  );
+
   // Headers de sécurité pour toutes les réponses
   const securityHeaders = {
     // Protection contre le clickjacking
@@ -151,7 +176,7 @@ export async function middleware(request) {
       "style-src 'self' 'unsafe-inline'", // Tailwind nécessite unsafe-inline
       "img-src 'self' data: https:",
       "font-src 'self' data:",
-      "connect-src 'self' https://api.openai.com https://www.google.com https://www.gstatic.com",
+      `connect-src ${connectSrcSources.join(' ')}`,
       "frame-src https://www.google.com", // reCAPTCHA frames
       "frame-ancestors 'none'",
       "base-uri 'self'",
@@ -184,9 +209,10 @@ export const config = {
      * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization)
+     * - _next/webpack-hmr (WebSocket HMR)
      * - favicon.ico (favicon file)
      * - public folder
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|_next/webpack-hmr|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

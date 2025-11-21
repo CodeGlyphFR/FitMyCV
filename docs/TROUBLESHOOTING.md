@@ -12,6 +12,7 @@ Guide de résolution des problèmes courants.
 - [NextAuth](#nextauth)
 - [Puppeteer](#puppeteer)
 - [Performance](#performance)
+- [Développement (HMR & Hot Reload)](#développement-hmr--hot-reload)
 - [Erreurs courantes](#erreurs-courantes)
 
 ---
@@ -588,6 +589,88 @@ GET /api/background-tasks/sync?deviceId=admin
 UPDATE BackgroundTask
 SET status = 'cancelled'
 WHERE status = 'running' OR status = 'queued';
+```
+
+---
+
+## Développement (HMR & Hot Reload)
+
+### ❌ WebSocket HMR ne fonctionne pas
+
+**Symptômes** :
+- Console erreur : "WebSocket connection to 'wss://dev-fitmycv.duckdns.org/_next/webpack-hmr' failed"
+- Hot Module Replacement ne fonctionne pas
+- Modifications de code nécessitent refresh manuel
+- Status 502 Bad Gateway pour webpack-hmr
+
+**Causes** :
+1. Middleware intercepte les requêtes WebSocket
+2. CSP bloque les connexions WebSocket
+3. `allowedDevOrigins` mal configuré (deprecated)
+4. Cache Next.js corrompu
+
+**Solutions** :
+
+**1. Vérifier le bypass middleware**
+
+Le middleware doit ignorer les requêtes HMR :
+
+```javascript
+// middleware.js - ligne ~66
+export async function middleware(request) {
+  const { pathname } = request.nextUrl;
+
+  // ⚡ CRITICAL: Bypass ALL middleware logic for WebSocket HMR
+  if (pathname.startsWith('/_next/webpack-hmr')) {
+    return NextResponse.next();
+  }
+  // ... reste du middleware
+}
+```
+
+**2. Vérifier CSP connect-src**
+
+Le CSP doit autoriser les WebSocket en développement :
+
+```javascript
+// middleware.js - Construction CSP
+const connectSrcSources = ["'self'"];
+
+if (process.env.NODE_ENV === 'development') {
+  const customDevDomain = process.env.NEXT_PUBLIC_DEV_WS_DOMAIN;
+  if (customDevDomain) {
+    connectSrcSources.push(customDevDomain);
+  }
+  connectSrcSources.push('ws://localhost:3001', 'wss://localhost:3001');
+}
+```
+
+**3. Supprimer allowedDevOrigins (deprecated)**
+
+```javascript
+// next.config.js - NE PAS avoir cette option
+// ❌ allowedDevOrigins: [...] // Cette option n'existe pas dans Next.js
+```
+
+**4. Vider le cache Next.js**
+
+```bash
+rm -rf .next
+npm run dev
+```
+
+**Vérification** :
+
+1. Ouvrir DevTools → Network → WS filter
+2. Recharger la page
+3. Chercher `webpack-hmr`
+4. Status devrait être `101 Switching Protocols` ✅
+
+**Variables d'environnement** (optionnel) :
+
+```bash
+# .env - Pour domaine personnalisé en dev
+NEXT_PUBLIC_DEV_WS_DOMAIN="wss://dev-fitmycv.duckdns.org"
 ```
 
 ---

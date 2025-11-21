@@ -56,6 +56,7 @@ export default function ChangesPanel() {
     <>
       {/* Bouton d'ouverture */}
       <button
+        data-onboarding="history"
         onClick={() => setIsOpen(true)}
         className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-white/20 hover:bg-white/30 backdrop-blur-xl border-2 border-white/30 hover:border-white/40 rounded-lg shadow-2xl hover:shadow-xl transition-all duration-200 drop-shadow"
         title={labels.title}
@@ -73,7 +74,7 @@ export default function ChangesPanel() {
         title={labels.title}
         size="large"
       >
-        <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
           {Object.entries(changesBySection).length === 0 ? (
             <p className="text-white/60 text-center py-8 drop-shadow">{labels.noChanges}</p>
           ) : (

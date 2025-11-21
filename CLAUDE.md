@@ -53,38 +53,103 @@ Toute la documentation technique est disponible dans le dossier **`docs/`**. Ce 
 
 ## 🔧 Environnements de Développement
 
-**Ce projet utilise une architecture DUAL avec 2 dossiers distincts :**
+**Ce projet utilise un workflow Git 3-branches :**
 
-### Dossier PRODUCTION (`~/Documents/cv-site/`)
+### Structure des Branches
+
+| Branche | Rôle | Tag | Merge vers |
+|---------|------|-----|------------|
+| `main` | Production stable | v1.2.3 | - |
+| `release` | Testing/Staging | v1.2.3-rc | `main` (via PR) |
+| `dev` | Développement actif | - | `release` (via PR) |
+
+### Dossier DÉVELOPPEMENT (`~/Documents/FitMyCV-DEV/`)
+- **Branche** : `dev` (branche de développement actif)
+- **Base de données** : SQLite `dev.db`
+- **Port** : `3001` (développement)
+- **Usage** : Développement quotidien, features, bugs, improvements
+
+### Dossier PRODUCTION (optionnel : `~/Documents/cv-site/`)
 - **Branche** : `main` uniquement (lecture seule, pull only)
 - **Base de données** : PostgreSQL `fitmycv_prod`
 - **Port** : `3000` (production)
 - **Usage** : Production uniquement, jamais de développement
 
-### Dossier DÉVELOPPEMENT (`~/Documents/cv-site-dev/`)
-- **Branche** : `release` (branche de développement)
-- **Base de données** : SQLite `dev.db`
-- **Port** : `3001` (développement)
-- **Usage** : Développement, features, tests
-
 ### Workflow Git
+
 ```bash
-# Développement (dans cv-site-dev/)
-cd ~/Documents/cv-site-dev
-git checkout release
+# 1. Développement d'une feature (dans FitMyCV-DEV/)
+cd ~/Documents/FitMyCV-DEV
+git checkout dev
+git pull origin dev
+git checkout -b feature/nom-feature
 # ... développement, commits ...
-git push origin release
+git push origin feature/nom-feature
 
-# Déploiement (merge manuel vers main)
+# 2. PR feature → dev
+gh pr create --base dev --head feature/nom-feature --title "feat: Description"
+# Après merge, supprimer la branche feature
+
+# 3. Quand prêt pour release : PR dev → release (tag -rc)
+gh pr create --base release --head dev --title "Release v1.x.x-rc"
+# Après merge:
+git checkout release
+git pull origin release
+git tag -a v1.x.x-rc -m "Release Candidate v1.x.x for testing"
+git push origin v1.x.x-rc
+
+# 4. Tests sur release (validation fonctionnelle)
+npm run dev  # Tester sur branche release
+npm run build && npm start  # Tester en mode production
+
+# 5. Après validation : PR release → main (tag final)
+gh pr create --base main --head release --title "Production Release v1.x.x"
+# Après merge:
 git checkout main
-git merge release
-git push origin main
+git pull origin main
+git tag -a v1.x.x -m "Production release v1.x.x"
+git push origin v1.x.x
 
-# Production (dans cv-site/)
+# 6. Déploiement production (dans cv-site/ si utilisé)
 cd ~/Documents/cv-site
+git checkout main
 git pull origin main
 npm run build
 npm start
+```
+
+### Workflow Hotfix (urgence production)
+
+```bash
+# 1. Créer hotfix depuis main
+git checkout main
+git pull origin main
+git checkout -b hotfix/nom-critique
+
+# 2. Fix + test rapide
+# ... corrections ...
+git commit -m "hotfix: Description critique"
+git push origin hotfix/nom-critique
+
+# 3. Merger dans main (production)
+git checkout main
+git merge hotfix/nom-critique --no-ff
+git tag -a v1.x.y -m "Hotfix v1.x.y"
+git push origin main --tags
+
+# 4. Backport dans release (éviter régression)
+git checkout release
+git merge hotfix/nom-critique --no-ff
+git push origin release
+
+# 5. Backport dans dev (éviter régression)
+git checkout dev
+git merge hotfix/nom-critique --no-ff
+git push origin dev
+
+# 6. Supprimer branche hotfix
+git branch -d hotfix/nom-critique
+git push origin --delete hotfix/nom-critique
 ```
 
 ---
@@ -294,7 +359,37 @@ const session = await getSession();
 const userId = session?.user?.id;
 ```
 
-### 5. Prévention scroll chaining (dropdowns)
+### 5. Vérification reCAPTCHA
+
+```javascript
+import { verifyRecaptcha } from '@/lib/recaptcha/verifyRecaptcha';
+
+// Vérifier token reCAPTCHA
+const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
+  callerName: 'import-pdf',
+  scoreThreshold: 0.5,
+});
+
+if (!recaptchaResult.success) {
+  return NextResponse.json({ error: recaptchaResult.error }, { status: 403 });
+}
+
+// Bypass en développement : ajouter BYPASS_RECAPTCHA=true dans .env
+```
+
+**Routes protégées par reCAPTCHA** (10 au total) :
+- `app/api/auth/register` - Création compte
+- `app/api/auth/request-reset` - Demande reset password
+- `app/api/auth/resend-verification` - Renvoi email vérification
+- `app/api/background-tasks/import-pdf` - Import CV PDF
+- `app/api/background-tasks/generate-cv` - Génération CV avec IA
+- `app/api/background-tasks/create-template-cv` - Création CV template
+- `app/api/background-tasks/translate-cv` - Traduction CV
+- `app/api/background-tasks/calculate-match-score` - Score match
+- `app/api/background-tasks/generate-cv-from-job-title` - Génération depuis job title
+- `app/api/cvs/create` - Création CV manuelle
+
+### 6. Prévention scroll chaining (dropdowns)
 
 ```javascript
 useEffect(() => {
@@ -348,12 +443,44 @@ Password: qwertyuiOP93300
 
 ### Workflow Git
 
+**Règles générales :**
 - ❌ **Ne merge JAMAIS sans demande explicite** (utiliser `--no-ff`)
 - ❌ **Ne commit JAMAIS sans demande explicite**
-- ✅ **Feature** : `feature/name_of_the_feature`
-- ✅ **Amélioration** : `improvement/name_of_the_feature`
-- ✅ **Bug majeur** : `bug/name_of_the_feature`
-- ✅ **Hotfix** : `hotfix/name_of_the_feature`
+- ❌ **Ne commit JAMAIS sans code review préalable** - Toujours utiliser l'agent code-review-expert AVANT de créer un commit
+- ❌ **Ne push JAMAIS sans demande explicite**
+- ✅ **Toujours créer des PRs** pour dev→release et release→main
+- ✅ **Taguer les versions** : -rc sur release, final sur main
+
+**Structure 3-branches :**
+
+| Branche | Base | Merge vers | Tag | PR requis |
+|---------|------|------------|-----|-----------|
+| `main` | - | - | v1.2.3 | - |
+| `release` | main | main | v1.2.3-rc | ✅ Oui |
+| `dev` | release | release | - | ✅ Oui |
+| `feature/*` | dev | dev | - | ✅ Oui |
+| `improvement/*` | dev | dev | - | ✅ Oui |
+| `bug/*` | dev | dev | - | ✅ Oui |
+| `hotfix/*` | main | main+release+dev | v1.2.y | ❌ Non (urgence) |
+
+**Nomenclature branches :**
+- ✅ **Feature** : `feature/name_of_the_feature` (part de dev)
+- ✅ **Amélioration** : `improvement/name_of_the_feature` (part de dev)
+- ✅ **Bug** : `bug/name_of_the_feature` (part de dev)
+- ✅ **Hotfix** : `hotfix/name_of_the_feature` (part de main, merge dans 3 branches)
+
+**Workflow visuel :**
+```
+Feature  ───┐ ┌───┐ ┌───     (branches de dev)
+         ╲ ╱ ╲ ╱ ╱
+Dev      ──○───○───○───     (PR vers release)
+          ╱         ╲
+Release  ─────────────○──    (tag -rc, PR vers main)
+        ╱              ╲
+Main   ○────────────────○    (tag final)
+
+Hotfix: main → merge dans (main + release + dev)
+```
 
 ### Commits
 
@@ -427,3 +554,5 @@ Pour toute question sur :
 ---
 
 **📝 Note** : Ce fichier est un **quick reference**. Pour toute information détaillée, consulter la **[documentation complète dans docs/](./docs/README.md)**.
+- Ne pas lire le fichier .env, chercher un fichier env.txt à la place (copie accéssible) ou demander à l'utilisateur de copier coller le contenu du .env sinon.
+- A chaque demande de commit, de PR, de merge etc... ne pas lancer les stop hooks

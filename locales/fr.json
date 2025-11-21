@@ -860,6 +860,8 @@
     "invoices": {
       "title": "Factures",
       "noInvoices": "Aucune facture pour le moment",
+      "noPdfInvoices": "Aucune facture PDF disponible",
+      "noPdfInvoicesHint": "Les factures PDF sont générées pour les abonnements. Les paiements de crédits sans abonnement n'ont pas de PDF.",
       "errorLoading": "Erreur lors du chargement des factures",
       "creditBanner": {
         "title": "💰 Crédit de facturation disponible",

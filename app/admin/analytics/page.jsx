@@ -14,24 +14,44 @@ import { DateRangePicker } from '@/components/admin/DateRangePicker';
 import { UserFilter } from '@/components/admin/UserFilter';
 import { TabsBar } from '@/components/admin/TabsBar';
 
-const TABS = [
-  { id: 'overview', label: 'Vue d\'ensemble', icon: '📊' },
-  { id: 'features', label: 'Features', icon: '⚡' },
-  { id: 'errors', label: 'Erreurs', icon: '🐛' },
-  { id: 'openai-costs', label: 'OpenAI Costs', icon: '💰' },
-  { id: 'feedback', label: 'Feedback', icon: '💬' },
-  { id: 'users', label: 'Utilisateurs', icon: '👨‍💼' },
-  { id: 'revenue', label: 'Revenus', icon: '💵' },
-  { id: 'subscriptions', label: 'Abonnements', icon: '💳' },
-  { id: 'settings', label: 'Settings', icon: '⚙️' },
-];
-
 export default function AnalyticsDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [period, setPeriod] = useState('30d');
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [triggeredAlerts, setTriggeredAlerts] = useState(null);
+
+  // Fetch triggered alerts
+  const fetchTriggeredAlerts = async () => {
+    try {
+      const res = await fetch('/api/admin/openai-alerts/triggered');
+      if (res.ok) {
+        const data = await res.json();
+        setTriggeredAlerts(data);
+      }
+    } catch (error) {
+      console.error('Error fetching triggered alerts:', error);
+    }
+  };
+
+  // Tabs configuration with dynamic badges
+  const TABS = [
+    { id: 'overview', label: 'Vue d\'ensemble', icon: '📊' },
+    { id: 'features', label: 'Features', icon: '⚡' },
+    { id: 'errors', label: 'Erreurs', icon: '🐛' },
+    { id: 'openai-costs', label: 'OpenAI Costs', icon: '💰', badge: triggeredAlerts?.totalTriggered || 0 },
+    { id: 'feedback', label: 'Feedback', icon: '💬' },
+    { id: 'users', label: 'Utilisateurs', icon: '👨‍💼' },
+    { id: 'revenue', label: 'Revenus', icon: '💵' },
+    { id: 'subscriptions', label: 'Abonnements', icon: '💳' },
+    { id: 'settings', label: 'Settings', icon: '⚙️' },
+  ];
+
+  // Fetch triggered alerts on mount and refresh
+  useEffect(() => {
+    fetchTriggeredAlerts();
+  }, [refreshKey]);
 
   // Reset animations when changing tabs
   useEffect(() => {
@@ -135,10 +155,10 @@ export default function AnalyticsDashboard() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-0">
-        {activeTab === 'overview' && <OverviewTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
+        {activeTab === 'overview' && <OverviewTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} triggeredAlerts={triggeredAlerts} />}
         {activeTab === 'features' && <FeaturesTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'errors' && <ErrorsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
-        {activeTab === 'openai-costs' && <OpenAICostsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
+        {activeTab === 'openai-costs' && <OpenAICostsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} triggeredAlerts={triggeredAlerts} />}
         {activeTab === 'feedback' && <FeedbackTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'users' && <UsersTab refreshKey={refreshKey} />}
         {activeTab === 'revenue' && <RevenueTab refreshKey={refreshKey} />}

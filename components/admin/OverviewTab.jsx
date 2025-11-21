@@ -8,7 +8,7 @@ import {
 import { FEATURE_CONFIG } from '@/lib/analytics/featureConfig';
 import { KPICard } from './KPICard';
 
-export function OverviewTab({ period, userId, refreshKey, isInitialLoad }) {
+export function OverviewTab({ period, userId, refreshKey, isInitialLoad, triggeredAlerts }) {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -262,7 +262,7 @@ export function OverviewTab({ period, userId, refreshKey, isInitialLoad }) {
       {/* Section 4: System Health Summary */}
       <div className="bg-white/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-white/20">
         <h3 className="text-lg font-semibold text-white mb-4">💚 Santé du Système</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Health Score */}
           <div className="text-center">
             <div className="text-6xl mb-2">{healthStatus.icon}</div>
@@ -286,6 +286,38 @@ export function OverviewTab({ period, userId, refreshKey, isInitialLoad }) {
             </div>
           </div>
 
+          {/* Alerts Status */}
+          <div className="space-y-3">
+            {(() => {
+              const alertCount = triggeredAlerts?.totalTriggered || 0;
+              const alertStatus = alertCount === 0 ? { icon: '✅', colorClass: 'text-green-400', label: 'Aucune alerte' }
+                : alertCount <= 2 ? { icon: '⚠️', colorClass: 'text-orange-400', label: 'Surveillance' }
+                : { icon: '🚨', colorClass: 'text-red-400', label: 'Critique' };
+
+              return (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/60">Alertes de seuils</span>
+                    <span className={`font-semibold ${alertStatus.colorClass} flex items-center gap-1`}>
+                      {alertStatus.icon} {alertCount}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/60">Statut</span>
+                    <span className={`font-semibold ${alertStatus.colorClass}`}>{alertStatus.label}</span>
+                  </div>
+                  {alertCount > 0 && (
+                    <div className="mt-2 p-2 bg-orange-500/10 rounded border border-orange-500/20">
+                      <p className="text-xs text-orange-300">
+                        {alertCount} alerte{alertCount > 1 ? 's' : ''} déclenchée{alertCount > 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+
           {/* Quick Actions */}
           <div className="flex flex-col justify-center gap-2">
             {kpis.healthScore < 70 && (
@@ -300,7 +332,25 @@ export function OverviewTab({ period, userId, refreshKey, isInitialLoad }) {
                 <p className="text-xs text-red-300/60 mt-1">{kpis.errorCount} erreurs à traiter</p>
               </div>
             )}
-            {kpis.healthScore >= 90 && (
+            {triggeredAlerts?.totalTriggered > 0 && (
+              <div className={`border rounded-lg p-3 ${
+                triggeredAlerts.totalTriggered <= 2
+                  ? 'bg-orange-500/20 border-orange-400/30'
+                  : 'bg-red-500/20 border-red-400/30'
+              }`}>
+                <p className={`text-sm ${
+                  triggeredAlerts.totalTriggered <= 2 ? 'text-orange-200' : 'text-red-200'
+                }`}>
+                  {triggeredAlerts.totalTriggered <= 2 ? '⚠️' : '🚨'} {triggeredAlerts.totalTriggered} alerte{triggeredAlerts.totalTriggered > 1 ? 's' : ''} déclenchée{triggeredAlerts.totalTriggered > 1 ? 's' : ''}
+                </p>
+                <p className={`text-xs mt-1 ${
+                  triggeredAlerts.totalTriggered <= 2 ? 'text-orange-300/60' : 'text-red-300/60'
+                }`}>
+                  Consultez l'onglet OpenAI Costs
+                </p>
+              </div>
+            )}
+            {kpis.healthScore >= 90 && !triggeredAlerts?.totalTriggered && (
               <div className="bg-green-500/20 border border-green-400/30 rounded-lg p-3">
                 <p className="text-sm text-green-200">✅ Système en excellent état</p>
                 <p className="text-xs text-green-300/60 mt-1">Aucune action requise</p>

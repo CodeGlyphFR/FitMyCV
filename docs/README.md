@@ -2,7 +2,7 @@
 
 > **Application Next.js 14 pour la création de CV personnalisés optimisés par IA**
 
-Version: **1.0.9**
+Version: **1.0.9.1**
 
 ---
 
@@ -266,32 +266,74 @@ Pour plus de détails, consultez [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ### Git Branching Strategy
 
-Ce projet suit une stratégie de branches structurée :
+Ce projet suit une **architecture 3-branches** avec PRs obligatoires :
 
-- **`main`** : Branche principale (production)
-- **`feature/*`** : Nouvelles fonctionnalités
-  - Exemple : `feature/business-plan-management`
-- **`improvement/*`** : Améliorations de fonctionnalités existantes
-  - Exemple : `improvement/export-pdf-modal`
-- **`bug/*`** : Corrections de bugs majeurs
-- **`hotfix/*`** : Corrections de bugs critiques
+| Branche | Rôle | Base | Tag |
+|---------|------|------|-----|
+| **`main`** | Production stable | - | v1.2.3 |
+| **`release`** | Testing/Staging | `main` | v1.2.3-rc |
+| **`dev`** | Développement actif | `release` | - |
+| **`feature/*`** | Nouvelles fonctionnalités | `dev` | - |
+| **`improvement/*`** | Améliorations existantes | `dev` | - |
+| **`bug/*`** | Corrections bugs | `dev` | - |
+| **`hotfix/*`** | Urgences production | `main` | v1.2.y |
 
-### Workflow
+**Exemples** :
+- `feature/business-plan-management` (part de `dev`)
+- `improvement/export-pdf-modal` (part de `dev`)
+- `bug/match-score-calculation` (part de `dev`)
+- `hotfix/security-xss` (part de `main`, merge dans les 3 branches)
+
+### Workflow de Contribution
+
+**Pour features/improvements/bugs** :
 
 ```bash
-# 1. Créer une branche feature
+# 1. Créer une branche depuis dev
+git checkout dev
+git pull origin dev
 git checkout -b feature/nom-feature
 
 # 2. Développer et committer
 git add .
 git commit -m "feat: Description de la feature"
+git push origin feature/nom-feature
 
-# 3. Merger dans main (avec --no-ff pour garder l'historique)
-git checkout main
-git merge feature/nom-feature --no-ff
+# 3. Créer PR vers dev
+gh pr create --base dev --head feature/nom-feature --title "feat: Description"
+# Attendre review et merge via GitHub UI
+
+# 4. Quand prêt pour release : PR dev → release (tag -rc)
+gh pr create --base release --head dev --title "Release v1.x.x-rc"
+# Après merge:
+git checkout release && git pull origin release
+git tag -a v1.x.x-rc -m "Release Candidate for testing"
+git push origin v1.x.x-rc
+
+# 5. Après validation : PR release → main (tag final)
+gh pr create --base main --head release --title "Production Release v1.x.x"
+# Après merge:
+git checkout main && git pull origin main
+git tag -a v1.x.x -m "Production release v1.x.x"
+git push origin v1.x.x
 ```
 
-**Note** : Les commits ne mentionnent jamais Claude Code ni génération automatique.
+**Workflow visuel** :
+```
+Feature  ───┐ ┌───┐ ┌───     (PR → dev)
+         ╲ ╱ ╲ ╱ ╱
+Dev      ──○───○───○───     (PR → release, tag -rc)
+          ╱         ╲
+Release  ─────────────○──    (PR → main, tag final)
+        ╱              ╲
+Main   ○────────────────○
+```
+
+**Notes importantes** :
+- Les commits ne mentionnent **jamais** Claude Code ni génération automatique
+- Toujours utiliser `--no-ff` pour préserver l'historique
+- PRs obligatoires pour `dev→release` et `release→main`
+- Tags : `-rc` sur release (testing), version finale sur main (production)
 
 Pour plus de détails, consultez [DEVELOPMENT.md](./DEVELOPMENT.md)
 
@@ -336,4 +378,4 @@ Propriétaire - Tous droits réservés
 
 ---
 
-**Développé avec Next.js 14 et OpenAI** | Version 1.0.9
+**Développé avec Next.js 14 et OpenAI** | Version 1.0.9.1

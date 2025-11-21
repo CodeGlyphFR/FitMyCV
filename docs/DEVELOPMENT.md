@@ -46,33 +46,69 @@ npm run dev
 
 ### Cycle de développement
 
+Le workflow suit une architecture **3-branches** (main → release → dev) avec PRs obligatoires.
+
 ```
-1. Créer une branche feature/improvement/bug/hotfix
+1. Créer une branche feature/improvement/bug depuis dev
 2. Développer la fonctionnalité
-3. Tester localement
+3. Tester localement (npm run dev, npm run build)
 4. Commit avec message conventionnel
-5. Merge dans main avec --no-ff
-6. Supprimer la branche locale
+5. Push et créer PR vers dev
+6. Après merge : supprimer la branche feature
+7. Quand prêt : créer PR dev → release (tag -rc)
+8. Tests sur release
+9. Après validation : créer PR release → main (tag final)
+```
+
+**Workflow visuel :**
+```
+Feature  ───┐ ┌───┐ ┌───     (PR → dev)
+         ╲ ╱ ╲ ╱ ╱
+Dev      ──○───○───○───     (PR → release, tag -rc)
+          ╱         ╲
+Release  ─────────────○──    (PR → main, tag final)
+        ╱              ╲
+Main   ○────────────────○
 ```
 
 ---
 
 ## Git Branching Strategy
 
+### Structure des branches
+
+Le projet utilise une architecture **3-branches** avec hiérarchie stricte :
+
+| Branche | Rôle | Base | Merge vers | Tag | PR requis |
+|---------|------|------|------------|-----|-----------|
+| `main` | Production stable | - | - | v1.2.3 | - |
+| `release` | Testing/Staging | `main` | `main` | v1.2.3-rc | ✅ Oui |
+| `dev` | Développement actif | `release` | `release` | - | ✅ Oui |
+| `feature/*` | Nouvelle fonctionnalité | `dev` | `dev` | - | ✅ Oui |
+| `improvement/*` | Amélioration existante | `dev` | `dev` | - | ✅ Oui |
+| `bug/*` | Correction bug | `dev` | `dev` | - | ✅ Oui |
+| `hotfix/*` | Urgence production | `main` | `main`+`release`+`dev` | v1.2.y | ❌ Non |
+
 ### Types de branches
 
-| Préfixe | Usage | Exemple |
-|---------|-------|---------|
-| `feature/` | Nouvelle fonctionnalité | `feature/oauth-apple` |
-| `improvement/` | Amélioration fonctionnalité existante | `improvement/export-pdf-modal` |
-| `bug/` | Correction bug majeur | `bug/match-score-calculation` |
-| `hotfix/` | Correction bug critique | `hotfix/security-xss` |
+| Préfixe | Usage | Exemple | Base |
+|---------|-------|---------|------|
+| `feature/` | Nouvelle fonctionnalité | `feature/oauth-apple` | `dev` |
+| `improvement/` | Amélioration fonctionnalité existante | `improvement/export-pdf-modal` | `dev` |
+| `bug/` | Correction bug majeur | `bug/match-score-calculation` | `dev` |
+| `hotfix/` | Correction bug critique production | `hotfix/security-xss` | `main` |
 
 ### Workflow
 
 #### 1. Créer une branche
 
+**Pour feature/improvement/bug** (partent toujours de `dev`) :
+
 ```bash
+# Se placer sur dev
+git checkout dev
+git pull origin dev
+
 # Feature
 git checkout -b feature/nom-feature
 
@@ -81,9 +117,17 @@ git checkout -b improvement/nom-improvement
 
 # Bug
 git checkout -b bug/nom-bug
+```
+
+**Pour hotfix** (part de `main`) :
+
+```bash
+# Se placer sur main
+git checkout main
+git pull origin main
 
 # Hotfix
-git checkout -b hotfix/nom-hotfix
+git checkout -b hotfix/nom-critique
 ```
 
 #### 2. Développer
@@ -91,20 +135,63 @@ git checkout -b hotfix/nom-hotfix
 ```bash
 # Faire des modifications
 # Tester localement
+npm run dev          # Test développement
+npm run build        # Test build
+npm start            # Test production local
 
-# Commit
+# Commit(s)
 git add .
 git commit -m "feat: Description de la feature"
 ```
 
-#### 3. Merger dans main
+#### 3. Créer Pull Request et merger
+
+**A. Feature/Bug/Improvement → dev** :
 
 ```bash
-# Se placer sur main
-git checkout main
+# Push la branche
+git push origin feature/nom-feature
 
-# Merger avec --no-ff (garde l'historique)
-git merge feature/nom-feature --no-ff
+# Créer PR vers dev
+gh pr create --base dev --head feature/nom-feature --title "feat: Description"
+
+# Après review et merge via GitHub UI:
+# Supprimer la branche feature
+git branch -d feature/nom-feature
+git push origin --delete feature/nom-feature
+```
+
+**B. dev → release** (quand prêt pour testing) :
+
+```bash
+# Créer PR dev → release
+gh pr create --base release --head dev --title "Release v1.x.x-rc"
+
+# Après merge via GitHub UI:
+git checkout release
+git pull origin release
+
+# Taguer la release candidate
+git tag -a v1.x.x-rc -m "Release Candidate v1.x.x for testing"
+git push origin v1.x.x-rc
+
+# Tests sur release
+npm run build && npm start  # Tester en conditions proches production
+```
+
+**C. release → main** (après validation) :
+
+```bash
+# Créer PR release → main
+gh pr create --base main --head release --title "Production Release v1.x.x"
+
+# Après merge via GitHub UI:
+git checkout main
+git pull origin main
+
+# Taguer la version finale
+git tag -a v1.x.x -m "Production release v1.x.x"
+git push origin v1.x.x
 ```
 
 **IMPORTANT** :
@@ -112,12 +199,190 @@ git merge feature/nom-feature --no-ff
 - **Toujours** utiliser `--no-ff` pour préserver l'historique
 - **Ne jamais** squash ou rebase (sauf demande explicite)
 - **Ne jamais** merge sans demande explicite
+- **PRs obligatoires** pour dev→release et release→main
+- **Tags** : `-rc` sur release, version finale sur main
 
-#### 4. Supprimer la branche
+#### 4. Supprimer les branches feature
 
 ```bash
 # Supprimer la branche locale
 git branch -d feature/nom-feature
+
+# Supprimer la branche remote (si elle n'a pas été supprimée via GitHub)
+git push origin --delete feature/nom-feature
+```
+
+---
+
+## Workflow Hotfix (Urgences Production)
+
+Les **hotfixes** sont des corrections critiques qui doivent être déployées rapidement en production. Ils suivent un workflow spécial car ils :
+- Partent de `main` (pas de `dev`)
+- Doivent être mergés dans **les 3 branches** (`main`, `release`, `dev`)
+- Ne nécessitent **pas de PR** (urgence)
+
+### Quand utiliser un hotfix ?
+
+Utiliser un hotfix **uniquement** pour :
+- ❌ Bugs critiques en production (security, crash, data loss)
+- ❌ Problèmes bloquants affectant tous les utilisateurs
+- ✅ Corrections urgentes ne pouvant pas attendre le prochain release
+
+**Ne PAS utiliser pour** :
+- Bugs mineurs (utiliser `bug/` depuis `dev`)
+- Nouvelles features (utiliser `feature/` depuis `dev`)
+- Améliorations (utiliser `improvement/` depuis `dev`)
+
+### Workflow Hotfix Complet
+
+#### 1. Créer le hotfix depuis main
+
+```bash
+# Se placer sur main (production)
+git checkout main
+git pull origin main
+
+# Créer branche hotfix
+git checkout -b hotfix/description-critique
+```
+
+#### 2. Corriger et tester rapidement
+
+```bash
+# Faire les corrections minimales nécessaires
+# ... modifications ...
+
+# Tester localement
+npm run dev          # Test rapide
+npm run build        # Build production
+npm start            # Test production local
+
+# Commit
+git add .
+git commit -m "hotfix: Description du bug critique corrigé"
+git push origin hotfix/description-critique
+```
+
+#### 3. Merger dans main (production)
+
+```bash
+# Revenir sur main
+git checkout main
+
+# Merger le hotfix (--no-ff pour garder l'historique)
+git merge hotfix/description-critique --no-ff
+
+# Taguer la version patch
+git tag -a v1.2.y -m "Hotfix v1.2.y - Description"
+git push origin main --tags
+```
+
+**Note** : Déployer immédiatement en production après ce merge.
+
+#### 4. Backport dans release (éviter régression)
+
+```bash
+# Se placer sur release
+git checkout release
+git pull origin release
+
+# Merger le hotfix
+git merge hotfix/description-critique --no-ff
+git push origin release
+```
+
+**Pourquoi** : Si `release` ne contient pas le hotfix, le prochain merge `release → main` réintroduira le bug.
+
+#### 5. Backport dans dev (éviter régression)
+
+```bash
+# Se placer sur dev
+git checkout dev
+git pull origin dev
+
+# Merger le hotfix
+git merge hotfix/description-critique --no-ff
+git push origin dev
+```
+
+**Pourquoi** : Si `dev` ne contient pas le hotfix, les futures features partiront d'une base buggée.
+
+#### 6. Supprimer la branche hotfix
+
+```bash
+# Supprimer localement
+git branch -d hotfix/description-critique
+
+# Supprimer sur remote
+git push origin --delete hotfix/description-critique
+```
+
+### Workflow Visuel Hotfix
+
+```
+               hotfix/critical
+              /     |     \
+             /      |      \
+Main    ───●───────●       \
+          /        merge    \
+         /                   \
+Release ──────────────────────●──
+                               \
+Dev    ─────────────────────────●
+```
+
+### Checklist Hotfix
+
+Avant de créer un hotfix, vérifier :
+
+- [ ] Le bug est **critique** et nécessite un déploiement immédiat ?
+- [ ] La correction est **minimale** et ciblée (pas de refactoring) ?
+- [ ] Les tests passent en local (npm run build && npm start) ?
+
+Après le hotfix :
+
+- [ ] Mergé dans `main` avec tag v1.2.y ?
+- [ ] Déployé en production ?
+- [ ] Backporté dans `release` ?
+- [ ] Backporté dans `dev` ?
+- [ ] Branche hotfix supprimée ?
+- [ ] Documentation mise à jour si nécessaire ?
+
+### Exemple Complet
+
+```bash
+# Contexte : Bug critique de sécurité XSS en production
+
+# 1. Créer hotfix
+git checkout main && git pull origin main
+git checkout -b hotfix/security-xss
+
+# 2. Corriger
+# ... fix XSS vulnerability ...
+git add . && git commit -m "hotfix: Fix XSS vulnerability in CV export"
+git push origin hotfix/security-xss
+
+# 3. Merge main + tag
+git checkout main
+git merge hotfix/security-xss --no-ff
+git tag -a v1.2.1 -m "Hotfix v1.2.1 - Security XSS fix"
+git push origin main --tags
+
+# 4. Backport release
+git checkout release && git pull origin release
+git merge hotfix/security-xss --no-ff
+git push origin release
+
+# 5. Backport dev
+git checkout dev && git pull origin dev
+git merge hotfix/security-xss --no-ff
+git push origin dev
+
+# 6. Cleanup
+git branch -d hotfix/security-xss
+git push origin --delete hotfix/security-xss
+
+# 7. Déployer en production immédiatement
 ```
 
 ---

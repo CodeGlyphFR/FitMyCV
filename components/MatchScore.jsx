@@ -227,6 +227,7 @@ export default function MatchScore({
     <div className="no-print relative -ml-3">
       {/* Bulle principale */}
       <div
+        data-onboarding="match-score"
         className={`
           relative w-12 h-12 rounded-full flex items-center justify-center
           bg-white/20 backdrop-blur-xl border-4 ${getBorderColor()} shadow-2xl

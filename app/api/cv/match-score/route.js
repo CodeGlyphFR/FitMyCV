@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { readUserCvFile } from "@/lib/cv/storage";
-import { calculateMatchScore } from "@/lib/openai/calculateMatchScore";
+import { calculateMatchScoreWithAnalysis } from "@/lib/openai/calculateMatchScoreWithAnalysis";
 
 export async function POST(request) {
   const session = await auth();
@@ -65,14 +65,16 @@ export async function POST(request) {
     console.log("[match-score] Source de l'offre:", jobOfferIdentifier);
     console.log("[match-score] Taille du CV:", cvContent.length, "caractères");
 
-    let score;
+    let result;
     try {
-      score = await calculateMatchScore({
+      result = await calculateMatchScoreWithAnalysis({
         cvContent,
-        jobOfferUrl: jobOfferIdentifier, // Peut être URL ou nom fichier, mais extractedJobOffer est en cache
+        jobOfferUrl: jobOfferIdentifier,
+        cvFile: cvRecord, // Passer le record DB pour accéder à extractedJobOffer
         signal: null,
+        userId,
       });
-      console.log("[match-score] Score calculé:", score);
+      console.log("[match-score] Score calculé:", result.matchScore);
     } catch (error) {
       console.error("[match-score] Erreur lors du calcul du score:", error);
       console.error("[match-score] Stack trace:", error.stack);
@@ -83,9 +85,9 @@ export async function POST(request) {
       }, { status: 500 });
     }
 
-    // ✅ Le score a été calculé avec succès, on peut maintenant sauvegarder et incrémenter le compteur
+    // ✅ Le score a été calculé avec succès, on peut maintenant sauvegarder
 
-    // Sauvegarder le score dans le CV
+    // Sauvegarder le score et l'analyse dans le CV
     await prisma.cvFile.update({
       where: {
         userId_filename: {
@@ -94,16 +96,24 @@ export async function POST(request) {
         },
       },
       data: {
-        matchScore: score,
+        matchScore: result.matchScore,
         matchScoreUpdatedAt: new Date(),
+        scoreBreakdown: JSON.stringify(result.scoreBreakdown),
+        improvementSuggestions: JSON.stringify(result.suggestions),
+        missingSkills: JSON.stringify(result.missingSkills),
+        matchingSkills: JSON.stringify(result.matchingSkills),
       },
     });
 
-    console.log(`[match-score] Score calculé et sauvegardé : ${score}/100`);
+    console.log(`[match-score] Score calculé et sauvegardé : ${result.matchScore}/100`);
 
     return NextResponse.json({
       success: true,
-      score,
+      score: result.matchScore,
+      scoreBreakdown: result.scoreBreakdown,
+      suggestions: result.suggestions,
+      missingSkills: result.missingSkills,
+      matchingSkills: result.matchingSkills,
     }, { status: 200 });
   } catch (error) {
     console.error("Error calculating match score:", error);

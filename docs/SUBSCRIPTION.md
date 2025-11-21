@@ -388,11 +388,16 @@ Si l'utilisateur a un `stripeCustomerId` local (commence par `local_`), l'API :
 ### Composant InvoicesTable
 
 Affiche l'historique avec :
+- **Filtrage automatique** : Affiche uniquement les factures avec PDF disponible (filtre les PaymentIntents sans Invoice)
 - **Badge Type** : 👑 Abonnement (violet) ou 💎 Crédits (bleu)
 - **Badge Statut** : Payé (vert), En attente (orange), Annulé (rouge)
-- **Téléchargement PDF** : Pour les factures d'abonnement
+- **Téléchargement PDF** : Toutes les factures affichées ont un bouton de téléchargement
+- **États vides intelligents** :
+  - Si aucune facture : "Aucune facture pour le moment"
+  - Si factures existent mais aucune avec PDF : "Aucune facture PDF disponible" avec explication
 - **Responsive** : Table desktop + cards mobile
 - **Tri** : Plus récent en premier
+- **Performance** : Compteurs de filtres mémorisés pour optimiser les rendus
 
 ### Banner de Crédit de Facturation
 

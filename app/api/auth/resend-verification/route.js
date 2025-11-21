@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 import { createVerificationToken, sendVerificationEmail, isEmailVerified } from '@/lib/email/emailService';
 import logger from '@/lib/security/secureLogger';
+import { verifyRecaptcha } from '@/lib/recaptcha/verifyRecaptcha';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,30 @@ export async function POST(request) {
         { error: 'Non authentifié' },
         { status: 401 }
       );
+    }
+
+    // Parse body pour obtenir recaptchaToken (optionnel)
+    let recaptchaToken = null;
+    try {
+      const body = await request.json();
+      recaptchaToken = body.recaptchaToken;
+    } catch (e) {
+      // Body vide ou invalide, pas de recaptchaToken - OK
+    }
+
+    // Vérification reCAPTCHA (optionnelle pour compatibilité, mais recommandée)
+    if (recaptchaToken) {
+      const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
+        callerName: 'resend-verification',
+        scoreThreshold: 0.5,
+      });
+
+      if (!recaptchaResult.success) {
+        return NextResponse.json(
+          { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
+          { status: recaptchaResult.statusCode || 403 }
+        );
+      }
     }
 
     const userId = session.user.id;

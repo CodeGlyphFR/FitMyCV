@@ -509,6 +509,7 @@ export default function Header(props){
       {/* Bouton d'édition du header en mode édition */}
       {(editing && settings.feature_edit_mode) ? (
         <button
+          data-onboarding="edit-button"
           onClick={()=>setOpen(true)}
           className="no-print absolute bottom-3 right-3 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-xs hover:bg-white/30 hover:shadow-xl transition-all duration-200"
           type="button"

@@ -860,6 +860,8 @@
     "invoices": {
       "title": "Invoices",
       "noInvoices": "No invoices yet",
+      "noPdfInvoices": "No PDF invoices available",
+      "noPdfInvoicesHint": "PDF invoices are generated for subscriptions. Credit payments without a subscription do not have a PDF.",
       "errorLoading": "Error loading invoices",
       "creditBanner": {
         "title": "💰 Billing credit available",

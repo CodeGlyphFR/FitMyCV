@@ -11,9 +11,11 @@ Ce document contient des exemples de code réutilisables et des patterns communs
 2. [Gestion Job Queue](#gestion-job-queue)
 3. [Validation de CV](#validation-de-cv)
 4. [Session Utilisateur](#session-utilisateur)
-5. [Gestion Scroll Chaining](#gestion-scroll-chaining)
-6. [Gestion Stripe et Abonnements](#gestion-stripe-et-abonnements)
-7. [Vérification Limites Features](#vérification-limites-features)
+5. [Vérification reCAPTCHA](#vérification-recaptcha)
+6. [Gestion Scroll Chaining](#gestion-scroll-chaining)
+7. [Gestion Stripe et Abonnements](#gestion-stripe-et-abonnements)
+8. [React useEffect et Dépendances Stables](#react-useeffect-et-dépendances-stables)
+9. [Vérification Limites Features](#vérification-limites-features)
 
 ---
 
@@ -345,6 +347,160 @@ export default async function MyServerComponent() {
 
 ---
 
+## Vérification reCAPTCHA
+
+Fonction centralisée pour vérifier les tokens reCAPTCHA v3 avec support du bypass pour tests/développement.
+
+### Utilisation de Base
+
+```javascript
+import { verifyRecaptcha } from '@/lib/recaptcha/verifyRecaptcha';
+
+// Vérifier un token
+const result = await verifyRecaptcha(recaptchaToken, {
+  callerName: 'import-pdf',  // Nom pour les logs
+  scoreThreshold: 0.5,        // Score minimum (0.0 = bot, 1.0 = humain)
+});
+
+if (!result.success) {
+  // Vérification échouée
+  console.error(result.error);
+  return Response.json({ error: result.error }, { status: 403 });
+}
+
+// Vérification réussie (ou bypassée)
+console.log('Score:', result.score);
+console.log('Bypassed:', result.bypassed); // true si BYPASS_RECAPTCHA=true
+```
+
+### Pattern dans API Route
+
+```javascript
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth/session";
+import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
+
+export async function POST(request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  }
+
+  const formData = await request.formData();
+  const recaptchaToken = formData.get("recaptchaToken");
+
+  // Vérification reCAPTCHA (optionnelle pour compatibilité)
+  if (recaptchaToken) {
+    const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
+      callerName: 'import-pdf',
+      scoreThreshold: 0.5,
+    });
+
+    if (!recaptchaResult.success) {
+      return NextResponse.json(
+        { error: recaptchaResult.error || "Échec de la vérification anti-spam." },
+        { status: recaptchaResult.error?.includes('Configuration') ? 500 : 403 }
+      );
+    }
+  }
+
+  // Suite de la logique métier
+  // ...
+}
+```
+
+### Bypass pour Tests/Développement
+
+Pour désactiver la vérification reCAPTCHA en développement ou lors de tests automatisés (MCP Puppeteer, etc.) :
+
+**1. Ajouter dans `.env` :**
+```bash
+BYPASS_RECAPTCHA=true
+```
+
+**2. La fonction retourne automatiquement success :**
+```javascript
+// Avec BYPASS_RECAPTCHA=true dans .env
+const result = await verifyRecaptcha(token, { callerName: 'test' });
+
+// result = {
+//   success: true,
+//   score: 1.0,
+//   bypassed: true
+// }
+```
+
+**3. Les logs affichent le bypass :**
+```
+[import-pdf] BYPASS MODE ENABLED - Skipping reCAPTCHA verification
+```
+
+### Options Disponibles
+
+```javascript
+await verifyRecaptcha(token, {
+  // Nom du caller pour les logs (obligatoire pour debug)
+  callerName: 'register',
+
+  // Seuil minimum de score (défaut: 0.5)
+  // 0.0 = certainement un bot
+  // 0.5 = seuil recommandé par Google
+  // 1.0 = certainement un humain
+  scoreThreshold: 0.5,
+
+  // Action attendue (optionnel, vérifie que le token correspond)
+  expectedAction: 'submit_form',
+});
+```
+
+### Codes d'Erreur
+
+La fonction retourne différents types d'erreurs :
+
+```javascript
+// Token manquant
+{ success: false, error: 'Token reCAPTCHA manquant' }
+
+// Configuration serveur manquante
+{ success: false, error: 'Configuration serveur manquante' }
+
+// Vérification échouée
+{ success: false, error: 'Échec de la vérification reCAPTCHA', errorCodes: [...] }
+
+// Action non correspondante
+{ success: false, error: 'Action reCAPTCHA non correspondante' }
+
+// Score trop faible
+{ success: false, score: 0.3, error: 'Score reCAPTCHA trop faible (0.3 < 0.5)' }
+
+// Erreur réseau/serveur
+{ success: false, error: 'Erreur serveur lors de la vérification reCAPTCHA' }
+```
+
+### Références d'Implémentation
+
+Routes utilisant `verifyRecaptcha()` (10 au total) :
+
+**Auth Routes** :
+- `app/api/auth/register/route.js:22` - Création compte
+- `app/api/auth/request-reset/route.js:14` - Demande reset password
+- `app/api/auth/resend-verification/route.js:33` - Renvoi email vérification
+
+**Background Tasks** :
+- `app/api/background-tasks/import-pdf/route.js:66` - Import CV PDF
+- `app/api/background-tasks/generate-cv/route.js:107` - Génération CV avec IA
+- `app/api/background-tasks/create-template-cv/route.js:63` - Création CV template
+- `app/api/background-tasks/translate-cv/route.js:34` - Traduction CV
+- `app/api/background-tasks/calculate-match-score/route.js:35` - Score match
+- `app/api/background-tasks/generate-cv-from-job-title/route.js:27` - Génération depuis job title
+
+**CV Operations** :
+- `app/api/cvs/create/route.js:24` - Création CV manuelle
+
+**Documentation** : [SECURITY.md](./SECURITY.md) | [MCP_PUPPETEER.md - Bypass reCAPTCHA](./MCP_PUPPETEER.md)
+
+---
+
 ## Gestion Scroll Chaining
 
 Patterns pour éviter le scroll de la page quand on scrolle dans un dropdown ou une liste modale.
@@ -609,6 +765,174 @@ export async function POST(request) {
 ```
 
 **Documentation** : [STRIPE_SETUP.md](./STRIPE_SETUP.md) | [SUBSCRIPTION.md](./SUBSCRIPTION.md)
+
+---
+
+## React useEffect et Dépendances Stables
+
+Patterns pour éviter les boucles infinies causées par des objets recréés à chaque render.
+
+### Problème : Boucles Infinies avec Objets
+
+Les hooks custom qui retournent des objets (state, operations, modals, etc.) créent de nouvelles références à chaque render. Si on les met dans les dépendances d'un `useEffect`, cela déclenche une boucle infinie.
+
+### Pourquoi setState est Stable
+
+React **garantit** que les fonctions `setState` ont une identité stable entre les renders. Cela signifie que `state.setSomething` est toujours la même fonction, même si l'objet `state` change.
+
+**Référence officielle** : [React docs - useState](https://react.dev/reference/react/useState#setstate-is-stable)
+
+### Pattern de Base
+
+```javascript
+// ❌ INCORRECT - Boucle infinie
+React.useEffect(() => {
+  state.setSomething(value);
+}, [state]); // 'state' est recréé à chaque render
+
+// ✅ CORRECT - Stable
+React.useEffect(() => {
+  state.setSomething(value);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []); // setState est garanti stable par React
+```
+
+### Cas d'Usage
+
+#### 1. setState Simple
+
+```javascript
+const [isOpen, setIsOpen] = React.useState(false);
+
+// ✅ Pas besoin d'ajouter setIsOpen aux dépendances
+React.useEffect(() => {
+  if (someCondition) {
+    setIsOpen(true);
+  }
+}, [someCondition]); // setIsOpen omis (stable)
+```
+
+#### 2. Custom Hook avec Setters
+
+```javascript
+// Hook custom qui retourne un objet
+function useModalState() {
+  const [isOpen, setIsOpen] = React.useState(false);
+  return {
+    isOpen,
+    open: () => setIsOpen(true),
+    close: () => setIsOpen(false)
+  };
+}
+
+// Utilisation
+function MyComponent() {
+  const modal = useModalState(); // Nouvel objet à chaque render
+
+  // ✅ On n'a besoin que de modal.isOpen (primitive)
+  React.useEffect(() => {
+    if (modal.isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  }, [modal.isOpen]); // Seulement la primitive
+
+  // ✅ Si on doit appeler modal.close(), omettre 'modal'
+  React.useEffect(() => {
+    function handleEscape(e) {
+      if (e.key === 'Escape') {
+        modal.close(); // Stable via setState
+      }
+    }
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // modal.close omis (stable)
+}
+```
+
+#### 3. Multiples Hooks Custom
+
+```javascript
+function ComplexComponent() {
+  const state = useComponentState(); // { items, setItems, current, setCurrent }
+  const modals = useModalState();    // { listOpen, setListOpen, ... }
+  const operations = useOperations(); // { reload, delete, ... }
+
+  // ✅ N'inclure QUE les primitives nécessaires
+  React.useEffect(() => {
+    // On écoute les changements de listOpen et items
+    if (modals.listOpen && state.items.length > 0) {
+      calculateDropdownPosition();
+    }
+  }, [modals.listOpen, state.items]); // Seulement les primitives
+
+  // ✅ Si on appelle uniquement des setters, tableau vide
+  React.useEffect(() => {
+    const unsubscribe = subscribeToEvents((event) => {
+      state.setItems(event.items);
+      modals.setListOpen(false);
+    });
+    return unsubscribe;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Setters omis (stables)
+}
+```
+
+### Quand Désactiver le Linter
+
+Utiliser `eslint-disable-next-line react-hooks/exhaustive-deps` quand :
+
+1. **setState functions** - Garantis stables par React
+2. **Fonctions wrappant setState** - Si elles ne font QUE du setState
+3. **Callbacks stables** - Fonctions passées qui ne changent jamais
+
+```javascript
+// Bon usage de eslint-disable
+React.useEffect(() => {
+  // Appelle uniquement des setters stables
+  modal.open();
+  state.reset();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [triggerCondition]); // Seulement la condition trigger
+```
+
+**⚠️ Attention** : Si la fonction lit des valeurs (props, state), elle doit être dans les dépendances OU recréée avec `useCallback`.
+
+### Anti-Patterns à Éviter
+
+```javascript
+// ❌ Inclure tout l'objet
+React.useEffect(() => {
+  if (state.isOpen) {
+    doSomething();
+  }
+}, [state]); // Boucle infinie
+
+// ❌ Mettre les setters explicitement
+React.useEffect(() => {
+  state.setIsOpen(true);
+}, [state.setIsOpen]); // Inutile et verbeux
+
+// ❌ Omettre des primitives nécessaires
+React.useEffect(() => {
+  if (props.userId) { // Lit une valeur
+    fetchUser(props.userId);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []); // INCORRECT - manque props.userId
+```
+
+### Références d'Implémentation
+
+Fixes appliqués dans TopBar.jsx (14 useEffect) :
+- `components/TopBar/TopBar.jsx:138` - Portal ready
+- `components/TopBar/TopBar.jsx:146` - CV list reload
+- `components/TopBar/TopBar.jsx:161` - Event listeners
+- `components/TopBar/TopBar.jsx:300` - Outside click handlers
+
+**Documentation** : [React Docs - useState](https://react.dev/reference/react/useState) | [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
 
 ---
 
