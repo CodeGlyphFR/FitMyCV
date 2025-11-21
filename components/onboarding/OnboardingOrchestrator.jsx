@@ -9,8 +9,8 @@ import { extractCvFilename } from '@/lib/onboarding/cvFilenameUtils';
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from '@/lib/onboarding/onboardingEvents';
 import OnboardingModal from './OnboardingModal';
 import OnboardingCompletionModal from './OnboardingCompletionModal';
-import PulsingDot from './PulsingDot';
 import OnboardingTooltip from './OnboardingTooltip';
+import OnboardingHighlight from './OnboardingHighlight';
 import confetti from 'canvas-confetti';
 
 /**
@@ -812,9 +812,10 @@ export default function OnboardingOrchestrator() {
     if (currentStep === 1) {
       return (
         <>
-          {/* Pulsing dot : disparaît quand modal ouvert */}
-          <PulsingDot
+          {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
+          <OnboardingHighlight
             show={!modalOpen}
+            blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
 
@@ -850,9 +851,10 @@ export default function OnboardingOrchestrator() {
     if (currentStep === 2) {
       return (
         <>
-          {/* Pulsing dot */}
-          <PulsingDot
+          {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
+          <OnboardingHighlight
             show={!modalOpen}
+            blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
 
@@ -887,8 +889,10 @@ export default function OnboardingOrchestrator() {
     if (currentStep === 3) {
       return (
         <>
-          <PulsingDot
+          {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
+          <OnboardingHighlight
             show={true}
+            blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
 
@@ -915,11 +919,10 @@ export default function OnboardingOrchestrator() {
 
       return (
         <>
-          {/* Note: OnboardingHighlight retiré car le backdrop-blur bloquait toute la page.
-              Le PulsingDot et le Tooltip suffisent pour guider l'utilisateur. */}
-
-          <PulsingDot
+          {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
+          <OnboardingHighlight
             show={true}
+            blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
 
@@ -939,8 +942,10 @@ export default function OnboardingOrchestrator() {
     if (currentStep === 5) {
       return (
         <>
-          <PulsingDot
+          {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
+          <OnboardingHighlight
             show={true}
+            blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
 
@@ -960,9 +965,10 @@ export default function OnboardingOrchestrator() {
     if (currentStep === 6) {
       return (
         <>
-          {/* Pulsing dot */}
-          <PulsingDot
-            show={true}
+          {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
+          <OnboardingHighlight
+            show={!modalOpen}
+            blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
 
@@ -1003,8 +1009,10 @@ export default function OnboardingOrchestrator() {
           {/* Phase 1 : Historique */}
           {step7Phase === 1 && (
             <>
-              <PulsingDot
+              {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
+              <OnboardingHighlight
                 show={true}
+                blurEnabled={!tooltipClosed}
                 targetSelector='[data-onboarding="history"]'
               />
 
@@ -1022,8 +1030,10 @@ export default function OnboardingOrchestrator() {
           {/* Phase 2 : Export */}
           {step7Phase === 2 && (
             <>
-              <PulsingDot
-                show={!tooltipClosed}
+              {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
+              <OnboardingHighlight
+                show={true}
+                blurEnabled={!tooltipClosed}
                 targetSelector='[data-onboarding="export"]'
               />
 
