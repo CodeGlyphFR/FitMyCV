@@ -21,8 +21,9 @@ export default function ChecklistPanel() {
     skipOnboarding,
   } = useOnboarding();
 
-  // Ne pas afficher si onboarding pas actif et pas complété
-  if (!isActive && !hasCompleted) return null;
+  // Ne pas afficher si onboarding pas actif (y compris si complété)
+  // La task list disparaît une fois l'onboarding terminé
+  if (!isActive) return null;
 
   // Calculer le nombre effectif d'étapes complétées
   // Inclut les steps explicitement complétés ET les steps implicitement complétés (avant currentStep)
