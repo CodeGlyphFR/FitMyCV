@@ -35,6 +35,7 @@ components/
 ├── feedback/         # Système de feedback (3 composants)
 ├── account/          # Paramètres compte (1 composant)
 ├── notifications/    # Notifications (2 composants)
+├── onboarding/       # Tutoriel d'intégration (7 composants)
 ├── [CV]              # Affichage CV (10 composants)
 └── [Providers]       # Context providers (8 composants)
 ```
@@ -844,6 +845,48 @@ showNotification({
 ### RealtimeRefreshProvider.jsx
 
 Provider de rafraîchissement en temps réel (SSE).
+
+---
+
+### OnboardingProvider.jsx
+
+Provider du système de tutoriel d'intégration (7 étapes).
+
+**Localisation** : `components/onboarding/OnboardingProvider.jsx`
+
+**Context** :
+
+```javascript
+{
+  currentStep: number,        // 0-7 (0 = pas commencé)
+  completedSteps: number[],   // Étapes complétées
+  isActive: boolean,          // Tutoriel en cours
+  hasCompleted: boolean,      // Tutoriel terminé
+  startOnboarding: () => void,
+  markStepComplete: (step) => void,
+  skipOnboarding: () => void,
+  completeOnboarding: () => void,
+  resetOnboarding: () => void
+}
+```
+
+**Composants associés** :
+
+- `OnboardingOrchestrator.jsx` : Gère l'affichage des étapes (modals, tooltips, pulsing dots)
+- `OnboardingModal.jsx` : Modal carousel pour les explications
+- `OnboardingCompletionModal.jsx` : Modal de fin avec présentation des fonctionnalités avancées
+- `ChecklistPanel.jsx` : Panel flottant de progression (disparaît après complétion)
+- `OnboardingTooltip.jsx` : Tooltips positionnés
+- `PulsingDot.jsx` : Point rouge pulsant pour attirer l'attention
+
+**Flux de complétion** :
+
+1. Utilisateur termine step 7 (export PDF)
+2. Animation confetti
+3. Modal carrousel présente les fonctionnalités avancées (recherche, import, création manuelle)
+4. Fermeture du modal → `completeOnboarding()` appelé
+5. ChecklistPanel disparaît
+6. Date de complétion visible dans Account Settings
 
 ---
 

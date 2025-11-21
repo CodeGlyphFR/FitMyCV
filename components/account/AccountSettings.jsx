@@ -21,6 +21,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
   const [onboardingMessage, setOnboardingMessage] = React.useState("");
   const [onboardingError, setOnboardingError] = React.useState("");
   const [onboardingLoading, setOnboardingLoading] = React.useState(false);
+  const [onboardingCompletedAt, setOnboardingCompletedAt] = React.useState(null);
 
   // Vérifier si l'email a été changé avec succès
   React.useEffect(() => {
@@ -30,6 +31,24 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       setEmail(user?.email || "");
     }
   }, [searchParams, user?.email]);
+
+  // Fetch onboarding completion date
+  React.useEffect(() => {
+    async function fetchOnboardingState() {
+      try {
+        const res = await fetch('/api/user/onboarding');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.completedAt) {
+            setOnboardingCompletedAt(new Date(data.completedAt));
+          }
+        }
+      } catch (error) {
+        console.error('[AccountSettings] Error fetching onboarding state:', error);
+      }
+    }
+    fetchOnboardingState();
+  }, []);
 
   const [currentPassword, setCurrentPassword] = React.useState("");
   const [newPassword, setNewPassword] = React.useState("");
@@ -329,6 +348,27 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
 
       <section className="rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-xl p-6 shadow-2xl">
         <h2 className="text-lg font-semibold mb-4 text-emerald-300 drop-shadow">Tutoriel d'intégration</h2>
+
+        {/* Afficher la date de complétion si disponible */}
+        {onboardingCompletedAt && (
+          <div className="rounded-lg border-2 border-emerald-400/30 bg-emerald-500/10 backdrop-blur-sm px-3 py-2 text-sm text-white/90 drop-shadow mb-4 flex items-center gap-2">
+            <span className="text-emerald-400">✓</span>
+            <span>
+              Tutoriel terminé le{' '}
+              {onboardingCompletedAt.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+              })}{' '}
+              à{' '}
+              {onboardingCompletedAt.toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </span>
+          </div>
+        )}
+
         <p className="text-sm text-white/80 drop-shadow mb-4">
           Relancez le guide de découverte de l'application si vous souhaitez revoir les fonctionnalités principales.
         </p>

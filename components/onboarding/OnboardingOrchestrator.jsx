@@ -8,6 +8,7 @@ import { isAiGenerationTask, isMatchScoreTask, isImprovementTask } from '@/lib/b
 import { extractCvFilename } from '@/lib/onboarding/cvFilenameUtils';
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from '@/lib/onboarding/onboardingEvents';
 import OnboardingModal from './OnboardingModal';
+import OnboardingCompletionModal from './OnboardingCompletionModal';
 import PulsingDot from './PulsingDot';
 import OnboardingTooltip from './OnboardingTooltip';
 import confetti from 'canvas-confetti';
@@ -45,6 +46,9 @@ export default function OnboardingOrchestrator() {
 
   // État pour gérer les 2 phases du step 7 (ancien 9)
   const [step7Phase, setStep7Phase] = useState(1);
+
+  // État pour le modal de complétion (affiché après step 7)
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
 
   // État pour gérer la fermeture individuelle des tooltips
   const [tooltipClosed, setTooltipClosed] = useState(false);
@@ -701,6 +705,16 @@ export default function OnboardingOrchestrator() {
   };
 
   /**
+   * Handler pour la fermeture du modal de complétion
+   * Appelé quand l'utilisateur termine le carrousel de fin ou ferme le modal
+   */
+  const handleCompletionModalClose = async () => {
+    setShowCompletionModal(false);
+    // Marquer l'onboarding comme complété
+    await completeOnboarding();
+  };
+
+  /**
    * Déclenche l'animation de confetti pour célébrer la complétion
    * Utilisé uniquement pour l'étape 7 Phase 2 (fin de l'onboarding)
    */
@@ -764,17 +778,19 @@ export default function OnboardingOrchestrator() {
         return;
       }
 
-      // Étape 7 Phase 2 : Fermer tooltip export = valider PUIS confetti
+      // Étape 7 Phase 2 : Fermer tooltip export = confetti PUIS ouvrir modal de complétion
       if (currentStep === 7 && step7Phase === 2) {
         try {
-          await markStepComplete(currentStep);
-          // Confetti seulement si validation réussie
+          // Fermer le tooltip et le pulsing dot AVANT d'ouvrir le modal
+          setTooltipClosed(true);
+          // Confetti pour célébrer
           triggerCompletionConfetti();
+          // Ouvrir le modal de complétion (la validation se fera à la fermeture du modal)
+          setShowCompletionModal(true);
           return;
         } catch (error) {
-          console.error('[Onboarding] Step 7 validation failed:', error);
-          setTooltipClosed(true); // Fermer le tooltip même en cas d'erreur
-          // TODO: Afficher une notification d'erreur à l'utilisateur en production
+          console.error('[Onboarding] Step 7 completion modal failed:', error);
+          setTooltipClosed(true);
           return;
         }
       }
@@ -979,6 +995,9 @@ export default function OnboardingOrchestrator() {
 
     // ========== ÉTAPE 7 : HISTORIQUE + EXPORT (ANCIEN 9, 2 PHASES) ==========
     if (currentStep === 7) {
+      // Ne rien afficher si le modal de complétion est ouvert
+      if (showCompletionModal) return null;
+
       return (
         <>
           {/* Phase 1 : Historique */}
@@ -1004,7 +1023,7 @@ export default function OnboardingOrchestrator() {
           {step7Phase === 2 && (
             <>
               <PulsingDot
-                show={true}
+                show={!tooltipClosed}
                 targetSelector='[data-onboarding="export"]'
               />
 
@@ -1028,6 +1047,12 @@ export default function OnboardingOrchestrator() {
   return (
     <>
       {renderStep()}
+
+      {/* Modal de complétion (affiché après step 7) */}
+      <OnboardingCompletionModal
+        open={showCompletionModal}
+        onComplete={handleCompletionModalClose}
+      />
     </>
   );
 }
