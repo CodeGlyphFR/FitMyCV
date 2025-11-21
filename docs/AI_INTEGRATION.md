@@ -233,20 +233,25 @@ Calcule le score de correspondance avec analyse détaillée.
 **Inputs** :
 
 - CV (JSON)
-- Offre d'emploi (texte extrait)
+- `cvFile.extractedJobOffer` (texte extrait stocké en DB lors de la création/génération du CV)
 
 **Process** :
 
 ```
-1. Load CV + job offer
-2. Load scoring prompts
-3. Call OpenAI API
-4. Parse score (0-100)
-5. Extract breakdown (technical_skills, experience, etc.)
-6. Extract suggestions (high/medium/low priority)
-7. Extract missing/matching skills
-8. Return analysis object
+1. Load CV content
+2. Get extractedJobOffer from DB (REQUIRED - no scraping)
+3. Detect languages (CV and job offer) for translation if needed
+4. Load scoring prompts
+5. Call OpenAI API
+6. Parse score (0-100)
+7. Extract breakdown (technical_skills, experience, education, soft_skills_languages)
+8. Extract suggestions (array)
+9. Extract missing/matching skills
+10. Recalculate weighted score (35% tech, 30% exp, 20% edu, 15% soft)
+11. Return analysis object
 ```
+
+**Note** : Le score ne peut être calculé que si le CV a un `extractedJobOffer` en base (stocké lors de la génération/création).
 
 **Output** :
 
@@ -300,16 +305,30 @@ Améliore un CV basé sur les suggestions.
 
 ### 6. createTemplateCv.js
 
-Crée un CV template vide.
+Crée un CV modèle fictif réaliste à partir d'une offre d'emploi (URL ou PDF).
 
 **Fichier** : `lib/openai/createTemplateCv.js`
+
+**Inputs** :
+
+- URL(s) d'offre(s) d'emploi ou PDF(s)
+- Niveau d'analyse (rapid/medium/deep)
 
 **Process** :
 
 ```
-1. Load template structure from data/template.json
-2. Return template (optionally with AI-generated placeholders)
+1. Extract job offer content via extractJobOfferWithGPT (from generateCv.js)
+   - Multi-strategy HTML extraction (semantic tags, job classes, H/F pattern)
+   - Antibot detection (HTTP first, Puppeteer fallback)
+2. Load template structure from data/template.json
+3. Load create-template prompts
+4. Call OpenAI API to generate realistic CV matching job requirements
+5. Validate CV structure (full_name + current_title required)
+6. Enrich with metadata (generator, source, timestamps)
+7. Return CV JSON + extractedJobOffer text
 ```
+
+**Note** : L'extraction d'offre (`extractJobOfferWithGPT`) est partagée avec `generateCv.js` pour éviter la duplication de code.
 
 ---
 
