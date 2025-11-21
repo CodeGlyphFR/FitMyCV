@@ -19,6 +19,7 @@ import { createPortal } from 'react-dom';
  * - persistent: boolean - Le tooltip reste affiché (pas de timeout auto-close) - default: false
  * - autoCloseDelay: number - Délai avant auto-close en ms (si pas persistent) - default: 0 (pas d'auto-close)
  * - maxWidth: number - Largeur max en pixels - default: 320
+ * - minWidth: number - Largeur min en pixels - default: 280
  * - offset: number - Distance entre tooltip et élément en pixels - default: 12
  */
 export default function OnboardingTooltip({
@@ -31,10 +32,12 @@ export default function OnboardingTooltip({
   persistent = false,
   autoCloseDelay = 0,
   maxWidth = 320,
+  minWidth = 280,
   offset = 12,
 }) {
   const [tooltipPosition, setTooltipPosition] = useState(null);
   const [calculatedPosition, setCalculatedPosition] = useState(position);
+  const [arrowOffset, setArrowOffset] = useState(0); // Décalage de l'arrow après clamping
   const tooltipRef = useRef(null);
 
   /**
@@ -188,6 +191,16 @@ export default function OnboardingTooltip({
     // Appliquer le clamping pour éviter le débordement du viewport
     const clampedPosition = clampToViewport(top, left, finalPosition, targetRect);
 
+    // Calculer le décalage de l'arrow pour qu'elle pointe toujours vers l'élément cible
+    // Pour top/bottom: décalage horizontal, pour left/right: décalage vertical
+    let arrowOffsetValue = 0;
+    if (finalPosition === 'top' || finalPosition === 'bottom') {
+      arrowOffsetValue = left - clampedPosition.left;
+    } else if (finalPosition === 'left' || finalPosition === 'right') {
+      arrowOffsetValue = top - clampedPosition.top;
+    }
+    setArrowOffset(arrowOffsetValue);
+
     setTooltipPosition(clampedPosition);
   };
 
@@ -229,6 +242,28 @@ export default function OnboardingTooltip({
     return () => clearTimeout(timer);
   }, [show, persistent, autoCloseDelay, onClose]);
 
+  /**
+   * Fermer le tooltip au clic sur l'élément cible
+   * L'action native du bouton est préservée (pas de preventDefault)
+   */
+  useEffect(() => {
+    if (!show || !targetSelector || !onClose) return;
+
+    const targetElement = document.querySelector(targetSelector);
+    if (!targetElement) return;
+
+    const handleTargetClick = () => {
+      // Fermer le tooltip sans bloquer l'action native
+      onClose();
+    };
+
+    targetElement.addEventListener('click', handleTargetClick);
+
+    return () => {
+      targetElement.removeEventListener('click', handleTargetClick);
+    };
+  }, [show, targetSelector, onClose]);
+
   // Handler close
   const handleClose = () => {
     if (onClose) onClose();
@@ -245,12 +280,45 @@ export default function OnboardingTooltip({
     right: '-translate-y-1/2',
   };
 
-  // Position de la flèche
+  // Position de la flèche (sans le positionnement horizontal/vertical qui sera calculé dynamiquement)
   const arrowPositionClasses = {
-    top: 'bottom-[-8px] left-1/2 -translate-x-1/2 rotate-180',
-    bottom: 'top-[-8px] left-1/2 -translate-x-1/2',
-    left: 'right-[-8px] top-1/2 -translate-y-1/2 rotate-90',
-    right: 'left-[-8px] top-1/2 -translate-y-1/2 -rotate-90',
+    top: 'bottom-[-8px] rotate-180',
+    bottom: 'top-[-8px]',
+    left: 'right-[-8px] rotate-90',
+    right: 'left-[-8px] -rotate-90',
+  };
+
+  // Calcul du style de positionnement de l'arrow avec le décalage
+  const getArrowStyle = () => {
+    const baseStyle = {
+      clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+    };
+
+    // Clamper l'arrowOffset pour qu'il reste dans les limites du tooltip
+    // Utiliser les dimensions réelles ou les valeurs par défaut
+    const tooltipWidth = tooltipRef.current?.offsetWidth || minWidth;
+    const tooltipHeight = tooltipRef.current?.offsetHeight || 100;
+    const margin = 20; // Marge de sécurité pour garder l'arrow visible
+
+    if (calculatedPosition === 'top' || calculatedPosition === 'bottom') {
+      // Clamper horizontalement
+      const maxOffset = (tooltipWidth / 2) - margin;
+      const clampedOffset = Math.max(-maxOffset, Math.min(maxOffset, arrowOffset));
+      return {
+        ...baseStyle,
+        left: `calc(50% + ${clampedOffset}px)`,
+        transform: 'translateX(-50%)',
+      };
+    } else {
+      // left/right: clamper verticalement
+      const maxOffset = (tooltipHeight / 2) - margin;
+      const clampedOffset = Math.max(-maxOffset, Math.min(maxOffset, arrowOffset));
+      return {
+        ...baseStyle,
+        top: `calc(50% + ${clampedOffset}px)`,
+        transform: 'translateY(-50%)',
+      };
+    }
   };
 
   const tooltipContent = (
@@ -265,6 +333,7 @@ export default function OnboardingTooltip({
         top: tooltipPosition.top,
         left: tooltipPosition.left,
         maxWidth,
+        minWidth,
       }}
       role="tooltip"
       aria-hidden={!show}
@@ -276,9 +345,7 @@ export default function OnboardingTooltip({
           bg-emerald-500
           ${arrowPositionClasses[calculatedPosition] || arrowPositionClasses.bottom}
         `}
-        style={{
-          clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
-        }}
+        style={getArrowStyle()}
       />
 
       {/* Contenu */}
