@@ -177,13 +177,13 @@ export default function OnboardingModal({
       <div
         className={`
           relative w-full ${sizeClasses[size] || sizeClasses.default}
-          bg-white/15 backdrop-blur-md rounded-2xl border-2 border-white/30 shadow-2xl
+          bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl
           overflow-hidden
         `}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/20">
+        <div className="flex items-center justify-between p-6 border-b border-white/10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
               <span className="text-2xl">✏️</span>
@@ -195,7 +195,7 @@ export default function OnboardingModal({
               >
                 Guide du mode édition
               </h2>
-              <p className="text-sm text-white/60">
+              <p className="text-sm text-slate-400">
                 {currentScreen + 1} / {screens.length}
               </p>
             </div>
@@ -207,7 +207,7 @@ export default function OnboardingModal({
               onClick={onClose}
               className="
                 p-2 rounded-lg
-                text-white/70 hover:text-white hover:bg-white/10
+                text-slate-400 hover:text-white hover:bg-white/10
                 transition-colors
               "
               aria-label="Fermer le modal"
@@ -374,14 +374,14 @@ export default function OnboardingModal({
         </div>
 
         {/* Footer avec boutons */}
-        <div className="flex items-center justify-between p-6 border-t border-white/20">
+        <div className="flex items-center justify-between p-6 border-t border-white/10">
           {/* Bouton Skip (gauche) */}
           {showSkipButton && (
             <button
               onClick={handleSkip}
               className="
                 px-4 py-2 text-sm
-                text-white/70 hover:text-white
+                text-slate-400 hover:text-white
                 transition-colors
               "
             >
