@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { ONBOARDING_EVENTS, emitOnboardingEvent } from "@/lib/onboarding/onboardingEvents";
 
 function LoadingSpinner() {
   return (
@@ -237,6 +238,14 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
     // Fermer le dropdown après le chargement
     onClose();
   };
+
+  // Émettre l'événement task_manager_opened pour l'onboarding
+  React.useEffect(() => {
+    if (isOpen) {
+      console.log('[TaskQueueDropdown] Dropdown ouvert, émission task_manager_opened');
+      emitOnboardingEvent(ONBOARDING_EVENTS.TASK_MANAGER_OPENED);
+    }
+  }, [isOpen]);
 
   // Calculate position when dropdown opens
   React.useEffect(() => {

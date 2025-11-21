@@ -12,6 +12,7 @@ import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { SettingsProvider } from "@/lib/settings/SettingsContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import RecaptchaProvider from "@/components/RecaptchaProvider";
+import OnboardingProvider from "@/components/onboarding/OnboardingProvider";
 
 export default function RootProviders({ session, initialSettings, children }){
   const pathname = usePathname();
@@ -23,7 +24,8 @@ export default function RootProviders({ session, initialSettings, children }){
         <SettingsProvider initialSettings={initialSettings}>
         <LanguageProvider>
         <NotificationProvider>
-          <AdminProvider>
+        <AdminProvider>
+        <OnboardingProvider>
             {isAuthPage ? (
               <>
                 {children}
@@ -39,7 +41,8 @@ export default function RootProviders({ session, initialSettings, children }){
                 </BackgroundTasksProvider>
               </RealtimeRefreshProvider>
             )}
-          </AdminProvider>
+        </OnboardingProvider>
+        </AdminProvider>
         </NotificationProvider>
         </LanguageProvider>
       </SettingsProvider>

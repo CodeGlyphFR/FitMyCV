@@ -84,10 +84,19 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
         message: t("pdfImport.notifications.scheduled", { fileName }),
         duration: 2500,
       });
+
+      // Fermer le modal IMMÉDIATEMENT pour feedback utilisateur
+      // (avant que refreshTasks puisse déclencher des événements qui unmount le composant)
+      removeOptimisticTask(optimisticTaskId);
       closePdfImport();
 
-      await refreshTasks();
-      removeOptimisticTask(optimisticTaskId);
+      // Puis rafraîchir en arrière-plan
+      try {
+        await refreshTasks();
+      } catch (error) {
+        console.error('[PDF Import] Failed to refresh tasks:', error);
+        // Le polling (10s interval) rattrapera de toute façon
+      }
     } catch (error) {
       // Fermer le modal avant d'afficher l'erreur
       closePdfImport();

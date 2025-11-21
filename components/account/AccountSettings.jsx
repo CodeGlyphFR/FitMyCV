@@ -2,17 +2,25 @@
 
 import React from "react";
 import { signOut } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import PasswordStrengthIndicator from "@/components/auth/PasswordStrengthIndicator";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 export default function AccountSettings({ user, isOAuthUser = false, oauthProviders = [] }){
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const { resetOnboarding } = useOnboarding();
+
   const [name, setName] = React.useState(user?.name || "");
   const [email, setEmail] = React.useState(user?.email || "");
   const [profileMessage, setProfileMessage] = React.useState("");
   const [profileError, setProfileError] = React.useState("");
   const [profileLoading, setProfileLoading] = React.useState(false);
+
+  const [onboardingMessage, setOnboardingMessage] = React.useState("");
+  const [onboardingError, setOnboardingError] = React.useState("");
+  const [onboardingLoading, setOnboardingLoading] = React.useState(false);
 
   // Vérifier si l'email a été changé avec succès
   React.useEffect(() => {
@@ -153,6 +161,32 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
     }
   }
 
+  async function handleResetOnboarding() {
+    setOnboardingMessage("");
+    setOnboardingError("");
+
+    try {
+      setOnboardingLoading(true);
+      await resetOnboarding();
+
+      // Show success message briefly
+      setOnboardingMessage("Le tutoriel a été réinitialisé. Redirection...");
+
+      // Redirect to CVs page where onboarding will auto-restart (currentStep === 0)
+      setTimeout(() => {
+        router.push('/');
+      }, 1500);
+    } catch (error) {
+      console.error('[AccountSettings] Reset onboarding error:', error);
+
+      // Use separate error state (follows pattern from updateProfile, updatePassword)
+      const errorMessage = error?.message || "Erreur lors de la réinitialisation du tutoriel.";
+      setOnboardingError(errorMessage);
+      setOnboardingLoading(false);  // Reset loading if error
+    }
+    // Note: no finally block - we're reloading on success
+  }
+
   return (
     <div className="space-y-8">
       <section className="rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-xl p-6 shadow-2xl">
@@ -291,6 +325,30 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
             {passwordLoading ? "Mise à jour…" : "Mettre à jour le mot de passe"}
           </button>
         </form>
+      </section>
+
+      <section className="rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-xl p-6 shadow-2xl">
+        <h2 className="text-lg font-semibold mb-4 text-emerald-300 drop-shadow">Tutoriel d'intégration</h2>
+        <p className="text-sm text-white/80 drop-shadow mb-4">
+          Relancez le guide de découverte de l'application si vous souhaitez revoir les fonctionnalités principales.
+        </p>
+        {onboardingError && (
+          <div className="rounded-lg border-2 border-red-400/50 bg-red-500/20 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow mb-4">
+            {onboardingError}
+          </div>
+        )}
+        {onboardingMessage && (
+          <div className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/20 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow mb-4">
+            {onboardingMessage}
+          </div>
+        )}
+        <button
+          onClick={handleResetOnboarding}
+          disabled={onboardingLoading}
+          className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500/40 transition-all duration-200 disabled:opacity-60 drop-shadow"
+        >
+          {onboardingLoading ? "Réinitialisation..." : "Relancer le tutoriel"}
+        </button>
       </section>
 
       <section className="rounded-2xl border-2 border-red-400/50 bg-red-500/20 backdrop-blur-xl p-6 shadow-2xl">

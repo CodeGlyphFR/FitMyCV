@@ -16,7 +16,7 @@ const nextConfig = {
     minimumCacheTTL: 60,
   },
   // Compiler les modules pour améliorer les performances
-  transpilePackages: [],
+  transpilePackages: ['swiper'],
   // Optimiser la compression
   compress: true,
   // Optimiser le chunking

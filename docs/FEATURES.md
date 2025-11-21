@@ -187,6 +187,11 @@ Traduit un CV existant vers une autre langue.
 
 Calcule un score de correspondance (0-100) entre un CV et une offre d'emploi, avec analyse détaillée.
 
+### Prérequis
+
+- Le CV doit avoir un `extractedJobOffer` en base de données (stocké lors de la génération/création)
+- Le calcul utilise l'offre extraite en cache, **pas de re-scraping de l'URL**
+
 ### Calcul du score
 
 **Critères** :
