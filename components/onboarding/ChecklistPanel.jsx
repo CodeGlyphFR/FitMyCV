@@ -5,10 +5,10 @@ import { ONBOARDING_STEPS } from '@/lib/onboarding/onboardingSteps';
 
 /**
  * Checklist flottante pour afficher la progression de l'onboarding
+ * Design style Stripe - fond solide, sans blur
  *
- * Position : Fixed top-left sous la topbar
+ * Position : Fixed bottom-right
  * État : Collapse/expand avec persistence localStorage
- * Contenu : Liste 9 étapes avec état visuel
  */
 export default function ChecklistPanel() {
   const {
@@ -21,16 +21,17 @@ export default function ChecklistPanel() {
     skipOnboarding,
   } = useOnboarding();
 
-  // Ne pas afficher si onboarding pas actif (y compris si complété)
-  // La task list disparaît une fois l'onboarding terminé
+  // Ne pas afficher si onboarding pas actif
   if (!isActive) return null;
 
   // Calculer le nombre effectif d'étapes complétées
-  // Inclut les steps explicitement complétés ET les steps implicitement complétés (avant currentStep)
   const effectiveCompletedCount = Math.max(completedSteps.length, currentStep - 1);
 
   // Calculer progression sur 7 étapes
   const progress = Math.round((effectiveCompletedCount / 7) * 100);
+
+  // Étape courante
+  const currentStepData = ONBOARDING_STEPS[currentStep - 1];
 
   /**
    * Handler skip avec confirmation
@@ -39,195 +40,146 @@ export default function ChecklistPanel() {
     const confirmed = confirm(
       'Êtes-vous sûr de vouloir passer le tutoriel ? Vous pourrez le relancer depuis les paramètres.'
     );
-
     if (confirmed) {
       skipOnboarding();
     }
   };
 
+  /**
+   * Icône checkmark pour étape complétée
+   */
+  const CheckIcon = () => (
+    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    </div>
+  );
+
+  /**
+   * Icône cercle pour étape en cours (avec pulse)
+   */
+  const CurrentIcon = () => (
+    <div className="flex-shrink-0 w-5 h-5 rounded-full border-2 border-emerald-500 animate-pulse" />
+  );
+
+  /**
+   * Icône cercle gris pour étape à venir
+   */
+  const UpcomingIcon = () => (
+    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-slate-600" />
+  );
+
   return (
     <div
-      className={`
-        fixed bottom-3 right-20 w-80
-        bg-white/15 backdrop-blur-md rounded-2xl border-2 border-white/30 shadow-2xl
-        z-[10001]
-        origin-bottom
-        transition-all duration-300
-        ${checklistExpanded ? 'max-h-[600px]' : 'max-h-16'}
-      `}
+      className="fixed bottom-3 right-20 w-80 bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl z-[10001] overflow-hidden"
       role="region"
       aria-label="Progression du tutoriel"
       aria-live="polite"
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/20">
-        <div className="flex items-center gap-3">
-          {/* Afficher l'étape en cours quand réduit, progression quand étendu */}
-          {!checklistExpanded ? (
-            <>
-              <span className="text-2xl">
-                {ONBOARDING_STEPS[currentStep - 1]?.emoji || '📚'}
-              </span>
-              <div>
-                <h3 className="text-white font-semibold text-sm">
-                  Étape {currentStep}/7
-                </h3>
-                <p className="text-white/70 text-xs truncate max-w-[180px]">
-                  {ONBOARDING_STEPS[currentStep - 1]?.title}
-                </p>
-              </div>
-            </>
-          ) : (
-            <>
-              <span className="text-2xl">📚</span>
-              <div>
-                <h3 className="text-white font-semibold text-sm">
-                  Votre progression
-                </h3>
-                <p className="text-white/70 text-xs">
-                  {effectiveCompletedCount}/7 étapes
-                </p>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Bouton collapse/expand */}
-        <button
-          onClick={toggleChecklist}
-          className="
-            p-2 rounded-lg
-            text-white/70 hover:text-white hover:bg-white/10
-            transition-colors
-          "
-          aria-label={checklistExpanded ? 'Réduire' : 'Agrandir'}
-          aria-expanded={checklistExpanded}
-        >
-          <svg
-            className={`w-5 h-5 transition-transform ${
-              checklistExpanded ? '' : 'rotate-180'
-            }`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+      <div className="flex items-center justify-between px-4 py-3">
+        <h3 className="text-white font-semibold text-sm">Guide de démarrage</h3>
+        <div className="flex items-center gap-1">
+          {/* Bouton expand/collapse */}
+          <button
+            onClick={toggleChecklist}
+            className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label={checklistExpanded ? 'Réduire' : 'Agrandir'}
+            aria-expanded={checklistExpanded}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </button>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              {checklistExpanded ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7V17" />
+              )}
+            </svg>
+          </button>
+          {/* Bouton close (skip) */}
+          <button
+            onClick={handleSkip}
+            className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label="Fermer le guide"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       </div>
 
-      {/* Contenu expansible */}
+      {/* Progress bar - toujours visible */}
+      <div className="h-1 bg-slate-700">
+        <div
+          className="h-full bg-emerald-500 transition-all duration-500 ease-out"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      {/* Mode réduit : Étape suivante */}
+      {!checklistExpanded && (
+        <div className="px-4 py-3 flex items-baseline gap-2">
+          <span className="text-slate-400 text-xs whitespace-nowrap">Étape suivante</span>
+          <span className="text-emerald-400 text-sm truncate">
+            {currentStepData?.title || 'Terminé'}
+          </span>
+        </div>
+      )}
+
+      {/* Mode étendu : Liste des étapes */}
       {checklistExpanded && (
         <div className="p-4">
-          {/* Progress bar */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between text-xs text-white/70 mb-2">
-              <span>Progression</span>
-              <span className="font-semibold text-emerald-400">{progress}%</span>
-            </div>
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-emerald-500 transition-all duration-500 ease-out"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Liste des étapes */}
-          <ul className="space-y-2 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+          <ul className="space-y-3 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
             {ONBOARDING_STEPS.map((step, idx) => {
               const stepNumber = idx + 1;
-              // Considérer les étapes précédentes comme complétées même si pas dans completedSteps
-              // (au cas où l'état n'est pas restauré après rechargement)
               const isCompleted = completedSteps.includes(stepNumber) || stepNumber < currentStep;
               const isCurrent = currentStep === stepNumber;
-              const isUpcoming = stepNumber > currentStep;
 
               return (
                 <li
                   key={step.id}
-                  className={`
-                    flex items-center gap-3 p-2 rounded-lg
-                    transition-colors
-                    ${isCurrent ? 'bg-white/10' : ''}
-                  `}
+                  className="flex items-center gap-3"
                   role="listitem"
                   aria-current={isCurrent ? 'step' : undefined}
                 >
                   {/* Icône état */}
-                  {isCompleted ? (
-                    <span
-                      className="flex-shrink-0 text-emerald-400 text-lg"
-                      aria-label="Étape complétée"
-                    >
-                      ✅
-                    </span>
-                  ) : isCurrent ? (
-                    <span
-                      className="flex-shrink-0 text-blue-400 text-lg animate-pulse"
-                      aria-label="Étape en cours"
-                    >
-                      🔵
-                    </span>
-                  ) : (
-                    <span
-                      className="flex-shrink-0 text-gray-500 text-lg"
-                      aria-label="Étape non atteinte"
-                    >
-                      ⚪
-                    </span>
-                  )}
+                  {isCompleted ? <CheckIcon /> : isCurrent ? <CurrentIcon /> : <UpcomingIcon />}
 
-                  {/* Numéro + titre */}
+                  {/* Titre */}
                   <span
-                    className={`
-                      text-sm
-                      ${
-                        isCompleted
-                          ? 'text-white'
-                          : isCurrent
-                          ? 'text-white font-medium'
-                          : 'text-white/50'
-                      }
-                    `}
+                    className={`text-sm ${
+                      isCompleted
+                        ? 'text-white'
+                        : isCurrent
+                        ? 'text-emerald-400 font-medium'
+                        : 'text-slate-500'
+                    }`}
                   >
-                    {stepNumber}. {step.title}
+                    {step.title}
                   </span>
                 </li>
               );
             })}
           </ul>
 
-          {/* Bouton Skip (si pas encore complété) */}
+          {/* Bouton Skip */}
           {!hasCompleted && (
-            <div className="mt-4 pt-4 border-t border-white/20">
+            <div className="mt-4 pt-3 border-t border-white/10">
               <button
                 onClick={handleSkip}
-                className="
-                  w-full py-2 px-4 text-sm
-                  text-white/70 hover:text-white
-                  hover:bg-white/10
-                  rounded-lg
-                  transition-colors
-                "
+                className="w-full py-2 text-sm text-slate-400 hover:text-white transition-colors"
               >
                 Passer le tutoriel
               </button>
             </div>
           )}
 
-          {/* Message de félicitations si complété */}
+          {/* Message de complétion */}
           {hasCompleted && (
-            <div className="mt-4 pt-4 border-t border-white/20 text-center">
+            <div className="mt-4 pt-3 border-t border-white/10 text-center">
               <span className="text-2xl">🎉</span>
-              <p className="text-white/90 text-sm mt-2">
-                Tutoriel complété !
-              </p>
+              <p className="text-white/90 text-sm mt-2">Tutoriel complété !</p>
             </div>
           )}
         </div>
@@ -236,21 +188,17 @@ export default function ChecklistPanel() {
       {/* Custom scrollbar styles */}
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
+          width: 4px;
         }
-
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 3px;
+          background: transparent;
         }
-
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(16, 185, 129, 0.5);
-          border-radius: 3px;
+          background: rgba(16, 185, 129, 0.4);
+          border-radius: 2px;
         }
-
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(16, 185, 129, 0.7);
+          background: rgba(16, 185, 129, 0.6);
         }
       `}</style>
     </div>
