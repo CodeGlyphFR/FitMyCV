@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Modal from "./ui/Modal";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { emitOnboardingEvent, ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
 
 function LoadingSpinner() {
   return (
@@ -220,6 +221,14 @@ export default function TaskQueueModal({ open, onClose }) {
   const { t } = useLanguage();
   const router = useRouter();
   const { tasks, clearCompletedTasks, cancelTask, isApiSyncEnabled } = useBackgroundTasks();
+
+  // Émettre l'événement onboarding quand le modal s'ouvre (pour valider l'étape 3)
+  useEffect(() => {
+    if (open) {
+      console.log('[TaskQueueModal] Modal ouvert, émission task_manager_opened');
+      emitOnboardingEvent(ONBOARDING_EVENTS.TASK_MANAGER_OPENED);
+    }
+  }, [open]);
 
   // Filtrer les tâches de calcul de match score (elles ne doivent apparaître que dans l'animation du bouton)
   const visibleTasks = tasks.filter(task => task.type !== 'calculate-match-score');
