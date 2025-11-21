@@ -8,7 +8,6 @@ import { isAiGenerationTask } from '@/lib/backgroundTasks/taskTypes';
 import { extractCvFilename } from '@/lib/onboarding/cvFilenameUtils';
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from '@/lib/onboarding/onboardingEvents';
 import OnboardingModal from './OnboardingModal';
-import OnboardingHighlight from './OnboardingHighlight';
 import PulsingDot from './PulsingDot';
 import OnboardingTooltip from './OnboardingTooltip';
 import confetti from 'canvas-confetti';
@@ -50,14 +49,11 @@ export default function OnboardingOrchestrator() {
   // État pour gérer la fermeture individuelle des tooltips
   const [tooltipClosed, setTooltipClosed] = useState(false);
 
-  // États pour les validations du step 3 (multi-conditions)
-  const [step3Validations, setStep3Validations] = useState({
-    generationCompleted: false,
-    task_manager_opened: false,
-    tooltip_closed: false,
-  });
+  // État pour tracker si une tâche de génération est complétée (mais ne déclenche PAS step 4 immédiatement)
+  const [taskCompleted, setTaskCompleted] = useState(false);
+  const [completedTaskResult, setCompletedTaskResult] = useState(null);
 
-  // État pour la précondition du step 4
+  // État pour la précondition du step 4 (ne se définit qu'APRÈS validation step 3)
   const [cvGenerated, setCvGenerated] = useState(false);
   const [generatedCvFilename, setGeneratedCvFilename] = useState(null);
 
@@ -337,13 +333,7 @@ export default function OnboardingOrchestrator() {
 
         // Vérifier si c'est une tâche de génération IA
         if (isAiGenerationTask(task)) {
-          console.log('[Onboarding] Tâche de génération IA terminée, émission cvGenerated');
-
-          // Marquer la validation "generationCompleted" pour le step 3
-          setStep3Validations(prev => ({
-            ...prev,
-            generationCompleted: true,
-          }));
+          console.log('[Onboarding] Tâche de génération IA terminée, stockage du résultat');
 
           // Extraire le nom du fichier CV généré de manière cohérente
           const cvFilename = extractCvFilename(task.result);
@@ -352,12 +342,12 @@ export default function OnboardingOrchestrator() {
             return;
           }
 
-          // Émettre l'événement cvGenerated pour déclencher le step 4
-          setCvGenerated(true);
-          setGeneratedCvFilename(cvFilename);
+          // Stocker que la tâche est complétée, mais NE PAS déclencher step 4 immédiatement
+          // Step 4 se déclenchera seulement après validation de step 3
+          setTaskCompleted(true);
+          setCompletedTaskResult({ cvFilename });
 
-          // Émettre l'événement global pour les autres composants
-          emitOnboardingEvent(ONBOARDING_EVENTS.CV_GENERATED, { cvFilename });
+          console.log('[Onboarding] Tâche complétée, en attente de validation step 3');
         }
       } catch (error) {
         console.error('[Onboarding] Error in handleTaskCompleted:', error);
@@ -379,22 +369,31 @@ export default function OnboardingOrchestrator() {
   // Utilisation de useRef pour éviter la re-registration
   const handleTaskManagerOpenedRef = useRef();
 
-  // Mettre à jour la ref quand currentStep change
+  // Mettre à jour la ref quand les dépendances changent
   useEffect(() => {
     handleTaskManagerOpenedRef.current = () => {
       if (currentStep !== 3) return; // Filtrer dans le handler
 
       try {
-        console.log('[Onboarding] Step 3 : Task manager ouvert, marquage de la validation');
-        setStep3Validations(prev => ({
-          ...prev,
-          task_manager_opened: true,
-        }));
+        console.log('[Onboarding] Step 3 : Task manager ouvert, validation immédiate du step');
+
+        // Valider step 3 immédiatement (c'est suffisant pour compléter l'étape)
+        markStepComplete(3);
+
+        // Si la tâche est déjà complétée, déclencher step 4 immédiatement
+        if (taskCompleted && completedTaskResult?.cvFilename) {
+          console.log('[Onboarding] Tâche déjà complétée, déclenchement step 4');
+          setCvGenerated(true);
+          setGeneratedCvFilename(completedTaskResult.cvFilename);
+          emitOnboardingEvent(ONBOARDING_EVENTS.CV_GENERATED, {
+            cvFilename: completedTaskResult.cvFilename
+          });
+        }
       } catch (error) {
         console.error('[Onboarding] Error in handleTaskManagerOpened:', error);
       }
     };
-  }, [currentStep]);
+  }, [currentStep, taskCompleted, completedTaskResult, markStepComplete]);
 
   // Enregistrer le listener une seule fois
   useEffect(() => {
@@ -406,18 +405,22 @@ export default function OnboardingOrchestrator() {
     };
   }, []); // Empty deps - register once
 
-  // ========== STEP 3 : VÉRIFIER SI TOUTES LES VALIDATIONS SONT REMPLIES ==========
+  // ========== STEP 3 → STEP 4 : DÉCLENCHER STEP 4 QUAND TÂCHE SE TERMINE (APRÈS VALIDATION STEP 3) ==========
   useEffect(() => {
-    if (currentStep !== 3) return;
+    // Déclencher step 4 seulement si:
+    // - On a validé step 3 (currentStep >= 4 signifie qu'on a déjà passé step 3)
+    // - Une tâche est complétée
+    // - cvGenerated n'est pas encore défini (pour éviter de déclencher plusieurs fois)
+    if (currentStep < 4 || !taskCompleted || !completedTaskResult?.cvFilename || cvGenerated) return;
 
-    const { generationCompleted, task_manager_opened, tooltip_closed } = step3Validations;
-
-    // Si les 3 conditions sont remplies, valider le step
-    if (generationCompleted && task_manager_opened && tooltip_closed) {
-      console.log('[Onboarding] Step 3 : Toutes les validations remplies, validation du step');
-      markStepComplete(3);
-    }
-  }, [currentStep, step3Validations, markStepComplete]);
+    // Step 3 est validé, et la tâche est complétée → déclencher step 4
+    console.log('[Onboarding] Step 3 validé + tâche complétée → déclenchement step 4');
+    setCvGenerated(true);
+    setGeneratedCvFilename(completedTaskResult.cvFilename);
+    emitOnboardingEvent(ONBOARDING_EVENTS.CV_GENERATED, {
+      cvFilename: completedTaskResult.cvFilename
+    });
+  }, [currentStep, taskCompleted, completedTaskResult, cvGenerated]);
 
   // ========== STEP 4 : NE DÉCLENCHER QUE SI cvGenerated EST TRUE ==========
   useEffect(() => {
@@ -625,13 +628,9 @@ export default function OnboardingOrchestrator() {
         return;
       }
 
-      // Étape 3 : Fermer tooltip = marquer la condition tooltip_closed
-      // La validation se fera automatiquement quand les 3 conditions seront remplies
+      // Étape 3 : Fermer tooltip = masquer simplement le tooltip
+      // La validation se fait automatiquement quand l'utilisateur clique sur le task manager
       if (currentStep === 3) {
-        setStep3Validations(prev => ({
-          ...prev,
-          tooltip_closed: true,
-        }));
         setTooltipClosed(true);
         return;
       }
@@ -778,11 +777,8 @@ export default function OnboardingOrchestrator() {
 
       return (
         <>
-          {/* Highlight glow sur sélecteur CV */}
-          <OnboardingHighlight
-            show={true}
-            targetSelector={step.targetSelector}
-          />
+          {/* Note: OnboardingHighlight retiré car le backdrop-blur bloquait toute la page.
+              Le PulsingDot et le Tooltip suffisent pour guider l'utilisateur. */}
 
           <PulsingDot
             show={true}
