@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { ONBOARDING_STEPS } from '@/lib/onboarding/onboardingSteps';
@@ -21,6 +22,16 @@ export default function ChecklistPanel() {
     toggleChecklist,
     skipOnboarding,
   } = useOnboarding();
+
+  // Détection mobile (< 768px)
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Ne pas afficher si onboarding pas actif
   if (!isActive) return null;
@@ -71,6 +82,54 @@ export default function ChecklistPanel() {
     <div className="flex-shrink-0 w-5 h-5 rounded-full bg-slate-600" />
   );
 
+  /**
+   * Donut progress pour mode mobile réduit
+   * Taille: 36px, avec pourcentage au centre
+   */
+  const DonutProgress = ({ percentage }) => {
+    const size = 36;
+    const strokeWidth = 3;
+    const radius = (size - strokeWidth) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (percentage / 100) * circumference;
+
+    return (
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="transform -rotate-90">
+          {/* Background circle */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke="rgb(51, 65, 85)"
+            strokeWidth={strokeWidth}
+          />
+          {/* Progress circle */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke="rgb(16, 185, 129)"
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            className="transition-all duration-500 ease-out"
+          />
+        </svg>
+        {/* Percentage text */}
+        <span className="absolute inset-0 flex items-center justify-center text-white text-[10px] font-medium">
+          {percentage}%
+        </span>
+      </div>
+    );
+  };
+
+  // Mode mobile réduit : affichage compact
+  const isMobileCollapsed = isMobile && !checklistExpanded;
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -79,34 +138,34 @@ export default function ChecklistPanel() {
         duration: 0.3,
         ease: [0.4, 0, 0.2, 1],
       }}
-      className="fixed bottom-6 right-20 w-80 bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl z-[10001] overflow-hidden"
+      className={`fixed bg-[rgb(2,6,23)] border border-white/20 shadow-2xl z-[10001] overflow-hidden ${
+        isMobileCollapsed
+          ? 'bottom-4 right-20 rounded-full px-2 py-1.5'
+          : 'bottom-6 right-20 w-80 rounded-xl'
+      }`}
       role="region"
       aria-label="Progression du tutoriel"
       aria-live="polite"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <h3 className="text-white font-semibold text-sm">Guide de démarrage</h3>
-        <div className="flex items-center gap-1">
-          {/* Bouton expand/collapse */}
+      {/* Mode mobile réduit : Donut + boutons uniquement */}
+      {isMobileCollapsed ? (
+        <div className="flex items-center gap-2">
+          <DonutProgress percentage={progress} />
+          {/* Bouton expand */}
           <button
             onClick={toggleChecklist}
-            className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-            aria-label={checklistExpanded ? 'Réduire' : 'Agrandir'}
-            aria-expanded={checklistExpanded}
+            className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label="Agrandir"
+            aria-expanded={false}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              {checklistExpanded ? (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7V17" />
-              )}
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7V17" />
             </svg>
           </button>
-          {/* Bouton close (skip) */}
+          {/* Bouton close */}
           <button
             onClick={handleSkip}
-            className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
             aria-label="Fermer le guide"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -114,82 +173,116 @@ export default function ChecklistPanel() {
             </svg>
           </button>
         </div>
-      </div>
-
-      {/* Progress bar - toujours visible */}
-      <div className="h-1 bg-slate-700">
-        <div
-          className="h-full bg-emerald-500 transition-all duration-500 ease-out"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
-      {/* Mode réduit : Étape suivante */}
-      {!checklistExpanded && (
-        <div className="px-4 py-3 flex items-baseline gap-2">
-          <span className="text-slate-400 text-xs whitespace-nowrap">Étape suivante</span>
-          <span className="text-emerald-400 text-sm truncate">
-            {currentStepData?.title || 'Terminé'}
-          </span>
-        </div>
-      )}
-
-      {/* Mode étendu : Liste des étapes */}
-      {checklistExpanded && (
-        <div className="p-4">
-          <ul className="space-y-3 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
-            {ONBOARDING_STEPS.map((step, idx) => {
-              const stepNumber = idx + 1;
-              const isCompleted = completedSteps.includes(stepNumber) || stepNumber < currentStep;
-              const isCurrent = currentStep === stepNumber;
-
-              return (
-                <li
-                  key={step.id}
-                  className="flex items-center gap-3"
-                  role="listitem"
-                  aria-current={isCurrent ? 'step' : undefined}
-                >
-                  {/* Icône état */}
-                  {isCompleted ? <CheckIcon /> : isCurrent ? <CurrentIcon /> : <UpcomingIcon />}
-
-                  {/* Titre */}
-                  <span
-                    className={`text-sm ${
-                      isCompleted
-                        ? 'text-white'
-                        : isCurrent
-                        ? 'text-emerald-400 font-medium'
-                        : 'text-slate-500'
-                    }`}
-                  >
-                    {step.title}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-
-          {/* Bouton Skip */}
-          {!hasCompleted && (
-            <div className="mt-4 pt-3 border-t border-white/10">
+      ) : (
+        <>
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3">
+            <h3 className="text-white font-semibold text-sm">Guide de démarrage</h3>
+            <div className="flex items-center gap-1">
+              {/* Bouton expand/collapse */}
+              <button
+                onClick={toggleChecklist}
+                className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                aria-label={checklistExpanded ? 'Réduire' : 'Agrandir'}
+                aria-expanded={checklistExpanded}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  {checklistExpanded ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7V17" />
+                  )}
+                </svg>
+              </button>
+              {/* Bouton close (skip) */}
               <button
                 onClick={handleSkip}
-                className="w-full py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                aria-label="Fermer le guide"
               >
-                Passer le tutoriel
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
+            </div>
+          </div>
+
+          {/* Progress bar - toujours visible */}
+          <div className="h-1 bg-slate-700">
+            <div
+              className="h-full bg-emerald-500 transition-all duration-500 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          {/* Mode réduit desktop : Étape suivante */}
+          {!checklistExpanded && (
+            <div className="px-4 py-3 flex items-baseline gap-2">
+              <span className="text-slate-400 text-xs whitespace-nowrap">Étape suivante</span>
+              <span className="text-emerald-400 text-sm truncate">
+                {currentStepData?.title || 'Terminé'}
+              </span>
             </div>
           )}
 
-          {/* Message de complétion */}
-          {hasCompleted && (
-            <div className="mt-4 pt-3 border-t border-white/10 text-center">
-              <span className="text-2xl">🎉</span>
-              <p className="text-white/90 text-sm mt-2">Tutoriel complété !</p>
+          {/* Mode étendu : Liste des étapes */}
+          {checklistExpanded && (
+            <div className="p-4">
+              <ul className="space-y-3 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
+                {ONBOARDING_STEPS.map((step, idx) => {
+                  const stepNumber = idx + 1;
+                  const isCompleted = completedSteps.includes(stepNumber) || stepNumber < currentStep;
+                  const isCurrent = currentStep === stepNumber;
+
+                  return (
+                    <li
+                      key={step.id}
+                      className="flex items-center gap-3"
+                      role="listitem"
+                      aria-current={isCurrent ? 'step' : undefined}
+                    >
+                      {/* Icône état */}
+                      {isCompleted ? <CheckIcon /> : isCurrent ? <CurrentIcon /> : <UpcomingIcon />}
+
+                      {/* Titre */}
+                      <span
+                        className={`text-sm ${
+                          isCompleted
+                            ? 'text-white'
+                            : isCurrent
+                            ? 'text-emerald-400 font-medium'
+                            : 'text-slate-500'
+                        }`}
+                      >
+                        {step.title}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {/* Bouton Skip */}
+              {!hasCompleted && (
+                <div className="mt-4 pt-3 border-t border-white/10">
+                  <button
+                    onClick={handleSkip}
+                    className="w-full py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                  >
+                    Passer le tutoriel
+                  </button>
+                </div>
+              )}
+
+              {/* Message de complétion */}
+              {hasCompleted && (
+                <div className="mt-4 pt-3 border-t border-white/10 text-center">
+                  <span className="text-2xl">🎉</span>
+                  <p className="text-white/90 text-sm mt-2">Tutoriel complété !</p>
+                </div>
+              )}
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* Custom scrollbar styles */}
