@@ -958,6 +958,7 @@ export default function OnboardingOrchestrator() {
             screens={step.modal.screens}
             currentScreen={currentScreen}
             title={step.title}
+            icon={step.emoji}
             onNext={handleModalNext}
             onPrev={handleModalPrev}
             onJumpTo={handleModalJumpTo}
@@ -998,6 +999,7 @@ export default function OnboardingOrchestrator() {
             screens={step.modal.screens}
             currentScreen={currentScreen}
             title={step.title}
+            icon={step.emoji}
             onNext={handleModalNext}
             onPrev={handleModalPrev}
             onJumpTo={handleModalJumpTo}
@@ -1113,6 +1115,7 @@ export default function OnboardingOrchestrator() {
             screens={step.modal.screens}
             currentScreen={currentScreen}
             title={step.title}
+            icon={step.emoji}
             onNext={handleModalNext}
             onPrev={handleModalPrev}
             onJumpTo={handleModalJumpTo}
@@ -1178,6 +1181,7 @@ export default function OnboardingOrchestrator() {
             screens={step.modal.screens}
             currentScreen={currentScreen}
             title={step.title}
+            icon={step.emoji}
             onNext={handleModalNext}
             onPrev={handleModalPrev}
             onJumpTo={handleModalJumpTo}

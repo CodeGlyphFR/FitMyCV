@@ -43,6 +43,7 @@ export default function OnboardingModal({
   screens = [],
   currentScreen = 0,
   title = "Guide du mode édition", // Titre du modal (défaut pour rétrocompatibilité)
+  icon = "✏️", // Icône du modal (emoji, défaut pour rétrocompatibilité)
   onNext,
   onPrev,
   onJumpTo, // NEW: Direct jump to specific screen
@@ -194,7 +195,7 @@ export default function OnboardingModal({
           <div className="flex items-center justify-between p-4 md:p-6">
             <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-xl md:text-2xl">✏️</span>
+                <span className="text-xl md:text-2xl">{icon}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <h2
