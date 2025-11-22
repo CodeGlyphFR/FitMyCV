@@ -278,6 +278,28 @@ sky-500: #0EA5E9        /* Actions secondaires */
 - **Touch targets** : Minimum 32px hauteur/largeur
 - **iOS blur optimization** : `.ios-blur-medium` pour performance
 
+### Background System
+
+- **Composant** : `GlobalBackground.jsx` (appliqué globalement)
+- **Couleur base** : `rgb(2, 6, 23)` → Utiliser classe Tailwind `bg-app-bg`
+- **Blobs animés** : 3 blobs Framer Motion (sky-500 dominance + emerald-500)
+- **Position** : `fixed inset-0 z-0` (couvre tout le viewport)
+- **Unified** : Même background pour `/auth` et toutes les pages
+- **Animation** : Framer Motion avec trajectoires mathématiques (sin/cos)
+  - Mouvements amples : ±200px horizontal, ±180px vertical
+  - Tailles responsives : 40-60% de `window.innerHeight`
+  - Durées : 25-31s (non synchronisées)
+  - 6 keyframes pour fluidité maximale
+  - GPU-accelerated (`willChange`)
+
+```jsx
+// Background unifié (préféré)
+<div className="bg-app-bg">...</div>
+
+// Ou valeur directe si nécessaire
+<div className="bg-[rgb(2,6,23)]">...</div>
+```
+
 ### Z-Index Layering
 
 ```css
