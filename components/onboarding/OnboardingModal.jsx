@@ -315,20 +315,6 @@ export default function OnboardingModal({
                   )}
                 </div>
               )}
-
-              {/* Swipe Hint (mobile only, first screen only) */}
-              {currentScreen === 0 && (
-                <motion.div
-                  initial={{ opacity: 1, x: 0 }}
-                  animate={{ opacity: 0, x: 20 }}
-                  transition={{ delay: 1, duration: 1.5 }}
-                  className="md:hidden absolute bottom-20 left-1/2 -translate-x-1/2
-                             flex items-center gap-2 text-white/60 text-sm pointer-events-none"
-                >
-                  <span>Glissez pour continuer</span>
-                  <ChevronRight className="w-4 h-4" />
-                </motion.div>
-              )}
             </motion.div>
           </AnimatePresence>
 
