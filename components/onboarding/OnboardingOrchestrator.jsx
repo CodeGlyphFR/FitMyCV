@@ -14,13 +14,12 @@ import OnboardingHighlight from './OnboardingHighlight';
 import confetti from 'canvas-confetti';
 
 /**
- * Orchestrateur des 7 étapes d'onboarding (optimisé v2)
+ * Orchestrateur des 8 étapes d'onboarding (optimisé v3)
  *
- * Changements :
- * - Étape 1 : Interception clic bouton mode édition (modal AVANT activation)
- * - Étape 2 : Fusion Génération IA (invitation + modal)
- * - Étape 6 : Fusion Optimisation (invitation + modal)
- * - Total 7 étapes au lieu de 9
+ * Changements v3 :
+ * - Étape 7 : Historique uniquement (validée à la fermeture du modal historique)
+ * - Étape 8 : Export avec modal tutoriel 3 écrans (validée au clic sur export)
+ * - Total 8 étapes
  */
 
 // Constantes
@@ -44,10 +43,7 @@ export default function OnboardingOrchestrator() {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentScreen, setCurrentScreen] = useState(0);
 
-  // État pour gérer les 2 phases du step 7 (ancien 9)
-  const [step7Phase, setStep7Phase] = useState(1);
-
-  // État pour le modal de complétion (affiché après step 7)
+  // État pour le modal de complétion (affiché après step 8)
   const [showCompletionModal, setShowCompletionModal] = useState(false);
 
   // État pour gérer la fermeture individuelle des tooltips
@@ -82,16 +78,18 @@ export default function OnboardingOrchestrator() {
   // Ref pour tracker si le modal step 6 a été montré
   const step6ModalShownRef = useRef(false);
 
-  // Réinitialiser step7Phase quand on entre dans le step 7
-  useEffect(() => {
-    if (currentStep === 7) {
-      setStep7Phase(1);
-    }
-  }, [currentStep]);
+  // Ref pour tracker si le modal step 8 a été complété (empêche tooltip de réapparaître)
+  const step8ModalCompletedRef = useRef(false);
+
+  // Ref pour tracker si le modal step 8 a été montré
+  const step8ModalShownRef = useRef(false);
+
+  // Ref pour le handler export-clicked (pattern stable comme step 7)
+  const handleExportClickedRef = useRef();
 
   // Réinitialiser tooltipClosed et prevEditingRef à chaque changement d'étape
   useEffect(() => {
-    // Only reset tooltipClosed if modal wasn't completed for step 1, 2, or 6
+    // Only reset tooltipClosed if modal wasn't completed for step 1, 2, 6 or 8
     if (currentStep === 1 && step1ModalCompletedRef.current) {
       // Keep tooltipClosed = true to prevent reappearing after modal completion
       console.log('[Onboarding] Step 1: Modal completed, keeping tooltip closed');
@@ -101,6 +99,9 @@ export default function OnboardingOrchestrator() {
     } else if (currentStep === 6 && step6ModalCompletedRef.current) {
       // Keep tooltipClosed = true to prevent reappearing after modal completion
       console.log('[Onboarding] Step 6: Modal completed, keeping tooltip closed');
+    } else if (currentStep === 8 && step8ModalCompletedRef.current) {
+      // Keep tooltipClosed = true to prevent reappearing after modal completion
+      console.log('[Onboarding] Step 8: Modal completed, keeping tooltip closed');
     } else {
       setTooltipClosed(false);
     }
@@ -132,6 +133,14 @@ export default function OnboardingOrchestrator() {
     if (currentStep !== 6) {
       step6ModalShownRef.current = false;
       step6ModalCompletedRef.current = false;
+    }
+  }, [currentStep]);
+
+  // Cleanup : Reset step 8 refs when leaving the step
+  useEffect(() => {
+    if (currentStep !== 8) {
+      step8ModalShownRef.current = false;
+      step8ModalCompletedRef.current = false;
     }
   }, [currentStep]);
 
@@ -579,8 +588,125 @@ export default function OnboardingOrchestrator() {
     };
   }, [currentStep, markStepComplete]);
 
-  // Ne rien afficher si pas actif
-  if (!isActive || currentStep === 0) return null;
+  // ========== STEP 7 : ÉCOUTER history-closed ==========
+  // Utilisation de useRef pour éviter la re-registration (pattern stable)
+  const handleHistoryClosedRef = useRef();
+
+  // Mettre à jour la ref quand les dépendances changent
+  useEffect(() => {
+    handleHistoryClosedRef.current = () => {
+      if (currentStep !== 7) return; // Filtrer dans le handler
+
+      console.log('[Onboarding] Step 7 : Modal historique fermé, validation du step');
+      markStepComplete(7);
+    };
+  }, [currentStep, markStepComplete]);
+
+  // Enregistrer le listener une seule fois avec un wrapper stable
+  useEffect(() => {
+    const stableHandler = () => handleHistoryClosedRef.current?.();
+
+    window.addEventListener(ONBOARDING_EVENTS.HISTORY_CLOSED, stableHandler);
+    return () => {
+      window.removeEventListener(ONBOARDING_EVENTS.HISTORY_CLOSED, stableHandler);
+    };
+  }, []); // Empty deps - register once
+
+  // ========== ÉTAPE 8 : INTERCEPTION CLIC BOUTON EXPORT ==========
+  useEffect(() => {
+    if (currentStep !== 8) return;
+
+    /**
+     * Intercepter le clic sur le bouton Export pour ouvrir le modal tutoriel
+     * AVANT d'ouvrir le modal d'export réel
+     */
+    const handleExportButtonClick = (e) => {
+      // Vérifier si le clic est sur le bouton export (ou un de ses enfants)
+      const exportButton = e.target.closest('[data-onboarding="export"]');
+      if (!exportButton) return;
+
+      // If modal was already shown, let the normal click behavior proceed
+      if (step8ModalShownRef.current) {
+        console.log('[Onboarding] Step 8: Modal already shown, allowing normal button behavior');
+        return;
+      }
+
+      // First click: prevent default and open tutorial modal
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Mark modal as shown
+      step8ModalShownRef.current = true;
+
+      // Fermer le tooltip immédiatement
+      setTooltipClosed(true);
+
+      // Ouvrir le modal tutoriel
+      setModalOpen(true);
+      setCurrentScreen(0);
+    };
+
+    // Utiliser event delegation sur document (capture phase)
+    document.addEventListener('click', handleExportButtonClick, { capture: true });
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener('click', handleExportButtonClick, { capture: true });
+    };
+  }, [currentStep]);
+
+  // ========== STEP 8 : ÉCOUTER export-clicked ==========
+  // Utilisation de useRef pour éviter la re-registration (pattern stable comme step 7)
+  useEffect(() => {
+    handleExportClickedRef.current = () => {
+      if (currentStep !== 8) return; // Filtrer dans le handler
+
+      console.log('[Onboarding] Step 8 : Export cliqué, validation du step');
+
+      // Confetti pour célébrer
+      triggerCompletionConfetti();
+
+      // IMPORTANT: Afficher le modal de complétion AVANT markStepComplete
+      // car markStepComplete(8) rend isActive = false, ce qui pourrait
+      // empêcher le rendu du modal
+      setShowCompletionModal(true);
+
+      // Marquer le step comme complété
+      markStepComplete(8);
+    };
+  }, [currentStep, markStepComplete]);
+
+  // Enregistrer le listener une seule fois avec un wrapper stable
+  useEffect(() => {
+    const stableHandler = () => handleExportClickedRef.current?.();
+
+    window.addEventListener(ONBOARDING_EVENTS.EXPORT_CLICKED, stableHandler);
+    return () => {
+      window.removeEventListener(ONBOARDING_EVENTS.EXPORT_CLICKED, stableHandler);
+    };
+  }, []); // Empty deps - register once
+
+  /**
+   * Handler pour la fermeture du modal de complétion
+   * Appelé quand l'utilisateur termine le carrousel de fin ou ferme le modal
+   * IMPORTANT: Défini ici car utilisé dans le early return ci-dessous
+   */
+  const handleCompletionModalClose = async () => {
+    setShowCompletionModal(false);
+    // Marquer l'onboarding comme complété
+    await completeOnboarding();
+  };
+
+  // Ne rien afficher si pas actif, SAUF si le modal de complétion doit être affiché
+  if (!isActive || currentStep === 0) {
+    // Toujours rendre le modal de complétion même si l'onboarding n'est plus actif
+    return showCompletionModal ? (
+      <OnboardingCompletionModal
+        open={showCompletionModal}
+        onComplete={handleCompletionModalClose}
+      />
+    ) : null;
+  }
 
   // Récupérer config de l'étape actuelle
   const step = getStepById(currentStep);
@@ -687,6 +813,21 @@ export default function OnboardingOrchestrator() {
 
       return; // Ne pas valider l'étape (validation lors de l'optimisation réelle)
     }
+
+    // Étape 8 : Ouvrir automatiquement le modal d'export PDF
+    // Raison : Après avoir vu le modal tutoriel, on ouvre directement le modal d'export
+    // Validation se fait via EXPORT_CLICKED quand l'utilisateur clique sur "Exporter en PDF"
+    if (currentStep === 8) {
+      step8ModalCompletedRef.current = true;
+
+      // Ouvrir le modal d'export après fermeture du modal tutoriel
+      setTimeout(() => {
+        emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_EXPORT);
+        console.log('[Onboarding] Step 8 : Event émis pour ouverture automatique du modal export');
+      }, MODAL_CLOSE_ANIMATION_DURATION);
+
+      return; // Ne pas valider l'étape (validation lors du clic sur export)
+    }
   };
 
   const handleModalSkip = () => {
@@ -699,19 +840,11 @@ export default function OnboardingOrchestrator() {
       step2ModalCompletedRef.current = true;
     } else if (currentStep === 6) {
       step6ModalCompletedRef.current = true;
+    } else if (currentStep === 8) {
+      step8ModalCompletedRef.current = true;
     }
 
     markStepComplete(currentStep);
-  };
-
-  /**
-   * Handler pour la fermeture du modal de complétion
-   * Appelé quand l'utilisateur termine le carrousel de fin ou ferme le modal
-   */
-  const handleCompletionModalClose = async () => {
-    setShowCompletionModal(false);
-    // Marquer l'onboarding comme complété
-    await completeOnboarding();
   };
 
   /**
@@ -771,28 +904,18 @@ export default function OnboardingOrchestrator() {
         return;
       }
 
-      // Étape 7 Phase 1 : Fermer tooltip historique = passer à Phase 2
-      if (currentStep === 7 && step7Phase === 1) {
-        setStep7Phase(2);
-        setTooltipClosed(false); // Réinitialiser pour afficher tooltip Phase 2
+      // Étape 7 : Fermer tooltip = masquer simplement le tooltip
+      // La validation se fait quand l'utilisateur ferme le modal historique
+      if (currentStep === 7) {
+        setTooltipClosed(true);
         return;
       }
 
-      // Étape 7 Phase 2 : Fermer tooltip export = confetti PUIS ouvrir modal de complétion
-      if (currentStep === 7 && step7Phase === 2) {
-        try {
-          // Fermer le tooltip et le pulsing dot AVANT d'ouvrir le modal
-          setTooltipClosed(true);
-          // Confetti pour célébrer
-          triggerCompletionConfetti();
-          // Ouvrir le modal de complétion (la validation se fera à la fermeture du modal)
-          setShowCompletionModal(true);
-          return;
-        } catch (error) {
-          console.error('[Onboarding] Step 7 completion modal failed:', error);
-          setTooltipClosed(true);
-          return;
-        }
+      // Étape 8 : Fermer tooltip = masquer simplement le tooltip
+      // La validation se fait quand l'utilisateur clique sur export
+      if (currentStep === 8) {
+        setTooltipClosed(true);
+        return;
       }
 
       // Autres étapes (2, 4, 5, 6) : simplement masquer le tooltip
@@ -999,54 +1122,66 @@ export default function OnboardingOrchestrator() {
       );
     }
 
-    // ========== ÉTAPE 7 : HISTORIQUE + EXPORT (ANCIEN 9, 2 PHASES) ==========
+    // ========== ÉTAPE 7 : HISTORIQUE ==========
     if (currentStep === 7) {
+      return (
+        <>
+          {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
+          <OnboardingHighlight
+            show={true}
+            blurEnabled={!tooltipClosed}
+            targetSelector={step.targetSelector}
+          />
+
+          <OnboardingTooltip
+            show={!tooltipClosed}
+            targetSelector={step.targetSelector}
+            content={step.tooltip.content}
+            position={step.tooltip.position}
+            closable={true}
+            onClose={handleTooltipClose}
+          />
+        </>
+      );
+    }
+
+    // ========== ÉTAPE 8 : EXPORT ==========
+    if (currentStep === 8) {
       // Ne rien afficher si le modal de complétion est ouvert
       if (showCompletionModal) return null;
 
       return (
         <>
-          {/* Phase 1 : Historique */}
-          {step7Phase === 1 && (
-            <>
-              {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
-              <OnboardingHighlight
-                show={true}
-                blurEnabled={!tooltipClosed}
-                targetSelector='[data-onboarding="history"]'
-              />
+          {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
+          <OnboardingHighlight
+            show={!modalOpen}
+            blurEnabled={!tooltipClosed}
+            targetSelector={step.targetSelector}
+          />
 
-              <OnboardingTooltip
-                show={!tooltipClosed}
-                targetSelector='[data-onboarding="history"]'
-                content="📝 Découvrez toutes les modifications apportées par l'IA"
-                position="left"
-                closable={true}
-                onClose={handleTooltipClose}
-              />
-            </>
-          )}
+          {/* Tooltip invitation - closable pour permettre de fermer */}
+          <OnboardingTooltip
+            show={!modalOpen && !tooltipClosed}
+            targetSelector={step.targetSelector}
+            content={step.tooltip.content}
+            position={step.tooltip.position}
+            closable={true}
+            onClose={handleTooltipClose}
+          />
 
-          {/* Phase 2 : Export */}
-          {step7Phase === 2 && (
-            <>
-              {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
-              <OnboardingHighlight
-                show={true}
-                blurEnabled={!tooltipClosed}
-                targetSelector='[data-onboarding="export"]'
-              />
-
-              <OnboardingTooltip
-                show={!tooltipClosed}
-                targetSelector='[data-onboarding="export"]'
-                content="📄 Téléchargez votre CV optimisé au format PDF !"
-                position="left"
-                closable={true}
-                onClose={handleTooltipClose}
-              />
-            </>
-          )}
+          {/* Modal tutoriel export (3 écrans) */}
+          <OnboardingModal
+            open={modalOpen}
+            screens={step.modal.screens}
+            currentScreen={currentScreen}
+            onNext={handleModalNext}
+            onPrev={handleModalPrev}
+            onJumpTo={handleModalJumpTo}
+            onComplete={handleModalComplete}
+            onClose={handleCloseModal}
+            showSkipButton={true}
+            size="large"
+          />
         </>
       );
     }
@@ -1058,7 +1193,7 @@ export default function OnboardingOrchestrator() {
     <>
       {renderStep()}
 
-      {/* Modal de complétion (affiché après step 7) */}
+      {/* Modal de complétion (affiché après step 8) */}
       <OnboardingCompletionModal
         open={showCompletionModal}
         onComplete={handleCompletionModalClose}

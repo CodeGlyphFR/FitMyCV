@@ -111,7 +111,7 @@ export default function OnboardingHighlight({
 
   const highlightContent = (
     <div
-      className="fixed inset-0 z-[10003] pointer-events-none"
+      className="fixed inset-0 z-[10001] pointer-events-none"
       role="presentation"
       aria-hidden="true"
     >

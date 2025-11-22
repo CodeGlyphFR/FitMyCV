@@ -2,7 +2,7 @@
 
 import { createContext, useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { ONBOARDING_STEPS, getStepById, isCompositeStep, getCompositeFeature } from '@/lib/onboarding/onboardingSteps';
+import { ONBOARDING_STEPS, getStepById, isCompositeStep, getCompositeFeature, getTotalSteps } from '@/lib/onboarding/onboardingSteps';
 import ChecklistPanel from './ChecklistPanel';
 import OnboardingOrchestrator from './OnboardingOrchestrator';
 import WelcomeModal from './WelcomeModal';
@@ -209,6 +209,29 @@ export default function OnboardingProvider({ children }) {
   }, []);
 
   /**
+   * Compléter l'onboarding
+   * IMPORTANT: Défini avant markStepComplete car utilisé dans ses dépendances
+   */
+  const completeOnboarding = useCallback(async () => {
+    try {
+      const res = await fetch('/api/user/onboarding?action=complete', {
+        method: 'POST',
+      });
+
+      if (res.ok) {
+        setHasCompleted(true);
+        setIsActive(false);
+        setCurrentStep(9);
+
+        // Ajouter toutes les étapes aux complétées
+        setCompletedSteps([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      }
+    } catch (error) {
+      console.error('[OnboardingProvider] Error completing onboarding:', error);
+    }
+  }, []);
+
+  /**
    * Marquer une étape comme complétée
    */
   const markStepComplete = useCallback(async (step) => {
@@ -218,7 +241,16 @@ export default function OnboardingProvider({ children }) {
       return [...prev, step];
     });
 
-    // Passer à l'étape suivante
+    // Si c'est la dernière étape (8), ne rien faire d'autre
+    // Le modal de complétion s'affichera et completeOnboarding() sera
+    // appelé quand l'utilisateur fermera le modal
+    const totalSteps = getTotalSteps();
+    if (step >= totalSteps) {
+      console.log('[OnboardingProvider] Step final complété, en attente fermeture modal');
+      return; // Ne pas appeler goToNextStep() ni completeOnboarding()
+    }
+
+    // Pour les steps 1-7, passer à l'étape suivante
     await goToNextStep();
   }, [goToNextStep]);
 
@@ -239,28 +271,6 @@ export default function OnboardingProvider({ children }) {
       }
     } catch (error) {
       console.error('[OnboardingProvider] Error skipping onboarding:', error);
-    }
-  }, []);
-
-  /**
-   * Compléter l'onboarding
-   */
-  const completeOnboarding = useCallback(async () => {
-    try {
-      const res = await fetch('/api/user/onboarding?action=complete', {
-        method: 'POST',
-      });
-
-      if (res.ok) {
-        setHasCompleted(true);
-        setIsActive(false);
-        setCurrentStep(9);
-
-        // Ajouter toutes les étapes aux complétées
-        setCompletedSteps([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-      }
-    } catch (error) {
-      console.error('[OnboardingProvider] Error completing onboarding:', error);
     }
   }, []);
 

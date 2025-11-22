@@ -4,6 +4,7 @@ import Modal from "./ui/Modal";
 import { useHighlight } from "./HighlightProvider";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
+import { ONBOARDING_EVENTS, emitOnboardingEvent } from "@/lib/onboarding/onboardingEvents";
 
 export default function ChangesPanel() {
   const [isOpen, setIsOpen] = useState(false);
@@ -52,6 +53,15 @@ export default function ChangesPanel() {
     return sectionLabels[section] || section;
   };
 
+  // Fonction commune pour fermer le modal et émettre l'événement onboarding
+  const handleClose = () => {
+    setIsOpen(false);
+    // Attendre fin animation modal avant d'émettre l'événement (pattern standard)
+    setTimeout(() => {
+      emitOnboardingEvent(ONBOARDING_EVENTS.HISTORY_CLOSED);
+    }, 300);
+  };
+
   return (
     <>
       {/* Bouton d'ouverture */}
@@ -70,7 +80,7 @@ export default function ChangesPanel() {
       {/* Modal avec l'historique */}
       <Modal
         open={isOpen}
-        onClose={() => setIsOpen(false)}
+        onClose={handleClose}
         title={labels.title}
         size="large"
       >
@@ -107,7 +117,7 @@ export default function ChangesPanel() {
         {/* Bouton fermer */}
         <div className="flex justify-end pt-4 border-t border-white/20">
           <button
-            onClick={() => setIsOpen(false)}
+            onClick={handleClose}
             className="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm border-2 border-white/40 rounded-lg transition-all duration-200 text-white font-medium text-sm drop-shadow"
           >
             {labels.close}

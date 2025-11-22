@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { ONBOARDING_EVENTS, emitOnboardingEvent } from '@/lib/onboarding/onboardingEvents';
 
 /**
  * Génère les initiales à partir d'un nom complet
@@ -336,6 +337,20 @@ export function useExportModal({ currentItem, language, addNotification }) {
     setIsOpen(true);
   }, []);
 
+  // Écouter l'événement onboarding pour ouvrir automatiquement le modal
+  useEffect(() => {
+    const handleOpenExport = () => {
+      console.log('[useExportModal] Réception événement OPEN_EXPORT, ouverture modal');
+      setIsOpen(true);
+    };
+
+    window.addEventListener(ONBOARDING_EVENTS.OPEN_EXPORT, handleOpenExport);
+
+    return () => {
+      window.removeEventListener(ONBOARDING_EVENTS.OPEN_EXPORT, handleOpenExport);
+    };
+  }, []);
+
   // Fermer le modal
   const closeModal = useCallback(() => {
     setIsOpen(false);
@@ -439,6 +454,9 @@ export function useExportModal({ currentItem, language, addNotification }) {
 
       // Fermer le modal
       closeModal();
+
+      // Émettre l'événement pour l'onboarding (step 8) APRÈS fermeture du modal
+      emitOnboardingEvent(ONBOARDING_EVENTS.EXPORT_CLICKED);
     } catch (error) {
       console.error('[useExportModal] Erreur catch générale:', error);
 
