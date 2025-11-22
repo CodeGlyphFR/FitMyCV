@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
-import AuthBackground from '@/components/auth/AuthBackground';
 
 export default function VerifyEmailRequiredPage() {
   const { data: session } = useSession();
@@ -44,7 +43,6 @@ export default function VerifyEmailRequiredPage() {
 
   return (
     <>
-      <AuthBackground />
       <div className="relative z-10 min-h-screen flex items-center justify-center px-6 py-8 ios-auth-container">
         <div className="w-full max-w-lg">
           <div className="rounded-3xl border-2 border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl p-8 space-y-6">
