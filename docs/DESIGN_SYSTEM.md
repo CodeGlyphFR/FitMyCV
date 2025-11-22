@@ -628,6 +628,105 @@ useEffect(() => {
 
 ---
 
+## Background System
+
+### Global Background
+- **Component**: `components/GlobalBackground.jsx`
+- **Base Color**: `rgb(2, 6, 23)` (deep dark blue) - Accessible via Tailwind class `bg-app-bg`
+- **Animated Blobs**: 3 blobs animés avec Framer Motion (sky-500/emerald-500)
+- **Coverage**: Applied globally via `app/layout.jsx`, covers entire viewport
+- **Z-index**: `z-0` (lowest layer)
+- **Position**: `fixed inset-0` (stays in place during scroll)
+
+### Animated Background Features
+
+**Implementation** (Framer Motion):
+- 3 blobs avec gradients radiaux (dominance bleu sky-500)
+- Tailles responsives basées sur `window.innerHeight` (40-60% de la hauteur viewport)
+- Animations organiques avec trajectoires mathématiques (sin/cos)
+- Mouvements amples : ±200px horizontal, ±180px vertical
+- 6 keyframes pour trajectoires complexes
+- Durées : 25-31s (non synchronisées)
+- GPU-accelerated avec `willChange: 'transform, opacity'`
+
+**Blob Configuration**:
+```javascript
+const blobs = [
+  {
+    size: window.innerHeight * 0.6,  // Responsive
+    gradient: 'radial-gradient(circle, rgba(14, 165, 233, 0.45) 0%, ...)',
+    blur: 70,
+    position: { top: '10%', left: '5%' }
+  },
+  // 2 autres blobs...
+];
+```
+
+**Animation Properties**:
+- **Déplacement** : Trajectoires organiques basées sur sin/cos
+- **Scale** : 0.75 à 1.3 (pulsation)
+- **Rotation** : ±15° pour profondeur
+- **Opacity** : 0.35 à 0.85 dynamique
+
+### Background Usage Guidelines
+
+#### Full-Page Backgrounds
+```jsx
+// Use bg-app-bg for consistency (preferred)
+<div className="bg-app-bg">...</div>
+
+// Or use direct RGB value if Tailwind class not available
+<div className="bg-[rgb(2,6,23)]">...</div>
+```
+
+#### Modal/Overlay Backgrounds
+For modals and overlays that need darker contrast:
+```jsx
+// Darker overlay for modals
+<div className="bg-gray-900/95 backdrop-blur-xl">...</div>
+
+// Dropdown menus
+<div className="bg-gray-900/98 backdrop-blur-sm">...</div>
+```
+
+### Background Hierarchy
+
+1. **GlobalBackground** (`z-0`) - Base `rgb(2,6,23)` + 3 blobs animés
+2. **Main Content** (`z-10`) - All page content sits above background
+3. **Modals/Overlays** (`z-[10002]+`) - May use darker variants like `bg-gray-900/95` for visual contrast
+
+### Historical Context
+
+**Current Implementation (v2 - Framer Motion)**
+- 3 blobs animés avec Framer Motion pour mouvements fluides
+- Tailles responsives basées sur viewport height
+- Trajectoires mathématiques organiques (sin/cos patterns)
+- Animations complexes : x, y, scale, rotate, opacity
+- Optimisations GPU avec willChange
+
+**Previous Implementation (Removed)**
+- CSS-only blob animations with Tailwind keyframes (replaced by Framer Motion)
+- `AuthBackground.jsx` component with iOS-specific variants (deleted)
+- Separate background handling for `/auth` routes (unified)
+- Static gradient mesh (replaced by animated blobs)
+
+### iOS Considerations
+
+The `ios-auth-container` class in `globals.css` handles iOS-specific layout:
+```css
+@supports (-webkit-touch-callout: none) {
+  .ios-auth-container {
+    align-items: flex-start !important;
+    padding-top: max(2rem, env(safe-area-inset-top, 0) + 1rem) !important;
+    padding-bottom: max(2rem, env(safe-area-inset-bottom, 0) + 1rem) !important;
+  }
+}
+```
+
+**Purpose**: Prevents iOS keyboard from pushing auth forms out of view by positioning content at the top instead of center.
+
+---
+
 ## Z-Index Layering
 
 ```css
