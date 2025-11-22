@@ -1,14 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Sparkles, Edit3, Zap } from 'lucide-react';
+import { Sparkles, Edit3, Zap, X } from 'lucide-react';
 import {
   slideVariants,
   paginationDotsContainer,
   paginationDot,
-  createChevronAnimations,
   createDotAnimations,
   transitions,
   calculateSwipePower,
@@ -16,7 +15,83 @@ import {
 } from '@/lib/animations/variants';
 
 /**
+ * Animation swipe simplifiée - Disque avec effet de traînée (mobile uniquement)
+ */
+function SwipeAnimation() {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: [0, 1, 0] }}
+      transition={{
+        duration: 5.1,
+        times: [0, 0.05, 1],
+      }}
+      className="md:hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10"
+      aria-hidden="true"
+    >
+      <motion.div
+        animate={{
+          x: [60, -60, 60, -60, 60, -60],
+        }}
+        transition={{
+          duration: 5.1,
+          times: [0, 0.33, 0.33, 0.66, 0.66, 1],
+          ease: "easeInOut",
+        }}
+        className="relative"
+      >
+        {/* Traînée (cercles avec opacité décroissante) */}
+        <motion.div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+          animate={{
+            opacity: [0, 0.7, 0],
+          }}
+          transition={{
+            duration: 5.1,
+            times: [0, 0.5, 1],
+            ease: "easeInOut",
+          }}
+        >
+          <div className="w-6 h-6 rounded-full bg-emerald-400/60 blur-sm ml-5" />
+        </motion.div>
+        <motion.div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+          animate={{
+            opacity: [0, 0.8, 0],
+          }}
+          transition={{
+            duration: 5.1,
+            times: [0, 0.5, 1],
+            ease: "easeInOut",
+          }}
+        >
+          <div className="w-6 h-6 rounded-full bg-emerald-400/70 blur-sm ml-2.5" />
+        </motion.div>
+
+        {/* Disque principal */}
+        <motion.div
+          animate={{
+            opacity: [0, 1, 0],
+          }}
+          transition={{
+            duration: 5.1,
+            times: [0, 0.5, 1],
+            ease: "easeInOut",
+          }}
+          className="w-8 h-8 rounded-full bg-emerald-400 shadow-lg shadow-emerald-500/50"
+        />
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/**
  * Modal de bienvenue affiché avant le début de l'onboarding
+ *
+ * RESPONSIVE BREAKPOINTS:
+ * - Mobile: 0-990px (barres de progression, swipe hint, pas de chevrons)
+ * - Desktop: 991px+ (chevrons visibles, pas de barres, textes/espacements plus grands)
+ * Note: md: breakpoint personnalisé à 991px dans tailwind.config.js (pas le défaut 768px)
  *
  * Props:
  * - open: boolean - État d'ouverture du modal
@@ -92,6 +167,8 @@ export default function WelcomeModal({
   const [direction, setDirection] = useState(0);
   const [isMorphing, setIsMorphing] = useState(false);
   const [morphTransform, setMorphTransform] = useState({ x: 0, y: 0 });
+  const [isScrollable, setIsScrollable] = useState(false);
+  const scrollRef = useRef(null);
   const shouldReduceMotion = useReducedMotion();
 
   // Reset screen when modal opens
@@ -102,6 +179,20 @@ export default function WelcomeModal({
       setIsMorphing(false);
     }
   }, [open]);
+
+  // Détection de scrollabilité pour le fade indicator
+  useEffect(() => {
+    const checkScrollable = () => {
+      if (scrollRef.current) {
+        const { scrollHeight, clientHeight } = scrollRef.current;
+        setIsScrollable(scrollHeight > clientHeight);
+      }
+    };
+
+    checkScrollable();
+    window.addEventListener('resize', checkScrollable);
+    return () => window.removeEventListener('resize', checkScrollable);
+  }, [currentScreen]);
 
   // Handler pour démarrer l'animation morphing
   const startMorphAnimation = useCallback(() => {
@@ -206,7 +297,8 @@ export default function WelcomeModal({
     }
   };
 
-  if (!open) return null;
+  // Ne pas render si pas ouvert ou screens vides
+  if (!open || WELCOME_SCREENS.length === 0) return null;
 
   const currentScreenData = WELCOME_SCREENS[currentScreen];
   const IconComponent = currentScreenData.icon;
@@ -259,7 +351,7 @@ export default function WelcomeModal({
         className={`
           relative bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl
           overflow-hidden
-          ${isMorphing ? '' : 'w-full max-w-2xl'}
+          ${isMorphing ? '' : 'w-full max-w-full mx-2 md:mx-4 md:max-w-2xl'}
         `}
         onClick={(e) => e.stopPropagation()}
       >
@@ -269,27 +361,75 @@ export default function WelcomeModal({
           transition={{ duration: MORPH_DURATION * 0.3 }}
         >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-full ${currentScreenData.iconBg} flex items-center justify-center`}>
-              <IconComponent className={`w-5 h-5 ${currentScreenData.iconColor}`} />
+        <div>
+          {/* Titre et boutons */}
+          <div className="flex items-center justify-between p-4 md:p-6">
+            <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full ${currentScreenData.iconBg} flex items-center justify-center flex-shrink-0`}>
+                <IconComponent className={`w-4 h-4 md:w-5 md:h-5 ${currentScreenData.iconColor}`} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2
+                  id="welcome-modal-title"
+                  className="text-lg md:text-xl font-bold text-white truncate mb-1"
+                >
+                  Bienvenue
+                </h2>
+                <p className="text-xs md:text-sm text-slate-400">
+                  {currentScreen + 1} / {WELCOME_SCREENS.length}
+                </p>
+
+                {/* Screen reader only announcement */}
+                <div className="sr-only md:hidden" role="status" aria-live="polite" aria-atomic="true">
+                  Étape {currentScreen + 1} sur {WELCOME_SCREENS.length}
+                </div>
+              </div>
             </div>
-            <div>
-              <h2
-                id="welcome-modal-title"
-                className="text-xl font-bold text-white"
+
+            {/* Boutons alignés à droite */}
+            <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+              {/* Bouton Passer le tutoriel - skip TOUT le tutoriel */}
+              {onSkip && (
+                <button
+                  onClick={onSkip}
+                  className="text-xs md:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap"
+                >
+                  Passer le tutoriel
+                </button>
+              )}
+
+              {/* X Button - Immediately close modal and start onboarding (same as "Compris" on last screen) */}
+              <button
+                onClick={startMorphAnimation}
+                className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                aria-label="Commencer l'onboarding"
               >
-                Bienvenue
-              </h2>
-              <p className="text-sm text-slate-400">
-                {currentScreen + 1} / {WELCOME_SCREENS.length}
-              </p>
+                <X className="w-4 h-4 md:w-5 md:h-5" />
+              </button>
             </div>
           </div>
+
+          {/* Mobile Progress Bars - Pleine largeur au-dessus de la bordure */}
+          <div className="md:hidden px-4 pb-3" aria-hidden="true">
+            <div className="flex gap-1">
+              {WELCOME_SCREENS.map((_, idx) => (
+                <div key={idx} className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full bg-emerald-500 transition-[width] duration-300 ${
+                      idx <= currentScreen ? 'w-full' : 'w-0'
+                    }`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Ligne de séparation */}
+          <div className="border-b border-white/10" />
         </div>
 
         {/* Carousel Container */}
-        <div className="relative min-h-[320px] overflow-hidden" role="tabpanel" aria-live="polite">
+        <div className="relative min-h-[360px] md:min-h-[320px] overflow-hidden" role="tabpanel" aria-live="polite">
           <AnimatePresence initial={true} custom={direction} mode="wait">
             <motion.div
               id="welcome-carousel-content"
@@ -307,75 +447,50 @@ export default function WelcomeModal({
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={1}
               onDragEnd={handleDragEnd}
-              className="absolute inset-0 p-6 pb-16 cursor-grab active:cursor-grabbing"
+              className="absolute inset-0 p-4 md:p-6 pb-14 md:pb-16 cursor-grab active:cursor-grabbing"
             >
-              <div className="flex flex-col items-center justify-center h-full space-y-6 text-center">
+              <div className="flex flex-col items-center justify-center h-full space-y-4 md:space-y-6 text-center">
                 {/* Icône décorative */}
-                <div className={`w-20 h-20 rounded-full ${currentScreenData.iconBg} flex items-center justify-center`}>
-                  <IconComponent className={`w-10 h-10 ${currentScreenData.iconColor}`} />
+                <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full ${currentScreenData.iconBg} flex items-center justify-center`}>
+                  <IconComponent className={`w-8 h-8 md:w-10 md:h-10 ${currentScreenData.iconColor}`} />
                 </div>
 
                 {/* Titre */}
-                <h3 className="text-2xl font-bold text-white">
+                <h3 className="text-xl md:text-2xl font-bold text-white">
                   {currentScreenData.title}
                 </h3>
 
-                {/* Description */}
-                <p className="text-white/80 text-lg leading-relaxed max-w-lg">
-                  {currentScreenData.description}
-                </p>
+                {/* Description avec scroll */}
+                <div className="w-full max-w-lg px-2 relative">
+                  <div
+                    ref={scrollRef}
+                    className="max-h-[200px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-white/10 hover:scrollbar-thumb-white/40"
+                    style={{
+                      scrollbarWidth: 'thin',
+                      scrollbarColor: 'rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1)',
+                    }}
+                  >
+                    <p className="text-white/80 text-base md:text-lg leading-relaxed">
+                      {currentScreenData.description}
+                    </p>
+                  </div>
+                  {/* Gradient fade indicator (visible si scroll possible) */}
+                  <div
+                    className={`absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[rgb(2,6,23)] to-transparent pointer-events-none transition-opacity ${
+                      isScrollable ? 'opacity-100' : 'opacity-0'
+                    }`}
+                  />
+                </div>
               </div>
+
+              {/* Swipe Animation (mobile only, first screen only) */}
+              {currentScreen === 0 && <SwipeAnimation />}
             </motion.div>
           </AnimatePresence>
 
-          {/* Navigation Arrows */}
-          <motion.button
-            onClick={handlePrev}
-            disabled={currentScreen === 0}
-            {...createChevronAnimations(shouldReduceMotion, 'left')}
-            animate={{
-              opacity: currentScreen === 0 ? 0.3 : 1,
-            }}
-            transition={transitions.default}
-            className="
-              absolute left-4 top-1/2 -translate-y-1/2 z-10
-              w-11 h-11 rounded-full
-              bg-emerald-500/50 hover:bg-emerald-500/70
-              disabled:pointer-events-none
-              text-white
-              flex items-center justify-center
-              backdrop-blur-sm
-            "
-            aria-label="Écran précédent"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </motion.button>
-
-          <motion.button
-            onClick={handleNext}
-            disabled={isLastScreen}
-            {...createChevronAnimations(shouldReduceMotion, 'right')}
-            animate={{
-              opacity: isLastScreen ? 0.3 : 1,
-            }}
-            transition={transitions.default}
-            className="
-              absolute right-4 top-1/2 -translate-y-1/2 z-10
-              w-11 h-11 rounded-full
-              bg-emerald-500/50 hover:bg-emerald-500/70
-              disabled:pointer-events-none
-              text-white
-              flex items-center justify-center
-              backdrop-blur-sm
-            "
-            aria-label="Écran suivant"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </motion.button>
-
-          {/* Pagination Bullets */}
+          {/* Pagination Bullets (Desktop only) */}
           <motion.div
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1 z-20"
+            className="hidden md:flex absolute bottom-4 left-1/2 -translate-x-1/2 gap-1 z-20"
             role="tablist"
             variants={paginationDotsContainer}
             initial="hidden"
@@ -414,30 +529,34 @@ export default function WelcomeModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-white/10">
-          {/* Bouton Skip */}
-          <button
-            onClick={onSkip}
-            className="
-              px-4 py-2 text-sm
-              text-slate-400 hover:text-white
-              transition-colors
-            "
-          >
-            Passer le tutoriel
-          </button>
+        <div className="flex items-center justify-between p-4 md:p-6 border-t border-white/10">
+          {/* Bouton Précédent (gauche, masqué au premier écran) */}
+          {currentScreen > 0 ? (
+            <button
+              onClick={handlePrev}
+              className="
+                px-3 md:px-4 py-2 text-xs md:text-sm
+                text-slate-400 hover:text-white
+                transition-colors
+              "
+            >
+              Précédent
+            </button>
+          ) : (
+            <div />
+          )}
 
-          {/* Bouton principal */}
+          {/* Bouton Suivant ou Compris (droite) */}
           <button
             onClick={handleNext}
             className="
-              px-8 py-3 rounded-lg
+              px-6 md:px-8 py-2.5 md:py-3 rounded-lg
               bg-emerald-500 hover:bg-emerald-600
-              text-white font-semibold
+              text-white text-sm md:text-base font-semibold
               transition-colors
             "
           >
-            {isLastScreen ? 'Commencer le tutoriel' : 'Suivant'}
+            {isLastScreen ? 'Compris' : 'Suivant'}
           </button>
         </div>
         </motion.div>

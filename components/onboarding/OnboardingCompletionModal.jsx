@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Search, Upload, FileText } from 'lucide-react';
+import { ChevronRight, Search, Upload, FileText } from 'lucide-react';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -18,6 +18,11 @@ import {
 /**
  * Modal de complétion de l'onboarding avec carousel (3 écrans)
  * Affiché quand l'utilisateur termine le tutoriel (step 7)
+ *
+ * RESPONSIVE BREAKPOINTS:
+ * - Mobile: 0-990px (barres de progression, swipe hint, pas de chevrons)
+ * - Desktop: 991px+ (chevrons visibles, pas de barres, textes/espacements plus grands)
+ * Note: md: breakpoint personnalisé à 991px dans tailwind.config.js (pas le défaut 768px)
  *
  * Props:
  * - open: boolean - État d'ouverture du modal
@@ -159,7 +164,8 @@ export default function OnboardingCompletionModal({
     }
   };
 
-  if (!open) return null;
+  // Ne pas render si pas ouvert ou screens vides
+  if (!open || COMPLETION_SCREENS.length === 0) return null;
 
   const currentScreenData = COMPLETION_SCREENS[currentScreen];
   const IconComponent = currentScreenData?.icon;
@@ -178,32 +184,50 @@ export default function OnboardingCompletionModal({
       {/* Modal */}
       <div
         className="
-          relative w-full max-w-4xl
+          relative w-full max-w-full mx-4 md:max-w-4xl
           bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl
           overflow-hidden
         "
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <span className="text-2xl">🎉</span>
+        <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/10">
+          <div className="flex items-center gap-2 md:gap-3 flex-1">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+              <span className="text-xl md:text-2xl">🎉</span>
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h2
                 id="completion-modal-title"
-                className="text-xl font-bold text-white"
+                className="text-lg md:text-xl font-bold text-white"
               >
                 Félicitations !
               </h2>
-              <p className="text-sm text-slate-400">
+              <p className="text-xs md:text-sm text-slate-400">
                 Découvrez encore plus de fonctionnalités
               </p>
+
+              {/* Screen reader only announcement */}
+              <div className="sr-only md:hidden" role="status" aria-live="polite" aria-atomic="true">
+                Étape {currentScreen + 1} sur {COMPLETION_SCREENS.length}
+              </div>
+
+              {/* Mobile Progress Bars - Full width (decorative) */}
+              <div className="md:hidden mt-2 flex gap-1" aria-hidden="true">
+                {COMPLETION_SCREENS.map((_, idx) => (
+                  <div key={idx} className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full bg-emerald-500 transition-[width] duration-300 ${
+                        idx <= currentScreen ? 'w-full' : 'w-0'
+                      }`}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Bouton fermeture */}
+          {/* X Button - Complete onboarding (same effect as "Commencer!" button) */}
           <button
             onClick={onComplete}
             className="
@@ -230,7 +254,7 @@ export default function OnboardingCompletionModal({
         </div>
 
         {/* Carousel Container */}
-        <div className="relative min-h-[400px] overflow-hidden" role="tabpanel" aria-live="polite">
+        <div className="relative min-h-[320px] md:min-h-[400px] overflow-hidden" role="tabpanel" aria-live="polite">
           <AnimatePresence initial={true} custom={direction} mode="wait">
             <motion.div
               key={currentScreen}
@@ -247,82 +271,51 @@ export default function OnboardingCompletionModal({
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={1}
               onDragEnd={handleDragEnd}
-              className="absolute inset-0 p-6 pb-20 cursor-grab active:cursor-grabbing"
+              className="absolute inset-0 p-4 md:p-6 pb-16 md:pb-20 cursor-grab active:cursor-grabbing"
             >
-              <div className="flex flex-col items-center justify-center space-y-6 h-full">
+              <div className="flex flex-col items-center justify-center space-y-4 md:space-y-6 h-full">
                 {/* Icône */}
-                <div className="w-24 h-24 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-emerald-500/20 flex items-center justify-center">
                   {IconComponent && (
-                    <IconComponent className="w-12 h-12 text-emerald-400" />
+                    <IconComponent className="w-10 h-10 md:w-12 md:h-12 text-emerald-400" />
                   )}
                 </div>
 
                 {/* Titre */}
-                <h3 className="text-2xl font-bold text-white text-center">
+                <h3 className="text-xl md:text-2xl font-bold text-white text-center">
                   {currentScreenData?.title}
                 </h3>
 
                 {/* Description */}
-                <p className="text-white/90 text-lg leading-relaxed text-center max-w-2xl">
+                <p className="text-white/90 text-base md:text-lg leading-relaxed text-center max-w-2xl px-2">
                   {currentScreenData?.description}
                 </p>
 
                 {/* Emoji décoratif */}
-                <div className="text-6xl opacity-20">
+                <div className="text-5xl md:text-6xl opacity-20">
                   {currentScreenData?.emoji}
                 </div>
               </div>
+
+              {/* Swipe Hint (mobile only, first screen only) */}
+              {currentScreen === 0 && (
+                <motion.div
+                  initial={{ opacity: 1, x: 0 }}
+                  animate={{ opacity: 0, x: 20 }}
+                  transition={{ delay: 1, duration: 1.5 }}
+                  className="md:hidden absolute bottom-20 left-1/2 -translate-x-1/2
+                             flex items-center gap-2 text-white/60 text-sm pointer-events-none"
+                >
+                  <span>Glissez pour continuer</span>
+                  <ChevronRight className="w-4 h-4" />
+                </motion.div>
+              )}
             </motion.div>
           </AnimatePresence>
 
-          {/* Navigation Arrows */}
-          <motion.button
-            onClick={handlePrev}
-            disabled={currentScreen === 0}
-            {...createChevronAnimations(shouldReduceMotion, 'left')}
-            animate={{
-              opacity: currentScreen === 0 ? 0.3 : 1,
-            }}
-            transition={transitions.default}
-            className="
-              absolute left-4 top-1/2 -translate-y-1/2 z-10
-              w-11 h-11 rounded-full
-              bg-emerald-500/50 hover:bg-emerald-500/70
-              disabled:pointer-events-none
-              text-white
-              flex items-center justify-center
-              backdrop-blur-sm
-            "
-            aria-label="Écran précédent"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </motion.button>
-
-          <motion.button
-            onClick={handleNext}
-            disabled={currentScreen >= COMPLETION_SCREENS.length - 1}
-            {...createChevronAnimations(shouldReduceMotion, 'right')}
-            animate={{
-              opacity: currentScreen >= COMPLETION_SCREENS.length - 1 ? 0.3 : 1,
-            }}
-            transition={transitions.default}
-            className="
-              absolute right-4 top-1/2 -translate-y-1/2 z-10
-              w-11 h-11 rounded-full
-              bg-emerald-500/50 hover:bg-emerald-500/70
-              disabled:pointer-events-none
-              text-white
-              flex items-center justify-center
-              backdrop-blur-sm
-            "
-            aria-label="Écran suivant"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </motion.button>
-
-          {/* Pagination Bullets */}
+          {/* Pagination Bullets (Desktop only) */}
           <motion.div
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1 z-20"
+            className="hidden md:flex absolute bottom-4 left-1/2 -translate-x-1/2 gap-1 z-20"
             role="tablist"
             variants={paginationDotsContainer}
             initial="hidden"
@@ -360,19 +353,30 @@ export default function OnboardingCompletionModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-white/10">
-          {/* Indicateur de progression */}
-          <p className="text-sm text-slate-400">
-            {currentScreen + 1} / {COMPLETION_SCREENS.length}
-          </p>
+        <div className="flex items-center justify-between p-4 md:p-6 border-t border-white/10">
+          {/* Bouton Précédent (gauche, masqué au premier écran) */}
+          {currentScreen > 0 ? (
+            <button
+              onClick={handlePrev}
+              className="
+                px-3 md:px-4 py-2 text-xs md:text-sm
+                text-slate-400 hover:text-white
+                transition-colors
+              "
+            >
+              Précédent
+            </button>
+          ) : (
+            <div />
+          )}
 
-          {/* Bouton principal */}
+          {/* Bouton Suivant ou Commencer (droite) */}
           <button
             onClick={handleNext}
             className="
-              px-8 py-3 rounded-lg
+              px-6 md:px-8 py-2.5 md:py-3 rounded-lg
               bg-emerald-500 hover:bg-emerald-600
-              text-white font-semibold
+              text-white text-sm md:text-base font-semibold
               transition-colors
             "
           >
