@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { ChevronRight, Search, Upload, FileText } from 'lucide-react';
+import { ChevronRight, Search, Upload, FileText, X } from 'lucide-react';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -191,70 +191,65 @@ export default function OnboardingCompletionModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/10">
-          <div className="flex items-center gap-2 md:gap-3 flex-1">
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-xl md:text-2xl">🎉</span>
+        <div>
+          {/* Titre et boutons */}
+          <div className="flex items-center justify-between p-4 md:p-6">
+            <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-xl md:text-2xl">🎉</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2
+                  id="completion-modal-title"
+                  className="text-lg md:text-xl font-bold text-white mb-1"
+                >
+                  Félicitations !
+                </h2>
+                <p className="text-xs md:text-sm text-slate-400">
+                  Découvrez encore plus de fonctionnalités
+                </p>
+
+                {/* Screen reader only announcement */}
+                <div className="sr-only md:hidden" role="status" aria-live="polite" aria-atomic="true">
+                  Étape {currentScreen + 1} sur {COMPLETION_SCREENS.length}
+                </div>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <h2
-                id="completion-modal-title"
-                className="text-lg md:text-xl font-bold text-white"
+
+            {/* Boutons alignés à droite */}
+            <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+              {/* X Button - Complete onboarding (same effect as "Commencer!" button) */}
+              <button
+                onClick={onComplete}
+                className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                aria-label="Fermer le modal"
               >
-                Félicitations !
-              </h2>
-              <p className="text-xs md:text-sm text-slate-400">
-                Découvrez encore plus de fonctionnalités
-              </p>
-
-              {/* Screen reader only announcement */}
-              <div className="sr-only md:hidden" role="status" aria-live="polite" aria-atomic="true">
-                Étape {currentScreen + 1} sur {COMPLETION_SCREENS.length}
-              </div>
-
-              {/* Mobile Progress Bars - Full width (decorative) */}
-              <div className="md:hidden mt-2 flex gap-1" aria-hidden="true">
-                {COMPLETION_SCREENS.map((_, idx) => (
-                  <div key={idx} className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full bg-emerald-500 transition-[width] duration-300 ${
-                        idx <= currentScreen ? 'w-full' : 'w-0'
-                      }`}
-                    />
-                  </div>
-                ))}
-              </div>
+                <X className="w-4 h-4 md:w-5 md:h-5" />
+              </button>
             </div>
           </div>
 
-          {/* X Button - Complete onboarding (same effect as "Commencer!" button) */}
-          <button
-            onClick={onComplete}
-            className="
-              p-2 rounded-lg
-              text-slate-400 hover:text-white hover:bg-white/10
-              transition-colors
-            "
-            aria-label="Fermer le modal"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+          {/* Mobile Progress Bars - Pleine largeur au-dessus de la bordure */}
+          <div className="md:hidden px-4 pb-3" aria-hidden="true">
+            <div className="flex gap-1">
+              {COMPLETION_SCREENS.map((_, idx) => (
+                <div key={idx} className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full bg-emerald-500 transition-[width] duration-300 ${
+                      idx <= currentScreen ? 'w-full' : 'w-0'
+                    }`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Ligne de séparation */}
+          <div className="border-b border-white/10" />
         </div>
 
         {/* Carousel Container */}
-        <div className="relative min-h-[320px] md:min-h-[400px] overflow-hidden" role="tabpanel" aria-live="polite">
+        <div className="relative min-h-[360px] md:min-h-[320px] overflow-hidden" role="tabpanel" aria-live="polite">
           <AnimatePresence initial={true} custom={direction} mode="wait">
             <motion.div
               key={currentScreen}
@@ -271,7 +266,7 @@ export default function OnboardingCompletionModal({
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={1}
               onDragEnd={handleDragEnd}
-              className="absolute inset-0 p-4 md:p-6 pb-16 md:pb-20 cursor-grab active:cursor-grabbing"
+              className="absolute inset-0 p-4 md:p-6 pb-14 md:pb-16 cursor-grab active:cursor-grabbing"
             >
               <div className="flex flex-col items-center justify-center space-y-4 md:space-y-6 h-full">
                 {/* Icône */}

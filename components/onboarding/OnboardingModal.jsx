@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, X } from 'lucide-react';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -188,83 +188,77 @@ export default function OnboardingModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/10">
-          <div className="flex items-center gap-2 md:gap-3 flex-1">
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-xl md:text-2xl">✏️</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-4 mb-1">
+        <div>
+          {/* Titre et boutons */}
+          <div className="flex items-center justify-between p-4 md:p-6">
+            <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-xl md:text-2xl">✏️</span>
+              </div>
+              <div className="flex-1 min-w-0">
                 <h2
                   id="onboarding-modal-title"
-                  className="text-lg md:text-xl font-bold text-white truncate"
+                  className="text-lg md:text-xl font-bold text-white truncate mb-1"
                 >
                   Guide du mode édition
                 </h2>
-                {/* Bouton Passer le tutoriel */}
-                {showSkipButton && onSkip && (
-                  <button
-                    onClick={onSkip}
-                    className="text-xs md:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap flex-shrink-0"
-                  >
-                    Passer le tutoriel
-                  </button>
-                )}
-              </div>
-              <p className="text-xs md:text-sm text-slate-400">
-                {currentScreen + 1} / {screens.length}
-              </p>
+                <p className="text-xs md:text-sm text-slate-400">
+                  {currentScreen + 1} / {screens.length}
+                </p>
 
-              {/* Screen reader only announcement */}
-              <div className="sr-only md:hidden" role="status" aria-live="polite" aria-atomic="true">
-                Étape {currentScreen + 1} sur {screens.length}
+                {/* Screen reader only announcement */}
+                <div className="sr-only md:hidden" role="status" aria-live="polite" aria-atomic="true">
+                  Étape {currentScreen + 1} sur {screens.length}
+                </div>
               </div>
+            </div>
 
-              {/* Mobile Progress Bars - Full width (decorative) */}
-              <div className="md:hidden mt-2 flex gap-1" aria-hidden="true">
-                {screens.map((_, idx) => (
-                  <div key={idx} className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full bg-emerald-500 transition-[width] duration-300 ${
-                        idx <= currentScreen ? 'w-full' : 'w-0'
-                      }`}
-                    />
-                  </div>
-                ))}
-              </div>
+            {/* Boutons alignés à droite */}
+            <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+              {/* Bouton Passer le tutoriel */}
+              {showSkipButton && onSkip && (
+                <button
+                  onClick={onSkip}
+                  className="text-xs md:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap"
+                >
+                  Passer le tutoriel
+                </button>
+              )}
+
+              {/* X Button - Allows user to exit mid-tutorial (different from WelcomeModal where X advances) */}
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                  aria-label="Fermer le modal"
+                >
+                  <X className="w-4 h-4 md:w-5 md:h-5" />
+                </button>
+              )}
             </div>
           </div>
 
-          {/* X Button - Allows user to exit mid-tutorial (different from WelcomeModal where X advances) */}
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="
-                p-2 rounded-lg
-                text-slate-400 hover:text-white hover:bg-white/10
-                transition-colors
-              "
-              aria-label="Fermer le modal"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          )}
+          {/* Mobile Progress Bars - Pleine largeur au-dessus de la bordure */}
+          <div className="md:hidden px-4 pb-3" aria-hidden="true">
+            <div className="flex gap-1">
+              {screens.map((_, idx) => (
+                <div key={idx} className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full bg-emerald-500 transition-[width] duration-300 ${
+                      idx <= currentScreen ? 'w-full' : 'w-0'
+                    }`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Ligne de séparation */}
+          <div className="border-b border-white/10" />
         </div>
 
         {/* Carousel Container */}
-        <div className="relative min-h-[320px] md:min-h-[450px] overflow-hidden" role="tabpanel" aria-live="polite">
+        <div className="relative min-h-[360px] md:min-h-[320px] overflow-hidden" role="tabpanel" aria-live="polite">
           <AnimatePresence initial={true} custom={direction} mode="wait">
             <motion.div
               id="onboarding-carousel-content"
@@ -282,7 +276,7 @@ export default function OnboardingModal({
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={1}
               onDragEnd={handleDragEnd}
-              className="absolute inset-0 p-4 md:p-6 pb-16 md:pb-20 cursor-grab active:cursor-grabbing"
+              className="absolute inset-0 p-4 md:p-6 pb-14 md:pb-16 cursor-grab active:cursor-grabbing"
             >
               {screens[currentScreen]?.image ? (
                 /* Mode avec image (si screen.image existe) */
