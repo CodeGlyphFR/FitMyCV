@@ -957,6 +957,7 @@ export default function OnboardingOrchestrator() {
             open={modalOpen}
             screens={step.modal.screens}
             currentScreen={currentScreen}
+            title={step.title}
             onNext={handleModalNext}
             onPrev={handleModalPrev}
             onJumpTo={handleModalJumpTo}
@@ -996,6 +997,7 @@ export default function OnboardingOrchestrator() {
             open={modalOpen}
             screens={step.modal.screens}
             currentScreen={currentScreen}
+            title={step.title}
             onNext={handleModalNext}
             onPrev={handleModalPrev}
             onJumpTo={handleModalJumpTo}
@@ -1110,6 +1112,7 @@ export default function OnboardingOrchestrator() {
             open={modalOpen}
             screens={step.modal.screens}
             currentScreen={currentScreen}
+            title={step.title}
             onNext={handleModalNext}
             onPrev={handleModalPrev}
             onJumpTo={handleModalJumpTo}
@@ -1174,6 +1177,7 @@ export default function OnboardingOrchestrator() {
             open={modalOpen}
             screens={step.modal.screens}
             currentScreen={currentScreen}
+            title={step.title}
             onNext={handleModalNext}
             onPrev={handleModalPrev}
             onJumpTo={handleModalJumpTo}

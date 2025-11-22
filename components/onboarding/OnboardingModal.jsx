@@ -42,6 +42,7 @@ export default function OnboardingModal({
   open = false,
   screens = [],
   currentScreen = 0,
+  title = "Guide du mode édition", // Titre du modal (défaut pour rétrocompatibilité)
   onNext,
   onPrev,
   onJumpTo, // NEW: Direct jump to specific screen
@@ -200,7 +201,7 @@ export default function OnboardingModal({
                   id="onboarding-modal-title"
                   className="text-lg md:text-xl font-bold text-white truncate mb-1"
                 >
-                  Guide du mode édition
+                  {title}
                 </h2>
                 <p className="text-xs md:text-sm text-slate-400">
                   {currentScreen + 1} / {screens.length}
