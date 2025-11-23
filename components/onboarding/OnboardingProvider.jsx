@@ -3,6 +3,8 @@
 import { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { ONBOARDING_STEPS, getStepById, isCompositeStep, getCompositeFeature, getTotalSteps } from '@/lib/onboarding/onboardingSteps';
+import { ONBOARDING_TIMINGS } from '@/lib/onboarding/onboardingConfig';
+import { onboardingLogger } from '@/lib/utils/onboardingLogger';
 import ChecklistPanel from './ChecklistPanel';
 import OnboardingOrchestrator from './OnboardingOrchestrator';
 import WelcomeModal from './WelcomeModal';
@@ -14,16 +16,10 @@ export const OnboardingContext = createContext(null);
 
 /**
  * Constantes pour les timers de transition entre étapes
+ * Importées depuis le fichier de configuration centralisé
  */
-const STEP_TRANSITION_DELAY = 2000; // 2 secondes entre chaque étape
-
-/**
- * Steps qui s'enchaînent immédiatement sans délai de transition
- * - Step 2 (ai_generate): Démonstration génération IA
- * - Step 3 (task_manager): Suivi des tâches
- * Ces steps forment un flux rapide qui ne nécessite pas de pause
- */
-const STEPS_WITHOUT_TIMER = [2, 3]; // Steps 2→3 et 3→4 s'enchaînent sans délai
+const STEP_TRANSITION_DELAY = ONBOARDING_TIMINGS.STEP_TRANSITION_DELAY;
+const STEPS_WITHOUT_TIMER = ONBOARDING_TIMINGS.STEPS_WITHOUT_TIMER;
 
 /**
  * Provider pour le système d'onboarding
@@ -86,7 +82,7 @@ export default function OnboardingProvider({ children }) {
     checklistExpanded: false,
     onboardingStartTime: null,
     stepStartTime: null,
-    startOnboarding: () => console.warn('[OnboardingProvider] Not authenticated'),
+    startOnboarding: () => onboardingLogger.warn('[OnboardingProvider] Not authenticated'),
     goToNextStep: () => {},
     goToPrevStep: () => {},
     goToStep: () => {},
@@ -117,7 +113,7 @@ export default function OnboardingProvider({ children }) {
       const res = await fetch('/api/user/onboarding');
 
       if (!res.ok) {
-        console.error('[OnboardingProvider] Failed to fetch state:', res.status);
+        onboardingLogger.error('[OnboardingProvider] Failed to fetch state:', res.status);
         setIsLoading(false);
         return;
       }
@@ -135,7 +131,7 @@ export default function OnboardingProvider({ children }) {
 
       setIsLoading(false);
     } catch (error) {
-      console.error('[OnboardingProvider] Error fetching state:', error);
+      onboardingLogger.error('[OnboardingProvider] Error fetching state:', error);
       setIsLoading(false);
     }
   }, []);
@@ -161,7 +157,7 @@ export default function OnboardingProvider({ children }) {
       }
 
       setIsActive(true);
-      console.log(`[OnboardingProvider] Onboarding activé, démarrage dans ${STEP_TRANSITION_DELAY}ms`);
+      onboardingLogger.log(`[OnboardingProvider] Onboarding activé, démarrage dans ${STEP_TRANSITION_DELAY}ms`);
 
       // Timer de 2 secondes avant d'afficher la première étape
       welcomeTimerRef.current = setTimeout(async () => {
@@ -179,11 +175,11 @@ export default function OnboardingProvider({ children }) {
             body: JSON.stringify({ step: 1 }),
           });
         } catch (error) {
-          console.error('[OnboardingProvider] Error updating step:', error);
+          onboardingLogger.error('[OnboardingProvider] Error updating step:', error);
         }
       }, STEP_TRANSITION_DELAY);
     } catch (error) {
-      console.error('[OnboardingProvider] Error starting onboarding:', error);
+      onboardingLogger.error('[OnboardingProvider] Error starting onboarding:', error);
     }
   }, []);
 
@@ -209,7 +205,7 @@ export default function OnboardingProvider({ children }) {
         body: JSON.stringify({ step: nextStep }),
       });
     } catch (error) {
-      console.error('[OnboardingProvider] Error updating step:', error);
+      onboardingLogger.error('[OnboardingProvider] Error updating step:', error);
     }
   }, [currentStep]);
 
@@ -231,7 +227,7 @@ export default function OnboardingProvider({ children }) {
         body: JSON.stringify({ step: prevStep }),
       });
     } catch (error) {
-      console.error('[OnboardingProvider] Error updating step:', error);
+      onboardingLogger.error('[OnboardingProvider] Error updating step:', error);
     }
   }, [currentStep]);
 
@@ -240,7 +236,7 @@ export default function OnboardingProvider({ children }) {
    */
   const goToStep = useCallback(async (step) => {
     if (step < 0 || step > 9) {
-      console.error('[OnboardingProvider] Invalid step:', step);
+      onboardingLogger.error('[OnboardingProvider] Invalid step:', step);
       return;
     }
 
@@ -255,7 +251,7 @@ export default function OnboardingProvider({ children }) {
         body: JSON.stringify({ step }),
       });
     } catch (error) {
-      console.error('[OnboardingProvider] Error updating step:', error);
+      onboardingLogger.error('[OnboardingProvider] Error updating step:', error);
     }
   }, []);
 
@@ -278,7 +274,7 @@ export default function OnboardingProvider({ children }) {
         setCompletedSteps([1, 2, 3, 4, 5, 6, 7, 8, 9]);
       }
     } catch (error) {
-      console.error('[OnboardingProvider] Error completing onboarding:', error);
+      onboardingLogger.error('[OnboardingProvider] Error completing onboarding:', error);
     }
   }, []);
 
@@ -303,7 +299,7 @@ export default function OnboardingProvider({ children }) {
     // appelé quand l'utilisateur fermera le modal
     const totalSteps = getTotalSteps();
     if (step >= totalSteps) {
-      console.log('[OnboardingProvider] Step final complété, en attente fermeture modal');
+      onboardingLogger.log('[OnboardingProvider] Step final complété, en attente fermeture modal');
       return; // Ne pas appeler goToNextStep() ni completeOnboarding()
     }
 
@@ -313,7 +309,7 @@ export default function OnboardingProvider({ children }) {
 
     if (needsTimer) {
       // Timer de 2 secondes avant de passer à l'étape suivante
-      console.log(`[OnboardingProvider] Step ${step} complété, transition dans ${STEP_TRANSITION_DELAY}ms`);
+      onboardingLogger.log(`[OnboardingProvider] Step ${step} complété, transition dans ${STEP_TRANSITION_DELAY}ms`);
 
       stepTimerRef.current = setTimeout(async () => {
         stepTimerRef.current = null;
@@ -321,17 +317,17 @@ export default function OnboardingProvider({ children }) {
         try {
           await goToNextStep();
         } catch (error) {
-          console.error('[OnboardingProvider] Error during step transition:', error);
+          onboardingLogger.error('[OnboardingProvider] Error during step transition:', error);
         }
       }, STEP_TRANSITION_DELAY);
     } else {
       // Transition immédiate (steps 2 et 3)
-      console.log(`[OnboardingProvider] Step ${step} complété, transition immédiate`);
+      onboardingLogger.log(`[OnboardingProvider] Step ${step} complété, transition immédiate`);
 
       try {
         await goToNextStep();
       } catch (error) {
-        console.error('[OnboardingProvider] Error during immediate step transition:', error);
+        onboardingLogger.error('[OnboardingProvider] Error during immediate step transition:', error);
       }
     }
   }, [goToNextStep]);
@@ -352,7 +348,7 @@ export default function OnboardingProvider({ children }) {
         setCurrentStep(0);
       }
     } catch (error) {
-      console.error('[OnboardingProvider] Error skipping onboarding:', error);
+      onboardingLogger.error('[OnboardingProvider] Error skipping onboarding:', error);
     }
   }, []);
 
@@ -375,7 +371,7 @@ export default function OnboardingProvider({ children }) {
         setStepStartTime(null);
       }
     } catch (error) {
-      console.error('[OnboardingProvider] Error resetting onboarding:', error);
+      onboardingLogger.error('[OnboardingProvider] Error resetting onboarding:', error);
     }
   }, []);
 
@@ -479,7 +475,7 @@ export default function OnboardingProvider({ children }) {
         return true;
 
       default:
-        console.warn('[OnboardingProvider] Unknown condition type:', condition.type);
+        onboardingLogger.warn('[OnboardingProvider] Unknown condition type:', condition.type);
         return true;
     }
   };
@@ -507,7 +503,7 @@ export default function OnboardingProvider({ children }) {
       });
     } catch (error) {
       // Silent fail (télémétrie non-critique)
-      console.error('[OnboardingProvider] Track error:', error);
+      onboardingLogger.error('[OnboardingProvider] Track error:', error);
     }
   }, [currentStep, stepStartTime]);
 
@@ -548,14 +544,14 @@ export default function OnboardingProvider({ children }) {
 
       if (topbarReady && noLoadingSpinners) {
         // Interface prête → afficher le welcome modal
-        console.log('[OnboardingProvider] Interface prête, affichage du welcome modal');
+        onboardingLogger.log('[OnboardingProvider] Interface prête, affichage du welcome modal');
         setTimeout(() => setShowWelcomeModal(true), 500); // Petit délai final pour la stabilité
         return true;
       }
 
       if (checkCount >= maxChecks) {
         // Timeout : afficher quand même après 10s
-        console.warn('[OnboardingProvider] Timeout, affichage du welcome modal sans vérification complète');
+        onboardingLogger.warn('[OnboardingProvider] Timeout, affichage du welcome modal sans vérification complète');
         setShowWelcomeModal(true);
         return true;
       }

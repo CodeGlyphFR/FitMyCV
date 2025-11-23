@@ -87,6 +87,12 @@ La documentation est organisée en plusieurs fichiers thématiques :
   - Match Score & Optimisation
   - Système de tâches background
 
+- **[ONBOARDING_TIMINGS.md](./ONBOARDING_TIMINGS.md)** - Système d'onboarding - Timings & Transitions
+  - Configuration centralisée des timings (9 constantes)
+  - Logger conditionnel (dev/production)
+  - Diagramme de séquence des étapes
+  - Guide de troubleshooting
+
 ### 💻 Références Développement
 - **[COMMANDS_REFERENCE.md](./COMMANDS_REFERENCE.md)** - Référence commandes complète
   - Commandes Next.js, Prisma, Stripe

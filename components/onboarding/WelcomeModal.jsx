@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Sparkles, Edit3, Zap, X } from 'lucide-react';
+import { ONBOARDING_TIMINGS } from '@/lib/onboarding/onboardingConfig';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -127,7 +128,8 @@ const WELCOME_SCREENS = [
 ];
 
 // Configuration de l'animation morphing
-const MORPH_DURATION = 0.7; // secondes
+// Utilise la config centralisée (ms → secondes pour Framer Motion)
+const MORPH_DURATION = ONBOARDING_TIMINGS.WELCOME_MORPH_DURATION / 1000; // 700ms → 0.7s
 const CHECKLIST_POSITION = {
   bottom: 24, // bottom-6 = 24px
   right: 80,  // right-20 = 80px

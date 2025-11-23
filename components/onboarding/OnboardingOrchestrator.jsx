@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useAdmin } from '@/components/admin/AdminProvider';
 import { getStepById } from '@/lib/onboarding/onboardingSteps';
+import { ONBOARDING_TIMINGS } from '@/lib/onboarding/onboardingConfig';
+import { onboardingLogger } from '@/lib/utils/onboardingLogger';
 import { isAiGenerationTask, isMatchScoreTask, isImprovementTask } from '@/lib/backgroundTasks/taskTypes';
 import { extractCvFilename } from '@/lib/onboarding/cvFilenameUtils';
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from '@/lib/onboarding/onboardingEvents';
@@ -22,11 +24,11 @@ import confetti from 'canvas-confetti';
  * - Total 8 étapes
  */
 
-// Constantes
-const MODAL_CLOSE_ANIMATION_DURATION = 300; // ms - durée de l'animation CSS du modal
-const BUTTON_POLLING_INTERVAL = 200; // ms - intervalle de polling pour trouver les boutons
-const BUTTON_POLLING_TIMEOUT = 10000; // ms - timeout max pour trouver un bouton (10s)
-const STEP_VALIDATION_DELAY = 500; // ms - délai pour permettre aux animations et requêtes async de se terminer avant validation
+// Constantes importées du fichier de configuration centralisé
+const MODAL_CLOSE_ANIMATION_DURATION = ONBOARDING_TIMINGS.MODAL_CLOSE_ANIMATION_DURATION;
+const BUTTON_POLLING_INTERVAL = ONBOARDING_TIMINGS.BUTTON_POLLING_INTERVAL;
+const BUTTON_POLLING_TIMEOUT = ONBOARDING_TIMINGS.BUTTON_POLLING_TIMEOUT;
+const STEP_VALIDATION_DELAY = ONBOARDING_TIMINGS.STEP_VALIDATION_DELAY;
 
 export default function OnboardingOrchestrator() {
   const {
@@ -92,16 +94,16 @@ export default function OnboardingOrchestrator() {
     // Only reset tooltipClosed if modal wasn't completed for step 1, 2, 6 or 8
     if (currentStep === 1 && step1ModalCompletedRef.current) {
       // Keep tooltipClosed = true to prevent reappearing after modal completion
-      console.log('[Onboarding] Step 1: Modal completed, keeping tooltip closed');
+      onboardingLogger.log('[Onboarding] Step 1: Modal completed, keeping tooltip closed');
     } else if (currentStep === 2 && step2ModalCompletedRef.current) {
       // Keep tooltipClosed = true to prevent reappearing after modal completion
-      console.log('[Onboarding] Step 2: Modal completed, keeping tooltip closed');
+      onboardingLogger.log('[Onboarding] Step 2: Modal completed, keeping tooltip closed');
     } else if (currentStep === 6 && step6ModalCompletedRef.current) {
       // Keep tooltipClosed = true to prevent reappearing after modal completion
-      console.log('[Onboarding] Step 6: Modal completed, keeping tooltip closed');
+      onboardingLogger.log('[Onboarding] Step 6: Modal completed, keeping tooltip closed');
     } else if (currentStep === 8 && step8ModalCompletedRef.current) {
       // Keep tooltipClosed = true to prevent reappearing after modal completion
-      console.log('[Onboarding] Step 8: Modal completed, keeping tooltip closed');
+      onboardingLogger.log('[Onboarding] Step 8: Modal completed, keeping tooltip closed');
     } else {
       setTooltipClosed(false);
     }
@@ -155,7 +157,7 @@ export default function OnboardingOrchestrator() {
     const handleEditModeButtonClick = (e) => {
       // If modal was already shown, let the normal click behavior proceed
       if (step1ModalShownRef.current) {
-        console.log('[Onboarding] Step 1: Modal already shown, allowing normal button behavior');
+        onboardingLogger.log('[Onboarding] Step 1: Modal already shown, allowing normal button behavior');
         return; // Don't prevent default, let the button toggle edit mode normally
       }
 
@@ -190,7 +192,7 @@ export default function OnboardingOrchestrator() {
 
       attempts++;
       if (attempts >= maxAttempts) {
-        console.error(`[Onboarding] Étape 1 : Bouton mode édition non trouvé après ${BUTTON_POLLING_TIMEOUT}ms`);
+        onboardingLogger.error(`[Onboarding] Étape 1 : Bouton mode édition non trouvé après ${BUTTON_POLLING_TIMEOUT}ms`);
         return true; // Stop polling après timeout
       }
 
@@ -219,7 +221,7 @@ export default function OnboardingOrchestrator() {
     // La validation se déclenche uniquement sur true → false, donc pas de faux positifs
     // lors de l'activation du mode édition (false → true)
     if (prevEditingRef.current === true && editing === false) {
-      console.log('[Onboarding] Step 1 : Utilisateur a quitté le mode édition, validation du step');
+      onboardingLogger.log('[Onboarding] Step 1 : Utilisateur a quitté le mode édition, validation du step');
       markStepComplete(1);
     }
 
@@ -244,7 +246,7 @@ export default function OnboardingOrchestrator() {
 
       // If modal was already shown, let the normal click behavior proceed
       if (step2ModalShownRef.current) {
-        console.log('[Onboarding] Step 2: Modal already shown, allowing normal button behavior');
+        onboardingLogger.log('[Onboarding] Step 2: Modal already shown, allowing normal button behavior');
         return; // Don't prevent default, let the button open generator normally
       }
 
@@ -280,7 +282,7 @@ export default function OnboardingOrchestrator() {
 
       attempts++;
       if (attempts >= maxAttempts) {
-        console.error(`[Onboarding] Étape 2 : Bouton AI Generate non trouvé après ${BUTTON_POLLING_TIMEOUT}ms`);
+        onboardingLogger.error(`[Onboarding] Étape 2 : Bouton AI Generate non trouvé après ${BUTTON_POLLING_TIMEOUT}ms`);
         return true; // Stop polling après timeout
       }
 
@@ -302,7 +304,7 @@ export default function OnboardingOrchestrator() {
       // Vérifier que c'est bien une tâche de génération IA
       // Utilise les constantes centralisées pour éviter les erreurs de typage
       if (isAiGenerationTask(task)) {
-        console.log('[Onboarding] Step 2 : Génération IA détectée, validation du step');
+        onboardingLogger.log('[Onboarding] Step 2 : Génération IA détectée, validation du step');
 
         // Ajouter un délai pour permettre à toutes les opérations async de se terminer
         // avant de valider le step et déclencher la transition
@@ -340,18 +342,18 @@ export default function OnboardingOrchestrator() {
       try {
         const task = event.detail?.task;
         if (!task) {
-          console.warn('[Onboarding] task:completed event missing task detail');
+          onboardingLogger.warn('[Onboarding] task:completed event missing task detail');
           return;
         }
 
         // Vérifier si c'est une tâche de génération IA
         if (isAiGenerationTask(task)) {
-          console.log('[Onboarding] Tâche de génération IA terminée, stockage du résultat');
+          onboardingLogger.log('[Onboarding] Tâche de génération IA terminée, stockage du résultat');
 
           // Extraire le nom du fichier CV généré de manière cohérente
           const cvFilename = extractCvFilename(task.result);
           if (!cvFilename) {
-            console.warn('[Onboarding] Tâche IA terminée mais pas de fichier CV trouvé');
+            onboardingLogger.warn('[Onboarding] Tâche IA terminée mais pas de fichier CV trouvé');
             return;
           }
 
@@ -360,12 +362,12 @@ export default function OnboardingOrchestrator() {
           setTaskCompleted(true);
           setCompletedTaskResult({ cvFilename });
 
-          console.log('[Onboarding] Tâche complétée, en attente de validation step 3');
+          onboardingLogger.log('[Onboarding] Tâche complétée, en attente de validation step 3');
         }
 
         // Vérifier si c'est une tâche de calcul de match score (step 5)
         if (isMatchScoreTask(task) && currentStep === 5) {
-          console.log('[Onboarding] Step 5 : Calcul de match score terminé, validation du step');
+          onboardingLogger.log('[Onboarding] Step 5 : Calcul de match score terminé, validation du step');
 
           // Délai pour permettre aux animations et requêtes async de se terminer
           setTimeout(() => {
@@ -375,7 +377,7 @@ export default function OnboardingOrchestrator() {
           }, STEP_VALIDATION_DELAY);
         }
       } catch (error) {
-        console.error('[Onboarding] Error in handleTaskCompleted:', error);
+        onboardingLogger.error('[Onboarding] Error in handleTaskCompleted:', error);
       }
     };
   }, [isActive, currentStep, markStepComplete]);
@@ -400,14 +402,14 @@ export default function OnboardingOrchestrator() {
       if (currentStep !== 3) return; // Filtrer dans le handler
 
       try {
-        console.log('[Onboarding] Step 3 : Task manager ouvert, validation immédiate du step');
+        onboardingLogger.log('[Onboarding] Step 3 : Task manager ouvert, validation immédiate du step');
 
         // Valider step 3 immédiatement (c'est suffisant pour compléter l'étape)
         markStepComplete(3);
 
         // Si la tâche est déjà complétée, déclencher step 4 immédiatement
         if (taskCompleted && completedTaskResult?.cvFilename) {
-          console.log('[Onboarding] Tâche déjà complétée, déclenchement step 4');
+          onboardingLogger.log('[Onboarding] Tâche déjà complétée, déclenchement step 4');
           setCvGenerated(true);
           setGeneratedCvFilename(completedTaskResult.cvFilename);
           emitOnboardingEvent(ONBOARDING_EVENTS.CV_GENERATED, {
@@ -415,7 +417,7 @@ export default function OnboardingOrchestrator() {
           });
         }
       } catch (error) {
-        console.error('[Onboarding] Error in handleTaskManagerOpened:', error);
+        onboardingLogger.error('[Onboarding] Error in handleTaskManagerOpened:', error);
       }
     };
   }, [currentStep, taskCompleted, completedTaskResult, markStepComplete]);
@@ -439,7 +441,7 @@ export default function OnboardingOrchestrator() {
     if (currentStep < 4 || !taskCompleted || !completedTaskResult?.cvFilename || cvGenerated) return;
 
     // Step 3 est validé, et la tâche est complétée → déclencher step 4
-    console.log('[Onboarding] Step 3 validé + tâche complétée → déclenchement step 4');
+    onboardingLogger.log('[Onboarding] Step 3 validé + tâche complétée → déclenchement step 4');
     setCvGenerated(true);
     setGeneratedCvFilename(completedTaskResult.cvFilename);
     emitOnboardingEvent(ONBOARDING_EVENTS.CV_GENERATED, {
@@ -452,7 +454,7 @@ export default function OnboardingOrchestrator() {
     // Si on est sur le step 4 mais que cvGenerated n'est pas true,
     // on ne doit PAS afficher le step 4 (précondition non remplie)
     if (currentStep === 4 && !cvGenerated) {
-      console.log('[Onboarding] Step 4 : Précondition cvGenerated non remplie, step ignoré');
+      onboardingLogger.log('[Onboarding] Step 4 : Précondition cvGenerated non remplie, step ignoré');
     }
   }, [currentStep, cvGenerated]);
 
@@ -467,12 +469,12 @@ export default function OnboardingOrchestrator() {
 
       try {
         const cvFilename = event.detail?.cvFilename;
-        console.log('[Onboarding] Step 4 : CV récemment généré sélectionné:', cvFilename);
+        onboardingLogger.log('[Onboarding] Step 4 : CV récemment généré sélectionné:', cvFilename);
 
         // Valider le step 4
         markStepComplete(4);
       } catch (error) {
-        console.error('[Onboarding] Error in handleGeneratedCvOpened:', error);
+        onboardingLogger.error('[Onboarding] Error in handleGeneratedCvOpened:', error);
       }
     };
   }, [currentStep, markStepComplete]);
@@ -495,7 +497,7 @@ export default function OnboardingOrchestrator() {
     const checkExistingScore = () => {
       const matchScoreElement = document.querySelector('[data-onboarding="match-score"]');
       if (matchScoreElement && matchScoreElement.textContent?.includes('%')) {
-        console.log('[Onboarding] Step 5 : Score déjà calculé, auto-validation');
+        onboardingLogger.log('[Onboarding] Step 5 : Score déjà calculé, auto-validation');
         setTimeout(() => {
           markStepComplete(5);
           emitOnboardingEvent(ONBOARDING_EVENTS.MATCH_SCORE_CALCULATED);
@@ -538,7 +540,7 @@ export default function OnboardingOrchestrator() {
 
       // If modal was already shown, let the normal click behavior proceed
       if (step6ModalShownRef.current) {
-        console.log('[Onboarding] Step 6: Modal already shown, allowing normal button behavior');
+        onboardingLogger.log('[Onboarding] Step 6: Modal already shown, allowing normal button behavior');
         return;
       }
 
@@ -568,7 +570,7 @@ export default function OnboardingOrchestrator() {
       const task = event.detail?.task;
 
       if (isImprovementTask(task)) {
-        console.log('[Onboarding] Step 6 : Optimisation terminée, validation du step');
+        onboardingLogger.log('[Onboarding] Step 6 : Optimisation terminée, validation du step');
 
         setTimeout(() => {
           if (!isCleanedUp) {
@@ -597,7 +599,7 @@ export default function OnboardingOrchestrator() {
     handleHistoryClosedRef.current = () => {
       if (currentStep !== 7) return; // Filtrer dans le handler
 
-      console.log('[Onboarding] Step 7 : Modal historique fermé, validation du step');
+      onboardingLogger.log('[Onboarding] Step 7 : Modal historique fermé, validation du step');
       markStepComplete(7);
     };
   }, [currentStep, markStepComplete]);
@@ -627,7 +629,7 @@ export default function OnboardingOrchestrator() {
 
       // If modal was already shown, let the normal click behavior proceed
       if (step8ModalShownRef.current) {
-        console.log('[Onboarding] Step 8: Modal already shown, allowing normal button behavior');
+        onboardingLogger.log('[Onboarding] Step 8: Modal already shown, allowing normal button behavior');
         return;
       }
 
@@ -661,7 +663,7 @@ export default function OnboardingOrchestrator() {
     handleExportClickedRef.current = () => {
       if (currentStep !== 8) return; // Filtrer dans le handler
 
-      console.log('[Onboarding] Step 8 : Export cliqué, validation du step');
+      onboardingLogger.log('[Onboarding] Step 8 : Export cliqué, validation du step');
 
       // Confetti pour célébrer
       triggerCompletionConfetti();
@@ -741,13 +743,13 @@ export default function OnboardingOrchestrator() {
   const handleModalJumpTo = (screenIndex) => {
     // Validate bounds
     if (typeof screenIndex !== 'number' || screenIndex < 0) {
-      console.warn('[Onboarding] Invalid screen index:', screenIndex);
+      onboardingLogger.warn('[Onboarding] Invalid screen index:', screenIndex);
       return;
     }
 
     const maxScreen = (step.modal?.screens?.length || 0) - 1;
     if (screenIndex > maxScreen) {
-      console.warn('[Onboarding] Screen index out of bounds:', screenIndex, 'max:', maxScreen);
+      onboardingLogger.warn('[Onboarding] Screen index out of bounds:', screenIndex, 'max:', maxScreen);
       return;
     }
 
@@ -771,11 +773,11 @@ export default function OnboardingOrchestrator() {
           // Validation : vérifier que le mode édition a bien été activé
           const editingState = localStorage.getItem('admin:editing');
           if (editingState !== '1') {
-            console.error('[Onboarding] Étape 1 : Mode édition non activé après complétion');
+            onboardingLogger.error('[Onboarding] Étape 1 : Mode édition non activé après complétion');
             // Note : En production, afficher une notification à l'utilisateur
           }
         } catch (error) {
-          console.error('[Onboarding] Étape 1 : Erreur activation mode édition:', error);
+          onboardingLogger.error('[Onboarding] Étape 1 : Erreur activation mode édition:', error);
           // Note : En production, afficher une notification d'erreur à l'utilisateur
         }
       }, MODAL_CLOSE_ANIMATION_DURATION);
@@ -793,7 +795,7 @@ export default function OnboardingOrchestrator() {
       // que le listener d'onboarding (lignes 128-141) n'intercepte le clic et ré-ouvre le modal
       setTimeout(() => {
         emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_GENERATOR);
-        console.log('[Onboarding] Step 2 : Event émis pour ouverture automatique du panel');
+        onboardingLogger.log('[Onboarding] Step 2 : Event émis pour ouverture automatique du panel');
       }, MODAL_CLOSE_ANIMATION_DURATION); // 300ms - attendre fin animation modal
 
       return; // Ne pas valider l'étape (validation lors de la génération réelle)
@@ -808,7 +810,7 @@ export default function OnboardingOrchestrator() {
       // Ouvrir le panel après fermeture du modal explicatif
       setTimeout(() => {
         emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_OPTIMIZER);
-        console.log('[Onboarding] Step 6 : Event émis pour ouverture automatique du panel optimisation');
+        onboardingLogger.log('[Onboarding] Step 6 : Event émis pour ouverture automatique du panel optimisation');
       }, MODAL_CLOSE_ANIMATION_DURATION);
 
       return; // Ne pas valider l'étape (validation lors de l'optimisation réelle)
@@ -823,7 +825,7 @@ export default function OnboardingOrchestrator() {
       // Ouvrir le modal d'export après fermeture du modal tutoriel
       setTimeout(() => {
         emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_EXPORT);
-        console.log('[Onboarding] Step 8 : Event émis pour ouverture automatique du modal export');
+        onboardingLogger.log('[Onboarding] Step 8 : Event émis pour ouverture automatique du modal export');
       }, MODAL_CLOSE_ANIMATION_DURATION);
 
       return; // Ne pas valider l'étape (validation lors du clic sur export)
@@ -880,7 +882,7 @@ export default function OnboardingOrchestrator() {
         });
       }, 400);
     } catch (error) {
-      console.error('[Onboarding] Erreur confetti:', error);
+      onboardingLogger.error('[Onboarding] Erreur confetti:', error);
     }
   };
 
@@ -921,7 +923,7 @@ export default function OnboardingOrchestrator() {
       // Autres étapes (2, 4, 5, 6) : simplement masquer le tooltip
       setTooltipClosed(true);
     } catch (error) {
-      console.error('[Onboarding] Erreur fermeture tooltip:', error);
+      onboardingLogger.error('[Onboarding] Erreur fermeture tooltip:', error);
       // En cas d'erreur de validation, on cache quand même le tooltip
       setTooltipClosed(true);
     }
@@ -1040,7 +1042,7 @@ export default function OnboardingOrchestrator() {
     if (currentStep === 4) {
       // Vérifier la précondition : ne s'affiche QUE si un CV a été généré
       if (!cvGenerated) {
-        console.log('[Onboarding] Step 4 : En attente de la génération d\'un CV...');
+        onboardingLogger.log('[Onboarding] Step 4 : En attente de la génération d\'un CV...');
         return null;
       }
 

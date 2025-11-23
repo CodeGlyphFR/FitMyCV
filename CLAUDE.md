@@ -433,6 +433,33 @@ useEffect(() => {
 }, [isOpen]);
 ```
 
+### 7. Système d'onboarding (Constantes & Logger)
+
+```javascript
+// Utiliser les constantes centralisées (9 timings disponibles)
+import { ONBOARDING_TIMINGS } from '@/lib/onboarding/onboardingConfig';
+
+const delay = ONBOARDING_TIMINGS.STEP_TRANSITION_DELAY; // 2000ms
+const polling = ONBOARDING_TIMINGS.BUTTON_POLLING_INTERVAL; // 200ms
+const timeout = ONBOARDING_TIMINGS.BUTTON_POLLING_TIMEOUT; // 10000ms
+
+// Utiliser le logger conditionnel (dev only pour logs, always pour errors/warnings)
+import { onboardingLogger } from '@/lib/utils/onboardingLogger';
+
+onboardingLogger.log('[Component] Info message');     // Dev only
+onboardingLogger.error('[Component] Error:', error);  // Always shown
+onboardingLogger.warn('[Component] Warning');         // Always shown
+```
+
+**Fichiers de référence** :
+- Configuration : `lib/onboarding/onboardingConfig.js`
+- Logger : `lib/utils/onboardingLogger.js`
+- Documentation : [docs/ONBOARDING_TIMINGS.md](./docs/ONBOARDING_TIMINGS.md)
+
+**Règles** :
+- ❌ **Ne pas utiliser** : `console.log`, `console.error` directement dans les composants d'onboarding
+- ✅ **Toujours utiliser** : `onboardingLogger.*` pour une console propre en production
+
 → **[Tous les patterns](./docs/CODE_PATTERNS.md)**
 
 ---
