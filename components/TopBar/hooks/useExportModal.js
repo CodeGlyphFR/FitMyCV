@@ -441,14 +441,18 @@ export function useExportModal({ currentItem, language, addNotification }) {
       }
 
       // Télécharger le PDF
+      console.log('[useExportModal] Début téléchargement PDF:', filename);
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      // Forcer le type à octet-stream pour garantir le téléchargement au lieu de l'ouverture dans le navigateur
+      const forcedBlob = new Blob([blob], { type: 'application/octet-stream' });
+      const url = window.URL.createObjectURL(forcedBlob);
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
       a.download = `${filename}.pdf`;
       document.body.appendChild(a);
       a.click();
+      console.log('[useExportModal] Téléchargement déclenché');
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
@@ -456,7 +460,11 @@ export function useExportModal({ currentItem, language, addNotification }) {
       closeModal();
 
       // Émettre l'événement pour l'onboarding (step 8) APRÈS fermeture du modal
-      emitOnboardingEvent(ONBOARDING_EVENTS.EXPORT_CLICKED);
+      // Délai de 300ms pour garantir que le téléchargement a démarré avant navigation/événements
+      setTimeout(() => {
+        console.log('[useExportModal] Émission événement EXPORT_CLICKED pour onboarding');
+        emitOnboardingEvent(ONBOARDING_EVENTS.EXPORT_CLICKED);
+      }, 300);
     } catch (error) {
       console.error('[useExportModal] Erreur catch générale:', error);
 
