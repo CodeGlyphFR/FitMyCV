@@ -706,7 +706,7 @@ export default function TopBar() {
                       className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
                       onClick={() => {
                         modals.setUserMenuOpen(false);
-                        router.push("/account");
+                        window.location.href = "/account";
                       }}
                     >
                       {t("topbar.myAccount")}
@@ -715,7 +715,7 @@ export default function TopBar() {
                       className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
                       onClick={() => {
                         modals.setUserMenuOpen(false);
-                        router.push("/account/subscriptions");
+                        window.location.href = "/account/subscriptions";
                       }}
                     >
                       {t("topbar.subscriptions")}

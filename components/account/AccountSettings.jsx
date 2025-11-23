@@ -194,7 +194,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       // Redirect to CVs page where onboarding will auto-restart (currentStep === 0)
       // Workflow: 500ms success message → redirect → LoadingScreen → 3s delay → WelcomeModal
       setTimeout(() => {
-        router.push('/');
+        window.location.href = '/';
       }, 500);
     } catch (error) {
       console.error('[AccountSettings] Reset onboarding error:', error);
