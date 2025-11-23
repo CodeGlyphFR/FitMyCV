@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { ONBOARDING_STEPS, getStepById, isCompositeStep, getCompositeFeature, getTotalSteps } from '@/lib/onboarding/onboardingSteps';
 import ChecklistPanel from './ChecklistPanel';
@@ -11,6 +11,19 @@ import WelcomeModal from './WelcomeModal';
  * Context pour l'onboarding
  */
 export const OnboardingContext = createContext(null);
+
+/**
+ * Constantes pour les timers de transition entre étapes
+ */
+const STEP_TRANSITION_DELAY = 2000; // 2 secondes entre chaque étape
+
+/**
+ * Steps qui s'enchaînent immédiatement sans délai de transition
+ * - Step 2 (ai_generate): Démonstration génération IA
+ * - Step 3 (task_manager): Suivi des tâches
+ * Ces steps forment un flux rapide qui ne nécessite pas de pause
+ */
+const STEPS_WITHOUT_TIMER = [2, 3]; // Steps 2→3 et 3→4 s'enchaînent sans délai
 
 /**
  * Provider pour le système d'onboarding
@@ -24,6 +37,10 @@ export const OnboardingContext = createContext(null);
  */
 export default function OnboardingProvider({ children }) {
   const { data: session, status } = useSession();
+
+  // Timer refs pour cleanup (éviter memory leaks)
+  const welcomeTimerRef = useRef(null);
+  const stepTimerRef = useRef(null);
 
   // État global
   const [currentStep, setCurrentStep] = useState(0);
@@ -40,6 +57,23 @@ export default function OnboardingProvider({ children }) {
   // Timestamps pour tracking
   const [onboardingStartTime, setOnboardingStartTime] = useState(null);
   const [stepStartTime, setStepStartTime] = useState(null);
+
+  /**
+   * Cleanup effect pour tous les timers (éviter memory leaks)
+   * Nettoie les timers lorsque le composant unmount
+   */
+  useEffect(() => {
+    return () => {
+      if (welcomeTimerRef.current) {
+        clearTimeout(welcomeTimerRef.current);
+        welcomeTimerRef.current = null;
+      }
+      if (stepTimerRef.current) {
+        clearTimeout(stepTimerRef.current);
+        stepTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Valeurs par défaut si non authentifié (éviter crash du hook)
   const defaultValue = {
@@ -120,17 +154,34 @@ export default function OnboardingProvider({ children }) {
    */
   const startOnboarding = useCallback(async () => {
     try {
-      setIsActive(true);
-      setCurrentStep(1);
-      setOnboardingStartTime(Date.now());
-      setStepStartTime(Date.now());
+      // Clear any existing welcome timer
+      if (welcomeTimerRef.current) {
+        clearTimeout(welcomeTimerRef.current);
+        welcomeTimerRef.current = null;
+      }
 
-      // Update API
-      await fetch('/api/user/onboarding', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ step: 1 }),
-      });
+      setIsActive(true);
+      console.log(`[OnboardingProvider] Onboarding activé, démarrage dans ${STEP_TRANSITION_DELAY}ms`);
+
+      // Timer de 2 secondes avant d'afficher la première étape
+      welcomeTimerRef.current = setTimeout(async () => {
+        welcomeTimerRef.current = null;
+
+        try {
+          setCurrentStep(1);
+          setOnboardingStartTime(Date.now());
+          setStepStartTime(Date.now());
+
+          // Update API
+          await fetch('/api/user/onboarding', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ step: 1 }),
+          });
+        } catch (error) {
+          console.error('[OnboardingProvider] Error updating step:', error);
+        }
+      }, STEP_TRANSITION_DELAY);
     } catch (error) {
       console.error('[OnboardingProvider] Error starting onboarding:', error);
     }
@@ -235,7 +286,13 @@ export default function OnboardingProvider({ children }) {
    * Marquer une étape comme complétée
    */
   const markStepComplete = useCallback(async (step) => {
-    // Ajouter à la liste des étapes complétées
+    // Clear any existing timer first
+    if (stepTimerRef.current) {
+      clearTimeout(stepTimerRef.current);
+      stepTimerRef.current = null;
+    }
+
+    // Ajouter à la liste des étapes complétées (retire le highlight immédiatement)
     setCompletedSteps(prev => {
       if (prev.includes(step)) return prev;
       return [...prev, step];
@@ -250,8 +307,33 @@ export default function OnboardingProvider({ children }) {
       return; // Ne pas appeler goToNextStep() ni completeOnboarding()
     }
 
-    // Pour les steps 1-7, passer à l'étape suivante
-    await goToNextStep();
+    // Déterminer si on applique un timer de transition
+    // Steps 2→3 et 3→4 s'enchaînent sans délai
+    const needsTimer = !STEPS_WITHOUT_TIMER.includes(step);
+
+    if (needsTimer) {
+      // Timer de 2 secondes avant de passer à l'étape suivante
+      console.log(`[OnboardingProvider] Step ${step} complété, transition dans ${STEP_TRANSITION_DELAY}ms`);
+
+      stepTimerRef.current = setTimeout(async () => {
+        stepTimerRef.current = null;
+
+        try {
+          await goToNextStep();
+        } catch (error) {
+          console.error('[OnboardingProvider] Error during step transition:', error);
+        }
+      }, STEP_TRANSITION_DELAY);
+    } else {
+      // Transition immédiate (steps 2 et 3)
+      console.log(`[OnboardingProvider] Step ${step} complété, transition immédiate`);
+
+      try {
+        await goToNextStep();
+      } catch (error) {
+        console.error('[OnboardingProvider] Error during immediate step transition:', error);
+      }
+    }
   }, [goToNextStep]);
 
   /**
