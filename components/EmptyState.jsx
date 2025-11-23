@@ -6,6 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
+import { LOADING_EVENTS, emitLoadingEvent } from "@/lib/loading/loadingEvents";
 
 export default function EmptyState() {
   const router = useRouter();
@@ -306,6 +307,23 @@ export default function EmptyState() {
       }
     };
   }, []);
+
+  // Emit PAGE_READY event for LoadingOverlay
+  React.useEffect(() => {
+    // Ne pas émettre si en cours d'import (importing state)
+    if (isImporting) return;
+
+    // Petit délai pour s'assurer que le rendu est complet
+    const timer = setTimeout(() => {
+      emitLoadingEvent(LOADING_EVENTS.PAGE_READY, {
+        trigger: 'emptyState',
+        timestamp: Date.now(),
+      });
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [isImporting]);
+
   // Show importing state
   if (isImporting) {
     return (
