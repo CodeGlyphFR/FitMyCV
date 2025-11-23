@@ -95,6 +95,8 @@ export async function POST(request){
       email: normalizedEmail,
       passwordHash,
       emailVerified: null, // Email non vérifié à l'inscription
+      hasCompletedOnboarding: false, // Nouveaux users doivent faire l'onboarding
+      onboardingStep: 0, // Commencer à l'étape 0
     },
   });
 

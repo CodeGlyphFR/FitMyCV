@@ -21,7 +21,7 @@ model User {
   referralCode           String?               @unique
   referredBy             String?
   onboardingStep         Int?                  @default(0)      // Étape actuelle (0-9)
-  hasCompletedOnboarding Boolean               @default(true)   // true pour users existants (opt-in volontaire)
+  hasCompletedOnboarding Boolean               @default(false)  // false pour nouveaux users (onboarding auto)
   onboardingCompletedAt  DateTime?                              // Date de complétion
   onboardingSkippedAt    DateTime?                              // Date si skippé
   viewedTooltips         String?                                // JSON des tooltips vus (peut être utile)

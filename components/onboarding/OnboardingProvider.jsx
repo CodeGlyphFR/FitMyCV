@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { ONBOARDING_STEPS, getStepById, isCompositeStep, getCompositeFeature, getTotalSteps } from '@/lib/onboarding/onboardingSteps';
 import { ONBOARDING_TIMINGS } from '@/lib/onboarding/onboardingConfig';
 import { ONBOARDING_EVENTS } from '@/lib/onboarding/onboardingEvents';
+import { LOADING_EVENTS } from '@/lib/loading/loadingEvents';
 import { onboardingLogger } from '@/lib/utils/onboardingLogger';
 import ChecklistPanel from './ChecklistPanel';
 import OnboardingOrchestrator from './OnboardingOrchestrator';
@@ -40,6 +41,19 @@ export default function OnboardingProvider({ children }) {
   const stepTimerRef = useRef(null);
   const loadingToOnboardingTimerRef = useRef(null);
   const listenerAttachedRef = useRef(false);
+  const loadingClosedWhileBusyRef = useRef(false); // Flag: LOADING_SCREEN_CLOSED reçu pendant isLoading=true
+
+  // Ref pour capturer l'état actuel (utilisé dans le handler auto-start)
+  // Permet d'éviter les valeurs "stale" dans les closures
+  const stateRef = useRef({
+    currentStep: 0,
+    hasCompleted: false,
+    hasSkipped: false,
+    isActive: false,
+    showWelcomeModal: false,
+    isLoading: true,
+    cvCount: 0, // Nombre de CVs de l'utilisateur (mis à jour via TOPBAR_READY event)
+  });
 
   // État global
   const [currentStep, setCurrentStep] = useState(0);
@@ -103,14 +117,42 @@ export default function OnboardingProvider({ children }) {
     steps: ONBOARDING_STEPS,
   };
 
-  // Bypass logique mais toujours render le Context
-  if (status === 'loading' || !session) {
-    return (
-      <OnboardingContext.Provider value={defaultValue}>
-        {children}
-      </OnboardingContext.Provider>
-    );
-  }
+  // Check si authentifié (utilisé pour conditionner la logique)
+  const isAuthenticated = status !== 'loading' && session;
+
+  // Maintenir stateRef à jour pour éviter les valeurs stale dans les handlers
+  // Note: cvCount est mis à jour séparément via l'événement TOPBAR_READY
+  useEffect(() => {
+    stateRef.current = {
+      ...stateRef.current, // Conserver cvCount (mis à jour par event listener)
+      currentStep,
+      hasCompleted,
+      hasSkipped,
+      isActive,
+      showWelcomeModal,
+      isLoading,
+    };
+  }, [currentStep, hasCompleted, hasSkipped, isActive, showWelcomeModal, isLoading]);
+
+  /**
+   * Écouter l'événement TOPBAR_READY pour mettre à jour cvCount
+   * Nécessaire pour vérifier si l'utilisateur a des CVs avant de démarrer l'onboarding
+   */
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const handleTopBarReady = (event) => {
+      const itemsCount = event?.detail?.itemsCount || 0;
+      onboardingLogger.log(`[OnboardingProvider] TOPBAR_READY received, cvCount=${itemsCount}`);
+      stateRef.current.cvCount = itemsCount;
+    };
+
+    window.addEventListener(LOADING_EVENTS.TOPBAR_READY, handleTopBarReady);
+
+    return () => {
+      window.removeEventListener(LOADING_EVENTS.TOPBAR_READY, handleTopBarReady);
+    };
+  }, [isAuthenticated]);
 
   /**
    * Charger l'état d'onboarding depuis l'API
@@ -145,12 +187,14 @@ export default function OnboardingProvider({ children }) {
 
   /**
    * Charger l'état au montage
+   * Conditionné : ne s'exécute que si authentifié
    */
   useEffect(() => {
+    if (!isAuthenticated) return;
     if (session?.user?.id) {
       fetchOnboardingState();
     }
-  }, [session?.user?.id, fetchOnboardingState]);
+  }, [isAuthenticated, session?.user?.id, fetchOnboardingState]);
 
   /**
    * Démarrer l'onboarding
@@ -444,8 +488,10 @@ export default function OnboardingProvider({ children }) {
 
   /**
    * Charger état checklist depuis localStorage
+   * Conditionné : ne s'exécute que si authentifié
    */
   useEffect(() => {
+    if (!isAuthenticated) return;
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('onboarding-checklist-expanded');
       if (saved !== null) {
@@ -456,7 +502,7 @@ export default function OnboardingProvider({ children }) {
         }
       }
     }
-  }, []);
+  }, [isAuthenticated]);
 
   /**
    * Vérifier conditions d'une étape
@@ -563,33 +609,63 @@ export default function OnboardingProvider({ children }) {
   /**
    * Auto-start onboarding pour nouveaux utilisateurs
    * Conditions :
+   * - Authentifié
    * - currentStep === 0 (jamais démarré)
    * - !hasCompleted et !hasSkipped
    * - Loading screen fermé (événement loadingScreenClosed)
    *
    * Workflow : Loading screen ferme → 3s de délai → WelcomeModal s'affiche
+   *
+   * IMPORTANT: Ce useEffect attache le listener IMMÉDIATEMENT au montage
+   * (sans attendre isLoading=false) pour éviter la race condition où
+   * LoadingOverlay émet LOADING_SCREEN_CLOSED avant que le listener soit attaché.
+   * Les conditions sont vérifiées DANS le handler avec stateRef.current.
    */
   useEffect(() => {
-    if (isLoading) return; // Attendre chargement de l'état
-
-    // Vérifier si c'est un nouvel utilisateur qui n'a jamais fait l'onboarding
-    const shouldAutoStart =
-      currentStep === 0 &&
-      !hasCompleted &&
-      !hasSkipped &&
-      !isActive &&
-      !showWelcomeModal;
-
-    if (!shouldAutoStart) {
-      // Cleanup handled by main cleanup function when effect re-runs
-      return;
-    }
+    // Conditionné : ne s'exécute que si authentifié
+    if (!isAuthenticated) return;
 
     // Only attach once (évite double-attachement si useEffect re-run)
     if (listenerAttachedRef.current) return;
 
     // Écouter l'événement de fermeture du loading screen
     const handleLoadingClosed = (event) => {
+      // Récupérer l'état actuel via stateRef (évite valeurs stale)
+      const state = stateRef.current;
+
+      // Vérifier si c'est un nouvel utilisateur qui n'a jamais fait l'onboarding
+      const shouldAutoStart =
+        state.currentStep === 0 &&
+        !state.hasCompleted &&
+        !state.hasSkipped &&
+        !state.isActive &&
+        !state.showWelcomeModal &&
+        !state.isLoading && // Attendre que l'état soit chargé depuis l'API
+        state.cvCount === 0; // Ne démarrer QUE si l'utilisateur n'a AUCUN CV
+
+      if (!shouldAutoStart) {
+        // Si isLoading=true, marquer le flag pour vérifier plus tard (fallback)
+        if (state.isLoading) {
+          loadingClosedWhileBusyRef.current = true;
+          onboardingLogger.log(
+            `[OnboardingProvider] Loading closed while busy (isLoading=true), ` +
+            `will check again when loading completes`
+          );
+        } else {
+          onboardingLogger.log(
+            `[OnboardingProvider] Loading closed but conditions not met: ` +
+            `step=${state.currentStep}, completed=${state.hasCompleted}, ` +
+            `skipped=${state.hasSkipped}, active=${state.isActive}, ` +
+            `modal=${state.showWelcomeModal}, loading=${state.isLoading}, ` +
+            `cvCount=${state.cvCount}`
+          );
+        }
+        return;
+      }
+
+      // Reset flag (conditions OK maintenant)
+      loadingClosedWhileBusyRef.current = false;
+
       // Clear any existing timer first (évite multiple timers si événement émis plusieurs fois)
       if (loadingToOnboardingTimerRef.current) {
         clearTimeout(loadingToOnboardingTimerRef.current);
@@ -599,6 +675,7 @@ export default function OnboardingProvider({ children }) {
       const trigger = event?.detail?.trigger || 'unknown';
       onboardingLogger.log(
         `[OnboardingProvider] Loading screen closed via ${trigger}, ` +
+        `conditions met (cvCount=${state.cvCount}), ` +
         `waiting ${ONBOARDING_TIMINGS.LOADING_TO_ONBOARDING_DELAY}ms before welcome modal`
       );
 
@@ -610,9 +687,11 @@ export default function OnboardingProvider({ children }) {
       }, ONBOARDING_TIMINGS.LOADING_TO_ONBOARDING_DELAY);
     };
 
-    // S'abonner à l'événement
+    // S'abonner à l'événement IMMÉDIATEMENT (ne pas attendre isLoading=false)
     window.addEventListener(ONBOARDING_EVENTS.LOADING_SCREEN_CLOSED, handleLoadingClosed);
     listenerAttachedRef.current = true;
+
+    onboardingLogger.log('[OnboardingProvider] Listener attached for LOADING_SCREEN_CLOSED (immediate)');
 
     // Cleanup
     return () => {
@@ -626,9 +705,66 @@ export default function OnboardingProvider({ children }) {
       if (listenerAttachedRef.current) {
         window.removeEventListener(ONBOARDING_EVENTS.LOADING_SCREEN_CLOSED, handleLoadingClosed);
         listenerAttachedRef.current = false;
+        onboardingLogger.log('[OnboardingProvider] Listener removed for LOADING_SCREEN_CLOSED');
       }
     };
-  }, [currentStep, hasCompleted, hasSkipped, isActive, isLoading, showWelcomeModal]);
+  }, [isAuthenticated]);
+
+  /**
+   * Fallback effect : Si LOADING_SCREEN_CLOSED est arrivé pendant isLoading=true,
+   * vérifier quand isLoading devient false si les conditions sont remplies
+   * pour démarrer l'onboarding
+   */
+  useEffect(() => {
+    // Skip si pas de flag marqué
+    if (!loadingClosedWhileBusyRef.current) return;
+
+    // Skip si isLoading encore true (attendre qu'il devienne false)
+    if (isLoading) return;
+
+    onboardingLogger.log('[OnboardingProvider] Fallback: isLoading became false, checking conditions');
+
+    // isLoading vient de passer à false, vérifier si on doit démarrer l'onboarding
+    const state = stateRef.current;
+    const shouldAutoStart =
+      state.currentStep === 0 &&
+      !state.hasCompleted &&
+      !state.hasSkipped &&
+      !state.isActive &&
+      !state.showWelcomeModal &&
+      state.cvCount === 0;
+
+    if (shouldAutoStart) {
+      onboardingLogger.log(
+        `[OnboardingProvider] Fallback: Conditions met, starting onboarding ` +
+        `(cvCount=${state.cvCount})`
+      );
+
+      // Reset flag
+      loadingClosedWhileBusyRef.current = false;
+
+      // Clear any existing timer
+      if (loadingToOnboardingTimerRef.current) {
+        clearTimeout(loadingToOnboardingTimerRef.current);
+        loadingToOnboardingTimerRef.current = null;
+      }
+
+      // Démarrer l'onboarding après délai
+      loadingToOnboardingTimerRef.current = setTimeout(() => {
+        loadingToOnboardingTimerRef.current = null;
+        onboardingLogger.log('[OnboardingProvider] Fallback: Showing welcome modal after delay');
+        setShowWelcomeModal(true);
+      }, ONBOARDING_TIMINGS.LOADING_TO_ONBOARDING_DELAY);
+    } else {
+      // Conditions toujours pas remplies, reset flag
+      loadingClosedWhileBusyRef.current = false;
+      onboardingLogger.log(
+        `[OnboardingProvider] Fallback: Conditions still not met after loading: ` +
+        `step=${state.currentStep}, cvCount=${state.cvCount}, ` +
+        `completed=${state.hasCompleted}, skipped=${state.hasSkipped}`
+      );
+    }
+  }, [isLoading]);
 
   /**
    * Handlers pour le WelcomeModal
@@ -645,6 +781,8 @@ export default function OnboardingProvider({ children }) {
 
   /**
    * Context value
+   * Si authentifié : vraie logique avec tous les hooks
+   * Sinon : defaultValue avec no-ops
    */
   const value = {
     // State
@@ -683,19 +821,23 @@ export default function OnboardingProvider({ children }) {
     steps: ONBOARDING_STEPS,
   };
 
+  // Toujours retourner la même structure JSX
+  // Utiliser condition ternaire pour la value du Provider
   return (
-    <OnboardingContext.Provider value={value}>
+    <OnboardingContext.Provider value={isAuthenticated ? value : defaultValue}>
       {children}
-      {/* Modal de bienvenue (avant l'onboarding) */}
-      <WelcomeModal
-        open={showWelcomeModal}
-        onComplete={handleWelcomeComplete}
-        onSkip={handleWelcomeSkip}
-      />
-      {/* Checklist flottante (affichée si onboarding actif ou complété) */}
-      <ChecklistPanel />
-      {/* Orchestrateur gérant l'affichage des 9 étapes */}
-      <OnboardingOrchestrator />
+      {/* Modal de bienvenue (avant l'onboarding) - seulement si authentifié */}
+      {isAuthenticated && (
+        <WelcomeModal
+          open={showWelcomeModal}
+          onComplete={handleWelcomeComplete}
+          onSkip={handleWelcomeSkip}
+        />
+      )}
+      {/* Checklist flottante (affichée si onboarding actif ou complété) - seulement si authentifié */}
+      {isAuthenticated && <ChecklistPanel />}
+      {/* Orchestrateur gérant l'affichage des 9 étapes - seulement si authentifié */}
+      {isAuthenticated && <OnboardingOrchestrator />}
     </OnboardingContext.Provider>
   );
 }

@@ -9,19 +9,25 @@ export default function LoadingOverlay() {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Ne pas exécuter la logique sur les pages d'authentification
-    if (pathname.startsWith("/auth")) {
-      removeInitialLoader('authPage');
-      return;
-    }
-
     let cleanupFunctions = [];
     let safetyTimeout;
+    let isRemovalInProgress = false; // Guard pour éviter appels multiples
 
     // Fonction pour supprimer le loader CSS initial
     const removeInitialLoader = (trigger) => {
+      // Éviter les appels multiples
+      if (isRemovalInProgress) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[LoadingOverlay] Removal already in progress, ignoring trigger:', trigger);
+        }
+        return;
+      }
+
       const initialOverlay = document.getElementById('initial-loading-overlay');
       if (!initialOverlay) return;
+
+      // Marquer comme en cours
+      isRemovalInProgress = true;
 
       // Log en développement
       if (process.env.NODE_ENV === 'development') {
@@ -45,7 +51,8 @@ export default function LoadingOverlay() {
 
       // Après la transition (300ms), supprimer complètement du DOM
       setTimeout(() => {
-        if (initialOverlay.parentNode) {
+        // Vérifier que l'élément existe encore et a un parent
+        if (initialOverlay && initialOverlay.parentNode) {
           initialOverlay.parentNode.removeChild(initialOverlay);
         }
 
@@ -56,6 +63,12 @@ export default function LoadingOverlay() {
         });
       }, 300);
     };
+
+    // Ne pas exécuter la logique sur les pages d'authentification
+    if (pathname.startsWith("/auth")) {
+      removeInitialLoader('authPage');
+      return;
+    }
 
     // Écouter l'événement TOPBAR_READY (émis par TopBar)
     const cleanupTopBar = onLoadingEvent(LOADING_EVENTS.TOPBAR_READY, (data) => {
