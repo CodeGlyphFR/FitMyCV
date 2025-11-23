@@ -826,8 +826,8 @@ export default function OnboardingProvider({ children }) {
   return (
     <OnboardingContext.Provider value={isAuthenticated ? value : defaultValue}>
       {children}
-      {/* Modal de bienvenue (avant l'onboarding) - seulement si authentifié */}
-      {isAuthenticated && (
+      {/* Modal de bienvenue (avant l'onboarding) - seulement si authentifié ET si l'utilisateur a au moins 1 CV */}
+      {isAuthenticated && stateRef.current.cvCount > 0 && (
         <WelcomeModal
           open={showWelcomeModal}
           onComplete={handleWelcomeComplete}
