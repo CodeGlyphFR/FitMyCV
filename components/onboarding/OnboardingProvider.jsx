@@ -4,6 +4,7 @@ import { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { ONBOARDING_STEPS, getStepById, isCompositeStep, getCompositeFeature, getTotalSteps } from '@/lib/onboarding/onboardingSteps';
 import { ONBOARDING_TIMINGS } from '@/lib/onboarding/onboardingConfig';
+import { ONBOARDING_EVENTS } from '@/lib/onboarding/onboardingEvents';
 import { onboardingLogger } from '@/lib/utils/onboardingLogger';
 import ChecklistPanel from './ChecklistPanel';
 import OnboardingOrchestrator from './OnboardingOrchestrator';
@@ -37,6 +38,8 @@ export default function OnboardingProvider({ children }) {
   // Timer refs pour cleanup (éviter memory leaks)
   const welcomeTimerRef = useRef(null);
   const stepTimerRef = useRef(null);
+  const loadingToOnboardingTimerRef = useRef(null);
+  const listenerAttachedRef = useRef(false);
 
   // État global
   const [currentStep, setCurrentStep] = useState(0);
@@ -67,6 +70,10 @@ export default function OnboardingProvider({ children }) {
       if (stepTimerRef.current) {
         clearTimeout(stepTimerRef.current);
         stepTimerRef.current = null;
+      }
+      if (loadingToOnboardingTimerRef.current) {
+        clearTimeout(loadingToOnboardingTimerRef.current);
+        loadingToOnboardingTimerRef.current = null;
       }
     };
   }, []);
@@ -261,6 +268,20 @@ export default function OnboardingProvider({ children }) {
    */
   const completeOnboarding = useCallback(async () => {
     try {
+      // Clear all active timers FIRST (prevent race conditions)
+      if (welcomeTimerRef.current) {
+        clearTimeout(welcomeTimerRef.current);
+        welcomeTimerRef.current = null;
+      }
+      if (stepTimerRef.current) {
+        clearTimeout(stepTimerRef.current);
+        stepTimerRef.current = null;
+      }
+      if (loadingToOnboardingTimerRef.current) {
+        clearTimeout(loadingToOnboardingTimerRef.current);
+        loadingToOnboardingTimerRef.current = null;
+      }
+
       const res = await fetch('/api/user/onboarding?action=complete', {
         method: 'POST',
       });
@@ -272,6 +293,7 @@ export default function OnboardingProvider({ children }) {
 
         // Ajouter toutes les étapes aux complétées
         setCompletedSteps([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        setShowWelcomeModal(false);
       }
     } catch (error) {
       onboardingLogger.error('[OnboardingProvider] Error completing onboarding:', error);
@@ -337,6 +359,20 @@ export default function OnboardingProvider({ children }) {
    */
   const skipOnboarding = useCallback(async () => {
     try {
+      // Clear all active timers FIRST (prevent race conditions)
+      if (welcomeTimerRef.current) {
+        clearTimeout(welcomeTimerRef.current);
+        welcomeTimerRef.current = null;
+      }
+      if (stepTimerRef.current) {
+        clearTimeout(stepTimerRef.current);
+        stepTimerRef.current = null;
+      }
+      if (loadingToOnboardingTimerRef.current) {
+        clearTimeout(loadingToOnboardingTimerRef.current);
+        loadingToOnboardingTimerRef.current = null;
+      }
+
       const res = await fetch('/api/user/onboarding?action=skip', {
         method: 'POST',
       });
@@ -346,6 +382,8 @@ export default function OnboardingProvider({ children }) {
         setHasCompleted(true);
         setIsActive(false);
         setCurrentStep(0);
+        setCompletedSteps([]);
+        setShowWelcomeModal(false);
       }
     } catch (error) {
       onboardingLogger.error('[OnboardingProvider] Error skipping onboarding:', error);
@@ -357,6 +395,20 @@ export default function OnboardingProvider({ children }) {
    */
   const resetOnboarding = useCallback(async () => {
     try {
+      // Clear all active timers FIRST (prevent race conditions)
+      if (welcomeTimerRef.current) {
+        clearTimeout(welcomeTimerRef.current);
+        welcomeTimerRef.current = null;
+      }
+      if (stepTimerRef.current) {
+        clearTimeout(stepTimerRef.current);
+        stepTimerRef.current = null;
+      }
+      if (loadingToOnboardingTimerRef.current) {
+        clearTimeout(loadingToOnboardingTimerRef.current);
+        loadingToOnboardingTimerRef.current = null;
+      }
+
       const res = await fetch('/api/user/onboarding?action=reset', {
         method: 'POST',
       });
@@ -369,6 +421,7 @@ export default function OnboardingProvider({ children }) {
         setCompletedSteps([]);
         setOnboardingStartTime(null);
         setStepStartTime(null);
+        setShowWelcomeModal(false);
       }
     } catch (error) {
       onboardingLogger.error('[OnboardingProvider] Error resetting onboarding:', error);
@@ -512,9 +565,9 @@ export default function OnboardingProvider({ children }) {
    * Conditions :
    * - currentStep === 0 (jamais démarré)
    * - !hasCompleted et !hasSkipped
-   * - Interface prête (TopBar monté, CV chargé, pas de loading)
+   * - Loading screen fermé (événement loadingScreenClosed)
    *
-   * Affiche d'abord le WelcomeModal avant de lancer l'onboarding
+   * Workflow : Loading screen ferme → 3s de délai → WelcomeModal s'affiche
    */
   useEffect(() => {
     if (isLoading) return; // Attendre chargement de l'état
@@ -527,48 +580,54 @@ export default function OnboardingProvider({ children }) {
       !isActive &&
       !showWelcomeModal;
 
-    if (!shouldAutoStart) return;
+    if (!shouldAutoStart) {
+      // Cleanup handled by main cleanup function when effect re-runs
+      return;
+    }
 
-    // Vérifier que l'interface est prête avant d'afficher le welcome modal
-    let checkCount = 0;
-    const maxChecks = 50; // 10 secondes max (200ms * 50)
+    // Only attach once (évite double-attachement si useEffect re-run)
+    if (listenerAttachedRef.current) return;
 
-    const checkReadiness = () => {
-      checkCount++;
-
-      // Vérifier les éléments clés
-      const topbarReady = !!document.querySelector('[data-onboarding="edit-button"]') ||
-                          !!document.querySelector('[data-onboarding="ai-generate"]');
-      const noLoadingSpinners = !document.querySelector('.animate-pulse[class*="spinner"]') &&
-                                 !document.querySelector('[data-loading="true"]');
-
-      if (topbarReady && noLoadingSpinners) {
-        // Interface prête → afficher le welcome modal
-        onboardingLogger.log('[OnboardingProvider] Interface prête, affichage du welcome modal');
-        setTimeout(() => setShowWelcomeModal(true), 500); // Petit délai final pour la stabilité
-        return true;
+    // Écouter l'événement de fermeture du loading screen
+    const handleLoadingClosed = (event) => {
+      // Clear any existing timer first (évite multiple timers si événement émis plusieurs fois)
+      if (loadingToOnboardingTimerRef.current) {
+        clearTimeout(loadingToOnboardingTimerRef.current);
+        loadingToOnboardingTimerRef.current = null;
       }
 
-      if (checkCount >= maxChecks) {
-        // Timeout : afficher quand même après 10s
-        onboardingLogger.warn('[OnboardingProvider] Timeout, affichage du welcome modal sans vérification complète');
+      const trigger = event?.detail?.trigger || 'unknown';
+      onboardingLogger.log(
+        `[OnboardingProvider] Loading screen closed via ${trigger}, ` +
+        `waiting ${ONBOARDING_TIMINGS.LOADING_TO_ONBOARDING_DELAY}ms before welcome modal`
+      );
+
+      // Délai de 3 secondes avant d'afficher le welcome modal
+      loadingToOnboardingTimerRef.current = setTimeout(() => {
+        loadingToOnboardingTimerRef.current = null;
+        onboardingLogger.log('[OnboardingProvider] Showing welcome modal after delay');
         setShowWelcomeModal(true);
-        return true;
-      }
-
-      return false;
+      }, ONBOARDING_TIMINGS.LOADING_TO_ONBOARDING_DELAY);
     };
 
-    // Polling toutes les 200ms
-    const interval = setInterval(() => {
-      const ready = checkReadiness();
-      if (ready) {
-        clearInterval(interval);
-      }
-    }, 200);
+    // S'abonner à l'événement
+    window.addEventListener(ONBOARDING_EVENTS.LOADING_SCREEN_CLOSED, handleLoadingClosed);
+    listenerAttachedRef.current = true;
 
     // Cleanup
-    return () => clearInterval(interval);
+    return () => {
+      // Clear timer if component unmounts during delay
+      if (loadingToOnboardingTimerRef.current) {
+        clearTimeout(loadingToOnboardingTimerRef.current);
+        loadingToOnboardingTimerRef.current = null;
+      }
+
+      // Only remove listener if it was actually attached
+      if (listenerAttachedRef.current) {
+        window.removeEventListener(ONBOARDING_EVENTS.LOADING_SCREEN_CLOSED, handleLoadingClosed);
+        listenerAttachedRef.current = false;
+      }
+    };
   }, [currentStep, hasCompleted, hasSkipped, isActive, isLoading, showWelcomeModal]);
 
   /**

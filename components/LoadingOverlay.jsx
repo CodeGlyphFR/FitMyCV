@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useLayoutEffect } from "react";
 import { usePathname } from "next/navigation";
+import { emitOnboardingEvent, ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
 
 export default function LoadingOverlay() {
   const pathname = usePathname();
@@ -65,7 +66,7 @@ export default function LoadingOverlay() {
     }
 
     let attempts = 0;
-    const maxAttempts = 40; // 40 tentatives * 50ms = 2 secondes max
+    const maxAttempts = 60; // 60 tentatives * 50ms = 3 secondes max
 
     // Attendre que le composant TopBar soit monté et réellement rendu
     const checkTopBarReady = () => {
@@ -73,8 +74,13 @@ export default function LoadingOverlay() {
 
       // Vérifier si on est dans l'EmptyState (pas de CVs)
       // Si oui, masquer immédiatement le loading
-      const emptyStateTitle = document.querySelector('h1.text-4xl.font-bold.text-slate-800');
+      const emptyStateTitle = document.querySelector('h1.text-4xl.font-bold.text-white');
       if (emptyStateTitle) {
+        // Émettre événement pour déclencher l'onboarding après un délai (voir OnboardingProvider)
+        emitOnboardingEvent(ONBOARDING_EVENTS.LOADING_SCREEN_CLOSED, {
+          trigger: 'emptyState',
+          timestamp: Date.now(),
+        });
         setIsLoading(false);
         return;
       }
@@ -88,6 +94,11 @@ export default function LoadingOverlay() {
         const isVisible = topBar.offsetHeight > 0;
 
         if (hasButtons && isVisible) {
+          // Émettre événement pour déclencher l'onboarding après un délai (voir OnboardingProvider)
+          emitOnboardingEvent(ONBOARDING_EVENTS.LOADING_SCREEN_CLOSED, {
+            trigger: 'topBarReady',
+            timestamp: Date.now(),
+          });
           // Masquer immédiatement sans délai supplémentaire
           setIsLoading(false);
           return;
@@ -108,11 +119,23 @@ export default function LoadingOverlay() {
 
     // Timeout de sécurité absolu : masquer le loader après 3 secondes maximum
     const maxTimeout = setTimeout(() => {
+      // Emit event BEFORE hiding (safety net)
+      emitOnboardingEvent(ONBOARDING_EVENTS.LOADING_SCREEN_CLOSED, {
+        trigger: 'safetyTimeout',
+        timestamp: Date.now(),
+      });
       setIsLoading(false);
     }, 3000);
 
     return () => {
       clearTimeout(maxTimeout);
+      // Ensure event is emitted if component unmounts while loading
+      if (isLoading) {
+        emitOnboardingEvent(ONBOARDING_EVENTS.LOADING_SCREEN_CLOSED, {
+          trigger: 'componentUnmount',
+          timestamp: Date.now(),
+        });
+      }
     };
   }, [pathname, isLoading]);
 

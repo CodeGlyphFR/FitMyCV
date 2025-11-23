@@ -168,6 +168,79 @@ const interval = setInterval(() => {
 
 ---
 
+## Délai entre fermeture loading screen et onboarding
+
+### Délai initial : 3 secondes
+
+**Valeur** : `LOADING_TO_ONBOARDING_DELAY = 3000ms`
+
+**Usage** :
+- Délai entre la fermeture du loading screen initial et l'affichage du welcome modal
+- Permet à l'utilisateur de voir brièvement l'interface avant le démarrage du tutoriel
+- Évite une expérience trop "précipitée" au premier lancement
+
+**Workflow** :
+1. L'application démarre, LoadingOverlay affiché
+2. TopBar/EmptyState détecté comme prêt
+3. LoadingOverlay se ferme, émet l'événement `ONBOARDING_EVENTS.LOADING_SCREEN_CLOSED`
+4. OnboardingProvider écoute cet événement
+5. **Délai de 3 secondes**
+6. WelcomeModal s'affiche pour démarrer l'onboarding
+
+**Code** :
+```javascript
+// LoadingOverlay.jsx - Émission de l'événement
+import { emitOnboardingEvent, ONBOARDING_EVENTS } from '@/lib/onboarding/onboardingEvents';
+
+emitOnboardingEvent(ONBOARDING_EVENTS.LOADING_SCREEN_CLOSED, {
+  trigger: 'topBarReady', // ou 'emptyState'
+  timestamp: Date.now(),
+});
+setIsLoading(false);
+
+// OnboardingProvider.jsx - Écoute de l'événement avec timer ref pour cleanup
+const loadingToOnboardingTimerRef = useRef(null);
+
+useEffect(() => {
+  const handleLoadingClosed = (event) => {
+    // Clear any existing timer first
+    if (loadingToOnboardingTimerRef.current) {
+      clearTimeout(loadingToOnboardingTimerRef.current);
+      loadingToOnboardingTimerRef.current = null;
+    }
+
+    // Start 3-second delay
+    loadingToOnboardingTimerRef.current = setTimeout(() => {
+      loadingToOnboardingTimerRef.current = null;
+      setShowWelcomeModal(true);
+    }, ONBOARDING_TIMINGS.LOADING_TO_ONBOARDING_DELAY);
+  };
+
+  window.addEventListener(ONBOARDING_EVENTS.LOADING_SCREEN_CLOSED, handleLoadingClosed);
+
+  return () => {
+    // Cleanup timer on unmount
+    if (loadingToOnboardingTimerRef.current) {
+      clearTimeout(loadingToOnboardingTimerRef.current);
+      loadingToOnboardingTimerRef.current = null;
+    }
+    window.removeEventListener(ONBOARDING_EVENTS.LOADING_SCREEN_CLOSED, handleLoadingClosed);
+  };
+}, [...]);
+```
+
+**Raisons du délai** :
+- **UX** : L'utilisateur a le temps de voir et comprendre l'interface avant que l'onboarding ne démarre
+- **Évite le rush** : Sans délai, l'interface apparaît et le modal se superpose immédiatement (sensation "trop rapide")
+- **Respiration visuelle** : Les 3 secondes créent une pause naturelle dans le flow
+
+**Cas d'utilisation** :
+- **Nouveau compte** : Premier lancement de l'application après inscription
+- **Relaunch depuis Account** : User clique "Relancer le tutoriel" dans les paramètres
+- **Reset développeur** : Réinitialisation manuelle de l'onboarding en dev
+
+---
+
 ## Configuration
 
 ### Fichier de configuration centralisé
@@ -200,6 +273,9 @@ export const ONBOARDING_TIMINGS = {
   // Polling et retry
   BUTTON_POLLING_INTERVAL: 200, // 0.2s
   BUTTON_POLLING_TIMEOUT: 10000, // 10s
+
+  // Délai entre fermeture loading screen et onboarding
+  LOADING_TO_ONBOARDING_DELAY: 3000, // 3s
 };
 ```
 
@@ -236,6 +312,7 @@ const STEP_VALIDATION_DELAY = ONBOARDING_TIMINGS.STEP_VALIDATION_DELAY;
 | `STEP_VALIDATION_DELAY` | 500ms (0.5s) | Validation automatique | OnboardingOrchestrator |
 | `BUTTON_POLLING_INTERVAL` | 200ms (0.2s) | Recherche boutons DOM | OnboardingOrchestrator |
 | `BUTTON_POLLING_TIMEOUT` | 10000ms (10s) | Timeout recherche | OnboardingOrchestrator |
+| `LOADING_TO_ONBOARDING_DELAY` | 3000ms (3s) | Délai loading → onboarding | OnboardingProvider |
 
 ---
 
