@@ -34,6 +34,7 @@ export default function OnboardingOrchestrator() {
   const {
     currentStep,
     isActive,
+    completedSteps,
     markStepComplete,
     goToNextStep,
     completeOnboarding,
@@ -939,7 +940,7 @@ export default function OnboardingOrchestrator() {
         <>
           {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
           <OnboardingHighlight
-            show={!modalOpen}
+            show={!modalOpen && !completedSteps.includes(1)}
             blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
@@ -980,7 +981,7 @@ export default function OnboardingOrchestrator() {
         <>
           {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
           <OnboardingHighlight
-            show={!modalOpen}
+            show={!modalOpen && !completedSteps.includes(2)}
             blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
@@ -1096,7 +1097,7 @@ export default function OnboardingOrchestrator() {
         <>
           {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
           <OnboardingHighlight
-            show={!modalOpen}
+            show={!modalOpen && !completedSteps.includes(6)}
             blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
@@ -1136,7 +1137,7 @@ export default function OnboardingOrchestrator() {
         <>
           {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
           <OnboardingHighlight
-            show={true}
+            show={!completedSteps.includes(7)}
             blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
@@ -1162,7 +1163,7 @@ export default function OnboardingOrchestrator() {
         <>
           {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
           <OnboardingHighlight
-            show={!modalOpen}
+            show={!modalOpen && !completedSteps.includes(8)}
             blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
