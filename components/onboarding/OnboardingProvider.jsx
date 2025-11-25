@@ -3,10 +3,11 @@
 import { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { ONBOARDING_STEPS, getStepById, isCompositeStep, getCompositeFeature, getTotalSteps } from '@/lib/onboarding/onboardingSteps';
-import { ONBOARDING_TIMINGS } from '@/lib/onboarding/onboardingConfig';
+import { ONBOARDING_TIMINGS, ONBOARDING_API } from '@/lib/onboarding/onboardingConfig';
 import { ONBOARDING_EVENTS } from '@/lib/onboarding/onboardingEvents';
 import { LOADING_EVENTS } from '@/lib/loading/loadingEvents';
 import { onboardingLogger } from '@/lib/utils/onboardingLogger';
+import { normalizeOnboardingState, markModalCompleted as markModalCompletedHelper, markTooltipClosed as markTooltipClosedHelper, markStepCompleted as markStepCompletedHelper } from '@/lib/onboarding/onboardingState';
 import ChecklistPanel from './ChecklistPanel';
 import OnboardingOrchestrator from './OnboardingOrchestrator';
 import WelcomeModal from './WelcomeModal';
@@ -43,6 +44,12 @@ export default function OnboardingProvider({ children }) {
   const listenerAttachedRef = useRef(false);
   const loadingClosedWhileBusyRef = useRef(false); // Flag: LOADING_SCREEN_CLOSED reçu pendant isLoading=true
 
+  // Refs pour queue d'updates (éviter race conditions)
+  const updateInProgressRef = useRef(false);
+  const pendingUpdateRef = useRef(null);
+  const retryAttemptsRef = useRef(0); // Compteur pour éviter boucle infinie
+  const MAX_RETRY_ATTEMPTS = ONBOARDING_API.MAX_RETRY_ATTEMPTS;
+
   // Ref pour capturer l'état actuel (utilisé dans le handler auto-start)
   // Permet d'éviter les valeurs "stale" dans les closures
   const stateRef = useRef({
@@ -58,6 +65,7 @@ export default function OnboardingProvider({ children }) {
   // État global
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState([]);
+  const [onboardingState, setOnboardingState] = useState({}); // État complet (step4, modals, tooltips)
   const [isActive, setIsActive] = useState(false);
   const [hasCompleted, setHasCompleted] = useState(false);
   const [hasSkipped, setHasSkipped] = useState(false);
@@ -103,7 +111,6 @@ export default function OnboardingProvider({ children }) {
     checklistExpanded: false,
     onboardingStartTime: null,
     stepStartTime: null,
-    startOnboarding: () => onboardingLogger.warn('[OnboardingProvider] Not authenticated'),
     goToNextStep: () => {},
     goToPrevStep: () => {},
     goToStep: () => {},
@@ -172,6 +179,8 @@ export default function OnboardingProvider({ children }) {
       setCurrentStep(data.currentStep);
       setHasCompleted(data.hasCompleted);
       setHasSkipped(data.isSkipped);
+      setCompletedSteps(data.completedSteps || []);
+      setOnboardingState(data.onboardingState || {});
 
       // Si on est sur une étape > 0 et pas complété, c'est qu'on est en cours
       if (data.currentStep > 0 && !data.hasCompleted && !data.isSkipped) {
@@ -197,49 +206,102 @@ export default function OnboardingProvider({ children }) {
   }, [isAuthenticated, session?.user?.id, fetchOnboardingState]);
 
   /**
-   * Démarrer l'onboarding
+   * SSE: Synchronisation temps réel multi-device
+   * Écoute les événements onboarding:updated et onboarding:reset
    */
-  const startOnboarding = useCallback(async () => {
-    try {
-      // Clear any existing welcome timer
-      if (welcomeTimerRef.current) {
-        clearTimeout(welcomeTimerRef.current);
-        welcomeTimerRef.current = null;
+  useEffect(() => {
+    if (!isAuthenticated || !session?.user?.id) return;
+
+    let eventSource = null;
+    let reconnectTimeout = null;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 5;
+    const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000]; // Exponential backoff
+
+    const connect = () => {
+      try {
+        eventSource = new EventSource('/api/user/onboarding/subscribe');
+
+        eventSource.addEventListener('connected', (event) => {
+          onboardingLogger.log('[SSE] Connexion établie:', JSON.parse(event.data));
+          reconnectAttempts = 0; // Reset counter on success
+        });
+
+        eventSource.addEventListener('onboarding:updated', (event) => {
+          const data = JSON.parse(event.data);
+          onboardingLogger.log('[SSE] onboarding:updated reçu:', data);
+
+          // Mise à jour de l'état depuis autre device
+          if (data.onboardingState) {
+            setOnboardingState(data.onboardingState);
+            setCompletedSteps(data.onboardingState.completedSteps || []);
+          }
+          if (data.currentStep !== undefined) {
+            setCurrentStep(data.currentStep);
+          }
+          if (data.hasCompleted !== undefined) {
+            setHasCompleted(data.hasCompleted);
+          }
+        });
+
+        eventSource.addEventListener('onboarding:reset', (event) => {
+          const data = JSON.parse(event.data);
+          onboardingLogger.log('[SSE] onboarding:reset reçu, reset complet UI');
+
+          // Reset complet de l'UI
+          setOnboardingState(data.onboardingState);
+          setCompletedSteps(data.onboardingState.completedSteps || []);
+          setCurrentStep(0);
+          setHasCompleted(false);
+          setHasSkipped(false);
+          setIsActive(false);
+          setShowWelcomeModal(false);
+        });
+
+        eventSource.onerror = (error) => {
+          onboardingLogger.error('[SSE] Erreur connexion:', error);
+          eventSource.close();
+
+          // Reconnect avec exponential backoff
+          if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            const delay = RECONNECT_DELAYS[reconnectAttempts] || 16000;
+            onboardingLogger.log(`[SSE] Reconnexion dans ${delay}ms (tentative ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
+
+            reconnectTimeout = setTimeout(() => {
+              reconnectAttempts++;
+              connect();
+            }, delay);
+          } else {
+            onboardingLogger.error('[SSE] Max reconnect attempts atteint, abandon');
+          }
+        };
+
+      } catch (error) {
+        onboardingLogger.error('[SSE] Erreur création EventSource:', error);
       }
+    };
 
-      setIsActive(true);
-      onboardingLogger.log(`[OnboardingProvider] Onboarding activé, démarrage dans ${STEP_TRANSITION_DELAY}ms`);
+    // Établir connexion SSE
+    connect();
 
-      // Timer de 2 secondes avant d'afficher la première étape
-      welcomeTimerRef.current = setTimeout(async () => {
-        welcomeTimerRef.current = null;
+    // Cleanup
+    return () => {
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
+  }, [isAuthenticated, session?.user?.id]);
 
-        try {
-          setCurrentStep(1);
-          setOnboardingStartTime(Date.now());
-          setStepStartTime(Date.now());
-
-          // Update API
-          await fetch('/api/user/onboarding', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ step: 1 }),
-          });
-        } catch (error) {
-          onboardingLogger.error('[OnboardingProvider] Error updating step:', error);
-        }
-      }, STEP_TRANSITION_DELAY);
-    } catch (error) {
-      onboardingLogger.error('[OnboardingProvider] Error starting onboarding:', error);
-    }
-  }, []);
 
   /**
    * Aller à l'étape suivante
    */
   const goToNextStep = useCallback(async () => {
-    if (currentStep >= 9) {
-      // Dernière étape → compléter onboarding
+    if (currentStep > getTotalSteps()) {
+      // Dépassé la dernière étape → compléter onboarding
       await completeOnboarding();
       return;
     }
@@ -286,7 +348,7 @@ export default function OnboardingProvider({ children }) {
    * Aller directement à une étape
    */
   const goToStep = useCallback(async (step) => {
-    if (step < 0 || step > 9) {
+    if (step < 0 || step > getTotalSteps()) {
       onboardingLogger.error('[OnboardingProvider] Invalid step:', step);
       return;
     }
@@ -333,10 +395,10 @@ export default function OnboardingProvider({ children }) {
       if (res.ok) {
         setHasCompleted(true);
         setIsActive(false);
-        setCurrentStep(9);
+        setCurrentStep(getTotalSteps());
 
         // Ajouter toutes les étapes aux complétées
-        setCompletedSteps([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        setCompletedSteps([1, 2, 3, 4, 5, 6, 7, 8]);
         setShowWelcomeModal(false);
       }
     } catch (error) {
@@ -345,7 +407,8 @@ export default function OnboardingProvider({ children }) {
   }, []);
 
   /**
-   * Marquer une étape comme complétée
+   * Marquer une étape comme complétée (avec optimistic update + rollback)
+   * Utilise onboardingState comme source unique de vérité
    */
   const markStepComplete = useCallback(async (step) => {
     // Clear any existing timer first
@@ -354,11 +417,48 @@ export default function OnboardingProvider({ children }) {
       stepTimerRef.current = null;
     }
 
-    // Ajouter à la liste des étapes complétées (retire le highlight immédiatement)
-    setCompletedSteps(prev => {
-      if (prev.includes(step)) return prev;
-      return [...prev, step];
-    });
+    // Sauvegarder état précédent pour rollback potentiel
+    const previousOnboardingState = onboardingState;
+    const previousCompletedSteps = completedSteps;
+    const previousCurrentStep = currentStep;
+
+    // Skip si déjà complété
+    if (onboardingState?.completedSteps?.includes(step)) {
+      onboardingLogger.log(`[OnboardingProvider] Step ${step} déjà complété, skip`);
+      return;
+    }
+
+    // Optimistic update (UI immédiate) - utiliser helper pour cohérence
+    const newOnboardingState = markStepCompletedHelper(onboardingState, step);
+
+    setOnboardingState(newOnboardingState);
+    setCompletedSteps(newOnboardingState.completedSteps);
+    setCurrentStep(newOnboardingState.currentStep); // ✅ Synchroniser avec le helper
+
+    // Persister en DB avec error handling (une seule requête PATCH atomique)
+    try {
+      const res = await fetch('/api/user/onboarding', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ onboardingState: newOnboardingState }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`API returned ${res.status}`);
+      }
+
+      onboardingLogger.log(`[OnboardingProvider] Step ${step} persisté avec succès (completedSteps: ${newOnboardingState.completedSteps}, currentStep: ${newOnboardingState.currentStep})`);
+    } catch (error) {
+      onboardingLogger.error('[OnboardingProvider] Persistence failed, rolling back:', error);
+
+      // Rollback vers état précédent
+      setOnboardingState(previousOnboardingState);
+      setCompletedSteps(previousCompletedSteps);
+      setCurrentStep(previousCurrentStep);
+
+      // Ne pas continuer la progression si la persistence a échoué
+      return;
+    }
 
     // Si c'est la dernière étape (8), ne rien faire d'autre
     // Le modal de complétion s'affichera et completeOnboarding() sera
@@ -366,37 +466,13 @@ export default function OnboardingProvider({ children }) {
     const totalSteps = getTotalSteps();
     if (step >= totalSteps) {
       onboardingLogger.log('[OnboardingProvider] Step final complété, en attente fermeture modal');
-      return; // Ne pas appeler goToNextStep() ni completeOnboarding()
+      return;
     }
 
-    // Déterminer si on applique un timer de transition
-    // Steps 2→3 et 3→4 s'enchaînent sans délai
-    const needsTimer = !STEPS_WITHOUT_TIMER.includes(step);
-
-    if (needsTimer) {
-      // Timer de 2 secondes avant de passer à l'étape suivante
-      onboardingLogger.log(`[OnboardingProvider] Step ${step} complété, transition dans ${STEP_TRANSITION_DELAY}ms`);
-
-      stepTimerRef.current = setTimeout(async () => {
-        stepTimerRef.current = null;
-
-        try {
-          await goToNextStep();
-        } catch (error) {
-          onboardingLogger.error('[OnboardingProvider] Error during step transition:', error);
-        }
-      }, STEP_TRANSITION_DELAY);
-    } else {
-      // Transition immédiate (steps 2 et 3)
-      onboardingLogger.log(`[OnboardingProvider] Step ${step} complété, transition immédiate`);
-
-      try {
-        await goToNextStep();
-      } catch (error) {
-        onboardingLogger.error('[OnboardingProvider] Error during immediate step transition:', error);
-      }
-    }
-  }, [goToNextStep]);
+    // currentStep est déjà incrémenté par le helper (ligne 470)
+    // Pas besoin de timer car la transition est immédiate
+    onboardingLogger.log(`[OnboardingProvider] Step ${step} complété, transition immédiate vers step ${newOnboardingState.currentStep}`);
+  }, [onboardingState, completedSteps, currentStep]);
 
   /**
    * Skip l'onboarding
@@ -423,7 +499,7 @@ export default function OnboardingProvider({ children }) {
 
       if (res.ok) {
         setHasSkipped(true);
-        setHasCompleted(true);
+        setHasCompleted(false); // Skip n'est PAS une complétion normale
         setIsActive(false);
         setCurrentStep(0);
         setCompletedSteps([]);
@@ -463,6 +539,7 @@ export default function OnboardingProvider({ children }) {
         setIsActive(false);
         setCurrentStep(0);
         setCompletedSteps([]);
+        setOnboardingState({}); // Reset état complet (modals, step4, etc.)
         setOnboardingStartTime(null);
         setStepStartTime(null);
         setShowWelcomeModal(false);
@@ -767,17 +844,224 @@ export default function OnboardingProvider({ children }) {
   }, [isLoading]);
 
   /**
+   * Deep merge helper pour éviter perte de données dans objets imbriqués
+   */
+  const deepMerge = useCallback((target, source) => {
+    const output = { ...target };
+    if (typeof target === 'object' && typeof source === 'object') {
+      Object.keys(source).forEach(key => {
+        if (typeof source[key] === 'object' && source[key] !== null && !Array.isArray(source[key])) {
+          if (!(key in target)) {
+            Object.assign(output, { [key]: source[key] });
+          } else {
+            output[key] = deepMerge(target[key], source[key]);
+          }
+        } else {
+          Object.assign(output, { [key]: source[key] });
+        }
+      });
+    }
+    return output;
+  }, []);
+
+  /**
+   * Mettre à jour l'état d'onboarding (update partiel avec queue anti-race)
+   * @param {object} updates - Objet avec les updates partiels (ex: { step4: { cvGenerated: true } })
+   */
+  const updateOnboardingState = useCallback(async (updates) => {
+    // Si update déjà en cours, merger avec pending update (évite race condition)
+    if (updateInProgressRef.current) {
+      onboardingLogger.log('[OnboardingProvider] Update déjà en cours, merge avec pending');
+      pendingUpdateRef.current = pendingUpdateRef.current
+        ? deepMerge(pendingUpdateRef.current, updates)
+        : updates;
+      return;
+    }
+
+    updateInProgressRef.current = true;
+    const previousState = onboardingState;
+
+    try {
+      // Deep merge pour préserver propriétés imbriquées
+      const newState = deepMerge(onboardingState, updates);
+      setOnboardingState(newState);
+
+      // Persister en DB
+      const res = await fetch('/api/user/onboarding', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ onboardingState: newState }),
+      });
+
+      if (!res.ok) {
+        onboardingLogger.error('[OnboardingProvider] Failed to persist onboardingState:', res.status);
+        // Rollback sur échec
+        setOnboardingState(previousState);
+        throw new Error(`API returned ${res.status}`);
+      }
+    } catch (error) {
+      onboardingLogger.error('[OnboardingProvider] Error persisting onboardingState:', error);
+      // Rollback sur erreur
+      setOnboardingState(previousState);
+    } finally {
+      updateInProgressRef.current = false;
+
+      // Si pending update existe, l'exécuter maintenant (récursif avec limite de retry)
+      if (pendingUpdateRef.current) {
+        const pending = pendingUpdateRef.current;
+        pendingUpdateRef.current = null;
+
+        retryAttemptsRef.current++;
+        if (retryAttemptsRef.current <= MAX_RETRY_ATTEMPTS) {
+          onboardingLogger.log(`[OnboardingProvider] Exécution pending update (attempt ${retryAttemptsRef.current}/${MAX_RETRY_ATTEMPTS}):`, pending);
+          await updateOnboardingState(pending);
+        } else {
+          onboardingLogger.error('[OnboardingProvider] Max retry attempts reached, dropping update:', pending);
+          retryAttemptsRef.current = 0; // Reset pour futures updates
+        }
+      } else {
+        retryAttemptsRef.current = 0; // Reset sur succès
+      }
+    }
+  }, [onboardingState, deepMerge]);
+
+  /**
+   * Marquer un modal comme complété (wrapper qui persiste en DB)
+   * @param {string} stepKey - Clé du modal (welcome, step1, step2, step6, step8, completion)
+   */
+  const markModalCompleted = useCallback(async (stepKey) => {
+    onboardingLogger.log(`[OnboardingProvider] markModalCompleted called for modal: ${stepKey}`);
+
+    // Create partial updates (not full state) for proper deep merging
+    const updates = {
+      modals: {
+        ...onboardingState.modals,
+        [stepKey]: {
+          completed: true,
+          completedAt: new Date().toISOString()
+        }
+      },
+      timestamps: {
+        ...onboardingState.timestamps,
+        lastStepChangeAt: new Date().toISOString()
+      }
+    };
+
+    onboardingLogger.log(`[OnboardingProvider] Modal completion updates for ${stepKey}:`, JSON.stringify(updates.modals[stepKey]));
+
+    try {
+      await updateOnboardingState(updates);
+      onboardingLogger.log(`[OnboardingProvider] Modal ${stepKey} marked as completed in DB`);
+    } catch (error) {
+      onboardingLogger.error(`[OnboardingProvider] Failed to mark modal ${stepKey} as completed:`, error);
+      throw error; // Re-throw to let caller handle it
+    }
+  }, [onboardingState, updateOnboardingState]);
+
+  /**
+   * Marquer un tooltip comme fermé/ouvert manuellement (wrapper qui persiste en DB)
+   * @param {number} stepNumber - Numéro du step (1-8)
+   * @param {boolean} [closed=true] - True pour fermer, false pour ouvrir/reset (défaut: true)
+   *
+   * @example
+   * // Fermer tooltip manuellement
+   * await markTooltipClosed(1); // closed=true (default)
+   *
+   * // Reset tooltip après modal (réapparaître après refresh)
+   * await markTooltipClosed(1, false);
+   */
+  const markTooltipClosed = useCallback(async (stepNumber, closed = true) => {
+    // Create partial updates (not full state) for proper deep merging
+    const updates = {
+      tooltips: {
+        ...onboardingState.tooltips,
+        [String(stepNumber)]: { closedManually: closed }
+      },
+      timestamps: {
+        ...onboardingState.timestamps,
+        lastStepChangeAt: new Date().toISOString()
+      }
+    };
+    await updateOnboardingState(updates);
+  }, [onboardingState, updateOnboardingState]);
+
+  /**
+   * Helper: Transition from welcome modal to step 1
+   * Shared logic for both "complete" (button) and "close" (X) actions
+   * Uses optimistic update with rollback on API failure
+   */
+  const transitionToStep1 = useCallback(async () => {
+    // Save previous state for rollback
+    const previousStep = currentStep;
+    const previousIsActive = isActive;
+
+    try {
+      // Optimistic update (UI first)
+      setIsActive(true);
+      setCurrentStep(1);
+      setOnboardingStartTime(Date.now());
+      setStepStartTime(Date.now());
+
+      // Update API
+      const res = await fetch('/api/user/onboarding', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ step: 1 }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`API returned ${res.status}`);
+      }
+
+      onboardingLogger.log('[OnboardingProvider] Successfully transitioned to step 1');
+    } catch (error) {
+      onboardingLogger.error('[OnboardingProvider] Failed to transition to step 1:', error);
+
+      // Rollback UI state
+      setCurrentStep(previousStep);
+      setIsActive(previousIsActive);
+      setOnboardingStartTime(null);
+      setStepStartTime(null);
+
+      // Re-throw for caller to handle
+      throw error;
+    }
+  }, [currentStep, isActive]);
+
+  /**
    * Handlers pour le WelcomeModal
    */
-  const handleWelcomeComplete = useCallback(() => {
+  const handleWelcomeComplete = useCallback(async () => {
     setShowWelcomeModal(false);
-    startOnboarding();
-  }, [startOnboarding]);
+
+    try {
+      // Mark welcome modal as completed in DB
+      await markModalCompleted('welcome');
+      // Transition to step 1
+      await transitionToStep1();
+    } catch (error) {
+      onboardingLogger.error('[OnboardingProvider] Welcome complete failed:', error);
+      // Note: transitionToStep1 already rolled back state on failure
+    }
+  }, [markModalCompleted, transitionToStep1]);
 
   const handleWelcomeSkip = useCallback(() => {
     setShowWelcomeModal(false);
     skipOnboarding();
   }, [skipOnboarding]);
+
+  const handleWelcomeClose = useCallback(async () => {
+    setShowWelcomeModal(false);
+    // Note: Ne PAS marquer le modal comme completed (croix ≠ complétion)
+
+    try {
+      // Transition to step 1 without marking modal as completed
+      await transitionToStep1();
+    } catch (error) {
+      onboardingLogger.error('[OnboardingProvider] Welcome close failed:', error);
+      // Note: transitionToStep1 already rolled back state on failure
+    }
+  }, [transitionToStep1]);
 
   /**
    * Context value
@@ -788,6 +1072,7 @@ export default function OnboardingProvider({ children }) {
     // State
     currentStep,
     completedSteps,
+    onboardingState,
     isActive,
     hasCompleted,
     hasSkipped,
@@ -799,7 +1084,6 @@ export default function OnboardingProvider({ children }) {
     stepStartTime,
 
     // Navigation
-    startOnboarding,
     goToNextStep,
     goToPrevStep,
     goToStep,
@@ -816,6 +1100,9 @@ export default function OnboardingProvider({ children }) {
     // Helpers
     checkStepConditions,
     trackEvent,
+    updateOnboardingState,
+    markModalCompleted,
+    markTooltipClosed,
 
     // Steps config (pour accès facile)
     steps: ONBOARDING_STEPS,
@@ -826,18 +1113,19 @@ export default function OnboardingProvider({ children }) {
   return (
     <OnboardingContext.Provider value={isAuthenticated ? value : defaultValue}>
       {children}
-      {/* Modal de bienvenue (avant l'onboarding) - seulement si authentifié ET si l'utilisateur a au moins 1 CV */}
-      {isAuthenticated && stateRef.current.cvCount > 0 && (
+      {/* Modal de bienvenue (avant l'onboarding) - seulement si authentifié */}
+      {isAuthenticated && (
         <WelcomeModal
           open={showWelcomeModal}
           onComplete={handleWelcomeComplete}
           onSkip={handleWelcomeSkip}
+          onClose={handleWelcomeClose}
         />
       )}
       {/* Checklist flottante (affichée si onboarding actif ou complété) - seulement si authentifié */}
       {isAuthenticated && <ChecklistPanel />}
-      {/* Orchestrateur gérant l'affichage des 9 étapes - seulement si authentifié */}
-      {isAuthenticated && <OnboardingOrchestrator />}
+      {/* Orchestrateur gérant l'affichage des 8 étapes - seulement si authentifié */}
+      {isAuthenticated && !isLoading && <OnboardingOrchestrator />}
     </OnboardingContext.Provider>
   );
 }

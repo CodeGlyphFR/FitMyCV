@@ -164,6 +164,7 @@ export default function WelcomeModal({
   open = false,
   onComplete,
   onSkip,
+  onClose, // Nouveau: handler pour la croix (X)
 }) {
   const [currentScreen, setCurrentScreen] = useState(0);
   const [direction, setDirection] = useState(0);
@@ -400,14 +401,16 @@ export default function WelcomeModal({
                 </button>
               )}
 
-              {/* X Button - Immediately close modal and start onboarding (same as "Compris" on last screen) */}
-              <button
-                onClick={startMorphAnimation}
-                className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-                aria-label="Commencer l'onboarding"
-              >
-                <X className="w-4 h-4 md:w-5 md:h-5" />
-              </button>
+              {/* X Button - Close modal (different from "Compris": doesn't mark modal as completed) */}
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                  aria-label="Fermer et commencer l'onboarding"
+                >
+                  <X className="w-4 h-4 md:w-5 md:h-5" />
+                </button>
+              )}
             </div>
           </div>
 

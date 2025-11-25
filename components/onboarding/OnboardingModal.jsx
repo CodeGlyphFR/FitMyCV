@@ -160,14 +160,14 @@ export default function OnboardingModal({
     }
   };
 
-  // Ne pas render si pas ouvert ou screens vides
-  if (!open || !screens || screens.length === 0) return null;
-
   // Classes de taille
   const sizeClasses = {
     default: 'max-w-full mx-4 md:max-w-2xl',
     large: 'max-w-full mx-4 md:max-w-4xl',
   };
+
+  // Ne pas render si pas ouvert ou screens vides
+  if (!open || !screens || screens.length === 0) return null;
 
   const modalContent = (
     <div
@@ -217,13 +217,13 @@ export default function OnboardingModal({
 
             {/* Boutons alignés à droite */}
             <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-              {/* Bouton Passer le tutoriel */}
+              {/* Bouton Passer cette étape */}
               {showSkipButton && onSkip && (
                 <button
                   onClick={onSkip}
                   className="text-xs md:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap"
                 >
-                  Passer le tutoriel
+                  Passer cette étape
                 </button>
               )}
 

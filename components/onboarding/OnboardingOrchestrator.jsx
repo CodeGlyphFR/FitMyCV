@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useAdmin } from '@/components/admin/AdminProvider';
 import { getStepById } from '@/lib/onboarding/onboardingSteps';
-import { ONBOARDING_TIMINGS } from '@/lib/onboarding/onboardingConfig';
+import { ONBOARDING_TIMINGS, STEP_TO_MODAL_KEY, ONBOARDING_API } from '@/lib/onboarding/onboardingConfig';
 import { onboardingLogger } from '@/lib/utils/onboardingLogger';
 import { isAiGenerationTask, isMatchScoreTask, isImprovementTask } from '@/lib/backgroundTasks/taskTypes';
 import { extractCvFilename } from '@/lib/onboarding/cvFilenameUtils';
@@ -34,10 +34,15 @@ export default function OnboardingOrchestrator() {
   const {
     currentStep,
     isActive,
+    isLoading,
     completedSteps,
+    onboardingState,
     markStepComplete,
     goToNextStep,
     completeOnboarding,
+    updateOnboardingState,
+    markModalCompleted,
+    markTooltipClosed,
   } = useOnboarding();
 
   const { editing, setEditing } = useAdmin();
@@ -57,93 +62,203 @@ export default function OnboardingOrchestrator() {
   const [completedTaskResult, setCompletedTaskResult] = useState(null);
 
   // État pour la précondition du step 4 (ne se définit qu'APRÈS validation step 3)
-  const [cvGenerated, setCvGenerated] = useState(false);
-  const [generatedCvFilename, setGeneratedCvFilename] = useState(null);
+  const [cvGenerated, setCvGenerated] = useState(onboardingState?.step4?.cvGenerated || false);
+  const [generatedCvFilename, setGeneratedCvFilename] = useState(onboardingState?.step4?.cvFilename || null);
 
   // Ref pour tracker l'état précédent du mode édition (étape 1)
   const prevEditingRef = useRef(editing);
 
-  // Ref pour tracker si le modal step 1 a été complété (empêche tooltip de réapparaître)
-  const step1ModalCompletedRef = useRef(false);
-
-  // Ref pour tracker si le modal step 1 a été montré (permet toggle normal du bouton après)
+  // Refs pour tracker si les modals ont été montrés (pas besoin de persister)
   const step1ModalShownRef = useRef(false);
-
-  // Ref pour tracker si le modal step 2 a été complété (empêche tooltip de réapparaître)
-  const step2ModalCompletedRef = useRef(false);
-
-  // Ref pour tracker si le modal step 2 a été montré (permet ouverture normale du generator après)
   const step2ModalShownRef = useRef(false);
-
-  // Ref pour tracker si le modal step 6 a été complété (empêche tooltip de réapparaître)
-  const step6ModalCompletedRef = useRef(false);
-
-  // Ref pour tracker si le modal step 6 a été montré
   const step6ModalShownRef = useRef(false);
-
-  // Ref pour tracker si le modal step 8 a été complété (empêche tooltip de réapparaître)
-  const step8ModalCompletedRef = useRef(false);
-
-  // Ref pour tracker si le modal step 8 a été montré
   const step8ModalShownRef = useRef(false);
 
   // Ref pour le handler export-clicked (pattern stable comme step 7)
   const handleExportClickedRef = useRef();
 
-  // Réinitialiser tooltipClosed et prevEditingRef à chaque changement d'étape
+  // ========== RESTORATION DES ÉTATS DEPUIS onboardingState (AU MOUNT) ==========
+
+  // Restaurer les états depuis onboardingState quand il est chargé depuis l'API
   useEffect(() => {
-    // Only reset tooltipClosed if modal wasn't completed for step 1, 2, 6 or 8
-    if (currentStep === 1 && step1ModalCompletedRef.current) {
-      // Keep tooltipClosed = true to prevent reappearing after modal completion
-      onboardingLogger.log('[Onboarding] Step 1: Modal completed, keeping tooltip closed');
-    } else if (currentStep === 2 && step2ModalCompletedRef.current) {
-      // Keep tooltipClosed = true to prevent reappearing after modal completion
-      onboardingLogger.log('[Onboarding] Step 2: Modal completed, keeping tooltip closed');
-    } else if (currentStep === 6 && step6ModalCompletedRef.current) {
-      // Keep tooltipClosed = true to prevent reappearing after modal completion
-      onboardingLogger.log('[Onboarding] Step 6: Modal completed, keeping tooltip closed');
-    } else if (currentStep === 8 && step8ModalCompletedRef.current) {
-      // Keep tooltipClosed = true to prevent reappearing after modal completion
-      onboardingLogger.log('[Onboarding] Step 8: Modal completed, keeping tooltip closed');
-    } else {
-      setTooltipClosed(false);
+    if (!onboardingState || Object.keys(onboardingState).length === 0) return;
+
+    // Validation et restauration step4 state
+    if (onboardingState.step4 && typeof onboardingState.step4 === 'object') {
+      if (typeof onboardingState.step4.cvGenerated === 'boolean') {
+        setCvGenerated(onboardingState.step4.cvGenerated);
+      }
+      if (typeof onboardingState.step4.cvFilename === 'string') {
+        setGeneratedCvFilename(onboardingState.step4.cvFilename);
+      }
     }
 
-    // Réinitialiser prevEditingRef pour éviter des validations incorrectes si on revient à step 1
-    if (currentStep === 1) {
-      prevEditingRef.current = editing;
-    }
-  }, [currentStep]); // REMOVED 'editing' from deps to prevent re-triggering on edit mode change
+    // Note: Modal completion flags are now read directly from onboardingState.modals
+    // No need to copy to local state
 
-  // Cleanup : Reset step 1 refs when leaving the step
+    onboardingLogger.log('[Onboarding] État restauré depuis DB:', onboardingState);
+  }, [onboardingState]); // Trigger uniquement quand onboardingState change
+
+  // ========== FIN RESTORATION ==========
+
+  // ========== PERSISTENCE DES ÉTATS DANS onboardingState ==========
+
+  // Ref pour accumuler les updates avant persistence (évite race conditions)
+  const pendingUpdatesRef = useRef({});
+  const persistTimeoutRef = useRef(null);
+  const persistInProgressRef = useRef(false); // Track requête en cours (empêche parallèles)
+
+  // Stocker updateOnboardingState dans une ref pour stabilité (évite re-création de debouncedPersist)
+  const updateOnboardingStateRef = useRef();
+  useEffect(() => {
+    updateOnboardingStateRef.current = updateOnboardingState;
+  }, [updateOnboardingState]);
+
+  // Fonction debouncée pour batch toutes les updates ensemble (STABLE - pas de deps)
+  const debouncedPersist = useCallback(() => {
+    // Clear timeout précédent
+    if (persistTimeoutRef.current) {
+      clearTimeout(persistTimeoutRef.current);
+      persistTimeoutRef.current = null;
+    }
+
+    // Debounce basé sur CACHE_TTL pour cohérence avec l'API
+    persistTimeoutRef.current = setTimeout(async () => {
+      persistTimeoutRef.current = null;
+
+      // Skip si pas d'updates ou requête déjà en cours
+      if (!updateOnboardingStateRef.current || Object.keys(pendingUpdatesRef.current).length === 0 || persistInProgressRef.current) {
+        return;
+      }
+
+      const updates = { ...pendingUpdatesRef.current };
+      pendingUpdatesRef.current = {}; // Clear pending
+
+      // Marquer requête en cours
+      persistInProgressRef.current = true;
+
+      try {
+        await updateOnboardingStateRef.current(updates);
+      } catch (error) {
+        onboardingLogger.error('[Onboarding] Error persisting state:', error);
+      } finally {
+        persistInProgressRef.current = false;
+      }
+    }, ONBOARDING_API.CACHE_TTL); // Synchronisé avec CACHE_TTL de l'API
+  }, []); // ← VIDE deps pour stabilité (pas de re-création)
+
+  // Single effect consolidé pour tous les états à persister
+  // Note: Modals sont maintenant persistés via markModalCompleted() directement
+  useEffect(() => {
+    if (!updateOnboardingStateRef.current) return;
+
+    // Accumuler tous les updates (step4 uniquement, modals gérés par markModalCompleted)
+    pendingUpdatesRef.current = {
+      step4: {
+        cvGenerated,
+        cvFilename: generatedCvFilename,
+      },
+    };
+
+    // Déclencher persistence debouncée
+    debouncedPersist();
+  }, [
+    cvGenerated,
+    generatedCvFilename,
+    debouncedPersist, // ← OK car debouncedPersist est STABLE maintenant (deps vides)
+  ]);
+
+  // Cleanup du timeout au unmount (avec flush des pending updates)
+  useEffect(() => {
+    return () => {
+      if (persistTimeoutRef.current) {
+        clearTimeout(persistTimeoutRef.current);
+        persistTimeoutRef.current = null;
+
+        // Flush pending updates immédiatement pour ne pas perdre de données
+        if (updateOnboardingStateRef.current &&
+            Object.keys(pendingUpdatesRef.current).length > 0 &&
+            !persistInProgressRef.current) {
+          const updates = { ...pendingUpdatesRef.current };
+          pendingUpdatesRef.current = {};
+
+          onboardingLogger.log('[Onboarding] Flush pending updates au unmount:', updates);
+
+          // Fire-and-forget (async sans await pour ne pas bloquer unmount)
+          updateOnboardingStateRef.current(updates).catch(err => {
+            onboardingLogger.error('[Onboarding] Failed to flush on unmount:', err);
+          });
+        }
+      }
+    };
+  }, []);
+
+  // ========== FIN PERSISTENCE ==========
+
+  // ========== CONSOLIDATED TOOLTIP LOGIC ==========
+  // Manages tooltip visibility based on:
+  //   1. Manual close by user (onboardingState.tooltips[step].closedManually)
+  //   2. Step completion (completedSteps.includes(currentStep))
+  //
+  // IMPORTANT: prevEditingRef is intentionally NOT reset here to avoid race condition
+  //
+  // Race condition scenario (BEFORE fix):
+  //   1. User exits edit mode (editing: true → false)
+  //   2. This effect runs first, resets prevEditingRef to false
+  //   3. Validation effect (lines 334-353) runs, sees prevEditingRef=false, editing=false
+  //   4. No transition detected → Step 1 never validates ❌
+  //
+  // Fixed behavior (AFTER removing prevEditingRef reset):
+  //   1. User exits edit mode (editing: true → false)
+  //   2. This effect runs, only manages tooltip (prevEditingRef unchanged)
+  //   3. Validation effect runs, sees prevEditingRef=true, editing=false
+  //   4. Transition detected → Step 1 validates correctly ✅
+  //
+  // prevEditingRef is now managed ONLY by the validation effect itself (line 352)
+  useEffect(() => {
+    // Condition 1: User closed tooltip manually
+    const manuallyClosedByUser = onboardingState?.tooltips?.[String(currentStep)]?.closedManually || false;
+
+    // Condition 2: Step completed
+    const stepCompleted = completedSteps.includes(currentStep);
+
+    // Tooltip should be closed if ANY of these conditions is true
+    // Note: Modal completion does NOT close tooltip (would reappear after modal closes)
+    const shouldCloseTooltip = manuallyClosedByUser || stepCompleted;
+
+    setTooltipClosed(shouldCloseTooltip);
+
+    // Logging for debugging
+    if (shouldCloseTooltip) {
+      onboardingLogger.log(
+        `[Onboarding] Tooltip step ${currentStep} closed: ` +
+        `manual=${manuallyClosedByUser}, completed=${stepCompleted}`
+      );
+    }
+  }, [currentStep, onboardingState?.tooltips, completedSteps]);
+
+  // Cleanup : Reset step refs when leaving the step
   useEffect(() => {
     if (currentStep !== 1) {
       step1ModalShownRef.current = false;
-      step1ModalCompletedRef.current = false;
     }
   }, [currentStep]);
 
-  // Cleanup : Reset step 2 refs when leaving the step
   useEffect(() => {
     if (currentStep !== 2) {
       step2ModalShownRef.current = false;
-      step2ModalCompletedRef.current = false;
     }
   }, [currentStep]);
 
-  // Cleanup : Reset step 6 refs when leaving the step
   useEffect(() => {
     if (currentStep !== 6) {
       step6ModalShownRef.current = false;
-      step6ModalCompletedRef.current = false;
     }
   }, [currentStep]);
 
-  // Cleanup : Reset step 8 refs when leaving the step
   useEffect(() => {
     if (currentStep !== 8) {
       step8ModalShownRef.current = false;
-      step8ModalCompletedRef.current = false;
     }
   }, [currentStep]);
 
@@ -169,10 +284,11 @@ export default function OnboardingOrchestrator() {
       // Mark modal as shown
       step1ModalShownRef.current = true;
 
-      // Fermer le tooltip immédiatement
+      // Fermer le tooltip temporairement (UI seulement)
+      // Ne PAS persister en DB car le tooltip n'a pas été fermé manuellement par X
       setTooltipClosed(true);
 
-      // Ouvrir le modal onboarding
+      // Ouvrir le modal onboarding (s'exécute immédiatement sans attendre)
       setModalOpen(true);
       setCurrentScreen(0);
     };
@@ -216,7 +332,13 @@ export default function OnboardingOrchestrator() {
 
   // ========== ÉTAPE 1 : VALIDATION QUAND L'UTILISATEUR QUITTE LE MODE ÉDITION ==========
   useEffect(() => {
-    if (currentStep !== 1 || modalOpen) return;
+    if (currentStep !== 1) return;
+
+    // Skip validation if modal is open to avoid premature validation during modal close animation
+    if (modalOpen) {
+      onboardingLogger.log('[Onboarding] Step 1: Skipping validation while modal open');
+      return;
+    }
 
     // Détecter la transition editing: true → false (utilisateur quitte le mode édition)
     // La validation se déclenche uniquement sur true → false, donc pas de faux positifs
@@ -449,15 +571,6 @@ export default function OnboardingOrchestrator() {
       cvFilename: completedTaskResult.cvFilename
     });
   }, [currentStep, taskCompleted, completedTaskResult, cvGenerated]);
-
-  // ========== STEP 4 : NE DÉCLENCHER QUE SI cvGenerated EST TRUE ==========
-  useEffect(() => {
-    // Si on est sur le step 4 mais que cvGenerated n'est pas true,
-    // on ne doit PAS afficher le step 4 (précondition non remplie)
-    if (currentStep === 4 && !cvGenerated) {
-      onboardingLogger.log('[Onboarding] Step 4 : Précondition cvGenerated non remplie, step ignoré');
-    }
-  }, [currentStep, cvGenerated]);
 
   // ========== STEP 4 : ÉCOUTER generatedCvOpened POUR VALIDER ==========
   // Utilisation de useRef pour éviter la re-registration
@@ -696,12 +809,21 @@ export default function OnboardingOrchestrator() {
    */
   const handleCompletionModalClose = async () => {
     setShowCompletionModal(false);
+
+    // Mark completion modal as completed in DB
+    try {
+      await markModalCompleted('completion');
+    } catch (error) {
+      onboardingLogger.error('[Onboarding] Failed to persist completion modal:', error);
+      // Continue anyway - onboarding completion is more critical
+    }
+
     // Marquer l'onboarding comme complété
     await completeOnboarding();
   };
 
-  // Ne rien afficher si pas actif, SAUF si le modal de complétion doit être affiché
-  if (!isActive || currentStep === 0) {
+  // Ne rien afficher si pas actif, en cours de chargement, SAUF si le modal de complétion doit être affiché
+  if (!isActive || currentStep === 0 || isLoading) {
     // Toujours rendre le modal de complétion même si l'onboarding n'est plus actif
     return showCompletionModal ? (
       <OnboardingCompletionModal
@@ -725,8 +847,12 @@ export default function OnboardingOrchestrator() {
     }
   };
 
-  const handleCloseModal = () => {
+  const handleCloseModal = async () => {
     setModalOpen(false);
+
+    // Ne PAS persister modal completion lors de fermeture par X
+    // La croix (X) ne marque pas le modal comme complété
+    // Seul le bouton "Compris" marque le modal comme complété (voir handleModalComplete)
   };
 
   const handleModalNext = () => {
@@ -757,30 +883,35 @@ export default function OnboardingOrchestrator() {
     setCurrentScreen(screenIndex);
   };
 
-  const handleModalComplete = () => {
+  const handleModalComplete = async () => {
     setModalOpen(false);
 
+    // Persist modal completion to DB
+    const modalKey = STEP_TO_MODAL_KEY[currentStep];
+    if (modalKey) {
+      try {
+        await markModalCompleted(modalKey);
+      } catch (error) {
+        onboardingLogger.error(`[Onboarding] Failed to persist ${modalKey} modal:`, error);
+        return; // Don't proceed if persistence failed
+      }
+    }
+
     // Étape 1 : Activer le mode édition après fermeture du modal
-    // NOTE: Step 1 validation happens when user EXITS edit mode (see validation useEffect lines 170-183)
+    // NOTE: Step 1 validation happens when user EXITS edit mode (see useEffect handling prevEditingRef transition)
     if (currentStep === 1) {
-      // Marquer le modal comme complété (empêche tooltip de réapparaître)
-      step1ModalCompletedRef.current = true;
-
       // Attendre que l'animation CSS du modal soit terminée
-      setTimeout(async () => {
-        try {
-          await setEditing(true);
+      setTimeout(() => {
+        // Reset prevEditingRef pour éviter validation incorrecte
+        prevEditingRef.current = false;
 
-          // Validation : vérifier que le mode édition a bien été activé
-          const editingState = localStorage.getItem('admin:editing');
-          if (editingState !== '1') {
-            onboardingLogger.error('[Onboarding] Étape 1 : Mode édition non activé après complétion');
-            // Note : En production, afficher une notification à l'utilisateur
-          }
-        } catch (error) {
-          onboardingLogger.error('[Onboarding] Étape 1 : Erreur activation mode édition:', error);
-          // Note : En production, afficher une notification d'erreur à l'utilisateur
-        }
+        // Activer le mode édition (fire-and-forget, async géré par setEditing)
+        setEditing(true).catch(error => {
+          onboardingLogger.error('[Onboarding] Step 1: Failed to activate edit mode:', error);
+        });
+
+        onboardingLogger.log('[Onboarding] Step 1: Edit mode activation requested, validation will occur when user exits edit mode');
+        // NOTE: Validation happens when user EXITS edit mode (see useEffect detecting editing: true → false)
       }, MODAL_CLOSE_ANIMATION_DURATION);
     }
 
@@ -788,9 +919,6 @@ export default function OnboardingOrchestrator() {
     // Raison : Après avoir vu le modal éducatif, on ouvre directement le panel
     // Validation se fait via MutationObserver (lignes 169-204) quand tâche créée
     if (currentStep === 2) {
-      // Marquer le modal comme complété (empêche tooltip de réapparaître)
-      step2ModalCompletedRef.current = true;
-
       // Ouvrir le panel après fermeture du modal explicatif
       // IMPORTANT : On utilise un custom event au lieu d'un clic simulé pour éviter
       // que le listener d'onboarding (lignes 128-141) n'intercepte le clic et ré-ouvre le modal
@@ -806,8 +934,6 @@ export default function OnboardingOrchestrator() {
     // Raison : Après avoir vu le modal éducatif, on ouvre directement le panel
     // Validation se fait via task:completed quand l'optimisation est terminée
     if (currentStep === 6) {
-      step6ModalCompletedRef.current = true;
-
       // Ouvrir le panel après fermeture du modal explicatif
       setTimeout(() => {
         emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_OPTIMIZER);
@@ -821,8 +947,6 @@ export default function OnboardingOrchestrator() {
     // Raison : Après avoir vu le modal tutoriel, on ouvre directement le modal d'export
     // Validation se fait via EXPORT_CLICKED quand l'utilisateur clique sur "Exporter en PDF"
     if (currentStep === 8) {
-      step8ModalCompletedRef.current = true;
-
       // Ouvrir le modal d'export après fermeture du modal tutoriel
       setTimeout(() => {
         emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_EXPORT);
@@ -833,20 +957,12 @@ export default function OnboardingOrchestrator() {
     }
   };
 
-  const handleModalSkip = () => {
+  const handleModalSkip = async () => {
     setModalOpen(false);
 
-    // Mark modal as completed for steps with tracking refs
-    if (currentStep === 1) {
-      step1ModalCompletedRef.current = true;
-    } else if (currentStep === 2) {
-      step2ModalCompletedRef.current = true;
-    } else if (currentStep === 6) {
-      step6ModalCompletedRef.current = true;
-    } else if (currentStep === 8) {
-      step8ModalCompletedRef.current = true;
-    }
-
+    // Ne PAS marquer le modal comme complété lors du skip
+    // "Passer cette étape" = skip le step entier, pas completion du modal
+    // On marque directement le step comme complété
     markStepComplete(currentStep);
   };
 
@@ -890,43 +1006,33 @@ export default function OnboardingOrchestrator() {
   /**
    * Handler tooltip close
    * Gère la fermeture individuelle des tooltips avec validation conditionnelle
+   * Includes rollback logic to keep UI/DB in sync on failure
    */
   const handleTooltipClose = async () => {
+    // Save previous state for rollback
+    const previousState = tooltipClosed;
+
     try {
-      // Étape 1 : Fermer tooltip = masquer simplement le tooltip
-      // La validation se fera quand l'utilisateur quittera le mode édition
-      if (currentStep === 1) {
-        setTooltipClosed(true);
-        return;
-      }
-
-      // Étape 3 : Fermer tooltip = masquer simplement le tooltip
-      // La validation se fait automatiquement quand l'utilisateur clique sur le task manager
-      if (currentStep === 3) {
-        setTooltipClosed(true);
-        return;
-      }
-
-      // Étape 7 : Fermer tooltip = masquer simplement le tooltip
-      // La validation se fait quand l'utilisateur ferme le modal historique
-      if (currentStep === 7) {
-        setTooltipClosed(true);
-        return;
-      }
-
-      // Étape 8 : Fermer tooltip = masquer simplement le tooltip
-      // La validation se fait quand l'utilisateur clique sur export
-      if (currentStep === 8) {
-        setTooltipClosed(true);
-        return;
-      }
-
-      // Autres étapes (2, 4, 5, 6) : simplement masquer le tooltip
+      // Optimistic update - close tooltip immediately for better UX
       setTooltipClosed(true);
+
+      // Persist to DB
+      await markTooltipClosed(currentStep);
+
+      onboardingLogger.log(`[Onboarding] Tooltip step ${currentStep} closed and persisted to DB`);
     } catch (error) {
-      onboardingLogger.error('[Onboarding] Erreur fermeture tooltip:', error);
-      // En cas d'erreur de validation, on cache quand même le tooltip
-      setTooltipClosed(true);
+      onboardingLogger.error('[Onboarding] Failed to persist tooltip close, rolling back:', error);
+
+      // Rollback UI to previous state on failure
+      setTooltipClosed(previousState);
+
+      // Optional: Show user-facing error notification
+      // window.dispatchEvent(new CustomEvent('notification:show', {
+      //   detail: {
+      //     type: 'error',
+      //     message: 'Unable to save progress. Please try again.'
+      //   }
+      // }));
     }
   };
 
@@ -940,7 +1046,7 @@ export default function OnboardingOrchestrator() {
         <>
           {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
           <OnboardingHighlight
-            show={!modalOpen && !completedSteps.includes(1)}
+            show={!modalOpen && currentStep === 1}
             blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
@@ -981,7 +1087,7 @@ export default function OnboardingOrchestrator() {
         <>
           {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
           <OnboardingHighlight
-            show={!modalOpen && !completedSteps.includes(2)}
+            show={!modalOpen && currentStep === 2}
             blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
@@ -1021,7 +1127,7 @@ export default function OnboardingOrchestrator() {
         <>
           {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
           <OnboardingHighlight
-            show={true}
+            show={currentStep === 3}
             blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
@@ -1051,7 +1157,7 @@ export default function OnboardingOrchestrator() {
         <>
           {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
           <OnboardingHighlight
-            show={true}
+            show={currentStep === 4}
             blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
@@ -1074,7 +1180,7 @@ export default function OnboardingOrchestrator() {
         <>
           {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
           <OnboardingHighlight
-            show={true}
+            show={currentStep === 5}
             blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
@@ -1097,7 +1203,7 @@ export default function OnboardingOrchestrator() {
         <>
           {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
           <OnboardingHighlight
-            show={!modalOpen && !completedSteps.includes(6)}
+            show={!modalOpen && currentStep === 6}
             blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
@@ -1137,7 +1243,7 @@ export default function OnboardingOrchestrator() {
         <>
           {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
           <OnboardingHighlight
-            show={!completedSteps.includes(7)}
+            show={currentStep === 7}
             blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
@@ -1163,7 +1269,7 @@ export default function OnboardingOrchestrator() {
         <>
           {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
           <OnboardingHighlight
-            show={!modalOpen && !completedSteps.includes(8)}
+            show={!modalOpen && currentStep === 8}
             blurEnabled={!tooltipClosed}
             targetSelector={step.targetSelector}
           />
