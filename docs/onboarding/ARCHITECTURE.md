@@ -476,6 +476,10 @@ App.jsx
 - Utilise `useOnboarding()` hook pour lire `currentStep`, `completedSteps`, `checklistExpanded`
 - Actions : `toggleChecklist()`
 
+**Visibilité** :
+- Automatiquement masqué sur les routes `/admin` via `OnboardingProvider`
+- Condition : `!isAdminRoute` (utilise `usePathname()` de Next.js)
+
 **Fichier** : 307 lignes
 
 ---

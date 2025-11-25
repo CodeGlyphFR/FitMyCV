@@ -2,6 +2,7 @@
 
 import { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import { usePathname } from 'next/navigation';
 import { ONBOARDING_STEPS, getStepById, isCompositeStep, getCompositeFeature, getTotalSteps } from '@/lib/onboarding/onboardingSteps';
 import { ONBOARDING_TIMINGS, ONBOARDING_API } from '@/lib/onboarding/onboardingConfig';
 import { ONBOARDING_EVENTS } from '@/lib/onboarding/onboardingEvents';
@@ -36,6 +37,10 @@ const STEPS_WITHOUT_TIMER = ONBOARDING_TIMINGS.STEPS_WITHOUT_TIMER;
  */
 export default function OnboardingProvider({ children }) {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
+
+  // Cacher l'onboarding UI sur les routes admin
+  const isAdminRoute = pathname?.startsWith('/admin');
 
   // Timer refs pour cleanup (éviter memory leaks)
   const welcomeTimerRef = useRef(null);
@@ -1122,10 +1127,10 @@ export default function OnboardingProvider({ children }) {
           onClose={handleWelcomeClose}
         />
       )}
-      {/* Checklist flottante (affichée si onboarding actif ou complété) - seulement si authentifié */}
-      {isAuthenticated && <ChecklistPanel />}
-      {/* Orchestrateur gérant l'affichage des 8 étapes - seulement si authentifié */}
-      {isAuthenticated && !isLoading && <OnboardingOrchestrator />}
+      {/* Checklist flottante (affichée si onboarding actif ou complété) - seulement si authentifié et pas sur /admin */}
+      {isAuthenticated && !isAdminRoute && <ChecklistPanel />}
+      {/* Orchestrateur gérant l'affichage des 8 étapes - seulement si authentifié et pas sur /admin */}
+      {isAuthenticated && !isAdminRoute && !isLoading && <OnboardingOrchestrator />}
     </OnboardingContext.Provider>
   );
 }
