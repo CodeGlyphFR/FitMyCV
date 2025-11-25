@@ -64,9 +64,9 @@ export default function CookieSettings() {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('scrollToTop', 'true');
     }
-    // Retour à la page précédente après un court délai
+    // Retour à la page principale après un court délai
     setTimeout(() => {
-      router.back();
+      window.location.href = '/';
     }, 1000);
   };
 
@@ -124,7 +124,7 @@ export default function CookieSettings() {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('scrollToTop', 'true');
     }
-    router.back();
+    window.location.href = '/';
   };
 
   return (

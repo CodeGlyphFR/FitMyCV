@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/session";
 import AccountSettings from "@/components/account/AccountSettings";
-import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { Suspense } from "react";
 
@@ -39,13 +38,13 @@ export default async function AccountPage(){
     <main className="min-h-screen">
       <div className="max-w-5xl mx-auto px-6 pt-6 pb-2 space-y-6">
         <div className="space-y-1">
-          <Link
+          <a
             href="/"
             className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-white mb-4 transition-colors drop-shadow"
           >
             <span>←</span>
             <span>Retour aux CVs</span>
-          </Link>
+          </a>
           <h1 className="text-2xl font-semibold text-white drop-shadow-lg">Mon compte</h1>
           <p className="text-sm text-white/70 drop-shadow">Gérez vos informations personnelles et vos préférences de sécurité.</p>
         </div>

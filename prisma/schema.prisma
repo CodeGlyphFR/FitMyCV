@@ -20,11 +20,7 @@ model User {
   stripeCustomerId       String?               @unique
   referralCode           String?               @unique
   referredBy             String?
-  onboardingStep         Int?                  @default(0)      // Étape actuelle (0-9)
-  hasCompletedOnboarding Boolean               @default(true)   // true pour users existants (opt-in volontaire)
-  onboardingCompletedAt  DateTime?                              // Date de complétion
-  onboardingSkippedAt    DateTime?                              // Date si skippé
-  viewedTooltips         String?                                // JSON des tooltips vus (peut être utile)
+  onboardingState        Json?                                  // État complet onboarding (UNIQUE source de vérité)
   createdAt              DateTime              @default(now())
   updatedAt              DateTime              @updatedAt
   accounts               Account[]

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { useElementPosition } from '@/hooks/useElementPosition';
 
 /**
  * Composant Highlight pour créer un spotlight sur un élément
@@ -27,27 +28,17 @@ export default function OnboardingHighlight({
   backdropOpacity = 50,
   blurAmount = '6px',
 }) {
-  const [rect, setRect] = useState(null);
+  // Use shared position hook for synchronized updates
+  const bounds = useElementPosition(targetSelector, show);
 
-  /**
-   * Calculer et mettre à jour la position de l'élément cible
-   */
-  const updatePosition = () => {
-    if (!targetSelector || !show) {
-      setRect(null);
-      return;
-    }
+  // Calculate rect with padding
+  // Note: This is a simple transformation (just adding padding to bounds),
+  // so useMemo is straightforward. OnboardingTooltip has more complex logic
+  // (viewport clamping, arrow offset calculation) which requires heavier memoization.
+  const rect = useMemo(() => {
+    if (!bounds) return null;
 
-    const element = document.querySelector(targetSelector);
-    if (!element) {
-      console.warn(`[OnboardingHighlight] Element not found: ${targetSelector}`);
-      setRect(null);
-      return;
-    }
-
-    const bounds = element.getBoundingClientRect();
-
-    setRect({
+    return {
       // Position du cutout (avec padding)
       top: bounds.top - padding,
       left: bounds.left - padding,
@@ -58,38 +49,8 @@ export default function OnboardingHighlight({
       innerLeft: bounds.left,
       innerWidth: bounds.width,
       innerHeight: bounds.height,
-    });
-  };
-
-  /**
-   * Mise à jour position sur scroll, resize, et changement show/targetSelector
-   */
-  useEffect(() => {
-    if (!show) {
-      setRect(null);
-      return;
-    }
-
-    // Délai initial pour laisser le DOM se stabiliser
-    const initialTimeout = setTimeout(updatePosition, 50);
-
-    const handleUpdate = () => {
-      updatePosition();
     };
-
-    window.addEventListener('resize', handleUpdate);
-    window.addEventListener('scroll', handleUpdate, true);
-
-    // Update interval (au cas où l'élément bouge dynamiquement)
-    const interval = setInterval(handleUpdate, 150);
-
-    return () => {
-      clearTimeout(initialTimeout);
-      window.removeEventListener('resize', handleUpdate);
-      window.removeEventListener('scroll', handleUpdate, true);
-      clearInterval(interval);
-    };
-  }, [show, targetSelector, padding]);
+  }, [bounds, padding]);
 
   // Ne pas render si pas show ou pas de rect
   if (!show || !rect) return null;
@@ -111,7 +72,7 @@ export default function OnboardingHighlight({
 
   const highlightContent = (
     <div
-      className="fixed inset-0 z-[10003] pointer-events-none"
+      className="fixed inset-0 z-[10001] pointer-events-none"
       role="presentation"
       aria-hidden="true"
     >

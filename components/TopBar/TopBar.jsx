@@ -35,6 +35,7 @@ import ExportPdfModal from "./modals/ExportPdfModal";
 import { getCvIcon } from "./utils/cvUtils";
 import { CREATE_TEMPLATE_OPTION } from "./utils/constants";
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from "@/lib/onboarding/onboardingEvents";
+import { LOADING_EVENTS, emitLoadingEvent } from "@/lib/loading/loadingEvents";
 
 export default function TopBar() {
   const router = useRouter();
@@ -149,6 +150,26 @@ export default function TopBar() {
     // operations.reload is memoized with useCallback and recreates when isAuthenticated changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, pathname, searchParams?.toString()]);
+
+  // Emit TOPBAR_READY event for LoadingOverlay
+  React.useEffect(() => {
+    // Ne pas émettre l'événement sur la page /auth
+    if (pathname === "/auth") return;
+
+    // Attendre que le TopBar soit complètement monté avec les items chargés
+    if (!isAuthenticated || state.items.length === 0) return;
+
+    // Petit délai pour s'assurer que le rendu est complet
+    const timer = setTimeout(() => {
+      emitLoadingEvent(LOADING_EVENTS.TOPBAR_READY, {
+        hasButtons: true,
+        itemsCount: state.items.length,
+      });
+    }, 50);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, state.items.length, pathname]);
 
   // Listen for CV list changes
   React.useEffect(() => {
@@ -685,7 +706,7 @@ export default function TopBar() {
                       className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
                       onClick={() => {
                         modals.setUserMenuOpen(false);
-                        router.push("/account");
+                        window.location.href = "/account";
                       }}
                     >
                       {t("topbar.myAccount")}
@@ -694,7 +715,7 @@ export default function TopBar() {
                       className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
                       onClick={() => {
                         modals.setUserMenuOpen(false);
-                        router.push("/account/subscriptions");
+                        window.location.href = "/account/subscriptions";
                       }}
                     >
                       {t("topbar.subscriptions")}

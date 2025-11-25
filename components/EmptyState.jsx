@@ -6,6 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
+import { LOADING_EVENTS, emitLoadingEvent } from "@/lib/loading/loadingEvents";
 
 export default function EmptyState() {
   const router = useRouter();
@@ -306,10 +307,27 @@ export default function EmptyState() {
       }
     };
   }, []);
+
+  // Emit PAGE_READY event for LoadingOverlay
+  React.useEffect(() => {
+    // Ne pas émettre si en cours d'import (importing state)
+    if (isImporting) return;
+
+    // Petit délai pour s'assurer que le rendu est complet
+    const timer = setTimeout(() => {
+      emitLoadingEvent(LOADING_EVENTS.PAGE_READY, {
+        trigger: 'emptyState',
+        timestamp: Date.now(),
+      });
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [isImporting]);
+
   // Show importing state
   if (isImporting) {
     return (
-      <div className="relative min-h-screen min-h-[100dvh] w-full overflow-y-auto bg-[rgb(2,6,23)] flex items-start justify-center p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+      <div className="relative min-h-screen min-h-[100dvh] w-full overflow-y-auto bg-transparent flex items-start justify-center p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="relative z-10 max-w-xl w-full mt-12">
           <div className="bg-white/15 backdrop-blur-md rounded-2xl shadow-2xl p-8 border-2 border-white/30 gpu-accelerate">
             <div className="text-center mb-8">
@@ -401,7 +419,7 @@ export default function EmptyState() {
   }
 
   return (
-    <div className="relative min-h-screen min-h-[100dvh] w-full overflow-y-auto bg-[rgb(2,6,23)] flex items-start justify-center px-4 pb-8 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div className="relative min-h-screen min-h-[100dvh] w-full overflow-y-auto bg-transparent flex items-start justify-center px-4 pb-8 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       <div className="relative z-10 max-w-2xl w-full mt-12">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-3 drop-shadow-lg">

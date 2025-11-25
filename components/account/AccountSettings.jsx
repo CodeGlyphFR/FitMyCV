@@ -192,9 +192,10 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       setOnboardingMessage("Le tutoriel a été réinitialisé. Redirection...");
 
       // Redirect to CVs page where onboarding will auto-restart (currentStep === 0)
+      // Workflow: 500ms success message → redirect → LoadingScreen → 3s delay → WelcomeModal
       setTimeout(() => {
-        router.push('/');
-      }, 1500);
+        window.location.href = '/';
+      }, 500);
     } catch (error) {
       console.error('[AccountSettings] Reset onboarding error:', error);
 

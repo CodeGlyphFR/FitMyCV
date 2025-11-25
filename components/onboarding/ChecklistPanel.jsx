@@ -39,8 +39,9 @@ export default function ChecklistPanel() {
   // Calculer le nombre effectif d'étapes complétées
   const effectiveCompletedCount = Math.max(completedSteps.length, currentStep - 1);
 
-  // Calculer progression sur 7 étapes
-  const progress = Math.round((effectiveCompletedCount / 7) * 100);
+  // Calculer progression sur le nombre total d'étapes (dynamique)
+  const totalSteps = ONBOARDING_STEPS.length; // 8
+  const progress = Math.round((effectiveCompletedCount / totalSteps) * 100);
 
   // Étape courante
   const currentStepData = ONBOARDING_STEPS[currentStep - 1];

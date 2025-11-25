@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronRight, X } from 'lucide-react';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -17,6 +17,11 @@ import {
 
 /**
  * Modal d'onboarding avec carousel (Framer Motion)
+ *
+ * RESPONSIVE BREAKPOINTS:
+ * - Mobile: 0-990px (barres de progression, swipe hint, pas de chevrons)
+ * - Desktop: 991px+ (chevrons visibles, pas de barres, textes/espacements plus grands)
+ * Note: md: breakpoint personnalisé à 991px dans tailwind.config.js (pas le défaut 768px)
  *
  * Props:
  * - open: boolean - État d'ouverture du modal
@@ -37,6 +42,8 @@ export default function OnboardingModal({
   open = false,
   screens = [],
   currentScreen = 0,
+  title = "Guide du mode édition", // Titre du modal (défaut pour rétrocompatibilité)
+  icon = "✏️", // Icône du modal (emoji, défaut pour rétrocompatibilité)
   onNext,
   onPrev,
   onJumpTo, // NEW: Direct jump to specific screen
@@ -153,14 +160,14 @@ export default function OnboardingModal({
     }
   };
 
-  // Ne pas render si pas ouvert
-  if (!open) return null;
-
   // Classes de taille
   const sizeClasses = {
-    default: 'max-w-2xl',
-    large: 'max-w-4xl',
+    default: 'max-w-full mx-4 md:max-w-2xl',
+    large: 'max-w-full mx-4 md:max-w-4xl',
   };
+
+  // Ne pas render si pas ouvert ou screens vides
+  if (!open || !screens || screens.length === 0) return null;
 
   const modalContent = (
     <div
@@ -183,54 +190,77 @@ export default function OnboardingModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <span className="text-2xl">✏️</span>
+        <div>
+          {/* Titre et boutons */}
+          <div className="flex items-center justify-between p-4 md:p-6">
+            <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-xl md:text-2xl">{icon}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2
+                  id="onboarding-modal-title"
+                  className="text-lg md:text-xl font-bold text-white truncate mb-1"
+                >
+                  {title}
+                </h2>
+                <p className="text-xs md:text-sm text-slate-400">
+                  {currentScreen + 1} / {screens.length}
+                </p>
+
+                {/* Screen reader only announcement */}
+                <div className="sr-only md:hidden" role="status" aria-live="polite" aria-atomic="true">
+                  Étape {currentScreen + 1} sur {screens.length}
+                </div>
+              </div>
             </div>
-            <div>
-              <h2
-                id="onboarding-modal-title"
-                className="text-xl font-bold text-white"
-              >
-                Guide du mode édition
-              </h2>
-              <p className="text-sm text-slate-400">
-                {currentScreen + 1} / {screens.length}
-              </p>
+
+            {/* Boutons alignés à droite */}
+            <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+              {/* Bouton Passer cette étape */}
+              {showSkipButton && onSkip && (
+                <button
+                  onClick={onSkip}
+                  className="text-xs md:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap"
+                >
+                  Passer cette étape
+                </button>
+              )}
+
+              {/* X Button - Allows user to exit mid-tutorial (different from WelcomeModal where X advances) */}
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                  aria-label="Fermer le modal"
+                >
+                  <X className="w-4 h-4 md:w-5 md:h-5" />
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Bouton fermeture */}
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="
-                p-2 rounded-lg
-                text-slate-400 hover:text-white hover:bg-white/10
-                transition-colors
-              "
-              aria-label="Fermer le modal"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          )}
+          {/* Mobile Progress Bars - Pleine largeur au-dessus de la bordure */}
+          <div className="md:hidden px-4 pb-3" aria-hidden="true">
+            <div className="flex gap-1">
+              {screens.map((_, idx) => (
+                <div key={idx} className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full bg-emerald-500 transition-[width] duration-300 ${
+                      idx <= currentScreen ? 'w-full' : 'w-0'
+                    }`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Ligne de séparation */}
+          <div className="border-b border-white/10" />
         </div>
 
         {/* Carousel Container */}
-        <div className="relative min-h-[450px] overflow-hidden" role="tabpanel" aria-live="polite">
+        <div className="relative min-h-[360px] md:min-h-[320px] overflow-hidden" role="tabpanel" aria-live="polite">
           <AnimatePresence initial={true} custom={direction} mode="wait">
             <motion.div
               id="onboarding-carousel-content"
@@ -248,39 +278,39 @@ export default function OnboardingModal({
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={1}
               onDragEnd={handleDragEnd}
-              className="absolute inset-0 p-6 pb-20 cursor-grab active:cursor-grabbing"
+              className="absolute inset-0 p-4 md:p-6 pb-14 md:pb-16 cursor-grab active:cursor-grabbing"
             >
               {screens[currentScreen]?.image ? (
                 /* Mode avec image (si screen.image existe) */
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="w-full h-64 rounded-xl overflow-hidden bg-white/10">
+                <div className="flex flex-col items-center text-center space-y-3 md:space-y-4">
+                  <div className="w-full h-48 md:h-64 rounded-xl overflow-hidden bg-white/10">
                     <img
                       src={screens[currentScreen].image}
                       alt={screens[currentScreen].title}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <p className="text-lg text-white/90 max-w-xl">
+                  <p className="text-base md:text-lg text-white/90 max-w-xl">
                     {screens[currentScreen].description}
                   </p>
                 </div>
               ) : (
                 /* Mode texte seul (si pas d'image) */
-                <div className="flex flex-col items-center justify-center space-y-6 max-h-[360px] overflow-y-auto px-2 custom-scrollbar touch-pan-y">
+                <div className="flex flex-col items-center justify-center space-y-4 md:space-y-6 max-h-[280px] md:max-h-[360px] overflow-y-auto px-2 custom-scrollbar touch-pan-y">
                   {/* Titre de l'écran */}
-                  <h3 className="text-2xl font-bold text-white text-center flex-shrink-0">
+                  <h3 className="text-xl md:text-2xl font-bold text-white text-center flex-shrink-0">
                     {screens[currentScreen]?.title}
                   </h3>
 
                   {/* Description longue */}
-                  <div className="text-white/90 text-lg leading-relaxed space-y-4 text-center max-w-2xl">
+                  <div className="text-white/90 text-base md:text-lg leading-relaxed space-y-3 md:space-y-4 text-center max-w-2xl">
                     <p>{screens[currentScreen]?.description}</p>
                   </div>
 
                   {/* Icône décorative (optionnel) */}
                   {screens[currentScreen]?.icon && (
-                    <div className="flex justify-center mt-4 flex-shrink-0">
-                      <div className="text-6xl opacity-20">
+                    <div className="flex justify-center mt-3 md:mt-4 flex-shrink-0">
+                      <div className="text-5xl md:text-6xl opacity-20">
                         {screens[currentScreen].icon}
                       </div>
                     </div>
@@ -290,54 +320,9 @@ export default function OnboardingModal({
             </motion.div>
           </AnimatePresence>
 
-          {/* Navigation Arrows */}
-          <motion.button
-            onClick={handlePrev}
-            disabled={currentScreen === 0}
-            {...createChevronAnimations(shouldReduceMotion, 'left')}
-            animate={{
-              opacity: currentScreen === 0 ? 0.3 : 1,
-            }}
-            transition={transitions.default}
-            className="
-              absolute left-4 top-1/2 -translate-y-1/2 z-10
-              w-11 h-11 rounded-full
-              bg-emerald-500/50 hover:bg-emerald-500/70
-              disabled:pointer-events-none
-              text-white
-              flex items-center justify-center
-              backdrop-blur-sm
-            "
-            aria-label="Écran précédent"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </motion.button>
-
-          <motion.button
-            onClick={handleNext}
-            disabled={currentScreen >= screens.length - 1}
-            {...createChevronAnimations(shouldReduceMotion, 'right')}
-            animate={{
-              opacity: currentScreen >= screens.length - 1 ? 0.3 : 1,
-            }}
-            transition={transitions.default}
-            className="
-              absolute right-4 top-1/2 -translate-y-1/2 z-10
-              w-11 h-11 rounded-full
-              bg-emerald-500/50 hover:bg-emerald-500/70
-              disabled:pointer-events-none
-              text-white
-              flex items-center justify-center
-              backdrop-blur-sm
-            "
-            aria-label="Écran suivant"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </motion.button>
-
-          {/* Pagination Bullets */}
+          {/* Pagination Bullets (Desktop only) */}
           <motion.div
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1 z-20"
+            className="hidden md:flex absolute bottom-4 left-1/2 -translate-x-1/2 gap-1 z-20"
             role="tablist"
             variants={paginationDotsContainer}
             initial="hidden"
@@ -374,38 +359,35 @@ export default function OnboardingModal({
         </div>
 
         {/* Footer avec boutons */}
-        <div className="flex items-center justify-between p-6 border-t border-white/10">
-          {/* Bouton Skip (gauche) */}
-          {showSkipButton && (
+        <div className="flex items-center justify-between p-4 md:p-6 border-t border-white/10">
+          {/* Bouton Précédent (gauche, masqué au premier écran) */}
+          {currentScreen > 0 ? (
             <button
-              onClick={handleSkip}
+              onClick={handlePrev}
               className="
-                px-4 py-2 text-sm
+                px-3 md:px-4 py-2 text-xs md:text-sm
                 text-slate-400 hover:text-white
                 transition-colors
               "
             >
-              Passer le tutoriel
-            </button>
-          )}
-
-          {/* Spacer ou bouton Compris (sur dernier écran) */}
-          {currentScreen >= screens.length - 1 ? (
-            <button
-              onClick={handleNext}
-              className="
-                px-8 py-3 rounded-lg
-                bg-emerald-500 hover:bg-emerald-600
-                text-white font-semibold
-                transition-colors
-                ml-auto
-              "
-            >
-              Compris !
+              Précédent
             </button>
           ) : (
             <div />
           )}
+
+          {/* Bouton Suivant ou Compris (droite) */}
+          <button
+            onClick={handleNext}
+            className="
+              px-6 md:px-8 py-2.5 md:py-3 rounded-lg
+              bg-emerald-500 hover:bg-emerald-600
+              text-white text-sm md:text-base font-semibold
+              transition-colors
+            "
+          >
+            {currentScreen >= screens.length - 1 ? 'Compris !' : 'Suivant'}
+          </button>
         </div>
       </div>
     </div>

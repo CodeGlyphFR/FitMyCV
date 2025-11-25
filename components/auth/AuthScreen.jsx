@@ -131,8 +131,8 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
       }
 
       // Email vérifié, rediriger vers la page d'accueil
-      router.replace("/");
-      router.refresh();
+      // Utiliser window.location.href pour garantir l'affichage du loading screen
+      window.location.href = "/";
     } catch (submitError) {
       console.error(submitError);
       setError(t("auth.errors.unexpected"));

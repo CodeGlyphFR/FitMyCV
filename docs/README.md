@@ -87,6 +87,18 @@ La documentation est organisée en plusieurs fichiers thématiques :
   - Match Score & Optimisation
   - Système de tâches background
 
+### 🎓 Système d'onboarding
+- **[onboarding/](./onboarding/)** - Documentation complète du système d'onboarding interactif
+  - **[README.md](./onboarding/README.md)** - Index + navigation + quick reference
+  - **[ARCHITECTURE.md](./onboarding/ARCHITECTURE.md)** - Architecture système, composants, flow
+  - **[WORKFLOW.md](./onboarding/WORKFLOW.md)** - Détail des 8 steps (objectifs, validation)
+  - **[STATE_MANAGEMENT.md](./onboarding/STATE_MANAGEMENT.md)** - Structure onboardingState, helpers, SSE
+  - **[COMPONENTS.md](./onboarding/COMPONENTS.md)** - Référence 8 composants + 4 hooks
+  - **[API_REFERENCE.md](./onboarding/API_REFERENCE.md)** - Endpoints REST + SSE
+  - **[TIMINGS.md](./onboarding/TIMINGS.md)** - Configuration délais
+  - **[DEVELOPMENT_GUIDE.md](./onboarding/DEVELOPMENT_GUIDE.md)** - How-to: add step, debug, test
+  - **[TROUBLESHOOTING.md](./onboarding/TROUBLESHOOTING.md)** - Bugs fixés, FAQ
+
 ### 💻 Références Développement
 - **[COMMANDS_REFERENCE.md](./COMMANDS_REFERENCE.md)** - Référence commandes complète
   - Commandes Next.js, Prisma, Stripe

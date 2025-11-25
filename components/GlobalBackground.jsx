@@ -1,17 +1,20 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 
 /**
  * Background animé élégant - Framer Motion avancé
+ * SSR-safe: Uses useState + useEffect to handle window.innerHeight
  */
 
-const blobs = [
+// Factory function to create blobs based on viewport height
+const createBlobs = (viewportHeight) => [
   {
     id: 1,
     initial: { x: 0, y: 0, scale: 1, opacity: 0 },
     position: { top: '10%', left: '5%' },
-    size: window.innerHeight * 0.6,
+    size: viewportHeight * 0.6,
     gradient: 'radial-gradient(circle, rgba(14, 165, 233, 0.45) 0%, rgba(14, 165, 233, 0.25) 35%, transparent 65%)',
     blur: 70,
   },
@@ -19,7 +22,7 @@ const blobs = [
     id: 2,
     initial: { x: 0, y: 0, scale: 1, opacity: 0 },
     position: { top: '5%', right: '1%' },
-    size: window.innerHeight * 0.5,
+    size: viewportHeight * 0.5,
     gradient: 'radial-gradient(circle, rgba(56, 189, 248, 0.42) 0%, rgba(56, 189, 248, 0.22) 35%, transparent 65%)',
     blur: 75,
   },
@@ -27,7 +30,7 @@ const blobs = [
     id: 3,
     initial: { x: 0, y: 0, scale: 1, opacity: 0 },
     position: { bottom: '1%', left: '15%' },
-    size: window.innerHeight * 0.4,
+    size: viewportHeight * 0.4,
     gradient: 'radial-gradient(circle, rgba(14, 165, 233, 0.38) 0%, rgba(16, 185, 129, 0.18) 40%, transparent 65%)',
     blur: 80,
   },
@@ -85,6 +88,22 @@ const blobVariants = {
 };
 
 export default function GlobalBackground() {
+  // Initialize with default height (600px fallback for SSR)
+  const [blobs, setBlobs] = useState(() => createBlobs(600));
+
+  useEffect(() => {
+    // Update blobs with actual window height on client
+    setBlobs(createBlobs(window.innerHeight));
+
+    // Handle viewport resize for responsive behavior
+    const handleResize = () => {
+      setBlobs(createBlobs(window.innerHeight));
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <div className="pointer-events-none fixed inset-0 z-0">
       {/* Base background */}
