@@ -2,12 +2,13 @@
 
 import { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import { usePathname } from 'next/navigation';
 import { ONBOARDING_STEPS, getStepById, isCompositeStep, getCompositeFeature, getTotalSteps } from '@/lib/onboarding/onboardingSteps';
 import { ONBOARDING_TIMINGS, ONBOARDING_API } from '@/lib/onboarding/onboardingConfig';
 import { ONBOARDING_EVENTS } from '@/lib/onboarding/onboardingEvents';
 import { LOADING_EVENTS } from '@/lib/loading/loadingEvents';
 import { onboardingLogger } from '@/lib/utils/onboardingLogger';
-import { normalizeOnboardingState, markModalCompleted as markModalCompletedHelper, markTooltipClosed as markTooltipClosedHelper, markStepCompleted as markStepCompletedHelper } from '@/lib/onboarding/onboardingState';
+import { DEFAULT_ONBOARDING_STATE, normalizeOnboardingState, markModalCompleted as markModalCompletedHelper, markTooltipClosed as markTooltipClosedHelper, markStepCompleted as markStepCompletedHelper } from '@/lib/onboarding/onboardingState';
 import ChecklistPanel from './ChecklistPanel';
 import OnboardingOrchestrator from './OnboardingOrchestrator';
 import WelcomeModal from './WelcomeModal';
@@ -36,6 +37,10 @@ const STEPS_WITHOUT_TIMER = ONBOARDING_TIMINGS.STEPS_WITHOUT_TIMER;
  */
 export default function OnboardingProvider({ children }) {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
+
+  // Cacher l'onboarding UI sur les routes admin
+  const isAdminRoute = pathname?.startsWith('/admin');
 
   // Timer refs pour cleanup (éviter memory leaks)
   const welcomeTimerRef = useRef(null);
@@ -65,7 +70,7 @@ export default function OnboardingProvider({ children }) {
   // État global
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState([]);
-  const [onboardingState, setOnboardingState] = useState({}); // État complet (step4, modals, tooltips)
+  const [onboardingState, setOnboardingState] = useState(DEFAULT_ONBOARDING_STATE); // État complet (step4, modals, tooltips) - Initialisé avec valeurs par défaut pour éviter race conditions
   const [isActive, setIsActive] = useState(false);
   const [hasCompleted, setHasCompleted] = useState(false);
   const [hasSkipped, setHasSkipped] = useState(false);
@@ -180,7 +185,7 @@ export default function OnboardingProvider({ children }) {
       setHasCompleted(data.hasCompleted);
       setHasSkipped(data.isSkipped);
       setCompletedSteps(data.completedSteps || []);
-      setOnboardingState(data.onboardingState || {});
+      setOnboardingState(data.onboardingState || DEFAULT_ONBOARDING_STATE); // L'API normalise déjà, mais fallback pour robustesse
 
       // Si on est sur une étape > 0 et pas complété, c'est qu'on est en cours
       if (data.currentStep > 0 && !data.hasCompleted && !data.isSkipped) {
@@ -1122,10 +1127,10 @@ export default function OnboardingProvider({ children }) {
           onClose={handleWelcomeClose}
         />
       )}
-      {/* Checklist flottante (affichée si onboarding actif ou complété) - seulement si authentifié */}
-      {isAuthenticated && <ChecklistPanel />}
-      {/* Orchestrateur gérant l'affichage des 8 étapes - seulement si authentifié */}
-      {isAuthenticated && !isLoading && <OnboardingOrchestrator />}
+      {/* Checklist flottante (affichée si onboarding actif ou complété) - seulement si authentifié et pas sur /admin */}
+      {isAuthenticated && !isAdminRoute && <ChecklistPanel />}
+      {/* Orchestrateur gérant l'affichage des 8 étapes - seulement si authentifié et pas sur /admin */}
+      {isAuthenticated && !isAdminRoute && !isLoading && <OnboardingOrchestrator />}
     </OnboardingContext.Provider>
   );
 }

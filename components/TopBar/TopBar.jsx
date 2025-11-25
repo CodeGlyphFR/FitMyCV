@@ -9,6 +9,7 @@ import { useNotifications } from "@/components/notifications/NotificationProvide
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { useLinkHistory } from "@/hooks/useLinkHistory";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import GptLogo from "@/components/ui/GptLogo";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
 import TaskQueueModal from "@/components/TaskQueueModal";
@@ -49,6 +50,7 @@ export default function TopBar() {
   const { t, language } = useLanguage();
   const { settings } = useSettings();
   const { history: linkHistory, addLinksToHistory } = useLinkHistory();
+  const { currentStep, onboardingState } = useOnboarding();
 
   // Main state hook
   const state = useTopBarState(language);
@@ -580,19 +582,23 @@ export default function TopBar() {
                     >
                       {state.items.map((it) => {
                         const isRecentlyGenerated = recentlyGeneratedCv && it.file === recentlyGeneratedCv;
+                        const isOnboardingStep4Cv = currentStep === 4 && it.file === onboardingState?.step4?.cvFilename;
                         return (
                         <li key={it.file}>
                           <button
                             type="button"
+                            data-cv-filename={it.file}
                             onClick={async () => {
-                              // Si c'est le CV récemment généré, émettre l'événement pour l'onboarding
-                              if (isRecentlyGenerated) {
-                                console.log('[TopBar] CV récemment généré sélectionné, émission generatedCvOpened');
+                              // Si c'est le CV récemment généré OU le CV de l'onboarding step 4, émettre l'événement
+                              if (isRecentlyGenerated || isOnboardingStep4Cv) {
+                                console.log('[TopBar] CV onboarding sélectionné, émission generatedCvOpened');
                                 emitOnboardingEvent(ONBOARDING_EVENTS.GENERATED_CV_OPENED, {
                                   cvFilename: it.file
                                 });
-                                // Nettoyer l'état de surbrillance
-                                setRecentlyGeneratedCv(null);
+                                // Nettoyer l'état de surbrillance si récent
+                                if (isRecentlyGenerated) {
+                                  setRecentlyGeneratedCv(null);
+                                }
                               }
 
                               await operations.selectFile(it.file);
@@ -605,6 +611,8 @@ export default function TopBar() {
                             } ${
                               isRecentlyGenerated
                                 ? "bg-emerald-500/30 border border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)] animate-pulse"
+                                : isOnboardingStep4Cv
+                                ? "bg-emerald-500/20"
                                 : ""
                             }`}
                           >

@@ -10,6 +10,7 @@ import { FeedbackTab } from '@/components/admin/FeedbackTab';
 import { UsersTab } from '@/components/admin/UsersTab';
 import { SubscriptionPlansTab } from '@/components/admin/SubscriptionPlansTab';
 import { RevenueTab } from '@/components/admin/RevenueTab';
+import { OnboardingTab } from '@/components/admin/OnboardingTab';
 import { DateRangePicker } from '@/components/admin/DateRangePicker';
 import { UserFilter } from '@/components/admin/UserFilter';
 import { TabsBar } from '@/components/admin/TabsBar';
@@ -43,6 +44,7 @@ export default function AnalyticsDashboard() {
     { id: 'openai-costs', label: 'OpenAI Costs', icon: '💰', badge: triggeredAlerts?.totalTriggered || 0 },
     { id: 'feedback', label: 'Feedback', icon: '💬' },
     { id: 'users', label: 'Utilisateurs', icon: '👨‍💼' },
+    { id: 'onboarding', label: 'Onboarding', icon: '🎯' },
     { id: 'revenue', label: 'Revenus', icon: '💵' },
     { id: 'subscriptions', label: 'Abonnements', icon: '💳' },
     { id: 'settings', label: 'Settings', icon: '⚙️' },
@@ -105,10 +107,10 @@ export default function AnalyticsDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              {!['settings', 'users', 'subscriptions', 'revenue'].includes(activeTab) && (
+              {!['settings', 'users', 'subscriptions', 'revenue', 'onboarding'].includes(activeTab) && (
                 <UserFilter value={selectedUserId} onChange={setSelectedUserId} />
               )}
-              {['overview', 'features', 'sessions', 'errors', 'openai-costs', 'feedback'].includes(activeTab) && (
+              {['overview', 'features', 'sessions', 'errors', 'openai-costs', 'feedback', 'onboarding'].includes(activeTab) && (
                 <DateRangePicker value={period} onChange={setPeriod} />
               )}
             </div>
@@ -130,7 +132,7 @@ export default function AnalyticsDashboard() {
               <span className="text-sm">Retour</span>
             </button>
             <h1 className="text-sm font-bold text-white">Analytics Dashboard</h1>
-            {['overview', 'features', 'sessions', 'errors', 'openai-costs', 'feedback'].includes(activeTab) && (
+            {['overview', 'features', 'sessions', 'errors', 'openai-costs', 'feedback', 'onboarding'].includes(activeTab) && (
               <DateRangePicker value={period} onChange={setPeriod} />
             )}
           </div>
@@ -145,7 +147,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* User Filter - Mobile only (below tabs) */}
-      {!['settings', 'users', 'subscriptions', 'revenue'].includes(activeTab) && (
+      {!['settings', 'users', 'subscriptions', 'revenue', 'onboarding'].includes(activeTab) && (
         <div className="md:hidden bg-gray-900/98 backdrop-blur-xl border-b border-white/10 sticky top-[5.5rem] z-40 will-change-transform">
           <div className="px-4 py-3">
             <UserFilter value={selectedUserId} onChange={setSelectedUserId} />
@@ -161,6 +163,7 @@ export default function AnalyticsDashboard() {
         {activeTab === 'openai-costs' && <OpenAICostsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} triggeredAlerts={triggeredAlerts} />}
         {activeTab === 'feedback' && <FeedbackTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'users' && <UsersTab refreshKey={refreshKey} />}
+        {activeTab === 'onboarding' && <OnboardingTab period={period} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'revenue' && <RevenueTab refreshKey={refreshKey} />}
         {activeTab === 'subscriptions' && <SubscriptionPlansTab refreshKey={refreshKey} />}
         {activeTab === 'settings' && <SettingsTab refreshKey={refreshKey} />}

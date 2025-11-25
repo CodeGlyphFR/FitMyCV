@@ -1,68 +1,117 @@
-# Guide d'utilisation
+# Guide d'utilisation - FitMyCv.ai
 
-Ce document décrit le flux type pour exploiter la plateforme de génération de CV ciblés.
+Ce document décrit le flux type pour exploiter la plateforme de génération de CV optimisés ATS.
 
 ## 1. Préparation de l'espace de travail
+
 1. Créez le fichier `.env.local` à partir de `.env.example` et renseignez vos secrets.
 2. Initialisez la base de données :
    ```bash
    npx prisma migrate deploy
-   npx prisma db seed # si vous ajoutez un script de seed
+   npx prisma generate
    ```
 3. Lancez le serveur Next.js :
    ```bash
-   npm run dev
-   ```
-4. Dans un second terminal (optionnel), activez l'environnement Python puis installez les dépendances IA :
-   ```bash
-   source .venv/bin/activate  # ou équivalent Windows
-   pip install -r requirements.txt
+   npm run dev  # http://localhost:3001
    ```
 
-## 2. Création du compte et CV générique
-1. Ouvrez `http://localhost:3000` et créez un compte (OAuth ou email/mot de passe).
-2. Au premier login, l'application provisionne un fichier `main.json` minimal dans `data/users/<user-id>/cvs/`.
-3. Éditez votre CV générique via l'interface (sections Résumé, Compétences, Expériences, etc.).
-   - Les données sont validées contre `data/schema.json`.
-   - Chaque sauvegarde chiffre le contenu avant écriture disque.
+## 2. Création du compte et premier CV
 
-## 3. Ciblage d'une offre
-1. Cliquez sur le sélecteur de CV en haut à gauche pour vérifier le fichier courant (`main.json`).
-2. Ouvrez le générateur IA (icône ChatGPT) :
-   - Ajoutez un ou plusieurs liens vers l'offre d'emploi.
-   - Ajoutez des pièces jointes (PDF, DOCX, TXT) contenant la description de l'offre.
-3. Lancez la génération :
-   - Les logs s'affichent en temps réel.
-   - Le script Python `scripts/generate_cv.py` appelle l'API OpenAI en injectant votre CV générique + l'offre.
-   - Les nouveaux fichiers générés (ex. `offer-<slug>.json`) apparaissent dans la liste de CV.
+1. Ouvrez `http://localhost:3001` et créez un compte (OAuth ou email/mot de passe).
+2. Au premier login, vous pouvez :
+   - **Créer un CV vierge** : Template vide pour édition manuelle
+   - **Importer un CV existant** : Upload PDF pour conversion automatique en format ATS
+
+## 3. Génération de CV avec IA
+
+### À partir d'un CV existant + offre d'emploi
+
+1. Sélectionnez un CV source (importé ou créé manuellement)
+2. Cliquez sur le générateur IA (icône GPT)
+3. Ajoutez une ou plusieurs offres d'emploi :
+   - **URL** : Indeed, LinkedIn, Welcome to the Jungle, etc.
+   - **PDF** : Téléchargement direct de l'offre
+4. Choisissez le niveau d'analyse :
+   - **Rapide** : Tests et usage fréquent
+   - **Normal** : Usage quotidien
+   - **Approfondi** : Candidatures importantes
+5. Lancez la génération :
+   - Un CV est généré **pour chaque offre** (multi-offres = multi-CVs)
+   - L'IA adapte votre CV source sans inventer de compétences
+   - Le nouveau CV apparaît dans votre liste
+
+### CV Modèle (fictif) depuis une offre
+
+1. Utilisez l'option "CV Modèle" pour générer un CV fictif parfait pour une offre
+2. Inspirez-vous de ce modèle pour adapter votre propre profil
+
+### CV depuis un titre de poste
+
+1. Tapez un titre de poste dans la barre de recherche (ex: "Développeur Full Stack")
+2. Un CV fictif réaliste est généré pour explorer ce métier
 
 ## 4. Gestion multi-CV
-- Chaque fichier `.json` du dossier utilisateur est accessible via le sélecteur.
-- Les nouveaux fichiers sont horodatés (`1716912345123.json`, `20240515125900123456-2.json` pour l'IA) afin de garder un historique clair.
-- Le cookie `cvFile` mémorise le CV actif. L'interface recharge automatiquement les sections.
-- Vous pouvez renommer ou supprimer un CV depuis le menu contextuel.
-- La validation AJV est visible en mode debug (header `x-debug: 1`).
 
-## 5. Export et diffusion
-- Utilisez le bouton "Exporter" pour récupérer une version imprimable/PDF du CV actif.
-- Personnalisez les titres de section et l'ordre via `order_hint` dans le JSON (`projects` est toujours inclus automatiquement).
-- Le footer affiche la version et l'auteur : adaptez-le dans `app/page.jsx` si besoin.
-- Avant chaque commit/déploiement, exécutez `npm run version:auto` pour synchroniser la version (`package.json`, interface, métadonnées).
+- **Sélecteur de CV** : Dropdown en haut à gauche pour changer de CV actif
+- **Icônes source** : Identifie l'origine (manuel, PDF import, IA généré, traduit)
+- **Renommer/Supprimer** : Menu contextuel sur chaque CV
+- **Cookie cvFile** : Mémorise le CV actif entre les sessions
 
-## 6. Administration et maintenance
-- Les API `app/api/cvs` permettent de créer, mettre à jour et supprimer des fichiers côté serveur.
-- Prisma Studio (`npx prisma studio`) aide à inspecter les comptes/utilisateurs.
-- Les CV sont stockés au format chiffré Base64 (préfixe `cv1`). Pour débugger manuellement, utilisez `lib/cv/crypto.decryptString()` depuis un script node.
-- Mettez à jour la clé `CV_ENCRYPTION_KEY` et `NEXTAUTH_SECRET` lors du déploiement production.
+## 5. Amélioration et optimisation
 
-## 7. Déploiement
+### Score de match
+
+1. Pour les CVs générés depuis une offre, calculez le score de correspondance
+2. L'analyse détaille :
+   - Score global (0-100)
+   - Breakdown par catégorie (compétences, expérience, formation, projets, soft skills)
+   - Suggestions d'amélioration avec impact estimé
+   - Compétences manquantes vs matchées
+
+### Optimisation automatique
+
+1. Après le calcul du score, cliquez sur "Optimiser"
+2. L'IA applique automatiquement les suggestions
+3. Consultez l'**historique de modifications** pour voir chaque changement
+
+## 6. Traduction
+
+- **Langues supportées** : Français et Anglais uniquement
+- Traduisez un CV existant via le bouton traduction
+- Le CV traduit est sauvegardé comme nouveau fichier
+
+## 7. Export PDF
+
+1. Cliquez sur "Exporter" pour générer le PDF
+2. **Customisez votre export** :
+   - Activez/désactivez chaque section
+   - Expériences : avec ou sans livrables clés
+   - Choisissez le thème (Default, Modern, Classic)
+3. Le PDF est optimisé ATS (sans photo, format standard)
+
+## 8. Édition manuelle
+
+- Activez le mode édition pour modifier directement chaque section
+- Auto-sauvegarde toutes les 2 secondes
+- Undo/Redo disponibles (Ctrl+Z / Ctrl+Y)
+
+## 9. Administration et maintenance
+
+- **API** : Routes `app/api/cvs` pour opérations CRUD
+- **Prisma Studio** : `npx prisma studio` pour inspecter la base
+- **CVs chiffrés** : Format Base64 avec préfixe `cv1`
+- **Clés à protéger** : `CV_ENCRYPTION_KEY` et `NEXTAUTH_SECRET`
+
+## 10. Déploiement
+
 1. Construisez puis démarrez l'app :
    ```bash
    npm run build
-   npm start
+   npm start  # http://localhost:3000
    ```
-2. Assurez-vous que le script Python est présent sur le serveur avec `openai` configuré.
-3. Configurez un stockage persistant (volume Docker, S3, etc.) pour `data/users` si vous horizontalisez.
-4. Ajoutez HTTPS et un proxy (Nginx/Caddy) pour exposer `NEXTAUTH_URL`.
+2. Configurez stockage persistant pour `data/users` si horizontal scaling
+3. Ajoutez HTTPS et proxy (Nginx/Caddy) pour `NEXTAUTH_URL`
 
-Bon usage !
+---
+
+**Bon usage !**

@@ -5,6 +5,7 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 import { useAdmin } from '@/components/admin/AdminProvider';
 import { getStepById } from '@/lib/onboarding/onboardingSteps';
 import { ONBOARDING_TIMINGS, STEP_TO_MODAL_KEY, ONBOARDING_API } from '@/lib/onboarding/onboardingConfig';
+import { isOnboardingStateLoaded } from '@/lib/onboarding/onboardingState';
 import { onboardingLogger } from '@/lib/utils/onboardingLogger';
 import { isAiGenerationTask, isMatchScoreTask, isImprovementTask } from '@/lib/backgroundTasks/taskTypes';
 import { extractCvFilename } from '@/lib/onboarding/cvFilenameUtils';
@@ -81,7 +82,11 @@ export default function OnboardingOrchestrator() {
 
   // Restaurer les états depuis onboardingState quand il est chargé depuis l'API
   useEffect(() => {
-    if (!onboardingState || Object.keys(onboardingState).length === 0) return;
+    // Wait for onboardingState to load (avoid race condition with empty state during initial mount)
+    if (!isOnboardingStateLoaded(onboardingState)) {
+      onboardingLogger.log('[Onboarding] Restoration waiting for onboardingState to load...');
+      return;
+    }
 
     // Validation et restauration step4 state
     if (onboardingState.step4 && typeof onboardingState.step4 === 'object') {
@@ -96,7 +101,35 @@ export default function OnboardingOrchestrator() {
     // Note: Modal completion flags are now read directly from onboardingState.modals
     // No need to copy to local state
 
-    onboardingLogger.log('[Onboarding] État restauré depuis DB:', onboardingState);
+    // Sync modal shown refs with DB state (allow re-opening if not completed)
+    // If modal.completed = false → ref = false → modal can re-open on next click
+    // If modal.completed = true → ref = true → modal won't re-open
+    if (onboardingState.modals && typeof onboardingState.modals === 'object') {
+      if (onboardingState.modals.step1) {
+        step1ModalShownRef.current = onboardingState.modals.step1.completed || false;
+      }
+      if (onboardingState.modals.step2) {
+        step2ModalShownRef.current = onboardingState.modals.step2.completed || false;
+      }
+      if (onboardingState.modals.step6) {
+        step6ModalShownRef.current = onboardingState.modals.step6.completed || false;
+      }
+      if (onboardingState.modals.step8) {
+        step8ModalShownRef.current = onboardingState.modals.step8.completed || false;
+      }
+    }
+
+    // Logging for debugging (show what was restored)
+    onboardingLogger.log(
+      '[Onboarding] State restored from DB: ' +
+      `step4.cvGenerated=${onboardingState.step4?.cvGenerated}, ` +
+      `modals=${Object.keys(onboardingState.modals || {}).length}, ` +
+      `tooltips=${Object.keys(onboardingState.tooltips || {}).length}, ` +
+      `step1Modal=${step1ModalShownRef.current}, ` +
+      `step2Modal=${step2ModalShownRef.current}, ` +
+      `step6Modal=${step6ModalShownRef.current}, ` +
+      `step8Modal=${step8ModalShownRef.current}`
+    );
   }, [onboardingState]); // Trigger uniquement quand onboardingState change
 
   // ========== FIN RESTORATION ==========
@@ -216,6 +249,14 @@ export default function OnboardingOrchestrator() {
   //
   // prevEditingRef is now managed ONLY by the validation effect itself (line 352)
   useEffect(() => {
+    // Wait for onboardingState to load (avoid race condition with empty state during initial mount)
+    if (!isOnboardingStateLoaded(onboardingState)) {
+      // Default behavior: show tooltip until we know better from DB
+      setTooltipClosed(false);
+      onboardingLogger.log('[Onboarding] Tooltip waiting for onboardingState to load...');
+      return;
+    }
+
     // Condition 1: User closed tooltip manually
     const manuallyClosedByUser = onboardingState?.tooltips?.[String(currentStep)]?.closedManually || false;
 
@@ -228,14 +269,12 @@ export default function OnboardingOrchestrator() {
 
     setTooltipClosed(shouldCloseTooltip);
 
-    // Logging for debugging
-    if (shouldCloseTooltip) {
-      onboardingLogger.log(
-        `[Onboarding] Tooltip step ${currentStep} closed: ` +
-        `manual=${manuallyClosedByUser}, completed=${stepCompleted}`
-      );
-    }
-  }, [currentStep, onboardingState?.tooltips, completedSteps]);
+    // Logging for debugging (always log to track behavior, not just when closed)
+    onboardingLogger.log(
+      `[Onboarding] Tooltip step ${currentStep}: ` +
+      `show=${!shouldCloseTooltip}, manual=${manuallyClosedByUser}, completed=${stepCompleted}`
+    );
+  }, [currentStep, onboardingState, completedSteps]);
 
   // Cleanup : Reset step refs when leaving the step
   useEffect(() => {
@@ -1155,7 +1194,7 @@ export default function OnboardingOrchestrator() {
 
       return (
         <>
-          {/* Highlight : ring toujours visible, blur seulement quand tooltip affichée */}
+          {/* Highlight : ring toujours visible sur le bouton principal, blur seulement quand tooltip affichée */}
           <OnboardingHighlight
             show={currentStep === 4}
             blurEnabled={!tooltipClosed}
