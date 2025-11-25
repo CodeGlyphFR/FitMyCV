@@ -436,12 +436,12 @@ useEffect(() => {
 ### 7. Système d'onboarding (Constantes & Logger)
 
 ```javascript
-// Utiliser les constantes centralisées (9 timings disponibles)
-import { ONBOARDING_TIMINGS } from '@/lib/onboarding/onboardingConfig';
+// Utiliser les constantes centralisées (9 timings + mappings + API config)
+import { ONBOARDING_TIMINGS, STEP_TO_MODAL_KEY, ONBOARDING_API } from '@/lib/onboarding/onboardingConfig';
 
-const delay = ONBOARDING_TIMINGS.STEP_TRANSITION_DELAY; // 2000ms
-const polling = ONBOARDING_TIMINGS.BUTTON_POLLING_INTERVAL; // 200ms
-const timeout = ONBOARDING_TIMINGS.BUTTON_POLLING_TIMEOUT; // 10000ms
+const delay = ONBOARDING_TIMINGS.STEP_TRANSITION_DELAY; // 1000ms
+const modalKey = STEP_TO_MODAL_KEY[currentStep]; // 'step1', 'step2', 'step6', 'step8'
+const cacheTimeout = ONBOARDING_API.CACHE_TTL; // 1000ms (synchronisé avec debounce)
 
 // Utiliser le logger conditionnel (dev only pour logs, always pour errors/warnings)
 import { onboardingLogger } from '@/lib/utils/onboardingLogger';
@@ -451,14 +451,27 @@ onboardingLogger.error('[Component] Error:', error);  // Always shown
 onboardingLogger.warn('[Component] Warning');         // Always shown
 ```
 
-**Fichiers de référence** :
+**Documentation complète** : **[docs/onboarding/](./docs/onboarding/)**
+- **[README.md](./docs/onboarding/README.md)** - Index + quick reference + navigation
+- **[ARCHITECTURE.md](./docs/onboarding/ARCHITECTURE.md)** - Architecture système, composants, flow
+- **[WORKFLOW.md](./docs/onboarding/WORKFLOW.md)** - Détail 8 steps (objectifs, validation)
+- **[STATE_MANAGEMENT.md](./docs/onboarding/STATE_MANAGEMENT.md)** - Structure onboardingState, helpers, SSE
+- **[COMPONENTS.md](./docs/onboarding/COMPONENTS.md)** - Référence 8 composants + 4 hooks
+- **[API_REFERENCE.md](./docs/onboarding/API_REFERENCE.md)** - Endpoints REST + SSE
+- **[TIMINGS.md](./docs/onboarding/TIMINGS.md)** - Configuration délais
+- **[DEVELOPMENT_GUIDE.md](./docs/onboarding/DEVELOPMENT_GUIDE.md)** - How-to: add step, debug, test
+- **[TROUBLESHOOTING.md](./docs/onboarding/TROUBLESHOOTING.md)** - Bugs fixés, FAQ
+
+**Fichiers code** :
 - Configuration : `lib/onboarding/onboardingConfig.js`
+- State helpers : `lib/onboarding/onboardingState.js`
 - Logger : `lib/utils/onboardingLogger.js`
-- Documentation : [docs/ONBOARDING_TIMINGS.md](./docs/ONBOARDING_TIMINGS.md)
+- Script reset DB : `scripts/reset-onboarding.js`
 
 **Règles** :
 - ❌ **Ne pas utiliser** : `console.log`, `console.error` directement dans les composants d'onboarding
 - ✅ **Toujours utiliser** : `onboardingLogger.*` pour une console propre en production
+- ✅ **Reset DB** : `node scripts/reset-onboarding.js --dry-run` (preview avant reset)
 
 → **[Tous les patterns](./docs/CODE_PATTERNS.md)**
 
