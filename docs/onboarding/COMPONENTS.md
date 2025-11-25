@@ -269,6 +269,51 @@ const { progress, completedCount, totalSteps } = useOnboardingProgress();
 
 ---
 
+## Intégrations externes
+
+### TopBar (Step 4)
+
+**Fichier** : `components/TopBar/TopBar.jsx`
+
+**Intégration onboarding** :
+- Utilise `useOnboarding()` pour accéder à `currentStep` et `onboardingState`
+- Ajoute attribut `data-cv-filename={it.file}` sur chaque bouton CV
+- Détecte le CV de l'onboarding : `isOnboardingStep4Cv = currentStep === 4 && it.file === onboardingState?.step4?.cvFilename`
+- Applique fond vert léger (`bg-emerald-500/20`) sur le CV concerné
+- Émet `ONBOARDING_EVENTS.GENERATED_CV_OPENED` pour validation step 4
+
+**Code** :
+```javascript
+import { useOnboarding } from "@/hooks/useOnboarding";
+
+const { currentStep, onboardingState } = useOnboarding();
+
+// Dans le map des CVs
+const isOnboardingStep4Cv = currentStep === 4 && it.file === onboardingState?.step4?.cvFilename;
+
+<button
+  data-cv-filename={it.file}
+  onClick={async () => {
+    if (isRecentlyGenerated || isOnboardingStep4Cv) {
+      emitOnboardingEvent(ONBOARDING_EVENTS.GENERATED_CV_OPENED, {
+        cvFilename: it.file
+      });
+    }
+    // ...
+  }}
+  className={`... ${
+    isOnboardingStep4Cv ? "bg-emerald-500/20" : ""
+  }`}
+>
+```
+
+**Persistance** :
+- `onboardingState.step4.cvFilename` stocke le nom du fichier généré
+- Après refresh, `isOnboardingStep4Cv` détecte automatiquement le bon CV
+- Cliquer sur le CV valide le step même après refresh
+
+---
+
 **Voir aussi** :
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Hiérarchie composants
 - [WORKFLOW.md](./WORKFLOW.md) - Workflow complet

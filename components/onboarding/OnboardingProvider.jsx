@@ -7,7 +7,7 @@ import { ONBOARDING_TIMINGS, ONBOARDING_API } from '@/lib/onboarding/onboardingC
 import { ONBOARDING_EVENTS } from '@/lib/onboarding/onboardingEvents';
 import { LOADING_EVENTS } from '@/lib/loading/loadingEvents';
 import { onboardingLogger } from '@/lib/utils/onboardingLogger';
-import { normalizeOnboardingState, markModalCompleted as markModalCompletedHelper, markTooltipClosed as markTooltipClosedHelper, markStepCompleted as markStepCompletedHelper } from '@/lib/onboarding/onboardingState';
+import { DEFAULT_ONBOARDING_STATE, normalizeOnboardingState, markModalCompleted as markModalCompletedHelper, markTooltipClosed as markTooltipClosedHelper, markStepCompleted as markStepCompletedHelper } from '@/lib/onboarding/onboardingState';
 import ChecklistPanel from './ChecklistPanel';
 import OnboardingOrchestrator from './OnboardingOrchestrator';
 import WelcomeModal from './WelcomeModal';
@@ -65,7 +65,7 @@ export default function OnboardingProvider({ children }) {
   // État global
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState([]);
-  const [onboardingState, setOnboardingState] = useState({}); // État complet (step4, modals, tooltips)
+  const [onboardingState, setOnboardingState] = useState(DEFAULT_ONBOARDING_STATE); // État complet (step4, modals, tooltips) - Initialisé avec valeurs par défaut pour éviter race conditions
   const [isActive, setIsActive] = useState(false);
   const [hasCompleted, setHasCompleted] = useState(false);
   const [hasSkipped, setHasSkipped] = useState(false);
@@ -180,7 +180,7 @@ export default function OnboardingProvider({ children }) {
       setHasCompleted(data.hasCompleted);
       setHasSkipped(data.isSkipped);
       setCompletedSteps(data.completedSteps || []);
-      setOnboardingState(data.onboardingState || {});
+      setOnboardingState(data.onboardingState || DEFAULT_ONBOARDING_STATE); // L'API normalise déjà, mais fallback pour robustesse
 
       // Si on est sur une étape > 0 et pas complété, c'est qu'on est en cours
       if (data.currentStep > 0 && !data.hasCompleted && !data.isSkipped) {

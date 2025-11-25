@@ -83,6 +83,71 @@ useEffect(() => {
 
 ---
 
+### Bug 3 : Step 4 highlight disparaissait après refresh
+
+**Symptôme** :
+1. Highlight sur CV selector disparaissait après refresh page
+2. Cliquer sur le CV après refresh ne validait pas le step 4
+3. Aucun indicateur visuel pour identifier quel CV ouvrir
+
+**Cause** :
+1. Pas d'attribut `data-cv-filename` sur les boutons CV → impossible de cibler un CV spécifique
+2. Événement `GENERATED_CV_OPENED` émis uniquement pour `isRecentlyGenerated` → pas après refresh
+3. Highlight adaptatif complexe avec MutationObserver → trop fragile
+
+**Fix** :
+1. **Ajouté `data-cv-filename` attribute** sur chaque bouton CV (TopBar.jsx ligne 590)
+2. **Fond vert léger** sur le CV concerné dans la liste (`bg-emerald-500/20`)
+3. **Highlight fixe** sur bouton principal (pas de déplacement adaptatif)
+4. **Événement émis** pour `isRecentlyGenerated || isOnboardingStep4Cv`
+
+**Code fix** :
+
+```javascript
+// TopBar.jsx - Ajout data-cv-filename
+<button
+  type="button"
+  data-cv-filename={it.file}  // ← Pour cibler le CV
+  onClick={async () => { /* ... */ }}
+>
+
+// TopBar.jsx - Détection CV onboarding
+const isOnboardingStep4Cv = currentStep === 4 && it.file === onboardingState?.step4?.cvFilename;
+
+// TopBar.jsx - Fond vert léger
+className={`... ${
+  isRecentlyGenerated
+    ? "bg-emerald-500/30 border border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)] animate-pulse"
+    : isOnboardingStep4Cv
+    ? "bg-emerald-500/20"  // ← Fond vert discret
+    : ""
+}`}
+
+// TopBar.jsx - Événement émis aussi après refresh
+if (isRecentlyGenerated || isOnboardingStep4Cv) {
+  emitOnboardingEvent(ONBOARDING_EVENTS.GENERATED_CV_OPENED, {
+    cvFilename: it.file
+  });
+}
+
+// OnboardingOrchestrator.jsx - Highlight fixe
+<OnboardingHighlight
+  show={currentStep === 4}
+  blurEnabled={!tooltipClosed}
+  targetSelector={step.targetSelector}  // ← Toujours bouton principal
+/>
+```
+
+**Comportement final** :
+- Highlight pulsant toujours visible sur bouton principal (même dropdown ouvert)
+- CV concerné a fond vert léger dans la liste
+- Cliquer sur le CV valide le step (même après refresh)
+- `onboardingState.step4.cvFilename` persiste le filename en DB
+
+**Commit** : À venir
+
+---
+
 ## FAQ
 
 ### Q: L'onboarding ne démarre pas automatiquement ?

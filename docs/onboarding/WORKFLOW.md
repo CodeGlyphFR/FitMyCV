@@ -127,14 +127,29 @@ L'onboarding guide les utilisateurs à travers **8 étapes interactives** :
 
 **Objectif** : Ouvrir le CV généré
 
-**Target** : `[data-onboarding="cv-selector"]`
+**Target (Highlight)** : `[data-onboarding="cv-selector"]` (bouton principal)
+
+**Target (Visual)** : `[data-cv-filename="<filename>"]` (CV dans la liste)
 
 **Précondition** : onboardingState.step4.cvGenerated = true
 
 **Workflow** :
 1. CV apparaît dans sélecteur
-2. Highlight + tooltip "Votre CV est prêt"
-3. **Validation** : GENERATED_CV_OPENED event
+2. Highlight pulsant sur bouton principal du CV selector (reste fixe même dropdown ouvert)
+3. Tooltip "Votre CV est prêt" sur bouton principal
+4. Quand dropdown ouvert : CV concerné a fond vert léger (`bg-emerald-500/20`)
+5. Clic sur CV → Émet `GENERATED_CV_OPENED` event
+6. **Validation** : GENERATED_CV_OPENED event
+
+**Persistance après refresh** :
+- `onboardingState.step4.cvFilename` stocke le nom du fichier généré
+- Highlight reste visible après refresh (grâce à `data-cv-filename` attribute)
+- Cliquer sur le CV émet l'événement même après refresh
+
+**Implémentation** :
+- TopBar.jsx détecte `isOnboardingStep4Cv = currentStep === 4 && it.file === onboardingState?.step4?.cvFilename`
+- Fond vert appliqué si `isOnboardingStep4Cv` est vrai
+- Événement émis pour `isRecentlyGenerated || isOnboardingStep4Cv`
 
 **Transition** : 2s → step 5
 
