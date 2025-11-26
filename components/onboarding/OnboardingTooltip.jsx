@@ -219,11 +219,12 @@ export default function OnboardingTooltip({
   };
 
   // Position de la flèche (sans le positionnement horizontal/vertical qui sera calculé dynamiquement)
+  // Note: Les rotations sont appliquées dans getArrowStyle() pour éviter le conflit avec transform inline
   const arrowPositionClasses = {
-    top: 'bottom-[-8px] rotate-180',
+    top: 'bottom-[-8px]',
     bottom: 'top-[-8px]',
-    left: 'right-[-8px] rotate-90',
-    right: 'left-[-8px] -rotate-90',
+    left: 'right-[-8px]',
+    right: 'left-[-8px]',
   };
 
   // Calcul du style de positionnement de l'arrow avec le décalage
@@ -242,19 +243,23 @@ export default function OnboardingTooltip({
       // Clamper horizontalement
       const maxOffset = (tooltipWidth / 2) - margin;
       const clampedOffset = Math.max(-maxOffset, Math.min(maxOffset, arrowOffset));
+      // Rotation: top = flèche vers le bas (180deg), bottom = flèche vers le haut (0deg)
+      const rotation = calculatedPosition === 'top' ? 'rotate(180deg)' : '';
       return {
         ...baseStyle,
         left: `calc(50% + ${clampedOffset}px)`,
-        transform: 'translateX(-50%)',
+        transform: `translateX(-50%) ${rotation}`.trim(),
       };
     } else {
       // left/right: clamper verticalement
       const maxOffset = (tooltipHeight / 2) - margin;
       const clampedOffset = Math.max(-maxOffset, Math.min(maxOffset, arrowOffset));
+      // Rotation: left = flèche vers la droite (90deg), right = flèche vers la gauche (-90deg)
+      const rotation = calculatedPosition === 'left' ? 'rotate(90deg)' : 'rotate(-90deg)';
       return {
         ...baseStyle,
         top: `calc(50% + ${clampedOffset}px)`,
-        transform: 'translateY(-50%)',
+        transform: `translateY(-50%) ${rotation}`,
       };
     }
   };

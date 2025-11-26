@@ -15,6 +15,19 @@ import OnboardingCompletionModal from './OnboardingCompletionModal';
 import OnboardingTooltip from './OnboardingTooltip';
 import OnboardingHighlight from './OnboardingHighlight';
 import confetti from 'canvas-confetti';
+import { Pencil, Sparkles, ClipboardList, FileText, Target, Rocket, History, Download } from 'lucide-react';
+
+// Mapping emoji → composant Lucide pour les icônes des modaux
+const EMOJI_TO_ICON = {
+  '✏️': Pencil,
+  '✨': Sparkles,
+  '📋': ClipboardList,
+  '📄': FileText,
+  '🎯': Target,
+  '🚀': Rocket,
+  '📝': History,
+  '📥': Download,
+};
 
 /**
  * Orchestrateur des 8 étapes d'onboarding (optimisé v3)
@@ -263,16 +276,19 @@ export default function OnboardingOrchestrator() {
     // Condition 2: Step completed
     const stepCompleted = completedSteps.includes(currentStep);
 
+    // Condition 3: Modal completed for this step (user clicked "Compris")
+    const modalKey = STEP_TO_MODAL_KEY[currentStep];
+    const modalCompleted = modalKey ? (onboardingState?.modals?.[modalKey]?.completed || false) : false;
+
     // Tooltip should be closed if ANY of these conditions is true
-    // Note: Modal completion does NOT close tooltip (would reappear after modal closes)
-    const shouldCloseTooltip = manuallyClosedByUser || stepCompleted;
+    const shouldCloseTooltip = manuallyClosedByUser || stepCompleted || modalCompleted;
 
     setTooltipClosed(shouldCloseTooltip);
 
     // Logging for debugging (always log to track behavior, not just when closed)
     onboardingLogger.log(
       `[Onboarding] Tooltip step ${currentStep}: ` +
-      `show=${!shouldCloseTooltip}, manual=${manuallyClosedByUser}, completed=${stepCompleted}`
+      `show=${!shouldCloseTooltip}, manual=${manuallyClosedByUser}, completed=${stepCompleted}, modal=${modalCompleted}`
     );
   }, [currentStep, onboardingState, completedSteps]);
 
@@ -888,10 +904,45 @@ export default function OnboardingOrchestrator() {
 
   const handleCloseModal = async () => {
     setModalOpen(false);
+    setTooltipClosed(true); // Fermer le tooltip aussi
 
     // Ne PAS persister modal completion lors de fermeture par X
     // La croix (X) ne marque pas le modal comme complété
     // Seul le bouton "Compris" marque le modal comme complété (voir handleModalComplete)
+
+    // Étape 1 : Activer le mode édition même si fermé par X
+    if (currentStep === 1) {
+      setTimeout(() => {
+        prevEditingRef.current = false;
+        setEditing(true).catch(error => {
+          onboardingLogger.error('[Onboarding] Step 1: Failed to activate edit mode:', error);
+        });
+      }, ONBOARDING_TIMINGS.MODAL_ANIMATION_DELAY);
+    }
+
+    // Étape 2 : Ouvrir le panel de génération IA même si fermé par X
+    if (currentStep === 2) {
+      setTimeout(() => {
+        emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_GENERATOR);
+        onboardingLogger.log('[Onboarding] Step 2 : Event émis pour ouverture panel (fermeture X)');
+      }, ONBOARDING_TIMINGS.MODAL_ANIMATION_DELAY);
+    }
+
+    // Étape 6 : Ouvrir le panel d'optimisation même si fermé par X
+    if (currentStep === 6) {
+      setTimeout(() => {
+        emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_OPTIMIZER);
+        onboardingLogger.log('[Onboarding] Step 6 : Event émis pour ouverture panel (fermeture X)');
+      }, ONBOARDING_TIMINGS.MODAL_ANIMATION_DELAY);
+    }
+
+    // Étape 8 : Ouvrir le modal d'export même si fermé par X
+    if (currentStep === 8) {
+      setTimeout(() => {
+        emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_EXPORT);
+        onboardingLogger.log('[Onboarding] Step 8 : Event émis pour ouverture export (fermeture X)');
+      }, ONBOARDING_TIMINGS.MODAL_ANIMATION_DELAY);
+    }
   };
 
   const handleModalNext = () => {
@@ -924,6 +975,7 @@ export default function OnboardingOrchestrator() {
 
   const handleModalComplete = async () => {
     setModalOpen(false);
+    setTooltipClosed(true); // Fermer le tooltip après complétion du modal
 
     // Persist modal completion to DB
     const modalKey = STEP_TO_MODAL_KEY[currentStep];
@@ -1000,7 +1052,7 @@ export default function OnboardingOrchestrator() {
     setModalOpen(false);
 
     // Ne PAS marquer le modal comme complété lors du skip
-    // "Passer cette étape" = skip le step entier, pas completion du modal
+    // "Passer" = skip le step entier, pas completion du modal
     // On marque directement le step comme complété
     markStepComplete(currentStep);
   };
@@ -1106,7 +1158,7 @@ export default function OnboardingOrchestrator() {
             screens={step.modal.screens}
             currentScreen={currentScreen}
             title={step.title}
-            icon={step.emoji}
+            IconComponent={EMOJI_TO_ICON[step.emoji] || Pencil}
             onNext={handleModalNext}
             onPrev={handleModalPrev}
             onJumpTo={handleModalJumpTo}
@@ -1147,7 +1199,7 @@ export default function OnboardingOrchestrator() {
             screens={step.modal.screens}
             currentScreen={currentScreen}
             title={step.title}
-            icon={step.emoji}
+            IconComponent={EMOJI_TO_ICON[step.emoji] || Pencil}
             onNext={handleModalNext}
             onPrev={handleModalPrev}
             onJumpTo={handleModalJumpTo}
@@ -1263,7 +1315,7 @@ export default function OnboardingOrchestrator() {
             screens={step.modal.screens}
             currentScreen={currentScreen}
             title={step.title}
-            icon={step.emoji}
+            IconComponent={EMOJI_TO_ICON[step.emoji] || Pencil}
             onNext={handleModalNext}
             onPrev={handleModalPrev}
             onJumpTo={handleModalJumpTo}
@@ -1329,7 +1381,7 @@ export default function OnboardingOrchestrator() {
             screens={step.modal.screens}
             currentScreen={currentScreen}
             title={step.title}
-            icon={step.emoji}
+            IconComponent={EMOJI_TO_ICON[step.emoji] || Pencil}
             onNext={handleModalNext}
             onPrev={handleModalPrev}
             onJumpTo={handleModalJumpTo}

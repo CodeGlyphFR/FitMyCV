@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { ChevronRight, X } from 'lucide-react';
+import { ChevronRight, X, Pencil } from 'lucide-react';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -43,7 +43,9 @@ export default function OnboardingModal({
   screens = [],
   currentScreen = 0,
   title = "Guide du mode édition", // Titre du modal (défaut pour rétrocompatibilité)
-  icon = "✏️", // Icône du modal (emoji, défaut pour rétrocompatibilité)
+  IconComponent = Pencil, // Icône Lucide du modal
+  iconBg = 'bg-emerald-500/20', // Background de l'icône
+  iconColor = 'text-emerald-400', // Couleur de l'icône
   onNext,
   onPrev,
   onJumpTo, // NEW: Direct jump to specific screen
@@ -57,6 +59,7 @@ export default function OnboardingModal({
 }) {
   const [direction, setDirection] = useState(0);
   const shouldReduceMotion = useReducedMotion();
+  const isDraggingRef = useRef(false);
 
   // Handlers boutons (useCallback pour éviter stale closures)
   const handleNext = useCallback(() => {
@@ -128,6 +131,9 @@ export default function OnboardingModal({
 
   // Gestion clic backdrop
   const handleBackdropClick = (e) => {
+    // Ignorer si on vient de faire un drag (évite la fermeture accidentelle)
+    if (isDraggingRef.current) return;
+
     if (e.target === e.currentTarget && !disableBackdropClick && onClose) {
       onClose();
     }
@@ -150,6 +156,10 @@ export default function OnboardingModal({
   }, [currentScreen, onJumpTo]);
 
   // Handler mobile swipe/drag
+  const handleDragStart = () => {
+    isDraggingRef.current = true;
+  };
+
   const handleDragEnd = (e, { offset, velocity }) => {
     const swipe = calculateSwipePower(offset.x, velocity.x);
 
@@ -158,12 +168,17 @@ export default function OnboardingModal({
     } else if (swipe > SWIPE_CONFIG.confidenceThreshold) {
       handlePrev();
     }
+
+    // Reset le flag après un court délai pour éviter les faux clics
+    setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 100);
   };
 
-  // Classes de taille
+  // Classes de taille (unifié max-w-2xl comme WelcomeModal)
   const sizeClasses = {
-    default: 'max-w-full mx-4 md:max-w-2xl',
-    large: 'max-w-full mx-4 md:max-w-4xl',
+    default: 'max-w-full mx-2 md:mx-4 md:max-w-2xl',
+    large: 'max-w-full mx-2 md:mx-4 md:max-w-2xl',
   };
 
   // Ne pas render si pas ouvert ou screens vides
@@ -194,15 +209,15 @@ export default function OnboardingModal({
           {/* Titre et boutons */}
           <div className="flex items-center justify-between p-4 md:p-6">
             <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-xl md:text-2xl">{icon}</span>
+              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full ${iconBg} flex items-center justify-center flex-shrink-0`}>
+                {IconComponent && <IconComponent className={`w-4 h-4 md:w-5 md:h-5 ${iconColor}`} />}
               </div>
               <div className="flex-1 min-w-0">
                 <h2
                   id="onboarding-modal-title"
-                  className="text-lg md:text-xl font-bold text-white truncate mb-1"
+                  className="text-base md:text-lg font-bold text-white mb-1 line-clamp-2"
                 >
-                  {title}
+                  {screens[currentScreen]?.title || title}
                 </h2>
                 <p className="text-xs md:text-sm text-slate-400">
                   {currentScreen + 1} / {screens.length}
@@ -217,13 +232,13 @@ export default function OnboardingModal({
 
             {/* Boutons alignés à droite */}
             <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-              {/* Bouton Passer cette étape */}
+              {/* Bouton Passer */}
               {showSkipButton && onSkip && (
                 <button
                   onClick={onSkip}
                   className="text-xs md:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap"
                 >
-                  Passer cette étape
+                  Passer
                 </button>
               )}
 
@@ -260,7 +275,7 @@ export default function OnboardingModal({
         </div>
 
         {/* Carousel Container */}
-        <div className="relative min-h-[360px] md:min-h-[320px] overflow-hidden" role="tabpanel" aria-live="polite">
+        <div className="relative min-h-[470px] md:min-h-[500px] overflow-hidden" role="tabpanel" aria-live="polite">
           <AnimatePresence initial={true} custom={direction} mode="wait">
             <motion.div
               id="onboarding-carousel-content"
@@ -277,6 +292,7 @@ export default function OnboardingModal({
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={1}
+              onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
               className="absolute inset-0 p-4 md:p-6 pb-14 md:pb-16 cursor-grab active:cursor-grabbing"
             >
@@ -295,26 +311,13 @@ export default function OnboardingModal({
                   </p>
                 </div>
               ) : (
-                /* Mode texte seul (si pas d'image) */
-                <div className="flex flex-col items-center justify-center space-y-4 md:space-y-6 max-h-[280px] md:max-h-[360px] overflow-y-auto px-2 custom-scrollbar touch-pan-y">
-                  {/* Titre de l'écran */}
-                  <h3 className="text-xl md:text-2xl font-bold text-white text-center flex-shrink-0">
-                    {screens[currentScreen]?.title}
-                  </h3>
-
-                  {/* Description longue */}
-                  <div className="text-white/90 text-base md:text-lg leading-relaxed space-y-3 md:space-y-4 text-center max-w-2xl">
-                    <p>{screens[currentScreen]?.description}</p>
+                /* Mode texte seul - aligné gauche comme WelcomeModal */
+                <div className="flex flex-col h-full">
+                  <div className="flex-1">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen]?.description}
+                    </p>
                   </div>
-
-                  {/* Icône décorative (optionnel) */}
-                  {screens[currentScreen]?.icon && (
-                    <div className="flex justify-center mt-3 md:mt-4 flex-shrink-0">
-                      <div className="text-5xl md:text-6xl opacity-20">
-                        {screens[currentScreen].icon}
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
             </motion.div>

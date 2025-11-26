@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { ChevronRight, Search, Upload, FileText, X } from 'lucide-react';
+import { Search, Upload, FileText, X } from 'lucide-react';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -60,6 +60,7 @@ export default function OnboardingCompletionModal({
   const [currentScreen, setCurrentScreen] = useState(0);
   const [direction, setDirection] = useState(0);
   const shouldReduceMotion = useReducedMotion();
+  const isDraggingRef = useRef(false);
 
   // Reset screen when modal opens
   useEffect(() => {
@@ -138,6 +139,9 @@ export default function OnboardingCompletionModal({
 
   // Handler backdrop click
   const handleBackdropClick = (e) => {
+    // Ignorer si on vient de faire un drag (évite la fermeture accidentelle)
+    if (isDraggingRef.current) return;
+
     if (e.target === e.currentTarget && onComplete) {
       onComplete();
     }
@@ -154,6 +158,10 @@ export default function OnboardingCompletionModal({
   );
 
   // Handler mobile swipe/drag
+  const handleDragStart = () => {
+    isDraggingRef.current = true;
+  };
+
   const handleDragEnd = (e, { offset, velocity }) => {
     const swipe = calculateSwipePower(offset.x, velocity.x);
 
@@ -162,6 +170,11 @@ export default function OnboardingCompletionModal({
     } else if (swipe > SWIPE_CONFIG.confidenceThreshold) {
       handlePrev();
     }
+
+    // Reset le flag après un court délai pour éviter les faux clics
+    setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 100);
   };
 
   // Ne pas render si pas ouvert ou screens vides
@@ -184,7 +197,7 @@ export default function OnboardingCompletionModal({
       {/* Modal */}
       <div
         className="
-          relative w-full max-w-full mx-4 md:max-w-4xl
+          relative w-full max-w-full mx-2 md:mx-4 md:max-w-2xl
           bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl
           overflow-hidden
         "
@@ -196,17 +209,17 @@ export default function OnboardingCompletionModal({
           <div className="flex items-center justify-between p-4 md:p-6">
             <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-xl md:text-2xl">🎉</span>
+                {IconComponent && <IconComponent className="w-4 h-4 md:w-5 md:h-5 text-emerald-400" />}
               </div>
               <div className="flex-1 min-w-0">
                 <h2
                   id="completion-modal-title"
-                  className="text-lg md:text-xl font-bold text-white mb-1"
+                  className="text-base md:text-lg font-bold text-white mb-1 line-clamp-2"
                 >
-                  Félicitations !
+                  {currentScreenData?.title || 'Félicitations !'}
                 </h2>
                 <p className="text-xs md:text-sm text-slate-400">
-                  Découvrez encore plus de fonctionnalités
+                  {currentScreen + 1} / {COMPLETION_SCREENS.length}
                 </p>
 
                 {/* Screen reader only announcement */}
@@ -249,7 +262,7 @@ export default function OnboardingCompletionModal({
         </div>
 
         {/* Carousel Container */}
-        <div className="relative min-h-[360px] md:min-h-[320px] overflow-hidden" role="tabpanel" aria-live="polite">
+        <div className="relative min-h-[470px] md:min-h-[500px] overflow-hidden" role="tabpanel" aria-live="polite">
           <AnimatePresence initial={true} custom={direction} mode="wait">
             <motion.div
               key={currentScreen}
@@ -265,30 +278,16 @@ export default function OnboardingCompletionModal({
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={1}
+              onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
               className="absolute inset-0 p-4 md:p-6 pb-14 md:pb-16 cursor-grab active:cursor-grabbing"
             >
-              <div className="flex flex-col items-center justify-center space-y-4 md:space-y-6 h-full">
-                {/* Icône */}
-                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  {IconComponent && (
-                    <IconComponent className="w-10 h-10 md:w-12 md:h-12 text-emerald-400" />
-                  )}
-                </div>
-
-                {/* Titre */}
-                <h3 className="text-xl md:text-2xl font-bold text-white text-center">
-                  {currentScreenData?.title}
-                </h3>
-
-                {/* Description */}
-                <p className="text-white/90 text-base md:text-lg leading-relaxed text-center max-w-2xl px-2">
-                  {currentScreenData?.description}
-                </p>
-
-                {/* Emoji décoratif */}
-                <div className="text-5xl md:text-6xl opacity-20">
-                  {currentScreenData?.emoji}
+              {/* Mode texte seul - aligné gauche comme WelcomeModal */}
+              <div className="flex flex-col h-full">
+                <div className="flex-1">
+                  <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                    {currentScreenData?.description}
+                  </p>
                 </div>
               </div>
             </motion.div>

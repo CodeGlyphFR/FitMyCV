@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Sparkles, Edit3, Zap, X } from 'lucide-react';
+import { Sparkles, HelpCircle, Rocket, X, Check, Lightbulb } from 'lucide-react';
 import { ONBOARDING_TIMINGS } from '@/lib/onboarding/onboardingConfig';
 import {
   slideVariants,
@@ -102,28 +102,72 @@ function SwipeAnimation() {
 
 const WELCOME_SCREENS = [
   {
-    title: 'Bienvenue sur FitMyCV !',
-    description:
-      "Nous sommes ravis de vous accompagner dans la création de CV parfaitement adaptés à chaque offre d'emploi. Notre plateforme utilise l'IA pour vous aider à décrocher plus d'entretiens.",
+    type: 'welcome',
+    title: 'Bienvenue sur FitMyCV 👋',
+    description: "Bienvenue ! Ce tutoriel va vous apprendre les bases pour créer rapidement des CV adaptés à chaque offre.",
     icon: Sparkles,
     iconBg: 'bg-emerald-500/20',
     iconColor: 'text-emerald-400',
+    checklist: [
+      'Un CV sur-mesure par offre',
+      'Format optimisé ATS*',
+      'Conçu pour convaincre les recruteurs',
+      'Prêt en quelques minutes',
+    ],
+    atsExplanation: "ATS (Applicant Tracking System) : logiciel utilisé par les recruteurs pour filtrer automatiquement les CV. Un format optimisé ATS augmente vos chances d'être vu.",
+    solution: {
+      title: 'Astuce',
+      description: "Collez simplement les liens de vos offres, on analyse tout automatiquement !",
+    },
   },
   {
-    title: 'Découvrez les fonctionnalités clés',
-    description:
-      "Ce court tutoriel vous guidera à travers les outils essentiels de FitMyCV. Nous commencerons par le mode édition — une fonctionnalité discrète mais puissante qui vous permet de personnaliser chaque détail de votre CV en un clic.",
-    icon: Edit3,
-    iconBg: 'bg-sky-500/20',
-    iconColor: 'text-sky-400',
-  },
-  {
-    title: 'Prêt à optimiser vos candidatures ?',
-    description:
-      "En quelques minutes, vous maîtriserez les outils qui font la différence : génération IA, score de compatibilité, optimisation ATS... Commençons l'aventure !",
-    icon: Zap,
+    type: 'problems',
+    title: 'Pourquoi vos candidatures restent-elles sans réponse ?',
+    icon: HelpCircle,
     iconBg: 'bg-amber-500/20',
     iconColor: 'text-amber-400',
+    problems: [
+      {
+        emoji: '😤',
+        title: 'Des dizaines de CV envoyés, zéro réponse',
+        description: 'Vous passez des heures à postuler mais n\'obtenez que du silence.',
+      },
+      {
+        emoji: '🤖',
+        title: 'Votre CV doit d\'abord convaincre un logiciel',
+        description: '88% des grandes entreprises utilisent des systèmes ATS qui analysent structure et mots-clés avant qu\'un humain ne voie votre CV.',
+      },
+      {
+        emoji: '👤',
+        title: 'Puis séduire un recruteur en quelques secondes',
+        description: 'S\'il passe le filtre, un recruteur le parcourt rapidement pour décider qui rencontrer.',
+      },
+      {
+        emoji: '🎯',
+        title: 'Le défi : réussir les deux avec un CV générique',
+        description: 'Mission impossible sans adapter votre CV à chaque offre.',
+      },
+    ],
+    solution: {
+      title: 'FitMyCV résout ce double défi',
+      description: "Notre IA adapte votre CV pour passer les filtres automatiques ET capter l'attention des recruteurs. Un CV sur-mesure par offre, en quelques clics, pour augmenter drastiquement vos chances d'obtenir un premier entretien.",
+    },
+  },
+  {
+    type: 'features',
+    title: 'Prêt pour une visite de 2 minutes ? ⏱️',
+    subtitle: 'Découvrez les 5 fonctionnalités qui vont changer votre façon de postuler',
+    icon: Rocket,
+    iconBg: 'bg-sky-500/20',
+    iconColor: 'text-sky-400',
+    features: [
+      { emoji: '✏️', title: 'Créer et éditer votre CV', description: 'Interface intuitive et format optimisé ATS' },
+      { emoji: '🤖', title: 'Générer avec l\'IA', description: 'CV adapté automatiquement à chaque offre d\'emploi' },
+      { emoji: '📊', title: 'Calculer votre score', description: 'Mesurez votre compatibilité avec une offre' },
+      { emoji: '⚡', title: 'Optimiser en 1 clic', description: 'L\'IA améliore votre CV automatiquement' },
+      { emoji: '📄', title: 'Exporter en format pro', description: 'PDF parfait pour postuler partout' },
+    ],
+    tip: 'Suivez la visite, vous créerez votre premier CV juste après !',
   },
 ];
 
@@ -170,8 +214,6 @@ export default function WelcomeModal({
   const [direction, setDirection] = useState(0);
   const [isMorphing, setIsMorphing] = useState(false);
   const [morphTransform, setMorphTransform] = useState({ x: 0, y: 0 });
-  const [isScrollable, setIsScrollable] = useState(false);
-  const scrollRef = useRef(null);
   const shouldReduceMotion = useReducedMotion();
 
   // Reset screen when modal opens
@@ -182,20 +224,6 @@ export default function WelcomeModal({
       setIsMorphing(false);
     }
   }, [open]);
-
-  // Détection de scrollabilité pour le fade indicator
-  useEffect(() => {
-    const checkScrollable = () => {
-      if (scrollRef.current) {
-        const { scrollHeight, clientHeight } = scrollRef.current;
-        setIsScrollable(scrollHeight > clientHeight);
-      }
-    };
-
-    checkScrollable();
-    window.addEventListener('resize', checkScrollable);
-    return () => window.removeEventListener('resize', checkScrollable);
-  }, [currentScreen]);
 
   // Handler pour démarrer l'animation morphing
   const startMorphAnimation = useCallback(() => {
@@ -374,9 +402,9 @@ export default function WelcomeModal({
               <div className="flex-1 min-w-0">
                 <h2
                   id="welcome-modal-title"
-                  className="text-lg md:text-xl font-bold text-white truncate mb-1"
+                  className="text-base md:text-lg font-bold text-white mb-1 line-clamp-2"
                 >
-                  Bienvenue
+                  {currentScreenData.title}
                 </h2>
                 <p className="text-xs md:text-sm text-slate-400">
                   {currentScreen + 1} / {WELCOME_SCREENS.length}
@@ -391,13 +419,13 @@ export default function WelcomeModal({
 
             {/* Boutons alignés à droite */}
             <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-              {/* Bouton Passer le tutoriel - skip TOUT le tutoriel */}
+              {/* Bouton Passer - skip TOUT le tutoriel */}
               {onSkip && (
                 <button
                   onClick={onSkip}
                   className="text-xs md:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap"
                 >
-                  Passer le tutoriel
+                  Passer
                 </button>
               )}
 
@@ -434,7 +462,7 @@ export default function WelcomeModal({
         </div>
 
         {/* Carousel Container */}
-        <div className="relative min-h-[360px] md:min-h-[320px] overflow-hidden" role="tabpanel" aria-live="polite">
+        <div className="relative min-h-[470px] md:min-h-[500px] overflow-hidden" role="tabpanel" aria-live="polite">
           <AnimatePresence initial={true} custom={direction} mode="wait">
             <motion.div
               id="welcome-carousel-content"
@@ -454,39 +482,124 @@ export default function WelcomeModal({
               onDragEnd={handleDragEnd}
               className="absolute inset-0 p-4 md:p-6 pb-14 md:pb-16 cursor-grab active:cursor-grabbing"
             >
-              <div className="flex flex-col items-center justify-center h-full space-y-4 md:space-y-6 text-center">
-                {/* Icône décorative */}
-                <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full ${currentScreenData.iconBg} flex items-center justify-center`}>
-                  <IconComponent className={`w-8 h-8 md:w-10 md:h-10 ${currentScreenData.iconColor}`} />
-                </div>
-
-                {/* Titre */}
-                <h3 className="text-xl md:text-2xl font-bold text-white">
-                  {currentScreenData.title}
-                </h3>
-
-                {/* Description avec scroll */}
-                <div className="w-full max-w-lg px-2 relative">
-                  <div
-                    ref={scrollRef}
-                    className="max-h-[200px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-white/10 hover:scrollbar-thumb-white/40"
-                    style={{
-                      scrollbarWidth: 'thin',
-                      scrollbarColor: 'rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1)',
-                    }}
-                  >
-                    <p className="text-white/80 text-base md:text-lg leading-relaxed">
+              {/* Écran 1: Welcome + Checklist + Tip */}
+              {currentScreenData.type === 'welcome' && (
+                <div className="flex flex-col h-full">
+                  {/* Contenu en haut */}
+                  <div className="flex-1">
+                    {/* Description */}
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left mb-6">
                       {currentScreenData.description}
                     </p>
+
+                    {/* Checklist avec checkmarks */}
+                    <div className="space-y-3 ml-4">
+                      {currentScreenData.checklist.map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-3 text-left">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          </div>
+                          <span className="text-white text-sm md:text-base">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* ATS explanation discret avec barre gauche */}
+                    {currentScreenData.atsExplanation && (
+                      <div className="mt-6 pl-4 border-l-2 border-white/20">
+                        <p className="text-white/50 text-sm leading-relaxed text-left">
+                          <span className="text-white/70 font-medium">*</span> {currentScreenData.atsExplanation}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  {/* Gradient fade indicator (visible si scroll possible) */}
-                  <div
-                    className={`absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[rgb(2,6,23)] to-transparent pointer-events-none transition-opacity ${
-                      isScrollable ? 'opacity-100' : 'opacity-0'
-                    }`}
-                  />
+
+                  {/* Tip box vert (avantage FitMyCV) */}
+                  <div className="mt-5 p-3 md:p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <p className="text-emerald-400 font-semibold text-sm md:text-base">
+                        {currentScreenData.solution.title}
+                      </p>
+                    </div>
+                    <p className="text-white/80 text-xs md:text-sm leading-relaxed text-left">
+                      {currentScreenData.solution.description}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Écran 2: Problèmes + Solution */}
+              {currentScreenData.type === 'problems' && (
+                <div className="flex flex-col h-full">
+                  {/* Contenu en haut */}
+                  <div className="flex-1">
+                    {/* Liste des problèmes */}
+                    <div className="space-y-3">
+                      {currentScreenData.problems.map((problem, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <span className="text-xl flex-shrink-0">{problem.emoji}</span>
+                          <div>
+                            <p className="text-white font-medium text-sm md:text-base">{problem.title}</p>
+                            <p className="text-white/60 text-xs md:text-sm">{problem.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Solution mise en avant (en bas) */}
+                  <div className="mt-4 p-3 md:p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <p className="text-emerald-400 font-semibold text-sm md:text-base">
+                        {currentScreenData.solution.title}
+                      </p>
+                    </div>
+                    <p className="text-white/80 text-xs md:text-sm leading-relaxed text-left">
+                      {currentScreenData.solution.description}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Écran 3: Features + Tip */}
+              {currentScreenData.type === 'features' && (
+                <div className="flex flex-col h-full">
+                  {/* Contenu en haut */}
+                  <div className="flex-1">
+                    {/* Sous-titre */}
+                    <p className="text-white/60 text-sm md:text-base text-left mb-4">
+                      {currentScreenData.subtitle}
+                    </p>
+
+                    {/* Liste des features */}
+                    <div className="space-y-3 md:space-y-4">
+                      {currentScreenData.features.map((feature, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <span className="text-xl flex-shrink-0">{feature.emoji}</span>
+                          <div>
+                            <p className="text-white font-medium text-sm md:text-base">{feature.title}</p>
+                            <p className="text-white/60 text-xs md:text-sm">{feature.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tip box en bas */}
+                  <div className="mt-auto p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+                      </div>
+                      <p className="text-white/80 text-sm leading-relaxed text-left">
+                        {currentScreenData.tip}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Swipe Animation (mobile only, first screen only) */}
               {currentScreen === 0 && <SwipeAnimation />}

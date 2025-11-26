@@ -334,8 +334,8 @@ App.jsx
 {
   open: boolean,              // Affichage modal
   onComplete: () => void,     // Clic "Compris" (dernier screen)
-  onSkip: () => void,         // Clic "Passer le tutoriel"
-  onClose: () => void         // Clic X (fermeture sans complétion)
+  onSkip: () => void,         // Clic "Passer"
+  onClose: () => void         // Clic X (ouvre feature mais sans persister complétion DB)
 }
 ```
 
@@ -350,7 +350,7 @@ App.jsx
 **Responsabilités** :
 - ✅ Afficher N screens avec carousel animé (Framer Motion)
 - ✅ Navigation : chevrons desktop, swipe mobile, clavier, bullets
-- ✅ Gestion boutons : "Compris" (onComplete), "Passer cette étape" (onSkip), X (onClose)
+- ✅ Gestion boutons : "Compris" (onComplete), "Passer" (onSkip), X (onClose)
 - ✅ Responsive : barres progression mobile, bullets desktop
 - ✅ Prévention scroll body (fixed position + touch-action: none)
 
@@ -366,7 +366,7 @@ App.jsx
   onPrev: () => void,         // Screen précédent
   onJumpTo: (idx) => void,    // Jump direct à un screen (bullets)
   onComplete: () => void,     // Clic "Compris" (dernier screen)
-  onSkip: () => void,         // Clic "Passer cette étape"
+  onSkip: () => void,         // Clic "Passer"
   onClose: () => void,        // Clic X
   showSkipButton: boolean,    // Afficher bouton "Passer"
   disableEscapeKey: boolean,  // Désactiver Escape
@@ -546,7 +546,7 @@ App.jsx
 
 ```
 À tout moment (welcome modal ou pendant steps) :
-1. User clique "Passer le tutoriel" ou "Passer cette étape"
+1. User clique "Passer" ou "Passer"
 2. skipOnboarding()
    ├─ API POST /api/user/onboarding?action=skip
    │   └─ isSkipped = true, hasCompleted = false
