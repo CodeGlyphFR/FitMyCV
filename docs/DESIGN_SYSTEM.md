@@ -264,7 +264,7 @@ max-w-2xl: 672px  /* Content max-width */
 
 ### Modals
 
-**Structure complète** :
+**Variante Glassmorphism** (Modal.jsx - défaut) :
 ```jsx
 {/* Backdrop */}
 <div className="fixed inset-0 z-[10002] bg-black/50">
@@ -278,6 +278,44 @@ max-w-2xl: 672px  /* Content max-width */
     <div className="text-white/90 overflow-y-auto flex-1 px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
   </div>
 </div>
+```
+
+**Variante Solide** (WelcomeModal, CVImprovementPanel) :
+```jsx
+{/* Backdrop */}
+<div className="fixed inset-0 z-[10002] bg-black/70">
+  {/* Container - fond solide */}
+  <div className="relative z-10 w-full max-w-4xl bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl flex flex-col max-h-[calc(100vh-2rem)]">
+    {/* Header avec icône */}
+    <div className="flex items-center justify-between p-4 md:p-6">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+          <Icon className="w-5 h-5 text-emerald-400" />
+        </div>
+        <h2 className="text-lg font-bold text-white">Titre</h2>
+      </div>
+      <button className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white">
+        <X className="w-5 h-5" />
+      </button>
+    </div>
+    <div className="border-b border-white/10" />
+
+    {/* Content scrollable */}
+    <div className="flex-1 overflow-y-auto p-4 md:p-6">
+
+    {/* Footer séparé */}
+    <div className="border-t border-white/10" />
+    <div className="p-4 md:p-6">
+  </div>
+</div>
+```
+
+**Cards intérieures (variante solide)** :
+```jsx
+/* Card neutre */      <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+/* Card succès */      <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-6">
+/* Card erreur */      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6">
+/* Card info */        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
 ```
 
 ### Badges
