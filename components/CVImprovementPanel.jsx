@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
-import { RefreshCw, X, BarChart3 } from "lucide-react";
+import { RefreshCw, X, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
 import { parseApiError } from "@/lib/utils/errorHandler";
 
 export default function CVImprovementPanel({ cvFile }) {
@@ -16,6 +16,8 @@ export default function CVImprovementPanel({ cvFile }) {
   const [animatedScore, setAnimatedScore] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [showAllMissingSkills, setShowAllMissingSkills] = useState(false);
+  const [showAllMatchingSkills, setShowAllMatchingSkills] = useState(false);
   const { t, language } = useLanguage();
   const { settings } = useSettings();
   const { addNotification } = useNotifications();
@@ -205,6 +207,17 @@ export default function CVImprovementPanel({ cvFile }) {
   const missingSkills = parseJson(cvData?.missingSkills, []);
   const matchingSkills = parseJson(cvData?.matchingSkills, []);
 
+  // Skills visibles avec toggle (5 par défaut)
+  const SKILLS_VISIBLE_DEFAULT = 5;
+  const visibleMissingSkills = showAllMissingSkills
+    ? missingSkills
+    : missingSkills.slice(0, SKILLS_VISIBLE_DEFAULT);
+  const hiddenMissingCount = missingSkills.length - SKILLS_VISIBLE_DEFAULT;
+  const visibleMatchingSkills = showAllMatchingSkills
+    ? matchingSkills
+    : matchingSkills.slice(0, SKILLS_VISIBLE_DEFAULT);
+  const hiddenMatchingCount = matchingSkills.length - SKILLS_VISIBLE_DEFAULT;
+
   // Vérifier si une tâche est en cours (optimisation ou calcul de score)
   const shouldDisableButton =
     cvData?.matchScoreStatus === 'inprogress' ||
@@ -328,6 +341,8 @@ export default function CVImprovementPanel({ cvFile }) {
     improveSuccess: language === 'fr' ? "CV amélioré ! Rechargement..." : "CV improved! Reloading...",
     improvementInProgress: language === 'fr' ? "Amélioration en cours..." : "Improvement in progress...",
     calculatingScore: language === 'fr' ? "Calcul du score en cours..." : "Calculating score...",
+    showMore: language === 'fr' ? 'autres' : 'more',
+    showLess: language === 'fr' ? 'Voir moins' : 'Show less',
   };
 
   // Fonction pour normaliser les scores (convertir de /100 à leurs échelles respectives)
@@ -813,20 +828,43 @@ export default function CVImprovementPanel({ cvFile }) {
                               {labels.missingSkills}
                             </h3>
                             <div className="flex flex-wrap gap-2">
-                              {missingSkills.map((skill, index) => (
+                              {visibleMissingSkills.map((skill, index) => (
                                 <span
                                   key={index}
-                                  style={{ animationDelay: `${index * 0.05}s` }}
                                   className="
                                     px-3 py-1 bg-red-500/20 text-white
                                     rounded-full text-xs font-medium border border-red-400/30
                                     hover:scale-105 hover:bg-red-500/30 transition-all duration-200
-                                    animate-scale-in
                                   "
                                 >
                                   {skill}
                                 </span>
                               ))}
+                              {/* Bouton toggle si plus de 5 skills */}
+                              {hiddenMissingCount > 0 && (
+                                <button
+                                  onClick={() => setShowAllMissingSkills(!showAllMissingSkills)}
+                                  className="
+                                    px-3 py-1 bg-red-500/20 text-red-300
+                                    rounded-full text-xs font-medium border border-red-400/40
+                                    hover:bg-red-500/30 hover:border-red-400/60
+                                    transition-all duration-200 cursor-pointer
+                                    inline-flex items-center gap-1
+                                  "
+                                >
+                                  {showAllMissingSkills ? (
+                                    <>
+                                      <ChevronUp className="w-3 h-3" />
+                                      {labels.showLess}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ChevronDown className="w-3 h-3" />
+                                      +{hiddenMissingCount} {labels.showMore}
+                                    </>
+                                  )}
+                                </button>
+                              )}
                             </div>
                           </div>
                         )}
@@ -839,21 +877,45 @@ export default function CVImprovementPanel({ cvFile }) {
                               {labels.matchingSkills}
                             </h3>
                             <div className="flex flex-wrap gap-2">
-                              {matchingSkills.map((skill, index) => (
+                              {visibleMatchingSkills.map((skill, index) => (
                                 <span
                                   key={index}
-                                  style={{ animationDelay: `${index * 0.05}s` }}
                                   className="
                                     px-3 py-1 bg-green-500/20 text-white
                                     rounded-full text-xs font-medium border border-green-400/30
                                     hover:scale-105 hover:bg-green-500/30 transition-all duration-200
-                                    animate-scale-in inline-flex items-center gap-1
+                                    inline-flex items-center gap-1
                                   "
                                 >
                                   <span className="text-green-300">✓</span>
                                   {skill}
                                 </span>
                               ))}
+                              {/* Bouton toggle si plus de 5 skills */}
+                              {hiddenMatchingCount > 0 && (
+                                <button
+                                  onClick={() => setShowAllMatchingSkills(!showAllMatchingSkills)}
+                                  className="
+                                    px-3 py-1 bg-green-500/20 text-green-300
+                                    rounded-full text-xs font-medium border border-green-400/40
+                                    hover:bg-green-500/30 hover:border-green-400/60
+                                    transition-all duration-200 cursor-pointer
+                                    inline-flex items-center gap-1
+                                  "
+                                >
+                                  {showAllMatchingSkills ? (
+                                    <>
+                                      <ChevronUp className="w-3 h-3" />
+                                      {labels.showLess}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ChevronDown className="w-3 h-3" />
+                                      +{hiddenMatchingCount} {labels.showMore}
+                                    </>
+                                  )}
+                                </button>
+                              )}
                             </div>
                           </div>
                         )}
