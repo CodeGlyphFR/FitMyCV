@@ -1148,17 +1148,29 @@ Affichage du match score avec indicateur circulaire.
 
 ### CVImprovementPanel.jsx
 
-Panel d'amélioration CV avec suggestions.
+Modal d'optimisation CV avec score, breakdown et suggestions d'amélioration.
 
 **Props** :
 
 ```javascript
 {
-  suggestions: Array<Suggestion>,
-  onOptimize: () => void,
-  optimiseStatus: 'idle' | 'inprogress' | 'failed'
+  cvFile: string // Nom du fichier CV
 }
 ```
+
+**Design** : Modal solide (non glassmorphism) avec fond `bg-[rgb(2,6,23)]`, inspiré du WelcomeModal.
+
+**Structure** :
+- Header avec icône BarChart3 + titre + bouton X + divider
+- Content scrollable : Score circulaire animé, breakdown par catégorie, suggestions prioritaires
+- Skills section : Missing skills (rouge) + Matching skills (vert)
+- Footer séparé avec divider + boutons action
+
+**Caractéristiques techniques** :
+- Portal custom via `createPortal` (pas Modal.jsx)
+- Focus trap + focus restoration
+- iOS scroll lock avec `touchAction: 'none'`
+- Protection backdrop click pendant scroll (`isDraggingRef`)
 
 ---
 

@@ -1,11 +1,11 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, X, BarChart3 } from "lucide-react";
 import { parseApiError } from "@/lib/utils/errorHandler";
 
 export default function CVImprovementPanel({ cvFile }) {
@@ -15,11 +15,118 @@ export default function CVImprovementPanel({ cvFile }) {
   const [error, setError] = useState(null);
   const [animatedScore, setAnimatedScore] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { t, language } = useLanguage();
   const { settings } = useSettings();
   const { addNotification } = useNotifications();
   const animationRef = useRef(null);
+  const scrollYRef = useRef(0);
+  const modalRef = useRef(null);
+  const previousFocusRef = useRef(null);
+  const isDraggingRef = useRef(false);
   const router = useRouter();
+
+  // Mount state for portal
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Gestion du scroll body quand le modal est ouvert (pattern WelcomeModal)
+  useEffect(() => {
+    if (!isOpen || !mounted) return;
+
+    scrollYRef.current = window.scrollY;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollYRef.current}px`;
+    document.body.style.width = '100%';
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
+    document.body.style.touchAction = 'none'; // iOS fix
+
+    return () => {
+      const currentTop = parseInt(document.body.style.top || '0', 10);
+      const restoreY = Math.abs(currentTop);
+
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.paddingRight = '';
+      document.body.style.touchAction = '';
+
+      window.scrollTo(0, restoreY);
+    };
+  }, [isOpen, mounted]);
+
+  // Focus management - save and restore focus
+  useEffect(() => {
+    if (!isOpen || !mounted || !modalRef.current) return;
+
+    // Sauvegarder le focus actuel
+    previousFocusRef.current = document.activeElement;
+
+    // Déplacer le focus vers le premier élément focusable
+    const focusableElements = modalRef.current.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusableElements.length > 0) {
+      focusableElements[0].focus();
+    }
+
+    return () => {
+      // Restaurer le focus
+      if (previousFocusRef.current && previousFocusRef.current.focus) {
+        previousFocusRef.current.focus();
+      }
+    };
+  }, [isOpen, mounted]);
+
+  // Focus trap - Tab key cycling
+  useEffect(() => {
+    if (!isOpen || !mounted || !modalRef.current) return;
+
+    const handleTab = (e) => {
+      if (e.key !== 'Tab') return;
+
+      const focusableElements = modalRef.current.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleTab);
+    return () => document.removeEventListener('keydown', handleTab);
+  }, [isOpen, mounted]);
+
+  // Gestion de la touche Escape
+  useEffect(() => {
+    if (!isOpen || !mounted) return;
+
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, mounted]);
 
   // Fonction pour charger les données
   const fetchCvData = React.useCallback(async () => {
@@ -314,458 +421,509 @@ export default function CVImprovementPanel({ cvFile }) {
         )}
       </button>
 
-      {/* Modal avec les suggestions */}
-      <Modal
-        open={isOpen}
-        onClose={() => setIsOpen(false)}
-        title={labels.title}
-        size="large"
-      >
-        <style jsx>{`
-          @keyframes slideInLeft {
-            from {
-              opacity: 0;
-              transform: translateX(-30px);
-            }
-            to {
-              opacity: 1;
-              transform: translateX(0);
-            }
-          }
+      {/* Modal avec les suggestions - Portal custom */}
+      {isOpen && mounted && createPortal(
+        <div
+          className="fixed inset-0 z-[10002] flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="optimization-modal-title"
+        >
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/70"
+            onClick={() => {
+              if (isDraggingRef.current) return; // Prevent close after drag/scroll
+              setIsOpen(false);
+            }}
+            aria-hidden="true"
+          />
 
-          @keyframes slideInRight {
-            from {
-              opacity: 0;
-              transform: translateX(30px);
-            }
-            to {
-              opacity: 1;
-              transform: translateX(0);
-            }
-          }
+          {/* Modal Container */}
+          <div
+            ref={modalRef}
+            className="relative z-10 w-full max-w-4xl bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl overflow-hidden flex flex-col max-h-[calc(100vh-2rem)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <style jsx>{`
+              @keyframes slideInLeft {
+                from {
+                  opacity: 0;
+                  transform: translateX(-30px);
+                }
+                to {
+                  opacity: 1;
+                  transform: translateX(0);
+                }
+              }
 
-          @keyframes scaleIn {
-            from {
-              opacity: 0;
-              transform: scale(0.9);
-            }
-            to {
-              opacity: 1;
-              transform: scale(1);
-            }
-          }
+              @keyframes slideInRight {
+                from {
+                  opacity: 0;
+                  transform: translateX(30px);
+                }
+                to {
+                  opacity: 1;
+                  transform: translateX(0);
+                }
+              }
 
-          @keyframes shimmer {
-            0% {
-              background-position: -1000px 0;
-            }
-            100% {
-              background-position: 1000px 0;
-            }
-          }
+              @keyframes scaleIn {
+                from {
+                  opacity: 0;
+                  transform: scale(0.9);
+                }
+                to {
+                  opacity: 1;
+                  transform: scale(1);
+                }
+              }
 
-          .animate-slide-in-left {
-            animation: slideInLeft 0.5s ease-out forwards;
-          }
+              @keyframes shimmer {
+                0% {
+                  background-position: -1000px 0;
+                }
+                100% {
+                  background-position: 1000px 0;
+                }
+              }
 
-          .animate-slide-in-right {
-            animation: slideInRight 0.5s ease-out forwards;
-          }
+              .animate-slide-in-left {
+                animation: slideInLeft 0.5s ease-out forwards;
+              }
 
-          .animate-scale-in {
-            animation: scaleIn 0.4s ease-out forwards;
-          }
+              .animate-slide-in-right {
+                animation: slideInRight 0.5s ease-out forwards;
+              }
 
-          .shimmer-bg {
-            background: linear-gradient(
-              90deg,
-              rgba(255, 255, 255, 0) 0%,
-              rgba(255, 255, 255, 0.3) 50%,
-              rgba(255, 255, 255, 0) 100%
-            );
-            background-size: 1000px 100%;
-            animation: shimmer 3s infinite;
-          }
-        `}</style>
+              .animate-scale-in {
+                animation: scaleIn 0.4s ease-out forwards;
+              }
 
-        <div className="space-y-4">
-          <div className={`space-y-4 transition-all duration-300 ${!isAnimationReady && !loading ? 'blur-sm opacity-0' : 'blur-0 opacity-100'}`}>
-            {loading && (
-              <div className="text-center py-12 text-white/70 text-sm">
-                <div className="inline-block w-8 h-8 border-4 border-white/30 border-t-blue-500 rounded-full animate-spin mb-3" />
-                <div className="drop-shadow">{labels.loading}</div>
-              </div>
-            )}
+              .shimmer-bg {
+                background: linear-gradient(
+                  90deg,
+                  rgba(255, 255, 255, 0) 0%,
+                  rgba(255, 255, 255, 0.3) 50%,
+                  rgba(255, 255, 255, 0) 100%
+                );
+                background-size: 1000px 100%;
+                animation: shimmer 3s infinite;
+              }
+            `}</style>
 
-            {error && (
-              <div className="text-center py-12">
-                <div className="text-white drop-shadow text-sm bg-red-500/30 backdrop-blur-sm rounded-lg p-4 border-2 border-red-400/50">
-                  {error}
+            {/* Header */}
+            <div className="flex-shrink-0">
+              <div className="flex items-center justify-between p-4 md:p-6">
+                <div className="flex items-center gap-3">
+                  {/* Icône ronde */}
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                    <BarChart3 className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  {/* Titre */}
+                  <h2 id="optimization-modal-title" className="text-lg font-bold text-white">
+                    {labels.title}
+                  </h2>
                 </div>
+                {/* Bouton fermer (X) */}
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                  aria-label={labels.close}
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-            )}
+              {/* Divider */}
+              <div className="border-b border-white/10" />
+            </div>
 
-            {!loading && !error && cvData && (
-              <>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* COLONNE GAUCHE : Score + Breakdown */}
-                  <div className="space-y-4 animate-slide-in-left">
-                    {/* Score principal avec cercle animé */}
-                    {cvData.matchScore !== null && (
-                      <div className="bg-white/15 backdrop-blur-md ios-blur-medium rounded-2xl p-6 shadow-lg border-2 border-white/30 gpu-accelerate">
-                        <div className="text-center">
-                          <div className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-4 drop-shadow">
-                            {labels.matchScore}
-                          </div>
-                          <div className="flex items-center justify-center gap-2">
-                            {/* Cercle de progression animé */}
-                            <div className="relative w-32 h-32">
-                              <svg className="w-32 h-32 transform -rotate-90">
-                                {/* Cercle de fond avec dégradé */}
-                                <defs>
-                                  <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stopColor={
-                                      cvData.matchScore >= 80 ? '#22c55e' :
-                                      cvData.matchScore >= 65 ? '#eab308' :
-                                      cvData.matchScore >= 50 ? '#f97316' : '#ef4444'
-                                    } />
-                                    <stop offset="100%" stopColor={
-                                      cvData.matchScore >= 80 ? '#16a34a' :
-                                      cvData.matchScore >= 65 ? '#ca8a04' :
-                                      cvData.matchScore >= 50 ? '#ea580c' : '#dc2626'
-                                    } />
-                                  </linearGradient>
-                                </defs>
-                                <circle
-                                  cx="64"
-                                  cy="64"
-                                  r="56"
-                                  stroke="#e5e7eb"
-                                  strokeWidth="8"
-                                  fill="none"
-                                />
-                                {/* Cercle de progression avec gradient */}
-                                <circle
-                                  cx="64"
-                                  cy="64"
-                                  r="56"
-                                  stroke="url(#scoreGradient)"
-                                  strokeWidth="8"
-                                  fill="none"
-                                  pathLength="100"
-                                  strokeDasharray="100"
-                                  strokeDashoffset={100 - animatedScore}
-                                  strokeLinecap="round"
-                                  className="transition-all duration-1000 ease-out"
-                                  filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
-                                />
-                              </svg>
-                              {/* Score au centre avec animation et fond coloré */}
-                              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                {/* Cercle de fond coloré selon le score */}
-                                <div className={`absolute w-24 h-24 rounded-full ${getScoreBgColor(animatedScore)} shadow-lg transition-colors duration-300`} />
-                                {/* Contenu du score */}
-                                <div className="relative flex flex-col items-center justify-center">
-                                  <span className="text-4xl font-bold text-white drop-shadow-lg transition-all duration-300">
-                                    {animatedScore}
-                                  </span>
-                                  <span className="text-sm text-white/80 font-medium drop-shadow">/100</span>
+            {/* Content - Scrollable */}
+            <div
+              className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
+              onTouchStart={() => { isDraggingRef.current = false; }}
+              onTouchMove={() => { isDraggingRef.current = true; }}
+              onTouchEnd={() => { setTimeout(() => { isDraggingRef.current = false; }, 100); }}
+              onMouseDown={() => { isDraggingRef.current = false; }}
+              onMouseMove={(e) => { if (e.buttons > 0) isDraggingRef.current = true; }}
+              onMouseUp={() => { setTimeout(() => { isDraggingRef.current = false; }, 100); }}
+            >
+              <div className={`space-y-6 transition-all duration-300 ${!isAnimationReady && !loading ? 'blur-sm opacity-0' : 'blur-0 opacity-100'}`}>
+                {loading && (
+                  <div className="text-center py-12 text-white/70 text-sm">
+                    <div className="inline-block w-8 h-8 border-4 border-white/30 border-t-blue-500 rounded-full animate-spin mb-3" />
+                    <div>{labels.loading}</div>
+                  </div>
+                )}
+
+                {error && (
+                  <div className="text-center py-12">
+                    <div className="text-white text-sm bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+                      {error}
+                    </div>
+                  </div>
+                )}
+
+                {!loading && !error && cvData && (
+                  <>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* COLONNE GAUCHE : Score + Breakdown */}
+                      <div className="space-y-4 animate-slide-in-left">
+                        {/* Score principal avec cercle animé */}
+                        {cvData.matchScore !== null && (
+                          <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                            <div className="text-center">
+                              <div className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-4">
+                                {labels.matchScore}
+                              </div>
+                              <div className="flex items-center justify-center gap-2">
+                                {/* Cercle de progression animé */}
+                                <div className="relative w-32 h-32">
+                                  <svg className="w-32 h-32 transform -rotate-90">
+                                    {/* Cercle de fond avec dégradé */}
+                                    <defs>
+                                      <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor={
+                                          cvData.matchScore >= 80 ? '#22c55e' :
+                                          cvData.matchScore >= 65 ? '#eab308' :
+                                          cvData.matchScore >= 50 ? '#f97316' : '#ef4444'
+                                        } />
+                                        <stop offset="100%" stopColor={
+                                          cvData.matchScore >= 80 ? '#16a34a' :
+                                          cvData.matchScore >= 65 ? '#ca8a04' :
+                                          cvData.matchScore >= 50 ? '#ea580c' : '#dc2626'
+                                        } />
+                                      </linearGradient>
+                                    </defs>
+                                    <circle
+                                      cx="64"
+                                      cy="64"
+                                      r="56"
+                                      stroke="#e5e7eb"
+                                      strokeWidth="8"
+                                      fill="none"
+                                    />
+                                    {/* Cercle de progression avec gradient */}
+                                    <circle
+                                      cx="64"
+                                      cy="64"
+                                      r="56"
+                                      stroke="url(#scoreGradient)"
+                                      strokeWidth="8"
+                                      fill="none"
+                                      pathLength="100"
+                                      strokeDasharray="100"
+                                      strokeDashoffset={100 - animatedScore}
+                                      strokeLinecap="round"
+                                      className="transition-all duration-1000 ease-out"
+                                      filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
+                                    />
+                                  </svg>
+                                  {/* Score au centre avec animation et fond coloré */}
+                                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    {/* Cercle de fond coloré selon le score */}
+                                    <div className={`absolute w-24 h-24 rounded-full ${getScoreBgColor(animatedScore)} shadow-lg transition-colors duration-300`} />
+                                    {/* Contenu du score */}
+                                    <div className="relative flex flex-col items-center justify-center">
+                                      <span className="text-4xl font-bold text-white transition-all duration-300">
+                                        {animatedScore}
+                                      </span>
+                                      <span className="text-sm text-white/80 font-medium">/100</span>
+                                    </div>
+                                  </div>
+                                  {/* Effet shimmer sur score élevé */}
+                                  {cvData.matchScore >= 90 && (
+                                    <div className="absolute inset-0 shimmer-bg rounded-full opacity-30" />
+                                  )}
                                 </div>
                               </div>
-                              {/* Effet shimmer sur score élevé */}
-                              {cvData.matchScore >= 90 && (
-                                <div className="absolute inset-0 shimmer-bg rounded-full opacity-30" />
-                              )}
                             </div>
                           </div>
-                        </div>
-                      </div>
-                    )}
+                        )}
 
-                    {/* Détail du score avec barres de progression animées */}
-                    {Object.keys(scoreBreakdown).length > 0 && (
-                      <div className="bg-white/15 backdrop-blur-md ios-blur-medium rounded-2xl p-6 shadow-lg border-2 border-white/30 gpu-accelerate">
-                        <h3 className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-4 drop-shadow">
-                          {labels.scoreBreakdown}
-                        </h3>
-                        <div className="space-y-3">
-                          {/* Compétences techniques */}
-                          <div style={{ animationDelay: '0.1s' }} className="animate-scale-in">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <div className="flex items-center gap-2">
-                                <span className="text-lg">💻</span>
-                                <span className="text-xs font-medium text-white drop-shadow">{labels.technicalSkills}</span>
-                              </div>
-                              <span className="text-xs font-bold text-white drop-shadow">
-                                {normalizeScore(scoreBreakdown.technical_skills, 35)}/35
-                              </span>
-                            </div>
-                            <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
-                              <div
-                                className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full shadow-sm transition-all duration-1000 ease-out"
-                                style={{
-                                  width: isAnimationReady ? `${(normalizeScore(scoreBreakdown.technical_skills, 35) / 35) * 100}%` : '0%',
-                                  transitionDelay: '0.2s'
-                                }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Expérience */}
-                          <div style={{ animationDelay: '0.2s' }} className="animate-scale-in">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <div className="flex items-center gap-2">
-                                <span className="text-lg">💼</span>
-                                <span className="text-xs font-medium text-white drop-shadow">{labels.experience}</span>
-                              </div>
-                              <span className="text-xs font-bold text-white drop-shadow">
-                                {normalizeScore(scoreBreakdown.experience, 30)}/30
-                              </span>
-                            </div>
-                            <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
-                              <div
-                                className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full shadow-sm transition-all duration-1000 ease-out"
-                                style={{
-                                  width: isAnimationReady ? `${(normalizeScore(scoreBreakdown.experience, 30) / 30) * 100}%` : '0%',
-                                  transitionDelay: '0.3s'
-                                }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Formation */}
-                          <div style={{ animationDelay: '0.3s' }} className="animate-scale-in">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <div className="flex items-center gap-2">
-                                <span className="text-lg">🎓</span>
-                                <span className="text-xs font-medium text-white drop-shadow">{labels.education}</span>
-                              </div>
-                              <span className="text-xs font-bold text-white drop-shadow">
-                                {normalizeScore(scoreBreakdown.education, 20)}/20
-                              </span>
-                            </div>
-                            <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
-                              <div
-                                className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full shadow-sm transition-all duration-1000 ease-out"
-                                style={{
-                                  width: isAnimationReady ? `${(normalizeScore(scoreBreakdown.education, 20) / 20) * 100}%` : '0%',
-                                  transitionDelay: '0.4s'
-                                }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Soft skills */}
-                          <div style={{ animationDelay: '0.4s' }} className="animate-scale-in">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <div className="flex items-center gap-2">
-                                <span className="text-lg">💬</span>
-                                <span className="text-xs font-medium text-white drop-shadow">{labels.softSkills}</span>
-                              </div>
-                              <span className="text-xs font-bold text-white drop-shadow">
-                                {normalizeScore(scoreBreakdown.soft_skills_languages || scoreBreakdown.soft_skills, 15)}/15
-                              </span>
-                            </div>
-                            <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
-                              <div
-                                className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full shadow-sm transition-all duration-1000 ease-out"
-                                style={{
-                                  width: isAnimationReady ? `${(normalizeScore(scoreBreakdown.soft_skills_languages || scoreBreakdown.soft_skills, 15) / 15) * 100}%` : '0%',
-                                  transitionDelay: '0.5s'
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* COLONNE DROITE : Suggestions */}
-                  <div className="animate-slide-in-right">
-                    {/* Suggestions d'amélioration */}
-                    {suggestions.length > 0 && (
-                      <div className="bg-white/15 backdrop-blur-md ios-blur-medium rounded-2xl p-6 shadow-lg border-2 border-white/30 gpu-accelerate">
-                        <h3 className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-4 flex items-center gap-2 drop-shadow">
-                          <span>💡</span>
-                          {labels.suggestions}
-                        </h3>
-                        <div className="space-y-2">
-                          {suggestions.map((suggestion, index) => (
-                            <div
-                              key={index}
-                              style={{ animationDelay: `${index * 0.1}s` }}
-                              className={`
-                                p-3 rounded-xl border-l-4 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5
-                                ${suggestion.priority?.toLowerCase() === 'high'
-                                  ? 'bg-red-500/20 border-red-500 hover:bg-red-500/30'
-                                  : suggestion.priority?.toLowerCase() === 'medium'
-                                  ? 'bg-yellow-500/20 border-yellow-500 hover:bg-yellow-500/30'
-                                  : 'bg-green-500/20 border-green-500 hover:bg-green-500/30'
-                                }
-                                animate-scale-in backdrop-blur-sm ios-blur-light
-                              `}
-                            >
-                              <div className="flex items-start justify-between mb-1.5 gap-2">
-                                <span className={`
-                                  inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full whitespace-nowrap
-                                  ${suggestion.priority?.toLowerCase() === 'high'
-                                    ? 'bg-red-500/40 text-white drop-shadow animate-pulse'
-                                    : suggestion.priority?.toLowerCase() === 'medium'
-                                    ? 'bg-yellow-500/40 text-white drop-shadow'
-                                    : 'bg-green-500/40 text-white drop-shadow'
-                                  }
-                                `}>
-                                  {suggestion.priority?.toLowerCase() === 'high' ? '🔥' :
-                                   suggestion.priority?.toLowerCase() === 'medium' ? '⚡' : '✨'}
-                                  {labels[suggestion.priority?.toLowerCase()] || suggestion.priority}
-                                </span>
-                                {suggestion.impact && (
-                                  <span className="text-[10px] font-semibold text-white drop-shadow whitespace-nowrap bg-white/20 px-2 py-0.5 rounded-full">
-                                    {suggestion.impact}
+                        {/* Détail du score avec barres de progression animées */}
+                        {Object.keys(scoreBreakdown).length > 0 && (
+                          <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                            <h3 className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-4">
+                              {labels.scoreBreakdown}
+                            </h3>
+                            <div className="space-y-3">
+                              {/* Compétences techniques */}
+                              <div style={{ animationDelay: '0.1s' }} className="animate-scale-in">
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg">💻</span>
+                                    <span className="text-xs font-medium text-white">{labels.technicalSkills}</span>
+                                  </div>
+                                  <span className="text-xs font-bold text-white">
+                                    {normalizeScore(scoreBreakdown.technical_skills, 35)}/35
                                   </span>
-                                )}
+                                </div>
+                                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                                  <div
+                                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-1000 ease-out"
+                                    style={{
+                                      width: isAnimationReady ? `${(normalizeScore(scoreBreakdown.technical_skills, 35) / 35) * 100}%` : '0%',
+                                      transitionDelay: '0.2s'
+                                    }}
+                                  />
+                                </div>
                               </div>
-                              {suggestion.title && (
-                                <h4 className="text-sm font-semibold text-white drop-shadow mb-1">
-                                  {suggestion.title}
-                                </h4>
-                              )}
-                              <p className="text-xs leading-relaxed text-white/90 drop-shadow break-words">
-                                {suggestion.suggestion}
-                              </p>
+
+                              {/* Expérience */}
+                              <div style={{ animationDelay: '0.2s' }} className="animate-scale-in">
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg">💼</span>
+                                    <span className="text-xs font-medium text-white">{labels.experience}</span>
+                                  </div>
+                                  <span className="text-xs font-bold text-white">
+                                    {normalizeScore(scoreBreakdown.experience, 30)}/30
+                                  </span>
+                                </div>
+                                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                                  <div
+                                    className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full transition-all duration-1000 ease-out"
+                                    style={{
+                                      width: isAnimationReady ? `${(normalizeScore(scoreBreakdown.experience, 30) / 30) * 100}%` : '0%',
+                                      transitionDelay: '0.3s'
+                                    }}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Formation */}
+                              <div style={{ animationDelay: '0.3s' }} className="animate-scale-in">
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg">🎓</span>
+                                    <span className="text-xs font-medium text-white">{labels.education}</span>
+                                  </div>
+                                  <span className="text-xs font-bold text-white">
+                                    {normalizeScore(scoreBreakdown.education, 20)}/20
+                                  </span>
+                                </div>
+                                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                                  <div
+                                    className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-1000 ease-out"
+                                    style={{
+                                      width: isAnimationReady ? `${(normalizeScore(scoreBreakdown.education, 20) / 20) * 100}%` : '0%',
+                                      transitionDelay: '0.4s'
+                                    }}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Soft skills */}
+                              <div style={{ animationDelay: '0.4s' }} className="animate-scale-in">
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg">💬</span>
+                                    <span className="text-xs font-medium text-white">{labels.softSkills}</span>
+                                  </div>
+                                  <span className="text-xs font-bold text-white">
+                                    {normalizeScore(scoreBreakdown.soft_skills_languages || scoreBreakdown.soft_skills, 15)}/15
+                                  </span>
+                                </div>
+                                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                                  <div
+                                    className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full transition-all duration-1000 ease-out"
+                                    style={{
+                                      width: isAnimationReady ? `${(normalizeScore(scoreBreakdown.soft_skills_languages || scoreBreakdown.soft_skills, 15) / 15) * 100}%` : '0%',
+                                      transitionDelay: '0.5s'
+                                    }}
+                                  />
+                                </div>
+                              </div>
                             </div>
-                          ))}
-                        </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* COLONNE DROITE : Suggestions */}
+                      <div className="animate-slide-in-right">
+                        {/* Suggestions d'amélioration */}
+                        {suggestions.length > 0 && (
+                          <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                            <h3 className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-4 flex items-center gap-2">
+                              <span>💡</span>
+                              {labels.suggestions}
+                            </h3>
+                            <div className="space-y-2">
+                              {suggestions.map((suggestion, index) => (
+                                <div
+                                  key={index}
+                                  style={{ animationDelay: `${index * 0.1}s` }}
+                                  className={`
+                                    p-3 rounded-xl border-l-4 transition-all duration-300 hover:-translate-y-0.5
+                                    ${suggestion.priority?.toLowerCase() === 'high'
+                                      ? 'bg-red-500/10 border-red-500 hover:bg-red-500/20'
+                                      : suggestion.priority?.toLowerCase() === 'medium'
+                                      ? 'bg-yellow-500/10 border-yellow-500 hover:bg-yellow-500/20'
+                                      : 'bg-green-500/10 border-green-500 hover:bg-green-500/20'
+                                    }
+                                    animate-scale-in
+                                  `}
+                                >
+                                  <div className="flex items-start justify-between mb-1.5 gap-2">
+                                    <span className={`
+                                      inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full whitespace-nowrap
+                                      ${suggestion.priority?.toLowerCase() === 'high'
+                                        ? 'bg-red-500/30 text-white animate-pulse'
+                                        : suggestion.priority?.toLowerCase() === 'medium'
+                                        ? 'bg-yellow-500/30 text-white'
+                                        : 'bg-green-500/30 text-white'
+                                      }
+                                    `}>
+                                      {suggestion.priority?.toLowerCase() === 'high' ? '🔥' :
+                                       suggestion.priority?.toLowerCase() === 'medium' ? '⚡' : '✨'}
+                                      {labels[suggestion.priority?.toLowerCase()] || suggestion.priority}
+                                    </span>
+                                    {suggestion.impact && (
+                                      <span className="text-[10px] font-semibold text-white whitespace-nowrap bg-white/10 px-2 py-0.5 rounded-full">
+                                        {suggestion.impact}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {suggestion.title && (
+                                    <h4 className="text-sm font-semibold text-white mb-1">
+                                      {suggestion.title}
+                                    </h4>
+                                  )}
+                                  <p className="text-xs leading-relaxed text-white/80 break-words">
+                                    {suggestion.suggestion}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Section compétences en bas - 2 colonnes */}
+                    {(missingSkills.length > 0 || matchingSkills.length > 0) && (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Compétences manquantes (bas gauche) */}
+                        {missingSkills.length > 0 && (
+                          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 animate-scale-in">
+                            <h3 className="text-xs font-semibold text-red-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                              <span>❌</span>
+                              {labels.missingSkills}
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {missingSkills.map((skill, index) => (
+                                <span
+                                  key={index}
+                                  style={{ animationDelay: `${index * 0.05}s` }}
+                                  className="
+                                    px-3 py-1 bg-red-500/20 text-white
+                                    rounded-full text-xs font-medium border border-red-400/30
+                                    hover:scale-105 hover:bg-red-500/30 transition-all duration-200
+                                    animate-scale-in
+                                  "
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Compétences correspondantes (bas droite) */}
+                        {matchingSkills.length > 0 && (
+                          <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-6 animate-scale-in">
+                            <h3 className="text-xs font-semibold text-green-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                              <span>✅</span>
+                              {labels.matchingSkills}
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {matchingSkills.map((skill, index) => (
+                                <span
+                                  key={index}
+                                  style={{ animationDelay: `${index * 0.05}s` }}
+                                  className="
+                                    px-3 py-1 bg-green-500/20 text-white
+                                    rounded-full text-xs font-medium border border-green-400/30
+                                    hover:scale-105 hover:bg-green-500/30 transition-all duration-200
+                                    animate-scale-in inline-flex items-center gap-1
+                                  "
+                                >
+                                  <span className="text-green-300">✓</span>
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
-                </div>
-
-              {/* Section compétences en bas - 2 colonnes */}
-              {(missingSkills.length > 0 || matchingSkills.length > 0) && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                  {/* Compétences manquantes (bas gauche) */}
-                  {missingSkills.length > 0 && (
-                    <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 shadow-lg border-2 border-white/30 animate-scale-in gpu-accelerate">
-                      <h3 className="text-xs font-semibold text-red-400 uppercase tracking-wide mb-3 flex items-center gap-2 drop-shadow">
-                        <span>❌</span>
-                        {labels.missingSkills}
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {missingSkills.map((skill, index) => (
-                          <span
-                            key={index}
-                            style={{ animationDelay: `${index * 0.05}s` }}
-                            className="
-                              px-3 py-1 bg-red-500/30 text-white drop-shadow
-                              rounded-full text-xs font-medium border-2 border-red-400/50
-                              hover:shadow-md hover:scale-105 hover:bg-red-500/40 transition-all duration-200
-                              animate-scale-in backdrop-blur-sm ios-blur-light
-                            "
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Compétences correspondantes (bas droite) */}
-                  {matchingSkills.length > 0 && (
-                    <div className="bg-white/15 backdrop-blur-md rounded-2xl p-6 shadow-lg border-2 border-white/30 animate-scale-in gpu-accelerate">
-                      <h3 className="text-xs font-semibold text-green-400 uppercase tracking-wide mb-3 flex items-center gap-2 drop-shadow">
-                        <span>✅</span>
-                        {labels.matchingSkills}
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {matchingSkills.map((skill, index) => (
-                          <span
-                            key={index}
-                            style={{ animationDelay: `${index * 0.05}s` }}
-                            className="
-                              px-3 py-1 bg-green-500/30 text-white drop-shadow
-                              rounded-full text-xs font-medium border-2 border-green-400/50
-                              hover:shadow-md hover:scale-105 hover:bg-green-500/40 transition-all duration-200
-                              animate-scale-in inline-flex items-center gap-1 backdrop-blur-sm
-                            "
-                          >
-                            <span className="text-green-300">✓</span>
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-              </>
-            )}
-
-            {/* Message si aucune donnée */}
-            {!loading && !error && cvData && !cvData.matchScore && suggestions.length === 0 && (
-              <div className="text-center py-12">
-                <div className="text-white/40 text-5xl mb-4">📊</div>
-                <div className="text-white/70 text-sm font-medium drop-shadow">{labels.noData}</div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Boutons d'action avec design amélioré */}
-        <div className="mt-6 pt-4 border-t border-white/20">
-          <div className="flex justify-center items-center gap-3 flex-wrap">
-            {/* Bouton amélioration automatique */}
-            {suggestions.length > 0 && (
-              <>
-                {!canOptimize ? (
-                  // Amélioration ou calcul en cours
-                  <button
-                    disabled
-                    className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-white/20 backdrop-blur-sm text-white/60 cursor-not-allowed animate-pulse inline-flex items-center gap-2 border-2 border-white/30"
-                  >
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    {cvData?.optimiseStatus === 'inprogress'
-                      ? labels.improvementInProgress
-                      : labels.calculatingScore}
-                  </button>
-                ) : (
-                  // Bouton actif avec animation
-                  <button
-                    onClick={handleImprove}
-                    className="
-                      group px-4 py-2.5 rounded-xl text-sm font-semibold
-                      bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600
-                      text-white shadow-lg hover:shadow-xl border-2 border-blue-400/50
-                      transform hover:scale-105 active:scale-95
-                      transition-all duration-200
-                      relative overflow-hidden
-                    "
-                  >
-                    <span className="absolute inset-0 shimmer-bg opacity-30" />
-                    <span className="relative drop-shadow">{labels.autoImprove}</span>
-                  </button>
+                  </>
                 )}
-              </>
-            )}
 
-            {/* Bouton fermer avec hover effect */}
-            <button
-              onClick={() => setIsOpen(false)}
-              className="
-                px-4 py-2.5 rounded-xl text-sm font-semibold
-                bg-white/20 backdrop-blur-sm text-white drop-shadow
-                border-2 border-white/40
-                hover:bg-white/30 hover:border-white/60
-                transform hover:scale-105 active:scale-95
-                transition-all duration-200
-              "
-            >
-              {labels.close}
-            </button>
+                {/* Message si aucune donnée */}
+                {!loading && !error && cvData && !cvData.matchScore && suggestions.length === 0 && (
+                  <div className="text-center py-12">
+                    <div className="text-white/40 text-5xl mb-4">📊</div>
+                    <div className="text-white/70 text-sm font-medium">{labels.noData}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer avec divider */}
+            <div className="flex-shrink-0">
+              <div className="border-t border-white/10" />
+              <div className="flex justify-center items-center gap-3 p-4 md:p-6">
+                {/* Bouton amélioration automatique */}
+                {suggestions.length > 0 && (
+                  <>
+                    {!canOptimize ? (
+                      // Amélioration ou calcul en cours
+                      <button
+                        disabled
+                        className="px-6 py-2.5 rounded-lg text-sm font-semibold bg-white/10 text-white/60 cursor-not-allowed animate-pulse inline-flex items-center gap-2"
+                      >
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        {cvData?.optimiseStatus === 'inprogress'
+                          ? labels.improvementInProgress
+                          : labels.calculatingScore}
+                      </button>
+                    ) : (
+                      // Bouton actif
+                      <button
+                        onClick={handleImprove}
+                        className="
+                          px-6 py-2.5 rounded-lg text-sm font-semibold
+                          bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600
+                          text-white hover:shadow-lg
+                          transition-all duration-200
+                        "
+                      >
+                        {labels.autoImprove}
+                      </button>
+                    )}
+                  </>
+                )}
+
+                {/* Bouton fermer */}
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="
+                    px-4 py-2.5 text-sm
+                    text-slate-400 hover:text-white
+                    transition-colors
+                  "
+                >
+                  {labels.close}
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      </Modal>
+        </div>,
+        document.body
+      )}
     </>
   );
 }
