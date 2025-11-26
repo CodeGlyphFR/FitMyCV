@@ -919,6 +919,30 @@ export default function OnboardingOrchestrator() {
         });
       }, ONBOARDING_TIMINGS.MODAL_ANIMATION_DELAY);
     }
+
+    // Étape 2 : Ouvrir le panel de génération IA même si fermé par X
+    if (currentStep === 2) {
+      setTimeout(() => {
+        emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_GENERATOR);
+        onboardingLogger.log('[Onboarding] Step 2 : Event émis pour ouverture panel (fermeture X)');
+      }, ONBOARDING_TIMINGS.MODAL_ANIMATION_DELAY);
+    }
+
+    // Étape 6 : Ouvrir le panel d'optimisation même si fermé par X
+    if (currentStep === 6) {
+      setTimeout(() => {
+        emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_OPTIMIZER);
+        onboardingLogger.log('[Onboarding] Step 6 : Event émis pour ouverture panel (fermeture X)');
+      }, ONBOARDING_TIMINGS.MODAL_ANIMATION_DELAY);
+    }
+
+    // Étape 8 : Ouvrir le modal d'export même si fermé par X
+    if (currentStep === 8) {
+      setTimeout(() => {
+        emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_EXPORT);
+        onboardingLogger.log('[Onboarding] Step 8 : Event émis pour ouverture export (fermeture X)');
+      }, ONBOARDING_TIMINGS.MODAL_ANIMATION_DELAY);
+    }
   };
 
   const handleModalNext = () => {

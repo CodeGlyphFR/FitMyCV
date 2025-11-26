@@ -335,7 +335,7 @@ App.jsx
   open: boolean,              // Affichage modal
   onComplete: () => void,     // Clic "Compris" (dernier screen)
   onSkip: () => void,         // Clic "Passer"
-  onClose: () => void         // Clic X (fermeture sans complétion)
+  onClose: () => void         // Clic X (ouvre feature mais sans persister complétion DB)
 }
 ```
 

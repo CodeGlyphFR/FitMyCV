@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChevronRight, X, Pencil } from 'lucide-react';
@@ -59,6 +59,7 @@ export default function OnboardingModal({
 }) {
   const [direction, setDirection] = useState(0);
   const shouldReduceMotion = useReducedMotion();
+  const isDraggingRef = useRef(false);
 
   // Handlers boutons (useCallback pour éviter stale closures)
   const handleNext = useCallback(() => {
@@ -130,6 +131,9 @@ export default function OnboardingModal({
 
   // Gestion clic backdrop
   const handleBackdropClick = (e) => {
+    // Ignorer si on vient de faire un drag (évite la fermeture accidentelle)
+    if (isDraggingRef.current) return;
+
     if (e.target === e.currentTarget && !disableBackdropClick && onClose) {
       onClose();
     }
@@ -152,6 +156,10 @@ export default function OnboardingModal({
   }, [currentScreen, onJumpTo]);
 
   // Handler mobile swipe/drag
+  const handleDragStart = () => {
+    isDraggingRef.current = true;
+  };
+
   const handleDragEnd = (e, { offset, velocity }) => {
     const swipe = calculateSwipePower(offset.x, velocity.x);
 
@@ -160,6 +168,11 @@ export default function OnboardingModal({
     } else if (swipe > SWIPE_CONFIG.confidenceThreshold) {
       handlePrev();
     }
+
+    // Reset le flag après un court délai pour éviter les faux clics
+    setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 100);
   };
 
   // Classes de taille (unifié max-w-2xl comme WelcomeModal)
@@ -279,6 +292,7 @@ export default function OnboardingModal({
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={1}
+              onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
               className="absolute inset-0 p-4 md:p-6 pb-14 md:pb-16 cursor-grab active:cursor-grabbing"
             >
