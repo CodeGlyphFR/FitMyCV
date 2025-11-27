@@ -72,6 +72,14 @@ const ComingSoonItem = ({ emoji, title, description }) => (
   </div>
 );
 
+// Mapping des clés features vers les icônes (identiques à TopBar)
+const FEATURE_ICONS = {
+  import: '/icons/import.png',
+  create: '/icons/add.png',
+  generate: '/icons/openai-symbol.png',
+  delete: '/icons/delete.png',
+};
+
 /**
  * Factory function to create translated completion screens
  * @param {Function} t - Translation function from useLanguage
@@ -362,10 +370,10 @@ export default function OnboardingCompletionModal({
                       {currentScreenData.description}
                     </p>
                     <div className="space-y-2">
-                      {currentScreenData.features?.map((feature, idx) => (
+                      {Object.entries(currentScreenData.features || {}).map(([key, feature], idx) => (
                         <FeatureBlock
                           key={idx}
-                          icon={<img src={feature.icon} alt="" className="h-5 w-5" />}
+                          icon={<img src={FEATURE_ICONS[key]} alt="" className="h-5 w-5" />}
                           title={feature.title}
                           description={feature.description}
                         />
