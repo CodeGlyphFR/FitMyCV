@@ -85,7 +85,7 @@ export default function Summary(props){
         <div className="space-y-2">
           <FormRow label={t("cvSections.summary")}>
             <textarea
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-[10px] font-normal text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/50 focus:outline-none leading-relaxed"
+              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none leading-relaxed"
               rows={8}
               value={text}
               onChange={e=>setText(e.target.value)}
@@ -94,13 +94,13 @@ export default function Summary(props){
           <div className="flex justify-end gap-2">
             <button
               onClick={()=>setOpen(false)}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs font-medium text-white hover:bg-white/30 transition-all duration-200"
+              className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors"
             >
               {t("common.cancel")}
             </button>
             <button
               onClick={save}
-              className="rounded-lg border border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-2 py-1 text-xs font-medium text-white hover:bg-emerald-500/40 transition-all duration-200"
+              className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors"
             >
               {t("common.save")}
             </button>

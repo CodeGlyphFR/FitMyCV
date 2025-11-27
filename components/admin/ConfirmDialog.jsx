@@ -66,7 +66,7 @@ export function ConfirmDialog({ dialog, onClose }) {
       />
 
       {/* Dialog */}
-      <div className="relative bg-gray-900/95 backdrop-blur-xl ios-optimized-blur gpu-accelerate border border-white/20 rounded-lg shadow-2xl max-w-md w-full p-6 animate-scale-in">
+      <div className="relative bg-[rgb(2,6,23)] border border-white/20 rounded-lg shadow-2xl max-w-md w-full p-6 animate-scale-in">
         {/* Icon */}
         <div className="text-4xl mb-4 text-center">{style.icon}</div>
 
@@ -86,13 +86,13 @@ export function ConfirmDialog({ dialog, onClose }) {
         <div className="flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition"
+            className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors"
           >
             {dialog.cancelText || 'Annuler'}
           </button>
           <button
             onClick={handleConfirm}
-            className={`px-4 py-2 ${style.confirmBg} ${style.confirmText} rounded-lg text-sm font-medium transition`}
+            className={`px-6 py-2.5 ${style.confirmBg} ${style.confirmText} rounded-lg text-sm font-semibold transition-colors`}
           >
             {dialog.confirmText || 'Confirmer'}
           </button>
