@@ -52,6 +52,7 @@ export default function OnboardingOrchestrator() {
     isLoading,
     completedSteps,
     onboardingState,
+    hasCompleted,
     markStepComplete,
     goToNextStep,
     completeOnboarding,
@@ -69,6 +70,9 @@ export default function OnboardingOrchestrator() {
 
   // État pour le modal de complétion (affiché après step 8)
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+
+  // Flag pour bloquer la réouverture du modal pendant la completion (évite race condition async)
+  const [isCompletingOnboarding, setIsCompletingOnboarding] = useState(false);
 
   // État pour gérer la fermeture individuelle des tooltips
   const [tooltipClosed, setTooltipClosed] = useState(false);
@@ -862,12 +866,16 @@ export default function OnboardingOrchestrator() {
   // ========== STEP 9 : OUVRIR LE MODAL DE COMPLETION AU CHARGEMENT ==========
   // Si currentStep === 9, c'est que l'utilisateur a complété le step 8 mais
   // n'a pas encore vu/fermé le modal de completion (ex: refresh de page)
+  // IMPORTANT: Ne réouvrir que si :
+  // 1. hasCompleted est false (pas déjà complété en DB)
+  // 2. isCompletingOnboarding est false (pas en cours de completion async)
+  // Ceci évite la race condition où le modal se réouvre pendant que completeOnboarding() est en cours
   useEffect(() => {
-    if (currentStep === 9 && !showCompletionModal) {
+    if (currentStep === 9 && !showCompletionModal && !hasCompleted && !isCompletingOnboarding) {
       onboardingLogger.log('[Onboarding] Step 9 : Ouverture du modal de completion (reprise après refresh)');
       setShowCompletionModal(true);
     }
-  }, [currentStep, showCompletionModal]);
+  }, [currentStep, showCompletionModal, hasCompleted, isCompletingOnboarding]);
 
   /**
    * Handler pour la fermeture du modal de complétion
@@ -879,6 +887,9 @@ export default function OnboardingOrchestrator() {
    *                                      False si fermé par X, Escape, ou backdrop
    */
   const handleCompletionModalClose = async ({ completed = false } = {}) => {
+    // Bloquer immédiatement toute réouverture du modal (AVANT l'appel API async)
+    // Ceci évite la race condition où l'effet step 9 réouvre le modal
+    setIsCompletingOnboarding(true);
     setShowCompletionModal(false);
 
     // Ne marquer le modal comme complété que si terminé normalement
@@ -894,6 +905,7 @@ export default function OnboardingOrchestrator() {
 
     // Toujours marquer l'onboarding comme complété (hasCompleted = true)
     await completeOnboarding();
+    // Pas besoin de reset isCompletingOnboarding car le composant sera démonté (isActive = false)
   };
 
   // Ne rien afficher si pas actif, en cours de chargement, SAUF si le modal de complétion doit être affiché
