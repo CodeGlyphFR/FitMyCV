@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Search, Upload, FileText, X } from 'lucide-react';
+import { Check, X, PartyPopper } from 'lucide-react';
+import TipBox from '@/components/ui/TipBox';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -29,27 +30,62 @@ import {
  * - onComplete: function - Callback quand le modal est complété/fermé
  */
 
+// Composants inline pour les écrans du carousel
+const ChecklistItem = ({ children }) => (
+  <div className="flex items-center gap-3 py-1">
+    <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+      <Check className="w-3 h-3 text-emerald-400" />
+    </div>
+    <span className="text-white/80 text-sm">{children}</span>
+  </div>
+);
+
+const HighlightBox = ({ emoji, children }) => (
+  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+    <div className="flex items-start gap-3">
+      <span className="text-xl flex-shrink-0">{emoji}</span>
+      <p className="text-white/90 text-sm font-medium">{children}</p>
+    </div>
+  </div>
+);
+
+const FeatureBlock = ({ icon, title, description }) => (
+  <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+    <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+      {icon}
+    </div>
+    <div className="flex-1 min-w-0">
+      <h4 className="text-white font-medium text-sm mb-0.5">{title}</h4>
+      <p className="text-white/60 text-xs leading-relaxed">{description}</p>
+    </div>
+  </div>
+);
+
+const ComingSoonItem = ({ emoji, title, description }) => (
+  <div className="flex items-start gap-3 py-2">
+    <span className="text-lg flex-shrink-0">{emoji}</span>
+    <div className="flex-1 min-w-0">
+      <span className="text-white font-medium text-sm">{title}</span>
+      <span className="text-white/60 text-sm"> — {description}</span>
+    </div>
+  </div>
+);
+
 const COMPLETION_SCREENS = [
   {
-    icon: Search,
-    title: 'Générez des CV par métier',
-    description:
-      'Utilisez la barre de recherche pour générer instantanément un template de CV adapté à n\'importe quel poste. Tapez simplement le titre du poste (ex: "Développeur React", "Chef de projet") et laissez l\'IA créer un CV professionnel pour vous.',
-    emoji: '🔍',
+    id: 'congratulations',
+    title: 'Félicitations, vous êtes prêt !',
+    type: 'congratulations',
   },
   {
-    icon: Upload,
-    title: 'Importez vos CV existants',
-    description:
-      'Vous avez déjà un CV ? Importez-le au format PDF ! L\'IA analysera son contenu et l\'optimisera automatiquement. Vous pourrez ensuite le personnaliser et l\'adapter à chaque offre d\'emploi.',
-    emoji: '📤',
+    id: 'features',
+    title: 'Tout ce que vous pouvez faire maintenant',
+    type: 'features',
   },
   {
-    icon: FileText,
-    title: 'Créez un CV de zéro',
-    description:
-      'Préférez partir d\'une page blanche ? Créez un CV manuellement et ajoutez vos expériences, formations et compétences section par section. L\'IA vous assistera pour optimiser chaque élément.',
-    emoji: '📝',
+    id: 'coming-soon',
+    title: 'Bientôt dans FitMyCV',
+    type: 'coming-soon',
   },
 ];
 
@@ -181,7 +217,6 @@ export default function OnboardingCompletionModal({
   if (!open || COMPLETION_SCREENS.length === 0) return null;
 
   const currentScreenData = COMPLETION_SCREENS[currentScreen];
-  const IconComponent = currentScreenData?.icon;
 
   const modalContent = (
     <div
@@ -209,7 +244,7 @@ export default function OnboardingCompletionModal({
           <div className="flex items-center justify-between p-4 md:p-6">
             <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                {IconComponent && <IconComponent className="w-4 h-4 md:w-5 md:h-5 text-emerald-400" />}
+                <PartyPopper className="w-4 h-4 md:w-5 md:h-5 text-emerald-400" />
               </div>
               <div className="flex-1 min-w-0">
                 <h2
@@ -229,9 +264,8 @@ export default function OnboardingCompletionModal({
               </div>
             </div>
 
-            {/* Boutons alignés à droite */}
+            {/* Bouton fermer */}
             <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-              {/* X Button - Complete onboarding (same effect as "Commencer!" button) */}
               <button
                 onClick={onComplete}
                 className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
@@ -262,7 +296,7 @@ export default function OnboardingCompletionModal({
         </div>
 
         {/* Carousel Container */}
-        <div className="relative min-h-[470px] md:min-h-[500px] overflow-hidden" role="tabpanel" aria-live="polite">
+        <div className="relative overflow-hidden" role="tabpanel" aria-live="polite">
           <AnimatePresence initial={true} custom={direction} mode="wait">
             <motion.div
               key={currentScreen}
@@ -280,15 +314,76 @@ export default function OnboardingCompletionModal({
               dragElastic={1}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
-              className="absolute inset-0 p-4 md:p-6 md:pb-16 cursor-grab active:cursor-grabbing"
+              className="p-4 md:p-6 md:pb-16 cursor-grab active:cursor-grabbing"
             >
-              {/* Mode texte seul - aligné gauche comme WelcomeModal */}
-              <div className="flex flex-col h-full">
-                <div className="flex-1">
-                  <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
-                    {currentScreenData?.description}
-                  </p>
-                </div>
+              {/* Contenu conditionnel par type d'écran */}
+              <div className="flex flex-col">
+                {currentScreenData?.type === 'congratulations' && (
+                  <div className="space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      Vous maîtrisez maintenant FitMyCV. Créez des CV sur-mesure, calculez votre score de match, optimisez en un clic et exportez des PDF professionnels.
+                    </p>
+                    <div className="space-y-1 ml-4">
+                      <ChecklistItem>Mode édition maîtrisé</ChecklistItem>
+                      <ChecklistItem>Génération IA découverte</ChecklistItem>
+                      <ChecklistItem>Score et optimisation compris</ChecklistItem>
+                      <ChecklistItem>Export PDF prêt à l&apos;emploi</ChecklistItem>
+                    </div>
+                    <HighlightBox emoji="🚀">
+                      Il est temps de décrocher votre prochain entretien !
+                    </HighlightBox>
+                  </div>
+                )}
+
+                {currentScreenData?.type === 'features' && (
+                  <div className="space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      FitMyCV vous offre plusieurs façons de créer et gérer vos CV.
+                    </p>
+                    <div className="space-y-2">
+                      <FeatureBlock
+                        icon={<img src="/icons/import.png" alt="" className="h-5 w-5" />}
+                        title="Importer un CV existant"
+                        description="Ajoutez vos CV en PDF ou Word, l'IA les adapte au format optimisé"
+                      />
+                      <FeatureBlock
+                        icon={<img src="/icons/add.png" alt="" className="h-5 w-5" />}
+                        title="Créer un CV vierge"
+                        description="Partez de zéro et construisez votre CV section par section"
+                      />
+                      <FeatureBlock
+                        icon={<img src="/icons/search.png" alt="" className="h-5 w-5" />}
+                        title="Générer un CV modèle"
+                        description="Tapez n'importe quel titre de poste, l'IA génère un CV fictif pour vous inspirer"
+                      />
+                      <FeatureBlock
+                        icon={<img src="/icons/delete.png" alt="" className="h-5 w-5" />}
+                        title="Supprimer un CV"
+                        description="Faites le ménage dans vos CV en un clic"
+                      />
+                    </div>
+                    <TipBox>
+                      Astuce : La barre de recherche fonctionne aussi avec des titres fictifs pour explorer de nouvelles carrières !
+                    </TipBox>
+                  </div>
+                )}
+
+                {currentScreenData?.type === 'coming-soon' && (
+                  <div className="space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      On ne s&apos;arrête pas là. Voici ce qui arrive prochainement pour vous aider à décrocher le job de vos rêves.
+                    </p>
+                    <div className="space-y-1">
+                      <ComingSoonItem emoji="🔍" title="Analyse d'offres" description="Comprenez exactement ce que cherche le recruteur" />
+                      <ComingSoonItem emoji="✉️" title="Lettres de motivation" description="L'IA les rédige pour vous" />
+                      <ComingSoonItem emoji="🎤" title="Préparation RH" description="Simulez vos entretiens" />
+                      <ComingSoonItem emoji="📋" title="Suivi candidatures" description="Tout au même endroit" />
+                    </div>
+                    <TipBox>
+                      Une idée de fonctionnalité ? Dites-le nous !
+                    </TipBox>
+                  </div>
+                )}
               </div>
             </motion.div>
           </AnimatePresence>
