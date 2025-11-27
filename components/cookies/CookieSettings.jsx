@@ -135,7 +135,7 @@ export default function CookieSettings() {
           className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-white mb-4 transition-colors drop-shadow"
         >
           <span>←</span>
-          <span>Retour</span>
+          <span>{t('cookies.preferences.back')}</span>
         </button>
 
         <h1 className="text-3xl font-bold mb-6 text-white drop-shadow-lg">

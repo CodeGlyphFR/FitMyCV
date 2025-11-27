@@ -6,11 +6,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import PasswordStrengthIndicator from "@/components/auth/PasswordStrengthIndicator";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function AccountSettings({ user, isOAuthUser = false, oauthProviders = [] }){
   const router = useRouter();
   const searchParams = useSearchParams();
   const { resetOnboarding } = useOnboarding();
+  const { t, language } = useLanguage();
 
   const [name, setName] = React.useState(user?.name || "");
   const [email, setEmail] = React.useState(user?.email || "");
@@ -26,11 +28,11 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
   // Vérifier si l'email a été changé avec succès
   React.useEffect(() => {
     if (searchParams.get('email-changed') === 'true') {
-      setProfileMessage("Votre adresse email a été modifiée avec succès !");
+      setProfileMessage(t('account.profile.emailSuccess'));
       // Mettre à jour l'email affiché
       setEmail(user?.email || "");
     }
-  }, [searchParams, user?.email]);
+  }, [searchParams, user?.email, t]);
 
   // Fetch onboarding completion date
   React.useEffect(() => {
@@ -69,7 +71,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
     setProfileError("");
 
     if (!name && !email){
-      setProfileError("Aucun changement détecté.");
+      setProfileError(t('account.profile.noChanges'));
       return;
     }
 
@@ -82,19 +84,19 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok){
-        setProfileError(payload?.error || "Impossible de mettre à jour le profil.");
+        setProfileError(payload?.error || t('account.profile.errors.updateFailed'));
         return;
       }
 
       // Gérer le message de succès en fonction de la réponse
       if (payload?.emailChangeRequested) {
-        setProfileMessage(payload?.message || "Un email de vérification a été envoyé à votre nouvelle adresse.");
+        setProfileMessage(payload?.message || t('account.profile.success'));
       } else {
-        setProfileMessage(payload?.message || "Profil mis à jour.");
+        setProfileMessage(payload?.message || t('account.profile.success'));
       }
     } catch (error) {
       console.error(error);
-      setProfileError("Erreur inattendue.");
+      setProfileError(t('account.profile.errors.unexpected'));
     } finally {
       setProfileLoading(false);
     }
@@ -106,15 +108,15 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
     setPasswordError("");
 
     if (!newPassword){
-      setPasswordError("Renseignez un nouveau mot de passe.");
+      setPasswordError(t('account.security.errors.newPasswordRequired'));
       return;
     }
     if (newPassword.length < 8){
-      setPasswordError("Le mot de passe doit contenir au moins 8 caractères.");
+      setPasswordError(t('account.security.errors.minLength'));
       return;
     }
     if (newPassword !== confirmPassword){
-      setPasswordError("Les mots de passe ne correspondent pas.");
+      setPasswordError(t('account.security.errors.mismatch'));
       return;
     }
 
@@ -127,16 +129,16 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok){
-        setPasswordError(payload?.error || "Impossible de mettre à jour le mot de passe.");
+        setPasswordError(payload?.error || t('account.security.errors.updateFailed'));
         return;
       }
-      setPasswordMessage("Mot de passe mis à jour.");
+      setPasswordMessage(t('account.security.success'));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
       console.error(error);
-      setPasswordError("Erreur inattendue.");
+      setPasswordError(t('account.security.errors.unexpected'));
     } finally {
       setPasswordLoading(false);
     }
@@ -147,7 +149,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
     setDeleteError("");
 
     if (!deletePassword){
-      setDeleteError("Veuillez saisir votre mot de passe pour confirmer la suppression.");
+      setDeleteError(t('account.deleteAccount.modal.errors.passwordRequired'));
       return;
     }
 
@@ -165,7 +167,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok){
-        setDeleteError(payload?.error || "Suppression impossible. Réessayez.");
+        setDeleteError(payload?.error || t('account.deleteAccount.modal.errors.deleteFailed'));
         setShowDeleteModal(false);
         setDeleteLoading(false);
         return;
@@ -174,7 +176,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       await signOut({ callbackUrl: "/auth?mode=login" });
     } catch (error) {
       console.error(error);
-      setDeleteError("Erreur inattendue lors de la suppression du compte.");
+      setDeleteError(t('account.deleteAccount.modal.errors.unexpected'));
       setShowDeleteModal(false);
       setDeleteLoading(false);
     }
@@ -189,7 +191,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       await resetOnboarding();
 
       // Show success message briefly
-      setOnboardingMessage("Le tutoriel a été réinitialisé. Redirection...");
+      setOnboardingMessage(t('account.tutorial.success'));
 
       // Redirect to CVs page where onboarding will auto-restart (currentStep === 0)
       // Workflow: 500ms success message → redirect → LoadingScreen → 3s delay → WelcomeModal
@@ -200,7 +202,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       console.error('[AccountSettings] Reset onboarding error:', error);
 
       // Use separate error state (follows pattern from updateProfile, updatePassword)
-      const errorMessage = error?.message || "Erreur lors de la réinitialisation du tutoriel.";
+      const errorMessage = error?.message || t('account.tutorial.errors.resetFailed');
       setOnboardingError(errorMessage);
       setOnboardingLoading(false);  // Reset loading if error
     }
@@ -210,31 +212,31 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
   return (
     <div className="space-y-8">
       <section className="rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-xl p-6 shadow-2xl">
-        <h2 className="text-lg font-semibold mb-4 text-emerald-300 drop-shadow">Informations du profil</h2>
+        <h2 className="text-lg font-semibold mb-4 text-emerald-300 drop-shadow">{t('account.profile.title')}</h2>
         <form onSubmit={updateProfile} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Nom complet</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.profile.fullName')}</label>
             <input
               type="text"
               value={name}
               onChange={event => setName(event.target.value)}
               className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
-              placeholder="Prénom Nom"
+              placeholder={t('account.profile.fullNamePlaceholder')}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Adresse email</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.profile.email')}</label>
             <input
               type="email"
               value={email}
               onChange={event => setEmail(event.target.value)}
               className={`w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none ${isOAuthUser ? 'opacity-50 cursor-not-allowed' : ''}`}
-              placeholder="prenom@exemple.com"
+              placeholder={t('account.profile.emailPlaceholder')}
               disabled={isOAuthUser}
             />
             {isOAuthUser && (
               <p className="text-xs text-white/60 drop-shadow">
-                Votre email est lié à votre compte {oauthProviders.length > 0 ? oauthProviders.join(', ') : 'OAuth'} et ne peut pas être modifié ici.
+                {t('account.profile.emailDisabled', { provider: oauthProviders.length > 0 ? oauthProviders.join(', ') : 'OAuth' })}
               </p>
             )}
           </div>
@@ -245,16 +247,16 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
             disabled={profileLoading}
             className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500/40 transition-all duration-200 disabled:opacity-60 drop-shadow"
           >
-            {profileLoading ? "Enregistrement…" : "Enregistrer les modifications"}
+            {profileLoading ? t('account.profile.saving') : t('account.profile.saveButton')}
           </button>
         </form>
       </section>
 
       <section className="rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-xl p-6 shadow-2xl">
-        <h2 className="text-lg font-semibold mb-4 text-emerald-300 drop-shadow">Sécurité</h2>
+        <h2 className="text-lg font-semibold mb-4 text-emerald-300 drop-shadow">{t('account.security.title')}</h2>
         <form onSubmit={updatePassword} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Mot de passe actuel</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.security.currentPassword')}</label>
             <PasswordInput
               id="currentPassword"
               name="currentPassword"
@@ -264,10 +266,10 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
               placeholder="••••••••"
               autoComplete="current-password"
             />
-            <p className="text-xs text-white/60 drop-shadow">Laissez vide si vous n'avez jamais défini de mot de passe.</p>
+            <p className="text-xs text-white/60 drop-shadow">{t('account.security.currentPasswordHint')}</p>
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Nouveau mot de passe</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.security.newPassword')}</label>
             <PasswordInput
               id="newPassword"
               name="newPassword"
@@ -283,9 +285,9 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                 {/* Barre de progression */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-white/70 drop-shadow">Force du mot de passe</span>
+                    <span className="text-white/70 drop-shadow">{t('account.security.passwordStrength.label')}</span>
                     <span className={`font-medium ${getStrengthColor(newPassword)}`}>
-                      {getStrengthLabel(newPassword)}
+                      {getStrengthLabel(newPassword, t)}
                     </span>
                   </div>
                   <div className="h-1.5 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
@@ -298,33 +300,33 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
 
                 {/* Liste des règles */}
                 <div className="space-y-1.5">
-                  <p className="text-xs font-medium text-white/70 drop-shadow">Règles de sécurité</p>
+                  <p className="text-xs font-medium text-white/70 drop-shadow">{t('account.security.passwordRules.title')}</p>
                   <PasswordRule
                     valid={newPassword.length >= 12}
-                    text="Au moins 12 caractères"
+                    text={t('account.security.passwordRules.minLength')}
                   />
                   <PasswordRule
                     valid={/[A-Z]/.test(newPassword)}
-                    text="Au moins une majuscule"
+                    text={t('account.security.passwordRules.uppercase')}
                   />
                   <PasswordRule
                     valid={/[a-z]/.test(newPassword)}
-                    text="Au moins une minuscule"
+                    text={t('account.security.passwordRules.lowercase')}
                   />
                   <PasswordRule
                     valid={/[0-9]/.test(newPassword)}
-                    text="Au moins un chiffre"
+                    text={t('account.security.passwordRules.numbers')}
                   />
                   <PasswordRule
                     valid={/[!@#$%^&*(),.?":{}|<>_\-+=[\]\\';/~`]/.test(newPassword)}
-                    text="Au moins un caractère spécial"
+                    text={t('account.security.passwordRules.specialChars')}
                   />
                 </div>
               </div>
             )}
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Confirmation</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.security.confirmPassword')}</label>
             <PasswordInput
               id="confirmPassword"
               name="confirmPassword"
@@ -342,27 +344,25 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
             disabled={passwordLoading}
             className="rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-white/30 transition-all duration-200 disabled:opacity-60 drop-shadow"
           >
-            {passwordLoading ? "Mise à jour…" : "Mettre à jour le mot de passe"}
+            {passwordLoading ? t('account.security.updating') : t('account.security.updateButton')}
           </button>
         </form>
       </section>
 
       <section className="rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-xl p-6 shadow-2xl">
-        <h2 className="text-lg font-semibold mb-4 text-emerald-300 drop-shadow">Tutoriel d'intégration</h2>
+        <h2 className="text-lg font-semibold mb-4 text-emerald-300 drop-shadow">{t('account.tutorial.title')}</h2>
 
         {/* Afficher la date de complétion si disponible */}
         {onboardingCompletedAt && (
           <div className="rounded-lg border-2 border-emerald-400/30 bg-emerald-500/10 backdrop-blur-sm px-3 py-2 text-sm text-white/90 drop-shadow mb-4 flex items-center gap-2">
             <span className="text-emerald-400">✓</span>
             <span>
-              Tutoriel terminé le{' '}
-              {onboardingCompletedAt.toLocaleDateString('fr-FR', {
+              {onboardingCompletedAt.toLocaleDateString(language === 'en' ? 'en-US' : 'fr-FR', {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric',
               })}{' '}
-              à{' '}
-              {onboardingCompletedAt.toLocaleTimeString('fr-FR', {
+              {onboardingCompletedAt.toLocaleTimeString(language === 'en' ? 'en-US' : 'fr-FR', {
                 hour: '2-digit',
                 minute: '2-digit',
               })}
@@ -371,7 +371,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
         )}
 
         <p className="text-sm text-white/80 drop-shadow mb-4">
-          Relancez le guide de découverte de l'application si vous souhaitez revoir les fonctionnalités principales.
+          {t('account.tutorial.description')}
         </p>
         {onboardingError && (
           <div className="rounded-lg border-2 border-red-400/50 bg-red-500/20 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow mb-4">
@@ -388,18 +388,18 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
           disabled={onboardingLoading}
           className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500/40 transition-all duration-200 disabled:opacity-60 drop-shadow"
         >
-          {onboardingLoading ? "Réinitialisation..." : "Relancer le tutoriel"}
+          {onboardingLoading ? t('account.tutorial.resetting') : t('account.tutorial.resetButton')}
         </button>
       </section>
 
       <section className="rounded-2xl border-2 border-red-400/50 bg-red-500/20 backdrop-blur-xl p-6 shadow-2xl">
-        <h2 className="text-lg font-semibold mb-2 text-red-300 drop-shadow">Supprimer le compte</h2>
+        <h2 className="text-lg font-semibold mb-2 text-red-300 drop-shadow">{t('account.deleteAccount.title')}</h2>
         <p className="text-sm text-white drop-shadow mb-3">
-          ⚠️ Cette action est définitive et <strong>sans remboursement</strong>. Tous vos CV, crédits et données seront effacés. Votre abonnement sera immédiatement annulé et vos données bancaires seront supprimées. Tapez votre mot de passe pour continuer.
+          ⚠️ {t('account.deleteAccount.description')}
         </p>
         <form onSubmit={openDeleteModal} className="space-y-3">
           <div className="space-y-1">
-            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">Mot de passe</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.deleteAccount.passwordLabel')}</label>
             <PasswordInput
               id="deletePassword"
               name="deletePassword"
@@ -414,14 +414,14 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
             <div className="rounded-lg border-2 border-red-400/50 bg-red-500/30 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow">{deleteError}</div>
           ) : null}
           <div className="text-xs text-white/70 drop-shadow">
-            Tous vos CV (dossier utilisateur inclus) seront supprimés. Cette opération est irréversible. Si vous avez créé le compte via un fournisseur externe, définissez d'abord un mot de passe dans la section Sécurité.
+            {t('account.deleteAccount.passwordHint')}
           </div>
           <button
             type="submit"
             disabled={deleteLoading}
             className="rounded-lg border-2 border-red-400/50 bg-red-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-red-500/40 transition-all duration-200 disabled:opacity-60 drop-shadow"
           >
-            {deleteLoading ? "Suppression…" : "Supprimer mon compte"}
+            {deleteLoading ? t('account.deleteAccount.deleting') : t('account.deleteAccount.deleteButton')}
           </button>
         </form>
       </section>
@@ -437,34 +437,34 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-xl font-semibold text-red-300 drop-shadow mb-4">
-              ⚠️ Confirmer la suppression du compte
+              ⚠️ {t('account.deleteAccount.modal.title')}
             </h3>
 
             <div className="space-y-3 mb-6">
               <p className="text-sm text-white/90 drop-shadow">
-                Vous êtes sur le point de supprimer définitivement votre compte. Cette action est irréversible.
+                {t('account.deleteAccount.modal.description')}
               </p>
 
               <ul className="space-y-2 text-sm text-white/80">
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-0.5">•</span>
-                  <span><strong className="text-white">Aucun remboursement</strong> ne sera effectué</span>
+                  <span>{t('account.deleteAccount.modal.consequences.noRefund')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-0.5">•</span>
-                  <span>Vous perdrez <strong className="text-white">tous vos crédits restants</strong></span>
+                  <span>{t('account.deleteAccount.modal.consequences.loseCredits')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-0.5">•</span>
-                  <span>Votre <strong className="text-white">abonnement sera immédiatement annulé</strong></span>
+                  <span>{t('account.deleteAccount.modal.consequences.cancelSubscription')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-0.5">•</span>
-                  <span><strong className="text-white">Tous vos CV</strong> seront définitivement supprimés</span>
+                  <span>{t('account.deleteAccount.modal.consequences.deleteCvs')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-0.5">•</span>
-                  <span>Vos <strong className="text-white">données bancaires</strong> seront supprimées de nos serveurs</span>
+                  <span>{t('account.deleteAccount.modal.consequences.deleteBankData')}</span>
                 </li>
               </ul>
             </div>
@@ -480,7 +480,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                   disabled={deleteLoading}
                 />
                 <span className="text-sm text-white/80 group-hover:text-white transition-colors">
-                  J'ai compris que cette action est <strong className="text-red-300">irréversible</strong> et que je ne serai <strong className="text-red-300">pas remboursé</strong>
+                  {t('account.deleteAccount.modal.confirmCheckbox')}
                 </span>
               </label>
             </div>
@@ -492,14 +492,14 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                 disabled={deleteLoading}
                 className="flex-1 px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors disabled:opacity-50 font-medium"
               >
-                Annuler
+                {t('account.deleteAccount.modal.cancelButton')}
               </button>
               <button
                 onClick={confirmDeleteAccount}
                 disabled={deleteLoading || !acceptedDeleteTerms}
                 className="flex-1 px-4 py-2.5 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white transition-colors disabled:opacity-50 font-medium shadow-lg shadow-red-500/20"
               >
-                {deleteLoading ? "Suppression..." : "Supprimer définitivement"}
+                {deleteLoading ? t('account.deleteAccount.modal.deleting') : t('account.deleteAccount.modal.confirmButton')}
               </button>
             </div>
           </div>
@@ -527,21 +527,22 @@ function getStrengthInfo(password) {
 
   if (validRules === 5) {
     if (password.length >= 16) {
-      return { strength: "very_strong", label: "Très fort", color: "text-emerald-600", bgColor: "bg-emerald-600", width: "100%" };
+      return { strength: "veryStrong", color: "text-emerald-600", bgColor: "bg-emerald-600", width: "100%" };
     } else if (password.length >= 14) {
-      return { strength: "strong", label: "Fort", color: "text-green-500", bgColor: "bg-green-500", width: "80%" };
+      return { strength: "strong", color: "text-green-500", bgColor: "bg-green-500", width: "80%" };
     } else {
-      return { strength: "medium", label: "Moyen", color: "text-yellow-500", bgColor: "bg-yellow-500", width: "60%" };
+      return { strength: "medium", color: "text-yellow-500", bgColor: "bg-yellow-500", width: "60%" };
     }
   } else if (validRules >= 3) {
-    return { strength: "medium", label: "Moyen", color: "text-yellow-500", bgColor: "bg-yellow-500", width: "40%" };
+    return { strength: "medium", color: "text-yellow-500", bgColor: "bg-yellow-500", width: "40%" };
   }
 
-  return { strength: "weak", label: "Faible", color: "text-red-500", bgColor: "bg-red-500", width: "20%" };
+  return { strength: "weak", color: "text-red-500", bgColor: "bg-red-500", width: "20%" };
 }
 
-function getStrengthLabel(password) {
-  return getStrengthInfo(password).label;
+function getStrengthLabel(password, t) {
+  const info = getStrengthInfo(password);
+  return t(`account.security.passwordStrength.${info.strength}`);
 }
 
 function getStrengthColor(password) {
