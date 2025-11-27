@@ -193,7 +193,7 @@ export default function OnboardingModal({
       aria-labelledby="onboarding-modal-title"
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm pointer-events-none" />
+      <div className="absolute inset-0 bg-black/70 pointer-events-none" />
 
       {/* Modal */}
       <div
