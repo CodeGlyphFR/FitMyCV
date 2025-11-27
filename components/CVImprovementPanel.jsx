@@ -457,7 +457,7 @@ export default function CVImprovementPanel({ cvFile }) {
           {/* Modal Container */}
           <div
             ref={modalRef}
-            className="relative z-10 w-full max-w-4xl bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl overflow-hidden flex flex-col max-h-[calc(100vh-2rem)]"
+            className="relative z-10 w-full max-w-4xl bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl overflow-hidden flex flex-col max-h-[calc(100vh-9rem)]"
             onClick={(e) => e.stopPropagation()}
           >
             <style jsx>{`
