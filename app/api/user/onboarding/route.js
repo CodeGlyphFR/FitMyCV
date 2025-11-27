@@ -152,6 +152,21 @@ export async function PUT(request) {
 
     const currentState = user?.onboardingState || DEFAULT_ONBOARDING_STATE;
 
+    // Protection anti-régression multi-device
+    // Si le client tente de passer à un step inférieur à celui en base,
+    // c'est une désynchronisation → rejeter et forcer reload côté client
+    const currentStepInDB = currentState.currentStep || 0;
+    if (step < currentStepInDB) {
+      return NextResponse.json(
+        {
+          error: 'DESYNC',
+          message: 'Client désynchronisé - step inférieur à celui en base',
+          serverStep: currentStepInDB
+        },
+        { status: 409 }
+      );
+    }
+
     // Mettre à jour currentStep
     const isStartingOnboarding = step === 1 && currentState.currentStep === 0;
 
@@ -240,6 +255,21 @@ export async function PATCH(request) {
 
     // Normaliser avant de sauvegarder
     const normalizedState = normalizeOnboardingState(onboardingState);
+
+    // Protection anti-régression multi-device
+    // Récupérer l'état actuel en base pour comparer le currentStep
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { onboardingState: true },
+    });
+    const currentState = user?.onboardingState || DEFAULT_ONBOARDING_STATE;
+    const currentStepInDB = currentState.currentStep || 0;
+    const newStep = normalizedState.currentStep || 0;
+
+    // Si le client tente de régresser le currentStep, garder le max
+    if (newStep < currentStepInDB) {
+      normalizedState.currentStep = currentStepInDB;
+    }
 
     // Vérifier cache
     if (shouldSkipUpdate(session.user.id, { onboardingState: normalizedState })) {

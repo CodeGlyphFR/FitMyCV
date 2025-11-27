@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { ChevronRight, X, Pencil } from 'lucide-react';
+import { ChevronRight, X, Pencil, Check } from 'lucide-react';
+import TipBox from '@/components/ui/TipBox';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -275,7 +276,7 @@ export default function OnboardingModal({
         </div>
 
         {/* Carousel Container */}
-        <div className="relative min-h-[470px] md:min-h-[500px] overflow-hidden" role="tabpanel" aria-live="polite">
+        <div className="relative overflow-hidden" role="tabpanel" aria-live="polite">
           <AnimatePresence initial={true} custom={direction} mode="wait">
             <motion.div
               id="onboarding-carousel-content"
@@ -294,10 +295,86 @@ export default function OnboardingModal({
               dragElastic={1}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
-              className="absolute inset-0 p-4 md:p-6 pb-14 md:pb-16 cursor-grab active:cursor-grabbing"
+              className="p-4 md:p-6 md:pb-16 cursor-grab active:cursor-grabbing"
             >
-              {screens[currentScreen]?.image ? (
-                /* Mode avec image (si screen.image existe) */
+              {/* Écran type: master_cv */}
+              {screens[currentScreen]?.type === 'master_cv' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left mb-6">
+                      {screens[currentScreen].description}
+                    </p>
+                    <div className="space-y-3 ml-4">
+                      {screens[currentScreen].checklist.map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-3 text-left">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          </div>
+                          <span className="text-white text-sm md:text-base">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <TipBox className="mt-4">
+                    {screens[currentScreen].tip}
+                  </TipBox>
+                </div>
+              )}
+
+              {/* Écran type: control */}
+              {screens[currentScreen]?.type === 'control' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left mb-4">
+                      {screens[currentScreen].description}
+                    </p>
+                    <p className="text-white/60 text-sm md:text-base text-left mb-4">
+                      {screens[currentScreen].subtitle}
+                    </p>
+                    <div className="space-y-3">
+                      {screens[currentScreen].actions.map((action, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                            <img src={action.icon} alt="" className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="text-white font-medium text-sm md:text-base">{action.title}</p>
+                            <p className="text-white/60 text-xs md:text-sm">{action.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <TipBox className="mt-4">
+                    {screens[currentScreen].tip}
+                  </TipBox>
+                </div>
+              )}
+
+              {/* Écran type: sections */}
+              {screens[currentScreen]?.type === 'sections' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1">
+                    <div className="space-y-4">
+                      {screens[currentScreen].blocks.map((block, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <span className="text-2xl flex-shrink-0">{block.emoji}</span>
+                          <div>
+                            <p className="text-white font-medium text-sm md:text-base">{block.title}</p>
+                            <p className="text-white/60 text-xs md:text-sm">{block.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <TipBox className="mt-4">
+                    {screens[currentScreen].tip}
+                  </TipBox>
+                </div>
+              )}
+
+              {/* Fallback: écrans avec image */}
+              {screens[currentScreen]?.image && (
                 <div className="flex flex-col items-center text-center space-y-3 md:space-y-4">
                   <div className="w-full h-48 md:h-64 rounded-xl overflow-hidden bg-white/10">
                     <img
@@ -310,8 +387,217 @@ export default function OnboardingModal({
                     {screens[currentScreen].description}
                   </p>
                 </div>
-              ) : (
-                /* Mode texte seul - aligné gauche comme WelcomeModal */
+              )}
+
+              {/* Écran type: step2_intro (Step 2 - Écran 1/3) */}
+              {screens[currentScreen]?.type === 'step2_intro' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].description}
+                    </p>
+
+                    <p className="text-white font-medium text-sm md:text-base text-left">
+                      {screens[currentScreen].subtitle}
+                    </p>
+
+                    <div className="space-y-3">
+                      {screens[currentScreen].blocks.map((block, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <span className="text-2xl flex-shrink-0">{block.emoji}</span>
+                          <div>
+                            <p className="text-white font-medium text-sm md:text-base">{block.title}</p>
+                            <p className="text-white/60 text-xs md:text-sm">{block.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <TipBox className="mt-4">
+                    {screens[currentScreen].tip}
+                  </TipBox>
+                </div>
+              )}
+
+              {/* Écran type: step2_methods (Step 2 - Écran 2/3) */}
+              {screens[currentScreen]?.type === 'step2_methods' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].description}
+                    </p>
+
+                    {/* Blocs principaux (URL, PDF) */}
+                    <div className="space-y-3">
+                      {screens[currentScreen].blocks.map((block, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <span className="text-2xl flex-shrink-0">{block.emoji}</span>
+                          <div>
+                            <p className="text-white font-medium text-sm md:text-base">{block.title}</p>
+                            <p className="text-white/60 text-xs md:text-sm">{block.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Bloc Historique (style distinct avec bordure emerald) */}
+                    {screens[currentScreen].historyBlock && (
+                      <div className="p-3 bg-emerald-500/5 border border-emerald-500/30 rounded-lg">
+                        <div className="flex items-start gap-3 text-left">
+                          <span className="text-xl flex-shrink-0">{screens[currentScreen].historyBlock.emoji}</span>
+                          <div>
+                            <p className="text-white font-medium text-sm">{screens[currentScreen].historyBlock.title}</p>
+                            <p className="text-white/60 text-xs">{screens[currentScreen].historyBlock.description}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sous-titre niveaux d'analyse */}
+                    <p className="text-white font-medium text-sm md:text-base text-left pt-2">
+                      {screens[currentScreen].subtitle2}
+                    </p>
+
+                    {/* Grille niveaux d'analyse (design inspiré de CvGeneratorModal) */}
+                    <div className="grid grid-cols-3 gap-2">
+                      {screens[currentScreen].analysisLevels.map((level, idx) => (
+                        <div key={idx} className="flex flex-col items-center text-center p-2 rounded-lg bg-white/5 border border-white/10">
+                          <span className="text-lg mb-1">{level.emoji}</span>
+                          <p className="text-white font-medium text-xs md:text-sm">{level.title}</p>
+                          <p className="text-white/50 text-[10px] md:text-xs">{level.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {screens[currentScreen].tip && (
+                    <TipBox className="mt-4">
+                      {screens[currentScreen].tip}
+                    </TipBox>
+                  )}
+                </div>
+              )}
+
+              {/* Écran type: step2_ai_behavior (Step 2 - Écran 3/3) */}
+              {screens[currentScreen]?.type === 'step2_ai_behavior' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].description}
+                    </p>
+
+                    <p className="text-white font-medium text-sm md:text-base text-left">
+                      {screens[currentScreen].subtitle}
+                    </p>
+
+                    <div className="space-y-2">
+                      {screens[currentScreen].checklist.map((item, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          </div>
+                          <span className="text-white/80 text-sm md:text-base">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <TipBox className="mt-4">
+                    {screens[currentScreen].tip}
+                  </TipBox>
+                </div>
+              )}
+
+              {/* Écran type: step6_score_analysis (Step 6 - Écran 1/2) */}
+              {screens[currentScreen]?.type === 'step6_score_analysis' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].description}
+                    </p>
+
+                    <p className="text-white font-medium text-sm md:text-base text-left">
+                      {screens[currentScreen].subtitle}
+                    </p>
+
+                    <div className="space-y-3">
+                      {screens[currentScreen].blocks.map((block, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <span className="text-2xl flex-shrink-0">{block.emoji}</span>
+                          <div>
+                            <p className="text-white font-medium text-sm md:text-base">{block.title}</p>
+                            <p className="text-white/60 text-xs md:text-sm">{block.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <TipBox className="mt-4">
+                    {screens[currentScreen].tip}
+                  </TipBox>
+                </div>
+              )}
+
+              {/* Écran type: step6_apply_improvements (Step 6 - Écran 2/2) */}
+              {screens[currentScreen]?.type === 'step6_apply_improvements' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].description}
+                    </p>
+
+                    <div className="space-y-2">
+                      {screens[currentScreen].checklist.map((item, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          </div>
+                          <span className="text-white/80 text-sm md:text-base">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <p className="text-white font-medium text-sm md:text-base text-left pt-2">
+                      {screens[currentScreen].subtitle}
+                    </p>
+
+                    <p className="text-white/60 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].transparencyText}
+                    </p>
+                  </div>
+                  <TipBox className="mt-4">
+                    {screens[currentScreen].tip}
+                  </TipBox>
+                </div>
+              )}
+
+              {/* Écran type: step8_export (Step 8 - Écrans 1-2) */}
+              {(screens[currentScreen]?.type === 'step8_export_ready' ||
+                screens[currentScreen]?.type === 'step8_export_custom') && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].description}
+                    </p>
+                    <div className="space-y-3">
+                      {screens[currentScreen].checklist.map((item, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          </div>
+                          <span className="text-white/80 text-sm md:text-base">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {screens[currentScreen].tip && (
+                    <TipBox className="mt-4">
+                      {screens[currentScreen].tip}
+                    </TipBox>
+                  )}
+                </div>
+              )}
+
+              {/* Fallback: écrans sans type (description simple) */}
+              {!screens[currentScreen]?.type && !screens[currentScreen]?.image && (
                 <div className="flex flex-col h-full">
                   <div className="flex-1">
                     <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">

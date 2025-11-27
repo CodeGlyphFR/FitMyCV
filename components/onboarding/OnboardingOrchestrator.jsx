@@ -857,23 +857,40 @@ export default function OnboardingOrchestrator() {
     };
   }, []); // Empty deps - register once
 
+  // ========== STEP 9 : OUVRIR LE MODAL DE COMPLETION AU CHARGEMENT ==========
+  // Si currentStep === 9, c'est que l'utilisateur a complété le step 8 mais
+  // n'a pas encore vu/fermé le modal de completion (ex: refresh de page)
+  useEffect(() => {
+    if (currentStep === 9 && !showCompletionModal) {
+      onboardingLogger.log('[Onboarding] Step 9 : Ouverture du modal de completion (reprise après refresh)');
+      setShowCompletionModal(true);
+    }
+  }, [currentStep, showCompletionModal]);
+
   /**
    * Handler pour la fermeture du modal de complétion
    * Appelé quand l'utilisateur termine le carrousel de fin ou ferme le modal
    * IMPORTANT: Défini ici car utilisé dans le early return ci-dessous
+   *
+   * @param {Object} options - Options de fermeture
+   * @param {boolean} options.completed - True si terminé normalement (bouton "Commencer!")
+   *                                      False si fermé par X, Escape, ou backdrop
    */
-  const handleCompletionModalClose = async () => {
+  const handleCompletionModalClose = async ({ completed = false } = {}) => {
     setShowCompletionModal(false);
 
-    // Mark completion modal as completed in DB
-    try {
-      await markModalCompleted('completion');
-    } catch (error) {
-      onboardingLogger.error('[Onboarding] Failed to persist completion modal:', error);
-      // Continue anyway - onboarding completion is more critical
+    // Ne marquer le modal comme complété que si terminé normalement
+    // (pas par X, Escape, ou backdrop)
+    if (completed) {
+      try {
+        await markModalCompleted('completion');
+      } catch (error) {
+        onboardingLogger.error('[Onboarding] Failed to persist completion modal:', error);
+        // Continue anyway - onboarding completion is more critical
+      }
     }
 
-    // Marquer l'onboarding comme complété
+    // Toujours marquer l'onboarding comme complété (hasCompleted = true)
     await completeOnboarding();
   };
 
@@ -890,7 +907,16 @@ export default function OnboardingOrchestrator() {
 
   // Récupérer config de l'étape actuelle
   const step = getStepById(currentStep);
-  if (!step) return null;
+  if (!step) {
+    // Si pas de step défini (ex: step 9 = "en attente du modal de completion"),
+    // afficher seulement le modal de completion si nécessaire
+    return showCompletionModal ? (
+      <OnboardingCompletionModal
+        open={showCompletionModal}
+        onComplete={handleCompletionModalClose}
+      />
+    ) : null;
+  }
 
   /**
    * Handlers modal

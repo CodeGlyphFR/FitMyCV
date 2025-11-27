@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Sparkles, HelpCircle, Rocket, X, Check, Lightbulb } from 'lucide-react';
+import { Sparkles, HelpCircle, Rocket, X, Check } from 'lucide-react';
+import TipBox from '@/components/ui/TipBox';
 import { ONBOARDING_TIMINGS } from '@/lib/onboarding/onboardingConfig';
 import {
   slideVariants,
@@ -462,7 +463,7 @@ export default function WelcomeModal({
         </div>
 
         {/* Carousel Container */}
-        <div className="relative min-h-[470px] md:min-h-[500px] overflow-hidden" role="tabpanel" aria-live="polite">
+        <div className="relative overflow-hidden" role="tabpanel" aria-live="polite">
           <AnimatePresence initial={true} custom={direction} mode="wait">
             <motion.div
               id="welcome-carousel-content"
@@ -480,7 +481,7 @@ export default function WelcomeModal({
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={1}
               onDragEnd={handleDragEnd}
-              className="absolute inset-0 p-4 md:p-6 pb-14 md:pb-16 cursor-grab active:cursor-grabbing"
+              className="p-4 md:p-6 md:pb-16 cursor-grab active:cursor-grabbing"
             >
               {/* Écran 1: Welcome + Checklist + Tip */}
               {currentScreenData.type === 'welcome' && (
@@ -588,16 +589,9 @@ export default function WelcomeModal({
                   </div>
 
                   {/* Tip box en bas */}
-                  <div className="mt-auto p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
-                      </div>
-                      <p className="text-white/80 text-sm leading-relaxed text-left">
-                        {currentScreenData.tip}
-                      </p>
-                    </div>
-                  </div>
+                  <TipBox className="mt-4">
+                    {currentScreenData.tip}
+                  </TipBox>
                 </div>
               )}
 
