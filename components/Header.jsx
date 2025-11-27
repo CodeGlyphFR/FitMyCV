@@ -596,27 +596,27 @@ export default function Header(props){
       <Modal open={open} onClose={()=>setOpen(false)} title={t("header.modalTitle")}>
         <div className="grid gap-3 md:grid-cols-2">
           <FormRow label={t("header.fullName")}>
-            <input className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 w-full focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.full_name} onChange={e=>setF({...f,full_name:e.target.value})} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.full_name} onChange={e=>setF({...f,full_name:e.target.value})} />
           </FormRow>
           <FormRow label={t("header.currentTitle")}>
-            <input className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 w-full focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.current_title} onChange={e=>setF({...f,current_title:e.target.value})} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.current_title} onChange={e=>setF({...f,current_title:e.target.value})} />
           </FormRow>
           <FormRow label={t("header.email")}>
-            <input className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 w-full focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.email} onChange={e=>setF({...f,email:e.target.value})} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.email} onChange={e=>setF({...f,email:e.target.value})} />
           </FormRow>
           <FormRow label={t("header.phone")}>
-            <input className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 w-full focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.phone} onChange={e=>setF({...f,phone:e.target.value})} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.phone} onChange={e=>setF({...f,phone:e.target.value})} />
           </FormRow>
 
           <div className="md:col-span-2 grid grid-cols-3 gap-3">
             <FormRow label={t("header.city")}>
-              <input className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 w-full focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.city} onChange={e=>setF({...f,city:e.target.value})} />
+              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.city} onChange={e=>setF({...f,city:e.target.value})} />
             </FormRow>
             <FormRow label={t("header.region")}>
-              <input className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 w-full focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.region} onChange={e=>setF({...f,region:e.target.value})} />
+              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.region} onChange={e=>setF({...f,region:e.target.value})} />
             </FormRow>
             <FormRow label={t("header.countryCode")}>
-              <input className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 w-full focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.country_code} onChange={e=>setF({...f,country_code:e.target.value})} />
+              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.country_code} onChange={e=>setF({...f,country_code:e.target.value})} />
             </FormRow>
           </div>
 
@@ -630,9 +630,9 @@ export default function Header(props){
                 </div>
               )}
               {linksLocal.map((row, idx) => (
-                <div key={idx} className="grid grid-cols-7 gap-2 items-center">
+                <div key={idx} className="flex gap-2 items-center">
                   <input
-                    className="col-span-2 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-sm text-white placeholder:text-white/50 focus:bg-white/30 focus:border-emerald-400 focus:outline-none transition-all duration-200"
+                    className="w-32 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:outline-none transition-all duration-200"
                     placeholder={t("header.labelPlaceholder")}
                     value={row.label}
                     onChange={e=>{
@@ -640,7 +640,7 @@ export default function Header(props){
                     }}
                   />
                   <input
-                    className="col-span-4 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-sm text-white placeholder:text-white/50 focus:bg-white/30 focus:border-emerald-400 focus:outline-none transition-all duration-200"
+                    className="flex-1 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:outline-none transition-all duration-200"
                     placeholder={t("header.urlPlaceholder")}
                     value={row.url}
                     onChange={e=>{
@@ -652,10 +652,10 @@ export default function Header(props){
                     onClick={()=>{
                       const arr=[...linksLocal]; arr.splice(idx,1); setLinksLocal(arr);
                     }}
-                    className="text-xs rounded border-2 border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-all duration-200"
+                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 text-white hover:bg-red-500/40 transition-all duration-200"
                     title={t("common.delete")}
                   >
-                    <img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " />
+                    <img src="/icons/delete.png" alt="Delete" className="h-4 w-4" />
                   </button>
                 </div>
               ))}
@@ -663,7 +663,7 @@ export default function Header(props){
                 <button
                   type="button"
                   onClick={()=>setLinksLocal([...(linksLocal||[]), {label:"", url:""}])}
-                  className="px-2 py-1 text-xs font-medium text-white bg-white/20 border-2 border-white/40 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-all duration-200 inline-flex items-center gap-1"
+                  className="px-2 py-1 text-xs font-medium text-white bg-emerald-500/30 border border-emerald-500/50 rounded-lg hover:bg-emerald-500/40 transition-all duration-200 inline-flex items-center gap-1"
                 >
                   <img src="/icons/add.png" alt="" className="h-3 w-3 " /> {t("header.addLink")}
                 </button>
@@ -672,8 +672,8 @@ export default function Header(props){
           </div>
 
           <div className="md:col-span-2 flex justify-end gap-2">
-            <button onClick={()=>setOpen(false)} className="px-3 py-2 text-sm font-medium text-white bg-white/20 border-2 border-white/40 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-all duration-200" type="button">{t("common.cancel")}</button>
-            <button onClick={save} className="px-3 py-2 text-sm font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-all duration-200" type="button">{t("common.save")}</button>
+            <button onClick={()=>setOpen(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors" type="button">{t("common.cancel")}</button>
+            <button onClick={save} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors" type="button">{t("common.save")}</button>
           </div>
         </div>
       </Modal>

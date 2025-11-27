@@ -344,7 +344,7 @@ export default function WelcomeModal({
     >
       {/* Backdrop - fade out pendant le morphing */}
       <motion.div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm pointer-events-none"
+        className="absolute inset-0 bg-black/70 pointer-events-none"
         animate={{ opacity: isMorphing ? 0 : 1 }}
         transition={{ duration: MORPH_DURATION * 0.5 }}
       />

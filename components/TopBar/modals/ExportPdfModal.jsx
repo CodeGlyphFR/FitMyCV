@@ -55,7 +55,7 @@ export default function ExportPdfModal({
             type="text"
             value={filename}
             onChange={(e) => setFilename(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+            className="w-full px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
             placeholder="Mon_CV"
           />
           <p className="mt-1 text-xs text-white/60">
@@ -68,14 +68,14 @@ export default function ExportPdfModal({
           <button
             type="button"
             onClick={selectAll}
-            className="flex-1 px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 hover:bg-emerald-500/30 transition-colors text-sm font-medium"
+            className="flex-1 px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-white/30 transition-colors text-sm font-medium"
           >
             {t('exportModal.selectAll')}
           </button>
           <button
             type="button"
             onClick={deselectAll}
-            className="flex-1 px-4 py-2 rounded-lg bg-white/10 border border-white/30 text-white hover:bg-white/20 transition-colors text-sm font-medium"
+            className="flex-1 px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-white/30 transition-colors text-sm font-medium"
           >
             {t('exportModal.deselectAll')}
           </button>
@@ -114,12 +114,12 @@ export default function ExportPdfModal({
         </div>
 
         {/* Footer buttons */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-white/20">
+        <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
           <button
             type="button"
             onClick={onClose}
             disabled={isExporting}
-            className="px-4 py-2 rounded-lg bg-white/10 border border-white/30 text-white hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('exportModal.cancel')}
           </button>
@@ -127,7 +127,7 @@ export default function ExportPdfModal({
             type="button"
             onClick={exportPdf}
             disabled={isExporting || !filename.trim()}
-            className="px-6 py-2 rounded-lg bg-emerald-500 border border-emerald-400 text-white hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isExporting && (
               <svg

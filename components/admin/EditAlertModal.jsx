@@ -142,7 +142,7 @@ export default function EditAlertModal({ open, onClose, alert, onSave, alertType
             min="0"
             value={formData.threshold}
             onChange={(e) => setFormData({ ...formData, threshold: e.target.value })}
-            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-3 py-2 rounded-lg border border-white/20 bg-white/5 text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
             placeholder="0.00"
             required
           />
@@ -160,7 +160,7 @@ export default function EditAlertModal({ open, onClose, alert, onSave, alertType
             type="text"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-3 py-2 rounded-lg border border-white/20 bg-white/5 text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
             placeholder="Nom de l'alerte"
             required
           />
@@ -178,7 +178,7 @@ export default function EditAlertModal({ open, onClose, alert, onSave, alertType
             type="text"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-3 py-2 rounded-lg border border-white/20 bg-white/5 text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
             placeholder="Description de l'alerte"
           />
         </div>
@@ -190,7 +190,7 @@ export default function EditAlertModal({ open, onClose, alert, onSave, alertType
             id="edit-enabled"
             checked={formData.enabled}
             onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-            className="w-4 h-4 rounded border-white/20 bg-white/10 text-emerald-500 focus:ring-2 focus:ring-emerald-500"
+            className="w-4 h-4 rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-2 focus:ring-emerald-400/50"
           />
           <label htmlFor="edit-enabled" className="text-sm text-white/80">
             Alerte activée
@@ -203,7 +203,7 @@ export default function EditAlertModal({ open, onClose, alert, onSave, alertType
             type="button"
             onClick={handleCancel}
             disabled={isSaving}
-            className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Annuler
           </button>
@@ -211,7 +211,7 @@ export default function EditAlertModal({ open, onClose, alert, onSave, alertType
             type="submit"
             disabled={isSaving || !formData.name.trim() || !formData.threshold}
             title={!formData.name.trim() ? 'Veuillez saisir un nom' : (!formData.threshold ? 'Veuillez saisir un seuil' : '')}
-            className="flex-1 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isSaving ? 'Enregistrement...' : (isEditMode ? 'Mettre à jour' : 'Créer')}
           </button>
