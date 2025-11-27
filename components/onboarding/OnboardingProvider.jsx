@@ -236,6 +236,19 @@ export default function OnboardingProvider({ children }) {
           const data = JSON.parse(event.data);
           onboardingLogger.log('[SSE] onboarding:updated reçu:', data);
 
+          // Protection anti-régression multi-device :
+          // N'accepter que les updates avec un step >= au step local actuel
+          // Cela évite qu'un client désynchronisé propage une régression via SSE
+          const localStep = stateRef.current.currentStep || 0;
+          const serverStep = data.currentStep ?? localStep;
+
+          if (serverStep < localStep) {
+            onboardingLogger.log(
+              `[SSE] Ignoring update with inferior step: server=${serverStep}, local=${localStep}`
+            );
+            return; // Ignorer cette update (notre état local est plus avancé)
+          }
+
           // Mise à jour de l'état depuis autre device
           if (data.onboardingState) {
             setOnboardingState(data.onboardingState);
@@ -317,11 +330,18 @@ export default function OnboardingProvider({ children }) {
 
     // Update API
     try {
-      await fetch('/api/user/onboarding', {
+      const res = await fetch('/api/user/onboarding', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ step: nextStep }),
       });
+
+      // Désync détectée (client en retard sur le serveur) → reload silencieux
+      if (res.status === 409) {
+        onboardingLogger.log('[OnboardingProvider] Désync détectée (409), reload page');
+        window.location.reload();
+        return;
+      }
     } catch (error) {
       onboardingLogger.error('[OnboardingProvider] Error updating step:', error);
     }
@@ -339,11 +359,18 @@ export default function OnboardingProvider({ children }) {
 
     // Update API
     try {
-      await fetch('/api/user/onboarding', {
+      const res = await fetch('/api/user/onboarding', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ step: prevStep }),
       });
+
+      // Désync détectée (client en retard sur le serveur) → reload silencieux
+      if (res.status === 409) {
+        onboardingLogger.log('[OnboardingProvider] Désync détectée (409), reload page');
+        window.location.reload();
+        return;
+      }
     } catch (error) {
       onboardingLogger.error('[OnboardingProvider] Error updating step:', error);
     }
@@ -363,11 +390,18 @@ export default function OnboardingProvider({ children }) {
 
     // Update API
     try {
-      await fetch('/api/user/onboarding', {
+      const res = await fetch('/api/user/onboarding', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ step }),
       });
+
+      // Désync détectée (client en retard sur le serveur) → reload silencieux
+      if (res.status === 409) {
+        onboardingLogger.log('[OnboardingProvider] Désync détectée (409), reload page');
+        window.location.reload();
+        return;
+      }
     } catch (error) {
       onboardingLogger.error('[OnboardingProvider] Error updating step:', error);
     }
@@ -1013,6 +1047,13 @@ export default function OnboardingProvider({ children }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ step: 1 }),
       });
+
+      // Désync détectée (client en retard sur le serveur) → reload silencieux
+      if (res.status === 409) {
+        onboardingLogger.log('[OnboardingProvider] Désync détectée (409), reload page');
+        window.location.reload();
+        return;
+      }
 
       if (!res.ok) {
         throw new Error(`API returned ${res.status}`);

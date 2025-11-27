@@ -109,8 +109,8 @@ export default function OnboardingCompletionModal({
   // Handlers boutons
   const handleNext = useCallback(() => {
     if (currentScreen >= COMPLETION_SCREENS.length - 1) {
-      // Dernier écran → compléter
-      if (onComplete) onComplete();
+      // Dernier écran → compléter (terminé normalement)
+      if (onComplete) onComplete({ completed: true });
     } else {
       setDirection(1);
       setCurrentScreen((prev) => prev + 1);
@@ -159,7 +159,8 @@ export default function OnboardingCompletionModal({
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        if (onComplete) onComplete();
+        // Fermé par Escape → pas de complétion du modal
+        if (onComplete) onComplete({ completed: false });
       }
       if (e.key === 'ArrowRight') {
         handleNext();
@@ -178,8 +179,9 @@ export default function OnboardingCompletionModal({
     // Ignorer si on vient de faire un drag (évite la fermeture accidentelle)
     if (isDraggingRef.current) return;
 
+    // Fermé par backdrop → pas de complétion du modal
     if (e.target === e.currentTarget && onComplete) {
-      onComplete();
+      onComplete({ completed: false });
     }
   };
 
@@ -267,7 +269,7 @@ export default function OnboardingCompletionModal({
             {/* Bouton fermer */}
             <div className="flex items-center gap-2 ml-2 flex-shrink-0">
               <button
-                onClick={onComplete}
+                onClick={() => onComplete && onComplete({ completed: false })}
                 className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
                 aria-label="Fermer le modal"
               >

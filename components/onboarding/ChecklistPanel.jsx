@@ -216,10 +216,10 @@ export default function ChecklistPanel() {
             />
           </div>
 
-          {/* Mode réduit desktop : Étape suivante */}
+          {/* Mode réduit desktop : En cours */}
           {!checklistExpanded && (
             <div className="px-4 py-3 flex items-baseline gap-2">
-              <span className="text-slate-400 text-xs whitespace-nowrap">Étape suivante</span>
+              <span className="text-slate-400 text-xs whitespace-nowrap">En cours</span>
               <span className="text-emerald-400 text-sm truncate">
                 {currentStepData?.title || 'Terminé'}
               </span>
