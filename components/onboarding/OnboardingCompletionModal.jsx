@@ -280,7 +280,7 @@ export default function OnboardingCompletionModal({
               dragElastic={1}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
-              className="absolute inset-0 p-4 md:p-6 pb-14 md:pb-16 cursor-grab active:cursor-grabbing"
+              className="absolute inset-0 p-4 md:p-6 md:pb-16 cursor-grab active:cursor-grabbing"
             >
               {/* Mode texte seul - aligné gauche comme WelcomeModal */}
               <div className="flex flex-col h-full">

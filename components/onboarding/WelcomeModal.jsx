@@ -481,7 +481,7 @@ export default function WelcomeModal({
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={1}
               onDragEnd={handleDragEnd}
-              className="p-4 md:p-6 pb-14 md:pb-16 cursor-grab active:cursor-grabbing"
+              className="p-4 md:p-6 md:pb-16 cursor-grab active:cursor-grabbing"
             >
               {/* Écran 1: Welcome + Checklist + Tip */}
               {currentScreenData.type === 'welcome' && (
