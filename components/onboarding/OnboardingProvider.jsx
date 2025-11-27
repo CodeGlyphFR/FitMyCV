@@ -3,7 +3,8 @@
 import { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
-import { ONBOARDING_STEPS, getStepById, isCompositeStep, getCompositeFeature, getTotalSteps } from '@/lib/onboarding/onboardingSteps';
+import { getStepById, getTotalSteps, ONBOARDING_STEPS_COUNT } from '@/lib/onboarding/onboardingSteps';
+import { useOnboardingSteps } from '@/lib/onboarding/useOnboardingSteps';
 import { ONBOARDING_TIMINGS, ONBOARDING_API } from '@/lib/onboarding/onboardingConfig';
 import { ONBOARDING_EVENTS } from '@/lib/onboarding/onboardingEvents';
 import { LOADING_EVENTS } from '@/lib/loading/loadingEvents';
@@ -38,6 +39,7 @@ const STEPS_WITHOUT_TIMER = ONBOARDING_TIMINGS.STEPS_WITHOUT_TIMER;
 export default function OnboardingProvider({ children }) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
+  const onboardingSteps = useOnboardingSteps();
 
   // Cacher l'onboarding UI sur les routes admin
   const isAdminRoute = pathname?.startsWith('/admin');
@@ -126,7 +128,7 @@ export default function OnboardingProvider({ children }) {
     toggleChecklist: () => {},
     checkStepConditions: () => false,
     trackEvent: () => {},
-    steps: ONBOARDING_STEPS,
+    steps: onboardingSteps,
   };
 
   // Check si authentifié (utilisé pour conditionner la logique)
@@ -624,7 +626,7 @@ export default function OnboardingProvider({ children }) {
    * Vérifier conditions d'une étape
    */
   const checkStepConditions = useCallback((stepId) => {
-    const step = getStepById(stepId);
+    const step = getStepById(onboardingSteps, stepId);
     if (!step) return false;
 
     // Si pas de précondition, l'étape est toujours accessible
@@ -642,7 +644,7 @@ export default function OnboardingProvider({ children }) {
 
     // Vérification simple
     return checkSingleCondition(precondition);
-  }, []);
+  }, [onboardingSteps]);
 
   /**
    * Helper pour vérifier une condition simple
@@ -1151,7 +1153,7 @@ export default function OnboardingProvider({ children }) {
     markTooltipClosed,
 
     // Steps config (pour accès facile)
-    steps: ONBOARDING_STEPS,
+    steps: onboardingSteps,
   };
 
   // Toujours retourner la même structure JSX

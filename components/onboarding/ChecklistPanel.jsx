@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useOnboarding } from '@/hooks/useOnboarding';
-import { ONBOARDING_STEPS } from '@/lib/onboarding/onboardingSteps';
+import { useOnboardingSteps } from '@/lib/onboarding/useOnboardingSteps';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 /**
  * Checklist flottante pour afficher la progression de l'onboarding
@@ -13,6 +14,9 @@ import { ONBOARDING_STEPS } from '@/lib/onboarding/onboardingSteps';
  * État : Collapse/expand avec persistence localStorage
  */
 export default function ChecklistPanel() {
+  const { t } = useLanguage();
+  const ONBOARDING_STEPS = useOnboardingSteps();
+
   const {
     currentStep,
     completedSteps,
@@ -50,9 +54,7 @@ export default function ChecklistPanel() {
    * Handler skip avec confirmation
    */
   const handleSkip = () => {
-    const confirmed = confirm(
-      'Êtes-vous sûr de vouloir passer le tutoriel ? Vous pourrez le relancer depuis les paramètres.'
-    );
+    const confirmed = confirm(t('onboarding.common.checklist.confirmSkip'));
     if (confirmed) {
       skipOnboarding();
     }
@@ -145,7 +147,7 @@ export default function ChecklistPanel() {
           : 'bottom-6 right-20 w-80 rounded-xl'
       }`}
       role="region"
-      aria-label="Progression du tutoriel"
+      aria-label={t('onboarding.common.checklist.progressLabel')}
       aria-live="polite"
     >
       {/* Mode mobile réduit : Donut + boutons uniquement */}
@@ -156,7 +158,7 @@ export default function ChecklistPanel() {
           <button
             onClick={toggleChecklist}
             className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-            aria-label="Agrandir"
+            aria-label={t('onboarding.common.aria.expandChecklist')}
             aria-expanded={false}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -167,7 +169,7 @@ export default function ChecklistPanel() {
           <button
             onClick={handleSkip}
             className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-            aria-label="Fermer le guide"
+            aria-label={t('onboarding.common.aria.closeGuide')}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -178,13 +180,13 @@ export default function ChecklistPanel() {
         <>
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3">
-            <h3 className="text-white font-semibold text-sm">Guide de démarrage</h3>
+            <h3 className="text-white font-semibold text-sm">{t('onboarding.common.checklist.title')}</h3>
             <div className="flex items-center gap-1">
               {/* Bouton expand/collapse */}
               <button
                 onClick={toggleChecklist}
                 className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-                aria-label={checklistExpanded ? 'Réduire' : 'Agrandir'}
+                aria-label={checklistExpanded ? t('onboarding.common.aria.collapseChecklist') : t('onboarding.common.aria.expandChecklist')}
                 aria-expanded={checklistExpanded}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -199,7 +201,7 @@ export default function ChecklistPanel() {
               <button
                 onClick={handleSkip}
                 className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-                aria-label="Fermer le guide"
+                aria-label={t('onboarding.common.aria.closeGuide')}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -219,9 +221,9 @@ export default function ChecklistPanel() {
           {/* Mode réduit desktop : En cours */}
           {!checklistExpanded && (
             <div className="px-4 py-3 flex items-baseline gap-2">
-              <span className="text-slate-400 text-xs whitespace-nowrap">En cours</span>
+              <span className="text-slate-400 text-xs whitespace-nowrap">{t('onboarding.common.checklist.inProgress')}</span>
               <span className="text-emerald-400 text-sm truncate">
-                {currentStepData?.title || 'Terminé'}
+                {currentStepData?.title || t('onboarding.common.checklist.completed')}
               </span>
             </div>
           )}
@@ -269,7 +271,7 @@ export default function ChecklistPanel() {
                     onClick={handleSkip}
                     className="w-full py-2 text-sm text-slate-400 hover:text-white transition-colors"
                   >
-                    Passer le tutoriel
+                    {t('onboarding.common.checklist.skipTutorial')}
                   </button>
                 </div>
               )}
@@ -278,7 +280,7 @@ export default function ChecklistPanel() {
               {hasCompleted && (
                 <div className="mt-4 pt-3 border-t border-white/10 text-center">
                   <span className="text-2xl">🎉</span>
-                  <p className="text-white/90 text-sm mt-2">Tutoriel complété !</p>
+                  <p className="text-white/90 text-sm mt-2">{t('onboarding.common.checklist.completed')}</p>
                 </div>
               )}
             </div>

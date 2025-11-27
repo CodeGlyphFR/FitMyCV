@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Check, X, PartyPopper } from 'lucide-react';
 import TipBox from '@/components/ui/TipBox';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -71,28 +72,55 @@ const ComingSoonItem = ({ emoji, title, description }) => (
   </div>
 );
 
-const COMPLETION_SCREENS = [
-  {
-    id: 'congratulations',
-    title: 'Félicitations, vous êtes prêt !',
-    type: 'congratulations',
-  },
-  {
-    id: 'features',
-    title: 'Tout ce que vous pouvez faire maintenant',
-    type: 'features',
-  },
-  {
-    id: 'coming-soon',
-    title: 'Bientôt dans FitMyCV',
-    type: 'coming-soon',
-  },
-];
+// Mapping des clés features vers les icônes (identiques à TopBar)
+const FEATURE_ICONS = {
+  import: '/icons/import.png',
+  create: '/icons/add.png',
+  generate: '/icons/openai-symbol.png',
+  delete: '/icons/delete.png',
+};
+
+/**
+ * Factory function to create translated completion screens
+ * @param {Function} t - Translation function from useLanguage
+ * @returns {Array} List of translated completion screens
+ */
+function createCompletionScreens(t) {
+  return [
+    {
+      id: 'congratulations',
+      title: t('onboarding.completion.screen1.title'),
+      type: 'congratulations',
+      description: t('onboarding.completion.screen1.description'),
+      checklist: t('onboarding.completion.screen1.checklist'),
+      highlight: t('onboarding.completion.screen1.highlight'),
+    },
+    {
+      id: 'features',
+      title: t('onboarding.completion.screen2.title'),
+      type: 'features',
+      description: t('onboarding.completion.screen2.description'),
+      features: t('onboarding.completion.screen2.features'),
+      tip: t('onboarding.completion.screen2.tip'),
+    },
+    {
+      id: 'coming-soon',
+      title: t('onboarding.completion.screen3.title'),
+      type: 'coming-soon',
+      description: t('onboarding.completion.screen3.description'),
+      comingSoon: t('onboarding.completion.screen3.comingSoon'),
+      tip: t('onboarding.completion.screen3.tip'),
+    },
+  ];
+}
 
 export default function OnboardingCompletionModal({
   open = false,
   onComplete,
 }) {
+  const { t } = useLanguage();
+  const COMPLETION_SCREENS = useMemo(() => createCompletionScreens(t), [t]);
+
   const [currentScreen, setCurrentScreen] = useState(0);
   const [direction, setDirection] = useState(0);
   const shouldReduceMotion = useReducedMotion();
@@ -253,7 +281,7 @@ export default function OnboardingCompletionModal({
                   id="completion-modal-title"
                   className="text-base md:text-lg font-bold text-white mb-1 line-clamp-2"
                 >
-                  {currentScreenData?.title || 'Félicitations !'}
+                  {currentScreenData?.title || t('onboarding.completion.screen1.title')}
                 </h2>
                 <p className="text-xs md:text-sm text-slate-400">
                   {currentScreen + 1} / {COMPLETION_SCREENS.length}
@@ -261,7 +289,7 @@ export default function OnboardingCompletionModal({
 
                 {/* Screen reader only announcement */}
                 <div className="sr-only md:hidden" role="status" aria-live="polite" aria-atomic="true">
-                  Étape {currentScreen + 1} sur {COMPLETION_SCREENS.length}
+                  {t('onboarding.common.aria.screenReaderStep', { current: currentScreen + 1, total: COMPLETION_SCREENS.length })}
                 </div>
               </div>
             </div>
@@ -271,7 +299,7 @@ export default function OnboardingCompletionModal({
               <button
                 onClick={() => onComplete && onComplete({ completed: false })}
                 className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-                aria-label="Fermer le modal"
+                aria-label={t('onboarding.common.aria.closeModal')}
               >
                 <X className="w-4 h-4 md:w-5 md:h-5" />
               </button>
@@ -323,16 +351,15 @@ export default function OnboardingCompletionModal({
                 {currentScreenData?.type === 'congratulations' && (
                   <div className="space-y-4">
                     <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
-                      Vous maîtrisez maintenant FitMyCV. Créez des CV sur-mesure, calculez votre score de match, optimisez en un clic et exportez des PDF professionnels.
+                      {currentScreenData.description}
                     </p>
                     <div className="space-y-1 ml-4">
-                      <ChecklistItem>Mode édition maîtrisé</ChecklistItem>
-                      <ChecklistItem>Génération IA découverte</ChecklistItem>
-                      <ChecklistItem>Score et optimisation compris</ChecklistItem>
-                      <ChecklistItem>Export PDF prêt à l&apos;emploi</ChecklistItem>
+                      {currentScreenData.checklist?.map((item, idx) => (
+                        <ChecklistItem key={idx}>{item}</ChecklistItem>
+                      ))}
                     </div>
                     <HighlightBox emoji="🚀">
-                      Il est temps de décrocher votre prochain entretien !
+                      {currentScreenData.highlight}
                     </HighlightBox>
                   </div>
                 )}
@@ -340,32 +367,20 @@ export default function OnboardingCompletionModal({
                 {currentScreenData?.type === 'features' && (
                   <div className="space-y-4">
                     <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
-                      FitMyCV vous offre plusieurs façons de créer et gérer vos CV.
+                      {currentScreenData.description}
                     </p>
                     <div className="space-y-2">
-                      <FeatureBlock
-                        icon={<img src="/icons/import.png" alt="" className="h-5 w-5" />}
-                        title="Importer un CV existant"
-                        description="Ajoutez vos CV en PDF ou Word, l'IA les adapte au format optimisé"
-                      />
-                      <FeatureBlock
-                        icon={<img src="/icons/add.png" alt="" className="h-5 w-5" />}
-                        title="Créer un CV vierge"
-                        description="Partez de zéro et construisez votre CV section par section"
-                      />
-                      <FeatureBlock
-                        icon={<img src="/icons/search.png" alt="" className="h-5 w-5" />}
-                        title="Générer un CV modèle"
-                        description="Tapez n'importe quel titre de poste, l'IA génère un CV fictif pour vous inspirer"
-                      />
-                      <FeatureBlock
-                        icon={<img src="/icons/delete.png" alt="" className="h-5 w-5" />}
-                        title="Supprimer un CV"
-                        description="Faites le ménage dans vos CV en un clic"
-                      />
+                      {Object.entries(currentScreenData.features || {}).map(([key, feature], idx) => (
+                        <FeatureBlock
+                          key={idx}
+                          icon={<img src={FEATURE_ICONS[key]} alt="" className="h-5 w-5" />}
+                          title={feature.title}
+                          description={feature.description}
+                        />
+                      ))}
                     </div>
                     <TipBox>
-                      Astuce : La barre de recherche fonctionne aussi avec des titres fictifs pour explorer de nouvelles carrières !
+                      {currentScreenData.tip}
                     </TipBox>
                   </div>
                 )}
@@ -373,16 +388,20 @@ export default function OnboardingCompletionModal({
                 {currentScreenData?.type === 'coming-soon' && (
                   <div className="space-y-4">
                     <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
-                      On ne s&apos;arrête pas là. Voici ce qui arrive prochainement pour vous aider à décrocher le job de vos rêves.
+                      {currentScreenData.description}
                     </p>
                     <div className="space-y-1">
-                      <ComingSoonItem emoji="🔍" title="Analyse d'offres" description="Comprenez exactement ce que cherche le recruteur" />
-                      <ComingSoonItem emoji="✉️" title="Lettres de motivation" description="L'IA les rédige pour vous" />
-                      <ComingSoonItem emoji="🎤" title="Préparation RH" description="Simulez vos entretiens" />
-                      <ComingSoonItem emoji="📋" title="Suivi candidatures" description="Tout au même endroit" />
+                      {currentScreenData.comingSoon?.map((item, idx) => (
+                        <ComingSoonItem
+                          key={idx}
+                          emoji={item.emoji}
+                          title={item.title}
+                          description={item.description}
+                        />
+                      ))}
                     </div>
                     <TipBox>
-                      Une idée de fonctionnalité ? Dites-le nous !
+                      {currentScreenData.tip}
                     </TipBox>
                   </div>
                 )}
@@ -412,7 +431,7 @@ export default function OnboardingCompletionModal({
                   relative w-8 h-8
                   flex items-center justify-center
                 "
-                aria-label={`Aller à l'écran ${idx + 1} sur ${COMPLETION_SCREENS.length}`}
+                aria-label={t('onboarding.common.aria.goToScreen', { current: idx + 1, total: COMPLETION_SCREENS.length })}
               >
                 <span
                   className={`
@@ -441,7 +460,7 @@ export default function OnboardingCompletionModal({
                 transition-colors
               "
             >
-              Précédent
+              {t('onboarding.common.buttons.previous')}
             </button>
           ) : (
             <div />
@@ -458,8 +477,8 @@ export default function OnboardingCompletionModal({
             "
           >
             {currentScreen >= COMPLETION_SCREENS.length - 1
-              ? 'Commencer !'
-              : 'Suivant'}
+              ? t('onboarding.common.buttons.start')
+              : t('onboarding.common.buttons.next')}
           </button>
         </div>
       </div>

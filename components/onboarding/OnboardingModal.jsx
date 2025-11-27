@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChevronRight, X, Pencil, Check } from 'lucide-react';
 import TipBox from '@/components/ui/TipBox';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -43,7 +44,7 @@ export default function OnboardingModal({
   open = false,
   screens = [],
   currentScreen = 0,
-  title = "Guide du mode édition", // Titre du modal (défaut pour rétrocompatibilité)
+  title, // Titre du modal (passé par le parent avec traduction)
   IconComponent = Pencil, // Icône Lucide du modal
   iconBg = 'bg-emerald-500/20', // Background de l'icône
   iconColor = 'text-emerald-400', // Couleur de l'icône
@@ -58,6 +59,7 @@ export default function OnboardingModal({
   disableBackdropClick = false,
   size = 'large',
 }) {
+  const { t } = useLanguage();
   const [direction, setDirection] = useState(0);
   const shouldReduceMotion = useReducedMotion();
   const isDraggingRef = useRef(false);
@@ -226,7 +228,7 @@ export default function OnboardingModal({
 
                 {/* Screen reader only announcement */}
                 <div className="sr-only md:hidden" role="status" aria-live="polite" aria-atomic="true">
-                  Étape {currentScreen + 1} sur {screens.length}
+                  {t('onboarding.common.aria.screenReaderStep', { current: currentScreen + 1, total: screens.length })}
                 </div>
               </div>
             </div>
@@ -239,7 +241,7 @@ export default function OnboardingModal({
                   onClick={onSkip}
                   className="text-xs md:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap"
                 >
-                  Passer
+                  {t('onboarding.common.buttons.skip')}
                 </button>
               )}
 
@@ -248,7 +250,7 @@ export default function OnboardingModal({
                 <button
                   onClick={onClose}
                   className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-                  aria-label="Fermer le modal"
+                  aria-label={t('onboarding.common.aria.closeModal')}
                 >
                   <X className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
@@ -632,7 +634,7 @@ export default function OnboardingModal({
                   relative w-8 h-8
                   flex items-center justify-center
                 "
-                aria-label={`Aller à l'écran ${idx + 1} sur ${screens.length}`}
+                aria-label={t('onboarding.common.aria.goToScreen', { current: idx + 1, total: screens.length })}
               >
                 <span className={`
                   block rounded-full transition-colors duration-200
@@ -659,7 +661,7 @@ export default function OnboardingModal({
                 transition-colors
               "
             >
-              Précédent
+              {t('onboarding.common.buttons.previous')}
             </button>
           ) : (
             <div />
@@ -675,7 +677,7 @@ export default function OnboardingModal({
               transition-colors
             "
           >
-            {currentScreen >= screens.length - 1 ? 'Compris !' : 'Suivant'}
+            {currentScreen >= screens.length - 1 ? t('onboarding.common.buttons.understood') : t('onboarding.common.buttons.next')}
           </button>
         </div>
       </div>
