@@ -569,6 +569,33 @@ export default function OnboardingModal({
                 </div>
               )}
 
+              {/* Écran type: step8_export (Step 8 - Écrans 1-2) */}
+              {(screens[currentScreen]?.type === 'step8_export_ready' ||
+                screens[currentScreen]?.type === 'step8_export_custom') && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].description}
+                    </p>
+                    <div className="space-y-3">
+                      {screens[currentScreen].checklist.map((item, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          </div>
+                          <span className="text-white/80 text-sm md:text-base">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {screens[currentScreen].tip && (
+                    <TipBox className="mt-4">
+                      {screens[currentScreen].tip}
+                    </TipBox>
+                  )}
+                </div>
+              )}
+
               {/* Fallback: écrans sans type (description simple) */}
               {!screens[currentScreen]?.type && !screens[currentScreen]?.image && (
                 <div className="flex flex-col h-full">
