@@ -340,7 +340,12 @@
     "Proficient": "Proficient"
   },
   "footer": {
-    "cookieManagement": "Cookie management"
+    "cookieManagement": "Cookie management",
+    "copyright": "© 2025 FitMyCv.ai",
+    "about": "About",
+    "cookies": "Cookies",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy"
   },
   "cookies": {
     "banner": {
@@ -421,6 +426,66 @@
         "withdraw": "Right to withdraw your consent at any time"
       },
       "examplesLabel": "Examples:"
+    },
+    "registry": {
+      "title": "📋 Detailed Cookie Registry",
+      "description": "Complete list of all cookies that may be used on this site, by category.",
+      "duration": "Duration:",
+      "type": "Type:",
+      "note": "Third-party cookies will only be set if you give your explicit consent. Necessary cookies are essential for the site to function and cannot be refused.",
+      "durations": {
+        "6_months": "6 months",
+        "30_days": "30 days",
+        "session": "Session",
+        "1_year": "1 year",
+        "2_years": "2 years",
+        "24_hours": "24 hours",
+        "1_minute": "1 minute",
+        "3_months": "3 months",
+        "13_months": "13 months",
+        "15_minutes": "15 minutes"
+      },
+      "purposes": {
+        "cookie_consent": "Stores user cookie consent preferences",
+        "session_token": "Authentication - Keeps user session active",
+        "secure_session_token": "Secure production authentication - Session token",
+        "csrf_protection": "Security - Protection against CSRF attacks",
+        "secure_csrf_protection": "Enhanced production security - CSRF protection",
+        "auth_callback": "Redirect after authentication",
+        "theme_preference": "Remembers user's chosen theme (light/dark)",
+        "language_preference": "Remembers user's chosen language",
+        "ga_unique_users": "Google Analytics - Distinguishes unique users",
+        "ga_distinguish_users": "Google Analytics - Distinguishes users",
+        "ga_rate_limit": "Google Analytics - Limits request rate",
+        "ga4_session_state": "Google Analytics 4 - Session state persistence",
+        "fb_pixel_tracking": "Facebook Pixel - Conversion tracking and targeted advertising",
+        "fb_cross_site_tracking": "Facebook - Stores and tracks visits across websites",
+        "fb_targeted_ads": "Facebook - Targeted advertising delivery",
+        "google_ads_retargeting": "Google Ads - Advertising tracking and retargeting",
+        "google_ads_cookie_test": "Google Ads - Tests if browser accepts cookies"
+      }
+    },
+    "history": {
+      "title": "📜 Your Consent History",
+      "records": "record",
+      "recordsPlural": "records",
+      "gdprCompliant": "GDPR Compliant",
+      "noHistory": "No consent history available. Your future preferences will be recorded here.",
+      "loadingError": "Loading error",
+      "loadError": "Unable to load history",
+      "browser": "Browser:",
+      "gdprNote": "This history proves that you have given (or refused) your consent in an informed manner. This data is retained for audit purposes and can be deleted by deleting your account.",
+      "actions": {
+        "created": "Created",
+        "updated": "Updated",
+        "revoked": "Revoked"
+      },
+      "categories": {
+        "necessary": "Necessary",
+        "functional": "Functional",
+        "analytics": "Analytics",
+        "marketing": "Marketing"
+      }
     }
   },
   "header": {
@@ -605,6 +670,125 @@
   },
   "cvImprovement": {
     "improving": "Improving..."
+  },
+  "account": {
+    "meta": {
+      "title": "My Account - FitMyCv.ai",
+      "description": "Manage your personal information and preferences"
+    },
+    "backToCvs": "Back to CVs",
+    "title": "My Account",
+    "subtitle": "Manage your personal information and security preferences.",
+    "loading": "Loading...",
+    "profile": {
+      "title": "Profile Information",
+      "fullName": "Full name",
+      "fullNamePlaceholder": "Enter your full name",
+      "email": "Email address",
+      "emailPlaceholder": "Enter your email address",
+      "emailDisabled": "Managed by {provider}",
+      "saveButton": "Save changes",
+      "saving": "Saving...",
+      "success": "Profile updated successfully!",
+      "emailSuccess": "Your email address has been changed successfully!",
+      "noChanges": "No changes detected.",
+      "errors": {
+        "updateFailed": "Unable to update profile.",
+        "unexpected": "Unexpected error."
+      }
+    },
+    "security": {
+      "title": "Security",
+      "oauthInfo": "Your account is managed by {provider}. The password is managed by this provider.",
+      "currentPassword": "Current password",
+      "currentPasswordPlaceholder": "Enter your current password",
+      "currentPasswordHint": "Leave empty if you have never set a password.",
+      "newPassword": "New password",
+      "newPasswordPlaceholder": "Enter a new password",
+      "confirmPassword": "Confirm password",
+      "confirmPasswordPlaceholder": "Confirm the new password",
+      "updateButton": "Update password",
+      "updating": "Updating...",
+      "success": "Password updated successfully!",
+      "passwordStrength": {
+        "label": "Password strength",
+        "weak": "Weak",
+        "medium": "Medium",
+        "strong": "Strong",
+        "veryStrong": "Very strong"
+      },
+      "passwordRules": {
+        "title": "Security rules",
+        "minLength": "At least 12 characters",
+        "uppercase": "At least one uppercase letter",
+        "lowercase": "At least one lowercase letter",
+        "numbers": "At least one number",
+        "specialChars": "At least one special character"
+      },
+      "errors": {
+        "newPasswordRequired": "Please enter a new password.",
+        "minLength": "Password must contain at least 8 characters.",
+        "mismatch": "Passwords do not match.",
+        "updateFailed": "Unable to update password.",
+        "unexpected": "Unexpected error."
+      }
+    },
+    "tutorial": {
+      "title": "Onboarding Tutorial",
+      "description": "Restart the onboarding tutorial to rediscover FitMyCv.ai features",
+      "resetButton": "Restart tutorial",
+      "resetting": "Resetting...",
+      "success": "Tutorial has been reset. Redirecting...",
+      "errors": {
+        "resetFailed": "Error resetting the tutorial."
+      }
+    },
+    "deleteAccount": {
+      "title": "Delete Account",
+      "description": "This action is final and non-refundable. All your CVs, credits and data will be deleted. Your subscription will be immediately canceled and your banking data will be removed. Enter your password to continue.",
+      "passwordLabel": "Password",
+      "passwordHint": "All your CVs (including user folder) will be deleted. This operation is irreversible. If you created your account via an external provider, first set a password in the Security section.",
+      "deleteButton": "Delete my account",
+      "deleting": "Deleting...",
+      "modal": {
+        "title": "Confirm account deletion",
+        "description": "You are about to permanently delete your account. This action is irreversible.",
+        "consequences": {
+          "noRefund": "No refund will be issued",
+          "loseCredits": "You will lose all your remaining credits",
+          "cancelSubscription": "Your subscription will be immediately canceled",
+          "deleteCvs": "All your CVs will be permanently deleted",
+          "deleteBankData": "Your banking data will be removed from our servers"
+        },
+        "confirmCheckbox": "I understand that this action is irreversible and that I will not be refunded",
+        "cancelButton": "Cancel",
+        "confirmButton": "Delete permanently",
+        "deleting": "Deleting...",
+        "errors": {
+          "passwordRequired": "Please enter your password to confirm deletion.",
+          "deleteFailed": "Unable to delete account. Please try again.",
+          "unexpected": "Unexpected error while deleting account."
+        }
+      }
+    }
+  },
+  "legal": {
+    "back": "Back",
+    "lastUpdated": "Last updated:",
+    "terms": {
+      "meta": {
+        "title": "Terms of Service - FitMyCv.ai",
+        "description": "Terms of service and conditions of use"
+      },
+      "title": "Terms of Service"
+    },
+    "privacy": {
+      "meta": {
+        "title": "Privacy Policy - FitMyCv.ai",
+        "description": "Privacy policy and personal data protection"
+      },
+      "title": "Privacy Policy"
+    }
   },
   "admin": {
     "subscriptionPlans": {

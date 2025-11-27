@@ -26,10 +26,10 @@ export default function ConsentHistory() {
       if (data.success) {
         setHistory(data.history);
       } else {
-        setError(data.error || 'Erreur de chargement');
+        setError(data.error || t('cookies.history.loadingError'));
       }
     } catch (err) {
-      setError('Impossible de charger l\'historique');
+      setError(t('cookies.history.loadError'));
       console.error('[ConsentHistory] Erreur:', err);
     } finally {
       setLoading(false);
@@ -49,9 +49,9 @@ export default function ConsentHistory() {
 
   const getActionLabel = (action) => {
     const labels = {
-      created: 'Créé',
-      updated: 'Modifié',
-      revoked: 'Révoqué',
+      created: t('cookies.history.actions.created'),
+      updated: t('cookies.history.actions.updated'),
+      revoked: t('cookies.history.actions.revoked'),
     };
     return labels[action] || action;
   };
@@ -67,10 +67,10 @@ export default function ConsentHistory() {
 
   const getCategoryLabel = (key) => {
     const labels = {
-      necessary: 'Nécessaires',
-      functional: 'Fonctionnels',
-      analytics: 'Analytiques',
-      marketing: 'Marketing',
+      necessary: t('cookies.history.categories.necessary'),
+      functional: t('cookies.history.categories.functional'),
+      analytics: t('cookies.history.categories.analytics'),
+      marketing: t('cookies.history.categories.marketing'),
     };
     return labels[key] || key;
   };
@@ -100,7 +100,7 @@ export default function ConsentHistory() {
     return (
       <div className="mt-8 p-6 bg-white/15 backdrop-blur-xl rounded-lg">
         <p className="text-sm text-white/90 drop-shadow">
-          📝 Aucun historique de consentement disponible. Vos préférences futures seront enregistrées ici.
+          📝 {t('cookies.history.noHistory')}
         </p>
       </div>
     );
@@ -121,10 +121,10 @@ export default function ConsentHistory() {
       >
         <div className="text-left">
           <h2 className="text-xl font-semibold text-emerald-300 mb-1 drop-shadow">
-            📜 Historique de vos consentements
+            {t('cookies.history.title')}
           </h2>
           <p className="text-sm text-white/70 drop-shadow">
-            {history.length} enregistrement{history.length > 1 ? 's' : ''} • Conforme RGPD
+            {history.length} {history.length > 1 ? t('cookies.history.recordsPlural') : t('cookies.history.records')} • {t('cookies.history.gdprCompliant')}
           </p>
         </div>
         <svg
@@ -172,7 +172,7 @@ export default function ConsentHistory() {
                 {log.userAgent && (
                   <div className="mt-2 pt-2">
                     <p className="text-xs text-white/60 truncate drop-shadow">
-                      <span className="font-semibold">Navigateur :</span> {log.userAgent}
+                      <span className="font-semibold">{t('cookies.history.browser')}</span> {log.userAgent}
                     </p>
                   </div>
                 )}
@@ -182,7 +182,7 @@ export default function ConsentHistory() {
 
           <div className="mt-4 p-3 bg-emerald-500/20 backdrop-blur-sm rounded text-xs">
             <p className="text-white drop-shadow">
-              <strong>ℹ️ Conformité RGPD :</strong> Cet historique prouve que vous avez donné (ou refusé) votre consentement de manière éclairée. Ces données sont conservées pour audit et peuvent être supprimées en supprimant votre compte.
+              <strong>ℹ️ {t('cookies.history.gdprCompliant')} :</strong> {t('cookies.history.gdprNote')}
             </p>
           </div>
         </div>

@@ -340,7 +340,12 @@
     "Proficient": "Compétent"
   },
   "footer": {
-    "cookieManagement": "Gestion des cookies"
+    "cookieManagement": "Gestion des cookies",
+    "copyright": "© 2025 FitMyCv.ai",
+    "about": "À propos",
+    "cookies": "Cookies",
+    "terms": "Conditions générales",
+    "privacy": "Politique de confidentialité"
   },
   "cookies": {
     "banner": {
@@ -421,6 +426,66 @@
         "withdraw": "Droit de retirer votre consentement à tout moment"
       },
       "examplesLabel": "Exemples :"
+    },
+    "registry": {
+      "title": "📋 Registre détaillé des cookies",
+      "description": "Liste complète de tous les cookies susceptibles d'être utilisés sur ce site, par catégorie.",
+      "duration": "Durée :",
+      "type": "Type :",
+      "note": "Les cookies tiers ne seront déposés que si vous donnez votre consentement explicite. Les cookies nécessaires sont essentiels au fonctionnement du site et ne peuvent être refusés.",
+      "durations": {
+        "6_months": "6 mois",
+        "30_days": "30 jours",
+        "session": "Session",
+        "1_year": "1 an",
+        "2_years": "2 ans",
+        "24_hours": "24 heures",
+        "1_minute": "1 minute",
+        "3_months": "3 mois",
+        "13_months": "13 mois",
+        "15_minutes": "15 minutes"
+      },
+      "purposes": {
+        "cookie_consent": "Stocke les préférences de consentement aux cookies de l'utilisateur",
+        "session_token": "Authentification - Maintient la session utilisateur active",
+        "secure_session_token": "Authentification sécurisée en production - Token de session",
+        "csrf_protection": "Sécurité - Protection contre les attaques CSRF",
+        "secure_csrf_protection": "Sécurité renforcée en production - Protection CSRF",
+        "auth_callback": "Redirection après authentification",
+        "theme_preference": "Mémorise le thème choisi par l'utilisateur (clair/sombre)",
+        "language_preference": "Mémorise la langue choisie par l'utilisateur",
+        "ga_unique_users": "Google Analytics - Distingue les utilisateurs uniques",
+        "ga_distinguish_users": "Google Analytics - Distingue les utilisateurs",
+        "ga_rate_limit": "Google Analytics - Limite le taux de requêtes",
+        "ga4_session_state": "Google Analytics 4 - Persistance de l'état de la session",
+        "fb_pixel_tracking": "Facebook Pixel - Suivi des conversions et publicité ciblée",
+        "fb_cross_site_tracking": "Facebook - Stocke et suit les visites sur plusieurs sites web",
+        "fb_targeted_ads": "Facebook - Diffusion de publicités ciblées",
+        "google_ads_retargeting": "Google Ads - Suivi publicitaire et reciblage",
+        "google_ads_cookie_test": "Google Ads - Teste si le navigateur accepte les cookies"
+      }
+    },
+    "history": {
+      "title": "📜 Historique de vos consentements",
+      "records": "enregistrement",
+      "recordsPlural": "enregistrements",
+      "gdprCompliant": "Conforme RGPD",
+      "noHistory": "Aucun historique de consentement disponible. Vos préférences futures seront enregistrées ici.",
+      "loadingError": "Erreur de chargement",
+      "loadError": "Impossible de charger l'historique",
+      "browser": "Navigateur :",
+      "gdprNote": "Cet historique prouve que vous avez donné (ou refusé) votre consentement de manière éclairée. Ces données sont conservées pour audit et peuvent être supprimées en supprimant votre compte.",
+      "actions": {
+        "created": "Créé",
+        "updated": "Modifié",
+        "revoked": "Révoqué"
+      },
+      "categories": {
+        "necessary": "Nécessaires",
+        "functional": "Fonctionnels",
+        "analytics": "Analytiques",
+        "marketing": "Marketing"
+      }
     }
   },
   "header": {
@@ -605,6 +670,125 @@
   },
   "cvImprovement": {
     "improving": "Amélioration en cours..."
+  },
+  "account": {
+    "meta": {
+      "title": "Mon compte - FitMyCv.ai",
+      "description": "Gérez vos informations personnelles et vos préférences"
+    },
+    "backToCvs": "Retour aux CVs",
+    "title": "Mon compte",
+    "subtitle": "Gérez vos informations personnelles et vos préférences de sécurité.",
+    "loading": "Chargement...",
+    "profile": {
+      "title": "Informations du profil",
+      "fullName": "Nom complet",
+      "fullNamePlaceholder": "Entrez votre nom complet",
+      "email": "Adresse email",
+      "emailPlaceholder": "Entrez votre adresse email",
+      "emailDisabled": "Gérée par {provider}",
+      "saveButton": "Enregistrer les modifications",
+      "saving": "Enregistrement...",
+      "success": "Profil mis à jour avec succès !",
+      "emailSuccess": "Votre adresse email a été modifiée avec succès !",
+      "noChanges": "Aucun changement détecté.",
+      "errors": {
+        "updateFailed": "Impossible de mettre à jour le profil.",
+        "unexpected": "Erreur inattendue."
+      }
+    },
+    "security": {
+      "title": "Sécurité",
+      "oauthInfo": "Votre compte est géré par {provider}. Le mot de passe est géré par ce fournisseur.",
+      "currentPassword": "Mot de passe actuel",
+      "currentPasswordPlaceholder": "Entrez votre mot de passe actuel",
+      "currentPasswordHint": "Laissez vide si vous n'avez jamais défini de mot de passe.",
+      "newPassword": "Nouveau mot de passe",
+      "newPasswordPlaceholder": "Entrez un nouveau mot de passe",
+      "confirmPassword": "Confirmation",
+      "confirmPasswordPlaceholder": "Confirmez le nouveau mot de passe",
+      "updateButton": "Mettre à jour le mot de passe",
+      "updating": "Mise à jour...",
+      "success": "Mot de passe mis à jour avec succès !",
+      "passwordStrength": {
+        "label": "Force du mot de passe",
+        "weak": "Faible",
+        "medium": "Moyen",
+        "strong": "Fort",
+        "veryStrong": "Très fort"
+      },
+      "passwordRules": {
+        "title": "Règles de sécurité",
+        "minLength": "Au moins 12 caractères",
+        "uppercase": "Au moins une majuscule",
+        "lowercase": "Au moins une minuscule",
+        "numbers": "Au moins un chiffre",
+        "specialChars": "Au moins un caractère spécial"
+      },
+      "errors": {
+        "newPasswordRequired": "Renseignez un nouveau mot de passe.",
+        "minLength": "Le mot de passe doit contenir au moins 8 caractères.",
+        "mismatch": "Les mots de passe ne correspondent pas.",
+        "updateFailed": "Impossible de mettre à jour le mot de passe.",
+        "unexpected": "Erreur inattendue."
+      }
+    },
+    "tutorial": {
+      "title": "Tutoriel d'intégration",
+      "description": "Relancez le tutoriel de prise en main pour redécouvrir les fonctionnalités de FitMyCv.ai",
+      "resetButton": "Relancer le tutoriel",
+      "resetting": "Réinitialisation...",
+      "success": "Le tutoriel a été réinitialisé. Redirection...",
+      "errors": {
+        "resetFailed": "Erreur lors de la réinitialisation du tutoriel."
+      }
+    },
+    "deleteAccount": {
+      "title": "Supprimer le compte",
+      "description": "Cette action est définitive et sans remboursement. Tous vos CV, crédits et données seront effacés. Votre abonnement sera immédiatement annulé et vos données bancaires seront supprimées. Tapez votre mot de passe pour continuer.",
+      "passwordLabel": "Mot de passe",
+      "passwordHint": "Tous vos CV (dossier utilisateur inclus) seront supprimés. Cette opération est irréversible. Si vous avez créé le compte via un fournisseur externe, définissez d'abord un mot de passe dans la section Sécurité.",
+      "deleteButton": "Supprimer mon compte",
+      "deleting": "Suppression...",
+      "modal": {
+        "title": "Confirmer la suppression du compte",
+        "description": "Vous êtes sur le point de supprimer définitivement votre compte. Cette action est irréversible.",
+        "consequences": {
+          "noRefund": "Aucun remboursement ne sera effectué",
+          "loseCredits": "Vous perdrez tous vos crédits restants",
+          "cancelSubscription": "Votre abonnement sera immédiatement annulé",
+          "deleteCvs": "Tous vos CV seront définitivement supprimés",
+          "deleteBankData": "Vos données bancaires seront supprimées de nos serveurs"
+        },
+        "confirmCheckbox": "J'ai compris que cette action est irréversible et que je ne serai pas remboursé",
+        "cancelButton": "Annuler",
+        "confirmButton": "Supprimer définitivement",
+        "deleting": "Suppression...",
+        "errors": {
+          "passwordRequired": "Veuillez saisir votre mot de passe pour confirmer la suppression.",
+          "deleteFailed": "Suppression impossible. Réessayez.",
+          "unexpected": "Erreur inattendue lors de la suppression du compte."
+        }
+      }
+    }
+  },
+  "legal": {
+    "back": "Retour",
+    "lastUpdated": "Dernière mise à jour :",
+    "terms": {
+      "meta": {
+        "title": "Conditions Générales de Vente - FitMyCv.ai",
+        "description": "Conditions générales de vente et d'utilisation du service"
+      },
+      "title": "Conditions Générales de Vente"
+    },
+    "privacy": {
+      "meta": {
+        "title": "Politique de confidentialité - FitMyCv.ai",
+        "description": "Politique de confidentialité et protection des données personnelles"
+      },
+      "title": "Politique de confidentialité"
+    }
   },
   "admin": {
     "subscriptionPlans": {
