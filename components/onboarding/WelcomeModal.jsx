@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Sparkles, HelpCircle, Rocket, X, Check } from 'lucide-react';
 import TipBox from '@/components/ui/TipBox';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { ONBOARDING_TIMINGS } from '@/lib/onboarding/onboardingConfig';
 import {
   slideVariants,
@@ -88,6 +89,52 @@ function SwipeAnimation() {
 }
 
 /**
+ * Factory function pour créer les écrans de bienvenue avec traduction
+ * @param {function} t - Fonction de traduction
+ * @returns {Array} - Liste des écrans de bienvenue
+ */
+function createWelcomeScreens(t) {
+  return [
+    {
+      type: 'welcome',
+      title: t('onboarding.welcome.screen1.title'),
+      description: t('onboarding.welcome.screen1.description'),
+      icon: Sparkles,
+      iconBg: 'bg-emerald-500/20',
+      iconColor: 'text-emerald-400',
+      checklist: t('onboarding.welcome.screen1.checklist'),
+      atsExplanation: t('onboarding.welcome.screen1.atsExplanation'),
+      solution: {
+        title: t('onboarding.welcome.screen1.solution.title'),
+        description: t('onboarding.welcome.screen1.solution.description'),
+      },
+    },
+    {
+      type: 'problems',
+      title: t('onboarding.welcome.screen2.title'),
+      icon: HelpCircle,
+      iconBg: 'bg-amber-500/20',
+      iconColor: 'text-amber-400',
+      problems: t('onboarding.welcome.screen2.problems'),
+      solution: {
+        title: t('onboarding.welcome.screen2.solution.title'),
+        description: t('onboarding.welcome.screen2.solution.description'),
+      },
+    },
+    {
+      type: 'features',
+      title: t('onboarding.welcome.screen3.title'),
+      subtitle: t('onboarding.welcome.screen3.subtitle'),
+      icon: Rocket,
+      iconBg: 'bg-sky-500/20',
+      iconColor: 'text-sky-400',
+      features: t('onboarding.welcome.screen3.features'),
+      tip: t('onboarding.welcome.screen3.tip'),
+    },
+  ];
+}
+
+/**
  * Modal de bienvenue affiché avant le début de l'onboarding
  *
  * RESPONSIVE BREAKPOINTS:
@@ -100,77 +147,6 @@ function SwipeAnimation() {
  * - onComplete: function - Callback quand l'utilisateur clique "Commencer"
  * - onSkip: function - Callback pour skip le tutorial
  */
-
-const WELCOME_SCREENS = [
-  {
-    type: 'welcome',
-    title: 'Bienvenue sur FitMyCV 👋',
-    description: "Bienvenue ! Ce tutoriel va vous apprendre les bases pour créer rapidement des CV adaptés à chaque offre.",
-    icon: Sparkles,
-    iconBg: 'bg-emerald-500/20',
-    iconColor: 'text-emerald-400',
-    checklist: [
-      'Un CV sur-mesure par offre',
-      'Format optimisé ATS*',
-      'Conçu pour convaincre les recruteurs',
-      'Prêt en quelques minutes',
-    ],
-    atsExplanation: "ATS (Applicant Tracking System) : logiciel utilisé par les recruteurs pour filtrer automatiquement les CV. Un format optimisé ATS augmente vos chances d'être vu.",
-    solution: {
-      title: 'Astuce',
-      description: "Collez simplement les liens de vos offres, on analyse tout automatiquement !",
-    },
-  },
-  {
-    type: 'problems',
-    title: 'Pourquoi vos candidatures restent-elles sans réponse ?',
-    icon: HelpCircle,
-    iconBg: 'bg-amber-500/20',
-    iconColor: 'text-amber-400',
-    problems: [
-      {
-        emoji: '😤',
-        title: 'Des dizaines de CV envoyés, zéro réponse',
-        description: 'Vous passez des heures à postuler mais n\'obtenez que du silence.',
-      },
-      {
-        emoji: '🤖',
-        title: 'Votre CV doit d\'abord convaincre un logiciel',
-        description: '88% des grandes entreprises utilisent des systèmes ATS qui analysent structure et mots-clés avant qu\'un humain ne voie votre CV.',
-      },
-      {
-        emoji: '👤',
-        title: 'Puis séduire un recruteur en quelques secondes',
-        description: 'S\'il passe le filtre, un recruteur le parcourt rapidement pour décider qui rencontrer.',
-      },
-      {
-        emoji: '🎯',
-        title: 'Le défi : réussir les deux avec un CV générique',
-        description: 'Mission impossible sans adapter votre CV à chaque offre.',
-      },
-    ],
-    solution: {
-      title: 'FitMyCV résout ce double défi',
-      description: "Notre IA adapte votre CV pour passer les filtres automatiques ET capter l'attention des recruteurs. Un CV sur-mesure par offre, en quelques clics, pour augmenter drastiquement vos chances d'obtenir un premier entretien.",
-    },
-  },
-  {
-    type: 'features',
-    title: 'Prêt pour une visite de 2 minutes ? ⏱️',
-    subtitle: 'Découvrez les 5 fonctionnalités qui vont changer votre façon de postuler',
-    icon: Rocket,
-    iconBg: 'bg-sky-500/20',
-    iconColor: 'text-sky-400',
-    features: [
-      { emoji: '✏️', title: 'Créer et éditer votre CV', description: 'Interface intuitive et format optimisé ATS' },
-      { emoji: '🤖', title: 'Générer avec l\'IA', description: 'CV adapté automatiquement à chaque offre d\'emploi' },
-      { emoji: '📊', title: 'Calculer votre score', description: 'Mesurez votre compatibilité avec une offre' },
-      { emoji: '⚡', title: 'Optimiser en 1 clic', description: 'L\'IA améliore votre CV automatiquement' },
-      { emoji: '📄', title: 'Exporter en format pro', description: 'PDF parfait pour postuler partout' },
-    ],
-    tip: 'Suivez la visite, vous créerez votre premier CV juste après !',
-  },
-];
 
 // Configuration de l'animation morphing
 // Utilise la config centralisée (ms → secondes pour Framer Motion)
@@ -211,11 +187,15 @@ export default function WelcomeModal({
   onSkip,
   onClose, // Nouveau: handler pour la croix (X)
 }) {
+  const { t } = useLanguage();
   const [currentScreen, setCurrentScreen] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isMorphing, setIsMorphing] = useState(false);
   const [morphTransform, setMorphTransform] = useState({ x: 0, y: 0 });
   const shouldReduceMotion = useReducedMotion();
+
+  // Générer les écrans traduits
+  const WELCOME_SCREENS = useMemo(() => createWelcomeScreens(t), [t]);
 
   // Reset screen when modal opens
   useEffect(() => {
@@ -253,7 +233,7 @@ export default function WelcomeModal({
       setDirection(1);
       setCurrentScreen((prev) => prev + 1);
     }
-  }, [currentScreen, startMorphAnimation]);
+  }, [currentScreen, WELCOME_SCREENS.length, startMorphAnimation]);
 
   const handlePrev = useCallback(() => {
     if (currentScreen > 0) {
@@ -413,7 +393,7 @@ export default function WelcomeModal({
 
                 {/* Screen reader only announcement */}
                 <div className="sr-only md:hidden" role="status" aria-live="polite" aria-atomic="true">
-                  Étape {currentScreen + 1} sur {WELCOME_SCREENS.length}
+                  {t('onboarding.common.aria.screenReaderStep', { current: currentScreen + 1, total: WELCOME_SCREENS.length })}
                 </div>
               </div>
             </div>
@@ -426,7 +406,7 @@ export default function WelcomeModal({
                   onClick={onSkip}
                   className="text-xs md:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap"
                 >
-                  Passer
+                  {t('onboarding.common.buttons.skip')}
                 </button>
               )}
 
@@ -435,7 +415,7 @@ export default function WelcomeModal({
                 <button
                   onClick={onClose}
                   className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-                  aria-label="Fermer et commencer l'onboarding"
+                  aria-label={t('onboarding.common.aria.closeAndStartOnboarding')}
                 >
                   <X className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
@@ -623,7 +603,7 @@ export default function WelcomeModal({
                   relative w-8 h-8
                   flex items-center justify-center
                 "
-                aria-label={`Aller à l'écran ${idx + 1} sur ${WELCOME_SCREENS.length}`}
+                aria-label={t('onboarding.common.aria.goToScreen', { current: idx + 1, total: WELCOME_SCREENS.length })}
               >
                 <span
                   className={`
@@ -652,7 +632,7 @@ export default function WelcomeModal({
                 transition-colors
               "
             >
-              Précédent
+              {t('onboarding.common.buttons.previous')}
             </button>
           ) : (
             <div />
@@ -668,7 +648,7 @@ export default function WelcomeModal({
               transition-colors
             "
           >
-            {isLastScreen ? 'Compris' : 'Suivant'}
+            {isLastScreen ? t('onboarding.common.buttons.understood') : t('onboarding.common.buttons.next')}
           </button>
         </div>
         </motion.div>

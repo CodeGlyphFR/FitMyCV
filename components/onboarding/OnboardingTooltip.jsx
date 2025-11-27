@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useElementPosition } from '@/hooks/useElementPosition';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 /**
  * Tooltip personnalisé pour l'onboarding
@@ -36,6 +37,7 @@ export default function OnboardingTooltip({
   minWidth = 280,
   offset = 12,
 }) {
+  const { t } = useLanguage();
   const tooltipRef = useRef(null);
 
   // Use shared position hook for synchronized updates
@@ -320,7 +322,7 @@ export default function OnboardingTooltip({
                 rounded
                 transition-colors
               "
-              aria-label="Fermer le tooltip"
+              aria-label={t('onboarding.common.aria.closeTooltip')}
             >
               <svg
                 className="w-4 h-4"

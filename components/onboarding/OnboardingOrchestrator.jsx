@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useAdmin } from '@/components/admin/AdminProvider';
+import { useOnboardingSteps } from '@/lib/onboarding/useOnboardingSteps';
 import { getStepById } from '@/lib/onboarding/onboardingSteps';
 import { ONBOARDING_TIMINGS, STEP_TO_MODAL_KEY, ONBOARDING_API } from '@/lib/onboarding/onboardingConfig';
 import { isOnboardingStateLoaded } from '@/lib/onboarding/onboardingState';
@@ -60,6 +61,7 @@ export default function OnboardingOrchestrator() {
   } = useOnboarding();
 
   const { editing, setEditing } = useAdmin();
+  const onboardingSteps = useOnboardingSteps();
 
   // État local pour les modals
   const [modalOpen, setModalOpen] = useState(false);
@@ -906,7 +908,7 @@ export default function OnboardingOrchestrator() {
   }
 
   // Récupérer config de l'étape actuelle
-  const step = getStepById(currentStep);
+  const step = getStepById(onboardingSteps, currentStep);
   if (!step) {
     // Si pas de step défini (ex: step 9 = "en attente du modal de completion"),
     // afficher seulement le modal de completion si nécessaire
