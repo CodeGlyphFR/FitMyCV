@@ -98,7 +98,7 @@ export default async function Page(){
 
   return (
     <HighlightProvider cv={cv}>
-      <main className="max-w-4xl mx-auto p-4 pb-2">
+      <main className="max-w-4xl mx-auto p-4 pb-2 md:pt-8">
         <ScrollToTopOnMount />
 
         {order.map(k => (
