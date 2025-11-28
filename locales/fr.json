@@ -676,7 +676,7 @@
       "title": "Mon compte - FitMyCv.ai",
       "description": "Gérez vos informations personnelles et vos préférences"
     },
-    "backToCvs": "Retour aux CVs",
+    "backToCvs": "Retour",
     "title": "Mon compte",
     "subtitle": "Gérez vos informations personnelles et vos préférences de sécurité.",
     "loading": "Chargement...",
@@ -805,7 +805,7 @@
     "page": {
       "title": "Abonnements & Crédits",
       "description": "Gérez votre abonnement, achetez des crédits et consultez votre historique.",
-      "backToCvs": "Retour aux CV",
+      "backToCvs": "Retour",
       "loadingTitle": "Chargement...",
       "errorLoading": "Erreur lors du chargement des données",
       "tabs": {
