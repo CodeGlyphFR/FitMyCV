@@ -1439,6 +1439,10 @@
           "delete": {
             "title": "Supprimer un CV",
             "description": "Faites le ménage dans vos CV en un clic"
+          },
+          "translate": {
+            "title": "Traduire votre CV",
+            "description": "Convertissez votre CV en français ou en anglais en un clic"
           }
         },
         "tip": "Astuce : La barre de recherche fonctionne aussi avec des titres fictifs pour explorer de nouvelles carrières !"

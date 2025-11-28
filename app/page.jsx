@@ -70,15 +70,18 @@ export default async function Page(){
   const hasCustomTitles = Object.keys(rawSectionTitles).length > 0;
   const sectionTitles = hasCustomTitles ? rawSectionTitles : {};
 
+  // Langue du CV pour les titres de sections (indépendant de la langue du site)
+  const cvLanguage = cv.language || 'fr';
+
   const sections = {
-    header:     <Header header={cv.header} />,
-    summary:    <Summary summary={cv.summary} sectionTitles={sectionTitles} />,
-    skills:     <Skills skills={cv.skills} sectionTitles={sectionTitles} />,
-    experience: <Experience experience={cv.experience} sectionTitles={sectionTitles} />,
-    education:  <Education education={cv.education} sectionTitles={sectionTitles} />,
-    languages:  <Languages languages={cv.languages} sectionTitles={sectionTitles} />,
-    extras:     <Extras extras={cv.extras} sectionTitles={sectionTitles} />,
-    projects:   <Projects projects={cv.projects} sectionTitles={sectionTitles} />,
+    header:     <Header header={cv.header} cvLanguage={cvLanguage} />,
+    summary:    <Summary summary={cv.summary} sectionTitles={sectionTitles} cvLanguage={cvLanguage} />,
+    skills:     <Skills skills={cv.skills} sectionTitles={sectionTitles} cvLanguage={cvLanguage} />,
+    experience: <Experience experience={cv.experience} sectionTitles={sectionTitles} cvLanguage={cvLanguage} />,
+    education:  <Education education={cv.education} sectionTitles={sectionTitles} cvLanguage={cvLanguage} />,
+    languages:  <Languages languages={cv.languages} sectionTitles={sectionTitles} cvLanguage={cvLanguage} />,
+    extras:     <Extras extras={cv.extras} sectionTitles={sectionTitles} cvLanguage={cvLanguage} />,
+    projects:   <Projects projects={cv.projects} sectionTitles={sectionTitles} cvLanguage={cvLanguage} />,
   };
 
   // ---- ORDRE DES SECTIONS (toujours inclure "projects") ----

@@ -5,13 +5,14 @@ import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { getSectionTitle } from "@/lib/i18n/cvLabels";
+import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 
 export default function Extras(props){
   const { t } = useLanguage();
   const extras = Array.isArray(props.extras)? props.extras:[];
   const sectionTitles = props.sectionTitles || {};
-  const title = getSectionTitle('extras', sectionTitles.extras, t);
+  const cvLanguage = props.cvLanguage || 'fr';
+  const title = getCvSectionTitleInCvLanguage('extras', sectionTitles.extras, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
   const [editIndex, setEditIndex] = React.useState(null);

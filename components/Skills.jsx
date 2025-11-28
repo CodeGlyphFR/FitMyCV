@@ -5,7 +5,8 @@ import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { getSkillLevelLabel, getSectionTitle } from "@/lib/i18n/cvLabels";
+import { getSkillLevelLabel } from "@/lib/i18n/cvLabels";
+import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 
 function Row({children}){ return <div className="flex gap-2">{children}</div>; }
 
@@ -58,7 +59,9 @@ export default function Skills(props){
   const { t } = useLanguage();
   const skills = props.skills || {};
   const sectionTitles = props.sectionTitles || {};
-  const title = getSectionTitle('skills', sectionTitles.skills, t);
+  const cvLanguage = props.cvLanguage || 'fr';
+  const cvT = getTranslatorForCvLanguage(cvLanguage);
+  const title = getCvSectionTitleInCvLanguage('skills', sectionTitles.skills, cvLanguage);
 
   const hard = Array.isArray(skills.hard_skills)? skills.hard_skills:[];
   const soft = Array.isArray(skills.soft_skills)? skills.soft_skills:[];
@@ -128,7 +131,7 @@ export default function Skills(props){
               {!hideHardBecauseOthersFull && showHard && (
                 <div className="w-full rounded-2xl border border-white/15 p-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold mb-2">{t("cvSections.hardSkills")}</h3>
+                    <h3 className="font-semibold mb-2">{cvT("cvSections.hardSkills")}</h3>
                     {editing && (
                       <button onClick={() => setOpenHard(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
                     )}
@@ -137,7 +140,7 @@ export default function Skills(props){
                   {hasHard ? (
                     <div className={`grid gap-3 ${hard.length > 5 ? "md:grid-cols-2" : "grid-cols-1"}`}>
                       {hard.map((s, i) => {
-                        const levelLabel = displaySkillLevel(s, t);
+                        const levelLabel = displaySkillLevel(s, cvT);
                         return (
                           <div key={i} className="text-sm">
                             <span className="font-medium">
@@ -160,7 +163,7 @@ export default function Skills(props){
                 {(hasTools || editing) && (
                   <div className="w-full rounded-2xl border border-white/15 p-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold mb-2">{t("cvSections.tools")}</h3>
+                      <h3 className="font-semibold mb-2">{cvT("cvSections.tools")}</h3>
                       {editing && (
                         <button onClick={() => setOpenTools(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
                       )}
@@ -169,7 +172,7 @@ export default function Skills(props){
                     {hasTools ? (
                       <ul className="space-y-1">
                         {tools.map((tool, i) => {
-                          const levelLabel = displaySkillLevel(tool, t);
+                          const levelLabel = displaySkillLevel(tool, cvT);
                           return (
                             <li key={i} className="text-sm">
                               <span className="font-medium">
@@ -190,7 +193,7 @@ export default function Skills(props){
                 {(hasMethods || editing) && (
                   <div className="w-full rounded-2xl border border-white/15 p-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold mb-2">{t("cvSections.methodologies")}</h3>
+                      <h3 className="font-semibold mb-2">{cvT("cvSections.methodologies")}</h3>
                       {editing && (
                         <button onClick={() => setOpenMeth(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
                       )}
@@ -235,7 +238,7 @@ export default function Skills(props){
                 editing && (
                   <div className="rounded-2xl border border-white/15 p-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold mb-2">{t("cvSections.softSkills")}</h3>
+                      <h3 className="font-semibold mb-2">{cvT("cvSections.softSkills")}</h3>
                       <button onClick={() => setOpenSoft(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
                     </div>
                     <div className="text-sm opacity-60">{t("cvSections.noSoftSkills")}</div>

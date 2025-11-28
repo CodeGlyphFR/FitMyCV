@@ -1439,6 +1439,10 @@
           "delete": {
             "title": "Delete a CV",
             "description": "Clean up your CVs in one click"
+          },
+          "translate": {
+            "title": "Translate your CV",
+            "description": "Convert your CV to French or English with one click"
           }
         },
         "tip": "Tip: The search bar also works with fictional titles to explore new careers!"
