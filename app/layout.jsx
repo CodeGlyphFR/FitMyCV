@@ -92,13 +92,15 @@ export default async function RootLayout(props){
              ============================================ */
           #initial-loading-overlay {
             position: fixed;
-            top: -100px;
-            left: -100px;
-            right: -100px;
-            bottom: -100px;
-            width: calc(100vw + 200px);
-            height: calc(100vh + 200px);
-            max-height: calc(100dvh + 200px);
+            /* Étendre au-delà des bords + safe areas iOS Safari */
+            top: calc(-100px - env(safe-area-inset-top, 0px));
+            left: calc(-100px - env(safe-area-inset-left, 0px));
+            right: calc(-100px - env(safe-area-inset-right, 0px));
+            bottom: calc(-100px - env(safe-area-inset-bottom, 0px));
+            /* Dimensions incluant les safe areas pour iOS 26+ Safari */
+            width: calc(100vw + 200px + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px));
+            height: calc(100vh + 200px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px));
+            max-height: calc(100dvh + 200px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px));
             background-color: rgb(2, 6, 23);
             z-index: 999999999;
             display: flex;
