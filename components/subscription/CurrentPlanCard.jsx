@@ -188,7 +188,7 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
   };
 
   return (
-    <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg">
+    <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg h-full flex flex-col">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="text-2xl">{planIcon}</div>
@@ -255,12 +255,6 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
             </div>
           </div>
 
-          {subscription.cancelAtPeriodEnd && (
-            <div className="mt-4 p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg text-sm text-orange-200">
-              ⚠️ {t('subscription.currentPlan.canceledWarning', { date: formatDate(subscription.currentPeriodEnd) })}
-            </div>
-          )}
-
           {/* Bouton de changement de période de facturation */}
           {!subscription.cancelAtPeriodEnd && plan.priceYearly && plan.priceYearly !== plan.priceMonthly && subscription.billingPeriod === 'monthly' && (
             <div className="mt-3">
@@ -303,15 +297,22 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
             </div>
           )}
 
-          {/* Message informatif + Bouton d'annulation/réactivation */}
-          <div className="mt-4 pt-3 border-t border-white/10">
+          {/* Message informatif + Bouton d'annulation/réactivation - Poussé en bas */}
+          <div className="mt-auto pt-3 border-t border-white/10">
             {subscription.cancelAtPeriodEnd ? (
-              <button
-                onClick={handleReactivateClick}
-                className="w-full px-3 py-2 rounded-lg bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 hover:border-green-500/50 text-green-300 hover:text-green-200 text-xs font-medium transition-all"
-              >
-                {t('subscription.currentPlan.reactivateButton')}
-              </button>
+              <div className="space-y-3">
+                {/* Warning block */}
+                <div className="p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg text-sm text-orange-200">
+                  ⚠️ {t('subscription.currentPlan.canceledWarning', { date: formatDate(subscription.currentPeriodEnd) })}
+                </div>
+                {/* Reactivate button */}
+                <button
+                  onClick={handleReactivateClick}
+                  className="w-full px-3 py-2 rounded-lg bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 hover:border-green-500/50 text-green-300 hover:text-green-200 text-xs font-medium transition-all"
+                >
+                  {t('subscription.currentPlan.reactivateButton')}
+                </button>
+              </div>
             ) : (
               <>
                 {subscription.billingPeriod === 'yearly' && plan.priceYearly && plan.priceYearly !== plan.priceMonthly ? (

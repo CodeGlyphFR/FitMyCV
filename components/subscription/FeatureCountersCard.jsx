@@ -60,7 +60,7 @@ export default function FeatureCountersCard({ featureCounters, plan }) {
   }, [plan.featureLimits, featureCounters]);
 
   return (
-    <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg">
+    <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-4 shadow-lg h-full">
       <div className="flex items-center gap-2 mb-3">
         <Activity className="text-white" size={20} />
         <h2 className="text-lg font-semibold text-white">{t('subscription.features.title')}</h2>
