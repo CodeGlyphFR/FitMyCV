@@ -111,6 +111,9 @@ export async function GET(){
       const title = json?.header?.current_title ? String(json.header.current_title).trim() : "";
       const trimmedTitle = title || "";
 
+      // Récupérer la langue du CV
+      const cvLanguage = json?.language || null;
+
       // Récupérer les données de source depuis la DB
       const sourceData = sourceMap.get(file);
       const sourceType = sourceData?.sourceType || null;
@@ -160,6 +163,7 @@ export async function GET(){
         isImported, // true si createdBy === 'import-pdf'
         isManual, // true si createdBy === null
         isTranslated, // true si c'est un CV traduit
+        language: cvLanguage, // 'fr', 'en', ou null
         createdAt: createdAtIso,
         updatedAt: updatedAtIso,
         sortKey: sortTimestamp, // Utiliser le timestamp de la DB pour le tri
@@ -197,6 +201,7 @@ export async function GET(){
         isImported,
         isManual,
         isTranslated,
+        language: null, // Impossible de lire la langue en cas d'erreur
         createdAt: null,
         updatedAt: null,
         sortKey,
