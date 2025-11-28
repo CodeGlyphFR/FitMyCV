@@ -6,13 +6,14 @@ import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import FormRow from "./ui/FormRow";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { getSectionTitle } from "@/lib/i18n/cvLabels";
+import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import ChangesPanel from "./ChangesPanel";
 
 export default function Summary(props){
   const { t } = useLanguage();
   const summary = props.summary || {};
-  const title = getSectionTitle('summary', props.sectionTitles?.summary, t);
+  const cvLanguage = props.cvLanguage || 'fr';
+  const title = getCvSectionTitleInCvLanguage('summary', props.sectionTitles?.summary, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
 

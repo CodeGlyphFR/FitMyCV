@@ -78,6 +78,7 @@ const FEATURE_ICONS = {
   create: '/icons/add.png',
   generate: '/icons/openai-symbol.png',
   delete: '/icons/delete.png',
+  translate: '/icons/translate.png',
 };
 
 /**

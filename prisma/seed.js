@@ -188,6 +188,12 @@ async function main() {
       value: 'gpt-5-mini-2025-08-07',
       category: 'ai_models',
       description: 'Modèle pour optimisation de CV'
+    },
+    {
+      settingName: 'model_detect_language',
+      value: 'gpt-4o-mini',
+      category: 'ai_models',
+      description: 'Modèle pour détection de langue de CV (léger, 50 chars max)'
     }
   ];
 

@@ -6,7 +6,7 @@ import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { getSectionTitle } from "@/lib/i18n/cvLabels";
+import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 
 function norm(s){
   const m = (s || "").trim();
@@ -19,7 +19,9 @@ export default function Projects(props){
   const { t } = useLanguage();
   const projects = Array.isArray(props.projects) ? props.projects : [];
   const sectionTitles = props.sectionTitles || {};
-  const title = getSectionTitle('projects', sectionTitles.projects, t);
+  const cvLanguage = props.cvLanguage || 'fr';
+  const cvT = getTranslatorForCvLanguage(cvLanguage);
+  const title = getCvSectionTitleInCvLanguage('projects', sectionTitles.projects, cvLanguage);
   const { editing } = useAdmin();
   const isEditing = !!editing; // force bool
   const { mutate } = useMutate();
@@ -124,7 +126,7 @@ export default function Projects(props){
                 <div className="font-semibold flex-1 min-w-0 break-words">{p.name || ""}</div>
                 <div className="text-sm opacity-80 whitespace-nowrap ml-auto mt-1">
                   {(p.start_date || p.end_date)
-                    ? [ym(p.start_date) || "", p.end_date === "present" ? t("cvSections.present") : (ym(p.end_date) || "")].filter(Boolean).join(" → ")
+                    ? [ym(p.start_date) || "", p.end_date === "present" ? cvT("cvSections.present") : (ym(p.end_date) || "")].filter(Boolean).join(" → ")
                     : ""}
                 </div>
               </div>

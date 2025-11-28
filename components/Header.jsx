@@ -13,6 +13,7 @@ import { useSettings } from "@/lib/settings/SettingsContext";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
 import { parseApiError } from "@/lib/utils/errorHandler";
+import { SUPPORTED_LANGUAGES, LANGUAGE_FLAGS, LANGUAGE_LABELS, DEFAULT_LANGUAGE } from "@/lib/cv/languageConstants";
 
 export default function Header(props){
   const header = props.header || {};
@@ -535,10 +536,11 @@ export default function Header(props){
                 ${isTranslateDropdownOpen ? 'opacity-100 scale-100 translate-x-0' : 'opacity-0 scale-75 translate-x-2 pointer-events-none'}
               `}
             >
-              {[
-                { code: 'fr', flag: '/icons/fr.svg', label: 'Français' },
-                { code: 'en', flag: '/icons/gb.svg', label: 'English' }
-              ].map((lang, index) => (
+              {Object.values(SUPPORTED_LANGUAGES).map(code => ({
+                code,
+                flag: LANGUAGE_FLAGS[code],
+                label: LANGUAGE_LABELS[code]
+              })).filter(lang => lang.code !== (props.cvLanguage || DEFAULT_LANGUAGE)).map((lang, index) => (
                 <button
                   key={lang.code}
                   onClick={() => executeTranslation(lang.code)}
@@ -587,7 +589,11 @@ export default function Header(props){
               aria-expanded={isTranslateDropdownOpen}
               type="button"
             >
-              <img src="/icons/translate.png" alt="Translate" className="h-4 w-4 " />
+              <img
+                src={LANGUAGE_FLAGS[props.cvLanguage] || LANGUAGE_FLAGS[DEFAULT_LANGUAGE]}
+                alt={LANGUAGE_LABELS[props.cvLanguage] || LANGUAGE_LABELS[DEFAULT_LANGUAGE]}
+                className="h-6 w-6"
+              />
             </button>
           </div>
         </div>

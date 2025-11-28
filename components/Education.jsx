@@ -6,7 +6,7 @@ import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { getSectionTitle } from "@/lib/i18n/cvLabels";
+import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 
 export default function Education(props){
   const { t } = useLanguage();
@@ -21,7 +21,8 @@ export default function Education(props){
   }, [rawEducation]);
 
   const sectionTitles = props.sectionTitles || {};
-  const title = getSectionTitle('education', sectionTitles.education, t);
+  const cvLanguage = props.cvLanguage || 'fr';
+  const title = getCvSectionTitleInCvLanguage('education', sectionTitles.education, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
   const [editIndex, setEditIndex] = React.useState(null);
