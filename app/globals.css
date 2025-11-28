@@ -91,12 +91,33 @@ a:not(.swiper-button-prev):not(.swiper-button-next):not(.swiper-pagination-bulle
   cursor: pointer;
 }
 
-/* iOS-specific auth layout - Position form at top with margin */
+/* iOS-specific styles
+   Reference: https://stackoverflow.com/questions/79753701
+   Reference: https://github.com/mui/material-ui/issues/46953 */
 @supports (-webkit-touch-callout: none) {
+  /* Auth layout - Position form at top with margin */
   .ios-auth-container {
     align-items: flex-start !important;
     padding-top: max(2rem, env(safe-area-inset-top, 0) + 1rem) !important;
     padding-bottom: max(2rem, env(safe-area-inset-bottom, 0) + 1rem) !important;
+  }
+
+  /* iOS 26 Safari Fix - Loading overlay safe area coverage
+     Safari clips fixed elements to the "inner viewport", not covering
+     the transparent bottom toolbar area. This ensures the html/body
+     background extends into safe areas during loading. */
+  html, body {
+    background-color: rgb(2, 6, 23) !important;
+  }
+
+  /* Hide content behind loading overlay on iOS to prevent flash in safe area */
+  body:has(#initial-loading-overlay:not(.hiding)) > *:not(#initial-loading-overlay) {
+    visibility: hidden !important;
+  }
+
+  /* Make the loading overlay visible (override the above rule) */
+  #initial-loading-overlay {
+    visibility: visible !important;
   }
 }
 
