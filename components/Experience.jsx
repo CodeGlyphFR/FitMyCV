@@ -6,7 +6,7 @@ import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { getSectionTitle } from "@/lib/i18n/cvLabels";
+import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 
 
 export default function Experience(props){
@@ -22,7 +22,9 @@ export default function Experience(props){
   }, [rawExperience]);
 
   const sectionTitles = props.sectionTitles || {};
-  const title = getSectionTitle('experience', sectionTitles.experience, t);
+  const cvLanguage = props.cvLanguage || 'fr';
+  const cvT = getTranslatorForCvLanguage(cvLanguage);
+  const title = getCvSectionTitleInCvLanguage('experience', sectionTitles.experience, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
 
@@ -158,7 +160,7 @@ export default function Experience(props){
                   {e.title || ""}{e.company ? " • " : ""}{e.company || ""}{e.department_or_client ? ` (${e.department_or_client})` : ""}
                 </div>
                 <div className="ml-3 text-sm opacity-80 whitespace-nowrap">
-                  {ym(e.start_date)} — {e.end_date === "present" ? t("cvSections.present") : ym(e.end_date)}
+                  {ym(e.start_date)} — {e.end_date === "present" ? cvT("cvSections.present") : ym(e.end_date)}
                 </div>
                 {editing && (
                   <div className="no-print flex gap-2 shrink-0">
@@ -203,7 +205,7 @@ export default function Experience(props){
 
                     {Array.isArray(e.deliverables) && e.deliverables.length > 0 ? (
                       <div className="md:col-span-1">
-                        <div className="text-sm font-medium mb-1">{t("cvSections.deliverables")}</div>
+                        <div className="text-sm font-medium mb-1">{cvT("cvSections.deliverables")}</div>
                         <ul className="list-disc pl-5 text-sm space-y-1">
                           {e.deliverables.map((d, j) => <li key={j}>{d}</li>)}
                         </ul>

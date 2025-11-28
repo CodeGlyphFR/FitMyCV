@@ -5,13 +5,15 @@ import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { getLanguageLevelLabel, getSectionTitle } from "@/lib/i18n/cvLabels";
+import { getLanguageLevelLabel } from "@/lib/i18n/cvLabels";
+import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 
 export default function Languages(props){
   const { t } = useLanguage();
   const languages = Array.isArray(props.languages)? props.languages:[];
   const sectionTitles = props.sectionTitles || {};
-  const title = getSectionTitle('languages', sectionTitles.languages, t);
+  const cvLanguage = props.cvLanguage || 'fr';
+  const title = getCvSectionTitleInCvLanguage('languages', sectionTitles.languages, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
   const [editIndex, setEditIndex] = React.useState(null);
