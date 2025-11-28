@@ -76,7 +76,36 @@
       "rapid": "Rapide",
       "medium": "Moyen",
       "deep": "Approfondi"
-    }
+    },
+    "filter": "Filtrer",
+    "filterTitle": "Filtres",
+    "filterCvType": "Type de CV",
+    "filterCvLanguage": "Langue du CV",
+    "filterDateRange": "Date de création",
+    "filterClearAll": "Effacer les filtres",
+    "filterNoResults": "Aucun CV ne correspond aux filtres",
+    "cvTypes": {
+      "generate-cv": "Avec offre",
+      "import-pdf": "Importé",
+      "manual": "Ajouté",
+      "translate-cv": "Traduit",
+      "improve-cv": "Amélioré",
+      "generate-cv-job-title": "Depuis titre",
+      "create-template": "Modèle IA"
+    },
+    "dateRanges": {
+      "24h": "24 heures",
+      "7d": "7 jours",
+      "30d": "30 jours",
+      "all": "Tout"
+    },
+    "cvLanguages": {
+      "fr": "Français",
+      "en": "English",
+      "all": "Toutes"
+    },
+    "filterSelectLanguage": "Sélectionner",
+    "filterSelectDate": "Sélectionner"
   },
   "jobTitleGenerator": {
     "notifications": {

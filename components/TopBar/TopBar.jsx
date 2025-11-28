@@ -23,9 +23,11 @@ import { useScrollBehavior } from "./hooks/useScrollBehavior";
 import { useModalStates } from "./hooks/useModalStates";
 import { useExportModal } from "./hooks/useExportModal";
 import { useSubscriptionData } from "./hooks/useSubscriptionData";
+import { useFilterState } from "./hooks/useFilterState";
 
 // Components
 import ItemLabel from "./components/ItemLabel";
+import FilterDropdown from "./components/FilterDropdown";
 import CvGeneratorModal from "./modals/CvGeneratorModal";
 import PdfImportModal from "./modals/PdfImportModal";
 import DeleteCvModal from "./modals/DeleteCvModal";
@@ -118,6 +120,44 @@ export default function TopBar() {
   const dropdownPortalRef = React.useRef(null);
   const userMenuRef = React.useRef(null);
   const userMenuButtonRef = React.useRef(null);
+  const filterButtonRef = React.useRef(null);
+
+  // Filter state hook
+  const filter = useFilterState();
+
+  // Filtered items based on active filters
+  const filteredItems = React.useMemo(() => {
+    if (!filter.hasActiveFilters) return state.items;
+
+    return state.items.filter(item => {
+      // Filtre par type
+      if (filter.filters.types.length > 0) {
+        const itemType = item.createdBy || 'manual';
+        if (!filter.filters.types.includes(itemType)) return false;
+      }
+
+      // Filtre par langue
+      if (filter.filters.language !== null) {
+        if (!item.language || item.language !== filter.filters.language) return false;
+      }
+
+      // Filtre par date de création
+      if (filter.filters.dateRange) {
+        const now = Date.now();
+        const created = new Date(item.createdAt).getTime();
+        if (Number.isNaN(created)) return false;
+
+        const ranges = {
+          '24h': 24 * 60 * 60 * 1000,      // 24 heures en ms
+          '7d': 7 * 24 * 60 * 60 * 1000,   // 7 jours en ms
+          '30d': 30 * 24 * 60 * 60 * 1000, // 30 jours en ms
+        };
+        if (now - created > ranges[filter.filters.dateRange]) return false;
+      }
+
+      return true;
+    });
+  }, [state.items, filter.filters, filter.hasActiveFilters]);
 
   // Active tasks count
   const activeTasksCount = React.useMemo(() => {
@@ -580,59 +620,65 @@ export default function TopBar() {
                         e.stopPropagation();
                       }}
                     >
-                      {state.items.map((it) => {
-                        const isRecentlyGenerated = recentlyGeneratedCv && it.file === recentlyGeneratedCv;
-                        const isOnboardingStep4Cv = currentStep === 4 && it.file === onboardingState?.step4?.cvFilename;
-                        return (
-                        <li key={it.file}>
-                          <button
-                            type="button"
-                            data-cv-filename={it.file}
-                            onClick={async () => {
-                              // Si c'est le CV récemment généré OU le CV de l'onboarding step 4, émettre l'événement
-                              if (isRecentlyGenerated || isOnboardingStep4Cv) {
-                                console.log('[TopBar] CV onboarding sélectionné, émission generatedCvOpened');
-                                emitOnboardingEvent(ONBOARDING_EVENTS.GENERATED_CV_OPENED, {
-                                  cvFilename: it.file
-                                });
-                                // Nettoyer l'état de surbrillance si récent
-                                if (isRecentlyGenerated) {
-                                  setRecentlyGeneratedCv(null);
-                                }
-                              }
-
-                              await operations.selectFile(it.file);
-                              modals.setListOpen(false);
-                            }}
-                            className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-white/25 text-white transition-colors duration-200 ${
-                              it.file === state.current
-                                ? "bg-white/20 border-l-2 border-emerald-400"
-                                : ""
-                            } ${
-                              isRecentlyGenerated
-                                ? "bg-emerald-500/30 border border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)] animate-pulse"
-                                : isOnboardingStep4Cv
-                                ? "bg-emerald-500/20"
-                                : ""
-                            }`}
-                          >
-                            <span
-                              key={`dropdown-icon-${it.file}-${it.createdBy}`}
-                              className="flex h-6 w-6 items-center justify-center shrink-0"
-                            >
-                              {getCvIcon(it.createdBy, it.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
-                            </span>
-                            <ItemLabel
-                              item={it}
-                              className="leading-tight"
-                              tickerKey={state.tickerResetKey}
-                              withHyphen={false}
-                              t={t}
-                            />
-                          </button>
+                      {filteredItems.length === 0 && filter.hasActiveFilters ? (
+                        <li className="px-3 py-3 text-sm text-white/60 text-center italic">
+                          {t("topbar.filterNoResults")}
                         </li>
-                        );
-                      })}
+                      ) : (
+                        filteredItems.map((it) => {
+                          const isRecentlyGenerated = recentlyGeneratedCv && it.file === recentlyGeneratedCv;
+                          const isOnboardingStep4Cv = currentStep === 4 && it.file === onboardingState?.step4?.cvFilename;
+                          return (
+                          <li key={it.file}>
+                            <button
+                              type="button"
+                              data-cv-filename={it.file}
+                              onClick={async () => {
+                                // Si c'est le CV récemment généré OU le CV de l'onboarding step 4, émettre l'événement
+                                if (isRecentlyGenerated || isOnboardingStep4Cv) {
+                                  console.log('[TopBar] CV onboarding sélectionné, émission generatedCvOpened');
+                                  emitOnboardingEvent(ONBOARDING_EVENTS.GENERATED_CV_OPENED, {
+                                    cvFilename: it.file
+                                  });
+                                  // Nettoyer l'état de surbrillance si récent
+                                  if (isRecentlyGenerated) {
+                                    setRecentlyGeneratedCv(null);
+                                  }
+                                }
+
+                                await operations.selectFile(it.file);
+                                modals.setListOpen(false);
+                              }}
+                              className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-white/25 text-white transition-colors duration-200 ${
+                                it.file === state.current
+                                  ? "bg-white/20 border-l-2 border-emerald-400"
+                                  : ""
+                              } ${
+                                isRecentlyGenerated
+                                  ? "bg-emerald-500/30 border border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)] animate-pulse"
+                                  : isOnboardingStep4Cv
+                                  ? "bg-emerald-500/20"
+                                  : ""
+                              }`}
+                            >
+                              <span
+                                key={`dropdown-icon-${it.file}-${it.createdBy}`}
+                                className="flex h-6 w-6 items-center justify-center shrink-0"
+                              >
+                                {getCvIcon(it.createdBy, it.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
+                              </span>
+                              <ItemLabel
+                                item={it}
+                                className="leading-tight"
+                                tickerKey={state.tickerResetKey}
+                                withHyphen={false}
+                                t={t}
+                              />
+                            </button>
+                          </li>
+                          );
+                        })
+                      )}
                     </ul>
                   </div>
                 </>,
@@ -783,6 +829,41 @@ export default function TopBar() {
               onClose={() => modals.setOpenTaskDropdown(false)}
               buttonRef={taskQueueButtonRef}
               className="hidden md:block"
+            />
+          </div>
+
+          {/* Filter Button */}
+          <div className="relative order-4 md:order-4">
+            <button
+              ref={filterButtonRef}
+              type="button"
+              onClick={() => filter.setFilterMenuOpen(!filter.filterMenuOpen)}
+              className={`rounded-lg border backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 transition-all duration-200 ${
+                filter.hasActiveFilters
+                  ? 'border-emerald-400 bg-emerald-500/30'
+                  : 'border-white/40 bg-white/20'
+              }`}
+              title={t("topbar.filter")}
+            >
+              <img src="/icons/filter.svg" alt={t("topbar.filter")} className="h-4 w-4" />
+              {filter.hasActiveFilters && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-400 text-[10px] text-gray-900 font-bold flex items-center justify-center">
+                  {filter.activeFilterCount}
+                </span>
+              )}
+            </button>
+
+            <FilterDropdown
+              isOpen={filter.filterMenuOpen}
+              onClose={() => filter.setFilterMenuOpen(false)}
+              buttonRef={filterButtonRef}
+              filters={filter.filters}
+              toggleType={filter.toggleType}
+              setLanguage={filter.setLanguage}
+              setDateRange={filter.setDateRange}
+              clearAllFilters={filter.clearAllFilters}
+              hasActiveFilters={filter.hasActiveFilters}
+              t={t}
             />
           </div>
 
