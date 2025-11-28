@@ -30,7 +30,7 @@
     },
     "passwordRules": {
       "title": "Your password must contain:",
-      "minLength": "At least 12 characters",
+      "minLength": "At least 8 characters",
       "uppercase": "At least one uppercase letter",
       "lowercase": "At least one lowercase letter",
       "numbers": "At least one number",
@@ -41,7 +41,7 @@
       "nameRequired": "Please provide your first and last name.",
       "firstNameRequired": "Please provide your first name.",
       "lastNameRequired": "Please provide your last name.",
-      "passwordLength": "Password must contain at least 12 characters.",
+      "passwordLength": "Password must contain at least 8 characters.",
       "passwordMismatch": "Passwords do not match.",
       "createFailed": "Unable to create your account.",
       "invalidCredentials": "Invalid credentials.",
@@ -719,7 +719,7 @@
       },
       "passwordRules": {
         "title": "Security rules",
-        "minLength": "At least 12 characters",
+        "minLength": "At least 8 characters",
         "uppercase": "At least one uppercase letter",
         "lowercase": "At least one lowercase letter",
         "numbers": "At least one number",

@@ -70,7 +70,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           setLoading(false);
           return;
         }
-        if (password.length < 12){
+        if (password.length < 8){
           setError(t("auth.errors.passwordLength"));
           setLoading(false);
           return;

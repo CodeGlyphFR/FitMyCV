@@ -30,7 +30,7 @@
     },
     "passwordRules": {
       "title": "Votre mot de passe doit contenir :",
-      "minLength": "Au moins 12 caractères",
+      "minLength": "Au moins 8 caractères",
       "uppercase": "Au moins une majuscule",
       "lowercase": "Au moins une minuscule",
       "numbers": "Au moins un chiffre",
@@ -41,7 +41,7 @@
       "nameRequired": "Renseignez votre prénom et nom.",
       "firstNameRequired": "Renseignez votre prénom.",
       "lastNameRequired": "Renseignez votre nom.",
-      "passwordLength": "Le mot de passe doit contenir au moins 12 caractères.",
+      "passwordLength": "Le mot de passe doit contenir au moins 8 caractères.",
       "passwordMismatch": "Les mots de passe ne correspondent pas.",
       "createFailed": "Impossible de créer votre compte.",
       "invalidCredentials": "Identifiants invalides.",
@@ -719,7 +719,7 @@
       },
       "passwordRules": {
         "title": "Règles de sécurité",
-        "minLength": "Au moins 12 caractères",
+        "minLength": "Au moins 8 caractères",
         "uppercase": "Au moins une majuscule",
         "lowercase": "Au moins une minuscule",
         "numbers": "Au moins un chiffre",
