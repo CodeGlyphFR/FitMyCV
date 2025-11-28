@@ -76,7 +76,36 @@
       "rapid": "Fast",
       "medium": "Medium",
       "deep": "Deep"
-    }
+    },
+    "filter": "Filter",
+    "filterTitle": "Filters",
+    "filterCvType": "CV Type",
+    "filterCvLanguage": "CV Language",
+    "filterDateRange": "Creation Date",
+    "filterClearAll": "Clear filters",
+    "filterNoResults": "No CV matches the filters",
+    "cvTypes": {
+      "generate-cv": "With offer",
+      "import-pdf": "Imported",
+      "manual": "Added",
+      "translate-cv": "Translated",
+      "improve-cv": "Improved",
+      "generate-cv-job-title": "From title",
+      "create-template": "AI Template"
+    },
+    "dateRanges": {
+      "24h": "24 hours",
+      "7d": "7 days",
+      "30d": "30 days",
+      "all": "All"
+    },
+    "cvLanguages": {
+      "fr": "Français",
+      "en": "English",
+      "all": "All"
+    },
+    "filterSelectLanguage": "Select",
+    "filterSelectDate": "Select"
   },
   "jobTitleGenerator": {
     "notifications": {
