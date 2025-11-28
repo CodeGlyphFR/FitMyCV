@@ -30,7 +30,7 @@
     },
     "passwordRules": {
       "title": "Your password must contain:",
-      "minLength": "At least 12 characters",
+      "minLength": "At least 8 characters",
       "uppercase": "At least one uppercase letter",
       "lowercase": "At least one lowercase letter",
       "numbers": "At least one number",
@@ -41,7 +41,7 @@
       "nameRequired": "Please provide your first and last name.",
       "firstNameRequired": "Please provide your first name.",
       "lastNameRequired": "Please provide your last name.",
-      "passwordLength": "Password must contain at least 12 characters.",
+      "passwordLength": "Password must contain at least 8 characters.",
       "passwordMismatch": "Passwords do not match.",
       "createFailed": "Unable to create your account.",
       "invalidCredentials": "Invalid credentials.",
@@ -676,7 +676,7 @@
       "title": "My Account - FitMyCv.ai",
       "description": "Manage your personal information and preferences"
     },
-    "backToCvs": "Back to CVs",
+    "backToCvs": "Back",
     "title": "My Account",
     "subtitle": "Manage your personal information and security preferences.",
     "loading": "Loading...",
@@ -719,7 +719,7 @@
       },
       "passwordRules": {
         "title": "Security rules",
-        "minLength": "At least 12 characters",
+        "minLength": "At least 8 characters",
         "uppercase": "At least one uppercase letter",
         "lowercase": "At least one lowercase letter",
         "numbers": "At least one number",
@@ -805,7 +805,7 @@
     "page": {
       "title": "Subscriptions & Credits",
       "description": "Manage your subscription, purchase credits, and view your history.",
-      "backToCvs": "Back to CVs",
+      "backToCvs": "Back",
       "loadingTitle": "Loading...",
       "errorLoading": "Error loading data",
       "tabs": {

@@ -302,7 +302,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                 <div className="space-y-1.5">
                   <p className="text-xs font-medium text-white/70 drop-shadow">{t('account.security.passwordRules.title')}</p>
                   <PasswordRule
-                    valid={newPassword.length >= 12}
+                    valid={newPassword.length >= 8}
                     text={t('account.security.passwordRules.minLength')}
                   />
                   <PasswordRule
@@ -511,7 +511,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
 
 // Fonctions helper pour l'indicateur de force du mot de passe
 function getStrengthInfo(password) {
-  const hasMinLength = password.length >= 12;
+  const hasMinLength = password.length >= 8;
   const hasUppercase = /[A-Z]/.test(password);
   const hasLowercase = /[a-z]/.test(password);
   const hasNumbers = /[0-9]/.test(password);
