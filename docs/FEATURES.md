@@ -181,6 +181,7 @@ Traduit un CV existant vers une autre langue.
 
 - **Français (fr)**
 - **English (en)**
+- **Español (es)**
 
 ### Processus
 

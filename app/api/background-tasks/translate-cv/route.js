@@ -49,7 +49,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "Aucun CV source fourni." }, { status: 400 });
     }
 
-    if (!targetLanguage || !['fr', 'en'].includes(targetLanguage)) {
+    if (!targetLanguage || !['fr', 'en', 'es'].includes(targetLanguage)) {
       return NextResponse.json({ error: "Langue cible invalide." }, { status: 400 });
     }
 
@@ -74,7 +74,8 @@ export async function POST(request) {
 
     const languageNames = {
       fr: 'français',
-      en: 'anglais'
+      en: 'anglais',
+      es: 'español'
     };
 
     const payload = {

@@ -9,6 +9,7 @@ import { useSettings } from "@/lib/settings/SettingsContext";
 const languages = [
   { code: "fr", flag: "/icons/fr.svg", label: "Français" },
   { code: "en", flag: "/icons/gb.svg", label: "English" },
+  { code: "es", flag: "/icons/es.svg", label: "Español" },
 ];
 
 export default function LanguageSwitcher() {

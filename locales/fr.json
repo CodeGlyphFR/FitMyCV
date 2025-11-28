@@ -1504,5 +1504,50 @@
         "tip": "Une idée de fonctionnalité ? Dites-le nous !"
       }
     }
+  },
+  "optimization": {
+    "title": "Analyse et Optimisation",
+    "matchScore": "Score de correspondance",
+    "scoreBreakdown": "Détail du score",
+    "suggestions": "Suggestions d'amélioration",
+    "missingSkills": "Compétences manquantes",
+    "matchingSkills": "Compétences correspondantes",
+    "technicalSkills": "Compétences techniques",
+    "experience": "Expérience",
+    "education": "Formation",
+    "softSkills": "Soft skills & langues",
+    "priority": "Priorité",
+    "impact": "Impact",
+    "high": "Haute",
+    "medium": "Moyenne",
+    "low": "Basse",
+    "noData": "Aucune donnée d'optimisation disponible",
+    "loading": "Chargement...",
+    "close": "Fermer",
+    "optimize": "Optimiser",
+    "autoImprove": "Améliorer automatiquement",
+    "improving": "Amélioration en cours...",
+    "improveSuccess": "CV amélioré ! Rechargement...",
+    "improvementInProgress": "Amélioration en cours...",
+    "calculatingScore": "Calcul du score en cours...",
+    "showMore": "autres",
+    "showLess": "Voir moins"
+  },
+  "changes": {
+    "title": "Historique des modifications",
+    "button": "📝 Historique",
+    "section": "Section",
+    "change": "Modification",
+    "reason": "Raison",
+    "close": "Fermer",
+    "noChanges": "Aucune modification enregistrée",
+    "sections": {
+      "summary": "Résumé",
+      "skills": "Compétences",
+      "experience": "Expérience",
+      "education": "Formation",
+      "languages": "Langues",
+      "projects": "Projets"
+    }
   }
 }
