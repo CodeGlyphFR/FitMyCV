@@ -115,7 +115,7 @@ export default function ChangesPanel() {
         </div>
 
         {/* Bouton fermer */}
-        <div className="flex justify-end pt-4 border-t border-white/20">
+        <div className="flex justify-end pt-4">
           <button
             onClick={handleClose}
             className="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm border-2 border-white/40 rounded-lg transition-all duration-200 text-white font-medium text-sm drop-shadow"
