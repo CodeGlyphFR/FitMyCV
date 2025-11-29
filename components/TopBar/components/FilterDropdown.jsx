@@ -145,6 +145,7 @@ export default function FilterDropdown({
   setDateRange,
   clearAllFilters,
   hasActiveFilters,
+  availableOptions,
   t,
 }) {
   const dropdownRef = React.useRef(null);
@@ -200,6 +201,30 @@ export default function FilterDropdown({
 
   if (!isOpen || !rect) return null;
 
+  // Filter visible options based on available data (progressive filtering)
+  const visibleTypes = availableOptions
+    ? CV_TYPES.filter(type =>
+        availableOptions.availableTypes.has(type.id) || filters.types.includes(type.id)
+      )
+    : CV_TYPES;
+
+  const visibleLanguages = availableOptions
+    ? CV_LANGUAGES.filter(lang =>
+        lang.id === null || availableOptions.availableLanguages.has(lang.id) || filters.language === lang.id
+      )
+    : CV_LANGUAGES;
+
+  const visibleDateRanges = availableOptions
+    ? DATE_RANGES.filter(range =>
+        range.id === null || availableOptions.availableDateRanges.has(range.id) || filters.dateRange === range.id
+      )
+    : DATE_RANGES;
+
+  // Determine which sections to show
+  const showTypesSection = visibleTypes.length > 0;
+  const showLanguagesSection = visibleLanguages.length > 1; // More than just "all"
+  const showDateRangesSection = visibleDateRanges.length > 1; // More than just "all"
+
   const dropdownContent = (
     <>
       {/* Overlay transparent pour fermer au click */}
@@ -225,41 +250,55 @@ export default function FilterDropdown({
         className="rounded-xl border border-white/25 bg-white/10 backdrop-blur-xl shadow-2xl py-2"
       >
         {/* Type de CV */}
-        <SectionTitle>{t("topbar.filterCvType")}</SectionTitle>
-        <div className="space-y-0">
-          {CV_TYPES.map((type) => (
-            <GlassCheckbox
-              key={type.id}
-              checked={filters.types.includes(type.id)}
-              onChange={() => toggleType(type.id)}
-              label={t(`topbar.cvTypes.${type.key}`)}
-            />
-          ))}
-        </div>
+        {showTypesSection && (
+          <>
+            <SectionTitle>{t("topbar.filterCvType")}</SectionTitle>
+            <div className="space-y-0">
+              {visibleTypes.map((type) => (
+                <GlassCheckbox
+                  key={type.id}
+                  checked={filters.types.includes(type.id)}
+                  onChange={() => toggleType(type.id)}
+                  label={t(`topbar.cvTypes.${type.key}`)}
+                />
+              ))}
+            </div>
+          </>
+        )}
 
-        <Divider />
+        {/* Divider between types and languages */}
+        {showTypesSection && showLanguagesSection && <Divider />}
 
         {/* Langue du CV - Liste déroulante */}
-        <SectionTitle>{t("topbar.filterCvLanguage")}</SectionTitle>
-        <GlassSelect
-          value={filters.language}
-          onChange={setLanguage}
-          options={CV_LANGUAGES}
-          t={t}
-          translationPrefix="topbar.cvLanguages"
-        />
+        {showLanguagesSection && (
+          <>
+            <SectionTitle>{t("topbar.filterCvLanguage")}</SectionTitle>
+            <GlassSelect
+              value={filters.language}
+              onChange={setLanguage}
+              options={visibleLanguages}
+              t={t}
+              translationPrefix="topbar.cvLanguages"
+            />
+          </>
+        )}
 
-        <Divider />
+        {/* Divider between languages and dates */}
+        {(showTypesSection || showLanguagesSection) && showDateRangesSection && <Divider />}
 
         {/* Date de création - Liste déroulante */}
-        <SectionTitle>{t("topbar.filterDateRange")}</SectionTitle>
-        <GlassSelect
-          value={filters.dateRange}
-          onChange={setDateRange}
-          options={DATE_RANGES}
-          t={t}
-          translationPrefix="topbar.dateRanges"
-        />
+        {showDateRangesSection && (
+          <>
+            <SectionTitle>{t("topbar.filterDateRange")}</SectionTitle>
+            <GlassSelect
+              value={filters.dateRange}
+              onChange={setDateRange}
+              options={visibleDateRanges}
+              t={t}
+              translationPrefix="topbar.dateRanges"
+            />
+          </>
+        )}
 
         {/* Bouton effacer les filtres */}
         {hasActiveFilters && (

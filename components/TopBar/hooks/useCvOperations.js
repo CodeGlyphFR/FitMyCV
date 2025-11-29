@@ -16,11 +16,18 @@ export function useCvOperations({
   setRawItems,
   setCurrent,
   setIconRefreshKey,
+  setHasLoadedOnce,
+  hadItemsOnceRef,
   currentItem,
   language,
   t,
 }) {
   const router = useRouter();
+
+  // Verrou pour éviter les race conditions lors de suppressions multiples rapides
+  const isReloadingRef = React.useRef(false);
+  const pendingReloadRef = React.useRef(null);
+  const isDeletingRef = React.useRef(false);
 
   const emitListChanged = React.useCallback(() => {
     if (typeof window !== "undefined") {
@@ -38,6 +45,14 @@ export function useCvOperations({
       return;
     }
 
+    // Si un reload est déjà en cours, mémoriser la demande pour plus tard
+    if (isReloadingRef.current) {
+      pendingReloadRef.current = preferredCurrent !== undefined ? preferredCurrent : null;
+      return;
+    }
+
+    isReloadingRef.current = true;
+
     try {
       const res = await fetch("/api/cvs", { cache: "no-store" });
       if (!res.ok) {
@@ -49,6 +64,16 @@ export function useCvOperations({
         ? data.items.map((it) => enhanceItem(it, cache, "CV"))
         : [];
       setRawItems(normalizedItems);
+
+      // Marquer que le premier chargement est terminé
+      if (typeof setHasLoadedOnce === "function") {
+        setHasLoadedOnce(true);
+      }
+
+      // Tracker si on a déjà eu des items (pour le skeleton lors des race conditions)
+      if (normalizedItems.length > 0 && hadItemsOnceRef) {
+        hadItemsOnceRef.current = true;
+      }
 
       const serverSuggested = data.current && normalizedItems.some((it) => it.file === data.current)
         ? data.current
@@ -85,7 +110,18 @@ export function useCvOperations({
         }
       }
     } catch (error) {
-      setRawItems([]);
+      // Ne pas vider les items sur erreur pour éviter que TopBar disparaisse
+      console.error('[TopBar] Erreur reload CV list:', error);
+    } finally {
+      isReloadingRef.current = false;
+
+      // Si une demande de reload était en attente, l'exécuter
+      if (pendingReloadRef.current !== null) {
+        const pending = pendingReloadRef.current;
+        pendingReloadRef.current = null;
+        // Utiliser setTimeout pour éviter la récursion synchrone
+        setTimeout(() => reload(pending), 0);
+      }
     }
   }, [isAuthenticated, setCurrentFile, titleCacheRef, lastSelectedRef, lastSelectedMetaRef, setRawItems, setCurrent]);
 
@@ -120,7 +156,10 @@ export function useCvOperations({
   }
 
   async function deleteCurrent() {
-    if (!current) return;
+    // Verrou pour éviter les suppressions multiples simultanées
+    if (!current || isDeletingRef.current) return;
+
+    isDeletingRef.current = true;
 
     try {
       const res = await fetch("/api/cvs/delete", {
@@ -146,15 +185,16 @@ export function useCvOperations({
         return;
       }
 
-      try {
-        await reload();
-      } catch (reloadError) {}
+      // emitListChanged() va déclencher reload() via l'event listener dans TopBar
+      // Donc pas besoin d'appeler reload() ici directement (évite double-reload)
       emitListChanged();
       router.refresh();
     } catch (e) {
       alert(
         t("deleteModal.errors.deleteFailed") + " " + (e && e.message ? e.message : String(e))
       );
+    } finally {
+      isDeletingRef.current = false;
     }
   }
 

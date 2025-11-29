@@ -40,6 +40,13 @@ import { CREATE_TEMPLATE_OPTION } from "./utils/constants";
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from "@/lib/onboarding/onboardingEvents";
 import { LOADING_EVENTS, emitLoadingEvent } from "@/lib/loading/loadingEvents";
 
+// Date range constants in milliseconds
+const DATE_RANGE_MS = {
+  '24h': 86400000,      // 24 hours
+  '7d': 604800000,      // 7 days
+  '30d': 2592000000,    // 30 days
+};
+
 export default function TopBar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -69,6 +76,8 @@ export default function TopBar() {
     setRawItems: state.setRawItems,
     setCurrent: state.setCurrent,
     setIconRefreshKey: state.setIconRefreshKey,
+    setHasLoadedOnce: state.setHasLoadedOnce,
+    hadItemsOnceRef: state.hadItemsOnceRef,
     currentItem: state.currentItem,
     language,
     t,
@@ -147,17 +156,64 @@ export default function TopBar() {
         const created = new Date(item.createdAt).getTime();
         if (Number.isNaN(created)) return false;
 
-        const ranges = {
-          '24h': 24 * 60 * 60 * 1000,      // 24 heures en ms
-          '7d': 7 * 24 * 60 * 60 * 1000,   // 7 jours en ms
-          '30d': 30 * 24 * 60 * 60 * 1000, // 30 jours en ms
-        };
-        if (now - created > ranges[filter.filters.dateRange]) return false;
+        if (now - created > DATE_RANGE_MS[filter.filters.dateRange]) return false;
       }
 
       return true;
     });
   }, [state.items, filter.filters, filter.hasActiveFilters]);
+
+  // Available filter options (progressive filtering)
+  const availableFilterOptions = React.useMemo(() => {
+    const items = state.items;
+
+    // Helper: filter items by other criteria (excluding the specified filter)
+    const getItemsMatchingOtherFilters = (excludeFilter) => {
+      return items.filter(item => {
+        // Apply type filter (unless excluded)
+        if (excludeFilter !== 'types' && filter.filters.types.length > 0) {
+          const itemType = item.createdBy || 'manual';
+          if (!filter.filters.types.includes(itemType)) return false;
+        }
+        // Apply language filter (unless excluded)
+        if (excludeFilter !== 'language' && filter.filters.language !== null) {
+          if (!item.language || item.language !== filter.filters.language) return false;
+        }
+        // Apply date filter (unless excluded)
+        if (excludeFilter !== 'dateRange' && filter.filters.dateRange) {
+          const now = Date.now();
+          const created = new Date(item.createdAt).getTime();
+          if (Number.isNaN(created)) return false;
+          if (now - created > DATE_RANGE_MS[filter.filters.dateRange]) return false;
+        }
+        return true;
+      });
+    };
+
+    // Available types (based on items filtered by language + date)
+    const itemsForTypes = getItemsMatchingOtherFilters('types');
+    const availableTypes = new Set(itemsForTypes.map(i => i.createdBy || 'manual'));
+
+    // Available languages (based on items filtered by type + date)
+    const itemsForLanguages = getItemsMatchingOtherFilters('language');
+    const availableLanguages = new Set(itemsForLanguages.map(i => i.language).filter(Boolean));
+
+    // Available date ranges (based on items filtered by type + language)
+    const itemsForDates = getItemsMatchingOtherFilters('dateRange');
+    const now = Date.now();
+    const availableDateRanges = new Set();
+    itemsForDates.forEach(item => {
+      const created = new Date(item.createdAt).getTime();
+      if (!Number.isNaN(created)) {
+        const age = now - created;
+        if (age <= DATE_RANGE_MS['24h']) availableDateRanges.add('24h');
+        if (age <= DATE_RANGE_MS['7d']) availableDateRanges.add('7d');
+        if (age <= DATE_RANGE_MS['30d']) availableDateRanges.add('30d');
+      }
+    });
+
+    return { availableTypes, availableLanguages, availableDateRanges };
+  }, [state.items, filter.filters]);
 
   // Active tasks count
   const activeTasksCount = React.useMemo(() => {
@@ -503,9 +559,39 @@ export default function TopBar() {
     return null;
   }
 
-  // No CVs
+  // No CVs - Distinguer les différents cas
   if (state.items.length === 0) {
-    return null;
+    // Cas 1: Premier chargement terminé et aucun CV → ne pas afficher (EmptyState)
+    if (state.hasLoadedOnce) {
+      return null;
+    }
+
+    // Cas 2: Premier chargement en cours mais on n'a jamais eu de CV → ne pas afficher (évite flash)
+    if (!state.hadItemsOnceRef.current) {
+      return null;
+    }
+
+    // Cas 3: On avait des CV avant mais plus maintenant (race condition suppression) → skeleton
+    return (
+      <div
+        ref={barRef}
+        className="no-print fixed top-0 left-0 right-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden',
+          WebkitTransform: 'translate3d(0, 0, 0)',
+          transform: 'translate3d(0, 0, 0)',
+          pointerEvents: 'auto'
+        }}
+      >
+        <div className="w-full p-3 flex items-center justify-between">
+          <span className="text-sm font-medium text-white/60 animate-pulse drop-shadow-lg">
+            {t("topbar.loading")}
+          </span>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -863,6 +949,7 @@ export default function TopBar() {
               setDateRange={filter.setDateRange}
               clearAllFilters={filter.clearAllFilters}
               hasActiveFilters={filter.hasActiveFilters}
+              availableOptions={availableFilterOptions}
               t={t}
             />
           </div>
