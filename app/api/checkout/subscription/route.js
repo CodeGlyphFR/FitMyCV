@@ -110,8 +110,9 @@ export async function POST(request) {
         if (isUpgrade) {
           console.log(`[Checkout Subscription] Upgrade détecté, modification directe de l'abonnement avec prorata`);
 
-          // Import de la fonction changeSubscription
+          // Import des fonctions nécessaires
           const { changeSubscription } = await import('@/lib/subscription/subscriptions');
+          const { resetFeatureCounters } = await import('@/lib/subscription/featureUsage');
 
           // Modifier l'abonnement Stripe (prorata automatique)
           const updatedSubscription = await stripe.subscriptions.update(
@@ -132,6 +133,12 @@ export async function POST(request) {
 
           // Mettre à jour la DB immédiatement
           await changeSubscription(userId, planId, billingPeriod);
+
+          // Reset des compteurs uniquement pour upgrade Free → Payant
+          if (currentTier === 0 && newTier > 0) {
+            await resetFeatureCounters(userId);
+            console.log(`[Checkout Subscription] Compteurs reset pour upgrade Free → tier ${newTier}`);
+          }
 
           console.log(`[Checkout Subscription] Upgrade effectué avec prorata, nouvel abonnement : ${updatedSubscription.id}`);
 
