@@ -1532,7 +1532,8 @@
     "improvementInProgress": "Mejora en progreso...",
     "calculatingScore": "Calculando puntuación...",
     "showMore": "más",
-    "showLess": "Mostrar menos"
+    "showLess": "Mostrar menos",
+    "languageNote": "El análisis y las sugerencias se muestran en el idioma del CV, no en el idioma de la interfaz."
   },
   "changes": {
     "title": "Historial de cambios",

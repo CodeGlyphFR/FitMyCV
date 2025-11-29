@@ -1531,7 +1531,8 @@
     "improvementInProgress": "Amélioration en cours...",
     "calculatingScore": "Calcul du score en cours...",
     "showMore": "autres",
-    "showLess": "Voir moins"
+    "showLess": "Voir moins",
+    "languageNote": "L'analyse et les suggestions sont affichées dans la langue du CV, pas dans la langue de l'interface."
   },
   "changes": {
     "title": "Historique des modifications",

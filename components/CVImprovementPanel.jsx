@@ -812,6 +812,12 @@ export default function CVImprovementPanel({ cvFile }) {
                                 </div>
                               ))}
                             </div>
+                            {/* Note sur la langue du contenu */}
+                            <div className="mt-4 text-center">
+                              <p className="text-xs text-white/60 italic">
+                                ℹ️ {t('optimization.languageNote')}
+                              </p>
+                            </div>
                           </div>
                         )}
                       </div>

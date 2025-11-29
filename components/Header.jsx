@@ -379,7 +379,11 @@ export default function Header(props){
       return;
     }
 
-    const targetLangName = targetLanguage === 'fr' ? 'français' : 'anglais';
+    const targetLangName = {
+      fr: 'français',
+      en: 'anglais',
+      es: 'español'
+    }[targetLanguage] || targetLanguage;
 
     // Envoyer la requête en arrière-plan
     try {
