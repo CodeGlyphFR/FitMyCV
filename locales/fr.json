@@ -102,6 +102,7 @@
     "cvLanguages": {
       "fr": "Français",
       "en": "English",
+      "es": "Español",
       "all": "Toutes"
     },
     "filterSelectLanguage": "Sélectionner",
