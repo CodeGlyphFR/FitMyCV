@@ -858,6 +858,7 @@
     },
     "currentPlan": {
       "title": "Plan {planName}",
+      "freePlan": "Plan Gratuit",
       "billingMonthly": "Facturation mensuelle",
       "billingYearly": "Facturation annuelle",
       "perMonth": "mois",

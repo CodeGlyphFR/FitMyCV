@@ -858,6 +858,7 @@
     },
     "currentPlan": {
       "title": "{planName} Plan",
+      "freePlan": "Free Plan",
       "billingMonthly": "Monthly billing",
       "billingYearly": "Yearly billing",
       "perMonth": "month",
