@@ -47,7 +47,7 @@ L'onboarding guide les utilisateurs à travers **8 étapes interactives** :
 **Objectif** : Présenter FitMyCV et préparer l'utilisateur
 
 **Déclenchement** :
-- Nouveau compte (cvCount = 0)
+- Au moins 1 CV créé (cvCount >= 1)
 - currentStep = 0
 - !hasCompleted && !hasSkipped
 - 3s après LOADING_SCREEN_CLOSED

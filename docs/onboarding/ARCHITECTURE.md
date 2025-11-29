@@ -41,7 +41,7 @@ Le système d'onboarding est une **architecture event-driven** utilisant :
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │                            USER SESSION                               │
-│  Nouveau utilisateur (cvCount = 0) charge l'application              │
+│  Utilisateur avec au moins 1 CV (cvCount >= 1) charge l'application  │
 └──────────────────────┬───────────────────────────────────────────────┘
                        │
                        ▼
@@ -56,7 +56,7 @@ Le système d'onboarding est une **architecture event-driven** utilisant :
 ┌──────────────────────────────────────────────────────────────────────┐
 │                     OnboardingProvider                                │
 │  - Écoute LOADING_SCREEN_CLOSED                                      │
-│  - Conditions : cvCount = 0, currentStep = 0                         │
+│  - Conditions : cvCount >= 1, currentStep = 0                        │
 │  - Affiche WelcomeModal                                              │
 │  - Connexion SSE (/api/user/onboarding/subscribe)                   │
 └──────────────────────┬───────────────────────────────────────────────┘
@@ -489,7 +489,7 @@ App.jsx
 ### Phase 1 : Initialisation
 
 ```
-1. User charge l'application (nouveau compte, cvCount = 0)
+1. User charge l'application (après création premier CV, cvCount >= 1)
 2. LoadingOverlay s'affiche
 3. OnboardingProvider se monte
    ├─ Charge onboardingState depuis API (GET /api/user/onboarding)
@@ -497,7 +497,7 @@ App.jsx
    └─ Attache listener LOADING_SCREEN_CLOSED
 4. LoadingOverlay ferme → émet LOADING_SCREEN_CLOSED
 5. OnboardingProvider détecte event
-   ├─ Vérifie conditions : currentStep === 0, cvCount === 0, !hasCompleted, !hasSkipped
+   ├─ Vérifie conditions : currentStep === 0, cvCount >= 1, !hasCompleted, !hasSkipped
    └─ Affiche WelcomeModal après 1s delay
 ```
 
