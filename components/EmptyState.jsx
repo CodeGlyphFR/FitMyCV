@@ -6,7 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
-import { LOADING_EVENTS, emitLoadingEvent } from "@/lib/loading/loadingEvents";
+import { LOADING_EVENTS, emitLoadingEvent, showLoadingOverlay } from "@/lib/loading/loadingEvents";
 
 export default function EmptyState() {
   const router = useRouter();
@@ -90,6 +90,9 @@ export default function EmptyState() {
 
       setOpenNewCv(false);
       resetNewCvForm();
+
+      // Afficher l'overlay de chargement AVANT la navigation
+      showLoadingOverlay();
 
       // Forcer un rechargement complet pour que le cookie soit bien pris en compte
       window.location.href = "/";
@@ -266,6 +269,8 @@ export default function EmptyState() {
 
                 // Wait a bit to show 100% then redirect
                 setTimeout(() => {
+                  // Afficher l'overlay de chargement AVANT la navigation
+                  showLoadingOverlay();
                   router.push("/");
                   router.refresh();
                 }, 1000);
