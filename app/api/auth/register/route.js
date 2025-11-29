@@ -7,6 +7,7 @@ import { createVerificationToken, sendVerificationEmail } from "@/lib/email/emai
 import logger from "@/lib/security/secureLogger";
 import { assignDefaultPlan } from "@/lib/subscription/subscriptions";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
+import { DEFAULT_ONBOARDING_STATE } from "@/lib/onboarding/onboardingState";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -95,8 +96,7 @@ export async function POST(request){
       email: normalizedEmail,
       passwordHash,
       emailVerified: null, // Email non vérifié à l'inscription
-      hasCompletedOnboarding: false, // Nouveaux users doivent faire l'onboarding
-      onboardingStep: 0, // Commencer à l'étape 0
+      onboardingState: DEFAULT_ONBOARDING_STATE, // Initialiser l'état d'onboarding complet
     },
   });
 
