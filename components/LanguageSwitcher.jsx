@@ -10,6 +10,7 @@ const languages = [
   { code: "fr", flag: "/icons/fr.svg", label: "Français" },
   { code: "en", flag: "/icons/gb.svg", label: "English" },
   { code: "es", flag: "/icons/es.svg", label: "Español" },
+  { code: "de", flag: "/icons/de.svg", label: "Deutsch" },
 ];
 
 export default function LanguageSwitcher() {

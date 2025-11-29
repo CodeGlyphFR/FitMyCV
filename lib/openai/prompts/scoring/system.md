@@ -12,6 +12,7 @@ Ta mission est d'analyser la correspondance entre un CV et une offre d'emploi, p
 - Si le CV est en français → analyse en français
 - Si le CV est en anglais → analyse en anglais
 - Si le CV est en español → analyse en español
+- Si le CV est en deutsch → analyse en deutsch
 
 {translationInstruction}
 

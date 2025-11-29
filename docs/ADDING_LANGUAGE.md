@@ -98,15 +98,63 @@ flowchart TD
 
 **Fichier à créer** : `public/icons/XX.svg`
 
-Télécharger depuis [flagicons.lipis.dev](https://flagicons.lipis.dev/) ou créer un SVG 24x24.
+**IMPORTANT** : Les drapeaux doivent être **circulaires** (format 512x512) avec un contour subtil pour des bordures nettes.
 
-**Exemple (espagnol)** :
+**Structure standard** :
 ```xml
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
-  <path fill="#AA151B" d="M0 0h640v480H0z"/>
-  <path fill="#F1BF00" d="M0 120h640v240H0z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <clipPath id="circleClip">
+      <circle cx="256" cy="256" r="256"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#circleClip)">
+    <!-- Bandes du drapeau ici -->
+  </g>
+  <!-- Contour subtil pour bordures nettes -->
+  <circle cx="256" cy="256" r="253" fill="none" stroke="#00000022" stroke-width="6"/>
 </svg>
 ```
+
+**Exemple (allemand - bandes horizontales)** :
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <clipPath id="circleClip">
+      <circle cx="256" cy="256" r="256"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#circleClip)">
+    <rect x="0" y="0" width="512" height="172" fill="#000000"/>
+    <rect x="0" y="170" width="512" height="172" fill="#DD0000"/>
+    <rect x="0" y="340" width="512" height="172" fill="#FFCC00"/>
+  </g>
+  <circle cx="256" cy="256" r="253" fill="none" stroke="#00000022" stroke-width="6"/>
+</svg>
+```
+
+**Exemple (français - bandes verticales)** :
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <clipPath id="circleClip">
+      <circle cx="256" cy="256" r="256"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#circleClip)">
+    <rect x="0" y="0" width="172" height="512" fill="#002395"/>
+    <rect x="170" y="0" width="172" height="512" fill="#fff"/>
+    <rect x="340" y="0" width="172" height="512" fill="#ED2939"/>
+  </g>
+  <circle cx="256" cy="256" r="253" fill="none" stroke="#00000022" stroke-width="6"/>
+</svg>
+```
+
+**Points clés** :
+- ViewBox : `0 0 512 512` (carré)
+- ClipPath circulaire : rayon 256, centré en (256, 256)
+- Bandes avec léger chevauchement (évite les gaps d'anti-aliasing)
+- Contour final : rayon 253, stroke semi-transparent `#00000022`, épaisseur 6px
 
 ### 1.2 Préparer le fichier de traduction
 
@@ -657,7 +705,17 @@ npm run dev
 
 ## Référence : Commits d'exemple
 
-Pour voir des exemples complets des fichiers modifiés, consulter les commits de l'ajout de l'espagnol :
+Pour voir des exemples complets des fichiers modifiés, consulter les commits d'ajout de langues :
+
+### Allemand (DE) - Novembre 2025
+
+```bash
+# Branche: improvement/add_allemand
+# Implémentation complète avec drapeaux circulaires optimisés
+git log improvement/add_allemand
+```
+
+### Espagnol (ES) - Novembre 2025
 
 ```bash
 # Voir le commit principal (20 fichiers, +2039 lignes)
