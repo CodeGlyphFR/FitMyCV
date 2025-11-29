@@ -39,10 +39,10 @@ export default function CookieRegistry() {
   return (
     <div className="mt-8 bg-white/15 backdrop-blur-xl rounded-lg shadow-2xl p-6">
       <h2 className="text-xl font-semibold mb-4 text-emerald-300 drop-shadow">
-        📋 Registre détaillé des cookies
+        {t('cookies.registry.title')}
       </h2>
       <p className="text-sm text-white/90 mb-4 drop-shadow">
-        Liste complète de tous les cookies susceptibles d'être utilisés sur ce site, par catégorie.
+        {t('cookies.registry.description')}
       </p>
 
       <div className="space-y-2">
@@ -98,15 +98,15 @@ export default function CookieRegistry() {
                           </span>
                         </div>
                         <p className="text-sm text-white/90 mb-2 drop-shadow">
-                          {cookie.purpose}
+                          {t(`cookies.registry.purposes.${cookie.purpose}`)}
                         </p>
                         <div className="flex flex-wrap gap-3 text-xs text-white/70 drop-shadow">
                           <div className="flex items-center gap-1">
-                            <span className="font-semibold">⏱️ Durée:</span>
-                            <span>{cookie.duration}</span>
+                            <span className="font-semibold">⏱️ {t('cookies.registry.duration')}</span>
+                            <span>{t(`cookies.registry.durations.${cookie.duration}`)}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <span className="font-semibold">💾 Type:</span>
+                            <span className="font-semibold">💾 {t('cookies.registry.type')}</span>
                             <span>{cookie.type}</span>
                           </div>
                         </div>
@@ -122,8 +122,7 @@ export default function CookieRegistry() {
 
       <div className="mt-4 p-3 bg-emerald-500/20 backdrop-blur-sm rounded text-sm">
         <p className="text-white drop-shadow">
-          <strong>ℹ️ Note:</strong> Les cookies tiers ne seront déposés que si vous donnez votre consentement explicite.
-          Les cookies nécessaires sont essentiels au fonctionnement du site et ne peuvent être refusés.
+          <strong>ℹ️ Note:</strong> {t('cookies.registry.note')}
         </p>
       </div>
     </div>

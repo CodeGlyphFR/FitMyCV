@@ -67,9 +67,10 @@ http://localhost:3001/admin/analytics
 | **Errors** | Logs d'erreurs |
 | **Feedback** | Feedbacks utilisateurs |
 | **OpenAI Costs** | Coûts et usage OpenAI |
-| **Exports** | Analytics des exports PDF |
-| **Settings** | Configuration globale |
+| **Onboarding** | Analytics onboarding : répartition statuts, drop-off, timeline |
+| **Revenue** | Revenus et transactions |
 | **Subscription Plans** | Gestion des plans d'abonnement |
+| **Settings** | Configuration globale |
 
 ### Navigation entre les onglets
 
@@ -204,6 +205,58 @@ export async function DELETE(request, { params }) {
 - Marquer comme resolved
 - Répondre (si email configuré)
 - Supprimer
+
+### OnboardingTab
+
+**Analytics de l'onboarding utilisateur** :
+
+#### KPIs (8 métriques)
+
+| KPI | Description |
+|-----|-------------|
+| **Taux de complétion** | % utilisateurs ayant terminé les 8 étapes |
+| **Taux d'abandon** | % utilisateurs ayant cliqué "Passer" |
+| **Temps moyen** | Durée moyenne pour compléter |
+| **Score de santé** | Indicateur composite (complétion × 0.6 + (100 - abandon) × 0.4) |
+| **Démarrés** | Nombre d'utilisateurs ayant commencé |
+| **Complétés** | Nombre d'utilisateurs ayant terminé |
+| **Bloqués** | Utilisateurs sans activité > 7 jours |
+| **Non démarrés** | Utilisateurs n'ayant jamais commencé |
+
+#### Charts
+
+1. **Répartition des Statuts** (Donut Chart)
+   - Complété (vert)
+   - En cours (bleu)
+   - Abandonné (orange)
+   - Bloqué (rouge)
+   - Non démarré (gris)
+
+2. **Drop-off par étape** (BarChart)
+   - Taux d'abandon entre chaque transition
+   - Couleur verte < 10%, jaune 10-20%, rouge > 20%
+
+3. **Timeline** (LineChart 14 jours)
+   - Démarrés, Complétés, Abandonnés par jour
+
+4. **Stats Modales** (Grille 2x3)
+   - Taux de complétion des 6 modales d'onboarding
+
+#### Table utilisateurs
+
+- **Filtres** : Statut, Étape, Recherche
+- **Colonnes** : Utilisateur, Statut, Progression, Dates
+- **Action** : Réinitialiser l'onboarding d'un utilisateur
+
+#### Filtrage par période
+
+Le filtre de période (7j/30j/90j/All) filtre par **activité onboarding** :
+- `timestamps.startedAt` - Date de début
+- `timestamps.completedAt` - Date de complétion
+- `timestamps.skippedAt` - Date d'abandon
+- `timestamps.lastStepChangeAt` - Dernière activité
+
+> **Note** : La checklist d'onboarding est automatiquement masquée sur les routes `/admin` pour ne pas distraire les administrateurs.
 
 ---
 

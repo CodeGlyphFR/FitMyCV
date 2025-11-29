@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function Modal({
@@ -9,6 +10,9 @@ export default function Modal({
   title,
   children,
   size = "default",
+  icon: IconComponent = null, // Icône Lucide optionnelle
+  iconBg = "bg-emerald-500/20", // Couleur de fond de l'icône
+  iconColor = "text-emerald-400", // Couleur de l'icône
   disableEscapeKey = false, // Permet de bloquer Escape pendant traitement
   disableBackdropClick = false // Permet de bloquer clic backdrop pendant traitement
 }){
@@ -150,9 +154,9 @@ export default function Modal({
       }}
       role="presentation"
     >
-      {/* Backdrop - no blur for better iOS performance */}
+      {/* Backdrop - solid dark overlay */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/70"
         onClick={handleBackdropClick}
         onTouchEnd={(e) => {
           e.preventDefault();
@@ -183,7 +187,7 @@ export default function Modal({
           aria-modal="true"
           aria-labelledby="modal-title"
           tabIndex={-1}
-          className={`relative z-10 w-full ${maxWidthClass} rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-md ios-blur-medium gpu-accelerate shadow-2xl`}
+          className={`relative z-10 w-full ${maxWidthClass} rounded-xl border border-white/20 bg-[rgb(2,6,23)] shadow-2xl overflow-hidden`}
           onClick={(e) => e.stopPropagation()}
           onTouchEnd={(e) => e.stopPropagation()}
           style={{
@@ -195,16 +199,39 @@ export default function Modal({
             willChange: open ? 'transform, opacity' : 'auto'
           }}
         >
-          <div className="flex items-center justify-between p-4 pb-2 flex-shrink-0">
-            <div
-              id="modal-title"
-              className="font-semibold text-emerald-300 drop-shadow-lg"
-            >
-              {title || t("common.confirmation")}
+          {/* Header */}
+          <div className="flex-shrink-0">
+            <div className="flex items-center justify-between p-4 md:p-6">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                {/* Icône optionnelle */}
+                {IconComponent && (
+                  <div className={`w-10 h-10 rounded-full ${iconBg} flex items-center justify-center flex-shrink-0`}>
+                    <IconComponent className={`w-5 h-5 ${iconColor}`} />
+                  </div>
+                )}
+                <h2
+                  id="modal-title"
+                  className="text-lg font-bold text-emerald-400 truncate"
+                >
+                  {title || t("common.confirmation")}
+                </h2>
+              </div>
+              {/* Bouton fermer */}
+              <button
+                onClick={onClose}
+                className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors flex-shrink-0"
+                aria-label="Fermer"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
+            {/* Divider */}
+            <div className="border-b border-white/10" />
           </div>
+
+          {/* Content */}
           <div
-            className="text-white/90 overflow-y-auto overflow-x-hidden flex-1 px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="text-white/90 overflow-y-auto overflow-x-hidden flex-1 p-4 md:p-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             style={{
               WebkitOverflowScrolling: 'touch',
               overscrollBehavior: 'contain'

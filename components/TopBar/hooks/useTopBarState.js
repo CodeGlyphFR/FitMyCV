@@ -24,6 +24,13 @@ export function useTopBarState(language) {
   const [cvSelectorGlow, setCvSelectorGlow] = React.useState(false);
   const [isMobile, setIsMobile] = React.useState(false);
 
+  // Flag pour savoir si le premier chargement est terminé
+  // Permet de distinguer "en cours de chargement" vs "vraiment aucun CV"
+  const [hasLoadedOnce, setHasLoadedOnce] = React.useState(false);
+
+  // Ref pour tracker si on a déjà eu des CV (pour afficher skeleton uniquement lors de race conditions)
+  const hadItemsOnceRef = React.useRef(false);
+
   // Scroll behavior
   const [isScrollingDown, setIsScrollingDown] = React.useState(false);
   const [lastScrollY, setLastScrollY] = React.useState(0);
@@ -90,6 +97,8 @@ export function useTopBarState(language) {
     setCvSelectorGlow,
     isMobile,
     setIsMobile,
+    hasLoadedOnce,
+    setHasLoadedOnce,
     isScrollingDown,
     setIsScrollingDown,
     lastScrollY,
@@ -108,6 +117,7 @@ export function useTopBarState(language) {
     lastSelectedRef,
     lastSelectedMetaRef,
     isScrollingDownRef,
+    hadItemsOnceRef,
 
     // Derived
     currentItem,

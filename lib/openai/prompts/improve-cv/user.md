@@ -43,14 +43,14 @@ Améliorer **UNIQUEMENT** les sections qui font perdre des points, sans toucher 
     {
       "section": "summary",
       "field": "description",
-      "change": "Ajouté mention de gestion d'équipe et reformulé pour matcher le poste",
-      "reason": "Gestion d'équipe requise dans l'offre et présente dans l'expérience"
+      "change": "[Description of change - MUST BE IN CV LANGUAGE: {cvLanguage}]",
+      "reason": "[Justification - MUST BE IN CV LANGUAGE: {cvLanguage}]"
     },
     {
       "section": "skills",
       "field": "hard_skills",
-      "change": "Ajouté Docker et Kubernetes avec niveau confirmé",
-      "reason": "Technologies mentionnées dans l'offre et utilisées dans les projets"
+      "change": "[Description of change - MUST BE IN CV LANGUAGE: {cvLanguage}]",
+      "reason": "[Justification - MUST BE IN CV LANGUAGE: {cvLanguage}]"
     }
   ]
 }
@@ -80,5 +80,7 @@ Améliorer **UNIQUEMENT** les sections qui font perdre des points, sans toucher 
 {suggestionsText}
 
 ---
+
+**⚠️ RAPPEL LANGUE OBLIGATOIRE** : Les champs `change` et `reason` dans `changes_made` DOIVENT être rédigés dans la **même langue que le CV** : **{cvLanguage}**.
 
 Améliore le CV en te basant sur ces suggestions. Sois précis et justifie chaque modification.

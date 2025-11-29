@@ -36,7 +36,7 @@ export default function PdfImportModal({
           <button
             type="button"
             onClick={() => pdfFileInputRef.current?.click()}
-            className="w-full rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-4 py-3 text-sm text-white hover:bg-white/30 hover:border-white/60 transition-all duration-200 flex items-center justify-center gap-2 group"
+            className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200 flex items-center justify-center gap-2 group"
           >
             <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -62,13 +62,13 @@ export default function PdfImportModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-white/30 transition-all duration-200"
+            className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors"
           >
             {t("pdfImport.cancel")}
           </button>
           <button
             type="submit"
-            className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500/40 transition-all duration-200 disabled:opacity-60"
+            className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60"
             disabled={!pdfFile}
           >
             {t("pdfImport.import")}

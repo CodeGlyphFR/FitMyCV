@@ -44,6 +44,7 @@ Toute la documentation technique est disponible dans le dossier **`docs/`**. Ce 
 - **[Usage](./docs/USAGE.md)** - Guide utilisateur
 - **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Résolution problèmes communs
 - **[Tests MVP](./docs/MVP_TESTING.md)** - Tests et validation
+- **[Ajouter une langue](./docs/ADDING_LANGUAGE.md)** - Guide pour intégrer une nouvelle langue
 
 ### Documentation Projet
 - **[README](./docs/README.md)** - Index documentation
@@ -278,6 +279,28 @@ sky-500: #0EA5E9        /* Actions secondaires */
 - **Touch targets** : Minimum 32px hauteur/largeur
 - **iOS blur optimization** : `.ios-blur-medium` pour performance
 
+### Background System
+
+- **Composant** : `GlobalBackground.jsx` (appliqué globalement)
+- **Couleur base** : `rgb(2, 6, 23)` → Utiliser classe Tailwind `bg-app-bg`
+- **Blobs animés** : 3 blobs Framer Motion (sky-500 dominance + emerald-500)
+- **Position** : `fixed inset-0 z-0` (couvre tout le viewport)
+- **Unified** : Même background pour `/auth` et toutes les pages
+- **Animation** : Framer Motion avec trajectoires mathématiques (sin/cos)
+  - Mouvements amples : ±200px horizontal, ±180px vertical
+  - Tailles responsives : 40-60% de `window.innerHeight`
+  - Durées : 25-31s (non synchronisées)
+  - 6 keyframes pour fluidité maximale
+  - GPU-accelerated (`willChange`)
+
+```jsx
+// Background unifié (préféré)
+<div className="bg-app-bg">...</div>
+
+// Ou valeur directe si nécessaire
+<div className="bg-[rgb(2,6,23)]">...</div>
+```
+
 ### Z-Index Layering
 
 ```css
@@ -410,6 +433,46 @@ useEffect(() => {
   };
 }, [isOpen]);
 ```
+
+### 7. Système d'onboarding (Constantes & Logger)
+
+```javascript
+// Utiliser les constantes centralisées (9 timings + mappings + API config)
+import { ONBOARDING_TIMINGS, STEP_TO_MODAL_KEY, ONBOARDING_API } from '@/lib/onboarding/onboardingConfig';
+
+const delay = ONBOARDING_TIMINGS.STEP_TRANSITION_DELAY; // 1000ms
+const modalKey = STEP_TO_MODAL_KEY[currentStep]; // 'step1', 'step2', 'step6', 'step8'
+const cacheTimeout = ONBOARDING_API.CACHE_TTL; // 1000ms (synchronisé avec debounce)
+
+// Utiliser le logger conditionnel (dev only pour logs, always pour errors/warnings)
+import { onboardingLogger } from '@/lib/utils/onboardingLogger';
+
+onboardingLogger.log('[Component] Info message');     // Dev only
+onboardingLogger.error('[Component] Error:', error);  // Always shown
+onboardingLogger.warn('[Component] Warning');         // Always shown
+```
+
+**Documentation complète** : **[docs/onboarding/](./docs/onboarding/)**
+- **[README.md](./docs/onboarding/README.md)** - Index + quick reference + navigation
+- **[ARCHITECTURE.md](./docs/onboarding/ARCHITECTURE.md)** - Architecture système, composants, flow
+- **[WORKFLOW.md](./docs/onboarding/WORKFLOW.md)** - Détail 8 steps (objectifs, validation)
+- **[STATE_MANAGEMENT.md](./docs/onboarding/STATE_MANAGEMENT.md)** - Structure onboardingState, helpers, SSE
+- **[COMPONENTS.md](./docs/onboarding/COMPONENTS.md)** - Référence 8 composants + 4 hooks
+- **[API_REFERENCE.md](./docs/onboarding/API_REFERENCE.md)** - Endpoints REST + SSE
+- **[TIMINGS.md](./docs/onboarding/TIMINGS.md)** - Configuration délais
+- **[DEVELOPMENT_GUIDE.md](./docs/onboarding/DEVELOPMENT_GUIDE.md)** - How-to: add step, debug, test
+- **[TROUBLESHOOTING.md](./docs/onboarding/TROUBLESHOOTING.md)** - Bugs fixés, FAQ
+
+**Fichiers code** :
+- Configuration : `lib/onboarding/onboardingConfig.js`
+- State helpers : `lib/onboarding/onboardingState.js`
+- Logger : `lib/utils/onboardingLogger.js`
+- Script reset DB : `scripts/reset-onboarding.js`
+
+**Règles** :
+- ❌ **Ne pas utiliser** : `console.log`, `console.error` directement dans les composants d'onboarding
+- ✅ **Toujours utiliser** : `onboardingLogger.*` pour une console propre en production
+- ✅ **Reset DB** : `node scripts/reset-onboarding.js --dry-run` (preview avant reset)
 
 → **[Tous les patterns](./docs/CODE_PATTERNS.md)**
 

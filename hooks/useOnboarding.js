@@ -1,5 +1,6 @@
 import { useContext } from 'react';
 import { OnboardingContext } from '@/components/onboarding/OnboardingProvider';
+import { getTotalSteps } from '@/lib/onboarding/onboardingSteps';
 
 /**
  * Hook personnalisé pour consommer le OnboardingContext
@@ -58,7 +59,7 @@ export function useIsCurrentStep(stepId) {
  */
 export function useOnboardingProgress() {
   const { completedSteps } = useOnboarding();
-  return Math.round((completedSteps.length / 9) * 100);
+  return Math.round((completedSteps.length / getTotalSteps()) * 100);
 }
 
 export default useOnboarding;

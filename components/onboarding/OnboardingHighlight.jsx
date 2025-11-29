@@ -1,53 +1,45 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { useElementPosition } from '@/hooks/useElementPosition';
 
 /**
  * Composant Highlight pour créer un spotlight sur un élément
  *
- * Crée un overlay sombre avec un découpage (cutout) autour de l'élément cible
- * pour le mettre en évidence pendant l'onboarding.
+ * Crée un overlay sombre avec blur et un découpage (cutout) autour de l'élément cible.
+ * L'overlay BLOQUE les clics sauf sur l'élément cible (via clip-path).
  *
  * Props:
  * - targetSelector: string - Sélecteur CSS de l'élément à highlighter
- * - show: boolean - Afficher ou masquer le highlight
- * - padding: number - Padding autour de l'élément (respiration) - default: 8
- * - onBackdropClick: function - Callback quand on clique sur le backdrop
- * - ringColor: string - Couleur du ring autour de l'élément - default: 'emerald-400'
- * - ringWidth: number - Largeur du ring en pixels - default: 4
- * - backdropOpacity: number - Opacité du backdrop - default: 70
+ * - show: boolean - Afficher ou masquer le highlight (ring + optionnellement blur)
+ * - blurEnabled: boolean - Si true, affiche le backdrop blur qui bloque les clics - default: true
+ * - padding: number - Padding autour de l'élément (respiration) - default: 12
+ * - borderRadius: number - Border radius du cutout en pixels - default: 12
+ * - backdropOpacity: number - Opacité du backdrop (0-100) - default: 50
+ * - blurAmount: string - Niveau de blur CSS - default: '6px'
  */
 export default function OnboardingHighlight({
   targetSelector,
   show = false,
-  padding = 8,
-  onBackdropClick,
-  ringColor = 'emerald-400',
-  ringWidth = 4,
-  backdropOpacity = 70,
+  blurEnabled = true,
+  padding = 12,
+  borderRadius = 12,
+  backdropOpacity = 50,
+  blurAmount = '6px',
 }) {
-  const [rect, setRect] = useState(null);
+  // Use shared position hook for synchronized updates
+  const bounds = useElementPosition(targetSelector, show);
 
-  /**
-   * Calculer et mettre à jour la position de l'élément cible
-   */
-  const updatePosition = () => {
-    if (!targetSelector || !show) {
-      setRect(null);
-      return;
-    }
+  // Calculate rect with padding
+  // Note: This is a simple transformation (just adding padding to bounds),
+  // so useMemo is straightforward. OnboardingTooltip has more complex logic
+  // (viewport clamping, arrow offset calculation) which requires heavier memoization.
+  const rect = useMemo(() => {
+    if (!bounds) return null;
 
-    const element = document.querySelector(targetSelector);
-    if (!element) {
-      console.warn(`[OnboardingHighlight] Element not found: ${targetSelector}`);
-      setRect(null);
-      return;
-    }
-
-    const bounds = element.getBoundingClientRect();
-
-    setRect({
+    return {
+      // Position du cutout (avec padding)
       top: bounds.top - padding,
       left: bounds.left - padding,
       width: bounds.width + padding * 2,
@@ -57,122 +49,101 @@ export default function OnboardingHighlight({
       innerLeft: bounds.left,
       innerWidth: bounds.width,
       innerHeight: bounds.height,
-    });
-  };
-
-  /**
-   * Mise à jour position sur scroll, resize, et changement show/targetSelector
-   */
-  useEffect(() => {
-    if (!show) {
-      setRect(null);
-      return;
-    }
-
-    updatePosition();
-
-    // Listener resize et scroll
-    const handleUpdate = () => {
-      updatePosition();
     };
-
-    window.addEventListener('resize', handleUpdate);
-    window.addEventListener('scroll', handleUpdate, true); // Capture phase pour tous scrolls
-
-    // Update interval (au cas où l'élément bouge dynamiquement)
-    const interval = setInterval(handleUpdate, 200);
-
-    return () => {
-      window.removeEventListener('resize', handleUpdate);
-      window.removeEventListener('scroll', handleUpdate, true);
-      clearInterval(interval);
-    };
-  }, [show, targetSelector, padding]);
-
-  /**
-   * Handler clic backdrop
-   */
-  const handleBackdropClick = (e) => {
-    // Vérifier qu'on a bien cliqué sur le backdrop et pas sur l'élément
-    if (e.target === e.currentTarget && onBackdropClick) {
-      onBackdropClick();
-    }
-  };
+  }, [bounds, padding]);
 
   // Ne pas render si pas show ou pas de rect
   if (!show || !rect) return null;
 
-  // Convertir ringColor en classe Tailwind
-  const ringColorMap = {
-    'emerald-400': 'ring-emerald-400',
-    'emerald-500': 'ring-emerald-500',
-    'sky-400': 'ring-sky-400',
-    'blue-400': 'ring-blue-400',
-  };
-
-  const ringClass = ringColorMap[ringColor] || 'ring-emerald-400';
+  // Générer le clip-path polygon pour créer le "trou"
+  // Le polygon dessine l'extérieur, puis revient pour découper l'intérieur
+  const clipPath = `polygon(
+    0% 0%,
+    0% 100%,
+    ${rect.left}px 100%,
+    ${rect.left}px ${rect.top}px,
+    ${rect.left + rect.width}px ${rect.top}px,
+    ${rect.left + rect.width}px ${rect.top + rect.height}px,
+    ${rect.left}px ${rect.top + rect.height}px,
+    ${rect.left}px 100%,
+    100% 100%,
+    100% 0%
+  )`;
 
   const highlightContent = (
     <div
-      className="fixed inset-0 z-[10003] pointer-events-none"
+      className="fixed inset-0 z-[10001] pointer-events-none"
       role="presentation"
       aria-hidden="true"
     >
-      {/* Backdrop avec blur */}
+      {/* Backdrop avec blur - BLOQUE les clics via clip-path (seulement si blurEnabled) */}
+      {blurEnabled && (
+        <div
+          className="absolute inset-0 pointer-events-auto transition-opacity duration-300"
+          style={{
+            backgroundColor: `rgba(0, 0, 0, ${backdropOpacity / 100})`,
+            backdropFilter: `blur(${blurAmount})`,
+            WebkitBackdropFilter: `blur(${blurAmount})`,
+            clipPath: clipPath,
+          }}
+        />
+      )}
+
+      {/* Ring pulsant vert autour de l'élément - pointer-events-none (toujours visible) */}
       <div
-        className={`absolute inset-0 bg-black/${backdropOpacity} backdrop-blur-sm pointer-events-auto`}
-        onClick={handleBackdropClick}
+        className="absolute pointer-events-none animate-pulse-ring-onboarding"
         style={{
-          // Découpage (cutout) autour de l'élément
-          clipPath: `polygon(
-            0% 0%,
-            0% 100%,
-            100% 100%,
-            100% 0%,
-            0% 0%,
-            ${rect.left}px ${rect.top}px,
-            ${rect.left}px ${rect.top + rect.height}px,
-            ${rect.left + rect.width}px ${rect.top + rect.height}px,
-            ${rect.left + rect.width}px ${rect.top}px,
-            ${rect.left}px ${rect.top}px
-          )`,
+          top: rect.innerTop - 4,
+          left: rect.innerLeft - 4,
+          width: rect.innerWidth + 8,
+          height: rect.innerHeight + 8,
+          borderRadius: borderRadius,
         }}
       />
 
-      {/* Ring/Border autour de l'élément */}
+      {/* Glow effect derrière l'élément - pointer-events-none */}
       <div
-        className={`
-          absolute
-          ${ringClass}
-          ring-${ringWidth}
-          rounded-lg
-          shadow-[0_0_40px_rgba(52,211,153,0.8)]
-          pointer-events-none
-          animate-pulse-subtle
-        `}
+        className="absolute pointer-events-none animate-glow-pulse-onboarding"
         style={{
-          top: rect.innerTop,
-          left: rect.innerLeft,
-          width: rect.innerWidth,
-          height: rect.innerHeight,
+          top: rect.innerTop - 6,
+          left: rect.innerLeft - 6,
+          width: rect.innerWidth + 12,
+          height: rect.innerHeight + 12,
+          borderRadius: borderRadius + 2,
+          boxShadow: '0 0 40px 15px rgba(16, 185, 129, 0.5)',
         }}
       />
 
-      {/* Custom animation pulse subtle */}
+      {/* Styles d'animation */}
       <style jsx global>{`
-        @keyframes pulse-subtle {
+        @keyframes pulse-ring-onboarding {
           0%, 100% {
-            opacity: 1;
-            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8),
+                        inset 0 0 0 3px rgba(16, 185, 129, 1);
           }
           50% {
-            opacity: 0.8;
-            transform: scale(1.02);
+            box-shadow: 0 0 0 10px rgba(16, 185, 129, 0),
+                        inset 0 0 0 3px rgba(52, 211, 153, 1);
           }
         }
 
-        .animate-pulse-subtle {
-          animation: pulse-subtle 2s ease-in-out infinite;
+        @keyframes glow-pulse-onboarding {
+          0%, 100% {
+            opacity: 0.7;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.03);
+          }
+        }
+
+        .animate-pulse-ring-onboarding {
+          animation: pulse-ring-onboarding 1.8s ease-in-out infinite;
+        }
+
+        .animate-glow-pulse-onboarding {
+          animation: glow-pulse-onboarding 1.8s ease-in-out infinite;
         }
       `}</style>
     </div>

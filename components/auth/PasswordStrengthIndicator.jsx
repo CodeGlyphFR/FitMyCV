@@ -11,7 +11,7 @@ export default function PasswordStrengthIndicator({ password }) {
   const { t } = useLanguage();
 
   // Validation des règles individuelles
-  const hasMinLength = password.length >= 12;
+  const hasMinLength = password.length >= 8;
   const hasUppercase = /[A-Z]/.test(password);
   const hasLowercase = /[a-z]/.test(password);
   const hasNumbers = /[0-9]/.test(password);

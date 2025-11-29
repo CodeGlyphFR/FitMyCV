@@ -70,15 +70,18 @@ export default async function Page(){
   const hasCustomTitles = Object.keys(rawSectionTitles).length > 0;
   const sectionTitles = hasCustomTitles ? rawSectionTitles : {};
 
+  // Langue du CV pour les titres de sections (indépendant de la langue du site)
+  const cvLanguage = cv.language || 'fr';
+
   const sections = {
-    header:     <Header header={cv.header} />,
-    summary:    <Summary summary={cv.summary} sectionTitles={sectionTitles} />,
-    skills:     <Skills skills={cv.skills} sectionTitles={sectionTitles} />,
-    experience: <Experience experience={cv.experience} sectionTitles={sectionTitles} />,
-    education:  <Education education={cv.education} sectionTitles={sectionTitles} />,
-    languages:  <Languages languages={cv.languages} sectionTitles={sectionTitles} />,
-    extras:     <Extras extras={cv.extras} sectionTitles={sectionTitles} />,
-    projects:   <Projects projects={cv.projects} sectionTitles={sectionTitles} />,
+    header:     <Header header={cv.header} cvLanguage={cvLanguage} />,
+    summary:    <Summary summary={cv.summary} sectionTitles={sectionTitles} cvLanguage={cvLanguage} />,
+    skills:     <Skills skills={cv.skills} sectionTitles={sectionTitles} cvLanguage={cvLanguage} />,
+    experience: <Experience experience={cv.experience} sectionTitles={sectionTitles} cvLanguage={cvLanguage} />,
+    education:  <Education education={cv.education} sectionTitles={sectionTitles} cvLanguage={cvLanguage} />,
+    languages:  <Languages languages={cv.languages} sectionTitles={sectionTitles} cvLanguage={cvLanguage} />,
+    extras:     <Extras extras={cv.extras} sectionTitles={sectionTitles} cvLanguage={cvLanguage} />,
+    projects:   <Projects projects={cv.projects} sectionTitles={sectionTitles} cvLanguage={cvLanguage} />,
   };
 
   // ---- ORDRE DES SECTIONS (toujours inclure "projects") ----
@@ -95,37 +98,13 @@ export default async function Page(){
 
   return (
     <HighlightProvider cv={cv}>
-      <main className="max-w-4xl mx-auto p-4 pb-2">
+      <main className="max-w-4xl mx-auto p-4 pb-2 md:pt-8">
         <ScrollToTopOnMount />
 
         {order.map(k => (
           <div key={k} className="cv-section">{sections[k]}</div>
         ))}
 
-        <div className="no-print mt-2 mb-0 text-xs text-white/70 text-center space-y-2">
-          <div>© 2025 FitMyCv.ai (v1.0.9.1)</div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-0 sm:gap-1 leading-none -space-y-3 sm:space-y-0">
-            <div className="flex items-baseline justify-center gap-1 leading-none">
-              <a href="/about" className="hover:text-white transition-colors">
-                À propos
-              </a>
-              <span className="text-white/40">•</span>
-              <a href="/cookies" className="hover:text-white transition-colors">
-                Cookies
-              </a>
-              <span className="text-white/40 hidden sm:inline">•</span>
-            </div>
-            <div className="flex items-baseline justify-center gap-1 leading-none">
-              <a href="/terms" className="hover:text-white transition-colors">
-                Conditions générales
-              </a>
-              <span className="text-white/40">•</span>
-              <a href="/privacy" className="hover:text-white transition-colors">
-                Politique de confidentialité
-              </a>
-            </div>
-          </div>
-        </div>
       </main>
     </HighlightProvider>
   );

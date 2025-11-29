@@ -58,6 +58,27 @@ export async function POST(req){
     sanitized.meta = meta;
     await writeUserCvFile(userId, selected, JSON.stringify(sanitized,null,2));
 
+    // Re-détecter la langue si summary.description a été modifié (synchrone pour refresh immédiat)
+    if (fieldPath === 'summary.description' || fieldPath.startsWith('summary.description.') || fieldPath === 'summary') {
+      const newDescription = sanitized?.summary?.description || '';
+      // Détecter si le résumé n'est pas vide (pas de minimum requis)
+      if (newDescription.trim().length > 0) {
+        try {
+          // Détection synchrone pour que le frontend voie la mise à jour immédiatement
+          const { detectAndPersistCvLanguage } = await import('@/lib/cv/languageUtils');
+          await detectAndPersistCvLanguage({
+            userId,
+            filename: selected,
+            cvContent: JSON.stringify(sanitized, null, 2),
+          });
+          console.log('[mutate] Détection de langue effectuée');
+        } catch (langError) {
+          // Erreur non-bloquante - le CV reste fonctionnel sans langue
+          console.error('[mutate] Erreur détection langue (non-bloquant):', langError.message);
+        }
+      }
+    }
+
     // Vérifier si une entrée existe dans la DB pour ce CV
     const existingCvFile = await prisma.cvFile.findUnique({
       where: {

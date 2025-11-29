@@ -209,7 +209,7 @@ Traduit un CV vers une langue cible.
 **Inputs** :
 
 - CV source (JSON)
-- Langue cible (en, fr, es, de, it, pt)
+- Langue cible (en, fr)
 
 **Process** :
 

@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { useElementPosition } from '@/hooks/useElementPosition';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 /**
  * Tooltip personnalisé pour l'onboarding
@@ -19,6 +21,7 @@ import { createPortal } from 'react-dom';
  * - persistent: boolean - Le tooltip reste affiché (pas de timeout auto-close) - default: false
  * - autoCloseDelay: number - Délai avant auto-close en ms (si pas persistent) - default: 0 (pas d'auto-close)
  * - maxWidth: number - Largeur max en pixels - default: 320
+ * - minWidth: number - Largeur min en pixels - default: 280
  * - offset: number - Distance entre tooltip et élément en pixels - default: 12
  */
 export default function OnboardingTooltip({
@@ -31,130 +34,49 @@ export default function OnboardingTooltip({
   persistent = false,
   autoCloseDelay = 0,
   maxWidth = 320,
+  minWidth = 280,
   offset = 12,
 }) {
-  const [tooltipPosition, setTooltipPosition] = useState(null);
-  const [calculatedPosition, setCalculatedPosition] = useState(position);
+  const { t } = useLanguage();
   const tooltipRef = useRef(null);
 
-  /**
-   * Ajuster la position du tooltip pour qu'il reste dans le viewport
-   * Prend en compte les transforms CSS pour éviter le débordement
-   *
-   * Utilise Math.max/Math.min pour un clamping correct au lieu de conditions if/else
-   */
-  const clampToViewport = (top, left, finalPosition, targetRect) => {
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-
-    // Utiliser maxWidth comme estimation si tooltip pas encore rendu
-    const tooltipWidth = tooltipRef.current?.offsetWidth || maxWidth;
-    const tooltipHeight = tooltipRef.current?.offsetHeight || 150;
-
-    const margin = 10; // Marge minimale des bords du viewport
-
-    let adjustedTop = top;
-    let adjustedLeft = left;
-
-    // Ajuster selon la position et les transforms CSS appliqués
-    switch (finalPosition) {
-      case 'top':
-      case 'bottom':
-        // Transform: -translate-x-1/2 centre le tooltip horizontalement
-        // Donc le bord gauche réel = left - (tooltipWidth / 2)
-        // On doit s'assurer que: margin <= (left - tooltipWidth/2) <= viewportWidth - tooltipWidth - margin
-
-        const minLeft = margin + (tooltipWidth / 2);
-        const maxLeft = viewportWidth - margin - (tooltipWidth / 2);
-        adjustedLeft = Math.max(minLeft, Math.min(maxLeft, left));
-
-        // Clamp vertical
-        if (finalPosition === 'top') {
-          // Transform: -translate-y-full
-          const tooltipTop = top - tooltipHeight;
-          if (tooltipTop < margin) {
-            adjustedTop = tooltipHeight + margin;
-          }
-        } else {
-          // Position bottom
-          const tooltipBottom = top + tooltipHeight;
-          if (tooltipBottom > viewportHeight - margin) {
-            adjustedTop = viewportHeight - tooltipHeight - margin;
-          }
-        }
-        break;
-
-      case 'left':
-        // Transform: -translate-x-full -translate-y-1/2
-        const minLeftPos = margin + tooltipWidth;
-        adjustedLeft = Math.max(minLeftPos, left);
-
-        const minTopPos = margin + (tooltipHeight / 2);
-        const maxTopPos = viewportHeight - margin - (tooltipHeight / 2);
-        adjustedTop = Math.max(minTopPos, Math.min(maxTopPos, top));
-        break;
-
-      case 'right':
-        // Transform: -translate-y-1/2
-        const maxRightPos = viewportWidth - margin - tooltipWidth;
-        adjustedLeft = Math.min(maxRightPos, left);
-
-        const minTopPosRight = margin + (tooltipHeight / 2);
-        const maxTopPosRight = viewportHeight - margin - (tooltipHeight / 2);
-        adjustedTop = Math.max(minTopPosRight, Math.min(maxTopPosRight, top));
-        break;
-    }
-
-    return { top: adjustedTop, left: adjustedLeft };
-  };
+  // Use shared position hook for synchronized updates
+  const targetRect = useElementPosition(targetSelector, show);
 
   /**
-   * Calculer position intelligente du tooltip
+   * Calculate intelligent tooltip positioning with viewport clamping
+   * Uses useMemo to recalculate only when targetRect changes
    */
-  const calculatePosition = () => {
-    if (!targetSelector || !show) {
-      setTooltipPosition(null);
-      return;
+  const { tooltipPosition, calculatedPosition, arrowOffset } = useMemo(() => {
+    if (!targetRect) {
+      return {
+        tooltipPosition: null,
+        calculatedPosition: position,
+        arrowOffset: 0,
+      };
     }
 
-    const targetElement = document.querySelector(targetSelector);
-    if (!targetElement) {
-      console.warn(`[OnboardingTooltip] Element not found: ${targetSelector}`);
-      setTooltipPosition(null);
-      return;
-    }
-
-    const targetRect = targetElement.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
     // Zones à éviter (topbar + checklist)
-    const topbarHeight = 80; // Hauteur approximative topbar
-    const checklistWidth = 320; // Largeur checklist (si visible)
+    const topbarHeight = 80;
+    const checklistWidth = 320;
 
     let finalPosition = position;
 
     // Position auto-intelligente
     if (position === 'auto') {
-      // Préférer bottom si espace suffisant
       if (targetRect.bottom + offset + 100 < viewportHeight) {
         finalPosition = 'bottom';
-      }
-      // Sinon top
-      else if (targetRect.top - offset - 100 > topbarHeight) {
+      } else if (targetRect.top - offset - 100 > topbarHeight) {
         finalPosition = 'top';
-      }
-      // Sinon right (si pas de checklist)
-      else if (targetRect.right + offset + maxWidth < viewportWidth) {
+      } else if (targetRect.right + offset + maxWidth < viewportWidth) {
         finalPosition = 'right';
-      }
-      // Sinon left
-      else {
+      } else {
         finalPosition = 'left';
       }
     }
-
-    setCalculatedPosition(finalPosition);
 
     // Calculer coordonnées selon position
     let top, left;
@@ -185,36 +107,67 @@ export default function OnboardingTooltip({
         left = targetRect.left + targetRect.width / 2;
     }
 
-    // Appliquer le clamping pour éviter le débordement du viewport
-    const clampedPosition = clampToViewport(top, left, finalPosition, targetRect);
+    // Viewport clamping
+    const tooltipWidth = tooltipRef.current?.offsetWidth || maxWidth;
+    const tooltipHeight = tooltipRef.current?.offsetHeight || 150;
+    const margin = 10;
 
-    setTooltipPosition(clampedPosition);
-  };
+    let adjustedTop = top;
+    let adjustedLeft = left;
 
-  /**
-   * Mise à jour position
-   */
-  useEffect(() => {
-    if (!show) {
-      setTooltipPosition(null);
-      return;
+    switch (finalPosition) {
+      case 'top':
+      case 'bottom':
+        const minLeft = margin + (tooltipWidth / 2);
+        const maxLeft = viewportWidth - margin - (tooltipWidth / 2);
+        adjustedLeft = Math.max(minLeft, Math.min(maxLeft, left));
+
+        if (finalPosition === 'top') {
+          const tooltipTop = top - tooltipHeight;
+          if (tooltipTop < margin) {
+            adjustedTop = tooltipHeight + margin;
+          }
+        } else {
+          const tooltipBottom = top + tooltipHeight;
+          if (tooltipBottom > viewportHeight - margin) {
+            adjustedTop = viewportHeight - tooltipHeight - margin;
+          }
+        }
+        break;
+
+      case 'left':
+        const minLeftPos = margin + tooltipWidth;
+        adjustedLeft = Math.max(minLeftPos, left);
+
+        const minTopPos = margin + (tooltipHeight / 2);
+        const maxTopPos = viewportHeight - margin - (tooltipHeight / 2);
+        adjustedTop = Math.max(minTopPos, Math.min(maxTopPos, top));
+        break;
+
+      case 'right':
+        const maxRightPos = viewportWidth - margin - tooltipWidth;
+        adjustedLeft = Math.min(maxRightPos, left);
+
+        const minTopPosRight = margin + (tooltipHeight / 2);
+        const maxTopPosRight = viewportHeight - margin - (tooltipHeight / 2);
+        adjustedTop = Math.max(minTopPosRight, Math.min(maxTopPosRight, top));
+        break;
     }
 
-    calculatePosition();
+    // Calculate arrow offset
+    let arrowOffsetValue = 0;
+    if (finalPosition === 'top' || finalPosition === 'bottom') {
+      arrowOffsetValue = left - adjustedLeft;
+    } else if (finalPosition === 'left' || finalPosition === 'right') {
+      arrowOffsetValue = top - adjustedTop;
+    }
 
-    const handleUpdate = () => calculatePosition();
-
-    window.addEventListener('resize', handleUpdate);
-    window.addEventListener('scroll', handleUpdate, true);
-
-    const interval = setInterval(handleUpdate, 200);
-
-    return () => {
-      window.removeEventListener('resize', handleUpdate);
-      window.removeEventListener('scroll', handleUpdate, true);
-      clearInterval(interval);
+    return {
+      tooltipPosition: { top: adjustedTop, left: adjustedLeft },
+      calculatedPosition: finalPosition,
+      arrowOffset: arrowOffsetValue,
     };
-  }, [show, targetSelector, position]); // offset retiré pour éviter boucle infinie (objet recréé à chaque render)
+  }, [targetRect, position, offset, maxWidth]);
 
   /**
    * Auto-close après délai
@@ -228,6 +181,28 @@ export default function OnboardingTooltip({
 
     return () => clearTimeout(timer);
   }, [show, persistent, autoCloseDelay, onClose]);
+
+  /**
+   * Fermer le tooltip au clic sur l'élément cible
+   * L'action native du bouton est préservée (pas de preventDefault)
+   */
+  useEffect(() => {
+    if (!show || !targetSelector || !onClose) return;
+
+    const targetElement = document.querySelector(targetSelector);
+    if (!targetElement) return;
+
+    const handleTargetClick = () => {
+      // Fermer le tooltip sans bloquer l'action native
+      onClose();
+    };
+
+    targetElement.addEventListener('click', handleTargetClick);
+
+    return () => {
+      targetElement.removeEventListener('click', handleTargetClick);
+    };
+  }, [show, targetSelector, onClose]);
 
   // Handler close
   const handleClose = () => {
@@ -245,12 +220,50 @@ export default function OnboardingTooltip({
     right: '-translate-y-1/2',
   };
 
-  // Position de la flèche
+  // Position de la flèche (sans le positionnement horizontal/vertical qui sera calculé dynamiquement)
+  // Note: Les rotations sont appliquées dans getArrowStyle() pour éviter le conflit avec transform inline
   const arrowPositionClasses = {
-    top: 'bottom-[-8px] left-1/2 -translate-x-1/2 rotate-180',
-    bottom: 'top-[-8px] left-1/2 -translate-x-1/2',
-    left: 'right-[-8px] top-1/2 -translate-y-1/2 rotate-90',
-    right: 'left-[-8px] top-1/2 -translate-y-1/2 -rotate-90',
+    top: 'bottom-[-8px]',
+    bottom: 'top-[-8px]',
+    left: 'right-[-8px]',
+    right: 'left-[-8px]',
+  };
+
+  // Calcul du style de positionnement de l'arrow avec le décalage
+  const getArrowStyle = () => {
+    const baseStyle = {
+      clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+    };
+
+    // Clamper l'arrowOffset pour qu'il reste dans les limites du tooltip
+    // Utiliser les dimensions réelles ou les valeurs par défaut
+    const tooltipWidth = tooltipRef.current?.offsetWidth || minWidth;
+    const tooltipHeight = tooltipRef.current?.offsetHeight || 100;
+    const margin = 20; // Marge de sécurité pour garder l'arrow visible
+
+    if (calculatedPosition === 'top' || calculatedPosition === 'bottom') {
+      // Clamper horizontalement
+      const maxOffset = (tooltipWidth / 2) - margin;
+      const clampedOffset = Math.max(-maxOffset, Math.min(maxOffset, arrowOffset));
+      // Rotation: top = flèche vers le bas (180deg), bottom = flèche vers le haut (0deg)
+      const rotation = calculatedPosition === 'top' ? 'rotate(180deg)' : '';
+      return {
+        ...baseStyle,
+        left: `calc(50% + ${clampedOffset}px)`,
+        transform: `translateX(-50%) ${rotation}`.trim(),
+      };
+    } else {
+      // left/right: clamper verticalement
+      const maxOffset = (tooltipHeight / 2) - margin;
+      const clampedOffset = Math.max(-maxOffset, Math.min(maxOffset, arrowOffset));
+      // Rotation: left = flèche vers la droite (90deg), right = flèche vers la gauche (-90deg)
+      const rotation = calculatedPosition === 'left' ? 'rotate(90deg)' : 'rotate(-90deg)';
+      return {
+        ...baseStyle,
+        top: `calc(50% + ${clampedOffset}px)`,
+        transform: `translateY(-50%) ${rotation}`,
+      };
+    }
   };
 
   const tooltipContent = (
@@ -265,6 +278,7 @@ export default function OnboardingTooltip({
         top: tooltipPosition.top,
         left: tooltipPosition.left,
         maxWidth,
+        minWidth,
       }}
       role="tooltip"
       aria-hidden={!show}
@@ -276,9 +290,7 @@ export default function OnboardingTooltip({
           bg-emerald-500
           ${arrowPositionClasses[calculatedPosition] || arrowPositionClasses.bottom}
         `}
-        style={{
-          clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
-        }}
+        style={getArrowStyle()}
       />
 
       {/* Contenu */}
@@ -310,7 +322,7 @@ export default function OnboardingTooltip({
                 rounded
                 transition-colors
               "
-              aria-label="Fermer le tooltip"
+              aria-label={t('onboarding.common.aria.closeTooltip')}
             >
               <svg
                 className="w-4 h-4"

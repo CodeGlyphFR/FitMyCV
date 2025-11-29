@@ -6,12 +6,13 @@ Guide complet des fonctionnalités de FitMyCv.ai.
 
 ## Table des matières
 
-- [🤖 Adaptation de CV par IA](#-adaptation-de-cv-par-ia)
+- [🤖 Génération de CV par IA](#-génération-de-cv-par-ia)
 - [📥 Import de CV](#-import-de-cv)
 - [🌍 Traduction de CV](#-traduction-de-cv)
 - [🎯 Score de match](#-score-de-match)
 - [✨ Optimisation](#-optimisation)
-- [💼 Création de CV fictif](#-création-de-cv-fictif)
+- [📜 Historique de modifications](#-historique-de-modifications)
+- [💼 Génération de CV fictif (Modèle)](#-génération-de-cv-fictif-modèle)
 - [💾 Export de CV](#-export-de-cv)
 - [✏️ Edition de CV](#️-edition-de-cv)
 - [📝 Création de CV](#-création-de-cv)
@@ -20,25 +21,58 @@ Guide complet des fonctionnalités de FitMyCv.ai.
 
 ---
 
-## 🤖 Adaptation de CV par IA
+## 🤖 Génération de CV par IA
 
 ### Description
 
-Génère automatiquement un CV personnalisé à partir d'une offre d'emploi (URL ou PDF).
+Génère un CV personnalisé et optimisé ATS **à partir d'un CV existant** (importé ou créé manuellement) et d'une ou plusieurs offres d'emploi.
 
-### Processus
+**Principe clé** : L'IA **n'invente jamais** de compétences ni d'expériences. Elle :
+- Filtre et met en avant les éléments pertinents du CV source
+- Enrichit et reformule les expériences pour correspondre à l'offre
+- Détermine les livrables clés et compétences depuis l'expérience existante
+- Analyse les formations/certifications et projets personnels pour identifier les compétences
+- Détecte les compétences manquantes et évalue le niveau de chacune
+
+### Types de génération
+
+#### 1. À partir d'un CV existant + offre(s) d'emploi
+
+L'utilisateur sélectionne un CV source puis fournit une ou plusieurs offres d'emploi (URL ou PDF).
+
+**Multi-offres** : Si plusieurs offres sont fournies, **un CV distinct est généré pour chaque offre**.
+
+**Analyse de l'offre** :
+- Compétences requises (techniques et soft skills)
+- Vocabulaire spécifique au poste/secteur
+- Contexte de l'offre (entreprise, mission, environnement)
+- Mots-clés ATS à intégrer
+
+**Adaptation du CV** :
+- Filtrage des éléments non pertinents
+- Reformulation des expériences avec le vocabulaire de l'offre
+- Mise en avant des livrables clés correspondants
+- Ajout de métriques quantifiables si disponibles
+
+#### 2. CV Modèle (fictif) depuis une offre
+
+Génère un CV **fictif mais réaliste** qui correspondrait parfaitement à l'offre d'emploi.
+
+**Usage** : Donner des idées à l'utilisateur pour composer son propre CV. L'utilisateur peut ensuite s'en inspirer pour adapter son vrai profil.
+
+### Processus technique
 
 ```
-1. Utilisateur fournit URL offre → Indeed, LinkedIn, etc.
+1. Utilisateur fournit URL(s) offre(s) → Indeed, LinkedIn, etc. (ou PDF)
 2. Extraction du contenu (Puppeteer Stealth mode)
 3. Parsing HTML → Extraction titre, description, compétences
-4. Chargement CV de référence de l'utilisateur
+4. Chargement CV source de l'utilisateur (ou template pour CV modèle)
 5. Appel OpenAI avec prompt optimisé
-6. Génération CV JSON personnalisé
+6. Génération CV JSON personnalisé (1 CV par offre)
 7. Validation AJV contre schema.json
 8. Chiffrement AES-256-GCM
 9. Sauvegarde dans data/users/{userId}/cvs/
-10. Métadonnées enregistrées dans CvFile
+10. Métadonnées enregistrées dans CvFile (avec extractedJobOffer)
 ```
 
 ### Niveaux d'analyse
@@ -90,25 +124,27 @@ Génère automatiquement un CV personnalisé à partir d'une offre d'emploi (URL
 
 ### Description
 
-Convertit un CV PDF en JSON structuré utilisable par l'application.
+Convertit un CV existant en JSON structuré et **optimisé ATS**. L'IA adapte n'importe quelle forme de CV en une structure unifiée et standard, parfaitement interprétable par les logiciels de sélection automatique (ATS).
+
+### Formats supportés
+
+- **PDF** (actuellement supporté)
+  - PDF texte (natif)
+  - PDF scanné (OCR limité, dépend de pdf2json)
+- **DOCX** (prévu dans une future version)
 
 ### Processus
 
 ```
-1. Upload PDF (Base64)
-2. Parsing avec pdf2json
+1. Upload fichier (Base64)
+2. Parsing avec pdf2json (PDF)
 3. Extraction texte brut
-4. Appel OpenAI pour structuration
+4. Appel OpenAI pour structuration ATS
 5. Parsing JSON (header, summary, skills, experience, etc.)
 6. Validation AJV
 7. Sauvegarde chiffrée
 8. Métadonnées CvFile avec createdBy: 'import-pdf'
 ```
-
-### Formats supportés
-
-- PDF texte (natif)
-- PDF scanné (OCR limité, dépend de pdf2json)
 
 ### Limitations
 
@@ -143,12 +179,10 @@ Traduit un CV existant vers une autre langue.
 
 ### Langues supportées
 
-- Français (fr)
-- English (en)
-- Español (es)
-- Deutsch (de)
-- Italiano (it)
-- Português (pt)
+- **Français (fr)**
+- **English (en)**
+- **Español (es)**
+- **Deutsch (de)**
 
 ### Processus
 
@@ -331,29 +365,67 @@ Améliore automatiquement un CV basé sur les suggestions du match score.
 
 ---
 
-## 💼 Création de CV fictif
+## 📜 Historique de modifications
 
 ### Description
 
-Génère un CV fictif professionnel basé uniquement sur un titre de poste, sans offre d'emploi existante.
+Permet de visualiser les modifications apportées à un CV par la fonction **Optimiser**.
+
+### Fonctionnement
+
+L'historique est **uniquement lié à la fonction "Optimiser"**. Il permet de :
+- Voir chaque modification appliquée par l'IA
+- Comprendre la justification de chaque changement
+- Identifier les améliorations apportées (métriques, mots-clés ATS, reformulations)
+
+### Affichage
+
+Le panneau d'historique montre :
+- Les modifications avant/après
+- La raison de chaque modification (basée sur les suggestions du match score)
+- La date de l'optimisation
+
+**Note** : L'historique ne concerne que les modifications automatiques de l'IA via la fonction Optimiser, pas les éditions manuelles de l'utilisateur.
+
+---
+
+## 💼 Génération de CV fictif (Modèle)
+
+### Description
+
+Génère un CV **fictif mais réaliste** pour aider l'utilisateur à comprendre ce qui est attendu pour un poste donné. Ce CV sert de **modèle d'inspiration** que l'utilisateur peut ensuite adapter à son propre profil.
+
+### Deux modes de génération
+
+#### 1. CV Modèle depuis une offre d'emploi
+
+Génère un CV fictif qui correspondrait **parfaitement** à une offre d'emploi spécifique.
+
+**Usage** : L'utilisateur peut créer ce CV modèle, puis s'en inspirer pour composer son propre CV adapté à l'offre. Chaque CV est entièrement éditable.
+
+#### 2. CV depuis un titre de poste (barre de recherche)
+
+L'utilisateur tape n'importe quel titre de poste et l'IA génère un modèle fictif réaliste.
+
+**Usage** : Exploration de nouvelles carrières, découverte des compétences requises pour un poste.
 
 ### Processus
 
 ```
-1. Utilisateur saisit un titre de poste (ex: "Développeur Full Stack")
-2. Appel OpenAI pour générer un CV adapté à ce poste
+1. Utilisateur saisit un titre de poste (ex: "Développeur Full Stack") OU fournit une offre
+2. Appel OpenAI pour générer un CV adapté
 3. Génération d'un profil fictif mais crédible
 4. Validation du JSON généré
 5. Chiffrement et sauvegarde
-6. Métadonnées avec createdBy: 'generate-from-job-title'
+6. Métadonnées avec createdBy: 'generate-from-job-title' ou 'create-template-cv'
 ```
 
 ### Use cases
 
 - **Exploration de carrière** : Découvrir les compétences requises pour un poste
+- **Inspiration** : Comprendre comment structurer un CV pour une offre spécifique
 - **Préparation d'entretien** : Comprendre les attentes d'un rôle
 - **Tests et prototypage** : Créer rapidement des CV de test
-- **Formation** : Exemples pour apprendre la structure d'un CV
 
 ### API
 
@@ -377,20 +449,28 @@ Génère un CV fictif professionnel basé uniquement sur un titre de poste, sans
 
 ### Description
 
-Exporte un CV au format PDF professionnel avec options personnalisables.
+Exporte un CV au format PDF professionnel, **optimisé ATS** (sans photo, format standard lisible par les outils d'analyse RH).
 
-### Options d'export
+L'utilisateur peut **customiser précisément** ce qu'il souhaite exporter.
 
-**Sections** :
+### Customisation de l'export
+
+**Sections au choix** (activer/désactiver chacune) :
 
 - ✅ Header (nom, contact)
-- ✅ Summary (résumé)
-- ✅ Skills (compétences)
-- ✅ Experience (expériences)
-- ✅ Education (formation)
-- ✅ Languages (langues)
-- ✅ Projects (projets)
+- ✅ Summary (résumé professionnel)
+- ✅ Skills (compétences techniques et soft skills)
+- ✅ Experience (expériences professionnelles)
+  - Option : avec ou sans **livrables clés** (achievements)
+- ✅ Education (formation, certifications)
+- ✅ Languages (langues maîtrisées)
+- ✅ Projects (projets personnels)
 - ✅ Extras (informations complémentaires)
+
+**Niveau de détail par section** :
+
+- Expériences : afficher ou masquer les livrables clés individuellement
+- Compétences : afficher par catégories ou liste simple
 
 **Thèmes** :
 
@@ -398,14 +478,21 @@ Exporte un CV au format PDF professionnel avec options personnalisables.
 - Modern (design épuré)
 - Classic (traditionnel)
 
+### Caractéristiques ATS
+
+- **Sans photo** : conformité ATS stricte
+- **Format standard** : lisible par tous les logiciels de recrutement
+- **Structure claire** : hiérarchie respectée, mots-clés visibles
+
 ### Processus
 
 ```
 1. Sélection des sections à inclure
-2. Choix du thème
-3. Génération HTML du CV
-4. Puppeteer → Rendu PDF
-5. Download automatique
+2. Personnalisation du niveau de détail (livrables clés, etc.)
+3. Choix du thème
+4. Génération HTML du CV
+5. Puppeteer → Rendu PDF
+6. Download automatique
 ```
 
 ### Format

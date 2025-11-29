@@ -91,12 +91,33 @@ a:not(.swiper-button-prev):not(.swiper-button-next):not(.swiper-pagination-bulle
   cursor: pointer;
 }
 
-/* iOS-specific auth layout - Position form at top with margin */
+/* iOS-specific styles
+   Reference: https://stackoverflow.com/questions/79753701
+   Reference: https://github.com/mui/material-ui/issues/46953 */
 @supports (-webkit-touch-callout: none) {
+  /* Auth layout - Position form at top with margin */
   .ios-auth-container {
     align-items: flex-start !important;
     padding-top: max(2rem, env(safe-area-inset-top, 0) + 1rem) !important;
     padding-bottom: max(2rem, env(safe-area-inset-bottom, 0) + 1rem) !important;
+  }
+
+  /* iOS 26 Safari Fix - Loading overlay safe area coverage
+     Safari clips fixed elements to the "inner viewport", not covering
+     the transparent bottom toolbar area. This ensures the html/body
+     background extends into safe areas during loading. */
+  html, body {
+    background-color: rgb(2, 6, 23) !important;
+  }
+
+  /* Hide content behind loading overlay on iOS to prevent flash in safe area */
+  body:has(#initial-loading-overlay:not(.hiding)) > *:not(#initial-loading-overlay) {
+    visibility: hidden !important;
+  }
+
+  /* Make the loading overlay visible (override the above rule) */
+  #initial-loading-overlay {
+    visibility: visible !important;
   }
 }
 
@@ -123,52 +144,6 @@ a:active,
   overflow-scrolling: auto;
 }
 
-@keyframes auth-blob {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
-    opacity: 0.55;
-  }
-  20% {
-    transform: translate3d(-18%, -12%, 0) scale(1.18) rotate(-10deg);
-    opacity: 0.95;
-  }
-  45% {
-    transform: translate3d(22%, 14%, 0) scale(0.92) rotate(12deg);
-    opacity: 0.75;
-  }
-  70% {
-    transform: translate3d(-10%, 18%, 0) scale(1.08) rotate(4deg);
-    opacity: 0.85;
-  }
-  100% {
-    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
-    opacity: 0.55;
-  }
-}
-
-.animate-auth-blob {
-  animation: auth-blob 18s ease-in-out infinite;
-}
-
-.animate-auth-blob-fast {
-  animation: auth-blob 14s ease-in-out infinite;
-}
-
-.animate-auth-blob-slow {
-  animation: auth-blob 26s ease-in-out infinite;
-}
-
-.animation-delay-1500 {
-  animation-delay: 1.5s;
-}
-
-.animation-delay-3000 {
-  animation-delay: 3s;
-}
-
-.animation-delay-6000 {
-  animation-delay: 6s;
-}
 
 @keyframes notification-in {
   0% {

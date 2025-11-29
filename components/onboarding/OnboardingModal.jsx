@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronRight, X, Pencil, Check } from 'lucide-react';
+import TipBox from '@/components/ui/TipBox';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -17,6 +19,11 @@ import {
 
 /**
  * Modal d'onboarding avec carousel (Framer Motion)
+ *
+ * RESPONSIVE BREAKPOINTS:
+ * - Mobile: 0-990px (barres de progression, swipe hint, pas de chevrons)
+ * - Desktop: 991px+ (chevrons visibles, pas de barres, textes/espacements plus grands)
+ * Note: md: breakpoint personnalisé à 991px dans tailwind.config.js (pas le défaut 768px)
  *
  * Props:
  * - open: boolean - État d'ouverture du modal
@@ -37,6 +44,10 @@ export default function OnboardingModal({
   open = false,
   screens = [],
   currentScreen = 0,
+  title, // Titre du modal (passé par le parent avec traduction)
+  IconComponent = Pencil, // Icône Lucide du modal
+  iconBg = 'bg-emerald-500/20', // Background de l'icône
+  iconColor = 'text-emerald-400', // Couleur de l'icône
   onNext,
   onPrev,
   onJumpTo, // NEW: Direct jump to specific screen
@@ -48,8 +59,10 @@ export default function OnboardingModal({
   disableBackdropClick = false,
   size = 'large',
 }) {
+  const { t } = useLanguage();
   const [direction, setDirection] = useState(0);
   const shouldReduceMotion = useReducedMotion();
+  const isDraggingRef = useRef(false);
 
   // Handlers boutons (useCallback pour éviter stale closures)
   const handleNext = useCallback(() => {
@@ -121,6 +134,9 @@ export default function OnboardingModal({
 
   // Gestion clic backdrop
   const handleBackdropClick = (e) => {
+    // Ignorer si on vient de faire un drag (évite la fermeture accidentelle)
+    if (isDraggingRef.current) return;
+
     if (e.target === e.currentTarget && !disableBackdropClick && onClose) {
       onClose();
     }
@@ -143,6 +159,10 @@ export default function OnboardingModal({
   }, [currentScreen, onJumpTo]);
 
   // Handler mobile swipe/drag
+  const handleDragStart = () => {
+    isDraggingRef.current = true;
+  };
+
   const handleDragEnd = (e, { offset, velocity }) => {
     const swipe = calculateSwipePower(offset.x, velocity.x);
 
@@ -151,16 +171,21 @@ export default function OnboardingModal({
     } else if (swipe > SWIPE_CONFIG.confidenceThreshold) {
       handlePrev();
     }
+
+    // Reset le flag après un court délai pour éviter les faux clics
+    setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 100);
   };
 
-  // Ne pas render si pas ouvert
-  if (!open) return null;
-
-  // Classes de taille
+  // Classes de taille (unifié max-w-2xl comme WelcomeModal)
   const sizeClasses = {
-    default: 'max-w-2xl',
-    large: 'max-w-4xl',
+    default: 'max-w-full mx-2 md:mx-4 md:max-w-2xl',
+    large: 'max-w-full mx-2 md:mx-4 md:max-w-2xl',
   };
+
+  // Ne pas render si pas ouvert ou screens vides
+  if (!open || !screens || screens.length === 0) return null;
 
   const modalContent = (
     <div
@@ -171,66 +196,89 @@ export default function OnboardingModal({
       aria-labelledby="onboarding-modal-title"
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm pointer-events-none" />
+      <div className="absolute inset-0 bg-black/70 pointer-events-none" />
 
       {/* Modal */}
       <div
         className={`
           relative w-full ${sizeClasses[size] || sizeClasses.default}
-          bg-white/15 backdrop-blur-md rounded-2xl border-2 border-white/30 shadow-2xl
+          bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl
           overflow-hidden
         `}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/20">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <span className="text-2xl">✏️</span>
+        <div>
+          {/* Titre et boutons */}
+          <div className="flex items-center justify-between p-4 md:p-6">
+            <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full ${iconBg} flex items-center justify-center flex-shrink-0`}>
+                {IconComponent && <IconComponent className={`w-4 h-4 md:w-5 md:h-5 ${iconColor}`} />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2
+                  id="onboarding-modal-title"
+                  className="text-base md:text-lg font-bold text-white mb-1 line-clamp-2"
+                >
+                  {screens[currentScreen]?.title || title}
+                </h2>
+                <p className="text-xs md:text-sm text-slate-400">
+                  {currentScreen + 1} / {screens.length}
+                </p>
+
+                {/* Screen reader only announcement */}
+                <div className="sr-only md:hidden" role="status" aria-live="polite" aria-atomic="true">
+                  {t('onboarding.common.aria.screenReaderStep', { current: currentScreen + 1, total: screens.length })}
+                </div>
+              </div>
             </div>
-            <div>
-              <h2
-                id="onboarding-modal-title"
-                className="text-xl font-bold text-white"
-              >
-                Guide du mode édition
-              </h2>
-              <p className="text-sm text-white/60">
-                {currentScreen + 1} / {screens.length}
-              </p>
+
+            {/* Boutons alignés à droite */}
+            <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+              {/* Bouton Passer */}
+              {showSkipButton && onSkip && (
+                <button
+                  onClick={onSkip}
+                  className="text-xs md:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap"
+                >
+                  {t('onboarding.common.buttons.skip')}
+                </button>
+              )}
+
+              {/* X Button - Allows user to exit mid-tutorial (different from WelcomeModal where X advances) */}
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                  aria-label={t('onboarding.common.aria.closeModal')}
+                >
+                  <X className="w-4 h-4 md:w-5 md:h-5" />
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Bouton fermeture */}
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="
-                p-2 rounded-lg
-                text-white/70 hover:text-white hover:bg-white/10
-                transition-colors
-              "
-              aria-label="Fermer le modal"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          )}
+          {/* Mobile Progress Bars - Pleine largeur au-dessus de la bordure */}
+          <div className="md:hidden px-4 pb-3" aria-hidden="true">
+            <div className="flex gap-1">
+              {screens.map((_, idx) => (
+                <div key={idx} className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full bg-emerald-500 transition-[width] duration-300 ${
+                      idx <= currentScreen ? 'w-full' : 'w-0'
+                    }`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Ligne de séparation */}
+          <div className="border-b border-white/10" />
         </div>
 
         {/* Carousel Container */}
-        <div className="relative min-h-[450px] overflow-hidden" role="tabpanel" aria-live="polite">
+        <div className="relative overflow-hidden" role="tabpanel" aria-live="polite">
           <AnimatePresence initial={true} custom={direction} mode="wait">
             <motion.div
               id="onboarding-carousel-content"
@@ -247,97 +295,325 @@ export default function OnboardingModal({
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={1}
+              onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
-              className="absolute inset-0 p-6 pb-20 cursor-grab active:cursor-grabbing"
+              className="p-4 md:p-6 md:pb-16 cursor-grab active:cursor-grabbing"
             >
-              {screens[currentScreen]?.image ? (
-                /* Mode avec image (si screen.image existe) */
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="w-full h-64 rounded-xl overflow-hidden bg-white/10">
+              {/* Écran type: master_cv */}
+              {screens[currentScreen]?.type === 'master_cv' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left mb-6">
+                      {screens[currentScreen].description}
+                    </p>
+                    <div className="space-y-3 ml-4">
+                      {screens[currentScreen].checklist.map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-3 text-left">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          </div>
+                          <span className="text-white text-sm md:text-base">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <TipBox className="mt-4">
+                    {screens[currentScreen].tip}
+                  </TipBox>
+                </div>
+              )}
+
+              {/* Écran type: control */}
+              {screens[currentScreen]?.type === 'control' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left mb-4">
+                      {screens[currentScreen].description}
+                    </p>
+                    <p className="text-white/60 text-sm md:text-base text-left mb-4">
+                      {screens[currentScreen].subtitle}
+                    </p>
+                    <div className="space-y-3">
+                      {screens[currentScreen].actions.map((action, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                            <img src={action.icon} alt="" className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="text-white font-medium text-sm md:text-base">{action.title}</p>
+                            <p className="text-white/60 text-xs md:text-sm">{action.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <TipBox className="mt-4">
+                    {screens[currentScreen].tip}
+                  </TipBox>
+                </div>
+              )}
+
+              {/* Écran type: sections */}
+              {screens[currentScreen]?.type === 'sections' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1">
+                    <div className="space-y-4">
+                      {screens[currentScreen].blocks.map((block, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <span className="text-2xl flex-shrink-0">{block.emoji}</span>
+                          <div>
+                            <p className="text-white font-medium text-sm md:text-base">{block.title}</p>
+                            <p className="text-white/60 text-xs md:text-sm">{block.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <TipBox className="mt-4">
+                    {screens[currentScreen].tip}
+                  </TipBox>
+                </div>
+              )}
+
+              {/* Fallback: écrans avec image */}
+              {screens[currentScreen]?.image && (
+                <div className="flex flex-col items-center text-center space-y-3 md:space-y-4">
+                  <div className="w-full h-48 md:h-64 rounded-xl overflow-hidden bg-white/10">
                     <img
                       src={screens[currentScreen].image}
                       alt={screens[currentScreen].title}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <p className="text-lg text-white/90 max-w-xl">
+                  <p className="text-base md:text-lg text-white/90 max-w-xl">
                     {screens[currentScreen].description}
                   </p>
                 </div>
-              ) : (
-                /* Mode texte seul (si pas d'image) */
-                <div className="flex flex-col items-center justify-center space-y-6 max-h-[360px] overflow-y-auto px-2 custom-scrollbar touch-pan-y">
-                  {/* Titre de l'écran */}
-                  <h3 className="text-2xl font-bold text-white text-center flex-shrink-0">
-                    {screens[currentScreen]?.title}
-                  </h3>
+              )}
 
-                  {/* Description longue */}
-                  <div className="text-white/90 text-lg leading-relaxed space-y-4 text-center max-w-2xl">
-                    <p>{screens[currentScreen]?.description}</p>
-                  </div>
+              {/* Écran type: step2_intro (Step 2 - Écran 1/3) */}
+              {screens[currentScreen]?.type === 'step2_intro' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].description}
+                    </p>
 
-                  {/* Icône décorative (optionnel) */}
-                  {screens[currentScreen]?.icon && (
-                    <div className="flex justify-center mt-4 flex-shrink-0">
-                      <div className="text-6xl opacity-20">
-                        {screens[currentScreen].icon}
-                      </div>
+                    <p className="text-white font-medium text-sm md:text-base text-left">
+                      {screens[currentScreen].subtitle}
+                    </p>
+
+                    <div className="space-y-3">
+                      {screens[currentScreen].blocks.map((block, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <span className="text-2xl flex-shrink-0">{block.emoji}</span>
+                          <div>
+                            <p className="text-white font-medium text-sm md:text-base">{block.title}</p>
+                            <p className="text-white/60 text-xs md:text-sm">{block.description}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
+                  </div>
+                  <TipBox className="mt-4">
+                    {screens[currentScreen].tip}
+                  </TipBox>
+                </div>
+              )}
+
+              {/* Écran type: step2_methods (Step 2 - Écran 2/3) */}
+              {screens[currentScreen]?.type === 'step2_methods' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].description}
+                    </p>
+
+                    {/* Blocs principaux (URL, PDF) */}
+                    <div className="space-y-3">
+                      {screens[currentScreen].blocks.map((block, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <span className="text-2xl flex-shrink-0">{block.emoji}</span>
+                          <div>
+                            <p className="text-white font-medium text-sm md:text-base">{block.title}</p>
+                            <p className="text-white/60 text-xs md:text-sm">{block.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Bloc Historique (style distinct avec bordure emerald) */}
+                    {screens[currentScreen].historyBlock && (
+                      <div className="p-3 bg-emerald-500/5 border border-emerald-500/30 rounded-lg">
+                        <div className="flex items-start gap-3 text-left">
+                          <span className="text-xl flex-shrink-0">{screens[currentScreen].historyBlock.emoji}</span>
+                          <div>
+                            <p className="text-white font-medium text-sm">{screens[currentScreen].historyBlock.title}</p>
+                            <p className="text-white/60 text-xs">{screens[currentScreen].historyBlock.description}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sous-titre niveaux d'analyse */}
+                    <p className="text-white font-medium text-sm md:text-base text-left pt-2">
+                      {screens[currentScreen].subtitle2}
+                    </p>
+
+                    {/* Grille niveaux d'analyse (design inspiré de CvGeneratorModal) */}
+                    <div className="grid grid-cols-3 gap-2">
+                      {screens[currentScreen].analysisLevels.map((level, idx) => (
+                        <div key={idx} className="flex flex-col items-center text-center p-2 rounded-lg bg-white/5 border border-white/10">
+                          <span className="text-lg mb-1">{level.emoji}</span>
+                          <p className="text-white font-medium text-xs md:text-sm">{level.title}</p>
+                          <p className="text-white/50 text-[10px] md:text-xs">{level.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {screens[currentScreen].tip && (
+                    <TipBox className="mt-4">
+                      {screens[currentScreen].tip}
+                    </TipBox>
                   )}
+                </div>
+              )}
+
+              {/* Écran type: step2_ai_behavior (Step 2 - Écran 3/3) */}
+              {screens[currentScreen]?.type === 'step2_ai_behavior' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].description}
+                    </p>
+
+                    <p className="text-white font-medium text-sm md:text-base text-left">
+                      {screens[currentScreen].subtitle}
+                    </p>
+
+                    <div className="space-y-2">
+                      {screens[currentScreen].checklist.map((item, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          </div>
+                          <span className="text-white/80 text-sm md:text-base">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <TipBox className="mt-4">
+                    {screens[currentScreen].tip}
+                  </TipBox>
+                </div>
+              )}
+
+              {/* Écran type: step6_score_analysis (Step 6 - Écran 1/2) */}
+              {screens[currentScreen]?.type === 'step6_score_analysis' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].description}
+                    </p>
+
+                    <p className="text-white font-medium text-sm md:text-base text-left">
+                      {screens[currentScreen].subtitle}
+                    </p>
+
+                    <div className="space-y-3">
+                      {screens[currentScreen].blocks.map((block, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <span className="text-2xl flex-shrink-0">{block.emoji}</span>
+                          <div>
+                            <p className="text-white font-medium text-sm md:text-base">{block.title}</p>
+                            <p className="text-white/60 text-xs md:text-sm">{block.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <TipBox className="mt-4">
+                    {screens[currentScreen].tip}
+                  </TipBox>
+                </div>
+              )}
+
+              {/* Écran type: step6_apply_improvements (Step 6 - Écran 2/2) */}
+              {screens[currentScreen]?.type === 'step6_apply_improvements' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].description}
+                    </p>
+
+                    <div className="space-y-2">
+                      {screens[currentScreen].checklist.map((item, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          </div>
+                          <span className="text-white/80 text-sm md:text-base">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <p className="text-white font-medium text-sm md:text-base text-left pt-2">
+                      {screens[currentScreen].subtitle}
+                    </p>
+
+                    <p className="text-white/60 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].transparencyText}
+                    </p>
+                  </div>
+                  <TipBox className="mt-4">
+                    {screens[currentScreen].tip}
+                  </TipBox>
+                </div>
+              )}
+
+              {/* Écran type: step8_export (Step 8 - Écrans 1-2) */}
+              {(screens[currentScreen]?.type === 'step8_export_ready' ||
+                screens[currentScreen]?.type === 'step8_export_custom') && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].description}
+                    </p>
+                    <div className="space-y-3">
+                      {screens[currentScreen].checklist.map((item, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          </div>
+                          <span className="text-white/80 text-sm md:text-base">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {screens[currentScreen].tip && (
+                    <TipBox className="mt-4">
+                      {screens[currentScreen].tip}
+                    </TipBox>
+                  )}
+                </div>
+              )}
+
+              {/* Fallback: écrans sans type (description simple) */}
+              {!screens[currentScreen]?.type && !screens[currentScreen]?.image && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen]?.description}
+                    </p>
+                  </div>
                 </div>
               )}
             </motion.div>
           </AnimatePresence>
 
-          {/* Navigation Arrows */}
-          <motion.button
-            onClick={handlePrev}
-            disabled={currentScreen === 0}
-            {...createChevronAnimations(shouldReduceMotion, 'left')}
-            animate={{
-              opacity: currentScreen === 0 ? 0.3 : 1,
-            }}
-            transition={transitions.default}
-            className="
-              absolute left-4 top-1/2 -translate-y-1/2 z-10
-              w-11 h-11 rounded-full
-              bg-emerald-500/50 hover:bg-emerald-500/70
-              disabled:pointer-events-none
-              text-white
-              flex items-center justify-center
-              backdrop-blur-sm
-            "
-            aria-label="Écran précédent"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </motion.button>
-
-          <motion.button
-            onClick={handleNext}
-            disabled={currentScreen >= screens.length - 1}
-            {...createChevronAnimations(shouldReduceMotion, 'right')}
-            animate={{
-              opacity: currentScreen >= screens.length - 1 ? 0.3 : 1,
-            }}
-            transition={transitions.default}
-            className="
-              absolute right-4 top-1/2 -translate-y-1/2 z-10
-              w-11 h-11 rounded-full
-              bg-emerald-500/50 hover:bg-emerald-500/70
-              disabled:pointer-events-none
-              text-white
-              flex items-center justify-center
-              backdrop-blur-sm
-            "
-            aria-label="Écran suivant"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </motion.button>
-
-          {/* Pagination Bullets */}
+          {/* Pagination Bullets (Desktop only) */}
           <motion.div
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1 z-20"
+            className="hidden md:flex absolute bottom-4 left-1/2 -translate-x-1/2 gap-1 z-20"
             role="tablist"
             variants={paginationDotsContainer}
             initial="hidden"
@@ -358,7 +634,7 @@ export default function OnboardingModal({
                   relative w-8 h-8
                   flex items-center justify-center
                 "
-                aria-label={`Aller à l'écran ${idx + 1} sur ${screens.length}`}
+                aria-label={t('onboarding.common.aria.goToScreen', { current: idx + 1, total: screens.length })}
               >
                 <span className={`
                   block rounded-full transition-colors duration-200
@@ -374,38 +650,35 @@ export default function OnboardingModal({
         </div>
 
         {/* Footer avec boutons */}
-        <div className="flex items-center justify-between p-6 border-t border-white/20">
-          {/* Bouton Skip (gauche) */}
-          {showSkipButton && (
+        <div className="flex items-center justify-between p-4 md:p-6 border-t border-white/10">
+          {/* Bouton Précédent (gauche, masqué au premier écran) */}
+          {currentScreen > 0 ? (
             <button
-              onClick={handleSkip}
+              onClick={handlePrev}
               className="
-                px-4 py-2 text-sm
-                text-white/70 hover:text-white
+                px-3 md:px-4 py-2 text-xs md:text-sm
+                text-slate-400 hover:text-white
                 transition-colors
               "
             >
-              Passer le tutoriel
-            </button>
-          )}
-
-          {/* Spacer ou bouton Compris (sur dernier écran) */}
-          {currentScreen >= screens.length - 1 ? (
-            <button
-              onClick={handleNext}
-              className="
-                px-8 py-3 rounded-lg
-                bg-emerald-500 hover:bg-emerald-600
-                text-white font-semibold
-                transition-colors
-                ml-auto
-              "
-            >
-              Compris !
+              {t('onboarding.common.buttons.previous')}
             </button>
           ) : (
             <div />
           )}
+
+          {/* Bouton Suivant ou Compris (droite) */}
+          <button
+            onClick={handleNext}
+            className="
+              px-6 md:px-8 py-2.5 md:py-3 rounded-lg
+              bg-emerald-500 hover:bg-emerald-600
+              text-white text-sm md:text-base font-semibold
+              transition-colors
+            "
+          >
+            {currentScreen >= screens.length - 1 ? t('onboarding.common.buttons.understood') : t('onboarding.common.buttons.next')}
+          </button>
         </div>
       </div>
     </div>

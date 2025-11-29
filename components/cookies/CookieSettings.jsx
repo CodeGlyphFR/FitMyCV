@@ -64,9 +64,9 @@ export default function CookieSettings() {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('scrollToTop', 'true');
     }
-    // Retour à la page précédente après un court délai
+    // Retour à la page principale après un court délai
     setTimeout(() => {
-      router.back();
+      window.location.href = '/';
     }, 1000);
   };
 
@@ -124,7 +124,7 @@ export default function CookieSettings() {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('scrollToTop', 'true');
     }
-    router.back();
+    window.location.href = '/';
   };
 
   return (
@@ -135,7 +135,7 @@ export default function CookieSettings() {
           className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-white mb-4 transition-colors drop-shadow"
         >
           <span>←</span>
-          <span>Retour</span>
+          <span>{t('cookies.preferences.back')}</span>
         </button>
 
         <h1 className="text-3xl font-bold mb-6 text-white drop-shadow-lg">

@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { usePathname } from "next/navigation";
+import { Lightbulb } from "lucide-react";
 import FeedbackModal from "./FeedbackModal";
 import { useSettings } from "@/lib/settings/SettingsContext";
 
@@ -26,14 +27,14 @@ export default function FeedbackButton() {
         className="
           no-print fixed bottom-6 left-[76px] z-50
           w-10 h-10 rounded-full
-          bg-yellow-500/20 backdrop-blur-xl text-white
+          bg-amber-500/20 backdrop-blur-xl text-white
           shadow-2xl hover:shadow-xl
           flex items-center justify-center
           transition-all duration-300
-          hover:scale-110 hover:bg-yellow-500/30
-          focus:outline-none focus:ring-4 focus:ring-yellow-400/40
+          hover:scale-110 hover:bg-amber-500/30
+          focus:outline-none focus:ring-4 focus:ring-amber-400/40
           pointer-events-auto
-          border-2 border-yellow-400/30
+          border-2 border-amber-500/30
           cursor-pointer
         "
         style={{
@@ -46,7 +47,7 @@ export default function FeedbackButton() {
         title="Donner votre avis"
         aria-label="Donner votre avis"
       >
-        <span className="text-xl drop-shadow-lg">💬</span>
+        <Lightbulb className="w-5 h-5 text-amber-400 drop-shadow-lg" />
       </button>
 
       <FeedbackModal

@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Modal from "./ui/Modal";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { emitOnboardingEvent, ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
 
 function LoadingSpinner() {
   return (
@@ -159,7 +160,7 @@ function TaskItem({ task, onCancel, onTaskClick }) {
 
   return (
     <div
-      className={`flex items-center justify-between p-3 border-2 border-white/30 rounded-lg bg-white/10 backdrop-blur-sm ios-blur-light ${isClickable ? 'cursor-pointer hover:bg-white/20 transition-all duration-200' : ''}`}
+      className={`flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5 ${isClickable ? 'cursor-pointer hover:bg-white/10 transition-all duration-200' : ''}`}
       onClick={handleClick}
     >
       <div className="flex-1 min-w-0">
@@ -186,7 +187,7 @@ function TaskItem({ task, onCancel, onTaskClick }) {
               e.stopPropagation();
               router.push(errorRedirectUrl);
             }}
-            className="mt-2 px-3 py-1 rounded-lg text-xs font-semibold bg-red-500/40 hover:bg-red-500/60 border-2 border-red-400/70 text-white drop-shadow transition-all duration-200 inline-flex items-center gap-1 shadow-sm hover:shadow-md"
+            className="mt-2 px-3 py-1 rounded-lg text-xs font-semibold bg-red-500/30 hover:bg-red-500/40 border border-red-500/50 text-white transition-all duration-200 inline-flex items-center gap-1"
           >
             {t("subscription.viewOptions") || "Voir les options"}
             <span className="text-base">→</span>
@@ -220,6 +221,14 @@ export default function TaskQueueModal({ open, onClose }) {
   const { t } = useLanguage();
   const router = useRouter();
   const { tasks, clearCompletedTasks, cancelTask, isApiSyncEnabled } = useBackgroundTasks();
+
+  // Émettre l'événement onboarding quand le modal s'ouvre (pour valider l'étape 3)
+  useEffect(() => {
+    if (open) {
+      console.log('[TaskQueueModal] Modal ouvert, émission task_manager_opened');
+      emitOnboardingEvent(ONBOARDING_EVENTS.TASK_MANAGER_OPENED);
+    }
+  }, [open]);
 
   // Filtrer les tâches de calcul de match score (elles ne doivent apparaître que dans l'animation du bouton)
   const visibleTasks = tasks.filter(task => task.type !== 'calculate-match-score');
@@ -295,10 +304,10 @@ export default function TaskQueueModal({ open, onClose }) {
           </div>
         )}
 
-        <div className="flex justify-between items-center pt-4 border-t border-white/30 text-xs text-white/70 drop-shadow">
+        <div className="flex justify-between items-center pt-4 border-t border-white/10 text-xs text-white/70">
           <div className="flex items-center gap-1">
             <div
-              className={`w-2 h-2 rounded-full drop-shadow ${isApiSyncEnabled ? 'bg-green-400' : 'bg-orange-400'}`}
+              className={`w-2 h-2 rounded-full ${isApiSyncEnabled ? 'bg-green-400' : 'bg-orange-400'}`}
               title={isApiSyncEnabled ? t("taskQueue.cloudSyncActive") : t("taskQueue.localSyncOnly")}
             />
             <span>{isApiSyncEnabled ? t("taskQueue.cloud") : t("taskQueue.localStorage")}</span>
@@ -306,7 +315,7 @@ export default function TaskQueueModal({ open, onClose }) {
           <div>{t("taskQueue.total")}: {tasks.length}</div>
           <button
             onClick={onClose}
-            className="px-3 py-1 text-sm font-medium text-white bg-white/20 border-2 border-white/40 rounded-lg hover:bg-white/30 backdrop-blur-sm ios-blur-light transition-all duration-200 drop-shadow"
+            className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
           >
             {t("common.close")}
           </button>

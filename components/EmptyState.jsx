@@ -3,15 +3,24 @@ import React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
+import { LOADING_EVENTS, emitLoadingEvent, showLoadingOverlay } from "@/lib/loading/loadingEvents";
+import PdfImportModal from "@/components/TopBar/modals/PdfImportModal";
+import NewCvModal from "@/components/TopBar/modals/NewCvModal";
+import { useNotifications } from "@/components/notifications/NotificationProvider";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
+import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
+import { parseApiError } from "@/lib/utils/errorHandler";
 
 export default function EmptyState() {
   const router = useRouter();
   const { data: session } = useSession();
   const { t } = useLanguage();
   const { settings } = useSettings();
+  const { addNotification } = useNotifications();
+  const { executeRecaptcha } = useRecaptcha();
+  const { localDeviceId } = useBackgroundTasks();
   const [openPdfImport, setOpenPdfImport] = React.useState(false);
   const [pdfFile, setPdfFile] = React.useState(null);
   const [isImporting, setIsImporting] = React.useState(false);
@@ -66,6 +75,14 @@ export default function EmptyState() {
     setNewCvBusy(true);
     setNewCvError(null);
     try {
+      // Obtenir le token reCAPTCHA
+      const recaptchaToken = await executeRecaptcha('create_cv');
+      if (!recaptchaToken) {
+        setNewCvError(t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.");
+        setNewCvBusy(false);
+        return;
+      }
+
       const res = await fetch("/api/cvs/create", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -73,10 +90,19 @@ export default function EmptyState() {
           full_name: trimmedName,
           current_title: trimmedTitle,
           email: newCvEmail.trim(),
+          recaptchaToken: recaptchaToken
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || t("newCvModal.errors.generic"));
+      if (!res.ok) {
+        const apiError = parseApiError(res, data);
+        const errorObj = new Error(apiError.message);
+        if (apiError.actionRequired && apiError.redirectUrl) {
+          errorObj.actionRequired = true;
+          errorObj.redirectUrl = apiError.redirectUrl;
+        }
+        throw errorObj;
+      }
 
       document.cookie = "cvFile=" + encodeURIComponent(data.file) + "; path=/; max-age=31536000";
       try {
@@ -85,15 +111,32 @@ export default function EmptyState() {
 
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("cv:list:changed"));
+        window.dispatchEvent(new CustomEvent("cv:selected", { detail: { file: data.file } }));
       }
 
       setOpenNewCv(false);
       resetNewCvForm();
 
+      // Afficher l'overlay de chargement AVANT la navigation
+      showLoadingOverlay();
+
       // Forcer un rechargement complet pour que le cookie soit bien pris en compte
       window.location.href = "/";
-    } catch (error) {
-      setNewCvError(error?.message || t("newCvModal.errors.generic"));
+    } catch (e) {
+      // Check if action is required (limits exceeded)
+      if (e?.actionRequired && e?.redirectUrl) {
+        // Close modal and show notification with action button
+        setOpenNewCv(false);
+        addNotification({
+          type: "error",
+          message: e.message,
+          redirectUrl: e.redirectUrl,
+          linkText: 'Voir les options',
+          duration: 10000,
+        });
+      } else {
+        setNewCvError(e?.message || t("newCvModal.errors.generic"));
+      }
     } finally {
       setNewCvBusy(false);
     }
@@ -103,9 +146,26 @@ export default function EmptyState() {
     event.preventDefault();
     if (!pdfFile) return;
 
+    const fileName = pdfFile.name;
+
     try {
+      // Obtenir le token reCAPTCHA
+      const recaptchaToken = await executeRecaptcha('import_pdf');
+      if (!recaptchaToken) {
+        addNotification({
+          type: "error",
+          message: t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.",
+          duration: 4000,
+        });
+        return;
+      }
+
       const formData = new FormData();
       formData.append("pdfFile", pdfFile);
+      formData.append("recaptchaToken", recaptchaToken);
+      if (localDeviceId) {
+        formData.append("deviceId", localDeviceId);
+      }
 
       const response = await fetch("/api/background-tasks/import-pdf", {
         method: "POST",
@@ -114,11 +174,17 @@ export default function EmptyState() {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data?.success) {
-        throw new Error(data?.error || t("pdfImport.notifications.error"));
+        const apiError = parseApiError(response, data);
+        const errorObj = { message: apiError.message };
+        if (apiError.actionRequired && apiError.redirectUrl) {
+          errorObj.actionRequired = true;
+          errorObj.redirectUrl = apiError.redirectUrl;
+        }
+        throw errorObj;
       }
 
       // Close modal and show importing state
-      setImportFileName(pdfFile.name);
+      setImportFileName(fileName);
       closePdfImport();
       setIsImporting(true);
       setImportProgress(0);
@@ -126,8 +192,22 @@ export default function EmptyState() {
       // Start polling for task completion
       startPollingForCompletion();
     } catch (error) {
-      console.error("Impossible de planifier l'import", error);
-      alert(error?.message || t("pdfImport.notifications.error"));
+      // Fermer le modal avant d'afficher l'erreur
+      closePdfImport();
+
+      const notification = {
+        type: "error",
+        message: error?.message || t("pdfImport.notifications.error"),
+        duration: 10000,
+      };
+
+      // Add redirect info if actionRequired
+      if (error?.actionRequired && error?.redirectUrl) {
+        notification.redirectUrl = error.redirectUrl;
+        notification.linkText = 'Voir les options';
+      }
+
+      addNotification(notification);
     }
   }
 
@@ -265,6 +345,8 @@ export default function EmptyState() {
 
                 // Wait a bit to show 100% then redirect
                 setTimeout(() => {
+                  // Afficher l'overlay de chargement AVANT la navigation
+                  showLoadingOverlay();
                   router.push("/");
                   router.refresh();
                 }, 1000);
@@ -306,18 +388,27 @@ export default function EmptyState() {
       }
     };
   }, []);
+
+  // Emit PAGE_READY event for LoadingOverlay
+  React.useEffect(() => {
+    // Ne pas émettre si en cours d'import (importing state)
+    if (isImporting) return;
+
+    // Petit délai pour s'assurer que le rendu est complet
+    const timer = setTimeout(() => {
+      emitLoadingEvent(LOADING_EVENTS.PAGE_READY, {
+        trigger: 'emptyState',
+        timestamp: Date.now(),
+      });
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [isImporting]);
+
   // Show importing state
   if (isImporting) {
     return (
-      <div className="relative min-h-screen min-h-[100dvh] w-full overflow-y-auto bg-slate-950 flex items-start justify-center p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-        {/* Animated background blobs - same as AuthScreen */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -top-32 -left-40 h-80 w-80 rounded-full bg-gradient-to-br from-emerald-400/90 via-sky-500/70 to-transparent blur-2xl animate-auth-blob-fast"/>
-          <div className="absolute top-[20%] right-[-140px] h-96 w-96 rounded-full bg-gradient-to-br from-sky-500/70 via-emerald-400/50 to-transparent blur-3xl animate-auth-blob animation-delay-1500"/>
-          <div className="absolute bottom-[-180px] left-[10%] h-[420px] w-[420px] rounded-full bg-gradient-to-br from-emerald-500/55 via-sky-400/35 to-transparent blur-[150px] animate-auth-blob-slow animation-delay-6000"/>
-          <div className="absolute top-[55%] right-[15%] h-56 w-56 rounded-full bg-gradient-to-br from-sky-400/50 via-emerald-300/40 to-transparent blur-2xl animate-auth-blob-fast animation-delay-3000"/>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(126,207,244,0.25),_transparent_65%)]"/>
-        </div>
+      <div className="relative min-h-screen min-h-[100dvh] w-full overflow-y-auto bg-transparent flex items-start justify-center p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="relative z-10 max-w-xl w-full mt-12">
           <div className="bg-white/15 backdrop-blur-md rounded-2xl shadow-2xl p-8 border-2 border-white/30 gpu-accelerate">
             <div className="text-center mb-8">
@@ -409,16 +500,7 @@ export default function EmptyState() {
   }
 
   return (
-    <div className="relative min-h-screen min-h-[100dvh] w-full overflow-y-auto bg-slate-950 flex items-start justify-center px-4 pb-8 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-      {/* Animated background blobs - same as AuthScreen */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-32 -left-40 h-80 w-80 rounded-full bg-gradient-to-br from-emerald-400/90 via-sky-500/70 to-transparent blur-2xl animate-auth-blob-fast"/>
-        <div className="absolute top-[20%] right-[-140px] h-96 w-96 rounded-full bg-gradient-to-br from-sky-500/70 via-emerald-400/50 to-transparent blur-3xl animate-auth-blob animation-delay-1500"/>
-        <div className="absolute bottom-[-180px] left-[10%] h-[420px] w-[420px] rounded-full bg-gradient-to-br from-emerald-500/55 via-sky-400/35 to-transparent blur-[150px] animate-auth-blob-slow animation-delay-6000"/>
-        <div className="absolute top-[55%] right-[15%] h-56 w-56 rounded-full bg-gradient-to-br from-sky-400/50 via-emerald-300/40 to-transparent blur-2xl animate-auth-blob-fast animation-delay-3000"/>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(126,207,244,0.25),_transparent_65%)]"/>
-      </div>
-
+    <div className="relative min-h-screen min-h-[100dvh] w-full overflow-y-auto bg-transparent flex items-start justify-center px-4 pb-8 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       <div className="relative z-10 max-w-2xl w-full mt-12">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-3 drop-shadow-lg">
@@ -516,137 +598,32 @@ export default function EmptyState() {
       </div>
 
       {/* PDF Import Modal */}
-      <Modal
+      <PdfImportModal
         open={openPdfImport}
         onClose={closePdfImport}
-        title={t("pdfImport.title")}
-      >
-        <form onSubmit={submitPdfImport} className="space-y-4">
-          <div className="text-sm text-white/90 drop-shadow">
-            {t("pdfImport.description")}
-          </div>
+        onSubmit={submitPdfImport}
+        pdfFile={pdfFile}
+        onPdfFileChanged={onPdfFileChanged}
+        pdfFileInputRef={pdfFileInputRef}
+        t={t}
+      />
 
-          <div className="space-y-2">
-            <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("pdfImport.pdfFile")}</div>
-            <input
-              ref={pdfFileInputRef}
-              className="hidden"
-              type="file"
-              accept=".pdf"
-              onChange={onPdfFileChanged}
-            />
-            <button
-              type="button"
-              onClick={() => pdfFileInputRef.current?.click()}
-              className="w-full rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-4 py-3 text-sm text-white hover:bg-white/30 hover:border-white/60 transition-all duration-200 flex items-center justify-center gap-2 group"
-            >
-              <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-              <span className="font-medium">
-                {pdfFile ? pdfFile.name : t("pdfImport.selectFile")}
-              </span>
-            </button>
-            {pdfFile ? (
-              <div className="rounded-lg border border-emerald-400/50 bg-emerald-500/20 px-3 py-2 text-xs text-white flex items-center gap-2">
-                <svg className="w-4 h-4 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                <div className="flex-1">
-                  <div className="font-medium">{t("pdfImport.fileSelected")}</div>
-                  <div className="truncate opacity-80">{pdfFile.name}</div>
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={closePdfImport}
-              className="rounded border-2 border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white hover:bg-white/30 transition-all duration-200"
-            >
-              {t("pdfImport.cancel")}
-            </button>
-            <button
-              type="submit"
-              className="rounded border-2 border-emerald-500 bg-emerald-500 px-3 py-2 text-sm text-white hover:bg-emerald-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!pdfFile}
-            >
-              {t("pdfImport.import")}
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      <Modal
+      {/* New CV Modal */}
+      <NewCvModal
         open={openNewCv}
-        onClose={() => {
-          setOpenNewCv(false);
-          resetNewCvForm();
-        }}
-        title={t("newCvModal.title")}
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow block mb-2">
-              {t("newCvModal.fullName")}<span className="text-red-400" aria-hidden="true"> {t("newCvModal.required")}</span>
-            </label>
-            <input
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-white placeholder:text-white/50 focus:bg-white/30 focus:border-emerald-400 focus:outline-none transition-all duration-200"
-              value={newCvFullName}
-              onChange={(event) => setNewCvFullName(event.target.value)}
-              placeholder="Ex: Jean Dupont"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow block mb-2">
-              {t("newCvModal.currentTitle")}<span className="text-red-400" aria-hidden="true"> {t("newCvModal.required")}</span>
-            </label>
-            <input
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-white placeholder:text-white/50 focus:bg-white/30 focus:border-emerald-400 focus:outline-none transition-all duration-200"
-              value={newCvCurrentTitle}
-              onChange={(event) => setNewCvCurrentTitle(event.target.value)}
-              placeholder="Ex: Développeur Full-Stack"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow block mb-2">{t("newCvModal.email")}</label>
-            <input
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-white placeholder:text-white/50 focus:bg-white/30 focus:border-emerald-400 focus:outline-none transition-all duration-200"
-              value={newCvEmail}
-              onChange={(event) => setNewCvEmail(event.target.value)}
-              placeholder="email@exemple.com"
-            />
-          </div>
-          {newCvError ? (
-            <div className="text-sm text-red-400 drop-shadow">{String(newCvError)}</div>
-          ) : null}
-          <div className="flex gap-2">
-            <button
-              onClick={createNewCv}
-              disabled={newCvBusy || !newCvFullName.trim() || !newCvCurrentTitle.trim()}
-              className="rounded border-2 border-emerald-500 bg-emerald-500 px-3 py-2 text-white hover:bg-emerald-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {newCvBusy ? t("newCvModal.creating") : t("newCvModal.create")}
-            </button>
-            <button
-              onClick={() => {
-                setOpenNewCv(false);
-                resetNewCvForm();
-              }}
-              className="rounded border-2 border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-white hover:bg-white/30 transition-all duration-200"
-            >
-              {t("newCvModal.cancel")}
-            </button>
-          </div>
-          <p className="text-xs text-white/70 drop-shadow">
-            {t("newCvModal.hint")}
-          </p>
-        </div>
-      </Modal>
+        onClose={() => setOpenNewCv(false)}
+        onCreate={createNewCv}
+        fullName={newCvFullName}
+        setFullName={setNewCvFullName}
+        currentTitle={newCvCurrentTitle}
+        setCurrentTitle={setNewCvCurrentTitle}
+        email={newCvEmail}
+        setEmail={setNewCvEmail}
+        error={newCvError}
+        setError={setNewCvError}
+        busy={newCvBusy}
+        t={t}
+      />
     </div>
   );
 }
