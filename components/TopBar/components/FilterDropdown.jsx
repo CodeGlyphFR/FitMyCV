@@ -19,6 +19,8 @@ const CV_LANGUAGES = [
   { id: null, key: "all" },
   { id: "fr", key: "fr" },
   { id: "en", key: "en" },
+  { id: "es", key: "es" },
+  { id: "de", key: "de" },
 ];
 
 // Plages de dates

@@ -102,6 +102,8 @@
     "cvLanguages": {
       "fr": "Français",
       "en": "English",
+      "es": "Spanish",
+      "de": "German",
       "all": "All"
     },
     "filterSelectLanguage": "Select",
@@ -1503,6 +1505,52 @@
         ],
         "tip": "Have a feature idea? Let us know!"
       }
+    }
+  },
+  "optimization": {
+    "title": "Analysis & Optimization",
+    "matchScore": "Match Score",
+    "scoreBreakdown": "Score Breakdown",
+    "suggestions": "Improvement Suggestions",
+    "missingSkills": "Missing Skills",
+    "matchingSkills": "Matching Skills",
+    "technicalSkills": "Technical Skills",
+    "experience": "Experience",
+    "education": "Education",
+    "softSkills": "Soft Skills & Languages",
+    "priority": "Priority",
+    "impact": "Impact",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "noData": "No optimization data available",
+    "loading": "Loading...",
+    "close": "Close",
+    "optimize": "Optimize",
+    "autoImprove": "Auto-Improve",
+    "improving": "Improving...",
+    "improveSuccess": "CV improved! Reloading...",
+    "improvementInProgress": "Improvement in progress...",
+    "calculatingScore": "Calculating score...",
+    "showMore": "more",
+    "showLess": "Show less",
+    "languageNote": "Analysis and suggestions are displayed in the CV's language, not the interface language."
+  },
+  "changes": {
+    "title": "Change History",
+    "button": "📝 History",
+    "section": "Section",
+    "change": "Change",
+    "reason": "Reason",
+    "close": "Close",
+    "noChanges": "No changes recorded",
+    "sections": {
+      "summary": "Summary",
+      "skills": "Skills",
+      "experience": "Experience",
+      "education": "Education",
+      "languages": "Languages",
+      "projects": "Projects"
     }
   }
 }

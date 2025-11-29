@@ -76,7 +76,7 @@ Ce document décrit le flux type pour exploiter la plateforme de génération de
 
 ## 6. Traduction
 
-- **Langues supportées** : Français et Anglais uniquement
+- **Langues supportées** : Français, Anglais et Espagnol
 - Traduisez un CV existant via le bouton traduction
 - Le CV traduit est sauvegardé comme nouveau fichier
 
