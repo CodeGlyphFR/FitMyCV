@@ -8,6 +8,7 @@ import frTranslations from "@/locales/fr.json";
 import enTranslations from "@/locales/en.json";
 import { trackCvExport } from "@/lib/telemetry/server";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
+import { refundCredit } from "@/lib/subscription/credits";
 
 const translations = {
   fr: frTranslations,
@@ -81,12 +82,19 @@ export async function POST(request) {
   console.log('[PDF Export] Request received'); // Log pour debug
   const startTime = Date.now();
 
+  // Variables pour tracking du crédit (remboursement si échec)
+  // Déclarées hors du try pour être accessibles dans le catch
+  let creditTransactionId = null;
+  let creditUsed = false;
+  let userId = null;
+
   try {
     // Vérifier l'authentification
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
+    userId = session.user.id;
 
     const requestData = await request.json();
     let filename = requestData.filename;
@@ -115,6 +123,9 @@ export async function POST(request) {
         redirectUrl: usageResult.redirectUrl
       }, { status: 403 });
     }
+    // Sauvegarder pour remboursement potentiel si échec
+    creditTransactionId = usageResult.transactionId;
+    creditUsed = usageResult.usedCredit;
 
     // Charger les données du CV via le système de stockage utilisateur
     let cvData;
@@ -124,6 +135,15 @@ export async function POST(request) {
       console.log('[PDF Export] CV loaded successfully for user:', session.user.id);
     } catch (error) {
       console.error('[PDF Export] Error loading CV:', error);
+      // Rembourser le crédit si utilisé
+      if (creditUsed && creditTransactionId) {
+        try {
+          await refundCredit(session.user.id, creditTransactionId, 'CV introuvable lors de l\'export');
+          console.log('[PDF Export] Crédit remboursé suite à CV introuvable');
+        } catch (refundError) {
+          console.error('[PDF Export] Erreur lors du remboursement:', refundError);
+        }
+      }
       return NextResponse.json({ error: "CV introuvable" }, { status: 404 });
     }
 
@@ -201,6 +221,16 @@ export async function POST(request) {
   } catch (error) {
     console.error("Erreur lors de la génération PDF:", error);
     console.error("Stack trace:", error.stack);
+
+    // Rembourser le crédit si utilisé
+    if (creditUsed && creditTransactionId && userId) {
+      try {
+        await refundCredit(userId, creditTransactionId, `Échec export PDF: ${error.message}`);
+        console.log('[PDF Export] Crédit remboursé suite à erreur:', error.message);
+      } catch (refundError) {
+        console.error('[PDF Export] Erreur lors du remboursement:', refundError);
+      }
+    }
 
     // Tracking télémétrie - Erreur
     const duration = Date.now() - startTime;
