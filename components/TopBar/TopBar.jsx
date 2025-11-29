@@ -76,6 +76,8 @@ export default function TopBar() {
     setRawItems: state.setRawItems,
     setCurrent: state.setCurrent,
     setIconRefreshKey: state.setIconRefreshKey,
+    setHasLoadedOnce: state.setHasLoadedOnce,
+    hadItemsOnceRef: state.hadItemsOnceRef,
     currentItem: state.currentItem,
     language,
     t,
@@ -557,9 +559,39 @@ export default function TopBar() {
     return null;
   }
 
-  // No CVs
+  // No CVs - Distinguer les différents cas
   if (state.items.length === 0) {
-    return null;
+    // Cas 1: Premier chargement terminé et aucun CV → ne pas afficher (EmptyState)
+    if (state.hasLoadedOnce) {
+      return null;
+    }
+
+    // Cas 2: Premier chargement en cours mais on n'a jamais eu de CV → ne pas afficher (évite flash)
+    if (!state.hadItemsOnceRef.current) {
+      return null;
+    }
+
+    // Cas 3: On avait des CV avant mais plus maintenant (race condition suppression) → skeleton
+    return (
+      <div
+        ref={barRef}
+        className="no-print fixed top-0 left-0 right-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden',
+          WebkitTransform: 'translate3d(0, 0, 0)',
+          transform: 'translate3d(0, 0, 0)',
+          pointerEvents: 'auto'
+        }}
+      >
+        <div className="w-full p-3 flex items-center justify-between">
+          <span className="text-sm font-medium text-white/60 animate-pulse drop-shadow-lg">
+            {t("topbar.loading")}
+          </span>
+        </div>
+      </div>
+    );
   }
 
   return (
