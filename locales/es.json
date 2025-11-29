@@ -1,0 +1,1555 @@
+{
+  "auth": {
+    "title": "Crear una cuenta",
+    "siteTitle": "FitMyCv.ai",
+    "welcome": "Crea CVs adaptados a cada oportunidad con IA.",
+    "continueWithGoogle": "Continuar con Google",
+    "continueWithApple": "Continuar con Apple",
+    "continueWithGithub": "Continuar con GitHub",
+    "or": "o",
+    "fullName": "Nombre completo",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "createAccount": "Crear mi cuenta",
+    "login": "Iniciar sesión",
+    "alreadyRegistered": "¿Ya estás registrado?",
+    "loginLink": "Iniciar sesión",
+    "new": "¿Nuevo?",
+    "createAccountLink": "Crear una cuenta",
+    "termsText": "Al conectarte, aceptas nuestros términos de uso. Sin spam.",
+    "pleaseWait": "Por favor espera…",
+    "passwordStrength": {
+      "label": "Seguridad de la contraseña",
+      "weak": "Débil",
+      "medium": "Media",
+      "strong": "Fuerte",
+      "very_strong": "Muy fuerte"
+    },
+    "passwordRules": {
+      "title": "Tu contraseña debe contener:",
+      "minLength": "Al menos 8 caracteres",
+      "uppercase": "Al menos una mayúscula",
+      "lowercase": "Al menos una minúscula",
+      "numbers": "Al menos un número",
+      "specialChars": "Al menos un carácter especial (!@#$%...)"
+    },
+    "errors": {
+      "required": "Correo y contraseña son obligatorios.",
+      "nameRequired": "Por favor proporciona tu nombre y apellido.",
+      "firstNameRequired": "Por favor proporciona tu nombre.",
+      "lastNameRequired": "Por favor proporciona tu apellido.",
+      "passwordLength": "La contraseña debe contener al menos 8 caracteres.",
+      "passwordMismatch": "Las contraseñas no coinciden.",
+      "createFailed": "No se pudo crear tu cuenta.",
+      "invalidCredentials": "Credenciales inválidas.",
+      "unexpected": "Error inesperado. Por favor intenta de nuevo.",
+      "oauthUnavailable": "Inicio de sesión con este proveedor no disponible. Configura las credenciales OAuth."
+    }
+  },
+  "maintenance": {
+    "registrationDisabled": "Mantenimiento en curso, los registros estarán disponibles pronto."
+  },
+  "topbar": {
+    "loading": "Cargando…",
+    "userMenu": "Menú de usuario",
+    "user": "Usuario",
+    "myCvs": "Mis CVs",
+    "myAccount": "Mi cuenta",
+    "subscriptions": "Suscripciones y Créditos",
+    "logout": "Cerrar sesión",
+    "analyzeOffers": "Análisis de ofertas",
+    "coverLetters": "Cartas de presentación",
+    "interviewPrep": "Preparación RRHH",
+    "applicationTracking": "Seguimiento de candidaturas",
+    "soon": "Próximamente",
+    "credits": "créditos",
+    "loadingInProgress": "Cargando ...",
+    "taskQueue": "Cola de tareas",
+    "delete": "Eliminar",
+    "cvInProgress": "CV en edición",
+    "jobTitlePlaceholder": "Introduce un título de puesto (ej: Desarrollador Full-Stack)",
+    "jobTitlePlaceholderMobile": "ej: Desarrollador Full-Stack",
+    "analysisLevels": {
+      "rapid": "Rápido",
+      "medium": "Medio",
+      "deep": "Profundo"
+    },
+    "filter": "Filtrar",
+    "filterTitle": "Filtros",
+    "filterCvType": "Tipo de CV",
+    "filterCvLanguage": "Idioma del CV",
+    "filterDateRange": "Fecha de creación",
+    "filterClearAll": "Borrar filtros",
+    "filterNoResults": "Ningún CV coincide con los filtros",
+    "cvTypes": {
+      "generate-cv": "Con oferta",
+      "import-pdf": "Importado",
+      "manual": "Añadido",
+      "translate-cv": "Traducido",
+      "improve-cv": "Mejorado",
+      "generate-cv-job-title": "Desde título",
+      "create-template": "Plantilla IA"
+    },
+    "dateRanges": {
+      "24h": "24 horas",
+      "7d": "7 días",
+      "30d": "30 días",
+      "all": "Todo"
+    },
+    "cvLanguages": {
+      "fr": "Français",
+      "en": "English",
+      "es": "Español",
+      "all": "Todos"
+    },
+    "filterSelectLanguage": "Seleccionar",
+    "filterSelectDate": "Seleccionar"
+  },
+  "jobTitleGenerator": {
+    "notifications": {
+      "scheduled": "Generando CV para '{jobTitle}'...",
+      "invalidTitle": "El título '{jobTitle}' no parece ser un puesto válido",
+      "error": "Error al generar el CV"
+    }
+  },
+  "matchScore": {
+    "score": "Puntuación de coincidencia: {score}/100",
+    "scoreTooltip": "Puntuación de coincidencia: {score}/100",
+    "notCalculated": "Puntuación no calculada",
+    "calculating": "Calculando",
+    "failed": "Fallido",
+    "refresh": "Actualizar puntuación",
+    "refreshSuccess": "Puntuación actualizada: {score}/100 ({count}/{limit})",
+    "refreshError": "Error al calcular la puntuación",
+    "rateLimitExceeded": "Límite global alcanzado (5 actualizaciones/24h para todos los CVs). Reinicio en {hours} horas y {minutes} minutos",
+    "rateLimitReached": "Límite global de 5 actualizaciones/24h alcanzado",
+    "resetIn": "Reinicio en {hours} horas y {minutes} minutos",
+    "refreshWithCount": "Actualizar ({count}/{limit})",
+    "noTokensLeft": "❌ No quedan tokens"
+  },
+  "cvGenerator": {
+    "title": "Generar CV con ChatGPT",
+    "description": "Proporciona ofertas de empleo (enlaces o archivos PDF/Word) para generar CVs adaptados a partir del CV de referencia seleccionado.",
+    "referenceCV": "CV de referencia",
+    "selectCV": "Seleccionar un CV",
+    "noManualCV": "No hay CV manual disponible. Crea un CV antes de lanzar la generación con IA.",
+    "createTemplateOption": "Crear una nueva plantilla de CV",
+    "templateCreationLabel": "Creación de plantilla de CV",
+    "links": "Enlaces",
+    "loadRecentLink": "Cargar enlace reciente",
+    "recentLinks": "Enlaces recientes",
+    "addLink": "Añadir enlace",
+    "files": "Archivos",
+    "selection": "Selección:",
+    "clearFiles": "Borrar archivos",
+    "analysisQuality": "Calidad del análisis",
+    "analysisHints": {
+      "rapid": "Análisis más rápido, para una vista general.",
+      "medium": "Equilibrio entre velocidad y calidad (recomendado).",
+      "deep": "Análisis completo para resultados optimizados."
+    },
+    "cancel": "Cancelar",
+    "validate": "Validar",
+    "errors": {
+      "selectReference": "Selecciona un CV de referencia antes de iniciar el análisis.",
+      "addLinkOrFile": "Añade al menos un enlace o archivo."
+    },
+    "notifications": {
+      "scheduled": "Adaptación de CV '{baseCvName}' programada",
+      "templateScheduled": "Creación de plantilla de CV programada",
+      "error": "Error al programar la generación"
+    }
+  },
+  "pdfImport": {
+    "title": "Importar CV PDF",
+    "description": "Importa un CV en formato PDF para convertirlo automáticamente usando inteligencia artificial y tu esquema de CV bruto.",
+    "pdfFile": "Archivo PDF",
+    "fileSelected": "Archivo seleccionado:",
+    "selectFile": "Elegir un archivo PDF",
+    "analysisQuality": "Calidad del análisis",
+    "cancel": "Cancelar",
+    "import": "Importar",
+    "notifications": {
+      "scheduled": "Importación de '{fileName}' programada",
+      "error": "Error al programar la importación"
+    }
+  },
+  "deleteModal": {
+    "title": "Confirmación",
+    "question": "¿Realmente quieres eliminar el CV:",
+    "warning": "Esta acción es",
+    "irreversible": "irreversible",
+    "no": "No",
+    "yes": "Sí",
+    "errors": {
+      "deleteFailed": "Error al eliminar:"
+    }
+  },
+  "export": {
+    "noCvSelected": "Ningún CV seleccionado para exportar.",
+    "errors": {
+      "exportFailed": "Error al exportar PDF. Por favor intenta de nuevo."
+    }
+  },
+  "exportModal": {
+    "title": "Personalizar y Exportar a PDF",
+    "filename": "Nombre del archivo",
+    "filenameHint": "El archivo se exportará con la extensión .pdf",
+    "selectAll": "Seleccionar todo",
+    "deselectAll": "Deseleccionar todo",
+    "experienceColumn": "Experiencia",
+    "includeDeliverables": "Incluir entregables",
+    "export": "Exportar",
+    "exporting": "Exportando...",
+    "cancel": "Cancelar",
+    "sectionsTitle": "Seleccionar secciones a incluir",
+    "showOptions": "Mostrar opciones",
+    "hideOptions": "Ocultar opciones",
+    "sections": {
+      "header": "Encabezado",
+      "summary": "Resumen",
+      "skills": "Habilidades",
+      "experience": "Experiencia",
+      "education": "Formación",
+      "languages": "Idiomas",
+      "projects": "Proyectos",
+      "extras": "Información adicional"
+    },
+    "subsections": {
+      "header": {
+        "contact": "Contacto",
+        "links": "Enlaces"
+      },
+      "summary": {
+        "description": "Descripción"
+      },
+      "skills": {
+        "hard_skills": "Habilidades técnicas",
+        "soft_skills": "Habilidades blandas",
+        "tools": "Herramientas",
+        "methodologies": "Metodologías"
+      }
+    },
+    "counters": {
+      "always": "Siempre incluido",
+      "empty": "Vacío",
+      "item": "elemento",
+      "items": "elementos",
+      "selected": "seleccionado"
+    }
+  },
+  "newCvModal": {
+    "title": "Crear nuevo CV",
+    "fullName": "Nombre completo",
+    "currentTitle": "Título actual",
+    "email": "Correo electrónico",
+    "required": "*",
+    "create": "Crear CV",
+    "creating": "Creando...",
+    "cancel": "Cancelar",
+    "hint": "Puedes completar todas las secciones después en modo edición.",
+    "errors": {
+      "fillRequired": "Por favor proporciona el nombre completo y el título actual.",
+      "generic": "Error"
+    },
+    "notifications": {
+      "success": "CV creado con éxito"
+    }
+  },
+  "cvSections": {
+    "header": "Encabezado",
+    "summary": "Resumen",
+    "experience": "Experiencia",
+    "education": "Formación",
+    "skills": "Habilidades",
+    "projects": "Proyectos",
+    "languages": "Idiomas",
+    "extras": "Extras",
+    "editSummary": "Editar resumen",
+    "noSummary": "Sin resumen todavía.",
+    "editExperience": "Editar experiencia",
+    "addExperience": "Añadir experiencia",
+    "deleteExperience": "Eliminar esta experiencia",
+    "noExperience": "Sin experiencia todavía.",
+    "editEducation": "Editar formación",
+    "addEducation": "Añadir formación",
+    "deleteEducation": "Eliminar esta formación",
+    "noEducation": "Sin formación todavía.",
+    "editSkills": "Editar habilidades",
+    "addSkill": "Añadir habilidad",
+    "deleteSkill": "Eliminar esta habilidad",
+    "noSkills": "Sin habilidades todavía.",
+    "editProjects": "Editar proyecto",
+    "addProject": "Añadir proyecto",
+    "deleteProject": "Eliminar este proyecto",
+    "noProjects": "Sin proyectos todavía.",
+    "editLanguages": "Editar idiomas",
+    "addLanguage": "Añadir idioma",
+    "deleteLanguage": "Eliminar este idioma",
+    "noLanguages": "Sin idiomas todavía.",
+    "editExtras": "Editar extras",
+    "noExtras": "Sin extras todavía.",
+    "present": "Presente",
+    "inProgress": "Puesto actual",
+    "projectInProgress": "Proyecto en curso",
+    "responsibilities": "Responsabilidades",
+    "deliverables": "Entregables",
+    "skillsUsed": "Habilidades utilizadas",
+    "technologies": "Tecnologías",
+    "hardSkills": "Habilidades técnicas",
+    "tools": "Herramientas",
+    "methodologies": "Metodologías",
+    "softSkills": "Habilidades blandas",
+    "noTools": "Sin herramientas todavía.",
+    "noMethodologies": "Sin metodologías todavía.",
+    "noSoftSkills": "Sin habilidades blandas todavía.",
+    "editTools": "Editar herramientas",
+    "editMethodologies": "Editar metodologías",
+    "editSoftSkills": "Editar habilidades blandas",
+    "addExtra": "Añadir extra",
+    "deleteExtra": "Eliminar este extra",
+    "placeholders": {
+      "institution": "Institución",
+      "degree": "Título",
+      "degreeOrCertification": "Título o certificación",
+      "fieldOfStudy": "Campo de estudio",
+      "startDate": "Inicio (AAAA o AAAA-MM)",
+      "endDate": "Fin (AAAA o AAAA-MM)",
+      "projectName": "Nombre del proyecto",
+      "role": "Rol",
+      "description": "Descripción",
+      "skillName": "Nombre",
+      "skillLabel": "Etiqueta",
+      "chooseLevel": "Elige un nivel…",
+      "languageName": "Idioma",
+      "languageLevel": "Nivel (ej: C1, B2, fluido...)",
+      "extraTitle": "Título",
+      "extraSummary": "Resumen",
+      "experienceTitleShort": "Título",
+      "experienceCompanyShort": "Empresa",
+      "experienceDepartment": "Departamento/Cliente",
+      "experienceStartShort": "Inicio (AAAA o AAAA-MM)",
+      "experienceEndShort": "Fin (AAAA, AAAA-MM)",
+      "experienceEndShortWithPresent": "Fin (AAAA, AAAA-MM o presente)",
+      "city": "Ciudad",
+      "region": "Región",
+      "countryCode": "País (código)"
+    }
+  },
+  "skillLevels": {
+    "awareness": "Conocimiento",
+    "beginner": "Principiante",
+    "intermediate": "Intermedio",
+    "proficient": "Competente",
+    "advanced": "Avanzado",
+    "expert": "Experto"
+  },
+  "languageLevels": {
+    "A1": "Principiante (A1)",
+    "A2": "Elemental (A2)",
+    "B1": "Intermedio (B1)",
+    "B2": "Intermedio alto (B2)",
+    "C1": "Avanzado (C1)",
+    "C2": "Competente (C2)",
+    "native": "Nativo",
+    "Native": "Nativo",
+    "beginner": "Principiante",
+    "Beginner": "Principiante",
+    "elementary": "Elemental",
+    "Elementary": "Elemental",
+    "intermediate": "Intermedio",
+    "Intermediate": "Intermedio",
+    "advanced": "Avanzado",
+    "Advanced": "Avanzado",
+    "fluent": "Fluido",
+    "Fluent": "Fluido",
+    "proficient": "Competente",
+    "Proficient": "Competente"
+  },
+  "footer": {
+    "cookieManagement": "Gestión de cookies",
+    "copyright": "© 2025 FitMyCv.ai",
+    "about": "Acerca de",
+    "cookies": "Cookies",
+    "terms": "Términos de servicio",
+    "privacy": "Política de privacidad"
+  },
+  "cookies": {
+    "banner": {
+      "title": "Este sitio utiliza cookies",
+      "description": "Usamos cookies para mejorar tu experiencia.",
+      "learnMore": "Más información",
+      "acceptAll": "Aceptar todo",
+      "rejectAll": "Rechazar todo",
+      "customize": "Personalizar",
+      "close": "Cerrar"
+    },
+    "preferences": {
+      "title": "Preferencias de cookies",
+      "description": "Elige qué tipos de cookies quieres permitir.",
+      "save": "Guardar mis preferencias",
+      "necessary": {
+        "title": "Cookies necesarias",
+        "description": "Esenciales para que el sitio funcione.",
+        "active": "Activo"
+      },
+      "functional": {
+        "title": "Cookies funcionales",
+        "description": "Recuerdan tus preferencias."
+      },
+      "analytics": {
+        "title": "Cookies de análisis",
+        "description": "Estadísticas de uso del sitio."
+      },
+      "marketing": {
+        "title": "Cookies de marketing",
+        "description": "Publicidad dirigida."
+      },
+      "back": "Volver",
+      "save": "Guardar"
+    },
+    "settings": {
+      "pageTitle": "Gestión de cookies",
+      "saved": "Tus preferencias han sido guardadas",
+      "currentStatus": "Estado actual",
+      "consentGiven": "Consentimiento dado el:",
+      "expiresOn": "Expira el:",
+      "aboutTitle": "Acerca de las cookies",
+      "aboutDescription": "De acuerdo con el Reglamento General de Protección de Datos (RGPD) y la normativa española, te informamos sobre el uso de cookies en nuestro sitio.",
+      "consentValidity": "Tu consentimiento es válido por 6 meses. Puedes cambiar tus preferencias en cualquier momento en esta página.",
+      "necessary": {
+        "title": "Cookies necesarias",
+        "alwaysActive": "Siempre activo",
+        "description": "Estas cookies son esenciales para que el sitio funcione. Permiten la autenticación, seguridad y navegación básica. No se pueden desactivar.",
+        "examples": "Sesión de usuario, tokens CSRF, preferencias de idioma"
+      },
+      "functional": {
+        "title": "Cookies funcionales",
+        "description": "Estas cookies mejoran la experiencia del usuario al recordar tus elecciones y preferencias (tema, diseño, opciones de visualización).",
+        "examples": "Preferencias de interfaz, configuración de visualización"
+      },
+      "analytics": {
+        "title": "Cookies de análisis",
+        "description": "Estas cookies nos ayudan a entender cómo usas nuestro sitio para mejorarlo. Los datos son anónimos y agregados.",
+        "examples": "Páginas visitadas, tiempo en el sitio, recorrido del usuario"
+      },
+      "marketing": {
+        "title": "Cookies de marketing",
+        "description": "Estas cookies se utilizan para ofrecerte contenido publicitario personalizado según tus intereses.",
+        "examples": "Seguimiento publicitario, remarketing"
+      },
+      "savePreferences": "Guardar mis preferencias",
+      "acceptAll": "Aceptar todo",
+      "rejectAll": "Rechazar todo",
+      "resetConsent": "Restablecer consentimiento",
+      "yourRights": "Tus derechos",
+      "rightsDescription": "De acuerdo con el RGPD, tienes los siguientes derechos:",
+      "rights": {
+        "access": "Derecho de acceso a tus datos personales",
+        "rectification": "Derecho de rectificación de tus datos",
+        "erasure": "Derecho de supresión de tus datos",
+        "objection": "Derecho de oposición al tratamiento de tus datos",
+        "portability": "Derecho a la portabilidad de datos",
+        "withdraw": "Derecho a retirar tu consentimiento en cualquier momento"
+      },
+      "examplesLabel": "Ejemplos:"
+    },
+    "registry": {
+      "title": "📋 Registro detallado de cookies",
+      "description": "Lista completa de todas las cookies que pueden usarse en este sitio, por categoría.",
+      "duration": "Duración:",
+      "type": "Tipo:",
+      "note": "Las cookies de terceros solo se establecerán si das tu consentimiento explícito. Las cookies necesarias son esenciales para que el sitio funcione y no pueden rechazarse.",
+      "durations": {
+        "6_months": "6 meses",
+        "30_days": "30 días",
+        "session": "Sesión",
+        "1_year": "1 año",
+        "2_years": "2 años",
+        "24_hours": "24 horas",
+        "1_minute": "1 minuto",
+        "3_months": "3 meses",
+        "13_months": "13 meses",
+        "15_minutes": "15 minutos"
+      },
+      "purposes": {
+        "cookie_consent": "Almacena las preferencias de consentimiento de cookies del usuario",
+        "session_token": "Autenticación - Mantiene la sesión del usuario activa",
+        "secure_session_token": "Autenticación segura en producción - Token de sesión",
+        "csrf_protection": "Seguridad - Protección contra ataques CSRF",
+        "secure_csrf_protection": "Seguridad mejorada en producción - Protección CSRF",
+        "auth_callback": "Redirección después de la autenticación",
+        "theme_preference": "Recuerda el tema elegido por el usuario (claro/oscuro)",
+        "language_preference": "Recuerda el idioma elegido por el usuario",
+        "ga_unique_users": "Google Analytics - Distingue usuarios únicos",
+        "ga_distinguish_users": "Google Analytics - Distingue usuarios",
+        "ga_rate_limit": "Google Analytics - Limita la tasa de solicitudes",
+        "ga4_session_state": "Google Analytics 4 - Persistencia del estado de sesión",
+        "fb_pixel_tracking": "Facebook Pixel - Seguimiento de conversiones y publicidad dirigida",
+        "fb_cross_site_tracking": "Facebook - Almacena y rastrea visitas en sitios web",
+        "fb_targeted_ads": "Facebook - Entrega de publicidad dirigida",
+        "google_ads_retargeting": "Google Ads - Seguimiento publicitario y retargeting",
+        "google_ads_cookie_test": "Google Ads - Prueba si el navegador acepta cookies"
+      }
+    },
+    "history": {
+      "title": "📜 Tu historial de consentimiento",
+      "records": "registro",
+      "recordsPlural": "registros",
+      "gdprCompliant": "Compatible con RGPD",
+      "noHistory": "No hay historial de consentimiento disponible. Tus futuras preferencias se registrarán aquí.",
+      "loadingError": "Error de carga",
+      "loadError": "No se pudo cargar el historial",
+      "browser": "Navegador:",
+      "gdprNote": "Este historial demuestra que has dado (o rechazado) tu consentimiento de manera informada. Estos datos se conservan para fines de auditoría y pueden eliminarse borrando tu cuenta.",
+      "actions": {
+        "created": "Creado",
+        "updated": "Actualizado",
+        "revoked": "Revocado"
+      },
+      "categories": {
+        "necessary": "Necesarias",
+        "functional": "Funcionales",
+        "analytics": "Análisis",
+        "marketing": "Marketing"
+      }
+    }
+  },
+  "header": {
+    "modalTitle": "Editar encabezado",
+    "fullName": "Nombre completo",
+    "currentTitle": "Título actual",
+    "email": "Correo electrónico",
+    "phone": "Teléfono",
+    "city": "Ciudad",
+    "region": "Región",
+    "countryCode": "País (código)",
+    "links": "Enlaces",
+    "noLinks": "Sin enlaces todavía.",
+    "labelPlaceholder": "Etiqueta (ej: GitHub)",
+    "urlPlaceholder": "URL (ej: https://github.com/john)",
+    "addLink": "Añadir enlace"
+  },
+  "common": {
+    "edit": "Editar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "add": "Añadir",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "close": "Cerrar",
+    "confirmation": "Confirmación",
+    "locale": "es-ES"
+  },
+  "editMode": {
+    "on": "✏️ Edición ON",
+    "off": "Edición OFF"
+  },
+  "taskQueue": {
+    "title": "Cola de tareas",
+    "noTasks": "Sin tareas en progreso",
+    "tasks": "Tareas",
+    "of": "de",
+    "clearCompleted": "Limpiar completadas",
+    "total": "Total",
+    "cancelTask": "Cancelar tarea",
+    "cloudSyncActive": "Sincronización en la nube activa",
+    "localSyncOnly": "Solo sincronización local",
+    "cloud": "Nube",
+    "localStorage": "Almacenamiento local",
+    "status": {
+      "queued": "En cola",
+      "running": "En ejecución",
+      "completed": "Completado",
+      "failed": "Fallido",
+      "cancelled": "Cancelado",
+      "unknown": "Desconocido"
+    },
+    "messages": {
+      "task": "Tarea",
+      "importInProgress": "Importación en progreso ...",
+      "importQueued": "Importación en cola ...",
+      "importCompleted": "Importación completada",
+      "importCancelled": "Importación cancelada",
+      "importFailed": "Importación fallida",
+      "creationInProgress": "Creación en progreso",
+      "creationQueued": "Creación en cola",
+      "creationCompleted": "Creación completada",
+      "creationCancelled": "Creación cancelada",
+      "creationFailed": "Creación fallida",
+      "templateCreationInProgress": "Creación de plantilla de CV en progreso ...",
+      "templateCreationQueued": "Creación de plantilla de CV en cola ...",
+      "templateCreationCompleted": "Plantilla de CV creada con éxito",
+      "templateCreationCancelled": "Creación de plantilla de CV cancelada",
+      "templateCreationFailed": "Creación de plantilla de CV fallida",
+      "matchScoreInProgress": "Cálculo de puntuación en progreso ...",
+      "matchScoreQueued": "Cálculo de puntuación en cola ...",
+      "matchScoreCompleted": "Puntuación calculada con éxito",
+      "matchScoreCancelled": "Cálculo de puntuación cancelado",
+      "matchScoreFailed": "Cálculo de puntuación fallido"
+    }
+  },
+  "emptyState": {
+    "welcome": "Bienvenido {firstName} a tu gestor de CVs",
+    "subtitle": "Comienza creando tu primer CV o importando uno existente",
+    "createManual": "Crear un CV manualmente",
+    "orImport": "o importar un CV PDF",
+    "importButton": "Importar PDF",
+    "importCard": {
+      "title": "Importar un CV",
+      "description": "Importa tu CV existente en formato PDF para convertirlo automáticamente",
+      "button": "Importar →"
+    },
+    "createCard": {
+      "title": "Crear nuevo CV",
+      "description": "Comienza con un CV en blanco y complétalo a tu ritmo",
+      "button": "Crear →"
+    },
+    "tip": "💡 Consejo: Puedes editar, duplicar y exportar tus CVs en cualquier momento",
+    "importing": {
+      "title": "Importación en progreso...",
+      "ready": "🎉 ¡Tu CV está listo!",
+      "steps": {
+        "reading": "Leyendo archivo PDF",
+        "analyzing": "Análisis inteligente del contenido",
+        "structuring": "Estructuración de datos",
+        "finalizing": "Finalizando"
+      },
+      "redirect": "🎊 Redirigiendo...",
+      "timeout": "☕ Mientras tanto, prepárate una bebida caliente...",
+      "timeoutAlert": "La importación está tardando más de lo esperado. Por favor actualiza la página.",
+      "loadingMessages": [
+        "🔍 Buscando tus superpoderes ocultos...",
+        "🎨 Añadiendo un toque de magia a tu trayectoria...",
+        "🧠 La IA está pensando en tu perfil...",
+        "📚 Leyendo entre líneas de tu experiencia...",
+        "✨ Puliendo tus habilidades...",
+        "🎯 Optimizando tu perfil profesional...",
+        "🚀 Preparando tu carrera para despegar...",
+        "🎭 Destacando tus talentos...",
+        "🔮 Prediciendo tu éxito futuro...",
+        "💎 Transformando tu CV en un diamante...",
+        "🎪 Orquestando tu trayectoria profesional...",
+        "🌟 Añadiendo un toque de excelencia...",
+        "🎨 Pintando tu retrato profesional...",
+        "🏆 Preparando tu arsenal de habilidades...",
+        "📖 Escribiendo tu leyenda profesional...",
+        "🎬 Dirigiendo la película de tu carrera...",
+        "🧩 Ensamblando las piezas de tu rompecabezas profesional...",
+        "🎵 Componiendo la sinfonía de tus logros...",
+        "🔬 Análisis molecular de tus habilidades...",
+        "🎪 Organizando el espectáculo de tus talentos..."
+      ]
+    }
+  },
+  "newCv": {
+    "title": "Crear un nuevo CV",
+    "fullName": "Nombre completo",
+    "fullNamePlaceholder": "Ej: Juan García",
+    "currentTitle": "Título actual",
+    "currentTitlePlaceholder": "Ej: Desarrollador Full-Stack",
+    "email": "Correo electrónico",
+    "emailPlaceholder": "correo@ejemplo.com",
+    "required": "Por favor proporciona el nombre completo y el título actual.",
+    "creating": "Creando...",
+    "createButton": "Crear CV",
+    "cancel": "Cancelar",
+    "tip": "Puedes completar todas las secciones después en modo edición.",
+    "loading": "Cargando…",
+    "error": "Error"
+  },
+  "sourceInfo": {
+    "createdFromLink": "Creado desde enlace",
+    "createdFromPdf": "Creado desde PDF"
+  },
+  "translate": {
+    "buttonTitle": "Traducir CV",
+    "selectLanguage": "Seleccionar idioma de traducción",
+    "selectLanguageDescription": "Elige el idioma al que quieres traducir tu CV:",
+    "errors": {
+      "noCvSelected": "Ningún CV seleccionado"
+    },
+    "notifications": {
+      "scheduled": "Traducción a {targetLangName} programada",
+      "error": "Error de traducción"
+    }
+  },
+  "feedback": {
+    "title": "¡Tu opinión nos ayuda a mejorar!",
+    "ratingLabel": "¿Cómo calificarías tu experiencia?",
+    "optional": "opcional",
+    "commentLabel": "Tu opinión (opcional)",
+    "commentPlaceholder": "Comparte tu opinión, sugiere nuevas funciones o reporta errores...",
+    "bugReportLabel": "Reporte de error",
+    "markAsBug": "Marcar como error",
+    "markedAsBug": "Marcado como error",
+    "charactersCount": "{count}/500 caracteres",
+    "cancel": "Cancelar",
+    "submit": "Enviar",
+    "submitting": "Enviando...",
+    "errors": {
+      "ratingRequired": "Por favor selecciona una calificación",
+      "commentTooLong": "El comentario no puede exceder 500 caracteres"
+    },
+    "success": "¡Gracias por tu opinión! 🙏"
+  },
+  "cvImprovement": {
+    "improving": "Mejorando..."
+  },
+  "account": {
+    "meta": {
+      "title": "Mi cuenta - FitMyCv.ai",
+      "description": "Gestiona tu información personal y preferencias"
+    },
+    "backToCvs": "Volver",
+    "title": "Mi cuenta",
+    "subtitle": "Gestiona tu información personal y preferencias de seguridad.",
+    "loading": "Cargando...",
+    "profile": {
+      "title": "Información del perfil",
+      "fullName": "Nombre completo",
+      "fullNamePlaceholder": "Introduce tu nombre completo",
+      "email": "Correo electrónico",
+      "emailPlaceholder": "Introduce tu correo electrónico",
+      "emailDisabled": "Gestionado por {provider}",
+      "saveButton": "Guardar cambios",
+      "saving": "Guardando...",
+      "success": "¡Perfil actualizado con éxito!",
+      "emailSuccess": "¡Tu correo electrónico ha sido cambiado con éxito!",
+      "noChanges": "No se detectaron cambios.",
+      "errors": {
+        "updateFailed": "No se pudo actualizar el perfil.",
+        "unexpected": "Error inesperado."
+      }
+    },
+    "security": {
+      "title": "Seguridad",
+      "oauthInfo": "Tu cuenta está gestionada por {provider}. La contraseña es gestionada por este proveedor.",
+      "currentPassword": "Contraseña actual",
+      "currentPasswordPlaceholder": "Introduce tu contraseña actual",
+      "currentPasswordHint": "Deja vacío si nunca has establecido una contraseña.",
+      "newPassword": "Nueva contraseña",
+      "newPasswordPlaceholder": "Introduce una nueva contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "confirmPasswordPlaceholder": "Confirma la nueva contraseña",
+      "updateButton": "Actualizar contraseña",
+      "updating": "Actualizando...",
+      "success": "¡Contraseña actualizada con éxito!",
+      "passwordStrength": {
+        "label": "Seguridad de la contraseña",
+        "weak": "Débil",
+        "medium": "Media",
+        "strong": "Fuerte",
+        "veryStrong": "Muy fuerte"
+      },
+      "passwordRules": {
+        "title": "Reglas de seguridad",
+        "minLength": "Al menos 8 caracteres",
+        "uppercase": "Al menos una mayúscula",
+        "lowercase": "Al menos una minúscula",
+        "numbers": "Al menos un número",
+        "specialChars": "Al menos un carácter especial"
+      },
+      "errors": {
+        "newPasswordRequired": "Por favor introduce una nueva contraseña.",
+        "minLength": "La contraseña debe contener al menos 8 caracteres.",
+        "mismatch": "Las contraseñas no coinciden.",
+        "updateFailed": "No se pudo actualizar la contraseña.",
+        "unexpected": "Error inesperado."
+      }
+    },
+    "tutorial": {
+      "title": "Tutorial de introducción",
+      "description": "Reinicia el tutorial de introducción para redescubrir las funciones de FitMyCv.ai",
+      "resetButton": "Reiniciar tutorial",
+      "resetting": "Reiniciando...",
+      "success": "Tutorial reiniciado. Redirigiendo...",
+      "errors": {
+        "resetFailed": "Error al reiniciar el tutorial."
+      }
+    },
+    "deleteAccount": {
+      "title": "Eliminar cuenta",
+      "description": "Esta acción es definitiva y no reembolsable. Todos tus CVs, créditos y datos serán eliminados. Tu suscripción será cancelada inmediatamente y tus datos bancarios serán eliminados. Introduce tu contraseña para continuar.",
+      "passwordLabel": "Contraseña",
+      "passwordHint": "Todos tus CVs (incluyendo la carpeta de usuario) serán eliminados. Esta operación es irreversible. Si creaste tu cuenta a través de un proveedor externo, primero establece una contraseña en la sección de Seguridad.",
+      "deleteButton": "Eliminar mi cuenta",
+      "deleting": "Eliminando...",
+      "modal": {
+        "title": "Confirmar eliminación de cuenta",
+        "description": "Estás a punto de eliminar permanentemente tu cuenta. Esta acción es irreversible.",
+        "consequences": {
+          "noRefund": "No se emitirá ningún reembolso",
+          "loseCredits": "Perderás todos tus créditos restantes",
+          "cancelSubscription": "Tu suscripción será cancelada inmediatamente",
+          "deleteCvs": "Todos tus CVs serán eliminados permanentemente",
+          "deleteBankData": "Tus datos bancarios serán eliminados de nuestros servidores"
+        },
+        "confirmCheckbox": "Entiendo que esta acción es irreversible y que no seré reembolsado",
+        "cancelButton": "Cancelar",
+        "confirmButton": "Eliminar permanentemente",
+        "deleting": "Eliminando...",
+        "errors": {
+          "passwordRequired": "Por favor introduce tu contraseña para confirmar la eliminación.",
+          "deleteFailed": "No se pudo eliminar la cuenta. Por favor intenta de nuevo.",
+          "unexpected": "Error inesperado al eliminar la cuenta."
+        }
+      }
+    }
+  },
+  "legal": {
+    "back": "Volver",
+    "lastUpdated": "Última actualización:",
+    "terms": {
+      "meta": {
+        "title": "Términos de servicio - FitMyCv.ai",
+        "description": "Términos de servicio y condiciones de uso"
+      },
+      "title": "Términos de servicio"
+    },
+    "privacy": {
+      "meta": {
+        "title": "Política de privacidad - FitMyCv.ai",
+        "description": "Política de privacidad y protección de datos personales"
+      },
+      "title": "Política de privacidad"
+    }
+  },
+  "admin": {
+    "subscriptionPlans": {
+      "tiers": {
+        "0": "Gratis",
+        "1": "Pro",
+        "2": "Premium",
+        "3": "Business",
+        "4": "Enterprise"
+      }
+    }
+  },
+  "subscription": {
+    "page": {
+      "title": "Suscripciones y Créditos",
+      "description": "Gestiona tu suscripción, compra créditos y consulta tu historial.",
+      "backToCvs": "Volver",
+      "loadingTitle": "Cargando...",
+      "errorLoading": "Error al cargar los datos",
+      "tabs": {
+        "subscription": "Suscripción",
+        "credits": "Créditos",
+        "history": "Historial"
+      },
+      "tabsAriaLabel": "Gestión de suscripción",
+      "close": "Cerrar"
+    },
+    "messages": {
+      "subscriptionUpdated": "✅ ¡Suscripción actualizada con éxito!",
+      "subscriptionActivated": "✅ ¡Suscripción activada con éxito!",
+      "creditsPurchased": "✅ ¡Créditos comprados con éxito!",
+      "paymentCanceled": "❌ Pago cancelado.",
+      "loadingError": "Error al cargar los datos",
+      "cancelScheduled": "✅ Tu suscripción será cancelada al final del período actual.",
+      "cancelError": "Error al cancelar la suscripción"
+    },
+    "currentPlan": {
+      "title": "Plan {planName}",
+      "billingMonthly": "Facturación mensual",
+      "billingYearly": "Facturación anual",
+      "perMonth": "mes",
+      "perYear": "año",
+      "status": {
+        "active": "Activo",
+        "canceled": "Cancelado",
+        "pastDue": "Pago fallido"
+      },
+      "currentPeriod": "Período actual",
+      "periodFrom": "Desde {date}",
+      "periodTo": "hasta {date}",
+      "renewal": "Renovación",
+      "renewalAutomatic": "Automática",
+      "renewalInactive": "Inactiva",
+      "canceledOn": "Cancelado el {date}",
+      "canceledWarning": "Tu suscripción será cancelada el {date}. Mantendrás el acceso hasta esa fecha.",
+      "switchToYearly": "Cambiar a facturación anual ({price}€/año - ahorra {discount}%)",
+      "cancelButton": "Cancelar suscripción",
+      "reactivateButton": "Reactivar renovación",
+      "switchPeriodInfo": "Para volver a pagos mensuales, por favor cancela tu suscripción anual",
+      "cancelModal": {
+        "title": "¿Cancelar tu suscripción?",
+        "description": "Si cancelas tu suscripción:",
+        "keepAccessUntil": "Mantendrás el acceso hasta {date}",
+        "downgradePlan": "Cambiarás automáticamente al plan Gratis",
+        "canReactivate": "Puedes reactivar en cualquier momento",
+        "keepButton": "Mantener",
+        "confirmButton": "Confirmar",
+        "canceling": "Cancelando..."
+      },
+      "reactivateModal": {
+        "title": "¿Reactivar tu suscripción?",
+        "description": "Si reactivas tu suscripción:",
+        "renewalRestored": "La renovación automática será restaurada",
+        "keepPlan": "Mantendrás tu plan {planName} después del {date}",
+        "canCancelAgain": "Puedes cancelar de nuevo en cualquier momento",
+        "cancelButton": "Cancelar",
+        "confirmButton": "Confirmar",
+        "reactivating": "Reactivando..."
+      },
+      "yearlyWarningModal": {
+        "title": "¿Cambiar a facturación anual?",
+        "warningTitle": "Advertencia: Este cambio es irreversible",
+        "cannotGoBackMonthly": "Una vez que cambies a facturación anual, no podrás volver a pagos mensuales",
+        "savingsInfo": "Ahorras {discount}% comparado con pagos mensuales ({yearlyPrice}€/año en lugar de {monthlyTotal}€/año)",
+        "cancellationInfo": "Si deseas cancelar después, la cancelación tendrá efecto al final de tu período anual",
+        "prorataInfo": "Se te cobrará ahora de forma prorrateada por el período restante",
+        "termsLabel": "Acepto los",
+        "termsLink": "Términos de servicio",
+        "termsRequired": "Debes aceptar los Términos de servicio",
+        "cancelButton": "Cancelar",
+        "confirm": "Confirmar",
+        "confirmButton": "Confirmar cambio a anual",
+        "switching": "Procesando..."
+      }
+    },
+    "comparison": {
+      "title": "Planes disponibles",
+      "badges": {
+        "current": "Plan actual",
+        "recommended": "⭐ Recomendado"
+      },
+      "pricing": {
+        "free": "Gratis",
+        "forever": "Para siempre",
+        "perMonth": "por mes",
+        "perYear": "por año",
+        "saveYearly": "💰 Ahorra {percent}% anual"
+      },
+      "features": {
+        "unlimited": "ilimitado",
+        "notAccessible": "❌ Funciones no accesibles:",
+        "showMore": "+ {count} más funciones",
+        "showLess": "− Mostrar menos"
+      },
+      "buttons": {
+        "currentPlan": "Plan actual",
+        "downgradeScheduled": "Cambio ya programado",
+        "downgradeScheduledOn": "Cambio programado el {date}",
+        "cancelDowngrade": "Cancelar cambio",
+        "cancelingDowngrade": "Cancelando...",
+        "upgrade": "Mejorar",
+        "downgrade": "Reducir",
+        "upgradeTo": "Mejorar a {planName}",
+        "downgradeTo": "Reducir a {planName}",
+        "monthly": "Mensual",
+        "yearly": "Anual",
+        "orYearly": "o Anual",
+        "scheduling": "Programando...",
+        "redirecting": "Redirigiendo..."
+      },
+      "securePayment": "💳 Pago seguro vía Stripe • Cancela cuando quieras",
+      "errors": {
+        "checkoutError": "Error al crear la sesión de pago",
+        "changePlanError": "Error al cambiar de plan",
+        "cancelError": "Error al cancelar la suscripción",
+        "previewError": "Error al calcular el prorrateo"
+      },
+      "downgradeToFreeModal": {
+        "title": "Cambiar al plan Gratis",
+        "description": "Estás a punto de cancelar tu suscripción.",
+        "scheduledCancelled": "Tu cambio programado a {planName} será cancelado.",
+        "keepAccessUntil": "Mantendrás el acceso a tu plan actual hasta <strong>{date}</strong>",
+        "effectiveDate": "Cambio programado el {date}",
+        "switchToFree": "Cambiarás automáticamente al <strong>plan Gratis</strong> en esa fecha",
+        "canUpgrade": "Puedes mejorar de nuevo en cualquier momento",
+        "cancel": "Cancelar",
+        "confirm": "Confirmar",
+        "scheduling": "Programando..."
+      },
+      "downgradePaidModal": {
+        "title": "Confirmar reducción",
+        "description": "Tu suscripción será cambiada al final de tu período actual.",
+        "effectiveDate": "Fecha efectiva",
+        "keepCurrentPlan": "Mantienes tu plan actual hasta el final de tu período",
+        "noRefund": "No se emitirá ningún reembolso",
+        "newInvoice": "Se emitirá una nueva factura en la fecha efectiva",
+        "canCancel": "Puedes cancelar este cambio en cualquier momento antes de la fecha efectiva",
+        "termsLabel": "Acepto los",
+        "termsLink": "Términos de servicio",
+        "termsRequired": "Debes aceptar los Términos de servicio",
+        "cancel": "Cancelar",
+        "confirm": "Confirmar",
+        "scheduling": "Programando..."
+      },
+      "upgradeModal": {
+        "title": "Confirmar mejora",
+        "calculatingProrata": "Calculando prorrateo...",
+        "prorataAmount": "Importe a pagar",
+        "prorataInfo": "Importe calculado para el período restante (prorrateo automático)",
+        "immediate": "Tu nuevo plan se activará inmediatamente",
+        "invoiceInfo": "La factura estará disponible en la pestaña Historial",
+        "secure": "Pago 100% seguro vía Stripe",
+        "yearlyWarning": "Una vez que cambies a facturación anual, no podrás volver a pagos mensuales",
+        "stayYearly": "Permanecerás en facturación anual hasta {date}",
+        "creditApplied": "{months} meses ofrecidos gracias a tu crédito",
+        "termsLabel": "Acepto los",
+        "termsLink": "Términos de servicio",
+        "termsRequired": "Debes aceptar los Términos de servicio",
+        "cancel": "Cancelar",
+        "confirm": "Confirmar",
+        "processing": "Procesando..."
+      }
+    },
+    "features": {
+      "title": "Uso mensual",
+      "resetInfo": "Los contadores se reinician en la fecha aniversario de tu suscripción",
+      "disabled": "Desactivado",
+      "unlimited": "∞",
+      "unlimitedTooltip": "Uso ilimitado para esta función",
+      "limitReached": "Límite alcanzado - usa tus créditos",
+      "limitAlmost": "Límite casi alcanzado ({percentage}%)",
+      "limitAlmostTooltip": "Más allá del límite, puedes usar tus créditos (1 crédito = 1 uso)",
+      "needMore": "¿Necesitas más?",
+      "needMoreInfo": "Compra créditos para superar tus límites mensuales sin cambiar de plan.",
+      "labels": {
+        "gpt_cv_generation": "🤖 Adaptación de CV con IA",
+        "import_pdf": "📥 Importación de CV",
+        "translate_cv": "🌍 Traducción de CV",
+        "match_score": "🎯 Puntuación de coincidencia",
+        "calculate_match_score": "🎯 Puntuación de coincidencia",
+        "optimize_cv": "✨ Optimización",
+        "generate_from_job_title": "💼 Creación de CV ficticio",
+        "export_cv": "💾 Exportación de CV",
+        "edit_cv": "✏️ Edición de CV",
+        "create_cv_manual": "📝 Creación de CV"
+      }
+    },
+    "credits": {
+      "title": "Saldo de créditos",
+      "available": "créditos disponibles",
+      "purchased": "Comprados",
+      "used": "Usados",
+      "refunded": "Reembolsados",
+      "gifted": "Bonificación recibida",
+      "howItWorks": "¿Cómo funciona?",
+      "rule1": "1 crédito = 1 uso de cualquier función",
+      "rule2": "Los créditos son permanentes (sin caducidad)",
+      "rule3": "Reembolso automático si una tarea falla",
+      "rule4": "Usa tus créditos para superar los límites mensuales"
+    },
+    "packs": {
+      "title": "Comprar créditos",
+      "credits": "créditos",
+      "pricePerCredit": "es decir {price}€ por crédito",
+      "buyButton": "Comprar",
+      "redirecting": "Redirigiendo...",
+      "securePayment": "Pago seguro vía Stripe • Créditos permanentes",
+      "loading": "Cargando..."
+    },
+    "transactions": {
+      "title": "Historial de transacciones",
+      "noTransactions": "Sin transacciones todavía.",
+      "columns": {
+        "type": "Tipo",
+        "details": "Detalles",
+        "amount": "Importe",
+        "date": "Fecha"
+      },
+      "types": {
+        "purchase": "Compra",
+        "usage": "Uso",
+        "refund": "Reembolso",
+        "gift": "Bonificación",
+        "cv_creation": "Creación de CV"
+      },
+      "refunded": "(Reembolsado)",
+      "pagination": {
+        "previous": "Anterior",
+        "next": "Siguiente",
+        "page": "Página {page}"
+      }
+    },
+    "invoices": {
+      "title": "Facturas",
+      "noInvoices": "Sin facturas todavía",
+      "noPdfInvoices": "No hay facturas PDF disponibles",
+      "noPdfInvoicesHint": "Las facturas PDF se generan para suscripciones. Los pagos de créditos sin suscripción no tienen PDF.",
+      "errorLoading": "Error al cargar las facturas",
+      "creditBanner": {
+        "title": "💰 Crédito de facturación disponible",
+        "amount": "Saldo actual: {amount}€",
+        "explanation": "Este crédito se deducirá automáticamente de tus futuras facturas.",
+        "estimatedMonths": "Aproximadamente {months} meses gratis 🎉",
+        "lessThanOneMonth": "Este crédito cubrirá parte de tu próxima factura."
+      },
+      "filters": {
+        "all": "Todas ({count})",
+        "subscriptions": "Suscripciones ({count})",
+        "credits": "Créditos ({count})"
+      },
+      "columns": {
+        "date": "Fecha",
+        "type": "Tipo",
+        "description": "Descripción",
+        "amount": "Importe",
+        "status": "Estado",
+        "action": "Acción"
+      },
+      "types": {
+        "subscription": "Suscripción",
+        "creditPack": "Créditos"
+      },
+      "status": {
+        "paid": "Pagado",
+        "open": "Pendiente",
+        "canceled": "Cancelado"
+      },
+      "downloadPdf": "PDF",
+      "pagination": {
+        "showing": "Mostrando {start} a {end} de {total} factura{plural}",
+        "previous": "Anterior",
+        "next": "Siguiente",
+        "page": "Página {current} de {total}"
+      }
+    }
+  },
+  "onboarding": {
+    "common": {
+      "buttons": {
+        "skip": "Saltar",
+        "previous": "Anterior",
+        "next": "Siguiente",
+        "understood": "Entendido",
+        "understoodExclaim": "¡Entendido!",
+        "start": "¡Comenzar!",
+        "close": "Cerrar"
+      },
+      "aria": {
+        "closeModal": "Cerrar modal",
+        "closeTooltip": "Cerrar tooltip",
+        "closeAndStartOnboarding": "Cerrar y comenzar tutorial",
+        "expandChecklist": "Expandir",
+        "collapseChecklist": "Contraer",
+        "closeGuide": "Cerrar guía",
+        "goToScreen": "Ir a pantalla {current} de {total}",
+        "screenReaderStep": "Paso {current} de {total}"
+      },
+      "checklist": {
+        "title": "Guía de inicio",
+        "inProgress": "En progreso",
+        "skipTutorial": "Saltar tutorial",
+        "completed": "¡Tutorial completado!",
+        "confirmSkip": "¿Estás seguro de que quieres saltar el tutorial? Puedes reiniciarlo desde la configuración.",
+        "progressLabel": "Progreso del tutorial"
+      }
+    },
+    "steps": {
+      "step1": {
+        "title": "Modo edición",
+        "description": "Descubre el modo edición para modificar fácilmente tu CV",
+        "tooltip": "👉 ¡Haz clic aquí para editar tu CV!",
+        "modal": {
+          "screen1": {
+            "title": "Crea tu CV \"maestro\"",
+            "description": "La idea es simple: crea un CV lo más completo posible con todas tus experiencias, habilidades y formación. Cuanto más detallado sea tu CV, mejor podrá la IA filtrarlo para cada oferta de empleo.",
+            "checklist": [
+              "Un CV completo para mantener",
+              "La IA extrae lo mejor para cada oferta",
+              "Un enorme ahorro de tiempo"
+            ],
+            "tip": "Piensa en \"Mega CV\": lista todo, la IA lo ordenará por ti. Hazlo una vez, la magia viene después."
+          },
+          "screen2": {
+            "title": "¡Tienes el control total!",
+            "description": "Tu CV te pertenece. Modifícalo como quieras, sección por sección.",
+            "subtitle": "3 acciones a tu disposición:",
+            "actions": {
+              "edit": {
+                "title": "Editar",
+                "description": "Edita el contenido de cualquier sección con un clic"
+              },
+              "delete": {
+                "title": "Eliminar",
+                "description": "Elimina lo que ya no es relevante"
+              },
+              "add": {
+                "title": "Añadir",
+                "description": "Completa tu CV con nuevas experiencias, formación, idiomas, proyectos o extras"
+              }
+            },
+            "tip": "Cuanto más rico sea tu CV, más tendrá la IA para trabajar."
+          },
+          "screen3": {
+            "title": "Dos secciones que no debes descuidar",
+            "blocks": {
+              "projects": {
+                "title": "Proyectos",
+                "description": "Lista tus proyectos profesionales Y personales. Un proyecto personal, una contribución open source, un proyecto estudiantil... todo cuenta para la IA."
+              },
+              "extra": {
+                "title": "Extra",
+                "description": "Completa tu información adicional: hobbies e intereses, disponibilidad, preferencia de trabajo remoto, movilidad, carnet de conducir..."
+              }
+            },
+            "tip": "Esta información ayuda a la IA a orientar mejor las ofertas que te corresponden."
+          }
+        }
+      },
+      "step2": {
+        "title": "Generación con IA",
+        "description": "Genera un CV adaptado con IA",
+        "tooltip": "✨ Adapta tu CV a ofertas de empleo con IA",
+        "modal": {
+          "screen1": {
+            "title": "Genera CVs adaptados en unos clics",
+            "description": "El corazón de FitMyCV: tus ofertas de empleo. Añádelas, la IA se encarga del resto. Analiza cada oferta, extrae la información clave y adapta tu CV automáticamente.",
+            "subtitle": "2 formas de comenzar:",
+            "blocks": {
+              "existing": {
+                "title": "Partir de un CV existente",
+                "description": "Selecciona tu CV más completo. Cuanto más detallado sea, más precisamente podrá la IA adaptarlo a cada oferta de empleo."
+              },
+              "template": {
+                "title": "Crear una plantilla desde la oferta",
+                "description": "Genera una plantilla de CV basada en la oferta de empleo para inspirarte y componer el tuyo propio."
+              }
+            },
+            "tip": "No necesitas copiar y pegar el contenido de las ofertas. Pega enlaces o importa PDFs, la IA extrae todo automáticamente."
+          },
+          "screen2": {
+            "title": "Una oferta de empleo = Un CV adaptado",
+            "description": "Añade tantas ofertas como quieras. Para cada una, la IA genera un CV perfectamente adaptado.",
+            "blocks": {
+              "url": {
+                "title": "Por URL",
+                "description": "Pega tus enlaces de ofertas de empleo. La IA abre cada página y extrae la información automáticamente."
+              },
+              "pdf": {
+                "title": "Por PDF",
+                "description": "Importa ofertas que te enviaron o que guardaste."
+              }
+            },
+            "historyBlock": {
+              "title": "Historial",
+              "description": "Encuentra todas las ofertas usadas anteriormente. Reutilízalas para generar nuevos CVs sin buscar de nuevo."
+            },
+            "subtitle2": "3 niveles de análisis:",
+            "analysisLevels": {
+              "rapid": {
+                "title": "Rápido",
+                "description": "Adaptación esencial"
+              },
+              "normal": {
+                "title": "Normal",
+                "description": "Análisis completo"
+              },
+              "deep": {
+                "title": "Profundo",
+                "description": "Optimización máxima"
+              }
+            }
+          },
+          "screen3": {
+            "title": "La IA adapta, no inventa",
+            "description": "La IA no fabrica experiencias falsas. Filtra tu CV genérico para conservar solo lo que importa para la oferta de empleo.",
+            "subtitle": "Específicamente, la IA:",
+            "checklist": [
+              "Filtra experiencias y habilidades relevantes para la oferta",
+              "Elimina lo innecesario para evitar sobrecargar el CV",
+              "Reformula usando el vocabulario de la oferta (compatible con ATS)",
+              "Detecta habilidades faltantes justificables por tu trayectoria",
+              "Determina tu nivel para cada habilidad añadida"
+            ],
+            "tip": "Resultado: un CV orientado, simplificado y perfectamente alineado con lo que busca el reclutador."
+          }
+        }
+      },
+      "step3": {
+        "title": "Gestor de tareas",
+        "description": "Sigue el progreso de tus tareas en segundo plano",
+        "tooltip": "🔄 Tu CV se está generando. Sigue el progreso aquí."
+      },
+      "step4": {
+        "title": "Abrir CV generado",
+        "description": "Abre y visualiza tu CV generado",
+        "tooltip": "✅ ¡Tu nuevo CV está listo! Haz clic aquí para abrirlo"
+      },
+      "step5": {
+        "title": "Puntuación de coincidencia",
+        "description": "Calcula la compatibilidad con una oferta de empleo",
+        "tooltip": "🎯 Calcula la compatibilidad de tu CV con una oferta de empleo",
+        "fallbackMessage": "Este paso requiere una oferta de empleo asociada. ¿Quieres saltarlo?"
+      },
+      "step6": {
+        "title": "Optimización con IA",
+        "description": "Optimiza el CV con sugerencias de IA",
+        "tooltip": "🚀 Optimiza tu CV para aumentar tu puntuación",
+        "modal": {
+          "screen1": {
+            "title": "Mide tu compatibilidad con la oferta",
+            "description": "Para cada CV generado, obtén una puntuación de coincidencia que indica qué tan bien tu perfil corresponde a las expectativas del reclutador.",
+            "subtitle": "El análisis detallado te muestra:",
+            "blocks": {
+              "breakdown": {
+                "title": "Desglose de puntuación",
+                "description": "Entiende qué funciona y qué puede mejorarse"
+              },
+              "validated": {
+                "title": "Habilidades validadas",
+                "description": "Lo que tu CV ya cubre para la oferta de empleo"
+              },
+              "missing": {
+                "title": "Habilidades faltantes",
+                "description": "Lo que el reclutador busca y que aún no aparece"
+              },
+              "improvements": {
+                "title": "Puntos de mejora",
+                "description": "Recomendaciones concretas para aumentar tu puntuación"
+              }
+            },
+            "tip": "Una puntuación alta = más posibilidades de ser notado por el reclutador."
+          },
+          "screen2": {
+            "title": "Aplica mejoras instantáneamente",
+            "description": "No necesitas modificar todo manualmente. La IA puede aplicar recomendaciones directamente a tu CV con un clic.",
+            "checklist": [
+              "Reformulación automática",
+              "Adición de habilidades faltantes justificables",
+              "Ajuste del vocabulario para la oferta de empleo"
+            ],
+            "subtitle": "Total transparencia:",
+            "transparencyText": "Cada modificación se registra en el historial con su justificación. Sabes exactamente qué cambió y por qué.",
+            "tip": "Optimiza, verifica, exporta. Tu CV está listo para postular."
+          }
+        }
+      },
+      "step7": {
+        "title": "Historial",
+        "description": "Ver historial de modificaciones de IA",
+        "tooltip": "📝 Descubre todas las modificaciones realizadas por la IA"
+      },
+      "step8": {
+        "title": "Exportación PDF",
+        "description": "Exporta tu CV optimizado a formato PDF",
+        "tooltip": "📄 Exporta tu CV optimizado a formato PDF",
+        "modal": {
+          "screen1": {
+            "title": "Exporta un CV listo para postular",
+            "description": "Genera un PDF profesional, en formato estándar sin foto, perfectamente legible por reclutadores y sus herramientas ATS.",
+            "checklist": [
+              "Formato universal reconocido por todos los ATS",
+              "Diseño claro y profesional",
+              "Listo para enviar a candidaturas"
+            ]
+          },
+          "screen2": {
+            "title": "Exportación 100% personalizable",
+            "description": "Selecciona lo que quieres incluir en tu PDF: secciones, experiencias, formación, idiomas, proyectos... Tú decides, nosotros generamos.",
+            "checklist": [
+              "Oculta secciones irrelevantes",
+              "Elige qué experiencias mostrar",
+              "Incluye o excluye entregables clave"
+            ],
+            "tip": "Un CV orientado = más impacto con el reclutador."
+          }
+        },
+        "onComplete": {
+          "message": "🎉 ¡Felicidades! ¡Ahora dominas todas las funciones!"
+        }
+      }
+    },
+    "welcome": {
+      "screen1": {
+        "title": "Bienvenido a FitMyCV 👋",
+        "description": "¡Bienvenido! Este tutorial te enseñará los conceptos básicos para crear rápidamente CVs adaptados a cada oferta.",
+        "checklist": [
+          "Un CV adaptado para cada oferta",
+          "Formato optimizado para ATS*",
+          "Diseñado para convencer a reclutadores",
+          "Listo en minutos"
+        ],
+        "atsExplanation": "ATS (Applicant Tracking System): software utilizado por reclutadores para filtrar automáticamente CVs. Un formato optimizado para ATS aumenta tus posibilidades de ser visto.",
+        "solution": {
+          "title": "Consejo",
+          "description": "¡Simplemente pega tus enlaces de ofertas, nosotros analizamos todo automáticamente!"
+        }
+      },
+      "screen2": {
+        "title": "¿Por qué tus candidaturas no reciben respuesta?",
+        "problems": [
+          {
+            "emoji": "😤",
+            "title": "Decenas de CVs enviados, cero respuestas",
+            "description": "Pasas horas postulando pero solo recibes silencio."
+          },
+          {
+            "emoji": "🤖",
+            "title": "Tu CV primero debe convencer a un software",
+            "description": "El 88% de las grandes empresas usan sistemas ATS que analizan estructura y palabras clave antes de que un humano vea tu CV."
+          },
+          {
+            "emoji": "👤",
+            "title": "Luego encantar a un reclutador en segundos",
+            "description": "Si pasa el filtro, un reclutador lo escanea rápidamente para decidir a quién conocer."
+          },
+          {
+            "emoji": "🎯",
+            "title": "El desafío: lograr ambos con un CV genérico",
+            "description": "Misión imposible sin adaptar tu CV a cada oferta."
+          }
+        ],
+        "solution": {
+          "title": "FitMyCV resuelve este doble desafío",
+          "description": "Nuestra IA adapta tu CV para pasar filtros automáticos Y captar la atención de los reclutadores. Un CV adaptado para cada oferta, en unos clics, para aumentar drásticamente tus posibilidades de conseguir una primera entrevista."
+        }
+      },
+      "screen3": {
+        "title": "¿Listo para un tour de 2 minutos? ⏱️",
+        "subtitle": "Descubre las 5 funciones que cambiarán tu forma de postular",
+        "features": [
+          {
+            "emoji": "✏️",
+            "title": "Crea y edita tu CV",
+            "description": "Interfaz intuitiva y formato optimizado para ATS"
+          },
+          {
+            "emoji": "🤖",
+            "title": "Genera con IA",
+            "description": "CV automáticamente adaptado a cada oferta de empleo"
+          },
+          {
+            "emoji": "📊",
+            "title": "Calcula tu puntuación",
+            "description": "Mide tu compatibilidad con una oferta"
+          },
+          {
+            "emoji": "⚡",
+            "title": "Optimiza en 1 clic",
+            "description": "La IA mejora tu CV automáticamente"
+          },
+          {
+            "emoji": "📄",
+            "title": "Exporta en formato pro",
+            "description": "PDF perfecto para postular en cualquier lugar"
+          }
+        ],
+        "tip": "¡Sigue el tour, crearás tu primer CV justo después!"
+      }
+    },
+    "completion": {
+      "screen1": {
+        "title": "¡Felicidades, estás listo!",
+        "description": "Ahora dominas FitMyCV. Crea CVs adaptados, calcula tu puntuación de coincidencia, optimiza con un clic y exporta PDFs profesionales.",
+        "checklist": [
+          "Modo edición dominado",
+          "Generación con IA descubierta",
+          "Puntuación y optimización comprendidas",
+          "Exportación PDF lista para usar"
+        ],
+        "highlight": "¡Es hora de conseguir tu próxima entrevista!"
+      },
+      "screen2": {
+        "title": "Todo lo que puedes hacer ahora",
+        "description": "FitMyCV te ofrece varias formas de crear y gestionar tus CVs.",
+        "features": {
+          "import": {
+            "title": "Importar un CV existente",
+            "description": "Añade tus CVs en PDF o Word, la IA los adapta al formato optimizado"
+          },
+          "create": {
+            "title": "Crear un CV en blanco",
+            "description": "Comienza desde cero y construye tu CV sección por sección"
+          },
+          "generate": {
+            "title": "Generar un CV plantilla",
+            "description": "Escribe cualquier título de puesto, la IA genera un CV ficticio para inspirarte"
+          },
+          "delete": {
+            "title": "Eliminar un CV",
+            "description": "Limpia tus CVs con un clic"
+          },
+          "translate": {
+            "title": "Traducir tu CV",
+            "description": "Convierte tu CV a francés o inglés con un clic"
+          }
+        },
+        "tip": "Consejo: ¡La barra de búsqueda también funciona con títulos ficticios para explorar nuevas carreras!"
+      },
+      "screen3": {
+        "title": "Próximamente en FitMyCV",
+        "description": "No nos detenemos aquí. Esto es lo que viene pronto para ayudarte a conseguir tu trabajo soñado.",
+        "comingSoon": [
+          {
+            "emoji": "🔍",
+            "title": "Análisis de ofertas",
+            "description": "Entiende exactamente lo que busca el reclutador"
+          },
+          {
+            "emoji": "✉️",
+            "title": "Cartas de presentación",
+            "description": "La IA las escribe por ti"
+          },
+          {
+            "emoji": "🎤",
+            "title": "Preparación RRHH",
+            "description": "Simula tus entrevistas"
+          },
+          {
+            "emoji": "📋",
+            "title": "Seguimiento de candidaturas",
+            "description": "Todo en un solo lugar"
+          }
+        ],
+        "tip": "¿Tienes una idea de función? ¡Cuéntanos!"
+      }
+    }
+  },
+  "optimization": {
+    "title": "Análisis y Optimización",
+    "matchScore": "Puntuación de compatibilidad",
+    "scoreBreakdown": "Desglose de puntuación",
+    "suggestions": "Sugerencias de mejora",
+    "missingSkills": "Habilidades faltantes",
+    "matchingSkills": "Habilidades coincidentes",
+    "technicalSkills": "Habilidades técnicas",
+    "experience": "Experiencia",
+    "education": "Educación",
+    "softSkills": "Soft skills e idiomas",
+    "priority": "Prioridad",
+    "impact": "Impacto",
+    "high": "Alta",
+    "medium": "Media",
+    "low": "Baja",
+    "noData": "Sin datos de optimización disponibles",
+    "loading": "Cargando...",
+    "close": "Cerrar",
+    "optimize": "Optimizar",
+    "autoImprove": "Mejora automática",
+    "improving": "Mejorando...",
+    "improveSuccess": "¡CV mejorado! Recargando...",
+    "improvementInProgress": "Mejora en progreso...",
+    "calculatingScore": "Calculando puntuación...",
+    "showMore": "más",
+    "showLess": "Mostrar menos",
+    "languageNote": "El análisis y las sugerencias se muestran en el idioma del CV, no en el idioma de la interfaz."
+  },
+  "changes": {
+    "title": "Historial de cambios",
+    "button": "📝 Historial",
+    "section": "Sección",
+    "change": "Cambio",
+    "reason": "Razón",
+    "close": "Cerrar",
+    "noChanges": "Sin cambios registrados",
+    "sections": {
+      "summary": "Resumen",
+      "skills": "Habilidades",
+      "experience": "Experiencia",
+      "education": "Educación",
+      "languages": "Idiomas",
+      "projects": "Proyectos"
+    }
+  }
+}

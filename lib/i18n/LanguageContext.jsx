@@ -3,10 +3,12 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import frTranslations from "@/locales/fr.json";
 import enTranslations from "@/locales/en.json";
+import esTranslations from "@/locales/es.json";
 
 const translations = {
   fr: frTranslations,
   en: enTranslations,
+  es: esTranslations,
 };
 
 const LanguageContext = createContext();
@@ -21,7 +23,7 @@ export function LanguageProvider({ children }) {
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
         const savedLanguage = localStorage.getItem("preferredLanguage");
-        if (savedLanguage && (savedLanguage === "fr" || savedLanguage === "en")) {
+        if (savedLanguage && ["fr", "en", "es"].includes(savedLanguage)) {
           setLanguage(savedLanguage);
         }
       } catch (error) {

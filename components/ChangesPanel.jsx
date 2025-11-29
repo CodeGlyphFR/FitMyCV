@@ -9,7 +9,7 @@ import { ONBOARDING_EVENTS, emitOnboardingEvent } from "@/lib/onboarding/onboard
 export default function ChangesPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const { changesMade, isImprovedCv } = useHighlight();
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const { settings } = useSettings();
 
   // Ne pas afficher si la feature est désactivée
@@ -22,14 +22,15 @@ export default function ChangesPanel() {
     return null;
   }
 
+  // Labels traduits via système i18n
   const labels = {
-    title: language === 'fr' ? "Historique des modifications" : "Change History",
-    button: language === 'fr' ? "📝 Historique" : "📝 History",
-    section: language === 'fr' ? "Section" : "Section",
-    change: language === 'fr' ? "Modification" : "Change",
-    reason: language === 'fr' ? "Raison" : "Reason",
-    close: language === 'fr' ? "Fermer" : "Close",
-    noChanges: language === 'fr' ? "Aucune modification enregistrée" : "No changes recorded",
+    title: t('changes.title'),
+    button: t('changes.button'),
+    section: t('changes.section'),
+    change: t('changes.change'),
+    reason: t('changes.reason'),
+    close: t('changes.close'),
+    noChanges: t('changes.noChanges'),
   };
 
   // Grouper les changements par section
@@ -42,15 +43,10 @@ export default function ChangesPanel() {
   }, {});
 
   const getSectionLabel = (section) => {
-    const sectionLabels = {
-      summary: language === 'fr' ? "Résumé" : "Summary",
-      skills: language === 'fr' ? "Compétences" : "Skills",
-      experience: language === 'fr' ? "Expérience" : "Experience",
-      education: language === 'fr' ? "Formation" : "Education",
-      languages: language === 'fr' ? "Langues" : "Languages",
-      projects: language === 'fr' ? "Projets" : "Projects",
-    };
-    return sectionLabels[section] || section;
+    const translationKey = `changes.sections.${section}`;
+    const translated = t(translationKey);
+    // Si la clé n'existe pas, t() retourne la clé elle-même
+    return translated !== translationKey ? translated : section;
   };
 
   // Fonction commune pour fermer le modal et émettre l'événement onboarding

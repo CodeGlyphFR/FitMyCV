@@ -18,4 +18,6 @@ Analyse ce CV par rapport à l'offre d'emploi et retourne le score de correspond
 
 ---
 
+**⚠️ RAPPEL LANGUE OBLIGATOIRE** : Tous les champs textuels dans ta réponse JSON (`suggestions[].title`, `suggestions[].suggestion`, `missing_skills[]`, `matching_skills[]`) DOIVENT être rédigés dans la **même langue que le CV** : **{cvLanguage}**.
+
 Analyse l'offre et compare avec le CV. Sois précis dans tes suggestions.

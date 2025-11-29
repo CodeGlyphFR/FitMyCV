@@ -44,6 +44,7 @@ Toute la documentation technique est disponible dans le dossier **`docs/`**. Ce 
 - **[Usage](./docs/USAGE.md)** - Guide utilisateur
 - **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Résolution problèmes communs
 - **[Tests MVP](./docs/MVP_TESTING.md)** - Tests et validation
+- **[Ajouter une langue](./docs/ADDING_LANGUAGE.md)** - Guide pour intégrer une nouvelle langue
 
 ### Documentation Projet
 - **[README](./docs/README.md)** - Index documentation
