@@ -6,6 +6,8 @@ import { auth } from "@/lib/auth/session";
 import { readUserCvFile } from "@/lib/cv/storage";
 import frTranslations from "@/locales/fr.json";
 import enTranslations from "@/locales/en.json";
+import esTranslations from "@/locales/es.json";
+import deTranslations from "@/locales/de.json";
 import { trackCvExport } from "@/lib/telemetry/server";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { refundCredit } from "@/lib/subscription/credits";
@@ -13,6 +15,8 @@ import { refundCredit } from "@/lib/subscription/credits";
 const translations = {
   fr: frTranslations,
   en: enTranslations,
+  es: esTranslations,
+  de: deTranslations,
 };
 
 /**
@@ -48,6 +52,17 @@ function getTranslation(language, path) {
   }
 
   return value || path;
+}
+
+// Translate skill/language levels according to CV language
+function translateLevel(language, level, type = 'skill') {
+  if (!level) return '';
+
+  const path = type === 'skill' ? `skillLevels.${level}` : `languageLevels.${level}`;
+  const translated = getTranslation(language, path);
+
+  // Si la traduction retourne le path (non trouvé), retourner le niveau original
+  return translated === path ? level : translated;
 }
 
 // Get section title with smart detection of default vs custom titles
@@ -507,6 +522,11 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       gap: 20px;
     }
 
+    .skill-category {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
     .skill-category h3 {
       font-size: 12px;
       font-weight: 600;
@@ -531,9 +551,26 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
     /* Experience */
     .experience-item {
       margin-bottom: 25px;
-      page-break-inside: avoid;
       border-left: 3px solid #e5e7eb;
       padding-left: 15px;
+    }
+
+    /* Bloc 1 : Header + Description (INDIVISIBLE) */
+    .experience-header-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    /* Bloc 2 : Responsabilités seules (INDIVISIBLE) */
+    .experience-responsibilities-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    /* Bloc 3 : Livrables + Technologies (INDIVISIBLE) */
+    .experience-deliverables-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
     .experience-header {
@@ -626,6 +663,8 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
     /* Education */
     .education-item {
       margin-bottom: 12px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
     .education-header {
@@ -654,6 +693,8 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
     /* Projects and Extras */
     .project-item, .extra-item {
       margin-bottom: 12px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
     .project-header {
@@ -692,6 +733,8 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       display: flex;
       flex-direction: column;
       gap: 6px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
     .language-item {
@@ -719,13 +762,27 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
         print-color-adjust: exact;
       }
 
-      .section {
-        page-break-inside: avoid;
+      .section-title {
+        break-after: avoid !important;
+        page-break-after: avoid !important;
       }
 
-      .experience-item {
-        break-inside: avoid;
-        page-break-inside: avoid;
+      /* Blocs indivisibles pour les expériences */
+      .experience-header-block,
+      .experience-responsibilities-block,
+      .experience-deliverables-block {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+
+      /* Autres sections indivisibles */
+      .education-item,
+      .languages-grid,
+      .project-item,
+      .extra-item,
+      .skill-category {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
       }
     }
   </style>
@@ -767,7 +824,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
             <div class="skill-category">
               <h3>${t('cvSections.hardSkills')}</h3>
               <div class="skill-list">
-                ${skills.hard_skills.filter(skill => skill.name && skill.proficiency).map(skill => `${skill.name} (${skill.proficiency})`).join(', ')}
+                ${skills.hard_skills.filter(skill => skill.name && skill.proficiency).map(skill => `${skill.name} (${translateLevel(language, skill.proficiency, 'skill')})`).join(', ')}
               </div>
             </div>
           ` : ''}
@@ -776,7 +833,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
             <div class="skill-category">
               <h3>${t('cvSections.tools')}</h3>
               <div class="skill-list">
-                ${skills.tools.filter(tool => tool.name && tool.proficiency).map(tool => `${tool.name} (${tool.proficiency})`).join(', ')}
+                ${skills.tools.filter(tool => tool.name && tool.proficiency).map(tool => `${tool.name} (${translateLevel(language, tool.proficiency, 'skill')})`).join(', ')}
               </div>
             </div>
           ` : ''}
@@ -808,27 +865,34 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
         <h2 class="section-title">${getSectionTitle('experience', section_titles.experience, language)}</h2>
         ${experience.map((exp, index) => `
           <div class="experience-item">
-            <div class="experience-header">
-              <div>
-                ${exp.title ? `<div class="experience-title">${exp.title}</div>` : ''}
-                ${exp.company ? `<div class="experience-company">${exp.company}${exp.department_or_client ? ` (${exp.department_or_client})` : ''}</div>` : ''}
+            <!-- Bloc 1 : Header + Description (INDIVISIBLE) -->
+            <div class="experience-header-block">
+              <div class="experience-header">
+                <div>
+                  ${exp.title ? `<div class="experience-title">${exp.title}</div>` : ''}
+                  ${exp.company ? `<div class="experience-company">${exp.company}${exp.department_or_client ? ` (${exp.department_or_client})` : ''}</div>` : ''}
+                </div>
+                ${exp.start_date || exp.end_date ? `<div class="experience-dates">${formatDate(exp.start_date, language)} – ${formatDate(exp.end_date, language)}</div>` : ''}
               </div>
-              ${exp.start_date || exp.end_date ? `<div class="experience-dates">${formatDate(exp.start_date, language)} – ${formatDate(exp.end_date, language)}</div>` : ''}
+              ${exp.location ? `<div class="experience-location">${formatLocation(exp.location)}</div>` : ''}
+              ${exp.description && exp.description.trim() ? `<div class="experience-description">${exp.description}</div>` : ''}
             </div>
-            ${exp.location ? `<div class="experience-location">${formatLocation(exp.location)}</div>` : ''}
-            ${exp.description && exp.description.trim() ? `<div class="experience-description">${exp.description}</div>` : ''}
 
-            ${(exp.responsibilities && exp.responsibilities.length > 0) || (exp.deliverables && exp.deliverables.length > 0) ? `
-              <div class="experience-lists">
-                ${exp.responsibilities && exp.responsibilities.length > 0 ? `
-                  <div class="responsibilities">
-                    <h4>${t('cvSections.responsibilities')}</h4>
-                    <ul>
-                      ${exp.responsibilities.map(resp => `<li>${resp}</li>`).join('')}
-                    </ul>
-                  </div>
-                ` : ''}
+            <!-- Bloc 2 : Responsabilités seules (INDIVISIBLE) -->
+            ${exp.responsibilities && exp.responsibilities.length > 0 ? `
+              <div class="experience-responsibilities-block">
+                <div class="responsibilities">
+                  <h4>${t('cvSections.responsibilities')}</h4>
+                  <ul>
+                    ${exp.responsibilities.map(resp => `<li>${resp}</li>`).join('')}
+                  </ul>
+                </div>
+              </div>
+            ` : ''}
 
+            <!-- Bloc 3 : Livrables + Technologies (INDIVISIBLE - restent ensemble) -->
+            ${((exp.deliverables && exp.deliverables.length > 0 && (selections?.sections?.experience?.itemsOptions?.[exp._originalIndex]?.includeDeliverables !== false)) || (exp.skills_used && exp.skills_used.length > 0)) ? `
+              <div class="experience-deliverables-block">
                 ${exp.deliverables && exp.deliverables.length > 0 && (selections?.sections?.experience?.itemsOptions?.[exp._originalIndex]?.includeDeliverables !== false) ? `
                   <div class="deliverables">
                     <h4>${t('cvSections.deliverables')}</h4>
@@ -837,12 +901,12 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
                     </ul>
                   </div>
                 ` : ''}
-              </div>
-            ` : ''}
 
-            ${exp.skills_used && exp.skills_used.length > 0 ? `
-              <div class="skills-used">
-                <strong>${t('cvSections.technologies')}:</strong> ${exp.skills_used.join(', ')}
+                ${exp.skills_used && exp.skills_used.length > 0 ? `
+                  <div class="skills-used">
+                    <strong>${t('cvSections.technologies')}:</strong> ${exp.skills_used.join(', ')}
+                  </div>
+                ` : ''}
               </div>
             ` : ''}
           </div>
@@ -875,7 +939,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
         <div class="languages-grid">
           ${languages.filter(lang => lang.name && lang.level).map(lang => `
             <div class="language-item">
-              <strong>${lang.name}:</strong> ${lang.level}
+              <strong>${lang.name}:</strong> ${translateLevel(language, lang.level, 'language')}
             </div>
           `).join('')}
         </div>

@@ -390,7 +390,7 @@ export function useExportModal({ currentItem, language, addNotification }) {
         },
         body: JSON.stringify({
           filename: currentFilename,
-          language: language,
+          language: cvData?.language || 'fr',  // Utiliser la langue du CV, pas de l'interface
           selections: selections,
           customFilename: filename
         }),
