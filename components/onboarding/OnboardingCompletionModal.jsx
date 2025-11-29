@@ -76,7 +76,7 @@ const ComingSoonItem = ({ emoji, title, description }) => (
 const FEATURE_ICONS = {
   import: '/icons/import.png',
   create: '/icons/add.png',
-  generate: '/icons/openai-symbol.png',
+  generate: '/icons/search.png',
   delete: '/icons/delete.png',
   translate: '/icons/translate.png',
 };
