@@ -1,5 +1,3 @@
-// Prisma schema for fitmycv user management
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,43 +8,41 @@ datasource db {
 }
 
 model User {
-  id            String        @id @default(cuid())
-  name          String?
-  email         String?       @unique
-  emailVerified DateTime?
-  passwordHash  String?
-  image         String?
-  role          String        @default("USER") // USER or ADMIN
-  accounts      Account[]
-  cvs           CvFile[]
-  linkHistory   LinkHistory[]
-  feedbacks     Feedback[]
-  consentLogs   ConsentLog[]
-  telemetryEvents TelemetryEvent[]
-  featureUsage  FeatureUsage[]
-  openaiUsage   OpenAIUsage[]
-  backgroundTasks BackgroundTask[] // Tâches en arrière-plan
-  openaiCalls   OpenAICall[]       // Appels OpenAI individuels
-  resetToken    String?       // Token for password reset
-  resetTokenExpiry DateTime?  // Expiration date for reset token
-
-  // Subscription system
-  stripeCustomerId String?     @unique
-  subscription     Subscription?
-  creditBalance    CreditBalance?
-  creditTransactions CreditTransaction[]
-  featureCounters  FeatureUsageCounter[]
-  referralCode     String?     @unique
-  referredBy       String?     // userId du parrain
-  referrals        Referral[]  @relation("Referrer")
-  referredUsers    Referral[]  @relation("Referred")
-
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id                     String                @id @default(cuid())
+  name                   String?
+  email                  String?               @unique
+  emailVerified          DateTime?
+  passwordHash           String?
+  image                  String?
+  role                   String                @default("USER")
+  resetToken             String?
+  resetTokenExpiry       DateTime?
+  stripeCustomerId       String?               @unique
+  referralCode           String?               @unique
+  referredBy             String?
+  onboardingState        Json?                                  // État complet onboarding (UNIQUE source de vérité)
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  accounts               Account[]
+  backgroundTasks        BackgroundTask[]
+  consentLogs            ConsentLog[]
+  creditBalance          CreditBalance?
+  creditTransactions     CreditTransaction[]
+  cvs                    CvFile[]
+  featureUsage           FeatureUsage[]
+  featureCounters        FeatureUsageCounter[]
+  feedbacks              Feedback[]
+  linkHistory            LinkHistory[]
+  openaiCalls            OpenAICall[]
+  openaiUsage            OpenAIUsage[]
+  referredUsers          Referral?             @relation("Referred")
+  referrals              Referral[]            @relation("Referrer")
+  subscription           Subscription?
+  telemetryEvents        TelemetryEvent[]
 }
 
 model Account {
-  id                String  @id @default(cuid())
+  id                String   @id @default(cuid())
   userId            String
   type              String
   provider          String
@@ -58,9 +54,9 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -74,70 +70,60 @@ model VerificationToken {
 }
 
 model CvFile {
-  id               String   @id @default(cuid())
-  userId           String
-  filename         String
-  sourceType       String?  // 'link', 'pdf', or null for manual
-  sourceValue      String?  // URL or PDF filename
-  extractedJobOffer String? // Extraction Claude de l'offre d'emploi (si sourceType='link')
-  createdBy        String?  // 'import-pdf', 'generate-cv', 'translate-cv', or null for manual
-  originalCreatedBy String? // Original createdBy for translated CVs (to preserve icon)
-  analysisLevel    String?  // 'rapid', 'medium', 'deep' for AI-generated CVs
-  isTranslated     Boolean  @default(false) // true if this CV is a translation
-  matchScore       Int?     // Match score (0-100) for CVs generated from job offers
-  matchScoreUpdatedAt DateTime? // Last time the match score was calculated
-  matchScoreStatus String? @default("idle") // Status of match score calculation: 'idle', 'inprogress', 'failed'
-  scoreBreakdown   String?  // JSON: {"technical_skills": 28, "experience": 22, ...}
-  improvementSuggestions String? // JSON: [{"priority": "high", "suggestion": "...", "impact": "+8"}]
-  missingSkills    String?  // JSON: ["Kubernetes", "TypeScript"]
-  matchingSkills   String?  // JSON: ["React", "Node.js"]
-  optimiseStatus   String? @default("idle") // Status of CV optimization: 'idle', 'inprogress', 'failed'
-  optimiseUpdatedAt DateTime? // Last time the optimization status was updated
-
-  // Credit system
-  createdWithCredit   Boolean  @default(false)  // CV créé avec un crédit
-  creditUsedAt        DateTime?
-  creditTransactionId String?  @unique
-  creditTransaction   CreditTransaction? @relation(fields: [creditTransactionId], references: [id])
-
-  // CV blocking (downgrade)
-  blocked             Boolean  @default(false)
-  blockedAt           DateTime?
-  blockedReason       String?
-
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                     String             @id @default(cuid())
+  userId                 String
+  filename               String
+  sourceType             String?
+  sourceValue            String?
+  extractedJobOffer      String?
+  createdBy              String?
+  originalCreatedBy      String?
+  analysisLevel          String?
+  isTranslated           Boolean            @default(false)
+  matchScore             Int?
+  matchScoreUpdatedAt    DateTime?
+  matchScoreStatus       String?            @default("idle")
+  scoreBreakdown         String?
+  improvementSuggestions String?
+  missingSkills          String?
+  matchingSkills         String?
+  optimiseStatus         String?            @default("idle")
+  optimiseUpdatedAt      DateTime?
+  createdWithCredit      Boolean            @default(false)
+  creditUsedAt           DateTime?
+  creditTransactionId    String?            @unique
+  blocked                Boolean            @default(false)
+  blockedAt              DateTime?
+  blockedReason          String?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditTransaction      CreditTransaction? @relation(fields: [creditTransactionId], references: [id])
 
   @@unique([userId, filename])
 }
 
 model BackgroundTask {
-  id                String   @id
-  title             String
-  successMessage    String?
-  type              String
-  status            String   // queued, running, completed, failed, cancelled
-  createdAt         BigInt   // Timestamp in milliseconds to match existing format
-  shouldUpdateCvList Boolean @default(false)
-  result            String?  // JSON string
-  error             String?
-  payload           String?
-  deviceId          String
-  userId            String?  // Optional - for user-specific tasks
-  user              User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cvFile            String?  // CV filename linked to this task (for improve-cv, calculate-match-score)
-
-  // Credit system
-  creditUsed          Boolean  @default(false)
-  creditTransactionId String?  @unique
-  creditTransaction   CreditTransaction? @relation(fields: [creditTransactionId], references: [id])
-
-  // Feature counter refund metadata
-  featureName                String?   // Nom de la feature utilisée (pour remboursement)
-  featureCounterPeriodStart  DateTime? // Period start pour remboursement compteur
-
-  updatedAt         DateTime @default(now()) @updatedAt
+  id                        String             @id
+  title                     String
+  successMessage            String?
+  type                      String
+  status                    String
+  createdAt                 BigInt
+  shouldUpdateCvList        Boolean            @default(false)
+  result                    String?
+  error                     String?
+  payload                   String?
+  deviceId                  String
+  userId                    String?
+  cvFile                    String?
+  creditUsed                Boolean            @default(false)
+  creditTransactionId       String?            @unique
+  featureName               String?
+  featureCounterPeriodStart DateTime?
+  updatedAt                 DateTime           @default(now()) @updatedAt
+  creditTransaction         CreditTransaction? @relation(fields: [creditTransactionId], references: [id])
+  user                      User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([deviceId])
   @@index([status])
@@ -157,21 +143,17 @@ model LinkHistory {
 }
 
 model Feedback {
-  id              String   @id @default(cuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  rating          Int      // 1-5 (obligatoire)
-  comment         String   // Texte du feedback (max 500 caractères, validé côté API)
-  isBugReport     Boolean  @default(false) // Toggle bug activé ou non
-
-  // Contexte au moment du feedback
-  currentCvFile   String?  // CV affiché au moment du feedback
-  userAgent       String?  // Browser info
-  pageUrl         String?  // URL de la page
-
-  createdAt       DateTime @default(now())
-  status          String   @default("new") // new, reviewed, resolved
+  id            String   @id @default(cuid())
+  userId        String
+  rating        Int
+  comment       String
+  isBugReport   Boolean  @default(false)
+  currentCvFile String?
+  userAgent     String?
+  pageUrl       String?
+  createdAt     DateTime @default(now())
+  status        String   @default("new")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])
@@ -182,15 +164,12 @@ model Feedback {
 model ConsentLog {
   id          String   @id @default(cuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  action      String   // "created" | "updated" | "revoked"
-  preferences String   // JSON string: { necessary: true, functional: false, analytics: true, marketing: false }
-
-  ip          String?  // Adresse IP (optionnel, pour traçabilité)
-  userAgent   String?  // Navigateur
-
+  action      String
+  preferences String
+  ip          String?
+  userAgent   String?
   createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])
@@ -198,10 +177,10 @@ model ConsentLog {
 
 model Setting {
   id          String   @id @default(cuid())
-  settingName String   @unique // Nom unique du setting (ex: "model_analysis_rapid")
-  value       String   // Valeur du setting (ex: "gpt-5-nano-2025-08-07")
-  category    String   // Catégorie (ex: "ai_models")
-  description String?  // Description pour le dashboard admin
+  settingName String   @unique
+  value       String
+  category    String
+  description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -236,7 +215,7 @@ model AutoSignInToken {
 model EmailChangeRequest {
   id        String   @id @default(cuid())
   userId    String
-  newEmail  String   // La nouvelle adresse email demandée
+  newEmail  String
   token     String   @unique
   expires   DateTime
   createdAt DateTime @default(now())
@@ -247,23 +226,18 @@ model EmailChangeRequest {
 }
 
 model TelemetryEvent {
-  id          String   @id @default(cuid())
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  type        String   // CV_GENERATED, CV_IMPORTED, CV_EXPORTED, CV_EDITED, etc.
-  category    String   // cv_management, auth, job_processing, navigation, interaction
-
-  metadata    String?  // JSON: { analysisLevel, fileSize, score, section, operation, etc. }
-
-  deviceId    String?  // Device identifier for cross-device tracking
-
-  duration    Int?     // Duration in milliseconds (for jobs, page views, etc.)
-  status      String?  // success, error, cancelled
-  error       String?  // Error message if status=error
-
-  timestamp   DateTime @default(now())
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String?
+  type      String
+  category  String
+  metadata  String?
+  deviceId  String?
+  duration  Int?
+  status    String?
+  error     String?
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([type])
@@ -277,18 +251,14 @@ model TelemetryEvent {
 model FeatureUsage {
   id            String   @id @default(cuid())
   userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  featureName   String   // generate_cv, import_pdf, export_cv, match_score, optimize_cv, etc.
-
+  featureName   String
   usageCount    Int      @default(0)
   lastUsedAt    DateTime @default(now())
-  totalDuration Int      @default(0) // Total duration in milliseconds
-
-  metadata      String?  // JSON: { rapid: 5, medium: 2, deep: 1 } for analysis levels, etc.
-
+  totalDuration Int      @default(0)
+  metadata      String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, featureName])
   @@index([userId])
@@ -297,25 +267,20 @@ model FeatureUsage {
 }
 
 model OpenAIUsage {
-  id              String   @id @default(cuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  featureName     String   // generate_cv, match_score, optimize_cv, translate_cv, import_pdf, etc.
-  model           String   // gpt-5-nano-2025-08-07, gpt-5-mini-2025-08-07, etc.
-  date            DateTime // Date du jour (agrégation quotidienne)
-
-  promptTokens    Int      @default(0)
-  cachedTokens    Int      @default(0) // Cached tokens (prompt caching)
-  completionTokens Int     @default(0)
-  totalTokens     Int      @default(0)
-
-  estimatedCost   Float    @default(0) // Coût estimé en dollars (calculé selon tarifs)
-
-  callsCount      Int      @default(0) // Nombre d'appels OpenAI ce jour
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String   @id @default(cuid())
+  userId           String
+  featureName      String
+  model            String
+  date             DateTime
+  promptTokens     Int      @default(0)
+  cachedTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  totalTokens      Int      @default(0)
+  estimatedCost    Float    @default(0)
+  callsCount       Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, featureName, model, date])
   @@index([userId])
@@ -327,18 +292,15 @@ model OpenAIUsage {
 }
 
 model OpenAIPricing {
-  id                    String   @id @default(cuid())
-  modelName             String   @unique // Ex: "gpt-5-nano-2025-08-07"
-
-  inputPricePerMToken   Float    // Prix par million de tokens en entrée (ex: 0.10)
-  outputPricePerMToken  Float    // Prix par million de tokens en sortie (ex: 0.40)
-  cachePricePerMToken   Float    @default(0) // Prix par million de tokens en cache (prompt caching)
-
-  description           String?  // Description du modèle
-  isActive              Boolean  @default(true)
-
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  modelName            String   @unique
+  inputPricePerMToken  Float
+  outputPricePerMToken Float
+  cachePricePerMToken  Float    @default(0)
+  description          String?
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   @@index([modelName])
   @@index([isActive])
@@ -346,14 +308,11 @@ model OpenAIPricing {
 
 model OpenAIAlert {
   id          String   @id @default(cuid())
-
-  type        String   // "user_daily", "user_monthly", "global_daily", "global_monthly", "feature_daily"
-  threshold   Float    // Seuil en dollars
+  type        String
+  threshold   Float
   enabled     Boolean  @default(true)
-
-  name        String   // Nom de l'alerte (ex: "Limite utilisateur journalière")
-  description String?  // Description optionnelle
-
+  name        String
+  description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -364,19 +323,17 @@ model OpenAIAlert {
 model OpenAICall {
   id               String   @id @default(cuid())
   userId           String
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  featureName      String   // generate_cv, match_score, optimize_cv, translate_cv, import_pdf, etc.
-  model            String   // gpt-5-nano-2025-08-07, gpt-5-mini-2025-08-07, etc.
-
+  featureName      String
+  model            String
   promptTokens     Int      @default(0)
-  cachedTokens     Int      @default(0) // Cached tokens (prompt caching)
+  cachedTokens     Int      @default(0)
   completionTokens Int      @default(0)
   totalTokens      Int      @default(0)
   estimatedCost    Float    @default(0)
-  duration         Int?     // Durée d'exécution en millisecondes
-  metadata         String?  // JSON: { analysisLevel, etc. }
-
+  duration         Int?
+  metadata         String?
   createdAt        DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([featureName])
@@ -386,51 +343,38 @@ model OpenAICall {
 }
 
 model SubscriptionPlan {
-  id                    Int      @id @default(autoincrement())
-  name                  String   @unique // "Gratuit", "Pro", "Premium"
-  description           String?  // Description du plan
-
-  // Identification robuste
-  isFree                Boolean  @default(false) // true uniquement pour le plan gratuit
-  tier                  Int      @default(0)     // 0=Gratuit, 1=Pro, 2=Premium (pour logique upgrade/downgrade)
-  isPopular             Boolean  @default(false) // true pour afficher badge "Recommandé"
-
-  // Prix structuré (mensuel/annuel)
-  priceMonthly          Float    @default(0) // Prix mensuel (ex: 9.99)
-  priceYearly           Float    @default(0) // Prix annuel (ex: 99.99)
-  yearlyDiscountPercent Float    @default(0) // % de réduction annuelle (pour info)
-  priceCurrency         String   @default("EUR") // EUR, USD, GBP
-
-  // Stripe IDs
-  stripeProductId       String?  @unique
-  stripePriceIdMonthly  String?  @unique
-  stripePriceIdYearly   String?  @unique
-
-  // Relations
-  featureLimits         SubscriptionPlanFeatureLimit[]
+  id                    Int                            @id @default(autoincrement())
+  name                  String                         @unique
+  description           String?
+  isFree                Boolean                        @default(false)
+  tier                  Int                            @default(0)
+  isPopular             Boolean                        @default(false)
+  priceMonthly          Float                          @default(0)
+  priceYearly           Float                          @default(0)
+  yearlyDiscountPercent Float                          @default(0)
+  priceCurrency         String                         @default("EUR")
+  stripeProductId       String?                        @unique
+  stripePriceIdMonthly  String?                        @unique
+  stripePriceIdYearly   String?                        @unique
+  createdAt             DateTime                       @default(now())
+  updatedAt             DateTime                       @updatedAt
   subscriptions         Subscription[]
-
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  featureLimits         SubscriptionPlanFeatureLimit[]
 
   @@index([name])
   @@index([tier])
 }
 
 model SubscriptionPlanFeatureLimit {
-  id                    String   @id @default(cuid())
+  id                    String           @id @default(cuid())
   planId                Int
+  featureName           String
+  isEnabled             Boolean          @default(true)
+  usageLimit            Int              @default(-1)
+  allowedAnalysisLevels String?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
   plan                  SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-
-  featureName           String   // generate_cv, import_pdf, export_cv, etc.
-  isEnabled             Boolean  @default(true)  // Feature activée ou non pour ce plan
-  usageLimit            Int      @default(-1)    // -1 = illimité, sinon nombre max d'utilisations
-
-  // Niveaux d'analyse (pour features avec analyse IA)
-  allowedAnalysisLevels String?  // JSON array: ["rapid", "medium", "deep"] ou null
-
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
 
   @@unique([planId, featureName])
   @@index([planId])
@@ -438,51 +382,39 @@ model SubscriptionPlanFeatureLimit {
 }
 
 model CreditPack {
-  id            Int      @id @default(autoincrement())
-  name          String   // Généré automatiquement: "{creditAmount} Crédits"
-  description   String?  // Description du pack
-  creditAmount  Int      @unique // Nombre de crédits dans ce pack (unique)
-  price         Float    // Prix fixe du pack
-  priceCurrency String   @default("EUR") // EUR, USD, GBP
-  isActive      Boolean  @default(true)  // Pack actif ou désactivé
-
-  // Stripe IDs
-  stripeProductId String? @unique
-  stripePriceId   String? @unique
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              Int      @id @default(autoincrement())
+  name            String
+  description     String?
+  creditAmount    Int      @unique
+  price           Float
+  priceCurrency   String   @default("EUR")
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  stripePriceId   String?  @unique
+  stripeProductId String?  @unique
 
   @@index([creditAmount])
   @@index([isActive])
 }
 
-// ========== SUBSCRIPTION SYSTEM MODELS ==========
-
-// Abonnement utilisateur
 model Subscription {
-  id                    String   @id @default(cuid())
-  userId                String   @unique
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  stripeCustomerId      String   @unique
-  stripeSubscriptionId  String?  @unique
-  stripePriceId         String?  // Prix actuel (monthly ou yearly)
-
-  planId                Int
-  plan                  SubscriptionPlan @relation(fields: [planId], references: [id])
-
-  status                String   // active, canceled, past_due, incomplete
-  billingPeriod         String   // monthly, yearly
-
-  currentPeriodStart    DateTime
-  currentPeriodEnd      DateTime
-
-  cancelAtPeriodEnd     Boolean  @default(false)
-  canceledAt            DateTime?
-
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                   String           @id @default(cuid())
+  userId               String           @unique
+  stripeCustomerId     String           @unique
+  stripeSubscriptionId String?          @unique
+  stripePriceId        String?
+  planId               Int
+  status               String
+  billingPeriod        String
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean          @default(false)
+  canceledAt           DateTime?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  plan                 SubscriptionPlan @relation(fields: [planId], references: [id])
+  user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
@@ -490,71 +422,56 @@ model Subscription {
   @@index([stripeSubscriptionId])
 }
 
-// Balance de crédits utilisateur
 model CreditBalance {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  balance         Int      @default(0) // Crédits disponibles
-  totalPurchased  Int      @default(0) // Total acheté (historique)
-  totalUsed       Int      @default(0) // Total consommé
-  totalRefunded   Int      @default(0) // Total remboursé
-  totalGifted     Int      @default(0) // Total reçu (parrainage, bonus, promo)
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  balance        Int      @default(0)
+  totalPurchased Int      @default(0)
+  totalUsed      Int      @default(0)
+  totalRefunded  Int      @default(0)
+  totalGifted    Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
-// Transactions crédits (historique complet)
 model CreditTransaction {
-  id                    String   @id @default(cuid())
+  id                    String          @id @default(cuid())
   userId                String
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  amount                Int      // + pour achat/bonus, - pour consommation
-  type                  String   // purchase, usage, refund, gift, cv_creation
-  featureName           String?  // Feature consommée (si type=usage)
-
-  taskId                String?  // ID BackgroundTask lié
+  amount                Int
+  type                  String
+  featureName           String?
+  taskId                String?
+  cvFileId              String?
+  stripePaymentIntentId String?         @unique
+  refunded              Boolean         @default(false)
+  relatedTransactionId  String?
+  metadata              String?
+  createdAt             DateTime        @default(now())
+  stripeInvoiceId       String?
   task                  BackgroundTask?
-
-  cvFileId              String?  // ID CvFile si type=cv_creation
+  user                  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   cvFile                CvFile?
-
-  stripePaymentIntentId String?  // Pour les achats
-  stripeInvoiceId       String?  // Facture Stripe associée
-  refunded              Boolean  @default(false)
-  relatedTransactionId  String?  // Transaction d'origine (pour refund)
-
-  metadata              String?  // JSON pour données additionnelles
-
-  createdAt             DateTime @default(now())
 
   @@index([userId])
   @@index([type])
   @@index([featureName])
   @@index([createdAt])
   @@index([userId, createdAt])
-  @@unique([stripePaymentIntentId])
 }
 
-// Compteurs d'utilisation mensuels par feature
 model FeatureUsageCounter {
   id          String   @id @default(cuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  featureName String   // generate_cv, import_pdf, etc.
+  featureName String
   count       Int      @default(0)
-
-  periodStart DateTime // Début de la période (date anniversaire abonnement ou reset)
-  periodEnd   DateTime // Fin de la période
-
+  periodStart DateTime
+  periodEnd   DateTime
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, featureName, periodStart])
   @@index([userId])
@@ -563,15 +480,13 @@ model FeatureUsageCounter {
   @@index([periodEnd])
 }
 
-// Logging des webhooks Stripe
 model StripeWebhookLog {
   id        String   @id @default(cuid())
-  eventId   String   @unique // Stripe event ID
-  eventType String   // customer.subscription.updated, etc.
-  payload   String   // JSON complet de l'event
+  eventId   String   @unique
+  eventType String
+  payload   String
   processed Boolean  @default(false)
-  error     String?  // Erreur si traitement échoué
-
+  error     String?
   createdAt DateTime @default(now())
 
   @@index([eventId])
@@ -580,26 +495,19 @@ model StripeWebhookLog {
   @@index([createdAt])
 }
 
-// Système de parrainage
 model Referral {
-  id              String   @id @default(cuid())
-
-  referrerId      String   // Utilisateur qui parraine
-  referrer        User     @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
-
-  referredUserId  String   @unique // Utilisateur parrainé
-  referredUser    User     @relation("Referred", fields: [referredUserId], references: [id], onDelete: Cascade)
-
-  referralCode    String   // Code utilisé pour le parrainage
-
-  status          String   // pending, completed
-  referrerReward  Int      @default(0) // Crédits donnés au parrain
-  referredReward  Int      @default(0) // Crédits donnés au filleul
-
-  rewardsGrantedAt DateTime? // Date d'attribution des récompenses
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String    @id @default(cuid())
+  referrerId       String
+  referredUserId   String    @unique
+  referralCode     String
+  status           String
+  referrerReward   Int       @default(0)
+  referredReward   Int       @default(0)
+  rewardsGrantedAt DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  referredUser     User      @relation("Referred", fields: [referredUserId], references: [id], onDelete: Cascade)
+  referrer         User      @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
 
   @@index([referrerId])
   @@index([referredUserId])
@@ -607,35 +515,23 @@ model Referral {
   @@index([status])
 }
 
-// Codes promotionnels
 model PromoCode {
-  id            String   @id @default(cuid())
-  code          String   @unique // Code promo (ex: "LAUNCH2025")
-  name          String   // Nom interne
-
-  type          String   // subscription_discount, credit_bonus
-
-  // Pour réduction abonnement
-  discountType  String?  // percentage, fixed_amount
-  discountValue Float?   // 20 (%), ou 5.00 (€)
-
-  // Pour bonus crédits
-  creditBonus   Int?     // Nombre de crédits offerts
-
-  applicableTo  String   // JSON array: planIds ou "all"
-
-  maxUses       Int?     // Nombre max d'utilisations (null = illimité)
-  currentUses   Int      @default(0)
-
-  validFrom     DateTime
-  validUntil    DateTime?
-
-  isActive      Boolean  @default(true)
-
-  stripeCouponId String? @unique // ID du coupon Stripe associé
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String    @id @default(cuid())
+  code           String    @unique
+  name           String
+  type           String
+  discountType   String?
+  discountValue  Float?
+  creditBonus    Int?
+  applicableTo   String
+  maxUses        Int?
+  currentUses    Int       @default(0)
+  validFrom      DateTime
+  validUntil     DateTime?
+  isActive       Boolean   @default(true)
+  stripeCouponId String?   @unique
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([code])
   @@index([isActive])

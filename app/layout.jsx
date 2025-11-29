@@ -84,9 +84,119 @@ export default async function RootLayout(props){
           main {
             min-height: calc(100vh - 56px);
           }
+
+          /* ============================================
+             INITIAL LOADING OVERLAY (CSS pur)
+             Visible IMMÉDIATEMENT au chargement
+             Supprimé par React LoadingOverlay
+             ============================================ */
+          #initial-loading-overlay {
+            position: fixed;
+            /* Étendre au-delà des bords + safe areas iOS Safari */
+            top: calc(-100px - env(safe-area-inset-top, 0px));
+            left: calc(-100px - env(safe-area-inset-left, 0px));
+            right: calc(-100px - env(safe-area-inset-right, 0px));
+            bottom: calc(-100px - env(safe-area-inset-bottom, 0px));
+            /* Dimensions incluant les safe areas pour iOS 26+ Safari */
+            width: calc(100vw + 200px + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px));
+            height: calc(100vh + 200px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px));
+            max-height: calc(100dvh + 200px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px));
+            background-color: rgb(2, 6, 23);
+            z-index: 999999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: touch;
+          }
+
+          /* Spinner container */
+          #initial-loading-overlay .spinner-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+          }
+
+          /* Spinner wrapper */
+          #initial-loading-overlay .spinner {
+            position: relative;
+            width: 64px;
+            height: 64px;
+          }
+
+          /* Outer ring */
+          #initial-loading-overlay .spinner-outer {
+            position: absolute;
+            inset: 0;
+            border-radius: 9999px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+          }
+
+          /* Spinning ring */
+          #initial-loading-overlay .spinner-spinning {
+            position: absolute;
+            inset: 0;
+            border-radius: 9999px;
+            border: 4px solid transparent;
+            border-top-color: white;
+            border-right-color: white;
+            animation: spin 1s linear infinite;
+          }
+
+          /* Inner pulsing dot */
+          #initial-loading-overlay .spinner-dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 9999px;
+            background-color: white;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          }
+
+          /* Animations */
+          @keyframes spin {
+            from {
+              transform: rotate(0deg);
+            }
+            to {
+              transform: rotate(360deg);
+            }
+          }
+
+          @keyframes pulse {
+            0%, 100% {
+              opacity: 1;
+            }
+            50% {
+              opacity: 0.5;
+            }
+          }
+
+          /* Fade out quand React prend le relais */
+          #initial-loading-overlay.hiding {
+            opacity: 0;
+            transition: opacity 300ms ease-out;
+            pointer-events: none;
+          }
         `}} />
       </head>
       <body className="min-h-screen antialiased flex flex-col">
+        {/* Initial loading overlay - CSS pur, visible IMMÉDIATEMENT */}
+        <div id="initial-loading-overlay">
+          <div className="spinner-container">
+            <div className="spinner">
+              <div className="spinner-outer"></div>
+              <div className="spinner-spinning"></div>
+              <div className="spinner-dot"></div>
+            </div>
+          </div>
+        </div>
+
         <RootProviders session={session} initialSettings={initialSettings}>
           <GlobalBackground />
           <div className="relative z-10 flex flex-col min-h-screen">

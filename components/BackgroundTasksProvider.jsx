@@ -4,6 +4,7 @@ import React, { createContext, useContext, useMemo, useState, useCallback, useRe
 import { useSession } from "next-auth/react";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
 import { useTaskSyncAPI } from "@/hooks/useTaskSyncAPI";
+import { emitTaskAddedEvent } from "@/lib/backgroundTasks/taskTypes";
 
 const BackgroundTasksContext = createContext(null);
 
@@ -18,10 +19,33 @@ export function useBackgroundTasks() {
 export default function BackgroundTasksProvider({ children }) {
   const { status } = useSession();
   const isAuthenticated = status === "authenticated";
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasksInternal] = useState([]);
   const { addNotification } = useNotifications();
   const previousStatusesRef = useRef(new Map());
   const initialLoadRef = useRef(true);
+
+  // Wrapper pour setTasks qui détecte les nouvelles tâches et émet des événements
+  const setTasks = useCallback((newTasksOrUpdater) => {
+    setTasksInternal(prevTasks => {
+      const updatedTasks = typeof newTasksOrUpdater === 'function'
+        ? newTasksOrUpdater(prevTasks)
+        : newTasksOrUpdater;
+
+      // Détecter les tâches nouvellement ajoutées (pas dans prevTasks)
+      const prevTaskIds = new Set(prevTasks.map(t => t.id));
+      const addedTasks = updatedTasks.filter(t => !prevTaskIds.has(t.id));
+
+      // Émettre l'événement task:added pour chaque nouvelle tâche
+      // (permet la détection des tâches venant du serveur)
+      if (typeof window !== 'undefined' && addedTasks.length > 0) {
+        addedTasks.forEach(task => {
+          emitTaskAddedEvent(task);
+        });
+      }
+
+      return updatedTasks;
+    });
+  }, []);
 
   const {
     isApiSyncEnabled,
@@ -140,6 +164,10 @@ export default function BackgroundTasksProvider({ children }) {
     };
 
     setTasks(prev => [optimisticTask, ...prev]);
+
+    // NOTE : L'événement task:added est émis après succès API dans useGeneratorModal.js
+    // pour éviter les faux positifs si l'API échoue
+
     return optimisticTask.id;
   }, []);
 
@@ -190,11 +218,21 @@ export default function BackgroundTasksProvider({ children }) {
         return;
       }
 
+      // Émettre task:completed pour l'onboarding (toutes les tâches complétées)
+      // Important: doit être avant le check shouldUpdateCvList car les tâches match score
+      // n'ont pas ce flag mais ont besoin de déclencher la validation de l'onboarding
+      if (task.status === 'completed' && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('task:completed', {
+          detail: { task }
+        }));
+      }
+
       if (!task?.shouldUpdateCvList) {
         return;
       }
 
       if (task.status === 'completed') {
+
         // Pour les tâches de création/import de CV, vérifier si c'est le premier CV
         // Si oui, ne pas notifier car l'utilisateur voit déjà la barre de progression
         const isImportOrCreateTask = task.type === 'import' || task.type === 'create-manual';

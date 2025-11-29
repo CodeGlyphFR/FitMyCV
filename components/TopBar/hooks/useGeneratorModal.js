@@ -3,6 +3,8 @@ import { CREATE_TEMPLATE_OPTION } from "../utils/constants";
 import { getAnalysisOption } from "../utils/cvUtils";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { parseApiError } from "@/lib/utils/errorHandler";
+import { TASK_TYPES } from "@/lib/backgroundTasks/taskTypes";
+import { ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
 
 /**
  * Hook pour gérer le modal de génération de CV
@@ -33,6 +35,15 @@ export function useGeneratorModal({
   const [plans, setPlans] = React.useState([]); // Liste des plans pour calculer les badges
 
   const fileInputRef = React.useRef(null);
+  const isMountedRef = React.useRef(true);
+  const onboardingGeneratorOpenedRef = React.useRef(false); // Tracker l'ouverture du modal pendant l'onboarding
+
+  // Cleanup on unmount pour prévenir les race conditions
+  React.useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const generatorSourceItems = React.useMemo(
     () => items.filter((it) => !it.isGenerated),
@@ -135,6 +146,37 @@ export function useGeneratorModal({
     setOpenGenerator(true);
   }, [currentItem, generatorSourceItems, lastSelectedMetaRef]);
 
+  // Écouter l'événement d'onboarding pour ouvrir le modal automatiquement (étape 2)
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const handleOnboardingOpen = () => {
+      if (!isMounted) return;
+
+      // Prévenir les ré-ouvertures multiples pendant l'onboarding
+      if (onboardingGeneratorOpenedRef.current) {
+        return;
+      }
+
+      try {
+        onboardingGeneratorOpenedRef.current = true;
+        openGeneratorModal();
+      } catch (error) {
+        console.error('[useGeneratorModal] Error in handleOnboardingOpen:', error);
+      }
+    };
+
+    window.addEventListener(ONBOARDING_EVENTS.OPEN_GENERATOR, handleOnboardingOpen);
+    return () => {
+      isMounted = false;
+      window.removeEventListener(ONBOARDING_EVENTS.OPEN_GENERATOR, handleOnboardingOpen);
+
+      // Reset du flag au cleanup pour permettre une future utilisation
+      // IMPORTANT: Ne pas reset dans closeGenerator() car ça permet les ré-ouvertures
+      onboardingGeneratorOpenedRef.current = false;
+    };
+  }, [openGeneratorModal]);
+
   function resetGeneratorState() {
     setLinkInputs([""]);
     setFileSelection([]);
@@ -148,6 +190,8 @@ export function useGeneratorModal({
   function closeGenerator() {
     setOpenGenerator(false);
     resetGeneratorState();
+    // Note: Le flag onboardingGeneratorOpenedRef n'est PAS reset ici pour éviter les ré-ouvertures
+    // Il sera reset automatiquement dans le cleanup du useEffect (ligne 176)
   }
 
   function updateLink(value, index) {
@@ -208,13 +252,13 @@ export function useGeneratorModal({
     let endpoint, taskType, taskLabel, notificationMessage;
 
     if (isTemplateCreation) {
-      taskType = 'create-template-cv';
+      taskType = TASK_TYPES.TEMPLATE_CREATION;
       taskLabel = t("cvGenerator.templateCreationLabel");
       notificationMessage = t("cvGenerator.notifications.templateScheduled");
       endpoint = "/api/background-tasks/create-template-cv";
     } else {
       const baseCvName = generatorBaseItem?.displayTitle || generatorBaseItem?.title || generatorBaseFile;
-      taskType = 'generate-cv';
+      taskType = TASK_TYPES.GENERATION;
       taskLabel = `Adaptation du CV '${baseCvName}'`;
       notificationMessage = t("cvGenerator.notifications.scheduled", { baseCvName });
       endpoint = "/api/background-tasks/generate-cv";
@@ -222,8 +266,17 @@ export function useGeneratorModal({
 
     try {
       // Obtenir le token reCAPTCHA (vérification côté serveur uniquement)
-      const recaptchaToken = await executeRecaptcha('generate_cv');
+      // Bypass ReCaptcha en développement si configuré (évite les blocages pendant l'onboarding)
+      const bypassMode = process.env.NEXT_PUBLIC_BYPASS_RECAPTCHA === 'true';
+      const recaptchaToken = bypassMode ? 'bypassed_token' : await executeRecaptcha('generate_cv');
+
+      // Note: Pas de check isMountedRef ici - l'appel API doit TOUJOURS se faire
+      // pour que la tâche soit créée sur le serveur et détectée par le polling
+
       if (!recaptchaToken) {
+        // Vérifier si monté uniquement avant les UI updates
+        if (!isMountedRef.current) return;
+
         addNotification({
           type: "error",
           message: t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.",
@@ -258,7 +311,17 @@ export function useGeneratorModal({
       });
 
       const data = await response.json().catch(() => ({}));
+
+      // Fermer le modal IMMÉDIATEMENT pour feedback utilisateur
+      // IMPORTANT: Faire ceci AVANT toutes les vérifications pour garantir la fermeture
+      // même si le composant est unmounted pendant l'onboarding (race condition)
+      closeGenerator();
+
+      // Vérifier la réponse API APRÈS fermeture du modal
       if (!response.ok || !data?.success) {
+        // Vérifier si monté avant les UI updates (notifications d'erreur)
+        if (!isMountedRef.current) return;
+
         const apiError = parseApiError(response, data);
         const errorObj = { message: apiError.message };
         if (apiError.actionRequired && apiError.redirectUrl) {
@@ -267,6 +330,9 @@ export function useGeneratorModal({
         }
         throw errorObj;
       }
+
+      // Vérifier avant les state updates (tâches optimistes, notifications)
+      if (!isMountedRef.current) return;
 
       // ✅ Succès confirmé par l'API -> créer la tâche optimiste et notifier
       const optimisticTaskId = addOptimisticTask({
@@ -281,18 +347,33 @@ export function useGeneratorModal({
         shouldUpdateCvList: true,
       });
 
+      // NOTE : L'événement task:added est émis automatiquement par le wrapper
+      // setTasks dans BackgroundTasksProvider.jsx (détection de nouvelles tâches)
+
       addNotification({
         type: "info",
         message: notificationMessage,
         duration: 2500,
       });
-      closeGenerator();
 
-      await refreshTasks();
+      // Nettoyer la tâche optimiste après notification
       removeOptimisticTask(optimisticTaskId);
+
+      // Puis rafraîchir en arrière-plan
+      // Note: Le modal est fermé, donc l'événement task:added n'affecte plus le generator
+      try {
+        await refreshTasks();
+      } catch (error) {
+        console.error('[Generator] Failed to refresh tasks:', error);
+        // Le polling (10s interval) rattrapera de toute façon
+      }
     } catch (error) {
       // Fermer le modal avant d'afficher l'erreur
+      // IMPORTANT: Faire ceci AVANT isMountedRef check pour garantir la fermeture
       closeGenerator();
+
+      // Vérifier avant les state updates dans le error handler
+      if (!isMountedRef.current) return;
 
       const notification = {
         type: "error",

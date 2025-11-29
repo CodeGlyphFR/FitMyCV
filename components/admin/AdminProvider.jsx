@@ -83,7 +83,7 @@ export default function AdminProvider(props){
   async function setEditing(next){
     if (!session?.user?.id){
       setEditingState(false);
-      return;
+      return Promise.resolve(); // Toujours retourner une Promise pour cohérence
     }
 
     if (next === true) {
@@ -108,12 +108,13 @@ export default function AdminProvider(props){
 
           addNotification(notification);
 
-          return; // Ne pas activer le mode édition
+          return Promise.resolve(); // Ne pas activer le mode édition (mais retourner Promise)
         }
 
         // OK → Activer le mode édition (sans débiter)
         setHasDebitedEditSession(false);
         setEditingState(true);
+        return Promise.resolve(); // Succès explicite
       } catch (error) {
         console.error('[AdminProvider] Erreur vérification can-edit:', error);
         addNotification({
@@ -121,11 +122,13 @@ export default function AdminProvider(props){
           message: 'Erreur lors de la vérification',
           duration: 4000
         });
+        return Promise.reject(error); // Échec explicite pour .catch()
       }
     } else {
       // Sortie du mode édition → Reset du flag
       setHasDebitedEditSession(false);
       setEditingState(false);
+      return Promise.resolve(); // Retour cohérent
     }
   }
 
@@ -163,6 +166,7 @@ export default function AdminProvider(props){
       {/* Edit mode button */}
       {session?.user?.id && pathname !== "/admin/new" && pathname !== "/admin/analytics" && hasAnyCv && settings.feature_edit_mode ? (
         <button
+          data-onboarding="edit-mode-button"
           onClick={()=>setEditing(!editing)}
           className={`
             fixed bottom-6 right-6 z-50 no-print

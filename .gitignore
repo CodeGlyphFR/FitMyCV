@@ -12,6 +12,7 @@ out/
 # Logs
 npm-debug.log*
 yarn-debug.log*
+logs/
 
 # OS
 .DS_Store
@@ -44,3 +45,8 @@ dev.db
 
 # Backups SQL de production
 backup_*.sql
+CaddyFile.txt
+.gitignore
+.gitignore
+env.txt
+prisma/get_job_offers.sh

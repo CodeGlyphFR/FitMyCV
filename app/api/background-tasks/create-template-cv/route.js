@@ -8,6 +8,7 @@ import prisma from "@/lib/prisma";
 import { ensureUserCvDir } from "@/lib/cv/storage";
 import { scheduleCreateTemplateCvJob } from "@/lib/backgroundTasks/createTemplateCvJob";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
+import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
 
 function sanitizeLinks(raw) {
   if (!Array.isArray(raw)) return [];
@@ -59,44 +60,15 @@ export async function POST(request) {
 
     // Vérification reCAPTCHA (optionnelle pour compatibilité, mais recommandée)
     if (recaptchaToken) {
-      try {
-        const secretKey = process.env.RECAPTCHA_SECRET_KEY;
-        if (!secretKey) {
-          console.error('[create-template-cv] RECAPTCHA_SECRET_KEY not configured');
-          return NextResponse.json({ error: "Configuration serveur manquante" }, { status: 500 });
-        }
+      const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
+        callerName: 'create-template-cv',
+        scoreThreshold: 0.5,
+      });
 
-        const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify';
-        const verificationData = new URLSearchParams({
-          secret: secretKey,
-          response: recaptchaToken,
-        });
-
-        const verificationResponse = await fetch(verificationUrl, {
-          method: 'POST',
-          body: verificationData,
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        });
-
-        const verificationResult = await verificationResponse.json();
-
-        if (!verificationResult.success || (verificationResult.score && verificationResult.score < 0.5)) {
-          console.warn('[create-template-cv] reCAPTCHA verification failed', {
-            success: verificationResult.success,
-            score: verificationResult.score,
-          });
-          return NextResponse.json(
-            { error: "Échec de la vérification anti-spam. Veuillez réessayer." },
-            { status: 403 }
-          );
-        }
-      } catch (error) {
-        console.error('[create-template-cv] Error verifying reCAPTCHA:', error);
+      if (!recaptchaResult.success) {
         return NextResponse.json(
-          { error: "Erreur lors de la vérification anti-spam" },
-          { status: 500 }
+          { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
+          { status: recaptchaResult.statusCode || 403 }
         );
       }
     }

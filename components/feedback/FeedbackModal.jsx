@@ -114,7 +114,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder={t("feedback.commentPlaceholder")}
-              className="w-full h-32 px-3 py-2 pr-14 pb-12 border-2 border-white/30 rounded-lg resize-none bg-white/10 text-white placeholder-white/50 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 backdrop-blur-sm ios-blur-light transition-all duration-200 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+              className="w-full h-32 px-3 py-2 pr-14 pb-12 border border-white/20 rounded-lg resize-none bg-white/5 text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
               maxLength={500}
             />
 
@@ -128,11 +128,10 @@ export default function FeedbackModal({ isOpen, onClose }) {
                 flex items-center justify-center
                 transition-all duration-200
                 hover:scale-110
-                backdrop-blur-sm ios-blur-light
                 shadow-lg
                 ${isBugReport
-                  ? 'bg-red-500/80 border-2 border-red-400 drop-shadow-lg ring-2 ring-red-300/70 animate-pulse'
-                  : 'bg-amber-400/70 border-2 border-amber-300 hover:bg-amber-500/80 hover:border-amber-200'
+                  ? 'bg-red-500 border border-red-400 ring-2 ring-red-300/70 animate-pulse'
+                  : 'bg-amber-500 border border-amber-400 hover:bg-amber-600 hover:border-amber-300'
                 }
               `}
               title={isBugReport ? t("feedback.markedAsBug") : t("feedback.markAsBug")}
@@ -165,7 +164,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
             type="button"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="px-4 py-2 text-sm font-medium text-white bg-white/20 border-2 border-white/40 rounded-lg hover:bg-white/30 backdrop-blur-sm ios-blur-light transition-all duration-200 drop-shadow disabled:opacity-50"
+            className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors disabled:opacity-50"
           >
             {t("feedback.cancel")}
           </button>
@@ -173,7 +172,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="px-4 py-2 text-sm font-medium text-white bg-emerald-400 border-2 border-emerald-300 rounded-lg hover:bg-emerald-500 backdrop-blur-sm ios-blur-light transition-all duration-200 drop-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isSubmitting ? t("feedback.submitting") : t("feedback.submit")}
           </button>

@@ -10,21 +10,10 @@ import { FeedbackTab } from '@/components/admin/FeedbackTab';
 import { UsersTab } from '@/components/admin/UsersTab';
 import { SubscriptionPlansTab } from '@/components/admin/SubscriptionPlansTab';
 import { RevenueTab } from '@/components/admin/RevenueTab';
+import { OnboardingTab } from '@/components/admin/OnboardingTab';
 import { DateRangePicker } from '@/components/admin/DateRangePicker';
 import { UserFilter } from '@/components/admin/UserFilter';
 import { TabsBar } from '@/components/admin/TabsBar';
-
-const TABS = [
-  { id: 'overview', label: 'Vue d\'ensemble', icon: '📊' },
-  { id: 'features', label: 'Features', icon: '⚡' },
-  { id: 'errors', label: 'Erreurs', icon: '🐛' },
-  { id: 'openai-costs', label: 'OpenAI Costs', icon: '💰' },
-  { id: 'feedback', label: 'Feedback', icon: '💬' },
-  { id: 'users', label: 'Utilisateurs', icon: '👨‍💼' },
-  { id: 'revenue', label: 'Revenus', icon: '💵' },
-  { id: 'subscriptions', label: 'Abonnements', icon: '💳' },
-  { id: 'settings', label: 'Settings', icon: '⚙️' },
-];
 
 export default function AnalyticsDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -32,6 +21,39 @@ export default function AnalyticsDashboard() {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [triggeredAlerts, setTriggeredAlerts] = useState(null);
+
+  // Fetch triggered alerts
+  const fetchTriggeredAlerts = async () => {
+    try {
+      const res = await fetch('/api/admin/openai-alerts/triggered');
+      if (res.ok) {
+        const data = await res.json();
+        setTriggeredAlerts(data);
+      }
+    } catch (error) {
+      console.error('Error fetching triggered alerts:', error);
+    }
+  };
+
+  // Tabs configuration with dynamic badges
+  const TABS = [
+    { id: 'overview', label: 'Vue d\'ensemble', icon: '📊' },
+    { id: 'features', label: 'Features', icon: '⚡' },
+    { id: 'errors', label: 'Erreurs', icon: '🐛' },
+    { id: 'openai-costs', label: 'OpenAI Costs', icon: '💰', badge: triggeredAlerts?.totalTriggered || 0 },
+    { id: 'feedback', label: 'Feedback', icon: '💬' },
+    { id: 'users', label: 'Utilisateurs', icon: '👨‍💼' },
+    { id: 'onboarding', label: 'Onboarding', icon: '🎯' },
+    { id: 'revenue', label: 'Revenus', icon: '💵' },
+    { id: 'subscriptions', label: 'Abonnements', icon: '💳' },
+    { id: 'settings', label: 'Settings', icon: '⚙️' },
+  ];
+
+  // Fetch triggered alerts on mount and refresh
+  useEffect(() => {
+    fetchTriggeredAlerts();
+  }, [refreshKey]);
 
   // Reset animations when changing tabs
   useEffect(() => {
@@ -85,10 +107,10 @@ export default function AnalyticsDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              {!['settings', 'users', 'subscriptions', 'revenue'].includes(activeTab) && (
+              {!['settings', 'users', 'subscriptions', 'revenue', 'onboarding'].includes(activeTab) && (
                 <UserFilter value={selectedUserId} onChange={setSelectedUserId} />
               )}
-              {['overview', 'features', 'sessions', 'errors', 'openai-costs', 'feedback'].includes(activeTab) && (
+              {['overview', 'features', 'sessions', 'errors', 'openai-costs', 'feedback', 'onboarding'].includes(activeTab) && (
                 <DateRangePicker value={period} onChange={setPeriod} />
               )}
             </div>
@@ -110,7 +132,7 @@ export default function AnalyticsDashboard() {
               <span className="text-sm">Retour</span>
             </button>
             <h1 className="text-sm font-bold text-white">Analytics Dashboard</h1>
-            {['overview', 'features', 'sessions', 'errors', 'openai-costs', 'feedback'].includes(activeTab) && (
+            {['overview', 'features', 'sessions', 'errors', 'openai-costs', 'feedback', 'onboarding'].includes(activeTab) && (
               <DateRangePicker value={period} onChange={setPeriod} />
             )}
           </div>
@@ -125,7 +147,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* User Filter - Mobile only (below tabs) */}
-      {!['settings', 'users', 'subscriptions', 'revenue'].includes(activeTab) && (
+      {!['settings', 'users', 'subscriptions', 'revenue', 'onboarding'].includes(activeTab) && (
         <div className="md:hidden bg-gray-900/98 backdrop-blur-xl border-b border-white/10 sticky top-[5.5rem] z-40 will-change-transform">
           <div className="px-4 py-3">
             <UserFilter value={selectedUserId} onChange={setSelectedUserId} />
@@ -135,12 +157,13 @@ export default function AnalyticsDashboard() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-0">
-        {activeTab === 'overview' && <OverviewTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
+        {activeTab === 'overview' && <OverviewTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} triggeredAlerts={triggeredAlerts} />}
         {activeTab === 'features' && <FeaturesTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'errors' && <ErrorsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
-        {activeTab === 'openai-costs' && <OpenAICostsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
+        {activeTab === 'openai-costs' && <OpenAICostsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} triggeredAlerts={triggeredAlerts} />}
         {activeTab === 'feedback' && <FeedbackTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'users' && <UsersTab refreshKey={refreshKey} />}
+        {activeTab === 'onboarding' && <OnboardingTab period={period} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'revenue' && <RevenueTab refreshKey={refreshKey} />}
         {activeTab === 'subscriptions' && <SubscriptionPlansTab refreshKey={refreshKey} />}
         {activeTab === 'settings' && <SettingsTab refreshKey={refreshKey} />}

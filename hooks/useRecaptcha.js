@@ -28,10 +28,17 @@ export function useRecaptcha() {
     }
 
     try {
-      const token = await executeGoogleRecaptcha(action);
+      // Timeout de 5 secondes pour éviter les blocages (ex: pendant l'onboarding)
+      const tokenPromise = executeGoogleRecaptcha(action);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('ReCaptcha timeout - script not loaded in time')), 5000)
+      );
+
+      const token = await Promise.race([tokenPromise, timeoutPromise]);
       return token;
     } catch (error) {
       console.error('[useRecaptcha] Error executing reCAPTCHA:', error);
+      // En cas d'erreur ou timeout, retourner null pour que le backend utilise BYPASS_RECAPTCHA si configuré
       return null;
     }
   }, [executeGoogleRecaptcha]);

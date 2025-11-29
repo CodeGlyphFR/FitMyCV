@@ -2,7 +2,7 @@
 
 > Application Next.js 14 pour la création de CV personnalisés optimisés par IA
 
-**Version:** 1.0.9
+**Version:** 1.0.9.2
 
 ---
 
@@ -12,10 +12,13 @@ FitMyCv.ai est une application web moderne qui permet aux utilisateurs de créer
 
 ### Fonctionnalités principales
 
-- **Génération de CV par IA** : Création automatique basée sur offres d'emploi (URL ou PDF)
-- **Import/Export PDF** : Conversion CV PDF existants et export professionnel
-- **Traduction automatique** : Support multi-langues
-- **Match Score & Optimisation** : Analyse de correspondance et amélioration ATS
+- **Génération de CV par IA** : Adapte un CV existant à une ou plusieurs offres d'emploi (URL ou PDF) - l'IA n'invente pas de compétences
+- **CV Modèle** : Génération de CV fictifs pour inspiration (depuis offre ou titre de poste)
+- **Import PDF** : Conversion de CV existants en format ATS unifié (DOCX prévu)
+- **Export PDF** : Export professionnel avec customisation fine (sections, livrables clés au choix)
+- **Traduction** : Français et Anglais
+- **Match Score & Optimisation** : Analyse de correspondance avec suggestions et optimisation automatique
+- **Historique de modifications** : Suivi des changements appliqués par l'optimisation IA
 - **Multi-utilisateurs** : Authentification complète (credentials, Google, GitHub, Apple)
 - **Dashboard Admin** : Analytics, monitoring, gestion utilisateurs
 
@@ -96,4 +99,4 @@ Propriétaire - Tous droits réservés
 
 ---
 
-**Développé avec Next.js 14 et OpenAI** | Version 1.0.9
+**Développé avec Next.js 14 et OpenAI** | Version 1.0.9.2

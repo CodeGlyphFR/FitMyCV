@@ -72,6 +72,11 @@ export function TabsBar({ tabs, activeTab, onTabChange }) {
         >
           <span className="text-base md:text-lg">{tab.icon}</span>
           <span>{tab.label}</span>
+          {tab.badge !== undefined && tab.badge > 0 && (
+            <span className="ml-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full px-2 py-0.5 min-w-[20px] flex items-center justify-center shadow-lg">
+              {tab.badge > 99 ? '99+' : tab.badge}
+            </span>
+          )}
         </button>
       ))}
     </div>

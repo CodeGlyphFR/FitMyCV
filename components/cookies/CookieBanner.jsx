@@ -98,7 +98,7 @@ export default function CookieBanner() {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      Politique de confidentialité
+                      {t('footer.privacy')}
                     </a>
                   </p>
                 </div>

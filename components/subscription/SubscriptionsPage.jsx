@@ -190,8 +190,16 @@ export default function SubscriptionsPage({ user }) {
 
           {/* Content skeleton */}
           <div className="space-y-6">
-            <SkeletonCurrentPlanCard />
-            <SkeletonFeatureCounters />
+            {/* Skeleton layout 1/2 + 1/2 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <SkeletonCurrentPlanCard />
+              </div>
+              <div>
+                <SkeletonFeatureCounters />
+              </div>
+            </div>
+            {/* Skeleton plan cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <SkeletonPlanCard />
               <SkeletonPlanCard />
@@ -309,21 +317,33 @@ export default function SubscriptionsPage({ user }) {
               aria-labelledby="tab-subscription"
               className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300"
             >
-              <CurrentPlanCard
-                subscription={subscriptionData.subscription}
-                plan={subscriptionData.subscription?.plan}
-                cvStats={subscriptionData.cvStats}
-                onCancelSubscription={handleCancelSubscription}
-              />
+              {/* Layout 1/2 + 1/2 pour Plan actuel et Usage mensuel */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Current Plan - 1/2 */}
+                <div className="h-full">
+                  <CurrentPlanCard
+                    subscription={subscriptionData.subscription}
+                    plan={subscriptionData.subscription?.plan}
+                    cvStats={subscriptionData.cvStats}
+                    onCancelSubscription={handleCancelSubscription}
+                  />
+                </div>
+
+                {/* Monthly Usage - 1/2 */}
+                <div className="h-full">
+                  <FeatureCountersCard
+                    featureCounters={subscriptionData.featureCounters}
+                    plan={subscriptionData.subscription?.plan}
+                  />
+                </div>
+              </div>
+
+              {/* Plan Comparison Cards - full width */}
               <PlanComparisonCards
                 currentPlan={subscriptionData.subscription?.plan}
                 subscription={subscriptionData.subscription}
                 scheduledDowngrade={subscriptionData.scheduledDowngrade}
                 onUpgradeSuccess={refreshData}
-              />
-              <FeatureCountersCard
-                featureCounters={subscriptionData.featureCounters}
-                plan={subscriptionData.subscription?.plan}
               />
             </div>
           )}

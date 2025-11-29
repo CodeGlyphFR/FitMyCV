@@ -9,6 +9,7 @@ import { useNotifications } from "@/components/notifications/NotificationProvide
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { useLinkHistory } from "@/hooks/useLinkHistory";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import GptLogo from "@/components/ui/GptLogo";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
 import TaskQueueModal from "@/components/TaskQueueModal";
@@ -22,9 +23,11 @@ import { useScrollBehavior } from "./hooks/useScrollBehavior";
 import { useModalStates } from "./hooks/useModalStates";
 import { useExportModal } from "./hooks/useExportModal";
 import { useSubscriptionData } from "./hooks/useSubscriptionData";
+import { useFilterState } from "./hooks/useFilterState";
 
 // Components
 import ItemLabel from "./components/ItemLabel";
+import FilterDropdown from "./components/FilterDropdown";
 import CvGeneratorModal from "./modals/CvGeneratorModal";
 import PdfImportModal from "./modals/PdfImportModal";
 import DeleteCvModal from "./modals/DeleteCvModal";
@@ -34,6 +37,15 @@ import ExportPdfModal from "./modals/ExportPdfModal";
 // Utils
 import { getCvIcon } from "./utils/cvUtils";
 import { CREATE_TEMPLATE_OPTION } from "./utils/constants";
+import { ONBOARDING_EVENTS, emitOnboardingEvent } from "@/lib/onboarding/onboardingEvents";
+import { LOADING_EVENTS, emitLoadingEvent } from "@/lib/loading/loadingEvents";
+
+// Date range constants in milliseconds
+const DATE_RANGE_MS = {
+  '24h': 86400000,      // 24 hours
+  '7d': 604800000,      // 7 days
+  '30d': 2592000000,    // 30 days
+};
 
 export default function TopBar() {
   const router = useRouter();
@@ -47,6 +59,7 @@ export default function TopBar() {
   const { t, language } = useLanguage();
   const { settings } = useSettings();
   const { history: linkHistory, addLinksToHistory } = useLinkHistory();
+  const { currentStep, onboardingState } = useOnboarding();
 
   // Main state hook
   const state = useTopBarState(language);
@@ -63,6 +76,8 @@ export default function TopBar() {
     setRawItems: state.setRawItems,
     setCurrent: state.setCurrent,
     setIconRefreshKey: state.setIconRefreshKey,
+    setHasLoadedOnce: state.setHasLoadedOnce,
+    hadItemsOnceRef: state.hadItemsOnceRef,
     currentItem: state.currentItem,
     language,
     t,
@@ -114,11 +129,99 @@ export default function TopBar() {
   const dropdownPortalRef = React.useRef(null);
   const userMenuRef = React.useRef(null);
   const userMenuButtonRef = React.useRef(null);
+  const filterButtonRef = React.useRef(null);
+
+  // Filter state hook
+  const filter = useFilterState();
+
+  // Filtered items based on active filters
+  const filteredItems = React.useMemo(() => {
+    if (!filter.hasActiveFilters) return state.items;
+
+    return state.items.filter(item => {
+      // Filtre par type
+      if (filter.filters.types.length > 0) {
+        const itemType = item.createdBy || 'manual';
+        if (!filter.filters.types.includes(itemType)) return false;
+      }
+
+      // Filtre par langue
+      if (filter.filters.language !== null) {
+        if (!item.language || item.language !== filter.filters.language) return false;
+      }
+
+      // Filtre par date de création
+      if (filter.filters.dateRange) {
+        const now = Date.now();
+        const created = new Date(item.createdAt).getTime();
+        if (Number.isNaN(created)) return false;
+
+        if (now - created > DATE_RANGE_MS[filter.filters.dateRange]) return false;
+      }
+
+      return true;
+    });
+  }, [state.items, filter.filters, filter.hasActiveFilters]);
+
+  // Available filter options (progressive filtering)
+  const availableFilterOptions = React.useMemo(() => {
+    const items = state.items;
+
+    // Helper: filter items by other criteria (excluding the specified filter)
+    const getItemsMatchingOtherFilters = (excludeFilter) => {
+      return items.filter(item => {
+        // Apply type filter (unless excluded)
+        if (excludeFilter !== 'types' && filter.filters.types.length > 0) {
+          const itemType = item.createdBy || 'manual';
+          if (!filter.filters.types.includes(itemType)) return false;
+        }
+        // Apply language filter (unless excluded)
+        if (excludeFilter !== 'language' && filter.filters.language !== null) {
+          if (!item.language || item.language !== filter.filters.language) return false;
+        }
+        // Apply date filter (unless excluded)
+        if (excludeFilter !== 'dateRange' && filter.filters.dateRange) {
+          const now = Date.now();
+          const created = new Date(item.createdAt).getTime();
+          if (Number.isNaN(created)) return false;
+          if (now - created > DATE_RANGE_MS[filter.filters.dateRange]) return false;
+        }
+        return true;
+      });
+    };
+
+    // Available types (based on items filtered by language + date)
+    const itemsForTypes = getItemsMatchingOtherFilters('types');
+    const availableTypes = new Set(itemsForTypes.map(i => i.createdBy || 'manual'));
+
+    // Available languages (based on items filtered by type + date)
+    const itemsForLanguages = getItemsMatchingOtherFilters('language');
+    const availableLanguages = new Set(itemsForLanguages.map(i => i.language).filter(Boolean));
+
+    // Available date ranges (based on items filtered by type + language)
+    const itemsForDates = getItemsMatchingOtherFilters('dateRange');
+    const now = Date.now();
+    const availableDateRanges = new Set();
+    itemsForDates.forEach(item => {
+      const created = new Date(item.createdAt).getTime();
+      if (!Number.isNaN(created)) {
+        const age = now - created;
+        if (age <= DATE_RANGE_MS['24h']) availableDateRanges.add('24h');
+        if (age <= DATE_RANGE_MS['7d']) availableDateRanges.add('7d');
+        if (age <= DATE_RANGE_MS['30d']) availableDateRanges.add('30d');
+      }
+    });
+
+    return { availableTypes, availableLanguages, availableDateRanges };
+  }, [state.items, filter.filters]);
 
   // Active tasks count
   const activeTasksCount = React.useMemo(() => {
     return tasks.filter(t => t.status === 'running' || t.status === 'queued').length;
   }, [tasks]);
+
+  // État pour l'onboarding : CV récemment généré à mettre en surbrillance
+  const [recentlyGeneratedCv, setRecentlyGeneratedCv] = React.useState(null);
 
   // Scroll behavior hook
   useScrollBehavior({
@@ -135,13 +238,36 @@ export default function TopBar() {
   // Portal ready (critical for dropdown rendering)
   React.useEffect(() => {
     state.setPortalReady(true);
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Reload CV list (critical for displaying CVs)
   React.useEffect(() => {
     if (!isAuthenticated) return;
     operations.reload();
-  }, [isAuthenticated, pathname, searchParams?.toString(), operations.reload]);
+    // operations.reload is memoized with useCallback and recreates when isAuthenticated changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, pathname, searchParams?.toString()]);
+
+  // Emit TOPBAR_READY event for LoadingOverlay
+  React.useEffect(() => {
+    // Ne pas émettre l'événement sur la page /auth
+    if (pathname === "/auth") return;
+
+    // Attendre que le TopBar soit complètement monté avec les items chargés
+    if (!isAuthenticated || state.items.length === 0) return;
+
+    // Petit délai pour s'assurer que le rendu est complet
+    const timer = setTimeout(() => {
+      emitLoadingEvent(LOADING_EVENTS.TOPBAR_READY, {
+        hasButtons: true,
+        itemsCount: state.items.length,
+      });
+    }, 50);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, state.items.length, pathname]);
 
   // Listen for CV list changes
   React.useEffect(() => {
@@ -155,7 +281,8 @@ export default function TopBar() {
       window.removeEventListener("realtime:cv:list:changed", onChanged);
       window.removeEventListener("focus", onChanged);
     };
-  }, [isAuthenticated, operations.reload]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   // Listen for import event
   React.useEffect(() => {
@@ -164,7 +291,33 @@ export default function TopBar() {
     };
     window.addEventListener("cv:open-import", handleOpenImport);
     return () => window.removeEventListener("cv:open-import", handleOpenImport);
-  }, [modals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Listen for onboarding CV generation event
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const handleCvGenerated = (event) => {
+      if (!isMounted) return; // Prevent state updates after unmount
+
+      try {
+        const cvFilename = event.detail?.cvFilename;
+        if (cvFilename) {
+          console.log('[TopBar] CV généré pour onboarding:', cvFilename);
+          setRecentlyGeneratedCv(cvFilename);
+        }
+      } catch (error) {
+        console.error('[TopBar] Error in handleCvGenerated:', error);
+      }
+    };
+
+    window.addEventListener(ONBOARDING_EVENTS.CV_GENERATED, handleCvGenerated);
+    return () => {
+      isMounted = false;
+      window.removeEventListener(ONBOARDING_EVENTS.CV_GENERATED, handleCvGenerated);
+    };
+  }, []);
 
   // CV selector glow animation
   React.useEffect(() => {
@@ -180,7 +333,8 @@ export default function TopBar() {
     return () => {
       window.removeEventListener("cv:selected", handleCvSelected);
     };
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Detect mobile
   React.useEffect(() => {
@@ -190,20 +344,23 @@ export default function TopBar() {
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Dropdown position updates
   React.useEffect(() => {
     if (modals.listOpen && triggerRef.current) {
       modals.setDropdownRect(triggerRef.current.getBoundingClientRect());
     }
-  }, [modals.listOpen, state.items, state.current, modals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modals.listOpen, state.items, state.current]);
 
   React.useEffect(() => {
     if (modals.userMenuOpen && userMenuButtonRef.current) {
       modals.setUserMenuRect(userMenuButtonRef.current.getBoundingClientRect());
     }
-  }, [modals.userMenuOpen, modals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modals.userMenuOpen]);
 
   // User menu outside click handler
   React.useEffect(() => {
@@ -241,7 +398,8 @@ export default function TopBar() {
       document.removeEventListener("keydown", handleKey);
       if (touchTimeout) clearTimeout(touchTimeout);
     };
-  }, [modals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modals.userMenuOpen]);
 
   // CV dropdown outside click handler
   React.useEffect(() => {
@@ -287,7 +445,8 @@ export default function TopBar() {
       document.removeEventListener("keydown", handleKey);
       if (touchTimeout) clearTimeout(touchTimeout);
     };
-  }, [modals.listOpen, state.isScrollingInDropdown, modals, state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modals.listOpen, state.isScrollingInDropdown]);
 
   // Base selector outside click handler
   React.useEffect(() => {
@@ -326,7 +485,8 @@ export default function TopBar() {
       document.removeEventListener("keydown", handleKey);
       if (touchTimeout) clearTimeout(touchTimeout);
     };
-  }, [generator.baseSelectorOpen, generator]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generator.baseSelectorOpen]);
 
   // Ticker reset on visibility change
   React.useEffect(() => {
@@ -338,7 +498,8 @@ export default function TopBar() {
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Ticker reset on intersection
   React.useEffect(() => {
@@ -354,7 +515,8 @@ export default function TopBar() {
     }, { threshold: 0.6 });
     observer.observe(barRef.current);
     return () => observer.disconnect();
-  }, [state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Close dropdown on resize
   React.useEffect(() => {
@@ -363,7 +525,8 @@ export default function TopBar() {
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [modals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Don't render on auth page
   if (pathname === "/auth") {
@@ -396,9 +559,39 @@ export default function TopBar() {
     return null;
   }
 
-  // No CVs
+  // No CVs - Distinguer les différents cas
   if (state.items.length === 0) {
-    return null;
+    // Cas 1: Premier chargement terminé et aucun CV → ne pas afficher (EmptyState)
+    if (state.hasLoadedOnce) {
+      return null;
+    }
+
+    // Cas 2: Premier chargement en cours mais on n'a jamais eu de CV → ne pas afficher (évite flash)
+    if (!state.hadItemsOnceRef.current) {
+      return null;
+    }
+
+    // Cas 3: On avait des CV avant mais plus maintenant (race condition suppression) → skeleton
+    return (
+      <div
+        ref={barRef}
+        className="no-print fixed top-0 left-0 right-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden',
+          WebkitTransform: 'translate3d(0, 0, 0)',
+          transform: 'translate3d(0, 0, 0)',
+          pointerEvents: 'auto'
+        }}
+      >
+        <div className="w-full p-3 flex items-center justify-between">
+          <span className="text-sm font-medium text-white/60 animate-pulse drop-shadow-lg">
+            {t("topbar.loading")}
+          </span>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -436,6 +629,7 @@ export default function TopBar() {
           {/* CV Selector */}
           <div className="flex-1 min-w-[120px] md:min-w-[200px] md:max-w-none order-3 md:order-3">
             <button
+              data-onboarding="cv-selector"
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
@@ -494,7 +688,7 @@ export default function TopBar() {
                     className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-md shadow-2xl cv-dropdown-no-animation"
                   >
                     <ul
-                      className="max-h-[240px] overflow-y-auto py-1"
+                      className="max-h-[240px] overflow-y-auto custom-scrollbar py-1"
                       onScroll={() => {
                         state.setIsScrollingInDropdown(true);
                       }}
@@ -512,32 +706,65 @@ export default function TopBar() {
                         e.stopPropagation();
                       }}
                     >
-                      {state.items.map((it) => (
-                        <li key={it.file}>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              await operations.selectFile(it.file);
-                              modals.setListOpen(false);
-                            }}
-                            className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-white/25 text-white transition-colors duration-200 ${it.file === state.current ? "bg-white/20 border-l-2 border-emerald-400" : ""}`}
-                          >
-                            <span
-                              key={`dropdown-icon-${it.file}-${it.createdBy}`}
-                              className="flex h-6 w-6 items-center justify-center shrink-0"
-                            >
-                              {getCvIcon(it.createdBy, it.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
-                            </span>
-                            <ItemLabel
-                              item={it}
-                              className="leading-tight"
-                              tickerKey={state.tickerResetKey}
-                              withHyphen={false}
-                              t={t}
-                            />
-                          </button>
+                      {filteredItems.length === 0 && filter.hasActiveFilters ? (
+                        <li className="px-3 py-3 text-sm text-white/60 text-center italic">
+                          {t("topbar.filterNoResults")}
                         </li>
-                      ))}
+                      ) : (
+                        filteredItems.map((it) => {
+                          const isRecentlyGenerated = recentlyGeneratedCv && it.file === recentlyGeneratedCv;
+                          const isOnboardingStep4Cv = currentStep === 4 && it.file === onboardingState?.step4?.cvFilename;
+                          return (
+                          <li key={it.file}>
+                            <button
+                              type="button"
+                              data-cv-filename={it.file}
+                              onClick={async () => {
+                                // Si c'est le CV récemment généré OU le CV de l'onboarding step 4, émettre l'événement
+                                if (isRecentlyGenerated || isOnboardingStep4Cv) {
+                                  console.log('[TopBar] CV onboarding sélectionné, émission generatedCvOpened');
+                                  emitOnboardingEvent(ONBOARDING_EVENTS.GENERATED_CV_OPENED, {
+                                    cvFilename: it.file
+                                  });
+                                  // Nettoyer l'état de surbrillance si récent
+                                  if (isRecentlyGenerated) {
+                                    setRecentlyGeneratedCv(null);
+                                  }
+                                }
+
+                                await operations.selectFile(it.file);
+                                modals.setListOpen(false);
+                              }}
+                              className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-white/25 text-white transition-colors duration-200 ${
+                                it.file === state.current
+                                  ? "bg-white/20 border-l-2 border-emerald-400"
+                                  : ""
+                              } ${
+                                isRecentlyGenerated
+                                  ? "bg-emerald-500/30 border border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)] animate-pulse"
+                                  : isOnboardingStep4Cv
+                                  ? "bg-emerald-500/20"
+                                  : ""
+                              }`}
+                            >
+                              <span
+                                key={`dropdown-icon-${it.file}-${it.createdBy}`}
+                                className="flex h-6 w-6 items-center justify-center shrink-0"
+                              >
+                                {getCvIcon(it.createdBy, it.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
+                              </span>
+                              <ItemLabel
+                                item={it}
+                                className="leading-tight"
+                                tickerKey={state.tickerResetKey}
+                                withHyphen={false}
+                                t={t}
+                              />
+                            </button>
+                          </li>
+                          );
+                        })
+                      )}
                     </ul>
                   </div>
                 </>,
@@ -619,7 +846,7 @@ export default function TopBar() {
                       className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
                       onClick={() => {
                         modals.setUserMenuOpen(false);
-                        router.push("/account");
+                        window.location.href = "/account";
                       }}
                     >
                       {t("topbar.myAccount")}
@@ -628,7 +855,7 @@ export default function TopBar() {
                       className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
                       onClick={() => {
                         modals.setUserMenuOpen(false);
-                        router.push("/account/subscriptions");
+                        window.location.href = "/account/subscriptions";
                       }}
                     >
                       {t("topbar.subscriptions")}
@@ -660,6 +887,7 @@ export default function TopBar() {
           {/* Task Manager */}
           <div className="relative order-2 md:order-2">
             <button
+              data-onboarding="task-manager"
               ref={taskQueueButtonRef}
               onClick={() => {
                 if (window.innerWidth <= 990) {
@@ -687,6 +915,42 @@ export default function TopBar() {
               onClose={() => modals.setOpenTaskDropdown(false)}
               buttonRef={taskQueueButtonRef}
               className="hidden md:block"
+            />
+          </div>
+
+          {/* Filter Button */}
+          <div className="relative order-4 md:order-4">
+            <button
+              ref={filterButtonRef}
+              type="button"
+              onClick={() => filter.setFilterMenuOpen(!filter.filterMenuOpen)}
+              className={`rounded-lg border backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 transition-all duration-200 ${
+                filter.hasActiveFilters
+                  ? 'border-emerald-400 bg-emerald-500/30'
+                  : 'border-white/40 bg-white/20'
+              }`}
+              title={t("topbar.filter")}
+            >
+              <img src="/icons/filter.svg" alt={t("topbar.filter")} className="h-4 w-4" />
+              {filter.hasActiveFilters && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-400 text-[10px] text-gray-900 font-bold flex items-center justify-center">
+                  {filter.activeFilterCount}
+                </span>
+              )}
+            </button>
+
+            <FilterDropdown
+              isOpen={filter.filterMenuOpen}
+              onClose={() => filter.setFilterMenuOpen(false)}
+              buttonRef={filterButtonRef}
+              filters={filter.filters}
+              toggleType={filter.toggleType}
+              setLanguage={filter.setLanguage}
+              setDateRange={filter.setDateRange}
+              clearAllFilters={filter.clearAllFilters}
+              hasActiveFilters={filter.hasActiveFilters}
+              availableOptions={availableFilterOptions}
+              t={t}
             />
           </div>
 
@@ -718,6 +982,7 @@ export default function TopBar() {
           {/* Action Buttons */}
           {settings.feature_ai_generation && (
             <button
+              data-onboarding="ai-generate"
               onClick={generator.openGeneratorModal}
               className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-4 transition-all duration-200"
               type="button"
@@ -746,6 +1011,7 @@ export default function TopBar() {
           )}
           {settings.feature_export && (
             <button
+              data-onboarding="export"
               onClick={exportModal.openModal}
               className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7 transition-all duration-200"
               type="button"

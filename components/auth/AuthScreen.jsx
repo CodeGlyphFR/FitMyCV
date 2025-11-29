@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { SITE_TITLE } from "@/lib/site";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
-import AuthBackground from "./AuthBackground";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 
@@ -71,7 +70,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           setLoading(false);
           return;
         }
-        if (password.length < 12){
+        if (password.length < 8){
           setError(t("auth.errors.passwordLength"));
           setLoading(false);
           return;
@@ -132,8 +131,8 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
       }
 
       // Email vérifié, rediriger vers la page d'accueil
-      router.replace("/");
-      router.refresh();
+      // Utiliser window.location.href pour garantir l'affichage du loading screen
+      window.location.href = "/";
     } catch (submitError) {
       console.error(submitError);
       setError(t("auth.errors.unexpected"));
@@ -162,7 +161,6 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
 
   return (
     <>
-      <AuthBackground />
       <div className="relative z-10 min-h-screen flex items-center justify-center px-6 py-8 ios-auth-container">
         <div className="w-full max-w-lg">
           <div className="rounded-3xl border-2 border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl p-6 space-y-6">

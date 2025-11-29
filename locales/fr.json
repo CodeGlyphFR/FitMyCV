@@ -30,7 +30,7 @@
     },
     "passwordRules": {
       "title": "Votre mot de passe doit contenir :",
-      "minLength": "Au moins 12 caractères",
+      "minLength": "Au moins 8 caractères",
       "uppercase": "Au moins une majuscule",
       "lowercase": "Au moins une minuscule",
       "numbers": "Au moins un chiffre",
@@ -41,7 +41,7 @@
       "nameRequired": "Renseignez votre prénom et nom.",
       "firstNameRequired": "Renseignez votre prénom.",
       "lastNameRequired": "Renseignez votre nom.",
-      "passwordLength": "Le mot de passe doit contenir au moins 12 caractères.",
+      "passwordLength": "Le mot de passe doit contenir au moins 8 caractères.",
       "passwordMismatch": "Les mots de passe ne correspondent pas.",
       "createFailed": "Impossible de créer votre compte.",
       "invalidCredentials": "Identifiants invalides.",
@@ -76,7 +76,38 @@
       "rapid": "Rapide",
       "medium": "Moyen",
       "deep": "Approfondi"
-    }
+    },
+    "filter": "Filtrer",
+    "filterTitle": "Filtres",
+    "filterCvType": "Type de CV",
+    "filterCvLanguage": "Langue du CV",
+    "filterDateRange": "Date de création",
+    "filterClearAll": "Effacer les filtres",
+    "filterNoResults": "Aucun CV ne correspond aux filtres",
+    "cvTypes": {
+      "generate-cv": "Avec offre",
+      "import-pdf": "Importé",
+      "manual": "Ajouté",
+      "translate-cv": "Traduit",
+      "improve-cv": "Amélioré",
+      "generate-cv-job-title": "Depuis titre",
+      "create-template": "Modèle IA"
+    },
+    "dateRanges": {
+      "24h": "24 heures",
+      "7d": "7 jours",
+      "30d": "30 jours",
+      "all": "Tout"
+    },
+    "cvLanguages": {
+      "fr": "Français",
+      "en": "English",
+      "es": "Español",
+      "de": "Allemand",
+      "all": "Toutes"
+    },
+    "filterSelectLanguage": "Sélectionner",
+    "filterSelectDate": "Sélectionner"
   },
   "jobTitleGenerator": {
     "notifications": {
@@ -340,7 +371,12 @@
     "Proficient": "Compétent"
   },
   "footer": {
-    "cookieManagement": "Gestion des cookies"
+    "cookieManagement": "Gestion des cookies",
+    "copyright": "© 2025 FitMyCv.ai",
+    "about": "À propos",
+    "cookies": "Cookies",
+    "terms": "Conditions générales",
+    "privacy": "Politique de confidentialité"
   },
   "cookies": {
     "banner": {
@@ -421,6 +457,66 @@
         "withdraw": "Droit de retirer votre consentement à tout moment"
       },
       "examplesLabel": "Exemples :"
+    },
+    "registry": {
+      "title": "📋 Registre détaillé des cookies",
+      "description": "Liste complète de tous les cookies susceptibles d'être utilisés sur ce site, par catégorie.",
+      "duration": "Durée :",
+      "type": "Type :",
+      "note": "Les cookies tiers ne seront déposés que si vous donnez votre consentement explicite. Les cookies nécessaires sont essentiels au fonctionnement du site et ne peuvent être refusés.",
+      "durations": {
+        "6_months": "6 mois",
+        "30_days": "30 jours",
+        "session": "Session",
+        "1_year": "1 an",
+        "2_years": "2 ans",
+        "24_hours": "24 heures",
+        "1_minute": "1 minute",
+        "3_months": "3 mois",
+        "13_months": "13 mois",
+        "15_minutes": "15 minutes"
+      },
+      "purposes": {
+        "cookie_consent": "Stocke les préférences de consentement aux cookies de l'utilisateur",
+        "session_token": "Authentification - Maintient la session utilisateur active",
+        "secure_session_token": "Authentification sécurisée en production - Token de session",
+        "csrf_protection": "Sécurité - Protection contre les attaques CSRF",
+        "secure_csrf_protection": "Sécurité renforcée en production - Protection CSRF",
+        "auth_callback": "Redirection après authentification",
+        "theme_preference": "Mémorise le thème choisi par l'utilisateur (clair/sombre)",
+        "language_preference": "Mémorise la langue choisie par l'utilisateur",
+        "ga_unique_users": "Google Analytics - Distingue les utilisateurs uniques",
+        "ga_distinguish_users": "Google Analytics - Distingue les utilisateurs",
+        "ga_rate_limit": "Google Analytics - Limite le taux de requêtes",
+        "ga4_session_state": "Google Analytics 4 - Persistance de l'état de la session",
+        "fb_pixel_tracking": "Facebook Pixel - Suivi des conversions et publicité ciblée",
+        "fb_cross_site_tracking": "Facebook - Stocke et suit les visites sur plusieurs sites web",
+        "fb_targeted_ads": "Facebook - Diffusion de publicités ciblées",
+        "google_ads_retargeting": "Google Ads - Suivi publicitaire et reciblage",
+        "google_ads_cookie_test": "Google Ads - Teste si le navigateur accepte les cookies"
+      }
+    },
+    "history": {
+      "title": "📜 Historique de vos consentements",
+      "records": "enregistrement",
+      "recordsPlural": "enregistrements",
+      "gdprCompliant": "Conforme RGPD",
+      "noHistory": "Aucun historique de consentement disponible. Vos préférences futures seront enregistrées ici.",
+      "loadingError": "Erreur de chargement",
+      "loadError": "Impossible de charger l'historique",
+      "browser": "Navigateur :",
+      "gdprNote": "Cet historique prouve que vous avez donné (ou refusé) votre consentement de manière éclairée. Ces données sont conservées pour audit et peuvent être supprimées en supprimant votre compte.",
+      "actions": {
+        "created": "Créé",
+        "updated": "Modifié",
+        "revoked": "Révoqué"
+      },
+      "categories": {
+        "necessary": "Nécessaires",
+        "functional": "Fonctionnels",
+        "analytics": "Analytiques",
+        "marketing": "Marketing"
+      }
     }
   },
   "header": {
@@ -606,6 +702,125 @@
   "cvImprovement": {
     "improving": "Amélioration en cours..."
   },
+  "account": {
+    "meta": {
+      "title": "Mon compte - FitMyCv.ai",
+      "description": "Gérez vos informations personnelles et vos préférences"
+    },
+    "backToCvs": "Retour",
+    "title": "Mon compte",
+    "subtitle": "Gérez vos informations personnelles et vos préférences de sécurité.",
+    "loading": "Chargement...",
+    "profile": {
+      "title": "Informations du profil",
+      "fullName": "Nom complet",
+      "fullNamePlaceholder": "Entrez votre nom complet",
+      "email": "Adresse email",
+      "emailPlaceholder": "Entrez votre adresse email",
+      "emailDisabled": "Gérée par {provider}",
+      "saveButton": "Enregistrer les modifications",
+      "saving": "Enregistrement...",
+      "success": "Profil mis à jour avec succès !",
+      "emailSuccess": "Votre adresse email a été modifiée avec succès !",
+      "noChanges": "Aucun changement détecté.",
+      "errors": {
+        "updateFailed": "Impossible de mettre à jour le profil.",
+        "unexpected": "Erreur inattendue."
+      }
+    },
+    "security": {
+      "title": "Sécurité",
+      "oauthInfo": "Votre compte est géré par {provider}. Le mot de passe est géré par ce fournisseur.",
+      "currentPassword": "Mot de passe actuel",
+      "currentPasswordPlaceholder": "Entrez votre mot de passe actuel",
+      "currentPasswordHint": "Laissez vide si vous n'avez jamais défini de mot de passe.",
+      "newPassword": "Nouveau mot de passe",
+      "newPasswordPlaceholder": "Entrez un nouveau mot de passe",
+      "confirmPassword": "Confirmation",
+      "confirmPasswordPlaceholder": "Confirmez le nouveau mot de passe",
+      "updateButton": "Mettre à jour le mot de passe",
+      "updating": "Mise à jour...",
+      "success": "Mot de passe mis à jour avec succès !",
+      "passwordStrength": {
+        "label": "Force du mot de passe",
+        "weak": "Faible",
+        "medium": "Moyen",
+        "strong": "Fort",
+        "veryStrong": "Très fort"
+      },
+      "passwordRules": {
+        "title": "Règles de sécurité",
+        "minLength": "Au moins 8 caractères",
+        "uppercase": "Au moins une majuscule",
+        "lowercase": "Au moins une minuscule",
+        "numbers": "Au moins un chiffre",
+        "specialChars": "Au moins un caractère spécial"
+      },
+      "errors": {
+        "newPasswordRequired": "Renseignez un nouveau mot de passe.",
+        "minLength": "Le mot de passe doit contenir au moins 8 caractères.",
+        "mismatch": "Les mots de passe ne correspondent pas.",
+        "updateFailed": "Impossible de mettre à jour le mot de passe.",
+        "unexpected": "Erreur inattendue."
+      }
+    },
+    "tutorial": {
+      "title": "Tutoriel d'intégration",
+      "description": "Relancez le tutoriel de prise en main pour redécouvrir les fonctionnalités de FitMyCv.ai",
+      "resetButton": "Relancer le tutoriel",
+      "resetting": "Réinitialisation...",
+      "success": "Le tutoriel a été réinitialisé. Redirection...",
+      "errors": {
+        "resetFailed": "Erreur lors de la réinitialisation du tutoriel."
+      }
+    },
+    "deleteAccount": {
+      "title": "Supprimer le compte",
+      "description": "Cette action est définitive et sans remboursement. Tous vos CV, crédits et données seront effacés. Votre abonnement sera immédiatement annulé et vos données bancaires seront supprimées. Tapez votre mot de passe pour continuer.",
+      "passwordLabel": "Mot de passe",
+      "passwordHint": "Tous vos CV (dossier utilisateur inclus) seront supprimés. Cette opération est irréversible. Si vous avez créé le compte via un fournisseur externe, définissez d'abord un mot de passe dans la section Sécurité.",
+      "deleteButton": "Supprimer mon compte",
+      "deleting": "Suppression...",
+      "modal": {
+        "title": "Confirmer la suppression du compte",
+        "description": "Vous êtes sur le point de supprimer définitivement votre compte. Cette action est irréversible.",
+        "consequences": {
+          "noRefund": "Aucun remboursement ne sera effectué",
+          "loseCredits": "Vous perdrez tous vos crédits restants",
+          "cancelSubscription": "Votre abonnement sera immédiatement annulé",
+          "deleteCvs": "Tous vos CV seront définitivement supprimés",
+          "deleteBankData": "Vos données bancaires seront supprimées de nos serveurs"
+        },
+        "confirmCheckbox": "J'ai compris que cette action est irréversible et que je ne serai pas remboursé",
+        "cancelButton": "Annuler",
+        "confirmButton": "Supprimer définitivement",
+        "deleting": "Suppression...",
+        "errors": {
+          "passwordRequired": "Veuillez saisir votre mot de passe pour confirmer la suppression.",
+          "deleteFailed": "Suppression impossible. Réessayez.",
+          "unexpected": "Erreur inattendue lors de la suppression du compte."
+        }
+      }
+    }
+  },
+  "legal": {
+    "back": "Retour",
+    "lastUpdated": "Dernière mise à jour :",
+    "terms": {
+      "meta": {
+        "title": "Conditions Générales de Vente - FitMyCv.ai",
+        "description": "Conditions générales de vente et d'utilisation du service"
+      },
+      "title": "Conditions Générales de Vente"
+    },
+    "privacy": {
+      "meta": {
+        "title": "Politique de confidentialité - FitMyCv.ai",
+        "description": "Politique de confidentialité et protection des données personnelles"
+      },
+      "title": "Politique de confidentialité"
+    }
+  },
   "admin": {
     "subscriptionPlans": {
       "tiers": {
@@ -621,7 +836,7 @@
     "page": {
       "title": "Abonnements & Crédits",
       "description": "Gérez votre abonnement, achetez des crédits et consultez votre historique.",
-      "backToCvs": "Retour aux CV",
+      "backToCvs": "Retour",
       "loadingTitle": "Chargement...",
       "errorLoading": "Erreur lors du chargement des données",
       "tabs": {
@@ -860,6 +1075,8 @@
     "invoices": {
       "title": "Factures",
       "noInvoices": "Aucune facture pour le moment",
+      "noPdfInvoices": "Aucune facture PDF disponible",
+      "noPdfInvoicesHint": "Les factures PDF sont générées pour les abonnements. Les paiements de crédits sans abonnement n'ont pas de PDF.",
       "errorLoading": "Erreur lors du chargement des factures",
       "creditBanner": {
         "title": "💰 Crédit de facturation disponible",
@@ -897,6 +1114,443 @@
         "next": "Suivant",
         "page": "Page {current} sur {total}"
       }
+    }
+  },
+  "onboarding": {
+    "common": {
+      "buttons": {
+        "skip": "Passer",
+        "previous": "Précédent",
+        "next": "Suivant",
+        "understood": "Compris",
+        "understoodExclaim": "Compris !",
+        "start": "Commencer !",
+        "close": "Fermer"
+      },
+      "aria": {
+        "closeModal": "Fermer le modal",
+        "closeTooltip": "Fermer le tooltip",
+        "closeAndStartOnboarding": "Fermer et commencer l'onboarding",
+        "expandChecklist": "Agrandir",
+        "collapseChecklist": "Réduire",
+        "closeGuide": "Fermer le guide",
+        "goToScreen": "Aller à l'écran {current} sur {total}",
+        "screenReaderStep": "Étape {current} sur {total}"
+      },
+      "checklist": {
+        "title": "Guide de démarrage",
+        "inProgress": "En cours",
+        "skipTutorial": "Passer le tutoriel",
+        "completed": "Tutoriel complété !",
+        "confirmSkip": "Êtes-vous sûr de vouloir passer le tutoriel ? Vous pourrez le relancer depuis les paramètres.",
+        "progressLabel": "Progression du tutoriel"
+      }
+    },
+    "steps": {
+      "step1": {
+        "title": "Mode édition",
+        "description": "Découvrez le mode édition pour modifier facilement votre CV",
+        "tooltip": "👉 Cliquez ici pour éditer votre CV !",
+        "modal": {
+          "screen1": {
+            "title": "Créez votre CV \"maître\"",
+            "description": "L'idée est simple : créez un CV le plus complet possible avec toutes vos expériences, compétences et formations. Plus votre CV sera détaillé, plus l'IA pourra le filtrer intelligemment pour chaque offre d'emploi.",
+            "checklist": [
+              "Un seul CV complet à maintenir",
+              "L'IA extrait le meilleur pour chaque offre",
+              "Un gain de temps énorme"
+            ],
+            "tip": "Pensez \"Mega CV\" : listez tout, l'IA s'occupe de trier pour vous. Faites-le une seule fois, la magie opère ensuite."
+          },
+          "screen2": {
+            "title": "Vous avez le contrôle total !",
+            "description": "Votre CV vous appartient. Modifiez-le à votre guise, section par section.",
+            "subtitle": "3 actions à votre disposition :",
+            "actions": {
+              "edit": {
+                "title": "Modifier",
+                "description": "Éditez le contenu de n'importe quelle section en un clic"
+              },
+              "delete": {
+                "title": "Supprimer",
+                "description": "Retirez ce qui n'est plus pertinent"
+              },
+              "add": {
+                "title": "Ajouter",
+                "description": "Complétez votre CV avec de nouvelles expériences, formations, langues, projets ou extras"
+              }
+            },
+            "tip": "Plus votre CV est riche, plus l'IA a de matière pour l'adapter."
+          },
+          "screen3": {
+            "title": "Deux sections à ne pas négliger",
+            "blocks": {
+              "projects": {
+                "title": "Projets",
+                "description": "Listez vos projets professionnels ET personnels. Un side-project, une contribution open source, un projet étudiant... tout compte pour l'IA."
+              },
+              "extra": {
+                "title": "Extra",
+                "description": "Renseignez vos informations complémentaires : hobbies et centres d'intérêt, disponibilité, préférence télétravail, mobilité et déplacements, permis de conduire..."
+              }
+            },
+            "tip": "Ces infos aident l'IA à mieux cibler les offres qui vous correspondent."
+          }
+        }
+      },
+      "step2": {
+        "title": "Génération IA",
+        "description": "Générer un CV adapté avec l'IA",
+        "tooltip": "✨ Adaptez votre CV aux offres grâce à l'IA",
+        "modal": {
+          "screen1": {
+            "title": "Générez des CV sur-mesure en quelques clics",
+            "description": "Le cœur de FitMyCV : vos offres d'emploi. Ajoutez-les, l'IA s'occupe du reste. Elle analyse chaque offre, extrait les informations clés et adapte votre CV automatiquement.",
+            "subtitle": "2 façons de commencer :",
+            "blocks": {
+              "existing": {
+                "title": "Partir d'un CV existant",
+                "description": "Sélectionnez votre CV le plus complet. Plus il est détaillé, plus l'IA pourra l'adapter précisément à chaque offre d'emploi."
+              },
+              "template": {
+                "title": "Créer un template depuis l'offre",
+                "description": "Générez un modèle de CV basé sur l'offre d'emploi pour vous inspirer et composer le vôtre."
+              }
+            },
+            "tip": "Pas besoin de copier-coller le contenu des offres. Collez les liens ou importez les PDF, l'IA extrait tout automatiquement."
+          },
+          "screen2": {
+            "title": "Une offre d'emploi = Un CV adapté",
+            "description": "Ajoutez autant d'offres que vous voulez. Pour chacune, l'IA génère un CV parfaitement adapté.",
+            "blocks": {
+              "url": {
+                "title": "Par URL",
+                "description": "Collez les liens de vos offres d'emploi. L'IA ouvre chaque page et extrait les informations automatiquement."
+              },
+              "pdf": {
+                "title": "Par PDF",
+                "description": "Importez les offres qu'on vous a envoyées ou que vous avez sauvegardées."
+              }
+            },
+            "historyBlock": {
+              "title": "Historique",
+              "description": "Retrouvez toutes les offres déjà utilisées. Réutilisez-les pour générer de nouveaux CV sans les rechercher à nouveau."
+            },
+            "subtitle2": "3 niveaux d'analyse :",
+            "analysisLevels": {
+              "rapid": {
+                "title": "Rapide",
+                "description": "Adaptation essentielle"
+              },
+              "normal": {
+                "title": "Normal",
+                "description": "Analyse complète"
+              },
+              "deep": {
+                "title": "Approfondi",
+                "description": "Optimisation maximale"
+              }
+            }
+          },
+          "screen3": {
+            "title": "L'IA adapte, elle n'invente rien",
+            "description": "L'IA ne fabrique pas de fausses expériences. Elle filtre votre CV générique pour ne garder que ce qui compte pour l'offre d'emploi.",
+            "subtitle": "Concrètement, l'IA va :",
+            "checklist": [
+              "Filtrer les expériences et compétences pertinentes pour l'offre",
+              "Retirer ce qui est inutile pour ne pas surcharger le CV",
+              "Reformuler avec le vocabulaire de l'offre d'emploi (ATS-friendly)",
+              "Détecter les compétences manquantes justifiables par votre parcours",
+              "Déterminer votre niveau pour chaque compétence ajoutée"
+            ],
+            "tip": "Résultat : un CV ciblé, allégé et parfaitement aligné avec ce que recherche le recruteur."
+          }
+        }
+      },
+      "step3": {
+        "title": "Task Manager",
+        "description": "Suivre la progression de vos tâches en arrière-plan",
+        "tooltip": "🔄 Votre CV est en cours de génération. Suivez l'avancement ici."
+      },
+      "step4": {
+        "title": "Ouverture du CV généré",
+        "description": "Ouvrir et consulter votre CV généré",
+        "tooltip": "✅ Votre nouveau CV est prêt ! Cliquez ici pour l'ouvrir"
+      },
+      "step5": {
+        "title": "Score de match",
+        "description": "Calculer la compatibilité avec une offre d'emploi",
+        "tooltip": "🎯 Calculez la compatibilité de votre CV avec une offre d'emploi",
+        "fallbackMessage": "Cette étape nécessite une offre d'emploi associée. Voulez-vous la passer ?"
+      },
+      "step6": {
+        "title": "Optimisation IA",
+        "description": "Optimiser le CV avec suggestions IA",
+        "tooltip": "🚀 Optimisez votre CV pour augmenter votre score",
+        "modal": {
+          "screen1": {
+            "title": "Mesurez votre compatibilité avec l'offre",
+            "description": "Pour chaque CV généré, obtenez un score de match qui indique à quel point votre profil correspond aux attentes du recruteur.",
+            "subtitle": "L'analyse détaillée vous montre :",
+            "blocks": {
+              "breakdown": {
+                "title": "Breakdown du score",
+                "description": "Comprenez ce qui fonctionne et ce qui peut être amélioré"
+              },
+              "validated": {
+                "title": "Compétences validées",
+                "description": "Ce que votre CV couvre déjà pour l'offre d'emploi"
+              },
+              "missing": {
+                "title": "Compétences manquantes",
+                "description": "Ce que le recruteur recherche et qui n'apparaît pas encore"
+              },
+              "improvements": {
+                "title": "Points d'amélioration",
+                "description": "Des recommandations concrètes pour booster votre score"
+              }
+            },
+            "tip": "Un score élevé = plus de chances d'être remarqué par le recruteur."
+          },
+          "screen2": {
+            "title": "Appliquez les améliorations instantanément",
+            "description": "Pas besoin de tout modifier manuellement. L'IA peut appliquer les recommandations directement dans votre CV en un seul clic.",
+            "checklist": [
+              "Reformulations automatiques",
+              "Ajout des compétences manquantes justifiables",
+              "Ajustement du vocabulaire pour l'offre d'emploi"
+            ],
+            "subtitle": "Transparence totale :",
+            "transparencyText": "Chaque modification est enregistrée dans l'historique avec sa justification. Vous savez exactement ce qui a changé et pourquoi.",
+            "tip": "Optimisez, vérifiez, exportez. Votre CV est prêt à postuler."
+          }
+        }
+      },
+      "step7": {
+        "title": "Historique",
+        "description": "Consulter l'historique des modifications IA",
+        "tooltip": "📝 Découvrez toutes les modifications apportées par l'IA"
+      },
+      "step8": {
+        "title": "Export PDF",
+        "description": "Exporter votre CV optimisé au format PDF",
+        "tooltip": "📄 Exportez votre CV optimisé au format PDF",
+        "modal": {
+          "screen1": {
+            "title": "Exportez un CV prêt à postuler",
+            "description": "Générez un PDF professionnel, au format standard sans photo, parfaitement lisible par les recruteurs et leurs outils ATS.",
+            "checklist": [
+              "Format universel reconnu par tous les ATS",
+              "Mise en page claire et professionnelle",
+              "Prêt à être envoyé en candidature"
+            ]
+          },
+          "screen2": {
+            "title": "Un export 100% personnalisable",
+            "description": "Sélectionnez ce que vous voulez inclure dans votre PDF : sections, expériences, formations, langues, projets... Vous décidez, on génère.",
+            "checklist": [
+              "Masquez les sections non pertinentes",
+              "Choisissez les expériences à afficher",
+              "Incluez ou non les livrables clés"
+            ],
+            "tip": "Un CV ciblé = plus d'impact auprès du recruteur."
+          }
+        },
+        "onComplete": {
+          "message": "🎉 Félicitations ! Vous maîtrisez maintenant toutes les fonctionnalités !"
+        }
+      }
+    },
+    "welcome": {
+      "screen1": {
+        "title": "Bienvenue sur FitMyCV 👋",
+        "description": "Bienvenue ! Ce tutoriel va vous apprendre les bases pour créer rapidement des CV adaptés à chaque offre.",
+        "checklist": [
+          "Un CV sur-mesure par offre",
+          "Format optimisé ATS*",
+          "Conçu pour convaincre les recruteurs",
+          "Prêt en quelques minutes"
+        ],
+        "atsExplanation": "ATS (Applicant Tracking System) : logiciel utilisé par les recruteurs pour filtrer automatiquement les CV. Un format optimisé ATS augmente vos chances d'être vu.",
+        "solution": {
+          "title": "Astuce",
+          "description": "Collez simplement les liens de vos offres, on analyse tout automatiquement !"
+        }
+      },
+      "screen2": {
+        "title": "Pourquoi vos candidatures restent-elles sans réponse ?",
+        "problems": [
+          {
+            "emoji": "😤",
+            "title": "Des dizaines de CV envoyés, zéro réponse",
+            "description": "Vous passez des heures à postuler mais n'obtenez que du silence."
+          },
+          {
+            "emoji": "🤖",
+            "title": "Votre CV doit d'abord convaincre un logiciel",
+            "description": "88% des grandes entreprises utilisent des systèmes ATS qui analysent structure et mots-clés avant qu'un humain ne voie votre CV."
+          },
+          {
+            "emoji": "👤",
+            "title": "Puis séduire un recruteur en quelques secondes",
+            "description": "S'il passe le filtre, un recruteur le parcourt rapidement pour décider qui rencontrer."
+          },
+          {
+            "emoji": "🎯",
+            "title": "Le défi : réussir les deux avec un CV générique",
+            "description": "Mission impossible sans adapter votre CV à chaque offre."
+          }
+        ],
+        "solution": {
+          "title": "FitMyCV résout ce double défi",
+          "description": "Notre IA adapte votre CV pour passer les filtres automatiques ET capter l'attention des recruteurs. Un CV sur-mesure par offre, en quelques clics, pour augmenter drastiquement vos chances d'obtenir un premier entretien."
+        }
+      },
+      "screen3": {
+        "title": "Prêt pour une visite de 2 minutes ? ⏱️",
+        "subtitle": "Découvrez les 5 fonctionnalités qui vont changer votre façon de postuler",
+        "features": [
+          {
+            "emoji": "✏️",
+            "title": "Créer et éditer votre CV",
+            "description": "Interface intuitive et format optimisé ATS"
+          },
+          {
+            "emoji": "🤖",
+            "title": "Générer avec l'IA",
+            "description": "CV adapté automatiquement à chaque offre d'emploi"
+          },
+          {
+            "emoji": "📊",
+            "title": "Calculer votre score",
+            "description": "Mesurez votre compatibilité avec une offre"
+          },
+          {
+            "emoji": "⚡",
+            "title": "Optimiser en 1 clic",
+            "description": "L'IA améliore votre CV automatiquement"
+          },
+          {
+            "emoji": "📄",
+            "title": "Exporter en format pro",
+            "description": "PDF parfait pour postuler partout"
+          }
+        ],
+        "tip": "Suivez la visite, vous créerez votre premier CV juste après !"
+      }
+    },
+    "completion": {
+      "screen1": {
+        "title": "Félicitations, vous êtes prêt !",
+        "description": "Vous maîtrisez maintenant FitMyCV. Créez des CV sur-mesure, calculez votre score de match, optimisez en un clic et exportez des PDF professionnels.",
+        "checklist": [
+          "Mode édition maîtrisé",
+          "Génération IA découverte",
+          "Score et optimisation compris",
+          "Export PDF prêt à l'emploi"
+        ],
+        "highlight": "Il est temps de décrocher votre prochain entretien !"
+      },
+      "screen2": {
+        "title": "Tout ce que vous pouvez faire maintenant",
+        "description": "FitMyCV vous offre plusieurs façons de créer et gérer vos CV.",
+        "features": {
+          "import": {
+            "title": "Importer un CV existant",
+            "description": "Ajoutez vos CV en PDF ou Word, l'IA les adapte au format optimisé"
+          },
+          "create": {
+            "title": "Créer un CV vierge",
+            "description": "Partez de zéro et construisez votre CV section par section"
+          },
+          "generate": {
+            "title": "Générer un CV modèle",
+            "description": "Tapez n'importe quel titre de poste, l'IA génère un CV fictif pour vous inspirer"
+          },
+          "delete": {
+            "title": "Supprimer un CV",
+            "description": "Faites le ménage dans vos CV en un clic"
+          },
+          "translate": {
+            "title": "Traduire votre CV",
+            "description": "Convertissez votre CV en français ou en anglais en un clic"
+          }
+        },
+        "tip": "Astuce : La barre de recherche fonctionne aussi avec des titres fictifs pour explorer de nouvelles carrières !"
+      },
+      "screen3": {
+        "title": "Bientôt dans FitMyCV",
+        "description": "On ne s'arrête pas là. Voici ce qui arrive prochainement pour vous aider à décrocher le job de vos rêves.",
+        "comingSoon": [
+          {
+            "emoji": "🔍",
+            "title": "Analyse d'offres",
+            "description": "Comprenez exactement ce que cherche le recruteur"
+          },
+          {
+            "emoji": "✉️",
+            "title": "Lettres de motivation",
+            "description": "L'IA les rédige pour vous"
+          },
+          {
+            "emoji": "🎤",
+            "title": "Préparation RH",
+            "description": "Simulez vos entretiens"
+          },
+          {
+            "emoji": "📋",
+            "title": "Suivi candidatures",
+            "description": "Tout au même endroit"
+          }
+        ],
+        "tip": "Une idée de fonctionnalité ? Dites-le nous !"
+      }
+    }
+  },
+  "optimization": {
+    "title": "Analyse et Optimisation",
+    "matchScore": "Score de correspondance",
+    "scoreBreakdown": "Détail du score",
+    "suggestions": "Suggestions d'amélioration",
+    "missingSkills": "Compétences manquantes",
+    "matchingSkills": "Compétences correspondantes",
+    "technicalSkills": "Compétences techniques",
+    "experience": "Expérience",
+    "education": "Formation",
+    "softSkills": "Soft skills & langues",
+    "priority": "Priorité",
+    "impact": "Impact",
+    "high": "Haute",
+    "medium": "Moyenne",
+    "low": "Basse",
+    "noData": "Aucune donnée d'optimisation disponible",
+    "loading": "Chargement...",
+    "close": "Fermer",
+    "optimize": "Optimiser",
+    "autoImprove": "Améliorer automatiquement",
+    "improving": "Amélioration en cours...",
+    "improveSuccess": "CV amélioré ! Rechargement...",
+    "improvementInProgress": "Amélioration en cours...",
+    "calculatingScore": "Calcul du score en cours...",
+    "showMore": "autres",
+    "showLess": "Voir moins",
+    "languageNote": "L'analyse et les suggestions sont affichées dans la langue du CV, pas dans la langue de l'interface."
+  },
+  "changes": {
+    "title": "Historique des modifications",
+    "button": "📝 Historique",
+    "section": "Section",
+    "change": "Modification",
+    "reason": "Raison",
+    "close": "Fermer",
+    "noChanges": "Aucune modification enregistrée",
+    "sections": {
+      "summary": "Résumé",
+      "skills": "Compétences",
+      "experience": "Expérience",
+      "education": "Formation",
+      "languages": "Langues",
+      "projects": "Projets"
     }
   }
 }

@@ -8,12 +8,6 @@ const nextConfig = {
     NEXT_PUBLIC_APP_VERSION: version,
     NEXT_PUBLIC_SITE_NAME: SITE_NAME,
   },
-  // Autoriser explicitement les origines en développement
-  // IMPORTANT: Pour autoriser des IPs/domaines spécifiques, utilisez la variable d'environnement
-  // ALLOWED_ORIGINS="http://localhost:3000,http://your-ip:3000" dans .env.local
-  allowedDevOrigins: process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
-    : ["http://localhost:3000", "http://localhost:3001"],
   // Optimisations pour LCP et CLS
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -22,7 +16,7 @@ const nextConfig = {
     minimumCacheTTL: 60,
   },
   // Compiler les modules pour améliorer les performances
-  transpilePackages: [],
+  transpilePackages: ['swiper'],
   // Optimiser la compression
   compress: true,
   // Optimiser le chunking

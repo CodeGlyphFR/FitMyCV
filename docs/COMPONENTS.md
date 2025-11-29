@@ -35,6 +35,7 @@ components/
 ├── feedback/         # Système de feedback (3 composants)
 ├── account/          # Paramètres compte (1 composant)
 ├── notifications/    # Notifications (2 composants)
+├── onboarding/       # Tutoriel d'intégration (7 composants)
 ├── [CV]              # Affichage CV (10 composants)
 └── [Providers]       # Context providers (8 composants)
 ```
@@ -847,6 +848,48 @@ Provider de rafraîchissement en temps réel (SSE).
 
 ---
 
+### OnboardingProvider.jsx
+
+Provider du système de tutoriel d'intégration (7 étapes).
+
+**Localisation** : `components/onboarding/OnboardingProvider.jsx`
+
+**Context** :
+
+```javascript
+{
+  currentStep: number,        // 0-7 (0 = pas commencé)
+  completedSteps: number[],   // Étapes complétées
+  isActive: boolean,          // Tutoriel en cours
+  hasCompleted: boolean,      // Tutoriel terminé
+  startOnboarding: () => void,
+  markStepComplete: (step) => void,
+  skipOnboarding: () => void,
+  completeOnboarding: () => void,
+  resetOnboarding: () => void
+}
+```
+
+**Composants associés** :
+
+- `OnboardingOrchestrator.jsx` : Gère l'affichage des étapes (modals, tooltips, pulsing dots)
+- `OnboardingModal.jsx` : Modal carousel pour les explications
+- `OnboardingCompletionModal.jsx` : Modal de fin avec présentation des fonctionnalités avancées
+- `ChecklistPanel.jsx` : Panel flottant de progression (disparaît après complétion)
+- `OnboardingTooltip.jsx` : Tooltips positionnés
+- `PulsingDot.jsx` : Point rouge pulsant pour attirer l'attention
+
+**Flux de complétion** :
+
+1. Utilisateur termine step 7 (export PDF)
+2. Animation confetti
+3. Modal carrousel présente les fonctionnalités avancées (recherche, import, création manuelle)
+4. Fermeture du modal → `completeOnboarding()` appelé
+5. ChecklistPanel disparaît
+6. Date de complétion visible dans Account Settings
+
+---
+
 ## Subscription & Billing Components
 
 Composants de la page abonnements (`/account/subscriptions`).
@@ -1036,12 +1079,16 @@ Historique des transactions de crédits.
 
 ### InvoicesTable.jsx
 
-Historique des factures Stripe (abonnements + packs crédits).
+Historique des factures Stripe avec PDF disponible.
+
+**Filtrage automatique** :
+- Affiche uniquement les factures avec PDF (filtre les PaymentIntents sans Invoice)
+- Compteurs de filtres optimisés avec `useMemo` pour les performances
 
 **Sources** :
 
-- Invoices Stripe (abonnements)
-- PaymentIntents Stripe (packs crédits)
+- Invoices Stripe (abonnements) - ont toujours un PDF
+- PaymentIntents Stripe avec Invoice créée (packs crédits) - ont un PDF si Invoice générée
 
 **Colonnes** :
 
@@ -1049,7 +1096,11 @@ Historique des factures Stripe (abonnements + packs crédits).
 - Type (👑 Abonnement / 💎 Crédits)
 - Montant
 - Statut (Payé / En attente / Annulé)
-- Actions (Télécharger PDF pour abonnements)
+- Actions (Télécharger PDF - présent pour toutes les factures affichées)
+
+**États vides intelligents** :
+- Aucune facture : "Aucune facture pour le moment"
+- Factures sans PDF : "Aucune facture PDF disponible" + explication
 
 **Responsive** :
 
@@ -1097,17 +1148,29 @@ Affichage du match score avec indicateur circulaire.
 
 ### CVImprovementPanel.jsx
 
-Panel d'amélioration CV avec suggestions.
+Modal d'optimisation CV avec score, breakdown et suggestions d'amélioration.
 
 **Props** :
 
 ```javascript
 {
-  suggestions: Array<Suggestion>,
-  onOptimize: () => void,
-  optimiseStatus: 'idle' | 'inprogress' | 'failed'
+  cvFile: string // Nom du fichier CV
 }
 ```
+
+**Design** : Modal solide (non glassmorphism) avec fond `bg-[rgb(2,6,23)]`, inspiré du WelcomeModal.
+
+**Structure** :
+- Header avec icône BarChart3 + titre + bouton X + divider
+- Content scrollable : Score circulaire animé, breakdown par catégorie, suggestions prioritaires
+- Skills section : Missing skills (rouge) + Matching skills (vert)
+- Footer séparé avec divider + boutons action
+
+**Caractéristiques techniques** :
+- Portal custom via `createPortal` (pas Modal.jsx)
+- Focus trap + focus restoration
+- iOS scroll lock avec `touchAction: 'none'`
+- Protection backdrop click pendant scroll (`isDraggingRef`)
 
 ---
 

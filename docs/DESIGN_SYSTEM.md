@@ -264,7 +264,7 @@ max-w-2xl: 672px  /* Content max-width */
 
 ### Modals
 
-**Structure complète** :
+**Variante Glassmorphism** (Modal.jsx - défaut) :
 ```jsx
 {/* Backdrop */}
 <div className="fixed inset-0 z-[10002] bg-black/50">
@@ -278,6 +278,44 @@ max-w-2xl: 672px  /* Content max-width */
     <div className="text-white/90 overflow-y-auto flex-1 px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
   </div>
 </div>
+```
+
+**Variante Solide** (WelcomeModal, CVImprovementPanel) :
+```jsx
+{/* Backdrop */}
+<div className="fixed inset-0 z-[10002] bg-black/70">
+  {/* Container - fond solide */}
+  <div className="relative z-10 w-full max-w-4xl bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl flex flex-col max-h-[calc(100vh-2rem)]">
+    {/* Header avec icône */}
+    <div className="flex items-center justify-between p-4 md:p-6">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+          <Icon className="w-5 h-5 text-emerald-400" />
+        </div>
+        <h2 className="text-lg font-bold text-white">Titre</h2>
+      </div>
+      <button className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white">
+        <X className="w-5 h-5" />
+      </button>
+    </div>
+    <div className="border-b border-white/10" />
+
+    {/* Content scrollable */}
+    <div className="flex-1 overflow-y-auto p-4 md:p-6">
+
+    {/* Footer séparé */}
+    <div className="border-t border-white/10" />
+    <div className="p-4 md:p-6">
+  </div>
+</div>
+```
+
+**Cards intérieures (variante solide)** :
+```jsx
+/* Card neutre */      <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+/* Card succès */      <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-6">
+/* Card erreur */      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6">
+/* Card info */        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
 ```
 
 ### Badges
@@ -625,6 +663,105 @@ useEffect(() => {
     }
   `}>
 ```
+
+---
+
+## Background System
+
+### Global Background
+- **Component**: `components/GlobalBackground.jsx`
+- **Base Color**: `rgb(2, 6, 23)` (deep dark blue) - Accessible via Tailwind class `bg-app-bg`
+- **Animated Blobs**: 3 blobs animés avec Framer Motion (sky-500/emerald-500)
+- **Coverage**: Applied globally via `app/layout.jsx`, covers entire viewport
+- **Z-index**: `z-0` (lowest layer)
+- **Position**: `fixed inset-0` (stays in place during scroll)
+
+### Animated Background Features
+
+**Implementation** (Framer Motion):
+- 3 blobs avec gradients radiaux (dominance bleu sky-500)
+- Tailles responsives basées sur `window.innerHeight` (40-60% de la hauteur viewport)
+- Animations organiques avec trajectoires mathématiques (sin/cos)
+- Mouvements amples : ±200px horizontal, ±180px vertical
+- 6 keyframes pour trajectoires complexes
+- Durées : 25-31s (non synchronisées)
+- GPU-accelerated avec `willChange: 'transform, opacity'`
+
+**Blob Configuration**:
+```javascript
+const blobs = [
+  {
+    size: window.innerHeight * 0.6,  // Responsive
+    gradient: 'radial-gradient(circle, rgba(14, 165, 233, 0.45) 0%, ...)',
+    blur: 70,
+    position: { top: '10%', left: '5%' }
+  },
+  // 2 autres blobs...
+];
+```
+
+**Animation Properties**:
+- **Déplacement** : Trajectoires organiques basées sur sin/cos
+- **Scale** : 0.75 à 1.3 (pulsation)
+- **Rotation** : ±15° pour profondeur
+- **Opacity** : 0.35 à 0.85 dynamique
+
+### Background Usage Guidelines
+
+#### Full-Page Backgrounds
+```jsx
+// Use bg-app-bg for consistency (preferred)
+<div className="bg-app-bg">...</div>
+
+// Or use direct RGB value if Tailwind class not available
+<div className="bg-[rgb(2,6,23)]">...</div>
+```
+
+#### Modal/Overlay Backgrounds
+For modals and overlays that need darker contrast:
+```jsx
+// Darker overlay for modals
+<div className="bg-gray-900/95 backdrop-blur-xl">...</div>
+
+// Dropdown menus
+<div className="bg-gray-900/98 backdrop-blur-sm">...</div>
+```
+
+### Background Hierarchy
+
+1. **GlobalBackground** (`z-0`) - Base `rgb(2,6,23)` + 3 blobs animés
+2. **Main Content** (`z-10`) - All page content sits above background
+3. **Modals/Overlays** (`z-[10002]+`) - May use darker variants like `bg-gray-900/95` for visual contrast
+
+### Historical Context
+
+**Current Implementation (v2 - Framer Motion)**
+- 3 blobs animés avec Framer Motion pour mouvements fluides
+- Tailles responsives basées sur viewport height
+- Trajectoires mathématiques organiques (sin/cos patterns)
+- Animations complexes : x, y, scale, rotate, opacity
+- Optimisations GPU avec willChange
+
+**Previous Implementation (Removed)**
+- CSS-only blob animations with Tailwind keyframes (replaced by Framer Motion)
+- `AuthBackground.jsx` component with iOS-specific variants (deleted)
+- Separate background handling for `/auth` routes (unified)
+- Static gradient mesh (replaced by animated blobs)
+
+### iOS Considerations
+
+The `ios-auth-container` class in `globals.css` handles iOS-specific layout:
+```css
+@supports (-webkit-touch-callout: none) {
+  .ios-auth-container {
+    align-items: flex-start !important;
+    padding-top: max(2rem, env(safe-area-inset-top, 0) + 1rem) !important;
+    padding-bottom: max(2rem, env(safe-area-inset-bottom, 0) + 1rem) !important;
+  }
+}
+```
+
+**Purpose**: Prevents iOS keyboard from pushing auth forms out of view by positioning content at the top instead of center.
 
 ---
 

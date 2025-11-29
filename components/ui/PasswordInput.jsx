@@ -51,7 +51,7 @@ export default function PasswordInput({
         value={value}
         onChange={onChange}
         disabled={disabled}
-        className={className}
+        className={`${className} pr-10`}
         placeholder={placeholder}
         autoComplete={autoComplete}
       />
@@ -60,7 +60,7 @@ export default function PasswordInput({
         onClick={togglePasswordVisibility}
         onMouseDown={(e) => e.preventDefault()}
         disabled={isToggling}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors disabled:opacity-50 select-none"
+        className="absolute inset-y-0 right-0 flex items-center pr-3 text-white/60 hover:text-white transition-colors disabled:opacity-50 select-none"
         aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
         tabIndex={-1}
       >

@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { ensureUserCvDir } from "@/lib/cv/storage";
 import { scheduleGenerateCvFromJobTitleJob } from "@/lib/backgroundTasks/generateCvFromJobTitleJob";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
+import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
 
 export async function POST(request) {
   const session = await auth();
@@ -19,6 +20,22 @@ export async function POST(request) {
     const rawAnalysisLevel = formData.get("analysisLevel");
     const rawModel = formData.get("model");
     const deviceId = formData.get("deviceId") || "unknown-device";
+    const recaptchaToken = formData.get("recaptchaToken");
+
+    // Vérification reCAPTCHA (optionnelle pour compatibilité, mais recommandée)
+    if (recaptchaToken) {
+      const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
+        callerName: 'generate-cv-from-job-title',
+        scoreThreshold: 0.5,
+      });
+
+      if (!recaptchaResult.success) {
+        return NextResponse.json(
+          { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
+          { status: recaptchaResult.statusCode || 403 }
+        );
+      }
+    }
 
     if (!jobTitle || typeof jobTitle !== "string" || !jobTitle.trim()) {
       return NextResponse.json({ error: "Titre de poste manquant." }, { status: 400 });
