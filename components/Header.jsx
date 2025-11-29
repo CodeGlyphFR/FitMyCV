@@ -382,7 +382,8 @@ export default function Header(props){
     const targetLangName = {
       fr: 'français',
       en: 'anglais',
-      es: 'español'
+      es: 'español',
+      de: 'deutsch'
     }[targetLanguage] || targetLanguage;
 
     // Envoyer la requête en arrière-plan
