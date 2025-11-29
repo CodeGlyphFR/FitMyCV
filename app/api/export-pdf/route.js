@@ -15,6 +15,25 @@ const translations = {
   en: enTranslations,
 };
 
+/**
+ * Sanitize filename for HTTP Content-Disposition header
+ * Returns both ASCII-safe and RFC 5987 encoded versions
+ */
+function sanitizeFilenameForHeader(filename) {
+  // ASCII-safe version: replace non-ASCII chars with underscore
+  const asciiSafe = filename
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+    .replace(/[^\x20-\x7E]/g, '_')   // Replace non-printable ASCII with _
+    .replace(/["\\]/g, '_');          // Replace quotes and backslashes
+
+  // RFC 5987 encoded version for full Unicode support
+  const encoded = encodeURIComponent(filename)
+    .replace(/'/g, '%27');
+
+  return { asciiSafe, encoded };
+}
+
 // Helper function to get translation
 function getTranslation(language, path) {
   const keys = path.split(".");
@@ -211,10 +230,12 @@ export async function POST(request) {
 
     // Retourner le PDF
     const pdfFilename = customFilename || filename.replace('.json', '');
+    const { asciiSafe, encoded } = sanitizeFilenameForHeader(pdfFilename);
+
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${pdfFilename}.pdf"`
+        'Content-Disposition': `attachment; filename="${asciiSafe}.pdf"; filename*=UTF-8''${encoded}.pdf`
       }
     });
 
