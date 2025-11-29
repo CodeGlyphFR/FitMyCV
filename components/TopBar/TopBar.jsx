@@ -40,6 +40,13 @@ import { CREATE_TEMPLATE_OPTION } from "./utils/constants";
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from "@/lib/onboarding/onboardingEvents";
 import { LOADING_EVENTS, emitLoadingEvent } from "@/lib/loading/loadingEvents";
 
+// Date range constants in milliseconds
+const DATE_RANGE_MS = {
+  '24h': 86400000,      // 24 hours
+  '7d': 604800000,      // 7 days
+  '30d': 2592000000,    // 30 days
+};
+
 export default function TopBar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -147,17 +154,64 @@ export default function TopBar() {
         const created = new Date(item.createdAt).getTime();
         if (Number.isNaN(created)) return false;
 
-        const ranges = {
-          '24h': 24 * 60 * 60 * 1000,      // 24 heures en ms
-          '7d': 7 * 24 * 60 * 60 * 1000,   // 7 jours en ms
-          '30d': 30 * 24 * 60 * 60 * 1000, // 30 jours en ms
-        };
-        if (now - created > ranges[filter.filters.dateRange]) return false;
+        if (now - created > DATE_RANGE_MS[filter.filters.dateRange]) return false;
       }
 
       return true;
     });
   }, [state.items, filter.filters, filter.hasActiveFilters]);
+
+  // Available filter options (progressive filtering)
+  const availableFilterOptions = React.useMemo(() => {
+    const items = state.items;
+
+    // Helper: filter items by other criteria (excluding the specified filter)
+    const getItemsMatchingOtherFilters = (excludeFilter) => {
+      return items.filter(item => {
+        // Apply type filter (unless excluded)
+        if (excludeFilter !== 'types' && filter.filters.types.length > 0) {
+          const itemType = item.createdBy || 'manual';
+          if (!filter.filters.types.includes(itemType)) return false;
+        }
+        // Apply language filter (unless excluded)
+        if (excludeFilter !== 'language' && filter.filters.language !== null) {
+          if (!item.language || item.language !== filter.filters.language) return false;
+        }
+        // Apply date filter (unless excluded)
+        if (excludeFilter !== 'dateRange' && filter.filters.dateRange) {
+          const now = Date.now();
+          const created = new Date(item.createdAt).getTime();
+          if (Number.isNaN(created)) return false;
+          if (now - created > DATE_RANGE_MS[filter.filters.dateRange]) return false;
+        }
+        return true;
+      });
+    };
+
+    // Available types (based on items filtered by language + date)
+    const itemsForTypes = getItemsMatchingOtherFilters('types');
+    const availableTypes = new Set(itemsForTypes.map(i => i.createdBy || 'manual'));
+
+    // Available languages (based on items filtered by type + date)
+    const itemsForLanguages = getItemsMatchingOtherFilters('language');
+    const availableLanguages = new Set(itemsForLanguages.map(i => i.language).filter(Boolean));
+
+    // Available date ranges (based on items filtered by type + language)
+    const itemsForDates = getItemsMatchingOtherFilters('dateRange');
+    const now = Date.now();
+    const availableDateRanges = new Set();
+    itemsForDates.forEach(item => {
+      const created = new Date(item.createdAt).getTime();
+      if (!Number.isNaN(created)) {
+        const age = now - created;
+        if (age <= DATE_RANGE_MS['24h']) availableDateRanges.add('24h');
+        if (age <= DATE_RANGE_MS['7d']) availableDateRanges.add('7d');
+        if (age <= DATE_RANGE_MS['30d']) availableDateRanges.add('30d');
+      }
+    });
+
+    return { availableTypes, availableLanguages, availableDateRanges };
+  }, [state.items, filter.filters]);
 
   // Active tasks count
   const activeTasksCount = React.useMemo(() => {
@@ -863,6 +917,7 @@ export default function TopBar() {
               setDateRange={filter.setDateRange}
               clearAllFilters={filter.clearAllFilters}
               hasActiveFilters={filter.hasActiveFilters}
+              availableOptions={availableFilterOptions}
               t={t}
             />
           </div>
