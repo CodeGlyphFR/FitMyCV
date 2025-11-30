@@ -258,6 +258,51 @@ Le filtre de période (7j/30j/90j/All) filtre par **activité onboarding** :
 
 > **Note** : La checklist d'onboarding est automatiquement masquée sur les routes `/admin` pour ne pas distraire les administrateurs.
 
+### EmailTemplatesTab
+
+**Gestion visuelle des templates email système** avec l'éditeur Unlayer.
+
+#### Templates disponibles
+
+| Template | Variables | Description |
+|----------|-----------|-------------|
+| `verification` | `{{userName}}`, `{{verificationUrl}}` | Email de vérification à l'inscription |
+| `password_reset` | `{{userName}}`, `{{resetUrl}}` | Email de réinitialisation mot de passe |
+| `email_change` | `{{userName}}`, `{{verificationUrl}}`, `{{newEmail}}` | Confirmation changement d'email |
+
+#### Fonctionnalités
+
+1. **Éditeur visuel Unlayer**
+   - Drag & drop de blocs
+   - Thème dark adapté
+   - Merge tags pour les variables (`{{userName}}`, etc.)
+
+2. **Copier depuis un autre template**
+   - Dropdown "Copier depuis..." pour dupliquer un design
+   - Charge le design source dans l'éditeur
+   - Ne sauvegarde pas automatiquement (cliquez "Sauvegarder")
+
+3. **Aperçu**
+   - Preview du template avec données de test
+   - Toggle desktop/mobile
+   - Envoi d'email de test
+
+4. **Historique des envois**
+   - Table des emails envoyés
+   - Filtrage par template et statut
+   - Pagination
+
+#### Workflow
+
+```
+1. Sélectionner un template (carte)
+2. [Optionnel] Copier depuis un autre template
+3. Modifier le design dans l'éditeur Unlayer
+4. Modifier le sujet de l'email
+5. Prévisualiser / Envoyer un test
+6. Sauvegarder
+```
+
 ---
 
 ## Settings
