@@ -47,6 +47,8 @@ Avant de répondre, assure-toi que :
 - Les valeurs null sont écrites `null` (pas `"null"`)
 - Pas de virgule finale dans les objets ou tableaux
 - Tous les guillemets et accolades sont correctement fermés
+- Chaque chaine de caractère dans "skills" dans le champ "name" de "hard_skills", "soft_skills", "tools" et "methodologies" **DOIVENT ABSOLUEMENT commencer par une MAJUSCULE**.
+- ⛔ Les **LOGICIELS** (Excel, Photoshop, SAP, SolidWorks, Matlab, Figma, etc.) vont **UNIQUEMENT** dans "tools", **JAMAIS** dans "hard_skills"
 
 ## CAS SPÉCIAUX
 

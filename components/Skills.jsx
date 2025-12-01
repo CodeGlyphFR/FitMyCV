@@ -7,6 +7,7 @@ import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getSkillLevelLabel } from "@/lib/i18n/cvLabels";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import { capitalizeSkillName } from "@/lib/utils/textFormatting";
 
 function Row({children}){ return <div className="flex gap-2">{children}</div>; }
 
@@ -144,7 +145,7 @@ export default function Skills(props){
                         return (
                           <div key={i} className="text-sm">
                             <span className="font-medium">
-                              {s && (s.name || s.label || s.title || s.value || (typeof s === "string" ? s : ""))}
+                              {capitalizeSkillName(s && (s.name || s.label || s.title || s.value || (typeof s === "string" ? s : "")))}
                             </span>
                             {levelLabel ? <span className="opacity-70"> • {levelLabel}</span> : null}
                           </div>
@@ -176,7 +177,7 @@ export default function Skills(props){
                           return (
                             <li key={i} className="text-sm">
                               <span className="font-medium">
-                                {tool && (tool.name || tool.label || tool.title || tool.value || (typeof tool === "string" ? tool : ""))}
+                                {capitalizeSkillName(tool && (tool.name || tool.label || tool.title || tool.value || (typeof tool === "string" ? tool : "")))}
                               </span>
                               {levelLabel ? <span className="opacity-70"> • {levelLabel}</span> : null}
                             </li>
@@ -205,7 +206,7 @@ export default function Skills(props){
                           const lab = typeof m === "string" ? m : (m?.name || m?.label || m?.title || m?.value || "");
                           return (
                             <span key={i} className="inline-block rounded border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
-                              {lab}
+                              {capitalizeSkillName(lab)}
                             </span>
                           );
                         })}
@@ -225,7 +226,7 @@ export default function Skills(props){
                       const lab = typeof m === "string" ? m : (m?.name || m?.label || m?.title || m?.value || "");
                       return (
                         <span key={i} className="inline-block rounded border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
-                          {lab}
+                          {capitalizeSkillName(lab)}
                         </span>
                       );
                     })}

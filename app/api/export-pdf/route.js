@@ -11,6 +11,7 @@ import deTranslations from "@/locales/de.json";
 import { trackCvExport } from "@/lib/telemetry/server";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { refundCredit } from "@/lib/subscription/credits";
+import { capitalizeSkillName } from "@/lib/utils/textFormatting";
 
 const translations = {
   fr: frTranslations,
@@ -824,7 +825,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
             <div class="skill-category">
               <h3>${t('cvSections.hardSkills')}</h3>
               <div class="skill-list">
-                ${skills.hard_skills.filter(skill => skill.name && skill.proficiency).map(skill => `${skill.name} (${translateLevel(language, skill.proficiency, 'skill')})`).join(', ')}
+                ${skills.hard_skills.filter(skill => skill.name && skill.proficiency).map(skill => `${capitalizeSkillName(skill.name)} (${translateLevel(language, skill.proficiency, 'skill')})`).join(', ')}
               </div>
             </div>
           ` : ''}
@@ -833,7 +834,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
             <div class="skill-category">
               <h3>${t('cvSections.tools')}</h3>
               <div class="skill-list">
-                ${skills.tools.filter(tool => tool.name && tool.proficiency).map(tool => `${tool.name} (${translateLevel(language, tool.proficiency, 'skill')})`).join(', ')}
+                ${skills.tools.filter(tool => tool.name && tool.proficiency).map(tool => `${capitalizeSkillName(tool.name)} (${translateLevel(language, tool.proficiency, 'skill')})`).join(', ')}
               </div>
             </div>
           ` : ''}
@@ -842,7 +843,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
             <div class="skill-category">
               <h3>${t('cvSections.softSkills')}</h3>
               <div class="skill-list">
-                ${skills.soft_skills.filter(s => s && s.trim()).join(', ')}
+                ${skills.soft_skills.filter(s => s && s.trim()).map(s => capitalizeSkillName(s)).join(', ')}
               </div>
             </div>
           ` : ''}
@@ -851,7 +852,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
             <div class="skill-category">
               <h3>${t('cvSections.methodologies')}</h3>
               <div class="skill-list">
-                ${skills.methodologies.filter(m => m && m.trim()).join(', ')}
+                ${skills.methodologies.filter(m => m && m.trim()).map(m => capitalizeSkillName(m)).join(', ')}
               </div>
             </div>
           ` : ''}
