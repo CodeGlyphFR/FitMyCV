@@ -132,7 +132,7 @@
     "noTokensLeft": "❌ Plus de tokens disponibles"
   },
   "cvGenerator": {
-    "title": "Générer un CV avec ChatGPT",
+    "title": "Générer un CV avec l'IA",
     "description": "Renseignez des offres d'emploi à analyser (liens ou fichier PDF/Word) pour générer des CV adaptés à partir du CV de référence sélectionné.",
     "referenceCV": "CV de référence",
     "selectCV": "Sélectionnez un CV",

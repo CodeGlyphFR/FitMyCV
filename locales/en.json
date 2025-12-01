@@ -132,7 +132,7 @@
     "noTokensLeft": "❌ No tokens left"
   },
   "cvGenerator": {
-    "title": "Generate CV with ChatGPT",
+    "title": "Generate CV with AI",
     "description": "Provide job offers to analyze (links or PDF/Word file) to generate tailored CVs from the selected reference CV.",
     "referenceCV": "Reference CV",
     "selectCV": "Select a CV",
