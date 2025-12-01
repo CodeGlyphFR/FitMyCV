@@ -1,7 +1,7 @@
 {
   "auth": {
     "title": "Konto erstellen",
-    "siteTitle": "FitMyCv.ai",
+    "siteTitle": "FitMyCV.io",
     "welcome": "Erstellen Sie maßgeschneiderte Lebensläufe für jede Gelegenheit mit KI.",
     "continueWithGoogle": "Mit Google fortfahren",
     "continueWithApple": "Mit Apple fortfahren",
@@ -372,7 +372,7 @@
   },
   "footer": {
     "cookieManagement": "Cookie-Verwaltung",
-    "copyright": "© 2025 FitMyCv.ai",
+    "copyright": "© 2025 FitMyCV.io",
     "about": "Über uns",
     "cookies": "Cookies",
     "terms": "Allgemeine Geschäftsbedingungen",
@@ -703,7 +703,7 @@
   },
   "account": {
     "meta": {
-      "title": "Mein Konto - FitMyCv.ai",
+      "title": "Mein Konto - FitMyCV.io",
       "description": "Verwalten Sie Ihre persönlichen Informationen und Einstellungen"
     },
     "backToCvs": "Zurück",
@@ -765,7 +765,7 @@
     },
     "tutorial": {
       "title": "Einführungs-Tutorial",
-      "description": "Starten Sie das Einführungs-Tutorial neu, um die Funktionen von FitMyCv.ai wiederzuentdecken",
+      "description": "Starten Sie das Einführungs-Tutorial neu, um die Funktionen von FitMyCV.io wiederzuentdecken",
       "resetButton": "Tutorial neu starten",
       "resetting": "Wird zurückgesetzt...",
       "success": "Das Tutorial wurde zurückgesetzt. Weiterleitung...",
@@ -807,14 +807,14 @@
     "lastUpdated": "Letzte Aktualisierung:",
     "terms": {
       "meta": {
-        "title": "Allgemeine Geschäftsbedingungen - FitMyCv.ai",
+        "title": "Allgemeine Geschäftsbedingungen - FitMyCV.io",
         "description": "Allgemeine Geschäftsbedingungen und Nutzungsbedingungen des Dienstes"
       },
       "title": "Allgemeine Geschäftsbedingungen"
     },
     "privacy": {
       "meta": {
-        "title": "Datenschutzrichtlinie - FitMyCv.ai",
+        "title": "Datenschutzrichtlinie - FitMyCV.io",
         "description": "Datenschutzrichtlinie und Schutz personenbezogener Daten"
       },
       "title": "Datenschutzrichtlinie"

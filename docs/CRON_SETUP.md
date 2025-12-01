@@ -1,4 +1,4 @@
-# Configuration Cron pour FitMyCv.ai
+# Configuration Cron pour FitMyCV.io
 
 Ce document explique comment configurer les tâches planifiées (cron) pour le système d'abonnements.
 
@@ -199,8 +199,8 @@ catch (error) {
   // Envoyer email d'alerte
   const resend = new Resend(process.env.RESEND_API_KEY);
   await resend.emails.send({
-    from: 'alerts@fitmycv.ai',
-    to: 'admin@fitmycv.ai',
+    from: 'alerts@FitMyCV.io',
+    to: 'admin@FitMyCV.io',
     subject: '🚨 Erreur cron reset compteurs',
     text: `Erreur: ${error.message}`,
   });

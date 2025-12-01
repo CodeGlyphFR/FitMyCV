@@ -8,7 +8,7 @@ import prisma from "@/lib/prisma";
 import { Suspense } from "react";
 
 export const metadata = {
-  title: "Mon compte - FitMyCv.ai",
+  title: "Mon compte - FitMyCV.io",
   description: "Gérez vos informations personnelles et vos préférences",
 };
 

@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 
 export const metadata = {
-  title: "Connexion - FitMyCv.ai",
+  title: "Connexion - FitMyCV.io",
   description: "Connectez-vous ou créez un compte pour accéder à vos CV personnalisés",
 };
 

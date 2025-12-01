@@ -1,6 +1,6 @@
-# Référence des Commandes - FitMyCv.ai
+# Référence des Commandes - FitMyCV.io
 
-> **Part of FitMyCv.ai technical documentation**
+> **Part of FitMyCV.io technical documentation**
 > Quick reference: [CLAUDE.md](../CLAUDE.md) | Development: [DEVELOPMENT.md](./DEVELOPMENT.md) | Installation: [INSTALLATION.md](./INSTALLATION.md)
 
 ## Table des matières

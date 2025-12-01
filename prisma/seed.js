@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 const EMAIL_TEMPLATES = [
   {
     name: 'verification',
-    subject: 'Vérifiez votre adresse email - FitMyCv.ai',
+    subject: 'Vérifiez votre adresse email - FitMyCV.io',
     variables: JSON.stringify(['userName', 'verificationUrl']),
     htmlContent: `<!DOCTYPE html>
 <html>
@@ -16,12 +16,12 @@ const EMAIL_TEMPLATES = [
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-    <h1 style="color: white; margin: 0; font-size: 28px;">FitMyCv.ai</h1>
+    <h1 style="color: white; margin: 0; font-size: 28px;">FitMyCV.io</h1>
   </div>
   <div style="background: #ffffff; padding: 40px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 10px 10px;">
     <h2 style="color: #333; margin-top: 0;">Bienvenue {{userName}} !</h2>
     <p style="font-size: 16px; color: #555;">
-      Merci de vous être inscrit sur FitMyCv.ai. Pour commencer à utiliser votre compte, veuillez vérifier votre adresse email en cliquant sur le bouton ci-dessous.
+      Merci de vous être inscrit sur FitMyCV.io. Pour commencer à utiliser votre compte, veuillez vérifier votre adresse email en cliquant sur le bouton ci-dessous.
     </p>
     <div style="text-align: center; margin: 40px 0;">
       <a href="{{verificationUrl}}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 40px; text-decoration: none; border-radius: 5px; font-weight: 600; font-size: 16px; display: inline-block;">
@@ -40,7 +40,7 @@ const EMAIL_TEMPLATES = [
     </p>
   </div>
   <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-    <p>© 2024 FitMyCv.ai. Tous droits réservés.</p>
+    <p>© 2024 FitMyCV.io. Tous droits réservés.</p>
   </div>
 </body>
 </html>`,
@@ -48,7 +48,7 @@ const EMAIL_TEMPLATES = [
   },
   {
     name: 'password_reset',
-    subject: 'Réinitialisation de votre mot de passe - FitMyCv.ai',
+    subject: 'Réinitialisation de votre mot de passe - FitMyCV.io',
     variables: JSON.stringify(['userName', 'resetUrl']),
     htmlContent: `<!DOCTYPE html>
 <html>
@@ -59,7 +59,7 @@ const EMAIL_TEMPLATES = [
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-    <h1 style="color: white; margin: 0; font-size: 28px;">FitMyCv.ai</h1>
+    <h1 style="color: white; margin: 0; font-size: 28px;">FitMyCV.io</h1>
   </div>
   <div style="background: #ffffff; padding: 40px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 10px 10px;">
     <h2 style="color: #333; margin-top: 0;">Bonjour {{userName}} !</h2>
@@ -86,7 +86,7 @@ const EMAIL_TEMPLATES = [
     </p>
   </div>
   <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-    <p>© 2024 FitMyCv.ai. Tous droits réservés.</p>
+    <p>© 2024 FitMyCV.io. Tous droits réservés.</p>
   </div>
 </body>
 </html>`,
@@ -94,7 +94,7 @@ const EMAIL_TEMPLATES = [
   },
   {
     name: 'email_change',
-    subject: 'Confirmez votre nouvelle adresse email - FitMyCv.ai',
+    subject: 'Confirmez votre nouvelle adresse email - FitMyCV.io',
     variables: JSON.stringify(['userName', 'verificationUrl', 'newEmail']),
     htmlContent: `<!DOCTYPE html>
 <html>
@@ -105,7 +105,7 @@ const EMAIL_TEMPLATES = [
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-    <h1 style="color: white; margin: 0; font-size: 28px;">FitMyCv.ai</h1>
+    <h1 style="color: white; margin: 0; font-size: 28px;">FitMyCV.io</h1>
   </div>
   <div style="background: #ffffff; padding: 40px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 10px 10px;">
     <h2 style="color: #333; margin-top: 0;">Bonjour {{userName}} !</h2>
@@ -136,7 +136,7 @@ const EMAIL_TEMPLATES = [
     </p>
   </div>
   <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-    <p>© 2024 FitMyCv.ai. Tous droits réservés.</p>
+    <p>© 2024 FitMyCV.io. Tous droits réservés.</p>
   </div>
 </body>
 </html>`,

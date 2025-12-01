@@ -1,4 +1,4 @@
-# Guide d'utilisation - FitMyCv.ai
+# Guide d'utilisation - FitMyCV.io
 
 Ce document décrit le flux type pour exploiter la plateforme de génération de CV optimisés ATS.
 

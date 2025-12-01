@@ -1,9 +1,9 @@
-# Guide de développement - FitMyCv.ai
+# Guide de développement - FitMyCV.io
 
-> **Part of FitMyCv.ai technical documentation**
+> **Part of FitMyCV.io technical documentation**
 > Quick reference: [CLAUDE.md](../CLAUDE.md) | Commands: [COMMANDS_REFERENCE.md](./COMMANDS_REFERENCE.md) | Patterns: [CODE_PATTERNS.md](./CODE_PATTERNS.md) | Environment: [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md)
 
-Guide complet pour développer sur FitMyCv.ai.
+Guide complet pour développer sur FitMyCV.io.
 
 ---
 

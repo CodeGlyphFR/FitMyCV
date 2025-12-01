@@ -1,9 +1,9 @@
-# Patterns de Code - FitMyCv.ai
+# Patterns de Code - FitMyCV.io
 
-> **Part of FitMyCv.ai technical documentation**
+> **Part of FitMyCV.io technical documentation**
 > Quick reference: [CLAUDE.md](../CLAUDE.md) | Architecture: [ARCHITECTURE.md](./ARCHITECTURE.md) | Development: [DEVELOPMENT.md](./DEVELOPMENT.md)
 
-Ce document contient des exemples de code réutilisables et des patterns communs pour le développement dans FitMyCv.ai.
+Ce document contient des exemples de code réutilisables et des patterns communs pour le développement dans FitMyCV.io.
 
 ## Table des matières
 

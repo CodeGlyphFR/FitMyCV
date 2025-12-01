@@ -1,7 +1,7 @@
 {
   "auth": {
     "title": "Crear una cuenta",
-    "siteTitle": "FitMyCv.ai",
+    "siteTitle": "FitMyCV.io",
     "welcome": "Crea CVs adaptados a cada oportunidad con IA.",
     "continueWithGoogle": "Continuar con Google",
     "continueWithApple": "Continuar con Apple",
@@ -372,7 +372,7 @@
   },
   "footer": {
     "cookieManagement": "Gestión de cookies",
-    "copyright": "© 2025 FitMyCv.ai",
+    "copyright": "© 2025 FitMyCV.io",
     "about": "Acerca de",
     "cookies": "Cookies",
     "terms": "Términos de servicio",
@@ -704,7 +704,7 @@
   },
   "account": {
     "meta": {
-      "title": "Mi cuenta - FitMyCv.ai",
+      "title": "Mi cuenta - FitMyCV.io",
       "description": "Gestiona tu información personal y preferencias"
     },
     "backToCvs": "Volver",
@@ -766,7 +766,7 @@
     },
     "tutorial": {
       "title": "Tutorial de introducción",
-      "description": "Reinicia el tutorial de introducción para redescubrir las funciones de FitMyCv.ai",
+      "description": "Reinicia el tutorial de introducción para redescubrir las funciones de FitMyCV.io",
       "resetButton": "Reiniciar tutorial",
       "resetting": "Reiniciando...",
       "success": "Tutorial reiniciado. Redirigiendo...",
@@ -808,14 +808,14 @@
     "lastUpdated": "Última actualización:",
     "terms": {
       "meta": {
-        "title": "Términos de servicio - FitMyCv.ai",
+        "title": "Términos de servicio - FitMyCV.io",
         "description": "Términos de servicio y condiciones de uso"
       },
       "title": "Términos de servicio"
     },
     "privacy": {
       "meta": {
-        "title": "Política de privacidad - FitMyCv.ai",
+        "title": "Política de privacidad - FitMyCV.io",
         "description": "Política de privacidad y protección de datos personales"
       },
       "title": "Política de privacidad"

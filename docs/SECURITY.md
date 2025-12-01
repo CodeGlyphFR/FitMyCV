@@ -1,6 +1,6 @@
-# Sécurité - FitMyCv.ai
+# Sécurité - FitMyCV.io
 
-Guide complet des mesures de sécurité implémentées dans FitMyCv.ai.
+Guide complet des mesures de sécurité implémentées dans FitMyCV.io.
 
 ---
 
@@ -19,7 +19,7 @@ Guide complet des mesures de sécurité implémentées dans FitMyCv.ai.
 
 ## Vue d'ensemble
 
-FitMyCv.ai implémente une sécurité multi-couches :
+FitMyCV.io implémente une sécurité multi-couches :
 
 ```
 ┌─────────────────────────────────────────┐

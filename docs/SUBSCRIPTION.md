@@ -1,4 +1,4 @@
-# Système d'Abonnements et Crédits - FitMyCv.ai
+# Système d'Abonnements et Crédits - FitMyCV.io
 
 Documentation complète du système hybride abonnements mensuels + micro-transactions (crédits).
 
@@ -19,7 +19,7 @@ Documentation complète du système hybride abonnements mensuels + micro-transac
 
 ### Concept
 
-FitMyCv.ai utilise un **système hybride** combinant :
+FitMyCV.io utilise un **système hybride** combinant :
 - **Abonnements mensuels/annuels** avec limites de features
 - **Crédits** achetables pour dépasser les limites
 

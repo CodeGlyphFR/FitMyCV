@@ -1,9 +1,9 @@
-# Variables d'Environnement - FitMyCv.ai
+# Variables d'Environnement - FitMyCV.io
 
-> **Part of FitMyCv.ai technical documentation**
+> **Part of FitMyCV.io technical documentation**
 > Quick reference: [CLAUDE.md](../CLAUDE.md) | Installation: [INSTALLATION.md](./INSTALLATION.md) | Stripe Setup: [STRIPE_SETUP.md](./STRIPE_SETUP.md)
 
-Ce document liste toutes les variables d'environnement nécessaires pour FitMyCv.ai, leur utilisation et leur configuration.
+Ce document liste toutes les variables d'environnement nécessaires pour FitMyCV.io, leur utilisation et leur configuration.
 
 ## Table des matières
 
@@ -450,7 +450,7 @@ const rootPath = getUserRootPath("user123");
 NEXT_PUBLIC_APP_VERSION="1.0.9.2"
 
 # Nom du site (utilisé dans le titre)
-NEXT_PUBLIC_SITE_NAME="FitMyCv.ai"
+NEXT_PUBLIC_SITE_NAME="FitMyCV.io"
 
 # Dossier de stockage des CV chiffrés (défaut: data/users)
 CV_BASE_DIR="data/users"
@@ -674,7 +674,7 @@ APPLE_SECRET="..."
 # Application
 # ============================================
 NEXT_PUBLIC_APP_VERSION="1.0.9.2"
-NEXT_PUBLIC_SITE_NAME="FitMyCv.ai"
+NEXT_PUBLIC_SITE_NAME="FitMyCV.io"
 CV_BASE_DIR="data/users"
 
 # ============================================

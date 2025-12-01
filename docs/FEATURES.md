@@ -1,6 +1,6 @@
-# Fonctionnalités - FitMyCv.ai
+# Fonctionnalités - FitMyCV.io
 
-Guide complet des fonctionnalités de FitMyCv.ai.
+Guide complet des fonctionnalités de FitMyCV.io.
 
 ---
 

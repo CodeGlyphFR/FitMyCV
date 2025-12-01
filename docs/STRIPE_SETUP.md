@@ -1,4 +1,4 @@
-# Configuration Stripe - FitMyCv.ai
+# Configuration Stripe - FitMyCV.io
 
 Guide complet pour configurer Stripe en mode Test puis Production.
 
@@ -6,7 +6,7 @@ Guide complet pour configurer Stripe en mode Test puis Production.
 
 - Compte Stripe ([créer un compte](https://dashboard.stripe.com/register))
 - Node.js installé
-- Application FitMyCv.ai installée
+- Application FitMyCV.io installée
 
 ---
 
@@ -127,7 +127,7 @@ Vérifiez les logs dans votre terminal Next.js et dans la table `StripeWebhookLo
 3. **Configurer l'endpoint** :
    - **Endpoint URL** : `https://votre-domaine.com/api/webhooks/stripe`
      - Exemple : `https://176.136.226.121.nip.io/api/webhooks/stripe`
-   - **Description** : "FitMyCv.ai Webhooks"
+   - **Description** : "FitMyCV.io Webhooks"
 
 4. **Sélectionner les événements** (UNIQUEMENT ces 6 événements nécessaires) :
 
@@ -234,9 +234,9 @@ node scripts/sync-stripe-products.js
 
 1. Allez sur [https://dashboard.stripe.com/test/products](https://dashboard.stripe.com/test/products)
 2. Vous devriez voir :
-   - `[Gratuit] Abonnement FitMyCv.ai`
-   - `[Pro] Abonnement FitMyCv.ai`
-   - `[Premium] Abonnement FitMyCv.ai`
+   - `[Gratuit] Abonnement FitMyCV.io`
+   - `[Pro] Abonnement FitMyCV.io`
+   - `[Premium] Abonnement FitMyCV.io`
    - `Pack Starter - 10 crédits`
    - etc.
 

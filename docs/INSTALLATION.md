@@ -1,9 +1,9 @@
-# Guide d'installation - FitMyCv.ai
+# Guide d'installation - FitMyCV.io
 
-> **Part of FitMyCv.ai technical documentation**
+> **Part of FitMyCV.io technical documentation**
 > Quick reference: [CLAUDE.md](../CLAUDE.md) | Environment Variables: [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md) | Commands: [COMMANDS_REFERENCE.md](./COMMANDS_REFERENCE.md)
 
-Ce guide vous accompagne pas à pas dans l'installation et la configuration de FitMyCv.ai.
+Ce guide vous accompagne pas à pas dans l'installation et la configuration de FitMyCV.io.
 
 ---
 
@@ -152,7 +152,7 @@ GITHUB_SECRET="votre-github-client-secret"
 # =====================================
 # Resend API (pour envoi emails)
 # RESEND_API_KEY="re_..."
-# EMAIL_FROM="noreply@fitmycv.ai"
+# EMAIL_FROM="noreply@FitMyCV.io"
 
 # =====================================
 # RECAPTCHA (OPTIONNEL)
@@ -481,4 +481,4 @@ npm run dev -- -p 3002
 
 ---
 
-**Installation terminée !** Votre environnement FitMyCv.ai est prêt.
+**Installation terminée !** Votre environnement FitMyCV.io est prêt.

@@ -1,6 +1,6 @@
-# Guide Administrateur - FitMyCv.ai
+# Guide Administrateur - FitMyCV.io
 
-Guide complet du dashboard admin et de la gestion de FitMyCv.ai.
+Guide complet du dashboard admin et de la gestion de FitMyCV.io.
 
 ---
 

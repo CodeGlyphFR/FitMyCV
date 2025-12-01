@@ -1,4 +1,4 @@
-# Composants React - FitMyCv.ai
+# Composants React - FitMyCV.io
 
 Catalogue complet des 100+ composants React de l'application.
 

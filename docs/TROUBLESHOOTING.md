@@ -1,4 +1,4 @@
-# Troubleshooting - FitMyCv.ai
+# Troubleshooting - FitMyCV.io
 
 Guide de résolution des problèmes courants.
 
@@ -292,7 +292,7 @@ Configurer Resend :
 ```bash
 # .env.local
 RESEND_API_KEY="re_..."
-EMAIL_FROM="noreply@fitmycv.ai"
+EMAIL_FROM="noreply@FitMyCV.io"
 ```
 
 **Alternative** : Vérifier manuellement l'email via Prisma Studio

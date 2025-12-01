@@ -1,6 +1,6 @@
-# Guide de déploiement - FitMyCv.ai
+# Guide de déploiement - FitMyCV.io
 
-Guide complet pour déployer FitMyCv.ai en production.
+Guide complet pour déployer FitMyCV.io en production.
 
 ---
 
@@ -47,7 +47,7 @@ Créer `.env.production` sur le serveur :
 # APPLICATION
 # =====================================
 NODE_ENV=production
-NEXT_PUBLIC_SITE_URL=https://fitmycv.ai
+NEXT_PUBLIC_SITE_URL=https://FitMyCV.io
 
 # =====================================
 # DATABASE
@@ -62,7 +62,7 @@ DATABASE_URL="postgresql://user:password@localhost:5432/fitmycv?schema=public"
 # NEXTAUTH
 # =====================================
 NEXTAUTH_SECRET="votre-secret-production-unique-32-caracteres"
-NEXTAUTH_URL=https://fitmycv.ai
+NEXTAUTH_URL=https://FitMyCV.io
 
 # =====================================
 # OPENAI
@@ -87,7 +87,7 @@ GITHUB_SECRET="production-github-client-secret"
 # EMAIL (OPTIONNEL)
 # =====================================
 RESEND_API_KEY="re_production_key"
-EMAIL_FROM="noreply@fitmycv.ai"
+EMAIL_FROM="noreply@FitMyCV.io"
 
 # =====================================
 # RECAPTCHA (OPTIONNEL)
@@ -98,7 +98,7 @@ RECAPTCHA_SECRET_KEY="production-secret-key"
 # =====================================
 # SÉCURITÉ
 # =====================================
-ALLOWED_ORIGINS="https://fitmycv.ai"
+ALLOWED_ORIGINS="https://FitMyCV.io"
 ```
 
 ### Génération des secrets
@@ -236,7 +236,7 @@ sudo apt install nginx
 ```nginx
 server {
     listen 80;
-    server_name fitmycv.ai www.fitmycv.ai;
+    server_name FitMyCV.io www.FitMyCV.io;
 
     location / {
         proxy_pass http://localhost:3000;
@@ -271,7 +271,7 @@ sudo systemctl reload nginx
 sudo apt install certbot python3-certbot-nginx
 
 # Obtenir certificat
-sudo certbot --nginx -d fitmycv.ai -d www.fitmycv.ai
+sudo certbot --nginx -d FitMyCV.io -d www.FitMyCV.io
 
 # Renouvellement automatique
 sudo certbot renew --dry-run
@@ -514,13 +514,13 @@ volumes:
 
 ```bash
 # Vérifier que Next.js fonctionne
-curl https://fitmycv.ai
+curl https://FitMyCV.io
 
 # Vérifier les API routes
-curl https://fitmycv.ai/api/settings
+curl https://FitMyCV.io/api/settings
 
 # Vérifier SSL
-curl -I https://fitmycv.ai
+curl -I https://FitMyCV.io
 ```
 
 ### 2. Créer un compte admin
@@ -531,7 +531,7 @@ npx prisma studio
 
 # Ou via SQL
 psql -U fitmycv_user -d fitmycv
-UPDATE "User" SET role = 'ADMIN' WHERE email = 'admin@fitmycv.ai';
+UPDATE "User" SET role = 'ADMIN' WHERE email = 'admin@FitMyCV.io';
 ```
 
 ### 3. Configurer les Settings

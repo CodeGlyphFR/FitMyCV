@@ -1,4 +1,4 @@
-# Base de données - FitMyCv.ai
+# Base de données - FitMyCV.io
 
 Documentation complète du schéma Prisma et des modèles de données.
 

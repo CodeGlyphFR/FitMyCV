@@ -1,6 +1,6 @@
-# Référence API - FitMyCv.ai
+# Référence API - FitMyCV.io
 
-Documentation complète des 75+ routes API de FitMyCv.ai.
+Documentation complète des 75+ routes API de FitMyCV.io.
 
 ---
 
@@ -25,7 +25,7 @@ Documentation complète des 75+ routes API de FitMyCv.ai.
 
 ```
 Développement: http://localhost:3001/api
-Production: https://fitmycv.ai/api
+Production: https://FitMyCV.io/api
 ```
 
 ### Authentification
@@ -1801,4 +1801,4 @@ Logger la durée du premier import (onboarding).
 
 ---
 
-**Documentation complète de l'API FitMyCv.ai** | 75+ endpoints documentés
+**Documentation complète de l'API FitMyCV.io** | 75+ endpoints documentés

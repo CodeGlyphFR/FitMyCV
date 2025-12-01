@@ -1,9 +1,9 @@
-# Architecture - FitMyCv.ai
+# Architecture - FitMyCV.io
 
-> **Part of FitMyCv.ai technical documentation**
+> **Part of FitMyCV.io technical documentation**
 > Quick reference: [CLAUDE.md](../CLAUDE.md) | Design System: [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) | Code Patterns: [CODE_PATTERNS.md](./CODE_PATTERNS.md)
 
-Ce document décrit en détail l'architecture de l'application FitMyCv.ai.
+Ce document décrit en détail l'architecture de l'application FitMyCV.io.
 
 ---
 
@@ -20,7 +20,7 @@ Ce document décrit en détail l'architecture de l'application FitMyCv.ai.
 
 ## Vue d'ensemble
 
-FitMyCv.ai est construite sur une architecture moderne basée sur **Next.js 14** avec l'**App Router**.
+FitMyCV.io est construite sur une architecture moderne basée sur **Next.js 14** avec l'**App Router**.
 
 ### Architecture globale
 
@@ -73,7 +73,7 @@ FitMyCv.ai est construite sur une architecture moderne basée sur **Next.js 14**
 
 ### App Router Structure
 
-FitMyCv.ai utilise le nouveau **App Router** de Next.js 14 (pas le Pages Router).
+FitMyCV.io utilise le nouveau **App Router** de Next.js 14 (pas le Pages Router).
 
 ```
 app/

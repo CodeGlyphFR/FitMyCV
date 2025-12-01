@@ -1,6 +1,6 @@
-# Design System - FitMyCv.ai
+# Design System - FitMyCV.io
 
-> **Part of FitMyCv.ai technical documentation**
+> **Part of FitMyCV.io technical documentation**
 > Quick reference: [CLAUDE.md](../CLAUDE.md) | Architecture: [ARCHITECTURE.md](./ARCHITECTURE.md) | Components: [COMPONENTS.md](./COMPONENTS.md)
 
 ## Table des matières

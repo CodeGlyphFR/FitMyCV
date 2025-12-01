@@ -1,7 +1,7 @@
 {
   "auth": {
     "title": "Créer un compte",
-    "siteTitle": "FitMyCv.ai",
+    "siteTitle": "FitMyCV.io",
     "welcome": "Créez des CV taillés pour chaque opportunité grâce à l'IA.",
     "continueWithGoogle": "Continuer avec Google",
     "continueWithApple": "Continuer avec Apple",
@@ -372,7 +372,7 @@
   },
   "footer": {
     "cookieManagement": "Gestion des cookies",
-    "copyright": "© 2025 FitMyCv.ai",
+    "copyright": "© 2025 FitMyCV.io",
     "about": "À propos",
     "cookies": "Cookies",
     "terms": "Conditions générales",
@@ -704,7 +704,7 @@
   },
   "account": {
     "meta": {
-      "title": "Mon compte - FitMyCv.ai",
+      "title": "Mon compte - FitMyCV.io",
       "description": "Gérez vos informations personnelles et vos préférences"
     },
     "backToCvs": "Retour",
@@ -766,7 +766,7 @@
     },
     "tutorial": {
       "title": "Tutoriel d'intégration",
-      "description": "Relancez le tutoriel de prise en main pour redécouvrir les fonctionnalités de FitMyCv.ai",
+      "description": "Relancez le tutoriel de prise en main pour redécouvrir les fonctionnalités de FitMyCV.io",
       "resetButton": "Relancer le tutoriel",
       "resetting": "Réinitialisation...",
       "success": "Le tutoriel a été réinitialisé. Redirection...",
@@ -808,14 +808,14 @@
     "lastUpdated": "Dernière mise à jour :",
     "terms": {
       "meta": {
-        "title": "Conditions Générales de Vente - FitMyCv.ai",
+        "title": "Conditions Générales de Vente - FitMyCV.io",
         "description": "Conditions générales de vente et d'utilisation du service"
       },
       "title": "Conditions Générales de Vente"
     },
     "privacy": {
       "meta": {
-        "title": "Politique de confidentialité - FitMyCv.ai",
+        "title": "Politique de confidentialité - FitMyCV.io",
         "description": "Politique de confidentialité et protection des données personnelles"
       },
       "title": "Politique de confidentialité"
