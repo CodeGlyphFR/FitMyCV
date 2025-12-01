@@ -95,7 +95,7 @@ export default function CvGeneratorModal({
       title={t("cvGenerator.title")}
     >
       <form onSubmit={onSubmit} className="space-y-4">
-        <div className="text-sm text-white/90 drop-shadow">
+        <div className="text-sm text-white/90 drop-shadow bg-emerald-500/10 border border-emerald-500/50 rounded-lg p-3">
           {t("cvGenerator.description")}
         </div>
 
