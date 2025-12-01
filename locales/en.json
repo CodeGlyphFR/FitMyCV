@@ -143,6 +143,7 @@
     "loadRecentLink": "Load recent link",
     "recentLinks": "Recent links",
     "addLink": "Add link",
+    "linkPlaceholder": "https://... (link to the job offer)",
     "files": "Files",
     "selection": "Selection:",
     "clearFiles": "Clear files",

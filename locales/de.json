@@ -143,6 +143,7 @@
     "loadRecentLink": "Einen kürzlichen Link laden",
     "recentLinks": "Kürzliche Links",
     "addLink": "Link hinzufügen",
+    "linkPlaceholder": "https://... (Link zur Stellenanzeige)",
     "files": "Dateien",
     "selection": "Auswahl:",
     "clearFiles": "Dateien löschen",
