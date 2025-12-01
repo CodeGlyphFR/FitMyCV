@@ -3,19 +3,61 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
+import DonutProgress from "./ui/DonutProgress";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from "@/lib/onboarding/onboardingEvents";
+import { useTaskProgress } from "@/hooks/useTaskProgress";
 
-function LoadingSpinner() {
+/**
+ * Indicateur de progression compact pour le dropdown
+ * Taille réduite (24px) pour s'adapter au design compact
+ * Disparaît après l'animation de completion pour afficher le status texte
+ */
+function TaskProgressIndicator({ task, onComplete }) {
+  const [showDonut, setShowDonut] = React.useState(true);
+  const { progress } = useTaskProgress({
+    taskId: task.id,
+    taskType: task.type,
+    taskStatus: task.status,
+    startTime: Number(task.createdAt),
+    payload: task.payload,
+  });
+
+  // Quand progress atteint 100% et tâche completed, attendre puis masquer
+  React.useEffect(() => {
+    if (progress >= 100 && task.status === 'completed') {
+      const timer = setTimeout(() => {
+        setShowDonut(false);
+        onComplete?.();
+      }, 600); // 600ms pour laisser voir le 100%
+      return () => clearTimeout(timer);
+    }
+  }, [progress, task.status, onComplete]);
+
+  if (!showDonut) return null;
+
   return (
-    <div className="animate-apple-spin h-3 w-3 border-2 border-white/30 border-t-blue-300 rounded-full drop-shadow"></div>
+    <DonutProgress
+      progress={progress}
+      size={24}
+      strokeWidth={2.5}
+      showPercent={false}
+    />
   );
 }
 
 function TaskItem({ task, onCancel, onTaskClick, compact = false }) {
   const { t } = useLanguage();
+  const [showProgressDonut, setShowProgressDonut] = React.useState(task.status === 'running');
+
+  // Réinitialiser showProgressDonut quand la tâche passe à running
+  React.useEffect(() => {
+    if (task.status === 'running') {
+      setShowProgressDonut(true);
+    }
+  }, [task.status]);
 
   const getStatusDisplay = (status) => {
     const colors = {
@@ -168,10 +210,13 @@ function TaskItem({ task, onCancel, onTaskClick, compact = false }) {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        {task.status === 'running' && <LoadingSpinner />}
-        <span className={`text-xs font-medium ${statusDisplay.color} drop-shadow`}>
-          {statusDisplay.label}
-        </span>
+        {showProgressDonut && (task.status === 'running' || task.status === 'completed') ? (
+          <TaskProgressIndicator task={task} onComplete={() => setShowProgressDonut(false)} />
+        ) : (
+          <span className={`text-xs font-medium ${statusDisplay.color} drop-shadow`}>
+            {statusDisplay.label}
+          </span>
+        )}
         {canCancel && (
           <button
             onClick={(e) => {
