@@ -155,6 +155,8 @@
     },
     "cancel": "Abbrechen",
     "validate": "Bestätigen",
+    "upgradeTooltipLine1": "Upgraden Sie auf {planName}",
+    "upgradeTooltipLine2": "um auf diese Stufe zuzugreifen",
     "errors": {
       "selectReference": "Wählen Sie einen Referenz-Lebenslauf, bevor Sie die Analyse starten.",
       "addLinkOrFile": "Fügen Sie mindestens einen Link oder eine Datei hinzu."

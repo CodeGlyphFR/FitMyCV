@@ -24,6 +24,9 @@ export default function SubscriptionsPage({ user }) {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = React.useState("subscription");
+
+  // Récupérer l'ID du plan à mettre en avant (depuis redirection modal génération CV)
+  const highlightPlanId = searchParams.get('highlightPlan');
   const [subscriptionData, setSubscriptionData] = React.useState(null);
   const [creditData, setCreditData] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -369,6 +372,7 @@ export default function SubscriptionsPage({ user }) {
                 subscription={subscriptionData.subscription}
                 scheduledDowngrade={subscriptionData.scheduledDowngrade}
                 onUpgradeSuccess={refreshData}
+                highlightPlanId={highlightPlanId ? parseInt(highlightPlanId, 10) : null}
               />
             </div>
           )}

@@ -155,6 +155,8 @@
     },
     "cancel": "Cancelar",
     "validate": "Validar",
+    "upgradeTooltipLine1": "Actualiza al plan {planName}",
+    "upgradeTooltipLine2": "para acceder a este nivel",
     "errors": {
       "selectReference": "Selecciona un CV de referencia antes de iniciar el análisis.",
       "addLinkOrFile": "Añade al menos un enlace o archivo."
