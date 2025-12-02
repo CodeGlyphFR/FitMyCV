@@ -31,6 +31,7 @@ export default async function AuthPage({ searchParams }){
   }
 
   const initialMode = searchParams?.mode === "register" ? "register" : "login";
+  const oauthError = searchParams?.error || null;
   const availability = {
     google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
     apple: Boolean(
@@ -43,5 +44,5 @@ export default async function AuthPage({ searchParams }){
     github: Boolean(process.env.GITHUB_ID && process.env.GITHUB_SECRET),
   };
 
-  return <AuthScreen initialMode={initialMode} providerAvailability={availability} registrationEnabled={registrationEnabled} />;
+  return <AuthScreen initialMode={initialMode} providerAvailability={availability} registrationEnabled={registrationEnabled} oauthError={oauthError} />;
 }

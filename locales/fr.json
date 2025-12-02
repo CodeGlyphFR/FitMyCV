@@ -46,7 +46,13 @@
       "createFailed": "Impossible de créer votre compte.",
       "invalidCredentials": "Identifiants invalides.",
       "unexpected": "Erreur inattendue. Réessayez.",
-      "oauthUnavailable": "Connexion via ce fournisseur indisponible. Configurez les identifiants OAuth."
+      "oauthUnavailable": "Connexion via ce fournisseur indisponible. Configurez les identifiants OAuth.",
+      "oauthAccountNotLinked": "Ce compte n'est pas lié à votre compte FitMyCV. Connectez-vous avec votre méthode habituelle, puis liez ce compte depuis les paramètres.",
+      "oauthSigninError": "Erreur lors de la connexion avec ce fournisseur. Veuillez réessayer.",
+      "oauthCreateError": "Impossible de créer le compte avec ce fournisseur.",
+      "emailCreateError": "Erreur lors de la création du compte.",
+      "callbackError": "Erreur de redirection. Veuillez réessayer.",
+      "oauthGeneric": "Erreur d'authentification. Veuillez réessayer."
     }
   },
   "maintenance": {
@@ -778,6 +784,45 @@
       "success": "Le tutoriel a été réinitialisé. Redirection...",
       "errors": {
         "resetFailed": "Erreur lors de la réinitialisation du tutoriel."
+      }
+    },
+    "linkedAccounts": {
+      "title": "Comptes liés",
+      "description": "Gérez les méthodes de connexion associées à votre compte FitMyCV.",
+      "status": {
+        "connected": "Connecté",
+        "notConnected": "Non connecté",
+        "notConfigured": "Non configuré"
+      },
+      "actions": {
+        "link": "Lier",
+        "unlink": "Délier",
+        "linking": "Liaison...",
+        "unlinking": "Suppression..."
+      },
+      "errors": {
+        "loadFailed": "Erreur lors du chargement des comptes liés.",
+        "linkFailed": "Impossible de lier le compte {provider}.",
+        "unlinkFailed": "Impossible de délier le compte {provider}.",
+        "cannotUnlinkLast": "Impossible de délier : vous devez avoir au moins un compte lié.",
+        "email_mismatch": "L'email de ce compte {provider} ne correspond pas à votre email FitMyCV.",
+        "already_linked_other": "Ce compte {provider} est déjà lié à un autre utilisateur.",
+        "oauth_error": "Erreur d'authentification avec {provider}.",
+        "invalid_state": "Session expirée. Veuillez réessayer.",
+        "expired": "La demande a expiré. Veuillez réessayer.",
+        "session_expired": "Votre session a expiré. Veuillez vous reconnecter.",
+        "server_error": "Erreur serveur. Veuillez réessayer."
+      },
+      "success": {
+        "linked": "Compte {provider} lié avec succès !",
+        "unlinked": "Compte {provider} délié avec succès.",
+        "alreadyLinked": "Compte {provider} déjà lié."
+      },
+      "confirmUnlink": {
+        "title": "Délier {provider} ?",
+        "message": "Vous ne pourrez plus vous connecter avec {provider}. Vous pourrez toujours le relier plus tard.",
+        "confirm": "Délier",
+        "cancel": "Annuler"
       }
     },
     "deleteAccount": {

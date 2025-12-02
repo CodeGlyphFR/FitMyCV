@@ -46,7 +46,13 @@
       "createFailed": "Unable to create your account.",
       "invalidCredentials": "Invalid credentials.",
       "unexpected": "Unexpected error. Please try again.",
-      "oauthUnavailable": "Login via this provider unavailable. Configure OAuth credentials."
+      "oauthUnavailable": "Login via this provider unavailable. Configure OAuth credentials.",
+      "oauthAccountNotLinked": "This account is not linked to your FitMyCV account. Sign in with your usual method, then link this account from settings.",
+      "oauthSigninError": "Error signing in with this provider. Please try again.",
+      "oauthCreateError": "Unable to create account with this provider.",
+      "emailCreateError": "Error creating account.",
+      "callbackError": "Redirect error. Please try again.",
+      "oauthGeneric": "Authentication error. Please try again."
     }
   },
   "maintenance": {
@@ -778,6 +784,45 @@
       "success": "Tutorial has been reset. Redirecting...",
       "errors": {
         "resetFailed": "Error resetting the tutorial."
+      }
+    },
+    "linkedAccounts": {
+      "title": "Linked Accounts",
+      "description": "Manage login methods connected to your FitMyCV account.",
+      "status": {
+        "connected": "Connected",
+        "notConnected": "Not connected",
+        "notConfigured": "Not configured"
+      },
+      "actions": {
+        "link": "Link",
+        "unlink": "Unlink",
+        "linking": "Linking...",
+        "unlinking": "Unlinking..."
+      },
+      "errors": {
+        "loadFailed": "Error loading linked accounts.",
+        "linkFailed": "Unable to link {provider} account.",
+        "unlinkFailed": "Unable to unlink {provider} account.",
+        "cannotUnlinkLast": "Cannot unlink: you must have at least one linked account.",
+        "email_mismatch": "The email of this {provider} account does not match your FitMyCV email.",
+        "already_linked_other": "This {provider} account is already linked to another user.",
+        "oauth_error": "Authentication error with {provider}.",
+        "invalid_state": "Session expired. Please try again.",
+        "expired": "Request has expired. Please try again.",
+        "session_expired": "Your session has expired. Please sign in again.",
+        "server_error": "Server error. Please try again."
+      },
+      "success": {
+        "linked": "{provider} account linked successfully!",
+        "unlinked": "{provider} account unlinked successfully.",
+        "alreadyLinked": "{provider} account already linked."
+      },
+      "confirmUnlink": {
+        "title": "Unlink {provider}?",
+        "message": "You will no longer be able to sign in with {provider}. You can always re-link it later.",
+        "confirm": "Unlink",
+        "cancel": "Cancel"
       }
     },
     "deleteAccount": {

@@ -5,6 +5,7 @@ import { signOut } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import PasswordStrengthIndicator from "@/components/auth/PasswordStrengthIndicator";
 import PasswordInput from "@/components/ui/PasswordInput";
+import LinkedAccountsSection from "@/components/account/LinkedAccountsSection";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
@@ -258,6 +259,14 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
             {profileLoading ? t('account.profile.saving') : t('account.profile.saveButton')}
           </button>
         </form>
+      </section>
+
+      {/* Section Comptes liés */}
+      <section className="rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-xl p-6 shadow-2xl">
+        <h2 className="text-lg font-semibold mb-4 text-emerald-300 drop-shadow">
+          {t('account.linkedAccounts.title')}
+        </h2>
+        <LinkedAccountsSection />
       </section>
 
       {!isOAuthUser && (

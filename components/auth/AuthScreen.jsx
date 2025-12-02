@@ -16,7 +16,7 @@ const getProviders = (t) => [
   { id: "github", label: t("auth.continueWithGithub"), image: "/icons/github.png", width: 28, height: 28 },
 ];
 
-export default function AuthScreen({ initialMode = "login", providerAvailability = {}, registrationEnabled = true }){
+export default function AuthScreen({ initialMode = "login", providerAvailability = {}, registrationEnabled = true, oauthError = null }){
   const router = useRouter();
   const { t } = useLanguage();
   const { executeRecaptcha } = useRecaptcha();
@@ -29,8 +29,41 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
   const [error, setError] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [successMessage, setSuccessMessage] = React.useState("");
+  const [oauthErrorMessage, setOauthErrorMessage] = React.useState("");
 
   const isRegister = mode === "register";
+
+  // Gérer les erreurs OAuth (notamment OAuthAccountNotLinked)
+  React.useEffect(() => {
+    if (oauthError) {
+      let message = "";
+      switch (oauthError) {
+        case "OAuthAccountNotLinked":
+          message = t("auth.errors.oauthAccountNotLinked");
+          break;
+        case "OAuthSignin":
+        case "OAuthCallback":
+          message = t("auth.errors.oauthSigninError");
+          break;
+        case "OAuthCreateAccount":
+          message = t("auth.errors.oauthCreateError");
+          break;
+        case "EmailCreateAccount":
+          message = t("auth.errors.emailCreateError");
+          break;
+        case "Callback":
+          message = t("auth.errors.callbackError");
+          break;
+        default:
+          message = t("auth.errors.oauthGeneric");
+      }
+      setOauthErrorMessage(message);
+      // Nettoyer l'URL
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, '', '/auth');
+      }
+    }
+  }, [oauthError, t]);
 
   // Vérifier si l'utilisateur vient de vérifier son email
   React.useEffect(() => {
@@ -178,6 +211,18 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           </p>
         </div>
 
+        {/* Afficher l'erreur OAuth si présente */}
+        {oauthErrorMessage && (
+          <div className="rounded-lg border-2 border-amber-400/50 bg-amber-500/20 backdrop-blur-sm px-4 py-3 text-sm">
+            <div className="flex items-start gap-2">
+              <span className="text-amber-400 text-lg flex-shrink-0">⚠️</span>
+              <p className="text-white drop-shadow flex-1">
+                {oauthErrorMessage}
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-center gap-3">
           {providers.map(provider => (
             <button
@@ -193,7 +238,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
                 alt={provider.label}
                 width={provider.width}
                 height={provider.height}
-                className="object-contain"
+                className={`object-contain ${["github", "apple"].includes(provider.id) ? "invert" : ""}`}
                 priority
               />
             </button>

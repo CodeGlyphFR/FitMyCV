@@ -46,7 +46,13 @@
       "createFailed": "No se pudo crear tu cuenta.",
       "invalidCredentials": "Credenciales inválidas.",
       "unexpected": "Error inesperado. Por favor intenta de nuevo.",
-      "oauthUnavailable": "Inicio de sesión con este proveedor no disponible. Configura las credenciales OAuth."
+      "oauthUnavailable": "Inicio de sesión con este proveedor no disponible. Configura las credenciales OAuth.",
+      "oauthAccountNotLinked": "Esta cuenta no está vinculada a tu cuenta FitMyCV. Inicia sesión con tu método habitual y luego vincula esta cuenta desde ajustes.",
+      "oauthSigninError": "Error al iniciar sesión con este proveedor. Por favor intenta de nuevo.",
+      "oauthCreateError": "No se pudo crear la cuenta con este proveedor.",
+      "emailCreateError": "Error al crear la cuenta.",
+      "callbackError": "Error de redirección. Por favor intenta de nuevo.",
+      "oauthGeneric": "Error de autenticación. Por favor intenta de nuevo."
     }
   },
   "maintenance": {
@@ -778,6 +784,45 @@
       "success": "Tutorial reiniciado. Redirigiendo...",
       "errors": {
         "resetFailed": "Error al reiniciar el tutorial."
+      }
+    },
+    "linkedAccounts": {
+      "title": "Cuentas vinculadas",
+      "description": "Gestiona los métodos de inicio de sesión conectados a tu cuenta FitMyCV.",
+      "status": {
+        "connected": "Conectado",
+        "notConnected": "No conectado",
+        "notConfigured": "No configurado"
+      },
+      "actions": {
+        "link": "Vincular",
+        "unlink": "Desvincular",
+        "linking": "Vinculando...",
+        "unlinking": "Desvinculando..."
+      },
+      "errors": {
+        "loadFailed": "Error al cargar las cuentas vinculadas.",
+        "linkFailed": "No se pudo vincular la cuenta de {provider}.",
+        "unlinkFailed": "No se pudo desvincular la cuenta de {provider}.",
+        "cannotUnlinkLast": "No se puede desvincular: debes tener al menos una cuenta vinculada.",
+        "email_mismatch": "El email de esta cuenta de {provider} no coincide con tu email de FitMyCV.",
+        "already_linked_other": "Esta cuenta de {provider} ya está vinculada a otro usuario.",
+        "oauth_error": "Error de autenticación con {provider}.",
+        "invalid_state": "Sesión expirada. Por favor intenta de nuevo.",
+        "expired": "La solicitud ha expirado. Por favor intenta de nuevo.",
+        "session_expired": "Tu sesión ha expirado. Por favor inicia sesión de nuevo.",
+        "server_error": "Error del servidor. Por favor intenta de nuevo."
+      },
+      "success": {
+        "linked": "¡Cuenta de {provider} vinculada con éxito!",
+        "unlinked": "Cuenta de {provider} desvinculada con éxito.",
+        "alreadyLinked": "Cuenta de {provider} ya vinculada."
+      },
+      "confirmUnlink": {
+        "title": "¿Desvincular {provider}?",
+        "message": "Ya no podrás iniciar sesión con {provider}. Siempre puedes volver a vincularlo más tarde.",
+        "confirm": "Desvincular",
+        "cancel": "Cancelar"
       }
     },
     "deleteAccount": {

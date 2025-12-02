@@ -46,7 +46,13 @@
       "createFailed": "Konto konnte nicht erstellt werden.",
       "invalidCredentials": "Ungültige Anmeldedaten.",
       "unexpected": "Unerwarteter Fehler. Bitte erneut versuchen.",
-      "oauthUnavailable": "Anmeldung über diesen Anbieter nicht verfügbar. Konfigurieren Sie die OAuth-Anmeldedaten."
+      "oauthUnavailable": "Anmeldung über diesen Anbieter nicht verfügbar. Konfigurieren Sie die OAuth-Anmeldedaten.",
+      "oauthAccountNotLinked": "Dieses Konto ist nicht mit Ihrem FitMyCV-Konto verknüpft. Melden Sie sich mit Ihrer üblichen Methode an und verknüpfen Sie dann dieses Konto in den Einstellungen.",
+      "oauthSigninError": "Fehler bei der Anmeldung mit diesem Anbieter. Bitte erneut versuchen.",
+      "oauthCreateError": "Konto konnte mit diesem Anbieter nicht erstellt werden.",
+      "emailCreateError": "Fehler beim Erstellen des Kontos.",
+      "callbackError": "Weiterleitungsfehler. Bitte erneut versuchen.",
+      "oauthGeneric": "Authentifizierungsfehler. Bitte erneut versuchen."
     }
   },
   "maintenance": {
@@ -777,6 +783,45 @@
       "success": "Das Tutorial wurde zurückgesetzt. Weiterleitung...",
       "errors": {
         "resetFailed": "Fehler beim Zurücksetzen des Tutorials."
+      }
+    },
+    "linkedAccounts": {
+      "title": "Verknüpfte Konten",
+      "description": "Verwalten Sie die mit Ihrem FitMyCV-Konto verbundenen Anmeldemethoden.",
+      "status": {
+        "connected": "Verbunden",
+        "notConnected": "Nicht verbunden",
+        "notConfigured": "Nicht konfiguriert"
+      },
+      "actions": {
+        "link": "Verknüpfen",
+        "unlink": "Trennen",
+        "linking": "Wird verknüpft...",
+        "unlinking": "Wird getrennt..."
+      },
+      "errors": {
+        "loadFailed": "Fehler beim Laden der verknüpften Konten.",
+        "linkFailed": "{provider}-Konto konnte nicht verknüpft werden.",
+        "unlinkFailed": "{provider}-Konto konnte nicht getrennt werden.",
+        "cannotUnlinkLast": "Kann nicht getrennt werden: Sie müssen mindestens ein verknüpftes Konto haben.",
+        "email_mismatch": "Die E-Mail dieses {provider}-Kontos stimmt nicht mit Ihrer FitMyCV-E-Mail überein.",
+        "already_linked_other": "Dieses {provider}-Konto ist bereits mit einem anderen Benutzer verknüpft.",
+        "oauth_error": "Authentifizierungsfehler mit {provider}.",
+        "invalid_state": "Sitzung abgelaufen. Bitte erneut versuchen.",
+        "expired": "Die Anfrage ist abgelaufen. Bitte erneut versuchen.",
+        "session_expired": "Ihre Sitzung ist abgelaufen. Bitte erneut anmelden.",
+        "server_error": "Serverfehler. Bitte erneut versuchen."
+      },
+      "success": {
+        "linked": "{provider}-Konto erfolgreich verknüpft!",
+        "unlinked": "{provider}-Konto erfolgreich getrennt.",
+        "alreadyLinked": "{provider}-Konto bereits verknüpft."
+      },
+      "confirmUnlink": {
+        "title": "{provider} trennen?",
+        "message": "Sie können sich nicht mehr mit {provider} anmelden. Sie können es später jederzeit wieder verknüpfen.",
+        "confirm": "Trennen",
+        "cancel": "Abbrechen"
       }
     },
     "deleteAccount": {
