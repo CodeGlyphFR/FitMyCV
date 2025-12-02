@@ -381,6 +381,9 @@
     "terms": "Términos de servicio",
     "privacy": "Política de privacidad"
   },
+  "about": {
+    "title": "Acerca de FitMyCV"
+  },
   "cookies": {
     "banner": {
       "title": "Este sitio utiliza cookies",

@@ -381,6 +381,9 @@
     "terms": "Terms of Service",
     "privacy": "Privacy Policy"
   },
+  "about": {
+    "title": "About FitMyCV"
+  },
   "cookies": {
     "banner": {
       "title": "This site uses cookies",

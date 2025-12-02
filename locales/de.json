@@ -381,6 +381,9 @@
     "terms": "Allgemeine Geschäftsbedingungen",
     "privacy": "Datenschutzrichtlinie"
   },
+  "about": {
+    "title": "Über FitMyCV"
+  },
   "cookies": {
     "banner": {
       "title": "Diese Website verwendet Cookies",
