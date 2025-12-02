@@ -1,0 +1,393 @@
+{
+  "onboarding": {
+    "common": {
+      "buttons": {
+        "skip": "Skip",
+        "previous": "Previous",
+        "next": "Next",
+        "understood": "Got it",
+        "understoodExclaim": "Got it!",
+        "start": "Start!",
+        "close": "Close"
+      },
+      "aria": {
+        "closeModal": "Close modal",
+        "closeTooltip": "Close tooltip",
+        "closeAndStartOnboarding": "Close and start onboarding",
+        "expandChecklist": "Expand",
+        "collapseChecklist": "Collapse",
+        "closeGuide": "Close guide",
+        "goToScreen": "Go to screen {current} of {total}",
+        "screenReaderStep": "Step {current} of {total}"
+      },
+      "checklist": {
+        "title": "Getting Started Guide",
+        "inProgress": "In progress",
+        "skipTutorial": "Skip tutorial",
+        "completed": "Tutorial completed!",
+        "confirmSkip": "Are you sure you want to skip the tutorial? You can restart it from settings.",
+        "progressLabel": "Tutorial progress"
+      }
+    },
+    "steps": {
+      "step1": {
+        "title": "Edit Mode",
+        "description": "Discover edit mode to easily modify your CV",
+        "tooltip": "👉 Click here to edit your CV!",
+        "modal": {
+          "screen1": {
+            "title": "Create your \"master\" CV",
+            "description": "The idea is simple: create a CV as complete as possible with all your experiences, skills and education. The more detailed your CV, the better AI can filter it for each job offer.",
+            "checklist": [
+              "One complete CV to maintain",
+              "AI extracts the best for each offer",
+              "A huge time saver"
+            ],
+            "tip": "Think \"Mega CV\": list everything, AI will sort it for you. Do it once, the magic happens afterward."
+          },
+          "screen2": {
+            "title": "You have full control!",
+            "description": "Your CV belongs to you. Modify it as you wish, section by section.",
+            "subtitle": "3 actions at your disposal:",
+            "actions": {
+              "edit": {
+                "title": "Edit",
+                "description": "Edit the content of any section in one click"
+              },
+              "delete": {
+                "title": "Delete",
+                "description": "Remove what is no longer relevant"
+              },
+              "add": {
+                "title": "Add",
+                "description": "Complete your CV with new experiences, education, languages, projects or extras"
+              }
+            },
+            "tip": "The richer your CV, the more AI has to work with."
+          },
+          "screen3": {
+            "title": "Two sections not to neglect",
+            "blocks": {
+              "projects": {
+                "title": "Projects",
+                "description": "List your professional AND personal projects. A side-project, an open source contribution, a student project... everything counts for AI."
+              },
+              "extra": {
+                "title": "Extra",
+                "description": "Fill in your additional information: hobbies and interests, availability, remote work preference, mobility, driver's license..."
+              }
+            },
+            "tip": "This info helps AI better target the offers that match you."
+          }
+        }
+      },
+      "step2": {
+        "title": "AI Generation",
+        "description": "Generate a tailored CV with AI",
+        "tooltip": "✨ Adapt your CV to job offers with AI",
+        "modal": {
+          "screen1": {
+            "title": "Generate tailored CVs in a few clicks",
+            "description": "The heart of FitMyCV: your job offers. Add them, AI handles the rest. It analyzes each offer, extracts key information and adapts your CV automatically.",
+            "subtitle": "2 ways to start:",
+            "blocks": {
+              "existing": {
+                "title": "Start from an existing CV",
+                "description": "Select your most complete CV. The more detailed it is, the more precisely AI can adapt it to each job offer."
+              },
+              "template": {
+                "title": "Create a template from the offer",
+                "description": "Generate a CV template based on the job offer to inspire you and compose your own."
+              }
+            },
+            "tip": "No need to copy-paste the offers content. Paste links or import PDFs, AI extracts everything automatically."
+          },
+          "screen2": {
+            "title": "One job offer = One tailored CV",
+            "description": "Add as many offers as you want. For each one, AI generates a perfectly tailored CV.",
+            "blocks": {
+              "url": {
+                "title": "By URL",
+                "description": "Paste your job offer links. AI opens each page and extracts information automatically."
+              },
+              "pdf": {
+                "title": "By PDF",
+                "description": "Import offers that were sent to you or that you saved."
+              }
+            },
+            "historyBlock": {
+              "title": "History",
+              "description": "Find all previously used offers. Reuse them to generate new CVs without searching again."
+            },
+            "subtitle2": "3 analysis levels:",
+            "analysisLevels": {
+              "rapid": {
+                "title": "Fast",
+                "description": "Essential adaptation"
+              },
+              "normal": {
+                "title": "Normal",
+                "description": "Complete analysis"
+              },
+              "deep": {
+                "title": "Deep",
+                "description": "Maximum optimization"
+              }
+            }
+          },
+          "screen3": {
+            "title": "AI adapts, it doesn't invent",
+            "description": "AI doesn't fabricate fake experiences. It filters your generic CV to keep only what matters for the job offer.",
+            "subtitle": "Specifically, AI will:",
+            "checklist": [
+              "Filter experiences and skills relevant to the offer",
+              "Remove what's unnecessary to avoid overloading the CV",
+              "Rephrase using the job offer's vocabulary (ATS-friendly)",
+              "Detect missing skills justifiable by your background",
+              "Determine your level for each added skill"
+            ],
+            "tip": "Result: a targeted, streamlined CV perfectly aligned with what the recruiter is looking for."
+          }
+        }
+      },
+      "step3": {
+        "title": "Task Manager",
+        "description": "Track the progress of your background tasks",
+        "tooltip": "🔄 Your CV is being generated. Track progress here."
+      },
+      "step4": {
+        "title": "Open Generated CV",
+        "description": "Open and view your generated CV",
+        "tooltip": "✅ Your new CV is ready! Click here to open it"
+      },
+      "step5": {
+        "title": "Match Score",
+        "description": "Calculate compatibility with a job offer",
+        "tooltip": "🎯 Calculate your CV's compatibility with a job offer",
+        "fallbackMessage": "This step requires an associated job offer. Would you like to skip it?"
+      },
+      "step6": {
+        "title": "AI Optimization",
+        "description": "Optimize CV with AI suggestions",
+        "tooltip": "🚀 Optimize your CV to increase your score",
+        "modal": {
+          "screen1": {
+            "title": "Measure your compatibility with the offer",
+            "description": "For each generated CV, get a match score indicating how well your profile matches the recruiter's expectations.",
+            "subtitle": "The detailed analysis shows you:",
+            "blocks": {
+              "breakdown": {
+                "title": "Score breakdown",
+                "description": "Understand what works and what can be improved"
+              },
+              "validated": {
+                "title": "Validated skills",
+                "description": "What your CV already covers for the job offer"
+              },
+              "missing": {
+                "title": "Missing skills",
+                "description": "What the recruiter is looking for that doesn't appear yet"
+              },
+              "improvements": {
+                "title": "Improvement points",
+                "description": "Concrete recommendations to boost your score"
+              }
+            },
+            "tip": "A high score = more chances of being noticed by the recruiter."
+          },
+          "screen2": {
+            "title": "Apply improvements instantly",
+            "description": "No need to modify everything manually. AI can apply recommendations directly to your CV in one click.",
+            "checklist": [
+              "Automatic rephrasing",
+              "Adding justifiable missing skills",
+              "Vocabulary adjustment for the job offer"
+            ],
+            "subtitle": "Full transparency:",
+            "transparencyText": "Each modification is recorded in the history with its justification. You know exactly what changed and why.",
+            "tip": "Optimize, verify, export. Your CV is ready to apply."
+          }
+        }
+      },
+      "step7": {
+        "title": "History",
+        "description": "View AI modification history",
+        "tooltip": "📝 Discover all modifications made by AI"
+      },
+      "step8": {
+        "title": "PDF Export",
+        "description": "Export your optimized CV to PDF format",
+        "tooltip": "📄 Export your optimized CV to PDF format",
+        "modal": {
+          "screen1": {
+            "title": "Export a CV ready to apply",
+            "description": "Generate a professional PDF, in standard format without photo, perfectly readable by recruiters and their ATS tools.",
+            "checklist": [
+              "Universal format recognized by all ATS",
+              "Clear and professional layout",
+              "Ready to be sent for applications"
+            ]
+          },
+          "screen2": {
+            "title": "100% customizable export",
+            "description": "Select what you want to include in your PDF: sections, experiences, education, languages, projects... You decide, we generate.",
+            "checklist": [
+              "Hide irrelevant sections",
+              "Choose which experiences to display",
+              "Include or exclude key deliverables"
+            ],
+            "tip": "A targeted CV = more impact with the recruiter."
+          }
+        },
+        "onComplete": {
+          "message": "🎉 Congratulations! You now master all the features!"
+        }
+      }
+    },
+    "welcome": {
+      "screen1": {
+        "title": "Welcome to FitMyCV 👋",
+        "description": "Welcome! This tutorial will teach you the basics to quickly create CVs tailored to each offer.",
+        "checklist": [
+          "A tailored CV for each offer",
+          "ATS-optimized format*",
+          "Designed to convince recruiters",
+          "Ready in minutes"
+        ],
+        "atsExplanation": "ATS (Applicant Tracking System): software used by recruiters to automatically filter CVs. An ATS-optimized format increases your chances of being seen.",
+        "solution": {
+          "title": "Tip",
+          "description": "Simply paste your offer links, we analyze everything automatically!"
+        }
+      },
+      "screen2": {
+        "title": "Why do your applications go unanswered?",
+        "problems": [
+          {
+            "emoji": "😤",
+            "title": "Dozens of CVs sent, zero response",
+            "description": "You spend hours applying but only get silence."
+          },
+          {
+            "emoji": "🤖",
+            "title": "Your CV must first convince a software",
+            "description": "88% of large companies use ATS systems that analyze structure and keywords before a human sees your CV."
+          },
+          {
+            "emoji": "👤",
+            "title": "Then charm a recruiter in seconds",
+            "description": "If it passes the filter, a recruiter quickly scans it to decide who to meet."
+          },
+          {
+            "emoji": "🎯",
+            "title": "The challenge: succeed at both with a generic CV",
+            "description": "Mission impossible without adapting your CV to each offer."
+          }
+        ],
+        "solution": {
+          "title": "FitMyCV solves this dual challenge",
+          "description": "Our AI adapts your CV to pass automatic filters AND capture recruiters' attention. A tailored CV for each offer, in a few clicks, to drastically increase your chances of getting a first interview."
+        }
+      },
+      "screen3": {
+        "title": "Ready for a 2-minute tour? ⏱️",
+        "subtitle": "Discover the 5 features that will change how you apply",
+        "features": [
+          {
+            "emoji": "✏️",
+            "title": "Create and edit your CV",
+            "description": "Intuitive interface and ATS-optimized format"
+          },
+          {
+            "emoji": "🤖",
+            "title": "Generate with AI",
+            "description": "CV automatically adapted to each job offer"
+          },
+          {
+            "emoji": "📊",
+            "title": "Calculate your score",
+            "description": "Measure your compatibility with an offer"
+          },
+          {
+            "emoji": "⚡",
+            "title": "Optimize in 1 click",
+            "description": "AI improves your CV automatically"
+          },
+          {
+            "emoji": "📄",
+            "title": "Export in pro format",
+            "description": "Perfect PDF to apply anywhere"
+          }
+        ],
+        "tip": "Follow the tour, you'll create your first CV right after!"
+      }
+    },
+    "completion": {
+      "screen1": {
+        "title": "Congratulations, you're ready!",
+        "description": "You now master FitMyCV. Create tailored CVs, calculate your match score, optimize in one click and export professional PDFs.",
+        "checklist": [
+          "Edit mode mastered",
+          "AI generation discovered",
+          "Score and optimization understood",
+          "PDF export ready to use"
+        ],
+        "highlight": "It's time to land your next interview!"
+      },
+      "screen2": {
+        "title": "Everything you can do now",
+        "description": "FitMyCV offers you several ways to create and manage your CVs.",
+        "features": {
+          "import": {
+            "title": "Import an existing CV",
+            "description": "Add your CVs in PDF or Word, AI adapts them to the optimized format"
+          },
+          "create": {
+            "title": "Create a blank CV",
+            "description": "Start from scratch and build your CV section by section"
+          },
+          "generate": {
+            "title": "Generate a template CV",
+            "description": "Type any job title, AI generates a fictional CV to inspire you"
+          },
+          "delete": {
+            "title": "Delete a CV",
+            "description": "Clean up your CVs in one click"
+          },
+          "translate": {
+            "title": "Translate your CV",
+            "description": "Convert your CV to French or English with one click"
+          }
+        },
+        "tip": "Tip: The search bar also works with fictional titles to explore new careers!"
+      },
+      "screen3": {
+        "title": "Coming soon to FitMyCV",
+        "description": "We're not stopping there. Here's what's coming soon to help you land your dream job.",
+        "comingSoon": [
+          {
+            "emoji": "🔍",
+            "title": "Offer Analysis",
+            "description": "Understand exactly what the recruiter is looking for"
+          },
+          {
+            "emoji": "✉️",
+            "title": "Cover Letters",
+            "description": "AI writes them for you"
+          },
+          {
+            "emoji": "🎤",
+            "title": "HR Preparation",
+            "description": "Simulate your interviews"
+          },
+          {
+            "emoji": "📋",
+            "title": "Application Tracking",
+            "description": "Everything in one place"
+          }
+        ],
+        "tip": "Have a feature idea? Let us know!"
+      }
+    }
+  }
+}

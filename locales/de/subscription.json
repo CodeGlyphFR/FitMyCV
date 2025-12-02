@@ -1,0 +1,287 @@
+{
+  "subscription": {
+    "page": {
+      "title": "Abonnements & Credits",
+      "description": "Verwalten Sie Ihr Abonnement, kaufen Sie Credits und sehen Sie Ihren Verlauf ein.",
+      "backToCvs": "Zurück",
+      "loadingTitle": "Laden...",
+      "errorLoading": "Fehler beim Laden der Daten",
+      "tabs": {
+        "subscription": "Abonnement",
+        "credits": "Credits",
+        "history": "Verlauf"
+      },
+      "tabsAriaLabel": "Abonnementverwaltung",
+      "close": "Schließen"
+    },
+    "messages": {
+      "subscriptionUpdated": "✅ Abonnement erfolgreich aktualisiert!",
+      "subscriptionActivated": "✅ Abonnement erfolgreich aktiviert!",
+      "creditsPurchased": "✅ Credits erfolgreich gekauft!",
+      "paymentCanceled": "❌ Zahlung abgebrochen.",
+      "loadingError": "Fehler beim Laden der Daten",
+      "cancelScheduled": "✅ Ihr Abonnement wird am Ende des aktuellen Zeitraums gekündigt.",
+      "cancelError": "Fehler bei der Kündigung des Abonnements"
+    },
+    "currentPlan": {
+      "title": "Plan {planName}",
+      "freePlan": "Kostenloser Plan",
+      "billingMonthly": "Monatliche Abrechnung",
+      "billingYearly": "Jährliche Abrechnung",
+      "perMonth": "Monat",
+      "perYear": "Jahr",
+      "status": {
+        "active": "Aktiv",
+        "canceled": "Gekündigt",
+        "pastDue": "Zahlung fehlgeschlagen"
+      },
+      "currentPeriod": "Aktueller Zeitraum",
+      "periodFrom": "Vom {date}",
+      "periodTo": "bis {date}",
+      "renewal": "Verlängerung",
+      "renewalAutomatic": "Automatisch",
+      "renewalInactive": "Inaktiv",
+      "canceledOn": "Gekündigt am {date}",
+      "canceledWarning": "Ihr Abonnement wird am {date} gekündigt. Sie behalten den Zugang bis zu diesem Datum.",
+      "switchToYearly": "Auf jährliche Abrechnung wechseln ({price}€/Jahr - sparen Sie {discount}%)",
+      "cancelButton": "Abonnement kündigen",
+      "reactivateButton": "Verlängerung reaktivieren",
+      "switchPeriodInfo": "Um zur monatlichen Zahlung zurückzukehren, kündigen Sie bitte Ihr jährliches Abonnement",
+      "cancelModal": {
+        "title": "Abonnement kündigen?",
+        "description": "Wenn Sie Ihr Abonnement kündigen:",
+        "keepAccessUntil": "Sie behalten den Zugang bis {date}",
+        "downgradePlan": "Sie werden automatisch zum kostenlosen Plan zurückgestuft",
+        "canReactivate": "Sie können jederzeit reaktivieren",
+        "keepButton": "Behalten",
+        "confirmButton": "Bestätigen",
+        "canceling": "Wird gekündigt..."
+      },
+      "reactivateModal": {
+        "title": "Abonnement reaktivieren?",
+        "description": "Wenn Sie Ihr Abonnement reaktivieren:",
+        "renewalRestored": "Die automatische Verlängerung wird wiederhergestellt",
+        "keepPlan": "Sie behalten Ihren Plan {planName} nach dem {date}",
+        "canCancelAgain": "Sie können jederzeit wieder kündigen",
+        "cancelButton": "Abbrechen",
+        "confirmButton": "Bestätigen",
+        "reactivating": "Wird reaktiviert..."
+      },
+      "yearlyWarningModal": {
+        "title": "Auf jährliche Abrechnung wechseln?",
+        "warningTitle": "Achtung: Diese Änderung ist unwiderruflich",
+        "cannotGoBackMonthly": "Sobald Sie auf jährliche Abrechnung wechseln, können Sie nicht mehr zur monatlichen Zahlung zurückkehren",
+        "savingsInfo": "Sie sparen {discount}% gegenüber monatlicher Zahlung ({yearlyPrice}€/Jahr statt {monthlyTotal}€/Jahr)",
+        "cancellationInfo": "Wenn Sie später kündigen möchten, wird die Kündigung am Ende Ihres jährlichen Zeitraums wirksam",
+        "prorataInfo": "Sie werden jetzt anteilig für den verbleibenden Zeitraum berechnet",
+        "termsLabel": "Ich akzeptiere die",
+        "termsLink": "Allgemeinen Geschäftsbedingungen",
+        "termsRequired": "Sie müssen die AGB akzeptieren",
+        "cancelButton": "Abbrechen",
+        "confirm": "Bestätigen",
+        "confirmButton": "Wechsel zu jährlich bestätigen",
+        "switching": "Verarbeitung..."
+      }
+    },
+    "comparison": {
+      "title": "Verfügbare Pläne",
+      "badges": {
+        "current": "Aktueller Plan",
+        "recommended": "⭐ Empfohlen"
+      },
+      "pricing": {
+        "free": "Kostenlos",
+        "forever": "Für immer",
+        "perMonth": "pro Monat",
+        "perYear": "pro Jahr",
+        "saveYearly": "💰 Sparen Sie {percent}% bei jährlicher Zahlung"
+      },
+      "features": {
+        "unlimited": "unbegrenzt",
+        "notAccessible": "❌ Nicht zugängliche Funktionen:",
+        "showMore": "+ {count} weitere Funktionen",
+        "showLess": "− Weniger anzeigen"
+      },
+      "buttons": {
+        "currentPlan": "Aktueller Plan",
+        "downgradeScheduled": "Downgrade bereits geplant",
+        "downgradeScheduledOn": "Downgrade geplant am {date}",
+        "cancelDowngrade": "Downgrade abbrechen",
+        "cancelingDowngrade": "Wird abgebrochen...",
+        "upgrade": "Upgrade",
+        "downgrade": "Downgrade",
+        "upgradeTo": "Auf {planName} wechseln",
+        "downgradeTo": "Zu {planName} zurückkehren",
+        "monthly": "Monatlich",
+        "yearly": "Jährlich",
+        "orYearly": "oder Jährlich",
+        "scheduling": "Wird geplant...",
+        "redirecting": "Weiterleitung..."
+      },
+      "securePayment": "💳 Sichere Zahlung über Stripe • Jederzeit kündbar",
+      "errors": {
+        "checkoutError": "Fehler beim Erstellen der Zahlungssitzung",
+        "changePlanError": "Fehler beim Planwechsel",
+        "cancelError": "Fehler bei der Kündigung",
+        "previewError": "Fehler bei der Berechnung des anteiligen Betrags"
+      },
+      "downgradeToFreeModal": {
+        "title": "Zum kostenlosen Plan wechseln",
+        "description": "Sie sind dabei, Ihr Abonnement zu kündigen.",
+        "scheduledCancelled": "Ihr geplantes Downgrade zu {planName} wird abgebrochen.",
+        "keepAccessUntil": "Sie behalten den Zugang zu Ihrem aktuellen Plan bis <strong>{date}</strong>",
+        "effectiveDate": "Downgrade geplant am {date}",
+        "switchToFree": "Sie wechseln automatisch zum <strong>kostenlosen Plan</strong> an diesem Datum",
+        "canUpgrade": "Sie können jederzeit wieder ein Upgrade durchführen",
+        "cancel": "Abbrechen",
+        "confirm": "Bestätigen",
+        "scheduling": "Wird geplant..."
+      },
+      "downgradePaidModal": {
+        "title": "Downgrade bestätigen",
+        "description": "Ihr Abonnement wird am Ende Ihres aktuellen Zeitraums geändert.",
+        "effectiveDate": "Wirksamkeitsdatum",
+        "keepCurrentPlan": "Sie behalten Ihren aktuellen Plan bis zum Ende Ihres Zeitraums",
+        "noRefund": "Keine Rückerstattung wird erfolgen",
+        "newInvoice": "Eine neue Rechnung wird am Wirksamkeitsdatum erstellt",
+        "canCancel": "Sie können diese Änderung jederzeit vor dem Wirksamkeitsdatum abbrechen",
+        "termsLabel": "Ich akzeptiere die",
+        "termsLink": "Allgemeinen Geschäftsbedingungen",
+        "termsRequired": "Sie müssen die AGB akzeptieren",
+        "cancel": "Abbrechen",
+        "confirm": "Bestätigen",
+        "scheduling": "Wird geplant..."
+      },
+      "upgradeModal": {
+        "title": "Upgrade bestätigen",
+        "calculatingProrata": "Anteiliger Betrag wird berechnet...",
+        "prorataAmount": "Zu zahlender Betrag",
+        "prorataInfo": "Betrag berechnet für den verbleibenden Zeitraum (automatische anteilige Berechnung)",
+        "immediate": "Ihr neuer Plan wird sofort aktiviert",
+        "invoiceInfo": "Die Rechnung ist im Tab Verlauf verfügbar",
+        "secure": "100% sichere Zahlung über Stripe",
+        "yearlyWarning": "Sobald Sie auf jährliche Abrechnung wechseln, können Sie nicht mehr zur monatlichen Zahlung zurückkehren",
+        "stayYearly": "Sie bleiben bei jährlicher Abrechnung bis {date}",
+        "creditApplied": "{months} Monate kostenlos dank Ihres Guthabens",
+        "termsLabel": "Ich akzeptiere die",
+        "termsLink": "Allgemeinen Geschäftsbedingungen",
+        "termsRequired": "Sie müssen die AGB akzeptieren",
+        "cancel": "Abbrechen",
+        "confirm": "Bestätigen",
+        "processing": "Verarbeitung..."
+      }
+    },
+    "features": {
+      "title": "Monatliche Nutzung",
+      "resetInfo": "Die Zähler werden am Jahrestag Ihres Abonnements zurückgesetzt",
+      "disabled": "Deaktiviert",
+      "unlimited": "∞",
+      "unlimitedTooltip": "Unbegrenzte Nutzung für diese Funktion",
+      "limitReached": "Limit erreicht - verwenden Sie Ihre Credits",
+      "limitAlmost": "Limit fast erreicht ({percentage}%)",
+      "limitAlmostTooltip": "Über dem Limit hinaus können Sie Ihre Credits verwenden (1 Credit = 1 Nutzung)",
+      "needMore": "Mehr benötigt?",
+      "needMoreInfo": "Kaufen Sie Credits, um Ihre monatlichen Limits zu überschreiten, ohne den Plan zu wechseln.",
+      "labels": {
+        "gpt_cv_generation": "🤖 KI-Lebenslauf-Anpassung",
+        "import_pdf": "📥 Lebenslauf-Import",
+        "translate_cv": "🌍 Lebenslauf-Übersetzung",
+        "match_score": "🎯 Match-Score",
+        "calculate_match_score": "🎯 Match-Score",
+        "optimize_cv": "✨ Optimierung",
+        "generate_from_job_title": "💼 Fiktive Lebenslauf-Erstellung",
+        "export_cv": "💾 Lebenslauf-Export",
+        "edit_cv": "✏️ Lebenslauf-Bearbeitung",
+        "create_cv_manual": "📝 Lebenslauf-Erstellung"
+      }
+    },
+    "credits": {
+      "title": "Credit-Guthaben",
+      "available": "verfügbare Credits",
+      "purchased": "Gekauft",
+      "used": "Verwendet",
+      "refunded": "Erstattet",
+      "gifted": "Erhaltene Boni",
+      "howItWorks": "Wie funktioniert es?",
+      "rule1": "1 Credit = 1 Nutzung einer beliebigen Funktion",
+      "rule2": "Credits sind dauerhaft (kein Ablauf)",
+      "rule3": "Automatische Erstattung bei fehlgeschlagener Aufgabe",
+      "rule4": "Verwenden Sie Ihre Credits, um monatliche Limits zu überschreiten"
+    },
+    "packs": {
+      "title": "Credits kaufen",
+      "credits": "Credits",
+      "pricePerCredit": "d.h. {price}€ pro Credit",
+      "buyButton": "Kaufen",
+      "redirecting": "Weiterleitung...",
+      "securePayment": "Sichere Zahlung über Stripe • Dauerhafte Credits",
+      "loading": "Laden..."
+    },
+    "transactions": {
+      "title": "Transaktionsverlauf",
+      "noTransactions": "Noch keine Transaktionen.",
+      "columns": {
+        "type": "Typ",
+        "details": "Details",
+        "amount": "Betrag",
+        "date": "Datum"
+      },
+      "types": {
+        "purchase": "Kauf",
+        "usage": "Nutzung",
+        "refund": "Erstattung",
+        "gift": "Bonus",
+        "cv_creation": "Lebenslauf-Erstellung"
+      },
+      "refunded": "(Erstattet)",
+      "pagination": {
+        "previous": "Zurück",
+        "next": "Weiter",
+        "page": "Seite {page}"
+      }
+    },
+    "invoices": {
+      "title": "Rechnungen",
+      "noInvoices": "Noch keine Rechnungen",
+      "noPdfInvoices": "Keine PDF-Rechnungen verfügbar",
+      "noPdfInvoicesHint": "PDF-Rechnungen werden für Abonnements erstellt. Credit-Zahlungen ohne Abonnement haben keine PDFs.",
+      "errorLoading": "Fehler beim Laden der Rechnungen",
+      "creditBanner": {
+        "title": "💰 Rechnungsguthaben verfügbar",
+        "amount": "Aktueller Saldo: {amount}€",
+        "explanation": "Dieses Guthaben wird automatisch von Ihren nächsten Rechnungen abgezogen.",
+        "estimatedMonths": "Das entspricht etwa {months} kostenlosen Monaten 🎉",
+        "lessThanOneMonth": "Dieses Guthaben deckt einen Teil Ihrer nächsten Rechnung."
+      },
+      "filters": {
+        "all": "Alle ({count})",
+        "subscriptions": "Abonnements ({count})",
+        "credits": "Credits ({count})"
+      },
+      "columns": {
+        "date": "Datum",
+        "type": "Typ",
+        "description": "Beschreibung",
+        "amount": "Betrag",
+        "status": "Status",
+        "action": "Aktion"
+      },
+      "types": {
+        "subscription": "Abonnement",
+        "creditPack": "Credits"
+      },
+      "status": {
+        "paid": "Bezahlt",
+        "open": "Ausstehend",
+        "canceled": "Storniert"
+      },
+      "downloadPdf": "PDF",
+      "pagination": {
+        "showing": "Anzeige von {start} bis {end} von {total} Rechnung{plural}",
+        "previous": "Zurück",
+        "next": "Weiter",
+        "page": "Seite {current} von {total}"
+      }
+    }
+  }
+}

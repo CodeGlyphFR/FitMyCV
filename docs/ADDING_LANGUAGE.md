@@ -30,7 +30,7 @@ Ce guide détaille **toutes** les étapes pour ajouter le support d'une nouvelle
 ```mermaid
 flowchart TD
     subgraph Phase1["Phase 1: Préparation"]
-        A["Créer drapeau XX.svg"] --> B["Copier fr.json → XX.json"]
+        A["Créer drapeau XX.svg"] --> B["Créer locales/XX/<br/>9 fichiers JSON"]
     end
 
     subgraph Phase2["Phase 2: Core Language"]
@@ -39,21 +39,21 @@ flowchart TD
     end
 
     subgraph Phase3["Phase 3: UI"]
-        F["LanguageContext.jsx<br/>Import + validation"] --> G["LanguageSwitcher.jsx"]
+        F["LanguageContext.jsx<br/>9 imports + merge"] --> G["LanguageSwitcher.jsx"]
         G --> H["FilterDropdown.jsx"]
         H --> I["Header.jsx<br/>targetLangName"]
     end
 
     subgraph Phase4["Phase 4: IA"]
-        J["cvLanguageHelper.js<br/>Titres sections"] --> K["translateCv.js"]
+        J["cvLanguageHelper.js<br/>9 imports + merge"] --> K["translateCv.js"]
         K --> L["translate-cv/route.js"]
         L --> M["prompts/scoring/system.md"]
     end
 
     subgraph Phase5["Phase 5: Traductions"]
-        N["XX.json<br/>Traduire 1500+ clés"] --> O["fr.json<br/>cvLanguages.XX"]
-        O --> P["en.json<br/>cvLanguages.XX"]
-        P --> Q["es.json<br/>cvLanguages.XX"]
+        N["locales/XX/<br/>Traduire 9 fichiers"] --> O["fr/ui.json<br/>cvLanguages.XX"]
+        O --> P["en/ui.json<br/>cvLanguages.XX"]
+        P --> Q["es/ui.json + de/ui.json<br/>cvLanguages.XX"]
     end
 
     subgraph Phase6["Phase 6: Docs"]
@@ -68,27 +68,25 @@ flowchart TD
     Phase6 --> T["npm run build"]
 ```
 
-### Liste des fichiers à modifier (17 fichiers)
+### Liste des fichiers à modifier
 
 | # | Fichier | Description |
 |---|---------|-------------|
 | 1 | `public/icons/XX.svg` | Icône du drapeau |
-| 2 | `locales/XX.json` | Traductions UI (1500+ clés) |
-| 3 | `lib/cv/languageConstants.js` | 5 constantes de langue |
-| 4 | `lib/cv/detectLanguage.js` | Détection fallback (mots-clés) |
-| 5 | `lib/openai/detectLanguage.js` | Détection IA (prompt) |
-| 6 | `lib/i18n/LanguageContext.jsx` | Import + validation |
-| 7 | `components/LanguageSwitcher.jsx` | Sélecteur de langue |
-| 8 | `components/TopBar/components/FilterDropdown.jsx` | Filtre CV |
-| 9 | `components/Header.jsx` | Mapping traduction |
-| 10 | `lib/i18n/cvLanguageHelper.js` | Titres sections CV |
-| 11 | `lib/openai/translateCv.js` | Noms de langue |
-| 12 | `app/api/background-tasks/translate-cv/route.js` | Validation API |
-| 13 | `lib/openai/prompts/scoring/system.md` | Instruction langue |
-| 14 | `locales/fr.json` | Clé inter-locale |
-| 15 | `locales/en.json` | Clé inter-locale |
-| 16 | `locales/es.json` | Clé inter-locale |
-| 17 | `docs/FEATURES.md` + `docs/USAGE.md` | Documentation |
+| 2-10 | `locales/XX/*.json` | 9 fichiers de traductions (ui, errors, auth, cv, enums, subscription, tasks, onboarding, account) |
+| 11 | `lib/cv/languageConstants.js` | 5 constantes de langue |
+| 12 | `lib/cv/detectLanguage.js` | Détection fallback (mots-clés) |
+| 13 | `lib/openai/detectLanguage.js` | Détection IA (prompt) |
+| 14 | `lib/i18n/LanguageContext.jsx` | 9 imports + merge + validation |
+| 15 | `components/LanguageSwitcher.jsx` | Sélecteur de langue |
+| 16 | `components/TopBar/components/FilterDropdown.jsx` | Filtre CV |
+| 17 | `components/Header.jsx` | Mapping traduction |
+| 18 | `lib/i18n/cvLanguageHelper.js` | 9 imports + merge + defaultTitles |
+| 19 | `lib/openai/translateCv.js` | Noms de langue |
+| 20 | `app/api/background-tasks/translate-cv/route.js` | Validation API |
+| 21 | `lib/openai/prompts/scoring/system.md` | Instruction langue |
+| 22-25 | `locales/{fr,en,es,de}/ui.json` | Clés inter-locale (topbar.cvLanguages) |
+| 26 | `docs/FEATURES.md` + `docs/USAGE.md` | Documentation |
 
 ---
 
@@ -156,24 +154,39 @@ flowchart TD
 - Bandes avec léger chevauchement (évite les gaps d'anti-aliasing)
 - Contour final : rayon 253, stroke semi-transparent `#00000022`, épaisseur 6px
 
-### 1.2 Préparer le fichier de traduction
+### 1.2 Préparer les fichiers de traduction
 
-**Fichier à créer** : `locales/XX.json`
+**Structure des fichiers** : `locales/XX/` (9 fichiers par langue)
 
 ```bash
-# Copier le fichier français comme base
-cp locales/fr.json locales/XX.json
+# Créer le dossier et copier les fichiers français comme base
+mkdir -p locales/XX
+cp locales/fr/ui.json locales/XX/ui.json
+cp locales/fr/errors.json locales/XX/errors.json
+cp locales/fr/auth.json locales/XX/auth.json
+cp locales/fr/cv.json locales/XX/cv.json
+cp locales/fr/enums.json locales/XX/enums.json
+cp locales/fr/subscription.json locales/XX/subscription.json
+cp locales/fr/tasks.json locales/XX/tasks.json
+cp locales/fr/onboarding.json locales/XX/onboarding.json
+cp locales/fr/account.json locales/XX/account.json
 ```
 
-Le fichier contient ~1500 clés organisées en sections :
-- `auth` - Authentification
-- `topbar` - Barre de navigation
-- `cvSections` - Titres des sections CV
-- `optimization` - Panel d'optimisation
-- `onboarding` - Tutoriel
-- etc.
+**Organisation des catégories** :
 
-> **Note** : La traduction de ce fichier est le travail principal (~1-2h)
+| Fichier | Contenu |
+|---------|---------|
+| `ui.json` | common, topbar, header, footer, editMode, emptyState, cookies, legal, export, deleteModal, maintenance, admin, about, newCv |
+| `errors.json` | Tous les messages d'erreur API (`errors.api.*`) |
+| `auth.json` | Authentification (login, register, OAuth, password) |
+| `cv.json` | cvSections, cvGenerator, optimization, matchScore, exportModal, newCvModal, pdfImport, translate, changes, cvImprovement, jobTitleGenerator, sourceInfo |
+| `enums.json` | skillLevels, languageLevels |
+| `subscription.json` | subscription (abonnements, crédits, factures) |
+| `tasks.json` | taskQueue (file d'attente des tâches) |
+| `onboarding.json` | Tutoriel complet |
+| `account.json` | account, feedback |
+
+> **Note** : La traduction de ces 9 fichiers est le travail principal (~1-2h)
 
 ---
 
@@ -328,19 +341,28 @@ const detectedLanguage = validLanguages.includes(content) ? content : 'fr';
 **Fichier** : `lib/i18n/LanguageContext.jsx`
 
 ```javascript
-// Ajouter l'import
-import deTranslations from "@/locales/de.json";
+// Ajouter les imports pour la nouvelle langue (9 fichiers)
+import xxUi from "@/locales/xx/ui.json";
+import xxErrors from "@/locales/xx/errors.json";
+import xxAuth from "@/locales/xx/auth.json";
+import xxCv from "@/locales/xx/cv.json";
+import xxEnums from "@/locales/xx/enums.json";
+import xxSubscription from "@/locales/xx/subscription.json";
+import xxTasks from "@/locales/xx/tasks.json";
+import xxOnboarding from "@/locales/xx/onboarding.json";
+import xxAccount from "@/locales/xx/account.json";
 
-// Ajouter au mapping
+// Ajouter au mapping translations
 const translations = {
-  fr: frTranslations,
-  en: enTranslations,
-  es: esTranslations,
-  de: deTranslations,  // NOUVEAU
+  fr: { ...frUi, ...frErrors, ...frAuth, ...frCv, ...frEnums, ...frSubscription, ...frTasks, ...frOnboarding, ...frAccount },
+  en: { ...enUi, ...enErrors, ...enAuth, ...enCv, ...enEnums, ...enSubscription, ...enTasks, ...enOnboarding, ...enAccount },
+  es: { ...esUi, ...esErrors, ...esAuth, ...esCv, ...esEnums, ...esSubscription, ...esTasks, ...esOnboarding, ...esAccount },
+  de: { ...deUi, ...deErrors, ...deAuth, ...deCv, ...deEnums, ...deSubscription, ...deTasks, ...deOnboarding, ...deAccount },
+  xx: { ...xxUi, ...xxErrors, ...xxAuth, ...xxCv, ...xxEnums, ...xxSubscription, ...xxTasks, ...xxOnboarding, ...xxAccount },  // NOUVEAU
 };
 
-// Ligne ~26 - Mettre à jour la validation
-if (savedLanguage && ["fr", "en", "es", "de"].includes(savedLanguage)) {
+// Mettre à jour la validation (ligne ~60)
+if (savedLanguage && ["fr", "en", "es", "de", "xx"].includes(savedLanguage)) {
 ```
 
 ### 3.2 Sélecteur de langue
@@ -394,22 +416,32 @@ const targetLangName = {
 **Fichier** : `lib/i18n/cvLanguageHelper.js`
 
 ```javascript
-// Ajouter l'import
-import deTranslations from '@/locales/de.json';
+// Ajouter les imports pour la nouvelle langue (9 fichiers)
+import xxUi from '@/locales/xx/ui.json';
+import xxErrors from '@/locales/xx/errors.json';
+import xxAuth from '@/locales/xx/auth.json';
+import xxCv from '@/locales/xx/cv.json';
+import xxEnums from '@/locales/xx/enums.json';
+import xxSubscription from '@/locales/xx/subscription.json';
+import xxTasks from '@/locales/xx/tasks.json';
+import xxOnboarding from '@/locales/xx/onboarding.json';
+import xxAccount from '@/locales/xx/account.json';
 
-// Ajouter au mapping
+// Ajouter au mapping translations (même pattern que LanguageContext.jsx)
 const translations = {
-  fr: frTranslations,
-  en: enTranslations,
-  es: esTranslations,
-  de: deTranslations,  // NOUVEAU
+  fr: { ...frUi, ...frErrors, ...frAuth, ...frCv, ...frEnums, ...frSubscription, ...frTasks, ...frOnboarding, ...frAccount },
+  en: { ...enUi, ...enErrors, ...enAuth, ...enCv, ...enEnums, ...enSubscription, ...enTasks, ...enOnboarding, ...enAccount },
+  es: { ...esUi, ...esErrors, ...esAuth, ...esCv, ...esEnums, ...esSubscription, ...esTasks, ...esOnboarding, ...esAccount },
+  de: { ...deUi, ...deErrors, ...deAuth, ...deCv, ...deEnums, ...deSubscription, ...deTasks, ...deOnboarding, ...deAccount },
+  xx: { ...xxUi, ...xxErrors, ...xxAuth, ...xxCv, ...xxEnums, ...xxSubscription, ...xxTasks, ...xxOnboarding, ...xxAccount },  // NOUVEAU
 };
 
 // Mettre à jour getTranslatorForCvLanguage
 export function getTranslatorForCvLanguage(cvLanguage) {
   const lang = cvLanguage === 'en' ? 'en'
              : cvLanguage === 'es' ? 'es'
-             : cvLanguage === 'de' ? 'de'  // NOUVEAU
+             : cvLanguage === 'de' ? 'de'
+             : cvLanguage === 'xx' ? 'xx'  // NOUVEAU
              : 'fr';
   // ...
 }
@@ -477,36 +509,30 @@ if (!targetLanguage || !['fr', 'en', 'es', 'de'].includes(targetLanguage)) {
 
 ## Phase 5 : Traductions inter-locales (1h+)
 
-### 5.1 Traduire le fichier principal
+### 5.1 Traduire les fichiers de la nouvelle langue
 
-**Fichier** : `locales/XX.json`
+**Dossier** : `locales/XX/` (8 fichiers)
 
-Traduire les ~1500 clés. Sections principales :
+Traduire les 8 fichiers :
 
-```json
-{
-  "auth": { ... },
-  "topbar": { ... },
-  "cvSections": {
-    "header": "Kopfzeile",
-    "summary": "Zusammenfassung",
-    "experience": "Berufserfahrung",
-    "education": "Ausbildung",
-    "skills": "Fähigkeiten",
-    "projects": "Projekte",
-    "languages": "Sprachen",
-    "extras": "Extras"
-  },
-  "optimization": { ... },
-  "onboarding": { ... }
-}
-```
+| Fichier | Clés à traduire |
+|---------|-----------------|
+| `ui.json` | Interface générale (~300 clés) |
+| `errors.json` | Messages d'erreur API (~100 clés) |
+| `auth.json` | Authentification (~50 clés) |
+| `cv.json` | Fonctionnalités CV (~400 clés) |
+| `enums.json` | Niveaux skills/langues (~30 clés) |
+| `subscription.json` | Abonnements (~200 clés) |
+| `onboarding.json` | Tutoriel (~300 clés) |
+| `account.json` | Compte utilisateur (~100 clés) |
 
 ### 5.2 Ajouter les clés inter-locales
 
 **IMPORTANT** : Quand vous ajoutez une langue XX, vous devez aussi ajouter des clés dans **tous les locales existants**.
 
-**Fichier** : `locales/fr.json`
+Les clés inter-locales sont dans `ui.json` de chaque langue (section `topbar.cvLanguages`).
+
+**Fichier** : `locales/fr/ui.json`
 
 ```json
 {
@@ -516,13 +542,14 @@ Traduire les ~1500 clés. Sections principales :
       "en": "English",
       "es": "Español",
       "de": "Allemand",
+      "xx": "Nouvelle langue",
       "all": "Toutes"
     }
   }
 }
 ```
 
-**Fichier** : `locales/en.json`
+**Fichier** : `locales/en/ui.json`
 
 ```json
 {
@@ -532,13 +559,14 @@ Traduire les ~1500 clés. Sections principales :
       "en": "English",
       "es": "Spanish",
       "de": "German",
+      "xx": "New Language",
       "all": "All"
     }
   }
 }
 ```
 
-**Fichier** : `locales/es.json`
+**Fichier** : `locales/es/ui.json`
 
 ```json
 {
@@ -548,13 +576,14 @@ Traduire les ~1500 clés. Sections principales :
       "en": "English",
       "es": "Español",
       "de": "Alemán",
+      "xx": "Nuevo Idioma",
       "all": "Todos"
     }
   }
 }
 ```
 
-**Fichier** : `locales/XX.json` (le nouveau)
+**Fichier** : `locales/de/ui.json`
 
 ```json
 {
@@ -564,7 +593,25 @@ Traduire les ~1500 clés. Sections principales :
       "en": "English",
       "es": "Español",
       "de": "Deutsch",
+      "xx": "Neue Sprache",
       "all": "Alle"
+    }
+  }
+}
+```
+
+**Fichier** : `locales/XX/ui.json` (le nouveau)
+
+```json
+{
+  "topbar": {
+    "cvLanguages": {
+      "fr": "Français",
+      "en": "English",
+      "es": "Español",
+      "de": "Deutsch",
+      "xx": "Nom natif",
+      "all": "Tous (traduit)"
     }
   }
 }
@@ -678,22 +725,23 @@ npm run dev
 - [ ] `lib/openai/detectLanguage.js` - Prompt + validLanguages
 
 ### Phase 3 : UI & Composants
-- [ ] `lib/i18n/LanguageContext.jsx` - Import + validation
+- [ ] `lib/i18n/LanguageContext.jsx` - 9 imports + merge + validation
 - [ ] `components/LanguageSwitcher.jsx` - Option dans le tableau
 - [ ] `components/TopBar/components/FilterDropdown.jsx` - CV_LANGUAGES
 - [ ] `components/Header.jsx` - Mapping targetLangName
 
 ### Phase 4 : Système IA
-- [ ] `lib/i18n/cvLanguageHelper.js` - Import + getTranslator + defaultTitles
+- [ ] `lib/i18n/cvLanguageHelper.js` - 9 imports + merge + getTranslator + defaultTitles
 - [ ] `lib/openai/translateCv.js` - languageNames
 - [ ] `app/api/background-tasks/translate-cv/route.js` - Validation
 - [ ] `lib/openai/prompts/scoring/system.md` - Instruction langue
 
 ### Phase 5 : Traductions
-- [ ] `locales/XX.json` - Fichier complet traduit (~1500 clés)
-- [ ] `locales/fr.json` - `topbar.cvLanguages.XX` ajouté
-- [ ] `locales/en.json` - `topbar.cvLanguages.XX` ajouté
-- [ ] `locales/es.json` - `topbar.cvLanguages.XX` ajouté
+- [ ] `locales/XX/` - 9 fichiers créés et traduits (ui, errors, auth, cv, enums, subscription, tasks, onboarding, account)
+- [ ] `locales/fr/ui.json` - `topbar.cvLanguages.XX` ajouté
+- [ ] `locales/en/ui.json` - `topbar.cvLanguages.XX` ajouté
+- [ ] `locales/es/ui.json` - `topbar.cvLanguages.XX` ajouté
+- [ ] `locales/de/ui.json` - `topbar.cvLanguages.XX` ajouté
 
 ### Phase 6 : Documentation & Tests
 - [ ] `docs/FEATURES.md` - Langue ajoutée

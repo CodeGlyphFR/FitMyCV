@@ -4,10 +4,51 @@ import { promises as fs } from "fs";
 import path from "path";
 import { auth } from "@/lib/auth/session";
 import { readUserCvFile } from "@/lib/cv/storage";
-import frTranslations from "@/locales/fr.json";
-import enTranslations from "@/locales/en.json";
-import esTranslations from "@/locales/es.json";
-import deTranslations from "@/locales/de.json";
+
+// French translations (split by category)
+import frUi from "@/locales/fr/ui.json";
+import frErrors from "@/locales/fr/errors.json";
+import frAuth from "@/locales/fr/auth.json";
+import frCv from "@/locales/fr/cv.json";
+import frEnums from "@/locales/fr/enums.json";
+import frSubscription from "@/locales/fr/subscription.json";
+import frTasks from "@/locales/fr/tasks.json";
+import frOnboarding from "@/locales/fr/onboarding.json";
+import frAccount from "@/locales/fr/account.json";
+
+// English translations (split by category)
+import enUi from "@/locales/en/ui.json";
+import enErrors from "@/locales/en/errors.json";
+import enAuth from "@/locales/en/auth.json";
+import enCv from "@/locales/en/cv.json";
+import enEnums from "@/locales/en/enums.json";
+import enSubscription from "@/locales/en/subscription.json";
+import enTasks from "@/locales/en/tasks.json";
+import enOnboarding from "@/locales/en/onboarding.json";
+import enAccount from "@/locales/en/account.json";
+
+// Spanish translations (split by category)
+import esUi from "@/locales/es/ui.json";
+import esErrors from "@/locales/es/errors.json";
+import esAuth from "@/locales/es/auth.json";
+import esCv from "@/locales/es/cv.json";
+import esEnums from "@/locales/es/enums.json";
+import esSubscription from "@/locales/es/subscription.json";
+import esTasks from "@/locales/es/tasks.json";
+import esOnboarding from "@/locales/es/onboarding.json";
+import esAccount from "@/locales/es/account.json";
+
+// German translations (split by category)
+import deUi from "@/locales/de/ui.json";
+import deErrors from "@/locales/de/errors.json";
+import deAuth from "@/locales/de/auth.json";
+import deCv from "@/locales/de/cv.json";
+import deEnums from "@/locales/de/enums.json";
+import deSubscription from "@/locales/de/subscription.json";
+import deTasks from "@/locales/de/tasks.json";
+import deOnboarding from "@/locales/de/onboarding.json";
+import deAccount from "@/locales/de/account.json";
+
 import { trackCvExport } from "@/lib/telemetry/server";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { refundCredit } from "@/lib/subscription/credits";
@@ -15,10 +56,10 @@ import { capitalizeSkillName } from "@/lib/utils/textFormatting";
 import { CommonErrors, CvErrors, OtherErrors } from "@/lib/api/apiErrors";
 
 const translations = {
-  fr: frTranslations,
-  en: enTranslations,
-  es: esTranslations,
-  de: deTranslations,
+  fr: { ...frUi, ...frErrors, ...frAuth, ...frCv, ...frEnums, ...frSubscription, ...frTasks, ...frOnboarding, ...frAccount },
+  en: { ...enUi, ...enErrors, ...enAuth, ...enCv, ...enEnums, ...enSubscription, ...enTasks, ...enOnboarding, ...enAccount },
+  es: { ...esUi, ...esErrors, ...esAuth, ...esCv, ...esEnums, ...esSubscription, ...esTasks, ...esOnboarding, ...esAccount },
+  de: { ...deUi, ...deErrors, ...deAuth, ...deCv, ...deEnums, ...deSubscription, ...deTasks, ...deOnboarding, ...deAccount },
 };
 
 /**

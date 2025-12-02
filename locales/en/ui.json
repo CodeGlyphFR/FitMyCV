@@ -1,0 +1,360 @@
+{
+  "maintenance": {
+    "registrationDisabled": "Maintenance in progress, registrations will be available again soon."
+  },
+  "topbar": {
+    "loading": "Loading…",
+    "userMenu": "User menu",
+    "user": "User",
+    "myCvs": "My CVs",
+    "myAccount": "My account",
+    "subscriptions": "Subscriptions & Credits",
+    "logout": "Log out",
+    "analyzeOffers": "Offer Analysis",
+    "coverLetters": "Cover Letters",
+    "interviewPrep": "HR Preparation",
+    "applicationTracking": "Application Tracking",
+    "soon": "Soon",
+    "credits": "credits",
+    "loadingInProgress": "Loading in progress ...",
+    "taskQueue": "Task queue",
+    "delete": "Delete",
+    "cvInProgress": "CV in progress",
+    "jobTitlePlaceholder": "Enter a job title (e.g., Full-Stack Developer)",
+    "jobTitlePlaceholderMobile": "e.g., Full-Stack Developer",
+    "analysisLevels": {
+      "rapid": "Fast",
+      "medium": "Medium",
+      "deep": "Deep"
+    },
+    "filter": "Filter",
+    "filterTitle": "Filters",
+    "filterCvType": "CV Type",
+    "filterCvLanguage": "CV Language",
+    "filterDateRange": "Creation Date",
+    "filterClearAll": "Clear filters",
+    "filterNoResults": "No CV matches the filters",
+    "cvTypes": {
+      "generate-cv": "With offer",
+      "import-pdf": "Imported",
+      "manual": "Added",
+      "translate-cv": "Translated",
+      "improve-cv": "Improved",
+      "generate-cv-job-title": "From title",
+      "create-template": "AI Template"
+    },
+    "dateRanges": {
+      "24h": "24 hours",
+      "7d": "7 days",
+      "30d": "30 days",
+      "all": "All"
+    },
+    "cvLanguages": {
+      "fr": "Français",
+      "en": "English",
+      "es": "Spanish",
+      "de": "German",
+      "all": "All"
+    },
+    "filterSelectLanguage": "Select",
+    "filterSelectDate": "Select"
+  },
+  "deleteModal": {
+    "title": "Confirmation",
+    "question": "Do you really want to delete the CV:",
+    "warning": "This action is",
+    "irreversible": "irreversible",
+    "no": "No",
+    "yes": "Yes",
+    "errors": {
+      "deleteFailed": "Delete failed:"
+    }
+  },
+  "export": {
+    "noCvSelected": "No CV selected for export.",
+    "errors": {
+      "exportFailed": "Error exporting PDF. Please try again."
+    }
+  },
+  "footer": {
+    "cookieManagement": "Cookie management",
+    "copyright": "© 2025 FitMyCV.io",
+    "about": "About",
+    "cookies": "Cookies",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy"
+  },
+  "about": {
+    "title": "About FitMyCV"
+  },
+  "cookies": {
+    "banner": {
+      "title": "This site uses cookies",
+      "description": "We use cookies to improve your experience.",
+      "learnMore": "Learn more",
+      "acceptAll": "Accept all",
+      "rejectAll": "Reject all",
+      "customize": "Customize",
+      "close": "Close"
+    },
+    "preferences": {
+      "title": "Cookie preferences",
+      "description": "Choose which types of cookies you want to allow.",
+      "save": "Save",
+      "necessary": {
+        "title": "Necessary cookies",
+        "description": "Essential for the site to function.",
+        "active": "Active"
+      },
+      "functional": {
+        "title": "Functional cookies",
+        "description": "Remember your preferences."
+      },
+      "analytics": {
+        "title": "Analytics cookies",
+        "description": "Site usage statistics."
+      },
+      "marketing": {
+        "title": "Marketing cookies",
+        "description": "Targeted advertising."
+      },
+      "back": "Back"
+    },
+    "settings": {
+      "pageTitle": "Cookie management",
+      "saved": "Your preferences have been saved",
+      "currentStatus": "Current status",
+      "consentGiven": "Consent given on:",
+      "expiresOn": "Expires on:",
+      "aboutTitle": "About cookies",
+      "aboutDescription": "In accordance with the General Data Protection Regulation (GDPR) and French regulations, we inform you about the use of cookies on our site.",
+      "consentValidity": "Your consent is valid for 6 months. You can change your preferences at any time on this page.",
+      "necessary": {
+        "title": "Necessary cookies",
+        "alwaysActive": "Always active",
+        "description": "These cookies are essential for the site to function. They enable authentication, security, and basic navigation. They cannot be disabled.",
+        "examples": "User session, CSRF tokens, language preferences"
+      },
+      "functional": {
+        "title": "Functional cookies",
+        "description": "These cookies improve user experience by remembering your choices and preferences (theme, layout, display options).",
+        "examples": "Interface preferences, display settings"
+      },
+      "analytics": {
+        "title": "Analytics cookies",
+        "description": "These cookies help us understand how you use our site to improve it. Data is anonymized and aggregated.",
+        "examples": "Pages visited, time spent, user journey"
+      },
+      "marketing": {
+        "title": "Marketing cookies",
+        "description": "These cookies are used to offer you personalized advertising content based on your interests.",
+        "examples": "Advertising tracking, remarketing"
+      },
+      "savePreferences": "Save my preferences",
+      "acceptAll": "Accept all",
+      "rejectAll": "Reject all",
+      "resetConsent": "Reset consent",
+      "yourRights": "Your rights",
+      "rightsDescription": "In accordance with GDPR, you have the following rights:",
+      "rights": {
+        "access": "Right to access your personal data",
+        "rectification": "Right to rectification of your data",
+        "erasure": "Right to erasure of your data",
+        "objection": "Right to object to the processing of your data",
+        "portability": "Right to data portability",
+        "withdraw": "Right to withdraw your consent at any time"
+      },
+      "examplesLabel": "Examples:"
+    },
+    "registry": {
+      "title": "📋 Detailed Cookie Registry",
+      "description": "Complete list of all cookies that may be used on this site, by category.",
+      "duration": "Duration:",
+      "type": "Type:",
+      "note": "Third-party cookies will only be set if you give your explicit consent. Necessary cookies are essential for the site to function and cannot be refused.",
+      "durations": {
+        "6_months": "6 months",
+        "30_days": "30 days",
+        "session": "Session",
+        "1_year": "1 year",
+        "2_years": "2 years",
+        "24_hours": "24 hours",
+        "1_minute": "1 minute",
+        "3_months": "3 months",
+        "13_months": "13 months",
+        "15_minutes": "15 minutes"
+      },
+      "purposes": {
+        "cookie_consent": "Stores user cookie consent preferences",
+        "session_token": "Authentication - Keeps user session active",
+        "secure_session_token": "Secure production authentication - Session token",
+        "csrf_protection": "Security - Protection against CSRF attacks",
+        "secure_csrf_protection": "Enhanced production security - CSRF protection",
+        "auth_callback": "Redirect after authentication",
+        "theme_preference": "Remembers user's chosen theme (light/dark)",
+        "language_preference": "Remembers user's chosen language",
+        "ga_unique_users": "Google Analytics - Distinguishes unique users",
+        "ga_distinguish_users": "Google Analytics - Distinguishes users",
+        "ga_rate_limit": "Google Analytics - Limits request rate",
+        "ga4_session_state": "Google Analytics 4 - Session state persistence",
+        "fb_pixel_tracking": "Facebook Pixel - Conversion tracking and targeted advertising",
+        "fb_cross_site_tracking": "Facebook - Stores and tracks visits across websites",
+        "fb_targeted_ads": "Facebook - Targeted advertising delivery",
+        "google_ads_retargeting": "Google Ads - Advertising tracking and retargeting",
+        "google_ads_cookie_test": "Google Ads - Tests if browser accepts cookies"
+      }
+    },
+    "history": {
+      "title": "📜 Your Consent History",
+      "records": "record",
+      "recordsPlural": "records",
+      "gdprCompliant": "GDPR Compliant",
+      "noHistory": "No consent history available. Your future preferences will be recorded here.",
+      "loadingError": "Loading error",
+      "loadError": "Unable to load history",
+      "browser": "Browser:",
+      "gdprNote": "This history proves that you have given (or refused) your consent in an informed manner. This data is retained for audit purposes and can be deleted by deleting your account.",
+      "actions": {
+        "created": "Created",
+        "updated": "Updated",
+        "revoked": "Revoked"
+      },
+      "categories": {
+        "necessary": "Necessary",
+        "functional": "Functional",
+        "analytics": "Analytics",
+        "marketing": "Marketing"
+      }
+    }
+  },
+  "header": {
+    "modalTitle": "Edit header",
+    "fullName": "Full name",
+    "currentTitle": "Current title",
+    "email": "Email",
+    "phone": "Phone",
+    "city": "City",
+    "region": "Region",
+    "countryCode": "Country (code)",
+    "links": "Links",
+    "noLinks": "No links yet.",
+    "labelPlaceholder": "Label (e.g., GitHub)",
+    "urlPlaceholder": "URL (e.g., https://github.com/john)",
+    "addLink": "Add link"
+  },
+  "common": {
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "add": "Add",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "close": "Close",
+    "confirmation": "Confirmation",
+    "locale": "en-US"
+  },
+  "editMode": {
+    "on": "✏️ Edit ON",
+    "off": "Edit OFF"
+  },
+  "emptyState": {
+    "welcome": "Welcome {firstName} to your CV manager",
+    "subtitle": "Start by creating your first CV or import an existing one",
+    "createManual": "Create a CV manually",
+    "orImport": "or import a PDF CV",
+    "importButton": "Import PDF",
+    "importCard": {
+      "title": "Import a CV",
+      "description": "Import your existing CV in PDF format to convert it automatically",
+      "button": "Import →"
+    },
+    "createCard": {
+      "title": "Create new CV",
+      "description": "Start with a blank CV and fill it at your own pace",
+      "button": "Create →"
+    },
+    "tip": "💡 Tip: You can edit, duplicate and export your CVs at any time",
+    "importing": {
+      "title": "Import in progress...",
+      "ready": "🎉 Your CV is ready!",
+      "steps": {
+        "reading": "Reading PDF file",
+        "analyzing": "Smart content analysis",
+        "structuring": "Data structuring",
+        "finalizing": "Finalizing"
+      },
+      "redirect": "🎊 Redirecting...",
+      "timeout": "☕ Meanwhile, prepare yourself a hot beverage...",
+      "timeoutAlert": "Import is taking longer than expected. Please refresh the page.",
+      "loadingMessages": [
+        "🔍 Searching for your hidden superpowers...",
+        "🎨 Adding a touch of magic to your journey...",
+        "🧠 AI is thinking hard about your profile...",
+        "📚 Reading between the lines of your experience...",
+        "✨ Polishing your skills...",
+        "🎯 Optimizing your professional profile...",
+        "🚀 Preparing your career for takeoff...",
+        "🎭 Highlighting your talents...",
+        "🔮 Predicting your future success...",
+        "💎 Transforming your CV into a diamond...",
+        "🎪 Orchestrating your professional journey...",
+        "🌟 Adding a touch of excellence...",
+        "🎨 Painting your professional portrait...",
+        "🏆 Preparing your skills arsenal...",
+        "📖 Writing your professional legend...",
+        "🎬 Directing the movie of your career...",
+        "🧩 Assembling the pieces of your professional puzzle...",
+        "🎵 Composing the symphony of your achievements...",
+        "🔬 Molecular analysis of your skills...",
+        "🎪 Organizing the show of your talents..."
+      ]
+    }
+  },
+  "newCv": {
+    "title": "Create a new CV",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "E.g.: John Doe",
+    "currentTitle": "Current title",
+    "currentTitlePlaceholder": "E.g.: Full-Stack Developer",
+    "email": "Email",
+    "emailPlaceholder": "email@example.com",
+    "required": "Please provide full name and current title.",
+    "creating": "Creating...",
+    "createButton": "Create CV",
+    "cancel": "Cancel",
+    "tip": "You can complete all sections later via edit mode.",
+    "loading": "Loading…",
+    "error": "Error"
+  },
+  "legal": {
+    "back": "Back",
+    "lastUpdated": "Last updated:",
+    "terms": {
+      "meta": {
+        "title": "Terms of Service - FitMyCV.io",
+        "description": "Terms of service and conditions of use"
+      },
+      "title": "Terms of Service"
+    },
+    "privacy": {
+      "meta": {
+        "title": "Privacy Policy - FitMyCV.io",
+        "description": "Privacy policy and personal data protection"
+      },
+      "title": "Privacy Policy"
+    }
+  },
+  "admin": {
+    "subscriptionPlans": {
+      "tiers": {
+        "0": "Free",
+        "1": "Pro",
+        "2": "Premium",
+        "3": "Business",
+        "4": "Enterprise"
+      }
+    }
+  }
+}

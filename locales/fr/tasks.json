@@ -1,0 +1,49 @@
+{
+  "taskQueue": {
+    "title": "File d'attente des tâches",
+    "noTasks": "Aucune tâche en cours",
+    "tasks": "Tâches",
+    "of": "sur",
+    "clearCompleted": "Effacer terminées",
+    "total": "Total",
+    "cancelTask": "Annuler la tâche",
+    "cloudSyncActive": "Synchronisation Cloud active",
+    "localSyncOnly": "Sync local uniquement",
+    "cloud": "Cloud",
+    "localStorage": "Stockage Local",
+    "status": {
+      "queued": "En attente",
+      "running": "En cours",
+      "completed": "Terminé",
+      "failed": "Échec",
+      "cancelled": "Annulé",
+      "unknown": "Inconnu"
+    },
+    "messages": {
+      "task": "Tâche",
+      "importInProgress": "Import en cours ...",
+      "importQueued": "Import en attente ...",
+      "importCompleted": "Import terminé",
+      "importCancelled": "Import annulé",
+      "importFailed": "Import échoué",
+      "creationInProgress": "Création en cours",
+      "creationQueued": "Création en attente",
+      "creationCompleted": "Création terminée",
+      "creationCancelled": "Création annulée",
+      "creationFailed": "Création échouée",
+      "templateCreationInProgress": "Création de CV modèle en cours ...",
+      "templateCreationQueued": "Création de CV modèle en attente ...",
+      "templateCreationCompleted": "CV modèle créé avec succès",
+      "templateCreationCancelled": "Création de CV modèle annulée",
+      "templateCreationFailed": "Création de CV modèle échouée",
+      "matchScoreInProgress": "Calcul du score de match en cours ...",
+      "matchScoreQueued": "Calcul du score de match en attente ...",
+      "matchScoreCompleted": "Score de match calculé avec succès",
+      "matchScoreCancelled": "Calcul du score de match annulé",
+      "matchScoreFailed": "Calcul du score de match échoué"
+    },
+    "errors": {
+      "noJobOfferDetected": "Aucune offre d'emploi détectée : {source}"
+    }
+  }
+}
