@@ -785,6 +785,8 @@
       "description": "This action is final and non-refundable. All your CVs, credits and data will be deleted. Your subscription will be immediately canceled and your banking data will be removed. Enter your password to continue.",
       "passwordLabel": "Password",
       "passwordHint": "All your CVs (including user folder) will be deleted. This operation is irreversible. If you created your account via an external provider, first set a password in the Security section.",
+      "emailLabel": "Confirmation email",
+      "emailHint": "Enter your account email to confirm deletion. All your CVs and data will be permanently deleted.",
       "deleteButton": "Delete my account",
       "deleting": "Deleting...",
       "modal": {
@@ -803,6 +805,7 @@
         "deleting": "Deleting...",
         "errors": {
           "passwordRequired": "Please enter your password to confirm deletion.",
+          "emailRequired": "Please enter your email to confirm deletion.",
           "deleteFailed": "Unable to delete account. Please try again.",
           "unexpected": "Unexpected error while deleting account."
         }

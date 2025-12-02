@@ -785,6 +785,8 @@
       "description": "Cette action est définitive et sans remboursement. Tous vos CV, crédits et données seront effacés. Votre abonnement sera immédiatement annulé et vos données bancaires seront supprimées. Tapez votre mot de passe pour continuer.",
       "passwordLabel": "Mot de passe",
       "passwordHint": "Tous vos CV (dossier utilisateur inclus) seront supprimés. Cette opération est irréversible. Si vous avez créé le compte via un fournisseur externe, définissez d'abord un mot de passe dans la section Sécurité.",
+      "emailLabel": "Email de confirmation",
+      "emailHint": "Saisissez l'email de votre compte pour confirmer la suppression. Tous vos CV et données seront définitivement supprimés.",
       "deleteButton": "Supprimer mon compte",
       "deleting": "Suppression...",
       "modal": {
@@ -803,6 +805,7 @@
         "deleting": "Suppression...",
         "errors": {
           "passwordRequired": "Veuillez saisir votre mot de passe pour confirmer la suppression.",
+          "emailRequired": "Veuillez saisir votre email pour confirmer la suppression.",
           "deleteFailed": "Suppression impossible. Réessayez.",
           "unexpected": "Erreur inattendue lors de la suppression du compte."
         }

@@ -784,6 +784,8 @@
       "description": "Diese Aktion ist endgültig und ohne Rückerstattung. Alle Ihre Lebensläufe, Credits und Daten werden gelöscht. Ihr Abonnement wird sofort gekündigt und Ihre Bankdaten werden gelöscht. Geben Sie Ihr Passwort ein, um fortzufahren.",
       "passwordLabel": "Passwort",
       "passwordHint": "Alle Ihre Lebensläufe (einschließlich Benutzerordner) werden gelöscht. Diese Aktion ist unwiderruflich. Wenn Sie Ihr Konto über einen externen Anbieter erstellt haben, legen Sie zuerst ein Passwort im Sicherheitsbereich fest.",
+      "emailLabel": "Bestätigungs-E-Mail",
+      "emailHint": "Geben Sie die E-Mail Ihres Kontos ein, um die Löschung zu bestätigen. Alle Ihre Lebensläufe und Daten werden endgültig gelöscht.",
       "deleteButton": "Mein Konto löschen",
       "deleting": "Löschen...",
       "modal": {
@@ -802,6 +804,7 @@
         "deleting": "Löschen...",
         "errors": {
           "passwordRequired": "Bitte geben Sie Ihr Passwort ein, um die Löschung zu bestätigen.",
+          "emailRequired": "Bitte geben Sie Ihre E-Mail ein, um die Löschung zu bestätigen.",
           "deleteFailed": "Löschen nicht möglich. Bitte erneut versuchen.",
           "unexpected": "Unerwarteter Fehler beim Löschen des Kontos."
         }

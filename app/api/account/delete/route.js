@@ -19,24 +19,37 @@ export async function DELETE(request){
   }
 
   const body = await request.json().catch(() => null);
-  const password = body?.password ? String(body.password) : "";
 
-  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    include: { accounts: { select: { provider: true } } }
+  });
   if (!user){
     return NextResponse.json({ error: "Utilisateur introuvable." }, { status: 404 });
   }
 
-  if (!user.passwordHash){
-    return NextResponse.json({ error: "Ce compte ne possède pas de mot de passe. Définissez-en un avant de supprimer le compte." }, { status: 400 });
-  }
+  // Déterminer si l'utilisateur est OAuth (pas de passwordHash ou a des comptes OAuth)
+  const isOAuthUser = !user.passwordHash || (user.accounts?.length > 0);
 
-  if (!password){
-    return NextResponse.json({ error: "Merci de saisir votre mot de passe pour confirmer." }, { status: 400 });
-  }
-
-  const valid = await bcrypt.compare(password, user.passwordHash);
-  if (!valid){
-    return NextResponse.json({ error: "Mot de passe incorrect." }, { status: 400 });
+  if (isOAuthUser) {
+    // Pour les utilisateurs OAuth, valider avec l'email
+    const email = body?.email ? String(body.email).toLowerCase().trim() : "";
+    if (!email){
+      return NextResponse.json({ error: "Merci de saisir votre email pour confirmer." }, { status: 400 });
+    }
+    if (email !== user.email){
+      return NextResponse.json({ error: "L'email ne correspond pas à celui de votre compte." }, { status: 400 });
+    }
+  } else {
+    // Pour les utilisateurs standard, valider avec le mot de passe
+    const password = body?.password ? String(body.password) : "";
+    if (!password){
+      return NextResponse.json({ error: "Merci de saisir votre mot de passe pour confirmer." }, { status: 400 });
+    }
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid){
+      return NextResponse.json({ error: "Mot de passe incorrect." }, { status: 400 });
+    }
   }
 
   // Récupérer les informations Stripe avant suppression

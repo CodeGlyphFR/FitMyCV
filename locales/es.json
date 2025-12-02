@@ -785,6 +785,8 @@
       "description": "Esta acción es definitiva y no reembolsable. Todos tus CVs, créditos y datos serán eliminados. Tu suscripción será cancelada inmediatamente y tus datos bancarios serán eliminados. Introduce tu contraseña para continuar.",
       "passwordLabel": "Contraseña",
       "passwordHint": "Todos tus CVs (incluyendo la carpeta de usuario) serán eliminados. Esta operación es irreversible. Si creaste tu cuenta a través de un proveedor externo, primero establece una contraseña en la sección de Seguridad.",
+      "emailLabel": "Email de confirmación",
+      "emailHint": "Introduce el email de tu cuenta para confirmar la eliminación. Todos tus CVs y datos serán eliminados permanentemente.",
       "deleteButton": "Eliminar mi cuenta",
       "deleting": "Eliminando...",
       "modal": {
@@ -803,6 +805,7 @@
         "deleting": "Eliminando...",
         "errors": {
           "passwordRequired": "Por favor introduce tu contraseña para confirmar la eliminación.",
+          "emailRequired": "Por favor introduce tu email para confirmar la eliminación.",
           "deleteFailed": "No se pudo eliminar la cuenta. Por favor intenta de nuevo.",
           "unexpected": "Error inesperado al eliminar la cuenta."
         }
