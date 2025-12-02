@@ -100,7 +100,27 @@ function TaskItem({ task, onCancel, onTaskClick, compact = false }) {
   let description = task.title || t("taskQueue.messages.task");
 
   if (task.status === 'failed' && task.error) {
-    description = task.error;
+    // Essayer de parser comme JSON avec clé de traduction
+    try {
+      const errorData = JSON.parse(task.error);
+      // Cas 1: Clé de traduction avec source (taskQueue.errors.*)
+      if (errorData.translationKey?.startsWith('taskQueue.errors.')) {
+        description = t(errorData.translationKey, { source: errorData.source || '' });
+      }
+      // Cas 2: Clé de traduction générique (errors.*)
+      else if (errorData.translationKey?.startsWith('errors.')) {
+        description = t(errorData.translationKey);
+      } else {
+        description = task.error;
+      }
+    } catch {
+      // Si c'est une clé de traduction directe (string)
+      if (typeof task.error === 'string' && task.error.startsWith('errors.')) {
+        description = t(task.error);
+      } else {
+        description = task.error;
+      }
+    }
   } else if (task.type === 'import') {
     if (task.status === 'running') {
       description = t("taskQueue.messages.importInProgress");

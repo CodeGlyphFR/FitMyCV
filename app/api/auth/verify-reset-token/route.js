@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyPasswordResetToken } from '@/lib/email/emailService';
+import { CommonErrors, AuthErrors } from '@/lib/api/apiErrors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,7 +15,7 @@ export async function GET(request) {
 
     if (!token) {
       return NextResponse.json(
-        { valid: false, error: 'Token manquant' },
+        { valid: false, error: 'errors.api.auth.tokenRequired' },
         { status: 400 }
       );
     }
@@ -25,7 +26,7 @@ export async function GET(request) {
     if (!result.valid) {
       return NextResponse.json({
         valid: false,
-        error: result.error || 'Token invalide ou expiré'
+        error: 'errors.api.auth.tokenInvalid'
       });
     }
 
@@ -37,7 +38,7 @@ export async function GET(request) {
   } catch (error) {
     console.error('[verify-reset-token] Erreur:', error);
     return NextResponse.json(
-      { valid: false, error: 'Erreur serveur' },
+      { valid: false, error: 'errors.api.common.serverError' },
       { status: 500 }
     );
   }

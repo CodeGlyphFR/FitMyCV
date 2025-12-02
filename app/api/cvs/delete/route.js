@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { ensureUserCvDir, listUserCvFiles, readUserCvFile, writeUserCvFile } from "@/lib/cv/storage";
 import { trackEvent, EventTypes } from "@/lib/telemetry/server";
+import { CommonErrors, CvErrors } from "@/lib/api/apiErrors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -112,18 +113,18 @@ export async function POST(req){
   try{
     const session = await auth();
     if (!session?.user?.id){
-      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+      return CommonErrors.notAuthenticated();
     }
 
     const body = await req.json();
     const file = (body && body.file) || "";
     if (!isJsonFileSafe(file)) {
-      return NextResponse.json({ error: "Nom de fichier invalide" }, { status: 400 });
+      return CvErrors.invalidFilename();
     }
     const dir = await ensureUserCvDir(session.user.id);
     const target = path.join(dir, path.basename(file));
     // verify file exists
-    try { await fs.access(target); } catch { return NextResponse.json({ error: "CV introuvable" }, { status: 404 }); }
+    try { await fs.access(target); } catch { return CvErrors.notFound(); }
     // delete
     await fs.unlink(target);
     try {
@@ -158,6 +159,6 @@ export async function POST(req){
     }
     return NextResponse.json({ ok: true, nextFile: nextFile || null });
   }catch(e){
-    return NextResponse.json({ error: (e && e.message) || "Erreur inconnue" }, { status: 500 });
+    return CvErrors.deleteError();
   }
 }

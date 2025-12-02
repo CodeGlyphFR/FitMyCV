@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import { logConsent } from '@/lib/cookies/consentLogger';
+import { CommonErrors, OtherErrors } from '@/lib/api/apiErrors';
 
 /**
  * POST /api/consent/log
@@ -16,10 +17,7 @@ export async function POST(request) {
     // Vérifier l'authentification
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Non authentifié' },
-        { status: 401 }
-      );
+      return CommonErrors.notAuthenticated();
     }
 
     // Parser le body
@@ -28,27 +26,18 @@ export async function POST(request) {
 
     // Validation
     if (!action || !preferences) {
-      return NextResponse.json(
-        { error: 'action et preferences requis' },
-        { status: 400 }
-      );
+      return OtherErrors.consentRequired();
     }
 
     if (!['created', 'updated', 'revoked'].includes(action)) {
-      return NextResponse.json(
-        { error: 'action invalide (created, updated, ou revoked)' },
-        { status: 400 }
-      );
+      return OtherErrors.consentInvalidAction();
     }
 
     // Logger le consentement
     const log = await logConsent(session.user.id, action, preferences, request);
 
     if (!log) {
-      return NextResponse.json(
-        { error: 'Erreur lors de l\'enregistrement' },
-        { status: 500 }
-      );
+      return CommonErrors.serverError();
     }
 
     return NextResponse.json({
@@ -61,9 +50,6 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error('[API /consent/log] Erreur:', error);
-    return NextResponse.json(
-      { error: 'Erreur serveur' },
-      { status: 500 }
-    );
+    return CommonErrors.serverError();
   }
 }

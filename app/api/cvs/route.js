@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth/session";
 import { listUserCvFiles, readUserCvFile } from "@/lib/cv/storage";
 import { sanitizeInMemory } from "@/lib/sanitize";
 import prisma from "@/lib/prisma";
+import { CommonErrors } from "@/lib/api/apiErrors";
 
 function parseNumericTimestamp(value){
   if (!value) return null;
@@ -67,7 +68,7 @@ export const dynamic = "force-dynamic";
 export async function GET(){
   const session = await auth();
   if (!session?.user?.id){
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    return CommonErrors.notAuthenticated();
   }
 
   const userId = session.user.id;

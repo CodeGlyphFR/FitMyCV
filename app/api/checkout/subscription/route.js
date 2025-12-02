@@ -7,16 +7,14 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 import stripe from '@/lib/stripe';
+import { CommonErrors, SubscriptionErrors } from '@/lib/api/apiErrors';
 
 export async function POST(request) {
   try {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Non authentifié' },
-        { status: 401 }
-      );
+      return CommonErrors.notAuthenticated();
     }
 
     const userId = session.user.id;
@@ -25,17 +23,11 @@ export async function POST(request) {
 
     // Validation
     if (!planId || typeof planId !== 'number') {
-      return NextResponse.json(
-        { error: 'planId requis' },
-        { status: 400 }
-      );
+      return SubscriptionErrors.planRequired();
     }
 
     if (!['monthly', 'yearly'].includes(billingPeriod)) {
-      return NextResponse.json(
-        { error: 'billingPeriod invalide (monthly ou yearly)' },
-        { status: 400 }
-      );
+      return SubscriptionErrors.invalidBillingPeriod();
     }
 
     // Récupérer le plan
@@ -44,10 +36,7 @@ export async function POST(request) {
     });
 
     if (!plan) {
-      return NextResponse.json(
-        { error: 'Plan introuvable' },
-        { status: 404 }
-      );
+      return SubscriptionErrors.invalidPlan();
     }
 
     // Vérifier que le plan a un prix configuré
@@ -56,10 +45,7 @@ export async function POST(request) {
       : plan.stripePriceIdYearly;
 
     if (!stripePriceId) {
-      return NextResponse.json(
-        { error: `Pas de prix ${billingPeriod} configuré pour ce plan` },
-        { status: 400 }
-      );
+      return SubscriptionErrors.invalidPlan();
     }
 
     // Vérifier si l'utilisateur a déjà un abonnement Stripe actif
@@ -212,16 +198,10 @@ export async function POST(request) {
 
         // Si ni upgrade ni downgrade (changement de plan au même tier), ne devrait pas arriver
         console.error('[Checkout Subscription] Cas non géré: ni upgrade ni downgrade');
-        return NextResponse.json(
-          { error: 'Changement de plan non supporté' },
-          { status: 400 }
-        );
+        return SubscriptionErrors.invalidPlan();
       } catch (error) {
         console.error('[Checkout Subscription] Erreur mise à jour abonnement:', error);
-        return NextResponse.json(
-          { error: error.message || 'Erreur lors de la mise à jour de l\'abonnement' },
-          { status: 500 }
-        );
+        return SubscriptionErrors.checkoutError();
       }
     }
 
@@ -295,9 +275,6 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('[Checkout Subscription] Erreur:', error);
-    return NextResponse.json(
-      { error: error.message || 'Erreur lors de la création de la session' },
-      { status: 500 }
-    );
+    return SubscriptionErrors.checkoutError();
   }
 }

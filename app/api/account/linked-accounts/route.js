@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/session";
+import { CommonErrors } from "@/lib/api/apiErrors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,7 +13,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
+    return CommonErrors.notAuthenticated();
   }
 
   // Récupérer les comptes OAuth liés
@@ -30,7 +31,7 @@ export async function GET() {
   });
 
   if (!user) {
-    return NextResponse.json({ error: "Utilisateur introuvable." }, { status: 404 });
+    return CommonErrors.notFound('user');
   }
 
   // Formater les comptes liés

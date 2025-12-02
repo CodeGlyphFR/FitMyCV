@@ -6,6 +6,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import { canCreateNewCv } from '@/lib/subscription/cvLimits';
+import { CommonErrors, CvErrors } from '@/lib/api/apiErrors';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -15,10 +16,7 @@ export async function GET(request) {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Non authentifié' },
-        { status: 401 }
-      );
+      return CommonErrors.notAuthenticated();
     }
 
     const userId = session.user.id;
@@ -28,9 +26,6 @@ export async function GET(request) {
 
   } catch (error) {
     console.error('[CV Can Create] Erreur:', error);
-    return NextResponse.json(
-      { error: error.message || 'Erreur lors de la vérification' },
-      { status: 500 }
-    );
+    return CvErrors.verifyError();
   }
 }

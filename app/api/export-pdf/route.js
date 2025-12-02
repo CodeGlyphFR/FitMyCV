@@ -12,6 +12,7 @@ import { trackCvExport } from "@/lib/telemetry/server";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { refundCredit } from "@/lib/subscription/credits";
 import { capitalizeSkillName } from "@/lib/utils/textFormatting";
+import { CommonErrors, CvErrors, OtherErrors } from "@/lib/api/apiErrors";
 
 const translations = {
   fr: frTranslations,
@@ -127,7 +128,7 @@ export async function POST(request) {
     // Vérifier l'authentification
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+      return CommonErrors.notAuthenticated();
     }
     userId = session.user.id;
 
@@ -146,7 +147,7 @@ export async function POST(request) {
     filename = String(filename || '');
 
     if (!filename || filename === 'undefined') {
-      return NextResponse.json({ error: "Nom de fichier manquant" }, { status: 400 });
+      return CvErrors.missingFilename();
     }
 
     // Vérifier les limites et incrémenter le compteur
@@ -179,7 +180,7 @@ export async function POST(request) {
           console.error('[PDF Export] Erreur lors du remboursement:', refundError);
         }
       }
-      return NextResponse.json({ error: "CV introuvable" }, { status: 404 });
+      return CvErrors.notFound();
     }
 
     // Lancer Puppeteer avec options compatibles
@@ -288,21 +289,7 @@ export async function POST(request) {
     }
 
     // Erreurs spécifiques de Puppeteer
-    if (error.message.includes('Could not find expected browser')) {
-      return NextResponse.json({
-        error: "Chromium non trouvé. Installation de Puppeteer incomplète."
-      }, { status: 500 });
-    }
-
-    if (error.message.includes('Failed to launch')) {
-      return NextResponse.json({
-        error: "Impossible de lancer le navigateur. Vérifiez les dépendances système."
-      }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      error: `Erreur lors de la génération du PDF: ${error.message}`
-    }, { status: 500 });
+    return OtherErrors.exportPdfFailed();
   }
 }
 

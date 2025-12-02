@@ -6,11 +6,12 @@ import { ensureUserCvDir } from "@/lib/cv/storage";
 import { scheduleGenerateCvFromJobTitleJob } from "@/lib/backgroundTasks/generateCvFromJobTitleJob";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
+import { CommonErrors, AuthErrors, BackgroundErrors } from "@/lib/api/apiErrors";
 
 export async function POST(request) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    return CommonErrors.notAuthenticated();
   }
 
   try {
@@ -30,15 +31,12 @@ export async function POST(request) {
       });
 
       if (!recaptchaResult.success) {
-        return NextResponse.json(
-          { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
-          { status: recaptchaResult.statusCode || 403 }
-        );
+        return AuthErrors.recaptchaFailed();
       }
     }
 
     if (!jobTitle || typeof jobTitle !== "string" || !jobTitle.trim()) {
-      return NextResponse.json({ error: "Titre de poste manquant." }, { status: 400 });
+      return BackgroundErrors.noJobTitleProvided();
     }
 
     const trimmedJobTitle = jobTitle.trim();
@@ -113,6 +111,6 @@ export async function POST(request) {
     }, { status: 202 });
   } catch (error) {
     console.error('Erreur lors de la mise en file de la génération de CV depuis titre:', error);
-    return NextResponse.json({ error: "Erreur lors de la mise en file de la génération." }, { status: 500 });
+    return BackgroundErrors.queueError();
   }
 }

@@ -8,6 +8,7 @@ import fs from "fs/promises";
 import path from "path";
 import logger from "@/lib/security/secureLogger";
 import stripe from "@/lib/stripe";
+import { CommonErrors, AccountErrors } from "@/lib/api/apiErrors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ export const dynamic = "force-dynamic";
 export async function DELETE(request){
   const session = await auth();
   if (!session?.user?.id){
-    return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
+    return CommonErrors.notAuthenticated();
   }
 
   const body = await request.json().catch(() => null);
@@ -25,7 +26,7 @@ export async function DELETE(request){
     include: { accounts: { select: { provider: true } } }
   });
   if (!user){
-    return NextResponse.json({ error: "Utilisateur introuvable." }, { status: 404 });
+    return CommonErrors.notFound('user');
   }
 
   // Déterminer si l'utilisateur est OAuth (pas de passwordHash ou a des comptes OAuth)
@@ -111,10 +112,7 @@ export async function DELETE(request){
     logger.context('DELETE account', 'info', `✅ Utilisateur ${user.id} supprimé avec succès (+ toutes données liées via cascade)`);
   } catch (error) {
     logger.context('DELETE account', 'error', "❌ Erreur lors de la suppression:", error);
-    return NextResponse.json({
-      error: "Impossible de supprimer le compte pour le moment.",
-      details: error.message
-    }, { status: 500 });
+    return AccountErrors.deleteFailed();
   }
 
   // Supprimer le dossier utilisateur

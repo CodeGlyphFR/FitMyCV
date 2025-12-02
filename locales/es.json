@@ -605,6 +605,9 @@
       "matchScoreCompleted": "Puntuación calculada con éxito",
       "matchScoreCancelled": "Cálculo de puntuación cancelado",
       "matchScoreFailed": "Cálculo de puntuación fallido"
+    },
+    "errors": {
+      "noJobOfferDetected": "No se detectó ninguna oferta de empleo: {source}"
     }
   },
   "emptyState": {
@@ -1606,6 +1609,127 @@
       "education": "Educación",
       "languages": "Idiomas",
       "projects": "Proyectos"
+    }
+  },
+  "errors": {
+    "api": {
+      "common": {
+        "notAuthenticated": "Autenticación requerida",
+        "invalidPayload": "Datos de solicitud inválidos",
+        "serverError": "Error del servidor. Por favor, inténtelo de nuevo más tarde.",
+        "notFound": "{resource} no encontrado",
+        "forbidden": "No tiene permiso para realizar esta acción",
+        "unknownError": "Se produjo un error desconocido"
+      },
+      "auth": {
+        "emailRequired": "El correo electrónico es obligatorio",
+        "passwordRequired": "La contraseña es obligatoria",
+        "emailAndPasswordRequired": "El correo electrónico y la contraseña son obligatorios",
+        "nameRequired": "Nombre, apellido, correo electrónico y contraseña son obligatorios",
+        "firstNameRequired": "El nombre es obligatorio",
+        "lastNameRequired": "El apellido es obligatorio",
+        "emailInvalid": "Dirección de correo electrónico inválida",
+        "nameInvalid": "Nombre inválido",
+        "firstNameInvalid": "Nombre inválido",
+        "lastNameInvalid": "Apellido inválido",
+        "passwordWeak": "La contraseña es demasiado débil",
+        "accountCreateFailed": "No se pudo crear la cuenta. Por favor, verifique sus datos.",
+        "recaptchaFailed": "La verificación anti-spam falló. Por favor, inténtelo de nuevo.",
+        "tokenRequired": "El token es obligatorio",
+        "tokenInvalid": "Token inválido o expirado",
+        "tokenExpired": "El token ha expirado",
+        "oauthOnly": "Esta cuenta usa autenticación externa",
+        "emailAlreadyVerified": "Correo electrónico ya verificado",
+        "rateLimitExceeded": "Por favor, espere antes de reintentar",
+        "emailAlreadyUsed": "Esta dirección de correo electrónico ya está en uso por otra cuenta",
+        "passwordIncorrect": "Contraseña actual incorrecta",
+        "providerRequired": "El proveedor es obligatorio",
+        "providerInvalid": "Proveedor inválido",
+        "providerNotConfigured": "Este proveedor no está configurado en este servidor",
+        "providerAlreadyLinked": "Este proveedor ya está vinculado a su cuenta",
+        "providerNotLinked": "Este proveedor no está vinculado a su cuenta",
+        "cannotUnlinkLastProvider": "No se puede desvincular: debe tener al menos una cuenta vinculada"
+      },
+      "cv": {
+        "notFound": "CV no encontrado",
+        "invalidFilename": "Nombre de archivo inválido",
+        "missingFilename": "Falta el nombre del archivo",
+        "readError": "Error al leer el CV",
+        "deleteError": "Error al eliminar el CV",
+        "createError": "Error al crear el CV",
+        "verifyError": "Error al verificar el CV",
+        "debitError": "Error al debitar créditos",
+        "sourceError": "Error al obtener la fuente del CV",
+        "metadataError": "Error al obtener los metadatos del CV",
+        "improveError": "Error al mejorar el CV"
+      },
+      "background": {
+        "noSourceProvided": "Añada al menos un enlace o archivo",
+        "invalidLinksFormat": "Formato de enlaces inválido",
+        "noPdfProvided": "No se proporcionó ningún archivo PDF",
+        "pdfSaveError": "No se pudo guardar el archivo PDF",
+        "queueError": "Error al poner en cola la tarea",
+        "invalidTargetLanguage": "Idioma de destino inválido",
+        "cvFileMissing": "Falta el archivo del CV",
+        "noJobOfferAnalysis": "El CV no tiene análisis de oferta de empleo",
+        "jobOfferUrlNotFound": "URL de la oferta de empleo no encontrada",
+        "noJobTitleProvided": "El título del puesto es obligatorio",
+        "noReferenceCvProvided": "El CV de referencia es obligatorio",
+        "cancelFailed": "No se pudo cancelar la tarea",
+        "deleteFailed": "No se pudieron eliminar las tareas completadas",
+        "taskCompleted": "Tarea completada",
+        "taskFailed": "Tarea fallida"
+      },
+      "account": {
+        "updateFailed": "No se pudo actualizar el perfil",
+        "passwordUpdateFailed": "No se pudo actualizar la contraseña",
+        "deleteFailed": "No se pudo eliminar la cuenta",
+        "unlinkFailed": "No se pudo desvincular la cuenta",
+        "emailChangeFailed": "Error al solicitar el cambio de correo electrónico"
+      },
+      "subscription": {
+        "limitReached": "Límite mensual alcanzado para esta función",
+        "invalidPlan": "Plan de suscripción inválido",
+        "planRequired": "El ID del plan es obligatorio",
+        "invalidBillingPeriod": "Período de facturación inválido (mensual o anual)",
+        "packRequired": "El ID del paquete es obligatorio",
+        "sessionRequired": "El ID de sesión es obligatorio",
+        "checkoutError": "Error al crear la sesión de pago"
+      },
+      "other": {
+        "feedbackFailed": "Error interno del servidor",
+        "exportPdfFailed": "Error al generar el PDF",
+        "consentRequired": "La acción y las preferencias son obligatorias",
+        "consentInvalidAction": "Acción inválida (created, updated o revoked)",
+        "onboardingInvalidStep": "Paso inválido",
+        "onboardingInvalidBody": "Cuerpo JSON inválido",
+        "onboardingInvalidAction": "Acción inválida"
+      },
+      "openai": {
+        "extractJobOfferFailed": "No se pudo extraer la oferta de empleo",
+        "gptNoContent": "GPT no devolvió ningún contenido",
+        "pdfAnalysisFailed": "No se pudo analizar el PDF de la oferta de empleo",
+        "cvContentMissing": "Falta el contenido del CV de referencia",
+        "noAiResponse": "Sin respuesta de la IA",
+        "invalidResponseFormat": "Formato de respuesta inválido",
+        "cvAndJobRequired": "El contenido del CV y de la oferta de empleo son obligatorios",
+        "jobTitleValidationFailed": "No se pudo validar el título del puesto",
+        "jobTitleMissing": "Título del puesto faltante o inválido",
+        "noGptResponse": "Sin respuesta de GPT",
+        "invalidJsonResponse": "La respuesta de GPT no es un JSON válido",
+        "incompleteCv": "El CV generado está incompleto (falta nombre o título)",
+        "noTextExtracted": "El PDF no contiene texto extraíble",
+        "gptExtractionFailed": "ChatGPT no pudo extraer la información del CV",
+        "openaiKeyMissing": "Falta la clave API de OpenAI",
+        "openaiQuotaExceeded": "Cuota de OpenAI excedida. Verifique su facturación.",
+        "invalidCvFormat": "Formato de CV inválido",
+        "extractedJobOfferMissing": "Falta la oferta de empleo extraída - el CV debe generarse con una oferta extraída",
+        "emptyOpenaiResponse": "Respuesta vacía de OpenAI",
+        "noTranslationResponse": "No se recibió respuesta de traducción",
+        "noJobOfferProvided": "No se proporcionó ninguna oferta de empleo (enlace o archivo requerido)",
+        "gptGenerationFailed": "GPT no pudo generar la plantilla de CV",
+        "promptNotFound": "Archivo de prompt no encontrado"
+      }
     }
   }
 }

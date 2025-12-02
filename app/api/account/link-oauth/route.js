@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/session";
 import logger from "@/lib/security/secureLogger";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
+import { CommonErrors, AuthErrors } from "@/lib/api/apiErrors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,7 +40,7 @@ const OAUTH_CONFIG = {
 export async function POST(request) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
+    return CommonErrors.notAuthenticated();
   }
 
   const body = await request.json().catch(() => null);
@@ -47,7 +48,7 @@ export async function POST(request) {
   const recaptchaToken = body?.recaptchaToken;
 
   if (!provider) {
-    return NextResponse.json({ error: "Provider requis." }, { status: 400 });
+    return AuthErrors.providerRequired();
   }
 
   // Vérification reCAPTCHA
@@ -57,25 +58,20 @@ export async function POST(request) {
   });
 
   if (!recaptchaResult.success) {
-    return NextResponse.json(
-      { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
-      { status: recaptchaResult.statusCode || 403 }
-    );
+    return AuthErrors.recaptchaFailed();
   }
 
   // Vérifier les providers valides
   const validProviders = ["google", "github", "apple"];
   if (!validProviders.includes(provider)) {
-    return NextResponse.json({ error: "Provider invalide." }, { status: 400 });
+    return AuthErrors.providerInvalid();
   }
 
   // Vérifier que le provider est configuré
   const config = OAUTH_CONFIG[provider];
   const clientId = config.clientId();
   if (!clientId) {
-    return NextResponse.json({
-      error: "Ce provider n'est pas configuré sur ce serveur."
-    }, { status: 400 });
+    return AuthErrors.providerNotConfigured();
   }
 
   // Vérifier que l'utilisateur n'a pas déjà ce provider lié
@@ -90,14 +86,12 @@ export async function POST(request) {
   });
 
   if (!user) {
-    return NextResponse.json({ error: "Utilisateur introuvable." }, { status: 404 });
+    return CommonErrors.notFound('user');
   }
 
   const alreadyLinked = user.accounts.some(acc => acc.provider === provider);
   if (alreadyLinked) {
-    return NextResponse.json({
-      error: "Ce provider est déjà lié à votre compte."
-    }, { status: 400 });
+    return AuthErrors.providerAlreadyLinked();
   }
 
   // Générer un state token sécurisé

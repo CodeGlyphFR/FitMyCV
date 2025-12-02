@@ -98,10 +98,20 @@ function TaskItem({ task, onCancel, onTaskClick }) {
   let errorRedirectUrl = null;
 
   if (task.status === 'failed' && task.error) {
-    // Try to parse error for actionRequired/redirectUrl
+    // Essayer de parser comme JSON
     try {
       const errorData = typeof task.error === 'string' ? JSON.parse(task.error) : task.error;
-      if (errorData?.error) {
+
+      // Cas 1: Clé de traduction avec source (taskQueue.errors.*)
+      if (errorData?.translationKey?.startsWith('taskQueue.errors.')) {
+        description = t(errorData.translationKey, { source: errorData.source || '' });
+      }
+      // Cas 2: Clé de traduction générique (errors.*)
+      else if (errorData?.translationKey?.startsWith('errors.')) {
+        description = t(errorData.translationKey);
+      }
+      // Cas 3: Erreur avec action requise (ex: upgrade plan)
+      else if (errorData?.error) {
         description = errorData.error;
         if (errorData.actionRequired && errorData.redirectUrl) {
           errorRedirectUrl = errorData.redirectUrl;
@@ -110,7 +120,12 @@ function TaskItem({ task, onCancel, onTaskClick }) {
         description = task.error;
       }
     } catch {
-      description = task.error;
+      // Si c'est une clé de traduction directe (string)
+      if (typeof task.error === 'string' && task.error.startsWith('errors.')) {
+        description = t(task.error);
+      } else {
+        description = task.error;
+      }
     }
   } else if (task.type === 'import') {
     if (task.status === 'running') {

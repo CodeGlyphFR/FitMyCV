@@ -5,13 +5,14 @@ import { ensureUserCvDir, listUserCvFiles, writeUserCvFile } from "@/lib/cv/stor
 import { trackCvCreation } from "@/lib/telemetry/server";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
+import { CommonErrors, AuthErrors, CvErrors } from "@/lib/api/apiErrors";
 
 export const runtime="nodejs"; export const dynamic="force-dynamic";
 export async function POST(req){
   try{
     const session = await auth();
     if (!session?.user?.id){
-      return NextResponse.json({ error:"Non authentifié" }, { status:401 });
+      return CommonErrors.notAuthenticated();
     }
 
     var body=await req.json(); var full_name=(body.full_name||"").trim(); var current_title=(body.current_title||"").trim(); var email=(body.email||"").trim();
@@ -27,10 +28,7 @@ export async function POST(req){
       });
 
       if (!recaptchaResult.success) {
-        return NextResponse.json(
-          { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
-          { status: recaptchaResult.statusCode || 403 }
-        );
+        return AuthErrors.recaptchaFailed();
       }
     }
 
@@ -101,5 +99,5 @@ response.cookies.set('cvFile', file, {
   sameSite: 'lax'
 });
 return response;
-  }catch(e){ return NextResponse.json({ error: (e&&e.message)||"Erreur inconnue" }, { status:500 }); }
+  }catch(e){ return CvErrors.createError(); }
 }

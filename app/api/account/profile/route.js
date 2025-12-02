@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/session";
 import { createEmailChangeRequest, sendEmailChangeVerification } from "@/lib/email/emailService";
+import { CommonErrors, AccountErrors } from "@/lib/api/apiErrors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,11 +10,11 @@ export const dynamic = "force-dynamic";
 export async function PUT(request){
   const session = await auth();
   if (!session?.user?.id){
-    return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
+    return CommonErrors.notAuthenticated();
   }
 
   const body = await request.json().catch(() => null);
-  if (!body) return NextResponse.json({ error: "Payload invalide." }, { status: 400 });
+  if (!body) return CommonErrors.invalidPayload();
 
   const { name, email } = body;
   if (!name && !email){
@@ -90,9 +91,7 @@ export async function PUT(request){
       emailChangeRequested = true;
     } catch (error) {
       console.error('[profile] Erreur lors de la création de la demande de changement d\'email:', error);
-      return NextResponse.json({
-        error: "Erreur lors de la demande de changement d'email."
-      }, { status: 500 });
+      return AccountErrors.emailChangeFailed();
     }
   }
 

@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { createVerificationToken, sendVerificationEmail, isEmailVerified } from '@/lib/email/emailService';
 import logger from '@/lib/security/secureLogger';
 import { verifyRecaptcha } from '@/lib/recaptcha/verifyRecaptcha';
+import { CommonErrors, AuthErrors } from '@/lib/api/apiErrors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,10 +14,7 @@ export async function POST(request) {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Non authentifié' },
-        { status: 401 }
-      );
+      return CommonErrors.notAuthenticated();
     }
 
     // Parse body pour obtenir recaptchaToken (optionnel)
@@ -36,10 +34,7 @@ export async function POST(request) {
       });
 
       if (!recaptchaResult.success) {
-        return NextResponse.json(
-          { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
-          { status: recaptchaResult.statusCode || 403 }
-        );
+        return AuthErrors.recaptchaFailed();
       }
     }
 
@@ -49,7 +44,7 @@ export async function POST(request) {
     const verified = await isEmailVerified(userId);
     if (verified) {
       return NextResponse.json(
-        { error: 'Email déjà vérifié' },
+        { error: 'errors.api.auth.emailAlreadyVerified' },
         { status: 400 }
       );
     }
@@ -61,10 +56,7 @@ export async function POST(request) {
     });
 
     if (!user?.email) {
-      return NextResponse.json(
-        { error: 'Email introuvable' },
-        { status: 404 }
-      );
+      return CommonErrors.notFound('email');
     }
 
     // Rate limiting: vérifier qu'on n'a pas envoyé trop récemment
@@ -79,7 +71,7 @@ export async function POST(request) {
 
     if (recentToken) {
       return NextResponse.json(
-        { error: 'Veuillez attendre avant de renvoyer un email' },
+        { error: 'errors.api.auth.rateLimitExceeded' },
         { status: 429 }
       );
     }
@@ -96,10 +88,7 @@ export async function POST(request) {
 
     if (!result.success) {
       logger.error('[resend-verification] Échec envoi email:', result.error);
-      return NextResponse.json(
-        { error: 'Impossible d\'envoyer l\'email' },
-        { status: 500 }
-      );
+      return CommonErrors.serverError();
     }
 
     logger.context('resend-verification', 'info', `Email de vérification renvoyé à ${user.email}`);
@@ -110,9 +99,6 @@ export async function POST(request) {
     });
   } catch (error) {
     logger.error('[resend-verification] Erreur:', error);
-    return NextResponse.json(
-      { error: 'Erreur interne' },
-      { status: 500 }
-    );
+    return CommonErrors.serverError();
   }
 }

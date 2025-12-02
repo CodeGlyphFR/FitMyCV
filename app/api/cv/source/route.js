@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
+import { CommonErrors, CvErrors } from "@/lib/api/apiErrors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    return CommonErrors.notAuthenticated();
   }
 
   try {
@@ -52,9 +53,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Erreur lors de la récupération de la source du CV:", error);
-    return NextResponse.json(
-      { error: "Impossible de récupérer la source du CV" },
-      { status: 500 }
-    );
+    return CvErrors.sourceError();
   }
 }

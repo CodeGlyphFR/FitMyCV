@@ -20,6 +20,7 @@ import { getTotalSteps } from '@/lib/onboarding/onboardingSteps';
 import { DEFAULT_ONBOARDING_STATE, normalizeOnboardingState } from '@/lib/onboarding/onboardingState';
 import { ONBOARDING_API } from '@/lib/onboarding/onboardingConfig';
 import { sseManager } from '@/lib/sse/sseManager';
+import { CommonErrors, OtherErrors } from '@/lib/api/apiErrors';
 
 // Constante : nombre d'étapes total
 const MAX_STEP = getTotalSteps();
@@ -84,7 +85,7 @@ export async function GET(request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+      return CommonErrors.notAuthenticated();
     }
 
     const user = await prisma.user.findUnique({
@@ -96,7 +97,7 @@ export async function GET(request) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
+      return CommonErrors.notFound('user');
     }
 
     // Prisma parse automatiquement Json → Object
@@ -116,7 +117,7 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error('[GET /api/user/onboarding] Error:', error);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    return CommonErrors.serverError();
   }
 }
 
@@ -130,7 +131,7 @@ export async function PUT(request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+      return CommonErrors.notAuthenticated();
     }
 
     const body = await request.json();
@@ -138,10 +139,7 @@ export async function PUT(request) {
 
     // Validation
     if (typeof step !== 'number' || step < 0 || step > MAX_STEP) {
-      return NextResponse.json(
-        { error: `Étape invalide (doit être entre 0 et ${MAX_STEP})` },
-        { status: 400 }
-      );
+      return OtherErrors.onboardingInvalidStep();
     }
 
     // Récupérer état actuel
@@ -214,7 +212,7 @@ export async function PUT(request) {
     });
   } catch (error) {
     console.error('[PUT /api/user/onboarding] Error:', error);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    return CommonErrors.serverError();
   }
 }
 
@@ -228,7 +226,7 @@ export async function PATCH(request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+      return CommonErrors.notAuthenticated();
     }
 
     // Parse body
@@ -236,21 +234,18 @@ export async function PATCH(request) {
     try {
       const text = await request.text();
       if (!text || text.trim() === '') {
-        return NextResponse.json({ error: 'Body vide' }, { status: 400 });
+        return OtherErrors.onboardingInvalidBody();
       }
       body = JSON.parse(text);
     } catch (error) {
-      return NextResponse.json({ error: 'Body JSON invalide' }, { status: 400 });
+      return OtherErrors.onboardingInvalidBody();
     }
 
     const { onboardingState } = body;
 
     // Validation
     if (!onboardingState || typeof onboardingState !== 'object' || onboardingState === null) {
-      return NextResponse.json(
-        { error: 'onboardingState doit être un objet' },
-        { status: 400 }
-      );
+      return OtherErrors.onboardingInvalidBody();
     }
 
     // Normaliser avant de sauvegarder
@@ -322,7 +317,7 @@ export async function PATCH(request) {
     });
   } catch (error) {
     console.error('[PATCH /api/user/onboarding] Error:', error);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    return CommonErrors.serverError();
   }
 }
 
@@ -334,7 +329,7 @@ export async function POST(request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+      return CommonErrors.notAuthenticated();
     }
 
     const url = new URL(request.url);
@@ -342,10 +337,7 @@ export async function POST(request) {
 
     const validActions = ['skip', 'complete', 'reset'];
     if (!action || !validActions.includes(action)) {
-      return NextResponse.json(
-        { error: `Action invalide. Valeurs: ${validActions.join(', ')}` },
-        { status: 400 }
-      );
+      return OtherErrors.onboardingInvalidAction();
     }
 
     if (action === 'complete') {
@@ -457,9 +449,9 @@ export async function POST(request) {
       });
     }
 
-    return NextResponse.json({ error: 'Action invalide' }, { status: 400 });
+    return OtherErrors.onboardingInvalidAction();
   } catch (error) {
     console.error('[POST /api/user/onboarding] Error:', error);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    return CommonErrors.serverError();
   }
 }
