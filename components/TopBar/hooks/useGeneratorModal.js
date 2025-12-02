@@ -265,25 +265,12 @@ export function useGeneratorModal({
     }
 
     try {
-      // Obtenir le token reCAPTCHA (vérification côté serveur uniquement)
-      // Bypass ReCaptcha en développement si configuré (évite les blocages pendant l'onboarding)
-      const bypassMode = process.env.NEXT_PUBLIC_BYPASS_RECAPTCHA === 'true';
-      const recaptchaToken = bypassMode ? 'bypassed_token' : await executeRecaptcha('generate_cv');
+      // Obtenir le token reCAPTCHA (le serveur gère BYPASS_RECAPTCHA)
+      const recaptchaToken = await executeRecaptcha('generate_cv');
+      // Ne pas bloquer si null - le serveur décidera avec BYPASS_RECAPTCHA
 
       // Note: Pas de check isMountedRef ici - l'appel API doit TOUJOURS se faire
       // pour que la tâche soit créée sur le serveur et détectée par le polling
-
-      if (!recaptchaToken) {
-        // Vérifier si monté uniquement avant les UI updates
-        if (!isMountedRef.current) return;
-
-        addNotification({
-          type: "error",
-          message: t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.",
-          duration: 4000,
-        });
-        return;
-      }
 
       const formData = new FormData();
       formData.append("links", JSON.stringify(cleanedLinks));

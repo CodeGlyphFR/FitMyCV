@@ -73,13 +73,9 @@ export default function EmptyState() {
     setNewCvBusy(true);
     setNewCvError(null);
     try {
-      // Obtenir le token reCAPTCHA
+      // Obtenir le token reCAPTCHA (le serveur gère BYPASS_RECAPTCHA)
       const recaptchaToken = await executeRecaptcha('create_cv');
-      if (!recaptchaToken) {
-        setNewCvError(t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.");
-        setNewCvBusy(false);
-        return;
-      }
+      // Ne pas bloquer si null - le serveur décidera
 
       const res = await fetch("/api/cvs/create", {
         method: "POST",
@@ -147,16 +143,9 @@ export default function EmptyState() {
     const fileName = pdfFile.name;
 
     try {
-      // Obtenir le token reCAPTCHA
+      // Obtenir le token reCAPTCHA (le serveur gère BYPASS_RECAPTCHA)
       const recaptchaToken = await executeRecaptcha('import_pdf');
-      if (!recaptchaToken) {
-        addNotification({
-          type: "error",
-          message: t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.",
-          duration: 4000,
-        });
-        return;
-      }
+      // Ne pas bloquer si null - le serveur décidera
 
       const formData = new FormData();
       formData.append("pdfFile", pdfFile);

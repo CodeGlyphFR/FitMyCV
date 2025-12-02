@@ -64,6 +64,11 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
 
     try {
       setLoading(true);
+
+      // Obtenir le token reCAPTCHA pour toutes les actions (le serveur gère BYPASS_RECAPTCHA)
+      const recaptchaToken = await executeRecaptcha(isRegister ? 'signup' : 'login');
+      // Ne pas bloquer si null - le serveur décidera avec BYPASS_RECAPTCHA
+
       if (isRegister){
         if (!firstName || !lastName){
           setError(t("auth.errors.nameRequired"));
@@ -77,14 +82,6 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         }
         if (password !== confirmPassword){
           setError(t("auth.errors.passwordMismatch"));
-          setLoading(false);
-          return;
-        }
-
-        // Obtenir le token reCAPTCHA (vérification côté serveur uniquement)
-        const recaptchaToken = await executeRecaptcha('signup');
-        if (!recaptchaToken) {
-          setError(t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.");
           setLoading(false);
           return;
         }
@@ -109,6 +106,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         redirect: false,
         email,
         password,
+        recaptchaToken: recaptchaToken || undefined,
       });
 
       if (result?.error){
