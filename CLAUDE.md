@@ -214,6 +214,7 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3001"   # URL publique
 - **Database**:
   - **Dev** (`cv-site-dev/`) : Prisma + SQLite `dev.db`
   - **Prod** (`cv-site/`) : Prisma + PostgreSQL `fitmycv_prod`
+- **i18n**: 4 langues (FR, EN, ES, DE), 9 catégories de traductions
 - **IA**: OpenAI API (génération, match score, optimisation ATS)
 - **Paiements**: Stripe (abonnements + packs crédits)
 - **Sécurité**: CV chiffrés AES-256-GCM côté serveur
@@ -232,6 +233,7 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3001"   # URL publique
 | **Abonnements** | Hybride : plans mensuels + micro-transactions (crédits) | [SUBSCRIPTION.md](./docs/SUBSCRIPTION.md) |
 | **Dashboard admin** | Analytics, monitoring, gestion users/plans | [ADMIN_GUIDE.md](./docs/ADMIN_GUIDE.md) |
 | **IA OpenAI** | Génération CV, match score, optimisation ATS | [AI_INTEGRATION.md](./docs/AI_INTEGRATION.md) |
+| **i18n** | 4 langues (FR, EN, ES, DE), 9 catégories par langue | [ADDING_LANGUAGE.md](./docs/ADDING_LANGUAGE.md) |
 
 ### Structure de données
 
@@ -517,6 +519,123 @@ onboardingLogger.warn('[Component] Warning');         // Always shown
 - ❌ **Ne pas utiliser** : `console.log`, `console.error` directement dans les composants d'onboarding
 - ✅ **Toujours utiliser** : `onboardingLogger.*` pour une console propre en production
 - ✅ **Reset DB** : `node scripts/reset-onboarding.js --dry-run` (preview avant reset)
+
+### 10. Système i18n (9 catégories)
+
+```javascript
+// Structure: locales/{lang}/*.json (fr, en, es, de)
+// 9 fichiers: ui, errors, auth, cv, enums, subscription, tasks, onboarding, account
+
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+
+const { t, language, changeLanguage } = useLanguage();
+const message = t('auth.login.title');                     // Traduction simple
+const error = t('errors.api.auth.emailRequired');          // Erreur API traduite
+const withVar = t('common.welcome', { name: 'John' });     // Avec variable {name}
+
+// Pour CV: langue CV séparée de langue UI
+import { getTranslatorForCvLanguage } from '@/lib/i18n/cvLanguageHelper';
+
+const tCv = getTranslatorForCvLanguage(cv.language);       // 'fr', 'en', 'es', 'de'
+const sectionTitle = tCv('cvSections.experience');         // Titre dans la langue du CV
+```
+
+**Catégories de traductions** :
+
+| Fichier | Contenu |
+|---------|---------|
+| `ui.json` | Interface (topbar, header, footer, modals, admin) |
+| `errors.json` | Erreurs API (`errors.api.*`) |
+| `auth.json` | Authentification (login, register, OAuth) |
+| `cv.json` | CV (sections, generator, optimization, export) |
+| `enums.json` | Niveaux (skillLevels, languageLevels) |
+| `subscription.json` | Abonnements, crédits, factures |
+| `tasks.json` | File d'attente des tâches |
+| `onboarding.json` | Tutoriel complet |
+| `account.json` | Compte utilisateur, feedback |
+
+→ **[Guide ajouter une langue](./docs/ADDING_LANGUAGE.md)**
+
+### 11. Erreurs API centralisées
+
+```javascript
+// Côté serveur - Utiliser les erreurs pré-définies
+import { CommonErrors, AuthErrors, CvErrors, SubscriptionErrors } from '@/lib/api/apiErrors';
+
+// Erreurs communes
+return CommonErrors.notAuthenticated();  // 401
+return CommonErrors.serverError();       // 500
+return CommonErrors.notFound('user');    // 404 avec paramètre
+
+// Erreurs spécifiques
+return AuthErrors.emailRequired();
+return CvErrors.notFound();
+return SubscriptionErrors.limitReached('gpt_cv_generation');
+
+// Erreur personnalisée
+import { apiError } from '@/lib/api/apiErrors';
+return apiError('errors.api.custom.myError', { status: 400, params: { field: 'email' } });
+```
+
+```javascript
+// Côté client - Parser et traduire les erreurs
+import { parseApiError, getErrorFromResponse } from '@/lib/api/parseApiError';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+
+const { t } = useLanguage();
+const response = await fetch('/api/some-route', { method: 'POST' });
+
+if (!response.ok) {
+  const data = await response.json();
+  const { message, actionRequired, redirectUrl } = parseApiError(data, t);
+  // message = "L'email est requis" (traduit dans la langue de l'utilisateur)
+}
+```
+
+**Catégories d'erreurs** : `CommonErrors`, `AuthErrors`, `CvErrors`, `BackgroundErrors`, `AccountErrors`, `SubscriptionErrors`, `OtherErrors`
+
+→ **[Pattern complet](./docs/CODE_PATTERNS.md#10-api-error-internationalization)**
+
+### 12. Système de Feedback
+
+```javascript
+// API endpoint: POST /api/feedback
+// Composants: FeedbackButton.jsx, FeedbackModal.jsx
+// Admin: FeedbackTab.jsx
+
+// Corps de la requête
+{
+  rating: 1-5,           // Note (optionnel pour bug reports)
+  comment: "...",        // Max 500 chars, XSS sanitized
+  isBugReport: boolean,  // true = bug report, false = feedback
+  currentCvFile: "...",  // Fichier CV en cours (optionnel)
+  pageUrl: "...",        // URL de la page
+  userAgent: "..."       // User agent navigateur
+}
+
+// Rate limiting: 10 feedbacks/jour/utilisateur
+// Feature flag: settings.feature_feedback (admin)
+```
+
+→ **[API Reference](./docs/API_REFERENCE.md#post-apifeedback)**
+
+### 13. Utilitaires Site
+
+```javascript
+// Version et titre du site
+import { SITE_VERSION, SITE_TITLE } from '@/lib/site';
+
+console.log(SITE_VERSION);  // "1.2.3" (de NEXT_PUBLIC_APP_VERSION)
+console.log(SITE_TITLE);    // "FitMyCV.io 1.2" (version formatée)
+
+// Formatage intelligent des skills
+import { capitalizeSkillName } from '@/lib/utils/textFormatting';
+
+capitalizeSkillName("python");      // "Python" (lowercase -> capitalize)
+capitalizeSkillName("SQL");         // "SQL" (all uppercase preserved)
+capitalizeSkillName("JavaScript");  // "JavaScript" (mixed case preserved)
+capitalizeSkillName("iOS");         // "iOS" (mixed case preserved)
+```
 
 → **[Tous les patterns](./docs/CODE_PATTERNS.md)**
 

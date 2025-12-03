@@ -91,82 +91,13 @@ npx prisma --version
 
 ### 1. Créer les fichiers d'environnement
 
-#### a) Fichier `.env.local` (Next.js)
+#### a) Fichier `.env` (Next.js)
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-Éditer `.env.local` avec vos valeurs :
-
-```bash
-# =====================================
-# APPLICATION
-# =====================================
-NODE_ENV=development
-NEXT_PUBLIC_SITE_URL=http://localhost:3001
-
-# =====================================
-# DATABASE (pour Next.js)
-# =====================================
-DATABASE_URL="file:./dev.db"
-
-# =====================================
-# NEXTAUTH
-# =====================================
-# Générer avec: openssl rand -base64 32
-NEXTAUTH_SECRET="votre-secret-aleatoire-32-caracteres"
-NEXTAUTH_URL=http://localhost:3001
-
-# =====================================
-# OPENAI (OBLIGATOIRE)
-# =====================================
-OPENAI_API_KEY="sk-proj-..."
-
-# =====================================
-# CHIFFREMENT CV (OBLIGATOIRE)
-# =====================================
-# Générer avec: openssl rand -base64 32
-CV_ENCRYPTION_KEY="votre-cle-chiffrement-32-octets"
-
-# =====================================
-# OAUTH (OPTIONNEL)
-# =====================================
-# Google OAuth
-GOOGLE_CLIENT_ID="votre-google-client-id"
-GOOGLE_CLIENT_SECRET="votre-google-client-secret"
-
-# GitHub OAuth
-GITHUB_ID="votre-github-client-id"
-GITHUB_SECRET="votre-github-client-secret"
-
-# Apple OAuth (configuration avancée)
-# APPLE_CLIENT_ID="votre-apple-client-id"
-# APPLE_CLIENT_SECRET="votre-apple-client-secret"
-# APPLE_TEAM_ID="votre-apple-team-id"
-# APPLE_KEY_ID="votre-apple-key-id"
-# APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
-
-# =====================================
-# EMAIL (OPTIONNEL)
-# =====================================
-# Resend API (pour envoi emails)
-# RESEND_API_KEY="re_..."
-# EMAIL_FROM="noreply@FitMyCV.io"
-
-# =====================================
-# RECAPTCHA (OPTIONNEL)
-# =====================================
-# reCAPTCHA v3 (protection anti-spam)
-# NEXT_PUBLIC_RECAPTCHA_SITE_KEY="6Le..."
-# RECAPTCHA_SECRET_KEY="6Le..."
-
-# =====================================
-# DÉVELOPPEMENT
-# =====================================
-# Origines autorisées (séparées par virgules)
-ALLOWED_ORIGINS="http://localhost:3000,http://localhost:3001"
-```
+Éditer `.env` avec vos valeurs.
 
 #### b) Fichier `prisma/.env` (Prisma)
 
@@ -189,7 +120,7 @@ echo 'DATABASE_URL="file:./dev.db"' > prisma/.env
 openssl rand -base64 32
 ```
 
-Copier le résultat dans `.env.local` :
+Copier le résultat dans `.env` :
 
 ```bash
 NEXTAUTH_SECRET="le-resultat-genere"
@@ -201,7 +132,7 @@ NEXTAUTH_SECRET="le-resultat-genere"
 openssl rand -base64 32
 ```
 
-Copier le résultat dans `.env.local` :
+Copier le résultat dans `.env` :
 
 ```bash
 CV_ENCRYPTION_KEY="le-resultat-genere"
@@ -215,7 +146,7 @@ CV_ENCRYPTION_KEY="le-resultat-genere"
 2. Aller dans **API Keys**
 3. Créer une nouvelle clé : **Create new secret key**
 4. Copier la clé (elle commence par `sk-proj-...`)
-5. Ajouter dans `.env.local` :
+5. Ajouter dans `.env` :
 
 ```bash
 OPENAI_API_KEY="sk-proj-votre-cle"
@@ -236,17 +167,17 @@ OPENAI_API_KEY="sk-proj-votre-cle"
 4. Créer des identifiants OAuth 2.0
 5. Ajouter les **Authorized redirect URIs** :
    - `http://localhost:3001/api/auth/callback/google` (dev)
-   - `https://votre-domaine.com/api/auth/callback/google` (prod)
-6. Copier Client ID et Client Secret dans `.env.local`
+   - `https://your-domain.com/api/auth/callback/google` (prod)
+6. Copier Client ID et Client Secret dans `.env`
 
 #### GitHub OAuth
 
 1. Aller sur [GitHub Developer Settings](https://github.com/settings/developers)
 2. Créer une nouvelle **OAuth App**
 3. Configurer :
-   - **Homepage URL** : `http://localhost:3001`
-   - **Authorization callback URL** : `http://localhost:3001/api/auth/callback/github`
-4. Copier Client ID et Client Secret dans `.env.local`
+   - **Homepage URL** : `https://your-domain.com`
+   - **Authorization callback URL** : `https://your-domain.com/api/auth/callback/github`
+4. Copier Client ID et Client Secret dans `.env`
 
 ---
 
