@@ -651,7 +651,7 @@ export default function Header(props){
                     }}
                   />
                   <input
-                    className="flex-1 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:outline-none transition-all duration-200"
+                    className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:outline-none transition-all duration-200"
                     placeholder={t("header.urlPlaceholder")}
                     value={row.url}
                     onChange={e=>{
