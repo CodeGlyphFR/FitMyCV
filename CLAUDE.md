@@ -37,7 +37,7 @@ Toute la documentation technique est disponible dans le dossier **`docs/`**. Ce 
 
 ### Développement & Patterns
 - **[Référence commandes](./docs/COMMANDS_REFERENCE.md)** - Toutes les commandes (Next.js, Prisma, Stripe, scripts)
-- **[Patterns de code](./docs/CODE_PATTERNS.md)** - Exemples réutilisables (CV, job queue, Stripe, limites)
+- **[Patterns de code](./docs/CODE_PATTERNS.md)** - Exemples réutilisables (CV, job queue, Stripe, limites, Email, OAuth)
 - **[Design System](./docs/DESIGN_SYSTEM.md)** - UI/UX guidelines complets (glassmorphism, composants, animations)
 
 ### Guides Pratiques
@@ -400,7 +400,7 @@ if (!recaptchaResult.success) {
 // Bypass en développement : ajouter BYPASS_RECAPTCHA=true dans .env
 ```
 
-**Routes protégées par reCAPTCHA** (10 au total) :
+**Routes protégées par reCAPTCHA** (11 au total) :
 - `app/api/auth/register` - Création compte
 - `app/api/auth/request-reset` - Demande reset password
 - `app/api/auth/resend-verification` - Renvoi email vérification
@@ -411,6 +411,7 @@ if (!recaptchaResult.success) {
 - `app/api/background-tasks/calculate-match-score` - Score match
 - `app/api/background-tasks/generate-cv-from-job-title` - Génération depuis job title
 - `app/api/cvs/create` - Création CV manuelle
+- `app/api/account/link-oauth` - Liaison compte OAuth
 
 ### 6. Prévention scroll chaining (dropdowns)
 
@@ -434,7 +435,50 @@ useEffect(() => {
 }, [isOpen]);
 ```
 
-### 7. Système d'onboarding (Constantes & Logger)
+### 7. Service Email (Resend)
+
+```javascript
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendEmailChangeConfirmation,
+  createVerificationToken,
+  verifyToken
+} from '@/lib/email/emailService';
+
+// Envoi email vérification
+await sendVerificationEmail(email, userId);
+
+// Envoi email reset password
+await sendPasswordResetEmail(email, userId);
+
+// Templates configurables dans Admin → Email Templates
+// Variables : {{userName}}, {{verificationUrl}}, {{resetUrl}}, {{newEmail}}
+```
+
+→ **[Pattern complet](./docs/CODE_PATTERNS.md#11-service-email-resend)**
+
+### 8. OAuth Account Linking (Multi-Provider)
+
+```javascript
+// Lier un compte OAuth existant
+POST /api/account/link-oauth
+Body: { provider: 'google' | 'github' | 'apple', recaptchaToken }
+Response: { authorizationUrl }
+
+// Callback après autorisation OAuth
+GET /api/auth/callback/link/[provider]?code=...&state=...
+
+// Délier un compte OAuth
+DELETE /api/account/unlink-oauth?provider=google
+
+// Lister les comptes liés
+GET /api/account/linked-accounts
+```
+
+→ **[Pattern complet](./docs/CODE_PATTERNS.md#12-oauth-multi-provider-account-linking)**
+
+### 9. Système d'onboarding (Constantes & Logger)
 
 ```javascript
 // Utiliser les constantes centralisées (9 timings + mappings + API config)
