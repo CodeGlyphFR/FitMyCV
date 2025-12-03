@@ -70,7 +70,7 @@ Toute la documentation technique est disponible dans le dossier **`docs/`**. Ce 
 - **Port** : `3001` (développement)
 - **Usage** : Développement quotidien, features, bugs, improvements
 
-### Dossier PRODUCTION (optionnel : `~/Documents/cv-site/`)
+### Dossier PRODUCTION (optionnel : `~/FitMyCV/`)
 - **Branche** : `main` uniquement (lecture seule, pull only)
 - **Base de données** : PostgreSQL `fitmycv_prod`
 - **Port** : `3000` (production)
