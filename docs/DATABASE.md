@@ -22,8 +22,8 @@ Documentation complète du schéma Prisma et des modèles de données.
 - **ORM** : Prisma 6.16.2
 - **Database (dev)** : SQLite 3
 - **Database (prod)** : PostgreSQL ou MySQL (recommandé)
-- **Modèles** : 28 tables
-- **Migrations** : 19 migrations appliquées
+- **Modèles** : 30 tables
+- **Migrations** : 20 migrations appliquées
 
 ### Configuration
 
@@ -65,6 +65,16 @@ model User {
   resetToken       String?
   resetTokenExpiry DateTime?
 
+  // Stripe
+  stripeCustomerId String?     @unique
+
+  // Referral
+  referralCode     String?     @unique
+  referredBy       String?
+
+  // Onboarding (source unique de vérité)
+  onboardingState  Json?       // {currentStep, hasCompleted, isSkipped, timestamps, ...}
+
   // Relations
   accounts         Account[]
   cvs              CvFile[]
@@ -74,6 +84,11 @@ model User {
   telemetryEvents  TelemetryEvent[]
   featureUsage     FeatureUsage[]
   openaiUsage      OpenAIUsage[]
+  subscription     Subscription?
+  creditBalance    CreditBalance?
+  creditTransactions CreditTransaction[]
+  referrals        Referral[]  @relation("Referrer")
+  referredUsers    Referral?   @relation("Referred")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -89,6 +104,9 @@ model User {
 | `emailVerified` | DateTime | Date de vérification email |
 | `passwordHash` | String | Hash bcrypt (null pour OAuth) |
 | `role` | String | USER ou ADMIN |
+| `stripeCustomerId` | String | ID client Stripe (unique) |
+| `referralCode` | String | Code de parrainage personnel (unique) |
+| `onboardingState` | Json | État complet de l'onboarding |
 
 ---
 
@@ -163,6 +181,8 @@ model CvFile {
   creditUsedAt        DateTime? // Date d'utilisation du crédit
   creditTransactionId String?  @unique // ID de la transaction crédit liée
   blocked             Boolean  @default(false) // Bloqué en cas de downgrade
+  blockedAt           DateTime? // Date de blocage
+  blockedReason       String?   // Raison du blocage
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -229,6 +249,12 @@ model BackgroundTask {
   deviceId String   // Device ID pour filtrer par client
   userId   String?  // User ID pour les tâches utilisateur
   cvFile   String?  // Filename du CV lié (pour improve-cv, calculate-match-score)
+
+  // Système de crédits
+  creditUsed              Boolean   @default(false)
+  creditTransactionId     String?   @unique
+  featureName             String?   // Feature liée
+  featureCounterPeriodStart DateTime? // Début période compteur
 
   updatedAt DateTime @default(now()) @updatedAt
 
@@ -507,14 +533,62 @@ Packs de crédits achetables par les utilisateurs (micro-transactions).
 ```prisma
 model CreditPack {
   id            Int      @id @default(autoincrement())
-  name          String   @unique // "Pack Starter", "Pack Pro", etc.
+  name          String   // "Pack Starter", "Pack Pro", etc.
   description   String?  // Description du pack
-  creditAmount  Int      // Nombre de crédits dans ce pack
+  creditAmount  Int      @unique // Nombre de crédits dans ce pack
   price         Float    // Prix fixe du pack
   priceCurrency String   @default("EUR") // EUR, USD, GBP
   isActive      Boolean  @default(true)  // Pack actif ou désactivé
+
+  // Stripe
+  stripePriceId   String?  @unique
+  stripeProductId String?  @unique
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([creditAmount])
+  @@index([isActive])
+}
+```
+
+**Champs clés** :
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `name` | String | Nom du pack (ex: "Pack 10 crédits") |
+| `creditAmount` | Int | Nombre de crédits (unique - identifie le pack) |
+| `price` | Float | Prix fixe du pack |
+| `priceCurrency` | String | Devise (EUR, USD, GBP) |
+| `stripePriceId` | String | ID Stripe Price (unique) |
+| `stripeProductId` | String | ID Stripe Product (unique) |
+| `isActive` | Boolean | Si false, le pack n'est pas affiché |
+
+**Notes** :
+- Crédits universels (utilisables pour toutes features IA)
+- Crédits permanents (pas d'expiration)
+- Prix fixe par pack (ex: 10 crédits = 5€)
+- Intégration Stripe pour paiement
+- Gestion admin via `/admin/analytics` onglet "Abonnements"
+
+---
+
+### 22. EmailTemplate (Templates email)
+
+Templates d'emails personnalisables pour l'admin.
+
+```prisma
+model EmailTemplate {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  subject     String
+  designJson  String
+  htmlContent String
+  variables   String
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  emailLogs   EmailLog[]
 
   @@index([name])
   @@index([isActive])
@@ -525,17 +599,64 @@ model CreditPack {
 
 | Champ | Type | Description |
 |-------|------|-------------|
-| `name` | String | Nom unique du pack (ex: "Pack 10 crédits") |
-| `creditAmount` | Int | Nombre de crédits inclus dans le pack |
-| `price` | Float | Prix fixe du pack |
-| `priceCurrency` | String | Devise (EUR, USD, GBP) |
-| `isActive` | Boolean | Si false, le pack n'est pas affiché aux utilisateurs |
+| `name` | String | Nom unique du template (ex: "welcome", "password-reset") |
+| `subject` | String | Sujet de l'email |
+| `designJson` | String | JSON du design (pour éditeur visuel) |
+| `htmlContent` | String | Contenu HTML final de l'email |
+| `variables` | String | Liste des variables disponibles (JSON) |
+| `isActive` | Boolean | Template activé ou désactivé |
 
 **Notes** :
-- Crédits universels (utilisables pour toutes features IA)
-- Crédits permanents (pas d'expiration)
-- Prix fixe par pack (ex: 10 crédits = 5€)
-- Gestion admin via `/admin/analytics` onglet "Abonnements"
+- Éditable via l'interface admin
+- Supporte les variables dynamiques ({{name}}, {{resetLink}}, etc.)
+- Relation avec EmailLog pour le suivi
+
+---
+
+### 23. EmailLog (Logs d'emails)
+
+Historique des emails envoyés via Resend.
+
+```prisma
+model EmailLog {
+  id              String         @id @default(cuid())
+  templateId      String?
+  templateName    String
+  recipientEmail  String
+  recipientUserId String?
+  subject         String
+  status          String
+  error           String?
+  resendId        String?
+  isTestEmail     Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  template        EmailTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@index([templateId])
+  @@index([templateName])
+  @@index([recipientEmail])
+  @@index([recipientUserId])
+  @@index([status])
+  @@index([createdAt])
+}
+```
+
+**Champs clés** :
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `templateName` | String | Nom du template utilisé |
+| `recipientEmail` | String | Email du destinataire |
+| `recipientUserId` | String? | ID utilisateur si connecté |
+| `status` | String | Statut (sent, delivered, bounced, failed) |
+| `error` | String? | Message d'erreur si échec |
+| `resendId` | String? | ID retourné par Resend |
+| `isTestEmail` | Boolean | Email de test (admin) |
+
+**Notes** :
+- Conserve l'historique même si le template est supprimé (onDelete: SetNull)
+- Permet le debug des emails non reçus
+- Statistiques d'envoi dans l'admin
 
 ---
 
@@ -674,7 +795,7 @@ prisma/migrations/
 └── 20251024_remove_cv_limit_system/
 ```
 
-**Total : 19 migrations**
+**Total : 20 migrations**
 
 ---
 
@@ -780,10 +901,10 @@ Les 10 modèles liés au système d'abonnement et de crédits sont documentés e
 - `FeatureUsageCounter` - Compteurs mensuels par feature/user
 - `StripeWebhookLog` - Logs des webhooks Stripe
 - `Referral` - Système de parrainage
-- `PromoCode` - Codes promotionnels (🚧 planifié)
+- `PromoCode` - Codes promotionnels
 
 Pour une documentation complète de l'architecture d'abonnement, des règles métier et des workflows, consultez `docs/SUBSCRIPTION.md`.
 
 ---
 
-**Base de données robuste et optimisée** | 28 modèles, 19 migrations
+**Base de données robuste et optimisée** | 30 modèles, 20 migrations

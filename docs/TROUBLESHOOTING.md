@@ -14,6 +14,8 @@ Guide de résolution des problèmes courants.
 - [Performance](#performance)
 - [Développement (HMR & Hot Reload)](#développement-hmr--hot-reload)
 - [Erreurs courantes](#erreurs-courantes)
+- [Emails (Resend)](#emails-resend)
+- [OAuth Account Linking](#oauth-account-linking)
 
 ---
 
@@ -804,6 +806,166 @@ console.log('[OpenAI] Request:', { model, messages });
 // Log responses
 console.log('[OpenAI] Response:', response.choices[0].message);
 ```
+
+---
+
+## Emails (Resend)
+
+### ❌ Emails non envoyés
+
+**Cause** : `RESEND_API_KEY` non configuré ou invalide
+
+**Solution** :
+
+```bash
+# .env.local
+RESEND_API_KEY="re_..."
+EMAIL_FROM="noreply@FitMyCV.io"
+```
+
+**Vérifier la clé** :
+
+1. Aller sur [Resend Dashboard](https://resend.com/api-keys)
+2. Vérifier que la clé existe et est active
+3. Régénérer si nécessaire
+
+---
+
+### ❌ Erreur: `Domain not verified`
+
+**Cause** : Le domaine n'est pas vérifié dans Resend
+
+**Solution** :
+
+1. Aller sur [Resend Domains](https://resend.com/domains)
+2. Ajouter votre domaine
+3. Configurer les DNS (MX, SPF, DKIM)
+4. Attendre la vérification (quelques minutes à quelques heures)
+
+**Mode développement** : Utiliser `onboarding@resend.dev` comme expéditeur
+
+---
+
+### ❌ Template email non trouvé
+
+**Cause** : Le template n'existe pas en base de données
+
+**Solution** :
+
+1. Aller dans Admin → Email Templates
+2. Créer le template manquant (`verification`, `password_reset`, `email_change`)
+3. Configurer sujet et design
+
+**Fallback** : Si aucun template en base, un HTML minimal est utilisé automatiquement
+
+---
+
+### ❌ Variables non remplacées dans l'email
+
+**Cause** : Format de variable incorrect
+
+**Solution** :
+
+S'assurer d'utiliser le bon format :
+
+```
+✅ Correct : {{userName}}, {{verificationUrl}}
+❌ Incorrect : {userName}, ${userName}, %userName%
+```
+
+**Variables disponibles** :
+
+| Template | Variables |
+|----------|-----------|
+| `verification` | `{{userName}}`, `{{verificationUrl}}` |
+| `password_reset` | `{{userName}}`, `{{resetUrl}}` |
+| `email_change` | `{{userName}}`, `{{verificationUrl}}`, `{{newEmail}}` |
+
+---
+
+### ❌ Email marqué comme spam
+
+**Cause** : Réputation domaine faible ou configuration DNS incomplète
+
+**Solution** :
+
+1. Configurer SPF : `v=spf1 include:resend.com ~all`
+2. Configurer DKIM : Voir les DNS records dans Resend
+3. Configurer DMARC : `v=DMARC1; p=none; rua=mailto:dmarc@votre-domaine.com`
+4. Éviter les liens raccourcis (bit.ly, etc.)
+
+---
+
+## OAuth Account Linking
+
+### ❌ Erreur: `email_mismatch` lors de la liaison
+
+**Cause** : L'email du provider OAuth ne correspond pas à l'email FitMyCV
+
+**Solution** :
+
+1. Vérifier l'email du compte FitMyCV dans les paramètres
+2. S'assurer de se connecter au provider avec le même email
+3. Si l'email a changé, modifier d'abord l'email FitMyCV
+
+---
+
+### ❌ Erreur: `already_linked_other` lors de la liaison
+
+**Cause** : Ce compte OAuth est déjà lié à un autre compte FitMyCV
+
+**Solution** :
+
+1. Se connecter à l'autre compte FitMyCV
+2. Délier le provider OAuth depuis les paramètres
+3. Revenir au compte actuel et réessayer
+
+---
+
+### ❌ Erreur: `expired` lors de la liaison
+
+**Cause** : Le state token a expiré (>10 minutes)
+
+**Solution** :
+
+Recommencer le processus de liaison (cliquer "Lier" à nouveau)
+
+---
+
+### ❌ Erreur: `invalid_state` lors de la liaison
+
+**Cause** : Possible attaque CSRF ou cookie expiré/supprimé
+
+**Solution** :
+
+1. Vérifier que les cookies sont activés
+2. Recommencer le processus de liaison
+3. Éviter d'ouvrir le lien dans plusieurs onglets
+
+---
+
+### ❌ Impossible de délier un provider
+
+**Cause** : C'est le dernier provider lié au compte
+
+**Solution** :
+
+Cette protection est intentionnelle. Pour pouvoir délier :
+1. Lier d'abord un autre provider (ex: GitHub si Google est lié)
+2. Ou créer un mot de passe local (si compte OAuth-only)
+
+---
+
+### ❌ Le bouton "Lier" ne répond pas
+
+**Cause** : reCAPTCHA bloqué ou erreur réseau
+
+**Solution** :
+
+1. Vérifier la connexion internet
+2. Désactiver les bloqueurs de pub/trackers
+3. Vérifier la console pour les erreurs reCAPTCHA
+4. En dev, ajouter `BYPASS_RECAPTCHA=true` dans `.env`
 
 ---
 

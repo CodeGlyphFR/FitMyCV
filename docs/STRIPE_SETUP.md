@@ -83,7 +83,7 @@ Suivez les instructions pour autoriser le CLI.
 npm run dev
 
 # Terminal 2 : Transférer webhooks
-stripe listen --forward-to localhost:3000/api/webhooks/stripe
+stripe listen --forward-to localhost:3001/api/webhooks/stripe
 ```
 
 Vous obtiendrez un **webhook signing secret** (commence par `whsec_...`).

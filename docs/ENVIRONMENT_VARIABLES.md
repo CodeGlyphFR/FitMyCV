@@ -351,6 +351,36 @@ APPLE_SECRET="..."
 
 ---
 
+## reCAPTCHA v3
+
+### NEXT_PUBLIC_RECAPTCHA_SITE_KEY (Obligatoire production)
+
+```bash
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY="6Le..."
+```
+
+**Obtenir** : [Google reCAPTCHA Admin](https://www.google.com/recaptcha/admin)
+
+### RECAPTCHA_SECRET_KEY (Obligatoire production)
+
+```bash
+RECAPTCHA_SECRET_KEY="6Le..."
+```
+
+Clé secrète côté serveur pour validation.
+
+### BYPASS_RECAPTCHA (Développement uniquement)
+
+```bash
+BYPASS_RECAPTCHA=true  # Désactive la vérification en développement
+```
+
+**Note** : N'utilisez JAMAIS cette variable en production.
+
+**Documentation** : [SECURITY.md - reCAPTCHA](./SECURITY.md#recaptcha-v3)
+
+---
+
 ## Variables Chiffrement
 
 ### CV_ENCRYPTION_KEY (Obligatoire)

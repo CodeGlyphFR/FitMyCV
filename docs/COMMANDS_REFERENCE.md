@@ -207,6 +207,19 @@ node scripts/check-user-subscription.js
 node scripts/set-plan-metadata.js
 ```
 
+### Onboarding
+
+```bash
+# Reset onboarding pour tous les utilisateurs (dry-run par défaut)
+node scripts/reset-onboarding.js --dry-run
+
+# Reset onboarding pour un utilisateur spécifique
+node scripts/reset-onboarding.js --user=<userId>
+
+# Reset onboarding - exécution réelle (avec sauvegarde)
+node scripts/reset-onboarding.js --execute
+```
+
 ### Features & Compteurs
 
 ```bash

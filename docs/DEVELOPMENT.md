@@ -527,6 +527,55 @@ export { encryptString, decryptString } from './crypto';
 
 ---
 
+## Internationalisation (i18n)
+
+### Structure des fichiers de traduction
+
+Les traductions sont organisées en **9 catégories par langue** :
+
+```
+locales/
+├── en/                      # English
+│   ├── ui.json             # UI strings (buttons, labels, navigation)
+│   ├── errors.json         # API error messages
+│   ├── auth.json           # Authentication flows
+│   ├── account.json        # Account management
+│   ├── cv.json             # CV-related content
+│   ├── subscription.json   # Plans, pricing, billing
+│   ├── tasks.json          # Background task messages
+│   ├── onboarding.json     # Onboarding steps
+│   └── enums.json          # Enumerated values (skill levels, etc.)
+├── fr/                      # French (same structure)
+├── de/                      # German (same structure)
+└── es/                      # Spanish (same structure)
+```
+
+### Ajouter une traduction
+
+```javascript
+// 1. Ajouter la clé dans la catégorie appropriée
+// locales/en/ui.json
+{
+  "buttons": {
+    "newButton": "New Button"
+  }
+}
+
+// 2. Utiliser dans un composant
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+
+function MyComponent() {
+  const { t } = useLanguage();
+  return <button>{t('ui.buttons.newButton')}</button>;
+}
+```
+
+### Ajouter une nouvelle langue
+
+Voir le guide complet : **[ADDING_LANGUAGE.md](./ADDING_LANGUAGE.md)**
+
+---
+
 ## Tests
 
 ### Tests manuels

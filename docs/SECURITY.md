@@ -9,6 +9,8 @@ Guide complet des mesures de sécurité implémentées dans FitMyCV.io.
 - [Vue d'ensemble](#vue-densemble)
 - [Chiffrement des données](#chiffrement-des-données)
 - [Authentification & Autorisation](#authentification--autorisation)
+- [Liaison de comptes OAuth](#liaison-de-comptes-oauth)
+- [reCAPTCHA v3](#recaptcha-v3)
 - [Rate Limiting](#rate-limiting)
 - [Headers de sécurité](#headers-de-sécurité)
 - [Validation & Sanitization](#validation--sanitization)
@@ -206,12 +208,13 @@ if (token?.id && !token?.emailVerified) {
 
 ### Tokens
 
-| Type | Durée de vie | Usage | Table |
-|------|-------------|-------|-------|
+| Type | Durée de vie | Usage | Stockage |
+|------|-------------|-------|----------|
 | **Email Verification** | 24h | Vérifier email | EmailVerificationToken |
 | **Auto Sign In** | 15 min | Connexion auto post-vérif | AutoSignInToken |
 | **Password Reset** | 1h | Reset mot de passe | User.resetToken |
 | **Email Change** | 24h | Changement email | EmailChangeRequest |
+| **OAuth Link State** | 10 min | Liaison provider OAuth | Cookie httpOnly |
 
 ### RBAC (Role-Based Access Control)
 
@@ -236,6 +239,150 @@ export async function requireAdmin(session) {
   return session.user;
 }
 ```
+
+---
+
+## Liaison de comptes OAuth
+
+### Vue d'ensemble
+
+Le système de liaison OAuth permet aux utilisateurs d'associer plusieurs providers (Google, GitHub, Apple) à leur compte FitMyCV existant.
+
+### Mesures de sécurité
+
+| Mesure | Description |
+|--------|-------------|
+| **State token** | 32 bytes aléatoires via `crypto.randomBytes(32)` |
+| **Encodage** | Base64url pour éviter les caractères spéciaux |
+| **Expiration** | 10 minutes maximum |
+| **Stockage** | Cookie `oauth_link_state` httpOnly |
+| **CSRF** | Validation state au callback |
+| **Email matching** | Email OAuth = Email FitMyCV obligatoire |
+| **Protection déliaison** | Minimum 1 provider requis |
+
+### Génération du state token
+
+```javascript
+// app/api/account/link-oauth/route.js
+const nonce = crypto.randomBytes(32).toString("hex");
+const stateData = {
+  linking: true,
+  userId: session.user.id,
+  userEmail: user.email,
+  provider,
+  nonce,
+  exp: Date.now() + 10 * 60 * 1000,  // Expire dans 10 min
+};
+
+const state = Buffer.from(JSON.stringify(stateData)).toString("base64url");
+```
+
+### Cookie sécurisé
+
+```javascript
+cookies.set("oauth_link_state", state, {
+  httpOnly: true,              // Pas accessible en JS
+  secure: NODE_ENV === "production",
+  sameSite: "lax",             // Protection CSRF
+  path: "/",
+  maxAge: 10 * 60,             // 10 minutes
+});
+```
+
+### Validation au callback
+
+```javascript
+// app/api/auth/callback/link/[provider]/route.js
+const storedState = cookies.get("oauth_link_state")?.value;
+
+if (!storedState || storedState !== state) {
+  // CSRF détecté - rejeter la requête
+}
+
+// Vérifier expiration
+if (Date.now() > stateData.exp) {
+  // Token expiré
+}
+
+// Vérifier email matching
+if (userEmail !== oauthEmail) {
+  // Emails ne correspondent pas - sécurité
+}
+
+// Supprimer cookie immédiatement après validation
+cookies.delete("oauth_link_state");
+```
+
+### Règle de protection déliaison
+
+```javascript
+// Empêche de délier le dernier provider
+if (user.accounts.length <= 1) {
+  return AuthErrors.cannotUnlinkLastProvider();
+}
+```
+
+### Code
+
+**Initiation** : `app/api/account/link-oauth/route.js`
+**Callback** : `app/api/auth/callback/link/[provider]/route.js`
+**Déliaison** : `app/api/account/unlink-oauth/route.js`
+
+---
+
+## reCAPTCHA v3
+
+### Vue d'ensemble
+
+Protection anti-bot sur les routes sensibles avec Google reCAPTCHA v3.
+
+**Fichier** : `lib/recaptcha/verifyRecaptcha.js`
+
+### Routes protégées (11)
+
+| Route | Action | Score threshold |
+|-------|--------|-----------------|
+| `/api/auth/register` | Création compte | 0.5 |
+| `/api/auth/request-reset` | Reset password | 0.5 |
+| `/api/auth/resend-verification` | Renvoi email | 0.5 |
+| `/api/background-tasks/import-pdf` | Import CV | 0.5 |
+| `/api/background-tasks/generate-cv` | Génération CV | 0.5 |
+| `/api/background-tasks/create-template-cv` | Création template | 0.5 |
+| `/api/background-tasks/translate-cv` | Traduction CV | 0.5 |
+| `/api/background-tasks/calculate-match-score` | Score match | 0.5 |
+| `/api/background-tasks/generate-cv-from-job-title` | Génération job | 0.5 |
+| `/api/cvs/create` | Création CV | 0.5 |
+| `/api/account/link-oauth` | Liaison OAuth | 0.5 |
+
+### Implémentation
+
+```javascript
+import { verifyRecaptcha } from '@/lib/recaptcha/verifyRecaptcha';
+
+const result = await verifyRecaptcha(recaptchaToken, {
+  callerName: 'import-pdf',
+  scoreThreshold: 0.5,
+});
+
+if (!result.success) {
+  return NextResponse.json({ error: result.error }, { status: 403 });
+}
+```
+
+### Bypass développement
+
+```bash
+# .env.local
+BYPASS_RECAPTCHA=true  # Désactive la vérification en dev
+```
+
+### Score threshold
+
+- **0.0 - 0.3** : Probablement un bot
+- **0.3 - 0.7** : Comportement suspect
+- **0.7 - 1.0** : Probablement humain
+
+FitMyCV utilise un seuil de **0.5** pour toutes les routes.
 
 ---
 

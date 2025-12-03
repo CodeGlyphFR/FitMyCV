@@ -37,9 +37,9 @@ npx prisma studio
 
 Tables créées :
 - `TelemetryEvent` - Événements trackés
-- `UserSession` - Sessions utilisateur
 - `FeatureUsage` - Usage agrégé par feature
-- `User` - Nouveau champ `role` (USER | ADMIN)
+- `FeatureUsageCounter` - Compteurs d'usage par période
+- `User` - Champ `role` (USER | ADMIN)
 
 ### 2. Créer un utilisateur admin
 
@@ -104,136 +104,58 @@ sqlite3 prisma/dev.db "UPDATE User SET role = 'ADMIN' WHERE email = 'votre-email
 
 ---
 
-## 🔄 Lifecycle des Sessions
-
-Le système de télémétrie gère automatiquement le cycle de vie des sessions utilisateur avec trois états possibles.
-
-### États des Sessions
-
-#### 🟢 ACTIVE - Session en cours
-Une session est **ACTIVE** lorsque :
-- L'utilisateur est connecté sur les pages CV (tout sauf `/auth` et `/admin`)
-- L'utilisateur interagit avec l'application (souris, clavier, scroll, touch)
-- La dernière activité date de moins de 2 minutes
-
-**Tracking** :
-- Un chronom\u00e8tre mesure la dur\u00e9e active cumul\u00e9e (champ `activeDuration`)
-- Les événements souris/clavier sont détectés automatiquement
-- Vérification d'inactivité toutes les minutes
-
-#### 🟠 PAUSED - Session en pause
-Une session passe en **PAUSE** automatiquement si :
-- L'onglet devient inactif (changement d'onglet, minimisation)
-- Aucune activité souris/clavier pendant 2 minutes
-- L'utilisateur est sur une page `/admin/*`
-
-**Comportement** :
-- Le chronom\u00e8tre se met en pause
-- La dur\u00e9e active cumul\u00e9e est sauvegard\u00e9e (`activeDuration`)
-- Le timestamp de pause est enregistr\u00e9 (`pausedAt`)
-
-#### ⚫ ENDED - Session termin\u00e9e
-Une session est **TERMINÉE** automatiquement si :
-- L'utilisateur se déconnecte
-- L'utilisateur ferme le navigateur ou tous les onglets
-- La session est en pause depuis plus de 10 minutes
-- La session est ouverte depuis plus de 24 heures (max lifetime)
-
-**Comportement** :
-- Le chronom\u00e8tre s'arrête définitivement
-- La dur\u00e9e active finale est calculée et sauvegardée
-- Le timestamp de fin est enregistr\u00e9 (`endedAt`)
-
-### Règles de Gestion
-
-#### 📌 Session unique par utilisateur
-- Un utilisateur ne peut avoir qu'une seule session ACTIVE ou PAUSED à la fois
-- Si une nouvelle session démarre, l'ancienne est automatiquement terminée
-- Les sessions terminées sont conservées dans l'historique
-
-#### 📊 Affichage dans le Dashboard
-Les sessions sont triées dans cet ordre :
-1. **Sessions ACTIVE** : tri par durée active décroissante
-2. **Sessions PAUSED** : tri par date de pause décroissante
-3. **Sessions ENDED** : tri par date de fin décroissante
-
-#### 🕐 Timers et Timeouts
-```
-Vérification inactivité : 1 minute (check toutes les 1 min)
-Timeout inactivité      : 2 minutes → Pause automatique
-Timeout pause           : 10 minutes → Fin automatique
-Heartbeat               : 5 minutes (maintien de session)
-Max lifetime            : 24 heures → Fin automatique
-```
-
-#### 🔄 Cleanup Automatique
-Le système nettoie automatiquement les sessions inactives :
-- **Toutes les minutes** : vérification des sessions ACTIVE inactives > 2min → PAUSED
-- **Toutes les minutes** : vérification des sessions PAUSED > 10min → ENDED
-- **Toutes les minutes** : vérification des sessions > 24h → ENDED
-
-### API Endpoints Sessions
-
-```
-POST /api/telemetry/session/start    # Créer/réutiliser session
-POST /api/telemetry/session/pause    # Mettre en pause
-POST /api/telemetry/session/resume   # Reprendre
-POST /api/telemetry/session/end      # Terminer
-GET  /api/analytics/sessions          # Récupérer statistiques
-```
-
-### Exemple de Flux Utilisateur
-
-```
-1. User se connecte sur /
-   → Session créée avec status = ACTIVE
-   → Chronom\u00e8tre démarre
-
-2. User navigue, utilise l'app
-   → Session reste ACTIVE
-   → Durée active s'incrémente
-
-3. User ouvre /admin
-   → Session passe en PAUSED
-   → Chronom\u00e8tre se met en pause
-   → activeDuration sauvegardée
-
-4. User revient sur /
-   → Session passe en ACTIVE
-   → Chronom\u00e8tre reprend
-
-5. User ferme le navigateur
-   → Session passe en ENDED
-   → activeDuration finalisée
-```
-
----
-
 ## 🔧 Intégration du tracking
 
 Le tracking côté client est **déjà activé** via le `TelemetryProvider` dans `RootProviders`.
 
-Pour le tracking côté serveur (jobs, API routes), consultez le guide complet :
+### Types d'événements disponibles
 
-📖 **[TRACKING_INTEGRATION.md](./TRACKING_INTEGRATION.md)**
+Le système track automatiquement les événements suivants (définis dans `lib/telemetry/server.js`) :
 
-### Checklist d'intégration
+**CV Management** :
+- `CV_GENERATED_URL` - CV généré depuis URL
+- `CV_GENERATED_PDF` - CV généré depuis PDF
+- `CV_TEMPLATE_CREATED_URL` / `CV_TEMPLATE_CREATED_PDF` - Template créé
+- `CV_GENERATED_FROM_JOB_TITLE` - CV depuis job title
+- `CV_IMPORTED` / `CV_FIRST_IMPORTED` - Import PDF
+- `CV_EXPORTED` - Export PDF
+- `CV_CREATED_MANUAL` - Création manuelle
+- `CV_EDITED` / `CV_DELETED` / `CV_TRANSLATED`
 
-Jobs Background :
-- [ ] `lib/backgroundTasks/generateCvJob.js`
-- [ ] `lib/backgroundTasks/importPdfJob.js`
-- [ ] `lib/backgroundTasks/calculateMatchScoreJob.js`
-- [ ] `lib/backgroundTasks/improveCvJob.js`
-- [ ] `lib/backgroundTasks/translateCvJob.js`
+**Match Score & Optimization** :
+- `MATCH_SCORE_CALCULATED`
+- `CV_OPTIMIZED`
 
-Routes API :
-- [ ] `app/api/export-pdf/route.js`
-- [ ] `app/api/admin/mutate/route.js`
-- [ ] `app/api/cvs/create/route.js`
-- [ ] `app/api/auth/register/route.js`
+**Job Processing** :
+- `JOB_QUEUED` / `JOB_STARTED` / `JOB_COMPLETED` / `JOB_FAILED` / `JOB_CANCELLED`
 
-Auth :
-- [ ] `lib/auth/options.js` (callbacks NextAuth)
+**Auth** :
+- `USER_REGISTERED` / `USER_LOGIN` / `USER_LOGOUT`
+- `EMAIL_VERIFIED` / `PASSWORD_RESET`
+
+**Navigation & Interaction** (Frontend) :
+- `PAGE_VIEW` / `BUTTON_CLICK`
+- `MODAL_OPENED` / `MODAL_CLOSED`
+- `FORM_SUBMITTED`
+
+### Tracking côté serveur
+
+Pour tracker un événement dans une route API ou un job :
+
+```javascript
+import { trackEvent, EventTypes } from '@/lib/telemetry/server';
+
+await trackEvent({
+  type: EventTypes.CV_GENERATED_URL,
+  userId: session.user.id,
+  metadata: {
+    analysisLevel: 'medium',
+    duration: 12500,
+    cvId: newCvId
+  },
+  status: 'success'
+});
+```
 
 ---
 
@@ -247,9 +169,10 @@ Tous les endpoints sont protégés et nécessitent un rôle `ADMIN`.
 GET /api/analytics/summary?period=30d
 GET /api/analytics/events?userId=xxx&type=CV_GENERATED&limit=100
 GET /api/analytics/features
-GET /api/analytics/sessions?period=30d
 GET /api/analytics/users/[userId]/summary
 GET /api/analytics/errors?period=7d
+GET /api/analytics/openai-usage?period=30d
+GET /api/analytics/feedbacks
 ```
 
 ### Endpoints Settings
@@ -391,10 +314,9 @@ Créez un job CRON qui agrège les anciennes données par jour/semaine/mois.
 
 ## 📚 Ressources
 
-- **Guide d'intégration** : [TRACKING_INTEGRATION.md](./TRACKING_INTEGRATION.md)
-- **Schéma Prisma** : [prisma/schema.prisma](./prisma/schema.prisma)
-- **Service backend** : [lib/telemetry/server.js](./lib/telemetry/server.js)
-- **Service frontend** : [lib/telemetry/client.js](./lib/telemetry/client.js)
+- **Schéma Prisma** : `prisma/schema.prisma`
+- **Service backend** : `lib/telemetry/server.js`
+- **Hook frontend** : `hooks/useTelemetry.js`
 
 ---
 
@@ -424,10 +346,9 @@ Créez un job CRON qui agrège les anciennes données par jour/semaine/mois.
 
 1. ✅ Créer un utilisateur admin
 2. ✅ Accéder au dashboard
-3. [ ] Intégrer le tracking dans les jobs (voir TRACKING_INTEGRATION.md)
-4. [ ] Tester avec des données réelles
-5. [ ] Configurer un nettoyage automatique (optionnel)
-6. [ ] Créer des alertes sur les erreurs critiques (optionnel)
+3. [ ] Tester avec des données réelles
+4. [ ] Configurer un nettoyage automatique (optionnel)
+5. [ ] Créer des alertes sur les erreurs critiques (optionnel)
 
 ---
 

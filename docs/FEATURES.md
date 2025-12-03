@@ -18,6 +18,8 @@ Guide complet des fonctionnalités de FitMyCV.io.
 - [📝 Création de CV](#-création-de-cv)
 - [Système de tâches background](#système-de-tâches-background)
 - [Authentification multi-provider](#authentification-multi-provider)
+- [🔗 Liaison de comptes OAuth](#-liaison-de-comptes-oauth)
+- [ℹ️ Page À propos](#️-page-à-propos)
 
 ---
 
@@ -931,4 +933,115 @@ APPLE_PRIVATE_KEY="..."
 
 ---
 
-**9 fonctionnalités majeures** | Powered by OpenAI & Puppeteer
+## 🔗 Liaison de comptes OAuth
+
+### Description
+
+Permet aux utilisateurs de lier plusieurs providers OAuth à leur compte existant. Un utilisateur peut ainsi se connecter via Google, GitHub ou Apple tout en conservant le même compte FitMyCV.
+
+### Fonctionnalités
+
+**Liaison de nouveaux providers** :
+
+- Ajouter Google, GitHub ou Apple à un compte existant
+- L'email OAuth doit correspondre à l'email du compte FitMyCV
+- Protection reCAPTCHA v3 lors de l'initiation
+
+**Déliaison de providers** :
+
+- Supprimer un provider lié au compte
+- **Règle de protection** : Impossible de délier si c'est le dernier moyen de connexion
+- Un utilisateur doit toujours avoir au moins un moyen de se connecter
+
+**Affichage des comptes liés** :
+
+- Liste des providers actuellement liés
+- Providers disponibles (configurés côté serveur)
+- Indicateur de possibilité de déliaison
+
+### Sécurité
+
+| Mesure | Description |
+|--------|-------------|
+| **State token** | Généré avec `crypto.randomBytes(32)` |
+| **Expiration** | 10 minutes maximum |
+| **Stockage** | Cookie `oauth_link_state` (httpOnly, secure) |
+| **CSRF** | Validation du state token au callback |
+| **Email matching** | L'email OAuth doit correspondre à l'email FitMyCV |
+| **Protection déliaison** | Minimum 1 provider lié obligatoire |
+
+### Processus technique
+
+```
+1. Utilisateur clique "Lier Google/GitHub/Apple"
+2. Vérification reCAPTCHA v3
+3. Génération state token (exp: 10 min)
+4. Stockage state dans cookie httpOnly
+5. Redirection vers OAuth provider
+6. Provider redirige vers /api/auth/callback/link/[provider]
+7. Validation state token depuis cookie
+8. Échange code → access token
+9. Récupération profil OAuth (id, email)
+10. Vérification email matching
+11. Création lien dans table Account
+12. Redirection vers /account avec succès/erreur
+```
+
+### Interface utilisateur
+
+**Composant** : `components/account/LinkedAccountsSection.jsx`
+
+**Affichage** :
+- Providers liés avec icône et email associé
+- Bouton "Lier" pour chaque provider disponible non lié
+- Bouton "Délier" (désactivé si dernier provider)
+- Messages de succès/erreur après les opérations
+
+### API Endpoints
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `/api/account/linked-accounts` | GET | Liste des comptes liés |
+| `/api/account/link-oauth` | POST | Initier liaison OAuth |
+| `/api/account/unlink-oauth` | DELETE | Délier un provider |
+| `/api/auth/callback/link/[provider]` | GET | Callback OAuth |
+
+### Code
+
+**Routes API** : `app/api/account/link-oauth/`, `unlink-oauth/`, `linked-accounts/`
+**Callback** : `app/api/auth/callback/link/[provider]/route.js`
+**UI** : `components/account/LinkedAccountsSection.jsx`
+
+---
+
+## ℹ️ Page À propos
+
+### Description
+
+Page d'information sur FitMyCV, son objectif, ses fonctionnalités principales et l'équipe.
+
+### Fonctionnalités
+
+- **Contenu multilingue** : Disponible en français, anglais, espagnol et allemand
+- **Design glassmorphism** : Cohérent avec le reste de l'application
+- **Sections** : Mission, fonctionnalités clés, technologies utilisées
+
+### Structure des fichiers
+
+| Fichier | Description |
+|---------|-------------|
+| `app/about/page.jsx` | Page principale |
+| `lib/about/fr.jsx` | Contenu français |
+| `lib/about/en.jsx` | Contenu anglais |
+| `lib/about/es.jsx` | Contenu espagnol |
+| `lib/about/de.jsx` | Contenu allemand |
+
+### Accès
+
+**URL** : `/about`
+
+La page est accessible publiquement (pas de session requise).
+
+---
+
+**11 fonctionnalités majeures** | Powered by OpenAI & Puppeteer

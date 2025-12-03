@@ -1,6 +1,6 @@
 # Référence API - FitMyCV.io
 
-Documentation complète des 75+ routes API de FitMyCV.io.
+Documentation complète des 96 routes API de FitMyCV.io.
 
 ---
 
@@ -14,6 +14,7 @@ Documentation complète des 75+ routes API de FitMyCV.io.
 - [Analytics](#analytics)
 - [Account](#account)
 - [Subscription & Billing](#subscription--billing)
+- [User Onboarding](#user-onboarding)
 - [Autres routes](#autres-routes)
 - [Codes d'erreur](#codes-derreur)
 
@@ -71,14 +72,45 @@ X-RateLimit-Remaining: 95
 }
 ```
 
-**Erreur** :
+**Erreur (format i18n)** :
+
+Les erreurs API utilisent des clés de traduction i18n permettant l'affichage de messages localisés côté client.
 
 ```json
 {
-  "error": "Message d'erreur",
-  "details": "Détails supplémentaires"
+  "error": "errors.api.auth.emailRequired",    // Clé de traduction i18n
+  "params": { "resource": "user" },            // Paramètres dynamiques (optionnel)
+  "actionRequired": true,                       // Action utilisateur requise (optionnel)
+  "redirectUrl": "/auth/verify-email"           // URL de redirection (optionnel)
 }
 ```
+
+**Traitement côté client** :
+
+```javascript
+import { parseApiError } from '@/lib/api/parseApiError';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+
+const { t } = useLanguage();
+const response = await fetch('/api/...');
+const data = await response.json();
+
+if (!response.ok) {
+  const { message, actionRequired, redirectUrl } = parseApiError(data, t);
+  // message = "L'adresse email est requise" (traduit)
+}
+```
+
+**Catégories d'erreurs** :
+
+| Préfixe | Description |
+|---------|-------------|
+| `errors.api.common.*` | Erreurs génériques (notAuthenticated, serverError, etc.) |
+| `errors.api.auth.*` | Erreurs d'authentification |
+| `errors.api.cv.*` | Erreurs liées aux CVs |
+| `errors.api.subscription.*` | Erreurs d'abonnement |
+| `errors.api.account.*` | Erreurs de compte |
+| `errors.api.background.*` | Erreurs de tâches background |
 
 ---
 
@@ -539,6 +571,37 @@ Améliorer un CV basé sur les suggestions.
 - `400` : Match score non calculé
 - `400` : Pas de suggestions disponibles
 - `409` : Optimisation déjà en cours
+
+---
+
+### GET `/api/cv/can-create`
+
+Vérifier si l'utilisateur peut créer un nouveau CV.
+
+**Auth** : Requise
+
+**Réponse (200)** :
+
+```json
+{
+  "allowed": true,
+  "reason": null,
+  "currentCount": 2,
+  "maxCount": 5
+}
+```
+
+**Réponse (200 - refusé)** :
+
+```json
+{
+  "allowed": false,
+  "reason": "limit_reached",
+  "currentCount": 5,
+  "maxCount": 5,
+  "message": "Limite de CVs atteinte pour votre plan"
+}
+```
 
 ---
 
@@ -1139,6 +1202,356 @@ Balance OpenAI (admin only).
 
 ---
 
+### GET `/api/admin/email-templates`
+
+Liste tous les templates email (admin only).
+
+**Auth** : Admin requise
+
+**Réponse (200)** :
+
+```json
+{
+  "templates": [
+    {
+      "id": "clxxx...",
+      "name": "verification",
+      "subject": "Vérifiez votre adresse email",
+      "designJson": "{...}",
+      "htmlContent": "<html>...</html>",
+      "variables": "[\"userName\", \"verificationUrl\"]",
+      "isActive": true,
+      "createdAt": "2025-01-15T10:00:00.000Z",
+      "updatedAt": "2025-01-15T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### POST `/api/admin/email-templates`
+
+Créer un nouveau template email (admin only).
+
+**Auth** : Admin requise
+
+**Body** :
+
+```json
+{
+  "name": "welcome",
+  "subject": "Bienvenue sur FitMyCV",
+  "designJson": "{...}",
+  "htmlContent": "<html>...</html>",
+  "variables": "[\"userName\"]"
+}
+```
+
+**Réponse (201)** :
+
+```json
+{
+  "template": { ... }
+}
+```
+
+**Erreurs** :
+- `400` : name, subject ou htmlContent manquant
+- `409` : Template avec ce nom existe déjà
+
+---
+
+### GET `/api/admin/email-templates/[id]`
+
+Récupérer un template email spécifique (admin only).
+
+**Auth** : Admin requise
+
+**Réponse (200)** :
+
+```json
+{
+  "template": {
+    "id": "clxxx...",
+    "name": "verification",
+    "subject": "Vérifiez votre adresse email",
+    "designJson": "{...}",
+    "htmlContent": "<html>...</html>",
+    "variables": "[\"userName\", \"verificationUrl\"]",
+    "isActive": true
+  }
+}
+```
+
+---
+
+### PUT `/api/admin/email-templates/[id]`
+
+Mettre à jour un template email (admin only).
+
+**Auth** : Admin requise
+
+**Body** :
+
+```json
+{
+  "subject": "Nouveau sujet",
+  "designJson": "{...}",
+  "htmlContent": "<html>...</html>",
+  "isActive": true
+}
+```
+
+**Réponse (200)** :
+
+```json
+{
+  "template": { ... }
+}
+```
+
+---
+
+### DELETE `/api/admin/email-templates/[id]`
+
+Supprimer un template email (admin only).
+
+**Auth** : Admin requise
+
+**Réponse (200)** :
+
+```json
+{
+  "success": true
+}
+```
+
+---
+
+### GET `/api/admin/email-logs`
+
+Historique des emails envoyés avec pagination (admin only).
+
+**Auth** : Admin requise
+
+**Query params** :
+
+```
+page: number (default: 1)
+limit: number (default: 25)
+template: string (optional) - Filtrer par nom de template
+status: string (optional) - Filtrer par status (sent, failed)
+```
+
+**Réponse (200)** :
+
+```json
+{
+  "logs": [
+    {
+      "id": "clxxx...",
+      "templateId": "clyyy...",
+      "templateName": "verification",
+      "recipientEmail": "user@example.com",
+      "recipientUserId": "clzzz...",
+      "subject": "Vérifiez votre adresse email",
+      "status": "sent",
+      "error": null,
+      "resendId": "abc123",
+      "isTestEmail": false,
+      "createdAt": "2025-01-15T10:00:00.000Z",
+      "template": {
+        "name": "verification",
+        "subject": "Vérifiez votre adresse email"
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 25,
+    "total": 150,
+    "totalPages": 6
+  }
+}
+```
+
+---
+
+### POST `/api/admin/email-test`
+
+Envoyer un email de test (admin only).
+
+**Auth** : Admin requise
+
+**Body** :
+
+```json
+{
+  "templateId": "clxxx...",
+  "testEmail": "admin@example.com"
+}
+```
+
+**Variables de test utilisées** :
+- `{{userName}}` : "Jean Dupont (Test)"
+- `{{verificationUrl}}` : URL de vérification test
+- `{{resetUrl}}` : URL de reset test
+- `{{newEmail}}` : "nouveau.email@test.com"
+
+**Réponse (200)** :
+
+```json
+{
+  "success": true,
+  "message": "Test email sent to admin@example.com",
+  "resendId": "abc123"
+}
+```
+
+**Erreurs** :
+- `400` : templateId ou testEmail manquant
+- `404` : Template non trouvé
+- `500` : Erreur d'envoi Resend
+
+---
+
+### POST `/api/admin/onboarding/reset`
+
+Réinitialiser l'onboarding d'un utilisateur (admin only).
+
+**Auth** : Admin requise
+
+**Body** :
+
+```json
+{
+  "userId": "clxxx..."
+}
+```
+
+**Réponse (200)** :
+
+```json
+{
+  "success": true,
+  "user": {
+    "id": "clxxx...",
+    "name": "John Doe",
+    "email": "user@example.com"
+  },
+  "message": "Onboarding réinitialisé pour user@example.com"
+}
+```
+
+**Erreurs** :
+- `400` : userId manquant ou invalide
+- `404` : Utilisateur non trouvé
+
+---
+
+### GET `/api/admin/onboarding/analytics`
+
+Récupérer les KPIs et statistiques d'onboarding (admin only).
+
+**Auth** : Admin requise
+
+**Query params** :
+
+```
+period: '7d' | '30d' | '90d' | 'all' (default: '30d')
+```
+
+**Réponse (200)** :
+
+```json
+{
+  "period": "30d",
+  "kpis": {
+    "totalUsers": 150,
+    "started": 120,
+    "completed": 80,
+    "skipped": 15,
+    "inProgress": 25,
+    "notStarted": 30,
+    "stuckCount": 5,
+    "completionRate": 66.7,
+    "skipRate": 12.5,
+    "avgCompletionTimeMs": 180000,
+    "avgCompletionTime": "3m 00s",
+    "healthScore": 75
+  },
+  "funnel": [
+    { "step": 0, "name": "Bienvenue", "icon": "👋", "reached": 120, "completed": 115 },
+    { "step": 1, "name": "Import CV", "icon": "📄", "reached": 115, "completed": 100 }
+  ],
+  "stepDropoff": [
+    { "from": 0, "to": 1, "fromName": "Bienvenue", "toName": "Import CV", "dropoffCount": 5, "dropoffRate": 4.2 }
+  ],
+  "modals": {
+    "step1": { "name": "Welcome Modal", "completed": 100, "total": 120, "rate": 83.3 }
+  },
+  "timeline": [
+    { "date": "01/01", "started": 5, "completed": 3, "skipped": 1 }
+  ]
+}
+```
+
+---
+
+### GET `/api/admin/onboarding/users`
+
+Liste des utilisateurs avec leur statut d'onboarding (admin only).
+
+**Auth** : Admin requise
+
+**Query params** :
+
+```
+page: number (default: 1)
+limit: number (default: 10, max: 50)
+status: 'completed' | 'in_progress' | 'skipped' | 'not_started' | 'stuck' | 'all'
+step: number (0-8) - Filtrer par étape actuelle
+search: string - Recherche par nom/email
+sortBy: 'newest' | 'oldest' | 'progress'
+```
+
+**Réponse (200)** :
+
+```json
+{
+  "users": [
+    {
+      "id": "clxxx...",
+      "name": "John Doe",
+      "email": "user@example.com",
+      "createdAt": "2025-01-15T10:00:00.000Z",
+      "status": "in_progress",
+      "currentStep": 3,
+      "currentStepName": "Génération CV",
+      "completedSteps": [0, 1, 2],
+      "modalsCompleted": 2,
+      "totalModals": 6,
+      "progressPercent": 37.5,
+      "startedAt": "2025-01-15T10:00:00.000Z",
+      "completedAt": null,
+      "lastActivity": "2025-01-15T11:00:00.000Z",
+      "isStuck": false,
+      "stuckDays": 0
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 150,
+    "totalPages": 15,
+    "hasMore": true
+  }
+}
+```
+
+---
+
 ## Analytics
 
 ### GET `/api/analytics/summary`
@@ -1368,6 +1781,160 @@ Supprimer son compte.
 
 ---
 
+### GET `/api/account/linked-accounts`
+
+Récupérer les comptes OAuth liés et les providers disponibles.
+
+**Auth** : Requise
+
+**Réponse (200)** :
+
+```json
+{
+  "linkedAccounts": [
+    {
+      "provider": "google",
+      "providerAccountId": "1234567890",
+      "linkedAt": "2025-01-15T10:00:00.000Z"
+    }
+  ],
+  "availableProviders": {
+    "google": true,
+    "github": true,
+    "apple": false
+  },
+  "canUnlink": {
+    "google": false
+  }
+}
+```
+
+**Notes** :
+- `availableProviders` : providers configurés côté serveur (env vars)
+- `canUnlink` : `true` seulement si l'utilisateur a plus d'un provider lié
+
+---
+
+### POST `/api/account/link-oauth`
+
+Initier le flow OAuth pour lier un nouveau provider au compte.
+
+**Auth** : Requise
+
+**reCAPTCHA** : Requise (score threshold: 0.5)
+
+**Body** :
+
+```json
+{
+  "provider": "github",
+  "recaptchaToken": "..."
+}
+```
+
+**Providers supportés** : `google`, `github`, `apple`
+
+**Réponse (200)** :
+
+```json
+{
+  "authUrl": "https://github.com/login/oauth/authorize?client_id=...",
+  "provider": "github"
+}
+```
+
+**Erreurs** :
+
+| Code | Clé traduction | Description |
+|------|----------------|-------------|
+| 400 | `errors.api.auth.providerRequired` | Provider manquant |
+| 400 | `errors.api.auth.providerInvalid` | Provider non supporté |
+| 400 | `errors.api.auth.providerNotConfigured` | Provider non configuré (env vars) |
+| 400 | `errors.api.auth.providerAlreadyLinked` | Provider déjà lié au compte |
+| 403 | `errors.api.auth.recaptchaFailed` | Vérification reCAPTCHA échouée |
+
+**Sécurité** :
+- State token généré avec `crypto.randomBytes(32)`
+- Expire dans 10 minutes
+- Stocké dans cookie `oauth_link_state` (httpOnly, secure)
+
+---
+
+### DELETE `/api/account/unlink-oauth`
+
+Supprimer un lien OAuth du compte.
+
+**Auth** : Requise
+
+**Body** :
+
+```json
+{
+  "provider": "github"
+}
+```
+
+**Réponse (200)** :
+
+```json
+{
+  "ok": true,
+  "provider": "github"
+}
+```
+
+**Erreurs** :
+
+| Code | Clé traduction | Description |
+|------|----------------|-------------|
+| 400 | `errors.api.auth.providerRequired` | Provider manquant |
+| 400 | `errors.api.auth.providerInvalid` | Provider non supporté |
+| 404 | `errors.api.auth.providerNotLinked` | Provider non lié au compte |
+| 400 | `errors.api.auth.cannotUnlinkLastProvider` | Impossible de délier le dernier provider |
+| 500 | `errors.api.account.unlinkFailed` | Erreur serveur lors de la suppression |
+
+**Règle de protection** : On ne peut pas délier un provider si c'est le seul moyen de connexion.
+
+---
+
+### GET `/api/auth/callback/link/[provider]`
+
+Callback OAuth pour compléter la liaison d'un provider.
+
+**Auth** : Session requise (même utilisateur que l'initiation)
+
+**Query params** (fournis par le provider) :
+
+| Param | Description |
+|-------|-------------|
+| `code` | Code d'autorisation OAuth |
+| `state` | State token pour validation CSRF |
+| `error` | Erreur OAuth (optionnel) |
+
+**Comportement** :
+- Valide le state token depuis le cookie
+- Échange le code contre un access token
+- Vérifie que l'email OAuth correspond à l'email FitMyCV
+- Crée le lien dans la table `Account`
+- Redirige vers `/account` avec paramètres de succès/erreur
+
+**Redirections** :
+
+| Paramètre | Description |
+|-----------|-------------|
+| `linkSuccess=true` | Liaison réussie |
+| `linkSuccess=already_linked` | Déjà lié (même compte) |
+| `linkError=oauth_error` | Erreur OAuth du provider |
+| `linkError=missing_params` | Code ou state manquant |
+| `linkError=invalid_state` | State invalide (CSRF) |
+| `linkError=expired` | State token expiré (>10 min) |
+| `linkError=session_expired` | Session utilisateur expirée |
+| `linkError=email_mismatch` | Email OAuth ≠ email FitMyCV |
+| `linkError=already_linked_other` | Provider lié à un autre compte |
+| `linkError=server_error` | Erreur serveur |
+
+---
+
 ## Subscription & Billing
 
 ### GET `/api/subscription/current`
@@ -1496,6 +2063,34 @@ Récupérer l'historique des factures (abonnements + packs de crédits).
   ]
 }
 ```
+
+---
+
+### POST `/api/subscription/reactivate`
+
+Réactiver un abonnement annulé (cancel_at_period_end).
+
+**Auth** : Requise
+
+**Réponse (200)** :
+
+```json
+{
+  "success": true,
+  "subscription": {
+    "id": "clxxx...",
+    "status": "active",
+    "cancelAtPeriodEnd": false,
+    "currentPeriodEnd": "2025-02-15T00:00:00.000Z"
+  }
+}
+```
+
+**Erreurs** :
+- `400` : Aucun abonnement à réactiver
+- `401` : Non authentifié
+
+**Note** : Cette route annule la demande d'annulation et rétablit le renouvellement automatique, à la fois dans la base de données et sur Stripe.
 
 ---
 
@@ -1747,6 +2342,171 @@ Historique des consentements.
 
 ---
 
+## User Onboarding
+
+### GET `/api/user/onboarding`
+
+Récupérer l'état d'onboarding complet de l'utilisateur connecté.
+
+**Auth** : Requise
+
+**Réponse (200)** :
+
+```json
+{
+  "currentStep": 3,
+  "hasCompleted": false,
+  "isSkipped": false,
+  "completedAt": null,
+  "skippedAt": null,
+  "startedAt": "2025-01-15T10:00:00.000Z",
+  "onboardingState": {
+    "currentStep": 3,
+    "hasCompleted": false,
+    "isSkipped": false,
+    "completedSteps": [0, 1, 2],
+    "modals": {
+      "step1": { "completed": true, "completedAt": "..." },
+      "step2": { "completed": true, "completedAt": "..." }
+    },
+    "timestamps": {
+      "startedAt": "2025-01-15T10:00:00.000Z",
+      "lastStepChangeAt": "2025-01-15T10:30:00.000Z"
+    }
+  }
+}
+```
+
+---
+
+### PUT `/api/user/onboarding`
+
+Mettre à jour l'étape en cours.
+
+**Auth** : Requise
+
+**Body** :
+
+```json
+{
+  "step": 4
+}
+```
+
+**Réponse (200)** :
+
+```json
+{
+  "success": true,
+  "currentStep": 4,
+  "hasCompleted": false
+}
+```
+
+**Erreurs** :
+- `400` : Step invalide (0-8)
+- `409` : Client désynchronisé (step inférieur à celui en base)
+
+**Note** : Cette route inclut une protection anti-régression multi-device. Si le client tente de régresser à un step inférieur, une erreur 409 est retournée avec le step actuel côté serveur.
+
+---
+
+### PATCH `/api/user/onboarding`
+
+Mettre à jour l'état d'onboarding complet (onboardingState).
+
+**Auth** : Requise
+
+**Body** :
+
+```json
+{
+  "onboardingState": {
+    "currentStep": 4,
+    "completedSteps": [0, 1, 2, 3],
+    "modals": {
+      "step1": { "completed": true, "completedAt": "..." }
+    }
+  }
+}
+```
+
+**Réponse (200)** :
+
+```json
+{
+  "success": true,
+  "onboardingState": { ... }
+}
+```
+
+**Note** : Utilise un cache in-memory avec TTL de 1000ms pour éviter les écritures DB multiples lors de mises à jour rapides. Synchronise via SSE pour les autres devices.
+
+---
+
+### POST `/api/user/onboarding?action={action}`
+
+Actions sur l'onboarding.
+
+**Auth** : Requise
+
+**Query params** :
+
+```
+action: 'complete' | 'skip' | 'reset'
+```
+
+**Actions** :
+
+| Action | Description |
+|--------|-------------|
+| `complete` | Marquer l'onboarding comme complété |
+| `skip` | Marquer l'onboarding comme ignoré (skip ≠ complete) |
+| `reset` | Réinitialiser l'onboarding à l'état initial |
+
+**Réponse (complete)** :
+
+```json
+{
+  "success": true,
+  "completedAt": "2025-01-15T12:00:00.000Z"
+}
+```
+
+**Réponse (skip)** :
+
+```json
+{
+  "success": true,
+  "skippedAt": "2025-01-15T12:00:00.000Z"
+}
+```
+
+**Réponse (reset)** :
+
+```json
+{
+  "success": true,
+  "message": "Onboarding réinitialisé",
+  "onboardingState": { ... }
+}
+```
+
+**Erreurs** :
+- `400` : Action invalide
+
+---
+
+### POST `/api/user/onboarding/subscribe`
+
+Souscrire aux mises à jour SSE de l'onboarding.
+
+**Auth** : Requise
+
+**Note** : Cette route est utilisée pour la synchronisation temps réel multi-device via Server-Sent Events.
+
+---
+
 ### POST `/api/telemetry/track`
 
 Tracker un événement télémétrie.
@@ -1801,4 +2561,4 @@ Logger la durée du premier import (onboarding).
 
 ---
 
-**Documentation complète de l'API FitMyCV.io** | 75+ endpoints documentés
+**Documentation complète de l'API FitMyCV.io** | 96 endpoints documentés

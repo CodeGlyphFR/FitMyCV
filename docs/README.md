@@ -63,20 +63,20 @@ La documentation est organisée en plusieurs fichiers thématiques :
 
 ### 🔌 API & Base de données
 - **[API_REFERENCE.md](./API_REFERENCE.md)** - Référence API complète
-  - 60+ routes API documentées
+  - 96 routes API documentées
   - Paramètres et réponses
   - Exemples de requêtes
   - Codes d'erreur
 
 - **[DATABASE.md](./DATABASE.md)** - Documentation base de données
-  - Schéma Prisma complet (23 modèles)
+  - Schéma Prisma complet (30 modèles)
   - Relations entre tables
   - Migrations
   - Index et optimisations
 
 ### ⚛️ Composants & Fonctionnalités
 - **[COMPONENTS.md](./COMPONENTS.md)** - Catalogue des composants
-  - 89 composants React documentés
+  - 120+ composants React documentés
   - Props et usage
   - Composants réutilisables
 
@@ -220,11 +220,11 @@ Pour plus de détails, consultez [INSTALLATION.md](./INSTALLATION.md)
 ```
 fitmycv/
 ├── app/                    # Next.js App Router
-│   ├── api/               # API Routes (60+ endpoints)
+│   ├── api/               # API Routes (96 endpoints)
 │   ├── auth/              # Pages authentification
 │   ├── admin/             # Dashboard admin
 │   └── account/           # Paramètres compte
-├── components/            # Composants React (89 fichiers)
+├── components/            # Composants React (120+ fichiers)
 │   ├── ui/               # Composants UI réutilisables
 │   ├── admin/            # Composants admin/analytics
 │   ├── auth/             # Composants authentification

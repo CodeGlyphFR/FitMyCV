@@ -13,6 +13,12 @@ Ce document décrit en détail l'architecture de l'application FitMyCV.io.
 - [Architecture Next.js 14](#architecture-nextjs-14)
 - [Structure des dossiers](#structure-des-dossiers)
 - [Flux de données principaux](#flux-de-données-principaux)
+  - [Génération de CV](#1-génération-de-cv-depuis-une-offre-demploi)
+  - [Match Score](#2-calcul-du-match-score)
+  - [Optimisation CV](#3-optimisation-de-cv)
+  - [Authentification](#4-authentification--session)
+  - [OAuth Account Linking](#5-oauth-account-linking-multi-provider)
+  - [Envoi d'Email](#6-envoi-demail-resend-service)
 - [Patterns et conventions](#patterns-et-conventions)
 - [Optimisations performance](#optimisations-performance)
 
@@ -39,7 +45,7 @@ FitMyCV.io est construite sur une architecture moderne basée sur **Next.js 14**
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
 │  │ Pages (SSR)  │  │ API Routes   │  │ Middleware   │      │
-│  │ App Router   │  │ 75+ endpoints│  │ Auth, Rate   │      │
+│  │ App Router   │  │ 96 endpoints │  │ Auth, Rate   │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐  │
@@ -50,11 +56,11 @@ FitMyCV.io est construite sur une architecture moderne basée sur **Next.js 14**
 └──────────┬───────────────┬──────────────┬──────────────────┘
            │               │              │
            │               │              │
-┌──────────▼─────┐  ┌──────▼──────┐  ┌───▼──────────┐
-│   PRISMA ORM   │  │  OPENAI API │  │  PUPPETEER   │
-│   SQLite/PG    │  │  GPT-5      │  │  Scraping    │
-│   28 Models    │  │  Models     │  │  PDF Export  │
-└────────────────┘  └─────────────┘  └──────────────┘
+┌──────────▼─────┐  ┌──────▼──────┐  ┌───▼──────────┐  ┌─────────────┐
+│   PRISMA ORM   │  │  OPENAI API │  │  PUPPETEER   │  │   RESEND    │
+│   SQLite/PG    │  │  GPT-4o/5   │  │  Scraping    │  │   Email     │
+│   30 Models    │  │  Models     │  │  PDF Export  │  │   Service   │
+└────────────────┘  └─────────────┘  └──────────────┘  └─────────────┘
 ```
 
 ### Couches de l'application
@@ -146,7 +152,7 @@ app/
 ```
 fitmycv/
 ├── app/                          # Next.js App Router
-│   ├── api/                     # API Routes (75+ endpoints)
+│   ├── api/                     # API Routes (96 endpoints)
 │   │   ├── auth/               # Authentication
 │   │   ├── cv/                 # CV management
 │   │   ├── cvs/                # CVs CRUD
@@ -261,7 +267,7 @@ fitmycv/
 │   └── utils.js                 # Generic utilities
 │
 ├── prisma/                       # Database
-│   ├── schema.prisma            # Prisma schema (28 models)
+│   ├── schema.prisma            # Prisma schema (30 models)
 │   ├── migrations/              # Database migrations (15)
 │   ├── dev.db                   # SQLite database (dev)
 │   └── seed.js                  # Database seeding
@@ -290,6 +296,19 @@ fitmycv/
 ├── hooks/                        # Custom React hooks
 │
 ├── locales/                      # Translation files
+│   ├── en/                      # English translations
+│   │   ├── ui.json             # UI strings (buttons, labels, navigation)
+│   │   ├── errors.json         # API error messages
+│   │   ├── auth.json           # Authentication flows
+│   │   ├── account.json        # Account management
+│   │   ├── cv.json             # CV-related content
+│   │   ├── subscription.json   # Plans, pricing, billing
+│   │   ├── tasks.json          # Background task messages
+│   │   ├── onboarding.json     # Onboarding steps
+│   │   └── enums.json          # Enumerated values (skill levels, etc.)
+│   ├── fr/                      # French translations (same structure)
+│   ├── de/                      # German translations (same structure)
+│   └── es/                      # Spanish translations (same structure)
 │
 ├── middleware.js                 # Next.js middleware (auth, rate limit)
 ├── instrumentation.js            # Next.js instrumentation hook
@@ -422,6 +441,82 @@ sequenceDiagram
         Middleware-->>User: Render page
     else Email not verified
         Middleware-->>User: Redirect to /auth/verify-email-required
+    end
+```
+
+### 5. OAuth Account Linking (Multi-Provider)
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant AccountPage
+    participant API as /api/account/link-oauth
+    participant OAuth as OAuth Provider
+    participant Callback as /api/auth/callback/link/[provider]
+    participant DB as Prisma
+
+    User->>AccountPage: Click "Lier Google/GitHub/Apple"
+    AccountPage->>API: POST {provider, recaptchaToken}
+    API->>API: Verify reCAPTCHA
+    API->>API: Generate state token (10min expiry)
+    API->>API: Store state in secure httpOnly cookie
+    API-->>AccountPage: {authUrl, provider}
+    AccountPage->>OAuth: Redirect to provider
+
+    OAuth->>User: Login/Authorize
+    User->>OAuth: Grant permission
+    OAuth->>Callback: Redirect with code + state
+
+    Callback->>Callback: Verify state from cookie
+    alt State valid
+        Callback->>OAuth: Exchange code for tokens
+        OAuth-->>Callback: {access_token, profile}
+        Callback->>Callback: Verify email matches user account
+        Callback->>DB: Check if providerAccountId already linked
+        alt Account not linked elsewhere
+            Callback->>DB: Create Account record
+            Callback->>Callback: Delete state cookie
+            Callback-->>User: Redirect to /account?linked=provider
+        else Account already linked
+            Callback-->>User: Redirect to /account?error=already_linked
+        end
+    else State invalid/expired
+        Callback-->>User: Redirect to /account?error=invalid_state
+    end
+```
+
+### 6. Envoi d'Email (Resend Service)
+
+```mermaid
+sequenceDiagram
+    participant Trigger as API/Auth
+    participant EmailService as lib/email/emailService
+    participant DB as Prisma
+    participant Resend as Resend API
+    participant User as User Inbox
+
+    Trigger->>EmailService: sendVerificationEmail(email, userId)
+    EmailService->>EmailService: createVerificationToken(userId)
+    EmailService->>DB: Create VerificationToken (24h expiry)
+
+    EmailService->>DB: Get EmailTemplate('verification')
+    alt Template exists
+        DB-->>EmailService: Template with variables
+        EmailService->>EmailService: Replace {{variables}}
+    else No template
+        EmailService->>EmailService: Use fallback HTML
+    end
+
+    EmailService->>Resend: Send email via API
+    Resend-->>EmailService: {id, status}
+    EmailService->>DB: Create EmailLog (status, messageId)
+
+    alt Send success
+        EmailService-->>Trigger: {success: true}
+        Resend->>User: Email delivered
+    else Send failed
+        EmailService->>DB: Update EmailLog (error)
+        EmailService-->>Trigger: {success: false, error}
     end
 ```
 
