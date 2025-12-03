@@ -405,6 +405,89 @@ async function main() {
     console.log(`  ✅ ${setting.settingName} = ${setting.value}`);
   }
 
+  // ===== 2b. Seed des settings de crédits par feature =====
+  console.log('\n💳 Création des settings de crédits par feature...');
+  const creditSettings = [
+    {
+      settingName: 'credits_create_cv_manual',
+      value: '1',
+      category: 'credits',
+      description: 'Crédits pour création manuelle CV',
+    },
+    {
+      settingName: 'credits_edit_cv',
+      value: '1',
+      category: 'credits',
+      description: 'Crédits pour édition CV',
+    },
+    {
+      settingName: 'credits_export_cv',
+      value: '1',
+      category: 'credits',
+      description: 'Crédits pour export PDF',
+    },
+    {
+      settingName: 'credits_match_score',
+      value: '1',
+      category: 'credits',
+      description: 'Crédits pour score de matching',
+    },
+    {
+      settingName: 'credits_translate_cv',
+      value: '1',
+      category: 'credits',
+      description: 'Crédits pour traduction CV',
+    },
+    {
+      settingName: 'credits_gpt_cv_generation_rapid',
+      value: '1',
+      category: 'credits',
+      description: 'Crédits pour génération CV rapide',
+    },
+    {
+      settingName: 'credits_gpt_cv_generation_medium',
+      value: '2',
+      category: 'credits',
+      description: 'Crédits pour génération CV normal',
+    },
+    {
+      settingName: 'credits_gpt_cv_generation_deep',
+      value: '0',
+      category: 'credits',
+      description: '0 = Abonnement Premium requis',
+    },
+    {
+      settingName: 'credits_optimize_cv',
+      value: '2',
+      category: 'credits',
+      description: 'Crédits pour optimisation CV',
+    },
+    {
+      settingName: 'credits_generate_from_job_title',
+      value: '3',
+      category: 'credits',
+      description: 'Crédits pour génération depuis titre',
+    },
+    {
+      settingName: 'credits_import_pdf',
+      value: '5',
+      category: 'credits',
+      description: 'Crédits pour import PDF',
+    },
+  ];
+
+  for (const setting of creditSettings) {
+    await prisma.setting.upsert({
+      where: { settingName: setting.settingName },
+      update: {
+        value: setting.value,
+        description: setting.description,
+      },
+      create: setting,
+    });
+    console.log(`  ✅ ${setting.settingName} = ${setting.value} crédit(s)`);
+  }
+
   // ===== 3. Seed du mapping des features =====
   console.log('\n🔗 Création du mapping des features...');
 
@@ -481,6 +564,7 @@ async function main() {
   console.log('\n📝 Résumé :');
   console.log(`   - Plans d'abonnement : ${plansCreated} créés, ${plansSkipped} ignorés`);
   console.log(`   - Settings IA : ${aiModelSettings.length} configurés`);
+  console.log(`   - Settings crédits : ${creditSettings.length} configurés`);
   console.log(`   - Feature Mappings : ${mappingsCreated} créés, ${mappingsUpdated} mis à jour`);
   console.log(`   - Templates email : ${templatesCreated} créés, ${templatesSkipped} ignorés`);
 }

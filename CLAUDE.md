@@ -359,20 +359,52 @@ import { runGenerateCvJob } from '@/lib/backgroundTasks/generateCvJob';
 enqueueJob(() => runGenerateCvJob(task));
 ```
 
-### 3. Vérifier limites features
+### 3. Vérifier limites features et consommer crédits
 
 ```javascript
-import { checkFeatureLimit } from '@/lib/subscription/featureUsage';
+import { incrementFeatureCounter } from '@/lib/subscription/featureUsage';
 
-const { allowed, needsCredit } = await checkFeatureLimit(
-  userId,
-  'gpt_cv_generation',
-  { analysisLevel: 'medium' }
-);
+// Vérifie les limites ET consomme les crédits si nécessaire
+const result = await incrementFeatureCounter(userId, 'gpt_cv_generation', {
+  analysisLevel: 'medium', // 'rapid', 'medium', 'deep'
+});
 
-if (!allowed) {
-  // Proposer upgrade ou utilisation crédit
+if (!result.success) {
+  // result.error contient le message (ex: "2 crédits requis, vous en avez 1")
+  // result.actionRequired = true si redirection nécessaire
+  // result.redirectUrl = '/account/subscriptions'
 }
+
+// Si succès: result.usedCredit = true/false, result.creditCost = nombre débité
+```
+
+**Coûts en crédits par feature** (configurables via Admin → Settings) :
+
+| Feature | Crédits | Setting |
+|---------|---------|---------|
+| create_cv_manual | 1 | credits_create_cv_manual |
+| edit_cv | 1 | credits_edit_cv |
+| export_cv | 1 | credits_export_cv |
+| match_score | 1 | credits_match_score |
+| translate_cv | 1 | credits_translate_cv |
+| gpt_cv_generation (rapid) | 1 | credits_gpt_cv_generation_rapid |
+| gpt_cv_generation (medium) | 2 | credits_gpt_cv_generation_medium |
+| gpt_cv_generation (deep) | 0 | credits_gpt_cv_generation_deep |
+| optimize_cv | 2 | credits_optimize_cv |
+| generate_from_job_title | 3 | credits_generate_from_job_title |
+| import_pdf | 5 | credits_import_pdf |
+
+**Note** : `0` = Fonctionnalité réservée aux abonnés Premium (pas de consommation de crédits possible)
+
+```javascript
+// Pour récupérer le coût d'une feature
+import { getCreditCostForFeature } from '@/lib/subscription/creditCost';
+
+const { cost, premiumRequired } = await getCreditCostForFeature('import_pdf');
+// cost = 5, premiumRequired = false
+
+const { cost, premiumRequired } = await getCreditCostForFeature('gpt_cv_generation', 'deep');
+// cost = 0, premiumRequired = true
 ```
 
 ### 4. Session utilisateur

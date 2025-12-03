@@ -8,7 +8,9 @@ import {
   getCategoryLabel,
   getSettingLabel,
   isHierarchicalCategory,
+  isCreditsCategory,
   getAIModelsStructure,
+  getCreditsStructure,
   AVAILABLE_AI_MODELS,
 } from '@/lib/admin/settingsConfig';
 
@@ -293,6 +295,94 @@ export function SettingsTab({ refreshKey }) {
     );
   }
 
+  // Afficher les crédits avec structure hiérarchique et inputs numériques
+  function renderCreditsSettings(categorySettings) {
+    const creditsStructure = getCreditsStructure();
+    const settingsByName = categorySettings.reduce((acc, setting) => {
+      acc[setting.settingName] = setting;
+      return acc;
+    }, {});
+
+    return (
+      <div className="space-y-6">
+        {/* Note explicative pour valeur 0 */}
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+          <p className="text-xs text-amber-300">
+            <strong>Note :</strong> Une valeur de <code className="bg-white/10 px-1 rounded">0</code> signifie que la fonctionnalité est réservée aux abonnés <strong>Premium</strong> (pas de consommation de crédits possible).
+          </p>
+        </div>
+
+        {Object.entries(creditsStructure).map(([groupLabel, settingNames]) => (
+          <div key={groupLabel}>
+            <h5 className="text-sm font-semibold text-white/80 mb-3 flex items-center gap-2">
+              <span className="w-1 h-4 bg-emerald-400 rounded"></span>
+              {groupLabel}
+            </h5>
+            <div className="space-y-2">
+              {settingNames.map(settingName => {
+                const setting = settingsByName[settingName];
+                if (!setting) return null;
+
+                const currentValue = getCurrentValue(setting);
+                const isModified = modifiedSettings[setting.id] !== undefined;
+                const isPremiumOnly = currentValue === '0';
+
+                return (
+                  <div
+                    key={setting.id}
+                    className={`p-3 rounded-lg transition-colors ${
+                      isModified ? 'bg-blue-500/10 border border-blue-400/30' : 'bg-white/5'
+                    } ${settingNames.length > 1 ? 'ml-4' : ''}`}
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-white">
+                            {getSettingLabel(setting.settingName)}
+                          </span>
+                          {isModified && (
+                            <span className="text-xs px-2 py-0.5 bg-blue-500/20 text-blue-300 border border-blue-400/30 rounded">
+                              modifié
+                            </span>
+                          )}
+                          {isPremiumOnly && (
+                            <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-400/30 rounded">
+                              Premium
+                            </span>
+                          )}
+                        </div>
+                        {setting.description && (
+                          <p className="text-xs text-white/60 mt-1 hidden md:block">
+                            {setting.description}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <input
+                          type="number"
+                          min="0"
+                          value={currentValue}
+                          onChange={(e) => handleValueChange(setting.id, e.target.value)}
+                          className="px-3 py-1 bg-white/10 border border-white/20 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 backdrop-blur-xl w-20 text-center font-mono"
+                        />
+                        <span className="text-sm text-white/60">crédit(s)</span>
+                      </div>
+                    </div>
+                    {setting.description && (
+                      <p className="text-xs text-white/60 mt-2 md:hidden">
+                        {setting.description}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   // Afficher les settings d'une catégorie non-hiérarchique
   function renderSimpleSettings(categorySettings) {
     return (
@@ -350,9 +440,11 @@ export function SettingsTab({ refreshKey }) {
               {getCategoryLabel(category)}
             </h4>
 
-            {isHierarchicalCategory(category)
-              ? renderAIModels(settingsByCategory[category])
-              : renderSimpleSettings(settingsByCategory[category])}
+            {isCreditsCategory(category)
+              ? renderCreditsSettings(settingsByCategory[category])
+              : isHierarchicalCategory(category)
+                ? renderAIModels(settingsByCategory[category])
+                : renderSimpleSettings(settingsByCategory[category])}
           </div>
         ))}
       </div>
