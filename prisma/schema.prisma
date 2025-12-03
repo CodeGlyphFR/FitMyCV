@@ -189,6 +189,19 @@ model Setting {
   @@index([settingName])
 }
 
+model FeatureMapping {
+  id               String   @id @default(cuid())
+  featureKey       String   @unique
+  displayName      String
+  settingNames     Json     // Array of Setting.settingName values
+  openAICallNames  Json     // Array of OpenAICall.featureName values
+  planFeatureNames Json     // Array of SubscriptionPlanFeatureLimit.featureName values
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([featureKey])
+}
+
 model EmailVerificationToken {
   id        String   @id @default(cuid())
   userId    String

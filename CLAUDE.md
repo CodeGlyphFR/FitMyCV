@@ -639,6 +639,59 @@ capitalizeSkillName("iOS");         // "iOS" (mixed case preserved)
 
 → **[Tous les patterns](./docs/CODE_PATTERNS.md)**
 
+### 14. FeatureMapping (Table de référence nomenclature)
+
+**Rôle** : Table centrale qui fait le lien entre les différents noms de features utilisés dans l'application (Setting, OpenAICall, SubscriptionPlanFeatureLimit).
+
+**⚠️ RÈGLE OBLIGATOIRE** : À chaque ajout, modification ou suppression de feature IA, cette table **DOIT** être mise à jour pour maintenir la cohérence.
+
+**Champs** :
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `featureKey` | String | Clé unique standardisée (ex: `match_score`, `gpt_cv_generation`) |
+| `displayName` | String | Nom affiché à l'utilisateur (ex: "Score de matching") |
+| `settingNames` | Json | Nom(s) dans Setting (category = 'ai_models') |
+| `openAICallNames` | Json | Nom(s) utilisés dans OpenAICall.featureName |
+| `planFeatureNames` | Json | Nom(s) utilisés dans SubscriptionPlanFeatureLimit.featureName |
+
+**Cas d'utilisation** :
+
+```javascript
+// 1. Nouvelle feature IA complète
+{
+  featureKey: 'match_score',
+  settingNames: ['model_match_score'],           // Setting pour le modèle IA
+  openAICallNames: ['match_score'],              // Tracking OpenAI
+  planFeatureNames: ['match_score'],             // Limite d'abonnement
+}
+
+// 2. Feature helper (utilisée par d'autres features)
+{
+  featureKey: 'detect_language',
+  settingNames: ['model_detect_language'],
+  openAICallNames: ['detect_cv_language'],
+  planFeatureNames: ['match_score', 'gpt_cv_generation', 'import_pdf'],  // Features parentes
+}
+
+// 3. Feature complexe (plusieurs modèles/appels)
+{
+  featureKey: 'gpt_cv_generation',
+  settingNames: ['model_analysis_rapid', 'model_analysis_medium', 'model_analysis_deep', 'model_extract_job_offer'],
+  openAICallNames: ['generate_cv_url', 'generate_cv_pdf', 'extract_job_offer_url', 'extract_job_offer_pdf', 'create_template_cv_url', 'create_template_cv_pdf'],
+  planFeatureNames: ['gpt_cv_generation'],
+}
+```
+
+**Helper** : `lib/features/featureMapping.js`
+
+```javascript
+import { getFeatureMapping, getSettingNamesForFeature } from '@/lib/features/featureMapping';
+
+const mapping = await getFeatureMapping('gpt_cv_generation');
+// → { featureKey, displayName, settingNames: [...], openAICallNames: [...], planFeatureNames: [...] }
+```
+
 ---
 
 ## 🧪 Tests & Debug

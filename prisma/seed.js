@@ -157,6 +157,59 @@ const MACRO_FEATURES = [
   'create_cv_manual',
 ];
 
+// Mapping des features entre Setting, OpenAICall et SubscriptionPlanFeatureLimit
+const FEATURE_MAPPINGS = [
+  {
+    featureKey: 'match_score',
+    displayName: 'Score de matching',
+    settingNames: ['model_match_score'],
+    openAICallNames: ['match_score'],
+    planFeatureNames: ['match_score'],
+  },
+  {
+    featureKey: 'optimize_cv',
+    displayName: 'Optimisation CV',
+    settingNames: ['model_optimize_cv'],
+    openAICallNames: ['optimize_cv'],
+    planFeatureNames: ['optimize_cv'],
+  },
+  {
+    featureKey: 'generate_from_job_title',
+    displayName: 'Génération depuis titre',
+    settingNames: ['model_generate_from_job_title'],
+    openAICallNames: ['generate_from_job_title'],
+    planFeatureNames: ['generate_from_job_title'],
+  },
+  {
+    featureKey: 'translate_cv',
+    displayName: 'Traduction CV',
+    settingNames: ['model_translate_cv'],
+    openAICallNames: ['translate_cv'],
+    planFeatureNames: ['translate_cv'],
+  },
+  {
+    featureKey: 'gpt_cv_generation',
+    displayName: 'Génération CV',
+    settingNames: ['model_analysis_rapid', 'model_analysis_medium', 'model_analysis_deep', 'model_extract_job_offer'],
+    openAICallNames: ['generate_cv_url', 'generate_cv_pdf', 'extract_job_offer_url', 'extract_job_offer_pdf', 'create_template_cv_url', 'create_template_cv_pdf'],
+    planFeatureNames: ['gpt_cv_generation'],
+  },
+  {
+    featureKey: 'import_pdf',
+    displayName: 'Import PDF',
+    settingNames: ['model_import_pdf', 'model_first_import_pdf'],
+    openAICallNames: ['import_pdf', 'first_import_pdf'],
+    planFeatureNames: ['import_pdf'],
+  },
+  {
+    featureKey: 'detect_language',
+    displayName: 'Détection langue',
+    settingNames: ['model_detect_language'],
+    openAICallNames: ['detect_cv_language'],
+    planFeatureNames: ['match_score', 'gpt_cv_generation', 'import_pdf'], // Utilisé par ces features
+  },
+];
+
 // Plans d'abonnement par défaut
 const DEFAULT_PLANS = [
   {
@@ -352,7 +405,48 @@ async function main() {
     console.log(`  ✅ ${setting.settingName} = ${setting.value}`);
   }
 
-  // ===== 3. Seed des templates email =====
+  // ===== 3. Seed du mapping des features =====
+  console.log('\n🔗 Création du mapping des features...');
+
+  let mappingsCreated = 0;
+  let mappingsUpdated = 0;
+
+  for (const mapping of FEATURE_MAPPINGS) {
+    try {
+      const result = await prisma.featureMapping.upsert({
+        where: { featureKey: mapping.featureKey },
+        update: {
+          displayName: mapping.displayName,
+          settingNames: mapping.settingNames,
+          openAICallNames: mapping.openAICallNames,
+          planFeatureNames: mapping.planFeatureNames,
+        },
+        create: {
+          featureKey: mapping.featureKey,
+          displayName: mapping.displayName,
+          settingNames: mapping.settingNames,
+          openAICallNames: mapping.openAICallNames,
+          planFeatureNames: mapping.planFeatureNames,
+        },
+      });
+
+      // Check if it was created or updated based on createdAt vs updatedAt
+      const wasCreated = result.createdAt.getTime() === result.updatedAt.getTime();
+      if (wasCreated) {
+        console.log(`  ✅ Mapping "${mapping.featureKey}" créé`);
+        mappingsCreated++;
+      } else {
+        console.log(`  🔄 Mapping "${mapping.featureKey}" mis à jour`);
+        mappingsUpdated++;
+      }
+    } catch (error) {
+      console.error(`  ❌ Erreur mapping "${mapping.featureKey}":`, error.message);
+    }
+  }
+
+  console.log(`\n  📊 Mappings: ${mappingsCreated} créés, ${mappingsUpdated} mis à jour (${FEATURE_MAPPINGS.length} total)`);
+
+  // ===== 4. Seed des templates email =====
   console.log('\n📧 Création des templates email...');
 
   let templatesCreated = 0;
@@ -387,6 +481,7 @@ async function main() {
   console.log('\n📝 Résumé :');
   console.log(`   - Plans d'abonnement : ${plansCreated} créés, ${plansSkipped} ignorés`);
   console.log(`   - Settings IA : ${aiModelSettings.length} configurés`);
+  console.log(`   - Feature Mappings : ${mappingsCreated} créés, ${mappingsUpdated} mis à jour`);
   console.log(`   - Templates email : ${templatesCreated} créés, ${templatesSkipped} ignorés`);
 }
 
