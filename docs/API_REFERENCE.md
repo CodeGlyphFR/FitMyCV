@@ -1158,6 +1158,48 @@ Liste des plans d'abonnement (admin only).
 
 ---
 
+### GET `/api/admin/plan-costs`
+
+Coûts API estimés et marges par plan d'abonnement (admin only).
+
+**Auth** : Admin requise
+
+**Source de données** : Vue PostgreSQL `v_cout_api_par_plan`
+
+**Réponse (200)** :
+
+```json
+{
+  "success": true,
+  "data": {
+    "costs": [
+      {
+        "plan": "Pro",
+        "priceMonthlyEur": 9.99,
+        "costMinUsd": 1.25,
+        "costAvgUsd": 1.52,
+        "costMaxUsd": 2.04,
+        "costMaxEur": 1.88,
+        "grossMarginEur": 8.11,
+        "marginPercent": 81.2
+      }
+    ],
+    "exchangeRate": {
+      "usdToEur": 0.9215,
+      "cached": true
+    },
+    "timestamp": "2024-12-03T14:30:00.000Z"
+  }
+}
+```
+
+**Notes** :
+- Taux de change USD/EUR récupéré via `api.frankfurter.app` (cache 1h)
+- Fallback sur taux fixe 0.92 si API indisponible
+- Marge calculée : `prix_mensuel - (cout_max * taux_change)`
+
+---
+
 ### GET `/api/admin/openai-pricing`
 
 Tarification OpenAI (admin only).

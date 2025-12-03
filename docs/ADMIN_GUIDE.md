@@ -457,6 +457,38 @@ Affiche :
 - **Yearly Discount** : % de réduction annuelle
 - **Max CV Count** : Nombre max de CVs (-1 = illimité)
 
+#### Coûts API et Marges
+
+Chaque tuile de plan affiche les coûts API estimés et la marge brute :
+
+**Affichage** :
+- **Coût API** : Min / Moy / Max (en $)
+- **Marge** : Prix - Coût max converti en € (avec %)
+
+**Seuils d'alerte visuels** :
+
+| Marge | Couleur | Signification |
+|-------|---------|---------------|
+| ≥ 70% | 🟢 Vert | Marge saine |
+| 50-70% | 🟠 Orange | À surveiller |
+| < 50% | 🔴 Rouge | Marge critique |
+
+**Source de données** : Vue PostgreSQL `v_cout_api_par_plan`
+
+**Taux de change** : API frankfurter.app (cache 1h, fallback 0.92)
+
+**Exemple d'affichage** :
+```
+┌─────────────────────────────────┐
+│ Pro - 9.99 €/mois               │
+│ Features activées: 8 / 9        │
+│ ┌─────────────────────────────┐ │
+│ │ 💰 Coût API $1.25/$1.52/$2.04│ │
+│ │ 📊 Marge   8.11 € (81%)     │ │
+│ └─────────────────────────────┘ │
+└─────────────────────────────────┘
+```
+
 #### Feature Limits
 
 Chaque plan a des limites par feature :
