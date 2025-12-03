@@ -283,6 +283,19 @@ const openai = new OpenAI({
 
 ## NextAuth
 
+### ❌ Erreur: `timeout-or-duplicate` reCAPTCHA après inscription
+
+**Cause** : Le token reCAPTCHA généré pour l'inscription était réutilisé pour le login automatique. Les tokens reCAPTCHA v3 ne peuvent être vérifiés qu'une seule fois par Google.
+
+**Symptômes** :
+- L'inscription réussit (email envoyé, user créé)
+- Le login automatique échoue avec "Identifiants invalides"
+- Log serveur : `reCAPTCHA verification failed { errorCodes: [ 'timeout-or-duplicate' ] }`
+
+**Solution** : Fixé dans `components/auth/AuthScreen.jsx` - un nouveau token est généré pour le login après inscription réussie.
+
+---
+
 ### ❌ Erreur: `[next-auth][error][SIGNIN_EMAIL_ERROR]`
 
 **Cause** : Service email non configuré

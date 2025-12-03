@@ -135,11 +135,18 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         // Après inscription réussie, on continue pour se connecter
       }
 
+      // Pour le login après inscription, générer un nouveau token
+      // (le précédent a été consommé par l'API register)
+      let loginRecaptchaToken = recaptchaToken;
+      if (isRegister) {
+        loginRecaptchaToken = await executeRecaptcha('login');
+      }
+
       const result = await signIn("credentials", {
         redirect: false,
         email,
         password,
-        recaptchaToken: recaptchaToken || undefined,
+        recaptchaToken: loginRecaptchaToken || undefined,
       });
 
       if (result?.error){
