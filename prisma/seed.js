@@ -804,35 +804,27 @@ async function main() {
   // ===== 5. Seed OpenAI Pricing =====
   console.log('🤖 Création des tarifs OpenAI...');
   let pricingCreated = 0;
-  let pricingUpdated = 0;
+  let pricingSkipped = 0;
 
   for (const pricing of OPENAI_PRICING) {
     try {
-      const result = await prisma.openAIPricing.upsert({
+      const existing = await prisma.openAIPricing.findUnique({
         where: { modelName: pricing.modelName },
-        update: {
-          inputPricePerMToken: pricing.inputPricePerMToken,
-          outputPricePerMToken: pricing.outputPricePerMToken,
-          cachePricePerMToken: pricing.cachePricePerMToken,
-          description: pricing.description,
-          isActive: pricing.isActive,
-        },
-        create: pricing,
       });
 
-      const wasCreated = result.createdAt.getTime() === result.updatedAt.getTime();
-      if (wasCreated) {
-        console.log(`  ✅ ${pricing.modelName}: $${pricing.inputPricePerMToken}/$${pricing.outputPricePerMToken}`);
-        pricingCreated++;
-      } else {
-        console.log(`  🔄 ${pricing.modelName}: mis à jour`);
-        pricingUpdated++;
+      if (existing) {
+        pricingSkipped++;
+        continue;
       }
+
+      await prisma.openAIPricing.create({ data: pricing });
+      console.log(`  ✅ ${pricing.modelName}: $${pricing.inputPricePerMToken}/$${pricing.outputPricePerMToken}`);
+      pricingCreated++;
     } catch (error) {
       console.error(`  ❌ Erreur pricing "${pricing.modelName}":`, error.message);
     }
   }
-  console.log(`  📊 Pricing: ${pricingCreated} créés, ${pricingUpdated} mis à jour\n`);
+  console.log(`  📊 Pricing: ${pricingCreated} créés, ${pricingSkipped} ignorés\n`);
 
   // ===== 5. Seed OpenAI Alerts =====
   console.log('🔔 Création des alertes OpenAI...');
@@ -864,47 +856,45 @@ async function main() {
   console.log('⚙️  Création des settings...');
   const allSettings = [...AI_MODEL_SETTINGS, ...CREDIT_SETTINGS, ...FEATURE_SETTINGS, ...SYSTEM_SETTINGS];
   let settingsCreated = 0;
-  let settingsUpdated = 0;
+  let settingsSkipped = 0;
 
   for (const setting of allSettings) {
     try {
-      const result = await prisma.setting.upsert({
+      const existing = await prisma.setting.findUnique({
         where: { settingName: setting.settingName },
-        update: {
-          value: setting.value,
-          description: setting.description,
-        },
-        create: setting,
       });
 
-      const wasCreated = result.createdAt.getTime() === result.updatedAt.getTime();
-      if (wasCreated) {
-        settingsCreated++;
-      } else {
-        settingsUpdated++;
+      if (existing) {
+        settingsSkipped++;
+        continue;
       }
+
+      await prisma.setting.create({ data: setting });
+      settingsCreated++;
     } catch (error) {
       console.error(`  ❌ Erreur setting "${setting.settingName}":`, error.message);
     }
   }
-  console.log(`  ✅ Settings: ${settingsCreated} créés, ${settingsUpdated} mis à jour (${allSettings.length} total)\n`);
+  console.log(`  ✅ Settings: ${settingsCreated} créés, ${settingsSkipped} ignorés\n`);
 
   // ===== 7. Seed du mapping des features =====
   console.log('🔗 Création du mapping des features...');
   let mappingsCreated = 0;
-  let mappingsUpdated = 0;
+  let mappingsSkipped = 0;
 
   for (const mapping of FEATURE_MAPPINGS) {
     try {
-      const result = await prisma.featureMapping.upsert({
+      const existing = await prisma.featureMapping.findUnique({
         where: { featureKey: mapping.featureKey },
-        update: {
-          displayName: mapping.displayName,
-          settingNames: mapping.settingNames,
-          openAICallNames: mapping.openAICallNames,
-          planFeatureNames: mapping.planFeatureNames,
-        },
-        create: {
+      });
+
+      if (existing) {
+        mappingsSkipped++;
+        continue;
+      }
+
+      await prisma.featureMapping.create({
+        data: {
           featureKey: mapping.featureKey,
           displayName: mapping.displayName,
           settingNames: mapping.settingNames,
@@ -912,20 +902,13 @@ async function main() {
           planFeatureNames: mapping.planFeatureNames,
         },
       });
-
-      const wasCreated = result.createdAt.getTime() === result.updatedAt.getTime();
-      if (wasCreated) {
-        console.log(`  ✅ Mapping "${mapping.featureKey}" créé`);
-        mappingsCreated++;
-      } else {
-        console.log(`  🔄 Mapping "${mapping.featureKey}" mis à jour`);
-        mappingsUpdated++;
-      }
+      console.log(`  ✅ Mapping "${mapping.featureKey}" créé`);
+      mappingsCreated++;
     } catch (error) {
       console.error(`  ❌ Erreur mapping "${mapping.featureKey}":`, error.message);
     }
   }
-  console.log(`  📊 Mappings: ${mappingsCreated} créés, ${mappingsUpdated} mis à jour\n`);
+  console.log(`  📊 Mappings: ${mappingsCreated} créés, ${mappingsSkipped} ignorés\n`);
 
   // ===== Résumé final =====
   console.log('✨ Seeding terminé avec succès !');
@@ -934,10 +917,10 @@ async function main() {
   console.log(`   - Packs crédits : ${packsCreated} créés, ${packsSkipped} ignorés`);
   console.log(`   - Plans d'abonnement : ${plansCreated} créés, ${plansSkipped} ignorés`);
   console.log(`   - Stripe sync : ${stripeSynced ? 'OK' : 'Non exécuté'}`);
-  console.log(`   - OpenAI Pricing : ${pricingCreated} créés, ${pricingUpdated} mis à jour`);
+  console.log(`   - OpenAI Pricing : ${pricingCreated} créés, ${pricingSkipped} ignorés`);
   console.log(`   - OpenAI Alerts : ${alertsCreated} créées, ${alertsSkipped} ignorées`);
-  console.log(`   - Settings : ${settingsCreated} créés, ${settingsUpdated} mis à jour`);
-  console.log(`   - Feature Mappings : ${mappingsCreated} créés, ${mappingsUpdated} mis à jour`);
+  console.log(`   - Settings : ${settingsCreated} créés, ${settingsSkipped} ignorés`);
+  console.log(`   - Feature Mappings : ${mappingsCreated} créés, ${mappingsSkipped} ignorés`);
 }
 
 main()
