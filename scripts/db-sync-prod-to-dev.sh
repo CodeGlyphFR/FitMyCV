@@ -7,7 +7,7 @@
 # WARNING: This will COMPLETELY REPLACE all data in the dev database!
 #
 # Prerequisites:
-# - .env file at project root with DATABASE_URL and DATABASE_URL_DEV
+# - .env file at project root with DATABASE_URL_PROD and DATABASE_URL_DEV
 # - pg_dump and psql installed
 # =============================================================================
 
@@ -35,9 +35,9 @@ fi
 # Step 1: Validate environment variables
 echo "1/4 Validating environment..."
 
-if [[ -z "$DATABASE_URL" ]]; then
-    echo "❌ ERROR: DATABASE_URL is not set!"
-    echo "   Add to .env: DATABASE_URL=\"postgresql://user:pass@host:port/fitmycv_prod\""
+if [[ -z "$DATABASE_URL_PROD" ]]; then
+    echo "❌ ERROR: DATABASE_URL_PROD is not set!"
+    echo "   Add to .env: DATABASE_URL_PROD=\"postgresql://user:pass@host:port/fitmycv_prod\""
     exit 1
 fi
 
@@ -58,7 +58,7 @@ echo "    ✅ Environment validated"
 echo ""
 
 # Remove query parameters from URLs (pg_dump doesn't support ?schema=public)
-PROD_URL=$(echo "$DATABASE_URL" | sed -E 's/\?.*//')
+PROD_URL=$(echo "$DATABASE_URL_PROD" | sed -E 's/\?.*//')
 DEV_URL=$(echo "$DATABASE_URL_DEV" | sed -E 's/\?.*//')
 
 # Extract database names for display
