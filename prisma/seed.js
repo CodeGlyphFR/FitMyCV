@@ -1,5 +1,21 @@
 const { PrismaClient } = require('@prisma/client');
+const { spawn } = require('child_process');
+const path = require('path');
+
 const prisma = new PrismaClient();
+
+// Helper pour exécuter le script de sync Stripe
+function runStripeSync() {
+  return new Promise((resolve) => {
+    const scriptPath = path.join(__dirname, '../scripts/sync-stripe.mjs');
+    const child = spawn('node', [scriptPath], {
+      stdio: 'inherit',
+      env: process.env,
+    });
+    child.on('close', (code) => resolve(code === 0));
+    child.on('error', () => resolve(false));
+  });
+}
 
 // ============================================================================
 // 1. EMAIL TEMPLATES
@@ -773,7 +789,19 @@ async function main() {
   }
   console.log(`  📊 Plans: ${plansCreated} créés, ${plansSkipped} ignorés\n`);
 
-  // ===== 4. Seed OpenAI Pricing =====
+  // ===== 4. Synchronisation Stripe (si configuré) =====
+  let stripeSynced = false;
+  if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_TODO') {
+    console.log('🔄 Synchronisation Stripe...');
+    stripeSynced = await runStripeSync();
+    if (!stripeSynced) {
+      console.log('  ⚠️  Synchronisation Stripe échouée (non bloquant)\n');
+    }
+  } else {
+    console.log('⏭️  Stripe non configuré, synchronisation ignorée\n');
+  }
+
+  // ===== 5. Seed OpenAI Pricing =====
   console.log('🤖 Création des tarifs OpenAI...');
   let pricingCreated = 0;
   let pricingUpdated = 0;
@@ -905,6 +933,7 @@ async function main() {
   console.log(`   - Templates email : ${templatesCreated} créés, ${templatesSkipped} ignorés`);
   console.log(`   - Packs crédits : ${packsCreated} créés, ${packsSkipped} ignorés`);
   console.log(`   - Plans d'abonnement : ${plansCreated} créés, ${plansSkipped} ignorés`);
+  console.log(`   - Stripe sync : ${stripeSynced ? 'OK' : 'Non exécuté'}`);
   console.log(`   - OpenAI Pricing : ${pricingCreated} créés, ${pricingUpdated} mis à jour`);
   console.log(`   - OpenAI Alerts : ${alertsCreated} créées, ${alertsSkipped} ignorées`);
   console.log(`   - Settings : ${settingsCreated} créés, ${settingsUpdated} mis à jour`);
