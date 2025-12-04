@@ -27,7 +27,7 @@ Ce script :
 - `STRIPE_SECRET_KEY` configuré dans `.env`
 - `DATABASE_URL` configuré dans `.env`
 
-**Fonction interne** : `lib/subscription/stripeSync.js` → `syncStripeProductsInternal()`
+**Fonction interne** : `lib/subscription/stripeSync.mjs` → `syncStripeProductsInternal()`
 
 ---
 

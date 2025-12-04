@@ -31,7 +31,7 @@ console.log(`📊 Database: ${process.env.DATABASE_URL.split('@')[1]?.split('/')
 console.log(`🔑 Stripe: ${process.env.STRIPE_SECRET_KEY.startsWith('sk_test_') ? 'Mode TEST' : 'Mode LIVE'}\n`);
 
 // Import dynamique pour que dotenv soit chargé avant
-const { syncStripeProductsInternal } = await import('../lib/subscription/stripeSync.js');
+const { syncStripeProductsInternal } = await import('../lib/subscription/stripeSync.mjs');
 
 try {
   const result = await syncStripeProductsInternal();

@@ -67,7 +67,7 @@ PromoCode              - Codes promotionnels (🚧 À venir - non implémenté)
 - `lib/subscription/featureUsage.js` - Limites features
 - `lib/subscription/cvLimits.js` - Limites CV
 - `lib/subscription/subscriptions.js` - Gestion abonnements
-- `lib/subscription/stripeSync.js` - Synchronisation automatique Stripe
+- `lib/subscription/stripeSync.mjs` - Synchronisation automatique Stripe
 
 ---
 
@@ -571,7 +571,7 @@ await cancelSubscription(userId, immediate = false);
 const summary = await getSubscriptionSummary(userId);
 ```
 
-### stripeSync.js
+### stripeSync.mjs
 ```javascript
 // Synchroniser tous les produits et prix avec Stripe
 const result = await syncStripeProductsInternal();
