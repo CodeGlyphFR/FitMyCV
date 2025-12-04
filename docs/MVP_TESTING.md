@@ -36,16 +36,20 @@ STRIPE_WEBHOOK_SECRET="whsec_..."
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
 ```
 
-### 1.3 Exécuter le script de synchronisation
+### 1.3 Synchronisation des produits Stripe
+
+La synchronisation est **automatique** lors de la création/modification des plans via l'Admin.
+
+Pour forcer une resync manuelle :
 
 ```bash
-node scripts/sync-stripe-products.js
+curl -X POST http://localhost:3001/api/admin/sync-stripe
 ```
 
 **Résultat attendu** :
-- ✅ 3 produits d'abonnement créés dans Stripe
-- ✅ 3 packs de crédits créés dans Stripe
-- ✅ Tous les prix (mensuels/annuels) créés
+- ✅ Produits d'abonnement créés/mis à jour dans Stripe
+- ✅ Packs de crédits créés/mis à jour dans Stripe
+- ✅ Tous les prix (mensuels/annuels) synchronisés
 - ✅ IDs Stripe sauvegardés dans la base de données
 
 ### 1.4 Lancer Stripe CLI pour les webhooks

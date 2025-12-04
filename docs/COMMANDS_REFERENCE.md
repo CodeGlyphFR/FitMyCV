@@ -188,8 +188,8 @@ node scripts/debug-user-subscription.js <userId>
 ### Stripe & Abonnements
 
 ```bash
-# Synchroniser produits/prix Stripe depuis la DB
-node scripts/sync-stripe-products.js
+# Synchroniser produits/prix Stripe (automatique via Admin, ou forcer manuellement)
+curl -X POST http://localhost:3001/api/admin/sync-stripe
 
 # Test API abonnements
 node scripts/test-subscription-api.js

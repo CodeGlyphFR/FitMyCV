@@ -191,43 +191,32 @@ npm start  # ou npm run dev
 
 ---
 
-## Étape 4 : Synchroniser les produits Stripe
+## Étape 4 : Synchronisation automatique des produits Stripe
 
-Le script `sync-stripe-products.js` crée automatiquement les produits et prix Stripe depuis votre base de données.
+La synchronisation des produits et prix Stripe est **automatique** via l'interface Admin.
 
-### 4.1 Vérifier les plans en BDD
+### 4.1 Créer les plans via l'Admin
+
+1. Connectez-vous en tant qu'admin
+2. Allez dans **Admin → Plans d'abonnement**
+3. Créez vos plans (Gratuit, Pro, Premium, etc.)
+4. **La synchronisation Stripe se fait automatiquement** à chaque création/modification
+
+> **Note** : Les plans gratuits (`isFree: true`) ne sont jamais synchronisés avec Stripe.
+
+### 4.2 Synchronisation manuelle (si nécessaire)
+
+En cas de problème, vous pouvez forcer une resynchronisation via l'endpoint admin :
 
 ```bash
-# Lancer le seed si pas déjà fait
-node prisma/seed-subscription-plans.js
+curl -X POST http://localhost:3001/api/admin/sync-stripe \
+  -H "Cookie: next-auth.session-token=VOTRE_SESSION"
 ```
 
-Cela crée 3 plans :
-- **Gratuit** (0€/mois)
-- **Pro** (9.99€/mois ou 99.99€/an)
-- **Premium** (29.99€/mois ou 299.99€/an)
-
-### 4.2 Exécuter le script de synchronisation
-
-```bash
-node scripts/sync-stripe-products.js
-```
-
-**Résultat attendu** :
-```
-🚀 Démarrage de la synchronisation Stripe...
-🔑 Mode: TEST
-✅ Connecté au compte Stripe: votre-compte@email.com
-
-📋 Synchronisation des plans d'abonnement...
-✅ Produit Stripe créé: Gratuit (prod_xxx)
-  ├─ Prix mensuel créé: 0 EUR/mois
-  └─ BDD mise à jour pour le plan Gratuit
-
-...
-
-✨ Synchronisation terminée avec succès!
-📍 Vérifiez vos produits: https://dashboard.stripe.com/test/products
+Ou directement depuis le code :
+```javascript
+import { syncStripeProductsInternal } from '@/lib/subscription/stripeSync';
+await syncStripeProductsInternal();
 ```
 
 ### 4.3 Vérifier dans Stripe Dashboard
@@ -375,9 +364,10 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_live_VOTRE_CLE_PUBLIQUE_LIVE"
 
 ### 6.5 Re-synchroniser les produits en Production
 
+La synchronisation est automatique via l'Admin. Pour forcer une resync :
+
 ```bash
-# Avec les nouvelles clés Live
-node scripts/sync-stripe-products.js
+curl -X POST https://votre-domaine.com/api/admin/sync-stripe
 ```
 
 ---
@@ -451,8 +441,8 @@ Pour éviter les conflits de synchronisation, les boucles infinies et les incoh�
 
 ```bash
 # 1. Modifier dans Admin UI
-# 2. Si la sync automatique échoue, forcer manuellement :
-node scripts/sync-stripe-products.js
+# 2. Si la sync automatique échoue, forcer manuellement via l'endpoint :
+curl -X POST http://localhost:3001/api/admin/sync-stripe
 ```
 
 **Cas d'exception** (très rare) : Si vous devez absolument modifier dans Stripe :
@@ -587,7 +577,7 @@ Le customer n'existe pas dans Stripe :
 ### Erreur "No such price"
 
 Le prix Stripe n'existe pas :
-1. Re-lancer `node scripts/sync-stripe-products.js`
+1. Forcer une resync via `POST /api/admin/sync-stripe`
 2. Vérifier que `stripePriceIdMonthly` et `stripePriceIdYearly` sont remplis dans `SubscriptionPlan`
 
 ### Paiement test échoue en production
