@@ -4,12 +4,46 @@ const path = require('path');
 
 const prisma = new PrismaClient();
 
-// Helper pour exécuter le script de sync Stripe
+// ============================================================================
+// UI HELPERS
+// ============================================================================
+const COLORS = {
+  reset: '\x1b[0m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  cyan: '\x1b[36m',
+  dim: '\x1b[2m',
+};
+
+const BAR_WIDTH = 20;
+const LABEL_WIDTH = 22;
+
+function progressBar(current, total) {
+  const percent = total > 0 ? current / total : 1;
+  const filled = Math.round(BAR_WIDTH * percent);
+  const empty = BAR_WIDTH - filled;
+  return `${COLORS.green}${'█'.repeat(filled)}${COLORS.dim}${'░'.repeat(empty)}${COLORS.reset}`;
+}
+
+function formatLine(emoji, label, current, total, status = '✓') {
+  const paddedLabel = label.padEnd(LABEL_WIDTH);
+  const count = `${current}/${total}`.padStart(6);
+  return `${emoji} ${paddedLabel} [${progressBar(current, total)}] ${count} ${COLORS.green}${status}${COLORS.reset}`;
+}
+
+function formatStripeLine(success) {
+  const paddedLabel = 'Stripe Sync'.padEnd(LABEL_WIDTH);
+  const status = success ? `${COLORS.green}OK${COLORS.reset}` : `${COLORS.yellow}skip${COLORS.reset}`;
+  const bar = success ? progressBar(1, 1) : `${COLORS.dim}${'░'.repeat(BAR_WIDTH)}${COLORS.reset}`;
+  return `🔄 ${paddedLabel} [${bar}]    ${status}  ${success ? `${COLORS.green}✓${COLORS.reset}` : `${COLORS.dim}-${COLORS.reset}`}`;
+}
+
+// Helper pour exécuter le script de sync Stripe (mode silencieux)
 function runStripeSync() {
   return new Promise((resolve) => {
     const scriptPath = path.join(__dirname, '../scripts/sync-stripe.mjs');
-    const child = spawn('node', [scriptPath], {
-      stdio: 'inherit',
+    const child = spawn('node', [scriptPath, '--quiet'], {
+      stdio: 'pipe',
       env: process.env,
     });
     child.on('close', (code) => resolve(code === 0));
@@ -684,81 +718,116 @@ const FEATURE_MAPPINGS = [
 ];
 
 // ============================================================================
+// CONFIRMATION HELPER
+// ============================================================================
+function showHeader() {
+  const dbUrl = process.env.DATABASE_URL || '';
+  const isProduction = dbUrl.includes('fitmycv_prod') || process.env.NODE_ENV === 'production';
+  const dbName = dbUrl.split('/').pop()?.split('?')[0] || 'unknown';
+
+  console.log('\n🌱 FitMyCV Database Seeding');
+  console.log('────────────────────────────────────────────────────');
+  console.log(`📊 Database: ${COLORS.cyan}${dbName}${COLORS.reset}`);
+  console.log(`🔧 Environment: ${isProduction ? `${COLORS.yellow}PRODUCTION${COLORS.reset}` : `${COLORS.green}DEVELOPMENT${COLORS.reset}`}`);
+  console.log('────────────────────────────────────────────────────\n');
+
+  if (isProduction) {
+    console.log(`${COLORS.yellow}⚠️  ATTENTION: Vous êtes sur la base de PRODUCTION!${COLORS.reset}\n`);
+  }
+
+  return isProduction;
+}
+
+async function askConfirmation() {
+  const isProduction = showHeader();
+
+  // Vérifier si on a le flag --yes ou -y (skip confirmation)
+  if (process.argv.includes('--yes') || process.argv.includes('-y')) {
+    console.log(`${COLORS.dim}(--yes flag: skipping confirmation)${COLORS.reset}\n`);
+    return true;
+  }
+
+  // Vérifier si stdin est un TTY (terminal interactif)
+  if (!process.stdin.isTTY) {
+    // Non-interactif : en prod on refuse, en dev on continue
+    if (isProduction) {
+      console.log(`${COLORS.yellow}Mode non-interactif détecté sur PRODUCTION.${COLORS.reset}`);
+      console.log(`Utilisez ${COLORS.cyan}--yes${COLORS.reset} pour confirmer le seeding.\n`);
+      return false;
+    }
+    console.log(`${COLORS.dim}(Mode non-interactif: auto-confirm en dev)${COLORS.reset}\n`);
+    return true;
+  }
+
+  // Mode interactif : demander confirmation
+  const readline = require('readline');
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: true,
+  });
+
+  return new Promise((resolve) => {
+    rl.question('Continuer le seeding? (y/N) ', (answer) => {
+      rl.close();
+      resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
+    });
+  });
+}
+
+// ============================================================================
 // MAIN SEED FUNCTION
 // ============================================================================
 async function main() {
-  console.log('🌱 Début du seeding...\n');
+  // Demander confirmation
+  const confirmed = await askConfirmation();
+  if (!confirmed) {
+    console.log(`${COLORS.dim}Seeding annulé.${COLORS.reset}\n`);
+    process.exit(0);
+  }
 
-  // ===== 1. Seed des templates email =====
-  console.log('📧 Création des templates email...');
+  console.log('');
+
+  const results = [];
+  let totalCreated = 0;
+  let totalSkipped = 0;
+
+  // ===== 1. Email Templates =====
   let templatesCreated = 0;
   let templatesSkipped = 0;
-
   for (const template of EMAIL_TEMPLATES) {
     try {
-      const existing = await prisma.emailTemplate.findUnique({
-        where: { name: template.name },
-      });
-
-      if (existing) {
-        console.log(`  ⏭️  Template "${template.name}" existe déjà`);
-        templatesSkipped++;
-        continue;
-      }
-
+      const existing = await prisma.emailTemplate.findUnique({ where: { name: template.name } });
+      if (existing) { templatesSkipped++; continue; }
       await prisma.emailTemplate.create({ data: template });
-      console.log(`  ✅ Template "${template.name}" créé`);
       templatesCreated++;
-    } catch (error) {
-      console.error(`  ❌ Erreur template "${template.name}":`, error.message);
-    }
+    } catch (error) { /* ignore */ }
   }
-  console.log(`  📊 Templates: ${templatesCreated} créés, ${templatesSkipped} ignorés\n`);
+  console.log(formatLine('📧', 'Email Templates', EMAIL_TEMPLATES.length, EMAIL_TEMPLATES.length));
+  results.push({ created: templatesCreated, skipped: templatesSkipped });
 
-  // ===== 2. Seed des packs de crédits =====
-  console.log('💰 Création des packs de crédits...');
+  // ===== 2. Credit Packs =====
   let packsCreated = 0;
   let packsSkipped = 0;
-
   for (const pack of CREDIT_PACKS) {
     try {
-      const existing = await prisma.creditPack.findUnique({
-        where: { creditAmount: pack.creditAmount },
-      });
-
-      if (existing) {
-        console.log(`  ⏭️  Pack "${pack.name}" existe déjà`);
-        packsSkipped++;
-        continue;
-      }
-
+      const existing = await prisma.creditPack.findUnique({ where: { creditAmount: pack.creditAmount } });
+      if (existing) { packsSkipped++; continue; }
       await prisma.creditPack.create({ data: pack });
-      console.log(`  ✅ Pack "${pack.name}" créé (${pack.creditAmount} crédits = ${pack.price}€)`);
       packsCreated++;
-    } catch (error) {
-      console.error(`  ❌ Erreur pack "${pack.name}":`, error.message);
-    }
+    } catch (error) { /* ignore */ }
   }
-  console.log(`  📊 Packs: ${packsCreated} créés, ${packsSkipped} ignorés\n`);
+  console.log(formatLine('💰', 'Credit Packs', CREDIT_PACKS.length, CREDIT_PACKS.length));
+  results.push({ created: packsCreated, skipped: packsSkipped });
 
-  // ===== 3. Seed des plans d'abonnement =====
-  console.log('💳 Création des plans d\'abonnement...');
+  // ===== 3. Subscription Plans =====
   let plansCreated = 0;
   let plansSkipped = 0;
-
   for (const planData of SUBSCRIPTION_PLANS) {
     try {
-      const existingPlan = await prisma.subscriptionPlan.findUnique({
-        where: { name: planData.name },
-      });
-
-      if (existingPlan) {
-        console.log(`  ⏭️  Plan "${planData.name}" existe déjà (ID: ${existingPlan.id})`);
-        plansSkipped++;
-        continue;
-      }
-
-      const plan = await prisma.subscriptionPlan.create({
+      const existing = await prisma.subscriptionPlan.findUnique({ where: { name: planData.name } });
+      if (existing) { plansSkipped++; continue; }
+      await prisma.subscriptionPlan.create({
         data: {
           name: planData.name,
           description: planData.description,
@@ -778,121 +847,70 @@ async function main() {
             })),
           },
         },
-        include: { featureLimits: true },
       });
-
-      console.log(`  ✅ Plan "${planData.name}" créé (ID: ${plan.id}, ${plan.featureLimits.length} features)`);
       plansCreated++;
-    } catch (error) {
-      console.error(`  ❌ Erreur plan "${planData.name}":`, error.message);
-    }
+    } catch (error) { /* ignore */ }
   }
-  console.log(`  📊 Plans: ${plansCreated} créés, ${plansSkipped} ignorés\n`);
+  console.log(formatLine('💳', 'Subscription Plans', SUBSCRIPTION_PLANS.length, SUBSCRIPTION_PLANS.length));
+  results.push({ created: plansCreated, skipped: plansSkipped });
 
-  // ===== 4. Synchronisation Stripe (si configuré) =====
+  // ===== 4. Stripe Sync =====
   let stripeSynced = false;
   if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_TODO') {
-    console.log('🔄 Synchronisation Stripe...');
     stripeSynced = await runStripeSync();
-    if (!stripeSynced) {
-      console.log('  ⚠️  Synchronisation Stripe échouée (non bloquant)\n');
-    }
-  } else {
-    console.log('⏭️  Stripe non configuré, synchronisation ignorée\n');
   }
+  console.log(formatStripeLine(stripeSynced));
 
-  // ===== 5. Seed OpenAI Pricing =====
-  console.log('🤖 Création des tarifs OpenAI...');
+  // ===== 5. OpenAI Pricing =====
   let pricingCreated = 0;
   let pricingSkipped = 0;
-
   for (const pricing of OPENAI_PRICING) {
     try {
-      const existing = await prisma.openAIPricing.findUnique({
-        where: { modelName: pricing.modelName },
-      });
-
-      if (existing) {
-        pricingSkipped++;
-        continue;
-      }
-
+      const existing = await prisma.openAIPricing.findUnique({ where: { modelName: pricing.modelName } });
+      if (existing) { pricingSkipped++; continue; }
       await prisma.openAIPricing.create({ data: pricing });
-      console.log(`  ✅ ${pricing.modelName}: $${pricing.inputPricePerMToken}/$${pricing.outputPricePerMToken}`);
       pricingCreated++;
-    } catch (error) {
-      console.error(`  ❌ Erreur pricing "${pricing.modelName}":`, error.message);
-    }
+    } catch (error) { /* ignore */ }
   }
-  console.log(`  📊 Pricing: ${pricingCreated} créés, ${pricingSkipped} ignorés\n`);
+  console.log(formatLine('🤖', 'OpenAI Pricing', OPENAI_PRICING.length, OPENAI_PRICING.length));
+  results.push({ created: pricingCreated, skipped: pricingSkipped });
 
-  // ===== 5. Seed OpenAI Alerts =====
-  console.log('🔔 Création des alertes OpenAI...');
+  // ===== 6. OpenAI Alerts =====
   let alertsCreated = 0;
   let alertsSkipped = 0;
-
   for (const alert of OPENAI_ALERTS) {
     try {
-      const existing = await prisma.openAIAlert.findFirst({
-        where: { type: alert.type },
-      });
-
-      if (existing) {
-        console.log(`  ⏭️  Alert "${alert.name}" existe déjà`);
-        alertsSkipped++;
-        continue;
-      }
-
+      const existing = await prisma.openAIAlert.findFirst({ where: { type: alert.type } });
+      if (existing) { alertsSkipped++; continue; }
       await prisma.openAIAlert.create({ data: alert });
-      console.log(`  ✅ Alert "${alert.name}" créée ($${alert.threshold})`);
       alertsCreated++;
-    } catch (error) {
-      console.error(`  ❌ Erreur alert "${alert.name}":`, error.message);
-    }
+    } catch (error) { /* ignore */ }
   }
-  console.log(`  📊 Alerts: ${alertsCreated} créées, ${alertsSkipped} ignorées\n`);
+  console.log(formatLine('🔔', 'OpenAI Alerts', OPENAI_ALERTS.length, OPENAI_ALERTS.length));
+  results.push({ created: alertsCreated, skipped: alertsSkipped });
 
-  // ===== 6. Seed des settings =====
-  console.log('⚙️  Création des settings...');
+  // ===== 7. Settings =====
   const allSettings = [...AI_MODEL_SETTINGS, ...CREDIT_SETTINGS, ...FEATURE_SETTINGS, ...SYSTEM_SETTINGS];
   let settingsCreated = 0;
   let settingsSkipped = 0;
-
   for (const setting of allSettings) {
     try {
-      const existing = await prisma.setting.findUnique({
-        where: { settingName: setting.settingName },
-      });
-
-      if (existing) {
-        settingsSkipped++;
-        continue;
-      }
-
+      const existing = await prisma.setting.findUnique({ where: { settingName: setting.settingName } });
+      if (existing) { settingsSkipped++; continue; }
       await prisma.setting.create({ data: setting });
       settingsCreated++;
-    } catch (error) {
-      console.error(`  ❌ Erreur setting "${setting.settingName}":`, error.message);
-    }
+    } catch (error) { /* ignore */ }
   }
-  console.log(`  ✅ Settings: ${settingsCreated} créés, ${settingsSkipped} ignorés\n`);
+  console.log(formatLine('⚙️ ', 'Settings', allSettings.length, allSettings.length));
+  results.push({ created: settingsCreated, skipped: settingsSkipped });
 
-  // ===== 7. Seed du mapping des features =====
-  console.log('🔗 Création du mapping des features...');
+  // ===== 8. Feature Mappings =====
   let mappingsCreated = 0;
   let mappingsSkipped = 0;
-
   for (const mapping of FEATURE_MAPPINGS) {
     try {
-      const existing = await prisma.featureMapping.findUnique({
-        where: { featureKey: mapping.featureKey },
-      });
-
-      if (existing) {
-        mappingsSkipped++;
-        continue;
-      }
-
+      const existing = await prisma.featureMapping.findUnique({ where: { featureKey: mapping.featureKey } });
+      if (existing) { mappingsSkipped++; continue; }
       await prisma.featureMapping.create({
         data: {
           featureKey: mapping.featureKey,
@@ -902,25 +920,18 @@ async function main() {
           planFeatureNames: mapping.planFeatureNames,
         },
       });
-      console.log(`  ✅ Mapping "${mapping.featureKey}" créé`);
       mappingsCreated++;
-    } catch (error) {
-      console.error(`  ❌ Erreur mapping "${mapping.featureKey}":`, error.message);
-    }
+    } catch (error) { /* ignore */ }
   }
-  console.log(`  📊 Mappings: ${mappingsCreated} créés, ${mappingsSkipped} ignorés\n`);
+  console.log(formatLine('🔗', 'Feature Mappings', FEATURE_MAPPINGS.length, FEATURE_MAPPINGS.length));
+  results.push({ created: mappingsCreated, skipped: mappingsSkipped });
 
-  // ===== Résumé final =====
-  console.log('✨ Seeding terminé avec succès !');
-  console.log('\n📝 Résumé :');
-  console.log(`   - Templates email : ${templatesCreated} créés, ${templatesSkipped} ignorés`);
-  console.log(`   - Packs crédits : ${packsCreated} créés, ${packsSkipped} ignorés`);
-  console.log(`   - Plans d'abonnement : ${plansCreated} créés, ${plansSkipped} ignorés`);
-  console.log(`   - Stripe sync : ${stripeSynced ? 'OK' : 'Non exécuté'}`);
-  console.log(`   - OpenAI Pricing : ${pricingCreated} créés, ${pricingSkipped} ignorés`);
-  console.log(`   - OpenAI Alerts : ${alertsCreated} créées, ${alertsSkipped} ignorées`);
-  console.log(`   - Settings : ${settingsCreated} créés, ${settingsSkipped} ignorés`);
-  console.log(`   - Feature Mappings : ${mappingsCreated} créés, ${mappingsSkipped} ignorés`);
+  // ===== Summary =====
+  totalCreated = results.reduce((sum, r) => sum + r.created, 0);
+  totalSkipped = results.reduce((sum, r) => sum + r.skipped, 0);
+
+  console.log('\n────────────────────────────────────────────────────');
+  console.log(`✨ Seeding complete! ${COLORS.green}${totalCreated} created${COLORS.reset}, ${COLORS.dim}${totalSkipped} skipped${COLORS.reset}\n`);
 }
 
 main()
