@@ -66,7 +66,7 @@ Toute la documentation technique est disponible dans le dossier **`docs/`**. Ce 
 
 ### Dossier DÉVELOPPEMENT (`~/Documents/FitMyCV-DEV/`)
 - **Branche** : `dev` (branche de développement actif)
-- **Base de données** : SQLite `dev.db`
+- **Base de données** : PostgreSQL `fitmycv_dev`
 - **Port** : `3001` (développement)
 - **Usage** : Développement quotidien, features, bugs, improvements
 
@@ -158,8 +158,8 @@ git push origin --delete hotfix/nom-critique
 ## ⚡ Quick Start
 
 ### Ports de développement
-- **Dev** (`cv-site-dev/`): `3001` (npm run dev) - SQLite
-- **Prod** (`cv-site/`): `3000` (npm start) - PostgreSQL
+- **Dev**: `3001` (npm run dev) - PostgreSQL `fitmycv_dev`
+- **Prod**: `3000` (npm start) - PostgreSQL
 
 ### Commandes essentielles
 
@@ -170,9 +170,12 @@ npm run build                    # Build production
 npm start                        # Serveur production (port 3000)
 
 # Database
-npx prisma migrate deploy        # Appliquer migrations
-npx prisma generate              # Générer client Prisma
-npx prisma studio                # Interface DB graphique
+npm run db:setup                 # Appliquer migrations + seed
+npm run db:reset                 # Reset complet (dev uniquement)
+npm run db:seed                  # Seed uniquement
+npm run db:studio                # Interface DB graphique
+npm run db:generate              # Générer client Prisma
+npm run db:sync-from-prod        # Copier prod → dev (dump complet)
 
 # Stripe (terminal séparé)
 stripe listen --forward-to localhost:3001/api/webhooks/stripe
@@ -182,9 +185,10 @@ stripe listen --forward-to localhost:3001/api/webhooks/stripe
 
 ### Variables d'environnement critiques
 
-**Pour DÉVELOPPEMENT** (`cv-site-dev/.env`) :
+**Pour DÉVELOPPEMENT** (`.env`) :
 ```bash
-DATABASE_URL="file:./dev.db"                    # SQLite (relatif à prisma/)
+DATABASE_URL="postgresql://fitmycv:password@localhost:5432/fitmycv_prod"
+DATABASE_URL_DEV="postgresql://fitmycv:password@localhost:5432/fitmycv_dev"
 NODE_ENV=development
 PORT=3001
 CV_ENCRYPTION_KEY="..."                         # openssl rand -base64 32
@@ -196,11 +200,9 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3001"   # URL publique
 ```
 
 **Important DATABASE_URL** :
-- **Dev (SQLite)** : Le chemin est TOUJOURS `file:./dev.db` (relatif au dossier `prisma/`)
-  - ❌ **Incorrect** : `file:./prisma/dev.db`
-  - ✅ **Correct** : `file:./dev.db`
-- **Prod (PostgreSQL)** : Format PostgreSQL standard avec credentials
-  - ✅ `postgresql://user:password@host:port/database?schema=public`
+- `DATABASE_URL` : Base principale (prod)
+- `DATABASE_URL_DEV` : Base dev (pour sync)
+- **Sync** : `npm run db:sync-from-prod` copie DATABASE_URL → DATABASE_URL_DEV
 
 → **[Toutes les variables](./docs/ENVIRONMENT_VARIABLES.md)**
 
@@ -212,17 +214,14 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3001"   # URL publique
 - **Frontend**: React 18 + Tailwind CSS (glassmorphism design)
 - **Backend**: Next.js 14 (App Router) + API Routes
 - **Database**:
-  - **Dev** (`cv-site-dev/`) : Prisma + SQLite `dev.db`
-  - **Prod** (`cv-site/`) : Prisma + PostgreSQL `fitmycv_prod`
+  - **Dev** : Prisma + PostgreSQL `fitmycv_dev`
+  - **Prod** : Prisma + PostgreSQL `fitmycv_prod`
 - **i18n**: 4 langues (FR, EN, ES, DE), 9 catégories de traductions
 - **IA**: OpenAI API (génération, match score, optimisation ATS)
 - **Paiements**: Stripe (abonnements + packs crédits)
 - **Sécurité**: CV chiffrés AES-256-GCM côté serveur
 
-**⚠️ Important Prisma Schema :**
-- Le fichier `prisma/schema.prisma` dans `cv-site/` (prod) utilise `provider = "postgresql"`
-- Le fichier `prisma/schema.prisma` dans `cv-site-dev/` (dev) peut utiliser `provider = "postgresql"` **car Prisma utilise automatiquement la DATABASE_URL** du `.env`
-- Pas besoin de modifier le provider entre dev et prod, seule la `DATABASE_URL` change
+**Setup dev** : `npm run db:setup` ou `npm run db:sync-from-prod`
 
 ### Systèmes clés
 
@@ -802,7 +801,8 @@ Hotfix: main → merge dans (main + release + dev)
 ### Développement
 
 - ✅ **npm run dev utilise port 3001**
-- ✅ **DATABASE_URL toujours `file:./dev.db`** (relatif à prisma/)
+- ✅ **PostgreSQL** : `fitmycv_dev` (dev) et `fitmycv_prod` (prod) sur même serveur
+- ✅ **Sync prod → dev** : `npm run db:sync-from-prod`
 - ✅ **Mettre à jour la documentation dans le dossier `docs/` et `CLAUDE.md`** Apres chaque modification de la codebase, vérifier la documentation et documenter la modification. Puis tenir à jour le fichier CLAUDE.md
 
 ### Documentation

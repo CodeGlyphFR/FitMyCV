@@ -28,7 +28,8 @@ Ce guide vous accompagne pas à pas dans l'installation et la configuration de F
 | **Node.js** | 18.x | 20.x LTS | Runtime JavaScript |
 | **npm** | 9.x | 10.x | Gestionnaire de paquets |
 | **Git** | 2.x | Latest | Contrôle de version |
-| **SQLite** | 3.x | 3.40+ | Base de données (dev) |
+| **PostgreSQL** | 14.x | 15.x | Base de données |
+| **pg_dump/psql** | - | Latest | Outils PostgreSQL (pour sync) |
 
 ### Services externes
 
@@ -99,18 +100,14 @@ cp .env.example .env
 
 Éditer `.env` avec vos valeurs.
 
-#### b) Fichier `prisma/.env` (Prisma)
+#### b) Database URL (PostgreSQL)
 
 ```bash
-# Créer le fichier .env dans le dossier prisma/
-echo 'DATABASE_URL="file:./dev.db"' > prisma/.env
+# Ajouter dans .env
+DATABASE_URL="postgresql://fitmycv:devpass@localhost:5433/fitmycv_dev"
 ```
 
-**IMPORTANT** :
-- Pour **Prisma** : `DATABASE_URL` doit être dans `prisma/.env` avec `file:./dev.db`
-- Pour **Next.js** : `DATABASE_URL` peut être dans `.env.local` avec la même valeur
-- Le chemin est **toujours** `file:./dev.db` (relatif au dossier `prisma/`)
-- **NE JAMAIS** utiliser `file:./prisma/dev.db`
+**Note** : Le projet utilise PostgreSQL via Docker pour le développement (port 5433).
 
 ### 2. Générer les clés de sécurité
 
@@ -183,47 +180,49 @@ OPENAI_API_KEY="sk-proj-votre-cle"
 
 ## Base de données
 
-### 1. Initialiser Prisma
+### 1. Créer la base de données de développement
 
-```bash
-# Générer le client Prisma
-npx prisma generate
+Créer la base `fitmycv_dev` sur le serveur PostgreSQL :
+
+```sql
+CREATE DATABASE fitmycv_dev;
+GRANT ALL PRIVILEGES ON DATABASE fitmycv_dev TO fitmycv;
 ```
 
-Cette commande génère le client Prisma TypeScript basé sur `prisma/schema.prisma`.
+### 2. Configurer DATABASE_URL
 
-### 2. Appliquer les migrations
+Ajouter dans `.env` :
 
 ```bash
-# Appliquer toutes les migrations
-npx prisma migrate deploy
+DATABASE_URL="postgresql://fitmycv:password@localhost:5432/fitmycv_dev"
 ```
 
-Cette commande :
-- Crée le fichier `prisma/dev.db` (SQLite)
-- Applique toutes les migrations (15 migrations)
-- Crée 23 tables (User, CvFile, BackgroundTask, etc.)
+### 3. Initialiser la base de données
 
-### 3. Vérifier la base de données
+```bash
+# Option 1: Setup avec seed data (données par défaut)
+npm run db:setup
+
+# Option 2: Copier les données de production
+npm run db:sync-from-prod
+```
+
+Le setup :
+- Génère le client Prisma
+- Applique la migration baseline (34 tables)
+- Peuple la base avec les données par défaut (plans, crédits, settings, etc.)
+
+### 4. Vérifier la base de données
 
 ```bash
 # Ouvrir Prisma Studio (interface graphique)
-npx prisma studio
+npm run db:studio
 ```
 
 Prisma Studio s'ouvre sur `http://localhost:5555` et permet de :
 - Visualiser toutes les tables
 - Ajouter/modifier/supprimer des données
 - Tester les relations
-
-### 4. (Optionnel) Peupler la base de données
-
-```bash
-# Exécuter le seed (si défini)
-npx prisma db seed
-```
-
-**Note** : Le seed n'est pas obligatoire. L'application crée automatiquement les données nécessaires au premier lancement.
 
 ---
 
@@ -305,27 +304,27 @@ curl http://localhost:3001
 curl http://localhost:3001/api/settings
 # Devrait retourner un JSON avec les settings publics
 
-# 3. Test base de données
-ls -lh prisma/dev.db
-# Devrait afficher le fichier de base de données
+# 3. Test base de données (Docker doit être running)
+docker exec fitmycv-dev-db pg_isready -U fitmycv -d fitmycv_dev
+# Devrait retourner "accepting connections"
 ```
 
 ---
 
 ## Problèmes courants
 
-### Erreur : `Error: Invalid 'DATABASE_URL'`
+### Erreur : `Error: Can't reach database server`
 
-**Cause** : Le chemin DATABASE_URL est incorrect.
+**Cause** : PostgreSQL Docker n'est pas démarré.
 
 **Solution** :
 
 ```bash
-# Dans prisma/.env
-DATABASE_URL="file:./dev.db"
+# Démarrer PostgreSQL
+npm run db:dev:start
 
-# PAS file:./prisma/dev.db ❌
-# PAS file:../prisma/dev.db ❌
+# Vérifier que le container tourne
+docker ps | grep fitmycv-dev-db
 ```
 
 ### Erreur : `Error: Cannot find module 'next'`

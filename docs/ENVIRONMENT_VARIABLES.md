@@ -105,32 +105,33 @@ GPT_MATCH_SCORE_USER_PROMPT="Your custom user prompt here..."
 
 ### DATABASE_URL (Obligatoire)
 
-URL de connexion à la base de données SQLite (par défaut) ou PostgreSQL.
+URL de connexion à PostgreSQL utilisée par Prisma.
 
 ```bash
-# SQLite (développement)
-DATABASE_URL="file:./dev.db"
+# Développement
+DATABASE_URL="postgresql://fitmycv:password@localhost:5432/fitmycv_dev"
 
-# PostgreSQL (production)
-DATABASE_URL="postgresql://user:password@localhost:5432/cv_site"
+# Production
+DATABASE_URL="postgresql://fitmycv:password@localhost:5432/fitmycv_prod"
 ```
 
-### IMPORTANT - Chemin Database
+### DATABASE_URL_DEV (Pour sync)
 
-- Le chemin DATABASE_URL est **TOUJOURS relatif au dossier `prisma/`**
-- ✅ **Correct** : `file:./dev.db` (relatif à `prisma/`)
-- ❌ **Incorrect** : `file:./prisma/dev.db` (chemin absolu depuis racine)
-
-**Pourquoi** : Prisma s'exécute depuis le dossier `prisma/` pour les migrations.
-
-### Exemple .env.local
+Variable requise pour le script `npm run db:sync-from-prod` qui copie les données de `DATABASE_URL` vers `DATABASE_URL_DEV`.
 
 ```bash
-# Pour SQLite (développement)
-DATABASE_URL="file:./dev.db"
+DATABASE_URL_DEV="postgresql://fitmycv:password@localhost:5432/fitmycv_dev"
 ```
 
-La base de données sera créée dans `prisma/dev.db`.
+### Setup développement
+
+```bash
+# Option 1: Setup avec seed data
+npm run db:setup
+
+# Option 2: Copier les données de production
+npm run db:sync-from-prod
+```
 
 **Documentation** : [DATABASE.md](./DATABASE.md) | [INSTALLATION.md](./INSTALLATION.md)
 
@@ -649,13 +650,13 @@ OPENAI_MODEL="gpt-4.1-mini"
 # GPT_MATCH_SCORE_USER_PROMPT="..."
 
 # ============================================
-# Database
+# Database (PostgreSQL)
 # ============================================
-# SQLite (développement) - TOUJOURS relatif à prisma/
-DATABASE_URL="file:./dev.db"
+# Développement (Docker sur port 5433)
+DATABASE_URL="postgresql://fitmycv:devpass@localhost:5433/fitmycv_dev"
 
-# PostgreSQL (production)
-# DATABASE_URL="postgresql://user:password@localhost:5432/cv_site"
+# Production
+# DATABASE_URL="postgresql://user:password@localhost:5432/fitmycv_prod"
 
 # ============================================
 # NextAuth

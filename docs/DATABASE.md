@@ -20,17 +20,17 @@ Documentation complète du schéma Prisma et des modèles de données.
 ### Technologie
 
 - **ORM** : Prisma 6.16.2
-- **Database (dev)** : SQLite 3
-- **Database (prod)** : PostgreSQL ou MySQL (recommandé)
-- **Modèles** : 30 tables
-- **Migrations** : 20 migrations appliquées
+- **Database (dev)** : PostgreSQL `fitmycv_dev`
+- **Database (prod)** : PostgreSQL `fitmycv_prod`
+- **Modèles** : 34 tables
+- **Migrations** : Baseline + incremental
 
 ### Configuration
 
 ```prisma
 // prisma/schema.prisma
 datasource db {
-  provider = "sqlite"  // "postgresql" ou "mysql" en production
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -39,9 +39,14 @@ generator client {
 }
 ```
 
-**Chemin DATABASE_URL** :
-- **Prisma** : `prisma/.env` avec `DATABASE_URL="file:./dev.db"`
-- **Next.js** : `.env.local` avec `DATABASE_URL="file:./dev.db"`
+**DATABASE_URL par environnement** :
+- **Dev** : `postgresql://fitmycv:password@localhost:5432/fitmycv_dev`
+- **Prod** : `postgresql://fitmycv:password@localhost:5432/fitmycv_prod`
+
+**Synchronisation prod → dev** :
+```bash
+npm run db:sync-from-prod
+```
 
 ---
 
@@ -751,10 +756,32 @@ Toutes les relations utilisent `onDelete: Cascade` :
 
 ## Migrations
 
-### Commandes
+### Scripts npm
 
 ```bash
-# Créer une migration en dev
+# Setup complet (migrations + seed)
+npm run db:setup
+
+# Reset base de données (dev uniquement)
+npm run db:reset
+
+# Seed uniquement
+npm run db:seed
+
+# Interface graphique Prisma Studio
+npm run db:studio
+
+# Générer le client Prisma
+npm run db:generate
+
+# Sync prod → dev (copie complète)
+npm run db:sync-from-prod
+```
+
+### Commandes Prisma
+
+```bash
+# Créer une nouvelle migration en dev
 npx prisma migrate dev --name nom_migration
 
 # Appliquer les migrations en prod
@@ -763,39 +790,77 @@ npx prisma migrate deploy
 # Générer le client Prisma
 npx prisma generate
 
-# Reset la base (dev uniquement)
+# Reset la base (dev uniquement - SUPPRIME TOUTES LES DONNÉES)
 npx prisma migrate reset
 
 # Interface graphique
 npx prisma studio
 ```
 
-### Historique des migrations
+### Approche Baseline
+
+Le projet utilise une **migration baseline** pour PostgreSQL. Cette approche permet :
+- De démarrer avec un état cohérent du schéma
+- D'éviter les problèmes de compatibilité SQLite/PostgreSQL
+- D'avoir un historique propre pour les futures migrations
 
 ```
 prisma/migrations/
-├── 20251003154937_init/
-├── 20251003164423_add_consent_log/
-├── 20251003173317_add_cv_improvement_fields/
-├── 20251003200001_add_cvfile_to_background_task/
-├── 20251004073853_standardize_status_and_add_optimise/
-├── 20251005222847_add_extracted_job_offer/
-├── 20251008100421_add_settings_table/
-├── 20251017121724_rename_matchScoreFirstRefreshAt_to_tokenLastUsage/
-├── 20251018094209_baseline_add_telemetry_and_auth_tables/
-├── 20251021143510_remove_user_session_add_openai_tables/
-├── 20251021150201_remove_session_table/
-├── 20251022084729_add_metadata_to_openai_call/
-├── 20251022094057_add_cache_price_to_openai_pricing/
-├── 20251022102016_add_cached_tokens_to_openai_tables/
-├── 20251023085505_add_model_first_import_pdf_setting/
-├── 20251023141905_add_subscription_plans/
-├── 20251023151000_update_subscription_plans_pricing_and_tokens/
-├── 20251024112105_add_credit_packs/
-└── 20251024_remove_cv_limit_system/
+└── 0_init_baseline/
+    └── migration.sql    # Schéma PostgreSQL complet (34 tables)
 ```
 
-**Total : 20 migrations**
+### Workflow développement
+
+```bash
+# Option 1: Setup avec seed data (données par défaut)
+npm run db:setup
+
+# Option 2: Reset complet avec seed data
+npm run db:reset
+
+# Option 3: Copier les données de production
+npm run db:sync-from-prod
+
+# Puis lancer le serveur dev
+npm run dev
+```
+
+**Scripts disponibles** :
+- `./scripts/db-dev-reset.sh` - Reset dev avec seed (confirmation requise)
+- `./scripts/db-sync-prod-to-dev.sh` - Copie prod → dev (confirmation requise)
+
+### Workflow production
+
+Pour un déploiement sur une base existante créée via `db push` :
+
+```bash
+# 1. Marquer la baseline comme appliquée (une seule fois)
+npx prisma migrate resolve --applied 0_init_baseline
+
+# 2. Appliquer les futures migrations
+npx prisma migrate deploy
+
+# 3. Seeder si nécessaire
+npm run db:seed
+```
+
+**Script automatisé** : `./scripts/db-setup-fresh.sh` (pour nouvelle installation)
+
+### Créer une nouvelle migration
+
+```bash
+# 1. Modifier prisma/schema.prisma
+
+# 2. Créer la migration
+npx prisma migrate dev --name description_changement
+
+# 3. Vérifier le fichier SQL généré dans prisma/migrations/
+
+# 4. Committer la migration avec le code
+git add prisma/migrations/ prisma/schema.prisma
+git commit -m "feat(db): description du changement"
+```
 
 ---
 
