@@ -1,9 +1,9 @@
-# Patterns de Code - FitMyCv.ai
+# Patterns de Code - FitMyCV.io
 
-> **Part of FitMyCv.ai technical documentation**
+> **Part of FitMyCV.io technical documentation**
 > Quick reference: [CLAUDE.md](../CLAUDE.md) | Architecture: [ARCHITECTURE.md](./ARCHITECTURE.md) | Development: [DEVELOPMENT.md](./DEVELOPMENT.md)
 
-Ce document contient des exemples de code réutilisables et des patterns communs pour le développement dans FitMyCv.ai.
+Ce document contient des exemples de code réutilisables et des patterns communs pour le développement dans FitMyCV.io.
 
 ## Table des matières
 
@@ -16,6 +16,9 @@ Ce document contient des exemples de code réutilisables et des patterns communs
 7. [Gestion Stripe et Abonnements](#gestion-stripe-et-abonnements)
 8. [React useEffect et Dépendances Stables](#react-useeffect-et-dépendances-stables)
 9. [Vérification Limites Features](#vérification-limites-features)
+10. [API Error Internationalization](#api-error-internationalization)
+11. [Service Email Resend](#service-email-resend)
+12. [OAuth Multi-Provider Account Linking](#oauth-multi-provider-account-linking)
 
 ---
 
@@ -479,7 +482,7 @@ La fonction retourne différents types d'erreurs :
 
 ### Références d'Implémentation
 
-Routes utilisant `verifyRecaptcha()` (10 au total) :
+Routes utilisant `verifyRecaptcha()` (11 au total) :
 
 **Auth Routes** :
 - `app/api/auth/register/route.js:22` - Création compte
@@ -496,6 +499,9 @@ Routes utilisant `verifyRecaptcha()` (10 au total) :
 
 **CV Operations** :
 - `app/api/cvs/create/route.js:24` - Création CV manuelle
+
+**Account Operations** :
+- `app/api/account/link-oauth/route.js:55` - Liaison compte OAuth
 
 **Documentation** : [SECURITY.md](./SECURITY.md) | [MCP_PUPPETEER.md - Bypass reCAPTCHA](./MCP_PUPPETEER.md)
 
@@ -1029,6 +1035,645 @@ export async function POST(request) {
 9. `create_cv_manual` - Création manuelle
 
 **Documentation** : [SUBSCRIPTION.md - Features](./SUBSCRIPTION.md#9-macro-features-trackées)
+
+---
+
+## API Error Internationalization
+
+Système centralisé pour les erreurs API avec traduction automatique.
+
+### Côté Serveur (API Routes)
+
+Utiliser les erreurs pré-définies pour des réponses cohérentes et traduisibles.
+
+#### Fonction apiError()
+
+```javascript
+import { apiError, CommonErrors, AuthErrors, CvErrors } from '@/lib/api/apiErrors';
+
+export async function POST(request) {
+  // Erreurs communes
+  if (!session?.user?.id) {
+    return CommonErrors.notAuthenticated();
+  }
+
+  // Erreurs d'authentification
+  if (!body.email) {
+    return AuthErrors.emailRequired();
+  }
+
+  // Erreur personnalisée
+  return apiError('errors.api.custom.myError', {
+    params: { field: 'email' },
+    status: 400
+  });
+}
+```
+
+#### Catégories d'erreurs
+
+```javascript
+import {
+  CommonErrors,      // notAuthenticated, invalidPayload, serverError, notFound, forbidden
+  AuthErrors,        // emailRequired, passwordRequired, tokenInvalid, providerNotLinked...
+  CvErrors,          // notFound, invalidFilename, readError, deleteError...
+  BackgroundErrors,  // noSourceProvided, pdfSaveError, queueError...
+  AccountErrors,     // updateFailed, passwordUpdateFailed, deleteFailed...
+  SubscriptionErrors,// limitReached, invalidPlan, checkoutError...
+  OtherErrors        // feedbackFailed, consentRequired...
+} from '@/lib/api/apiErrors';
+```
+
+#### Exemples courants
+
+```javascript
+// Ressource non trouvée (avec paramètre)
+return CommonErrors.notFound('user');
+// → { error: "errors.api.common.notFound", params: { resource: "user" }, status: 404 }
+
+// Limite atteinte (avec redirection)
+return SubscriptionErrors.limitReached('gpt_cv_generation');
+// → { error: "...", actionRequired: true, redirectUrl: "/subscription", status: 400 }
+
+// Provider OAuth non lié
+return AuthErrors.providerNotLinked();
+// → { error: "errors.api.auth.providerNotLinked", status: 404 }
+```
+
+### Côté Client (React)
+
+Utiliser `parseApiError()` pour traduire les erreurs dans la langue de l'utilisateur.
+
+#### parseApiError()
+
+```javascript
+import { parseApiError } from '@/lib/api/parseApiError';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+
+function MyComponent() {
+  const { t } = useLanguage();
+
+  const handleSubmit = async () => {
+    const res = await fetch('/api/some-route', { method: 'POST' });
+
+    if (!res.ok) {
+      const data = await res.json();
+      const { message, actionRequired, redirectUrl } = parseApiError(data, t);
+
+      if (actionRequired && redirectUrl) {
+        router.push(redirectUrl);
+      } else {
+        setError(message);  // Message traduit dans la langue de l'utilisateur
+      }
+    }
+  };
+}
+```
+
+#### parseTaskError() (pour les tâches background)
+
+```javascript
+import { parseTaskError } from '@/lib/api/parseApiError';
+
+function TaskQueueDisplay({ task }) {
+  const { t } = useLanguage();
+
+  const displayError = task.errorMessage
+    ? parseTaskError(task.errorMessage, t)
+    : null;
+
+  return displayError && <span className="text-red-500">{displayError}</span>;
+}
+```
+
+#### getErrorFromResponse() (helper)
+
+```javascript
+import { getErrorFromResponse } from '@/lib/api/parseApiError';
+
+const handleError = async (response) => {
+  const message = await getErrorFromResponse(response, t);
+  setError(message);
+};
+```
+
+### Format des clés de traduction
+
+Les clés suivent la convention `errors.api.<category>.<errorName>` :
+
+```
+errors.api.common.notAuthenticated
+errors.api.auth.emailRequired
+errors.api.cv.notFound
+errors.api.subscription.limitReached
+```
+
+### Fichiers de traduction
+
+Les traductions sont dans `locales/{lang}/errors.json` :
+
+```json
+{
+  "errors": {
+    "api": {
+      "common": {
+        "notAuthenticated": "Vous devez être connecté",
+        "serverError": "Erreur serveur inattendue"
+      },
+      "auth": {
+        "emailRequired": "L'email est requis",
+        "providerNotLinked": "Ce compte n'est pas lié"
+      }
+    }
+  }
+}
+```
+
+### Ajouter une nouvelle erreur
+
+1. **Définir l'erreur** dans `lib/api/apiErrors.js` :
+
+```javascript
+export const MyErrors = {
+  customError: () => apiError('errors.api.my.customError', { status: 400 }),
+  withParams: (field) => apiError('errors.api.my.withParams', {
+    params: { field },
+    status: 422
+  }),
+};
+```
+
+2. **Ajouter les traductions** dans `locales/{lang}/errors.json` :
+
+```json
+{
+  "errors": {
+    "api": {
+      "my": {
+        "customError": "Custom error message",
+        "withParams": "Error with field: {{field}}"
+      }
+    }
+  }
+}
+```
+
+**Fichiers** :
+- Définitions : `lib/api/apiErrors.js`
+- Parsing client : `lib/api/parseApiError.js`
+- Traductions : `locales/{lang}/errors.json`
+
+---
+
+## Service Email Resend
+
+Service centralisé pour l'envoi d'emails transactionnels via Resend.
+
+### Configuration
+
+```javascript
+// Variables d'environnement requises
+// .env
+RESEND_API_KEY="re_xxxx..."
+EMAIL_FROM="noreply@fitmycv.io"  // Email vérifié sur Resend
+NEXT_PUBLIC_SITE_URL="http://localhost:3001"
+```
+
+### Fonctions Disponibles
+
+Le service `lib/email/emailService.js` expose 14 fonctions :
+
+| Fonction | Description |
+|----------|-------------|
+| `sendVerificationEmail()` | Envoyer email de vérification |
+| `sendPasswordResetEmail()` | Envoyer email de réinitialisation |
+| `sendEmailChangeVerification()` | Envoyer email pour changement d'adresse |
+| `createVerificationToken()` | Créer token de vérification (24h) |
+| `verifyToken()` | Vérifier un token de vérification |
+| `deleteVerificationToken()` | Supprimer un token après usage |
+| `isEmailVerified()` | Vérifier si email est vérifié |
+| `markEmailAsVerified()` | Marquer email comme vérifié |
+| `createPasswordResetToken()` | Créer token reset (1h) |
+| `verifyPasswordResetToken()` | Vérifier token reset |
+| `deletePasswordResetToken()` | Supprimer token reset |
+| `createEmailChangeRequest()` | Créer demande changement email |
+| `verifyEmailChangeToken()` | Vérifier token changement |
+| `deleteEmailChangeRequest()` | Supprimer demande changement |
+
+### Envoyer un Email de Vérification
+
+```javascript
+import { createVerificationToken, sendVerificationEmail } from '@/lib/email/emailService';
+
+export async function POST(request) {
+  const { email, name, userId } = await request.json();
+
+  // 1. Créer le token (stocké en base, expire dans 24h)
+  const token = await createVerificationToken(userId);
+
+  // 2. Envoyer l'email
+  const result = await sendVerificationEmail({
+    email,
+    name,
+    token,
+    userId, // optionnel, pour logging
+  });
+
+  if (!result.success) {
+    return Response.json({ error: result.error }, { status: 500 });
+  }
+
+  return Response.json({ success: true });
+}
+```
+
+### Envoyer un Email de Reset Password
+
+```javascript
+import { createPasswordResetToken, sendPasswordResetEmail } from '@/lib/email/emailService';
+
+export async function POST(request) {
+  const { email } = await request.json();
+
+  // 1. Créer token (vérifie aussi que l'utilisateur existe et a un password)
+  const result = await createPasswordResetToken(email);
+
+  if (!result.success) {
+    // result.error === 'oauth_only' si compte OAuth uniquement
+    if (result.error === 'oauth_only') {
+      return Response.json({
+        error: 'Compte OAuth uniquement',
+        message: result.message
+      }, { status: 400 });
+    }
+    return Response.json({ success: true }); // Sécurité : ne pas révéler si email existe
+  }
+
+  // 2. Envoyer l'email si token créé
+  if (result.token) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    await sendPasswordResetEmail({
+      email,
+      name: user.name,
+      token: result.token,
+      userId: result.userId,
+    });
+  }
+
+  return Response.json({ success: true });
+}
+```
+
+### Vérifier et Consommer un Token
+
+```javascript
+import { verifyToken, markEmailAsVerified, deleteVerificationToken } from '@/lib/email/emailService';
+
+export async function GET(request) {
+  const token = new URL(request.url).searchParams.get('token');
+
+  // 1. Vérifier le token
+  const { valid, userId, error } = await verifyToken(token);
+
+  if (!valid) {
+    return Response.json({ error }, { status: 400 });
+  }
+
+  // 2. Marquer email comme vérifié
+  await markEmailAsVerified(userId);
+
+  // 3. Supprimer le token
+  await deleteVerificationToken(token);
+
+  return Response.json({ success: true });
+}
+```
+
+### Templates Email (Base de Données)
+
+Les templates sont stockés en base (`EmailTemplate`) et chargés dynamiquement :
+
+```javascript
+// Le service charge automatiquement les templates depuis la DB
+// Si aucun template n'existe, un template HTML hardcodé est utilisé
+
+// Variables disponibles dans les templates :
+// {{userName}} - Nom de l'utilisateur
+// {{verificationUrl}} - URL de vérification
+// {{resetUrl}} - URL de réinitialisation
+// {{newEmail}} - Nouvelle adresse email
+```
+
+### Logging des Emails
+
+Tous les emails sont automatiquement loggés dans la table `EmailLog` :
+
+```javascript
+// Automatique dans sendVerificationEmail, sendPasswordResetEmail, etc.
+// Champs loggés :
+// - templateId, templateName
+// - recipientEmail, recipientUserId
+// - subject, status (sent/failed)
+// - error, resendId
+// - isTestEmail
+```
+
+### Gestion des Erreurs
+
+```javascript
+const result = await sendVerificationEmail({ email, name, token });
+
+if (!result.success) {
+  // Erreurs possibles :
+  // - "Service d'email non configuré" - RESEND_API_KEY manquant
+  // - "Erreur lors de l'envoi de l'email" - Erreur API Resend
+  // - Message d'erreur Resend spécifique
+  console.error('Email error:', result.error);
+}
+```
+
+**Fichiers** :
+- Service : `lib/email/emailService.js`
+- Admin API : `app/api/admin/email-templates/route.js`
+- Admin UI : `components/admin/EmailTemplatesTab.jsx`
+
+**Documentation** : [API_REFERENCE.md - Admin Email](./API_REFERENCE.md#get-apiadminemail-templates) | [ADMIN_GUIDE.md](./ADMIN_GUIDE.md)
+
+---
+
+## OAuth Multi-Provider Account Linking
+
+Système permettant de lier plusieurs providers OAuth (Google, GitHub, Apple) à un même compte.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Account Linking Flow                      │
+├─────────────────────────────────────────────────────────────┤
+│  1. POST /api/account/link-oauth                            │
+│     └─> Génère URL OAuth avec state token (cookie)          │
+│                                                             │
+│  2. Redirection vers provider (Google/GitHub/Apple)         │
+│     └─> User s'authentifie chez le provider                 │
+│                                                             │
+│  3. GET /api/auth/callback/link/[provider]                  │
+│     └─> Valide state, échange code, crée lien Account       │
+│                                                             │
+│  4. Redirection vers /account avec résultat                 │
+│     └─> ?linkSuccess=true ou ?linkError=xxx                 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Initier la Liaison (Composant Client)
+
+```javascript
+'use client';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+
+function LinkedAccountsSection() {
+  const { t } = useLanguage();
+  const [loading, setLoading] = useState(false);
+
+  const handleLinkProvider = async (provider) => {
+    setLoading(true);
+
+    // 1. Obtenir le token reCAPTCHA
+    const recaptchaToken = await executeRecaptcha('link_oauth');
+
+    // 2. Appeler l'API pour obtenir l'URL OAuth
+    const res = await fetch('/api/account/link-oauth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider, recaptchaToken }),
+    });
+
+    if (res.ok) {
+      const { authUrl } = await res.json();
+      // 3. Rediriger vers le provider OAuth
+      window.location.href = authUrl;
+    } else {
+      const data = await res.json();
+      // Gérer l'erreur (provider déjà lié, etc.)
+      setError(parseApiError(data, t).message);
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <button onClick={() => handleLinkProvider('google')}>
+      Lier Google
+    </button>
+  );
+}
+```
+
+### API Route - Initier Liaison
+
+```javascript
+// app/api/account/link-oauth/route.js
+import { auth } from '@/lib/auth/session';
+import { verifyRecaptcha } from '@/lib/recaptcha/verifyRecaptcha';
+import crypto from 'crypto';
+import { cookies } from 'next/headers';
+
+export async function POST(request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return AuthErrors.notAuthenticated();
+  }
+
+  const { provider, recaptchaToken } = await request.json();
+
+  // 1. Vérifier reCAPTCHA
+  const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
+    callerName: 'link-oauth',
+    scoreThreshold: 0.5,
+  });
+  if (!recaptchaResult.success) {
+    return AuthErrors.recaptchaFailed();
+  }
+
+  // 2. Vérifier que le provider n'est pas déjà lié
+  const existingAccount = await prisma.account.findFirst({
+    where: { userId: session.user.id, provider },
+  });
+  if (existingAccount) {
+    return AuthErrors.providerAlreadyLinked();
+  }
+
+  // 3. Générer state token (protection CSRF)
+  const stateToken = crypto.randomBytes(32).toString('hex');
+  const stateData = JSON.stringify({
+    token: stateToken,
+    userId: session.user.id,
+    provider,
+    timestamp: Date.now(),
+  });
+
+  // 4. Stocker en cookie httpOnly (expire 10 min)
+  const cookieStore = await cookies();
+  cookieStore.set('oauth_link_state', stateData, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 600, // 10 minutes
+    path: '/',
+  });
+
+  // 5. Construire URL OAuth
+  const authUrl = buildOAuthUrl(provider, stateToken);
+
+  return Response.json({ authUrl, provider });
+}
+```
+
+### API Route - Callback OAuth
+
+```javascript
+// app/api/auth/callback/link/[provider]/route.js
+import { auth } from '@/lib/auth/session';
+import { cookies } from 'next/headers';
+
+export async function GET(request, { params }) {
+  const { provider } = await params;
+  const { searchParams } = new URL(request.url);
+  const code = searchParams.get('code');
+  const state = searchParams.get('state');
+  const error = searchParams.get('error');
+
+  const redirectUrl = new URL('/account', process.env.NEXT_PUBLIC_SITE_URL);
+
+  // 1. Gérer erreur OAuth
+  if (error) {
+    redirectUrl.searchParams.set('linkError', 'oauth_error');
+    return Response.redirect(redirectUrl);
+  }
+
+  // 2. Vérifier session
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirectUrl.searchParams.set('linkError', 'session_expired');
+    return Response.redirect(redirectUrl);
+  }
+
+  // 3. Valider state token
+  const cookieStore = await cookies();
+  const stateCookie = cookieStore.get('oauth_link_state');
+  if (!stateCookie) {
+    redirectUrl.searchParams.set('linkError', 'invalid_state');
+    return Response.redirect(redirectUrl);
+  }
+
+  const stateData = JSON.parse(stateCookie.value);
+
+  // Vérifier expiration (10 min)
+  if (Date.now() - stateData.timestamp > 10 * 60 * 1000) {
+    redirectUrl.searchParams.set('linkError', 'expired');
+    return Response.redirect(redirectUrl);
+  }
+
+  // Vérifier token et userId
+  if (stateData.token !== state || stateData.userId !== session.user.id) {
+    redirectUrl.searchParams.set('linkError', 'invalid_state');
+    return Response.redirect(redirectUrl);
+  }
+
+  // 4. Échanger code contre tokens
+  const tokens = await exchangeCodeForTokens(provider, code);
+  const oauthUser = await getOAuthUserInfo(provider, tokens.access_token);
+
+  // 5. Vérifier que l'email correspond
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (oauthUser.email.toLowerCase() !== user.email.toLowerCase()) {
+    redirectUrl.searchParams.set('linkError', 'email_mismatch');
+    return Response.redirect(redirectUrl);
+  }
+
+  // 6. Vérifier que le provider n'est pas lié à un autre compte
+  const existingLink = await prisma.account.findFirst({
+    where: { provider, providerAccountId: oauthUser.id },
+  });
+  if (existingLink && existingLink.userId !== session.user.id) {
+    redirectUrl.searchParams.set('linkError', 'already_linked_other');
+    return Response.redirect(redirectUrl);
+  }
+
+  // 7. Créer le lien
+  await prisma.account.create({
+    data: {
+      userId: session.user.id,
+      type: 'oauth',
+      provider,
+      providerAccountId: oauthUser.id,
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      expires_at: tokens.expires_in ? Math.floor(Date.now() / 1000) + tokens.expires_in : null,
+    },
+  });
+
+  // 8. Nettoyer cookie et rediriger
+  cookieStore.delete('oauth_link_state');
+  redirectUrl.searchParams.set('linkSuccess', 'true');
+  return Response.redirect(redirectUrl);
+}
+```
+
+### Délier un Provider
+
+```javascript
+// Côté client
+const handleUnlink = async (provider) => {
+  const res = await fetch('/api/account/unlink-oauth', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ provider }),
+  });
+
+  if (res.ok) {
+    // Rafraîchir la liste des comptes liés
+    refreshLinkedAccounts();
+  } else {
+    const data = await res.json();
+    // Erreurs possibles :
+    // - providerNotLinked : Provider non lié
+    // - cannotUnlinkLastProvider : Dernier provider, ne peut pas délier
+    setError(parseApiError(data, t).message);
+  }
+};
+```
+
+### Règles de Sécurité
+
+1. **State token** : Protège contre CSRF, généré avec `crypto.randomBytes(32)`
+2. **Expiration** : State expire après 10 minutes
+3. **Vérification email** : L'email OAuth doit correspondre à l'email du compte FitMyCV
+4. **Protection dernier provider** : Impossible de délier si c'est le seul moyen de connexion
+5. **reCAPTCHA** : Requis pour initier la liaison
+
+### Codes d'Erreur
+
+| Code | Description |
+|------|-------------|
+| `linkSuccess=true` | Liaison réussie |
+| `linkSuccess=already_linked` | Déjà lié (même compte) |
+| `linkError=oauth_error` | Erreur OAuth du provider |
+| `linkError=missing_params` | Code ou state manquant |
+| `linkError=invalid_state` | State invalide (CSRF) |
+| `linkError=expired` | State token expiré |
+| `linkError=session_expired` | Session utilisateur expirée |
+| `linkError=email_mismatch` | Email OAuth ≠ email FitMyCV |
+| `linkError=already_linked_other` | Provider lié à un autre compte |
+
+**Fichiers** :
+- Initiation : `app/api/account/link-oauth/route.js`
+- Callback : `app/api/auth/callback/link/[provider]/route.js`
+- Délier : `app/api/account/unlink-oauth/route.js`
+- Liste : `app/api/account/linked-accounts/route.js`
+- Composant : `components/account/LinkedAccountsSection.jsx`
+
+**Documentation** : [API_REFERENCE.md - Account](./API_REFERENCE.md#post-apiaccountlink-oauth) | [SECURITY.md](./SECURITY.md)
 
 ---
 

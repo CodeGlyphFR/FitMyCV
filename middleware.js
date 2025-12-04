@@ -172,12 +172,12 @@ export async function middleware(request) {
     // Content Security Policy
     'Content-Security-Policy': [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com", // Next.js + reCAPTCHA
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://editor.unlayer.com", // Next.js + reCAPTCHA + Unlayer
       "style-src 'self' 'unsafe-inline'", // Tailwind nécessite unsafe-inline
       "img-src 'self' data: https:",
       "font-src 'self' data:",
-      `connect-src ${connectSrcSources.join(' ')}`,
-      "frame-src https://www.google.com", // reCAPTCHA frames
+      `connect-src ${connectSrcSources.join(' ')} https://editor.unlayer.com https://api.unlayer.com`,
+      "frame-src https://www.google.com https://editor.unlayer.com", // reCAPTCHA + Unlayer frames
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",

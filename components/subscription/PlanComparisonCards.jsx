@@ -14,10 +14,14 @@ import { SkeletonPlanCard } from "@/components/ui/SkeletonLoader";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { translatePlanName } from "@/lib/subscription/planTranslations";
 
-export default function PlanComparisonCards({ currentPlan, subscription, scheduledDowngrade, onUpgradeSuccess }) {
+export default function PlanComparisonCards({ currentPlan, subscription, scheduledDowngrade, onUpgradeSuccess, highlightPlanId }) {
   const { t, language } = useLanguage();
   const [plans, setPlans] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+
+  // Refs et state pour l'animation de mise en avant
+  const highlightedCardRef = React.useRef(null);
+  const [isHighlighting, setIsHighlighting] = React.useState(false);
   const [processingPlanId, setProcessingPlanId] = React.useState(null);
   const [showDowngradeModal, setShowDowngradeModal] = React.useState(false);
   const [showDowngradeToFreeModal, setShowDowngradeToFreeModal] = React.useState(false);
@@ -51,6 +55,28 @@ export default function PlanComparisonCards({ currentPlan, subscription, schedul
     }
     fetchPlans();
   }, []);
+
+  // Scroll vers le plan mis en avant et déclencher l'animation pulse glow (infinie)
+  React.useEffect(() => {
+    if (highlightPlanId && !loading && plans.length > 0) {
+      // Attendre que le DOM soit prêt
+      const timeoutId = setTimeout(() => {
+        if (highlightedCardRef.current) {
+          // Scroll vers la card avec un petit décalage pour le confort visuel
+          highlightedCardRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+          // Déclencher l'animation après le scroll (continue indéfiniment)
+          setTimeout(() => {
+            setIsHighlighting(true);
+          }, 500);
+        }
+      }, 300);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [highlightPlanId, loading, plans.length]);
 
   const getFeatureLabel = (featureName) => {
     return t(`subscription.features.labels.${featureName}`,
@@ -406,11 +432,13 @@ export default function PlanComparisonCards({ currentPlan, subscription, schedul
           return (
             <div
               key={plan.id}
+              ref={plan.id === highlightPlanId ? highlightedCardRef : null}
               className={`
                 backdrop-blur-md bg-gradient-to-br ${colorClass}
                 border rounded-xl p-4 shadow-lg transition-all relative
                 ${isCurrentPlan ? 'ring-2 ring-white/50' : ''}
                 ${isPopularPlan(plan) && !isCurrentPlan ? 'ring-2 ring-yellow-500/50 shadow-xl shadow-yellow-500/10 md:scale-105' : ''}
+                ${plan.id === highlightPlanId && isHighlighting ? 'ring-2 ring-emerald-400 animate-pulse-glow' : ''}
               `}
             >
               {/* Header */}

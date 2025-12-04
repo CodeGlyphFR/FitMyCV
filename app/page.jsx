@@ -18,7 +18,7 @@ import { auth } from "@/lib/auth/session";
 import { ensureUserCvDir, listUserCvFiles, readUserCvFile } from "@/lib/cv/storage";
 
 export const metadata = {
-  title: "Mes CVs - FitMyCv.ai",
+  title: "Mes CVs - FitMyCV.io",
   description: "Visualisez et gérez vos CV personnalisés",
 };
 

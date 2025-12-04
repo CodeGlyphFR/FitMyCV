@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth/session";
 import SubscriptionsPage from "@/components/subscription/SubscriptionsPage";
 
 export const metadata = {
-  title: "Abonnements & Crédits - FitMyCv.ai",
+  title: "Abonnements & Crédits - FitMyCV.io",
   description: "Gérez votre abonnement et vos crédits",
 };
 

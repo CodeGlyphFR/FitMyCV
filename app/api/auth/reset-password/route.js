@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { verifyPasswordResetToken, deletePasswordResetToken } from '@/lib/email/emailService';
 import { validatePassword } from '@/lib/security/passwordPolicy';
 import prisma from '@/lib/prisma';
+import { CommonErrors, AuthErrors } from '@/lib/api/apiErrors';
 
 export const runtime = 'nodejs';
 
@@ -12,39 +13,24 @@ export async function POST(request) {
 
     // Validation basique
     if (!token || typeof token !== 'string') {
-      return NextResponse.json(
-        { error: 'Token requis' },
-        { status: 400 }
-      );
+      return AuthErrors.tokenRequired();
     }
 
     if (!password || typeof password !== 'string') {
-      return NextResponse.json(
-        { error: 'Mot de passe requis' },
-        { status: 400 }
-      );
+      return AuthErrors.passwordRequired();
     }
 
     // Validation de la force du mot de passe
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid) {
-      return NextResponse.json(
-        {
-          error: 'Mot de passe trop faible',
-          details: passwordValidation.errors
-        },
-        { status: 400 }
-      );
+      return AuthErrors.passwordWeak();
     }
 
     // Vérifier le token
     const tokenResult = await verifyPasswordResetToken(token);
 
     if (!tokenResult.valid) {
-      return NextResponse.json(
-        { error: tokenResult.error || 'Token invalide ou expiré' },
-        { status: 400 }
-      );
+      return AuthErrors.tokenInvalid();
     }
 
     // Hasher le nouveau mot de passe
@@ -66,9 +52,6 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('[reset-password] Erreur:', error);
-    return NextResponse.json(
-      { error: 'Erreur serveur' },
-      { status: 500 }
-    );
+    return CommonErrors.serverError();
   }
 }

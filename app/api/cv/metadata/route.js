@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
+import { CommonErrors, CvErrors } from "@/lib/api/apiErrors";
 
 export async function GET(request) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    return CommonErrors.notAuthenticated();
   }
 
   try {
@@ -13,7 +14,7 @@ export async function GET(request) {
     const cvFile = searchParams.get("file");
 
     if (!cvFile) {
-      return NextResponse.json({ error: "CV file missing" }, { status: 400 });
+      return CvErrors.missingFilename();
     }
 
     const userId = session.user.id;
@@ -47,12 +48,12 @@ export async function GET(request) {
     });
 
     if (!cvRecord) {
-      return NextResponse.json({ error: "CV not found" }, { status: 404 });
+      return CvErrors.notFound();
     }
 
     return NextResponse.json(cvRecord, { status: 200 });
   } catch (error) {
     console.error("Error fetching CV metadata:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return CvErrors.metadataError();
   }
 }

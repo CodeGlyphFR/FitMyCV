@@ -9,6 +9,7 @@ import { ensureUserCvDir } from "@/lib/cv/storage";
 import { scheduleCreateTemplateCvJob } from "@/lib/backgroundTasks/createTemplateCvJob";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
+import { CommonErrors, AuthErrors, BackgroundErrors } from "@/lib/api/apiErrors";
 
 function sanitizeLinks(raw) {
   if (!Array.isArray(raw)) return [];
@@ -47,7 +48,7 @@ async function saveUploads(files) {
 export async function POST(request) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    return CommonErrors.notAuthenticated();
   }
 
   try {
@@ -66,10 +67,7 @@ export async function POST(request) {
       });
 
       if (!recaptchaResult.success) {
-        return NextResponse.json(
-          { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
-          { status: recaptchaResult.statusCode || 403 }
-        );
+        return AuthErrors.recaptchaFailed();
       }
     }
 
@@ -78,7 +76,7 @@ export async function POST(request) {
       try {
         parsedLinks = JSON.parse(rawLinks);
       } catch (_error) {
-        return NextResponse.json({ error: "Format des liens invalide." }, { status: 400 });
+        return BackgroundErrors.invalidLinksFormat();
       }
     }
 
@@ -86,7 +84,7 @@ export async function POST(request) {
     const files = formData.getAll("files").filter(Boolean);
 
     if (!links.length && !files.length) {
-      return NextResponse.json({ error: "Ajoutez au moins un lien ou un fichier (offre d'emploi)." }, { status: 400 });
+      return BackgroundErrors.noSourceProvided();
     }
 
     const requestedAnalysisLevel = typeof rawAnalysisLevel === "string" ? rawAnalysisLevel.trim().toLowerCase() : "medium";
@@ -247,6 +245,6 @@ export async function POST(request) {
     }, { status: 202 });
   } catch (error) {
     console.error('Erreur lors de la mise en file de la création de CV modèle:', error);
-    return NextResponse.json({ error: "Erreur lors de la mise en file de la création." }, { status: 500 });
+    return BackgroundErrors.queueError();
   }
 }

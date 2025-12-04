@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Connexion en cours - FitMyCv.ai",
+  title: "Connexion en cours - FitMyCV.io",
   description: "Finalisation de votre connexion",
 };
 

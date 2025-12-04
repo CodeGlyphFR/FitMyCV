@@ -3,9 +3,11 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
+  const { executeRecaptcha } = useRecaptcha();
   const [email, setEmail] = React.useState("");
   const [error, setError] = React.useState("");
   const [success, setSuccess] = React.useState(false);
@@ -23,10 +25,14 @@ export default function ForgotPasswordPage() {
     try {
       setLoading(true);
 
+      // Obtenir le token reCAPTCHA (le serveur gère BYPASS_RECAPTCHA)
+      const recaptchaToken = await executeRecaptcha('forgot_password');
+      // Ne pas bloquer si null - le serveur décidera
+
       const res = await fetch("/api/auth/request-reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, recaptchaToken }),
       });
 
       const data = await res.json();

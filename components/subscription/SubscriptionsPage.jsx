@@ -13,6 +13,7 @@ import CreditBalanceCard from "./CreditBalanceCard";
 import CreditPacksCards from "./CreditPacksCards";
 import CreditTransactionsTable from "./CreditTransactionsTable";
 import InvoicesTable from "./InvoicesTable";
+import { isFreePlan, getPlanIcon } from "@/lib/subscription/planUtils";
 import {
   SkeletonCurrentPlanCard,
   SkeletonFeatureCounters,
@@ -23,6 +24,9 @@ export default function SubscriptionsPage({ user }) {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = React.useState("subscription");
+
+  // Récupérer l'ID du plan à mettre en avant (depuis redirection modal génération CV)
+  const highlightPlanId = searchParams.get('highlightPlan');
   const [subscriptionData, setSubscriptionData] = React.useState(null);
   const [creditData, setCreditData] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -317,26 +321,50 @@ export default function SubscriptionsPage({ user }) {
               aria-labelledby="tab-subscription"
               className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300"
             >
-              {/* Layout 1/2 + 1/2 pour Plan actuel et Usage mensuel */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Current Plan - 1/2 */}
-                <div className="h-full">
-                  <CurrentPlanCard
-                    subscription={subscriptionData.subscription}
-                    plan={subscriptionData.subscription?.plan}
-                    cvStats={subscriptionData.cvStats}
-                    onCancelSubscription={handleCancelSubscription}
-                  />
-                </div>
+              {/* Layout conditionnel selon le type de plan */}
+              {isFreePlan(subscriptionData.subscription?.plan) ? (
+                // Plan Gratuit : ligne minimaliste + usage pleine largeur
+                <>
+                  {/* Ligne minimaliste Plan Gratuit */}
+                  <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl px-4 py-3 shadow-lg flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">{getPlanIcon(subscriptionData.subscription?.plan)}</span>
+                      <span className="text-white font-medium">{t('subscription.currentPlan.freePlan')}</span>
+                    </div>
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-500/20 border border-green-500/50 text-green-200 text-xs">
+                      <CheckCircle size={14} />
+                      {t('subscription.currentPlan.status.active')}
+                    </span>
+                  </div>
 
-                {/* Monthly Usage - 1/2 */}
-                <div className="h-full">
+                  {/* Usage mensuel - pleine largeur */}
                   <FeatureCountersCard
                     featureCounters={subscriptionData.featureCounters}
                     plan={subscriptionData.subscription?.plan}
                   />
+                </>
+              ) : (
+                // Plan payant : layout 1/2 + 1/2
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Current Plan - 1/2 */}
+                  <div className="h-full">
+                    <CurrentPlanCard
+                      subscription={subscriptionData.subscription}
+                      plan={subscriptionData.subscription?.plan}
+                      cvStats={subscriptionData.cvStats}
+                      onCancelSubscription={handleCancelSubscription}
+                    />
+                  </div>
+
+                  {/* Monthly Usage - 1/2 */}
+                  <div className="h-full">
+                    <FeatureCountersCard
+                      featureCounters={subscriptionData.featureCounters}
+                      plan={subscriptionData.subscription?.plan}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Plan Comparison Cards - full width */}
               <PlanComparisonCards
@@ -344,6 +372,7 @@ export default function SubscriptionsPage({ user }) {
                 subscription={subscriptionData.subscription}
                 scheduledDowngrade={subscriptionData.scheduledDowngrade}
                 onUpgradeSuccess={refreshData}
+                highlightPlanId={highlightPlanId ? parseInt(highlightPlanId, 10) : null}
               />
             </div>
           )}

@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 export default function VerifyEmailRequiredPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { executeRecaptcha } = useRecaptcha();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -19,8 +21,14 @@ export default function VerifyEmailRequiredPage() {
     setMessage('');
 
     try {
+      // Obtenir le token reCAPTCHA (le serveur gère BYPASS_RECAPTCHA)
+      const recaptchaToken = await executeRecaptcha('resend_verification');
+      // Ne pas bloquer si null - le serveur décidera
+
       const response = await fetch('/api/auth/resend-verification', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recaptchaToken }),
       });
 
       const data = await response.json();

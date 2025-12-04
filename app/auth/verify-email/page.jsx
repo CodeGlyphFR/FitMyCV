@@ -5,7 +5,7 @@ import EmailVerificationError from '@/components/auth/EmailVerificationError';
 import logger from '@/lib/security/secureLogger';
 
 export const metadata = {
-  title: "Vérification d'email - FitMyCv.ai",
+  title: "Vérification d'email - FitMyCV.io",
   description: "Vérification de votre adresse email",
 };
 

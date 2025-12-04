@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 
 export const metadata = {
-  title: "Connexion - FitMyCv.ai",
+  title: "Connexion - FitMyCV.io",
   description: "Connectez-vous ou créez un compte pour accéder à vos CV personnalisés",
 };
 
@@ -31,6 +31,7 @@ export default async function AuthPage({ searchParams }){
   }
 
   const initialMode = searchParams?.mode === "register" ? "register" : "login";
+  const oauthError = searchParams?.error || null;
   const availability = {
     google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
     apple: Boolean(
@@ -43,5 +44,5 @@ export default async function AuthPage({ searchParams }){
     github: Boolean(process.env.GITHUB_ID && process.env.GITHUB_SECRET),
   };
 
-  return <AuthScreen initialMode={initialMode} providerAvailability={availability} registrationEnabled={registrationEnabled} />;
+  return <AuthScreen initialMode={initialMode} providerAvailability={availability} registrationEnabled={registrationEnabled} oauthError={oauthError} />;
 }

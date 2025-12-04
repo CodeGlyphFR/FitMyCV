@@ -1,0 +1,360 @@
+{
+  "maintenance": {
+    "registrationDisabled": "Wartung in Bearbeitung, Registrierungen werden bald wieder verfügbar sein."
+  },
+  "topbar": {
+    "loading": "Laden…",
+    "userMenu": "Benutzermenü",
+    "user": "Benutzer",
+    "myCvs": "Meine Lebensläufe",
+    "myAccount": "Mein Konto",
+    "subscriptions": "Abonnements & Credits",
+    "logout": "Abmelden",
+    "analyzeOffers": "Stellenanzeigen analysieren",
+    "coverLetters": "Anschreiben",
+    "interviewPrep": "Vorstellungsgespräch vorbereiten",
+    "applicationTracking": "Bewerbungsverfolgung",
+    "soon": "Bald",
+    "credits": "Credits",
+    "loadingInProgress": "Laden läuft ...",
+    "taskQueue": "Aufgabenwarteschlange",
+    "delete": "Löschen",
+    "cvInProgress": "Lebenslauf wird bearbeitet",
+    "jobTitlePlaceholder": "Geben Sie eine Stellenbezeichnung ein (z.B. Full-Stack-Entwickler)",
+    "jobTitlePlaceholderMobile": "z.B. Full-Stack-Entwickler",
+    "analysisLevels": {
+      "rapid": "Schnell",
+      "medium": "Mittel",
+      "deep": "Tiefgehend"
+    },
+    "filter": "Filtern",
+    "filterTitle": "Filter",
+    "filterCvType": "Lebenslauf-Typ",
+    "filterCvLanguage": "Lebenslauf-Sprache",
+    "filterDateRange": "Erstellungsdatum",
+    "filterClearAll": "Filter löschen",
+    "filterNoResults": "Kein Lebenslauf entspricht den Filtern",
+    "cvTypes": {
+      "generate-cv": "Mit Stellenanzeige",
+      "import-pdf": "Importiert",
+      "manual": "Hinzugefügt",
+      "translate-cv": "Übersetzt",
+      "improve-cv": "Verbessert",
+      "generate-cv-job-title": "Aus Titel",
+      "create-template": "KI-Vorlage"
+    },
+    "dateRanges": {
+      "24h": "24 Stunden",
+      "7d": "7 Tage",
+      "30d": "30 Tage",
+      "all": "Alle"
+    },
+    "cvLanguages": {
+      "fr": "Français",
+      "en": "English",
+      "es": "Español",
+      "de": "Deutsch",
+      "all": "Alle"
+    },
+    "filterSelectLanguage": "Auswählen",
+    "filterSelectDate": "Auswählen"
+  },
+  "deleteModal": {
+    "title": "Bestätigung",
+    "question": "Möchten Sie den Lebenslauf wirklich löschen:",
+    "warning": "Diese Aktion ist",
+    "irreversible": "unwiderruflich",
+    "no": "Nein",
+    "yes": "Ja",
+    "errors": {
+      "deleteFailed": "Löschen nicht möglich:"
+    }
+  },
+  "export": {
+    "noCvSelected": "Kein Lebenslauf für den Export ausgewählt.",
+    "errors": {
+      "exportFailed": "Fehler beim PDF-Export. Bitte erneut versuchen."
+    }
+  },
+  "footer": {
+    "cookieManagement": "Cookie-Verwaltung",
+    "copyright": "© 2025 FitMyCV.io",
+    "about": "Über uns",
+    "cookies": "Cookies",
+    "terms": "Allgemeine Geschäftsbedingungen",
+    "privacy": "Datenschutzrichtlinie"
+  },
+  "about": {
+    "title": "Über FitMyCV"
+  },
+  "cookies": {
+    "banner": {
+      "title": "Diese Website verwendet Cookies",
+      "description": "Wir verwenden Cookies, um Ihre Erfahrung zu verbessern.",
+      "learnMore": "Mehr erfahren",
+      "acceptAll": "Alle akzeptieren",
+      "rejectAll": "Alle ablehnen",
+      "customize": "Anpassen",
+      "close": "Schließen"
+    },
+    "preferences": {
+      "title": "Cookie-Einstellungen",
+      "description": "Wählen Sie die Cookie-Typen, die Sie zulassen möchten.",
+      "save": "Meine Einstellungen speichern",
+      "necessary": {
+        "title": "Notwendige Cookies",
+        "description": "Wesentlich für den Betrieb der Website.",
+        "active": "Aktiv"
+      },
+      "functional": {
+        "title": "Funktionale Cookies",
+        "description": "Speichern Ihre Einstellungen."
+      },
+      "analytics": {
+        "title": "Analytische Cookies",
+        "description": "Nutzungsstatistiken der Website."
+      },
+      "marketing": {
+        "title": "Marketing-Cookies",
+        "description": "Zielgerichtete Werbung."
+      },
+      "back": "Zurück"
+    },
+    "settings": {
+      "pageTitle": "Cookie-Verwaltung",
+      "saved": "Ihre Einstellungen wurden gespeichert",
+      "currentStatus": "Aktueller Status",
+      "consentGiven": "Zustimmung erteilt am:",
+      "expiresOn": "Läuft ab am:",
+      "aboutTitle": "Über Cookies",
+      "aboutDescription": "Gemäß der Datenschutz-Grundverordnung (DSGVO) und den deutschen Vorschriften informieren wir Sie über die Verwendung von Cookies auf unserer Website.",
+      "consentValidity": "Ihre Zustimmung ist 6 Monate gültig. Sie können Ihre Einstellungen jederzeit auf dieser Seite ändern.",
+      "necessary": {
+        "title": "Notwendige Cookies",
+        "alwaysActive": "Immer aktiv",
+        "description": "Diese Cookies sind für den Betrieb der Website unerlässlich. Sie ermöglichen Authentifizierung, Sicherheit und grundlegende Navigation. Sie können nicht deaktiviert werden.",
+        "examples": "Benutzersitzung, CSRF-Token, Spracheinstellungen"
+      },
+      "functional": {
+        "title": "Funktionale Cookies",
+        "description": "Diese Cookies verbessern die Benutzererfahrung, indem sie Ihre Auswahl und Einstellungen (Theme, Layout, Anzeigeoptionen) speichern.",
+        "examples": "Schnittstelleneinstellungen, Anzeigeeinstellungen"
+      },
+      "analytics": {
+        "title": "Analytische Cookies",
+        "description": "Diese Cookies helfen uns zu verstehen, wie Sie unsere Website nutzen, um sie zu verbessern. Die Daten werden anonymisiert und aggregiert.",
+        "examples": "Besuchte Seiten, verbrachte Zeit, Benutzerweg"
+      },
+      "marketing": {
+        "title": "Marketing-Cookies",
+        "description": "Diese Cookies werden verwendet, um Ihnen personalisierte Werbeinhalte basierend auf Ihren Interessen anzuzeigen.",
+        "examples": "Werbeverfolgung, Remarketing"
+      },
+      "savePreferences": "Meine Einstellungen speichern",
+      "acceptAll": "Alle akzeptieren",
+      "rejectAll": "Alle ablehnen",
+      "resetConsent": "Zustimmung zurücksetzen",
+      "yourRights": "Ihre Rechte",
+      "rightsDescription": "Gemäß DSGVO haben Sie folgende Rechte:",
+      "rights": {
+        "access": "Recht auf Zugang zu Ihren persönlichen Daten",
+        "rectification": "Recht auf Berichtigung Ihrer Daten",
+        "erasure": "Recht auf Löschung Ihrer Daten",
+        "objection": "Recht auf Widerspruch gegen die Verarbeitung Ihrer Daten",
+        "portability": "Recht auf Datenübertragbarkeit",
+        "withdraw": "Recht, Ihre Zustimmung jederzeit zu widerrufen"
+      },
+      "examplesLabel": "Beispiele:"
+    },
+    "registry": {
+      "title": "📋 Detailliertes Cookie-Register",
+      "description": "Vollständige Liste aller Cookies, die auf dieser Website nach Kategorie verwendet werden können.",
+      "duration": "Dauer:",
+      "type": "Typ:",
+      "note": "Drittanbieter-Cookies werden nur gesetzt, wenn Sie Ihre ausdrückliche Zustimmung geben. Notwendige Cookies sind für den Betrieb der Website unerlässlich und können nicht abgelehnt werden.",
+      "durations": {
+        "6_months": "6 Monate",
+        "30_days": "30 Tage",
+        "session": "Sitzung",
+        "1_year": "1 Jahr",
+        "2_years": "2 Jahre",
+        "24_hours": "24 Stunden",
+        "1_minute": "1 Minute",
+        "3_months": "3 Monate",
+        "13_months": "13 Monate",
+        "15_minutes": "15 Minuten"
+      },
+      "purposes": {
+        "cookie_consent": "Speichert die Cookie-Zustimmungseinstellungen des Benutzers",
+        "session_token": "Authentifizierung - Hält die Benutzersitzung aktiv",
+        "secure_session_token": "Sichere Authentifizierung in Produktion - Sitzungstoken",
+        "csrf_protection": "Sicherheit - Schutz vor CSRF-Angriffen",
+        "secure_csrf_protection": "Verstärkte Sicherheit in Produktion - CSRF-Schutz",
+        "auth_callback": "Weiterleitung nach Authentifizierung",
+        "theme_preference": "Speichert das vom Benutzer gewählte Theme (hell/dunkel)",
+        "language_preference": "Speichert die vom Benutzer gewählte Sprache",
+        "ga_unique_users": "Google Analytics - Unterscheidet eindeutige Benutzer",
+        "ga_distinguish_users": "Google Analytics - Unterscheidet Benutzer",
+        "ga_rate_limit": "Google Analytics - Begrenzt die Anfragerate",
+        "ga4_session_state": "Google Analytics 4 - Persistenz des Sitzungsstatus",
+        "fb_pixel_tracking": "Facebook Pixel - Conversion-Tracking und zielgerichtete Werbung",
+        "fb_cross_site_tracking": "Facebook - Speichert und verfolgt Besuche über mehrere Websites",
+        "fb_targeted_ads": "Facebook - Lieferung zielgerichteter Werbung",
+        "google_ads_retargeting": "Google Ads - Werbeverfolgung und Retargeting",
+        "google_ads_cookie_test": "Google Ads - Testet, ob der Browser Cookies akzeptiert"
+      }
+    },
+    "history": {
+      "title": "📜 Verlauf Ihrer Zustimmungen",
+      "records": "Eintrag",
+      "recordsPlural": "Einträge",
+      "gdprCompliant": "DSGVO-konform",
+      "noHistory": "Kein Zustimmungsverlauf verfügbar. Ihre zukünftigen Einstellungen werden hier aufgezeichnet.",
+      "loadingError": "Ladefehler",
+      "loadError": "Verlauf konnte nicht geladen werden",
+      "browser": "Browser:",
+      "gdprNote": "Dieser Verlauf beweist, dass Sie Ihre Zustimmung informiert gegeben (oder verweigert) haben. Diese Daten werden zur Prüfung aufbewahrt und können durch Löschen Ihres Kontos entfernt werden.",
+      "actions": {
+        "created": "Erstellt",
+        "updated": "Geändert",
+        "revoked": "Widerrufen"
+      },
+      "categories": {
+        "necessary": "Notwendig",
+        "functional": "Funktional",
+        "analytics": "Analytisch",
+        "marketing": "Marketing"
+      }
+    }
+  },
+  "header": {
+    "modalTitle": "Kopfzeile bearbeiten",
+    "fullName": "Vollständiger Name",
+    "currentTitle": "Aktuelle Position",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "city": "Stadt",
+    "region": "Region",
+    "countryCode": "Land (Code)",
+    "links": "Links",
+    "noLinks": "Keine Links vorhanden.",
+    "labelPlaceholder": "Label (z.B. GitHub)",
+    "urlPlaceholder": "URL (z.B. https://github.com/erick)",
+    "addLink": "Link hinzufügen"
+  },
+  "common": {
+    "edit": "Bearbeiten",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "add": "Hinzufügen",
+    "loading": "Laden...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "close": "Schließen",
+    "confirmation": "Bestätigung",
+    "locale": "de-DE"
+  },
+  "editMode": {
+    "on": "✏️ Bearbeitung AN",
+    "off": "Bearbeitung AUS"
+  },
+  "emptyState": {
+    "welcome": "Willkommen {firstName} bei Ihrem Lebenslauf-Manager",
+    "subtitle": "Beginnen Sie mit der Erstellung Ihres ersten Lebenslaufs oder importieren Sie einen vorhandenen",
+    "createManual": "Lebenslauf manuell erstellen",
+    "orImport": "oder einen PDF-Lebenslauf importieren",
+    "importButton": "PDF importieren",
+    "importCard": {
+      "title": "Lebenslauf importieren",
+      "description": "Importieren Sie Ihren vorhandenen Lebenslauf im PDF-Format zur automatischen Konvertierung",
+      "button": "Importieren →"
+    },
+    "createCard": {
+      "title": "Neuen Lebenslauf erstellen",
+      "description": "Beginnen Sie mit einem leeren Lebenslauf und füllen Sie ihn in Ihrem eigenen Tempo aus",
+      "button": "Erstellen →"
+    },
+    "tip": "💡 Tipp: Sie können Ihre Lebensläufe jederzeit bearbeiten, duplizieren und exportieren",
+    "importing": {
+      "title": "Import läuft...",
+      "ready": "🎉 Ihr Lebenslauf ist fertig!",
+      "steps": {
+        "reading": "PDF-Datei wird gelesen",
+        "analyzing": "Intelligente Inhaltsanalyse",
+        "structuring": "Daten werden strukturiert",
+        "finalizing": "Abschluss"
+      },
+      "redirect": "🎊 Weiterleitung läuft...",
+      "timeout": "☕ In der Zwischenzeit bereiten Sie sich ein warmes Getränk vor...",
+      "timeoutAlert": "Der Import dauert länger als erwartet. Bitte aktualisieren Sie die Seite.",
+      "loadingMessages": [
+        "🔍 Suche nach Ihren versteckten Superkräften...",
+        "🎨 Etwas Magie auf Ihren Werdegang anwenden...",
+        "🧠 Die KI denkt intensiv über Ihr Profil nach...",
+        "📚 Zwischen den Zeilen Ihrer Erfahrung lesen...",
+        "✨ Ihre Fähigkeiten polieren...",
+        "🎯 Ihr berufliches Profil optimieren...",
+        "🚀 Vorbereitung für den Start Ihrer Karriere...",
+        "🎭 Ihre Talente zur Geltung bringen...",
+        "🔮 Ihren zukünftigen Erfolg vorhersagen...",
+        "💎 Ihren Lebenslauf in einen Diamanten verwandeln...",
+        "🎪 Ihren beruflichen Werdegang orchestrieren...",
+        "🌟 Einen Hauch von Exzellenz hinzufügen...",
+        "🎨 Ihr berufliches Porträt malen...",
+        "🏆 Ihr Kompetenzarsenal vorbereiten...",
+        "📖 Ihre berufliche Legende schreiben...",
+        "🎬 Den Film Ihrer Karriere drehen...",
+        "🧩 Die Teile Ihres beruflichen Puzzles zusammenfügen...",
+        "🎵 Die Symphonie Ihrer Erfolge komponieren...",
+        "🔬 Molekulare Analyse Ihrer Fähigkeiten...",
+        "🎪 Die Show Ihrer Talente organisieren..."
+      ]
+    }
+  },
+  "newCv": {
+    "title": "Neuen Lebenslauf erstellen",
+    "fullName": "Vollständiger Name",
+    "fullNamePlaceholder": "z.B. Max Mustermann",
+    "currentTitle": "Aktuelle Position",
+    "currentTitlePlaceholder": "z.B. Full-Stack-Entwickler",
+    "email": "E-Mail",
+    "emailPlaceholder": "email@beispiel.de",
+    "required": "Bitte geben Sie den vollständigen Namen und die aktuelle Position ein.",
+    "creating": "Erstellen...",
+    "createButton": "Lebenslauf erstellen",
+    "cancel": "Abbrechen",
+    "tip": "Sie können alle Abschnitte später im Bearbeitungsmodus vervollständigen.",
+    "loading": "Laden…",
+    "error": "Fehler"
+  },
+  "legal": {
+    "back": "Zurück",
+    "lastUpdated": "Letzte Aktualisierung:",
+    "terms": {
+      "meta": {
+        "title": "Allgemeine Geschäftsbedingungen - FitMyCV.io",
+        "description": "Allgemeine Geschäftsbedingungen und Nutzungsbedingungen des Dienstes"
+      },
+      "title": "Allgemeine Geschäftsbedingungen"
+    },
+    "privacy": {
+      "meta": {
+        "title": "Datenschutzrichtlinie - FitMyCV.io",
+        "description": "Datenschutzrichtlinie und Schutz personenbezogener Daten"
+      },
+      "title": "Datenschutzrichtlinie"
+    }
+  },
+  "admin": {
+    "subscriptionPlans": {
+      "tiers": {
+        "0": "Kostenlos",
+        "1": "Pro",
+        "2": "Premium",
+        "3": "Business",
+        "4": "Enterprise"
+      }
+    }
+  }
+}

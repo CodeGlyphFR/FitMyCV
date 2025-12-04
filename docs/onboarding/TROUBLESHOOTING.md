@@ -154,7 +154,7 @@ if (isRecentlyGenerated || isOnboardingStep4Cv) {
 
 **A** : Vérifier conditions auto-start :
 1. User authentifié
-2. cvCount = 0 (aucun CV)
+2. cvCount >= 1 (au moins 1 CV créé)
 3. currentStep = 0
 4. !hasCompleted && !hasSkipped
 5. Événement LOADING_SCREEN_CLOSED émis

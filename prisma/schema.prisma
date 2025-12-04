@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -42,21 +42,22 @@ model User {
 }
 
 model Account {
-  id                String   @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                       String   @id @default(cuid())
+  userId                   String
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String?
+  refresh_token_expires_in Int?
+  access_token             String?
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String?
+  session_state            String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -186,6 +187,19 @@ model Setting {
 
   @@index([category])
   @@index([settingName])
+}
+
+model FeatureMapping {
+  id               String   @id @default(cuid())
+  featureKey       String   @unique
+  displayName      String
+  settingNames     Json     // Array of Setting.settingName values
+  openAICallNames  Json     // Array of OpenAICall.featureName values
+  planFeatureNames Json     // Array of SubscriptionPlanFeatureLimit.featureName values
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([featureKey])
 }
 
 model EmailVerificationToken {
@@ -537,4 +551,42 @@ model PromoCode {
   @@index([isActive])
   @@index([validFrom])
   @@index([validUntil])
+}
+
+model EmailTemplate {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  subject     String
+  designJson  String
+  htmlContent String
+  variables   String
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  emailLogs   EmailLog[]
+
+  @@index([name])
+  @@index([isActive])
+}
+
+model EmailLog {
+  id              String         @id @default(cuid())
+  templateId      String?
+  templateName    String
+  recipientEmail  String
+  recipientUserId String?
+  subject         String
+  status          String
+  error           String?
+  resendId        String?
+  isTestEmail     Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  template        EmailTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@index([templateId])
+  @@index([templateName])
+  @@index([recipientEmail])
+  @@index([recipientUserId])
+  @@index([status])
+  @@index([createdAt])
 }

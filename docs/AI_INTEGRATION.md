@@ -1,6 +1,6 @@
-# Intégration OpenAI - FitMyCv.ai
+# Intégration OpenAI - FitMyCV.io
 
-Documentation complète de l'intégration OpenAI dans FitMyCv.ai.
+Documentation complète de l'intégration OpenAI dans FitMyCV.io.
 
 ---
 
@@ -18,7 +18,7 @@ Documentation complète de l'intégration OpenAI dans FitMyCv.ai.
 
 ## Vue d'ensemble
 
-FitMyCv.ai utilise l'**OpenAI API** pour toutes les opérations d'intelligence artificielle.
+FitMyCV.io utilise l'**OpenAI API** pour toutes les opérations d'intelligence artificielle.
 
 ### SDK
 

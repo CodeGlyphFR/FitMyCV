@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
@@ -14,7 +13,6 @@ import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { parseApiError } from "@/lib/utils/errorHandler";
 
 export default function EmptyState() {
-  const router = useRouter();
   const { data: session } = useSession();
   const { t } = useLanguage();
   const { settings } = useSettings();
@@ -75,13 +73,9 @@ export default function EmptyState() {
     setNewCvBusy(true);
     setNewCvError(null);
     try {
-      // Obtenir le token reCAPTCHA
+      // Obtenir le token reCAPTCHA (le serveur gère BYPASS_RECAPTCHA)
       const recaptchaToken = await executeRecaptcha('create_cv');
-      if (!recaptchaToken) {
-        setNewCvError(t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.");
-        setNewCvBusy(false);
-        return;
-      }
+      // Ne pas bloquer si null - le serveur décidera
 
       const res = await fetch("/api/cvs/create", {
         method: "POST",
@@ -149,16 +143,9 @@ export default function EmptyState() {
     const fileName = pdfFile.name;
 
     try {
-      // Obtenir le token reCAPTCHA
+      // Obtenir le token reCAPTCHA (le serveur gère BYPASS_RECAPTCHA)
       const recaptchaToken = await executeRecaptcha('import_pdf');
-      if (!recaptchaToken) {
-        addNotification({
-          type: "error",
-          message: t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.",
-          duration: 4000,
-        });
-        return;
-      }
+      // Ne pas bloquer si null - le serveur décidera
 
       const formData = new FormData();
       formData.append("pdfFile", pdfFile);
@@ -308,7 +295,10 @@ export default function EmptyState() {
 
     pollIntervalRef.current = setInterval(async () => {
       try {
-        const res = await fetch("/api/cvs", { cache: "no-store" });
+        const res = await fetch(`/api/cvs?_=${Date.now()}`, {
+          cache: "no-store",
+          headers: { 'Cache-Control': 'no-cache' }
+        });
         if (res.ok) {
           const data = await res.json();
           if (data.items && data.items.length > 0) {
@@ -347,8 +337,8 @@ export default function EmptyState() {
                 setTimeout(() => {
                   // Afficher l'overlay de chargement AVANT la navigation
                   showLoadingOverlay();
-                  router.push("/");
-                  router.refresh();
+                  // Forcer un rechargement complet (comme pour la création manuelle)
+                  window.location.href = "/";
                 }, 1000);
               }
             }, stepDuration);

@@ -53,7 +53,7 @@ node scripts/sync-stripe-products.js
 Dans un terminal séparé :
 
 ```bash
-stripe listen --forward-to localhost:3000/api/webhooks/stripe
+stripe listen --forward-to localhost:3001/api/webhooks/stripe
 ```
 
 Copier le `webhook signing secret` dans `.env.local`.

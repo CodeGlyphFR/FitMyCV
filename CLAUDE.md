@@ -37,7 +37,7 @@ Toute la documentation technique est disponible dans le dossier **`docs/`**. Ce 
 
 ### Développement & Patterns
 - **[Référence commandes](./docs/COMMANDS_REFERENCE.md)** - Toutes les commandes (Next.js, Prisma, Stripe, scripts)
-- **[Patterns de code](./docs/CODE_PATTERNS.md)** - Exemples réutilisables (CV, job queue, Stripe, limites)
+- **[Patterns de code](./docs/CODE_PATTERNS.md)** - Exemples réutilisables (CV, job queue, Stripe, limites, Email, OAuth)
 - **[Design System](./docs/DESIGN_SYSTEM.md)** - UI/UX guidelines complets (glassmorphism, composants, animations)
 
 ### Guides Pratiques
@@ -66,11 +66,11 @@ Toute la documentation technique est disponible dans le dossier **`docs/`**. Ce 
 
 ### Dossier DÉVELOPPEMENT (`~/Documents/FitMyCV-DEV/`)
 - **Branche** : `dev` (branche de développement actif)
-- **Base de données** : SQLite `dev.db`
+- **Base de données** : PostgreSQL `fitmycv_dev`
 - **Port** : `3001` (développement)
 - **Usage** : Développement quotidien, features, bugs, improvements
 
-### Dossier PRODUCTION (optionnel : `~/Documents/cv-site/`)
+### Dossier PRODUCTION (optionnel : `~/FitMyCV/`)
 - **Branche** : `main` uniquement (lecture seule, pull only)
 - **Base de données** : PostgreSQL `fitmycv_prod`
 - **Port** : `3000` (production)
@@ -158,8 +158,8 @@ git push origin --delete hotfix/nom-critique
 ## ⚡ Quick Start
 
 ### Ports de développement
-- **Dev** (`cv-site-dev/`): `3001` (npm run dev) - SQLite
-- **Prod** (`cv-site/`): `3000` (npm start) - PostgreSQL
+- **Dev**: `3001` (npm run dev) - PostgreSQL `fitmycv_dev`
+- **Prod**: `3000` (npm start) - PostgreSQL
 
 ### Commandes essentielles
 
@@ -170,9 +170,12 @@ npm run build                    # Build production
 npm start                        # Serveur production (port 3000)
 
 # Database
-npx prisma migrate deploy        # Appliquer migrations
-npx prisma generate              # Générer client Prisma
-npx prisma studio                # Interface DB graphique
+npm run db:setup                 # Appliquer migrations + seed
+npm run db:reset                 # Reset complet (dev uniquement)
+npm run db:seed                  # Seed uniquement
+npm run db:studio                # Interface DB graphique
+npm run db:generate              # Générer client Prisma
+npm run db:sync-from-prod        # Copier prod → dev (dump complet)
 
 # Stripe (terminal séparé)
 stripe listen --forward-to localhost:3001/api/webhooks/stripe
@@ -182,9 +185,10 @@ stripe listen --forward-to localhost:3001/api/webhooks/stripe
 
 ### Variables d'environnement critiques
 
-**Pour DÉVELOPPEMENT** (`cv-site-dev/.env`) :
+**Pour DÉVELOPPEMENT** (`.env`) :
 ```bash
-DATABASE_URL="file:./dev.db"                    # SQLite (relatif à prisma/)
+DATABASE_URL="postgresql://fitmycv:password@localhost:5432/fitmycv_prod"
+DATABASE_URL_DEV="postgresql://fitmycv:password@localhost:5432/fitmycv_dev"
 NODE_ENV=development
 PORT=3001
 CV_ENCRYPTION_KEY="..."                         # openssl rand -base64 32
@@ -196,11 +200,9 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3001"   # URL publique
 ```
 
 **Important DATABASE_URL** :
-- **Dev (SQLite)** : Le chemin est TOUJOURS `file:./dev.db` (relatif au dossier `prisma/`)
-  - ❌ **Incorrect** : `file:./prisma/dev.db`
-  - ✅ **Correct** : `file:./dev.db`
-- **Prod (PostgreSQL)** : Format PostgreSQL standard avec credentials
-  - ✅ `postgresql://user:password@host:port/database?schema=public`
+- `DATABASE_URL` : Base principale (prod)
+- `DATABASE_URL_DEV` : Base dev (pour sync)
+- **Sync** : `npm run db:sync-from-prod` copie DATABASE_URL → DATABASE_URL_DEV
 
 → **[Toutes les variables](./docs/ENVIRONMENT_VARIABLES.md)**
 
@@ -212,16 +214,14 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3001"   # URL publique
 - **Frontend**: React 18 + Tailwind CSS (glassmorphism design)
 - **Backend**: Next.js 14 (App Router) + API Routes
 - **Database**:
-  - **Dev** (`cv-site-dev/`) : Prisma + SQLite `dev.db`
-  - **Prod** (`cv-site/`) : Prisma + PostgreSQL `fitmycv_prod`
+  - **Dev** : Prisma + PostgreSQL `fitmycv_dev`
+  - **Prod** : Prisma + PostgreSQL `fitmycv_prod`
+- **i18n**: 4 langues (FR, EN, ES, DE), 9 catégories de traductions
 - **IA**: OpenAI API (génération, match score, optimisation ATS)
 - **Paiements**: Stripe (abonnements + packs crédits)
 - **Sécurité**: CV chiffrés AES-256-GCM côté serveur
 
-**⚠️ Important Prisma Schema :**
-- Le fichier `prisma/schema.prisma` dans `cv-site/` (prod) utilise `provider = "postgresql"`
-- Le fichier `prisma/schema.prisma` dans `cv-site-dev/` (dev) peut utiliser `provider = "postgresql"` **car Prisma utilise automatiquement la DATABASE_URL** du `.env`
-- Pas besoin de modifier le provider entre dev et prod, seule la `DATABASE_URL` change
+**Setup dev** : `npm run db:setup` ou `npm run db:sync-from-prod`
 
 ### Systèmes clés
 
@@ -232,6 +232,7 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3001"   # URL publique
 | **Abonnements** | Hybride : plans mensuels + micro-transactions (crédits) | [SUBSCRIPTION.md](./docs/SUBSCRIPTION.md) |
 | **Dashboard admin** | Analytics, monitoring, gestion users/plans | [ADMIN_GUIDE.md](./docs/ADMIN_GUIDE.md) |
 | **IA OpenAI** | Génération CV, match score, optimisation ATS | [AI_INTEGRATION.md](./docs/AI_INTEGRATION.md) |
+| **i18n** | 4 langues (FR, EN, ES, DE), 9 catégories par langue | [ADDING_LANGUAGE.md](./docs/ADDING_LANGUAGE.md) |
 
 ### Structure de données
 
@@ -357,20 +358,52 @@ import { runGenerateCvJob } from '@/lib/backgroundTasks/generateCvJob';
 enqueueJob(() => runGenerateCvJob(task));
 ```
 
-### 3. Vérifier limites features
+### 3. Vérifier limites features et consommer crédits
 
 ```javascript
-import { checkFeatureLimit } from '@/lib/subscription/featureUsage';
+import { incrementFeatureCounter } from '@/lib/subscription/featureUsage';
 
-const { allowed, needsCredit } = await checkFeatureLimit(
-  userId,
-  'gpt_cv_generation',
-  { analysisLevel: 'medium' }
-);
+// Vérifie les limites ET consomme les crédits si nécessaire
+const result = await incrementFeatureCounter(userId, 'gpt_cv_generation', {
+  analysisLevel: 'medium', // 'rapid', 'medium', 'deep'
+});
 
-if (!allowed) {
-  // Proposer upgrade ou utilisation crédit
+if (!result.success) {
+  // result.error contient le message (ex: "2 crédits requis, vous en avez 1")
+  // result.actionRequired = true si redirection nécessaire
+  // result.redirectUrl = '/account/subscriptions'
 }
+
+// Si succès: result.usedCredit = true/false, result.creditCost = nombre débité
+```
+
+**Coûts en crédits par feature** (configurables via Admin → Settings) :
+
+| Feature | Crédits | Setting |
+|---------|---------|---------|
+| create_cv_manual | 1 | credits_create_cv_manual |
+| edit_cv | 1 | credits_edit_cv |
+| export_cv | 1 | credits_export_cv |
+| match_score | 1 | credits_match_score |
+| translate_cv | 1 | credits_translate_cv |
+| gpt_cv_generation (rapid) | 1 | credits_gpt_cv_generation_rapid |
+| gpt_cv_generation (medium) | 2 | credits_gpt_cv_generation_medium |
+| gpt_cv_generation (deep) | 0 | credits_gpt_cv_generation_deep |
+| optimize_cv | 2 | credits_optimize_cv |
+| generate_from_job_title | 3 | credits_generate_from_job_title |
+| import_pdf | 5 | credits_import_pdf |
+
+**Note** : `0` = Fonctionnalité réservée aux abonnés Premium (pas de consommation de crédits possible)
+
+```javascript
+// Pour récupérer le coût d'une feature
+import { getCreditCostForFeature } from '@/lib/subscription/creditCost';
+
+const { cost, premiumRequired } = await getCreditCostForFeature('import_pdf');
+// cost = 5, premiumRequired = false
+
+const { cost, premiumRequired } = await getCreditCostForFeature('gpt_cv_generation', 'deep');
+// cost = 0, premiumRequired = true
 ```
 
 ### 4. Session utilisateur
@@ -400,7 +433,7 @@ if (!recaptchaResult.success) {
 // Bypass en développement : ajouter BYPASS_RECAPTCHA=true dans .env
 ```
 
-**Routes protégées par reCAPTCHA** (10 au total) :
+**Routes protégées par reCAPTCHA** (11 au total) :
 - `app/api/auth/register` - Création compte
 - `app/api/auth/request-reset` - Demande reset password
 - `app/api/auth/resend-verification` - Renvoi email vérification
@@ -411,6 +444,7 @@ if (!recaptchaResult.success) {
 - `app/api/background-tasks/calculate-match-score` - Score match
 - `app/api/background-tasks/generate-cv-from-job-title` - Génération depuis job title
 - `app/api/cvs/create` - Création CV manuelle
+- `app/api/account/link-oauth` - Liaison compte OAuth
 
 ### 6. Prévention scroll chaining (dropdowns)
 
@@ -434,7 +468,50 @@ useEffect(() => {
 }, [isOpen]);
 ```
 
-### 7. Système d'onboarding (Constantes & Logger)
+### 7. Service Email (Resend)
+
+```javascript
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendEmailChangeConfirmation,
+  createVerificationToken,
+  verifyToken
+} from '@/lib/email/emailService';
+
+// Envoi email vérification
+await sendVerificationEmail(email, userId);
+
+// Envoi email reset password
+await sendPasswordResetEmail(email, userId);
+
+// Templates configurables dans Admin → Email Templates
+// Variables : {{userName}}, {{verificationUrl}}, {{resetUrl}}, {{newEmail}}
+```
+
+→ **[Pattern complet](./docs/CODE_PATTERNS.md#11-service-email-resend)**
+
+### 8. OAuth Account Linking (Multi-Provider)
+
+```javascript
+// Lier un compte OAuth existant
+POST /api/account/link-oauth
+Body: { provider: 'google' | 'github' | 'apple', recaptchaToken }
+Response: { authorizationUrl }
+
+// Callback après autorisation OAuth
+GET /api/auth/callback/link/[provider]?code=...&state=...
+
+// Délier un compte OAuth
+DELETE /api/account/unlink-oauth?provider=google
+
+// Lister les comptes liés
+GET /api/account/linked-accounts
+```
+
+→ **[Pattern complet](./docs/CODE_PATTERNS.md#12-oauth-multi-provider-account-linking)**
+
+### 9. Système d'onboarding (Constantes & Logger)
 
 ```javascript
 // Utiliser les constantes centralisées (9 timings + mappings + API config)
@@ -474,7 +551,177 @@ onboardingLogger.warn('[Component] Warning');         // Always shown
 - ✅ **Toujours utiliser** : `onboardingLogger.*` pour une console propre en production
 - ✅ **Reset DB** : `node scripts/reset-onboarding.js --dry-run` (preview avant reset)
 
+### 10. Système i18n (9 catégories)
+
+```javascript
+// Structure: locales/{lang}/*.json (fr, en, es, de)
+// 9 fichiers: ui, errors, auth, cv, enums, subscription, tasks, onboarding, account
+
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+
+const { t, language, changeLanguage } = useLanguage();
+const message = t('auth.login.title');                     // Traduction simple
+const error = t('errors.api.auth.emailRequired');          // Erreur API traduite
+const withVar = t('common.welcome', { name: 'John' });     // Avec variable {name}
+
+// Pour CV: langue CV séparée de langue UI
+import { getTranslatorForCvLanguage } from '@/lib/i18n/cvLanguageHelper';
+
+const tCv = getTranslatorForCvLanguage(cv.language);       // 'fr', 'en', 'es', 'de'
+const sectionTitle = tCv('cvSections.experience');         // Titre dans la langue du CV
+```
+
+**Catégories de traductions** :
+
+| Fichier | Contenu |
+|---------|---------|
+| `ui.json` | Interface (topbar, header, footer, modals, admin) |
+| `errors.json` | Erreurs API (`errors.api.*`) |
+| `auth.json` | Authentification (login, register, OAuth) |
+| `cv.json` | CV (sections, generator, optimization, export) |
+| `enums.json` | Niveaux (skillLevels, languageLevels) |
+| `subscription.json` | Abonnements, crédits, factures |
+| `tasks.json` | File d'attente des tâches |
+| `onboarding.json` | Tutoriel complet |
+| `account.json` | Compte utilisateur, feedback |
+
+→ **[Guide ajouter une langue](./docs/ADDING_LANGUAGE.md)**
+
+### 11. Erreurs API centralisées
+
+```javascript
+// Côté serveur - Utiliser les erreurs pré-définies
+import { CommonErrors, AuthErrors, CvErrors, SubscriptionErrors } from '@/lib/api/apiErrors';
+
+// Erreurs communes
+return CommonErrors.notAuthenticated();  // 401
+return CommonErrors.serverError();       // 500
+return CommonErrors.notFound('user');    // 404 avec paramètre
+
+// Erreurs spécifiques
+return AuthErrors.emailRequired();
+return CvErrors.notFound();
+return SubscriptionErrors.limitReached('gpt_cv_generation');
+
+// Erreur personnalisée
+import { apiError } from '@/lib/api/apiErrors';
+return apiError('errors.api.custom.myError', { status: 400, params: { field: 'email' } });
+```
+
+```javascript
+// Côté client - Parser et traduire les erreurs
+import { parseApiError, getErrorFromResponse } from '@/lib/api/parseApiError';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+
+const { t } = useLanguage();
+const response = await fetch('/api/some-route', { method: 'POST' });
+
+if (!response.ok) {
+  const data = await response.json();
+  const { message, actionRequired, redirectUrl } = parseApiError(data, t);
+  // message = "L'email est requis" (traduit dans la langue de l'utilisateur)
+}
+```
+
+**Catégories d'erreurs** : `CommonErrors`, `AuthErrors`, `CvErrors`, `BackgroundErrors`, `AccountErrors`, `SubscriptionErrors`, `OtherErrors`
+
+→ **[Pattern complet](./docs/CODE_PATTERNS.md#10-api-error-internationalization)**
+
+### 12. Système de Feedback
+
+```javascript
+// API endpoint: POST /api/feedback
+// Composants: FeedbackButton.jsx, FeedbackModal.jsx
+// Admin: FeedbackTab.jsx
+
+// Corps de la requête
+{
+  rating: 1-5,           // Note (optionnel pour bug reports)
+  comment: "...",        // Max 500 chars, XSS sanitized
+  isBugReport: boolean,  // true = bug report, false = feedback
+  currentCvFile: "...",  // Fichier CV en cours (optionnel)
+  pageUrl: "...",        // URL de la page
+  userAgent: "..."       // User agent navigateur
+}
+
+// Rate limiting: 10 feedbacks/jour/utilisateur
+// Feature flag: settings.feature_feedback (admin)
+```
+
+→ **[API Reference](./docs/API_REFERENCE.md#post-apifeedback)**
+
+### 13. Utilitaires Site
+
+```javascript
+// Version et titre du site
+import { SITE_VERSION, SITE_TITLE } from '@/lib/site';
+
+console.log(SITE_VERSION);  // "1.2.3" (de NEXT_PUBLIC_APP_VERSION)
+console.log(SITE_TITLE);    // "FitMyCV.io 1.2" (version formatée)
+
+// Formatage intelligent des skills
+import { capitalizeSkillName } from '@/lib/utils/textFormatting';
+
+capitalizeSkillName("python");      // "Python" (lowercase -> capitalize)
+capitalizeSkillName("SQL");         // "SQL" (all uppercase preserved)
+capitalizeSkillName("JavaScript");  // "JavaScript" (mixed case preserved)
+capitalizeSkillName("iOS");         // "iOS" (mixed case preserved)
+```
+
 → **[Tous les patterns](./docs/CODE_PATTERNS.md)**
+
+### 14. FeatureMapping (Table de référence nomenclature)
+
+**Rôle** : Table centrale qui fait le lien entre les différents noms de features utilisés dans l'application (Setting, OpenAICall, SubscriptionPlanFeatureLimit).
+
+**⚠️ RÈGLE OBLIGATOIRE** : À chaque ajout, modification ou suppression de feature IA, cette table **DOIT** être mise à jour pour maintenir la cohérence.
+
+**Champs** :
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `featureKey` | String | Clé unique standardisée (ex: `match_score`, `gpt_cv_generation`) |
+| `displayName` | String | Nom affiché à l'utilisateur (ex: "Score de matching") |
+| `settingNames` | Json | Nom(s) dans Setting (category = 'ai_models') |
+| `openAICallNames` | Json | Nom(s) utilisés dans OpenAICall.featureName |
+| `planFeatureNames` | Json | Nom(s) utilisés dans SubscriptionPlanFeatureLimit.featureName |
+
+**Cas d'utilisation** :
+
+```javascript
+// 1. Nouvelle feature IA complète
+{
+  featureKey: 'match_score',
+  settingNames: ['model_match_score'],           // Setting pour le modèle IA
+  openAICallNames: ['match_score'],              // Tracking OpenAI
+  planFeatureNames: ['match_score'],             // Limite d'abonnement
+}
+
+// 2. Feature helper (utilisée par d'autres features)
+{
+  featureKey: 'detect_language',
+  settingNames: ['model_detect_language'],
+  openAICallNames: ['detect_cv_language'],
+  planFeatureNames: ['match_score', 'gpt_cv_generation', 'import_pdf'],  // Features parentes
+}
+
+// 3. Feature complexe (plusieurs modèles/appels)
+{
+  featureKey: 'gpt_cv_generation',
+  settingNames: ['model_analysis_rapid', 'model_analysis_medium', 'model_analysis_deep', 'model_extract_job_offer'],
+  openAICallNames: ['generate_cv_url', 'generate_cv_pdf', 'extract_job_offer_url', 'extract_job_offer_pdf', 'create_template_cv_url', 'create_template_cv_pdf'],
+  planFeatureNames: ['gpt_cv_generation'],
+}
+```
+
+**Helper** : `lib/features/featureMapping.js`
+
+```javascript
+import { getFeatureMapping, getSettingNamesForFeature } from '@/lib/features/featureMapping';
+
+const mapping = await getFeatureMapping('gpt_cv_generation');
+// → { featureKey, displayName, settingNames: [...], openAICallNames: [...], planFeatureNames: [...] }
+```
 
 ---
 
@@ -554,7 +801,8 @@ Hotfix: main → merge dans (main + release + dev)
 ### Développement
 
 - ✅ **npm run dev utilise port 3001**
-- ✅ **DATABASE_URL toujours `file:./dev.db`** (relatif à prisma/)
+- ✅ **PostgreSQL** : `fitmycv_dev` (dev) et `fitmycv_prod` (prod) sur même serveur
+- ✅ **Sync prod → dev** : `npm run db:sync-from-prod`
 - ✅ **Mettre à jour la documentation dans le dossier `docs/` et `CLAUDE.md`** Apres chaque modification de la codebase, vérifier la documentation et documenter la modification. Puis tenir à jour le fichier CLAUDE.md
 
 ### Documentation

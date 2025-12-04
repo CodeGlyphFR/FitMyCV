@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { scheduleTranslateCvJob } from "@/lib/backgroundTasks/translateCvJob";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
+import { CommonErrors, AuthErrors, BackgroundErrors } from "@/lib/api/apiErrors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ async function updateBackgroundTask(taskId, userId, data) {
 export async function POST(request) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    return CommonErrors.notAuthenticated();
   }
 
   try {
@@ -38,19 +39,16 @@ export async function POST(request) {
       });
 
       if (!recaptchaResult.success) {
-        return NextResponse.json(
-          { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
-          { status: recaptchaResult.statusCode || 403 }
-        );
+        return AuthErrors.recaptchaFailed();
       }
     }
 
     if (!sourceFile) {
-      return NextResponse.json({ error: "Aucun CV source fourni." }, { status: 400 });
+      return BackgroundErrors.cvFileMissing();
     }
 
     if (!targetLanguage || !['fr', 'en', 'es', 'de'].includes(targetLanguage)) {
-      return NextResponse.json({ error: "Langue cible invalide." }, { status: 400 });
+      return BackgroundErrors.invalidTargetLanguage();
     }
 
     const userId = session.user.id;
@@ -128,6 +126,6 @@ export async function POST(request) {
     }, { status: 202 });
   } catch (error) {
     console.error('Erreur lors de la mise en file de la traduction:', error);
-    return NextResponse.json({ error: "Erreur lors de la mise en file de la traduction." }, { status: 500 });
+    return BackgroundErrors.queueError();
   }
 }

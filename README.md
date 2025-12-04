@@ -1,14 +1,14 @@
-# FitMyCv.ai
+# FitMyCV.io
 
 > Application Next.js 14 pour la création de CV personnalisés optimisés par IA
 
-**Version:** 1.0.9.1
+**Version:** 1.0.9.2
 
 ---
 
 ## À propos
 
-FitMyCv.ai est une application web moderne qui permet aux utilisateurs de créer des CV personnalisés et optimisés pour des offres d'emploi spécifiques grâce à l'intelligence artificielle.
+FitMyCV.io est une application web moderne qui permet aux utilisateurs de créer des CV personnalisés et optimisés pour des offres d'emploi spécifiques grâce à l'intelligence artificielle.
 
 ### Fonctionnalités principales
 
@@ -99,4 +99,4 @@ Propriétaire - Tous droits réservés
 
 ---
 
-**Développé avec Next.js 14 et OpenAI** | Version 1.0.9.1
+**Développé avec Next.js 14 et OpenAI** | Version 1.0.9.2

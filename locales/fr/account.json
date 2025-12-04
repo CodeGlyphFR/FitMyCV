@@ -1,0 +1,164 @@
+{
+  "feedback": {
+    "title": "Votre retour nous aide à améliorer !",
+    "ratingLabel": "Comment évaluez-vous votre expérience ?",
+    "optional": "optionnel",
+    "commentLabel": "Votre retour (optionnel)",
+    "commentPlaceholder": "Partagez votre retour, proposez de nouvelles fonctionnalités ou signalez des bugs...",
+    "bugReportLabel": "Signalement de bug",
+    "markAsBug": "Marquer comme bug",
+    "markedAsBug": "Marqué comme bug",
+    "charactersCount": "{count}/500 caractères",
+    "cancel": "Annuler",
+    "submit": "Envoyer",
+    "submitting": "Envoi...",
+    "errors": {
+      "ratingRequired": "Veuillez sélectionner une note",
+      "commentTooLong": "Le commentaire ne peut pas dépasser 500 caractères"
+    },
+    "success": "Merci pour votre retour ! 🙏"
+  },
+  "account": {
+    "meta": {
+      "title": "Mon compte - FitMyCV.io",
+      "description": "Gérez vos informations personnelles et vos préférences"
+    },
+    "backToCvs": "Retour",
+    "title": "Mon compte",
+    "subtitle": "Gérez vos informations personnelles et vos préférences de sécurité.",
+    "loading": "Chargement...",
+    "profile": {
+      "title": "Informations du profil",
+      "fullName": "Nom complet",
+      "fullNamePlaceholder": "Entrez votre nom complet",
+      "email": "Adresse email",
+      "emailPlaceholder": "Entrez votre adresse email",
+      "emailDisabled": "Gérée par {provider}",
+      "saveButton": "Enregistrer les modifications",
+      "saving": "Enregistrement...",
+      "success": "Profil mis à jour avec succès !",
+      "emailSuccess": "Votre adresse email a été modifiée avec succès !",
+      "noChanges": "Aucun changement détecté.",
+      "errors": {
+        "updateFailed": "Impossible de mettre à jour le profil.",
+        "unexpected": "Erreur inattendue."
+      }
+    },
+    "security": {
+      "title": "Sécurité",
+      "oauthInfo": "Votre compte est géré par {provider}. Le mot de passe est géré par ce fournisseur.",
+      "currentPassword": "Mot de passe actuel",
+      "currentPasswordPlaceholder": "Entrez votre mot de passe actuel",
+      "currentPasswordHint": "Laissez vide si vous n'avez jamais défini de mot de passe.",
+      "newPassword": "Nouveau mot de passe",
+      "newPasswordPlaceholder": "Entrez un nouveau mot de passe",
+      "confirmPassword": "Confirmation",
+      "confirmPasswordPlaceholder": "Confirmez le nouveau mot de passe",
+      "updateButton": "Mettre à jour le mot de passe",
+      "updating": "Mise à jour...",
+      "success": "Mot de passe mis à jour avec succès !",
+      "passwordStrength": {
+        "label": "Force du mot de passe",
+        "weak": "Faible",
+        "medium": "Moyen",
+        "strong": "Fort",
+        "veryStrong": "Très fort"
+      },
+      "passwordRules": {
+        "title": "Règles de sécurité",
+        "minLength": "Au moins 8 caractères",
+        "uppercase": "Au moins une majuscule",
+        "lowercase": "Au moins une minuscule",
+        "numbers": "Au moins un chiffre",
+        "specialChars": "Au moins un caractère spécial"
+      },
+      "errors": {
+        "newPasswordRequired": "Renseignez un nouveau mot de passe.",
+        "minLength": "Le mot de passe doit contenir au moins 8 caractères.",
+        "mismatch": "Les mots de passe ne correspondent pas.",
+        "updateFailed": "Impossible de mettre à jour le mot de passe.",
+        "unexpected": "Erreur inattendue."
+      }
+    },
+    "tutorial": {
+      "title": "Tutoriel d'intégration",
+      "description": "Relancez le tutoriel de prise en main pour redécouvrir les fonctionnalités de FitMyCV.io",
+      "resetButton": "Relancer le tutoriel",
+      "resetting": "Réinitialisation...",
+      "success": "Le tutoriel a été réinitialisé. Redirection...",
+      "errors": {
+        "resetFailed": "Erreur lors de la réinitialisation du tutoriel."
+      }
+    },
+    "linkedAccounts": {
+      "title": "Comptes liés",
+      "description": "Gérez les méthodes de connexion associées à votre compte FitMyCV.",
+      "status": {
+        "connected": "Connecté",
+        "notConnected": "Non connecté",
+        "notConfigured": "Non configuré"
+      },
+      "actions": {
+        "link": "Lier",
+        "unlink": "Délier",
+        "linking": "Liaison...",
+        "unlinking": "Suppression..."
+      },
+      "errors": {
+        "loadFailed": "Erreur lors du chargement des comptes liés.",
+        "linkFailed": "Impossible de lier le compte {provider}.",
+        "unlinkFailed": "Impossible de délier le compte {provider}.",
+        "cannotUnlinkLast": "Impossible de délier : vous devez avoir au moins un compte lié.",
+        "email_mismatch": "L'email de ce compte {provider} ne correspond pas à votre email FitMyCV.",
+        "already_linked_other": "Ce compte {provider} est déjà lié à un autre utilisateur.",
+        "oauth_error": "Erreur d'authentification avec {provider}.",
+        "invalid_state": "Session expirée. Veuillez réessayer.",
+        "expired": "La demande a expiré. Veuillez réessayer.",
+        "session_expired": "Votre session a expiré. Veuillez vous reconnecter.",
+        "server_error": "Erreur serveur. Veuillez réessayer."
+      },
+      "success": {
+        "linked": "Compte {provider} lié avec succès !",
+        "unlinked": "Compte {provider} délié avec succès.",
+        "alreadyLinked": "Compte {provider} déjà lié."
+      },
+      "confirmUnlink": {
+        "title": "Délier {provider} ?",
+        "message": "Vous ne pourrez plus vous connecter avec {provider}. Vous pourrez toujours le relier plus tard.",
+        "confirm": "Délier",
+        "cancel": "Annuler"
+      }
+    },
+    "deleteAccount": {
+      "title": "Supprimer le compte",
+      "description": "Cette action est définitive et sans remboursement. Tous vos CV, crédits et données seront effacés. Votre abonnement sera immédiatement annulé et vos données bancaires seront supprimées. Tapez votre mot de passe pour continuer.",
+      "passwordLabel": "Mot de passe",
+      "passwordHint": "Tous vos CV (dossier utilisateur inclus) seront supprimés. Cette opération est irréversible. Si vous avez créé le compte via un fournisseur externe, définissez d'abord un mot de passe dans la section Sécurité.",
+      "emailLabel": "Email de confirmation",
+      "emailHint": "Saisissez l'email de votre compte pour confirmer la suppression. Tous vos CV et données seront définitivement supprimés.",
+      "deleteButton": "Supprimer mon compte",
+      "deleting": "Suppression...",
+      "modal": {
+        "title": "Confirmer la suppression du compte",
+        "description": "Vous êtes sur le point de supprimer définitivement votre compte. Cette action est irréversible.",
+        "consequences": {
+          "noRefund": "Aucun remboursement ne sera effectué",
+          "loseCredits": "Vous perdrez tous vos crédits restants",
+          "cancelSubscription": "Votre abonnement sera immédiatement annulé",
+          "deleteCvs": "Tous vos CV seront définitivement supprimés",
+          "deleteBankData": "Vos données bancaires seront supprimées de nos serveurs"
+        },
+        "confirmCheckbox": "J'ai compris que cette action est irréversible et que je ne serai pas remboursé",
+        "cancelButton": "Annuler",
+        "confirmButton": "Supprimer définitivement",
+        "deleting": "Suppression...",
+        "errors": {
+          "passwordRequired": "Veuillez saisir votre mot de passe pour confirmer la suppression.",
+          "emailRequired": "Veuillez saisir votre email pour confirmer la suppression.",
+          "deleteFailed": "Suppression impossible. Réessayez.",
+          "unexpected": "Erreur inattendue lors de la suppression du compte."
+        }
+      }
+    }
+  }
+}

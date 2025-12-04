@@ -1,6 +1,6 @@
-# Composants React - FitMyCv.ai
+# Composants React - FitMyCV.io
 
-Catalogue complet des 100+ composants React de l'application.
+Catalogue complet des 132 composants React de l'application.
 
 ---
 
@@ -14,6 +14,7 @@ Catalogue complet des 100+ composants React de l'application.
 - [UI Components](#ui-components)
 - [Providers & Context](#providers--context)
 - [Subscription & Billing Components](#subscription--billing-components)
+- [Account Components](#account-components)
 - [Autres composants](#autres-composants)
 
 ---
@@ -27,15 +28,15 @@ Les composants sont organisés par fonctionnalité dans `components/` :
 ```
 components/
 ├── TopBar/           # Navigation principale (1 composant + sous-composants)
-├── admin/            # Admin et analytics (20+ composants)
+├── admin/            # Admin et analytics (32 composants)
 ├── auth/             # Authentification (4 composants)
 ├── subscription/     # Abonnements et crédits (10 composants)
-├── ui/               # UI réutilisables (10+ composants)
+├── ui/               # UI réutilisables (12 composants)
 ├── cookies/          # Gestion cookies RGPD (4 composants)
 ├── feedback/         # Système de feedback (3 composants)
-├── account/          # Paramètres compte (1 composant)
+├── account/          # Paramètres compte (4 composants)
 ├── notifications/    # Notifications (2 composants)
-├── onboarding/       # Tutoriel d'intégration (7 composants)
+├── onboarding/       # Tutoriel d'intégration (9 composants)
 ├── [CV]              # Affichage CV (10 composants)
 └── [Providers]       # Context providers (8 composants)
 ```
@@ -505,6 +506,191 @@ Gestion des plans d'abonnement.
 
 ---
 
+#### EmailTemplatesTab.jsx
+
+Gestion des templates d'email.
+
+**Fonctionnalités** :
+
+- Liste des templates avec statut (actif/inactif)
+- Création/édition de templates
+- Variables disponibles par template
+- Prévisualisation avant envoi
+
+---
+
+#### EmailEditor.jsx
+
+Éditeur de templates email avec Unlayer.
+
+**Props** :
+
+```javascript
+{
+  template: EmailTemplate,
+  onSave: (designJson, htmlContent) => void,
+  onCancel: () => void
+}
+```
+
+**Features** :
+
+- Éditeur drag-and-drop (Unlayer)
+- Insertion de variables dynamiques
+- Preview en temps réel
+- Export HTML
+
+---
+
+#### EmailLogsTable.jsx
+
+Historique des emails envoyés.
+
+**Colonnes** :
+
+- Date d'envoi
+- Template utilisé
+- Destinataire
+- Statut (sent, delivered, bounced, failed)
+- ID Resend
+
+**Filtres** :
+
+- Par template
+- Par statut
+- Par période
+
+---
+
+#### EmailPreviewModal.jsx
+
+Modal de prévisualisation d'email.
+
+**Props** :
+
+```javascript
+{
+  template: EmailTemplate,
+  variables: Record<string, string>,
+  onSendTest: () => void
+}
+```
+
+---
+
+#### OnboardingTab.jsx
+
+Analytics du système d'onboarding.
+
+**Métriques** :
+
+- Taux de complétion
+- Taux de skip
+- Temps moyen par étape
+- Drop-off par étape
+
+**Graphiques** :
+
+- Funnel de conversion
+- Timeline d'activité
+- Distribution des statuts
+
+---
+
+#### OnboardingUsersTable.jsx
+
+Liste des utilisateurs avec leur progression d'onboarding.
+
+**Colonnes** :
+
+- Utilisateur (email)
+- Étape actuelle
+- Statut (en cours, complété, skipped)
+- Date début/fin
+- Actions (reset)
+
+---
+
+#### OnboardingStatusChart.jsx
+
+Graphique circulaire des statuts d'onboarding.
+
+---
+
+#### OnboardingDropoffChart.jsx
+
+Graphique de drop-off par étape.
+
+---
+
+#### OnboardingTimeline.jsx
+
+Timeline d'activité onboarding récente.
+
+---
+
+#### OnboardingModalStats.jsx
+
+Statistiques des modals d'onboarding (vues, interactions).
+
+---
+
+#### RevenueTab.jsx
+
+Analytics des revenus et abonnements.
+
+**Métriques** :
+
+- MRR actuel
+- Évolution MRR
+- Distribution par plan
+- Churn rate
+
+---
+
+#### MRRHistoryChart.jsx
+
+Graphique d'évolution du MRR.
+
+---
+
+#### PlanDistributionChart.jsx
+
+Graphique de distribution des plans.
+
+---
+
+#### ConfirmDialog.jsx
+
+Dialog de confirmation générique.
+
+**Props** :
+
+```javascript
+{
+  isOpen: boolean,
+  title: string,
+  message: string,
+  onConfirm: () => void,
+  onCancel: () => void,
+  variant: 'danger' | 'warning' | 'info'
+}
+```
+
+---
+
+#### EditAlertModal.jsx
+
+Modal d'édition des alertes OpenAI.
+
+---
+
+#### ToggleSwitch.jsx
+
+Switch toggle pour paramètres on/off.
+
+---
+
 ### KPICard.jsx
 
 Carte KPI réutilisable.
@@ -787,6 +973,71 @@ Input mot de passe avec toggle visibilité.
 
 ---
 
+### DonutProgress.jsx
+
+Cercle de progression circulaire.
+
+**Props** :
+
+```javascript
+{
+  value: number,      // 0-100
+  size: number,       // Diamètre en px
+  strokeWidth: number,
+  color: string       // Couleur de remplissage
+}
+```
+
+---
+
+### SkeletonLoader.jsx
+
+Placeholder de chargement animé.
+
+**Props** :
+
+```javascript
+{
+  width: string,
+  height: string,
+  variant: 'text' | 'rect' | 'circle'
+}
+```
+
+---
+
+### TipBox.jsx
+
+Boîte d'information/conseil.
+
+**Props** :
+
+```javascript
+{
+  type: 'info' | 'warning' | 'success' | 'error',
+  title: string,
+  children: ReactNode
+}
+```
+
+---
+
+### Tooltip.jsx
+
+Tooltip au survol.
+
+**Props** :
+
+```javascript
+{
+  content: string,
+  position: 'top' | 'bottom' | 'left' | 'right',
+  children: ReactNode
+}
+```
+
+---
+
 ## Providers & Context
 
 ### RootProviders.jsx
@@ -872,11 +1123,13 @@ Provider du système de tutoriel d'intégration (7 étapes).
 
 **Composants associés** :
 
+- `WelcomeModal.jsx` : Modal de bienvenue au premier lancement
 - `OnboardingOrchestrator.jsx` : Gère l'affichage des étapes (modals, tooltips, pulsing dots)
 - `OnboardingModal.jsx` : Modal carousel pour les explications
 - `OnboardingCompletionModal.jsx` : Modal de fin avec présentation des fonctionnalités avancées
 - `ChecklistPanel.jsx` : Panel flottant de progression (disparaît après complétion)
 - `OnboardingTooltip.jsx` : Tooltips positionnés
+- `OnboardingHighlight.jsx` : Overlay de mise en évidence des éléments
 - `PulsingDot.jsx` : Point rouge pulsant pour attirer l'attention
 
 **Flux de complétion** :
@@ -1109,6 +1362,86 @@ Historique des factures Stripe avec PDF disponible.
 
 ---
 
+## Account Components
+
+Composants pour la gestion du compte utilisateur.
+
+**Dossier** : `components/account/`
+
+### AccountSettings.jsx
+
+Page complète des paramètres du compte utilisateur.
+
+**Sections** :
+
+- Profil (nom, email)
+- Sécurité (changement mot de passe)
+- Préférences (langue, thème)
+- Danger zone (suppression compte)
+
+---
+
+### AccountPageHeader.jsx
+
+En-tête de la page Account avec navigation tabs.
+
+---
+
+### AccountPageLoading.jsx
+
+Skeleton loader pour la page Account.
+
+---
+
+### LinkedAccountsSection.jsx
+
+Gestion des comptes OAuth liés au compte utilisateur.
+
+**Props** :
+
+```javascript
+{
+  linkedAccounts: Array<{
+    provider: string,
+    providerAccountId: string,
+    linkedAt: string
+  }>,
+  availableProviders: {
+    google: boolean,
+    github: boolean,
+    apple: boolean
+  },
+  canUnlink: { [provider: string]: boolean }
+}
+```
+
+**Fonctionnalités** :
+
+- Affichage des providers liés avec icône et date
+- Bouton "Lier" pour chaque provider disponible non lié
+- Bouton "Délier" (désactivé si dernier provider)
+- Modals de confirmation pour liaison/déliaison
+- Messages de succès/erreur après opérations
+- Protection reCAPTCHA pour la liaison
+
+**États** :
+
+| État | Description |
+|------|-------------|
+| `isLinking` | Liaison en cours (loading) |
+| `isUnlinking` | Déliaison en cours (loading) |
+| `linkError` | Erreur de liaison |
+| `unlinkError` | Erreur de déliaison |
+
+**Design** :
+
+- Glass cards pour chaque provider
+- Icônes colorées (Google, GitHub, Apple)
+- Animations de transition
+- Responsive mobile-first
+
+---
+
 ## Autres composants
 
 ### EmptyState.jsx
@@ -1229,4 +1562,4 @@ Scroll automatique en haut au montage.
 
 ---
 
-**100+ composants React documentés** | Architecture modulaire et réutilisable
+**132 composants React documentés** | Architecture modulaire et réutilisable

@@ -243,7 +243,7 @@ try {
 ## Troubleshooting commun
 
 **Onboarding ne démarre pas** :
-- Vérifier cvCount = 0
+- Vérifier cvCount >= 1
 - Vérifier currentStep = 0
 - Vérifier LOADING_SCREEN_CLOSED émis
 - Logs : `[OnboardingProvider] Auto-start conditions`

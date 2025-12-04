@@ -498,13 +498,14 @@ node scripts/migrate-onboarding-state.js
 ```sql
 -- Users avec onboarding en cours
 SELECT COUNT(*) FROM "User"
-WHERE "onboardingStep" > 0
-AND "hasCompletedOnboarding" = false;
+WHERE "onboardingState" IS NOT NULL
+AND ("onboardingState"->>'hasCompleted')::boolean = false
+AND ("onboardingState"->>'isSkipped')::boolean = false;
 
 -- Moyenne steps complétés
 SELECT AVG(jsonb_array_length("onboardingState"->'completedSteps'))
 FROM "User"
-WHERE "onboardingStep" > 0;
+WHERE "onboardingState" IS NOT NULL;
 
 -- Users ayant complété welcome modal
 SELECT COUNT(*) FROM "User"

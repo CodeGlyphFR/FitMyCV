@@ -1,5 +1,7 @@
 # Refonte du système de paiement Stripe - Documentation
 
+> **Note historique** : Ce document documente la refonte majeure du système Stripe effectuée en octobre 2025. Il sert de référence pour comprendre les décisions d'architecture et les fonctionnalités implémentées.
+
 ## Vue d'ensemble
 
 Ce document décrit les modifications apportées au système de paiement Stripe pour améliorer la sécurité, la conformité légale et l'expérience utilisateur.

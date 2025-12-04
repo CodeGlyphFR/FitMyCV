@@ -1,6 +1,6 @@
-# Référence des Commandes - FitMyCv.ai
+# Référence des Commandes - FitMyCV.io
 
-> **Part of FitMyCv.ai technical documentation**
+> **Part of FitMyCV.io technical documentation**
 > Quick reference: [CLAUDE.md](../CLAUDE.md) | Development: [DEVELOPMENT.md](./DEVELOPMENT.md) | Installation: [INSTALLATION.md](./INSTALLATION.md)
 
 ## Table des matières
@@ -205,6 +205,19 @@ node scripts/check-user-subscription.js
 
 # Définir les métadonnées d'un plan
 node scripts/set-plan-metadata.js
+```
+
+### Onboarding
+
+```bash
+# Reset onboarding pour tous les utilisateurs (dry-run par défaut)
+node scripts/reset-onboarding.js --dry-run
+
+# Reset onboarding pour un utilisateur spécifique
+node scripts/reset-onboarding.js --user=<userId>
+
+# Reset onboarding - exécution réelle (avec sauvegarde)
+node scripts/reset-onboarding.js --execute
 ```
 
 ### Features & Compteurs

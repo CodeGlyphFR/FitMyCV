@@ -1,9 +1,9 @@
-# Guide d'installation - FitMyCv.ai
+# Guide d'installation - FitMyCV.io
 
-> **Part of FitMyCv.ai technical documentation**
+> **Part of FitMyCV.io technical documentation**
 > Quick reference: [CLAUDE.md](../CLAUDE.md) | Environment Variables: [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md) | Commands: [COMMANDS_REFERENCE.md](./COMMANDS_REFERENCE.md)
 
-Ce guide vous accompagne pas à pas dans l'installation et la configuration de FitMyCv.ai.
+Ce guide vous accompagne pas à pas dans l'installation et la configuration de FitMyCV.io.
 
 ---
 
@@ -28,7 +28,8 @@ Ce guide vous accompagne pas à pas dans l'installation et la configuration de F
 | **Node.js** | 18.x | 20.x LTS | Runtime JavaScript |
 | **npm** | 9.x | 10.x | Gestionnaire de paquets |
 | **Git** | 2.x | Latest | Contrôle de version |
-| **SQLite** | 3.x | 3.40+ | Base de données (dev) |
+| **PostgreSQL** | 14.x | 15.x | Base de données |
+| **pg_dump/psql** | - | Latest | Outils PostgreSQL (pour sync) |
 
 ### Services externes
 
@@ -91,95 +92,22 @@ npx prisma --version
 
 ### 1. Créer les fichiers d'environnement
 
-#### a) Fichier `.env.local` (Next.js)
+#### a) Fichier `.env` (Next.js)
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-Éditer `.env.local` avec vos valeurs :
+Éditer `.env` avec vos valeurs.
+
+#### b) Database URL (PostgreSQL)
 
 ```bash
-# =====================================
-# APPLICATION
-# =====================================
-NODE_ENV=development
-NEXT_PUBLIC_SITE_URL=http://localhost:3001
-
-# =====================================
-# DATABASE (pour Next.js)
-# =====================================
-DATABASE_URL="file:./dev.db"
-
-# =====================================
-# NEXTAUTH
-# =====================================
-# Générer avec: openssl rand -base64 32
-NEXTAUTH_SECRET="votre-secret-aleatoire-32-caracteres"
-NEXTAUTH_URL=http://localhost:3001
-
-# =====================================
-# OPENAI (OBLIGATOIRE)
-# =====================================
-OPENAI_API_KEY="sk-proj-..."
-
-# =====================================
-# CHIFFREMENT CV (OBLIGATOIRE)
-# =====================================
-# Générer avec: openssl rand -base64 32
-CV_ENCRYPTION_KEY="votre-cle-chiffrement-32-octets"
-
-# =====================================
-# OAUTH (OPTIONNEL)
-# =====================================
-# Google OAuth
-GOOGLE_CLIENT_ID="votre-google-client-id"
-GOOGLE_CLIENT_SECRET="votre-google-client-secret"
-
-# GitHub OAuth
-GITHUB_ID="votre-github-client-id"
-GITHUB_SECRET="votre-github-client-secret"
-
-# Apple OAuth (configuration avancée)
-# APPLE_CLIENT_ID="votre-apple-client-id"
-# APPLE_CLIENT_SECRET="votre-apple-client-secret"
-# APPLE_TEAM_ID="votre-apple-team-id"
-# APPLE_KEY_ID="votre-apple-key-id"
-# APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
-
-# =====================================
-# EMAIL (OPTIONNEL)
-# =====================================
-# Resend API (pour envoi emails)
-# RESEND_API_KEY="re_..."
-# EMAIL_FROM="noreply@fitmycv.ai"
-
-# =====================================
-# RECAPTCHA (OPTIONNEL)
-# =====================================
-# reCAPTCHA v3 (protection anti-spam)
-# NEXT_PUBLIC_RECAPTCHA_SITE_KEY="6Le..."
-# RECAPTCHA_SECRET_KEY="6Le..."
-
-# =====================================
-# DÉVELOPPEMENT
-# =====================================
-# Origines autorisées (séparées par virgules)
-ALLOWED_ORIGINS="http://localhost:3000,http://localhost:3001"
+# Ajouter dans .env
+DATABASE_URL="postgresql://fitmycv:devpass@localhost:5433/fitmycv_dev"
 ```
 
-#### b) Fichier `prisma/.env` (Prisma)
-
-```bash
-# Créer le fichier .env dans le dossier prisma/
-echo 'DATABASE_URL="file:./dev.db"' > prisma/.env
-```
-
-**IMPORTANT** :
-- Pour **Prisma** : `DATABASE_URL` doit être dans `prisma/.env` avec `file:./dev.db`
-- Pour **Next.js** : `DATABASE_URL` peut être dans `.env.local` avec la même valeur
-- Le chemin est **toujours** `file:./dev.db` (relatif au dossier `prisma/`)
-- **NE JAMAIS** utiliser `file:./prisma/dev.db`
+**Note** : Le projet utilise PostgreSQL via Docker pour le développement (port 5433).
 
 ### 2. Générer les clés de sécurité
 
@@ -189,7 +117,7 @@ echo 'DATABASE_URL="file:./dev.db"' > prisma/.env
 openssl rand -base64 32
 ```
 
-Copier le résultat dans `.env.local` :
+Copier le résultat dans `.env` :
 
 ```bash
 NEXTAUTH_SECRET="le-resultat-genere"
@@ -201,7 +129,7 @@ NEXTAUTH_SECRET="le-resultat-genere"
 openssl rand -base64 32
 ```
 
-Copier le résultat dans `.env.local` :
+Copier le résultat dans `.env` :
 
 ```bash
 CV_ENCRYPTION_KEY="le-resultat-genere"
@@ -215,7 +143,7 @@ CV_ENCRYPTION_KEY="le-resultat-genere"
 2. Aller dans **API Keys**
 3. Créer une nouvelle clé : **Create new secret key**
 4. Copier la clé (elle commence par `sk-proj-...`)
-5. Ajouter dans `.env.local` :
+5. Ajouter dans `.env` :
 
 ```bash
 OPENAI_API_KEY="sk-proj-votre-cle"
@@ -236,63 +164,65 @@ OPENAI_API_KEY="sk-proj-votre-cle"
 4. Créer des identifiants OAuth 2.0
 5. Ajouter les **Authorized redirect URIs** :
    - `http://localhost:3001/api/auth/callback/google` (dev)
-   - `https://votre-domaine.com/api/auth/callback/google` (prod)
-6. Copier Client ID et Client Secret dans `.env.local`
+   - `https://your-domain.com/api/auth/callback/google` (prod)
+6. Copier Client ID et Client Secret dans `.env`
 
 #### GitHub OAuth
 
 1. Aller sur [GitHub Developer Settings](https://github.com/settings/developers)
 2. Créer une nouvelle **OAuth App**
 3. Configurer :
-   - **Homepage URL** : `http://localhost:3001`
-   - **Authorization callback URL** : `http://localhost:3001/api/auth/callback/github`
-4. Copier Client ID et Client Secret dans `.env.local`
+   - **Homepage URL** : `https://your-domain.com`
+   - **Authorization callback URL** : `https://your-domain.com/api/auth/callback/github`
+4. Copier Client ID et Client Secret dans `.env`
 
 ---
 
 ## Base de données
 
-### 1. Initialiser Prisma
+### 1. Créer la base de données de développement
 
-```bash
-# Générer le client Prisma
-npx prisma generate
+Créer la base `fitmycv_dev` sur le serveur PostgreSQL :
+
+```sql
+CREATE DATABASE fitmycv_dev;
+GRANT ALL PRIVILEGES ON DATABASE fitmycv_dev TO fitmycv;
 ```
 
-Cette commande génère le client Prisma TypeScript basé sur `prisma/schema.prisma`.
+### 2. Configurer DATABASE_URL
 
-### 2. Appliquer les migrations
+Ajouter dans `.env` :
 
 ```bash
-# Appliquer toutes les migrations
-npx prisma migrate deploy
+DATABASE_URL="postgresql://fitmycv:password@localhost:5432/fitmycv_dev"
 ```
 
-Cette commande :
-- Crée le fichier `prisma/dev.db` (SQLite)
-- Applique toutes les migrations (15 migrations)
-- Crée 23 tables (User, CvFile, BackgroundTask, etc.)
+### 3. Initialiser la base de données
 
-### 3. Vérifier la base de données
+```bash
+# Option 1: Setup avec seed data (données par défaut)
+npm run db:setup
+
+# Option 2: Copier les données de production
+npm run db:sync-from-prod
+```
+
+Le setup :
+- Génère le client Prisma
+- Applique la migration baseline (34 tables)
+- Peuple la base avec les données par défaut (plans, crédits, settings, etc.)
+
+### 4. Vérifier la base de données
 
 ```bash
 # Ouvrir Prisma Studio (interface graphique)
-npx prisma studio
+npm run db:studio
 ```
 
 Prisma Studio s'ouvre sur `http://localhost:5555` et permet de :
 - Visualiser toutes les tables
 - Ajouter/modifier/supprimer des données
 - Tester les relations
-
-### 4. (Optionnel) Peupler la base de données
-
-```bash
-# Exécuter le seed (si défini)
-npx prisma db seed
-```
-
-**Note** : Le seed n'est pas obligatoire. L'application crée automatiquement les données nécessaires au premier lancement.
 
 ---
 
@@ -374,27 +304,27 @@ curl http://localhost:3001
 curl http://localhost:3001/api/settings
 # Devrait retourner un JSON avec les settings publics
 
-# 3. Test base de données
-ls -lh prisma/dev.db
-# Devrait afficher le fichier de base de données
+# 3. Test base de données (Docker doit être running)
+docker exec fitmycv-dev-db pg_isready -U fitmycv -d fitmycv_dev
+# Devrait retourner "accepting connections"
 ```
 
 ---
 
 ## Problèmes courants
 
-### Erreur : `Error: Invalid 'DATABASE_URL'`
+### Erreur : `Error: Can't reach database server`
 
-**Cause** : Le chemin DATABASE_URL est incorrect.
+**Cause** : PostgreSQL Docker n'est pas démarré.
 
 **Solution** :
 
 ```bash
-# Dans prisma/.env
-DATABASE_URL="file:./dev.db"
+# Démarrer PostgreSQL
+npm run db:dev:start
 
-# PAS file:./prisma/dev.db ❌
-# PAS file:../prisma/dev.db ❌
+# Vérifier que le container tourne
+docker ps | grep fitmycv-dev-db
 ```
 
 ### Erreur : `Error: Cannot find module 'next'`
@@ -481,4 +411,4 @@ npm run dev -- -p 3002
 
 ---
 
-**Installation terminée !** Votre environnement FitMyCv.ai est prêt.
+**Installation terminée !** Votre environnement FitMyCV.io est prêt.

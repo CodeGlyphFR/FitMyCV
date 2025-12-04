@@ -351,3 +351,17 @@ select:-moz-autofill:focus {
 .touch-pan-y {
   touch-action: pan-y !important;
 }
+
+/* Animation pulse-glow pour mise en avant des cards d'abonnement */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3), 0 25px 50px -12px rgba(16, 185, 129, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.6), 0 25px 50px -12px rgba(16, 185, 129, 0.5);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}

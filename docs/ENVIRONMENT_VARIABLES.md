@@ -1,9 +1,9 @@
-# Variables d'Environnement - FitMyCv.ai
+# Variables d'Environnement - FitMyCV.io
 
-> **Part of FitMyCv.ai technical documentation**
+> **Part of FitMyCV.io technical documentation**
 > Quick reference: [CLAUDE.md](../CLAUDE.md) | Installation: [INSTALLATION.md](./INSTALLATION.md) | Stripe Setup: [STRIPE_SETUP.md](./STRIPE_SETUP.md)
 
-Ce document liste toutes les variables d'environnement nécessaires pour FitMyCv.ai, leur utilisation et leur configuration.
+Ce document liste toutes les variables d'environnement nécessaires pour FitMyCV.io, leur utilisation et leur configuration.
 
 ## Table des matières
 
@@ -105,32 +105,33 @@ GPT_MATCH_SCORE_USER_PROMPT="Your custom user prompt here..."
 
 ### DATABASE_URL (Obligatoire)
 
-URL de connexion à la base de données SQLite (par défaut) ou PostgreSQL.
+URL de connexion à PostgreSQL utilisée par Prisma.
 
 ```bash
-# SQLite (développement)
-DATABASE_URL="file:./dev.db"
+# Développement
+DATABASE_URL="postgresql://fitmycv:password@localhost:5432/fitmycv_dev"
 
-# PostgreSQL (production)
-DATABASE_URL="postgresql://user:password@localhost:5432/cv_site"
+# Production
+DATABASE_URL="postgresql://fitmycv:password@localhost:5432/fitmycv_prod"
 ```
 
-### IMPORTANT - Chemin Database
+### DATABASE_URL_DEV (Pour sync)
 
-- Le chemin DATABASE_URL est **TOUJOURS relatif au dossier `prisma/`**
-- ✅ **Correct** : `file:./dev.db` (relatif à `prisma/`)
-- ❌ **Incorrect** : `file:./prisma/dev.db` (chemin absolu depuis racine)
-
-**Pourquoi** : Prisma s'exécute depuis le dossier `prisma/` pour les migrations.
-
-### Exemple .env.local
+Variable requise pour le script `npm run db:sync-from-prod` qui copie les données de `DATABASE_URL` vers `DATABASE_URL_DEV`.
 
 ```bash
-# Pour SQLite (développement)
-DATABASE_URL="file:./dev.db"
+DATABASE_URL_DEV="postgresql://fitmycv:password@localhost:5432/fitmycv_dev"
 ```
 
-La base de données sera créée dans `prisma/dev.db`.
+### Setup développement
+
+```bash
+# Option 1: Setup avec seed data
+npm run db:setup
+
+# Option 2: Copier les données de production
+npm run db:sync-from-prod
+```
 
 **Documentation** : [DATABASE.md](./DATABASE.md) | [INSTALLATION.md](./INSTALLATION.md)
 
@@ -351,6 +352,36 @@ APPLE_SECRET="..."
 
 ---
 
+## reCAPTCHA v3
+
+### NEXT_PUBLIC_RECAPTCHA_SITE_KEY (Obligatoire production)
+
+```bash
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY="6Le..."
+```
+
+**Obtenir** : [Google reCAPTCHA Admin](https://www.google.com/recaptcha/admin)
+
+### RECAPTCHA_SECRET_KEY (Obligatoire production)
+
+```bash
+RECAPTCHA_SECRET_KEY="6Le..."
+```
+
+Clé secrète côté serveur pour validation.
+
+### BYPASS_RECAPTCHA (Développement uniquement)
+
+```bash
+BYPASS_RECAPTCHA=true  # Désactive la vérification en développement
+```
+
+**Note** : N'utilisez JAMAIS cette variable en production.
+
+**Documentation** : [SECURITY.md - reCAPTCHA](./SECURITY.md#recaptcha-v3)
+
+---
+
 ## Variables Chiffrement
 
 ### CV_ENCRYPTION_KEY (Obligatoire)
@@ -447,10 +478,10 @@ const rootPath = getUserRootPath("user123");
 
 ```bash
 # Version de l'application (affichée dans l'UI)
-NEXT_PUBLIC_APP_VERSION="1.0.9.1"
+NEXT_PUBLIC_APP_VERSION="1.0.9.2"
 
 # Nom du site (utilisé dans le titre)
-NEXT_PUBLIC_SITE_NAME="FitMyCv.ai"
+NEXT_PUBLIC_SITE_NAME="FitMyCV.io"
 
 # Dossier de stockage des CV chiffrés (défaut: data/users)
 CV_BASE_DIR="data/users"
@@ -619,13 +650,13 @@ OPENAI_MODEL="gpt-4.1-mini"
 # GPT_MATCH_SCORE_USER_PROMPT="..."
 
 # ============================================
-# Database
+# Database (PostgreSQL)
 # ============================================
-# SQLite (développement) - TOUJOURS relatif à prisma/
-DATABASE_URL="file:./dev.db"
+# Développement (Docker sur port 5433)
+DATABASE_URL="postgresql://fitmycv:devpass@localhost:5433/fitmycv_dev"
 
-# PostgreSQL (production)
-# DATABASE_URL="postgresql://user:password@localhost:5432/cv_site"
+# Production
+# DATABASE_URL="postgresql://user:password@localhost:5432/fitmycv_prod"
 
 # ============================================
 # NextAuth
@@ -673,8 +704,8 @@ APPLE_SECRET="..."
 # ============================================
 # Application
 # ============================================
-NEXT_PUBLIC_APP_VERSION="1.0.9.1"
-NEXT_PUBLIC_SITE_NAME="FitMyCv.ai"
+NEXT_PUBLIC_APP_VERSION="1.0.9.2"
+NEXT_PUBLIC_SITE_NAME="FitMyCV.io"
 CV_BASE_DIR="data/users"
 
 # ============================================

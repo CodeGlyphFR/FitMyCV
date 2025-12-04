@@ -7,6 +7,7 @@ import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getSkillLevelLabel } from "@/lib/i18n/cvLabels";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import { capitalizeSkillName } from "@/lib/utils/textFormatting";
 
 function Row({children}){ return <div className="flex gap-2">{children}</div>; }
 
@@ -144,7 +145,7 @@ export default function Skills(props){
                         return (
                           <div key={i} className="text-sm">
                             <span className="font-medium">
-                              {s && (s.name || s.label || s.title || s.value || (typeof s === "string" ? s : ""))}
+                              {capitalizeSkillName(s && (s.name || s.label || s.title || s.value || (typeof s === "string" ? s : "")))}
                             </span>
                             {levelLabel ? <span className="opacity-70"> • {levelLabel}</span> : null}
                           </div>
@@ -176,7 +177,7 @@ export default function Skills(props){
                           return (
                             <li key={i} className="text-sm">
                               <span className="font-medium">
-                                {tool && (tool.name || tool.label || tool.title || tool.value || (typeof tool === "string" ? tool : ""))}
+                                {capitalizeSkillName(tool && (tool.name || tool.label || tool.title || tool.value || (typeof tool === "string" ? tool : "")))}
                               </span>
                               {levelLabel ? <span className="opacity-70"> • {levelLabel}</span> : null}
                             </li>
@@ -205,7 +206,7 @@ export default function Skills(props){
                           const lab = typeof m === "string" ? m : (m?.name || m?.label || m?.title || m?.value || "");
                           return (
                             <span key={i} className="inline-block rounded border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
-                              {lab}
+                              {capitalizeSkillName(lab)}
                             </span>
                           );
                         })}
@@ -225,7 +226,7 @@ export default function Skills(props){
                       const lab = typeof m === "string" ? m : (m?.name || m?.label || m?.title || m?.value || "");
                       return (
                         <span key={i} className="inline-block rounded border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
-                          {lab}
+                          {capitalizeSkillName(lab)}
                         </span>
                       );
                     })}
@@ -255,9 +256,9 @@ export default function Skills(props){
         <div className="space-y-2">
           {hardLocal.map((row,idx)=>(
             <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...hardLocal]; arr[idx]={...arr[idx], name:e.target.value}; setHardLocal(arr); }} />
+              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...hardLocal]; arr[idx]={...arr[idx], name:e.target.value}; setHardLocal(arr); }} />
               <select
-                className="flex-1 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
+                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
                 value={row.proficiency ?? ""}
                 onChange={e => { const arr=[...hardLocal]; arr[idx]={ ...arr[idx], proficiency:e.target.value }; setHardLocal(arr); }}
               >
@@ -281,9 +282,9 @@ export default function Skills(props){
         <div className="space-y-2">
           {toolsLocal.map((row,idx)=>(
             <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...toolsLocal]; arr[idx]={...arr[idx], name:e.target.value}; setToolsLocal(arr); }} />
+              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...toolsLocal]; arr[idx]={...arr[idx], name:e.target.value}; setToolsLocal(arr); }} />
               <select
-                className="flex-1 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
+                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
                 value={row.proficiency ?? ""}
                 onChange={e => { const arr=[...toolsLocal]; arr[idx]={ ...arr[idx], proficiency:e.target.value }; setToolsLocal(arr); }}
               >
@@ -307,7 +308,7 @@ export default function Skills(props){
         <div className="space-y-2">
           {methLocal.map((row,idx)=>(
             <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...methLocal]; arr[idx]=e.target.value; setMethLocal(arr); }} />
+              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...methLocal]; arr[idx]=e.target.value; setMethLocal(arr); }} />
               <button onClick={()=>{ const arr=[...methLocal]; arr.splice(idx,1); setMethLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 p-1.5 text-white hover:bg-red-500/40 transition-colors shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
             </div>
           ))}
@@ -323,7 +324,7 @@ export default function Skills(props){
         <div className="space-y-2">
           {softLocal.map((row,idx)=>(
             <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...softLocal]; arr[idx]=e.target.value; setSoftLocal(arr); }} />
+              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...softLocal]; arr[idx]=e.target.value; setSoftLocal(arr); }} />
               <button onClick={()=>{ const arr=[...softLocal]; arr.splice(idx,1); setSoftLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 p-1.5 text-white hover:bg-red-500/40 transition-colors shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
             </div>
           ))}

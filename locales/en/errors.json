@@ -1,0 +1,123 @@
+{
+  "errors": {
+    "api": {
+      "common": {
+        "notAuthenticated": "Authentication required",
+        "invalidPayload": "Invalid request data",
+        "serverError": "Server error. Please try again later.",
+        "notFound": "{resource} not found",
+        "forbidden": "You do not have permission to perform this action",
+        "unknownError": "An unknown error occurred"
+      },
+      "auth": {
+        "emailRequired": "Email is required",
+        "passwordRequired": "Password is required",
+        "emailAndPasswordRequired": "Email and password are required",
+        "nameRequired": "First name, last name, email, and password are required",
+        "firstNameRequired": "First name is required",
+        "lastNameRequired": "Last name is required",
+        "emailInvalid": "Invalid email address",
+        "nameInvalid": "Invalid name",
+        "firstNameInvalid": "Invalid first name",
+        "lastNameInvalid": "Invalid last name",
+        "passwordWeak": "Password is too weak",
+        "accountCreateFailed": "Unable to create account. Please check your information.",
+        "recaptchaFailed": "Anti-spam verification failed. Please try again.",
+        "tokenRequired": "Token is required",
+        "tokenInvalid": "Invalid or expired token",
+        "tokenExpired": "Token has expired",
+        "oauthOnly": "This account uses external authentication",
+        "emailAlreadyVerified": "Email already verified",
+        "rateLimitExceeded": "Please wait before retrying",
+        "emailAlreadyUsed": "This email address is already used by another account",
+        "passwordIncorrect": "Current password is incorrect",
+        "providerRequired": "Provider is required",
+        "providerInvalid": "Invalid provider",
+        "providerNotConfigured": "This provider is not configured on this server",
+        "providerAlreadyLinked": "This provider is already linked to your account",
+        "providerNotLinked": "This provider is not linked to your account",
+        "cannotUnlinkLastProvider": "Cannot unlink: you must have at least one linked account"
+      },
+      "cv": {
+        "notFound": "CV not found",
+        "invalidFilename": "Invalid file name",
+        "missingFilename": "File name is missing",
+        "readError": "Error reading CV",
+        "deleteError": "Error deleting CV",
+        "createError": "Error creating CV",
+        "verifyError": "Error verifying CV",
+        "debitError": "Error debiting credits",
+        "sourceError": "Error retrieving CV source",
+        "metadataError": "Error retrieving CV metadata",
+        "improveError": "Error improving CV"
+      },
+      "background": {
+        "noSourceProvided": "Add at least one link or file",
+        "invalidLinksFormat": "Invalid links format",
+        "noPdfProvided": "No PDF file provided",
+        "pdfSaveError": "Unable to save PDF file",
+        "queueError": "Error queuing the task",
+        "invalidTargetLanguage": "Invalid target language",
+        "cvFileMissing": "CV file is missing",
+        "noJobOfferAnalysis": "CV does not have a job offer analysis",
+        "jobOfferUrlNotFound": "Job offer URL not found",
+        "noJobTitleProvided": "Job title is required",
+        "noReferenceCvProvided": "Reference CV is required",
+        "cancelFailed": "Unable to cancel task",
+        "deleteFailed": "Unable to delete completed tasks",
+        "taskCompleted": "Task completed",
+        "taskFailed": "Task failed"
+      },
+      "account": {
+        "updateFailed": "Unable to update profile",
+        "passwordUpdateFailed": "Unable to update password",
+        "deleteFailed": "Unable to delete account",
+        "unlinkFailed": "Unable to unlink account",
+        "emailChangeFailed": "Error requesting email change"
+      },
+      "subscription": {
+        "limitReached": "Monthly limit reached for this feature",
+        "invalidPlan": "Invalid subscription plan",
+        "planRequired": "Plan ID is required",
+        "invalidBillingPeriod": "Invalid billing period (monthly or yearly)",
+        "packRequired": "Pack ID is required",
+        "sessionRequired": "Session ID is required",
+        "checkoutError": "Error creating checkout session"
+      },
+      "other": {
+        "feedbackFailed": "Internal server error",
+        "exportPdfFailed": "Error generating PDF",
+        "consentRequired": "Action and preferences are required",
+        "consentInvalidAction": "Invalid action (created, updated, or revoked)",
+        "onboardingInvalidStep": "Invalid step",
+        "onboardingInvalidBody": "Invalid JSON body",
+        "onboardingInvalidAction": "Invalid action"
+      },
+      "openai": {
+        "extractJobOfferFailed": "Unable to extract job offer",
+        "gptNoContent": "GPT returned no content",
+        "pdfAnalysisFailed": "Unable to analyze job offer PDF",
+        "cvContentMissing": "Reference CV content missing",
+        "noAiResponse": "No response from AI",
+        "invalidResponseFormat": "Invalid response format",
+        "cvAndJobRequired": "CV content and job offer are required",
+        "jobTitleValidationFailed": "Unable to validate job title",
+        "jobTitleMissing": "Job title missing or invalid",
+        "noGptResponse": "No response from GPT",
+        "invalidJsonResponse": "GPT response is not valid JSON",
+        "incompleteCv": "Generated CV is incomplete (missing name or title)",
+        "noTextExtracted": "PDF contains no extractable text",
+        "gptExtractionFailed": "ChatGPT could not extract CV information",
+        "openaiKeyMissing": "OpenAI API key is missing",
+        "openaiQuotaExceeded": "OpenAI quota exceeded. Check your billing.",
+        "invalidCvFormat": "Invalid CV format",
+        "extractedJobOfferMissing": "Extracted job offer missing - CV must be generated with an extracted offer",
+        "emptyOpenaiResponse": "Empty response from OpenAI",
+        "noTranslationResponse": "No translation response received",
+        "noJobOfferProvided": "No job offer provided (link or file required)",
+        "gptGenerationFailed": "GPT could not generate CV template",
+        "promptNotFound": "Prompt file not found"
+      }
+    }
+  }
+}

@@ -11,6 +11,7 @@ import { UsersTab } from '@/components/admin/UsersTab';
 import { SubscriptionPlansTab } from '@/components/admin/SubscriptionPlansTab';
 import { RevenueTab } from '@/components/admin/RevenueTab';
 import { OnboardingTab } from '@/components/admin/OnboardingTab';
+import { EmailTemplatesTab } from '@/components/admin/EmailTemplatesTab';
 import { DateRangePicker } from '@/components/admin/DateRangePicker';
 import { UserFilter } from '@/components/admin/UserFilter';
 import { TabsBar } from '@/components/admin/TabsBar';
@@ -47,6 +48,7 @@ export default function AnalyticsDashboard() {
     { id: 'onboarding', label: 'Onboarding', icon: '🎯' },
     { id: 'revenue', label: 'Revenus', icon: '💵' },
     { id: 'subscriptions', label: 'Abonnements', icon: '💳' },
+    { id: 'emails', label: 'Gestion Emails', icon: '📧' },
     { id: 'settings', label: 'Settings', icon: '⚙️' },
   ];
 
@@ -107,7 +109,7 @@ export default function AnalyticsDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              {!['settings', 'users', 'subscriptions', 'revenue', 'onboarding'].includes(activeTab) && (
+              {!['settings', 'users', 'subscriptions', 'revenue', 'onboarding', 'emails'].includes(activeTab) && (
                 <UserFilter value={selectedUserId} onChange={setSelectedUserId} />
               )}
               {['overview', 'features', 'sessions', 'errors', 'openai-costs', 'feedback', 'onboarding'].includes(activeTab) && (
@@ -147,7 +149,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* User Filter - Mobile only (below tabs) */}
-      {!['settings', 'users', 'subscriptions', 'revenue', 'onboarding'].includes(activeTab) && (
+      {!['settings', 'users', 'subscriptions', 'revenue', 'onboarding', 'emails'].includes(activeTab) && (
         <div className="md:hidden bg-gray-900/98 backdrop-blur-xl border-b border-white/10 sticky top-[5.5rem] z-40 will-change-transform">
           <div className="px-4 py-3">
             <UserFilter value={selectedUserId} onChange={setSelectedUserId} />
@@ -166,6 +168,7 @@ export default function AnalyticsDashboard() {
         {activeTab === 'onboarding' && <OnboardingTab period={period} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'revenue' && <RevenueTab refreshKey={refreshKey} />}
         {activeTab === 'subscriptions' && <SubscriptionPlansTab refreshKey={refreshKey} />}
+        {activeTab === 'emails' && <EmailTemplatesTab refreshKey={refreshKey} />}
         {activeTab === 'settings' && <SettingsTab refreshKey={refreshKey} />}
       </div>
     </div>

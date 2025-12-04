@@ -1,0 +1,393 @@
+{
+  "onboarding": {
+    "common": {
+      "buttons": {
+        "skip": "Saltar",
+        "previous": "Anterior",
+        "next": "Siguiente",
+        "understood": "Entendido",
+        "understoodExclaim": "¡Entendido!",
+        "start": "¡Comenzar!",
+        "close": "Cerrar"
+      },
+      "aria": {
+        "closeModal": "Cerrar modal",
+        "closeTooltip": "Cerrar tooltip",
+        "closeAndStartOnboarding": "Cerrar y comenzar tutorial",
+        "expandChecklist": "Expandir",
+        "collapseChecklist": "Contraer",
+        "closeGuide": "Cerrar guía",
+        "goToScreen": "Ir a pantalla {current} de {total}",
+        "screenReaderStep": "Paso {current} de {total}"
+      },
+      "checklist": {
+        "title": "Guía de inicio",
+        "inProgress": "En progreso",
+        "skipTutorial": "Saltar tutorial",
+        "completed": "¡Tutorial completado!",
+        "confirmSkip": "¿Estás seguro de que quieres saltar el tutorial? Puedes reiniciarlo desde la configuración.",
+        "progressLabel": "Progreso del tutorial"
+      }
+    },
+    "steps": {
+      "step1": {
+        "title": "Modo edición",
+        "description": "Descubre el modo edición para modificar fácilmente tu CV",
+        "tooltip": "👉 ¡Haz clic aquí para editar tu CV!",
+        "modal": {
+          "screen1": {
+            "title": "Crea tu CV \"maestro\"",
+            "description": "La idea es simple: crea un CV lo más completo posible con todas tus experiencias, habilidades y formación. Cuanto más detallado sea tu CV, mejor podrá la IA filtrarlo para cada oferta de empleo.",
+            "checklist": [
+              "Un CV completo para mantener",
+              "La IA extrae lo mejor para cada oferta",
+              "Un enorme ahorro de tiempo"
+            ],
+            "tip": "Piensa en \"Mega CV\": lista todo, la IA lo ordenará por ti. Hazlo una vez, la magia viene después."
+          },
+          "screen2": {
+            "title": "¡Tienes el control total!",
+            "description": "Tu CV te pertenece. Modifícalo como quieras, sección por sección.",
+            "subtitle": "3 acciones a tu disposición:",
+            "actions": {
+              "edit": {
+                "title": "Editar",
+                "description": "Edita el contenido de cualquier sección con un clic"
+              },
+              "delete": {
+                "title": "Eliminar",
+                "description": "Elimina lo que ya no es relevante"
+              },
+              "add": {
+                "title": "Añadir",
+                "description": "Completa tu CV con nuevas experiencias, formación, idiomas, proyectos o extras"
+              }
+            },
+            "tip": "Cuanto más rico sea tu CV, más tendrá la IA para trabajar."
+          },
+          "screen3": {
+            "title": "Dos secciones que no debes descuidar",
+            "blocks": {
+              "projects": {
+                "title": "Proyectos",
+                "description": "Lista tus proyectos profesionales Y personales. Un proyecto personal, una contribución open source, un proyecto estudiantil... todo cuenta para la IA."
+              },
+              "extra": {
+                "title": "Extra",
+                "description": "Completa tu información adicional: hobbies e intereses, disponibilidad, preferencia de trabajo remoto, movilidad, carnet de conducir..."
+              }
+            },
+            "tip": "Esta información ayuda a la IA a orientar mejor las ofertas que te corresponden."
+          }
+        }
+      },
+      "step2": {
+        "title": "Generación con IA",
+        "description": "Genera un CV adaptado con IA",
+        "tooltip": "✨ Adapta tu CV a ofertas de empleo con IA",
+        "modal": {
+          "screen1": {
+            "title": "Genera CVs adaptados en unos clics",
+            "description": "El corazón de FitMyCV: tus ofertas de empleo. Añádelas, la IA se encarga del resto. Analiza cada oferta, extrae la información clave y adapta tu CV automáticamente.",
+            "subtitle": "2 formas de comenzar:",
+            "blocks": {
+              "existing": {
+                "title": "Partir de un CV existente",
+                "description": "Selecciona tu CV más completo. Cuanto más detallado sea, más precisamente podrá la IA adaptarlo a cada oferta de empleo."
+              },
+              "template": {
+                "title": "Crear una plantilla desde la oferta",
+                "description": "Genera una plantilla de CV basada en la oferta de empleo para inspirarte y componer el tuyo propio."
+              }
+            },
+            "tip": "No necesitas copiar y pegar el contenido de las ofertas. Pega enlaces o importa PDFs, la IA extrae todo automáticamente."
+          },
+          "screen2": {
+            "title": "Una oferta de empleo = Un CV adaptado",
+            "description": "Añade tantas ofertas como quieras. Para cada una, la IA genera un CV perfectamente adaptado.",
+            "blocks": {
+              "url": {
+                "title": "Por URL",
+                "description": "Pega tus enlaces de ofertas de empleo. La IA abre cada página y extrae la información automáticamente."
+              },
+              "pdf": {
+                "title": "Por PDF",
+                "description": "Importa ofertas que te enviaron o que guardaste."
+              }
+            },
+            "historyBlock": {
+              "title": "Historial",
+              "description": "Encuentra todas las ofertas usadas anteriormente. Reutilízalas para generar nuevos CVs sin buscar de nuevo."
+            },
+            "subtitle2": "3 niveles de análisis:",
+            "analysisLevels": {
+              "rapid": {
+                "title": "Rápido",
+                "description": "Adaptación esencial"
+              },
+              "normal": {
+                "title": "Normal",
+                "description": "Análisis completo"
+              },
+              "deep": {
+                "title": "Profundo",
+                "description": "Optimización máxima"
+              }
+            }
+          },
+          "screen3": {
+            "title": "La IA adapta, no inventa",
+            "description": "La IA no fabrica experiencias falsas. Filtra tu CV genérico para conservar solo lo que importa para la oferta de empleo.",
+            "subtitle": "Específicamente, la IA:",
+            "checklist": [
+              "Filtra experiencias y habilidades relevantes para la oferta",
+              "Elimina lo innecesario para evitar sobrecargar el CV",
+              "Reformula usando el vocabulario de la oferta (compatible con ATS)",
+              "Detecta habilidades faltantes justificables por tu trayectoria",
+              "Determina tu nivel para cada habilidad añadida"
+            ],
+            "tip": "Resultado: un CV orientado, simplificado y perfectamente alineado con lo que busca el reclutador."
+          }
+        }
+      },
+      "step3": {
+        "title": "Gestor de tareas",
+        "description": "Sigue el progreso de tus tareas en segundo plano",
+        "tooltip": "🔄 Tu CV se está generando. Sigue el progreso aquí."
+      },
+      "step4": {
+        "title": "Abrir CV generado",
+        "description": "Abre y visualiza tu CV generado",
+        "tooltip": "✅ ¡Tu nuevo CV está listo! Haz clic aquí para abrirlo"
+      },
+      "step5": {
+        "title": "Puntuación de coincidencia",
+        "description": "Calcula la compatibilidad con una oferta de empleo",
+        "tooltip": "🎯 Calcula la compatibilidad de tu CV con una oferta de empleo",
+        "fallbackMessage": "Este paso requiere una oferta de empleo asociada. ¿Quieres saltarlo?"
+      },
+      "step6": {
+        "title": "Optimización con IA",
+        "description": "Optimiza el CV con sugerencias de IA",
+        "tooltip": "🚀 Optimiza tu CV para aumentar tu puntuación",
+        "modal": {
+          "screen1": {
+            "title": "Mide tu compatibilidad con la oferta",
+            "description": "Para cada CV generado, obtén una puntuación de coincidencia que indica qué tan bien tu perfil corresponde a las expectativas del reclutador.",
+            "subtitle": "El análisis detallado te muestra:",
+            "blocks": {
+              "breakdown": {
+                "title": "Desglose de puntuación",
+                "description": "Entiende qué funciona y qué puede mejorarse"
+              },
+              "validated": {
+                "title": "Habilidades validadas",
+                "description": "Lo que tu CV ya cubre para la oferta de empleo"
+              },
+              "missing": {
+                "title": "Habilidades faltantes",
+                "description": "Lo que el reclutador busca y que aún no aparece"
+              },
+              "improvements": {
+                "title": "Puntos de mejora",
+                "description": "Recomendaciones concretas para aumentar tu puntuación"
+              }
+            },
+            "tip": "Una puntuación alta = más posibilidades de ser notado por el reclutador."
+          },
+          "screen2": {
+            "title": "Aplica mejoras instantáneamente",
+            "description": "No necesitas modificar todo manualmente. La IA puede aplicar recomendaciones directamente a tu CV con un clic.",
+            "checklist": [
+              "Reformulación automática",
+              "Adición de habilidades faltantes justificables",
+              "Ajuste del vocabulario para la oferta de empleo"
+            ],
+            "subtitle": "Total transparencia:",
+            "transparencyText": "Cada modificación se registra en el historial con su justificación. Sabes exactamente qué cambió y por qué.",
+            "tip": "Optimiza, verifica, exporta. Tu CV está listo para postular."
+          }
+        }
+      },
+      "step7": {
+        "title": "Historial",
+        "description": "Ver historial de modificaciones de IA",
+        "tooltip": "📝 Descubre todas las modificaciones realizadas por la IA"
+      },
+      "step8": {
+        "title": "Exportación PDF",
+        "description": "Exporta tu CV optimizado a formato PDF",
+        "tooltip": "📄 Exporta tu CV optimizado a formato PDF",
+        "modal": {
+          "screen1": {
+            "title": "Exporta un CV listo para postular",
+            "description": "Genera un PDF profesional, en formato estándar sin foto, perfectamente legible por reclutadores y sus herramientas ATS.",
+            "checklist": [
+              "Formato universal reconocido por todos los ATS",
+              "Diseño claro y profesional",
+              "Listo para enviar a candidaturas"
+            ]
+          },
+          "screen2": {
+            "title": "Exportación 100% personalizable",
+            "description": "Selecciona lo que quieres incluir en tu PDF: secciones, experiencias, formación, idiomas, proyectos... Tú decides, nosotros generamos.",
+            "checklist": [
+              "Oculta secciones irrelevantes",
+              "Elige qué experiencias mostrar",
+              "Incluye o excluye entregables clave"
+            ],
+            "tip": "Un CV orientado = más impacto con el reclutador."
+          }
+        },
+        "onComplete": {
+          "message": "🎉 ¡Felicidades! ¡Ahora dominas todas las funciones!"
+        }
+      }
+    },
+    "welcome": {
+      "screen1": {
+        "title": "Bienvenido a FitMyCV 👋",
+        "description": "¡Bienvenido! Este tutorial te enseñará los conceptos básicos para crear rápidamente CVs adaptados a cada oferta.",
+        "checklist": [
+          "Un CV adaptado para cada oferta",
+          "Formato optimizado para ATS*",
+          "Diseñado para convencer a reclutadores",
+          "Listo en minutos"
+        ],
+        "atsExplanation": "ATS (Applicant Tracking System): software utilizado por reclutadores para filtrar automáticamente CVs. Un formato optimizado para ATS aumenta tus posibilidades de ser visto.",
+        "solution": {
+          "title": "Consejo",
+          "description": "¡Simplemente pega tus enlaces de ofertas, nosotros analizamos todo automáticamente!"
+        }
+      },
+      "screen2": {
+        "title": "¿Por qué tus candidaturas no reciben respuesta?",
+        "problems": [
+          {
+            "emoji": "😤",
+            "title": "Decenas de CVs enviados, cero respuestas",
+            "description": "Pasas horas postulando pero solo recibes silencio."
+          },
+          {
+            "emoji": "🤖",
+            "title": "Tu CV primero debe convencer a un software",
+            "description": "El 88% de las grandes empresas usan sistemas ATS que analizan estructura y palabras clave antes de que un humano vea tu CV."
+          },
+          {
+            "emoji": "👤",
+            "title": "Luego encantar a un reclutador en segundos",
+            "description": "Si pasa el filtro, un reclutador lo escanea rápidamente para decidir a quién conocer."
+          },
+          {
+            "emoji": "🎯",
+            "title": "El desafío: lograr ambos con un CV genérico",
+            "description": "Misión imposible sin adaptar tu CV a cada oferta."
+          }
+        ],
+        "solution": {
+          "title": "FitMyCV resuelve este doble desafío",
+          "description": "Nuestra IA adapta tu CV para pasar filtros automáticos Y captar la atención de los reclutadores. Un CV adaptado para cada oferta, en unos clics, para aumentar drásticamente tus posibilidades de conseguir una primera entrevista."
+        }
+      },
+      "screen3": {
+        "title": "¿Listo para un tour de 2 minutos? ⏱️",
+        "subtitle": "Descubre las 5 funciones que cambiarán tu forma de postular",
+        "features": [
+          {
+            "emoji": "✏️",
+            "title": "Crea y edita tu CV",
+            "description": "Interfaz intuitiva y formato optimizado para ATS"
+          },
+          {
+            "emoji": "🤖",
+            "title": "Genera con IA",
+            "description": "CV automáticamente adaptado a cada oferta de empleo"
+          },
+          {
+            "emoji": "📊",
+            "title": "Calcula tu puntuación",
+            "description": "Mide tu compatibilidad con una oferta"
+          },
+          {
+            "emoji": "⚡",
+            "title": "Optimiza en 1 clic",
+            "description": "La IA mejora tu CV automáticamente"
+          },
+          {
+            "emoji": "📄",
+            "title": "Exporta en formato pro",
+            "description": "PDF perfecto para postular en cualquier lugar"
+          }
+        ],
+        "tip": "¡Sigue el tour, crearás tu primer CV justo después!"
+      }
+    },
+    "completion": {
+      "screen1": {
+        "title": "¡Felicidades, estás listo!",
+        "description": "Ahora dominas FitMyCV. Crea CVs adaptados, calcula tu puntuación de coincidencia, optimiza con un clic y exporta PDFs profesionales.",
+        "checklist": [
+          "Modo edición dominado",
+          "Generación con IA descubierta",
+          "Puntuación y optimización comprendidas",
+          "Exportación PDF lista para usar"
+        ],
+        "highlight": "¡Es hora de conseguir tu próxima entrevista!"
+      },
+      "screen2": {
+        "title": "Todo lo que puedes hacer ahora",
+        "description": "FitMyCV te ofrece varias formas de crear y gestionar tus CVs.",
+        "features": {
+          "import": {
+            "title": "Importar un CV existente",
+            "description": "Añade tus CVs en PDF o Word, la IA los adapta al formato optimizado"
+          },
+          "create": {
+            "title": "Crear un CV en blanco",
+            "description": "Comienza desde cero y construye tu CV sección por sección"
+          },
+          "generate": {
+            "title": "Generar un CV plantilla",
+            "description": "Escribe cualquier título de puesto, la IA genera un CV ficticio para inspirarte"
+          },
+          "delete": {
+            "title": "Eliminar un CV",
+            "description": "Limpia tus CVs con un clic"
+          },
+          "translate": {
+            "title": "Traducir tu CV",
+            "description": "Convierte tu CV a francés o inglés con un clic"
+          }
+        },
+        "tip": "Consejo: ¡La barra de búsqueda también funciona con títulos ficticios para explorar nuevas carreras!"
+      },
+      "screen3": {
+        "title": "Próximamente en FitMyCV",
+        "description": "No nos detenemos aquí. Esto es lo que viene pronto para ayudarte a conseguir tu trabajo soñado.",
+        "comingSoon": [
+          {
+            "emoji": "🔍",
+            "title": "Análisis de ofertas",
+            "description": "Entiende exactamente lo que busca el reclutador"
+          },
+          {
+            "emoji": "✉️",
+            "title": "Cartas de presentación",
+            "description": "La IA las escribe por ti"
+          },
+          {
+            "emoji": "🎤",
+            "title": "Preparación RRHH",
+            "description": "Simula tus entrevistas"
+          },
+          {
+            "emoji": "📋",
+            "title": "Seguimiento de candidaturas",
+            "description": "Todo en un solo lugar"
+          }
+        ],
+        "tip": "¿Tienes una idea de función? ¡Cuéntanos!"
+      }
+    }
+  }
+}

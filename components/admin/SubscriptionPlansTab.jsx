@@ -123,6 +123,11 @@ export function SubscriptionPlansTab({ refreshKey }) {
   const [toast, setToast] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
 
+  // Plan costs and margins (from PostgreSQL view)
+  const [planCosts, setPlanCosts] = useState({});
+  const [costsLoading, setCostsLoading] = useState(false);
+  const [exchangeRate, setExchangeRate] = useState(null);
+
   // Formulaire Plans
   const [formData, setFormData] = useState({
     name: '',
@@ -151,6 +156,39 @@ export function SubscriptionPlansTab({ refreshKey }) {
     fetchPlans();
     fetchPacks();
   }, [refreshKey]);
+
+  // Fetch plan costs when plans change
+  useEffect(() => {
+    if (plans.length > 0) {
+      fetchPlanCosts();
+    }
+  }, [plans]);
+
+  async function fetchPlanCosts() {
+    try {
+      setCostsLoading(true);
+      const response = await fetch('/api/admin/plan-costs');
+      if (!response.ok) {
+        console.warn('[SubscriptionPlansTab] Failed to fetch plan costs');
+        return;
+      }
+
+      const data = await response.json();
+      if (data.success && data.data) {
+        // Create a map by plan name for easy lookup
+        const costsMap = {};
+        data.data.costs.forEach((cost) => {
+          costsMap[cost.plan] = cost;
+        });
+        setPlanCosts(costsMap);
+        setExchangeRate(data.data.exchangeRate);
+      }
+    } catch (error) {
+      console.error('[SubscriptionPlansTab] Error fetching plan costs:', error);
+    } finally {
+      setCostsLoading(false);
+    }
+  }
 
   async function fetchPlans() {
     try {
@@ -534,6 +572,23 @@ export function SubscriptionPlansTab({ refreshKey }) {
     });
   }
 
+  // Helper function to determine margin text color
+  // Thresholds: red < 50%, orange < 70%, green >= 70%
+  function getMarginColor(marginPercent) {
+    if (marginPercent === null || marginPercent === undefined) return 'text-white/40';
+    if (marginPercent < 50) return 'text-red-400';
+    if (marginPercent < 70) return 'text-orange-400';
+    return 'text-green-400';
+  }
+
+  // Helper function to determine margin background color
+  function getMarginBgColor(marginPercent) {
+    if (marginPercent === null || marginPercent === undefined) return 'bg-white/5 border-white/10';
+    if (marginPercent < 50) return 'bg-red-500/10 border-red-500/30';
+    if (marginPercent < 70) return 'bg-orange-500/10 border-orange-500/30';
+    return 'bg-green-500/10 border-green-500/30';
+  }
+
   if (loading && plans.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -669,6 +724,49 @@ export function SubscriptionPlansTab({ refreshKey }) {
                   </span>
                 </div>
               </div>
+
+              {/* API Costs & Margin Section */}
+              {planCosts[plan.name] ? (
+                <div className={`space-y-2 mb-4 p-3 rounded-lg border ${getMarginBgColor(planCosts[plan.name].marginPercent)}`}>
+                  {/* API Cost Range: Min / Avg / Max */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-white/60 flex items-center gap-1">
+                      <span>💰</span> Coût API
+                    </span>
+                    <span className="text-white text-sm font-medium">
+                      ${planCosts[plan.name].costMinUsd.toFixed(2)} / ${planCosts[plan.name].costAvgUsd.toFixed(2)} / ${planCosts[plan.name].costMaxUsd.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Gross Margin */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-white/60 flex items-center gap-1">
+                      <span>📊</span> Marge
+                    </span>
+                    <span className={`text-sm font-medium ${getMarginColor(planCosts[plan.name].marginPercent)}`}>
+                      {planCosts[plan.name].grossMarginEur.toFixed(2)} € ({planCosts[plan.name].marginPercent.toFixed(0)}%)
+                    </span>
+                  </div>
+
+                  {/* Alert for low margins */}
+                  {planCosts[plan.name].marginPercent < 70 && (
+                    <div className={`text-xs mt-1 ${planCosts[plan.name].marginPercent < 50 ? 'text-red-300' : 'text-orange-300'}`}>
+                      {planCosts[plan.name].marginPercent < 50
+                        ? '⚠️ Marge critique - Risque de perte'
+                        : '⚠️ Marge faible - À surveiller'}
+                    </div>
+                  )}
+                </div>
+              ) : costsLoading ? (
+                <div className="mb-4 p-3 bg-white/5 rounded-lg border border-white/10 animate-pulse">
+                  <div className="h-4 bg-white/10 rounded w-2/3 mb-2"></div>
+                  <div className="h-4 bg-white/10 rounded w-1/2"></div>
+                </div>
+              ) : (
+                <div className="mb-4 p-3 bg-white/5 rounded-lg border border-white/10">
+                  <span className="text-xs text-white/40">Données de coût non disponibles</span>
+                </div>
+              )}
 
               {/* Actions */}
               <div className="flex gap-2 mt-auto">

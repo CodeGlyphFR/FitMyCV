@@ -356,7 +356,7 @@ async function createInvoiceForCreditPurchase({ customer, amount, currency, cred
       customer: customer,
       auto_advance: false, // Ne pas envoyer automatiquement
       collection_method: 'charge_automatically',
-      description: `Achat de ${creditAmount} crédits FitMyCv.ai`,
+      description: `Achat de ${creditAmount} crédits FitMyCV.io`,
       metadata: {
         userId: userId,
         creditAmount: creditAmount.toString(),

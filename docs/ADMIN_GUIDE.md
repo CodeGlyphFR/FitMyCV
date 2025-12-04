@@ -1,6 +1,6 @@
-# Guide Administrateur - FitMyCv.ai
+# Guide Administrateur - FitMyCV.io
 
-Guide complet du dashboard admin et de la gestion de FitMyCv.ai.
+Guide complet du dashboard admin et de la gestion de FitMyCV.io.
 
 ---
 
@@ -258,6 +258,51 @@ Le filtre de période (7j/30j/90j/All) filtre par **activité onboarding** :
 
 > **Note** : La checklist d'onboarding est automatiquement masquée sur les routes `/admin` pour ne pas distraire les administrateurs.
 
+### EmailTemplatesTab
+
+**Gestion visuelle des templates email système** avec l'éditeur Unlayer.
+
+#### Templates disponibles
+
+| Template | Variables | Description |
+|----------|-----------|-------------|
+| `verification` | `{{userName}}`, `{{verificationUrl}}` | Email de vérification à l'inscription |
+| `password_reset` | `{{userName}}`, `{{resetUrl}}` | Email de réinitialisation mot de passe |
+| `email_change` | `{{userName}}`, `{{verificationUrl}}`, `{{newEmail}}` | Confirmation changement d'email |
+
+#### Fonctionnalités
+
+1. **Éditeur visuel Unlayer**
+   - Drag & drop de blocs
+   - Thème dark adapté
+   - Merge tags pour les variables (`{{userName}}`, etc.)
+
+2. **Copier depuis un autre template**
+   - Dropdown "Copier depuis..." pour dupliquer un design
+   - Charge le design source dans l'éditeur
+   - Ne sauvegarde pas automatiquement (cliquez "Sauvegarder")
+
+3. **Aperçu**
+   - Preview du template avec données de test
+   - Toggle desktop/mobile
+   - Envoi d'email de test
+
+4. **Historique des envois**
+   - Table des emails envoyés
+   - Filtrage par template et statut
+   - Pagination
+
+#### Workflow
+
+```
+1. Sélectionner un template (carte)
+2. [Optionnel] Copier depuis un autre template
+3. Modifier le design dans l'éditeur Unlayer
+4. Modifier le sujet de l'email
+5. Prévisualiser / Envoyer un test
+6. Sauvegarder
+```
+
 ---
 
 ## Settings
@@ -411,6 +456,38 @@ Affiche :
 - **Price Yearly** : Prix annuel (€)
 - **Yearly Discount** : % de réduction annuelle
 - **Max CV Count** : Nombre max de CVs (-1 = illimité)
+
+#### Coûts API et Marges
+
+Chaque tuile de plan affiche les coûts API estimés et la marge brute :
+
+**Affichage** :
+- **Coût API** : Min / Moy / Max (en $)
+- **Marge** : Prix - Coût max converti en € (avec %)
+
+**Seuils d'alerte visuels** :
+
+| Marge | Couleur | Signification |
+|-------|---------|---------------|
+| ≥ 70% | 🟢 Vert | Marge saine |
+| 50-70% | 🟠 Orange | À surveiller |
+| < 50% | 🔴 Rouge | Marge critique |
+
+**Source de données** : Vue PostgreSQL `v_cout_api_par_plan`
+
+**Taux de change** : API frankfurter.app (cache 1h, fallback 0.92)
+
+**Exemple d'affichage** :
+```
+┌─────────────────────────────────┐
+│ Pro - 9.99 €/mois               │
+│ Features activées: 8 / 9        │
+│ ┌─────────────────────────────┐ │
+│ │ 💰 Coût API $1.25/$1.52/$2.04│ │
+│ │ 📊 Marge   8.11 € (81%)     │ │
+│ └─────────────────────────────┘ │
+└─────────────────────────────────┘
+```
 
 #### Feature Limits
 

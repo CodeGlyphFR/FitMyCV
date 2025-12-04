@@ -1,8 +1,8 @@
-# Documentation FitMyCv.ai
+# Documentation FitMyCV.io
 
 > **Application Next.js 14 pour la création de CV personnalisés optimisés par IA**
 
-Version: **1.0.9.1**
+Version: **1.0.9.2**
 
 ---
 
@@ -20,7 +20,7 @@ Version: **1.0.9.1**
 
 ## Vue d'ensemble
 
-FitMyCv.ai est une application web moderne qui permet aux utilisateurs de créer des CV personnalisés et optimisés pour des offres d'emploi spécifiques grâce à l'intelligence artificielle.
+FitMyCV.io est une application web moderne qui permet aux utilisateurs de créer des CV personnalisés et optimisés pour des offres d'emploi spécifiques grâce à l'intelligence artificielle.
 
 ### Fonctionnalités principales
 
@@ -63,20 +63,20 @@ La documentation est organisée en plusieurs fichiers thématiques :
 
 ### 🔌 API & Base de données
 - **[API_REFERENCE.md](./API_REFERENCE.md)** - Référence API complète
-  - 60+ routes API documentées
+  - 96 routes API documentées
   - Paramètres et réponses
   - Exemples de requêtes
   - Codes d'erreur
 
 - **[DATABASE.md](./DATABASE.md)** - Documentation base de données
-  - Schéma Prisma complet (23 modèles)
+  - Schéma Prisma complet (30 modèles)
   - Relations entre tables
   - Migrations
   - Index et optimisations
 
 ### ⚛️ Composants & Fonctionnalités
 - **[COMPONENTS.md](./COMPONENTS.md)** - Catalogue des composants
-  - 89 composants React documentés
+  - 120+ composants React documentés
   - Props et usage
   - Composants réutilisables
 
@@ -220,11 +220,11 @@ Pour plus de détails, consultez [INSTALLATION.md](./INSTALLATION.md)
 ```
 fitmycv/
 ├── app/                    # Next.js App Router
-│   ├── api/               # API Routes (60+ endpoints)
+│   ├── api/               # API Routes (96 endpoints)
 │   ├── auth/              # Pages authentification
 │   ├── admin/             # Dashboard admin
 │   └── account/           # Paramètres compte
-├── components/            # Composants React (89 fichiers)
+├── components/            # Composants React (120+ fichiers)
 │   ├── ui/               # Composants UI réutilisables
 │   ├── admin/            # Composants admin/analytics
 │   ├── auth/             # Composants authentification
@@ -390,4 +390,4 @@ Propriétaire - Tous droits réservés
 
 ---
 
-**Développé avec Next.js 14 et OpenAI** | Version 1.0.9.1
+**Développé avec Next.js 14 et OpenAI** | Version 1.0.9.2

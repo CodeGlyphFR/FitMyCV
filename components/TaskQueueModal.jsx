@@ -3,14 +3,48 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Modal from "./ui/Modal";
+import DonutProgress from "./ui/DonutProgress";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { emitOnboardingEvent, ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
+import { useTaskProgress } from "@/hooks/useTaskProgress";
 
-function LoadingSpinner() {
+/**
+ * Indicateur de progression pour les tâches en cours
+ * Affiche un donut avec le pourcentage basé sur le temps estimé
+ * Disparaît après l'animation de completion pour afficher le status texte
+ */
+function TaskProgressIndicator({ task, onComplete }) {
+  const [showDonut, setShowDonut] = React.useState(true);
+  const { progress } = useTaskProgress({
+    taskId: task.id,
+    taskType: task.type,
+    taskStatus: task.status,
+    startTime: Number(task.createdAt),
+    payload: task.payload,
+  });
+
+  // Quand progress atteint 100% et tâche completed, attendre puis masquer
+  React.useEffect(() => {
+    if (progress >= 100 && task.status === 'completed') {
+      const timer = setTimeout(() => {
+        setShowDonut(false);
+        onComplete?.();
+      }, 600); // 600ms pour laisser voir le 100%
+      return () => clearTimeout(timer);
+    }
+  }, [progress, task.status, onComplete]);
+
+  if (!showDonut) return null;
+
   return (
-    <div className="animate-apple-spin h-4 w-4 border-2 border-white/30 border-t-blue-300 rounded-full drop-shadow"></div>
+    <DonutProgress
+      progress={progress}
+      size={28}
+      strokeWidth={3}
+      showPercent={false}
+    />
   );
 }
 
@@ -22,6 +56,14 @@ function extractQuotedName(text) {
 
 function TaskItem({ task, onCancel, onTaskClick }) {
   const { t } = useLanguage();
+  const [showProgressDonut, setShowProgressDonut] = React.useState(task.status === 'running');
+
+  // Réinitialiser showProgressDonut quand la tâche passe à running
+  React.useEffect(() => {
+    if (task.status === 'running') {
+      setShowProgressDonut(true);
+    }
+  }, [task.status]);
 
   const getStatusDisplay = (status) => {
     const colors = {
@@ -56,10 +98,20 @@ function TaskItem({ task, onCancel, onTaskClick }) {
   let errorRedirectUrl = null;
 
   if (task.status === 'failed' && task.error) {
-    // Try to parse error for actionRequired/redirectUrl
+    // Essayer de parser comme JSON
     try {
       const errorData = typeof task.error === 'string' ? JSON.parse(task.error) : task.error;
-      if (errorData?.error) {
+
+      // Cas 1: Clé de traduction avec source (taskQueue.errors.*)
+      if (errorData?.translationKey?.startsWith('taskQueue.errors.')) {
+        description = t(errorData.translationKey, { source: errorData.source || '' });
+      }
+      // Cas 2: Clé de traduction générique (errors.*)
+      else if (errorData?.translationKey?.startsWith('errors.')) {
+        description = t(errorData.translationKey);
+      }
+      // Cas 3: Erreur avec action requise (ex: upgrade plan)
+      else if (errorData?.error) {
         description = errorData.error;
         if (errorData.actionRequired && errorData.redirectUrl) {
           errorRedirectUrl = errorData.redirectUrl;
@@ -68,7 +120,12 @@ function TaskItem({ task, onCancel, onTaskClick }) {
         description = task.error;
       }
     } catch {
-      description = task.error;
+      // Si c'est une clé de traduction directe (string)
+      if (typeof task.error === 'string' && task.error.startsWith('errors.')) {
+        description = t(task.error);
+      } else {
+        description = task.error;
+      }
     }
   } else if (task.type === 'import') {
     if (task.status === 'running') {
@@ -195,10 +252,13 @@ function TaskItem({ task, onCancel, onTaskClick }) {
         )}
       </div>
       <div className="flex items-center gap-2 ml-4">
-        {task.status === 'running' && <LoadingSpinner />}
-        <span className={`text-sm font-medium ${statusDisplay.color}`}>
-          {statusDisplay.label}
-        </span>
+        {showProgressDonut && (task.status === 'running' || task.status === 'completed') ? (
+          <TaskProgressIndicator task={task} onComplete={() => setShowProgressDonut(false)} />
+        ) : (
+          <span className={`text-sm font-medium ${statusDisplay.color}`}>
+            {statusDisplay.label}
+          </span>
+        )}
         {canCancel && (
           <button
             type="button"

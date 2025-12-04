@@ -4,18 +4,19 @@ import prisma from "@/lib/prisma";
 import { v4 as uuidv4 } from "uuid";
 import { scheduleImproveCvJob } from "@/lib/backgroundTasks/improveCvJob";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
+import { CommonErrors, CvErrors } from "@/lib/api/apiErrors";
 
 export async function POST(request) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    return CommonErrors.notAuthenticated();
   }
 
   try {
     const { cvFile, replaceExisting = false } = await request.json();
 
     if (!cvFile) {
-      return NextResponse.json({ error: "CV file missing" }, { status: 400 });
+      return CvErrors.missingFilename();
     }
 
     const userId = session.user.id;
@@ -39,7 +40,7 @@ export async function POST(request) {
     });
 
     if (!cvRecord) {
-      return NextResponse.json({ error: "CV not found" }, { status: 404 });
+      return CvErrors.notFound();
     }
 
     // Vérifier que le CV a un scoreBreakdown (score calculé) et des suggestions
@@ -125,9 +126,6 @@ export async function POST(request) {
 
   } catch (error) {
     console.error("Error improving CV:", error);
-    return NextResponse.json({
-      error: "Internal server error",
-      details: error.message
-    }, { status: 500 });
+    return CvErrors.improveError();
   }
 }

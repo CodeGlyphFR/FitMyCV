@@ -9,8 +9,9 @@ import { Info } from "lucide-react";
  * @param {string} props.content - Le texte du tooltip
  * @param {React.ReactNode} props.children - L'élément déclencheur (optionnel, utilise une icône Info par défaut)
  * @param {string} props.position - Position du tooltip: 'top' | 'bottom' | 'left' | 'right' (défaut: 'top')
+ * @param {string} props.className - Classes CSS additionnelles pour le wrapper
  */
-export default function Tooltip({ content, children, position = "top" }) {
+export default function Tooltip({ content, children, position = "top", className = "" }) {
   const [isVisible, setIsVisible] = React.useState(false);
   const [isMobile, setIsMobile] = React.useState(false);
 
@@ -40,7 +41,7 @@ export default function Tooltip({ content, children, position = "top" }) {
   };
 
   return (
-    <div className="relative inline-flex">
+    <div className={`relative ${className || 'inline-flex'}`}>
       {/* Trigger */}
       <div
         onMouseEnter={() => !isMobile && setIsVisible(true)}
@@ -48,7 +49,7 @@ export default function Tooltip({ content, children, position = "top" }) {
         onFocus={() => !isMobile && setIsVisible(true)}
         onBlur={() => !isMobile && setIsVisible(false)}
         onClick={handleClick}
-        className="inline-flex items-center cursor-help"
+        className={`${className ? 'w-full' : 'inline-flex items-center'} cursor-help`}
         tabIndex={0}
         role="button"
         aria-label="Afficher l'info-bulle"
@@ -61,7 +62,7 @@ export default function Tooltip({ content, children, position = "top" }) {
         <div
           className={`
             absolute z-50 px-3 py-2 text-xs text-white bg-gray-900 rounded-lg shadow-lg
-            max-w-xs pointer-events-none
+            text-center pointer-events-none whitespace-nowrap
             ${positionClasses[position]}
             animate-in fade-in zoom-in-95 duration-200
           `}

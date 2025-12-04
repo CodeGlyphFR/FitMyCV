@@ -70,7 +70,7 @@ async function syncSubscriptionPlans() {
       // Créer le produit Stripe si nécessaire
       if (!stripeProduct) {
         stripeProduct = await stripe.products.create({
-          name: `[${plan.name}] Abonnement FitMyCv.ai`,
+          name: `[${plan.name}] Abonnement FitMyCV.io`,
           description: plan.description || `Plan ${plan.name} - ${plan.maxCvCount === -1 ? 'CV illimités' : `${plan.maxCvCount} CV max`}`,
           metadata: {
             plan_id: plan.id.toString(),
@@ -197,7 +197,7 @@ async function syncCreditPacks() {
       if (!stripeProduct) {
         stripeProduct = await stripe.products.create({
           name: `${pack.name} - ${pack.creditAmount} crédits`,
-          description: pack.description || `Pack de ${pack.creditAmount} crédits pour FitMyCv.ai`,
+          description: pack.description || `Pack de ${pack.creditAmount} crédits pour FitMyCV.io`,
           metadata: {
             pack_id: pack.id.toString(),
             pack_name: pack.name,

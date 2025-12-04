@@ -1,0 +1,164 @@
+{
+  "feedback": {
+    "title": "¡Tu opinión nos ayuda a mejorar!",
+    "ratingLabel": "¿Cómo calificarías tu experiencia?",
+    "optional": "opcional",
+    "commentLabel": "Tu opinión (opcional)",
+    "commentPlaceholder": "Comparte tu opinión, sugiere nuevas funciones o reporta errores...",
+    "bugReportLabel": "Reporte de error",
+    "markAsBug": "Marcar como error",
+    "markedAsBug": "Marcado como error",
+    "charactersCount": "{count}/500 caracteres",
+    "cancel": "Cancelar",
+    "submit": "Enviar",
+    "submitting": "Enviando...",
+    "errors": {
+      "ratingRequired": "Por favor selecciona una calificación",
+      "commentTooLong": "El comentario no puede exceder 500 caracteres"
+    },
+    "success": "¡Gracias por tu opinión! 🙏"
+  },
+  "account": {
+    "meta": {
+      "title": "Mi cuenta - FitMyCV.io",
+      "description": "Gestiona tu información personal y preferencias"
+    },
+    "backToCvs": "Volver",
+    "title": "Mi cuenta",
+    "subtitle": "Gestiona tu información personal y preferencias de seguridad.",
+    "loading": "Cargando...",
+    "profile": {
+      "title": "Información del perfil",
+      "fullName": "Nombre completo",
+      "fullNamePlaceholder": "Introduce tu nombre completo",
+      "email": "Correo electrónico",
+      "emailPlaceholder": "Introduce tu correo electrónico",
+      "emailDisabled": "Gestionado por {provider}",
+      "saveButton": "Guardar cambios",
+      "saving": "Guardando...",
+      "success": "¡Perfil actualizado con éxito!",
+      "emailSuccess": "¡Tu correo electrónico ha sido cambiado con éxito!",
+      "noChanges": "No se detectaron cambios.",
+      "errors": {
+        "updateFailed": "No se pudo actualizar el perfil.",
+        "unexpected": "Error inesperado."
+      }
+    },
+    "security": {
+      "title": "Seguridad",
+      "oauthInfo": "Tu cuenta está gestionada por {provider}. La contraseña es gestionada por este proveedor.",
+      "currentPassword": "Contraseña actual",
+      "currentPasswordPlaceholder": "Introduce tu contraseña actual",
+      "currentPasswordHint": "Deja vacío si nunca has establecido una contraseña.",
+      "newPassword": "Nueva contraseña",
+      "newPasswordPlaceholder": "Introduce una nueva contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "confirmPasswordPlaceholder": "Confirma la nueva contraseña",
+      "updateButton": "Actualizar contraseña",
+      "updating": "Actualizando...",
+      "success": "¡Contraseña actualizada con éxito!",
+      "passwordStrength": {
+        "label": "Seguridad de la contraseña",
+        "weak": "Débil",
+        "medium": "Media",
+        "strong": "Fuerte",
+        "veryStrong": "Muy fuerte"
+      },
+      "passwordRules": {
+        "title": "Reglas de seguridad",
+        "minLength": "Al menos 8 caracteres",
+        "uppercase": "Al menos una mayúscula",
+        "lowercase": "Al menos una minúscula",
+        "numbers": "Al menos un número",
+        "specialChars": "Al menos un carácter especial"
+      },
+      "errors": {
+        "newPasswordRequired": "Por favor introduce una nueva contraseña.",
+        "minLength": "La contraseña debe contener al menos 8 caracteres.",
+        "mismatch": "Las contraseñas no coinciden.",
+        "updateFailed": "No se pudo actualizar la contraseña.",
+        "unexpected": "Error inesperado."
+      }
+    },
+    "tutorial": {
+      "title": "Tutorial de introducción",
+      "description": "Reinicia el tutorial de introducción para redescubrir las funciones de FitMyCV.io",
+      "resetButton": "Reiniciar tutorial",
+      "resetting": "Reiniciando...",
+      "success": "Tutorial reiniciado. Redirigiendo...",
+      "errors": {
+        "resetFailed": "Error al reiniciar el tutorial."
+      }
+    },
+    "linkedAccounts": {
+      "title": "Cuentas vinculadas",
+      "description": "Gestiona los métodos de inicio de sesión conectados a tu cuenta FitMyCV.",
+      "status": {
+        "connected": "Conectado",
+        "notConnected": "No conectado",
+        "notConfigured": "No configurado"
+      },
+      "actions": {
+        "link": "Vincular",
+        "unlink": "Desvincular",
+        "linking": "Vinculando...",
+        "unlinking": "Desvinculando..."
+      },
+      "errors": {
+        "loadFailed": "Error al cargar las cuentas vinculadas.",
+        "linkFailed": "No se pudo vincular la cuenta de {provider}.",
+        "unlinkFailed": "No se pudo desvincular la cuenta de {provider}.",
+        "cannotUnlinkLast": "No se puede desvincular: debes tener al menos una cuenta vinculada.",
+        "email_mismatch": "El email de esta cuenta de {provider} no coincide con tu email de FitMyCV.",
+        "already_linked_other": "Esta cuenta de {provider} ya está vinculada a otro usuario.",
+        "oauth_error": "Error de autenticación con {provider}.",
+        "invalid_state": "Sesión expirada. Por favor intenta de nuevo.",
+        "expired": "La solicitud ha expirado. Por favor intenta de nuevo.",
+        "session_expired": "Tu sesión ha expirado. Por favor inicia sesión de nuevo.",
+        "server_error": "Error del servidor. Por favor intenta de nuevo."
+      },
+      "success": {
+        "linked": "¡Cuenta de {provider} vinculada con éxito!",
+        "unlinked": "Cuenta de {provider} desvinculada con éxito.",
+        "alreadyLinked": "Cuenta de {provider} ya vinculada."
+      },
+      "confirmUnlink": {
+        "title": "¿Desvincular {provider}?",
+        "message": "Ya no podrás iniciar sesión con {provider}. Siempre puedes volver a vincularlo más tarde.",
+        "confirm": "Desvincular",
+        "cancel": "Cancelar"
+      }
+    },
+    "deleteAccount": {
+      "title": "Eliminar cuenta",
+      "description": "Esta acción es definitiva y no reembolsable. Todos tus CVs, créditos y datos serán eliminados. Tu suscripción será cancelada inmediatamente y tus datos bancarios serán eliminados. Introduce tu contraseña para continuar.",
+      "passwordLabel": "Contraseña",
+      "passwordHint": "Todos tus CVs (incluyendo la carpeta de usuario) serán eliminados. Esta operación es irreversible. Si creaste tu cuenta a través de un proveedor externo, primero establece una contraseña en la sección de Seguridad.",
+      "emailLabel": "Email de confirmación",
+      "emailHint": "Introduce el email de tu cuenta para confirmar la eliminación. Todos tus CVs y datos serán eliminados permanentemente.",
+      "deleteButton": "Eliminar mi cuenta",
+      "deleting": "Eliminando...",
+      "modal": {
+        "title": "Confirmar eliminación de cuenta",
+        "description": "Estás a punto de eliminar permanentemente tu cuenta. Esta acción es irreversible.",
+        "consequences": {
+          "noRefund": "No se emitirá ningún reembolso",
+          "loseCredits": "Perderás todos tus créditos restantes",
+          "cancelSubscription": "Tu suscripción será cancelada inmediatamente",
+          "deleteCvs": "Todos tus CVs serán eliminados permanentemente",
+          "deleteBankData": "Tus datos bancarios serán eliminados de nuestros servidores"
+        },
+        "confirmCheckbox": "Entiendo que esta acción es irreversible y que no seré reembolsado",
+        "cancelButton": "Cancelar",
+        "confirmButton": "Eliminar permanentemente",
+        "deleting": "Eliminando...",
+        "errors": {
+          "passwordRequired": "Por favor introduce tu contraseña para confirmar la eliminación.",
+          "emailRequired": "Por favor introduce tu email para confirmar la eliminación.",
+          "deleteFailed": "No se pudo eliminar la cuenta. Por favor intenta de nuevo.",
+          "unexpected": "Error inesperado al eliminar la cuenta."
+        }
+      }
+    }
+  }
+}

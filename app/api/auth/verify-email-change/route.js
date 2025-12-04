@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { verifyEmailChangeToken, deleteEmailChangeRequest } from '@/lib/email/emailService';
 import prisma from '@/lib/prisma';
 import logger from '@/lib/security/secureLogger';
+import { CommonErrors, AuthErrors } from '@/lib/api/apiErrors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,10 +13,7 @@ export async function GET(request) {
     const token = searchParams.get('token');
 
     if (!token) {
-      return NextResponse.json(
-        { error: 'Token manquant' },
-        { status: 400 }
-      );
+      return AuthErrors.tokenRequired();
     }
 
     // Vérifier le token
@@ -23,10 +21,7 @@ export async function GET(request) {
 
     if (!verification.valid) {
       logger.context('verify-email-change', 'warn', `Échec de vérification: ${verification.error}`);
-      return NextResponse.json(
-        { error: verification.error || 'Token invalide' },
-        { status: 400 }
-      );
+      return AuthErrors.tokenInvalid();
     }
 
     // Vérifier que la nouvelle adresse n'est pas déjà utilisée
@@ -40,7 +35,7 @@ export async function GET(request) {
     if (existing) {
       await deleteEmailChangeRequest(token);
       return NextResponse.json(
-        { error: 'Cette adresse email est déjà utilisée par un autre compte.' },
+        { error: 'errors.api.auth.emailAlreadyUsed' },
         { status: 409 }
       );
     }
@@ -65,9 +60,6 @@ export async function GET(request) {
     });
   } catch (error) {
     logger.error('[verify-email-change] Erreur:', error);
-    return NextResponse.json(
-      { error: 'Erreur lors de la vérification' },
-      { status: 500 }
-    );
+    return CommonErrors.serverError();
   }
 }

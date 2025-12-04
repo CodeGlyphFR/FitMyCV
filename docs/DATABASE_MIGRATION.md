@@ -1,5 +1,7 @@
 # Migration de Base de Données (SQLite → PostgreSQL)
 
+> **Note** : Ce guide reste disponible pour référence lors de futures migrations ou pour documenter le processus utilisé.
+
 Ce guide couvre la migration complète de la base de données SQLite de développement vers PostgreSQL pour la production.
 
 ## Table des matières

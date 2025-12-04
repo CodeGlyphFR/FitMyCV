@@ -1,0 +1,49 @@
+{
+  "taskQueue": {
+    "title": "Aufgabenwarteschlange",
+    "noTasks": "Keine laufenden Aufgaben",
+    "tasks": "Aufgaben",
+    "of": "von",
+    "clearCompleted": "Abgeschlossene löschen",
+    "total": "Gesamt",
+    "cancelTask": "Aufgabe abbrechen",
+    "cloudSyncActive": "Cloud-Synchronisierung aktiv",
+    "localSyncOnly": "Nur lokale Synchronisierung",
+    "cloud": "Cloud",
+    "localStorage": "Lokaler Speicher",
+    "status": {
+      "queued": "In Warteschlange",
+      "running": "Läuft",
+      "completed": "Abgeschlossen",
+      "failed": "Fehlgeschlagen",
+      "cancelled": "Abgebrochen",
+      "unknown": "Unbekannt"
+    },
+    "messages": {
+      "task": "Aufgabe",
+      "importInProgress": "Import läuft ...",
+      "importQueued": "Import wartet ...",
+      "importCompleted": "Import abgeschlossen",
+      "importCancelled": "Import abgebrochen",
+      "importFailed": "Import fehlgeschlagen",
+      "creationInProgress": "Erstellung läuft",
+      "creationQueued": "Erstellung wartet",
+      "creationCompleted": "Erstellung abgeschlossen",
+      "creationCancelled": "Erstellung abgebrochen",
+      "creationFailed": "Erstellung fehlgeschlagen",
+      "templateCreationInProgress": "Lebenslauf-Vorlage wird erstellt ...",
+      "templateCreationQueued": "Lebenslauf-Vorlage wartet ...",
+      "templateCreationCompleted": "Lebenslauf-Vorlage erfolgreich erstellt",
+      "templateCreationCancelled": "Erstellung der Lebenslauf-Vorlage abgebrochen",
+      "templateCreationFailed": "Erstellung der Lebenslauf-Vorlage fehlgeschlagen",
+      "matchScoreInProgress": "Match-Score wird berechnet ...",
+      "matchScoreQueued": "Match-Score-Berechnung wartet ...",
+      "matchScoreCompleted": "Match-Score erfolgreich berechnet",
+      "matchScoreCancelled": "Match-Score-Berechnung abgebrochen",
+      "matchScoreFailed": "Match-Score-Berechnung fehlgeschlagen"
+    },
+    "errors": {
+      "noJobOfferDetected": "Keine Stellenanzeige erkannt: {source}"
+    }
+  }
+}
