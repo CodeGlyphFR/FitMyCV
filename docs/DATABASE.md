@@ -145,15 +145,19 @@ model Account {
 
 ---
 
-### 3. CvFile (Métadonnées des CVs)
+### 3. CvFile (Contenu et métadonnées des CVs)
 
-Stocke les métadonnées des CVs (le contenu est chiffré dans `data/users/`).
+Stocke le contenu JSON et les métadonnées des CVs directement en base de données.
 
 ```prisma
 model CvFile {
   id               String   @id @default(cuid())
   userId           String
-  filename         String   // Ex: cv_1234567890.json
+  filename         String   // Ex: 1234567890.json
+
+  // Contenu CV (migré depuis filesystem)
+  content          Json?    // Contenu JSON complet du CV
+  contentVersion   Int      @default(1) // Numéro de version courante
 
   // Source
   sourceType       String?  // 'link' | 'pdf' | null (manual)
@@ -171,7 +175,7 @@ model CvFile {
   matchScoreUpdatedAt DateTime?
   matchScoreStatus String?  @default("idle") // 'idle' | 'inprogress' | 'failed'
 
-  // Score détaillé (JSON)
+  // Score détaillé (JSON serialized)
   scoreBreakdown   String?  // {"technical_skills": 28, "experience": 22, ...}
   improvementSuggestions String? // [{"priority": "high", "suggestion": "...", "impact": "+8"}]
   missingSkills    String?  // ["Kubernetes", "TypeScript"]
@@ -189,7 +193,9 @@ model CvFile {
   blockedAt           DateTime? // Date de blocage
   blockedReason       String?   // Raison du blocage
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Relations
+  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versions CvVersion[] // Historique des versions (optimisation IA)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -197,6 +203,41 @@ model CvFile {
   @@unique([userId, filename])
 }
 ```
+
+---
+
+### 3.1 CvVersion (Historique des versions)
+
+Stocke l'historique des versions de CV, créées lors des optimisations IA.
+
+```prisma
+model CvVersion {
+  id        String   @id @default(cuid())
+  cvFileId  String
+  version   Int      // Numéro de version (1, 2, 3...)
+  content   Json     // Contenu JSON complet
+  changelog String?  // "Optimisation IA", "Restauration depuis v2"
+  createdAt DateTime @default(now())
+
+  cvFile CvFile @relation(fields: [cvFileId], references: [id], onDelete: Cascade)
+
+  @@unique([cvFileId, version])
+  @@index([cvFileId, createdAt(sort: Desc)])
+}
+```
+
+**Comportement par action** :
+
+| Action | Comportement |
+|--------|--------------|
+| Édition manuelle | Écrase `CvFile.content` directement, **aucune CvVersion créée** |
+| Import PDF | Crée un nouveau `CvFile` (son propre historique) |
+| Traduction | Crée un nouveau `CvFile` |
+| Génération CV | Crée un nouveau `CvFile` |
+| **Optimisation IA** | **Crée une nouvelle `CvVersion`** |
+| **Restauration** | **Crée une nouvelle `CvVersion`** (copie du contenu ancien) |
+
+**Configuration** : `cv_max_versions` dans Settings (défaut: 5)
 
 **Champs JSON** :
 

@@ -22,19 +22,19 @@ Ce document contient des exemples de code réutilisables et des patterns communs
 
 ---
 
-## Accès aux CV Chiffrés
+## Accès aux CV (Database Storage)
 
-Les CV sont chiffrés avec AES-256-GCM côté serveur. Utiliser les fonctions helpers pour lire/écrire automatiquement.
+Les CV sont stockés directement en base de données PostgreSQL dans le champ `CvFile.content` (JSON natif).
 
 ### Lire un CV
 
 ```javascript
-import { readCv } from '@/lib/cv/storage';
+import { readUserCvFile } from '@/lib/cv/storage';
 
-// Déchiffre automatiquement
-const cvData = await readCv(userId, filename);
+// Retourne le JSON stringifié
+const cvContent = await readUserCvFile(userId, filename);
+const cvData = JSON.parse(cvContent);
 
-// cvData est un objet JSON validé
 console.log(cvData.header.name);
 console.log(cvData.summary.description);
 ```
@@ -42,64 +42,80 @@ console.log(cvData.summary.description);
 ### Écrire un CV
 
 ```javascript
-import { writeCv } from '@/lib/cv/storage';
+import { writeUserCvFile } from '@/lib/cv/storage';
 
-// Chiffre automatiquement avant stockage
-await writeCv(userId, filename, cvData);
+// Accepte string JSON ou objet
+await writeUserCvFile(userId, filename, cvData);
+// ou
+await writeUserCvFile(userId, filename, JSON.stringify(cvData, null, 2));
+```
+
+### Versionning (Optimisation IA)
+
+Lors des optimisations IA, créer une version de sauvegarde **AVANT** modification :
+
+```javascript
+import { createCvVersion } from '@/lib/cv/versioning';
+import { writeUserCvFile } from '@/lib/cv/storage';
+
+// 1. Créer une version AVANT modification
+await createCvVersion(userId, filename, 'Avant optimisation IA');
+
+// 2. Écrire le CV optimisé
+await writeUserCvFile(userId, filename, optimizedCv);
+```
+
+### Restaurer une version
+
+```javascript
+import { restoreCvVersion, getCvVersions } from '@/lib/cv/versioning';
+
+// Lister les versions disponibles
+const versions = await getCvVersions(userId, filename);
+// [{ version: 2, changelog: "...", createdAt: ... }, ...]
+
+// Restaurer une version (crée automatiquement une sauvegarde du contenu actuel)
+const restoredContent = await restoreCvVersion(userId, filename, 2);
 ```
 
 ### Pattern Complet (API Route)
 
 ```javascript
 import { getSession } from '@/lib/auth/session';
-import { readCv, writeCv } from '@/lib/cv/storage';
-import { validateCvData } from '@/lib/cv/validation';
+import { readUserCvFile, writeUserCvFile } from '@/lib/cv/storage';
 
 export async function GET(request) {
-  // 1. Vérifier session
   const session = await getSession();
   if (!session?.user?.id) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // 2. Lire CV chiffré
   try {
-    const cvData = await readCv(session.user.id, 'cv-123.json');
-    return Response.json(cvData);
+    const cvContent = await readUserCvFile(session.user.id, 'cv-123.json');
+    return Response.json(JSON.parse(cvContent));
   } catch (error) {
-    console.error('Error reading CV:', error);
     return Response.json({ error: 'CV not found' }, { status: 404 });
   }
 }
 
 export async function POST(request) {
-  // 1. Vérifier session
   const session = await getSession();
   if (!session?.user?.id) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // 2. Parser body
   const body = await request.json();
 
-  // 3. Valider données
-  const { valid, data, errors } = validateCvData(body.cvData);
-  if (!valid) {
-    return Response.json({ error: 'Invalid CV data', errors }, { status: 400 });
-  }
-
-  // 4. Écrire CV chiffré
   try {
-    await writeCv(session.user.id, body.filename, data);
+    await writeUserCvFile(session.user.id, body.filename, body.cvData);
     return Response.json({ success: true });
   } catch (error) {
-    console.error('Error writing CV:', error);
     return Response.json({ error: 'Failed to save CV' }, { status: 500 });
   }
 }
 ```
 
-**Documentation** : [SECURITY.md](./SECURITY.md) | [Architecture - Chiffrement CV](./ARCHITECTURE.md#chiffrement-des-cv)
+**Documentation** : [DATABASE.md](./DATABASE.md#3-cvfile) | [API_REFERENCE.md](./API_REFERENCE.md#get-apicvsversionsfilefilename)
 
 ---
 

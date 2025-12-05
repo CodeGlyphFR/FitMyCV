@@ -33,7 +33,6 @@ Toute la documentation technique est disponible dans le dossier **`docs/`**. Ce 
 
 ### Configuration Externe
 - **[Setup Stripe](./docs/STRIPE_SETUP.md)** - Configuration Stripe complète (webhooks, test mode)
-- **[MCP Puppeteer](./docs/MCP_PUPPETEER.md)** - Browser automation pour tests et analyse UX
 
 ### Développement & Patterns
 - **[Référence commandes](./docs/COMMANDS_REFERENCE.md)** - Toutes les commandes (Next.js, Prisma, Stripe, scripts)
@@ -65,133 +64,35 @@ Toute la documentation technique est disponible dans le dossier **`docs/`**. Ce 
 | `dev` | Développement actif | - | `release` (via PR) |
 
 ### Dossier DÉVELOPPEMENT (`~/Documents/FitMyCV-DEV/`)
-- **Branche** : `dev` (branche de développement actif)
 - **Base de données** : PostgreSQL `fitmycv_dev`
+- **user** : `erickdesmet`
 - **Port** : `3001` (développement)
 - **Usage** : Développement quotidien, features, bugs, improvements
 
 ### Dossier PRODUCTION (optionnel : `~/FitMyCV/`)
-- **Branche** : `main` uniquement (lecture seule, pull only)
 - **Base de données** : PostgreSQL `fitmycv_prod`
+- **user** : `erickdesmet`
 - **Port** : `3000` (production)
 - **Usage** : Production uniquement, jamais de développement
-
-### Workflow Git
-
-```bash
-# 1. Développement d'une feature (dans FitMyCV-DEV/)
-cd ~/Documents/FitMyCV-DEV
-git checkout dev
-git pull origin dev
-git checkout -b feature/nom-feature
-# ... développement, commits ...
-git push origin feature/nom-feature
-
-# 2. PR feature → dev
-gh pr create --base dev --head feature/nom-feature --title "feat: Description"
-# Après merge, supprimer la branche feature
-
-# 3. Quand prêt pour release : PR dev → release (tag -rc)
-gh pr create --base release --head dev --title "Release v1.x.x-rc"
-# Après merge:
-git checkout release
-git pull origin release
-git tag -a v1.x.x-rc -m "Release Candidate v1.x.x for testing"
-git push origin v1.x.x-rc
-
-# 4. Tests sur release (validation fonctionnelle)
-npm run dev  # Tester sur branche release
-npm run build && npm start  # Tester en mode production
-
-# 5. Après validation : PR release → main (tag final)
-gh pr create --base main --head release --title "Production Release v1.x.x"
-# Après merge:
-git checkout main
-git pull origin main
-git tag -a v1.x.x -m "Production release v1.x.x"
-git push origin v1.x.x
-
-# 6. Déploiement production (dans cv-site/ si utilisé)
-cd ~/Documents/cv-site
-git checkout main
-git pull origin main
-npm run build
-npm start
-```
-
-### Workflow Hotfix (urgence production)
-
-```bash
-# 1. Créer hotfix depuis main
-git checkout main
-git pull origin main
-git checkout -b hotfix/nom-critique
-
-# 2. Fix + test rapide
-# ... corrections ...
-git commit -m "hotfix: Description critique"
-git push origin hotfix/nom-critique
-
-# 3. Merger dans main (production)
-git checkout main
-git merge hotfix/nom-critique --no-ff
-git tag -a v1.x.y -m "Hotfix v1.x.y"
-git push origin main --tags
-
-# 4. Backport dans release (éviter régression)
-git checkout release
-git merge hotfix/nom-critique --no-ff
-git push origin release
-
-# 5. Backport dans dev (éviter régression)
-git checkout dev
-git merge hotfix/nom-critique --no-ff
-git push origin dev
-
-# 6. Supprimer branche hotfix
-git branch -d hotfix/nom-critique
-git push origin --delete hotfix/nom-critique
-```
-
----
 
 ## ⚡ Quick Start
 
 ### Ports de développement
 - **Dev**: `3001` (npm run dev) - PostgreSQL `fitmycv_dev`
-- **Prod**: `3000` (npm start) - PostgreSQL
 
 ### Commandes essentielles
-
-```bash
-# Développement
-npm run dev                      # Serveur développement (port 3001)
-npm run build                    # Build production
-npm start                        # Serveur production (port 3000)
-
-# Database
-npm run db:setup                 # Appliquer migrations + seed
-npm run db:reset                 # Reset complet (dev uniquement)
-npm run db:seed                  # Seed uniquement
-npm run db:studio                # Interface DB graphique
-npm run db:generate              # Générer client Prisma
-npm run db:sync-from-prod        # Copier prod → dev (dump complet)
-
-# Stripe (terminal séparé)
-stripe listen --forward-to localhost:3001/api/webhooks/stripe
-```
-
 → **[Toutes les commandes](./docs/COMMANDS_REFERENCE.md)**
 
 ### Variables d'environnement critiques
 
 **Pour DÉVELOPPEMENT** (`.env`) :
 ```bash
-DATABASE_URL="postgresql://fitmycv:password@localhost:5432/fitmycv_prod"
-DATABASE_URL_DEV="postgresql://fitmycv:password@localhost:5432/fitmycv_dev"
+DATABASE_URL="postgresql://fitmycv:password@localhost:5432/fitmycv_prod" # DB PRODUCTION
+DATABASE_URL="postgresql://fitmycv:password@localhost:5432/fitmycv_dev" # DB DEVELOPEMENT
 NODE_ENV=development
+USER=erickdesmet
 PORT=3001
-CV_ENCRYPTION_KEY="..."                         # openssl rand -base64 32
+CV_ENCRYPTION_KEY="..."                        
 CV_BASE_DIR="data/users"                        # Chemin vers dossier users (relatif ou absolu)
 NEXTAUTH_SECRET="..."                           # openssl rand -base64 32
 OPENAI_API_KEY="sk-..."                         # OpenAI API
@@ -202,7 +103,6 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3001"   # URL publique
 **Important DATABASE_URL** :
 - `DATABASE_URL` : Base principale (prod)
 - `DATABASE_URL_DEV` : Base dev (pour sync)
-- **Sync** : `npm run db:sync-from-prod` copie DATABASE_URL → DATABASE_URL_DEV
 
 → **[Toutes les variables](./docs/ENVIRONMENT_VARIABLES.md)**
 
@@ -219,7 +119,7 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3001"   # URL publique
 - **i18n**: 4 langues (FR, EN, ES, DE), 9 catégories de traductions
 - **IA**: OpenAI API (génération, match score, optimisation ATS)
 - **Paiements**: Stripe (abonnements + packs crédits)
-- **Sécurité**: CV chiffrés AES-256-GCM côté serveur
+- **Stockage CV**: PostgreSQL natif (JSON) avec versioning
 
 **Setup dev** : `npm run db:setup` ou `npm run db:sync-from-prod`
 
@@ -227,7 +127,7 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3001"   # URL publique
 
 | Système | Description | Documentation |
 |---------|-------------|---------------|
-| **CV chiffrés** | AES-256-GCM avec IV de 12 bytes | [SECURITY.md](./docs/SECURITY.md) |
+| **Stockage CV** | PostgreSQL natif (CvFile.content) + versioning (CvVersion) | [DATABASE.md](./docs/DATABASE.md#3-cvfile) |
 | **Job queue** | 3 jobs concurrents max (génération, import, traduction) | [ARCHITECTURE.md](./docs/ARCHITECTURE.md#background-tasks) |
 | **Abonnements** | Hybride : plans mensuels + micro-transactions (crédits) | [SUBSCRIPTION.md](./docs/SUBSCRIPTION.md) |
 | **Dashboard admin** | Analytics, monitoring, gestion users/plans | [ADMIN_GUIDE.md](./docs/ADMIN_GUIDE.md) |
@@ -337,17 +237,39 @@ const rootPath = getUserRootPath(userId);
 // -> /mnt/DATA/PROD/users/{userId}
 ```
 
-### 2. Accès CV chiffrés
+### 2. Accès CV (Database Storage)
 
 ```javascript
-import { readCv, writeCv } from '@/lib/cv/storage';
+import { readUserCvFile, writeUserCvFile, listUserCvFiles } from '@/lib/cv/storage';
 
-// Déchiffre automatiquement
-const cvData = await readCv(userId, filename);
+// Lire un CV (retourne JSON stringifié)
+const cvData = await readUserCvFile(userId, filename);
+const cv = JSON.parse(cvData);
 
-// Chiffre automatiquement
-await writeCv(userId, filename, cvData);
+// Écrire un CV (accepte string ou objet)
+await writeUserCvFile(userId, filename, cvData);
+
+// Lister les CVs d'un utilisateur
+const filenames = await listUserCvFiles(userId);
 ```
+
+### 2b. Versioning CV (Optimisation IA)
+
+```javascript
+import { createCvVersion, getCvVersions, restoreCvVersion } from '@/lib/cv/versioning';
+
+// Créer une version AVANT modification IA
+await createCvVersion(userId, filename, 'Avant optimisation IA');
+
+// Lister les versions d'un CV
+const versions = await getCvVersions(userId, filename);
+// → [{ version: 3, changelog: '...', createdAt }, { version: 2, ... }]
+
+// Restaurer une version antérieure
+const restoredContent = await restoreCvVersion(userId, filename, 2);
+```
+
+**Note** : Le versioning est uniquement utilisé par `improveCvJob` (optimisation IA). Les éditions manuelles écrasent directement sans créer de version.
 
 ### 3. Enqueuer un job
 
@@ -796,13 +718,11 @@ Hotfix: main → merge dans (main + release + dev)
 
 - ❌ **Jamais de "🤖 Generated with"** ou mention de Claude Code
 - ✅ **Vérifier et mettre à jour docs/** avant commit
-- ✅ **Exécuter `npm run build`** après changement code
 
 ### Développement
 
 - ✅ **npm run dev utilise port 3001**
 - ✅ **PostgreSQL** : `fitmycv_dev` (dev) et `fitmycv_prod` (prod) sur même serveur
-- ✅ **Sync prod → dev** : `npm run db:sync-from-prod`
 - ✅ **Mettre à jour la documentation dans le dossier `docs/` et `CLAUDE.md`** Apres chaque modification de la codebase, vérifier la documentation et documenter la modification. Puis tenir à jour le fichier CLAUDE.md
 
 ### Documentation
@@ -865,5 +785,6 @@ Pour toute question sur :
 ---
 
 **📝 Note** : Ce fichier est un **quick reference**. Pour toute information détaillée, consulter la **[documentation complète dans docs/](./docs/README.md)**.
-- Ne pas lire le fichier .env, chercher un fichier env.txt à la place (copie accéssible) ou demander à l'utilisateur de copier coller le contenu du .env sinon.
+- Ne pas lire le fichier .env, demander à l'utilisateur de copier coller le contenu du .env
 - A chaque demande de commit, de PR, de merge etc... ne pas lancer les stop hooks
+- Ne JAMAIS faire de db push ! UNIQUEMENT DES MIGRATIONS !!! Si une migration échoue, demande moi quoi faire !

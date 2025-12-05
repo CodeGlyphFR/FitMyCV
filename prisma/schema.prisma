@@ -74,6 +74,8 @@ model CvFile {
   id                     String             @id @default(cuid())
   userId                 String
   filename               String
+  content                Json?              // Contenu CV JSON (migré depuis filesystem)
+  contentVersion         Int                @default(1) // Numéro de version courante
   sourceType             String?
   sourceValue            String?
   extractedJobOffer      String?
@@ -100,8 +102,23 @@ model CvFile {
   updatedAt              DateTime           @updatedAt
   user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   creditTransaction      CreditTransaction? @relation(fields: [creditTransactionId], references: [id])
+  versions               CvVersion[]        // Historique des versions (optimisation IA)
 
   @@unique([userId, filename])
+}
+
+model CvVersion {
+  id        String   @id @default(cuid())
+  cvFileId  String
+  version   Int      // Numéro de version (1, 2, 3...)
+  content   Json     // Contenu JSON complet
+  changelog String?  // "Optimisation IA", "Restauration depuis v2"
+  createdAt DateTime @default(now())
+
+  cvFile CvFile @relation(fields: [cvFileId], references: [id], onDelete: Cascade)
+
+  @@unique([cvFileId, version])
+  @@index([cvFileId, createdAt(sort: Desc)])
 }
 
 model BackgroundTask {

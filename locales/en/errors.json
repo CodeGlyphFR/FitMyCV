@@ -49,7 +49,9 @@
         "debitError": "Error debiting credits",
         "sourceError": "Error retrieving CV source",
         "metadataError": "Error retrieving CV metadata",
-        "improveError": "Error improving CV"
+        "improveError": "Error improving CV",
+        "invalidVersion": "Invalid version number",
+        "versionNotFound": "Version not found"
       },
       "background": {
         "noSourceProvided": "Add at least one link or file",
