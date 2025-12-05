@@ -1,32 +1,9 @@
-IMPORT ET STRUCTURATION DE CV PDF
+Analyse les images du CV ci-dessous et extrais TOUTES les informations visibles.
 
-Analyse le CV PDF fourni et remplis le template JSON vierge avec les informations extraites.
+- Le CV peut avoir plusieurs colonnes ou sections - lis TOUT le contenu
+- Combine les informations de toutes les pages
+- Remplis "generated_at" avec la date du jour (format ISO : YYYY-MM-DD)
 
-{INCLUDE:_shared/json-instructions.md}
-
----
-
-## TEMPLATE JSON À REMPLIR
-
-Respecte exactement cette structure :
-
-```json
-{cvSchema}
-```
-
----
-
-## CONTENU DU CV EXTRAIT DU PDF
-
-```
-{pdfText}
-```
-
----
-
-## ⚠️ IMPORTANT
-
-- Remplis le champ **'generated_at'** avec la date actuelle au format ISO
-- **Ne modifie pas** les champs 'order_hint' et 'section_titles'
-
-{INCLUDE:_shared/response-format.md}
+VALEURS FIXES (NE PAS MODIFIER) :
+- order_hint : ["header", "summary", "skills", "experience", "education", "languages", "extras", "projects"]
+- section_titles : {"summary": "Summary", "skills": "Skills", "experience": "Experience", "education": "Education", "languages": "Languages", "extras": "Extras", "projects": "Projects"}
