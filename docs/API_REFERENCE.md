@@ -413,7 +413,7 @@ Créer un nouveau CV vide.
 
 ---
 
-### DELETE `/api/cvs/delete`
+### POST `/api/cvs/delete`
 
 Supprimer un CV.
 
@@ -423,7 +423,74 @@ Supprimer un CV.
 
 ```json
 {
-  "filename": "cv_1234567890.json"
+  "file": "1234567890.json"
+}
+```
+
+**Réponse (200)** :
+
+```json
+{
+  "ok": true,
+  "nextFile": "autre_fichier.json"
+}
+```
+
+---
+
+### GET `/api/cvs/versions?file={filename}`
+
+Récupérer la liste des versions d'un CV (créées lors des optimisations IA).
+
+**Auth** : Requise
+
+**Query params** :
+- `file` (requis) : Nom du fichier CV
+- `version` (optionnel) : Si spécifié, retourne le contenu de cette version
+
+**Réponse (200) - Liste des versions** :
+
+```json
+{
+  "filename": "1234567890.json",
+  "versions": [
+    {
+      "version": 2,
+      "changelog": "Avant optimisation IA",
+      "createdAt": "2025-12-05T18:00:00.000Z"
+    },
+    {
+      "version": 1,
+      "changelog": "Avant optimisation IA",
+      "createdAt": "2025-12-04T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+**Réponse (200) - Contenu d'une version** (avec `?version=2`) :
+
+```json
+{
+  "version": 2,
+  "content": { ... }
+}
+```
+
+---
+
+### POST `/api/cvs/restore`
+
+Restaurer une version antérieure d'un CV. Crée automatiquement une version de sauvegarde du contenu actuel.
+
+**Auth** : Requise
+
+**Body** :
+
+```json
+{
+  "filename": "1234567890.json",
+  "version": 2
 }
 ```
 
@@ -432,7 +499,9 @@ Supprimer un CV.
 ```json
 {
   "success": true,
-  "message": "CV supprimé"
+  "filename": "1234567890.json",
+  "restoredVersion": 2,
+  "content": { ... }
 }
 ```
 

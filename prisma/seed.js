@@ -641,7 +641,19 @@ const SYSTEM_SETTINGS = [
 ];
 
 // ============================================================================
-// 10. FEATURE MAPPINGS (Complet avec features non-IA)
+// 10. SETTINGS - CV
+// ============================================================================
+const CV_SETTINGS = [
+  {
+    settingName: 'cv_max_versions',
+    value: '5',
+    category: 'cv',
+    description: 'Nombre maximum de versions historisées par CV (optimisation IA)',
+  },
+];
+
+// ============================================================================
+// 11. FEATURE MAPPINGS (Complet avec features non-IA)
 // ============================================================================
 const FEATURE_MAPPINGS = [
   {
@@ -840,7 +852,7 @@ async function main() {
   results.push({ created: alertsCreated, skipped: alertsSkipped });
 
   // ===== 7. Settings =====
-  const allSettings = [...AI_MODEL_SETTINGS, ...CREDIT_SETTINGS, ...FEATURE_SETTINGS, ...SYSTEM_SETTINGS];
+  const allSettings = [...AI_MODEL_SETTINGS, ...CREDIT_SETTINGS, ...FEATURE_SETTINGS, ...SYSTEM_SETTINGS, ...CV_SETTINGS];
   let settingsCreated = 0;
   let settingsSkipped = 0;
   for (const setting of allSettings) {

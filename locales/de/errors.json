@@ -49,7 +49,9 @@
         "debitError": "Fehler beim Abbuchen von Credits",
         "sourceError": "Fehler beim Abrufen der Lebenslauf-Quelle",
         "metadataError": "Fehler beim Abrufen der Lebenslauf-Metadaten",
-        "improveError": "Fehler bei der Verbesserung des Lebenslaufs"
+        "improveError": "Fehler bei der Verbesserung des Lebenslaufs",
+        "invalidVersion": "Ungültige Versionsnummer",
+        "versionNotFound": "Version nicht gefunden"
       },
       "background": {
         "noSourceProvided": "Fügen Sie mindestens einen Link oder eine Datei hinzu",

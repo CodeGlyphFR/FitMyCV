@@ -49,7 +49,9 @@
         "debitError": "Erreur lors du débit des crédits",
         "sourceError": "Erreur lors de la récupération de la source du CV",
         "metadataError": "Erreur lors de la récupération des métadonnées du CV",
-        "improveError": "Erreur lors de l'amélioration du CV"
+        "improveError": "Erreur lors de l'amélioration du CV",
+        "invalidVersion": "Numéro de version invalide",
+        "versionNotFound": "Version introuvable"
       },
       "background": {
         "noSourceProvided": "Ajoutez au moins un lien ou un fichier",

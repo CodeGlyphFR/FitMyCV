@@ -7,7 +7,7 @@ Guide complet des mesures de sécurité implémentées dans FitMyCV.io.
 ## Table des matières
 
 - [Vue d'ensemble](#vue-densemble)
-- [Chiffrement des données](#chiffrement-des-données)
+- [Stockage des CVs](#stockage-des-cvs)
 - [Authentification & Autorisation](#authentification--autorisation)
 - [Liaison de comptes OAuth](#liaison-de-comptes-oauth)
 - [reCAPTCHA v3](#recaptcha-v3)
@@ -33,7 +33,7 @@ FitMyCV.io implémente une sécurité multi-couches :
 ├─────────────────────────────────────────┤
 │  API Routes (Validation, Sanitization)  │ ← Application
 ├─────────────────────────────────────────┤
-│  Encryption (AES-256-GCM)               │ ← Données
+│  Database (PostgreSQL JSON natif)       │ ← Données
 ├─────────────────────────────────────────┤
 │  Database (Prisma avec parameterized)   │ ← Stockage
 └─────────────────────────────────────────┘
@@ -41,91 +41,66 @@ FitMyCV.io implémente une sécurité multi-couches :
 
 ---
 
-## Chiffrement des données
+## Stockage des CVs
 
-### AES-256-GCM
+### PostgreSQL JSON natif
 
-Tous les CVs sont chiffrés avant stockage avec **AES-256-GCM** (Galois/Counter Mode).
+Les CVs sont stockés directement en PostgreSQL au format JSON natif dans le champ `CvFile.content`.
 
-**Fichier** : `lib/cv/crypto.js`
+**Fichier** : `lib/cv/storage.js`
 
-### Configuration
-
-```bash
-# .env.local
-# Générer avec: openssl rand -base64 32
-CV_ENCRYPTION_KEY="votre-cle-32-octets-en-base64"
-```
-
-**IMPORTANT** : Cette clé doit faire exactement **32 octets** (256 bits).
-
-### Format des fichiers chiffrés
+### Architecture
 
 ```
-cv1:{iv}:{authTag}:{ciphertext}
-│   │   │          └─ Données chiffrées (Base64)
-│   │   └──────────── Tag d'authentification (16 bytes, Base64)
-│   └──────────────── Vecteur d'initialisation (12 bytes, Base64)
-└──────────────────── Préfixe de version
+┌─────────────────────────────────────────┐
+│  Application (Next.js)                  │
+├─────────────────────────────────────────┤
+│  lib/cv/storage.js                      │
+│  - readUserCvFile()                     │
+│  - writeUserCvFile()                    │
+├─────────────────────────────────────────┤
+│  Prisma ORM                             │
+│  - CvFile.content (Json)                │
+│  - CvVersion.content (Json)             │
+├─────────────────────────────────────────┤
+│  PostgreSQL                             │
+│  - Connexion TLS (production)           │
+│  - Accès authentifié                    │
+└─────────────────────────────────────────┘
 ```
 
-**Exemple** :
+### Sécurité du stockage
 
-```
-cv1:aBcD123...==:xYz789...==:dEf456...==
-```
+| Mesure | Description |
+|--------|-------------|
+| **Isolation** | Chaque CV lié à un userId unique |
+| **Validation** | Schema JSON validé (AJV) avant stockage |
+| **Transactions** | Opérations atomiques via Prisma |
+| **Versioning** | Historique des optimisations IA |
+| **Backup** | Fichiers filesystem conservés (migration legacy) |
 
-### Fonctions de chiffrement
+### Versioning (Optimisation IA)
 
-#### encryptString(plaintext)
+Le système conserve les versions précédentes avant chaque optimisation IA :
 
 ```javascript
-import crypto from 'crypto';
-
-export function encryptString(plaintext) {
-  const key = Buffer.from(process.env.CV_ENCRYPTION_KEY, 'base64');
-  const iv = crypto.randomBytes(12); // 96 bits pour GCM
-
-  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-
-  let ciphertext = cipher.update(plaintext, 'utf8', 'base64');
-  ciphertext += cipher.final('base64');
-
-  const authTag = cipher.getAuthTag();
-
-  return `cv1:${iv.toString('base64')}:${authTag.toString('base64')}:${ciphertext}`;
-}
+// lib/cv/versioning.js
+await createCvVersion(userId, filename, 'Avant optimisation IA');
 ```
 
-#### decryptString(ciphertext)
+**Configuration** : `cv_max_versions` (défaut: 5) dans Settings
 
-```javascript
-export function decryptString(ciphertext) {
-  if (!ciphertext.startsWith('cv1:')) {
-    throw new Error('Invalid cipher format');
-  }
+**Note** : Seul `improveCvJob` crée des versions. Les éditions manuelles écrasent directement.
 
-  const [version, ivB64, authTagB64, dataB64] = ciphertext.split(':');
+### Migration depuis chiffrement (Deprecated)
 
-  const key = Buffer.from(process.env.CV_ENCRYPTION_KEY, 'base64');
-  const iv = Buffer.from(ivB64, 'base64');
-  const authTag = Buffer.from(authTagB64, 'base64');
+Les anciens CVs chiffrés AES-256-GCM ont été migrés vers PostgreSQL.
 
-  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
-  decipher.setAuthTag(authTag);
+**Script** : `scripts/migrate-cv-to-database.mjs`
 
-  let plaintext = decipher.update(dataB64, 'base64', 'utf8');
-  plaintext += decipher.final('utf8');
-
-  return plaintext;
-}
-```
-
-### Sécurité
-
-- **Authenticité** : GCM garantit l'intégrité (pas de modification sans détection)
-- **IV aléatoire** : Chaque fichier a un IV unique (pas de patterns répétitifs)
-- **Key rotation** : Possible en déchiffrant puis rechiffrant tous les CVs
+**Variables deprecated** :
+- `CV_ENCRYPTION_KEY` - Conservée pour référence/rollback
+- `CV_BASE_DIR` - Fichiers conservés comme backup permanent
 
 ---
 
@@ -744,7 +719,7 @@ Liste de tous les cookies utilisés par l'application :
 - [ ] Rate limiting configuré
 - [ ] Validation des inputs
 - [ ] Sanitization des outputs
-- [ ] Chiffrement des données sensibles
+- [ ] Stockage sécurisé des données (PostgreSQL)
 - [ ] Authentification forte (mots de passe + OAuth)
 - [ ] Vérification email obligatoire
 - [ ] RBAC implémenté
@@ -754,4 +729,4 @@ Liste de tous les cookies utilisés par l'application :
 
 ---
 
-**Sécurité multi-couches** | AES-256-GCM, NextAuth, Headers, Rate Limiting, RGPD
+**Sécurité multi-couches** | PostgreSQL natif, NextAuth, Headers, Rate Limiting, RGPD

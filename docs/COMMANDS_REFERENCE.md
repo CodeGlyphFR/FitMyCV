@@ -16,22 +16,6 @@
 
 ## Next.js
 
-### Commandes de Base
-
-```bash
-# Démarre le serveur de développement (port 3001)
-npm run dev
-
-# Build de production
-npm run build
-
-# Démarre le serveur de production (port 3000)
-npm start
-
-# Backfill des données de télémétrie
-npm run backfill:telemetry
-```
-
 ### Ports
 
 - **Développement** : `3001` (configuré dans package.json)
@@ -41,7 +25,6 @@ npm run backfill:telemetry
 
 - Le port de développement est **3001** pour éviter les conflits
 - Toujours utiliser `npm run dev` pour le développement local
-- Exécuter `npm run build` après chaque changement de code pour validation
 
 ---
 
@@ -63,19 +46,13 @@ npx prisma generate
 ### Database Management
 
 ```bash
-# Ouvrir Prisma Studio (interface graphique pour la base de données)
-npx prisma studio
-
 # Seed la base de données (plans d'abonnement par défaut)
 node prisma/seed.js
 ```
 
 ### Important
 
-- **DATABASE_URL** doit être dans `.env.local`
-- Valeur : `DATABASE_URL="file:./dev.db"` (relatif au dossier `prisma/`)
-- **NE JAMAIS** utiliser `file:./prisma/dev.db`
-- Le chemin est toujours `file:./dev.db` car Prisma s'exécute depuis le dossier `prisma/`
+- **DATABASE_URL** doit être dans `.env`
 
 **Documentation complète** : [DATABASE.md](./DATABASE.md) | [INSTALLATION.md](./INSTALLATION.md)
 
@@ -113,63 +90,6 @@ stripe trigger checkout.session.completed
 4. Redémarrer le serveur Next.js
 
 **Documentation complète** : [STRIPE_SETUP.md](./STRIPE_SETUP.md)
-
----
-
-## MCP Puppeteer
-
-### Installation Rapide
-
-```bash
-# Ajouter le serveur MCP Puppeteer
-claude mcp add-json "puppeteer" '{"command":"npx","args":["-y","@modelcontextprotocol/server-puppeteer"]}'
-
-# Vérifier l'installation
-claude mcp list
-
-# Redémarrer Claude Code pour activer
-```
-
-### Outils Disponibles (7)
-
-- `navigate` - Naviguer vers une URL
-- `screenshot` - Capturer une screenshot
-- `click` - Cliquer sur un élément
-- `fill` - Remplir un input
-- `evaluate` - Exécuter du JavaScript dans le navigateur
-- `hover` - Survoler un élément
-- `select` - Sélectionner une option
-
-### Configuration Linux
-
-Ajouter dans la configuration MCP :
-```json
-{
-  "allowDangerous": true,
-  "launchOptions": {
-    "args": ["--no-sandbox", "--disable-setuid-sandbox"]
-  }
-}
-```
-
-### Exemple Minimal
-
-```javascript
-// Naviguer et capturer
-await puppeteer_navigate({
-  url: "https://176.136.226.121.nip.io",
-  allowDangerous: true,
-  launchOptions: { headless: true, args: ["--no-sandbox"] }
-});
-
-await puppeteer_screenshot({
-  name: "homepage",
-  width: 1920,
-  height: 1080
-});
-```
-
-**Documentation complète** : [MCP_PUPPETEER.md](./MCP_PUPPETEER.md)
 
 ---
 

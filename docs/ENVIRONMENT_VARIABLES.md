@@ -13,7 +13,7 @@ Ce document liste toutes les variables d'environnement nécessaires pour FitMyCV
 4. [Variables NextAuth](#variables-nextauth)
 5. [Variables Stripe](#variables-stripe)
 6. [Variables OAuth](#variables-oauth)
-7. [Variables Chiffrement](#variables-chiffrement)
+7. [Variables Stockage CV (Deprecated)](#variables-stockage-cv-deprecated)
 8. [Variables Optionnelles](#variables-optionnelles)
 9. [Génération des Secrets](#génération-des-secrets)
 10. [Best Practices Sécurité](#best-practices-sécurité)
@@ -382,36 +382,30 @@ BYPASS_RECAPTCHA=true  # Désactive la vérification en développement
 
 ---
 
-## Variables Chiffrement
+## Variables Stockage CV (Deprecated)
 
-### CV_ENCRYPTION_KEY (Obligatoire)
+> **Note** : Depuis la migration vers PostgreSQL, les CVs sont stockés en base de données.
+> Les variables ci-dessous sont conservées pour la migration et le backup des fichiers legacy.
 
-Clé de chiffrement AES-256-GCM pour les CV stockés.
+### CV_ENCRYPTION_KEY (Deprecated)
+
+Ancienne clé de chiffrement AES-256-GCM pour les CV stockés sur filesystem.
 
 ```bash
 CV_ENCRYPTION_KEY="base64-encoded-32-bytes-key"
 ```
 
-**Générer** :
-```bash
-openssl rand -base64 32
-```
+**Statut** : Deprecated - Conservée uniquement pour :
+- Script de migration `scripts/migrate-cv-to-database.mjs`
+- Lecture des anciens fichiers chiffrés (rollback)
 
-**Important** :
-- ✅ 32 octets en base64 (44 caractères encodés)
-- ✅ Générer UNE FOIS et conserver précieusement
-- ❌ **NE JAMAIS** changer cette clé en production (les CV existants deviendraient illisibles)
-- ✅ Sauvegarder dans un gestionnaire de secrets (1Password, AWS Secrets Manager, etc.)
-
-**Format** : AES-256-GCM avec IV de 12 bytes et authTag de 16 bytes.
-
-**Documentation** : [SECURITY.md - Chiffrement CV](./SECURITY.md#chiffrement-des-cv)
+**Note** : Les nouveaux CVs sont stockés en PostgreSQL (champ `CvFile.content` JSON natif).
 
 ---
 
-### CV_BASE_DIR (Optionnel)
+### CV_BASE_DIR (Deprecated)
 
-Chemin vers le dossier contenant les données utilisateurs (CVs chiffrés).
+Chemin vers le dossier contenant les anciens fichiers CV chiffrés.
 
 ```bash
 CV_BASE_DIR="data/users"  # Chemin relatif (par défaut)
@@ -419,56 +413,34 @@ CV_BASE_DIR="data/users"  # Chemin relatif (par défaut)
 CV_BASE_DIR="/mnt/DATA/PROD/users"  # Chemin absolu
 ```
 
-**Comportement** :
-- **Non défini** : Utilise `data/users` (relatif au dossier du projet)
-- **Chemin relatif** : Résolu depuis `process.cwd()` (racine du projet)
-- **Chemin absolu** : Utilisé tel quel (recommandé pour stockage externe)
+**Statut** : Deprecated - Conservée pour :
+- Accès aux fichiers backup (conservés indéfiniment)
+- Script de migration
+- Rollback éventuel
 
-**Cas d'usage** :
-- Stocker les CVs sur un disque externe (HDD, SSD, NAS)
-- Séparer les données du code source
-- Faciliter les backups et migrations
-
-**Structure attendue** :
+**Structure des fichiers backup** :
 ```
 {CV_BASE_DIR}/
 ├── {userId1}/
 │   └── cvs/
-│       ├── cv1.json (chiffré)
-│       └── cv2.json (chiffré)
+│       ├── cv1.json (chiffré AES-256-GCM - backup)
+│       └── cv2.json (chiffré AES-256-GCM - backup)
 └── {userId2}/
     └── cvs/
-        └── cv1.json (chiffré)
+        └── cv1.json (chiffré AES-256-GCM - backup)
 ```
 
 **Module de résolution de chemins** : `lib/utils/paths.js`
 
-Fonctions utilitaires disponibles :
 ```javascript
 import { resolveCvBaseDir, getUserCvPath, getUserRootPath } from "@/lib/utils/paths";
 
-// Résoudre CV_BASE_DIR (absolu ou relatif)
-const baseDir = resolveCvBaseDir();
-
-// Chemin vers le dossier CVs d'un user
+// Pour accéder aux fichiers backup uniquement
 const cvPath = getUserCvPath("user123");
 // -> /mnt/DATA/PROD/users/user123/cvs
-
-// Chemin vers le dossier racine d'un user
-const rootPath = getUserRootPath("user123");
-// -> /mnt/DATA/PROD/users/user123
 ```
 
-**Fichiers utilisant cette variable** :
-- `lib/utils/paths.js` - Résolution centralisée des chemins
-- `lib/cv/storage.js` - Lecture/écriture CVs
-- `lib/user/deletion.js` - Suppression dossiers utilisateurs
-- `lib/auth/options.js` - Création workspace utilisateur
-- `lib/admin/userManagement.js` - Gestion admin
-
-**Tests** : `lib/utils/__tests__/paths.test.js`
-
-**Documentation** : [ARCHITECTURE.md - Structure des données](./ARCHITECTURE.md#structure-des-données-cv)
+**Documentation** : [SECURITY.md - Stockage des CVs](./SECURITY.md#stockage-des-cvs)
 
 ---
 
@@ -482,9 +454,6 @@ NEXT_PUBLIC_APP_VERSION="1.0.9.2"
 
 # Nom du site (utilisé dans le titre)
 NEXT_PUBLIC_SITE_NAME="FitMyCV.io"
-
-# Dossier de stockage des CV chiffrés (défaut: data/users)
-CV_BASE_DIR="data/users"
 ```
 
 **Note** : `NEXT_PUBLIC_APP_VERSION` et `NEXT_PUBLIC_SITE_NAME` sont affichés dans la TopBar et le titre de la page.
@@ -667,11 +636,11 @@ NEXTAUTH_URL="http://localhost:3001"
 NEXT_PUBLIC_SITE_URL="http://localhost:3001"
 
 # ============================================
-# Chiffrement CV
+# Stockage CV (Deprecated - Migration vers PostgreSQL)
 # ============================================
-# Générer avec: openssl rand -base64 32
-# IMPORTANT: NE JAMAIS CHANGER EN PRODUCTION
-CV_ENCRYPTION_KEY="your-encryption-key-here"
+# Variables conservées pour backup/migration uniquement
+# CV_ENCRYPTION_KEY="..." (pour script migration)
+# CV_BASE_DIR="data/users" (fichiers backup)
 
 # ============================================
 # Stripe (Test Mode)
@@ -706,7 +675,6 @@ APPLE_SECRET="..."
 # ============================================
 NEXT_PUBLIC_APP_VERSION="1.0.9.2"
 NEXT_PUBLIC_SITE_NAME="FitMyCV.io"
-CV_BASE_DIR="data/users"
 
 # ============================================
 # Environnement
@@ -731,11 +699,11 @@ const requiredEnvVars = [
   'NEXTAUTH_SECRET',
   'NEXTAUTH_URL',
   'NEXT_PUBLIC_SITE_URL',
-  'CV_ENCRYPTION_KEY',
   'STRIPE_SECRET_KEY',
   'STRIPE_WEBHOOK_SECRET',
   'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
   'RESEND_API_KEY'
+  // CV_ENCRYPTION_KEY - Deprecated (stockage PostgreSQL)
 ];
 
 const missing = requiredEnvVars.filter(v => !process.env[v]);
