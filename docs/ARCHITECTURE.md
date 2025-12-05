@@ -257,7 +257,7 @@ fitmycv/
 │   │   ├── featureUsage.js     # Feature limits & counters
 │   │   ├── cvLimits.js         # CV limits with credits
 │   │   ├── subscriptions.js    # Subscription management
-│   │   ├── stripeSync.js       # Stripe products synchronization
+│   │   ├── stripeSync.mjs      # Stripe products synchronization
 │   │   ├── planUtils.js        # Plan utilities and helpers
 │   │   └── planTranslations.js # Plan name/description translations
 │   ├── stripe.js                # Stripe client singleton
