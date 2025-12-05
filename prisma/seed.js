@@ -718,7 +718,7 @@ const FEATURE_MAPPINGS = [
 ];
 
 // ============================================================================
-// CONFIRMATION HELPER
+// HEADER DISPLAY
 // ============================================================================
 function showHeader() {
   const dbUrl = process.env.DATABASE_URL || '';
@@ -730,63 +730,13 @@ function showHeader() {
   console.log(`📊 Database: ${COLORS.cyan}${dbName}${COLORS.reset}`);
   console.log(`🔧 Environment: ${isProduction ? `${COLORS.yellow}PRODUCTION${COLORS.reset}` : `${COLORS.green}DEVELOPMENT${COLORS.reset}`}`);
   console.log('────────────────────────────────────────────────────\n');
-
-  if (isProduction) {
-    console.log(`${COLORS.yellow}⚠️  ATTENTION: Vous êtes sur la base de PRODUCTION!${COLORS.reset}\n`);
-  }
-
-  return isProduction;
-}
-
-async function askConfirmation() {
-  const isProduction = showHeader();
-
-  // Vérifier si on a le flag --yes ou -y (skip confirmation)
-  if (process.argv.includes('--yes') || process.argv.includes('-y')) {
-    console.log(`${COLORS.dim}(--yes flag: skipping confirmation)${COLORS.reset}\n`);
-    return true;
-  }
-
-  // Vérifier si stdin est un TTY (terminal interactif)
-  if (!process.stdin.isTTY) {
-    // Non-interactif : en prod on refuse, en dev on continue
-    if (isProduction) {
-      console.log(`${COLORS.yellow}Mode non-interactif détecté sur PRODUCTION.${COLORS.reset}`);
-      console.log(`Utilisez ${COLORS.cyan}--yes${COLORS.reset} pour confirmer le seeding.\n`);
-      return false;
-    }
-    console.log(`${COLORS.dim}(Mode non-interactif: auto-confirm en dev)${COLORS.reset}\n`);
-    return true;
-  }
-
-  // Mode interactif : demander confirmation
-  const readline = require('readline');
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    terminal: true,
-  });
-
-  return new Promise((resolve) => {
-    rl.question('Continuer le seeding? (y/N) ', (answer) => {
-      rl.close();
-      resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
-    });
-  });
 }
 
 // ============================================================================
 // MAIN SEED FUNCTION
 // ============================================================================
 async function main() {
-  // Demander confirmation
-  const confirmed = await askConfirmation();
-  if (!confirmed) {
-    console.log(`${COLORS.dim}Seeding annulé.${COLORS.reset}\n`);
-    process.exit(0);
-  }
-
-  console.log('');
+  showHeader();
 
   const results = [];
   let totalCreated = 0;
