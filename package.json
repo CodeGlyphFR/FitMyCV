@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
-    "rebuild" : "./scripts/rebuild-prod.sh",
+    "rebuild": "./scripts/rebuild-prod.sh",
     "start": "next start -p 3000",
     "db:setup": "prisma migrate deploy && prisma db seed",
     "db:reset": "prisma migrate reset",
@@ -28,6 +28,7 @@
     "next-auth": "^4.24.11",
     "openai": "^6.0.0",
     "pdf2json": "^3.2.2",
+    "pdf2pic": "^3.2.0",
     "puppeteer": "^24.23.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
@@ -38,7 +39,8 @@
     "recharts": "^3.3.0",
     "resend": "^6.1.2",
     "sharp": "^0.34.4",
-    "stripe": "^19.1.0"
+    "stripe": "^19.1.0",
+    "supports-color": "^10.2.2"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.19",
