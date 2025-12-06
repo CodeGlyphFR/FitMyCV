@@ -19,6 +19,7 @@ Ces fichiers sont inclus automatiquement dans les prompts via la directive `{INC
 | `json-instructions.md` | Instructions détaillées pour remplir le template CV JSON |
 | `scoring-rules.md` | Format de scoring unifié (4 catégories, poids, formule) |
 | `cv-improvement-rules.md` | Règles d'amélioration de CV (ce qui est autorisé/interdit) |
+| `anti-detection-rules.md` | Règles anti-détection IA et humanisation (mots bannis, style naturel, CAR/STAR) |
 | `language-policy.md` | Politique de langue pour génération et traduction |
 | `response-format.md` | Format de réponse JSON standard |
 
@@ -30,6 +31,7 @@ prompts/
 │   ├── json-instructions.md  # Instructions template CV
 │   ├── scoring-rules.md      # Format scoring unifié
 │   ├── cv-improvement-rules.md # Règles amélioration CV
+│   ├── anti-detection-rules.md # Règles anti-détection IA
 │   ├── language-policy.md    # Politique de langue
 │   └── response-format.md    # Format réponse JSON
 │

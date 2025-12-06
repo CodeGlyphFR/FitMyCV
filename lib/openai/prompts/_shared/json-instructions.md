@@ -21,7 +21,7 @@ Informations personnelles :
 ## 2. SUMMARY
 
 - **headline** : titre/accroche courte et percutante (1 ligne)
-- **description** : résumé professionnel détaillé adapté au poste (2-3 phrases)
+- **description** : C'est le "Who am I" du CV
 - **years_experience** : nombre d'années d'expérience (nombre)
 - **domains** : domaines d'expertise (tableau de strings)
 - **key_strengths** : forces clés / atouts principaux (tableau de strings, 3-5 éléments)
@@ -151,6 +151,23 @@ Avant de finaliser le JSON, RELIS chaque élément de skills et VÉRIFIE que :
 Si tu trouves une minuscule en début de mot, CORRIGE-LA immédiatement.
 
 ## 4. EXPERIENCE
+
+### ⚠️ RÈGLE CRITIQUE - NE JAMAIS COMBINER LES EXPÉRIENCES
+
+**Chaque poste/mission = UNE entrée séparée dans le tableau**, même si :
+- Plusieurs postes dans la MÊME entreprise → entrées séparées
+- Évolution de titre (Junior → Senior → Lead) → entrées séparées
+- Missions successives chez le MÊME client → entrées séparées
+- Dates qui se chevauchent → entrées séparées
+
+| ❌ INCORRECT (combiné) | ✅ CORRECT (séparé) |
+|------------------------|---------------------|
+| "Développeur puis Tech Lead chez Entreprise X (2018-2023)" | Entrée 1: "Développeur" (2018-2020) + Entrée 2: "Tech Lead" (2020-2023) |
+| "Consultant pour Client A et B" | Entrée 1: Mission Client A + Entrée 2: Mission Client B |
+
+**Règle** : Si le CV source montre N expériences distinctes → le JSON doit avoir N entrées dans `experience[]`
+
+---
 
 Tableau d'expériences professionnelles avec :
 - **title** : intitulé du poste

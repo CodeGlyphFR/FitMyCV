@@ -83,6 +83,7 @@ model CvFile {
   originalCreatedBy      String?
   analysisLevel          String?
   isTranslated           Boolean            @default(false)
+  language               String?            // Langue du CV (fr, en, es, de) - détectée à l'import
   matchScore             Int?
   matchScoreUpdatedAt    DateTime?
   matchScoreStatus       String?            @default("idle")

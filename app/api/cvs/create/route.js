@@ -42,13 +42,16 @@ export async function POST(req){
       }, { status: 403 });
     }
 
-    var now=new Date();
-    var isoNow=now.toISOString();
-    var generated_at=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
-    var cv={ generated_at, header:{ full_name, current_title, contact:{ email, links:[], location:{} } }, summary:{ description:"", domains:[] },
-      skills:{ hard_skills:[], tools:[], methodologies:[] }, experience:[], education:[], languages:[], extras:{ driver_licenses:[] }, projects:[],
-      order_hint:["header","summary","skills","experience","education","languages","extras","projects"], section_titles:{ summary:"Résumé", skills:"Compétences", experience:"Expérience", education:"Éducation", languages:"Langues", extras:"Informations complémentaires", projects:"Projets personnels" },
-      meta:{ generator:"manual", source:"manual", created_at:isoNow, updated_at:isoNow }
+    // CV JSON contient uniquement le contenu (8 sections), métadonnées en DB (CvFile.*)
+    var cv={
+      header:{ full_name, current_title, contact:{ email, links:[], location:{} } },
+      summary:{ description:"", domains:[] },
+      skills:{ hard_skills:[], tools:[], methodologies:[], soft_skills:[] },
+      experience:[],
+      education:[],
+      languages:[],
+      extras:[],
+      projects:[]
     };
     await ensureUserCvDir(userId);
     const existingFiles = await listUserCvFiles(userId).catch(() => []);

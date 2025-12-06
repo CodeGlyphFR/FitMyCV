@@ -17,3 +17,5 @@ Identifier et corriger **UNIQUEMENT** les points faibles du CV par rapport à l'
 - Priorisation des améliorations à fort impact
 
 {INCLUDE:_shared/cv-improvement-rules.md}
+
+{INCLUDE:_shared/anti-detection-rules.md}
