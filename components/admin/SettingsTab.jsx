@@ -9,10 +9,17 @@ import {
   getSettingLabel,
   isHierarchicalCategory,
   isCreditsCategory,
+  isPdfImportCategory,
+  isCvDisplayCategory,
   getAIModelsStructure,
   getCreditsStructure,
+  getPdfImportStructure,
+  getPdfImportConfig,
+  getCvSections,
   AVAILABLE_AI_MODELS,
 } from '@/lib/admin/settingsConfig';
+import { PdfImportSettings } from './settings/PdfImportSettings';
+import { SectionOrderSettings } from './settings/SectionOrderSettings';
 
 export function SettingsTab({ refreshKey }) {
   const [settings, setSettings] = useState([]);
@@ -440,11 +447,25 @@ export function SettingsTab({ refreshKey }) {
               {getCategoryLabel(category)}
             </h4>
 
-            {isCreditsCategory(category)
-              ? renderCreditsSettings(settingsByCategory[category])
-              : isHierarchicalCategory(category)
-                ? renderAIModels(settingsByCategory[category])
-                : renderSimpleSettings(settingsByCategory[category])}
+            {isPdfImportCategory(category)
+              ? <PdfImportSettings
+                  settings={settingsByCategory[category]}
+                  modifiedSettings={modifiedSettings}
+                  onValueChange={handleValueChange}
+                  getCurrentValue={getCurrentValue}
+                />
+              : isCvDisplayCategory(category)
+                ? <SectionOrderSettings
+                    settings={settingsByCategory[category]}
+                    modifiedSettings={modifiedSettings}
+                    onValueChange={handleValueChange}
+                    getCurrentValue={getCurrentValue}
+                  />
+                : isCreditsCategory(category)
+                  ? renderCreditsSettings(settingsByCategory[category])
+                  : isHierarchicalCategory(category)
+                    ? renderAIModels(settingsByCategory[category])
+                    : renderSimpleSettings(settingsByCategory[category])}
           </div>
         ))}
       </div>

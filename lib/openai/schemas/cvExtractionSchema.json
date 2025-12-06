@@ -1,0 +1,206 @@
+{
+  "name": "cv_content_extraction",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "header": {
+        "type": "object",
+        "description": "Informations personnelles et contact",
+        "properties": {
+          "full_name": { "type": "string", "description": "Nom complet" },
+          "current_title": { "type": "string", "description": "Titre actuel" },
+          "email": { "type": ["string", "null"], "description": "Email" },
+          "phone": { "type": ["string", "null"], "description": "Téléphone" },
+          "city": { "type": ["string", "null"], "description": "Ville" },
+          "region": { "type": ["string", "null"], "description": "Région/État" },
+          "country_code": { "type": ["string", "null"], "description": "Code pays ISO" },
+          "links": {
+            "type": "array",
+            "description": "Liens (LinkedIn, GitHub, Portfolio, etc.)",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "description": "linkedin, github, portfolio, website, other" },
+                "label": { "type": "string", "description": "Label affiché" },
+                "url": { "type": "string", "description": "URL complète" }
+              },
+              "required": ["type", "label", "url"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["full_name", "current_title", "email", "phone", "city", "region", "country_code", "links"],
+        "additionalProperties": false
+      },
+      "summary": {
+        "type": ["object", "null"],
+        "description": "Résumé professionnel",
+        "properties": {
+          "headline": { "type": ["string", "null"], "description": "Titre accrocheur" },
+          "description": { "type": ["string", "null"], "description": "Description détaillée" },
+          "years_experience": { "type": ["integer", "null"], "description": "Années d'expérience" },
+          "domains": {
+            "type": "array",
+            "description": "Domaines d'expertise",
+            "items": { "type": "string" }
+          },
+          "key_strengths": {
+            "type": "array",
+            "description": "Points forts principaux",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["headline", "description", "years_experience", "domains", "key_strengths"],
+        "additionalProperties": false
+      },
+      "skills": {
+        "type": "object",
+        "description": "Compétences et outils",
+        "properties": {
+          "hard_skills": {
+            "type": "array",
+            "description": "Compétences techniques SAUF logiciels",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string", "description": "Nom (majuscule)" },
+                "proficiency": { "type": ["string", "null"], "description": "Awareness, Beginner, Intermediate, Proficient, Advanced, Expert" }
+              },
+              "required": ["name", "proficiency"],
+              "additionalProperties": false
+            }
+          },
+          "soft_skills": {
+            "type": "array",
+            "description": "Compétences comportementales",
+            "items": { "type": "string" }
+          },
+          "tools": {
+            "type": "array",
+            "description": "Logiciels: Excel, SAP, Photoshop, Figma, VS Code, etc.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string", "description": "Nom (majuscule)" },
+                "proficiency": { "type": ["string", "null"], "description": "Awareness, Beginner, Intermediate, Proficient, Advanced, Expert" }
+              },
+              "required": ["name", "proficiency"],
+              "additionalProperties": false
+            }
+          },
+          "methodologies": {
+            "type": "array",
+            "description": "Méthodologies: Agile, Scrum, Lean, etc.",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["hard_skills", "soft_skills", "tools", "methodologies"],
+        "additionalProperties": false
+      },
+      "experience": {
+        "type": "array",
+        "description": "Expériences professionnelles (CHAQUE poste = UNE entrée)",
+        "items": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string", "description": "Intitulé du poste" },
+            "company": { "type": "string", "description": "Entreprise" },
+            "department_or_client": { "type": ["string", "null"], "description": "Département ou client" },
+            "start_date": { "type": "string", "description": "Date début (YYYY-MM)" },
+            "end_date": { "type": ["string", "null"], "description": "Date fin (YYYY-MM ou null si actuel)" },
+            "city": { "type": ["string", "null"], "description": "Ville" },
+            "region": { "type": ["string", "null"], "description": "Région" },
+            "country_code": { "type": ["string", "null"], "description": "Code pays" },
+            "description": { "type": ["string", "null"], "description": "Description du poste" },
+            "responsibilities": {
+              "type": "array",
+              "description": "Responsabilités principales",
+              "items": { "type": "string" }
+            },
+            "deliverables": {
+              "type": "array",
+              "description": "Réalisations clés",
+              "items": { "type": "string" }
+            },
+            "skills_used": {
+              "type": "array",
+              "description": "Compétences utilisées",
+              "items": { "type": "string" }
+            }
+          },
+          "required": ["title", "company", "department_or_client", "start_date", "end_date", "city", "region", "country_code", "description", "responsibilities", "deliverables", "skills_used"],
+          "additionalProperties": false
+        }
+      },
+      "education": {
+        "type": "array",
+        "description": "Formations (CHAQUE diplôme = UNE entrée)",
+        "items": {
+          "type": "object",
+          "properties": {
+            "institution": { "type": "string", "description": "Établissement" },
+            "degree": { "type": ["string", "null"], "description": "Diplôme" },
+            "field_of_study": { "type": ["string", "null"], "description": "Domaine d'études" },
+            "city": { "type": ["string", "null"], "description": "Ville" },
+            "region": { "type": ["string", "null"], "description": "Région" },
+            "country_code": { "type": ["string", "null"], "description": "Code pays" },
+            "start_date": { "type": ["string", "null"], "description": "Date début" },
+            "end_date": { "type": ["string", "null"], "description": "Date fin" }
+          },
+          "required": ["institution", "degree", "field_of_study", "city", "region", "country_code", "start_date", "end_date"],
+          "additionalProperties": false
+        }
+      },
+      "languages": {
+        "type": "array",
+        "description": "Langues parlées",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "description": "Langue" },
+            "level": { "type": ["string", "null"], "description": "Niveau: A1, A2, B1, B2, C1, C2, native" }
+          },
+          "required": ["name", "level"],
+          "additionalProperties": false
+        }
+      },
+      "extras": {
+        "type": "array",
+        "description": "Certifications, bénévolat, hobbies",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "description": "Titre" },
+            "summary": { "type": ["string", "null"], "description": "Description" }
+          },
+          "required": ["name", "summary"],
+          "additionalProperties": false
+        }
+      },
+      "projects": {
+        "type": "array",
+        "description": "Projets personnels",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "description": "Nom du projet" },
+            "role": { "type": ["string", "null"], "description": "Rôle" },
+            "summary": { "type": ["string", "null"], "description": "Description" },
+            "tech_stack": {
+              "type": "array",
+              "description": "Technologies utilisées",
+              "items": { "type": "string" }
+            },
+            "start_date": { "type": ["string", "null"], "description": "Date début" },
+            "end_date": { "type": ["string", "null"], "description": "Date fin" }
+          },
+          "required": ["name", "role", "summary", "tech_stack", "start_date", "end_date"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": ["header", "summary", "skills", "experience", "education", "languages", "extras", "projects"],
+    "additionalProperties": false
+  }
+}

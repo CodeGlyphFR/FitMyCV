@@ -15,7 +15,8 @@ import { sanitizeInMemory } from "@/lib/sanitize";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/session";
-import { ensureUserCvDir, listUserCvFiles, readUserCvFile } from "@/lib/cv/storage";
+import { ensureUserCvDir, listUserCvFiles, readUserCvFileWithMeta } from "@/lib/cv/storage";
+import { getSectionOrder, getSectionTitles } from "@/lib/openai/cvConstants";
 
 export const metadata = {
   title: "Mes CVs - FitMyCV.io",
@@ -37,18 +38,30 @@ async function getCV(userId){
 
   const file = (cvCookie && availableFiles.includes(cvCookie)) ? cvCookie : availableFiles[0];
 
-  let raw;
+  let cvData;
   try {
-    raw = await readUserCvFile(userId, file);
+    // Récupérer le CV avec ses métadonnées depuis la DB
+    cvData = await readUserCvFileWithMeta(userId, file);
   } catch (error) {
     // Si le fichier n'existe pas, retourner null
     return null;
   }
 
-  // Pas de sanitize ni validation à l'affichage - uniquement parsing
-  const cv = JSON.parse(raw);
+  // Récupérer l'ordre des sections depuis Settings (global)
+  const orderHint = await getSectionOrder();
 
-  return { cv };
+  // Langue depuis la DB (ou fallback vers cv.language pour rétrocompatibilité, ou 'fr')
+  const language = cvData.language || cvData.content?.language || 'fr';
+
+  // Calculer les titres de sections depuis la langue
+  const sectionTitles = getSectionTitles(language);
+
+  return {
+    cv: cvData.content,
+    language,
+    orderHint,
+    sectionTitles,
+  };
 }
 
 export default async function Page(){
@@ -64,14 +77,8 @@ export default async function Page(){
     return <EmptyState />;
   }
 
-  const { cv } = cvResult;
-  // Ne passer sectionTitles que s'ils sont vraiment personnalisés (non vides et non par défaut)
-  const rawSectionTitles = cv.section_titles || {};
-  const hasCustomTitles = Object.keys(rawSectionTitles).length > 0;
-  const sectionTitles = hasCustomTitles ? rawSectionTitles : {};
-
-  // Langue du CV pour les titres de sections (indépendant de la langue du site)
-  const cvLanguage = cv.language || 'fr';
+  // Extraire les données depuis cvResult
+  const { cv, language: cvLanguage, orderHint, sectionTitles } = cvResult;
 
   const sections = {
     header:     <Header header={cv.header} cvLanguage={cvLanguage} />,
@@ -84,9 +91,8 @@ export default async function Page(){
     projects:   <Projects projects={cv.projects} sectionTitles={sectionTitles} cvLanguage={cvLanguage} />,
   };
 
-  // ---- ORDRE DES SECTIONS (toujours inclure "projects") ----
-  const defaultOrder = ["header","summary","skills","experience","education","languages","extras"];
-  const base = Array.isArray(cv.order_hint) && cv.order_hint.length ? [...cv.order_hint] : [...defaultOrder];
+  // ---- ORDRE DES SECTIONS (depuis Settings, toujours inclure "projects") ----
+  const base = [...orderHint];
 
   if (!base.includes("projects")) {
     const idx = base.indexOf("extras");

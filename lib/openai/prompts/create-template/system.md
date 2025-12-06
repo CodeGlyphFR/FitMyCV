@@ -17,6 +17,8 @@ Ce CV doit être **cohérent** avec l'offre d'emploi et servir de **modèle** qu
 
 {INCLUDE:_shared/language-policy.md}
 
+{INCLUDE:_shared/anti-detection-rules.md}
+
 ## RÈGLES IMPORTANTES
 
 - ✅ Crée un profil fictif mais **réaliste et professionnel**

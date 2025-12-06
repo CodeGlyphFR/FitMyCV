@@ -8,6 +8,8 @@ Traduire le CV dans la langue cible de manière professionnelle et naturelle, en
 
 {INCLUDE:_shared/language-policy.md}
 
+{INCLUDE:_shared/anti-detection-rules.md}
+
 ## RÈGLES IMPORTANTES
 
 1. ❌ Ne modifie **JAMAIS** les noms des champs JSON

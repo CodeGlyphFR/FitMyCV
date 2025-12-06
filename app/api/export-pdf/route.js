@@ -3,7 +3,7 @@ import puppeteer from "puppeteer";
 import { promises as fs } from "fs";
 import path from "path";
 import { auth } from "@/lib/auth/session";
-import { readUserCvFile } from "@/lib/cv/storage";
+import { readUserCvFileWithMeta } from "@/lib/cv/storage";
 
 // French translations (split by category)
 import frUi from "@/locales/fr/ui.json";
@@ -206,9 +206,12 @@ export async function POST(request) {
 
     // Charger les données du CV via le système de stockage utilisateur
     let cvData;
+    let cvLanguage;
     try {
-      const cvContent = await readUserCvFile(session.user.id, filename);
-      cvData = JSON.parse(cvContent);
+      const cvResult = await readUserCvFileWithMeta(session.user.id, filename);
+      cvData = cvResult.content;
+      // Utiliser la langue de la DB, ou celle de la requête, ou fallback vers cv.language ou 'fr'
+      cvLanguage = cvResult.language || language || cvData?.language || 'fr';
       console.log('[PDF Export] CV loaded successfully for user:', session.user.id);
     } catch (error) {
       console.error('[PDF Export] Error loading CV:', error);
@@ -248,8 +251,8 @@ export async function POST(request) {
 
     const page = await browser.newPage();
 
-    // Générer le HTML du CV avec les sélections
-    const htmlContent = generateCvHtml(cvData, language, selections);
+    // Générer le HTML du CV avec les sélections (utilise la langue depuis DB)
+    const htmlContent = generateCvHtml(cvData, cvLanguage, selections);
 
     await page.setContent(htmlContent, {
       waitUntil: 'networkidle0',

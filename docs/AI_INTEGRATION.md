@@ -178,24 +178,130 @@ Génère un CV personnalisé depuis une offre d'emploi.
 
 ### 2. importPdf.js
 
-Convertit un PDF en JSON structuré.
+Convertit un PDF en JSON structuré via Vision API (multi-images).
 
 **Fichier** : `lib/openai/importPdf.js`
 
 **Inputs** :
 
-- PDF Base64
+- Chemin du fichier PDF
+- Signal d'annulation (AbortController)
+- userId (pour télémétrie)
+- isFirstImport (pour sélection modèle)
 
 **Process** :
 
 ```
-1. Parse PDF with pdf2json
-2. Extract raw text
-3. Load prompts
-4. Call OpenAI API with extracted text
-5. Parse JSON response
-6. Validate structure
-7. Return CV JSON
+1. Charger configuration Vision depuis Settings (lib/openai/pdfToImages.js)
+2. Convertir PDF en images JPEG base64 (pdf2pic + sharp)
+3. Charger prompts (import-pdf/system.md, user.md)
+4. Appeler Vision API avec images + schema d'extraction
+5. Parser la réponse (Structured Outputs)
+6. Détecter langue du CV depuis le contenu
+7. Reconstruire CV complet via cvReconstructor.js
+8. Retourner { content: JSON, language: string }
+```
+
+**Modules associés** :
+
+| Module | Rôle |
+|--------|------|
+| `pdfToImages.js` | Conversion PDF → images base64 (configurable via Settings) |
+| `cvExtractionSchema.json` | Schéma d'extraction contenu pur (8 sections) |
+| `cvReconstructor.js` | Reconstruction CV complet depuis extraction + métadonnées |
+| `cvConstants.js` | Constantes (section_titles, order, helpers) |
+
+**Output** : `{ content: string, language: string }`
+
+---
+
+### 2.1 Optimisation tokens PDF Import
+
+**Problème** : Le schéma CV complet contient des métadonnées redondantes (~135 tokens/réponse).
+
+**Solution** : Schéma d'extraction "content-only" + reconstruction serveur.
+
+#### Métadonnées supprimées du schéma
+
+| Champ supprimé | Tokens économisés | Reconstitution |
+|----------------|-------------------|----------------|
+| `order_hint` | ~30 | Setting `cv_section_order` |
+| `section_titles` | ~50 | Dérivé de `language` |
+| `meta` object | ~40 | CvFile (createdBy, sourceType...) |
+| `generated_at` | ~10 | `createdAt.toISOString()` |
+| `language` | ~5 | Stocké en colonne CvFile.language |
+
+**Total économisé** : ~235-335 tokens par import (16% de réduction).
+
+#### Fichiers clés
+
+```
+lib/openai/
+├── schemas/
+│   └── cvExtractionSchema.json    # Schéma contenu pur (8 sections)
+├── cvReconstructor.js             # Reconstruction CV complet
+├── cvConstants.js                 # section_titles, getSectionOrder()
+└── pdfToImages.js                 # Conversion PDF → images (configurable)
+```
+
+#### Exemple de reconstruction
+
+```javascript
+import { reconstructCv } from '@/lib/openai/cvReconstructor';
+
+// Extraction brute depuis OpenAI
+const extracted = {
+  header: { full_name: "John Doe", current_title: "Developer" },
+  skills: { hard_skills: [...], tools: [...] },
+  experience: [...],
+  // ... 8 sections contenu pur
+};
+
+// Métadonnées depuis DB
+const dbMeta = {
+  createdAt: new Date(),
+  createdBy: 'pdf-import-vision',
+  sourceType: 'pdf-import',
+};
+
+// Reconstruction CV complet
+const fullCv = await reconstructCv(extracted, dbMeta);
+// fullCv contient: language, section_titles, order_hint, meta, etc.
+```
+
+---
+
+### 2.2 Configuration Vision API (Settings)
+
+Les paramètres de conversion PDF → images sont configurables via Admin → Settings.
+
+**Catégorie** : `pdf_import`
+
+| Setting | Défaut | Range | Description |
+|---------|--------|-------|-------------|
+| `pdf_image_max_width` | 1000 | 500-1500 px | Largeur max des images |
+| `pdf_image_density` | 100 | 72-150 DPI | Densité de conversion |
+| `pdf_image_quality` | 75 | 50-100% | Qualité JPEG |
+| `pdf_vision_detail` | high | low/auto/high | Mode Vision API |
+
+**Impact sur les coûts** :
+
+| Mode | Tokens/image (~) | Recommandation |
+|------|------------------|----------------|
+| `low` | ~85 | Documents simples |
+| `auto` | ~85-1000 | Décision OpenAI |
+| `high` | ~1000+ | CVs complexes (défaut) |
+
+**Accès configuration** :
+
+```javascript
+import { getPdfImageConfig, invalidatePdfConfigCache } from '@/lib/openai/pdfToImages';
+
+const config = await getPdfImageConfig();
+// { maxWidth: 1000, density: 100, quality: 75, detail: 'high' }
+
+// Après modification admin
+invalidatePdfConfigCache();
 ```
 
 ---

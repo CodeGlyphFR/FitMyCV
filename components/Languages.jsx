@@ -6,13 +6,14 @@ import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getLanguageLevelLabel } from "@/lib/i18n/cvLabels";
-import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 
 export default function Languages(props){
   const { t } = useLanguage();
   const languages = Array.isArray(props.languages)? props.languages:[];
   const sectionTitles = props.sectionTitles || {};
   const cvLanguage = props.cvLanguage || 'fr';
+  const cvT = getTranslatorForCvLanguage(cvLanguage);
   const title = getCvSectionTitleInCvLanguage('languages', sectionTitles.languages, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
@@ -65,7 +66,7 @@ export default function Languages(props){
             <div key={i} className="relative inline-block rounded-full border border-white/15 px-3 py-1 text-sm overflow-visible">
               <div className={editing ? "pr-12" : ""}>
                 <span className="font-semibold">{l.name || ""}</span>
-                <span className="text-sm opacity-80"> : {getLanguageLevelLabel(l.level, t) || l.level || ""}</span>
+                <span className="text-sm opacity-80"> : {getLanguageLevelLabel(l.level, cvT) || l.level || ""}</span>
               </div>
               {editing && (
                 <div className="no-print absolute top-1/2 -translate-y-1/2 right-0 flex">

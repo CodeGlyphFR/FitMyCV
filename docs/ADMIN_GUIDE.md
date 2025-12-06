@@ -312,8 +312,11 @@ Le filtre de période (7j/30j/90j/All) filtre par **activité onboarding** :
 #### Catégories
 
 1. **ai_models** : Configuration des modèles OpenAI
-2. **features** : Activation/désactivation de features
-3. **general** : Configuration générale
+2. **credits** : Coûts en crédits par feature
+3. **features** : Activation/désactivation de features
+4. **system** : Configuration système (maintenance, inscriptions)
+5. **pdf_import** : Paramètres Vision API pour import PDF
+6. **cv_display** : Affichage CV (ordre des sections)
 
 #### Settings AI Models
 
@@ -329,6 +332,48 @@ Le filtre de période (7j/30j/90j/All) filtre par **activité onboarding** :
 |-------------|-------|-------------|
 | `registration_enabled` | 1 | Autoriser les inscriptions (0 = fermé) |
 | `maintenance_mode` | 0 | Mode maintenance (1 = activé) |
+
+#### Settings PDF Import (Vision)
+
+Configuration de la conversion PDF → images pour l'API Vision.
+
+| Setting Name | Défaut | Range | Description |
+|--------------|--------|-------|-------------|
+| `pdf_image_max_width` | 1000 | 500-1500 px | Largeur maximale des images |
+| `pdf_image_density` | 100 | 72-150 DPI | Densité de conversion PDF |
+| `pdf_image_quality` | 75 | 50-100% | Qualité de compression JPEG |
+| `pdf_vision_detail` | high | low/auto/high | Mode de détail Vision API |
+
+**Interface** : Sliders pour les valeurs numériques, select pour le mode détail.
+
+**Impact coûts** :
+- `low` : ~85 tokens/image (documents simples)
+- `auto` : OpenAI décide (variable)
+- `high` : ~1000+ tokens/image (CVs complexes - recommandé)
+
+**Note** : Des valeurs plus basses réduisent les coûts mais peuvent affecter la qualité d'extraction.
+
+#### Settings CV Display
+
+Configuration de l'affichage des CVs.
+
+| Setting Name | Défaut | Description |
+|--------------|--------|-------------|
+| `cv_section_order` | `["header",...]` | Ordre d'affichage des sections CV |
+
+**Interface** : Drag & drop pour réorganiser les sections.
+
+**Sections disponibles** :
+1. **header** (En-tête) - Position fixe, ne peut pas être déplacé
+2. **summary** (Résumé)
+3. **skills** (Compétences)
+4. **experience** (Expérience)
+5. **education** (Formation)
+6. **languages** (Langues)
+7. **extras** (Extras)
+8. **projects** (Projets)
+
+**Composant** : `components/admin/settings/SectionOrderSettings.jsx`
 
 #### Actions
 

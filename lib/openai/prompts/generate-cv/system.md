@@ -12,3 +12,5 @@ Tu maîtrises parfaitement:
 2. Optimiser pour les systèmes ATS
 
 {INCLUDE:_shared/cv-improvement-rules.md}
+
+{INCLUDE:_shared/anti-detection-rules.md}

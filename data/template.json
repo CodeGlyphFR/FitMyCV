@@ -1,5 +1,4 @@
 {
-  "generated_at": "",
   "header": {
     "full_name": "",
     "current_title": "",
@@ -97,30 +96,5 @@
       "start_date": "",
       "end_date": ""
     }
-  ],
-  "order_hint": [
-    "header",
-    "summary",
-    "skills",
-    "experience",
-    "education",
-    "languages",
-    "extras",
-    "projects"
-  ],
-  "section_titles": {
-    "summary": "Résumé",
-    "skills": "Compétences",
-    "experience": "Expérience",
-    "education": "Éducation",
-    "languages": "Langues",
-    "extras": "Informations complémentaires",
-    "projects": "Projets personnels"
-  },
-  "meta": {
-    "generator": "manual",
-    "source": "manual",
-    "created_at": "",
-    "updated_at": ""
-  }
+  ]
 }
