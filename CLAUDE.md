@@ -127,7 +127,8 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3001"   # URL publique
 
 | Système | Description | Documentation |
 |---------|-------------|---------------|
-| **Stockage CV** | PostgreSQL natif (CvFile.content) + versioning (CvVersion) | [DATABASE.md](./docs/DATABASE.md#3-cvfile) |
+| **Stockage CV** | PostgreSQL natif (CvFile.content) + versioning (CvVersion) | [DATABASE.md](./docs/DATABASE.md#4-cvfile) |
+| **JobOffer** | Extraction structurée des offres (JSON) + réutilisation | [DATABASE.md](./docs/DATABASE.md#3-joboffer) |
 | **Job queue** | 3 jobs concurrents max (génération, import, traduction) | [ARCHITECTURE.md](./docs/ARCHITECTURE.md#background-tasks) |
 | **Abonnements** | Hybride : plans mensuels + micro-transactions (crédits) | [SUBSCRIPTION.md](./docs/SUBSCRIPTION.md) |
 | **Dashboard admin** | Analytics, monitoring, gestion users/plans | [ADMIN_GUIDE.md](./docs/ADMIN_GUIDE.md) |
@@ -253,7 +254,43 @@ await writeUserCvFile(userId, filename, cvData);
 const filenames = await listUserCvFiles(userId);
 ```
 
-### 2b. Versioning CV (Optimisation IA)
+### 2b. JobOffer (Extraction structurée)
+
+```javascript
+// Extraction et stockage d'une offre d'emploi
+import { extractJobOfferFromUrl, extractJobOfferFromPdf, storeJobOffer } from '@/lib/openai/generateCv';
+
+// Extraire depuis une URL
+const extraction = await extractJobOfferFromUrl(url, userId);
+// extraction = { content: {...}, tokensUsed: 500, model: 'gpt-5-mini' }
+
+// Stocker dans la table JobOffer (upsert par userId + sourceValue)
+const jobOfferId = await storeJobOffer(userId, 'url', url, extraction.content, extraction.model, extraction.tokensUsed);
+
+// Accéder à l'offre via relation Prisma
+const cvFile = await prisma.cvFile.findUnique({
+  where: { userId_filename: { userId, filename } },
+  include: { jobOffer: true }
+});
+
+// cvFile.jobOffer.content = { title, company, skills, ... }
+```
+
+**Structure de `jobOffer.content`** :
+
+```javascript
+{
+  title: "Software Engineer",
+  company: "TechCorp",
+  contract: "CDI",  // CDI, CDD, Freelance, Stage, Alternance
+  experience: { min_years: 3, max_years: 5, level: "mid" },
+  location: { city: "Paris", country: "France", remote: "hybrid" },
+  skills: { required: ["React", "Node.js"], nice_to_have: ["GraphQL"] },
+  // ... voir AI_INTEGRATION.md pour le schéma complet
+}
+```
+
+### 2c. Versioning CV (Optimisation IA)
 
 ```javascript
 import { createCvVersion, getCvVersions, restoreCvVersion } from '@/lib/cv/versioning';
@@ -270,6 +307,16 @@ const restoredContent = await restoreCvVersion(userId, filename, 2);
 ```
 
 **Note** : Le versioning est uniquement utilisé par `improveCvJob` (optimisation IA). Les éditions manuelles écrasent directement sans créer de version.
+
+### 2d. HTML to Markdown (Pipeline)
+
+```javascript
+import { htmlToMarkdown } from '@/lib/utils/htmlToMarkdown';
+
+const { title, content, textLength } = await htmlToMarkdown(rawHtml, url);
+// content: Markdown propre (~5k chars vs ~60k HTML)
+// textLength: Longueur du texte extrait
+```
 
 ### 3. Enqueuer un job
 

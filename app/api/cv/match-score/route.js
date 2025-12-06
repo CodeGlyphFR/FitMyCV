@@ -19,7 +19,7 @@ export async function POST(request) {
 
     const userId = session.user.id;
 
-    // Récupérer les métadonnées du CV depuis la DB
+    // Récupérer les métadonnées du CV depuis la DB avec la relation JobOffer
     const cvRecord = await prisma.cvFile.findUnique({
       where: {
         userId_filename: {
@@ -28,7 +28,7 @@ export async function POST(request) {
         },
       },
       select: {
-        extractedJobOffer: true,
+        jobOffer: true, // Relation vers JobOffer
         sourceValue: true,
       },
     });
@@ -37,9 +37,9 @@ export async function POST(request) {
       return NextResponse.json({ error: "CV not found" }, { status: 404 });
     }
 
-    // Vérifier que le CV a une analyse d'offre d'emploi en base
-    if (!cvRecord.extractedJobOffer) {
-      console.log("[match-score] CV non éligible - pas d'extractedJobOffer");
+    // Vérifier que le CV a une offre d'emploi associée
+    if (!cvRecord.jobOffer) {
+      console.log("[match-score] CV non éligible - pas de jobOffer");
       return NextResponse.json({ error: "CV does not have a job offer analysis" }, { status: 400 });
     }
 
@@ -70,7 +70,7 @@ export async function POST(request) {
       result = await calculateMatchScoreWithAnalysis({
         cvContent,
         jobOfferUrl: jobOfferIdentifier,
-        cvFile: cvRecord, // Passer le record DB pour accéder à extractedJobOffer
+        cvFile: cvRecord, // Passer le record DB pour accéder à jobOffer.content
         signal: null,
         userId,
       });
@@ -154,7 +154,7 @@ export async function GET(request) {
         missingSkills: true,
         matchingSkills: true,
         optimiseStatus: true,
-        extractedJobOffer: true,
+        jobOfferId: true, // Vérifier si un JobOffer est associé
         sourceValue: true,
       },
     });
@@ -187,7 +187,7 @@ export async function GET(request) {
       missingSkills,
       matchingSkills,
       optimiseStatus: cvRecord.optimiseStatus || 'idle',
-      hasExtractedJobOffer: !!cvRecord.extractedJobOffer, // Boolean pour savoir si on peut calculer le score
+      hasJobOffer: !!cvRecord.jobOfferId, // Boolean pour savoir si on peut calculer le score
       hasScoreBreakdown: !!cvRecord.scoreBreakdown, // Boolean pour savoir si on peut optimiser
       sourceValue: cvRecord.sourceValue,
     }, { status: 200 });

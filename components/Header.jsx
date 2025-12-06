@@ -31,7 +31,7 @@ export default function Header(props){
   const [optimiseStatus, setOptimiseStatus] = React.useState("idle");
   const [isLoadingMatchScore, setIsLoadingMatchScore] = React.useState(false);
   const [currentCvFile, setCurrentCvFile] = React.useState(null);
-  const [hasExtractedJobOffer, setHasExtractedJobOffer] = React.useState(false);
+  const [hasJobOffer, setHasJobOffer] = React.useState(false);
   const [hasScoreBreakdown, setHasScoreBreakdown] = React.useState(false);
   const [isTransitioning, setIsTransitioning] = React.useState(false);
 
@@ -128,7 +128,7 @@ export default function Header(props){
         setMatchScore(data.score);
         setMatchScoreStatus(finalStatus);
         setOptimiseStatus(finalOptimiseStatus);
-        setHasExtractedJobOffer(data.hasExtractedJobOffer || false);
+        setHasJobOffer(data.hasJobOffer || false);
         setHasScoreBreakdown(data.hasScoreBreakdown || false);
 
         // Force un re-render en utilisant un timeout (workaround iOS)
@@ -159,7 +159,7 @@ export default function Header(props){
     fetch("/api/cv/source", { cache: "no-store" })
       .then(res => {
         if (!res.ok) {
-          return { sourceType: null, sourceValue: null, hasExtractedJobOffer: false };
+          return { sourceType: null, sourceValue: null, hasJobOffer: false };
         }
         return res.json();
       })
@@ -167,15 +167,15 @@ export default function Header(props){
         // Mettre à jour les infos de source
         setSourceInfo({ sourceType: data.sourceType, sourceValue: data.sourceValue });
 
-        // Ne récupérer le score que si le CV a une offre d'emploi extraite
-        if (data.hasExtractedJobOffer) {
+        // Ne récupérer le score que si le CV a une offre d'emploi associée
+        if (data.hasJobOffer) {
           fetchMatchScore();
         } else {
           // Réinitialiser les états du score seulement si pas d'offre
           setMatchScore(null);
           setMatchScoreStatus('idle');
           setOptimiseStatus('idle');
-          setHasExtractedJobOffer(false);
+          setHasJobOffer(false);
           setHasScoreBreakdown(false);
           setIsLoadingMatchScore(false);
         }
@@ -495,7 +495,7 @@ export default function Header(props){
               isLoading={isLoadingMatchScore}
               onRefresh={handleRefreshMatchScore}
               currentCvFile={currentCvFile}
-              hasExtractedJobOffer={hasExtractedJobOffer}
+              hasJobOffer={hasJobOffer}
               isOptimizeButtonReady={isOptimizeButtonReady}
               optimiseStatus={optimiseStatus}
             />

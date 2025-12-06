@@ -12,7 +12,7 @@ export default function MatchScore({
   isLoading = false,
   onRefresh,
   currentCvFile,
-  hasExtractedJobOffer = false,
+  hasJobOffer = false,
   isOptimizeButtonReady = false,
   optimiseStatus = "idle"
 }) {
@@ -116,8 +116,8 @@ export default function MatchScore({
   const shouldShowLoading = (isActuallyLoading && !isStuckLoading) || isDelayedLoading;
 
 
-  // Afficher le composant uniquement si le CV a une analyse d'offre d'emploi en base ET si la feature est activée
-  if (!hasExtractedJobOffer || !sourceValue || !settings.feature_match_score) {
+  // Afficher le composant uniquement si le CV a une offre d'emploi associée ET si la feature est activée
+  if (!hasJobOffer || !sourceValue || !settings.feature_match_score) {
     return null;
   }
 

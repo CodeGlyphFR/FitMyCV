@@ -728,7 +728,7 @@ const HeavyComponent = dynamic(() => import('./HeavyComponent'), {
 
 | Donnée | Cache | Durée | Invalidation |
 |--------|-------|-------|--------------|
-| **Extracted job offers** | CvFile.extractedJobOffer | Permanent | Jamais (immutable) |
+| **Extracted job offers** | JobOffer table | Permanent | Jamais (immutable) |
 | **Settings** | AdminProvider state | Session | Manual refresh |
 | **OpenAI pricing** | Memory | Session | Admin update |
 | **Static assets** | CDN/Browser | 1 year | Build hash |

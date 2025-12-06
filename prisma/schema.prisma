@@ -32,6 +32,7 @@ model User {
   featureUsage           FeatureUsage[]
   featureCounters        FeatureUsageCounter[]
   feedbacks              Feedback[]
+  jobOffers              JobOffer[]
   linkHistory            LinkHistory[]
   openaiCalls            OpenAICall[]
   openaiUsage            OpenAIUsage[]
@@ -78,7 +79,7 @@ model CvFile {
   contentVersion         Int                @default(1) // Numéro de version courante
   sourceType             String?
   sourceValue            String?
-  extractedJobOffer      String?
+  jobOfferId             String?            // Relation vers JobOffer (extraction structurée)
   createdBy              String?
   originalCreatedBy      String?
   analysisLevel          String?
@@ -103,9 +104,11 @@ model CvFile {
   updatedAt              DateTime           @updatedAt
   user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   creditTransaction      CreditTransaction? @relation(fields: [creditTransactionId], references: [id])
+  jobOffer               JobOffer?          @relation(fields: [jobOfferId], references: [id], onDelete: SetNull)
   versions               CvVersion[]        // Historique des versions (optimisation IA)
 
   @@unique([userId, filename])
+  @@index([jobOfferId])
 }
 
 model CvVersion {
@@ -120,6 +123,29 @@ model CvVersion {
 
   @@unique([cvFileId, version])
   @@index([cvFileId, createdAt(sort: Desc)])
+}
+
+model JobOffer {
+  id              String   @id @default(cuid())
+  userId          String
+  sourceType      String   // 'url' | 'pdf'
+  sourceValue     String   // URL ou nom fichier PDF
+  contentHash     String?  // Hash SHA256 du contenu PDF (null pour URLs)
+  content         Json     // Extraction structurée JSON
+  extractedAt     DateTime @default(now())
+  extractionModel String   // Modèle IA utilisé pour l'extraction
+  tokensUsed      Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cvFiles CvFile[] // CVs générés à partir de cette offre
+
+  @@unique([userId, sourceValue])
+  @@index([userId])
+  @@index([sourceType])
+  @@index([userId, contentHash])
 }
 
 model BackgroundTask {

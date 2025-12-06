@@ -58,7 +58,7 @@ export async function POST(request) {
         },
       },
       select: {
-        extractedJobOffer: true,
+        jobOfferId: true, // Vérifier si un JobOffer est associé
         sourceValue: true,
         sourceType: true,
       },
@@ -68,9 +68,9 @@ export async function POST(request) {
       return CvErrors.notFound();
     }
 
-    // Vérifier que le CV a une analyse d'offre d'emploi en base
-    if (!cvRecord.extractedJobOffer) {
-      console.log("[calculate-match-score] CV non éligible - pas d'extractedJobOffer");
+    // Vérifier que le CV a une offre d'emploi associée
+    if (!cvRecord.jobOfferId) {
+      console.log("[calculate-match-score] CV non éligible - pas de jobOffer");
       return BackgroundErrors.noJobOfferAnalysis();
     }
 

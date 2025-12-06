@@ -115,7 +115,7 @@
         "openaiKeyMissing": "La clé API OpenAI est manquante",
         "openaiQuotaExceeded": "Quota OpenAI dépassé. Vérifiez votre facturation.",
         "invalidCvFormat": "Format de CV invalide",
-        "extractedJobOfferMissing": "Offre d'emploi extraite manquante - le CV doit être généré avec une offre extraite",
+        "jobOfferMissing": "Offre d'emploi manquante - le CV doit être généré avec une offre d'emploi associée",
         "emptyOpenaiResponse": "Réponse vide d'OpenAI",
         "noTranslationResponse": "Aucune réponse de traduction reçue",
         "noJobOfferProvided": "Aucune offre d'emploi fournie (lien ou fichier requis)",

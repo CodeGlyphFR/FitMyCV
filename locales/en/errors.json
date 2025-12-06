@@ -115,7 +115,7 @@
         "openaiKeyMissing": "OpenAI API key is missing",
         "openaiQuotaExceeded": "OpenAI quota exceeded. Check your billing.",
         "invalidCvFormat": "Invalid CV format",
-        "extractedJobOfferMissing": "Extracted job offer missing - CV must be generated with an extracted offer",
+        "jobOfferMissing": "Job offer missing - CV must be generated with an associated job offer",
         "emptyOpenaiResponse": "Empty response from OpenAI",
         "noTranslationResponse": "No translation response received",
         "noJobOfferProvided": "No job offer provided (link or file required)",

@@ -699,6 +699,13 @@ const FEATURE_MAPPINGS = [
     planFeatureNames: ['import_pdf'],
   },
   {
+    featureKey: 'extract_job_offer',
+    displayName: 'Extraction offre emploi',
+    settingNames: ['model_extract_job_offer'],
+    openAICallNames: ['extract_job_offer_url', 'extract_job_offer_pdf'],
+    planFeatureNames: ['gpt_cv_generation'],
+  },
+  {
     featureKey: 'detect_language',
     displayName: 'Détection langue',
     settingNames: ['model_detect_language'],

@@ -115,7 +115,7 @@
         "openaiKeyMissing": "OpenAI API-Schlüssel fehlt",
         "openaiQuotaExceeded": "OpenAI-Kontingent überschritten. Überprüfen Sie Ihre Abrechnung.",
         "invalidCvFormat": "Ungültiges Lebenslauf-Format",
-        "extractedJobOfferMissing": "Extrahiertes Stellenangebot fehlt - Lebenslauf muss mit extrahiertem Angebot generiert werden",
+        "jobOfferMissing": "Stellenangebot fehlt - Lebenslauf muss mit einem zugehörigen Stellenangebot erstellt werden",
         "emptyOpenaiResponse": "Leere Antwort von OpenAI",
         "noTranslationResponse": "Keine Übersetzungsantwort erhalten",
         "noJobOfferProvided": "Kein Stellenangebot bereitgestellt (Link oder Datei erforderlich)",

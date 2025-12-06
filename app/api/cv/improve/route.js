@@ -21,7 +21,7 @@ export async function POST(request) {
 
     const userId = session.user.id;
 
-    // Récupérer les métadonnées du CV depuis la DB
+    // Récupérer les métadonnées du CV depuis la DB avec la relation JobOffer
     const cvRecord = await prisma.cvFile.findUnique({
       where: {
         userId_filename: {
@@ -30,7 +30,7 @@ export async function POST(request) {
         },
       },
       select: {
-        extractedJobOffer: true,
+        jobOffer: true, // Relation vers JobOffer
         scoreBreakdown: true,
         improvementSuggestions: true,
         sourceValue: true,
@@ -105,12 +105,17 @@ export async function POST(request) {
       }
     });
 
+    // Formater le contenu de l'offre pour l'amélioration
+    const jobOfferContent = cvRecord.jobOffer?.content
+      ? JSON.stringify(cvRecord.jobOffer.content)
+      : null;
+
     // Lancer l'amélioration en arrière-plan via la job queue
     scheduleImproveCvJob({
       taskId,
       user: session.user,
       cvFile,
-      jobOfferContent: cvRecord.extractedJobOffer,
+      jobOfferContent,
       jobOfferUrl: cvRecord.sourceValue, // Gardé pour les métadonnées uniquement
       currentScore: cvRecord.matchScore || 0,
       suggestions,
