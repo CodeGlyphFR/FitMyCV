@@ -468,7 +468,7 @@ model ConsentLog {
 ```prisma
 model Setting {
   id          String   @id @default(cuid())
-  settingName String   @unique  // Ex: "model_analysis_rapid"
+  settingName String   @unique  // Ex: "model_cv_generation"
   value       String   // Ex: "gpt-5-nano-2025-08-07"
   category    String   // 'ai_models' | 'features' | 'general'
   description String?
@@ -486,6 +486,7 @@ model Setting {
 | settingName | value | category |
 |------------|-------|----------|
 | `model_cv_generation` | gpt-4.1-2025-04-14 | ai_models |
+| `model_extract_job_offer` | gpt-5-mini-2025-08-07 | ai_models |
 | `registration_enabled` | 1 | features |
 | `maintenance_mode` | 0 | general |
 | `default_token_limit` | 5 | general |
@@ -540,7 +541,7 @@ model FeatureUsage {
   lastUsedAt    DateTime @default(now())
   totalDuration Int      @default(0)  // Millisecondes
 
-  metadata      String?  // JSON: { rapid: 5, medium: 2, deep: 1 }
+  metadata      String?  // JSON: détails feature-specific
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

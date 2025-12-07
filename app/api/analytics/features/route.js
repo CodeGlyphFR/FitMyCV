@@ -106,7 +106,6 @@ export async function GET(request) {
           totalDuration: 0,
           userIds: new Set(),
           lastUsedAt: event.timestamp,
-          analysisLevelBreakdown: {},
         };
       }
 
@@ -118,19 +117,6 @@ export async function GET(request) {
       }
       if (new Date(event.timestamp) > new Date(stats.lastUsedAt)) {
         stats.lastUsedAt = event.timestamp;
-      }
-
-      // Parse metadata for analysis level breakdown (for generate_cv)
-      if (event.metadata && featureName === 'generate_cv') {
-        try {
-          const meta = JSON.parse(event.metadata);
-          if (meta.analysisLevel) {
-            stats.analysisLevelBreakdown[meta.analysisLevel] =
-              (stats.analysisLevelBreakdown[meta.analysisLevel] || 0) + 1;
-          }
-        } catch (e) {
-          // Ignore parsing errors
-        }
       }
     });
 
@@ -144,9 +130,6 @@ export async function GET(request) {
         : 0,
       userCount: stats.userIds.size,
       lastUsedAt: stats.lastUsedAt,
-      analysisLevelBreakdown: Object.keys(stats.analysisLevelBreakdown).length > 0
-        ? stats.analysisLevelBreakdown
-        : null,
     }));
 
     // Sort by total usage

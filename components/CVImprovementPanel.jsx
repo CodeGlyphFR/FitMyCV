@@ -272,7 +272,6 @@ export default function CVImprovementPanel({ cvFile }) {
         },
         body: JSON.stringify({
           cvFile,
-          analysisLevel: "deep", // Utiliser le niveau max pour l'amélioration
           replaceExisting: true, // Remplacer le CV existant au lieu d'en créer un nouveau
         }),
       });

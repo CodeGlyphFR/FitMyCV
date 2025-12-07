@@ -74,16 +74,12 @@ Génère un CV **fictif mais réaliste** qui correspondrait parfaitement à l'of
 7. Validation AJV contre schema.json
 8. Chiffrement AES-256-GCM
 9. Sauvegarde dans data/users/{userId}/cvs/
-10. Métadonnées enregistrées dans CvFile (avec extractedJobOffer)
+10. Métadonnées enregistrées dans CvFile (avec relation vers JobOffer)
 ```
 
-### Niveaux d'analyse
+### Modèle IA
 
-| Niveau | Modèle | Coût estimé | Contexte | Usage |
-|--------|--------|-------------|----------|-------|
-| **Rapid** | gpt-5-nano-2025-08-07 | ~0.01$ | 8K tokens | Tests rapides |
-| **Medium** | gpt-5-mini-2025-08-07 | ~0.05$ | 16K tokens | Usage quotidien |
-| **Deep** | gpt-5-2025-08-07 | ~0.20$ | 32K tokens | Candidatures importantes |
+Le modèle OpenAI utilisé pour la génération de CV est configurable via l'interface admin (Settings → AI Models → `model_cv_generation`). Le modèle recommandé est `gpt-4.1-2025-04-14` qui offre un bon équilibre entre qualité et coût.
 
 ### Extraction web optimisée
 
@@ -99,7 +95,7 @@ Génère un CV **fictif mais réaliste** qui correspondrait parfaitement à l'of
 - Focus sur le contenu de l'offre
 
 **Cache** :
-- Extraction sauvegardée dans `CvFile.extractedJobOffer`
+- Extraction sauvegardée dans la table `JobOffer` (relation via `CvFile.jobOfferId`)
 - Évite de re-scraper pour match score / optimisation
 - Économie de coûts et de temps
 
@@ -109,7 +105,6 @@ Génère un CV **fictif mais réaliste** qui correspondrait parfaitement à l'of
 // POST /api/background-tasks/generate-cv
 {
   "url": "https://indeed.com/job/123",
-  "analysisLevel": "medium",
   "deviceId": "device_uuid"
 }
 ```
@@ -161,7 +156,6 @@ Convertit un CV existant en JSON structuré et **optimisé ATS**. L'IA adapte n'
 {
   "pdfBase64": "JVBERi0xLjQKJ...",
   "filename": "mon_cv.pdf",
-  "analysisLevel": "medium",
   "deviceId": "device_uuid"
 }
 ```
@@ -225,8 +219,8 @@ Calcule un score de correspondance (0-100) entre un CV et une offre d'emploi, av
 
 ### Prérequis
 
-- Le CV doit avoir un `extractedJobOffer` en base de données (stocké lors de la génération/création)
-- Le calcul utilise l'offre extraite en cache, **pas de re-scraping de l'URL**
+- Le CV doit être lié à une `JobOffer` en base de données (via `CvFile.jobOfferId`, stockée lors de la génération/création)
+- Le calcul utilise l'offre extraite en cache (table `JobOffer`), **pas de re-scraping de l'URL**
 
 ### Calcul du score
 
@@ -435,7 +429,6 @@ L'utilisateur tape n'importe quel titre de poste et l'IA génère un modèle fic
 // POST /api/background-tasks/generate-cv-from-job-title
 {
   "jobTitle": "Développeur Full Stack",
-  "analysisLevel": "medium",
   "deviceId": "device_uuid"
 }
 ```

@@ -169,7 +169,7 @@ export async function DELETE(request, { params }) {
 **Graphiques** :
 
 - Usage dans le temps (par jour)
-- Distribution par niveau d'analyse (rapid/medium/deep)
+- Distribution par feature et par modèle IA utilisé
 - Top utilisateurs par feature
 
 ### ErrorsTab
@@ -538,13 +538,13 @@ Chaque plan a des limites par feature :
 
 **SubscriptionPlanFeatureLimit** :
 
-| Feature | Enabled | Usage Limit | Allowed Analysis Levels |
-|---------|---------|-------------|-------------------------|
-| `generate_cv` | ✅ | -1 (illimité) | ["rapid", "medium", "deep"] |
-| `import_pdf` | ✅ | 10/mois | ["medium"] |
-| `translate_cv` | ✅ | 5/mois | - |
-| `match_score` | ✅ | -1 | - |
-| `export_cv` | ✅ | -1 | - |
+| Feature | Enabled | Usage Limit |
+|---------|---------|-------------|
+| `generate_cv` | ✅ | -1 (illimité) |
+| `import_pdf` | ✅ | 10/mois |
+| `translate_cv` | ✅ | 5/mois |
+| `match_score` | ✅ | -1 |
+| `export_cv` | ✅ | -1 |
 
 **Exemple : Plan Gratuit**
 

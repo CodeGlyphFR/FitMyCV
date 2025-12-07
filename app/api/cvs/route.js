@@ -74,7 +74,7 @@ export async function GET(){
   const userId = session.user.id;
   const files = await listUserCvFiles(userId);
 
-  // Récupérer tous les sourceType, createdBy, analysisLevel, isTranslated, originalCreatedBy et createdAt depuis la DB en une seule requête
+  // Récupérer tous les sourceType, createdBy, isTranslated, originalCreatedBy et createdAt depuis la DB en une seule requête
   const cvFilesData = await prisma.cvFile.findMany({
     where: {
       userId,
@@ -86,7 +86,6 @@ export async function GET(){
       sourceValue: true,
       createdBy: true,
       originalCreatedBy: true,
-      analysisLevel: true,
       isTranslated: true,
       createdAt: true,
     },
@@ -98,7 +97,6 @@ export async function GET(){
     sourceValue: cf.sourceValue,
     createdBy: cf.createdBy,
     originalCreatedBy: cf.originalCreatedBy,
-    analysisLevel: cf.analysisLevel,
     isTranslated: cf.isTranslated,
     dbCreatedAt: cf.createdAt,
   }]));
@@ -121,7 +119,6 @@ export async function GET(){
       const sourceValue = sourceData?.sourceValue || null;
       const createdBy = sourceData?.createdBy || null;
       const originalCreatedBy = sourceData?.originalCreatedBy || null;
-      const analysisLevel = sourceData?.analysisLevel || null;
       const isTranslated = sourceData?.isTranslated || false;
       const dbCreatedAt = sourceData?.dbCreatedAt || null;
 
@@ -159,7 +156,6 @@ export async function GET(){
         sourceValue, // URL ou nom de fichier PDF
         createdBy, // 'generate-cv', 'import-pdf', 'translate-cv', ou null
         originalCreatedBy, // createdBy original pour les CV traduits
-        analysisLevel, // 'rapid', 'medium', 'deep', ou null
         isGenerated, // true si createdBy === 'generate-cv'
         isImported, // true si createdBy === 'import-pdf'
         isManual, // true si createdBy === null
@@ -176,7 +172,6 @@ export async function GET(){
       const sourceValue = sourceData?.sourceValue || null;
       const createdBy = sourceData?.createdBy || null;
       const originalCreatedBy = sourceData?.originalCreatedBy || null;
-      const analysisLevel = sourceData?.analysisLevel || null;
       const isTranslated = sourceData?.isTranslated || false;
       const dbCreatedAt = sourceData?.dbCreatedAt || null;
 
@@ -197,7 +192,6 @@ export async function GET(){
         sourceValue,
         createdBy,
         originalCreatedBy,
-        analysisLevel,
         isGenerated,
         isImported,
         isManual,

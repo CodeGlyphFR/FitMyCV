@@ -337,8 +337,8 @@ sequenceDiagram
 
     User->>TopBar: Click "Générer un CV"
     TopBar->>TopBar: Open CvGeneratorModal
-    User->>TopBar: Enter job URL + Select analysis level
-    TopBar->>API: POST {url, analysisLevel}
+    User->>TopBar: Enter job URL
+    TopBar->>API: POST {url}
     API->>DB: Create BackgroundTask (queued)
     API->>JobQueue: Enqueue generateCvJob
     API-->>TopBar: {taskId}

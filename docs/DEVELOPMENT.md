@@ -441,8 +441,8 @@ git commit -m "refactor: Simplification du job queue manager"
 
 ```javascript
 // ✅ Good
-export async function generateCv(url, analysisLevel) {
-  const model = await getModelForAnalysisLevel(analysisLevel);
+export async function generateCv(url) {
+  const model = await getModelForCvGeneration();
 
   const response = await openai.chat.completions.create({
     model,
@@ -453,8 +453,8 @@ export async function generateCv(url, analysisLevel) {
 }
 
 // ❌ Bad
-export async function generateCv(url,analysisLevel){
-const model=await getModelForAnalysisLevel(analysisLevel)
+export async function generateCv(url){
+const model=await getModelForCvGeneration()
 const response=await openai.chat.completions.create({model,messages:[systemPrompt,userPrompt]})
 return response.choices[0].message.content
 }
@@ -585,7 +585,7 @@ Pour le moment, tests manuels uniquement.
 **Checklist** :
 
 - [ ] Inscription/Connexion
-- [ ] Génération CV (rapid/medium/deep)
+- [ ] Génération CV
 - [ ] Import PDF
 - [ ] Traduction CV
 - [ ] Match Score
@@ -651,7 +651,7 @@ Ouvrir Chrome DevTools → `chrome://inspect`
 
 ```javascript
 // Console logs
-console.log('[generateCv] Starting generation...', { url, analysisLevel });
+console.log('[generateCv] Starting generation...', { url });
 console.error('[generateCv] Error:', error);
 
 // Secure logger (production)

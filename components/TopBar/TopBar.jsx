@@ -1049,11 +1049,7 @@ export default function TopBar() {
         setBaseSelectorOpen={generator.setBaseSelectorOpen}
         generatorSourceItems={generator.generatorSourceItems}
         generatorBaseItem={generator.generatorBaseItem}
-        analysisLevel={generator.analysisLevel}
-        setAnalysisLevel={generator.setAnalysisLevel}
-        allowedAnalysisLevels={generator.allowedAnalysisLevels}
         plans={generator.plans}
-        currentAnalysisOption={generator.currentAnalysisOption}
         generatorError={generator.generatorError}
         linkHistory={linkHistory}
         linkHistoryDropdowns={generator.linkHistoryDropdowns}

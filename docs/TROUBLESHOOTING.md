@@ -240,8 +240,8 @@ OPENAI_API_KEY="sk-proj-nouvelle-cle"
 
 **Workaround temporaire** :
 
-- Utiliser `analysisLevel: 'rapid'` (moins cher)
 - Limiter les générations
+- Optimiser les prompts pour réduire la consommation de tokens
 
 ---
 

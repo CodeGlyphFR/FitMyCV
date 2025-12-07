@@ -671,7 +671,7 @@ capitalizeSkillName("iOS");         // "iOS" (mixed case preserved)
 // 3. Feature complexe (plusieurs modèles/appels)
 {
   featureKey: 'gpt_cv_generation',
-  settingNames: ['model_analysis_rapid', 'model_analysis_medium', 'model_analysis_deep', 'model_extract_job_offer'],
+  settingNames: ['model_cv_generation', 'model_extract_job_offer'],
   openAICallNames: ['generate_cv_url', 'generate_cv_pdf', 'extract_job_offer_url', 'extract_job_offer_pdf', 'create_template_cv_url', 'create_template_cv_pdf'],
   planFeatureNames: ['gpt_cv_generation'],
 }

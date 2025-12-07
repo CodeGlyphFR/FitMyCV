@@ -128,16 +128,6 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
     }))
     .sort((a, b) => b.value - a.value);
 
-  // Analysis levels data (for generate_cv)
-  const generateCvFeature = features.find(f => f.featureName === 'generate_cv');
-  const analysisLevelData = generateCvFeature?.analysisLevelBreakdown
-    ? Object.entries(generateCvFeature.analysisLevelBreakdown).map(([level, count]) => ({
-        level,
-        count,
-        fill: level === 'rapid' ? '#10B981' : level === 'medium' ? '#F59E0B' : '#EF4444'
-      }))
-    : [];
-
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
@@ -236,36 +226,6 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
         </div>
       </div>
 
-      {/* Analysis Levels Chart (if exists) */}
-      {analysisLevelData.length > 0 && (
-        <div className="bg-white/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-white/20">
-          <h3 className="text-lg font-semibold text-white mb-4">🔍 Distribution par niveau d'analyse (Génération IA)</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={analysisLevelData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-              <XAxis
-                dataKey="level"
-                stroke="rgba(255,255,255,0.6)"
-                tick={{ fill: 'rgba(255,255,255,0.6)' }}
-              />
-              <YAxis
-                stroke="rgba(255,255,255,0.6)"
-                tick={{ fill: 'rgba(255,255,255,0.6)' }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(0,0,0,0.9)',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  borderRadius: '8px',
-                  color: '#fff'
-                }}
-              />
-              <Bar dataKey="count" name="Utilisations" radius={[4, 4, 0, 0]} isAnimationActive={isInitialLoad} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
       {/* Feature Cards */}
       <div>
         <h3 className="text-lg font-semibold text-white mb-4">🎯 Détail par feature</h3>
@@ -340,34 +300,6 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
                       </div>
                     </div>
 
-                    {/* Analysis Levels Badges */}
-                    {feature.analysisLevelBreakdown && (
-                      <div className="pt-2 border-t border-white/10">
-                        <p className="text-xs text-white/40 mb-2">Niveaux d'analyse</p>
-                        <div className="flex gap-1 flex-wrap">
-                          {Object.entries(feature.analysisLevelBreakdown).map(([level, count]) => (
-                            <span
-                              key={level}
-                              className="px-2 py-1 text-xs rounded"
-                              style={{
-                                backgroundColor: level === 'rapid' ? 'rgba(16, 185, 129, 0.2)'
-                                  : level === 'medium' ? 'rgba(245, 158, 11, 0.2)'
-                                  : 'rgba(239, 68, 68, 0.2)',
-                                color: level === 'rapid' ? '#34D399'
-                                  : level === 'medium' ? '#FBBF24'
-                                  : '#FCA5A5',
-                                border: `1px solid ${level === 'rapid' ? 'rgba(16, 185, 129, 0.3)'
-                                  : level === 'medium' ? 'rgba(245, 158, 11, 0.3)'
-                                  : 'rgba(239, 68, 68, 0.3)'}`
-                              }}
-                            >
-                              {level}: {count}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
                     {/* Last Used */}
                     <div className="pt-2 flex items-center gap-2 text-xs text-white/40">
                       <span>📅</span>
@@ -413,9 +345,6 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
                     Durée totale
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
-                    Analyse levels
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                     Dernière utilisation
                   </th>
                 </tr>
@@ -448,31 +377,6 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-white/80">
                           {feature.totalDuration > 0 ? `${Math.round(feature.totalDuration / 1000)}s` : '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white/80">
-                          {feature.analysisLevelBreakdown ? (
-                            <div className="flex gap-2">
-                              {Object.entries(feature.analysisLevelBreakdown).map(([level, count]) => (
-                                <span
-                                  key={level}
-                                  className="px-2 py-1 rounded text-xs"
-                                  style={{
-                                    backgroundColor: level === 'rapid' ? 'rgba(16, 185, 129, 0.2)'
-                                      : level === 'medium' ? 'rgba(245, 158, 11, 0.2)'
-                                      : 'rgba(239, 68, 68, 0.2)',
-                                    color: level === 'rapid' ? '#34D399'
-                                      : level === 'medium' ? '#FBBF24'
-                                      : '#FCA5A5',
-                                    border: `1px solid ${level === 'rapid' ? 'rgba(16, 185, 129, 0.3)'
-                                      : level === 'medium' ? 'rgba(245, 158, 11, 0.3)'
-                                      : 'rgba(239, 68, 68, 0.3)'}`
-                                  }}
-                                >
-                                  {level}: {count}
-                                </span>
-                              ))}
-                            </div>
-                          ) : '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-white/80">
                           {new Date(feature.lastUsedAt).toLocaleDateString('fr-FR')}

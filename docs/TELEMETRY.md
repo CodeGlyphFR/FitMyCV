@@ -78,8 +78,8 @@ sqlite3 prisma/dev.db "UPDATE User SET role = 'ADMIN' WHERE email = 'votre-email
 
 ### Onglet "Features"
 - Utilisation de chaque feature
-- Breakdown par analysis level (rapid/medium/deep)
 - Durée moyenne d'exécution
+- Taux de succès par feature
 
 ### Onglet "Sessions"
 - Durée moyenne et médiane
@@ -149,7 +149,6 @@ await trackEvent({
   type: EventTypes.CV_GENERATED_URL,
   userId: session.user.id,
   metadata: {
-    analysisLevel: 'medium',
     duration: 12500,
     cvId: newCvId
   },
@@ -274,8 +273,8 @@ SELECT * FROM FeatureUsage;
 - Nombre total d'actions
 
 ### CVs
-- Générés (avec analysis level)
-- Importés (avec analysis level)
+- Générés
+- Importés
 - Créés manuellement
 - Exportés
 - Édités (avec type d'opération)

@@ -89,7 +89,7 @@ function calculatePhasedProgress(elapsed, estimated) {
  * @param {string} options.taskType - Type de tâche (generation, import-pdf, etc.)
  * @param {string} options.taskStatus - Statut actuel (running, completed, etc.)
  * @param {number} options.startTime - Timestamp de démarrage (task.createdAt)
- * @param {Object} options.payload - Payload de la tâche (optionnel, pour analysisLevel)
+ * @param {Object} options.payload - Payload de la tâche (optionnel)
  *
  * @returns {Object} { progress, isOvertime, estimatedDuration }
  */
@@ -115,11 +115,6 @@ export function useTaskProgress({
     const fetchEstimatedDuration = async () => {
       try {
         const params = new URLSearchParams({ taskType });
-
-        // Extraire analysisLevel du payload si disponible
-        if (payload?.analysisLevel) {
-          params.append('analysisLevel', payload.analysisLevel);
-        }
 
         console.log(`[useTaskProgress] Fetching duration for taskType=${taskType}, params=${params.toString()}`);
 
