@@ -37,12 +37,6 @@
     "files": "PDF job offers",
     "selection": "Selection:",
     "clearFiles": "Clear files",
-    "analysisQuality": "Analysis quality",
-    "analysisHints": {
-      "rapid": "Fastest analysis, for a quick overview.",
-      "medium": "Balance between speed and quality (recommended).",
-      "deep": "Complete analysis for optimized results."
-    },
     "cancel": "Cancel",
     "validate": "Validate",
     "upgradeTooltipLine1": "Upgrade to {planName}",

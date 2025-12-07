@@ -37,12 +37,6 @@
     "files": "PDF-Stellenangebote",
     "selection": "Auswahl:",
     "clearFiles": "Dateien löschen",
-    "analysisQuality": "Analysequalität",
-    "analysisHints": {
-      "rapid": "Schnellste Analyse für einen schnellen Überblick.",
-      "medium": "Balance zwischen Geschwindigkeit und Qualität (empfohlen).",
-      "deep": "Vollständige Analyse für optimierte Ergebnisse."
-    },
     "cancel": "Abbrechen",
     "validate": "Bestätigen",
     "upgradeTooltipLine1": "Upgraden Sie auf {planName}",

@@ -37,12 +37,6 @@
     "files": "Ofertas de empleo PDF",
     "selection": "Selección:",
     "clearFiles": "Borrar archivos",
-    "analysisQuality": "Calidad del análisis",
-    "analysisHints": {
-      "rapid": "Análisis más rápido, para una vista general.",
-      "medium": "Equilibrio entre velocidad y calidad (recomendado).",
-      "deep": "Análisis completo para resultados optimizados."
-    },
     "cancel": "Cancelar",
     "validate": "Validar",
     "upgradeTooltipLine1": "Actualiza al plan {planName}",

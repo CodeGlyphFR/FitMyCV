@@ -101,6 +101,7 @@
         "pdfAnalysisFailed": "Unable to analyze job offer PDF",
         "cvContentMissing": "Reference CV content missing",
         "noAiResponse": "No response from AI",
+        "responseTruncated": "The AI response was truncated (too long). Please try again.",
         "invalidResponseFormat": "Invalid response format",
         "cvAndJobRequired": "CV content and job offer are required",
         "jobTitleValidationFailed": "Unable to validate job title",

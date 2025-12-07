@@ -221,7 +221,7 @@ const SUBSCRIPTION_PLANS = [
     yearlyDiscountPercent: 0,
     priceCurrency: 'EUR',
     features: {
-      gpt_cv_generation: { enabled: true, limit: 5, analysisLevels: ['rapid', 'medium'] },
+      gpt_cv_generation: { enabled: true, limit: 5 },
       import_pdf: { enabled: true, limit: 5 },
       generate_from_job_title: { enabled: true, limit: 5 },
       export_cv: { enabled: true, limit: 5 },
@@ -243,7 +243,7 @@ const SUBSCRIPTION_PLANS = [
     yearlyDiscountPercent: 16.59,
     priceCurrency: 'EUR',
     features: {
-      gpt_cv_generation: { enabled: true, limit: 25, analysisLevels: ['rapid', 'medium'] },
+      gpt_cv_generation: { enabled: true, limit: 25 },
       import_pdf: { enabled: true, limit: 25 },
       generate_from_job_title: { enabled: true, limit: 25 },
       export_cv: { enabled: true, limit: -1 },
@@ -265,7 +265,7 @@ const SUBSCRIPTION_PLANS = [
     yearlyDiscountPercent: 16.63,
     priceCurrency: 'EUR',
     features: {
-      gpt_cv_generation: { enabled: true, limit: 60, analysisLevels: ['rapid', 'medium', 'deep'] },
+      gpt_cv_generation: { enabled: true, limit: 60 },
       import_pdf: { enabled: true, limit: 60 },
       generate_from_job_title: { enabled: true, limit: 60 },
       export_cv: { enabled: true, limit: -1 },
@@ -411,22 +411,10 @@ const OPENAI_ALERTS = [
 // ============================================================================
 const AI_MODEL_SETTINGS = [
   {
-    settingName: 'model_analysis_rapid',
-    value: 'gpt-5-nano-2025-08-07',
-    category: 'ai_models',
-    description: 'Modèle rapide et économique pour analyse rapide',
-  },
-  {
-    settingName: 'model_analysis_medium',
+    settingName: 'model_cv_generation',
     value: 'gpt-4.1-2025-04-14',
     category: 'ai_models',
-    description: 'Modèle standard pour analyse équilibrée',
-  },
-  {
-    settingName: 'model_analysis_deep',
-    value: 'gpt-5-2025-08-07',
-    category: 'ai_models',
-    description: 'Modèle avancé pour analyse approfondie',
+    description: 'Modèle utilisé pour la génération de CV',
   },
   {
     settingName: 'model_match_score',
@@ -513,22 +501,10 @@ const CREDIT_SETTINGS = [
     description: 'Crédits pour traduction CV',
   },
   {
-    settingName: 'credits_gpt_cv_generation_rapid',
-    value: '1',
-    category: 'credits',
-    description: 'Crédits pour génération CV rapide',
-  },
-  {
-    settingName: 'credits_gpt_cv_generation_medium',
+    settingName: 'credits_gpt_cv_generation',
     value: '2',
     category: 'credits',
-    description: 'Crédits pour génération CV normal',
-  },
-  {
-    settingName: 'credits_gpt_cv_generation_deep',
-    value: '0',
-    category: 'credits',
-    description: '0 = Abonnement Premium requis',
+    description: 'Crédits pour génération CV',
   },
   {
     settingName: 'credits_optimize_cv',
@@ -687,7 +663,7 @@ const FEATURE_MAPPINGS = [
   {
     featureKey: 'gpt_cv_generation',
     displayName: 'Génération CV',
-    settingNames: ['model_analysis_rapid', 'model_analysis_medium', 'model_analysis_deep', 'model_extract_job_offer'],
+    settingNames: ['model_cv_generation', 'model_extract_job_offer'],
     openAICallNames: ['generate_cv_url', 'generate_cv_pdf', 'extract_job_offer_url', 'extract_job_offer_pdf', 'create_template_cv_url', 'create_template_cv_pdf'],
     planFeatureNames: ['gpt_cv_generation'],
   },
@@ -812,7 +788,6 @@ async function main() {
               featureName,
               isEnabled: config.enabled,
               usageLimit: config.limit,
-              allowedAnalysisLevels: config.analysisLevels ? JSON.stringify(config.analysisLevels) : null,
             })),
           },
         },

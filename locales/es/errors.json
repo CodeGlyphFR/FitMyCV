@@ -101,6 +101,7 @@
         "pdfAnalysisFailed": "No se pudo analizar el PDF de la oferta de empleo",
         "cvContentMissing": "Falta el contenido del CV de referencia",
         "noAiResponse": "Sin respuesta de la IA",
+        "responseTruncated": "La respuesta de la IA fue truncada (demasiado larga). Por favor, inténtelo de nuevo.",
         "invalidResponseFormat": "Formato de respuesta inválido",
         "cvAndJobRequired": "El contenido del CV y de la oferta de empleo son obligatorios",
         "jobTitleValidationFailed": "No se pudo validar el título del puesto",

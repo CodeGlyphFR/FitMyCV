@@ -24,7 +24,6 @@ const MACRO_FEATURES = {
       'create_template_cv_url',
       'create_template_cv_pdf'
     ],
-    hasAnalysisLevels: true,
     isAIFeature: true
   },
   import_pdf: {
@@ -32,7 +31,6 @@ const MACRO_FEATURES = {
     icon: '📥',
     description: 'Import de CV depuis PDF',
     microFeatures: ['import_pdf', 'first_import_pdf', 'import_cv'],
-    hasAnalysisLevels: false,
     isAIFeature: true
   },
   translate_cv: {
@@ -40,7 +38,6 @@ const MACRO_FEATURES = {
     icon: '🌍',
     description: 'Traduction de CV',
     microFeatures: ['translate_cv'],
-    hasAnalysisLevels: false,
     isAIFeature: true
   },
   match_score: {
@@ -48,7 +45,6 @@ const MACRO_FEATURES = {
     icon: '🎯',
     description: 'Calcul du score de match avec l\'offre',
     microFeatures: ['match_score'],
-    hasAnalysisLevels: false,
     isAIFeature: true
   },
   optimize_cv: {
@@ -56,7 +52,6 @@ const MACRO_FEATURES = {
     icon: '✨',
     description: 'Optimisation automatique du CV',
     microFeatures: ['optimize_cv'],
-    hasAnalysisLevels: false,
     isAIFeature: true
   },
   generate_from_job_title: {
@@ -64,7 +59,6 @@ const MACRO_FEATURES = {
     icon: '💼',
     description: 'Génération depuis un titre de poste',
     microFeatures: ['generate_from_job_title'],
-    hasAnalysisLevels: false,
     isAIFeature: true
   },
   export_cv: {
@@ -72,7 +66,6 @@ const MACRO_FEATURES = {
     icon: '💾',
     description: 'Export du CV en PDF',
     microFeatures: ['export_cv'],
-    hasAnalysisLevels: false,
     isAIFeature: false
   },
   edit_cv: {
@@ -80,7 +73,6 @@ const MACRO_FEATURES = {
     icon: '✏️',
     description: 'Mode édition du CV',
     microFeatures: ['edit_cv'],
-    hasAnalysisLevels: false,
     isAIFeature: false
   },
   create_cv_manual: {
@@ -88,7 +80,6 @@ const MACRO_FEATURES = {
     icon: '📝',
     description: 'Création manuelle de CV (bouton +)',
     microFeatures: ['create_cv_manual'],
-    hasAnalysisLevels: false,
     isAIFeature: false
   }
 };
@@ -96,11 +87,6 @@ const MACRO_FEATURES = {
 // Features IA (avec mode Token)
 const AI_FEATURES = Object.entries(MACRO_FEATURES)
   .filter(([_, config]) => config.isAIFeature)
-  .map(([key]) => key);
-
-// Features avec niveaux d'analyse
-const ANALYSIS_LEVEL_FEATURES = Object.entries(MACRO_FEATURES)
-  .filter(([_, config]) => config.hasAnalysisLevels)
   .map(([key]) => key);
 
 export function SubscriptionPlansTab({ refreshKey }) {
@@ -245,13 +231,9 @@ export function SubscriptionPlansTab({ refreshKey }) {
     // Initialiser les features avec des valeurs par défaut
     const defaultFeatures = {};
     Object.keys(MACRO_FEATURES).forEach((featureName) => {
-      const config = MACRO_FEATURES[featureName];
       defaultFeatures[featureName] = {
         isEnabled: true,
         usageLimit: -1,
-        allowedAnalysisLevels: config.hasAnalysisLevels
-          ? ['rapid', 'medium', 'deep']
-          : null,
       };
     });
     setFeatureLimits(defaultFeatures);
@@ -281,22 +263,15 @@ export function SubscriptionPlansTab({ refreshKey }) {
       existingFeatures[fl.featureName] = {
         isEnabled: fl.isEnabled,
         usageLimit: fl.usageLimit,
-        allowedAnalysisLevels: fl.allowedAnalysisLevels
-          ? JSON.parse(fl.allowedAnalysisLevels)
-          : null,
       };
     });
 
     // Ajouter les features manquantes avec des valeurs par défaut
     Object.keys(MACRO_FEATURES).forEach((featureName) => {
       if (!existingFeatures[featureName]) {
-        const config = MACRO_FEATURES[featureName];
         existingFeatures[featureName] = {
           isEnabled: true,
           usageLimit: -1,
-          allowedAnalysisLevels: config.hasAnalysisLevels
-            ? ['rapid', 'medium', 'deep']
-            : null,
         };
       }
     });
@@ -329,7 +304,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
             featureName,
             isEnabled: config.isEnabled,
             usageLimit: config.usageLimit,
-            allowedAnalysisLevels: config.allowedAnalysisLevels,
           })),
         }),
       });
@@ -374,7 +348,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
             featureName,
             isEnabled: config.isEnabled,
             usageLimit: config.usageLimit,
-            allowedAnalysisLevels: config.allowedAnalysisLevels,
           })),
         }),
       });
@@ -1093,9 +1066,6 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                       <th className="px-3 py-2 text-center text-xs font-medium text-white/60 uppercase">
                         Illimité
                       </th>
-                      <th className="px-3 py-2 text-center text-xs font-medium text-white/60 uppercase">
-                        Niveaux
-                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/10">
@@ -1103,11 +1073,9 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                       const limit = featureLimits[featureName] || {
                         isEnabled: true,
                         usageLimit: -1,
-                        allowedAnalysisLevels: null,
                       };
 
                       const isUnlimited = limit.usageLimit === -1;
-                      const hasAnalysisLevels = ANALYSIS_LEVEL_FEATURES.includes(featureName);
 
                       return (
                         <tr key={featureName} className="hover:bg-white/5 transition">
@@ -1176,53 +1144,6 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                               disabled={!limit.isEnabled}
                               className="w-4 h-4 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             />
-                          </td>
-
-                          {/* Niveaux d'analyse */}
-                          <td className="px-3 py-2">
-                            {hasAnalysisLevels && (
-                              <div className="flex gap-1 justify-center items-center flex-wrap">
-                                {['rapid', 'medium', 'deep'].map((level) => {
-                                  const isChecked = limit.allowedAnalysisLevels?.includes(level) || false;
-                                  const levelLabels = { rapid: 'R', medium: 'M', deep: 'D' };
-                                  return (
-                                    <label
-                                      key={level}
-                                      className={`flex items-center justify-center w-6 h-6 rounded text-xs cursor-pointer transition ${
-                                        !limit.isEnabled
-                                          ? 'opacity-50 cursor-not-allowed bg-white/5 text-white/40'
-                                          : isChecked
-                                          ? 'bg-blue-500/30 text-blue-300 border border-blue-400/50'
-                                          : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10'
-                                      }`}
-                                      title={level}
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentLevels = limit.allowedAnalysisLevels || [];
-                                          const newLevels = e.target.checked
-                                            ? [...currentLevels, level]
-                                            : currentLevels.filter((l) => l !== level);
-
-                                          setFeatureLimits({
-                                            ...featureLimits,
-                                            [featureName]: {
-                                              ...limit,
-                                              allowedAnalysisLevels: newLevels.length > 0 ? newLevels : null,
-                                            },
-                                          });
-                                        }}
-                                        disabled={!limit.isEnabled}
-                                        className="sr-only"
-                                      />
-                                      {levelLabels[level]}
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                            )}
                           </td>
                         </tr>
                       );

@@ -101,6 +101,7 @@
         "pdfAnalysisFailed": "Impossible d'analyser le PDF de l'offre d'emploi",
         "cvContentMissing": "Contenu du CV de référence manquant",
         "noAiResponse": "Pas de réponse de l'IA",
+        "responseTruncated": "La réponse de l'IA a été tronquée (trop longue). Veuillez réessayer.",
         "invalidResponseFormat": "Format de réponse invalide",
         "cvAndJobRequired": "Le contenu du CV et de l'offre d'emploi sont requis",
         "jobTitleValidationFailed": "Impossible de valider le titre de poste",

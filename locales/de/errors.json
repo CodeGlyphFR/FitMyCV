@@ -101,6 +101,7 @@
         "pdfAnalysisFailed": "PDF des Stellenangebots konnte nicht analysiert werden",
         "cvContentMissing": "Referenz-Lebenslauf fehlt",
         "noAiResponse": "Keine Antwort von der KI",
+        "responseTruncated": "Die KI-Antwort wurde abgeschnitten (zu lang). Bitte versuchen Sie es erneut.",
         "invalidResponseFormat": "Ungültiges Antwortformat",
         "cvAndJobRequired": "Lebenslauf und Stellenangebot sind erforderlich",
         "jobTitleValidationFailed": "Stellenbezeichnung konnte nicht validiert werden",

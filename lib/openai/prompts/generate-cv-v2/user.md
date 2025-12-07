@@ -1,13 +1,13 @@
-## OFFRE D'EMPLOI (Structuree)
-
-```json
-{jobOfferContent}
-```
-
 ## CV SOURCE
 
 ```json
 {mainCvContent}
+```
+
+## OFFRE D'EMPLOI (Structuree)
+
+```json
+{jobOfferContent}
 ```
 
 ## INSTRUCTIONS

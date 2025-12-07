@@ -22,11 +22,6 @@
     "cvInProgress": "CV in progress",
     "jobTitlePlaceholder": "Enter a job title (e.g., Full-Stack Developer)",
     "jobTitlePlaceholderMobile": "e.g., Full-Stack Developer",
-    "analysisLevels": {
-      "rapid": "Fast",
-      "medium": "Medium",
-      "deep": "Deep"
-    },
     "filter": "Filter",
     "filterTitle": "Filters",
     "filterCvType": "CV Type",

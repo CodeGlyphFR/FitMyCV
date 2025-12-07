@@ -15,6 +15,8 @@ Tu ne retournes PAS le CV complet, seulement les changements necessaires sous fo
 
 {INCLUDE:_shared/anti-detection-rules.md}
 
+{INCLUDE:_shared/language-policy.md}
+
 ## FORMAT DE SORTIE
 
 Tu retournes un objet JSON avec:

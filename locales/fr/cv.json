@@ -37,12 +37,6 @@
     "files": "Offres d'emploi PDF",
     "selection": "Sélection :",
     "clearFiles": "Effacer les fichiers",
-    "analysisQuality": "Qualité de l'analyse",
-    "analysisHints": {
-      "rapid": "Analyse la plus rapide, pour un aperçu rapide.",
-      "medium": "Équilibre entre vitesse et qualité (recommandé).",
-      "deep": "Analyse complète pour des résultats optimisés."
-    },
     "cancel": "Annuler",
     "validate": "Valider",
     "upgradeTooltipLine1": "Passez au plan {planName}",

@@ -97,32 +97,16 @@ SELECT * FROM Setting WHERE category = 'ai_models';
 
 | settingName | value (modèle) | Usage |
 |------------|----------------|-------|
-| `model_analysis_rapid` | gpt-5-nano-2025-08-07 | Analyse rapide, tests |
-| `model_analysis_medium` | gpt-5-mini-2025-08-07 | Usage quotidien |
-| `model_analysis_deep` | gpt-5-2025-08-07 | Analyses approfondies |
+| `model_cv_generation` | gpt-4.1-2025-04-14 | Génération de CV |
 
-### Caractéristiques des modèles
+### Caractéristiques du modèle
 
-#### GPT-5-nano (rapid)
+#### GPT-4.1 (CV Generation)
 
-- **Context window** : 8K tokens
-- **Coût estimé** : ~$0.01 par génération CV
-- **Vitesse** : ~5-10 secondes
-- **Usage** : Tests, prototypage, usage fréquent
-
-#### GPT-5-mini (medium)
-
-- **Context window** : 16K tokens
+- **Context window** : 128K tokens
 - **Coût estimé** : ~$0.05 par génération CV
 - **Vitesse** : ~10-20 secondes
-- **Usage** : Production standard, candidatures normales
-
-#### GPT-5 (deep)
-
-- **Context window** : 32K tokens
-- **Coût estimé** : ~$0.20 par génération CV
-- **Vitesse** : ~15-30 secondes
-- **Usage** : Candidatures importantes, analyses détaillées
+- **Usage** : Production standard, toutes candidatures
 
 ### Sélection du modèle
 
@@ -130,17 +114,9 @@ SELECT * FROM Setting WHERE category = 'ai_models';
 // lib/settings/aiModels.js
 import { getSetting } from '@/lib/settings/settingsUtils';
 
-export async function getModelForAnalysisLevel(level) {
-  const settingMap = {
-    rapid: 'model_analysis_rapid',
-    medium: 'model_analysis_medium',
-    deep: 'model_analysis_deep',
-  };
-
-  const settingName = settingMap[level] || settingMap.medium;
-  const model = await getSetting(settingName);
-
-  return model || 'gpt-5-mini-2025-08-07'; // Fallback
+export async function getCvGenerationModel() {
+  const model = await getSetting('model_cv_generation');
+  return model || 'gpt-4.1-2025-04-14'; // Fallback
 }
 ```
 
@@ -158,7 +134,6 @@ Génère un CV personnalisé depuis une offre d'emploi.
 
 - URL de l'offre ou contenu PDF
 - CV de référence de l'utilisateur
-- Niveau d'analyse (rapid/medium/deep)
 
 **Process** :
 
@@ -431,7 +406,6 @@ Crée un CV modèle fictif réaliste à partir d'une offre d'emploi (URL ou PDF)
 **Inputs** :
 
 - URL(s) d'offre(s) d'emploi ou PDF(s)
-- Niveau d'analyse (rapid/medium/deep)
 
 **Process** :
 

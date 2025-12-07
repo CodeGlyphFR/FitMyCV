@@ -22,11 +22,6 @@
     "cvInProgress": "Lebenslauf wird bearbeitet",
     "jobTitlePlaceholder": "Geben Sie eine Stellenbezeichnung ein (z.B. Full-Stack-Entwickler)",
     "jobTitlePlaceholderMobile": "z.B. Full-Stack-Entwickler",
-    "analysisLevels": {
-      "rapid": "Schnell",
-      "medium": "Mittel",
-      "deep": "Tiefgehend"
-    },
     "filter": "Filtern",
     "filterTitle": "Filter",
     "filterCvType": "Lebenslauf-Typ",

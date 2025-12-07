@@ -322,9 +322,7 @@ Le filtre de période (7j/30j/90j/All) filtre par **activité onboarding** :
 
 | Setting Name | Value | Description |
 |-------------|-------|-------------|
-| `model_analysis_rapid` | gpt-5-nano-2025-08-07 | Modèle pour analyse rapide |
-| `model_analysis_medium` | gpt-5-mini-2025-08-07 | Modèle pour analyse standard |
-| `model_analysis_deep` | gpt-5-2025-08-07 | Modèle pour analyse approfondie |
+| `model_cv_generation` | gpt-4.1-2025-04-14 | Modèle pour génération de CV |
 
 #### Settings Features
 

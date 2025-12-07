@@ -333,9 +333,7 @@ enqueueJob(() => runGenerateCvJob(task));
 import { incrementFeatureCounter } from '@/lib/subscription/featureUsage';
 
 // Vérifie les limites ET consomme les crédits si nécessaire
-const result = await incrementFeatureCounter(userId, 'gpt_cv_generation', {
-  analysisLevel: 'medium', // 'rapid', 'medium', 'deep'
-});
+const result = await incrementFeatureCounter(userId, 'gpt_cv_generation');
 
 if (!result.success) {
   // result.error contient le message (ex: "2 crédits requis, vous en avez 1")
@@ -355,24 +353,20 @@ if (!result.success) {
 | export_cv | 1 | credits_export_cv |
 | match_score | 1 | credits_match_score |
 | translate_cv | 1 | credits_translate_cv |
-| gpt_cv_generation (rapid) | 1 | credits_gpt_cv_generation_rapid |
-| gpt_cv_generation (medium) | 2 | credits_gpt_cv_generation_medium |
-| gpt_cv_generation (deep) | 0 | credits_gpt_cv_generation_deep |
+| gpt_cv_generation | 2 | credits_gpt_cv_generation |
 | optimize_cv | 2 | credits_optimize_cv |
 | generate_from_job_title | 3 | credits_generate_from_job_title |
 | import_pdf | 5 | credits_import_pdf |
-
-**Note** : `0` = Fonctionnalité réservée aux abonnés Premium (pas de consommation de crédits possible)
 
 ```javascript
 // Pour récupérer le coût d'une feature
 import { getCreditCostForFeature } from '@/lib/subscription/creditCost';
 
-const { cost, premiumRequired } = await getCreditCostForFeature('import_pdf');
-// cost = 5, premiumRequired = false
+const { cost } = await getCreditCostForFeature('import_pdf');
+// cost = 5
 
-const { cost, premiumRequired } = await getCreditCostForFeature('gpt_cv_generation', 'deep');
-// cost = 0, premiumRequired = true
+const { cost } = await getCreditCostForFeature('gpt_cv_generation');
+// cost = 2
 ```
 
 ### 4. Session utilisateur

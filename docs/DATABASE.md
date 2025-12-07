@@ -231,7 +231,6 @@ model CvFile {
   // Création
   createdBy        String?  // 'generate-cv' | 'import-pdf' | 'translate-cv' | null
   originalCreatedBy String? // Pour les traductions (garde l'icône originale)
-  analysisLevel    String?  // 'rapid' | 'medium' | 'deep'
   isTranslated     Boolean  @default(false)
 
   // Match Score
@@ -486,9 +485,7 @@ model Setting {
 
 | settingName | value | category |
 |------------|-------|----------|
-| `model_analysis_rapid` | gpt-5-nano-2025-08-07 | ai_models |
-| `model_analysis_medium` | gpt-5-mini-2025-08-07 | ai_models |
-| `model_analysis_deep` | gpt-5-2025-08-07 | ai_models |
+| `model_cv_generation` | gpt-4.1-2025-04-14 | ai_models |
 | `registration_enabled` | 1 | features |
 | `maintenance_mode` | 0 | general |
 | `default_token_limit` | 5 | general |
@@ -1023,7 +1020,7 @@ const task = await prisma.backgroundTask.create({
     createdAt: BigInt(Date.now()),
     deviceId,
     userId,
-    payload: JSON.stringify({ url, analysisLevel }),
+    payload: JSON.stringify({ url }),
   }
 });
 ```
@@ -1036,7 +1033,7 @@ await prisma.telemetryEvent.create({
     userId,
     type: 'CV_GENERATED',
     category: 'cv_management',
-    metadata: JSON.stringify({ analysisLevel, duration }),
+    metadata: JSON.stringify({ duration }),
     deviceId,
     duration,
     status: 'success',

@@ -1,7 +1,6 @@
 import React from "react";
 import GptLogo from "@/components/ui/GptLogo";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
-import { ANALYSIS_OPTIONS } from "@/lib/i18n/cvLabels";
 
 /**
  * Formate une date au format DD/MM/YYYY (FR) ou MM/DD/YYYY (EN)
@@ -32,14 +31,6 @@ export function normalizeBoolean(value) {
     if (trimmed === "false") return false;
   }
   return Boolean(value);
-}
-
-/**
- * Récupère une option d'analyse par son ID
- */
-export function getAnalysisOption(id, t) {
-  const options = ANALYSIS_OPTIONS(t);
-  return options.find((option) => option.id === id) || options[1];
 }
 
 /**

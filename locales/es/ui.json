@@ -22,11 +22,6 @@
     "cvInProgress": "CV en edición",
     "jobTitlePlaceholder": "Introduce un título de puesto (ej: Desarrollador Full-Stack)",
     "jobTitlePlaceholderMobile": "ej: Desarrollador Full-Stack",
-    "analysisLevels": {
-      "rapid": "Rápido",
-      "medium": "Medio",
-      "deep": "Profundo"
-    },
     "filter": "Filtrar",
     "filterTitle": "Filtros",
     "filterCvType": "Tipo de CV",

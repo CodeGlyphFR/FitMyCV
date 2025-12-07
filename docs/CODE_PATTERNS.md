@@ -976,8 +976,7 @@ export async function POST(request) {
   // 1. Vérifier limite AVANT d'exécuter l'action
   const { allowed, reason, needsCredit, currentCount, limit } = await checkFeatureLimit(
     session.user.id,
-    'gpt_cv_generation',
-    { analysisLevel: 'medium' } // Contexte optionnel
+    'gpt_cv_generation'
   );
 
   if (!allowed) {
