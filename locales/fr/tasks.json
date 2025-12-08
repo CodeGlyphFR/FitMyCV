@@ -43,7 +43,8 @@
       "matchScoreFailed": "Calcul du score de match échoué"
     },
     "errors": {
-      "noJobOfferDetected": "Aucune offre d'emploi détectée : {source}"
+      "noJobOfferDetected": "Aucune offre d'emploi détectée : {source}",
+      "loginRequired": "Cette page nécessite une connexion. Téléchargez l'offre en PDF depuis le site et uploadez-la."
     }
   }
 }

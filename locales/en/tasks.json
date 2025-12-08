@@ -43,7 +43,8 @@
       "matchScoreFailed": "Match score calculation failed"
     },
     "errors": {
-      "noJobOfferDetected": "No job offer detected: {source}"
+      "noJobOfferDetected": "No job offer detected: {source}",
+      "loginRequired": "This page requires authentication. Download the job offer as PDF from the website and upload it."
     }
   }
 }

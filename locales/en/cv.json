@@ -60,6 +60,7 @@
     "analysisQuality": "Analysis quality",
     "cancel": "Cancel",
     "import": "Import",
+    "importing": "Importing...",
     "notifications": {
       "scheduled": "Import '{fileName}' scheduled",
       "error": "Error scheduling import"

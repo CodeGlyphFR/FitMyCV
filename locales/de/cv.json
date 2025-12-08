@@ -60,6 +60,7 @@
     "analysisQuality": "Analysequalität",
     "cancel": "Abbrechen",
     "import": "Importieren",
+    "importing": "Importieren...",
     "notifications": {
       "scheduled": "Import '{fileName}' geplant",
       "error": "Fehler bei der Planung des Imports"
