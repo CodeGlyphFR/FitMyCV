@@ -10,6 +10,8 @@ Documentation complète de l'intégration OpenAI dans FitMyCV.io.
 - [Configuration](#configuration)
 - [Modèles IA](#modèles-ia)
 - [Fonctions IA](#fonctions-ia)
+- [Extraction Structurée des Offres d'Emploi](#extraction-structurée-des-offres-demploi)
+- [Détection de langue des CVs](#détection-de-langue-des-cvs)
 - [Système de prompts](#système-de-prompts)
 - [Gestion des coûts](#gestion-des-coûts)
 - [Telemetry OpenAI](#telemetry-openai)
@@ -148,6 +150,7 @@ Génère un CV personnalisé depuis une offre d'emploi.
 4. Generate CV modifications (DIFF format)
    - Schema: lib/openai/schemas/cvModificationsSchema.json
    - Returns only changes, not full CV
+   - **Token optimization**: Uses `null` for unchanged sections (70-87% savings)
 5. Apply modifications to reference CV (applyModifications.js)
 6. Validate final CV with AJV
 7. Return { cvContent, jobOfferId, reasoning }
@@ -499,7 +502,8 @@ const { title, content, textLength } = await htmlToMarkdown(html, url);
   "education": { "level": "Bac+5", "field": "Informatique" },
   "languages": [{ "language": "English", "level": "fluent" }],
   "responsibilities": ["Développer des features", "Code reviews"],
-  "benefits": ["RTT", "Télétravail", "Mutuelle"]
+  "benefits": ["RTT", "Télétravail", "Mutuelle"],
+  "language": "fr"
 }
 ```
 
@@ -507,6 +511,7 @@ const { title, content, textLength } = await htmlToMarkdown(html, url);
 - Info absente → `null` (jamais inventer)
 - Valeurs normalisées obligatoires (enums: contract, level, remote, etc.)
 - Skills séparés en required/nice_to_have
+- **`language`** : Langue de l'offre (fr, en, es, de, null si ambigu)
 
 ### Table JobOffer
 
@@ -538,6 +543,61 @@ import { formatJobOfferForAnalysis } from '@/lib/openai/calculateMatchScoreWithA
 const readableText = formatJobOfferForAnalysis(jobOffer.content);
 // "📋 TITRE DU POSTE: Software Engineer\n🏢 ENTREPRISE: TechCorp\n..."
 ```
+
+---
+
+## Détection de langue des CVs
+
+### Architecture
+
+La langue d'un CV est stockée dans `CvFile.language` (colonne DB, pas dans le JSON).
+
+| Source CV | Méthode de détection | Détails |
+|-----------|---------------------|---------|
+| **Génération (offre)** | Langue de l'offre d'emploi | Extraite via `jobOfferExtractionSchema.json` (champ `language`) |
+| **Création template** | Langue de l'offre d'emploi | Idem |
+| **Import PDF** | OpenAI `detectCvLanguageWithOpenAI()` | Analyse du summary (50 chars) |
+
+### Principe
+
+Le CV généré à partir d'une offre d'emploi doit être dans **la langue de l'offre**.
+
+```
+Offre d'emploi (EN) → CV généré (EN)
+Offre d'emploi (FR) → CV généré (FR)
+```
+
+### Implémentation
+
+**Génération/Template** (depuis offre) :
+
+```javascript
+// lib/backgroundTasks/generateCvJob.js et createTemplateCvJob.js
+const detectedLanguage = result.jobOfferLanguage || null;
+// La langue vient de l'extraction structurée de l'offre
+```
+
+**Import PDF** (sans offre) :
+
+```javascript
+// lib/backgroundTasks/importPdfJob.js
+const { detectCvLanguageWithOpenAI } = await import('@/lib/openai/detectLanguage');
+detectedLanguage = await detectCvLanguageWithOpenAI({
+  summaryDescription: cvData.summary.description,
+  signal,
+  userId,
+});
+// Fallback sur heuristique si OpenAI échoue
+```
+
+### Langues supportées
+
+| Code | Langue |
+|------|--------|
+| `fr` | Français |
+| `en` | Anglais |
+| `es` | Espagnol |
+| `de` | Allemand |
 
 ---
 
