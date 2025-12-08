@@ -142,6 +142,10 @@
         "type": "array",
         "items": { "type": "string" },
         "description": "Benefits and perks offered"
+      },
+      "language": {
+        "type": ["string", "null"],
+        "description": "Language code of the job offer content: fr (French), en (English), es (Spanish), de (German), or null if unclear/multilingual"
       }
     },
     "required": [
@@ -155,7 +159,8 @@
       "education",
       "languages",
       "responsibilities",
-      "benefits"
+      "benefits",
+      "language"
     ],
     "additionalProperties": false
   }
