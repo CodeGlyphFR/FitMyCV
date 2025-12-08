@@ -1067,6 +1067,7 @@ export default function TopBar() {
         pdfFile={modals.pdfFile}
         onPdfFileChanged={modals.onPdfFileChanged}
         pdfFileInputRef={modals.pdfFileInputRef}
+        busy={modals.pdfImportBusy}
         t={t}
       />
 

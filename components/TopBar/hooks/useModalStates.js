@@ -13,6 +13,7 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
   // PDF Import modal
   const [openPdfImport, setOpenPdfImport] = React.useState(false);
   const [pdfFile, setPdfFile] = React.useState(null);
+  const [pdfImportBusy, setPdfImportBusy] = React.useState(false);
   const pdfFileInputRef = React.useRef(null);
 
   function resetPdfImportState() {
@@ -32,8 +33,9 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
 
   async function submitPdfImport(event) {
     event.preventDefault();
-    if (!pdfFile) return;
+    if (!pdfFile || pdfImportBusy) return;
 
+    setPdfImportBusy(true);
     const fileName = pdfFile.name;
 
     try {
@@ -107,6 +109,8 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
       }
 
       addNotification(notification);
+    } finally {
+      setPdfImportBusy(false);
     }
   }
 
@@ -311,6 +315,7 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     setOpenPdfImport,
     pdfFile,
     setPdfFile,
+    pdfImportBusy,
     pdfFileInputRef,
     closePdfImport,
     onPdfFileChanged,
