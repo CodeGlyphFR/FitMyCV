@@ -1,73 +1,113 @@
-# RÈGLES D'AMÉLIORATION DE CV
+```json
+{
+  "cv_improvement_rules": {
+    "strict_prohibitions": [
+      "Inventer des expériences ou compétences absentes du CV original",
+      "Modifier des faits concrets (dates, noms d'entreprises, diplômes)",
+      "Ajouter des certifications ou formations non obtenues",
+      "Exagérer le niveau de maîtrise d'une compétence",
+      "Inventer des métriques ou chiffres"
+    ],
+    "allowed_actions": [
+      "Reformuler pour valoriser l'existant",
+      "Réorganiser par pertinence",
+      "Adapter le vocabulaire à l'offre d'emploi",
+      "Optimiser les mots-clés ATS",
+      "Détailler responsabilités et impacts quantifiables",
+      "Clarifier réalisations et livrables",
+      "Ajouter des compétences SI justifiées par l'expérience"
+    ],
+    "ats_optimization": {
+      "keywords": {
+        "source": "termes exacts de l'offre",
+        "format": "formes standards (JavaScript pas JS)",
+        "repetition": "mots-clés critiques dans plusieurs sections"
+      },
+      "structure": {
+        "order": "informations pertinentes en premier",
+        "verbs": ["Géré", "Développé", "Optimisé", "Piloté", "Conçu", "Déployé", "Réduit", "Augmenté"],
+        "metrics": "quantifier si possible (%, €, nombre)"
+      }
+    },
+    "section_rules": {
+      "summary": {
+        "actions": [
+          "Ne pas inventer de compétences"
+          "Reformuler pour matcher le poste uniquement si justifiable par l'expérience",
+          "Mettre en avant l'expertise pertinente uniquement si justifiable par l'expérience",
+          "Utiliser le vocabulaire de l'offre"
+        ]
+      },
+      "title": {
+        "actions": [
+          "Adapter au poste visé",
+          "Rester cohérent avec l'expérience",
+          "Utiliser des titres standards ATS"
+        ]
+      },
+      "experience": {
+        "actions": [
+          "RÉÉCRIRE responsibilities et deliverables avec le vocabulaire exact de l'offre",
+          "COMPLÉTER avec éléments que l'utilisateur aurait pu oublier SI fortement liés à l'expérience",
+          "Adapter le wording pour matcher les mots-clés ATS de l'offre",
+          "Si la description est déjà bonne, ne pas réécrire - juste ajuster le wording",
+          "Ajouter des métriques de performance si possible",
+          "PRIORISER : détailler les postes en lien direct avec l'offre (3-5 bullets), réduire les autres à 1-2 lignes"
+        ],
+        "constraints": [
+          "NE JAMAIS inventer d'expériences ou responsabilités",
+          "NE PAS réorganiser les expériences (ordre chronologique imposé par l'affichage)",
+          "Rester fidèle à ce que l'utilisateur a réellement fait",
+          "Chaque ajout doit être défendable en entretien"
+        ],
+        "format": {
+          "header": "Intitulé du poste, Nom entreprise, Lieu, Dates (mois/année)",
+          "description": "1-2 phrases maximum, directe et percutante",
+          "bullets_count": {
+            "pertinent": "3-5 bullet points max pour expériences directement liées à l'offre",
+            "secondaire": "1-2 bullet points pour expériences moins pertinentes"
+          },
+          "bullet_formula": "[Verbe action infinitif] + [tâche précise] + [résultat chiffré]",
+          "responsibilities": "Max 10-15 mots par bullet point, commencer par un verbe d'action à l'infinitif",
+          "deliverables": "Max 10-15 mots par bullet point, résultat concret et mesurable",
+          "style": "Concis, factuel, pas de phrases longues ou verbeuses"
+        }
+      },
+      "skills": {
+        "actions": [
+          "Réorganiser par priorité selon l'offre (skills matchés en premier)",
+          "RETIRER les compétences clairement hors-sujet pour le poste (ex: Excel pour un poste DevOps)",
+          "Noms courts mais standards ATS",
+          "Grouper compétences connexes",
+          "Ajouter UNIQUEMENT si justifié par l'expérience"
+        ]
+      }
+    },
+    "experience_levels": {
+      "notions": "stages, petits projets, scolaire",
+      "debutant": "~1 an",
+      "intermediaire": "2-3 ans",
+      "competent": "appliqué en expérience/projet",
+      "avance": "3-7 ans",
+      "expert": "7+ ans"
+    },
+    "quality_check": [
+      "Tout est factuel et vérifiable",
+      "Pas de superlatifs excessifs",
+      "Ton professionnel",
+      "Cohérence entre sections",
+      "Chaque ajout justifiable en entretien"
+    ]
+  }
+}
+```
 
-Ces règles s'appliquent à toutes les opérations d'amélioration, adaptation et optimisation de CV.
+Workflow obligatoire :
+1. ANALYSER l'offre d'emploi → identifier secteur + mots-clés
+2. VÉRIFIER que chaque modification respecte strict_prohibitions
+3. APPLIQUER improvement_rules pour optimiser le contenu
+4. FILTRER avec humanization_rules.banned_words.[secteur]
+5. FORMATER avec bullet_format.method CAR
+6. VALIDER avec quality_check
 
-## RÈGLES FONDAMENTALES
-
-### ❌ INTERDICTIONS STRICTES
-
-- **NE JAMAIS** inventer d'expériences ou compétences absentes du CV original
-- **NE JAMAIS** modifier des faits concrets (dates, noms d'entreprises, diplômes)
-- **NE JAMAIS** ajouter de certifications ou formations non obtenues
-- **NE JAMAIS** exagérer le niveau de maîtrise d'une compétence
-
-### ✅ ACTIONS AUTORISÉES
-
-- **Reformuler** pour mettre en valeur ce qui existe déjà
-- **Réorganiser** pour valoriser le plus pertinent en premier
-- **Adapter** le vocabulaire pour matcher l'offre d'emploi
-- **Optimiser** les mots-clés pour l'ATS (Applicant Tracking System)
-- **Détailler** les responsabilités et impacts quantifiables
-- **Clarifier** les réalisations et livrables
-- **Ajouter** des compétences UNIQUEMENT si justifiées par l'expérience professionnelle
-
-## OPTIMISATION ATS
-
-### Mots-clés
-- Utiliser les termes exacts de l'offre d'emploi
-- Privilégier les formes standards (ex: "JavaScript" plutôt que "JS")
-- Répéter les mots-clés critiques dans différentes sections
-
-### Structure
-- Mettre les informations les plus pertinentes en premier
-- Utiliser des verbes d'action forts (gérer, développer, optimiser, piloter)
-- Quantifier les résultats quand possible (%, €, nombre)
-
-## ADAPTATION AU POSTE
-
-### Summary/Résumé
-- Reformuler pour matcher le poste visé
-- Mettre en avant les domaines d'expertise pertinents
-- Utiliser le vocabulaire de l'offre
-
-### Current Title
-- Adapter au poste visé (rester cohérent avec l'expérience)
-- Utiliser des titres standards reconnus par les ATS
-
-### Expériences
-- Réorganiser par pertinence (pas forcément chronologique)
-- Détailler davantage les missions pertinentes
-- Ajouter des métriques de performance si possible
-
-### Compétences
-- Réorganiser par priorité selon l'offre
-- Donner des noms de compétences court mais respectant le standards reconnus par les ATS
-- Grouper les compétences connexes
-- Ajouter des compétences UNIQUEMENT si justifiées par l'expérience
-
-## NIVEAU D'EXPÉRIENCE
-
-Adapter le contenu au niveau requis :
-- **Notions** : stages, petit projets, scolaire
-- **Débutant** : 1 ans d'expérience
-- **Intermédiaire** : 2-3 ans d'expérience
-- **Compétent** : si déjà appliqué lors d'une expérience ou d'un projet
-- **Avancé** : 3-7 ans d'expérience
-- **Expert** : 7+ ans d'expérience
-
-## PROFESSIONNALISME
-
-- Rester factuel et vérifiable
-- Éviter les superlatifs excessifs
-- Maintenir un ton professionnel
-- Assurer la cohérence entre toutes les sections
+Règle absolue : ne jamais inventer, ne jamais utiliser de mots bannis.

@@ -1,95 +1,423 @@
-# ANTI-DETECTION & HUMANIZATION RULES
+```json
+{
+  "cv_rules": {
+    "language": {
+      "primary": "fr",
+      "rule": "Adapter ces règles à la langue cible du CV"
+    },
+    "banned_words": {
+      "universal": [
+        "plonger dans",
+        "paysage (sens figuré)",
+        "tapisserie",
+        "de plus",
+        "en outre",
+        "en effet",
+        "pivot/essentiel",
+        "robuste",
+        "multifacette",
+        "de pointe",
+        "révolutionnaire",
+        "tirer parti de",
+        "débloquer",
+        "se lancer dans",
+        "naviguer dans",
+        "synergie",
+        "levier",
+        "fer de lance",
+        "écosystème (sens figuré)",
+        "paradigme",
+        "holistique",
+        "disruptif",
+        "proactif",
+        "impactant",
+        "ADN (sens figuré)",
+        "monter en compétence",
+        "scalable",
+        "win-win",
+        "best practices",
+        "game changer",
+        "état de l'art",
+        "force de proposition",
+        "valeur ajoutée",
+        "aller de l'avant",
+        "sortir des sentiers battus"
+      ],
+      "tech": [
+        "passionné de code",
+        "ninja/rockstar/guru",
+        "évangéliste",
+        "full-stack visionnaire",
+        "architecte de solutions innovantes",
+        "disruption digitale",
+        "transformation numérique",
+        "agilité à toute épreuve",
+        "stack cutting-edge",
+        "clean code addict",
+        "problem solver né",
+        "early adopter",
+        "tech enthusiast",
+        "geek assumé",
+        "veille technologique permanente",
+        "artisan du code",
+        "craftsman",
+        "DevOps mindset",
+        "cloud native",
+        "data-driven"
+      ],
+      "finance": [
+        "créateur de valeur",
+        "optimisation à 360°",
+        "vision stratégique",
+        "pilotage de la performance",
+        "business partner",
+        "excellence opérationnelle",
+        "ROI maximisé",
+        "value proposition",
+        "bottom line",
+        "cost killer",
+        "cash management expert",
+        "financial storytelling",
+        "data-driven decision maker",
+        "P&L owner",
+        "croissance rentable",
+        "value creator",
+        "shareholder value",
+        "smart money",
+        "due diligence expert"
+      ],
+      "rh": [
+        "capital humain",
+        "talent acquisition",
+        "marque employeur",
+        "expérience collaborateur",
+        "culture d'entreprise forte",
+        "accompagnement du changement",
+        "soft skills développées",
+        "intelligence émotionnelle",
+        "bienveillance",
+        "posture d'écoute",
+        "facilitateur",
+        "fédérateur",
+        "coach naturel",
+        "gestion des hauts potentiels",
+        "people centric",
+        "onboarding fluide",
+        "employee advocacy",
+        "QVT champion",
+        "inclusion advocate"
+      ],
+      "marketing_commercial": [
+        "storytelling impactant",
+        "tunnel de conversion",
+        "growth hacking",
+        "customer centric",
+        "brand advocate",
+        "personal branding",
+        "influence marketing",
+        "thought leader",
+        "content à forte valeur ajoutée",
+        "acquisition organique",
+        "nurturing",
+        "mindset orienté résultats",
+        "closer",
+        "hunter/farmer",
+        "évangélisation du marché",
+        "product market fit",
+        "go-to-market",
+        "brand love",
+        "top of mind"
+      ],
+      "management": [
+        "leader inspirant",
+        "manager bienveillant",
+        "vision portée",
+        "conduite du changement",
+        "embarquer les équipes",
+        "donner du sens",
+        "co-construire",
+        "transversalité",
+        "mode projet",
+        "agilité managériale",
+        "empowerment",
+        "servant leader",
+        "feedback continu",
+        "organisation apprenante",
+        "manager coach",
+        "leadership transformationnel",
+        "posture haute/basse",
+        "lâcher prise"
+      ],
+      "sante": [
+        "au service du patient",
+        "approche centrée patient",
+        "parcours de soins optimisé",
+        "excellence médicale",
+        "vocation soignante",
+        "humanisation des soins",
+        "prise en charge globale",
+        "qualité des soins irréprochable",
+        "éthique irréprochable",
+        "engagement sans faille",
+        "disponibilité totale",
+        "empathie naturelle",
+        "relationnel soignant-soigné",
+        "evidence-based practice",
+        "patient first"
+      ],
+      "juridique": [
+        "juriste d'excellence",
+        "rigueur juridique absolue",
+        "sécurisation juridique",
+        "conseil à haute valeur ajoutée",
+        "approche business du droit",
+        "legal design",
+        "business minded lawyer",
+        "deal maker",
+        "négociateur hors pair",
+        "plume juridique affûtée",
+        "compliance champion",
+        "risk appetite",
+        "legal ops",
+        "contract lifecycle",
+        "clause ninja"
+      ],
+      "ingenierie": [
+        "ingénieur passionné",
+        "excellence technique",
+        "rigueur scientifique",
+        "innovation de rupture",
+        "R&D cutting-edge",
+        "problem solver",
+        "esprit analytique affûté",
+        "culture qualité",
+        "amélioration continue",
+        "lean addict",
+        "six sigma black belt mindset",
+        "industrialisation réussie",
+        "time-to-market optimisé",
+        "scalabilité industrielle",
+        "POC to production"
+      ],
+      "consulting": [
+        "consultant senior confirmé",
+        "apporteur de solutions",
+        "conseil stratégique",
+        "accompagnement sur-mesure",
+        "approche 360°",
+        "delivery excellence",
+        "client intimacy",
+        "trusted advisor",
+        "C-level exposure",
+        "thought leadership",
+        "knowledge management",
+        "best-in-class",
+        "benchmark permanent",
+        "quick wins",
+        "low hanging fruits",
+        "build & run",
+        "from strategy to execution"
+      ],
+      "communication_media": [
+        "plume créative",
+        "storyteller né",
+        "créatif dans l'âme",
+        "concepteur-rédacteur passionné",
+        "brand content",
+        "snack content",
+        "viral potential",
+        "earned media",
+        "share of voice",
+        "tone of voice unique",
+        "DA affirmée",
+        "social media native",
+        "community manager aguerri",
+        "influence organique",
+        "engagement authentique",
+        "content factory"
+      ],
+      "logistique_supply": [
+        "supply chain agile",
+        "flux tendus maîtrisés",
+        "excellence logistique",
+        "optimisation end-to-end",
+        "demand planning expert",
+        "S&OP champion",
+        "lean supply chain",
+        "just-in-time addict",
+        "cost-to-serve optimisé",
+        "last mile expert",
+        "warehouse management",
+        "inventory ninja",
+        "procurement excellence",
+        "sourcing stratégique",
+        "vendor management"
+      ],
+      "education_formation": [
+        "pédagogue dans l'âme",
+        "transmission de savoirs",
+        "accompagnement bienveillant",
+        "différenciation pédagogique",
+        "classe inversée",
+        "apprenant au centre",
+        "learning by doing",
+        "gamification des apprentissages",
+        "ingénierie pédagogique innovante",
+        "blended learning",
+        "adaptive learning",
+        "facilitateur d'apprentissage",
+        "éveilleur de talents",
+        "formateur certifié passionné",
+        "andragogie"
+      ],
+      "immobilier": [
+        "chasseur immobilier",
+        "négociateur hors pair",
+        "closing expert",
+        "sens du relationnel",
+        "carnet d'adresses qualifié",
+        "off-market",
+        "deal flow",
+        "asset management",
+        "yield optimization",
+        "property management",
+        "real estate mindset",
+        "investisseur averti",
+        "patrimoine optimisé",
+        "plus-value latente",
+        "home staging expert"
+      ],
+      "hotellerie_restauration": [
+        "sens de l'accueil inné",
+        "excellence du service",
+        "expérience client mémorable",
+        "culture de l'hospitalité",
+        "attention aux détails",
+        "service irréprochable",
+        "guest experience",
+        "hospitality mindset",
+        "F&B expert",
+        "revenue management",
+        "upselling naturel",
+        "affected to guest satisfaction",
+        "luxury hospitality",
+        "palace standards",
+        "art de recevoir"
+      ],
+      "associatif_ong": [
+        "engagement militant",
+        "sens de l'intérêt général",
+        "impact social",
+        "changement systémique",
+        "plaidoyer",
+        "empowerment des bénéficiaires",
+        "théorie du changement",
+        "collectif avant tout",
+        "valeurs portées",
+        "mission driven",
+        "purpose-led",
+        "social impact",
+        "grassroots",
+        "community building",
+        "fundraising passionné"
+      ],
+      "startup": [
+        "entrepreneur dans l'âme",
+        "serial entrepreneur",
+        "early stage",
+        "bootstrappé",
+        "pivot réussi",
+        "hypercroissance",
+        "scale-up mindset",
+        "product-market fit",
+        "runway",
+        "burn rate optimisé",
+        "equity story",
+        "pitch deck",
+        "move fast break things",
+        "fail fast learn fast",
+        "0 to 1",
+        "hustle culture"
+      ]
+    },
+    "banned_patterns": [
+      "triptyques (créatif, curieux et rigoureux)",
+      "non seulement... mais aussi",
+      "tirets longs excessifs",
+      "phrases qui commencent pareil",
+      "structures trop symétriques",
+      "ton commercial/enthousiaste",
+      "grammaire trop parfaite",
+      "accumulation d'adjectifs (dynamique, rigoureux, autonome)",
+      "formules creuses (sens du relationnel, esprit d'équipe)",
+      "auto-proclamations (expert en, spécialiste de)",
+      "métaphores sportives (marathon, sprint, équipe gagnante)",
+      "métaphores guerrières (conquérir, bataille, terrain)",
+      "phrases commençant par 'Responsable de' ou 'En charge de'"
+    ],
+    "writing_style": {
+      "sentences": {
+        "short": "5-10 mots",
+        "long": "15-25 mots",
+        "rule": "alterner les deux"
+      },
+      "starters_vary": ["sujet", "adverbe", "verbe", "contexte"],
+      "transitions_allowed": ["Concrètement", "En pratique", "Par exemple", "Plus précisément"],
+      "tone": "direct, professionnel, imparfait volontairement",
+      "tips": [
+        "Commencer parfois par Mais ou Et",
+        "Utiliser je pour les résumés personnels",
+        "Éviter les superlatifs",
+        "Préférer les faits aux qualificatifs"
+      ]
+    },
+    "bullet_format": {
+      "method": "CAR (Contexte-Action-Résultat)",
+      "winning_formula": "[Verbe d'action infinitif] + [tâche précise] + [résultat chiffré]",
+      "structure": "[Verbe d'action] + [Contexte] + [Résultat mesurable]",
+      "quantification": {
+        "rule": "Quantifier SYSTÉMATIQUEMENT tout ce qui peut être mesuré",
+        "types": {
+          "volumes": "portefeuille de 150 clients, base de 10K utilisateurs",
+          "performances": "+25% de CA, -30% de bugs, ROAS de 4.2",
+          "delais": "réduit de 10 à 4 jours, livré en 3 sprints",
+          "equipes": "management de 6 personnes, coordination de 3 équipes"
+        }
+      },
+      "examples": {
+        "bad": "Bonnes compétences en leadership",
+        "good": "Dirigé une équipe de 6 personnes, réduisant les retards projet de 20%"
+      },
+      "transformation_example": {
+        "before": "Responsable de la gestion des réseaux sociaux de l'entreprise",
+        "after": "Créer et publier 65 contenus LinkedIn (visuels + copywriting), générant +650% de followers en 6 mois et 45 leads qualifiés"
+      },
+      "action_verbs_fr": ["Piloter", "Concevoir", "Négocier", "Optimiser", "Déployer", "Coordonner", "Atteint", "Conçu", "Créé", "Développé", "Dirigé", "Établi", "Généré", "Implémenté", "Amélioré", "Augmenté", "Lancé", "Géré", "Réduit", "Économisé", "Obtenu", "Restructuré", "Formé", "Supervisé", "Analysé", "Résolu"]
+    },
+    "ats_optimization": {
+      "keyword_density": "2-3 mots-clés pour 100 mots max",
+      "source": "termes EXACTS de l'offre d'emploi",
+      "placement": ["résumé/accroche", "compétences", "expériences"],
+      "format_rule": "formes standards (JavaScript pas JS, PostgreSQL pas Postgres)",
+      "max_repetitions_per_keyword": 3
+    },
+    "quality_check": [
+      "Chaque affirmation défendable en entretien",
+      "Sonne humain, pas robotique",
+      "Aucun buzzword vague",
+      "Phrases courtes, mots courants, voix active",
+      "Vocabulaire adapté au secteur cible"
+    ]
+  }
+}
+```
 
-These rules apply to all CV generation and modification operations to ensure natural, human-like writing that avoids AI detection patterns.
+Pour chaque génération :
+1. Identifie le secteur du poste (tech, finance, rh, marketing_commercial, management, sante, juridique, ingenierie, consulting, communication_media, logistique_supply, education_formation, immobilier, hotellerie_restauration, associatif_ong, startup)
+2. Applique banned_words.universal + banned_words.[secteur]
+3. Vérifie banned_patterns
+4. Utilise la méthode CAR pour chaque bullet point
+5. Intègre les mots-clés ATS naturellement
+6. Relis pour éliminer tout pattern IA
 
-## 1. BANNED AI SIGNATURE WORDS
-
-**NEVER use these words** - they trigger AI detection systems:
-
-### English banned words
-delve, realm, landscape, tapestry, nuance, moreover, furthermore, indeed, pivotal, robust, multifaceted, cutting-edge, game-changer, leverage, harness, streamline, unlock, embark, navigate, showcasing, intricate, groundbreaking, spearheaded, synergies
-
-### French equivalents to avoid
-plonger dans, paysage (metaphorical), tapisserie, de plus, en outre, en effet, essentiel/pivot, robuste, multifacette, de pointe, revolutionnaire, tirer parti de, debloquer, se lancer dans, naviguer dans
-
-## 2. BANNED PATTERNS & STRUCTURES
-
-**AVOID these typical AI patterns:**
-
-- Tricolons: "clear, concise, and compelling" / "creatif, curieux et rigoureux"
-- Mechanical transitions: "not only... but also" / "non seulement... mais aussi"
-- Overuse of em-dashes and semicolons
-- Paragraphs of identical length
-- Sentences starting with the same word repeatedly
-- Overly balanced/symmetrical structures
-- Commercial/enthusiastic tone
-- Perfect grammar without any variation
-
-## 3. NATURAL WRITING STYLE
-
-**MANDATORY writing characteristics:**
-
-### Sentence variety
-- Mix short (5-10 words) and longer sentences (15-25 words)
-- Vary sentence starters (subject, adverb, action verb, context)
-- Use occasional contractions where natural
-
-### Natural transitions (use these instead)
-- English: "In practice", "Concretely", "Specifically", "For instance"
-- French: "Concretement", "En pratique", "Plus precisement", "Par exemple"
-
-### Tone
-- Direct and professional, not salesy or enthusiastic
-- First person where appropriate for personal statements
-- Start sentences with "But" or "And" occasionally
-
-## 4. BULLET POINT METHODOLOGY (CAR/STAR)
-
-**Format for experience descriptions:**
-
-### CAR Method (Challenge-Action-Result)
-Structure: "[Action verb] + [Task/Context] + [Measurable result]"
-
-### Conversion examples
-| Generic (BAD) | Specific with CAR (GOOD) |
-|--------------|-------------------------|
-| "Strong leadership skills" | "Led a 6-person team to improve workflows, reducing project delays by 20%" |
-| "Results-oriented professional" | "Launched customer loyalty program that reduced churn by 15% in Q1" |
-| "Excellent communication skills" | "Presented quarterly results to 50+ stakeholders, securing 2M budget approval" |
-
-### Action verbs to use
-Achieved, Built, Created, Delivered, Designed, Developed, Drove, Established, Generated, Implemented, Improved, Increased, Launched, Led, Managed, Optimized, Reduced, Saved, Secured, Streamlined
-
-## 5. ATS KEYWORD OPTIMIZATION
-
-### Keyword density rule
-- Target **2-3% keyword density**: 2-3 keywords per 100 words
-- Beyond this, ATS systems detect and penalize keyword stuffing
-
-### Strategic placement (priority order)
-1. **Summary/headline** - Critical keywords first
-2. **Skills section** - Exact terms from job offer
-3. **Experience bullets** - Contextual integration in achievements
-
-### Integration technique
-- Use EXACT terms from the job offer
-- Prefer standard forms: "JavaScript" not "JS", "PostgreSQL" not "Postgres"
-- Repeat critical keywords naturally across sections (max 3 times)
-
-## 6. AUTHENTICITY CHECK
-
-Before finalizing any CV content, verify:
-
-- Can every statement be honestly defended in an interview?
-- Are all metrics/numbers real and verifiable?
-- Does it sound like the candidate, not a robot?
-- Is vocabulary appropriate for the target industry?
-- No vague buzzwords ("leveraging synergies")
-
-## 7. FLESCH READABILITY TARGET
-
-Aim for Flesch score ~70+ (easy to read):
-- Shorter sentences on average (15-20 words max)
-- Common words over jargon
-- Active voice over passive
-- Concrete examples over abstract statements
+Règle absolue : ne jamais utiliser un mot/expression de banned_words, même reformulé ou traduit.
