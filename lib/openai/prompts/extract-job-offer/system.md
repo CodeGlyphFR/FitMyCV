@@ -45,6 +45,13 @@ Analyser le contenu fourni et extraire TOUTES les informations pertinentes de l'
 - "native" - Langue maternelle, bilingue
 - null - Si non specifie
 
+**language** (langue de l'offre):
+- "fr" - Offre redigee en francais
+- "en" - Offre redigee en anglais
+- "es" - Offre redigee en espagnol
+- "de" - Offre redigee en allemand
+- null - Si multilingue ou ambigu
+
 ### Regles critiques
 
 - Si une information est **absente**, utiliser **null** - Ne JAMAIS inventer
