@@ -10,19 +10,8 @@
 {jobOfferContent}
 ```
 
-## INSTRUCTIONS
+## RAPPEL LANGUE
 
-1. Analyse les skills **required** de l'offre
-2. Identifie les correspondances dans le CV source
-3. Genere les modifications pour:
-   - Adapter le titre (current_title) au poste
-   - Reformuler le summary pour matcher l'offre
-   - Reorganiser les skills (mettre en avant les matchs)
-   - Adapter les experiences (mots-cles, responsabilites)
+**Tu DOIS rediger le CV adapte entierement en {jobOfferLanguage}.**
 
-4. Retourne UNIQUEMENT les modifications au format JSON schema
-
-Important:
-- N'ajoute que des skills justifies par l'experience existante
-- Prefere reorganiser plutot qu'ajouter
-- Garde les modifications minimales mais impactantes pour l'ATS
+Si le CV source est dans une autre langue, traduis le contenu pertinent en {jobOfferLanguage}.
