@@ -19,6 +19,7 @@ Ce document contient des exemples de code réutilisables et des patterns communs
 10. [API Error Internationalization](#api-error-internationalization)
 11. [Service Email Resend](#service-email-resend)
 12. [OAuth Multi-Provider Account Linking](#oauth-multi-provider-account-linking)
+13. [Formatage Numéros de Téléphone](#formatage-numéros-de-téléphone)
 
 ---
 
@@ -1689,6 +1690,89 @@ const handleUnlink = async (provider) => {
 - Composant : `components/account/LinkedAccountsSection.jsx`
 
 **Documentation** : [API_REFERENCE.md - Account](./API_REFERENCE.md#post-apiaccountlink-oauth) | [SECURITY.md](./SECURITY.md)
+
+---
+
+## Formatage Numéros de Téléphone
+
+Les numéros de téléphone sont formatés selon les conventions natives de chaque pays.
+
+### Usage de base
+
+```javascript
+import { formatPhoneNumber } from '@/lib/utils/phoneFormatting';
+
+// Avec code pays
+formatPhoneNumber('0612345678', 'FR');     // "+33 6 12 34 56 78"
+formatPhoneNumber('6123456789', 'US');     // "+1 (612) 345-6789"
+formatPhoneNumber('07123456789', 'GB');    // "+44 7123 456789"
+
+// Avec préfixe international (détection auto)
+formatPhoneNumber('+33612345678', null);   // "+33 6 12 34 56 78"
+formatPhoneNumber('+16123456789', null);   // "+1 (612) 345-6789"
+
+// Cas limites
+formatPhoneNumber(null, 'FR');             // ""
+formatPhoneNumber('123', 'XX');            // "123" (format simple)
+```
+
+### Dans les composants CV
+
+```jsx
+// Header.jsx - Affichage UI
+import { formatPhoneNumber } from '@/lib/utils/phoneFormatting';
+
+<div>{formatPhoneNumber(header.contact?.phone, header.contact?.location?.country_code)}</div>
+```
+
+```javascript
+// export-pdf/route.js - Export PDF
+import { formatPhoneNumber } from '@/lib/utils/phoneFormatting';
+
+${contact.phone ? `<span>${formatPhoneNumber(contact.phone, contact.location?.country_code)}</span>` : ''}
+```
+
+### Formats par pays
+
+| Pays | ISO | Exemple entrée | Exemple sortie |
+|------|-----|----------------|----------------|
+| France | FR | 0612345678 | +33 6 12 34 56 78 |
+| USA/Canada | US/CA | 6123456789 | +1 (612) 345-6789 |
+| UK | GB | 07123456789 | +44 7123 456789 |
+| Allemagne | DE | 015112345678 | +49 151 12345678 |
+| Espagne | ES | 612345678 | +34 612 345 678 |
+| Italie | IT | 3331234567 | +39 333 123 4567 |
+| Belgique | BE | 0412345678 | +32 412 34 56 78 |
+| Suisse | CH | 0791234567 | +41 79 123 45 67 |
+| Pays-Bas | NL | 0612345678 | +31 6 12 34 56 78 |
+| Maroc | MA | 0612345678 | +212 6 12 34 56 78 |
+
+### Fonctions utilitaires
+
+```javascript
+import { normalizePhone, getCountryCallingCode, COUNTRY_CALLING_CODES } from '@/lib/utils/phoneFormatting';
+
+// Normaliser (garder digits + leading +)
+normalizePhone('+33 6 12-34.56.78');  // "+33612345678"
+normalizePhone('06 12 34 56 78');      // "0612345678"
+
+// Obtenir le code pays
+getCountryCallingCode('FR');  // "33"
+getCountryCallingCode('US');  // "1"
+
+// Liste complète des codes pays
+console.log(COUNTRY_CALLING_CODES);  // { FR: '33', US: '1', ... }
+```
+
+### Algorithme
+
+1. **Normalise** : Garde uniquement les chiffres et le `+` initial
+2. **Détecte le pays** : Via `countryCode` fourni ou en parsant le `+XXX`
+3. **Supprime le préfixe trunk** : `0` en France, UK, etc.
+4. **Applique le format natif** : Espaces, tirets, parenthèses selon le pays
+5. **Fallback** : Format générique par blocs de 3 si pays inconnu
+
+**Fichier** : `lib/utils/phoneFormatting.js`
 
 ---
 

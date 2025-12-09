@@ -4,6 +4,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { auth } from "@/lib/auth/session";
 import { readUserCvFileWithMeta } from "@/lib/cv/storage";
+import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
 
 // French translations (split by category)
 import frUi from "@/locales/fr/ui.json";
@@ -828,7 +829,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       ${isSubsectionEnabled('header', 'contact') && (contact.email || contact.phone || contact.location) ? `
         <div class="contact-info">
           ${contact.email ? `<span class="contact-item">${contact.email}</span>` : ''}
-          ${contact.phone ? `<span class="contact-item">${formatPhone(contact.phone, contact.location)}</span>` : ''}
+          ${contact.phone ? `<span class="contact-item">${formatPhoneNumber(contact.phone, contact.location?.country_code)}</span>` : ''}
           ${contact.location ? `<span class="contact-item">${formatLocation(contact.location)}</span>` : ''}
         </div>
       ` : ''}
@@ -1036,44 +1037,6 @@ function formatDate(dateStr, language = 'fr') {
   const month = parts[1];
   const mm = String(Number(month)).padStart(2, "0");
   return `${mm}/${year}`;
-}
-
-function getCountryCallingCode(countryCode) {
-  const countryCodes = {
-    'FR': '+33', 'BE': '+32', 'CH': '+41', 'LU': '+352', 'MC': '+377',
-    'US': '+1', 'CA': '+1', 'UK': '+44', 'GB': '+44', 'DE': '+49',
-    'IT': '+39', 'ES': '+34', 'PT': '+351', 'NL': '+31', 'AT': '+43',
-    'SE': '+46', 'NO': '+47', 'DK': '+45', 'FI': '+358', 'PL': '+48',
-    'CZ': '+420', 'SK': '+421', 'HU': '+36', 'RO': '+40', 'BG': '+359',
-    'GR': '+30', 'TR': '+90', 'RU': '+7', 'UA': '+380', 'BY': '+375',
-    'JP': '+81', 'CN': '+86', 'KR': '+82', 'IN': '+91', 'AU': '+61',
-    'NZ': '+64', 'ZA': '+27', 'BR': '+55', 'AR': '+54', 'MX': '+52',
-    'CL': '+56', 'CO': '+57', 'PE': '+51', 'VE': '+58', 'EG': '+20',
-    'MA': '+212', 'TN': '+216', 'DZ': '+213', 'SN': '+221', 'CI': '+225'
-  };
-  return countryCodes[countryCode?.toUpperCase()] || '';
-}
-
-function formatPhone(phone, location) {
-  if (!phone) return "";
-
-  // Si le numéro commence déjà par +, on le laisse tel quel
-  if (phone.startsWith('+')) return phone;
-
-  // Essayer de déterminer l'indicatif à partir du pays
-  let countryCode = '';
-  if (location?.country_code) {
-    countryCode = getCountryCallingCode(location.country_code);
-  }
-
-  // Si on a trouvé un indicatif et que le numéro ne commence pas par +
-  if (countryCode && !phone.startsWith('+')) {
-    // Supprimer le 0 initial s'il existe (format français/européen)
-    const cleanPhone = phone.replace(/^0+/, '');
-    return `${countryCode} ${cleanPhone}`;
-  }
-
-  return phone;
 }
 
 function formatLocation(location) {

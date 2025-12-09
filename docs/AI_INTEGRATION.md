@@ -552,11 +552,26 @@ const readableText = formatJobOfferForAnalysis(jobOffer.content);
 
 La langue d'un CV est stockée dans `CvFile.language` (colonne DB, pas dans le JSON).
 
-| Source CV | Méthode de détection | Détails |
-|-----------|---------------------|---------|
-| **Génération (offre)** | Langue de l'offre d'emploi | Extraite via `jobOfferExtractionSchema.json` (champ `language`) |
+| Source CV | Méthode de détection | Modèle utilisé |
+|-----------|---------------------|----------------|
+| **Génération (offre)** | Langue de l'offre d'emploi | Extraite via `jobOfferExtractionSchema.json` |
 | **Création template** | Langue de l'offre d'emploi | Idem |
-| **Import PDF** | OpenAI `detectCvLanguageWithOpenAI()` | Analyse du summary (50 chars) |
+| **Import PDF** | Vision API (`detectPdfLanguage`) | `model_detect_language` (Settings) |
+| **Match score** | OpenAI (`detectCvLanguageWithOpenAI`) | `model_detect_language` (Settings) |
+
+### Modèle de détection
+
+Toutes les fonctions de détection de langue utilisent le setting **`model_detect_language`** depuis la DB :
+
+```javascript
+// lib/settings/aiModels.js
+const model = await getAiModelSetting('model_detect_language');
+// Défaut: gpt-4o-mini (léger, ~85 tokens pour PDF Vision)
+```
+
+**Fichiers** :
+- `lib/openai/detectPdfLanguage.js` - Détection via Vision API (première page PDF)
+- `lib/openai/detectLanguage.js` - Détection via texte (summary CV)
 
 ### Principe
 
@@ -580,15 +595,18 @@ const detectedLanguage = result.jobOfferLanguage || null;
 **Import PDF** (sans offre) :
 
 ```javascript
-// lib/backgroundTasks/importPdfJob.js
-const { detectCvLanguageWithOpenAI } = await import('@/lib/openai/detectLanguage');
-detectedLanguage = await detectCvLanguageWithOpenAI({
-  summaryDescription: cvData.summary.description,
-  signal,
-  userId,
-});
-// Fallback sur heuristique si OpenAI échoue
+// lib/openai/importPdf.js
+import { detectPdfLanguage } from './detectPdfLanguage.js';
+
+// Détection via Vision API (première page, detail configurable via pdf_vision_detail)
+const detectedLanguage = await detectPdfLanguage(imageBase64Array[0], client, userId, signal, pdfConfig.detail);
+// Utilise model_detect_language depuis Settings + pdf_vision_detail pour la qualité d'analyse
 ```
+
+**Paramètres de détection** :
+- **Modèle** : `model_detect_language` (défaut: gpt-4o-mini)
+- **Detail Vision** : `pdf_vision_detail` (défaut: high) - Utilisé pour la détection ET l'extraction
+- **Prompt** : Analyse job titles, section headers, body text (ignore noms propres et termes techniques)
 
 ### Langues supportées
 

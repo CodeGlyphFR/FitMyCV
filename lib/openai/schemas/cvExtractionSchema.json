@@ -21,11 +21,10 @@
             "items": {
               "type": "object",
               "properties": {
-                "type": { "type": "string", "description": "linkedin, github, portfolio, website, other" },
-                "label": { "type": "string", "description": "Label affiché" },
+                "label": { "type": "string", "description": "Linkedin, Github, Portfolio, Website, Other. Suivant la nature du lien (à identifier)" },
                 "url": { "type": "string", "description": "URL complète" }
               },
-              "required": ["type", "label", "url"],
+              "required": ["label", "url"],
               "additionalProperties": false
             }
           }
@@ -37,8 +36,7 @@
         "type": ["object", "null"],
         "description": "Résumé professionnel",
         "properties": {
-          "headline": { "type": ["string", "null"], "description": "Titre accrocheur" },
-          "description": { "type": ["string", "null"], "description": "Description détaillée" },
+          "description": { "type": ["string", "null"], "description": "Rédigez un paragraphe concis de 3 lignes à la première personne, qui présente le titre professionnel, les années d'expérience, les compétences clés et la valeur ajoutée principale, sans mise en forme complexe ni tableaux pour garantir une lecture optimale par les ATS." },
           "years_experience": { "type": ["integer", "null"], "description": "Années d'expérience" },
           "domains": {
             "type": "array",
@@ -51,7 +49,7 @@
             "items": { "type": "string" }
           }
         },
-        "required": ["headline", "description", "years_experience", "domains", "key_strengths"],
+        "required": ["description", "years_experience", "domains", "key_strengths"],
         "additionalProperties": false
       },
       "skills": {
@@ -60,12 +58,12 @@
         "properties": {
           "hard_skills": {
             "type": "array",
-            "description": "Compétences techniques SAUF logiciels",
+            "description": "EVALUER quels compétences sont de l'ordre TECHNIQUE et les renseigner ici ! Pas de logiciels ! Pas de méthode de travail !",
             "items": {
               "type": "object",
               "properties": {
-                "name": { "type": "string", "description": "Nom (majuscule)" },
-                "proficiency": { "type": ["string", "null"], "description": "Awareness, Beginner, Intermediate, Proficient, Advanced, Expert" }
+                "name": { "type": "string", "description": "Nom de la compétence. NE PAS AJOUTER DES PRECISIONS ENTRE PARENTHESES" },
+                "proficiency": { "type": ["string", "null"], "description": "Tu DOIS déterminer le niveau de compétence en te basant sur les expériences : Awareness, Beginner, Intermediate, Proficient, Advanced, Expert" }
               },
               "required": ["name", "proficiency"],
               "additionalProperties": false
@@ -73,17 +71,17 @@
           },
           "soft_skills": {
             "type": "array",
-            "description": "Compétences comportementales",
+            "description": "EVALUER quels compétences sont de l'ordre COMPORTEMENTALE et les renseigner ici ! Pas de logiciels ! Pas de méthode de travail ! Pas de compétences technique !",
             "items": { "type": "string" }
           },
           "tools": {
             "type": "array",
-            "description": "Logiciels: Excel, SAP, Photoshop, Figma, VS Code, etc.",
+            "description": "EVALUER dans le CV les logiciels utilisé. Exemple: Excel, SAP, Photoshop, Figma, VS Code, etc.",
             "items": {
               "type": "object",
               "properties": {
-                "name": { "type": "string", "description": "Nom (majuscule)" },
-                "proficiency": { "type": ["string", "null"], "description": "Awareness, Beginner, Intermediate, Proficient, Advanced, Expert" }
+                "name": { "type": "string", "description": "Nom de l'outils" },
+                "proficiency": { "type": ["string", "null"], "description": "Tu DOIS déterminer le niveau de compétence en te basant sur les expériences : Awareness, Beginner, Intermediate, Proficient, Advanced, Expert" }
               },
               "required": ["name", "proficiency"],
               "additionalProperties": false
@@ -91,7 +89,7 @@
           },
           "methodologies": {
             "type": "array",
-            "description": "Méthodologies: Agile, Scrum, Lean, etc.",
+            "description": "ABSOLUMENT EVALUER les méthodologies appliqué à partir des expériences et des projets. Exemple: Agile, Scrum, Lean, etc..",
             "items": { "type": "string" }
           }
         },
@@ -100,7 +98,7 @@
       },
       "experience": {
         "type": "array",
-        "description": "Expériences professionnelles (CHAQUE poste = UNE entrée)",
+        "description": "Expériences professionnelles. POUR CHAQUE expérience trouvé dans le CV = UNE entrée ! Tu ne dois pas fusionner des expériences ou en créeer d'avantage !",
         "items": {
           "type": "object",
           "properties": {
@@ -120,7 +118,7 @@
             },
             "deliverables": {
               "type": "array",
-              "description": "Réalisations clés",
+              "description": "Résultats clés et chiffrés",
               "items": { "type": "string" }
             },
             "skills_used": {
@@ -135,13 +133,13 @@
       },
       "education": {
         "type": "array",
-        "description": "Formations (CHAQUE diplôme = UNE entrée)",
+        "description": "Formations (CHAQUE diplôme = UNE entrée), ça peut aussi être une certification, ou une formation sans diplôme !",
         "items": {
           "type": "object",
           "properties": {
-            "institution": { "type": "string", "description": "Établissement" },
-            "degree": { "type": ["string", "null"], "description": "Diplôme" },
-            "field_of_study": { "type": ["string", "null"], "description": "Domaine d'études" },
+            "institution": { "type": "string", "description": "Établissement ou nom de la certification. DONNER UNIQUEMENT LE NOM DE L'ECOLE OU DE LA FORMATION" },
+            "degree": { "type": ["string", "null"], "description": "IDENTIFIER le niveau d'étude ou le titre reçu. Exemple Diplôme d'ingénieur, Master, Baccalauréat etc..." },
+            "field_of_study": { "type": ["string", "null"], "description": "DETERMINER le ou les domaines étudiés. Exemple: Electronique, Informatique, Supply Chain etc..." },
             "city": { "type": ["string", "null"], "description": "Ville" },
             "region": { "type": ["string", "null"], "description": "Région" },
             "country_code": { "type": ["string", "null"], "description": "Code pays" },
@@ -159,7 +157,7 @@
           "type": "object",
           "properties": {
             "name": { "type": "string", "description": "Langue" },
-            "level": { "type": ["string", "null"], "description": "Niveau: A1, A2, B1, B2, C1, C2, native" }
+            "level": { "type": ["string", "null"], "description": "Niveau: A1, A2, B1, B2, C1, C2, Native" }
           },
           "required": ["name", "level"],
           "additionalProperties": false
@@ -167,7 +165,7 @@
       },
       "extras": {
         "type": "array",
-        "description": "Certifications, bénévolat, hobbies",
+        "description": "Bénévolat, hobbies, disponibilité, remote, permis etc...",
         "items": {
           "type": "object",
           "properties": {

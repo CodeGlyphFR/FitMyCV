@@ -1,6 +1,7 @@
 import React from "react";
 import GptLogo from "@/components/ui/GptLogo";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
+import { toTitleCase } from "@/lib/utils/textFormatting";
 
 /**
  * Formate une date au format DD/MM/YYYY (FR) ou MM/DD/YYYY (EN)
@@ -81,7 +82,7 @@ export function enhanceItem(item, titleCache = null, fallbackTitle = "CV") {
 
   const isGpt = normalizeBoolean(item?.isGpt);
   const hasTitle = effectiveTitle.length > 0;
-  const displayTitle = hasTitle ? effectiveTitle : fallbackTitle;
+  const displayTitle = hasTitle ? toTitleCase(effectiveTitle) : fallbackTitle;
   if (titleCache && hasTitle && fileId) {
     titleCache.set(fileId, effectiveTitle);
   }

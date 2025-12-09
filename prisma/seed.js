@@ -629,7 +629,55 @@ const CV_SETTINGS = [
 ];
 
 // ============================================================================
-// 11. FEATURE MAPPINGS (Complet avec features non-IA)
+// 11. SETTINGS - PDF IMPORT
+// ============================================================================
+const PDF_IMPORT_SETTINGS = [
+  {
+    settingName: 'pdf_image_max_width',
+    value: '1000',
+    category: 'pdf_import',
+    description: 'Largeur maximale des images PDF en pixels',
+  },
+  {
+    settingName: 'pdf_image_density',
+    value: '100',
+    category: 'pdf_import',
+    description: 'Densité de conversion PDF (DPI)',
+  },
+  {
+    settingName: 'pdf_image_quality',
+    value: '75',
+    category: 'pdf_import',
+    description: 'Qualité JPEG des images (0-100)',
+  },
+  {
+    settingName: 'pdf_vision_detail',
+    value: 'high',
+    category: 'pdf_import',
+    description: 'Niveau de détail Vision API (low, auto, high)',
+  },
+  {
+    settingName: 'temperature_import_pdf',
+    value: '0.1',
+    category: 'pdf_import',
+    description: 'Température GPT pour import PDF (0=déterministe, 2=créatif)',
+  },
+  {
+    settingName: 'top_p_import_pdf',
+    value: '1',
+    category: 'pdf_import',
+    description: 'Top P (nucleus sampling) pour import PDF (0-1)',
+  },
+  {
+    settingName: 'seed_import_pdf',
+    value: '0',
+    category: 'pdf_import',
+    description: 'Seed pour reproductibilité (0 = désactivé)',
+  },
+];
+
+// ============================================================================
+// 12. FEATURE MAPPINGS (Complet avec features non-IA)
 // ============================================================================
 const FEATURE_MAPPINGS = [
   {
@@ -834,7 +882,7 @@ async function main() {
   results.push({ created: alertsCreated, skipped: alertsSkipped });
 
   // ===== 7. Settings =====
-  const allSettings = [...AI_MODEL_SETTINGS, ...CREDIT_SETTINGS, ...FEATURE_SETTINGS, ...SYSTEM_SETTINGS, ...CV_SETTINGS];
+  const allSettings = [...AI_MODEL_SETTINGS, ...CREDIT_SETTINGS, ...FEATURE_SETTINGS, ...SYSTEM_SETTINGS, ...CV_SETTINGS, ...PDF_IMPORT_SETTINGS];
   let settingsCreated = 0;
   let settingsSkipped = 0;
   for (const setting of allSettings) {

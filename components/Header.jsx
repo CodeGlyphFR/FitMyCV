@@ -14,6 +14,8 @@ import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
 import { parseApiError } from "@/lib/utils/errorHandler";
 import { SUPPORTED_LANGUAGES, LANGUAGE_FLAGS, LANGUAGE_LABELS, DEFAULT_LANGUAGE } from "@/lib/cv/languageConstants";
+import { toTitleCase } from "@/lib/utils/textFormatting";
+import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
 
 export default function Header(props){
   const header = props.header || {};
@@ -447,11 +449,11 @@ export default function Header(props){
   return (
     <header className="page mb-6 flex items-start justify-between gap-4 bg-white/15 backdrop-blur-xl p-4 rounded-2xl shadow-2xl relative overflow-visible min-h-[120px]">
       <div className="pr-24">
-        <h1 className="text-2xl font-bold text-white drop-shadow-lg">{header.full_name || ""}</h1>
-        <p className="text-sm text-white/80 drop-shadow">{header.current_title || ""}</p>
+        <h1 className="text-2xl font-bold text-white drop-shadow-lg">{toTitleCase(header.full_name) || ""}</h1>
+        <p className="text-sm text-white/80 drop-shadow">{toTitleCase(header.current_title) || ""}</p>
         <div className="mt-2 text-sm text-white/90 drop-shadow">
           <div>{header.contact?.email || ""}</div>
-          <div>{header.contact?.phone || ""}</div>
+          <div>{formatPhoneNumber(header.contact?.phone, header.contact?.location?.country_code)}</div>
           {header.contact?.location ? (
             <div>
               {header.contact.location.city || ""}{header.contact.location.region? ", ":""}

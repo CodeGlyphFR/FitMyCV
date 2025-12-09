@@ -27,7 +27,7 @@ export function PdfImportSettings({
   function renderSlider(setting, settingConfig) {
     const currentValue = getCurrentValue(setting);
     const isModified = modifiedSettings[setting.id] !== undefined;
-    const numValue = parseInt(currentValue, 10);
+    const numValue = parseFloat(currentValue);
 
     return (
       <div
@@ -49,7 +49,7 @@ export function PdfImportSettings({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-lg font-mono text-white font-semibold">
-              {numValue}
+              {Number.isInteger(numValue) ? numValue : numValue.toFixed(2)}
             </span>
             <span className="text-sm text-white/60">{settingConfig.unit}</span>
           </div>

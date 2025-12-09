@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import { capitalizeSkillName } from "@/lib/utils/textFormatting";
 
 /**
  * Icônes pour chaque section
@@ -25,7 +26,7 @@ function formatItemTitle(item, sectionKey) {
     case 'education':
       return `${item.degree || item.field_of_study || 'Formation'} - ${item.institution || 'Établissement inconnu'}`;
     case 'languages':
-      return `${item.name || 'Langue'} (${item.level || 'Niveau inconnu'})`;
+      return `${item.name || 'Langue'} (${capitalizeSkillName(item.level) || 'Niveau inconnu'})`;
     case 'projects':
       return item.name || 'Projet sans nom';
     case 'extras':

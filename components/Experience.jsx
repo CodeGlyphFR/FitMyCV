@@ -7,6 +7,7 @@ import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import { capitalizeSkillName } from "@/lib/utils/textFormatting";
 
 
 export default function Experience(props){
@@ -53,7 +54,7 @@ export default function Experience(props){
   // ---- Actions ----
   const openEdit = (i) => {
     const e = experience[i] || {};
-    const isCurrentPosition = e.end_date === "present";
+    const isCurrentPosition = !e.end_date || e.end_date === "present";
     setF({
       title: e.title || "",
       company: e.company || "",
@@ -160,7 +161,7 @@ export default function Experience(props){
                   {e.title || ""}{e.company ? " • " : ""}{e.company || ""}{e.department_or_client ? ` (${e.department_or_client})` : ""}
                 </div>
                 <div className="ml-3 text-sm opacity-80 whitespace-nowrap">
-                  {ym(e.start_date)} — {e.end_date === "present" ? cvT("cvSections.present") : ym(e.end_date)}
+                  {ym(e.start_date)} — {(!e.end_date || e.end_date === "present") ? cvT("cvSections.present") : ym(e.end_date)}
                 </div>
                 {editing && (
                   <div className="no-print flex gap-2 shrink-0">
@@ -217,7 +218,7 @@ export default function Experience(props){
 
               <div className="flex flex-wrap gap-1 mt-4">
                 {Array.isArray(e.skills_used) && e.skills_used.map((m, k) => (
-                  <span key={k} className="inline-block rounded border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">{m}</span>
+                  <span key={k} className="inline-block rounded border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">{capitalizeSkillName(m)}</span>
                 ))}
               </div>
             </div>

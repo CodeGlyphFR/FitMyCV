@@ -79,7 +79,7 @@
     "showOptions": "Afficher les options",
     "hideOptions": "Masquer les options",
     "experienceColumn": "Expérience",
-    "includeDeliverables": "Inclure livrables",
+    "includeDeliverables": "Inclure Résultats",
     "sections": {
       "header": "En-tête",
       "summary": "Résumé",
@@ -168,7 +168,7 @@
     "inProgress": "Poste en cours",
     "projectInProgress": "Projet en cours",
     "responsibilities": "Responsabilités",
-    "deliverables": "Livrables",
+    "deliverables": "Résultats",
     "skillsUsed": "Compétences utilisées",
     "technologies": "Technologies",
     "hardSkills": "Compétences techniques",

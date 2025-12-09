@@ -6,6 +6,7 @@ import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import { capitalizeSkillName, toTitleCase } from "@/lib/utils/textFormatting";
 
 export default function Extras(props){
   const { t } = useLanguage();
@@ -66,7 +67,7 @@ export default function Extras(props){
               return (
                 <div key={originalIndex} className="relative inline-block rounded-full border border-white/15 px-3 py-1 text-sm overflow-visible">
                   <div className={editing ? "pr-12" : ""}>
-                    <span className="font-semibold">{e.name || ""}</span>
+                    <span className="font-semibold">{toTitleCase(e.name) || ""}</span>
                     <span className="text-sm opacity-80"> : {e.summary || ""}</span>
                   </div>
                   {editing && (
@@ -87,7 +88,7 @@ export default function Extras(props){
                 return (
                   <div key={originalIndex} className="rounded-xl border border-white/15 p-3 relative z-0 overflow-visible">
                     <div className={editing ? "pr-12" : ""}>
-                      <div className="font-semibold">{e.name || ""}</div>
+                      <div className="font-semibold">{toTitleCase(e.name) || ""}</div>
                       <div className="text-sm opacity-80">{e.summary || ""}</div>
                     </div>
                     {editing && (

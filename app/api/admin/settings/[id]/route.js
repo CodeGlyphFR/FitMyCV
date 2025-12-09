@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 import { clearAiModelCache } from '@/lib/settings/aiModels';
+import { invalidatePdfConfigCache } from '@/lib/openai/pdfToImages';
 
 /**
  * PUT /api/admin/settings/[id]
@@ -50,6 +51,12 @@ export async function PUT(request, { params }) {
     if (existing.category === 'ai_models') {
       clearAiModelCache();
       console.log(`[Settings API] Cache des modèles IA vidé après modification de ${existing.settingName}`);
+    }
+
+    // Vider le cache PDF si on modifie un setting pdf_import
+    if (existing.category === 'pdf_import') {
+      invalidatePdfConfigCache();
+      console.log(`[Settings API] Cache PDF vidé après modification de ${existing.settingName}`);
     }
 
     return NextResponse.json({ setting });
