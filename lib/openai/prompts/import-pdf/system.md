@@ -38,33 +38,31 @@ Output clean, properly accented text - never output "e9", "e8", "a0" patterns in
 
 ## MANDATORY SKILLS EXTRACTION
 
-You MUST extract methodologies and soft skills even if not explicitly listed. Analyze experiences and deduce them.
+You MUST extract methodologies and soft skills by ANALYZING the CV content. Output in **{detectedLanguage}**.
 
-**IMPORTANT**: Output methodologies and soft skills in **{detectedLanguage}** (the CV language).
+### Methodologies (REQUIRED)
+**STRICT RULES:**
+- Extract ONLY methodologies that are **explicitly mentioned** OR **clearly evidenced** by specific keywords in the CV
+- Do NOT guess, assume, or add generic methodologies
+- Do NOT copy examples - analyze the actual CV content
+- Each methodology you extract MUST be justified by real content in the CV
 
-### Methodologies (REQUIRED - minimum 3)
-Look for these in experiences and projects:
-- **Project management**: Agile, Scrum, Kanban, SAFe, Prince2, Waterfall, V-Cycle, Lean Management
-- **Quality/Process**: Lean, Six Sigma, ITIL, ISO, CMMI, Kaizen
-- **Development**: DevOps, CI/CD, TDD, BDD, Design Thinking, GitFlow
-- **Business**: OKR, KPI tracking, RACI, SWOT, Business Analysis
+**How to identify:**
+- Look for methodology names directly mentioned (e.g., if CV says "Scrum Master" → extract Scrum)
+- Look for characteristic keywords (e.g., "sprints", "backlog" → Agile/Scrum)
+- Look for certifications mentioning methodologies
+- If NO methodology is found in the CV → return empty array, do NOT invent
 
-**Inference rules** - If you see these keywords, extract the methodology:
-- "sprints", "daily standup", "backlog", "user stories" → Agile, Scrum
-- "continuous integration", "deployment pipeline", "automation" → CI/CD, DevOps
-- "process optimization", "waste reduction", "efficiency" → Lean
-- "iterative", "incremental delivery" → Agile
-- "ITIL", "incident management", "service desk" → ITIL
+### Soft Skills (REQUIRED)
+**STRICT RULES:**
+- Deduce soft skills ONLY from actual responsibilities and achievements described in the CV
+- Do NOT add generic soft skills without evidence
+- Each soft skill MUST be traceable to specific CV content
 
-### Soft Skills (REQUIRED - minimum 5)
-Deduce from responsibilities and achievements, **output in {detectedLanguage}**:
-- Team leadership, management → Leadership / Direction d'équipe
-- Client meetings, presentations, stakeholders → Communication
-- Problem resolution, troubleshooting → Résolution de problèmes / Problem-solving
-- Cross-functional teams, international → Collaboration, Adaptabilité / Adaptability
-- Multiple projects, deadlines → Organisation, Gestion du temps / Time management
-- Training, mentoring → Pédagogie, Transmission / Knowledge transfer
-- Negotiations, contracts → Négociation
-- Autonomy, initiative → Autonomie, Esprit d'initiative
+**How to identify:**
+- "Managed a team of X people" → Leadership
+- "Presented to stakeholders" → Communication
+- "Resolved critical issues" → Problem-solving
+- If the CV doesn't show evidence of a skill → do NOT add it
 
-**CRITICAL**: Never return empty arrays for methodologies or soft_skills. Extract from context!
+**FORBIDDEN**: Never output a skill or methodology that is not supported by CV content!
