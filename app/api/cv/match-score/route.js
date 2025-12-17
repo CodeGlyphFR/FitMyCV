@@ -102,6 +102,9 @@ export async function POST(request) {
         improvementSuggestions: JSON.stringify(result.suggestions),
         missingSkills: JSON.stringify(result.missingSkills),
         matchingSkills: JSON.stringify(result.matchingSkills),
+        // Réinitialiser scoreBefore car ce n'est pas une optimisation
+        // (scoreBefore ne doit être affiché qu'après une optimisation IA)
+        scoreBefore: null,
       },
     });
 
@@ -131,6 +134,7 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const cvFile = searchParams.get("file");
+    const versionParam = searchParams.get("version");
 
     if (!cvFile) {
       return NextResponse.json({ error: "CV file missing" }, { status: 400 });
@@ -138,6 +142,74 @@ export async function GET(request) {
 
     const userId = session.user.id;
 
+    // Si on demande une version spécifique (pas 'latest')
+    if (versionParam && versionParam !== 'latest') {
+      const versionNumber = parseInt(versionParam, 10);
+      if (isNaN(versionNumber)) {
+        return NextResponse.json({ error: "Invalid version number" }, { status: 400 });
+      }
+
+      // Récupérer le score depuis CvVersion
+      const cvFileRecord = await prisma.cvFile.findUnique({
+        where: { userId_filename: { userId, filename: cvFile } },
+        select: {
+          jobOfferId: true,
+          sourceValue: true,
+          versions: {
+            where: { version: versionNumber },
+            select: {
+              matchScore: true,
+              scoreBreakdown: true,
+              improvementSuggestions: true,
+              missingSkills: true,
+              matchingSkills: true,
+            },
+          },
+        },
+      });
+
+      if (!cvFileRecord) {
+        return NextResponse.json({ error: "CV not found" }, { status: 404 });
+      }
+
+      const versionRecord = cvFileRecord.versions?.[0];
+      if (!versionRecord) {
+        return NextResponse.json({ error: "Version not found" }, { status: 404 });
+      }
+
+      // Parser les JSON strings
+      let scoreBreakdown = null;
+      let improvementSuggestions = null;
+      let missingSkills = null;
+      let matchingSkills = null;
+
+      try {
+        if (versionRecord.scoreBreakdown) scoreBreakdown = JSON.parse(versionRecord.scoreBreakdown);
+        if (versionRecord.improvementSuggestions) improvementSuggestions = JSON.parse(versionRecord.improvementSuggestions);
+        if (versionRecord.missingSkills) missingSkills = JSON.parse(versionRecord.missingSkills);
+        if (versionRecord.matchingSkills) matchingSkills = JSON.parse(versionRecord.matchingSkills);
+      } catch (e) {
+        console.error("[match-score] Erreur parsing JSON (version):", e);
+      }
+
+      return NextResponse.json({
+        score: versionRecord.matchScore,
+        scoreBefore: null, // Pas de scoreBefore pour les anciennes versions
+        updatedAt: null,
+        status: 'idle',
+        scoreBreakdown,
+        improvementSuggestions,
+        missingSkills,
+        matchingSkills,
+        optimiseStatus: 'idle',
+        hasJobOffer: !!cvFileRecord.jobOfferId,
+        hasScoreBreakdown: !!versionRecord.scoreBreakdown,
+        sourceValue: cvFileRecord.sourceValue,
+        isHistoricalVersion: true, // Flag pour le frontend (mode lecture seule)
+      }, { status: 200 });
+    }
+
+    // Comportement par défaut: score du CvFile actuel
     const cvRecord = await prisma.cvFile.findUnique({
       where: {
         userId_filename: {
@@ -147,6 +219,7 @@ export async function GET(request) {
       },
       select: {
         matchScore: true,
+        scoreBefore: true, // Score avant optimisation
         matchScoreUpdatedAt: true,
         matchScoreStatus: true,
         scoreBreakdown: true,
@@ -180,6 +253,7 @@ export async function GET(request) {
 
     return NextResponse.json({
       score: cvRecord.matchScore,
+      scoreBefore: cvRecord.scoreBefore, // Score avant optimisation (null si pas d'optimisation)
       updatedAt: cvRecord.matchScoreUpdatedAt,
       status: cvRecord.matchScoreStatus || 'idle', // Status du calcul: 'idle', 'inprogress', 'failed'
       scoreBreakdown,
@@ -190,6 +264,7 @@ export async function GET(request) {
       hasJobOffer: !!cvRecord.jobOfferId, // Boolean pour savoir si on peut calculer le score
       hasScoreBreakdown: !!cvRecord.scoreBreakdown, // Boolean pour savoir si on peut optimiser
       sourceValue: cvRecord.sourceValue,
+      isHistoricalVersion: false, // Version courante
     }, { status: 200 });
   } catch (error) {
     console.error("Error fetching match score:", error);

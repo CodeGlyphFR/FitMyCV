@@ -8,6 +8,11 @@ import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import { capitalizeSkillName } from "@/lib/utils/textFormatting";
+import BulletHighlight, { RemovedBulletsDisplay } from "./BulletHighlight";
+import SkillItemHighlight, { RemovedSkillsDisplay } from "./SkillItemHighlight";
+import SectionReviewActions from "./SectionReviewActions";
+import ExperienceReviewActions from "./ExperienceReviewActions";
+import { useHighlight } from "./HighlightProvider";
 
 
 export default function Experience(props){
@@ -28,6 +33,7 @@ export default function Experience(props){
   const title = getCvSectionTitleInCvLanguage('experience', sectionTitles.experience, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
+  const { batchProcessingExpIndex } = useHighlight();
 
   // ---- UI State ----
   const [editIndex, setEditIndex] = React.useState(null);
@@ -140,22 +146,41 @@ export default function Experience(props){
       title={
         <div className="flex items-center justify-between gap-2">
           <span>{title}</span>
-          {editing && (
-            <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="no-print rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white hover:bg-white/30 transition-all duration-200"
-            >
-              {t("common.add")}
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            <SectionReviewActions section="experience" />
+            {editing && (
+              <button
+                type="button"
+                onClick={() => setAddOpen(true)}
+                className="no-print rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white hover:bg-white/30 transition-all duration-200"
+              >
+                {t("common.add")}
+              </button>
+            )}
+          </div>
         </div>
       }
     >
       <div className="space-y-3">
         {experience.length > 0 ? (
-          experience.map((e, i) => (
-            <div key={i} className="rounded-2xl border border-white/15 p-3">
+          experience.map((e, i) => {
+            const isProcessing = batchProcessingExpIndex === i;
+            return (
+            <div key={i} className="rounded-2xl border border-white/15 p-3 relative overflow-hidden">
+              {/* Overlay de chargement pendant le batch processing */}
+              {isProcessing && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-slate-900/85">
+                  <div className="flex items-center gap-3 text-white">
+                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    <span className="text-sm font-medium">{t("review.processing") || "Traitement..."}</span>
+                  </div>
+                </div>
+              )}
+              {/* Contenu flouté pendant le traitement */}
+              <div className={isProcessing ? 'blur-md pointer-events-none' : ''}>
               <div className="flex flex-wrap items-baseline gap-2">
                 <div className="font-semibold flex-1 min-w-0">
                   {e.title || ""}{e.company ? " • " : ""}{e.company || ""}{e.department_or_client ? ` (${e.department_or_client})` : ""}
@@ -163,6 +188,7 @@ export default function Experience(props){
                 <div className="ml-3 text-sm opacity-80 whitespace-nowrap">
                   {ym(e.start_date)} — {(!e.end_date || e.end_date === "present") ? cvT("cvSections.present") : ym(e.end_date)}
                 </div>
+                <ExperienceReviewActions expIndex={i} />
                 {editing && (
                   <div className="no-print flex gap-2 shrink-0">
                     <button
@@ -194,35 +220,80 @@ export default function Experience(props){
                   <p className="text-sm text-justify opacity-95 whitespace-pre-line">{e.description}</p>
                 ) : null}
 
-                {(Array.isArray(e.responsibilities) && e.responsibilities.length > 0) || (Array.isArray(e.deliverables) && e.deliverables.length > 0) ? (
-                  <div className="grid gap-4 md:grid-cols-3">
-                    {Array.isArray(e.responsibilities) && e.responsibilities.length > 0 ? (
-                      <div className="md:col-span-2">
-                        <ul className="list-disc pl-5 text-sm space-y-1">
-                          {e.responsibilities.map((r, j) => <li key={j}>{r}</li>)}
-                        </ul>
-                      </div>
-                    ) : <div className="md:col-span-2" />}
+                <div className="grid gap-4 md:grid-cols-3">
+                  {/* Responsibilities */}
+                  <div className="md:col-span-2">
+                    {(Array.isArray(e.responsibilities) && e.responsibilities.length > 0) && (
+                      <ul className="list-disc pl-5 text-sm space-y-1">
+                        {e.responsibilities.map((r, j) => (
+                          <li key={j}>
+                            <BulletHighlight
+                              section="experience"
+                              field="responsibilities"
+                              expIndex={i}
+                              bulletText={r}
+                            >
+                              {r}
+                            </BulletHighlight>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {/* Toujours afficher les responsabilités supprimées (même si tableau vide) */}
+                    <ul className="list-disc pl-5 text-sm space-y-1">
+                      <RemovedBulletsDisplay section="experience" field="responsibilities" expIndex={i} />
+                    </ul>
+                  </div>
 
-                    {Array.isArray(e.deliverables) && e.deliverables.length > 0 ? (
-                      <div className="md:col-span-1">
+                  {/* Deliverables */}
+                  <div className="md:col-span-1">
+                    {(Array.isArray(e.deliverables) && e.deliverables.length > 0) && (
+                      <>
                         <div className="text-sm font-medium mb-1">{cvT("cvSections.deliverables")}</div>
                         <ul className="list-disc pl-5 text-sm space-y-1">
-                          {e.deliverables.map((d, j) => <li key={j}>{d}</li>)}
+                          {e.deliverables.map((d, j) => (
+                            <li key={j}>
+                              <BulletHighlight
+                                section="experience"
+                                field="deliverables"
+                                expIndex={i}
+                                bulletText={d}
+                              >
+                                {d}
+                              </BulletHighlight>
+                            </li>
+                          ))}
                         </ul>
-                      </div>
-                    ) : null}
+                      </>
+                    )}
+                    {/* Toujours afficher les résultats supprimés (même si tableau vide) */}
+                    <ul className="list-disc pl-5 text-sm space-y-1">
+                      <RemovedBulletsDisplay section="experience" field="deliverables" expIndex={i} />
+                    </ul>
                   </div>
-                ) : null}
+                </div>
               </div>
 
+              {/* Skills used */}
               <div className="flex flex-wrap gap-1 mt-4">
                 {Array.isArray(e.skills_used) && e.skills_used.map((m, k) => (
-                  <span key={k} className="inline-block rounded border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">{capitalizeSkillName(m)}</span>
+                  <SkillItemHighlight
+                    key={k}
+                    section="experience"
+                    field="skills_used"
+                    itemName={m}
+                    expIndex={i}
+                  >
+                    <span className="inline-block rounded border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">{capitalizeSkillName(m)}</span>
+                  </SkillItemHighlight>
                 ))}
+                {/* Toujours afficher les compétences supprimées (même si tableau vide) */}
+                <RemovedSkillsDisplay section="experience" field="skills_used" expIndex={i} />
+              </div>
               </div>
             </div>
-          ))
+          );
+          })
         ) : (
           editing && (
             <div className="rounded-2xl border border-white/15 p-3 text-sm opacity-60">
