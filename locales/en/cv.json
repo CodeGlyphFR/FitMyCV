@@ -275,5 +275,37 @@
       "languages": "Languages",
       "projects": "Projects"
     }
+  },
+  "versions": {
+    "title": "Versions",
+    "current": "Current version",
+    "currentShort": "Current",
+    "latest": "Latest version",
+    "previous": "Previous version",
+    "selectVersion": "Select a version",
+    "noVersions": "No previous versions",
+    "noDescription": "No description",
+    "restore": "Restore",
+    "restoreTitle": "Restore this version (deletes current version)"
+  },
+  "review": {
+    "title": "Review change",
+    "before": "Before",
+    "after": "After",
+    "empty": "(empty)",
+    "accept": "Accept",
+    "reject": "Reject",
+    "acceptAll": "Accept all",
+    "rejectAll": "Reject all",
+    "accepted": "Accepted",
+    "rejected": "Rejected",
+    "pending": "pending change(s)",
+    "pendingImportantSingular": "important pending change",
+    "pendingImportantPlural": "important pending changes",
+    "modifications": "change(s)",
+    "progress": "{reviewed}/{total} reviewed",
+    "allReviewed": "All changes reviewed",
+    "processing": "Processing...",
+    "reason": "Reason"
   }
 }
