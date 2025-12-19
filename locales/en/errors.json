@@ -36,7 +36,8 @@
         "providerNotConfigured": "This provider is not configured on this server",
         "providerAlreadyLinked": "This provider is already linked to your account",
         "providerNotLinked": "This provider is not linked to your account",
-        "cannotUnlinkLastProvider": "Cannot unlink: you must have at least one linked account"
+        "cannotUnlinkLastProvider": "Cannot unlink: you must have at least one linked account",
+        "registrationDisabled": "Registrations are temporarily suspended"
       },
       "cv": {
         "notFound": "CV not found",

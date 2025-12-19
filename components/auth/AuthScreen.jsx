@@ -16,11 +16,14 @@ const getProviders = (t) => [
   { id: "github", label: t("auth.continueWithGithub"), image: "/icons/github.png", width: 28, height: 28 },
 ];
 
-export default function AuthScreen({ initialMode = "login", providerAvailability = {}, registrationEnabled = true, oauthError = null }){
+export default function AuthScreen({ initialMode = "login", providerAvailability = {}, registrationEnabled = true, maintenanceEnabled = false, oauthError = null }){
   const router = useRouter();
   const { t } = useLanguage();
   const { executeRecaptcha } = useRecaptcha();
-  const [mode, setMode] = React.useState(initialMode);
+  // Protection: forcer login si initialMode=register mais registration bloquée ou maintenance
+  const [mode, setMode] = React.useState(
+    initialMode === "register" && (!registrationEnabled || maintenanceEnabled) ? "login" : initialMode
+  );
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
@@ -70,7 +73,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('verified') === 'true') {
-        setSuccessMessage('Email vérifié avec succès ! Vous pouvez maintenant vous connecter.');
+        setSuccessMessage(t('auth.emailVerifiedSuccess'));
         // Nettoyer l'URL
         window.history.replaceState({}, '', '/auth');
       }
@@ -78,8 +81,8 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
   }, []);
 
   function switchMode(next){
-    // Empêcher le passage en mode "register" si les inscriptions sont désactivées
-    if (next === "register" && !registrationEnabled) {
+    // Empêcher le passage en mode "register" si inscriptions désactivées OU maintenance
+    if (next === "register" && (!registrationEnabled || maintenanceEnabled)) {
       return;
     }
     setMode(next);
@@ -230,6 +233,15 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           </div>
         )}
 
+        {/* Bandeau mode maintenance */}
+        {maintenanceEnabled && (
+          <div className="rounded-lg border-2 border-orange-400/50 bg-orange-500/20 backdrop-blur-sm px-4 py-4 text-center">
+            <p className="text-white/90 drop-shadow text-sm">
+              {t("maintenance.modeEnabled")}
+            </p>
+          </div>
+        )}
+
         <div className="flex items-center justify-center gap-3">
           {providers.map(provider => (
             <button
@@ -252,12 +264,19 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           ))}
         </div>
 
+        {/* Message subtil quand les inscriptions sont désactivées */}
+        {!registrationEnabled && !maintenanceEnabled && (
+          <p className="text-xs text-white/60 text-center -mt-2">
+            {t("auth.oauthLoginOnly")}
+          </p>
+        )}
+
         <div className="relative flex items-center justify-center">
           <div className="h-px bg-white/30 w-full"></div>
         </div>
 
-        {/* Bandeau de maintenance si les inscriptions sont désactivées */}
-        {!registrationEnabled && (
+        {/* Bandeau inscriptions désactivées (formulaire login reste visible) */}
+        {!registrationEnabled && !maintenanceEnabled && (
           <div className="rounded-lg border-2 border-yellow-400/50 bg-yellow-500/20 backdrop-blur-sm px-4 py-3 text-sm">
             <div className="flex items-start gap-2">
               <span className="text-yellow-400 text-lg">⚠️</span>
@@ -366,7 +385,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         {!isRegister && (
           <div className="text-center text-sm text-slate-100 drop-shadow">
             <a href="/auth/forgot-password" className="font-medium text-emerald-300 hover:text-emerald-200 hover:underline">
-              Mot de passe oublié ?
+              {t("auth.forgotPassword")}
             </a>
           </div>
         )}
@@ -381,7 +400,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
               </button>
             </span>
           ) : (
-            registrationEnabled && (
+            registrationEnabled && !maintenanceEnabled && (
               <span>
                 {t("auth.new")}
                 {" "}

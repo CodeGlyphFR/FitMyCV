@@ -36,7 +36,8 @@
         "providerNotConfigured": "Este proveedor no está configurado en este servidor",
         "providerAlreadyLinked": "Este proveedor ya está vinculado a su cuenta",
         "providerNotLinked": "Este proveedor no está vinculado a su cuenta",
-        "cannotUnlinkLastProvider": "No se puede desvincular: debe tener al menos una cuenta vinculada"
+        "cannotUnlinkLastProvider": "No se puede desvincular: debe tener al menos una cuenta vinculada",
+        "registrationDisabled": "Los registros están temporalmente suspendidos"
       },
       "cv": {
         "notFound": "CV no encontrado",
