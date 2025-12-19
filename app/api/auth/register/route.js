@@ -31,6 +31,15 @@ export async function POST(request){
     }
   }
 
+  // Vérifier si les inscriptions sont autorisées
+  const regSetting = await prisma.setting.findUnique({
+    where: { settingName: 'registration_enabled' }
+  });
+  if (regSetting?.value === '0') {
+    logger.context('auth', 'warn', `Tentative d'inscription bloquée (registration_disabled) pour ${email}`);
+    return AuthErrors.registrationDisabled();
+  }
+
   // Support both formats: new (firstName/lastName) and legacy (name)
   let fullName;
   if (firstName && lastName) {

@@ -31,6 +31,10 @@ export function SettingsTab({ refreshKey }) {
   const [availableModels, setAvailableModels] = useState(AVAILABLE_AI_MODELS);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  // États pour la confirmation du mode maintenance
+  const [showMaintenanceConfirm, setShowMaintenanceConfirm] = useState(false);
+  const [maintenanceInfo, setMaintenanceInfo] = useState(null);
+  const [pendingMaintenanceSetting, setPendingMaintenanceSetting] = useState(null);
 
   useEffect(() => {
     fetchSettings();
@@ -73,11 +77,53 @@ export function SettingsTab({ refreshKey }) {
     }
   }
 
-  function handleValueChange(settingId, newValue) {
+  // Fetch le nombre d'utilisateurs actifs pour le mode maintenance
+  async function fetchActiveSessionsCount() {
+    try {
+      const res = await fetch('/api/admin/maintenance/active-sessions');
+      const data = await res.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching active sessions:', error);
+      return null;
+    }
+  }
+
+  async function handleValueChange(settingId, newValue) {
+    // Trouver le setting pour vérifier si c'est maintenance_enabled
+    const setting = settings.find(s => s.id === settingId);
+
+    // Si on active le mode maintenance, afficher la modal de confirmation
+    if (setting?.settingName === 'maintenance_enabled' && newValue === '1') {
+      const sessionInfo = await fetchActiveSessionsCount();
+      setMaintenanceInfo(sessionInfo);
+      setPendingMaintenanceSetting({ settingId, newValue });
+      setShowMaintenanceConfirm(true);
+      return;
+    }
+
     setModifiedSettings(prev => ({
       ...prev,
       [settingId]: newValue
     }));
+  }
+
+  function confirmMaintenanceToggle() {
+    if (pendingMaintenanceSetting) {
+      setModifiedSettings(prev => ({
+        ...prev,
+        [pendingMaintenanceSetting.settingId]: pendingMaintenanceSetting.newValue
+      }));
+    }
+    setShowMaintenanceConfirm(false);
+    setPendingMaintenanceSetting(null);
+    setMaintenanceInfo(null);
+  }
+
+  function cancelMaintenanceToggle() {
+    setShowMaintenanceConfirm(false);
+    setPendingMaintenanceSetting(null);
+    setMaintenanceInfo(null);
   }
 
   function getCurrentValue(setting) {
@@ -95,6 +141,11 @@ export function SettingsTab({ refreshKey }) {
 
     setSaving(true);
     try {
+      // Vérifier si maintenance_enabled est modifié
+      const maintenanceSettingId = settings.find(s => s.settingName === 'maintenance_enabled')?.id;
+      const maintenanceChanged = maintenanceSettingId && modifiedSettings[maintenanceSettingId] !== undefined;
+      const maintenanceEnabled = modifiedSettings[maintenanceSettingId] === '1';
+
       const promises = Object.entries(modifiedSettings).map(([id, value]) =>
         fetch(`/api/admin/settings/${id}`, {
           method: 'PUT',
@@ -107,7 +158,20 @@ export function SettingsTab({ refreshKey }) {
       const allSuccess = results.every(res => res.ok);
 
       if (allSuccess) {
-        setToast({ type: 'success', message: 'Paramètres sauvegardés avec succès !' });
+        // Toast personnalisé pour le mode maintenance
+        if (maintenanceChanged) {
+          if (maintenanceEnabled) {
+            const sessionInfo = await fetchActiveSessionsCount();
+            setToast({
+              type: 'success',
+              message: `Mode maintenance activé ! ${sessionInfo?.recentActiveUsers || 0} utilisateurs seront déconnectés.`
+            });
+          } else {
+            setToast({ type: 'success', message: 'Mode maintenance désactivé. Le site est de nouveau accessible.' });
+          }
+        } else {
+          setToast({ type: 'success', message: 'Paramètres sauvegardés avec succès !' });
+        }
         setModifiedSettings({});
         await fetchSettings();
       } else {
@@ -492,6 +556,55 @@ export function SettingsTab({ refreshKey }) {
           🗑️ Supprimer toutes les données analytics
         </button>
       </div>
+
+      {/* Maintenance Mode Confirmation Modal */}
+      {showMaintenanceConfirm && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900/95 backdrop-blur-xl rounded-lg shadow-2xl border border-orange-500/30 p-6 max-w-md w-full">
+            <h3 className="text-xl font-semibold text-orange-400 mb-4">
+              🔧 Activer le mode maintenance ?
+            </h3>
+            <p className="text-white/80 mb-4">
+              Cette action va <strong className="text-white">déconnecter</strong> tous les utilisateurs non-admin à leur prochaine action.
+            </p>
+            {maintenanceInfo && (
+              <div className="bg-white/10 rounded-lg p-4 mb-4">
+                <p className="text-white/70 text-sm mb-2">Sessions potentiellement affectées :</p>
+                <div className="flex items-center gap-4">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-orange-400">
+                      {maintenanceInfo.recentActiveUsers}
+                    </p>
+                    <p className="text-xs text-white/60">utilisateurs actifs</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-white/60">
+                      (derniers {maintenanceInfo.sessionMaxAgeDays} jours)
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            <p className="text-orange-300 text-sm mb-6">
+              Les formulaires de connexion seront masqués. Seuls les administrateurs pourront se connecter.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={cancelMaintenanceToggle}
+                className="px-4 py-2 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmMaintenanceToggle}
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+              >
+                Activer la maintenance
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (

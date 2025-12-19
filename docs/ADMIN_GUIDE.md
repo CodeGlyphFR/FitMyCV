@@ -328,7 +328,7 @@ Le filtre de période (7j/30j/90j/All) filtre par **activité onboarding** :
 
 | Setting Name | Value | Description |
 |-------------|-------|-------------|
-| `registration_enabled` | 1 | Autoriser les inscriptions (0 = fermé) |
+| `registration_enabled` | 1 | Autoriser les inscriptions email ET OAuth (0 = fermé, bloque toutes les nouvelles inscriptions) |
 | `maintenance_mode` | 0 | Mode maintenance (1 = activé) |
 
 #### Settings PDF Import (Vision)

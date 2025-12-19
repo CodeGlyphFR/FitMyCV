@@ -614,6 +614,12 @@ const SYSTEM_SETTINGS = [
     category: 'system',
     description: 'Active ou désactive les inscriptions (1 = activé, 0 = désactivé)',
   },
+  {
+    settingName: 'maintenance_enabled',
+    value: '0',
+    category: 'system',
+    description: 'Mode maintenance - bloque tous les utilisateurs non-admin (1 = activé, 0 = désactivé)',
+  },
 ];
 
 // ============================================================================

@@ -36,7 +36,8 @@
         "providerNotConfigured": "Ce provider n'est pas configuré sur ce serveur",
         "providerAlreadyLinked": "Ce provider est déjà lié à votre compte",
         "providerNotLinked": "Ce provider n'est pas lié à votre compte",
-        "cannotUnlinkLastProvider": "Impossible de délier : vous devez avoir au moins un compte lié"
+        "cannotUnlinkLastProvider": "Impossible de délier : vous devez avoir au moins un compte lié",
+        "registrationDisabled": "Les inscriptions sont temporairement suspendues"
       },
       "cv": {
         "notFound": "CV introuvable",

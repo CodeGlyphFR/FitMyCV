@@ -36,7 +36,8 @@
         "providerNotConfigured": "Dieser Anbieter ist auf diesem Server nicht konfiguriert",
         "providerAlreadyLinked": "Dieser Anbieter ist bereits mit Ihrem Konto verknüpft",
         "providerNotLinked": "Dieser Anbieter ist nicht mit Ihrem Konto verknüpft",
-        "cannotUnlinkLastProvider": "Verknüpfung kann nicht aufgehoben werden: Sie müssen mindestens ein verknüpftes Konto haben"
+        "cannotUnlinkLastProvider": "Verknüpfung kann nicht aufgehoben werden: Sie müssen mindestens ein verknüpftes Konto haben",
+        "registrationDisabled": "Registrierungen sind vorübergehend ausgesetzt"
       },
       "cv": {
         "notFound": "Lebenslauf nicht gefunden",

@@ -126,6 +126,8 @@ Endpoint NextAuth pour tous les providers.
 - `github` : GitHub OAuth
 - `apple` : Apple Sign In
 
+**Note** : Quand `registration_enabled = 0`, les nouvelles inscriptions sont bloquées pour TOUS les providers (email ET OAuth). Les utilisateurs existants peuvent toujours se connecter.
+
 **Exemple (credentials)** :
 
 ```javascript

@@ -1,6 +1,9 @@
 {
   "maintenance": {
-    "registrationDisabled": "Maintenance en cours, les inscriptions seront de nouveaux disponibles prochainement."
+    "registrationDisabled": "Suite au succès de FitMyCV, les inscriptions sont temporairement en pause pendant notre migration vers un serveur plus performant. Elles seront de nouveau disponibles très prochainement !",
+    "modeEnabled": "FitMyCV est actuellement en maintenance. Nous travaillons à améliorer votre expérience. Veuillez réessayer dans quelques minutes.",
+    "modeEnabledTitle": "Maintenance en cours",
+    "adminOnly": "Seuls les administrateurs peuvent se connecter pendant la maintenance."
   },
   "topbar": {
     "loading": "Chargement…",
