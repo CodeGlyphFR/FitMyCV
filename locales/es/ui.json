@@ -1,6 +1,9 @@
 {
   "maintenance": {
-    "registrationDisabled": "Debido al éxito de FitMyCV, los registros están temporalmente en pausa mientras migramos a un servidor más potente. ¡Estarán disponibles de nuevo muy pronto!"
+    "registrationDisabled": "Debido al éxito de FitMyCV, los registros están temporalmente en pausa mientras migramos a un servidor más potente. ¡Estarán disponibles de nuevo muy pronto!",
+    "modeEnabled": "FitMyCV está actualmente en mantenimiento. Estamos trabajando para mejorar su experiencia. Por favor, inténtelo de nuevo en unos minutos.",
+    "modeEnabledTitle": "Mantenimiento en curso",
+    "adminOnly": "Solo los administradores pueden iniciar sesión durante el mantenimiento."
   },
   "topbar": {
     "loading": "Cargando…",
