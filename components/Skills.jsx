@@ -251,16 +251,7 @@ export default function Skills(props){
 
               {/* Soft skills */}
               {hasSoft ? (
-                <div className="w-full rounded-2xl border border-white/15 p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold">{cvT("cvSections.softSkills")}</h3>
-                    <div className="flex items-center gap-2">
-                      <SkillsReviewActions field="soft_skills" />
-                      {editing && (
-                        <button onClick={() => setOpenSoft(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
-                      )}
-                    </div>
-                  </div>
+                <div>
                   <div className="flex flex-wrap gap-1">
                     {soft.map((m, i) => {
                       const softName = typeof m === "string" ? m : (m?.name || m?.label || m?.title || m?.value || "");
@@ -272,8 +263,12 @@ export default function Skills(props){
                         </SkillItemHighlight>
                       );
                     })}
-                    {/* Afficher les soft skills supprimées */}
                     <RemovedSkillsDisplay section="skills" field="soft_skills" />
+                    {editing && (
+                      <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center rounded border border-white/15 bg-white/20 opacity-90 cursor-pointer hover:bg-white/30 transition-all duration-200" style={{height: '23px', width: '23px', minHeight: '23px', minWidth: '23px', maxHeight: '23px', maxWidth: '23px'}}>
+                        <img src="/icons/edit.png" alt="Edit" className="h-[11px] w-[11px]" />
+                      </span>
+                    )}
                   </div>
                 </div>
               ) : (
