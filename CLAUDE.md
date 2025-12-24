@@ -1,253 +1,146 @@
 # CLAUDE.md
 
-> **This file provides guidance to Claude Code AI assistant when working with this repository.**
->
-> **For human developers:** Start with [README.md](./README.md) for project overview, then consult [docs/](./docs/) for detailed documentation.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
----
+## Project Overview
 
-## 📚 Documentation Complète
+FitMyCV.io is a Next.js 14 application that creates AI-optimized CVs tailored to specific job offers. Built with React 18, Tailwind CSS, Prisma ORM, and OpenAI integration.
 
-Toute la documentation technique est disponible dans le dossier **`docs/`**. Ce fichier est un **quick reference** pour Claude Code avec des liens vers la documentation détaillée.
+## Essential Commands
 
-### Installation & Configuration
-- **[Installation complète](./docs/INSTALLATION.md)** - Setup initial, prérequis, premiers pas
-- **[Variables d'environnement](./docs/ENVIRONMENT_VARIABLES.md)** - Configuration .env détaillée
-- **[Déploiement](./docs/DEPLOYMENT.md)** - Production deployment guide
-- **[Configuration CRON](./docs/CRON_SETUP.md)** - Tâches planifiées
+```bash
+# Development
+npm run dev                    # Start dev server (port 3001)
+npm run build                  # Production build
+npm start                      # Start production server (port 3000)
 
-### Architecture & Développement
-- **[Architecture complète](./docs/ARCHITECTURE.md)** - Vue d'ensemble système, background tasks, télémétrie
-- **[Guide développement](./docs/DEVELOPMENT.md)** - Workflow développeur, best practices
-- **[Base de données](./docs/DATABASE.md)** - Schéma Prisma, migrations, models
-- **[Référence API](./docs/API_REFERENCE.md)** - Tous les endpoints avec exemples
-- **[Composants](./docs/COMPONENTS.md)** - Structure composants React
-- **[Features](./docs/FEATURES.md)** - Fonctionnalités détaillées
-
-### Systèmes Spécialisés
-- **[Intégration IA](./docs/AI_INTEGRATION.md)** - OpenAI, prompts, modèles, analyse levels
-- **[Système d'abonnements](./docs/SUBSCRIPTION.md)** - Plans, crédits, Stripe, limites features
-- **[Dashboard Admin](./docs/ADMIN_GUIDE.md)** - Interface admin, analytics, monitoring
-- **[Télémétrie & Analytics](./docs/TELEMETRY.md)** - Système télémétrie, sessions, dashboard analytics
-- **[Sécurité](./docs/SECURITY.md)** - Best practices, chiffrement CV, sanitization
-
-### Configuration Externe
-- **[Setup Stripe](./docs/STRIPE_SETUP.md)** - Configuration Stripe complète (webhooks, test mode)
-
-### Développement & Patterns
-- **[Référence commandes](./docs/COMMANDS_REFERENCE.md)** - Toutes les commandes (Next.js, Prisma, Stripe, scripts)
-- **[Patterns de code](./docs/CODE_PATTERNS.md)** - Exemples réutilisables (CV, job queue, Stripe, limites, Email, OAuth)
-- **[Design System](./docs/DESIGN_SYSTEM.md)** - UI/UX guidelines complets (glassmorphism, composants, animations)
-
-### Guides Pratiques
-- **[Usage](./docs/USAGE.md)** - Guide utilisateur
-- **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Résolution problèmes communs
-- **[Tests MVP](./docs/MVP_TESTING.md)** - Tests et validation
-- **[Ajouter une langue](./docs/ADDING_LANGUAGE.md)** - Guide pour intégrer une nouvelle langue
-
-### Documentation Projet
-- **[README](./docs/README.md)** - Index documentation
-- **[Refactoring Stripe](./docs/STRIPE_REFACTORING.md)** - Notes refactoring système paiements
-
----
-
-## 🔧 Environnements de Développement
-
-**Ce projet utilise un workflow Git 3-branches :**
-
-### Structure des Branches
-
-| Branche | Rôle | Tag | Merge vers |
-|---------|------|-----|------------|
-| `main` | Production stable | v1.2.3 | - |
-| `release` | Testing/Staging | v1.2.3-rc | `main` (via PR) |
-| `dev` | Développement actif | - | `release` (via PR) |
-
-### Dossier DÉVELOPPEMENT (`~/Documents/FitMyCV-DEV/`)
-- **Base de données** : PostgreSQL `fitmycv_dev`
-- **user** : `erickdesmet`
-- **Port** : `3001` (développement)
-- **Usage** : Développement quotidien, features, bugs, improvements
-
-### Dossier PRODUCTION (optionnel : `~/FitMyCV/`)
-- **Base de données** : PostgreSQL `fitmycv_prod`
-- **user** : `erickdesmet`
-- **Port** : `3000` (production)
-- **Usage** : Production uniquement, jamais de développement
-
-## ⚡ Quick Start
-
-### Ports de développement
-- **Dev**: `3001` (npm run dev) - PostgreSQL `fitmycv_dev`
-
-### Commandes essentielles
-→ **[Toutes les commandes](./docs/COMMANDS_REFERENCE.md)**
-
----
-
-## 🏗️ Architecture (Quick Reference)
-
-### Stack
-- **Frontend**: React 18 + Tailwind CSS (glassmorphism design)
-- **Backend**: Next.js 14 (App Router) + API Routes
-- **Database**:
-  - **Dev** : Prisma + PostgreSQL `fitmycv_dev`
-  - **Prod** : Prisma + PostgreSQL `fitmycv_prod`
-- **i18n**: 4 langues (FR, EN, ES, DE), 9 catégories de traductions
-- **IA**: OpenAI API (génération, match score, optimisation ATS)
-- **Paiements**: Stripe (abonnements + packs crédits)
-- **Stockage CV**: PostgreSQL natif (JSON) avec versioning
-
-### Systèmes clés
-
-| Système | Description | Documentation |
-|---------|-------------|---------------|
-| **Stockage CV** | PostgreSQL natif (CvFile.content) + versioning (CvVersion) | [DATABASE.md](./docs/DATABASE.md#4-cvfile) |
-| **JobOffer** | Extraction structurée des offres (JSON) + réutilisation | [DATABASE.md](./docs/DATABASE.md#3-joboffer) |
-| **Job queue** | 3 jobs concurrents max (génération, import, traduction) | [ARCHITECTURE.md](./docs/ARCHITECTURE.md#background-tasks) |
-| **Abonnements** | Hybride : plans mensuels + micro-transactions (crédits) | [SUBSCRIPTION.md](./docs/SUBSCRIPTION.md) |
-| **Dashboard admin** | Analytics, monitoring, gestion users/plans | [ADMIN_GUIDE.md](./docs/ADMIN_GUIDE.md) |
-| **IA OpenAI** | Génération CV, match score, optimisation ATS | [AI_INTEGRATION.md](./docs/AI_INTEGRATION.md) |
-| **i18n** | 4 langues (FR, EN, ES, DE), 9 catégories par langue | [ADDING_LANGUAGE.md](./docs/ADDING_LANGUAGE.md) |
-
-### Structure de données
-
-- **Database schema** : [DATABASE.md](./docs/DATABASE.md)
-- **CV JSON structure** : [ARCHITECTURE.md - Structure CV](./docs/ARCHITECTURE.md#structure-des-données-cv)
-- **API Routes** : [API_REFERENCE.md](./docs/API_REFERENCE.md)
-- **Composants React** : [COMPONENTS.md](./docs/COMPONENTS.md)
-
----
-
-## 🎨 Design System (Quick Reference)
-
-**Approche** : Glassmorphism + Deep dark blue background (`rgb(2, 6, 23)`) + Emerald primary color
-
-### Couleurs principales
-```css
-/* Primary */
-emerald-500: #10B981    /* Boutons primaires, focus states */
-emerald-400: #34D399    /* Éléments interactifs */
-
-/* Secondary */
-sky-500: #0EA5E9        /* Actions secondaires */
-
-/* Background */
---bg-base: rgb(2, 6, 23)  /* Deep dark blue */
+# Database
+npx prisma migrate dev --name <name>  # Create migration
+npx prisma migrate deploy             # Apply migrations
+npx prisma generate                   # Regenerate Prisma client
+npx prisma studio                     # Visual DB editor
+npx prisma db seed                    # Seed database
+npm run db:reset                      # Reset database (dev only)
 ```
 
-### Patterns de base
+## Architecture
 
-```jsx
-/* Glass card standard */
-<div className="bg-white/15 backdrop-blur-md rounded-2xl border-2 border-white/30" />
+### Tech Stack
+- **Frontend**: React 18, Next.js 14 App Router, Tailwind CSS
+- **Backend**: Next.js API Routes, Prisma 6, PostgreSQL (prod) / SQLite (dev)
+- **AI**: OpenAI API (GPT-4o models)
+- **Services**: Stripe (payments), Resend (email), Puppeteer (scraping/PDF)
+- **Auth**: NextAuth.js with credentials + OAuth (Google, GitHub, Apple)
 
-/* Glass input */
-<input className="bg-white/20 backdrop-blur-sm border border-white/40 rounded-lg" />
+### Directory Structure
+```
+app/                    # Next.js App Router (pages + API routes)
+├── api/               # 96 API endpoints
+├── auth/              # Authentication pages
+├── admin/             # Admin dashboard
+└── account/           # User settings
 
-/* Button primary */
-<button className="bg-emerald-500 hover:bg-emerald-600 rounded-lg px-4 py-2 text-white" />
+components/            # React components (100+)
+├── TopBar/           # Main navigation + modals
+├── ui/               # Reusable UI components
+├── admin/            # Admin components
+└── [CV sections]     # Header, Skills, Experience, Education...
+
+lib/                   # Core libraries
+├── auth/             # NextAuth config & session
+├── cv/               # CV storage, validation, encryption
+├── openai/           # AI functions (generate, translate, improve)
+├── backgroundTasks/  # Job queue system (max 3 concurrent)
+├── subscription/     # Plans, credits, feature limits
+├── email/            # Resend email service
+└── api/              # API errors & i18n
+
+prisma/               # Database schema (30+ models)
+locales/              # Translations (en, fr, de, es)
 ```
 
-### Responsive & iOS
+### Background Task System
+Long-running tasks (CV generation, PDF import, translation) use a job queue:
+- Max 3 concurrent jobs
+- Tasks tracked in `BackgroundTask` model
+- Status: queued → running → completed/failed
 
-- **Breakpoint** : `md:` = `991px` (mobile-first approach)
-- **Safe areas** : `env(safe-area-inset-top)` pour notch iOS
-- **Touch targets** : Minimum 32px hauteur/largeur
-- **iOS blur optimization** : `.ios-blur-medium` pour performance
+### CV Storage
+CVs are stored as JSON in PostgreSQL (`CvFile.content` field), with versioning for AI optimizations (`CvVersion` model).
 
-### Background System
+## Code Patterns
 
-- **Composant** : `GlobalBackground.jsx` (appliqué globalement)
-- **Couleur base** : `rgb(2, 6, 23)` → Utiliser classe Tailwind `bg-app-bg`
-- **Blobs animés** : 3 blobs Framer Motion (sky-500 dominance + emerald-500)
-- **Position** : `fixed inset-0 z-0` (couvre tout le viewport)
-- **Unified** : Même background pour `/auth` et toutes les pages
-- **Animation** : Framer Motion avec trajectoires mathématiques (sin/cos)
-  - Mouvements amples : ±200px horizontal, ±180px vertical
-  - Tailles responsives : 40-60% de `window.innerHeight`
-  - Durées : 25-31s (non synchronisées)
-  - 6 keyframes pour fluidité maximale
-  - GPU-accelerated (`willChange`)
+### API Route Pattern
+```javascript
+import { getSession } from '@/lib/auth/session';
+import prisma from '@/lib/prisma';
 
-```jsx
-// Background unifié (préféré)
-<div className="bg-app-bg">...</div>
-
-// Ou valeur directe si nécessaire
-<div className="bg-[rgb(2,6,23)]">...</div>
+export async function GET(request) {
+  const session = await getSession();
+  if (!session?.user?.id) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  // ... logic
+  return Response.json({ data });
+}
 ```
 
-### Z-Index Layering
+### CV Operations
+```javascript
+import { readUserCvFile, writeUserCvFile } from '@/lib/cv/storage';
+import { validateCvData } from '@/lib/cv/validation';
 
-```css
-z-0:       Background (GlobalBackground)
-z-10:      Main content
-z-[10001]: TopBar, Notification backdrop
-z-[10002]: Dropdown menus, User menu
-z-[10003]: Notifications, Custom selects
-z-[10004]: Tooltips
+const cvContent = await readUserCvFile(userId, filename);
+const { valid, data, errors } = validateCvData(JSON.parse(cvContent));
+await writeUserCvFile(userId, filename, modifiedData);
 ```
 
-→ **[Design System complet](./docs/DESIGN_SYSTEM.md)**
+### Background Job Pattern
+```javascript
+import { enqueueJob } from '@/lib/backgroundTasks/jobQueue';
+import { runMyJob } from '@/lib/backgroundTasks/myJob';
 
----
-
-## 📜 Project Rules (IMPORTANT pour Claude Code)
-
-### Workflow Git
-
-**Règles générales :**
-- ❌ **Ne merge JAMAIS sans demande explicite** (utiliser `--no-ff`)
-- ❌ **Ne commit JAMAIS sans demande explicite**
-- ❌ **Ne push JAMAIS sans demande explicite**
-- ✅ **Toujours créer des PRs** pour dev→release et release→main
-- ✅ **Taguer les versions** : -rc sur release, final sur main
-
-**Structure 3-branches :**
-
-| Branche | Base | Merge vers | Tag | PR requis |
-|---------|------|------------|-----|-----------|
-| `main` | - | - | v1.2.3 | - |
-| `release` | main | main | v1.2.3-rc | ✅ Oui |
-| `dev` | release | release | - | ✅ Oui |
-| `feature/*` | dev | dev | - | ✅ Oui |
-| `improvement/*` | dev | dev | - | ✅ Oui |
-| `bug/*` | dev | dev | - | ✅ Oui |
-| `hotfix/*` | main | main+release+dev | v1.2.y | ❌ Non (urgence) |
-
-**Nomenclature branches :**
-- ✅ **Feature** : `feature/name_of_the_feature` (part de dev)
-- ✅ **Amélioration** : `improvement/name_of_the_feature` (part de dev)
-- ✅ **Bug** : `bug/name_of_the_feature` (part de dev)
-- ✅ **Hotfix** : `hotfix/name_of_the_feature` (part de main, merge dans 3 branches)
-
-**Workflow visuel :**
-```
-Feature  ───┐ ┌───┐ ┌───     (branches de dev)
-         ╲ ╱ ╲ ╱ ╱
-Dev      ──○───○───○───     (PR vers release)
-          ╱         ╲
-Release  ─────────────○──    (tag -rc, PR vers main)
-        ╱              ╲
-Main   ○────────────────○    (tag final)
-
-Hotfix: main → merge dans (main + release + dev)
+const task = await prisma.backgroundTask.create({ data: { ... } });
+enqueueJob(() => runMyJob(task));
 ```
 
-### Commits
+### Feature Usage Limits
+```javascript
+import { checkFeatureLimit, incrementFeatureUsage } from '@/lib/subscription/featureUsage';
 
-- ❌ **Jamais de "🤖 Generated with"** ou mention de Claude Code
-- ✅ **Vérifier et mettre à jour docs/** avant commit
+const { allowed, needsCredit } = await checkFeatureLimit(userId, 'gpt_cv_generation');
+if (!allowed) return Response.json({ error: 'Limit reached' }, { status: 403 });
+// ... do work
+await incrementFeatureUsage(userId, 'gpt_cv_generation');
+```
 
-### Développement
+## Git Workflow
 
-- ✅ **npm run dev utilise port 3001**
-- ✅ **PostgreSQL** : `fitmycv_dev` (dev) et `fitmycv_prod` (prod) sur même serveur
-- ✅ **Mettre à jour la documentation dans le dossier `docs/` et `CLAUDE.md`** Apres chaque modification de la codebase, vérifier la documentation et documenter la modification. Puis tenir à jour le fichier CLAUDE.md
+3-branch strategy: `main` ← `release` ← `dev`
 
----
+- **Branches**: `feature/`, `improvement/`, `bug/` from `dev`; `hotfix/` from `main`
+- **PRs required**: Always for merges to `dev`, `release`, `main`
+- **Tags**: `-rc` on release, final version on main
+- **Commits**: Conventional format (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`)
 
-**📝 Note** : Ce fichier est un **quick reference**. Pour toute information détaillée, consulter la **[documentation complète dans docs/](./docs/README.md)**.
-- Ne pas lire le fichier .env, demander à l'utilisateur de copier coller le contenu du .env
-- Ne JAMAIS faire de db push ! UNIQUEMENT DES MIGRATIONS !!! Si une migration échoue, demande moi quoi faire !
+## Key Files Reference
+
+| Area | Files |
+|------|-------|
+| Auth config | `lib/auth/options.js`, `lib/auth/session.js` |
+| CV validation | `lib/cv/validation.js`, `data/schema.json` |
+| AI functions | `lib/openai/*.js` |
+| Job queue | `lib/backgroundTasks/jobQueue.js` |
+| Subscription | `lib/subscription/featureUsage.js`, `lib/subscription/credits.js` |
+| API errors | `lib/api/apiErrors.js` |
+| Translations | `locales/{lang}/*.json` |
+
+## Documentation
+
+Full documentation available in `docs/`:
+- `ARCHITECTURE.md` - System architecture, data flows
+- `API_REFERENCE.md` - All 96 API endpoints
+- `CODE_PATTERNS.md` - Reusable code patterns with examples
+- `DEVELOPMENT.md` - Git workflow, standards, debugging
+- `SUBSCRIPTION.md` - Plans, credits, feature limits
+- `DESIGN_SYSTEM.md` - UI/UX guidelines, Tailwind patterns

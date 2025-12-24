@@ -1,8 +1,10 @@
-## CV SOURCE (a adapter)
+## CV SOURCE (a adapter et traduire)
 
 ```json
 {mainCvContent}
 ```
+
+---
 
 ## OFFRE D'EMPLOI
 
@@ -10,10 +12,13 @@
 {jobOfferContent}
 ```
 
+---
+
 ## INSTRUCTIONS
 
-Adapte le CV source pour cette offre d'emploi.
+1. **Detecter le profil** du candidat (junior/confirme/senior) selon les annees d'experience
+2. **Adapter le CV** pour cette offre d'emploi en appliquant les regles du profil detecte
+3. **Traduire entierement** en **{jobOfferLanguage}**
+4. **Retourner le CV complet** au format JSON (pas de diff)
 
-**RAPPEL LANGUE** : Le CV adapte DOIT etre entierement en **{jobOfferLanguage}**.
-
-Retourne le CV complet au format JSON (pas de diff, le CV entier).
+Le champ `language` du CV retourne doit etre : "{jobOfferLanguage}"

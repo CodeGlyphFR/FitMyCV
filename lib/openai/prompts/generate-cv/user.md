@@ -4,14 +4,21 @@
 {mainCvContent}
 ```
 
+---
+
 ## OFFRE D'EMPLOI (Structuree)
 
 ```json
 {jobOfferContent}
 ```
 
-## RAPPEL LANGUE
+---
 
-**Tu DOIS rediger le CV adapte entierement en {jobOfferLanguage}.**
+## INSTRUCTIONS
 
-Si le CV source est dans une autre langue, traduis le contenu pertinent en {jobOfferLanguage}.
+1. **Detecter le profil** du candidat (junior/confirme/senior) selon les annees d'experience
+2. **Appliquer les regles d'adaptation** correspondantes au profil detecte
+3. **Generer les modifications** au format JSON (mode diff)
+4. **Langue de sortie** : {jobOfferLanguage}
+
+Retourne le JSON des modifications uniquement.
