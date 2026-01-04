@@ -26,6 +26,9 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
   const [onboardingLoading, setOnboardingLoading] = React.useState(false);
   const [onboardingCompletedAt, setOnboardingCompletedAt] = React.useState(null);
 
+  // Mode crédits-only (pas d'abonnements)
+  const [creditsOnlyMode, setCreditsOnlyMode] = React.useState(false);
+
   // Vérifier si l'email a été changé avec succès
   React.useEffect(() => {
     if (searchParams.get('email-changed') === 'true') {
@@ -51,6 +54,14 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       }
     }
     fetchOnboardingState();
+  }, []);
+
+  // Fetch du mode crédits-only
+  React.useEffect(() => {
+    fetch('/api/subscription/current')
+      .then(res => res.json())
+      .then(data => setCreditsOnlyMode(data.creditsOnlyMode || false))
+      .catch(() => {});
   }, []);
 
   const [currentPassword, setCurrentPassword] = React.useState("");
@@ -414,7 +425,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       <section className="rounded-2xl border-2 border-red-400/50 bg-red-500/20 backdrop-blur-xl p-6 shadow-2xl">
         <h2 className="text-lg font-semibold mb-2 text-red-300 drop-shadow">{t('account.deleteAccount.title')}</h2>
         <p className="text-sm text-white drop-shadow mb-3">
-          ⚠️ {t('account.deleteAccount.description')}
+          ⚠️ {t(creditsOnlyMode ? 'account.deleteAccount.description_credits_only' : 'account.deleteAccount.description')}
         </p>
         <form onSubmit={openDeleteModal} className="space-y-3">
           <div className="space-y-1">
@@ -483,18 +494,22 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
               </p>
 
               <ul className="space-y-2 text-sm text-white/80">
-                <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">•</span>
-                  <span>{t('account.deleteAccount.modal.consequences.noRefund')}</span>
-                </li>
+                {!creditsOnlyMode && (
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400 mt-0.5">•</span>
+                    <span>{t('account.deleteAccount.modal.consequences.noRefund')}</span>
+                  </li>
+                )}
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-0.5">•</span>
                   <span>{t('account.deleteAccount.modal.consequences.loseCredits')}</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">•</span>
-                  <span>{t('account.deleteAccount.modal.consequences.cancelSubscription')}</span>
-                </li>
+                {!creditsOnlyMode && (
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400 mt-0.5">•</span>
+                    <span>{t('account.deleteAccount.modal.consequences.cancelSubscription')}</span>
+                  </li>
+                )}
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-0.5">•</span>
                   <span>{t('account.deleteAccount.modal.consequences.deleteCvs')}</span>

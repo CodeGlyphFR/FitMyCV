@@ -53,6 +53,10 @@ export default function useMutate(){
           if (debitRes.ok && debitData.success) {
             console.log('[useMutate] ✅ Débit de la session d\'édition réussi');
             markEditAsDebited();
+            // Rafraîchir le compteur de crédits
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new Event('credits-updated'));
+            }
           } else {
             // Afficher erreur mais ne pas bloquer (mutation déjà effectuée)
             console.error('[useMutate] ⚠️ Erreur débit edit session:', debitData.error);

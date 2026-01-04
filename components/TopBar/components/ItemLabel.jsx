@@ -23,7 +23,7 @@ const ItemLabel = React.memo(function ItemLabel({
 
   const prefix = item.displayDate || "??/??/????";
   const baseTitleClass = item.hasTitle ? "font-medium" : "italic text-neutral-500";
-  const titleClass = `${baseTitleClass} text-sm sm:text-base`;
+  const titleClass = `${baseTitleClass} text-sm`;
 
   const containerRef = React.useRef(null);
   const innerRef = React.useRef(null);
@@ -194,11 +194,11 @@ const ItemLabel = React.memo(function ItemLabel({
 
   return (
     <span className={rootClass}>
-      <span className="flex-shrink-0 text-xs sm:text-sm opacity-60 whitespace-nowrap">
+      <span className="flex-shrink-0 text-sm opacity-60 whitespace-nowrap">
         {prefix}
       </span>
       {withHyphen ? (
-        <span className="flex-shrink-0 opacity-30 text-xs sm:text-sm" aria-hidden="true">
+        <span className="flex-shrink-0 opacity-30 text-sm" aria-hidden="true">
           –
         </span>
       ) : null}

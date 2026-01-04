@@ -472,21 +472,21 @@ const AI_MODEL_SETTINGS = [
 const CREDIT_SETTINGS = [
   {
     settingName: 'credits_create_cv_manual',
-    value: '1',
+    value: '0',
     category: 'credits',
-    description: 'Crédits pour création manuelle CV',
+    description: 'Crédits pour création manuelle CV (0 = gratuit)',
   },
   {
     settingName: 'credits_edit_cv',
-    value: '1',
+    value: '0',
     category: 'credits',
-    description: 'Crédits pour édition CV',
+    description: 'Crédits pour édition CV (0 = gratuit)',
   },
   {
     settingName: 'credits_export_cv',
-    value: '1',
+    value: '0',
     category: 'credits',
-    description: 'Crédits pour export PDF',
+    description: 'Crédits pour export PDF (0 = gratuit)',
   },
   {
     settingName: 'credits_match_score',
@@ -620,19 +620,30 @@ const SYSTEM_SETTINGS = [
     category: 'system',
     description: 'Mode maintenance - bloque tous les utilisateurs non-admin (1 = activé, 0 = désactivé)',
   },
-];
-
-// ============================================================================
-// 10. SETTINGS - CV
-// ============================================================================
-const CV_SETTINGS = [
+  {
+    settingName: 'subscription_mode_enabled',
+    value: '1',
+    category: 'system',
+    description: 'Mode abonnement activé (1) ou mode crédits uniquement (0)',
+  },
+  {
+    settingName: 'welcome_credits',
+    value: '5',
+    category: 'credits',
+    description: 'Crédits offerts à l\'inscription (mode crédits uniquement)',
+  },
   {
     settingName: 'cv_max_versions',
     value: '5',
-    category: 'cv',
+    category: 'system',
     description: 'Nombre maximum de versions historisées par CV (optimisation IA)',
   },
 ];
+
+// ============================================================================
+// 10. SETTINGS - CV (vide - déplacé vers SYSTEM_SETTINGS)
+// ============================================================================
+const CV_SETTINGS = [];
 
 // ============================================================================
 // 11. SETTINGS - PDF IMPORT

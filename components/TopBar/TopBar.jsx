@@ -24,6 +24,7 @@ import { useModalStates } from "./hooks/useModalStates";
 import { useExportModal } from "./hooks/useExportModal";
 import { useSubscriptionData } from "./hooks/useSubscriptionData";
 import { useFilterState } from "./hooks/useFilterState";
+import { useWrapDetection } from "./hooks/useWrapDetection";
 
 // Components
 import ItemLabel from "./components/ItemLabel";
@@ -118,7 +119,7 @@ export default function TopBar() {
   });
 
   // Subscription data hook
-  const { planName, planIcon, creditBalance, loading: subscriptionLoading } = useSubscriptionData();
+  const { planName, planIcon, creditBalance, creditsOnlyMode, loading: subscriptionLoading } = useSubscriptionData();
 
   // Refs
   const triggerRef = React.useRef(null);
@@ -130,9 +131,13 @@ export default function TopBar() {
   const userMenuRef = React.useRef(null);
   const userMenuButtonRef = React.useRef(null);
   const filterButtonRef = React.useRef(null);
+  const flexContainerRef = React.useRef(null);
 
   // Filter state hook
   const filter = useFilterState();
+
+  // Détection dynamique du wrapping
+  const hasWrapped = useWrapDetection(flexContainerRef, isAuthenticated);
 
   // Filtered items based on active filters
   const filteredItems = React.useMemo(() => {
@@ -336,16 +341,26 @@ export default function TopBar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Detect mobile
+  // State pour détecter les très petits écrans (< 640px) - pour cacher l'éclair
+  const [isSmallScreen, setIsSmallScreen] = React.useState(
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false
+  );
+
+  // Mettre à jour isSmallScreen au resize
   React.useEffect(() => {
-    const checkMobile = () => {
-      state.setIsMobile(window.innerWidth <= 990);
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth < 640);
     };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Detect mobile - Basé sur le wrapping dynamique
+  React.useEffect(() => {
+    // Mode mobile = wrapping détecté OU écran vraiment petit (< 640px)
+    state.setIsMobile(hasWrapped || isSmallScreen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasWrapped, isSmallScreen]);
 
   // Dropdown position updates
   React.useEffect(() => {
@@ -608,7 +623,10 @@ export default function TopBar() {
           pointerEvents: 'auto'
         }}
       >
-        <div className="w-full p-3 flex flex-wrap items-center gap-x-2 gap-y-2 sm:gap-3">
+        <div
+          ref={flexContainerRef}
+          className="w-full p-3 flex flex-wrap md:flex-nowrap items-center gap-x-2 gap-y-2 sm:gap-3"
+        >
           {/* User Icon */}
           <div className="relative order-1 md:order-1">
             <button
@@ -858,7 +876,7 @@ export default function TopBar() {
                         window.location.href = "/account/subscriptions";
                       }}
                     >
-                      {t("topbar.subscriptions")}
+                      {creditsOnlyMode ? t("topbar.subscriptions_credits_only") : t("topbar.subscriptions")}
                     </button>
                     <button
                       className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
@@ -871,10 +889,16 @@ export default function TopBar() {
                     </button>
 
                     {/* Footer - Plan & Credits */}
-                    {!subscriptionLoading && planName && (
+                    {!subscriptionLoading && (planName || creditsOnlyMode) && (
                       <div className="border-t border-white/20 mt-2 pt-2">
                         <div className="text-center text-[11px] text-white/60 drop-shadow">
-                          {planIcon} {planName} • {creditBalance} {t("topbar.credits")}
+                          {creditsOnlyMode ? (
+                            // Mode crédits uniquement: afficher seulement les crédits
+                            <>{creditBalance} {t("topbar.credits")}</>
+                          ) : (
+                            // Mode abonnement: afficher plan + crédits
+                            <>{planIcon} {planName} • {creditBalance} {t("topbar.credits")}</>
+                          )}
                         </div>
                       </div>
                     )}
@@ -954,13 +978,13 @@ export default function TopBar() {
             />
           </div>
 
-          {/* Break line on mobile */}
-          <div className="w-full md:hidden order-5"></div>
+          {/* Break line - visible en dessous de 1025px (md:), caché au-dessus */}
+          <div className="w-full md:hidden order-6"></div>
 
           {/* Job Title Input */}
           {settings.feature_search_bar && (
-            <div className="w-auto flex-1 order-6 md:order-9 md:flex-none flex justify-start md:justify-end px-4 py-1 min-w-0">
-              <div className="relative w-full md:w-[400px] flex items-center group job-title-input-wrapper">
+            <div className="flex-1 order-7 md:order-10 lg:flex-none flex justify-start lg:justify-end px-2 md:px-4 py-1 min-w-0">
+              <div className="relative w-full md:max-w-[280px] lg:max-w-[400px] flex items-center group job-title-input-wrapper">
                 <span className="absolute left-0 text-white/70 drop-shadow flex items-center justify-center w-6 h-6">
                   <img src="/icons/search.png" alt="Search" className="h-4 w-4" />
                 </span>
@@ -984,7 +1008,7 @@ export default function TopBar() {
             <button
               data-onboarding="ai-generate"
               onClick={generator.openGeneratorModal}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-4 transition-all duration-200"
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-5 transition-all duration-200"
               type="button"
             >
               <GptLogo className="h-4 w-4" />
@@ -993,7 +1017,7 @@ export default function TopBar() {
           {settings.feature_manual_cv && (
             <button
               onClick={() => modals.setOpenNewCv(true)}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center h-8 w-8 order-7 md:order-5 transition-all duration-200"
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center h-8 w-8 order-9 md:order-6 transition-all duration-200"
               type="button"
             >
               <img src="/icons/add.png" alt="Add" className="h-4 w-4 " />
@@ -1002,7 +1026,7 @@ export default function TopBar() {
           {settings.feature_import && (
             <button
               onClick={() => modals.setOpenPdfImport(true)}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-9 md:order-6 transition-all duration-200"
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7 transition-all duration-200"
               type="button"
               title={t("pdfImport.title")}
             >
@@ -1013,7 +1037,7 @@ export default function TopBar() {
             <button
               data-onboarding="export"
               onClick={exportModal.openModal}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7 transition-all duration-200"
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-11 md:order-8 transition-all duration-200"
               type="button"
               title="Exporter en PDF"
             >
@@ -1022,11 +1046,24 @@ export default function TopBar() {
           )}
           <button
             onClick={() => modals.setOpenDelete(true)}
-            className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center h-8 w-8 order-4 md:order-8 transition-all duration-200"
+            className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center h-8 w-8 order-12 md:order-9 transition-all duration-200"
             title={t("topbar.delete")}
           >
             <img src="/icons/delete.png" alt="Delete" className="h-4 w-4 " />
           </button>
+
+          {/* Credits Badge - Mode crédits-only uniquement (tout à droite) */}
+          {creditsOnlyMode && !subscriptionLoading && (
+            <button
+              type="button"
+              onClick={() => { window.location.href = '/account/subscriptions?tab=credits'; }}
+              className="rounded-lg border border-amber-400/50 bg-amber-500/20 backdrop-blur-sm text-white text-sm hover:bg-amber-500/30 hover:shadow-xl inline-flex items-center gap-1.5 px-2.5 h-8 order-5 md:order-11 transition-all duration-200"
+              title={`${creditBalance} ${t("topbar.credits")}`}
+            >
+              {!isSmallScreen && <span className="text-amber-300">⚡</span>}
+              <span className="font-medium text-amber-100">{creditBalance}</span>
+            </button>
+          )}
         </div>
       </div>
 

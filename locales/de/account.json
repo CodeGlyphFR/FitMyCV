@@ -132,6 +132,7 @@
     "deleteAccount": {
       "title": "Konto löschen",
       "description": "Diese Aktion ist endgültig und ohne Rückerstattung. Alle Ihre Lebensläufe, Credits und Daten werden gelöscht. Ihr Abonnement wird sofort gekündigt und Ihre Bankdaten werden gelöscht. Geben Sie Ihr Passwort ein, um fortzufahren.",
+      "description_credits_only": "Diese Aktion ist endgültig. Alle Ihre Lebensläufe, Credits und Daten werden gelöscht. Geben Sie Ihr Passwort ein, um fortzufahren.",
       "passwordLabel": "Passwort",
       "passwordHint": "Alle Ihre Lebensläufe (einschließlich Benutzerordner) werden gelöscht. Diese Aktion ist unwiderruflich. Wenn Sie Ihr Konto über einen externen Anbieter erstellt haben, legen Sie zuerst ein Passwort im Sicherheitsbereich fest.",
       "emailLabel": "Bestätigungs-E-Mail",

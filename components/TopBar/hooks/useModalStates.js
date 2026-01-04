@@ -167,6 +167,7 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("cv:list:changed"));
         window.dispatchEvent(new CustomEvent("cv:selected", { detail: { file: data.file } }));
+        window.dispatchEvent(new Event("credits-updated"));
       }
 
       setOpenNewCv(false);

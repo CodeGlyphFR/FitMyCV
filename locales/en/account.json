@@ -132,6 +132,7 @@
     "deleteAccount": {
       "title": "Delete Account",
       "description": "This action is final and non-refundable. All your CVs, credits and data will be deleted. Your subscription will be immediately canceled and your banking data will be removed. Enter your password to continue.",
+      "description_credits_only": "This action is final. All your CVs, credits and data will be deleted. Enter your password to continue.",
       "passwordLabel": "Password",
       "passwordHint": "All your CVs (including user folder) will be deleted. This operation is irreversible. If you created your account via an external provider, first set a password in the Security section.",
       "emailLabel": "Confirmation email",

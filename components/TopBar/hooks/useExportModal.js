@@ -459,6 +459,15 @@ export function useExportModal({ currentItem, language, addNotification }) {
       // Fermer le modal
       closeModal();
 
+      // Rafraîchir le compteur de crédits (l'export consomme des crédits)
+      // Petit délai pour s'assurer que les états React sont à jour après closeModal
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          console.log('[useExportModal] Dispatch événement credits-updated');
+          window.dispatchEvent(new Event('credits-updated'));
+        }
+      }, 100);
+
       // Émettre l'événement pour l'onboarding (step 8) APRÈS fermeture du modal
       // Délai de 300ms pour garantir que le téléchargement a démarré avant navigation/événements
       setTimeout(() => {

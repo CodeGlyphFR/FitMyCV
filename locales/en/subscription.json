@@ -2,7 +2,9 @@
   "subscription": {
     "page": {
       "title": "Subscriptions & Credits",
+      "title_credits_only": "Manage my credits",
       "description": "Manage your subscription, purchase credits, and view your history.",
+      "description_credits_only": "Purchase credits to use advanced features.",
       "backToCvs": "Back",
       "loadingTitle": "Loading...",
       "errorLoading": "Error loading data",
