@@ -1,5 +1,9 @@
+"use client";
+
 import React from "react";
 import Modal from "@/components/ui/Modal";
+import { useCreditCost } from "@/hooks/useCreditCost";
+import CreditCostDisplay from "@/components/ui/CreditCostDisplay";
 
 /**
  * Modal de création d'un nouveau CV vierge
@@ -19,6 +23,10 @@ export default function NewCvModal({
   busy,
   t,
 }) {
+  // Récupérer les coûts en crédits
+  const { showCosts, getCost } = useCreditCost();
+  const createCost = getCost("create_cv_manual");
+
   const handleClose = () => {
     onClose();
     setFullName("");
@@ -70,6 +78,10 @@ export default function NewCvModal({
         {error ? (
           <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{String(error)}</div>
         ) : null}
+
+        {/* Affichage du coût en crédits (mode crédits-only uniquement, si coût > 0) */}
+        {createCost > 0 && <CreditCostDisplay cost={createCost} show={showCosts} />}
+
         <div className="flex gap-2">
           <button
             onClick={handleClose}

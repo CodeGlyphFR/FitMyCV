@@ -6,6 +6,8 @@ import { getCvIcon } from "../utils/cvUtils";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
 import ItemLabel from "../components/ItemLabel";
 import { CREATE_TEMPLATE_OPTION } from "../utils/constants";
+import { useCreditCost } from "@/hooks/useCreditCost";
+import CreditCostDisplay from "@/components/ui/CreditCostDisplay";
 
 /**
  * Modal de génération de CV à partir d'une offre d'emploi
@@ -37,6 +39,17 @@ export default function CvGeneratorModal({
   baseSelectorRef,
   baseDropdownRef,
 }) {
+  // Récupérer les coûts en crédits
+  const { showCosts, getCost } = useCreditCost();
+
+  // Calculer le coût total (liens non vides + fichiers)
+  const linkCount = linkInputs.filter((l) => l.trim() !== "").length;
+  const fileCount = (fileSelection || []).length;
+  const totalOperations = Math.max(linkCount + fileCount, 1);
+  const unitCost = getCost("gpt_cv_generation");
+  const totalCost = unitCost * totalOperations;
+  const costDetail = totalOperations > 1 ? `${totalOperations} × ${unitCost}` : null;
+
   return (
     <Modal
       open={open}
@@ -275,6 +288,13 @@ export default function CvGeneratorModal({
             {generatorError}
           </div>
         ) : null}
+
+        {/* Affichage du coût en crédits (mode crédits-only uniquement) */}
+        <CreditCostDisplay
+          cost={totalCost}
+          show={showCosts}
+          detail={costDetail}
+        />
 
         <div className="flex justify-end gap-2">
           <button

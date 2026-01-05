@@ -252,7 +252,9 @@
     "success": "Success",
     "close": "Close",
     "confirmation": "Confirmation",
-    "locale": "en-US"
+    "locale": "en-US",
+    "yes": "Yes",
+    "no": "No"
   },
   "editMode": {
     "on": "✏️ Edit ON",
@@ -355,5 +357,11 @@
         "4": "Enterprise"
       }
     }
+  },
+  "credits": {
+    "costLabel": "Cost",
+    "unit": "credit",
+    "unitPlural": "credits",
+    "useCredits": "Use {count} Cr."
   }
 }

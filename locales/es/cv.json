@@ -1,5 +1,8 @@
 {
   "jobTitleGenerator": {
+    "confirmTitle": "Confirmación",
+    "confirmMessage": "Esta función consumirá {credits} crédito(s). ¿Desea continuar?",
+    "confirmJobTitle": "Título del puesto: \"{jobTitle}\"",
     "notifications": {
       "scheduled": "Generando CV para '{jobTitle}'...",
       "invalidTitle": "El título '{jobTitle}' no parece ser un puesto válido",

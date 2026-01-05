@@ -3,6 +3,7 @@ import React from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { RefreshCw } from "lucide-react";
+import { useCreditCost } from "@/hooks/useCreditCost";
 
 export default function MatchScore({
   sourceType,
@@ -20,6 +21,8 @@ export default function MatchScore({
 }) {
   const { t } = useLanguage();
   const { settings } = useSettings();
+  const { showCosts, getCost } = useCreditCost();
+  const matchScoreCost = getCost("match_score");
   const [isHovered, setIsHovered] = React.useState(false);
   const [showSuccessEffect, setShowSuccessEffect] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
@@ -219,14 +222,15 @@ export default function MatchScore({
     if (shouldShowLoading) {
       return t("matchScore.calculating");
     }
-    // WORKAROUND iOS: Si on a un score, montrer le score même si status=loading
-    if (score !== null && score !== undefined) {
-      return `Score: ${score}`;
-    }
     if (status === "error") {
       return t("matchScore.failed");
     }
-    return t("matchScore.notCalculated");
+    // Afficher le coût en crédits (mode crédits-only)
+    if (showCosts && matchScoreCost > 0) {
+      return t("credits.useCredits", { count: matchScoreCost }) || `Utiliser ${matchScoreCost} Cr.`;
+    }
+    // Sinon message par défaut
+    return t("matchScore.refresh") || "Recalculer";
   };
 
   return (

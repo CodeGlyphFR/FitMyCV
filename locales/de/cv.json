@@ -1,5 +1,8 @@
 {
   "jobTitleGenerator": {
+    "confirmTitle": "Bestätigung",
+    "confirmMessage": "Diese Funktion verbraucht {credits} Kredit(e). Möchten Sie fortfahren?",
+    "confirmJobTitle": "Stellenbezeichnung: \"{jobTitle}\"",
     "notifications": {
       "scheduled": "Lebenslauf-Generierung für '{jobTitle}' läuft...",
       "invalidTitle": "Der Titel '{jobTitle}' scheint keine gültige Position zu sein",

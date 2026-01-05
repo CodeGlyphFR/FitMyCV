@@ -40,6 +40,8 @@ import { getCvIcon } from "./utils/cvUtils";
 import { CREATE_TEMPLATE_OPTION } from "./utils/constants";
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from "@/lib/onboarding/onboardingEvents";
 import { LOADING_EVENTS, emitLoadingEvent } from "@/lib/loading/loadingEvents";
+import { useCreditCost } from "@/hooks/useCreditCost";
+import Modal from "@/components/ui/Modal";
 
 // Date range constants in milliseconds
 const DATE_RANGE_MS = {
@@ -61,6 +63,8 @@ export default function TopBar() {
   const { settings } = useSettings();
   const { history: linkHistory, addLinksToHistory } = useLinkHistory();
   const { currentStep, onboardingState } = useOnboarding();
+  const { showCosts, getCost } = useCreditCost();
+  const jobTitleCost = getCost("generate_from_job_title");
 
   // Main state hook
   const state = useTopBarState(language);
@@ -993,7 +997,7 @@ export default function TopBar() {
                   value={modals.jobTitleInput}
                   onChange={(e) => modals.setJobTitleInput(e.target.value)}
                   onKeyDown={(e) => {
-                    modals.handleJobTitleSubmit(e, language);
+                    modals.handleJobTitleSubmit(e, language, showCosts, jobTitleCost);
                   }}
                   placeholder={state.isMobile ? t("topbar.jobTitlePlaceholderMobile") : t("topbar.jobTitlePlaceholder")}
                   className="w-full bg-transparent border-0 border-b-2 pl-8 pr-2 py-1 text-sm italic text-white placeholder-white/50 focus:outline-none transition-colors duration-200 border-white/30 focus:border-emerald-400 cursor-text"
@@ -1160,6 +1164,40 @@ export default function TopBar() {
         isExporting={exportModal.isExporting}
         t={t}
       />
+
+      {/* Modal de confirmation pour génération par titre de poste */}
+      <Modal
+        open={modals.jobTitleConfirmModal.open}
+        onClose={modals.cancelJobTitleConfirmation}
+        title={t("jobTitleGenerator.confirmTitle") || "Confirmation"}
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-white drop-shadow">
+            {t("jobTitleGenerator.confirmMessage", { credits: modals.jobTitleConfirmModal.creditCost }) ||
+              `Cette fonctionnalité va consommer ${modals.jobTitleConfirmModal.creditCost} crédit(s). Voulez-vous continuer ?`}
+          </p>
+          <p className="text-xs text-white/70 drop-shadow">
+            {t("jobTitleGenerator.confirmJobTitle", { jobTitle: modals.jobTitleConfirmModal.jobTitle }) ||
+              `Titre de poste : "${modals.jobTitleConfirmModal.jobTitle}"`}
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={modals.cancelJobTitleConfirmation}
+              className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors"
+            >
+              {t("common.no") || "Non"}
+            </button>
+            <button
+              type="button"
+              onClick={modals.confirmJobTitleGeneration}
+              className="px-6 py-2.5 rounded-lg bg-emerald-500/30 hover:bg-emerald-500/40 border border-emerald-500/50 text-white text-sm font-semibold transition-colors"
+            >
+              {t("common.yes") || "Oui"}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Styles */}
       <style jsx global>{`

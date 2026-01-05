@@ -1,5 +1,9 @@
+"use client";
+
 import React from "react";
 import Modal from "@/components/ui/Modal";
+import { useCreditCost } from "@/hooks/useCreditCost";
+import CreditCostDisplay from "@/components/ui/CreditCostDisplay";
 
 /**
  * Modal d'import de CV depuis un fichier PDF
@@ -14,6 +18,10 @@ export default function PdfImportModal({
   busy,
   t,
 }) {
+  // Récupérer les coûts en crédits
+  const { showCosts, getCost } = useCreditCost();
+  const importCost = getCost("import_pdf");
+
   return (
     <Modal
       open={open}
@@ -59,6 +67,9 @@ export default function PdfImportModal({
             </div>
           ) : null}
         </div>
+
+        {/* Affichage du coût en crédits (mode crédits-only uniquement) */}
+        <CreditCostDisplay cost={importCost} show={showCosts} />
 
         <div className="flex justify-end gap-2">
           <button

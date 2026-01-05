@@ -7,6 +7,8 @@ import { useSettings } from "@/lib/settings/SettingsContext";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
 import { RefreshCw, X, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
 import { parseApiError } from "@/lib/utils/errorHandler";
+import { useCreditCost } from "@/hooks/useCreditCost";
+import CreditCostDisplay from "@/components/ui/CreditCostDisplay";
 
 export default function CVImprovementPanel({ cvFile }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,6 +23,8 @@ export default function CVImprovementPanel({ cvFile }) {
   const { t, language } = useLanguage();
   const { settings } = useSettings();
   const { addNotification } = useNotifications();
+  const { showCosts, getCost } = useCreditCost();
+  const optimizeCost = getCost("optimize_cv");
   const animationRef = useRef(null);
   const scrollYRef = useRef(0);
   const modalRef = useRef(null);
@@ -942,6 +946,14 @@ export default function CVImprovementPanel({ cvFile }) {
             {/* Footer avec divider */}
             <div className="flex-shrink-0">
               <div className="border-t border-white/10" />
+
+              {/* Affichage du coût en crédits (mode crédits-only uniquement) */}
+              {suggestions.length > 0 && showCosts && optimizeCost > 0 && (
+                <div className="px-4 pt-4 md:px-6 md:pt-6">
+                  <CreditCostDisplay cost={optimizeCost} show={true} />
+                </div>
+              )}
+
               <div className="flex justify-center items-center gap-3 p-4 md:p-6">
                 {/* Bouton amélioration automatique */}
                 {suggestions.length > 0 && (

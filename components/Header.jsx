@@ -18,6 +18,8 @@ import { SUPPORTED_LANGUAGES, LANGUAGE_FLAGS, LANGUAGE_LABELS, DEFAULT_LANGUAGE 
 import { toTitleCase } from "@/lib/utils/textFormatting";
 import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
 import { useHighlight } from "./HighlightProvider";
+import { useCreditCost } from "@/hooks/useCreditCost";
+import CreditCostTooltip from "@/components/ui/CreditCostTooltip";
 
 export default function Header(props){
   const header = props.header || {};
@@ -26,6 +28,8 @@ export default function Header(props){
   const { mutate } = useMutate();
   const { t, language } = useLanguage();
   const { settings } = useSettings();
+  const { showCosts, getCost } = useCreditCost();
+  const translateCost = getCost("translate_cv");
   const [open, setOpen] = React.useState(false);
   const [isTranslateDropdownOpen, setIsTranslateDropdownOpen] = React.useState(false);
   const [sourceInfo, setSourceInfo] = React.useState({ sourceType: null, sourceValue: null });
@@ -598,34 +602,40 @@ export default function Header(props){
                 flag: LANGUAGE_FLAGS[code],
                 label: LANGUAGE_LABELS[code]
               })).filter(lang => lang.code !== (props.cvLanguage || DEFAULT_LANGUAGE)).map((lang, index) => (
-                <button
+                <CreditCostTooltip
                   key={lang.code}
-                  onClick={() => executeTranslation(lang.code)}
-                  className={`
-                    w-8 h-8 rounded-full
-                    bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl
-                    flex items-center justify-center
-                    overflow-hidden
-                    hover:shadow-xl hover:bg-white/30
-                    transition-all duration-200
-                    cursor-pointer
-                    p-0.5
-                  `}
-                  style={{
-                    transitionDelay: isTranslateDropdownOpen ? `${index * 50}ms` : '0ms'
-                  }}
-                  title={`Traduire en ${lang.label}`}
-                  aria-label={`Traduire en ${lang.label}`}
-                  type="button"
+                  cost={translateCost}
+                  show={showCosts}
+                  position="bottom"
                 >
-                  <Image
-                    src={lang.flag}
-                    alt={lang.label}
-                    width={24}
-                    height={24}
-                    className="object-cover"
-                  />
-                </button>
+                  <button
+                    onClick={() => executeTranslation(lang.code)}
+                    className={`
+                      w-8 h-8 rounded-full
+                      bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl
+                      flex items-center justify-center
+                      overflow-hidden
+                      hover:shadow-xl hover:bg-white/30
+                      transition-all duration-200
+                      cursor-pointer
+                      p-0.5
+                    `}
+                    style={{
+                      transitionDelay: isTranslateDropdownOpen ? `${index * 50}ms` : '0ms'
+                    }}
+                    title={`Traduire en ${lang.label}`}
+                    aria-label={`Traduire en ${lang.label}`}
+                    type="button"
+                  >
+                    <Image
+                      src={lang.flag}
+                      alt={lang.label}
+                      width={24}
+                      height={24}
+                      className="object-cover"
+                    />
+                  </button>
+                </CreditCostTooltip>
               ))}
             </div>
 

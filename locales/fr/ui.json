@@ -252,7 +252,9 @@
     "success": "Succès",
     "close": "Fermer",
     "confirmation": "Confirmation",
-    "locale": "fr-FR"
+    "locale": "fr-FR",
+    "yes": "Oui",
+    "no": "Non"
   },
   "editMode": {
     "on": "✏️ Édition ON",
@@ -355,5 +357,11 @@
         "4": "Enterprise"
       }
     }
+  },
+  "credits": {
+    "costLabel": "Coût",
+    "unit": "crédit",
+    "unitPlural": "crédits",
+    "useCredits": "Utiliser {count} Cr."
   }
 }

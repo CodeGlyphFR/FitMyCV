@@ -67,15 +67,8 @@ export default function Modal({
       // Sauvegarder l'élément qui avait le focus
       previousFocusRef.current = document.activeElement;
 
-      // Déplacer le focus vers le premier élément focusable de la modal
-      const focusableElements = modalRef.current.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      if (focusableElements.length > 0) {
-        focusableElements[0].focus();
-      } else {
-        modalRef.current.focus();
-      }
+      // Focus sur le conteneur du modal (aucun bouton pré-sélectionné)
+      modalRef.current.focus();
 
       return () => {
         // Restaurer le focus à l'élément précédent
@@ -94,7 +87,7 @@ export default function Modal({
       if (e.key !== 'Tab') return;
 
       const focusableElements = modalRef.current.querySelectorAll(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        'button:not([disabled]):not([tabindex="-1"]), [href]:not([tabindex="-1"]), input:not([disabled]):not([tabindex="-1"]), select:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]):not([tabindex="-1"]), [tabindex]:not([tabindex="-1"])'
       );
       const firstElement = focusableElements[0];
       const lastElement = focusableElements[focusableElements.length - 1];
@@ -187,7 +180,7 @@ export default function Modal({
           aria-modal="true"
           aria-labelledby="modal-title"
           tabIndex={-1}
-          className={`relative z-10 w-full ${maxWidthClass} rounded-xl border border-white/20 bg-[rgb(2,6,23)] shadow-2xl overflow-hidden`}
+          className={`relative z-10 w-full ${maxWidthClass} rounded-xl border border-white/20 bg-[rgb(2,6,23)] shadow-2xl overflow-hidden outline-none`}
           onClick={(e) => e.stopPropagation()}
           onTouchEnd={(e) => e.stopPropagation()}
           style={{
@@ -219,6 +212,7 @@ export default function Modal({
               {/* Bouton fermer */}
               <button
                 onClick={onClose}
+                tabIndex={-1}
                 className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors flex-shrink-0"
                 aria-label="Fermer"
               >
