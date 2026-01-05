@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
-import { Resend } from 'resend';
+import { sendEmail, isSmtpConfigured, isResendConfigured } from '@/lib/email/transports';
 import { render } from '@maily-to/render';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@fitmycv.io';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 // Test data for variable substitution
@@ -83,27 +81,12 @@ export async function POST(request) {
         // Remove backgroundColor from json before rendering (not a TipTap property)
         const { backgroundColor: _, ...contentJson } = designJson;
 
-        // Render the content
-        const contentHtml = await render(contentJson);
+        // Render the content with Maily
+        html = await render(contentJson);
 
-        // Wrap with background color styles (same pattern as EmailTemplatesTab preview/save)
-        // Note: We exclude buttons (a tags) from the transparent rule to preserve button backgrounds
-        html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    *:not(a):not(a *) { background-color: transparent !important; }
-    body { background-color: ${backgroundColor} !important; }
-  </style>
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: ${backgroundColor};">
-  <div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: ${backgroundColor};">
-    ${contentHtml}
-  </div>
-</body>
-</html>`;
+        // Simple background color replacement - don't overcomplicate
+        html = html.replace(/background-color:\s*#ffffff/gi, `background-color:${backgroundColor}`);
+        html = html.replace(/background-color:\s*white/gi, `background-color:${backgroundColor}`);
       } catch (renderError) {
         console.warn('[Email Test API] Failed to render Maily template, falling back to htmlContent:', renderError);
         html = template.htmlContent;
@@ -116,13 +99,16 @@ export async function POST(request) {
     html = substituteVariables(html, TEST_DATA);
     const subject = `[TEST] ${substituteVariables(template.subject, TEST_DATA)}`;
 
-    // Send via Resend
-    const { data, error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: testEmail,
-      subject,
-      html,
-    });
+    // Check if at least one provider is configured
+    if (!isSmtpConfigured() && !isResendConfigured()) {
+      return NextResponse.json(
+        { error: 'Aucun provider email configuré (SMTP ou Resend)' },
+        { status: 500 }
+      );
+    }
+
+    // Send via transport layer (handles SMTP/Resend selection and fallback)
+    const result = await sendEmail({ to: testEmail, subject, html });
 
     // Log the test email
     await prisma.emailLog.create({
@@ -131,17 +117,22 @@ export async function POST(request) {
         templateName: template.name,
         recipientEmail: testEmail,
         subject,
-        status: error ? 'failed' : 'sent',
-        error: error?.message || null,
-        resendId: data?.id || null,
+        status: result.success ? 'sent' : 'failed',
+        error: result.error || null,
+        provider: result.provider || 'unknown',
+        providerId: result.messageId || null,
         isTestEmail: true,
       },
     });
 
-    if (error) {
-      console.error('[Email Test API] Resend error:', error);
+    if (!result.success) {
+      console.error('[Email Test API] Send error:', {
+        error: result.error,
+        provider: result.provider,
+        usedFallback: result.usedFallback,
+      });
       return NextResponse.json(
-        { error: error.message || 'Failed to send test email' },
+        { error: result.error || 'Failed to send test email' },
         { status: 500 }
       );
     }
@@ -149,7 +140,9 @@ export async function POST(request) {
     return NextResponse.json({
       success: true,
       message: `Test email sent to ${testEmail}`,
-      resendId: data?.id,
+      provider: result.provider,
+      providerId: result.messageId,
+      usedFallback: result.usedFallback || false,
     });
 
   } catch (error) {

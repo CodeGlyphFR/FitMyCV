@@ -40,6 +40,29 @@ function StatusBadge({ status }) {
 }
 
 /**
+ * Provider badge component
+ */
+function ProviderBadge({ provider }) {
+  const styles = {
+    smtp: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    resend: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+    unknown: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+  };
+
+  const labels = {
+    smtp: 'SMTP',
+    resend: 'Resend',
+    unknown: '?',
+  };
+
+  return (
+    <span className={`px-2 py-0.5 text-xs font-medium rounded-full border ${styles[provider] || styles.unknown}`}>
+      {labels[provider] || provider || '?'}
+    </span>
+  );
+}
+
+/**
  * EmailLogsTable - Table des logs d'emails envoyes
  *
  * @param {Object} props
@@ -122,6 +145,7 @@ export function EmailLogsTable({ templateFilter, refreshKey, limit = 10 }) {
                 <th className="px-4 py-3">Date</th>
                 <th className="px-4 py-3">Destinataire</th>
                 <th className="px-4 py-3">Template</th>
+                <th className="px-4 py-3">Provider</th>
                 <th className="px-4 py-3">Statut</th>
                 <th className="px-4 py-3">Details</th>
               </tr>
@@ -146,6 +170,9 @@ export function EmailLogsTable({ templateFilter, refreshKey, limit = 10 }) {
                     {log.templateName}
                   </td>
                   <td className="px-4 py-3">
+                    <ProviderBadge provider={log.provider} />
+                  </td>
+                  <td className="px-4 py-3">
                     <StatusBadge status={log.status} />
                   </td>
                   <td className="px-4 py-3 text-sm">
@@ -153,9 +180,9 @@ export function EmailLogsTable({ templateFilter, refreshKey, limit = 10 }) {
                       <span className="text-red-400 text-xs" title={log.error}>
                         {log.error.length > 30 ? `${log.error.slice(0, 30)}...` : log.error}
                       </span>
-                    ) : log.resendId ? (
+                    ) : log.providerId ? (
                       <span className="text-white/40 text-xs font-mono">
-                        {log.resendId.slice(0, 12)}...
+                        {log.providerId.length > 16 ? `${log.providerId.slice(0, 16)}...` : log.providerId}
                       </span>
                     ) : (
                       <span className="text-white/30">-</span>

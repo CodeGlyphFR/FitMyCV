@@ -73,6 +73,27 @@ export async function PUT(request){
       return NextResponse.json({ error: "Cet email est déjà utilisé." }, { status: 409 });
     }
 
+    // Vérifier le cooldown (rate limiting anti-spam)
+    const COOLDOWN_SECONDS = 60;
+    const existingRequest = await prisma.emailChangeRequest.findFirst({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (existingRequest) {
+      const secondsSinceLastRequest = Math.floor(
+        (Date.now() - existingRequest.createdAt.getTime()) / 1000
+      );
+
+      if (secondsSinceLastRequest < COOLDOWN_SECONDS) {
+        const cooldownRemaining = COOLDOWN_SECONDS - secondsSinceLastRequest;
+        return NextResponse.json({
+          error: `Veuillez patienter ${cooldownRemaining} secondes avant de renvoyer un email.`,
+          cooldownRemaining,
+        }, { status: 429 });
+      }
+    }
+
     // Au lieu de changer directement l'email, créer une demande de changement
     try {
       const token = await createEmailChangeRequest(session.user.id, normalizedEmail);
