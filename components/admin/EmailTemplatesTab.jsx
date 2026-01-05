@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { EmailPreviewModal } from './EmailPreviewModal';
 import { EmailLogsTable } from './EmailLogsTable';
+import { EmailStatsKPIs } from './EmailStatsKPIs';
 import { Toast } from './Toast';
 import { MailyEditor, getEditorJSON, getEditorHTML } from './MailyEditor';
 import { ImagePickerModal } from './ImagePickerModal';
@@ -161,35 +162,19 @@ export function EmailTemplatesTab({ refreshKey }) {
         backgroundColor,
       };
 
-      let contentHtml = '';
-
+      let htmlContent = '';
       try {
-        contentHtml = await render(editorContent);
+        // Render with Maily - it generates a complete HTML document
+        htmlContent = await render(editorContent);
+
+        // Simple background color replacement - don't overcomplicate
+        htmlContent = htmlContent.replace(/background-color:\s*#ffffff/gi, `background-color:${backgroundColor}`);
+        htmlContent = htmlContent.replace(/background-color:\s*white/gi, `background-color:${backgroundColor}`);
       } catch (renderError) {
         console.error('Error rendering HTML:', renderError);
         // Fallback to editor HTML if render fails
-        contentHtml = getEditorHTML(editor);
+        htmlContent = getEditorHTML(editor);
       }
-
-      // Create full HTML email with background color applied everywhere
-      // Note: We exclude buttons (a tags with button styles) from the transparent rule
-      const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    *:not(a):not(a *) { background-color: transparent !important; }
-    body { background-color: ${backgroundColor} !important; }
-  </style>
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: ${backgroundColor};">
-  <div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: ${backgroundColor};">
-    ${contentHtml}
-  </div>
-</body>
-</html>`;
 
       // Save to API
       const res = await fetch(`/api/admin/email-templates/${selectedTemplate.id}`, {
@@ -240,33 +225,18 @@ export function EmailTemplatesTab({ refreshKey }) {
 
     try {
       const designJson = getEditorJSON(editor);
-      let contentHtml = '';
+      let html = '';
 
       try {
-        contentHtml = await render(designJson);
-      } catch (renderError) {
-        contentHtml = getEditorHTML(editor);
-      }
+        // Render with Maily - it generates a complete HTML document
+        html = await render(designJson);
 
-      // Create full HTML document with background color applied everywhere
-      // Note: We exclude buttons (a tags) from the transparent rule to preserve button backgrounds
-      const html = `
-<!DOCTYPE html>
-<html style="height: 100%; margin: 0; padding: 0;">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    *:not(a):not(a *) { background-color: transparent !important; }
-    body { background-color: ${backgroundColor} !important; }
-  </style>
-</head>
-<body style="height: 100%; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: ${backgroundColor};">
-  <div style="max-width: 600px; margin: 0 auto; padding: 20px; min-height: 100%; background-color: ${backgroundColor};">
-    ${contentHtml}
-  </div>
-</body>
-</html>`;
+        // Simple background color replacement - don't overcomplicate
+        html = html.replace(/background-color:\s*#ffffff/gi, `background-color:${backgroundColor}`);
+        html = html.replace(/background-color:\s*white/gi, `background-color:${backgroundColor}`);
+      } catch (renderError) {
+        html = getEditorHTML(editor);
+      }
 
       setPreviewHtml(html);
       setPreviewOpen(true);
@@ -864,6 +834,12 @@ export function EmailTemplatesTab({ refreshKey }) {
           </div>
         </div>
       )}
+
+      {/* Email Stats KPIs */}
+      <div className="mt-8">
+        <h3 className="text-lg font-medium text-white mb-4">Statistiques d'envoi</h3>
+        <EmailStatsKPIs refreshKey={logsRefreshKey} />
+      </div>
 
       {/* Email logs */}
       <div className="mt-8">

@@ -653,7 +653,8 @@ model EmailLog {
   subject         String
   status          String
   error           String?
-  resendId        String?
+  provider        String         @default("resend") // "smtp" ou "resend"
+  providerId      String?        // ID du message (SMTP messageId ou Resend ID)
   isTestEmail     Boolean        @default(false)
   createdAt       DateTime       @default(now())
   template        EmailTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
@@ -664,4 +665,5 @@ model EmailLog {
   @@index([recipientUserId])
   @@index([status])
   @@index([createdAt])
+  @@index([provider])
 }

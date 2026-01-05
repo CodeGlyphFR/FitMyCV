@@ -20,6 +20,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
   const [profileMessage, setProfileMessage] = React.useState("");
   const [profileError, setProfileError] = React.useState("");
   const [profileLoading, setProfileLoading] = React.useState(false);
+  const [emailCooldown, setEmailCooldown] = React.useState(0);
 
   const [onboardingMessage, setOnboardingMessage] = React.useState("");
   const [onboardingError, setOnboardingError] = React.useState("");
@@ -64,6 +65,17 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       .catch(() => {});
   }, []);
 
+  // Timer pour le cooldown email
+  React.useEffect(() => {
+    if (emailCooldown <= 0) return;
+
+    const timer = setInterval(() => {
+      setEmailCooldown(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [emailCooldown]);
+
   const [currentPassword, setCurrentPassword] = React.useState("");
   const [newPassword, setNewPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
@@ -97,6 +109,10 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok){
+        // Gérer le cooldown (rate limiting)
+        if (res.status === 429 && payload?.cooldownRemaining) {
+          setEmailCooldown(payload.cooldownRemaining);
+        }
         setProfileError(payload?.error || t('account.profile.errors.updateFailed'));
         return;
       }
@@ -104,6 +120,8 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       // Gérer le message de succès en fonction de la réponse
       if (payload?.emailChangeRequested) {
         setProfileMessage(payload?.message || t('account.profile.success'));
+        // Activer le cooldown après envoi réussi
+        setEmailCooldown(60);
       } else {
         setProfileMessage(payload?.message || t('account.profile.success'));
       }
@@ -264,10 +282,15 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
           {profileMessage ? <div className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/20 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow">{profileMessage}</div> : null}
           <button
             type="submit"
-            disabled={profileLoading}
+            disabled={profileLoading || emailCooldown > 0}
             className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500/40 transition-all duration-200 disabled:opacity-60 drop-shadow"
           >
-            {profileLoading ? t('account.profile.saving') : t('account.profile.saveButton')}
+            {profileLoading
+              ? t('account.profile.saving')
+              : emailCooldown > 0
+                ? `${t('account.profile.saveButton')} (${emailCooldown}s)`
+                : t('account.profile.saveButton')
+            }
           </button>
         </form>
       </section>
