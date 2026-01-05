@@ -52,7 +52,65 @@ function runStripeSync() {
 }
 
 // ============================================================================
-// 1. EMAIL TEMPLATES
+// 1. EMAIL TRIGGERS
+// ============================================================================
+const EMAIL_TRIGGERS = [
+  {
+    name: 'email_verification',
+    label: 'Verification Email',
+    description: "Envoye lors de l'inscription pour verifier l'adresse email",
+    variables: JSON.stringify(['userName', 'verificationUrl']),
+    category: 'authentication',
+    icon: '✉️',
+    isSystem: true,
+  },
+  {
+    name: 'password_reset',
+    label: 'Reset Mot de passe',
+    description: "Envoye lors d'une demande de reinitialisation du mot de passe",
+    variables: JSON.stringify(['userName', 'resetUrl']),
+    category: 'authentication',
+    icon: '🔐',
+    isSystem: true,
+  },
+  {
+    name: 'email_change',
+    label: 'Changement Email',
+    description: "Envoye pour confirmer un changement d'adresse email",
+    variables: JSON.stringify(['userName', 'verificationUrl', 'newEmail']),
+    category: 'authentication',
+    icon: '📧',
+    isSystem: true,
+  },
+  {
+    name: 'welcome',
+    label: 'Bienvenue',
+    description: "Envoye apres la verification de l'email pour souhaiter la bienvenue",
+    variables: JSON.stringify(['userName', 'loginUrl', 'welcomeCredits']),
+    category: 'account',
+    icon: '👋',
+    isSystem: true,
+  },
+  {
+    name: 'purchase_credits',
+    label: 'Achat Credits',
+    description: "Envoye apres un achat de credits avec le lien vers la facture Stripe",
+    variables: JSON.stringify(['userName', 'creditsAmount', 'totalPrice', 'invoiceUrl']),
+    category: 'payments',
+    icon: '💳',
+    isSystem: true,
+  },
+];
+
+// Mapping ancien nom -> nouveau nom de trigger
+const TEMPLATE_TO_TRIGGER_MAPPING = {
+  verification: 'email_verification',
+  password_reset: 'password_reset',
+  email_change: 'email_change',
+};
+
+// ============================================================================
+// 2. EMAIL TEMPLATES
 // ============================================================================
 const EMAIL_TEMPLATES = [
   {
@@ -802,14 +860,68 @@ async function main() {
   let totalCreated = 0;
   let totalSkipped = 0;
 
-  // ===== 1. Email Templates =====
+  // ===== 1. Email Triggers =====
+  let triggersCreated = 0;
+  let triggersUpdated = 0;
+  const triggerMap = {}; // Store trigger IDs for template association
+  for (const trigger of EMAIL_TRIGGERS) {
+    try {
+      // Use upsert to create or update triggers (variables may have changed)
+      const result = await prisma.emailTrigger.upsert({
+        where: { name: trigger.name },
+        update: {
+          label: trigger.label,
+          description: trigger.description,
+          variables: trigger.variables,
+          category: trigger.category,
+          icon: trigger.icon,
+        },
+        create: trigger,
+      });
+      triggerMap[trigger.name] = result.id;
+      // Check if it was created or updated by comparing timestamps
+      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
+        triggersCreated++;
+      } else {
+        triggersUpdated++;
+      }
+    } catch (error) { /* ignore */ }
+  }
+  console.log(formatLine('🎯', 'Email Triggers', EMAIL_TRIGGERS.length, EMAIL_TRIGGERS.length));
+  results.push({ created: triggersCreated, updated: triggersUpdated });
+
+  // ===== 2. Email Templates =====
   let templatesCreated = 0;
   let templatesSkipped = 0;
   for (const template of EMAIL_TEMPLATES) {
     try {
-      const existing = await prisma.emailTemplate.findUnique({ where: { name: template.name } });
-      if (existing) { templatesSkipped++; continue; }
-      await prisma.emailTemplate.create({ data: template });
+      // Check if template already exists with this name
+      const existingTemplates = await prisma.emailTemplate.findMany({ where: { name: template.name } });
+      if (existingTemplates.length > 0) {
+        // Update existing template to associate with trigger if not already
+        const triggerName = TEMPLATE_TO_TRIGGER_MAPPING[template.name];
+        if (triggerName && triggerMap[triggerName]) {
+          const needsUpdate = existingTemplates.find(t => !t.triggerId);
+          if (needsUpdate) {
+            await prisma.emailTemplate.update({
+              where: { id: needsUpdate.id },
+              data: { triggerId: triggerMap[triggerName], isActive: true },
+            });
+          }
+        }
+        templatesSkipped++;
+        continue;
+      }
+      // Create new template with trigger association
+      const triggerName = TEMPLATE_TO_TRIGGER_MAPPING[template.name];
+      const templateData = {
+        ...template,
+        isActive: true, // Mark as active by default for existing templates
+      };
+      if (triggerName && triggerMap[triggerName]) {
+        templateData.triggerId = triggerMap[triggerName];
+      }
+      await prisma.emailTemplate.create({ data: templateData });
       templatesCreated++;
     } catch (error) { /* ignore */ }
   }
