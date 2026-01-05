@@ -5,7 +5,7 @@ import { FileText, Download, Loader2, ChevronLeft, ChevronRight } from "lucide-r
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import CreditBalanceBanner from "./CreditBalanceBanner";
 
-export default function InvoicesTable({ creditBalance: creditBalanceProp, currentPlan }) {
+export default function InvoicesTable({ creditBalance: creditBalanceProp, currentPlan, creditsOnlyMode = false }) {
   const { t } = useLanguage();
   const [invoices, setInvoices] = React.useState([]);
   const [creditBalance, setCreditBalance] = React.useState(creditBalanceProp || 0);
@@ -129,6 +129,9 @@ export default function InvoicesTable({ creditBalance: creditBalanceProp, curren
     };
   }, [invoices, hasPdfUrl]);
 
+  // En mode crédits-only, masquer le filtre abonnements s'il n'y a pas de factures d'abonnements
+  const showSubscriptionFilter = !creditsOnlyMode || filterCounts.subscription > 0;
+
   // Calculer pagination
   const totalPages = Math.ceil(filteredInvoices.length / limit);
   const displayedInvoices = filteredInvoices.slice(page * limit, (page + 1) * limit);
@@ -218,16 +221,18 @@ export default function InvoicesTable({ creditBalance: creditBalanceProp, curren
         >
           {t('subscription.invoices.filters.all', { count: filterCounts.all })}
         </button>
-        <button
-          onClick={() => setTypeFilter('subscription')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            typeFilter === 'subscription'
-              ? 'bg-purple-500/20 text-purple-200 border border-purple-500/50'
-              : 'bg-white/5 text-white/60 hover:bg-purple-500/10 hover:text-purple-200 border border-white/10'
-          }`}
-        >
-          👑 {t('subscription.invoices.filters.subscriptions', { count: filterCounts.subscription })}
-        </button>
+        {showSubscriptionFilter && (
+          <button
+            onClick={() => setTypeFilter('subscription')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              typeFilter === 'subscription'
+                ? 'bg-purple-500/20 text-purple-200 border border-purple-500/50'
+                : 'bg-white/5 text-white/60 hover:bg-purple-500/10 hover:text-purple-200 border border-white/10'
+            }`}
+          >
+            👑 {t('subscription.invoices.filters.subscriptions', { count: filterCounts.subscription })}
+          </button>
+        )}
         <button
           onClick={() => setTypeFilter('credit_pack')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${

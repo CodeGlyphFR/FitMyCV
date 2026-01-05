@@ -16,22 +16,22 @@ Ces fichiers sont inclus automatiquement dans les prompts via la directive `{INC
 
 | Fichier | Description |
 |---------|-------------|
-| `json-instructions.md` | Instructions détaillées pour remplir le template CV JSON |
-| `scoring-rules.md` | Format de scoring unifié (4 catégories, poids, formule) |
-| `cv-improvement-rules.md` | Règles d'amélioration de CV (ce qui est autorisé/interdit) |
-| `anti-detection-rules.md` | Règles anti-détection IA et humanisation (mots bannis, style naturel, CAR/STAR) |
-| `language-policy.md` | Politique de langue pour génération et traduction |
-| `response-format.md` | Format de réponse JSON standard |
+| `system-base.md` | Prefixe commun (role expert + schema CV + regles d'adaptation) |
+| `cv-adaptation-rules.md` | Regles unifiees d'adaptation CV (competences, experiences, resume, style) |
+| `json-instructions.md` | Instructions detaillees pour remplir le template CV JSON |
+| `scoring-rules.md` | Format de scoring unifie (4 categories, poids, formule) |
+| `language-policy.md` | Politique de langue pour generation et traduction |
+| `response-format.md` | Format de reponse JSON standard |
 
 ## 🗂️ Structure complète
 
 ```
 prompts/
 ├── _shared/                  # 📦 COMPOSANTS RÉUTILISABLES
+│   ├── system-base.md        # Prefixe commun (role + schema + regles)
+│   ├── cv-adaptation-rules.md # Regles unifiees d'adaptation CV
 │   ├── json-instructions.md  # Instructions template CV
 │   ├── scoring-rules.md      # Format scoring unifié
-│   ├── cv-improvement-rules.md # Règles amélioration CV
-│   ├── anti-detection-rules.md # Règles anti-détection IA
 │   ├── language-policy.md    # Politique de langue
 │   └── response-format.md    # Format réponse JSON
 │
@@ -68,9 +68,7 @@ const userPrompt = await loadPromptWithVars('scoring/user.md', {
 Les prompts peuvent inclure des fichiers partagés avec la directive `{INCLUDE:...}` :
 
 ```markdown
-## RÈGLES D'AMÉLIORATION
-
-{INCLUDE:_shared/cv-improvement-rules.md}
+{INCLUDE:_shared/system-base.md}
 
 ## FORMAT DE RÉPONSE
 
@@ -130,6 +128,16 @@ console.log(getPromptCacheStats());
 ```
 
 ## 📅 Changelog
+
+### 2025-12-19 - Simplification radicale des prompts
+- 🔥 Suppression de `anti-detection-rules.md` (412 lignes de banned words)
+- 🔥 Suppression de `cv-improvement-rules.md` (fusionné)
+- ✨ Création de `cv-adaptation-rules.md` (~80 lignes, regles unifiees)
+- ✨ Refonte de `system-base.md` (prefixe simplifie)
+- 📉 Reduction de ~87% des lignes de regles
+- 📉 Reduction de ~73% des tokens par prompt
+- 🎯 Regles claires : competences, experiences, resume, header, style
+- ✅ Harmonisation de `cvExtractionSchema.json` (descriptions simplifiees)
 
 ### 2025-01-10 - Refactorisation majeure
 - ✨ Ajout du dossier `_shared/` avec composants réutilisables

@@ -184,7 +184,6 @@ export async function POST(request) {
             featureName: fl.featureName,
             isEnabled: fl.isEnabled ?? true,
             usageLimit: fl.usageLimit ?? -1,
-            allowedAnalysisLevels: fl.allowedAnalysisLevels ? JSON.stringify(fl.allowedAnalysisLevels) : null,
           })) || [],
         },
       },

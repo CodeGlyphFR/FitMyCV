@@ -132,6 +132,7 @@
     "deleteAccount": {
       "title": "Supprimer le compte",
       "description": "Cette action est définitive et sans remboursement. Tous vos CV, crédits et données seront effacés. Votre abonnement sera immédiatement annulé et vos données bancaires seront supprimées. Tapez votre mot de passe pour continuer.",
+      "description_credits_only": "Cette action est définitive. Tous vos CV, crédits et données seront effacés. Tapez votre mot de passe pour continuer.",
       "passwordLabel": "Mot de passe",
       "passwordHint": "Tous vos CV (dossier utilisateur inclus) seront supprimés. Cette opération est irréversible. Si vous avez créé le compte via un fournisseur externe, définissez d'abord un mot de passe dans la section Sécurité.",
       "emailLabel": "Email de confirmation",

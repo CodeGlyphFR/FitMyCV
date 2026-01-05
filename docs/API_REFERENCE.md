@@ -126,6 +126,8 @@ Endpoint NextAuth pour tous les providers.
 - `github` : GitHub OAuth
 - `apple` : Apple Sign In
 
+**Note** : Quand `registration_enabled = 0`, les nouvelles inscriptions sont bloquées pour TOUS les providers (email ET OAuth). Les utilisateurs existants peuvent toujours se connecter.
+
 **Exemple (credentials)** :
 
 ```javascript
@@ -318,7 +320,6 @@ Lister tous les CVs de l'utilisateur connecté.
       "sourceType": "link",
       "sourceValue": "https://indeed.com/job/123",
       "createdBy": "generate-cv",
-      "analysisLevel": "medium",
       "matchScore": 85,
       "isTranslated": false,
       "createdAt": "2025-01-15T10:30:00.000Z",
@@ -523,7 +524,6 @@ Récupérer les métadonnées d'un CV.
     "sourceType": "link",
     "sourceValue": "https://indeed.com/job/123",
     "createdBy": "generate-cv",
-    "analysisLevel": "medium",
     "matchScore": 85,
     "matchScoreStatus": "idle",
     "scoreBreakdown": {
@@ -819,17 +819,11 @@ Générer un CV depuis une offre d'emploi.
 ```json
 {
   "url": "https://indeed.com/job/123",
-  "analysisLevel": "medium",
   "deviceId": "device_uuid"
 }
 ```
 
-**Options analysisLevel** :
-- `rapid` : Modèle rapide (configuré dans admin) - ~0.01$
-- `medium` : Modèle standard (configuré dans admin) - ~0.05$
-- `deep` : Modèle avancé (configuré dans admin) - ~0.20$
-
-**Note** : Les modèles OpenAI utilisés pour chaque niveau sont configurables via l'interface admin (Settings → AI Models).
+**Note** : Le modèle OpenAI utilisé pour la génération est configurable via l'interface admin (Settings → AI Models → `model_cv_generation`).
 
 **Réponse (200)** :
 
@@ -854,7 +848,6 @@ Importer un CV depuis un fichier PDF.
 {
   "pdfBase64": "JVBERi0xLjQKJ...",
   "filename": "mon_cv.pdf",
-  "analysisLevel": "medium",
   "deviceId": "device_uuid"
 }
 ```
@@ -935,7 +928,6 @@ Générer un CV depuis un titre de poste (sans offre).
 ```json
 {
   "jobTitle": "Développeur Full Stack React/Node.js",
-  "analysisLevel": "medium",
   "deviceId": "device_uuid"
 }
 ```
@@ -1139,7 +1131,7 @@ Liste tous les settings (admin only).
   "settings": [
     {
       "id": "clxxx...",
-      "settingName": "model_analysis_rapid",
+      "settingName": "model_cv_generation",
       "value": "gpt-5-nano-2025-08-07",
       "category": "ai_models",
       "description": "Modèle pour analyse rapide"

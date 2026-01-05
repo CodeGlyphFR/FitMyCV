@@ -22,7 +22,7 @@ Documentation complète du schéma Prisma et des modèles de données.
 - **ORM** : Prisma 6.16.2
 - **Database (dev)** : PostgreSQL `fitmycv_dev`
 - **Database (prod)** : PostgreSQL `fitmycv_prod`
-- **Modèles** : 34 tables
+- **Modèles** : 35 tables
 - **Migrations** : Baseline + incremental
 
 ### Configuration
@@ -145,7 +145,71 @@ model Account {
 
 ---
 
-### 3. CvFile (Contenu et métadonnées des CVs)
+### 3. JobOffer (Offres d'emploi extraites)
+
+Stocke les extractions structurées des offres d'emploi, réutilisables par plusieurs CVs.
+
+```prisma
+model JobOffer {
+  id              String    @id @default(cuid())
+  userId          String
+  sourceType      String    // 'url' | 'pdf'
+  sourceValue     String    // URL ou nom fichier PDF
+  content         Json      // Extraction structurée (JSON)
+  extractedAt     DateTime  @default(now())
+  extractionModel String    // Modèle OpenAI utilisé
+  tokensUsed      Int       @default(0)
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cvFiles         CvFile[]  // Relation 1-N
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([userId, sourceValue])
+  @@index([userId])
+}
+```
+
+**Champs clés** :
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `sourceType` | String | Type de source : 'url' ou 'pdf' |
+| `sourceValue` | String | URL complète ou nom du fichier PDF |
+| `content` | Json | Extraction structurée (voir AI_INTEGRATION.md) |
+| `extractionModel` | String | Modèle utilisé (ex: gpt-5-mini) |
+| `tokensUsed` | Int | Tokens consommés pour l'extraction |
+
+**Structure du champ `content`** :
+
+```javascript
+{
+  "title": "Software Engineer",
+  "company": "TechCorp",
+  "contract": "CDI",         // CDI, CDD, Freelance, Stage, Alternance
+  "experience": { "min_years": 3, "max_years": 5, "level": "mid" },
+  "location": { "city": "Paris", "country": "France", "remote": "hybrid" },
+  "salary": { "min": 45000, "max": 55000, "currency": "EUR", "period": "year" },
+  "skills": {
+    "required": ["React", "Node.js"],
+    "nice_to_have": ["GraphQL"]
+  },
+  "education": { "level": "Bac+5", "field": "Informatique" },
+  "languages": [{ "language": "English", "level": "fluent" }],
+  "responsibilities": ["Développer des features"],
+  "benefits": ["RTT", "Télétravail"]
+}
+```
+
+**Avantages** :
+- Réutilisation : plusieurs CVs peuvent référencer la même offre
+- Réduction tokens : extraction une seule fois
+- Validation structurée : JSON Schema strict via OpenAI Structured Outputs
+
+---
+
+### 4. CvFile (Contenu et métadonnées des CVs)
 
 Stocke le contenu JSON et les métadonnées des CVs directement en base de données.
 
@@ -162,12 +226,11 @@ model CvFile {
   // Source
   sourceType       String?  // 'link' | 'pdf' | null (manual)
   sourceValue      String?  // URL ou nom du PDF
-  extractedJobOffer String? // Contenu de l'offre extrait (cache)
+  jobOfferId       String?  // Relation vers JobOffer
 
   // Création
   createdBy        String?  // 'generate-cv' | 'import-pdf' | 'translate-cv' | null
   originalCreatedBy String? // Pour les traductions (garde l'icône originale)
-  analysisLevel    String?  // 'rapid' | 'medium' | 'deep'
   isTranslated     Boolean  @default(false)
 
   // Match Score
@@ -195,6 +258,7 @@ model CvFile {
 
   // Relations
   user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobOffer JobOffer?   @relation(fields: [jobOfferId], references: [id], onDelete: SetNull)
   versions CvVersion[] // Historique des versions (optimisation IA)
 
   createdAt DateTime @default(now())
@@ -206,7 +270,7 @@ model CvFile {
 
 ---
 
-### 3.1 CvVersion (Historique des versions)
+### 4.1 CvVersion (Historique des versions)
 
 Stocke l'historique des versions de CV, créées lors des optimisations IA.
 
@@ -274,7 +338,7 @@ model CvVersion {
 
 ---
 
-### 4. BackgroundTask (Tâches asynchrones)
+### 5. BackgroundTask (Tâches asynchrones)
 
 Gère la queue de tâches en arrière-plan.
 
@@ -325,7 +389,7 @@ model BackgroundTask {
 
 ---
 
-### 5. LinkHistory (Historique des URLs)
+### 6. LinkHistory (Historique des URLs)
 
 Stocke les URLs d'offres d'emploi utilisées.
 
@@ -345,7 +409,7 @@ model LinkHistory {
 
 ---
 
-### 6. Feedback (Retours utilisateurs)
+### 7. Feedback (Retours utilisateurs)
 
 ```prisma
 model Feedback {
@@ -375,7 +439,7 @@ model Feedback {
 
 ---
 
-### 7. ConsentLog (Logs RGPD cookies)
+### 8. ConsentLog (Logs RGPD cookies)
 
 ```prisma
 model ConsentLog {
@@ -399,12 +463,12 @@ model ConsentLog {
 
 ---
 
-### 8. Setting (Configuration admin)
+### 9. Setting (Configuration admin)
 
 ```prisma
 model Setting {
   id          String   @id @default(cuid())
-  settingName String   @unique  // Ex: "model_analysis_rapid"
+  settingName String   @unique  // Ex: "model_cv_generation"
   value       String   // Ex: "gpt-5-nano-2025-08-07"
   category    String   // 'ai_models' | 'features' | 'general'
   description String?
@@ -421,16 +485,15 @@ model Setting {
 
 | settingName | value | category |
 |------------|-------|----------|
-| `model_analysis_rapid` | gpt-5-nano-2025-08-07 | ai_models |
-| `model_analysis_medium` | gpt-5-mini-2025-08-07 | ai_models |
-| `model_analysis_deep` | gpt-5-2025-08-07 | ai_models |
+| `model_cv_generation` | gpt-4.1-2025-04-14 | ai_models |
+| `model_extract_job_offer` | gpt-5-mini-2025-08-07 | ai_models |
 | `registration_enabled` | 1 | features |
 | `maintenance_mode` | 0 | general |
 | `default_token_limit` | 5 | general |
 
 ---
 
-### 9. TelemetryEvent (Événements)
+### 10. TelemetryEvent (Événements)
 
 ```prisma
 model TelemetryEvent {
@@ -464,7 +527,7 @@ model TelemetryEvent {
 
 ---
 
-### 10. FeatureUsage (Usage features)
+### 11. FeatureUsage (Usage features)
 
 Agrégation de l'usage par feature et par utilisateur.
 
@@ -478,7 +541,7 @@ model FeatureUsage {
   lastUsedAt    DateTime @default(now())
   totalDuration Int      @default(0)  // Millisecondes
 
-  metadata      String?  // JSON: { rapid: 5, medium: 2, deep: 1 }
+  metadata      String?  // JSON: détails feature-specific
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -494,7 +557,7 @@ model FeatureUsage {
 
 ---
 
-### 11. OpenAIUsage (Agrégation quotidienne)
+### 12. OpenAIUsage (Agrégation quotidienne)
 
 ```prisma
 model OpenAIUsage {
@@ -529,7 +592,7 @@ model OpenAIUsage {
 
 ---
 
-### 12. OpenAICall (Logs individuels)
+### 13. OpenAICall (Logs individuels)
 
 ```prisma
 model OpenAICall {
@@ -559,20 +622,20 @@ model OpenAICall {
 
 ---
 
-### 13-23. Autres modèles
+### 14-24. Autres modèles
 
-**13. EmailVerificationToken** : Tokens de vérification email
-**14. AutoSignInToken** : Tokens de connexion automatique
-**15. EmailChangeRequest** : Demandes de changement d'email
-**16. VerificationToken** : Tokens NextAuth
-**17. OpenAIPricing** : Tarification OpenAI par modèle
-**18. OpenAIAlert** : Alertes de coûts OpenAI
-**19. SubscriptionPlan** : Plans d'abonnement
-**20. SubscriptionPlanFeatureLimit** : Limites par plan
+**14. EmailVerificationToken** : Tokens de vérification email
+**15. AutoSignInToken** : Tokens de connexion automatique
+**16. EmailChangeRequest** : Demandes de changement d'email
+**17. VerificationToken** : Tokens NextAuth
+**18. OpenAIPricing** : Tarification OpenAI par modèle
+**19. OpenAIAlert** : Alertes de coûts OpenAI
+**20. SubscriptionPlan** : Plans d'abonnement
+**21. SubscriptionPlanFeatureLimit** : Limites par plan
 
 ---
 
-### 21. CreditPack (Packs de crédits)
+### 22. CreditPack (Packs de crédits)
 
 Packs de crédits achetables par les utilisateurs (micro-transactions).
 
@@ -619,7 +682,7 @@ model CreditPack {
 
 ---
 
-### 22. EmailTemplate (Templates email)
+### 23. EmailTemplate (Templates email)
 
 Templates d'emails personnalisables pour l'admin.
 
@@ -659,7 +722,7 @@ model EmailTemplate {
 
 ---
 
-### 23. EmailLog (Logs d'emails)
+### 24. EmailLog (Logs d'emails)
 
 Historique des emails envoyés via Resend.
 
@@ -712,6 +775,7 @@ model EmailLog {
 
 ```
 User (1) ──────┬──────── (N) CvFile
+               ├──────── (N) JobOffer
                ├──────── (N) Account
                ├──────── (N) LinkHistory
                ├──────── (N) Feedback
@@ -719,6 +783,8 @@ User (1) ──────┬──────── (N) CvFile
                ├──────── (N) TelemetryEvent
                ├──────── (N) FeatureUsage
                └──────── (N) OpenAIUsage
+
+JobOffer (1) ──────────── (N) CvFile
 
 SubscriptionPlan (1) ──── (N) SubscriptionPlanFeatureLimit
 ```
@@ -729,6 +795,7 @@ Toutes les relations utilisent `onDelete: Cascade` :
 
 - Supprimer un **User** supprime :
   - Tous ses **CvFile**
+  - Tous ses **JobOffer**
   - Tous ses **Account**
   - Tout son **LinkHistory**
   - Tous ses **Feedback**
@@ -736,6 +803,9 @@ Toutes les relations utilisent `onDelete: Cascade` :
   - Tous ses **TelemetryEvent**
   - Tous ses **FeatureUsage**
   - Tous ses **OpenAIUsage**
+
+- Supprimer un **JobOffer** :
+  - Met à `null` le `jobOfferId` des **CvFile** liés (`onDelete: SetNull`)
 
 ---
 
@@ -951,7 +1021,7 @@ const task = await prisma.backgroundTask.create({
     createdAt: BigInt(Date.now()),
     deviceId,
     userId,
-    payload: JSON.stringify({ url, analysisLevel }),
+    payload: JSON.stringify({ url }),
   }
 });
 ```
@@ -964,7 +1034,7 @@ await prisma.telemetryEvent.create({
     userId,
     type: 'CV_GENERATED',
     category: 'cv_management',
-    metadata: JSON.stringify({ analysisLevel, duration }),
+    metadata: JSON.stringify({ duration }),
     deviceId,
     duration,
     status: 'success',

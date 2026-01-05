@@ -1,5 +1,8 @@
 {
   "jobTitleGenerator": {
+    "confirmTitle": "Confirmation",
+    "confirmMessage": "Cette fonctionnalité va consommer {credits} crédit(s). Voulez-vous continuer ?",
+    "confirmJobTitle": "Titre de poste : \"{jobTitle}\"",
     "notifications": {
       "scheduled": "Génération du CV pour '{jobTitle}' en cours...",
       "invalidTitle": "Le titre '{jobTitle}' ne semble pas être un poste valide",
@@ -37,12 +40,6 @@
     "files": "Offres d'emploi PDF",
     "selection": "Sélection :",
     "clearFiles": "Effacer les fichiers",
-    "analysisQuality": "Qualité de l'analyse",
-    "analysisHints": {
-      "rapid": "Analyse la plus rapide, pour un aperçu rapide.",
-      "medium": "Équilibre entre vitesse et qualité (recommandé).",
-      "deep": "Analyse complète pour des résultats optimisés."
-    },
     "cancel": "Annuler",
     "validate": "Valider",
     "upgradeTooltipLine1": "Passez au plan {planName}",
@@ -66,6 +63,7 @@
     "analysisQuality": "Qualité de l'analyse",
     "cancel": "Annuler",
     "import": "Importer",
+    "importing": "Importation...",
     "notifications": {
       "scheduled": "Import '{fileName}' planifié",
       "error": "Erreur lors de la planification de l'import"
@@ -84,7 +82,7 @@
     "showOptions": "Afficher les options",
     "hideOptions": "Masquer les options",
     "experienceColumn": "Expérience",
-    "includeDeliverables": "Inclure livrables",
+    "includeDeliverables": "Inclure Résultats",
     "sections": {
       "header": "En-tête",
       "summary": "Résumé",
@@ -173,7 +171,7 @@
     "inProgress": "Poste en cours",
     "projectInProgress": "Projet en cours",
     "responsibilities": "Responsabilités",
-    "deliverables": "Livrables",
+    "deliverables": "Résultats",
     "skillsUsed": "Compétences utilisées",
     "technologies": "Technologies",
     "hardSkills": "Compétences techniques",
@@ -280,5 +278,37 @@
       "languages": "Langues",
       "projects": "Projets"
     }
+  },
+  "versions": {
+    "title": "Versions",
+    "current": "Version actuelle",
+    "currentShort": "Actuel",
+    "latest": "Dernière version",
+    "previous": "Version précédente",
+    "selectVersion": "Sélectionner une version",
+    "noVersions": "Aucune version précédente",
+    "noDescription": "Sans description",
+    "restore": "Restaurer",
+    "restoreTitle": "Restaurer cette version (supprime la version actuelle)"
+  },
+  "review": {
+    "title": "Revoir la modification",
+    "before": "Avant",
+    "after": "Après",
+    "empty": "(vide)",
+    "accept": "Accepter",
+    "reject": "Rejeter",
+    "acceptAll": "Tout accepter",
+    "rejectAll": "Tout refuser",
+    "accepted": "Accepté",
+    "rejected": "Rejeté",
+    "pending": "modification(s) en attente",
+    "pendingImportantSingular": "modification importante en attente",
+    "pendingImportantPlural": "modifications importantes en attente",
+    "modifications": "modification(s)",
+    "progress": "{reviewed}/{total} revues",
+    "allReviewed": "Toutes les modifications revues",
+    "processing": "Traitement en cours...",
+    "reason": "Raison"
   }
 }

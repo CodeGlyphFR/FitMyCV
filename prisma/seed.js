@@ -221,7 +221,7 @@ const SUBSCRIPTION_PLANS = [
     yearlyDiscountPercent: 0,
     priceCurrency: 'EUR',
     features: {
-      gpt_cv_generation: { enabled: true, limit: 5, analysisLevels: ['rapid', 'medium'] },
+      gpt_cv_generation: { enabled: true, limit: 5 },
       import_pdf: { enabled: true, limit: 5 },
       generate_from_job_title: { enabled: true, limit: 5 },
       export_cv: { enabled: true, limit: 5 },
@@ -243,7 +243,7 @@ const SUBSCRIPTION_PLANS = [
     yearlyDiscountPercent: 16.59,
     priceCurrency: 'EUR',
     features: {
-      gpt_cv_generation: { enabled: true, limit: 25, analysisLevels: ['rapid', 'medium'] },
+      gpt_cv_generation: { enabled: true, limit: 25 },
       import_pdf: { enabled: true, limit: 25 },
       generate_from_job_title: { enabled: true, limit: 25 },
       export_cv: { enabled: true, limit: -1 },
@@ -265,7 +265,7 @@ const SUBSCRIPTION_PLANS = [
     yearlyDiscountPercent: 16.63,
     priceCurrency: 'EUR',
     features: {
-      gpt_cv_generation: { enabled: true, limit: 60, analysisLevels: ['rapid', 'medium', 'deep'] },
+      gpt_cv_generation: { enabled: true, limit: 60 },
       import_pdf: { enabled: true, limit: 60 },
       generate_from_job_title: { enabled: true, limit: 60 },
       export_cv: { enabled: true, limit: -1 },
@@ -411,22 +411,10 @@ const OPENAI_ALERTS = [
 // ============================================================================
 const AI_MODEL_SETTINGS = [
   {
-    settingName: 'model_analysis_rapid',
-    value: 'gpt-5-nano-2025-08-07',
-    category: 'ai_models',
-    description: 'Modèle rapide et économique pour analyse rapide',
-  },
-  {
-    settingName: 'model_analysis_medium',
+    settingName: 'model_cv_generation',
     value: 'gpt-4.1-2025-04-14',
     category: 'ai_models',
-    description: 'Modèle standard pour analyse équilibrée',
-  },
-  {
-    settingName: 'model_analysis_deep',
-    value: 'gpt-5-2025-08-07',
-    category: 'ai_models',
-    description: 'Modèle avancé pour analyse approfondie',
+    description: 'Modèle utilisé pour la génération de CV',
   },
   {
     settingName: 'model_match_score',
@@ -484,21 +472,21 @@ const AI_MODEL_SETTINGS = [
 const CREDIT_SETTINGS = [
   {
     settingName: 'credits_create_cv_manual',
-    value: '1',
+    value: '0',
     category: 'credits',
-    description: 'Crédits pour création manuelle CV',
+    description: 'Crédits pour création manuelle CV (0 = gratuit)',
   },
   {
     settingName: 'credits_edit_cv',
-    value: '1',
+    value: '0',
     category: 'credits',
-    description: 'Crédits pour édition CV',
+    description: 'Crédits pour édition CV (0 = gratuit)',
   },
   {
     settingName: 'credits_export_cv',
-    value: '1',
+    value: '0',
     category: 'credits',
-    description: 'Crédits pour export PDF',
+    description: 'Crédits pour export PDF (0 = gratuit)',
   },
   {
     settingName: 'credits_match_score',
@@ -513,22 +501,10 @@ const CREDIT_SETTINGS = [
     description: 'Crédits pour traduction CV',
   },
   {
-    settingName: 'credits_gpt_cv_generation_rapid',
-    value: '1',
-    category: 'credits',
-    description: 'Crédits pour génération CV rapide',
-  },
-  {
-    settingName: 'credits_gpt_cv_generation_medium',
+    settingName: 'credits_gpt_cv_generation',
     value: '2',
     category: 'credits',
-    description: 'Crédits pour génération CV normal',
-  },
-  {
-    settingName: 'credits_gpt_cv_generation_deep',
-    value: '0',
-    category: 'credits',
-    description: '0 = Abonnement Premium requis',
+    description: 'Crédits pour génération CV',
   },
   {
     settingName: 'credits_optimize_cv',
@@ -638,22 +614,87 @@ const SYSTEM_SETTINGS = [
     category: 'system',
     description: 'Active ou désactive les inscriptions (1 = activé, 0 = désactivé)',
   },
-];
-
-// ============================================================================
-// 10. SETTINGS - CV
-// ============================================================================
-const CV_SETTINGS = [
+  {
+    settingName: 'maintenance_enabled',
+    value: '0',
+    category: 'system',
+    description: 'Mode maintenance - bloque tous les utilisateurs non-admin (1 = activé, 0 = désactivé)',
+  },
+  {
+    settingName: 'subscription_mode_enabled',
+    value: '1',
+    category: 'system',
+    description: 'Mode abonnement activé (1) ou mode crédits uniquement (0)',
+  },
+  {
+    settingName: 'welcome_credits',
+    value: '5',
+    category: 'credits',
+    description: 'Crédits offerts à l\'inscription (mode crédits uniquement)',
+  },
   {
     settingName: 'cv_max_versions',
     value: '5',
-    category: 'cv',
+    category: 'system',
     description: 'Nombre maximum de versions historisées par CV (optimisation IA)',
   },
 ];
 
 // ============================================================================
-// 11. FEATURE MAPPINGS (Complet avec features non-IA)
+// 10. SETTINGS - CV (vide - déplacé vers SYSTEM_SETTINGS)
+// ============================================================================
+const CV_SETTINGS = [];
+
+// ============================================================================
+// 11. SETTINGS - PDF IMPORT
+// ============================================================================
+const PDF_IMPORT_SETTINGS = [
+  {
+    settingName: 'pdf_image_max_width',
+    value: '1000',
+    category: 'pdf_import',
+    description: 'Largeur maximale des images PDF en pixels',
+  },
+  {
+    settingName: 'pdf_image_density',
+    value: '100',
+    category: 'pdf_import',
+    description: 'Densité de conversion PDF (DPI)',
+  },
+  {
+    settingName: 'pdf_image_quality',
+    value: '75',
+    category: 'pdf_import',
+    description: 'Qualité JPEG des images (0-100)',
+  },
+  {
+    settingName: 'pdf_vision_detail',
+    value: 'high',
+    category: 'pdf_import',
+    description: 'Niveau de détail Vision API (low, auto, high)',
+  },
+  {
+    settingName: 'temperature_import_pdf',
+    value: '0.1',
+    category: 'pdf_import',
+    description: 'Température GPT pour import PDF (0=déterministe, 2=créatif)',
+  },
+  {
+    settingName: 'top_p_import_pdf',
+    value: '1',
+    category: 'pdf_import',
+    description: 'Top P (nucleus sampling) pour import PDF (0-1)',
+  },
+  {
+    settingName: 'seed_import_pdf',
+    value: '0',
+    category: 'pdf_import',
+    description: 'Seed pour reproductibilité (0 = désactivé)',
+  },
+];
+
+// ============================================================================
+// 12. FEATURE MAPPINGS (Complet avec features non-IA)
 // ============================================================================
 const FEATURE_MAPPINGS = [
   {
@@ -687,7 +728,7 @@ const FEATURE_MAPPINGS = [
   {
     featureKey: 'gpt_cv_generation',
     displayName: 'Génération CV',
-    settingNames: ['model_analysis_rapid', 'model_analysis_medium', 'model_analysis_deep', 'model_extract_job_offer'],
+    settingNames: ['model_cv_generation', 'model_extract_job_offer'],
     openAICallNames: ['generate_cv_url', 'generate_cv_pdf', 'extract_job_offer_url', 'extract_job_offer_pdf', 'create_template_cv_url', 'create_template_cv_pdf'],
     planFeatureNames: ['gpt_cv_generation'],
   },
@@ -697,6 +738,13 @@ const FEATURE_MAPPINGS = [
     settingNames: ['model_import_pdf', 'model_first_import_pdf'],
     openAICallNames: ['import_pdf', 'first_import_pdf'],
     planFeatureNames: ['import_pdf'],
+  },
+  {
+    featureKey: 'extract_job_offer',
+    displayName: 'Extraction offre emploi',
+    settingNames: ['model_extract_job_offer'],
+    openAICallNames: ['extract_job_offer_url', 'extract_job_offer_pdf'],
+    planFeatureNames: ['gpt_cv_generation'],
   },
   {
     featureKey: 'detect_language',
@@ -805,7 +853,6 @@ async function main() {
               featureName,
               isEnabled: config.enabled,
               usageLimit: config.limit,
-              allowedAnalysisLevels: config.analysisLevels ? JSON.stringify(config.analysisLevels) : null,
             })),
           },
         },
@@ -852,7 +899,7 @@ async function main() {
   results.push({ created: alertsCreated, skipped: alertsSkipped });
 
   // ===== 7. Settings =====
-  const allSettings = [...AI_MODEL_SETTINGS, ...CREDIT_SETTINGS, ...FEATURE_SETTINGS, ...SYSTEM_SETTINGS, ...CV_SETTINGS];
+  const allSettings = [...AI_MODEL_SETTINGS, ...CREDIT_SETTINGS, ...FEATURE_SETTINGS, ...SYSTEM_SETTINGS, ...CV_SETTINGS, ...PDF_IMPORT_SETTINGS];
   let settingsCreated = 0;
   let settingsSkipped = 0;
   for (const setting of allSettings) {

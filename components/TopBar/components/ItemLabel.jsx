@@ -1,5 +1,4 @@
 import React from "react";
-import { getAnalysisLevelLabel } from "@/lib/i18n/cvLabels";
 
 const useIsomorphicLayoutEffect = typeof window !== "undefined"
   ? React.useLayoutEffect
@@ -24,7 +23,7 @@ const ItemLabel = React.memo(function ItemLabel({
 
   const prefix = item.displayDate || "??/??/????";
   const baseTitleClass = item.hasTitle ? "font-medium" : "italic text-neutral-500";
-  const titleClass = `${baseTitleClass} text-sm sm:text-base`;
+  const titleClass = `${baseTitleClass} text-sm`;
 
   const containerRef = React.useRef(null);
   const innerRef = React.useRef(null);
@@ -43,8 +42,6 @@ const ItemLabel = React.memo(function ItemLabel({
   React.useEffect(() => {
     scrollActiveRef.current = scrollActive;
   }, [scrollActive]);
-
-  const levelLabel = getAnalysisLevelLabel(item.analysisLevel, t);
 
   useIsomorphicLayoutEffect(() => {
     if (typeof window === "undefined") return;
@@ -193,22 +190,15 @@ const ItemLabel = React.memo(function ItemLabel({
       if (resizeObserver) resizeObserver.disconnect();
       if (detachWindowListener) detachWindowListener();
     };
-  }, [item.displayTitle, item.analysisLevel, item.createdBy, item.isTranslated, tickerKey]);
-
-  const shouldShowLevel = (item.createdBy === 'generate-cv' || item.createdBy === 'import-pdf') && levelLabel;
-
-  let displayTitleWithLevel = item.displayTitle;
-  if (shouldShowLevel) {
-    displayTitleWithLevel = `${displayTitleWithLevel} [${levelLabel}]`;
-  }
+  }, [item.displayTitle, item.createdBy, item.isTranslated, tickerKey]);
 
   return (
     <span className={rootClass}>
-      <span className="flex-shrink-0 text-xs sm:text-sm opacity-60 whitespace-nowrap">
+      <span className="flex-shrink-0 text-sm opacity-60 whitespace-nowrap">
         {prefix}
       </span>
       {withHyphen ? (
-        <span className="flex-shrink-0 opacity-30 text-xs sm:text-sm" aria-hidden="true">
+        <span className="flex-shrink-0 opacity-30 text-sm" aria-hidden="true">
           –
         </span>
       ) : null}
@@ -217,9 +207,9 @@ const ItemLabel = React.memo(function ItemLabel({
         className={`cv-ticker ${titleClass} ${scrollActive ? "cv-ticker--active" : ""}`}
       >
         <span ref={innerRef} className="cv-ticker__inner">
-          <span className="cv-ticker__chunk">{displayTitleWithLevel}</span>
+          <span className="cv-ticker__chunk">{item.displayTitle}</span>
           {scrollActive ? (
-            <span className="cv-ticker__chunk" aria-hidden="true">{displayTitleWithLevel}</span>
+            <span className="cv-ticker__chunk" aria-hidden="true">{item.displayTitle}</span>
           ) : null}
         </span>
       </span>
@@ -232,7 +222,6 @@ const ItemLabel = React.memo(function ItemLabel({
     prevProps.item?.file === nextProps.item?.file &&
     prevProps.item?.displayTitle === nextProps.item?.displayTitle &&
     prevProps.item?.displayDate === nextProps.item?.displayDate &&
-    prevProps.item?.analysisLevel === nextProps.item?.analysisLevel &&
     prevProps.item?.createdBy === nextProps.item?.createdBy &&
     prevProps.tickerKey === nextProps.tickerKey &&
     prevProps.className === nextProps.className &&

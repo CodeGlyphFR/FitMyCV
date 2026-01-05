@@ -36,7 +36,8 @@
         "providerNotConfigured": "This provider is not configured on this server",
         "providerAlreadyLinked": "This provider is already linked to your account",
         "providerNotLinked": "This provider is not linked to your account",
-        "cannotUnlinkLastProvider": "Cannot unlink: you must have at least one linked account"
+        "cannotUnlinkLastProvider": "Cannot unlink: you must have at least one linked account",
+        "registrationDisabled": "Registrations are temporarily suspended"
       },
       "cv": {
         "notFound": "CV not found",
@@ -101,6 +102,7 @@
         "pdfAnalysisFailed": "Unable to analyze job offer PDF",
         "cvContentMissing": "Reference CV content missing",
         "noAiResponse": "No response from AI",
+        "responseTruncated": "The AI response was truncated (too long). Please try again.",
         "invalidResponseFormat": "Invalid response format",
         "cvAndJobRequired": "CV content and job offer are required",
         "jobTitleValidationFailed": "Unable to validate job title",
@@ -115,7 +117,7 @@
         "openaiKeyMissing": "OpenAI API key is missing",
         "openaiQuotaExceeded": "OpenAI quota exceeded. Check your billing.",
         "invalidCvFormat": "Invalid CV format",
-        "extractedJobOfferMissing": "Extracted job offer missing - CV must be generated with an extracted offer",
+        "jobOfferMissing": "Job offer missing - CV must be generated with an associated job offer",
         "emptyOpenaiResponse": "Empty response from OpenAI",
         "noTranslationResponse": "No translation response received",
         "noJobOfferProvided": "No job offer provided (link or file required)",

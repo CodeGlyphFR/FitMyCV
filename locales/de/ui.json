@@ -1,6 +1,9 @@
 {
   "maintenance": {
-    "registrationDisabled": "Wartung in Bearbeitung, Registrierungen werden bald wieder verfügbar sein."
+    "registrationDisabled": "Aufgrund des Erfolgs von FitMyCV sind die Registrierungen vorübergehend pausiert, während wir auf einen leistungsstärkeren Server migrieren. Sie werden sehr bald wieder verfügbar sein!",
+    "modeEnabled": "FitMyCV befindet sich derzeit in Wartung. Wir arbeiten daran, Ihre Erfahrung zu verbessern. Bitte versuchen Sie es in einigen Minuten erneut.",
+    "modeEnabledTitle": "Wartung im Gange",
+    "adminOnly": "Nur Administratoren können sich während der Wartung anmelden."
   },
   "topbar": {
     "loading": "Laden…",
@@ -9,6 +12,7 @@
     "myCvs": "Meine Lebensläufe",
     "myAccount": "Mein Konto",
     "subscriptions": "Abonnements & Credits",
+    "subscriptions_credits_only": "Meine Credits verwalten",
     "logout": "Abmelden",
     "analyzeOffers": "Stellenanzeigen analysieren",
     "coverLetters": "Anschreiben",
@@ -22,11 +26,6 @@
     "cvInProgress": "Lebenslauf wird bearbeitet",
     "jobTitlePlaceholder": "Geben Sie eine Stellenbezeichnung ein (z.B. Full-Stack-Entwickler)",
     "jobTitlePlaceholderMobile": "z.B. Full-Stack-Entwickler",
-    "analysisLevels": {
-      "rapid": "Schnell",
-      "medium": "Mittel",
-      "deep": "Tiefgehend"
-    },
     "filter": "Filtern",
     "filterTitle": "Filter",
     "filterCvType": "Lebenslauf-Typ",
@@ -253,7 +252,9 @@
     "success": "Erfolg",
     "close": "Schließen",
     "confirmation": "Bestätigung",
-    "locale": "de-DE"
+    "locale": "de-DE",
+    "yes": "Ja",
+    "no": "Nein"
   },
   "editMode": {
     "on": "✏️ Bearbeitung AN",
@@ -356,5 +357,11 @@
         "4": "Enterprise"
       }
     }
+  },
+  "credits": {
+    "costLabel": "Kosten",
+    "unit": "Kredit",
+    "unitPlural": "Kredite",
+    "useCredits": "{count} Cr. verwenden"
   }
 }

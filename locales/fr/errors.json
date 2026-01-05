@@ -36,7 +36,8 @@
         "providerNotConfigured": "Ce provider n'est pas configuré sur ce serveur",
         "providerAlreadyLinked": "Ce provider est déjà lié à votre compte",
         "providerNotLinked": "Ce provider n'est pas lié à votre compte",
-        "cannotUnlinkLastProvider": "Impossible de délier : vous devez avoir au moins un compte lié"
+        "cannotUnlinkLastProvider": "Impossible de délier : vous devez avoir au moins un compte lié",
+        "registrationDisabled": "Les inscriptions sont temporairement suspendues"
       },
       "cv": {
         "notFound": "CV introuvable",
@@ -101,6 +102,7 @@
         "pdfAnalysisFailed": "Impossible d'analyser le PDF de l'offre d'emploi",
         "cvContentMissing": "Contenu du CV de référence manquant",
         "noAiResponse": "Pas de réponse de l'IA",
+        "responseTruncated": "La réponse de l'IA a été tronquée (trop longue). Veuillez réessayer.",
         "invalidResponseFormat": "Format de réponse invalide",
         "cvAndJobRequired": "Le contenu du CV et de l'offre d'emploi sont requis",
         "jobTitleValidationFailed": "Impossible de valider le titre de poste",
@@ -115,7 +117,7 @@
         "openaiKeyMissing": "La clé API OpenAI est manquante",
         "openaiQuotaExceeded": "Quota OpenAI dépassé. Vérifiez votre facturation.",
         "invalidCvFormat": "Format de CV invalide",
-        "extractedJobOfferMissing": "Offre d'emploi extraite manquante - le CV doit être généré avec une offre extraite",
+        "jobOfferMissing": "Offre d'emploi manquante - le CV doit être généré avec une offre d'emploi associée",
         "emptyOpenaiResponse": "Réponse vide d'OpenAI",
         "noTranslationResponse": "Aucune réponse de traduction reçue",
         "noJobOfferProvided": "Aucune offre d'emploi fournie (lien ou fichier requis)",

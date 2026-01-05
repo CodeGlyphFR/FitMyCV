@@ -1,0 +1,373 @@
+{
+  "name": "cv_modifications",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "modifications": {
+        "type": "object",
+        "description": "Modifications to apply to the source CV",
+        "properties": {
+          "header": {
+            "type": ["object", "null"],
+            "description": "Header modifications",
+            "properties": {
+              "current_title": {
+                "type": ["string", "null"],
+                "description": "New professional title adapted to the job offer"
+              }
+            },
+            "required": ["current_title"],
+            "additionalProperties": false
+          },
+          "summary": {
+            "type": ["object", "null"],
+            "description": "Summary/profile modifications",
+            "properties": {
+              "headline": {
+                "type": ["string", "null"],
+                "description": "New headline if needed"
+              },
+              "description": {
+                "type": ["string", "null"],
+                "description": "New description adapted to the offer"
+              },
+              "domains": {
+                "type": ["object", "null"],
+                "description": "Domain modifications",
+                "properties": {
+                  "add": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Domains to add"
+                  },
+                  "remove": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Domains to remove"
+                  },
+                  "reorder": {
+                    "type": ["array", "null"],
+                    "items": { "type": "string" },
+                    "description": "New order of domains (full list)"
+                  }
+                },
+                "required": ["add", "remove", "reorder"],
+                "additionalProperties": false
+              },
+              "key_strengths": {
+                "type": ["object", "null"],
+                "description": "Key strengths modifications",
+                "properties": {
+                  "add": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Strengths to add"
+                  },
+                  "remove": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Strengths to remove"
+                  },
+                  "reorder": {
+                    "type": ["array", "null"],
+                    "items": { "type": "string" },
+                    "description": "New order of strengths (full list)"
+                  }
+                },
+                "required": ["add", "remove", "reorder"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["headline", "description", "domains", "key_strengths"],
+            "additionalProperties": false
+          },
+          "skills": {
+            "type": ["object", "null"],
+            "description": "Skills section modifications",
+            "properties": {
+              "hard_skills": {
+                "type": ["object", "null"],
+                "description": "Hard skills modifications",
+                "properties": {
+                  "add": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" },
+                        "proficiency": { "type": ["string", "null"] }
+                      },
+                      "required": ["name", "proficiency"],
+                      "additionalProperties": false
+                    },
+                    "description": "Skills to add with proficiency level"
+                  },
+                  "remove": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Skill names to remove"
+                  },
+                  "update": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" },
+                        "proficiency": { "type": "string" }
+                      },
+                      "required": ["name", "proficiency"],
+                      "additionalProperties": false
+                    },
+                    "description": "Skills to update proficiency"
+                  },
+                  "reorder": {
+                    "type": ["array", "null"],
+                    "items": { "type": "string" },
+                    "description": "New order of skills (by name)"
+                  }
+                },
+                "required": ["add", "remove", "update", "reorder"],
+                "additionalProperties": false
+              },
+              "soft_skills": {
+                "type": ["object", "null"],
+                "description": "Soft skills modifications",
+                "properties": {
+                  "add": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Soft skills to add"
+                  },
+                  "remove": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Soft skills to remove"
+                  },
+                  "reorder": {
+                    "type": ["array", "null"],
+                    "items": { "type": "string" },
+                    "description": "New order of soft skills"
+                  }
+                },
+                "required": ["add", "remove", "reorder"],
+                "additionalProperties": false
+              },
+              "tools": {
+                "type": ["object", "null"],
+                "description": "Tools modifications",
+                "properties": {
+                  "add": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" },
+                        "proficiency": { "type": ["string", "null"] }
+                      },
+                      "required": ["name", "proficiency"],
+                      "additionalProperties": false
+                    },
+                    "description": "Tools to add with proficiency"
+                  },
+                  "remove": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Tool names to remove"
+                  },
+                  "update": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" },
+                        "proficiency": { "type": "string" }
+                      },
+                      "required": ["name", "proficiency"],
+                      "additionalProperties": false
+                    },
+                    "description": "Tools to update proficiency"
+                  },
+                  "reorder": {
+                    "type": ["array", "null"],
+                    "items": { "type": "string" },
+                    "description": "New order of tools (by name)"
+                  }
+                },
+                "required": ["add", "remove", "update", "reorder"],
+                "additionalProperties": false
+              },
+              "methodologies": {
+                "type": ["object", "null"],
+                "description": "Methodologies modifications",
+                "properties": {
+                  "add": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Methodologies to add"
+                  },
+                  "remove": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Methodologies to remove"
+                  },
+                  "reorder": {
+                    "type": ["array", "null"],
+                    "items": { "type": "string" },
+                    "description": "New order of methodologies"
+                  }
+                },
+                "required": ["add", "remove", "reorder"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["hard_skills", "soft_skills", "tools", "methodologies"],
+            "additionalProperties": false
+          },
+          "experience": {
+            "type": ["object", "null"],
+            "description": "Experience section modifications",
+            "properties": {
+              "reorder": {
+                "type": ["array", "null"],
+                "items": { "type": "integer" },
+                "description": "New order of experiences by original index (0-based)"
+              },
+              "updates": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "index": {
+                      "type": "integer",
+                      "description": "Index of experience to modify (0-based)"
+                    },
+                    "changes": {
+                      "type": "object",
+                      "properties": {
+                        "description": {
+                          "type": ["string", "null"],
+                          "description": "New description"
+                        },
+                        "responsibilities": {
+                          "type": ["object", "null"],
+                          "properties": {
+                            "add": {
+                              "type": "array",
+                              "items": { "type": "string" }
+                            },
+                            "remove": {
+                              "type": "array",
+                              "items": { "type": "string" }
+                            },
+                            "update": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "index": { "type": "integer" },
+                                  "value": { "type": "string" }
+                                },
+                                "required": ["index", "value"],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": ["add", "remove", "update"],
+                          "additionalProperties": false
+                        },
+                        "deliverables": {
+                          "type": ["object", "null"],
+                          "properties": {
+                            "add": {
+                              "type": "array",
+                              "items": { "type": "string" }
+                            },
+                            "remove": {
+                              "type": "array",
+                              "items": { "type": "string" }
+                            },
+                            "update": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "index": { "type": "integer" },
+                                  "value": { "type": "string" }
+                                },
+                                "required": ["index", "value"],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": ["add", "remove", "update"],
+                          "additionalProperties": false
+                        },
+                        "skills_used": {
+                          "type": ["object", "null"],
+                          "properties": {
+                            "add": {
+                              "type": "array",
+                              "items": { "type": "string" }
+                            },
+                            "remove": {
+                              "type": "array",
+                              "items": { "type": "string" }
+                            }
+                          },
+                          "required": ["add", "remove"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": ["description", "responsibilities", "deliverables", "skills_used"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["index", "changes"],
+                  "additionalProperties": false
+                },
+                "description": "Updates to apply to specific experiences"
+              }
+            },
+            "required": ["reorder", "updates"],
+            "additionalProperties": false
+          },
+          "education": {
+            "type": ["object", "null"],
+            "description": "Education section modifications",
+            "properties": {
+              "reorder": {
+                "type": ["array", "null"],
+                "items": { "type": "integer" },
+                "description": "New order by original index"
+              }
+            },
+            "required": ["reorder"],
+            "additionalProperties": false
+          },
+          "languages": {
+            "type": ["object", "null"],
+            "description": "Languages section modifications",
+            "properties": {
+              "reorder": {
+                "type": ["array", "null"],
+                "items": { "type": "string" },
+                "description": "New order by language name"
+              }
+            },
+            "required": ["reorder"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["header", "summary", "skills", "experience", "education", "languages"],
+        "additionalProperties": false
+      },
+      "reasoning": {
+        "type": "string",
+        "description": "Brief explanation of adaptation choices (1-2 sentences)"
+      }
+    },
+    "required": ["modifications", "reasoning"],
+    "additionalProperties": false
+  }
+}

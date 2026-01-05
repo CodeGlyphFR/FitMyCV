@@ -125,9 +125,10 @@ export default function BackgroundTasksProvider({ children }) {
     const result = await cancelTaskOnServer?.(taskId);
     if (result?.success) {
       await refreshTasks();
-      // Émettre l'événement pour rafraîchir les compteurs de tokens
+      // Émettre les événements pour rafraîchir les compteurs
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('tokens:updated'));
+        window.dispatchEvent(new Event('credits-updated'));
       }
       return;
     }
@@ -239,6 +240,13 @@ export default function BackgroundTasksProvider({ children }) {
         window.dispatchEvent(new CustomEvent('task:completed', {
           detail: { task }
         }));
+        // Rafraîchir le compteur de crédits (la tâche a potentiellement consommé des crédits)
+        window.dispatchEvent(new Event('credits-updated'));
+      }
+
+      // Rafraîchir le compteur de crédits si la tâche a échoué (remboursement potentiel)
+      if (task.status === 'failed' && typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('credits-updated'));
       }
 
       if (!task?.shouldUpdateCvList) {

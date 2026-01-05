@@ -2,13 +2,12 @@
 
 import React from "react";
 import Modal from "@/components/ui/Modal";
-import { ANALYSIS_OPTIONS } from "@/lib/i18n/cvLabels";
 import { getCvIcon } from "../utils/cvUtils";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
 import ItemLabel from "../components/ItemLabel";
 import { CREATE_TEMPLATE_OPTION } from "../utils/constants";
-import { getPlanTier } from "@/lib/subscription/planUtils";
-import Tooltip from "@/components/ui/Tooltip";
+import { useCreditCost } from "@/hooks/useCreditCost";
+import CreditCostDisplay from "@/components/ui/CreditCostDisplay";
 
 /**
  * Modal de génération de CV à partir d'une offre d'emploi
@@ -31,9 +30,6 @@ export default function CvGeneratorModal({
   setBaseSelectorOpen,
   generatorSourceItems,
   generatorBaseItem,
-  analysisLevel,
-  setAnalysisLevel,
-  currentAnalysisOption,
   generatorError,
   linkHistory,
   linkHistoryDropdowns,
@@ -42,52 +38,18 @@ export default function CvGeneratorModal({
   t,
   baseSelectorRef,
   baseDropdownRef,
-  allowedAnalysisLevels = ['rapid', 'medium', 'deep'],
-  plans = [],
 }) {
-  // Fonction pour déterminer quel badge afficher pour un niveau bloqué
-  // en trouvant le plan avec le tier le plus bas qui autorise ce niveau
-  // Retourne { planName, planId } pour le tooltip et la redirection
-  const getLevelBadge = (levelId) => {
-    // Si le niveau est autorisé, pas de badge
-    if (allowedAnalysisLevels.includes(levelId)) {
-      return { planName: null, planId: null };
-    }
+  // Récupérer les coûts en crédits
+  const { showCosts, getCost } = useCreditCost();
 
-    // Trouver tous les plans qui autorisent ce niveau
-    const plansWithLevel = plans.filter(plan => {
-      const featureLimit = plan.featureLimits?.find(
-        limit => limit.featureName === 'gpt_cv_generation'
-      );
+  // Calculer le coût total (liens non vides + fichiers)
+  const linkCount = linkInputs.filter((l) => l.trim() !== "").length;
+  const fileCount = (fileSelection || []).length;
+  const totalOperations = Math.max(linkCount + fileCount, 1);
+  const unitCost = getCost("gpt_cv_generation");
+  const totalCost = unitCost * totalOperations;
+  const costDetail = totalOperations > 1 ? `${totalOperations} × ${unitCost}` : null;
 
-      if (!featureLimit?.allowedAnalysisLevels) return false;
-
-      try {
-        const levels = JSON.parse(featureLimit.allowedAnalysisLevels);
-        return levels.includes(levelId);
-      } catch {
-        return false;
-      }
-    });
-
-    // Si aucun plan n'autorise ce niveau, ne pas afficher de badge
-    if (plansWithLevel.length === 0) return { planName: null, planId: null };
-
-    // Trouver le plan avec le tier le plus bas
-    const minTierPlan = plansWithLevel.reduce((min, plan) => {
-      const planTier = getPlanTier(plan);
-      const minTier = getPlanTier(min);
-      return planTier < minTier ? plan : min;
-    }, plansWithLevel[0]);
-
-    // Retourner le nom et l'ID du plan
-    return { planName: minTierPlan.name, planId: minTierPlan.id };
-  };
-
-  // Handler pour le clic sur un niveau bloqué - redirige vers le plan spécifique
-  const handleBlockedLevelClick = (planId) => {
-    window.location.href = `/account/subscriptions?highlightPlan=${planId}`;
-  };
   return (
     <Modal
       open={open}
@@ -321,76 +283,18 @@ export default function CvGeneratorModal({
           ) : null}
         </div>
 
-        <div className="space-y-2">
-          <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("cvGenerator.analysisQuality")}</div>
-          <div className="grid grid-cols-3 gap-1 rounded-lg border border-white/20 bg-white/5 p-1 text-xs sm:text-sm">
-            {ANALYSIS_OPTIONS(t).map((option) => {
-              const active = option.id === analysisLevel;
-              const isAllowed = allowedAnalysisLevels.includes(option.id);
-              const { planName, planId } = getLevelBadge(option.id);
-
-              const buttonContent = (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => {
-                    if (isAllowed) {
-                      setAnalysisLevel(option.id);
-                    } else {
-                      handleBlockedLevelClick(planId);
-                    }
-                  }}
-                  className={`
-                    rounded-md px-2 py-1 font-medium transition-all duration-200 relative w-full
-                    ${active && isAllowed ? "bg-emerald-400 text-white shadow" : ""}
-                    ${!active && isAllowed ? "text-white/80 hover:bg-white/20" : ""}
-                    ${!isAllowed ? "text-white/80 hover:bg-white/20 hover:ring-2 hover:ring-white/30 cursor-pointer" : ""}
-                  `}
-                  aria-pressed={active && isAllowed}
-                >
-                  {option.label}
-                  {planName && (
-                    <span className={`
-                      absolute -top-1 -right-1
-                      text-[9px] px-1.5 py-0.5 rounded-full font-semibold
-                      shadow-lg
-                      ${planName === 'Premium' || planName.toLowerCase().includes('premium') ? 'bg-gradient-to-r from-purple-500 to-violet-600 border border-purple-300 text-white' : ''}
-                      ${planName === 'Pro' || planName.toLowerCase().includes('pro') ? 'bg-gradient-to-r from-blue-500 to-cyan-600 border border-blue-300 text-white' : ''}
-                      ${!planName.toLowerCase().includes('premium') && !planName.toLowerCase().includes('pro') ? 'bg-gradient-to-r from-blue-500 to-cyan-600 border border-blue-300 text-white' : ''}
-                    `}>
-                      {planName}
-                    </span>
-                  )}
-                </button>
-              );
-
-              // Si le niveau est bloqué, wrapper avec Tooltip (2 lignes)
-              if (!isAllowed && planName) {
-                return (
-                  <Tooltip
-                    key={option.id}
-                    content={<>{t("cvGenerator.upgradeTooltipLine1", { planName })}<br/>{t("cvGenerator.upgradeTooltipLine2")}</>}
-                    position="top"
-                    className="w-full"
-                  >
-                    {buttonContent}
-                  </Tooltip>
-                );
-              }
-
-              return buttonContent;
-            })}
-          </div>
-          <p className="text-xs text-white/70 drop-shadow">
-            {currentAnalysisOption.hint}
-          </p>
-        </div>
-
         {generatorError ? (
           <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {generatorError}
           </div>
         ) : null}
+
+        {/* Affichage du coût en crédits (mode crédits-only uniquement) */}
+        <CreditCostDisplay
+          cost={totalCost}
+          show={showCosts}
+          detail={costDetail}
+        />
 
         <div className="flex justify-end gap-2">
           <button

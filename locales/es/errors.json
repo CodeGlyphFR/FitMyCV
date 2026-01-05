@@ -36,7 +36,8 @@
         "providerNotConfigured": "Este proveedor no está configurado en este servidor",
         "providerAlreadyLinked": "Este proveedor ya está vinculado a su cuenta",
         "providerNotLinked": "Este proveedor no está vinculado a su cuenta",
-        "cannotUnlinkLastProvider": "No se puede desvincular: debe tener al menos una cuenta vinculada"
+        "cannotUnlinkLastProvider": "No se puede desvincular: debe tener al menos una cuenta vinculada",
+        "registrationDisabled": "Los registros están temporalmente suspendidos"
       },
       "cv": {
         "notFound": "CV no encontrado",
@@ -101,6 +102,7 @@
         "pdfAnalysisFailed": "No se pudo analizar el PDF de la oferta de empleo",
         "cvContentMissing": "Falta el contenido del CV de referencia",
         "noAiResponse": "Sin respuesta de la IA",
+        "responseTruncated": "La respuesta de la IA fue truncada (demasiado larga). Por favor, inténtelo de nuevo.",
         "invalidResponseFormat": "Formato de respuesta inválido",
         "cvAndJobRequired": "El contenido del CV y de la oferta de empleo son obligatorios",
         "jobTitleValidationFailed": "No se pudo validar el título del puesto",
@@ -115,7 +117,7 @@
         "openaiKeyMissing": "Falta la clave API de OpenAI",
         "openaiQuotaExceeded": "Cuota de OpenAI excedida. Verifique su facturación.",
         "invalidCvFormat": "Formato de CV inválido",
-        "extractedJobOfferMissing": "Falta la oferta de empleo extraída - el CV debe generarse con una oferta extraída",
+        "jobOfferMissing": "Falta la oferta de empleo - el CV debe generarse con una oferta de empleo asociada",
         "emptyOpenaiResponse": "Respuesta vacía de OpenAI",
         "noTranslationResponse": "No se recibió respuesta de traducción",
         "noJobOfferProvided": "No se proporcionó ninguna oferta de empleo (enlace o archivo requerido)",

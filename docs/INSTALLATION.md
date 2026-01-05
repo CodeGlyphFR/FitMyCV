@@ -150,9 +150,7 @@ OPENAI_API_KEY="sk-proj-votre-cle"
 ```
 
 **Coût estimé** :
-- ~0.01$ par génération de CV (modèle rapid)
-- ~0.05$ par génération de CV (modèle medium)
-- ~0.20$ par génération de CV (modèle deep)
+- Variable selon le modèle configuré (voir Settings admin)
 
 ### 4. Configurer OAuth (Optionnel)
 
@@ -272,10 +270,9 @@ npx prisma studio
 
 1. Cliquer sur **+ Générer un CV**
 2. Coller une URL d'offre d'emploi (ex: Indeed, LinkedIn)
-3. Sélectionner le niveau d'analyse (rapid/medium/deep)
-4. Cliquer sur **Générer**
-5. Suivre la progression dans la modal de tâches
-6. Le CV apparaît automatiquement une fois généré
+3. Cliquer sur **Générer**
+4. Suivre la progression dans la modal de tâches
+5. Le CV apparaît automatiquement une fois généré
 
 ---
 

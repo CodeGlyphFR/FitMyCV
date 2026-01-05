@@ -118,21 +118,6 @@
             "historyBlock": {
               "title": "Verlauf",
               "description": "Finden Sie alle bereits verwendeten Angebote. Verwenden Sie sie wieder, um neue Lebensläufe zu generieren, ohne sie erneut zu suchen."
-            },
-            "subtitle2": "3 Analyseebenen:",
-            "analysisLevels": {
-              "rapid": {
-                "title": "Schnell",
-                "description": "Wesentliche Anpassung"
-              },
-              "normal": {
-                "title": "Normal",
-                "description": "Vollständige Analyse"
-              },
-              "deep": {
-                "title": "Tiefgehend",
-                "description": "Maximale Optimierung"
-              }
             }
           },
           "screen3": {

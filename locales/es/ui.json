@@ -1,6 +1,9 @@
 {
   "maintenance": {
-    "registrationDisabled": "Mantenimiento en curso, los registros estarán disponibles pronto."
+    "registrationDisabled": "Debido al éxito de FitMyCV, los registros están temporalmente en pausa mientras migramos a un servidor más potente. ¡Estarán disponibles de nuevo muy pronto!",
+    "modeEnabled": "FitMyCV está actualmente en mantenimiento. Estamos trabajando para mejorar su experiencia. Por favor, inténtelo de nuevo en unos minutos.",
+    "modeEnabledTitle": "Mantenimiento en curso",
+    "adminOnly": "Solo los administradores pueden iniciar sesión durante el mantenimiento."
   },
   "topbar": {
     "loading": "Cargando…",
@@ -9,6 +12,7 @@
     "myCvs": "Mis CVs",
     "myAccount": "Mi cuenta",
     "subscriptions": "Suscripciones y Créditos",
+    "subscriptions_credits_only": "Gestionar mis créditos",
     "logout": "Cerrar sesión",
     "analyzeOffers": "Análisis de ofertas",
     "coverLetters": "Cartas de presentación",
@@ -22,11 +26,6 @@
     "cvInProgress": "CV en edición",
     "jobTitlePlaceholder": "Introduce un título de puesto (ej: Desarrollador Full-Stack)",
     "jobTitlePlaceholderMobile": "ej: Desarrollador Full-Stack",
-    "analysisLevels": {
-      "rapid": "Rápido",
-      "medium": "Medio",
-      "deep": "Profundo"
-    },
     "filter": "Filtrar",
     "filterTitle": "Filtros",
     "filterCvType": "Tipo de CV",
@@ -253,7 +252,9 @@
     "success": "Éxito",
     "close": "Cerrar",
     "confirmation": "Confirmación",
-    "locale": "es-ES"
+    "locale": "es-ES",
+    "yes": "Sí",
+    "no": "No"
   },
   "editMode": {
     "on": "✏️ Edición ON",
@@ -356,5 +357,11 @@
         "4": "Enterprise"
       }
     }
+  },
+  "credits": {
+    "costLabel": "Costo",
+    "unit": "crédito",
+    "unitPlural": "créditos",
+    "useCredits": "Usar {count} Cr."
   }
 }

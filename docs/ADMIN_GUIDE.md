@@ -169,7 +169,7 @@ export async function DELETE(request, { params }) {
 **Graphiques** :
 
 - Usage dans le temps (par jour)
-- Distribution par niveau d'analyse (rapid/medium/deep)
+- Distribution par feature et par modèle IA utilisé
 - Top utilisateurs par feature
 
 ### ErrorsTab
@@ -322,15 +322,13 @@ Le filtre de période (7j/30j/90j/All) filtre par **activité onboarding** :
 
 | Setting Name | Value | Description |
 |-------------|-------|-------------|
-| `model_analysis_rapid` | gpt-5-nano-2025-08-07 | Modèle pour analyse rapide |
-| `model_analysis_medium` | gpt-5-mini-2025-08-07 | Modèle pour analyse standard |
-| `model_analysis_deep` | gpt-5-2025-08-07 | Modèle pour analyse approfondie |
+| `model_cv_generation` | gpt-4.1-2025-04-14 | Modèle pour génération de CV |
 
 #### Settings Features
 
 | Setting Name | Value | Description |
 |-------------|-------|-------------|
-| `registration_enabled` | 1 | Autoriser les inscriptions (0 = fermé) |
+| `registration_enabled` | 1 | Autoriser les inscriptions email ET OAuth (0 = fermé, bloque toutes les nouvelles inscriptions) |
 | `maintenance_mode` | 0 | Mode maintenance (1 = activé) |
 
 #### Settings PDF Import (Vision)
@@ -540,13 +538,13 @@ Chaque plan a des limites par feature :
 
 **SubscriptionPlanFeatureLimit** :
 
-| Feature | Enabled | Usage Limit | Allowed Analysis Levels |
-|---------|---------|-------------|-------------------------|
-| `generate_cv` | ✅ | -1 (illimité) | ["rapid", "medium", "deep"] |
-| `import_pdf` | ✅ | 10/mois | ["medium"] |
-| `translate_cv` | ✅ | 5/mois | - |
-| `match_score` | ✅ | -1 | - |
-| `export_cv` | ✅ | -1 | - |
+| Feature | Enabled | Usage Limit |
+|---------|---------|-------------|
+| `generate_cv` | ✅ | -1 (illimité) |
+| `import_pdf` | ✅ | 10/mois |
+| `translate_cv` | ✅ | 5/mois |
+| `match_score` | ✅ | -1 |
+| `export_cv` | ✅ | -1 |
 
 **Exemple : Plan Gratuit**
 

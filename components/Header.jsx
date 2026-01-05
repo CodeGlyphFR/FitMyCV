@@ -12,8 +12,14 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
+import ChangeHighlight from "./ChangeHighlight";
 import { parseApiError } from "@/lib/utils/errorHandler";
 import { SUPPORTED_LANGUAGES, LANGUAGE_FLAGS, LANGUAGE_LABELS, DEFAULT_LANGUAGE } from "@/lib/cv/languageConstants";
+import { toTitleCase } from "@/lib/utils/textFormatting";
+import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
+import { useHighlight } from "./HighlightProvider";
+import { useCreditCost } from "@/hooks/useCreditCost";
+import CreditCostTooltip from "@/components/ui/CreditCostTooltip";
 
 export default function Header(props){
   const header = props.header || {};
@@ -22,18 +28,31 @@ export default function Header(props){
   const { mutate } = useMutate();
   const { t, language } = useLanguage();
   const { settings } = useSettings();
+  const { showCosts, getCost } = useCreditCost();
+  const translateCost = getCost("translate_cv");
   const [open, setOpen] = React.useState(false);
   const [isTranslateDropdownOpen, setIsTranslateDropdownOpen] = React.useState(false);
   const [sourceInfo, setSourceInfo] = React.useState({ sourceType: null, sourceValue: null });
   const translateDropdownRef = React.useRef(null);
   const [matchScore, setMatchScore] = React.useState(null);
+  const [scoreBefore, setScoreBefore] = React.useState(null);
   const [matchScoreStatus, setMatchScoreStatus] = React.useState("idle");
   const [optimiseStatus, setOptimiseStatus] = React.useState("idle");
   const [isLoadingMatchScore, setIsLoadingMatchScore] = React.useState(false);
   const [currentCvFile, setCurrentCvFile] = React.useState(null);
-  const [hasExtractedJobOffer, setHasExtractedJobOffer] = React.useState(false);
+  const [hasJobOffer, setHasJobOffer] = React.useState(false);
   const [hasScoreBreakdown, setHasScoreBreakdown] = React.useState(false);
   const [isTransitioning, setIsTransitioning] = React.useState(false);
+
+  // Récupérer la version courante depuis le contexte
+  const { currentVersion } = useHighlight();
+
+  // Calculer isHistoricalVersion directement depuis currentVersion (plus fiable que l'API)
+  const isHistoricalVersion = currentVersion !== 'latest';
+
+  // Ref pour tracker la version en cours de fetch (éviter race conditions)
+  const fetchVersionRef = React.useRef(currentVersion);
+  const abortControllerRef = React.useRef(null);
 
   // Calculer si le bouton Optimiser est disponible (visible ET actif)
   const isOptimizeButtonReady = React.useMemo(() => {
@@ -79,6 +98,19 @@ export default function Header(props){
   });
 
   const fetchMatchScore = React.useCallback(async () => {
+    // Annuler la requête précédente si elle existe
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Créer un nouveau AbortController pour cette requête
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    // Capturer la version au moment de l'appel
+    const versionAtFetchStart = currentVersion;
+    fetchVersionRef.current = versionAtFetchStart;
+
     setIsLoadingMatchScore(true);
     try {
       // Récupérer le fichier CV actuel depuis le cookie
@@ -94,12 +126,15 @@ export default function Header(props){
 
       // Cache-busting pour iOS - ajouter un timestamp
       const cacheBuster = Date.now();
-      const response = await fetch(`/api/cv/match-score?file=${encodeURIComponent(currentFile)}&_=${cacheBuster}`, {
+      // Ajouter le paramètre version si on consulte une version historique
+      const versionParam = versionAtFetchStart !== 'latest' ? `&version=${versionAtFetchStart}` : '';
+      const response = await fetch(`/api/cv/match-score?file=${encodeURIComponent(currentFile)}${versionParam}&_=${cacheBuster}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
-        }
+        },
+        signal: abortController.signal
       });
 
       if (!response.ok) {
@@ -113,10 +148,15 @@ export default function Header(props){
 
       const data = await response.json();
 
-      // Vérifier que le CV n'a pas changé entre temps
+      // Vérifier que le CV ET la version n'ont pas changé entre temps
       const updatedCookies = document.cookie.split(';');
       const updatedCvFileCookie = updatedCookies.find(c => c.trim().startsWith('cvFile='));
       const updatedFile = updatedCvFileCookie ? decodeURIComponent(updatedCvFileCookie.split('=')[1]) : null;
+
+      // Ignorer la réponse si la version a changé pendant le fetch
+      if (fetchVersionRef.current !== versionAtFetchStart) {
+        return;
+      }
 
       if (updatedFile === currentFile) {
         // Utiliser le status de la base en priorité
@@ -124,11 +164,11 @@ export default function Header(props){
         const finalStatus = data.status || (data.score !== null ? 'idle' : 'idle');
         const finalOptimiseStatus = data.optimiseStatus || 'idle';
 
-
         setMatchScore(data.score);
+        setScoreBefore(data.scoreBefore || null);
         setMatchScoreStatus(finalStatus);
         setOptimiseStatus(finalOptimiseStatus);
-        setHasExtractedJobOffer(data.hasExtractedJobOffer || false);
+        setHasJobOffer(data.hasJobOffer || false);
         setHasScoreBreakdown(data.hasScoreBreakdown || false);
 
         // Force un re-render en utilisant un timeout (workaround iOS)
@@ -139,9 +179,13 @@ export default function Header(props){
         setIsLoadingMatchScore(false);
       }
     } catch (error) {
+      // Ignorer les erreurs d'abort (changement de version rapide)
+      if (error.name === 'AbortError') {
+        return;
+      }
       setIsLoadingMatchScore(false);
     }
-  }, []);
+  }, [currentVersion]);
 
   const fetchSourceInfo = React.useCallback(() => {
     // Récupérer le CV actuel depuis le cookie pour détecter les changements
@@ -159,7 +203,7 @@ export default function Header(props){
     fetch("/api/cv/source", { cache: "no-store" })
       .then(res => {
         if (!res.ok) {
-          return { sourceType: null, sourceValue: null, hasExtractedJobOffer: false };
+          return { sourceType: null, sourceValue: null, hasJobOffer: false };
         }
         return res.json();
       })
@@ -167,15 +211,16 @@ export default function Header(props){
         // Mettre à jour les infos de source
         setSourceInfo({ sourceType: data.sourceType, sourceValue: data.sourceValue });
 
-        // Ne récupérer le score que si le CV a une offre d'emploi extraite
-        if (data.hasExtractedJobOffer) {
+        // Ne récupérer le score que si le CV a une offre d'emploi associée
+        if (data.hasJobOffer) {
           fetchMatchScore();
         } else {
           // Réinitialiser les états du score seulement si pas d'offre
           setMatchScore(null);
+          setScoreBefore(null);
           setMatchScoreStatus('idle');
           setOptimiseStatus('idle');
-          setHasExtractedJobOffer(false);
+          setHasJobOffer(false);
           setHasScoreBreakdown(false);
           setIsLoadingMatchScore(false);
         }
@@ -192,6 +237,11 @@ export default function Header(props){
   React.useEffect(() => {
     fetchSourceInfo();
   }, [fetchSourceInfo]); // Fetch au montage
+
+  // Refetch le score quand on change de version
+  React.useEffect(() => {
+    fetchMatchScore();
+  }, [currentVersion, fetchMatchScore]);
 
   // Écouter les événements de synchronisation temps réel
   React.useEffect(() => {
@@ -447,11 +497,15 @@ export default function Header(props){
   return (
     <header className="page mb-6 flex items-start justify-between gap-4 bg-white/15 backdrop-blur-xl p-4 rounded-2xl shadow-2xl relative overflow-visible min-h-[120px]">
       <div className="pr-24">
-        <h1 className="text-2xl font-bold text-white drop-shadow-lg">{header.full_name || ""}</h1>
-        <p className="text-sm text-white/80 drop-shadow">{header.current_title || ""}</p>
+        <h1 className="text-2xl font-bold text-white drop-shadow-lg">{toTitleCase(header.full_name) || ""}</h1>
+        <p className="text-sm text-white/80 drop-shadow">
+          <ChangeHighlight section="header" field="current_title">
+            {toTitleCase(header.current_title) || ""}
+          </ChangeHighlight>
+        </p>
         <div className="mt-2 text-sm text-white/90 drop-shadow">
           <div>{header.contact?.email || ""}</div>
-          <div>{header.contact?.phone || ""}</div>
+          <div>{formatPhoneNumber(header.contact?.phone, header.contact?.location?.country_code)}</div>
           {header.contact?.location ? (
             <div>
               {header.contact.location.city || ""}{header.contact.location.region? ", ":""}
@@ -491,18 +545,20 @@ export default function Header(props){
               sourceType={sourceInfo.sourceType}
               sourceValue={sourceInfo.sourceValue}
               score={matchScore}
+              scoreBefore={scoreBefore}
               status={matchScoreStatus === 'inprogress' ? 'loading' : matchScoreStatus}
               isLoading={isLoadingMatchScore}
               onRefresh={handleRefreshMatchScore}
               currentCvFile={currentCvFile}
-              hasExtractedJobOffer={hasExtractedJobOffer}
+              hasJobOffer={hasJobOffer}
               isOptimizeButtonReady={isOptimizeButtonReady}
               optimiseStatus={optimiseStatus}
+              isHistoricalVersion={isHistoricalVersion}
             />
           </div>
 
-          {/* Bouton Optimiser en bas à droite */}
-          {hasScoreBreakdown && currentCvFile && (
+          {/* Bouton Optimiser en bas à droite (masqué pour versions historiques) */}
+          {hasScoreBreakdown && currentCvFile && !isHistoricalVersion && (
             <div className="absolute bottom-0 right-2">
               <CVImprovementPanel
                 cvFile={currentCvFile}
@@ -546,34 +602,40 @@ export default function Header(props){
                 flag: LANGUAGE_FLAGS[code],
                 label: LANGUAGE_LABELS[code]
               })).filter(lang => lang.code !== (props.cvLanguage || DEFAULT_LANGUAGE)).map((lang, index) => (
-                <button
+                <CreditCostTooltip
                   key={lang.code}
-                  onClick={() => executeTranslation(lang.code)}
-                  className={`
-                    w-8 h-8 rounded-full
-                    bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl
-                    flex items-center justify-center
-                    overflow-hidden
-                    hover:shadow-xl hover:bg-white/30
-                    transition-all duration-200
-                    cursor-pointer
-                    p-0.5
-                  `}
-                  style={{
-                    transitionDelay: isTranslateDropdownOpen ? `${index * 50}ms` : '0ms'
-                  }}
-                  title={`Traduire en ${lang.label}`}
-                  aria-label={`Traduire en ${lang.label}`}
-                  type="button"
+                  cost={translateCost}
+                  show={showCosts}
+                  position="bottom"
                 >
-                  <Image
-                    src={lang.flag}
-                    alt={lang.label}
-                    width={24}
-                    height={24}
-                    className="object-cover"
-                  />
-                </button>
+                  <button
+                    onClick={() => executeTranslation(lang.code)}
+                    className={`
+                      w-8 h-8 rounded-full
+                      bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl
+                      flex items-center justify-center
+                      overflow-hidden
+                      hover:shadow-xl hover:bg-white/30
+                      transition-all duration-200
+                      cursor-pointer
+                      p-0.5
+                    `}
+                    style={{
+                      transitionDelay: isTranslateDropdownOpen ? `${index * 50}ms` : '0ms'
+                    }}
+                    title={`Traduire en ${lang.label}`}
+                    aria-label={`Traduire en ${lang.label}`}
+                    type="button"
+                  >
+                    <Image
+                      src={lang.flag}
+                      alt={lang.label}
+                      width={24}
+                      height={24}
+                      className="object-cover"
+                    />
+                  </button>
+                </CreditCostTooltip>
               ))}
             </div>
 

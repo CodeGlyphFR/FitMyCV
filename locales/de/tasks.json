@@ -43,7 +43,8 @@
       "matchScoreFailed": "Match-Score-Berechnung fehlgeschlagen"
     },
     "errors": {
-      "noJobOfferDetected": "Keine Stellenanzeige erkannt: {source}"
+      "noJobOfferDetected": "Keine Stellenanzeige erkannt: {source}",
+      "loginRequired": "Diese Seite erfordert eine Anmeldung. Laden Sie das Stellenangebot als PDF von der Website herunter und laden Sie es hoch."
     }
   }
 }

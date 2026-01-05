@@ -79,17 +79,6 @@ export async function GET(request) {
       },
     });
 
-    // Features that support analysis levels
-    const featuresWithLevels = [
-      'generate_cv_url',
-      'generate_cv_pdf',
-      'create_template_cv_url',
-      'create_template_cv_pdf',
-      'generate_from_job_title',
-      'import_pdf',
-      'optimize_cv',
-    ];
-
     // Get breakdown by feature
     const byFeature = await prisma.openAIUsage.groupBy({
       by: ['featureName'],
@@ -147,99 +136,6 @@ export async function GET(request) {
         };
       })
     );
-
-    // Get breakdown by analysis level for features that support it
-    const byFeatureWithLevels = await Promise.all(
-      byFeature.map(async (feature) => {
-        if (!featuresWithLevels.includes(feature.featureName)) {
-          return null;
-        }
-
-        // Get all OpenAICall records for this feature to extract analysisLevel from metadata
-        const calls = await prisma.openAICall.findMany({
-          where: {
-            featureName: feature.featureName,
-            ...(userId && { userId }),
-            createdAt: {
-              gte: startDate,
-            },
-          },
-          select: {
-            metadata: true,
-            estimatedCost: true,
-            promptTokens: true,
-            cachedTokens: true,
-            completionTokens: true,
-            totalTokens: true,
-          },
-        });
-
-        // Group by analysisLevel
-        const levelGroups = calls.reduce((acc, call) => {
-          // Parse metadata JSON string
-          let metadata = {};
-          if (call.metadata) {
-            try {
-              metadata = JSON.parse(call.metadata);
-            } catch (e) {
-              console.warn('[OpenAI Usage API] Failed to parse metadata:', e);
-            }
-          }
-          const level = metadata.analysisLevel || 'unknown';
-
-          if (!acc[level]) {
-            acc[level] = {
-              cost: 0,
-              promptTokens: 0,
-              cachedTokens: 0,
-              completionTokens: 0,
-              tokens: 0,
-              calls: 0,
-            };
-          }
-
-          acc[level].cost += call.estimatedCost || 0;
-          acc[level].promptTokens += call.promptTokens || 0;
-          acc[level].cachedTokens += call.cachedTokens || 0;
-          acc[level].completionTokens += call.completionTokens || 0;
-          acc[level].tokens += call.totalTokens || 0;
-          acc[level].calls += 1;
-
-          return acc;
-        }, {});
-
-        const levels = Object.entries(levelGroups).map(([level, data]) => ({
-          level,
-          cost: data.cost,
-          promptTokens: data.promptTokens,
-          cachedTokens: data.cachedTokens,
-          completionTokens: data.completionTokens,
-          tokens: data.tokens,
-          calls: data.calls,
-        })).sort((a, b) => b.cost - a.cost); // Sort by cost descending
-
-        // Only return level breakdown if there are real levels (not just "unknown")
-        // This filters out features with old records (no metadata) or features without level support
-        const hasRealLevels = levels.length > 1 || (levels.length === 1 && levels[0].level !== 'unknown');
-
-        if (!hasRealLevels) {
-          return null; // No level breakdown for this feature
-        }
-
-        return {
-          featureName: feature.featureName,
-          levels,
-        };
-      })
-    );
-
-    // Filter out nulls and create a map for easy lookup
-    const levelBreakdownMap = byFeatureWithLevels
-      .filter(item => item !== null)
-      .reduce((acc, item) => {
-        acc[item.featureName] = item.levels;
-        return acc;
-      }, {});
 
     // Get breakdown by model
     const byModel = await prisma.openAIUsage.groupBy({
@@ -333,7 +229,6 @@ export async function GET(request) {
       },
       byFeature: byFeature.map(f => {
         const lastCostData = lastCostByFeature.find(lc => lc.featureName === f.featureName);
-        const levelBreakdown = levelBreakdownMap[f.featureName] || null;
 
         return {
           feature: f.featureName,
@@ -348,7 +243,6 @@ export async function GET(request) {
           lastTokens: lastCostData?.lastTokens || 0,
           lastCallDate: lastCostData?.lastCallDate || null,
           lastDuration: lastCostData?.lastDuration || null,
-          levelBreakdown: levelBreakdown, // Add level breakdown if available
         };
       }),
       byModel: byModel.map(m => ({

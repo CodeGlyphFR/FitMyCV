@@ -7,7 +7,8 @@ import Modal from "./ui/Modal";
 import FormRow from "./ui/FormRow";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
-import ChangesPanel from "./ChangesPanel";
+import VersionSelector from "./VersionSelector";
+import ChangeHighlight, { ReviewProgressBar } from "./ChangeHighlight";
 
 export default function Summary(props){
   const { t } = useLanguage();
@@ -61,9 +62,13 @@ export default function Summary(props){
                 )}
               </div>
             )}
-            {/* Bouton Historique des modifications */}
+            {/* Barre de progression review */}
             <div className="no-print">
-              <ChangesPanel />
+              <ReviewProgressBar />
+            </div>
+            {/* Sélecteur de version */}
+            <div className="no-print">
+              <VersionSelector />
             </div>
           </div>
         </div>
@@ -78,7 +83,13 @@ export default function Summary(props){
           className="text-sm text-justify leading-relaxed opacity-95 whitespace-pre-line"
           suppressHydrationWarning
         >
-          {summary.description}
+          <ChangeHighlight
+            section="summary"
+            field="description"
+            className="text-sm text-justify leading-relaxed opacity-95 whitespace-pre-line"
+          >
+            {summary.description}
+          </ChangeHighlight>
         </p>
       )}
 

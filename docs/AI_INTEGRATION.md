@@ -10,6 +10,8 @@ Documentation complète de l'intégration OpenAI dans FitMyCV.io.
 - [Configuration](#configuration)
 - [Modèles IA](#modèles-ia)
 - [Fonctions IA](#fonctions-ia)
+- [Extraction Structurée des Offres d'Emploi](#extraction-structurée-des-offres-demploi)
+- [Détection de langue des CVs](#détection-de-langue-des-cvs)
 - [Système de prompts](#système-de-prompts)
 - [Gestion des coûts](#gestion-des-coûts)
 - [Telemetry OpenAI](#telemetry-openai)
@@ -97,32 +99,16 @@ SELECT * FROM Setting WHERE category = 'ai_models';
 
 | settingName | value (modèle) | Usage |
 |------------|----------------|-------|
-| `model_analysis_rapid` | gpt-5-nano-2025-08-07 | Analyse rapide, tests |
-| `model_analysis_medium` | gpt-5-mini-2025-08-07 | Usage quotidien |
-| `model_analysis_deep` | gpt-5-2025-08-07 | Analyses approfondies |
+| `model_cv_generation` | gpt-4.1-2025-04-14 | Génération de CV |
 
-### Caractéristiques des modèles
+### Caractéristiques du modèle
 
-#### GPT-5-nano (rapid)
+#### GPT-4.1 (CV Generation)
 
-- **Context window** : 8K tokens
-- **Coût estimé** : ~$0.01 par génération CV
-- **Vitesse** : ~5-10 secondes
-- **Usage** : Tests, prototypage, usage fréquent
-
-#### GPT-5-mini (medium)
-
-- **Context window** : 16K tokens
+- **Context window** : 128K tokens
 - **Coût estimé** : ~$0.05 par génération CV
 - **Vitesse** : ~10-20 secondes
-- **Usage** : Production standard, candidatures normales
-
-#### GPT-5 (deep)
-
-- **Context window** : 32K tokens
-- **Coût estimé** : ~$0.20 par génération CV
-- **Vitesse** : ~15-30 secondes
-- **Usage** : Candidatures importantes, analyses détaillées
+- **Usage** : Production standard, toutes candidatures
 
 ### Sélection du modèle
 
@@ -130,17 +116,9 @@ SELECT * FROM Setting WHERE category = 'ai_models';
 // lib/settings/aiModels.js
 import { getSetting } from '@/lib/settings/settingsUtils';
 
-export async function getModelForAnalysisLevel(level) {
-  const settingMap = {
-    rapid: 'model_analysis_rapid',
-    medium: 'model_analysis_medium',
-    deep: 'model_analysis_deep',
-  };
-
-  const settingName = settingMap[level] || settingMap.medium;
-  const model = await getSetting(settingName);
-
-  return model || 'gpt-5-mini-2025-08-07'; // Fallback
+export async function getCvGenerationModel() {
+  const model = await getSetting('model_cv_generation');
+  return model || 'gpt-4.1-2025-04-14'; // Fallback
 }
 ```
 
@@ -158,21 +136,33 @@ Génère un CV personnalisé depuis une offre d'emploi.
 
 - URL de l'offre ou contenu PDF
 - CV de référence de l'utilisateur
-- Niveau d'analyse (rapid/medium/deep)
 
 **Process** :
 
 ```
-1. Extract job offer (Puppeteer ou PDF parsing)
-2. Load reference CV (encrypted)
-3. Load prompts (system, user, examples)
-4. Call OpenAI API
-5. Parse JSON response
-6. Validate with AJV
-7. Return structured CV
+1. Extract job offer content:
+   - URL: htmlToMarkdown() pipeline (Readability + Turndown)
+   - PDF: extractTextFromPdf()
+2. Extract structured job offer via OpenAI Structured Outputs
+   - Schema: lib/openai/schemas/jobOfferExtractionSchema.json
+   - Validation garantie par OpenAI
+3. Store job offer in JobOffer table (upsert by userId + sourceValue)
+4. Generate CV modifications (DIFF format)
+   - Schema: lib/openai/schemas/cvModificationsSchema.json
+   - Returns only changes, not full CV
+   - **Token optimization**: Uses `null` for unchanged sections (70-87% savings)
+5. Apply modifications to reference CV (applyModifications.js)
+6. Validate final CV with AJV
+7. Return { cvContent, jobOfferId, reasoning }
 ```
 
-**Output** : CV JSON structuré
+**Output** : CV JSON structuré + jobOfferId
+
+**Fonctions exportées** :
+- `generateCv()` - Génération CV complète
+- `extractJobOfferFromUrl()` - Extraction depuis URL
+- `extractJobOfferFromPdf()` - Extraction depuis PDF
+- `storeJobOffer()` - Stockage en base JobOffer
 
 ---
 
@@ -339,25 +329,26 @@ Calcule le score de correspondance avec analyse détaillée.
 **Inputs** :
 
 - CV (JSON)
-- `cvFile.extractedJobOffer` (texte extrait stocké en DB lors de la création/génération du CV)
+- `cvFile.jobOffer` (relation Prisma vers JobOffer avec extraction structurée JSON)
 
 **Process** :
 
 ```
 1. Load CV content
-2. Get extractedJobOffer from DB (REQUIRED - no scraping)
-3. Detect languages (CV and job offer) for translation if needed
-4. Load scoring prompts
-5. Call OpenAI API
-6. Parse score (0-100)
-7. Extract breakdown (technical_skills, experience, education, soft_skills_languages)
-8. Extract suggestions (array)
-9. Extract missing/matching skills
-10. Recalculate weighted score (35% tech, 30% exp, 20% edu, 15% soft)
-11. Return analysis object
+2. Get jobOffer from DB via relation (REQUIRED - no scraping)
+3. Format structured job offer for analysis (formatJobOfferForAnalysis)
+4. Detect languages (CV and job offer) for translation if needed
+5. Load scoring prompts
+6. Call OpenAI API
+7. Parse score (0-100)
+8. Extract breakdown (technical_skills, experience, education, soft_skills_languages)
+9. Extract suggestions (array)
+10. Extract missing/matching skills
+11. Recalculate weighted score (35% tech, 30% exp, 20% edu, 15% soft)
+12. Return analysis object
 ```
 
-**Note** : Le score ne peut être calculé que si le CV a un `extractedJobOffer` en base (stocké lors de la génération/création).
+**Note** : Le score ne peut être calculé que si le CV a une relation `jobOffer` en base (stockée lors de la génération/création via la table `JobOffer`).
 
 **Output** :
 
@@ -418,23 +409,24 @@ Crée un CV modèle fictif réaliste à partir d'une offre d'emploi (URL ou PDF)
 **Inputs** :
 
 - URL(s) d'offre(s) d'emploi ou PDF(s)
-- Niveau d'analyse (rapid/medium/deep)
 
 **Process** :
 
 ```
-1. Extract job offer content via extractJobOfferWithGPT (from generateCv.js)
-   - Multi-strategy HTML extraction (semantic tags, job classes, H/F pattern)
-   - Antibot detection (HTTP first, Puppeteer fallback)
-2. Load template structure from data/template.json
-3. Load create-template prompts
-4. Call OpenAI API to generate realistic CV matching job requirements
-5. Validate CV structure (full_name + current_title required)
-6. Enrich with metadata (generator, source, timestamps)
-7. Return CV JSON + extractedJobOffer text
+1. Extract job offer via extractJobOfferFromUrl/extractJobOfferFromPdf (from generateCv.js)
+   - HTML → Markdown pipeline (Readability + Turndown)
+   - Structured JSON extraction (OpenAI Structured Outputs)
+2. Store job offer in JobOffer table via storeJobOffer (from generateCv.js)
+3. Load template structure from data/template.json
+4. Format job offer for template generation (formatJobOfferForTemplate)
+5. Load create-template prompts
+6. Call OpenAI API to generate realistic CV matching job requirements
+7. Validate CV structure (full_name + current_title required)
+8. Enrich with metadata (generator, source, timestamps)
+9. Return CV JSON + jobOfferId
 ```
 
-**Note** : L'extraction d'offre (`extractJobOfferWithGPT`) est partagée avec `generateCv.js` pour éviter la duplication de code.
+**Note** : L'extraction d'offre (`extractJobOfferFromUrl`, `extractJobOfferFromPdf`) et le stockage (`storeJobOffer`) sont partagés avec `generateCv.js` pour éviter la duplication de code.
 
 ---
 
@@ -459,6 +451,171 @@ Génère un CV depuis un titre de poste (sans offre).
 5. Parse & validate CV
 6. Return CV JSON
 ```
+
+---
+
+## Extraction Structurée des Offres d'Emploi
+
+### Architecture
+
+Le système utilise une extraction structurée des offres d'emploi avec stockage séparé dans la table `JobOffer`.
+
+```
+URL/PDF → htmlToMarkdown() → OpenAI Structured Outputs → JobOffer table
+                                                              ↓
+                                                        CvFile.jobOfferId
+```
+
+### Pipeline HTML → Markdown
+
+**Fichier** : `lib/utils/htmlToMarkdown.js`
+
+```javascript
+import { htmlToMarkdown } from '@/lib/utils/htmlToMarkdown';
+
+const { title, content, textLength } = await htmlToMarkdown(html, url);
+// content: ~5k chars (vs ~60k HTML brut)
+```
+
+**Étapes** :
+1. JSDOM parsing
+2. Readability (extraction contenu principal)
+3. Turndown (HTML → Markdown)
+4. Nettoyage final
+
+### Schema d'extraction
+
+**Fichier** : `lib/openai/schemas/jobOfferExtractionSchema.json`
+
+```json
+{
+  "title": "Software Engineer",
+  "company": "TechCorp",
+  "contract": "CDI",
+  "experience": { "min_years": 3, "max_years": 5, "level": "mid" },
+  "location": { "city": "Paris", "country": "France", "remote": "hybrid" },
+  "salary": { "min": 45000, "max": 55000, "currency": "EUR", "period": "year" },
+  "skills": {
+    "required": ["React", "Node.js", "TypeScript"],
+    "nice_to_have": ["GraphQL", "Kubernetes"]
+  },
+  "education": { "level": "Bac+5", "field": "Informatique" },
+  "languages": [{ "language": "English", "level": "fluent" }],
+  "responsibilities": ["Développer des features", "Code reviews"],
+  "benefits": ["RTT", "Télétravail", "Mutuelle"],
+  "language": "fr"
+}
+```
+
+**Règles d'extraction** :
+- Info absente → `null` (jamais inventer)
+- Valeurs normalisées obligatoires (enums: contract, level, remote, etc.)
+- Skills séparés en required/nice_to_have
+- **`language`** : Langue de l'offre (fr, en, es, de, null si ambigu)
+
+### Table JobOffer
+
+```prisma
+model JobOffer {
+  id              String    @id @default(cuid())
+  userId          String
+  sourceType      String    // 'url' | 'pdf'
+  sourceValue     String    // URL ou nom fichier PDF
+  content         Json      // Extraction structurée
+  extractedAt     DateTime  @default(now())
+  extractionModel String
+  tokensUsed      Int       @default(0)
+
+  user            User      @relation(...)
+  cvFiles         CvFile[]  // Plusieurs CVs peuvent utiliser la même offre
+
+  @@unique([userId, sourceValue])
+}
+```
+
+### Formatage pour l'IA
+
+Lors de l'analyse (match score, amélioration), le JSON structuré est reconverti en texte lisible :
+
+```javascript
+import { formatJobOfferForAnalysis } from '@/lib/openai/calculateMatchScoreWithAnalysis';
+
+const readableText = formatJobOfferForAnalysis(jobOffer.content);
+// "📋 TITRE DU POSTE: Software Engineer\n🏢 ENTREPRISE: TechCorp\n..."
+```
+
+---
+
+## Détection de langue des CVs
+
+### Architecture
+
+La langue d'un CV est stockée dans `CvFile.language` (colonne DB, pas dans le JSON).
+
+| Source CV | Méthode de détection | Modèle utilisé |
+|-----------|---------------------|----------------|
+| **Génération (offre)** | Langue de l'offre d'emploi | Extraite via `jobOfferExtractionSchema.json` |
+| **Création template** | Langue de l'offre d'emploi | Idem |
+| **Import PDF** | Vision API (`detectPdfLanguage`) | `model_detect_language` (Settings) |
+| **Match score** | OpenAI (`detectCvLanguageWithOpenAI`) | `model_detect_language` (Settings) |
+
+### Modèle de détection
+
+Toutes les fonctions de détection de langue utilisent le setting **`model_detect_language`** depuis la DB :
+
+```javascript
+// lib/settings/aiModels.js
+const model = await getAiModelSetting('model_detect_language');
+// Défaut: gpt-4o-mini (léger, ~85 tokens pour PDF Vision)
+```
+
+**Fichiers** :
+- `lib/openai/detectPdfLanguage.js` - Détection via Vision API (première page PDF)
+- `lib/openai/detectLanguage.js` - Détection via texte (summary CV)
+
+### Principe
+
+Le CV généré à partir d'une offre d'emploi doit être dans **la langue de l'offre**.
+
+```
+Offre d'emploi (EN) → CV généré (EN)
+Offre d'emploi (FR) → CV généré (FR)
+```
+
+### Implémentation
+
+**Génération/Template** (depuis offre) :
+
+```javascript
+// lib/backgroundTasks/generateCvJob.js et createTemplateCvJob.js
+const detectedLanguage = result.jobOfferLanguage || null;
+// La langue vient de l'extraction structurée de l'offre
+```
+
+**Import PDF** (sans offre) :
+
+```javascript
+// lib/openai/importPdf.js
+import { detectPdfLanguage } from './detectPdfLanguage.js';
+
+// Détection via Vision API (première page, detail configurable via pdf_vision_detail)
+const detectedLanguage = await detectPdfLanguage(imageBase64Array[0], client, userId, signal, pdfConfig.detail);
+// Utilise model_detect_language depuis Settings + pdf_vision_detail pour la qualité d'analyse
+```
+
+**Paramètres de détection** :
+- **Modèle** : `model_detect_language` (défaut: gpt-4o-mini)
+- **Detail Vision** : `pdf_vision_detail` (défaut: high) - Utilisé pour la détection ET l'extraction
+- **Prompt** : Analyse job titles, section headers, body text (ignore noms propres et termes techniques)
+
+### Langues supportées
+
+| Code | Langue |
+|------|--------|
+| `fr` | Français |
+| `en` | Anglais |
+| `es` | Espagnol |
+| `de` | Allemand |
 
 ---
 
@@ -586,9 +743,11 @@ const cost = (
 ### Optimisations de coûts
 
 1. **Prompt caching** : Les prompts système sont cachés (réduction ~50%)
-2. **Extraction HTML optimisée** : Suppression des balises inutiles (réduction ~30%)
-3. **Cache d'extraction** : Sauvegarde de l'offre extraite (évite re-scraping)
-4. **Sélection du modèle** : Rapid pour tests, Deep pour candidatures importantes
+2. **HTML → Markdown pipeline** : Readability + Turndown (~90% réduction taille, ~5k chars vs ~60k HTML)
+3. **Extraction structurée** : JSON Schema strict (validation garantie par OpenAI)
+4. **Table JobOffer séparée** : Réutilisable par plusieurs CVs (évite re-extraction)
+5. **DIFF format** : L'IA retourne uniquement les modifications (~70% réduction tokens)
+6. **Sélection du modèle** : Rapid pour tests, Deep pour candidatures importantes
 
 ### Monitoring
 

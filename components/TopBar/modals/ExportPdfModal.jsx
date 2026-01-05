@@ -2,6 +2,8 @@
 import React from 'react';
 import Modal from '@/components/ui/Modal';
 import SectionCard from './ExportPdfModal/SectionCard';
+import { useCreditCost } from "@/hooks/useCreditCost";
+import CreditCostDisplay from "@/components/ui/CreditCostDisplay";
 
 /**
  * Modal d'export PDF avec sélection granulaire des sections
@@ -25,6 +27,10 @@ export default function ExportPdfModal({
   isExporting,
   t
 }) {
+
+  // Récupérer les coûts en crédits
+  const { showCosts, getCost } = useCreditCost();
+  const exportCost = getCost("export_cv");
 
   // Sections à afficher
   const sectionsConfig = [
@@ -112,6 +118,9 @@ export default function ExportPdfModal({
             })}
           </div>
         </div>
+
+        {/* Affichage du coût en crédits (mode crédits-only uniquement, si coût > 0) */}
+        {exportCost > 0 && <CreditCostDisplay cost={exportCost} show={showCosts} />}
 
         {/* Footer buttons */}
         <div className="flex justify-end gap-3 pt-4 border-t border-white/10">

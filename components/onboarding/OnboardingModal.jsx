@@ -454,22 +454,6 @@ export default function OnboardingModal({
                         </div>
                       </div>
                     )}
-
-                    {/* Sous-titre niveaux d'analyse */}
-                    <p className="text-white font-medium text-sm md:text-base text-left pt-2">
-                      {screens[currentScreen].subtitle2}
-                    </p>
-
-                    {/* Grille niveaux d'analyse (design inspiré de CvGeneratorModal) */}
-                    <div className="grid grid-cols-3 gap-2">
-                      {screens[currentScreen].analysisLevels.map((level, idx) => (
-                        <div key={idx} className="flex flex-col items-center text-center p-2 rounded-lg bg-white/5 border border-white/10">
-                          <span className="text-lg mb-1">{level.emoji}</span>
-                          <p className="text-white font-medium text-xs md:text-sm">{level.title}</p>
-                          <p className="text-white/50 text-[10px] md:text-xs">{level.description}</p>
-                        </div>
-                      ))}
-                    </div>
                   </div>
                   {screens[currentScreen].tip && (
                     <TipBox className="mt-4">

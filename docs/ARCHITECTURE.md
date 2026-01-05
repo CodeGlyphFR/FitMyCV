@@ -337,8 +337,8 @@ sequenceDiagram
 
     User->>TopBar: Click "Générer un CV"
     TopBar->>TopBar: Open CvGeneratorModal
-    User->>TopBar: Enter job URL + Select analysis level
-    TopBar->>API: POST {url, analysisLevel}
+    User->>TopBar: Enter job URL
+    TopBar->>API: POST {url}
     API->>DB: Create BackgroundTask (queued)
     API->>JobQueue: Enqueue generateCvJob
     API-->>TopBar: {taskId}
@@ -728,7 +728,7 @@ const HeavyComponent = dynamic(() => import('./HeavyComponent'), {
 
 | Donnée | Cache | Durée | Invalidation |
 |--------|-------|-------|--------------|
-| **Extracted job offers** | CvFile.extractedJobOffer | Permanent | Jamais (immutable) |
+| **Extracted job offers** | JobOffer table | Permanent | Jamais (immutable) |
 | **Settings** | AdminProvider state | Session | Manual refresh |
 | **OpenAI pricing** | Memory | Session | Admin update |
 | **Static assets** | CDN/Browser | 1 year | Build hash |

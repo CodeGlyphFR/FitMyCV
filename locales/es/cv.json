@@ -1,5 +1,8 @@
 {
   "jobTitleGenerator": {
+    "confirmTitle": "Confirmación",
+    "confirmMessage": "Esta función consumirá {credits} crédito(s). ¿Desea continuar?",
+    "confirmJobTitle": "Título del puesto: \"{jobTitle}\"",
     "notifications": {
       "scheduled": "Generando CV para '{jobTitle}'...",
       "invalidTitle": "El título '{jobTitle}' no parece ser un puesto válido",
@@ -37,12 +40,6 @@
     "files": "Ofertas de empleo PDF",
     "selection": "Selección:",
     "clearFiles": "Borrar archivos",
-    "analysisQuality": "Calidad del análisis",
-    "analysisHints": {
-      "rapid": "Análisis más rápido, para una vista general.",
-      "medium": "Equilibrio entre velocidad y calidad (recomendado).",
-      "deep": "Análisis completo para resultados optimizados."
-    },
     "cancel": "Cancelar",
     "validate": "Validar",
     "upgradeTooltipLine1": "Actualiza al plan {planName}",
@@ -66,6 +63,7 @@
     "analysisQuality": "Calidad del análisis",
     "cancel": "Cancelar",
     "import": "Importar",
+    "importing": "Importando...",
     "notifications": {
       "scheduled": "Importación de '{fileName}' programada",
       "error": "Error al programar la importación"
@@ -78,7 +76,7 @@
     "selectAll": "Seleccionar todo",
     "deselectAll": "Deseleccionar todo",
     "experienceColumn": "Experiencia",
-    "includeDeliverables": "Incluir entregables",
+    "includeDeliverables": "Incluir Resultados",
     "export": "Exportar",
     "exporting": "Exportando...",
     "cancel": "Cancelar",
@@ -173,7 +171,7 @@
     "inProgress": "Puesto actual",
     "projectInProgress": "Proyecto en curso",
     "responsibilities": "Responsabilidades",
-    "deliverables": "Entregables",
+    "deliverables": "Resultados",
     "skillsUsed": "Habilidades utilizadas",
     "technologies": "Tecnologías",
     "hardSkills": "Habilidades técnicas",
@@ -280,5 +278,37 @@
       "languages": "Idiomas",
       "projects": "Proyectos"
     }
+  },
+  "versions": {
+    "title": "Versiones",
+    "current": "Versión actual",
+    "currentShort": "Actual",
+    "latest": "Última versión",
+    "previous": "Versión anterior",
+    "selectVersion": "Seleccionar una versión",
+    "noVersions": "Sin versiones anteriores",
+    "noDescription": "Sin descripción",
+    "restore": "Restaurar",
+    "restoreTitle": "Restaurar esta versión (elimina la versión actual)"
+  },
+  "review": {
+    "title": "Revisar cambio",
+    "before": "Antes",
+    "after": "Después",
+    "empty": "(vacío)",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "acceptAll": "Aceptar todo",
+    "rejectAll": "Rechazar todo",
+    "accepted": "Aceptado",
+    "rejected": "Rechazado",
+    "pending": "cambio(s) pendiente(s)",
+    "pendingImportantSingular": "cambio importante pendiente",
+    "pendingImportantPlural": "cambios importantes pendientes",
+    "modifications": "cambio(s)",
+    "progress": "{reviewed}/{total} revisados",
+    "allReviewed": "Todos los cambios revisados",
+    "processing": "Procesando...",
+    "reason": "Razón"
   }
 }

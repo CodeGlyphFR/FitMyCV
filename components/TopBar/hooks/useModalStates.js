@@ -13,6 +13,7 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
   // PDF Import modal
   const [openPdfImport, setOpenPdfImport] = React.useState(false);
   const [pdfFile, setPdfFile] = React.useState(null);
+  const [pdfImportBusy, setPdfImportBusy] = React.useState(false);
   const pdfFileInputRef = React.useRef(null);
 
   function resetPdfImportState() {
@@ -32,8 +33,9 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
 
   async function submitPdfImport(event) {
     event.preventDefault();
-    if (!pdfFile) return;
+    if (!pdfFile || pdfImportBusy) return;
 
+    setPdfImportBusy(true);
     const fileName = pdfFile.name;
 
     try {
@@ -107,6 +109,8 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
       }
 
       addNotification(notification);
+    } finally {
+      setPdfImportBusy(false);
     }
   }
 
@@ -163,6 +167,7 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("cv:list:changed"));
         window.dispatchEvent(new CustomEvent("cv:selected", { detail: { file: data.file } }));
+        window.dispatchEvent(new Event("credits-updated"));
       }
 
       setOpenNewCv(false);
@@ -205,12 +210,53 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
   // Job Title Input
   const [jobTitleInput, setJobTitleInput] = React.useState("");
 
-  async function handleJobTitleSubmit(event, language) {
+  // Modal de confirmation pour le titre de poste (mode crédits-only)
+  const [jobTitleConfirmModal, setJobTitleConfirmModal] = React.useState({
+    open: false,
+    jobTitle: "",
+    language: "",
+  });
+
+  // Fonction appelée quand l'utilisateur appuie sur Enter
+  function handleJobTitleSubmit(event, language, showCreditConfirmation = false, creditCost = 0) {
     if (event.key !== 'Enter') return;
+
+    // Empêcher le comportement par défaut
+    event.preventDefault();
 
     const trimmedJobTitle = jobTitleInput.trim();
     if (!trimmedJobTitle) return;
 
+    // Si mode crédits-only et coût > 0, afficher le modal de confirmation
+    if (showCreditConfirmation && creditCost > 0) {
+      setJobTitleConfirmModal({
+        open: true,
+        jobTitle: trimmedJobTitle,
+        language: language,
+        creditCost: creditCost,
+      });
+      return;
+    }
+
+    // Sinon, exécuter directement
+    executeJobTitleGeneration(trimmedJobTitle, language);
+  }
+
+  // Confirmer la génération depuis le modal
+  function confirmJobTitleGeneration() {
+    const { jobTitle, language } = jobTitleConfirmModal;
+    setJobTitleConfirmModal({ open: false, jobTitle: "", language: "", creditCost: 0 });
+    setJobTitleInput("");
+    executeJobTitleGeneration(jobTitle, language);
+  }
+
+  // Annuler la confirmation
+  function cancelJobTitleConfirmation() {
+    setJobTitleConfirmModal({ open: false, jobTitle: "", language: "", creditCost: 0 });
+  }
+
+  // Exécuter la génération
+  async function executeJobTitleGeneration(jobTitle, language) {
     setJobTitleInput("");
 
     // Émettre un événement pour décrémenter optimistiquement le compteur
@@ -220,9 +266,8 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
 
     try {
       const formData = new FormData();
-      formData.append("jobTitle", trimmedJobTitle);
+      formData.append("jobTitle", jobTitle);
       formData.append("language", language === 'en' ? 'anglais' : 'français');
-      formData.append("analysisLevel", "medium");
       if (localDeviceId) {
         formData.append("deviceId", localDeviceId);
       }
@@ -254,14 +299,14 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
       // ✅ Succès confirmé par l'API -> créer la tâche optimiste et notifier
       const optimisticTaskId = addOptimisticTask({
         type: 'job-title-generation',
-        label: t("jobTitleGenerator.notifications.scheduled", { jobTitle: trimmedJobTitle }),
-        metadata: { jobTitle: trimmedJobTitle },
+        label: t("jobTitleGenerator.notifications.scheduled", { jobTitle }),
+        metadata: { jobTitle },
         shouldUpdateCvList: true,
       });
 
       addNotification({
         type: "info",
-        message: t("jobTitleGenerator.notifications.scheduled", { jobTitle: trimmedJobTitle }),
+        message: t("jobTitleGenerator.notifications.scheduled", { jobTitle }),
         duration: 2500,
       });
 
@@ -312,6 +357,7 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     setOpenPdfImport,
     pdfFile,
     setPdfFile,
+    pdfImportBusy,
     pdfFileInputRef,
     closePdfImport,
     onPdfFileChanged,
@@ -342,6 +388,9 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     jobTitleInput,
     setJobTitleInput,
     handleJobTitleSubmit,
+    jobTitleConfirmModal,
+    confirmJobTitleGeneration,
+    cancelJobTitleConfirmation,
 
     // User Menu
     userMenuOpen,

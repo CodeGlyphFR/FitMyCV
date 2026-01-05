@@ -521,7 +521,8 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                   let outputCost = 0;
 
                   if (pricing) {
-                    inputCost = (data.lastPromptTokens / 1_000_000) * pricing.inputPricePerMToken;
+                    const nonCachedTokens = data.lastPromptTokens - data.lastCachedTokens;
+                    inputCost = (nonCachedTokens / 1_000_000) * pricing.inputPricePerMToken;
                     cachedCost = (data.lastCachedTokens / 1_000_000) * pricing.cachePricePerMToken;
                     outputCost = (data.lastCompletionTokens / 1_000_000) * pricing.outputPricePerMToken;
                   }
@@ -540,7 +541,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                           <p className="text-xs text-white/60 mb-1">Détail des tokens:</p>
                           <div className="flex items-center justify-between gap-4">
                             <span className="text-xs text-cyan-300">Input:</span>
-                            <span className="text-white text-xs">{formatNumber(data.lastPromptTokens)} ({formatCurrency(inputCost)})</span>
+                            <span className="text-white text-xs">{formatNumber(data.lastPromptTokens - data.lastCachedTokens)} ({formatCurrency(inputCost)})</span>
                           </div>
                           <div className="flex items-center justify-between gap-4">
                             <span className="text-xs text-indigo-300">Cache:</span>

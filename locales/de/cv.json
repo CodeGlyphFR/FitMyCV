@@ -1,5 +1,8 @@
 {
   "jobTitleGenerator": {
+    "confirmTitle": "Bestätigung",
+    "confirmMessage": "Diese Funktion verbraucht {credits} Kredit(e). Möchten Sie fortfahren?",
+    "confirmJobTitle": "Stellenbezeichnung: \"{jobTitle}\"",
     "notifications": {
       "scheduled": "Lebenslauf-Generierung für '{jobTitle}' läuft...",
       "invalidTitle": "Der Titel '{jobTitle}' scheint keine gültige Position zu sein",
@@ -37,12 +40,6 @@
     "files": "PDF-Stellenangebote",
     "selection": "Auswahl:",
     "clearFiles": "Dateien löschen",
-    "analysisQuality": "Analysequalität",
-    "analysisHints": {
-      "rapid": "Schnellste Analyse für einen schnellen Überblick.",
-      "medium": "Balance zwischen Geschwindigkeit und Qualität (empfohlen).",
-      "deep": "Vollständige Analyse für optimierte Ergebnisse."
-    },
     "cancel": "Abbrechen",
     "validate": "Bestätigen",
     "upgradeTooltipLine1": "Upgraden Sie auf {planName}",
@@ -66,6 +63,7 @@
     "analysisQuality": "Analysequalität",
     "cancel": "Abbrechen",
     "import": "Importieren",
+    "importing": "Importieren...",
     "notifications": {
       "scheduled": "Import '{fileName}' geplant",
       "error": "Fehler bei der Planung des Imports"
@@ -84,7 +82,7 @@
     "showOptions": "Optionen anzeigen",
     "hideOptions": "Optionen ausblenden",
     "experienceColumn": "Erfahrung",
-    "includeDeliverables": "Lieferungen einschließen",
+    "includeDeliverables": "Ergebnisse einschließen",
     "sections": {
       "header": "Kopfzeile",
       "summary": "Zusammenfassung",
@@ -173,7 +171,7 @@
     "inProgress": "Aktuelle Position",
     "projectInProgress": "Laufendes Projekt",
     "responsibilities": "Verantwortlichkeiten",
-    "deliverables": "Lieferungen",
+    "deliverables": "Ergebnisse",
     "skillsUsed": "Verwendete Fähigkeiten",
     "technologies": "Technologien",
     "hardSkills": "Technische Fähigkeiten",
@@ -280,5 +278,37 @@
       "languages": "Sprachen",
       "projects": "Projekte"
     }
+  },
+  "versions": {
+    "title": "Versionen",
+    "current": "Aktuelle Version",
+    "currentShort": "Aktuell",
+    "latest": "Neueste Version",
+    "previous": "Vorherige Version",
+    "selectVersion": "Version auswählen",
+    "noVersions": "Keine früheren Versionen",
+    "noDescription": "Keine Beschreibung",
+    "restore": "Wiederherstellen",
+    "restoreTitle": "Diese Version wiederherstellen (löscht die aktuelle Version)"
+  },
+  "review": {
+    "title": "Änderung überprüfen",
+    "before": "Vorher",
+    "after": "Nachher",
+    "empty": "(leer)",
+    "accept": "Akzeptieren",
+    "reject": "Ablehnen",
+    "acceptAll": "Alle akzeptieren",
+    "rejectAll": "Alle ablehnen",
+    "accepted": "Akzeptiert",
+    "rejected": "Abgelehnt",
+    "pending": "ausstehende Änderung(en)",
+    "pendingImportantSingular": "wichtige ausstehende Änderung",
+    "pendingImportantPlural": "wichtige ausstehende Änderungen",
+    "modifications": "Änderung(en)",
+    "progress": "{reviewed}/{total} überprüft",
+    "allReviewed": "Alle Änderungen überprüft",
+    "processing": "Verarbeitung läuft...",
+    "reason": "Grund"
   }
 }

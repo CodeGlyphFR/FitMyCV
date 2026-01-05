@@ -2,7 +2,9 @@
   "subscription": {
     "page": {
       "title": "Suscripciones y Créditos",
+      "title_credits_only": "Gestionar mis créditos",
       "description": "Gestiona tu suscripción, compra créditos y consulta tu historial.",
+      "description_credits_only": "Compra créditos para usar funciones avanzadas.",
       "backToCvs": "Volver",
       "loadingTitle": "Cargando...",
       "errorLoading": "Error al cargar los datos",

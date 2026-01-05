@@ -523,12 +523,11 @@ const grant = await grantCredits(userId, 10, 'purchase', {
 ### featureUsage.js
 ```javascript
 // Vérifier si peut utiliser
-const check = await canUseFeature(userId, 'gpt_cv_generation', 'medium');
+const check = await canUseFeature(userId, 'gpt_cv_generation');
 
 // Incrémenter compteur (débite crédit si nécessaire)
 const result = await incrementFeatureCounter(userId, 'gpt_cv_generation', {
   taskId: 'task_123',
-  analysisLevel: 'medium',
 });
 
 // Rembourser si échec
@@ -612,7 +611,6 @@ import { incrementFeatureCounter, refundFeatureUsage } from '@/lib/subscription/
 // Au début du job
 const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation', {
   taskId,
-  analysisLevel: 'medium',
 });
 
 if (!usageResult.success) {

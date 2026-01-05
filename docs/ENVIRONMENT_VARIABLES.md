@@ -75,7 +75,7 @@ OPENAI_MODEL="gpt-4.1-mini"
 - `gpt-4o-mini` - Version mini de GPT-4o
 - `gpt-4o` - Modèle multimodal avancé
 
-**Note** : Les niveaux d'analyse (`rapid`, `medium`, `deep`) configurés dans l'admin peuvent override ce modèle pour les opérations IA spécifiques.
+**Note** : Chaque feature IA peut avoir son propre modèle configuré dans l'interface admin (Settings → AI Models).
 
 **Documentation** : [AI_INTEGRATION.md](./AI_INTEGRATION.md)
 

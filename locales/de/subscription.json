@@ -2,7 +2,9 @@
   "subscription": {
     "page": {
       "title": "Abonnements & Credits",
+      "title_credits_only": "Meine Credits verwalten",
       "description": "Verwalten Sie Ihr Abonnement, kaufen Sie Credits und sehen Sie Ihren Verlauf ein.",
+      "description_credits_only": "Kaufen Sie Credits, um erweiterte Funktionen zu nutzen.",
       "backToCvs": "Zurück",
       "loadingTitle": "Laden...",
       "errorLoading": "Fehler beim Laden der Daten",

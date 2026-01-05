@@ -31,10 +31,21 @@ export function SettingsTab({ refreshKey }) {
   const [availableModels, setAvailableModels] = useState(AVAILABLE_AI_MODELS);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  // États pour la confirmation du mode maintenance
+  const [showMaintenanceConfirm, setShowMaintenanceConfirm] = useState(false);
+  const [maintenanceInfo, setMaintenanceInfo] = useState(null);
+  const [pendingMaintenanceSetting, setPendingMaintenanceSetting] = useState(null);
+
+  // États pour le mode abonnement
+  const [subscriptionMode, setSubscriptionMode] = useState({ enabled: true, paidSubscribersCount: 0, loading: true });
+  const [showCancelAllConfirm, setShowCancelAllConfirm] = useState(false);
+  const [cancelAllPreview, setCancelAllPreview] = useState(null);
+  const [cancellingAll, setCancellingAll] = useState(false);
 
   useEffect(() => {
     fetchSettings();
     fetchAvailableModels();
+    fetchSubscriptionMode();
   }, [refreshKey]);
 
   useEffect(() => {
@@ -73,11 +84,132 @@ export function SettingsTab({ refreshKey }) {
     }
   }
 
-  function handleValueChange(settingId, newValue) {
+  // Fetch le nombre d'utilisateurs actifs pour le mode maintenance
+  async function fetchActiveSessionsCount() {
+    try {
+      const res = await fetch('/api/admin/maintenance/active-sessions');
+      const data = await res.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching active sessions:', error);
+      return null;
+    }
+  }
+
+  // Fetch l'état du mode abonnement
+  async function fetchSubscriptionMode() {
+    try {
+      const res = await fetch('/api/admin/subscription-mode');
+      const data = await res.json();
+      setSubscriptionMode({
+        enabled: data.subscriptionModeEnabled,
+        paidSubscribersCount: data.paidSubscribersCount || 0,
+        loading: false,
+      });
+    } catch (error) {
+      console.error('Error fetching subscription mode:', error);
+      setSubscriptionMode(prev => ({ ...prev, loading: false }));
+    }
+  }
+
+  // Toggle le mode abonnement
+  async function handleSubscriptionModeToggle(enabled) {
+    try {
+      const res = await fetch('/api/admin/subscription-mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled }),
+      });
+
+      if (!res.ok) throw new Error('Failed to update subscription mode');
+
+      setSubscriptionMode(prev => ({ ...prev, enabled }));
+      setToast({
+        type: 'success',
+        message: enabled ? 'Mode abonnement activé' : 'Mode crédits uniquement activé',
+      });
+      fetchSubscriptionMode(); // Refresh les données
+    } catch (error) {
+      console.error('Error toggling subscription mode:', error);
+      setToast({ type: 'error', message: 'Erreur lors du changement de mode' });
+    }
+  }
+
+  // Prévisualiser l'annulation massive
+  async function fetchCancelAllPreview() {
+    try {
+      const res = await fetch('/api/admin/cancel-all-subscriptions');
+      const data = await res.json();
+      setCancelAllPreview(data);
+    } catch (error) {
+      console.error('Error fetching cancel preview:', error);
+      setToast({ type: 'error', message: 'Erreur lors de la récupération des abonnements' });
+    }
+  }
+
+  // Exécuter l'annulation massive
+  async function handleCancelAllSubscriptions() {
+    setCancellingAll(true);
+    try {
+      const res = await fetch('/api/admin/cancel-all-subscriptions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmationCode: 'CANCEL_ALL_SUBSCRIPTIONS' }),
+      });
+
+      if (!res.ok) throw new Error('Failed to cancel subscriptions');
+
+      const data = await res.json();
+      setToast({
+        type: 'success',
+        message: data.message || 'Abonnements annulés avec succès',
+      });
+      setShowCancelAllConfirm(false);
+      setCancelAllPreview(null);
+      fetchSubscriptionMode(); // Refresh les données
+    } catch (error) {
+      console.error('Error cancelling subscriptions:', error);
+      setToast({ type: 'error', message: 'Erreur lors de l\'annulation des abonnements' });
+    } finally {
+      setCancellingAll(false);
+    }
+  }
+
+  async function handleValueChange(settingId, newValue) {
+    // Trouver le setting pour vérifier si c'est maintenance_enabled
+    const setting = settings.find(s => s.id === settingId);
+
+    // Si on active le mode maintenance, afficher la modal de confirmation
+    if (setting?.settingName === 'maintenance_enabled' && newValue === '1') {
+      const sessionInfo = await fetchActiveSessionsCount();
+      setMaintenanceInfo(sessionInfo);
+      setPendingMaintenanceSetting({ settingId, newValue });
+      setShowMaintenanceConfirm(true);
+      return;
+    }
+
     setModifiedSettings(prev => ({
       ...prev,
       [settingId]: newValue
     }));
+  }
+
+  function confirmMaintenanceToggle() {
+    if (pendingMaintenanceSetting) {
+      setModifiedSettings(prev => ({
+        ...prev,
+        [pendingMaintenanceSetting.settingId]: pendingMaintenanceSetting.newValue
+      }));
+    }
+    setShowMaintenanceConfirm(false);
+    setPendingMaintenanceSetting(null);
+    setMaintenanceInfo(null);
+  }
+
+  function cancelMaintenanceToggle() {
+    setShowMaintenanceConfirm(false);
+    setPendingMaintenanceSetting(null);
+    setMaintenanceInfo(null);
   }
 
   function getCurrentValue(setting) {
@@ -95,6 +227,11 @@ export function SettingsTab({ refreshKey }) {
 
     setSaving(true);
     try {
+      // Vérifier si maintenance_enabled est modifié
+      const maintenanceSettingId = settings.find(s => s.settingName === 'maintenance_enabled')?.id;
+      const maintenanceChanged = maintenanceSettingId && modifiedSettings[maintenanceSettingId] !== undefined;
+      const maintenanceEnabled = modifiedSettings[maintenanceSettingId] === '1';
+
       const promises = Object.entries(modifiedSettings).map(([id, value]) =>
         fetch(`/api/admin/settings/${id}`, {
           method: 'PUT',
@@ -107,7 +244,20 @@ export function SettingsTab({ refreshKey }) {
       const allSuccess = results.every(res => res.ok);
 
       if (allSuccess) {
-        setToast({ type: 'success', message: 'Paramètres sauvegardés avec succès !' });
+        // Toast personnalisé pour le mode maintenance
+        if (maintenanceChanged) {
+          if (maintenanceEnabled) {
+            const sessionInfo = await fetchActiveSessionsCount();
+            setToast({
+              type: 'success',
+              message: `Mode maintenance activé ! ${sessionInfo?.recentActiveUsers || 0} utilisateurs seront déconnectés.`
+            });
+          } else {
+            setToast({ type: 'success', message: 'Mode maintenance désactivé. Le site est de nouveau accessible.' });
+          }
+        } else {
+          setToast({ type: 'success', message: 'Paramètres sauvegardés avec succès !' });
+        }
         setModifiedSettings({});
         await fetchSettings();
       } else {
@@ -158,8 +308,15 @@ export function SettingsTab({ refreshKey }) {
     return <div className="p-8 text-center text-white">Chargement...</div>;
   }
 
-  // Grouper les settings par catégorie
+  // Settings à exclure de la liste générique (ont leur propre section dédiée)
+  const excludedSettings = ['subscription_mode_enabled'];
+
+  // Grouper les settings par catégorie (en excluant ceux avec section dédiée)
   const settingsByCategory = settings.reduce((acc, setting) => {
+    // Exclure les settings qui ont leur propre section dédiée
+    if (excludedSettings.includes(setting.settingName)) {
+      return acc;
+    }
     if (!acc[setting.category]) {
       acc[setting.category] = [];
     }
@@ -312,10 +469,69 @@ export function SettingsTab({ refreshKey }) {
 
     return (
       <div className="space-y-6">
-        {/* Note explicative pour valeur 0 */}
+        {/* Section Mode Abonnement (en haut des crédits) */}
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+          <h5 className="text-sm font-semibold text-blue-400 mb-3 flex items-center gap-2">
+            <span className="w-1 h-4 bg-blue-400 rounded"></span>
+            💳 Mode Abonnement
+          </h5>
+
+          {subscriptionMode.loading ? (
+            <div className="text-white/60 text-sm">Chargement...</div>
+          ) : (
+            <div className="space-y-3">
+              {/* Toggle mode abonnement */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white text-sm font-medium">Mode abonnement</p>
+                  <p className="text-white/60 text-xs">
+                    {subscriptionMode.enabled
+                      ? 'Plans + limites mensuelles + crédits pour dépasser'
+                      : 'Mode crédits uniquement - toutes features accessibles avec crédits'}
+                  </p>
+                </div>
+                <ToggleSwitch
+                  enabled={subscriptionMode.enabled}
+                  onChange={handleSubscriptionModeToggle}
+                />
+              </div>
+
+              {/* Statistiques compactes */}
+              <div className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2">
+                <span className="text-white/70 text-xs">Abonnés payants actifs :</span>
+                <span className="text-lg font-bold text-blue-400">
+                  {subscriptionMode.paidSubscribersCount}
+                </span>
+              </div>
+
+              {/* Bouton annuler tous les abonnements */}
+              {subscriptionMode.paidSubscribersCount > 0 && !subscriptionMode.enabled && (
+                <div className="border-t border-white/10 pt-3">
+                  <p className="text-orange-300 text-xs mb-2">
+                    ⚠️ Pour basculer complètement en mode crédits, annulez tous les abonnements payants.
+                  </p>
+                  <button
+                    onClick={() => {
+                      fetchCancelAllPreview();
+                      setShowCancelAllConfirm(true);
+                    }}
+                    className="px-3 py-1.5 text-xs bg-orange-500/20 text-orange-400 border border-orange-500/50 rounded-lg hover:bg-orange-500/30 transition font-medium"
+                  >
+                    📋 Annuler tous les abonnements payants
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Note explicative pour valeur 0 - conditionnelle selon le mode */}
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
           <p className="text-xs text-amber-300">
-            <strong>Note :</strong> Une valeur de <code className="bg-white/10 px-1 rounded">0</code> signifie que la fonctionnalité est réservée aux abonnés <strong>Premium</strong> (pas de consommation de crédits possible).
+            <strong>Note :</strong> Une valeur de <code className="bg-white/10 px-1 rounded">0</code> signifie que la fonctionnalité est {subscriptionMode.enabled
+              ? <>réservée aux abonnés <strong>Premium</strong> (pas de consommation de crédits possible)</>
+              : <><strong>gratuite</strong> (aucun crédit requis)</>
+            }.
           </p>
         </div>
 
@@ -353,8 +569,12 @@ export function SettingsTab({ refreshKey }) {
                             </span>
                           )}
                           {isPremiumOnly && (
-                            <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-400/30 rounded">
-                              Premium
+                            <span className={`text-xs px-2 py-0.5 rounded ${
+                              subscriptionMode.enabled
+                                ? 'bg-amber-500/20 text-amber-300 border border-amber-400/30'
+                                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
+                            }`}>
+                              {subscriptionMode.enabled ? 'Premium' : 'Gratuit'}
                             </span>
                           )}
                         </div>
@@ -493,6 +713,55 @@ export function SettingsTab({ refreshKey }) {
         </button>
       </div>
 
+      {/* Maintenance Mode Confirmation Modal */}
+      {showMaintenanceConfirm && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900/95 backdrop-blur-xl rounded-lg shadow-2xl border border-orange-500/30 p-6 max-w-md w-full">
+            <h3 className="text-xl font-semibold text-orange-400 mb-4">
+              🔧 Activer le mode maintenance ?
+            </h3>
+            <p className="text-white/80 mb-4">
+              Cette action va <strong className="text-white">déconnecter</strong> tous les utilisateurs non-admin à leur prochaine action.
+            </p>
+            {maintenanceInfo && (
+              <div className="bg-white/10 rounded-lg p-4 mb-4">
+                <p className="text-white/70 text-sm mb-2">Sessions potentiellement affectées :</p>
+                <div className="flex items-center gap-4">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-orange-400">
+                      {maintenanceInfo.recentActiveUsers}
+                    </p>
+                    <p className="text-xs text-white/60">utilisateurs actifs</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-white/60">
+                      (derniers {maintenanceInfo.sessionMaxAgeDays} jours)
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            <p className="text-orange-300 text-sm mb-6">
+              Les formulaires de connexion seront masqués. Seuls les administrateurs pourront se connecter.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={cancelMaintenanceToggle}
+                className="px-4 py-2 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmMaintenanceToggle}
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+              >
+                Activer la maintenance
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -527,6 +796,79 @@ export function SettingsTab({ refreshKey }) {
                 className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {deleting ? 'Suppression...' : 'Oui, supprimer tout'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel All Subscriptions Confirmation Modal */}
+      {showCancelAllConfirm && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900/95 backdrop-blur-xl rounded-lg shadow-2xl border border-orange-500/30 p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-semibold text-orange-400 mb-4">
+              ⚠️ Annuler tous les abonnements payants ?
+            </h3>
+
+            {cancelAllPreview ? (
+              <>
+                <div className="bg-white/10 rounded-lg p-4 mb-4">
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <p className="text-2xl font-bold text-orange-400">
+                        {cancelAllPreview.subscriptionsCount}
+                      </p>
+                      <p className="text-xs text-white/60">abonnements à annuler</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-green-400">
+                        {cancelAllPreview.totalRefund?.toFixed(2)} {cancelAllPreview.currency}
+                      </p>
+                      <p className="text-xs text-white/60">remboursement estimé (prorata)</p>
+                    </div>
+                  </div>
+                </div>
+
+                {cancelAllPreview.subscriptions?.length > 0 && (
+                  <div className="mb-4 max-h-40 overflow-y-auto">
+                    <p className="text-white/70 text-sm mb-2">Abonnements concernés :</p>
+                    <div className="space-y-1">
+                      {cancelAllPreview.subscriptions.map((sub, i) => (
+                        <div key={i} className="text-xs text-white/60 flex justify-between">
+                          <span>{sub.userEmail}</span>
+                          <span>{sub.planName} ({sub.prorataAmount?.toFixed(2)} {sub.currency})</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-orange-300 text-sm mb-6">
+                  Cette action va annuler tous les abonnements Stripe et rembourser les utilisateurs au prorata.
+                  <strong className="text-white"> Cette opération est irréversible.</strong>
+                </p>
+              </>
+            ) : (
+              <div className="text-white/60 py-4">Chargement de la prévisualisation...</div>
+            )}
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowCancelAllConfirm(false);
+                  setCancelAllPreview(null);
+                }}
+                disabled={cancellingAll}
+                className="px-4 py-2 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleCancelAllSubscriptions}
+                disabled={cancellingAll || !cancelAllPreview}
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {cancellingAll ? 'Annulation en cours...' : 'Confirmer l\'annulation'}
               </button>
             </div>
           </div>

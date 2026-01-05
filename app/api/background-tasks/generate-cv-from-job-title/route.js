@@ -18,7 +18,6 @@ export async function POST(request) {
     const formData = await request.formData();
     const jobTitle = formData.get("jobTitle");
     const language = formData.get("language") || "français";
-    const rawAnalysisLevel = formData.get("analysisLevel");
     const rawModel = formData.get("model");
     const deviceId = formData.get("deviceId") || "unknown-device";
     const recaptchaToken = formData.get("recaptchaToken");
@@ -40,16 +39,12 @@ export async function POST(request) {
     }
 
     const trimmedJobTitle = jobTitle.trim();
-
-    const requestedAnalysisLevel = typeof rawAnalysisLevel === "string" ? rawAnalysisLevel.trim().toLowerCase() : "medium";
     const requestedModel = typeof rawModel === "string" ? rawModel.trim() : "";
 
     const userId = session.user.id;
 
     // Vérifier les limites ET incrémenter le compteur/débiter le crédit
-    const usageResult = await incrementFeatureCounter(userId, 'generate_from_job_title', {
-      analysisLevel: requestedAnalysisLevel,
-    });
+    const usageResult = await incrementFeatureCounter(userId, 'generate_from_job_title');
 
     if (!usageResult.success) {
       return NextResponse.json({
@@ -70,7 +65,6 @@ export async function POST(request) {
     const taskPayload = {
       jobTitle: trimmedJobTitle,
       language: language,
-      analysisLevel: requestedAnalysisLevel,
       model: requestedModel,
     };
 

@@ -1,6 +1,9 @@
 {
   "maintenance": {
-    "registrationDisabled": "Maintenance in progress, registrations will be available again soon."
+    "registrationDisabled": "Due to FitMyCV's success, registrations are temporarily paused while we migrate to a more powerful server. They will be available again very soon!",
+    "modeEnabled": "FitMyCV is currently under maintenance. We are working to improve your experience. Please try again in a few minutes.",
+    "modeEnabledTitle": "Maintenance in progress",
+    "adminOnly": "Only administrators can log in during maintenance."
   },
   "topbar": {
     "loading": "Loading…",
@@ -9,6 +12,7 @@
     "myCvs": "My CVs",
     "myAccount": "My account",
     "subscriptions": "Subscriptions & Credits",
+    "subscriptions_credits_only": "Manage my credits",
     "logout": "Log out",
     "analyzeOffers": "Offer Analysis",
     "coverLetters": "Cover Letters",
@@ -22,11 +26,6 @@
     "cvInProgress": "CV in progress",
     "jobTitlePlaceholder": "Enter a job title (e.g., Full-Stack Developer)",
     "jobTitlePlaceholderMobile": "e.g., Full-Stack Developer",
-    "analysisLevels": {
-      "rapid": "Fast",
-      "medium": "Medium",
-      "deep": "Deep"
-    },
     "filter": "Filter",
     "filterTitle": "Filters",
     "filterCvType": "CV Type",
@@ -253,7 +252,9 @@
     "success": "Success",
     "close": "Close",
     "confirmation": "Confirmation",
-    "locale": "en-US"
+    "locale": "en-US",
+    "yes": "Yes",
+    "no": "No"
   },
   "editMode": {
     "on": "✏️ Edit ON",
@@ -356,5 +357,11 @@
         "4": "Enterprise"
       }
     }
+  },
+  "credits": {
+    "costLabel": "Cost",
+    "unit": "credit",
+    "unitPlural": "credits",
+    "useCredits": "Use {count} Cr."
   }
 }

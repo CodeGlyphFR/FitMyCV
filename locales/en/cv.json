@@ -1,5 +1,8 @@
 {
   "jobTitleGenerator": {
+    "confirmTitle": "Confirmation",
+    "confirmMessage": "This feature will consume {credits} credit(s). Do you want to continue?",
+    "confirmJobTitle": "Job title: \"{jobTitle}\"",
     "notifications": {
       "scheduled": "Generating CV for '{jobTitle}'...",
       "invalidTitle": "The title '{jobTitle}' doesn't seem to be a valid position",
@@ -37,12 +40,6 @@
     "files": "PDF job offers",
     "selection": "Selection:",
     "clearFiles": "Clear files",
-    "analysisQuality": "Analysis quality",
-    "analysisHints": {
-      "rapid": "Fastest analysis, for a quick overview.",
-      "medium": "Balance between speed and quality (recommended).",
-      "deep": "Complete analysis for optimized results."
-    },
     "cancel": "Cancel",
     "validate": "Validate",
     "upgradeTooltipLine1": "Upgrade to {planName}",
@@ -66,6 +63,7 @@
     "analysisQuality": "Analysis quality",
     "cancel": "Cancel",
     "import": "Import",
+    "importing": "Importing...",
     "notifications": {
       "scheduled": "Import '{fileName}' scheduled",
       "error": "Error scheduling import"
@@ -78,7 +76,7 @@
     "selectAll": "Select all",
     "deselectAll": "Deselect all",
     "experienceColumn": "Experience",
-    "includeDeliverables": "Include deliverables",
+    "includeDeliverables": "Include Results",
     "export": "Export",
     "exporting": "Exporting...",
     "cancel": "Cancel",
@@ -173,7 +171,7 @@
     "inProgress": "Current position",
     "projectInProgress": "Ongoing project",
     "responsibilities": "Responsibilities",
-    "deliverables": "Deliverables",
+    "deliverables": "Results",
     "skillsUsed": "Skills used",
     "technologies": "Technologies",
     "hardSkills": "Technical skills",
@@ -280,5 +278,37 @@
       "languages": "Languages",
       "projects": "Projects"
     }
+  },
+  "versions": {
+    "title": "Versions",
+    "current": "Current version",
+    "currentShort": "Current",
+    "latest": "Latest version",
+    "previous": "Previous version",
+    "selectVersion": "Select a version",
+    "noVersions": "No previous versions",
+    "noDescription": "No description",
+    "restore": "Restore",
+    "restoreTitle": "Restore this version (deletes current version)"
+  },
+  "review": {
+    "title": "Review change",
+    "before": "Before",
+    "after": "After",
+    "empty": "(empty)",
+    "accept": "Accept",
+    "reject": "Reject",
+    "acceptAll": "Accept all",
+    "rejectAll": "Reject all",
+    "accepted": "Accepted",
+    "rejected": "Rejected",
+    "pending": "pending change(s)",
+    "pendingImportantSingular": "important pending change",
+    "pendingImportantPlural": "important pending changes",
+    "modifications": "change(s)",
+    "progress": "{reviewed}/{total} reviewed",
+    "allReviewed": "All changes reviewed",
+    "processing": "Processing...",
+    "reason": "Reason"
   }
 }

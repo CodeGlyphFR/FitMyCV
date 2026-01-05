@@ -97,8 +97,6 @@ export async function POST(request) {
     const rawLinks = formData.get("links");
     const rawBaseFile = formData.get("baseFile");
     const rawBaseFileLabel = formData.get("baseFileLabel");
-    const rawAnalysisLevel = formData.get("analysisLevel");
-    const rawModel = formData.get("model");
     const taskId = formData.get("taskId");
     const deviceId = formData.get("deviceId") || "unknown-device";
     const recaptchaToken = formData.get("recaptchaToken");
@@ -133,8 +131,6 @@ export async function POST(request) {
 
     const requestedBaseFile = rawBaseFile ? sanitizeFilenameLocal(rawBaseFile) : "";
     const requestedBaseFileLabel = sanitizeLabel(rawBaseFileLabel);
-    const requestedAnalysisLevel = typeof rawAnalysisLevel === "string" ? rawAnalysisLevel.trim().toLowerCase() : "medium";
-    const requestedModel = typeof rawModel === "string" ? rawModel.trim() : "";
 
     const { directory: uploadsDirectory, saved: savedUploads, errors: uploadErrors } = await saveUploads(files);
 
@@ -162,9 +158,7 @@ export async function POST(request) {
       const link = links[i];
 
       // Vérifier les limites ET incrémenter le compteur/débiter le crédit
-      const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation', {
-        analysisLevel: requestedAnalysisLevel,
-      });
+      const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation');
 
       if (!usageResult.success) {
         if (i === 0 && links.length === 1 && savedUploads.length === 0) {
@@ -201,8 +195,6 @@ export async function POST(request) {
         links: [link],
         baseFile: requestedBaseFile,
         baseFileLabel: requestedBaseFileLabel,
-        analysisLevel: requestedAnalysisLevel,
-        model: requestedModel,
         uploads: [],
         uploadDirectory: null,
       };
@@ -244,9 +236,7 @@ export async function POST(request) {
       const upload = savedUploads[i];
 
       // Vérifier les limites ET incrémenter le compteur/débiter le crédit
-      const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation', {
-        analysisLevel: requestedAnalysisLevel,
-      });
+      const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation');
 
       if (!usageResult.success) {
         if (createdTasks.length === 0 && i === 0 && savedUploads.length === 1) {
@@ -273,8 +263,6 @@ export async function POST(request) {
         links: [],
         baseFile: requestedBaseFile,
         baseFileLabel: requestedBaseFileLabel,
-        analysisLevel: requestedAnalysisLevel,
-        model: requestedModel,
         uploads: [upload],
         uploadDirectory: uploadsDirectory,
       };

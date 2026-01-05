@@ -7,6 +7,7 @@ import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getLanguageLevelLabel } from "@/lib/i18n/cvLabels";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import { capitalizeSkillName, toTitleCase } from "@/lib/utils/textFormatting";
 
 export default function Languages(props){
   const { t } = useLanguage();
@@ -65,8 +66,8 @@ export default function Languages(props){
           {languages.map((l,i)=>(
             <div key={i} className="relative inline-block rounded-full border border-white/15 px-3 py-1 text-sm overflow-visible">
               <div className={editing ? "pr-12" : ""}>
-                <span className="font-semibold">{l.name || ""}</span>
-                <span className="text-sm opacity-80"> : {getLanguageLevelLabel(l.level, cvT) || l.level || ""}</span>
+                <span className="font-semibold">{toTitleCase(l.name) || ""}</span>
+                <span className="text-sm opacity-80"> : {getLanguageLevelLabel(l.level, cvT) || capitalizeSkillName(l.level) || ""}</span>
               </div>
               {editing && (
                 <div className="no-print absolute top-1/2 -translate-y-1/2 right-0 flex">

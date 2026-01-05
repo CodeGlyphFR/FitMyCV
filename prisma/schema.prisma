@@ -32,6 +32,7 @@ model User {
   featureUsage           FeatureUsage[]
   featureCounters        FeatureUsageCounter[]
   feedbacks              Feedback[]
+  jobOffers              JobOffer[]
   linkHistory            LinkHistory[]
   openaiCalls            OpenAICall[]
   openaiUsage            OpenAIUsage[]
@@ -78,13 +79,13 @@ model CvFile {
   contentVersion         Int                @default(1) // Numéro de version courante
   sourceType             String?
   sourceValue            String?
-  extractedJobOffer      String?
+  jobOfferId             String?            // Relation vers JobOffer (extraction structurée)
   createdBy              String?
   originalCreatedBy      String?
-  analysisLevel          String?
   isTranslated           Boolean            @default(false)
   language               String?            // Langue du CV (fr, en, es, de) - détectée à l'import
   matchScore             Int?
+  scoreBefore            Int?               // Score avant optimisation IA (conservé pour affichage)
   matchScoreUpdatedAt    DateTime?
   matchScoreStatus       String?            @default("idle")
   scoreBreakdown         String?
@@ -99,27 +100,64 @@ model CvFile {
   blocked                Boolean            @default(false)
   blockedAt              DateTime?
   blockedReason          String?
+  // Review state pour modifications IA
+  pendingChanges         Json?              // Array des changements avec statut (pending/accepted/rejected)
+  pendingSourceVersion   Int?               // Version à comparer pour les diffs
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
   user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   creditTransaction      CreditTransaction? @relation(fields: [creditTransactionId], references: [id])
+  jobOffer               JobOffer?          @relation(fields: [jobOfferId], references: [id], onDelete: SetNull)
   versions               CvVersion[]        // Historique des versions (optimisation IA)
 
   @@unique([userId, filename])
+  @@index([jobOfferId])
 }
 
 model CvVersion {
-  id        String   @id @default(cuid())
-  cvFileId  String
-  version   Int      // Numéro de version (1, 2, 3...)
-  content   Json     // Contenu JSON complet
-  changelog String?  // "Optimisation IA", "Restauration depuis v2"
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  cvFileId   String
+  version    Int      // Numéro de version (1, 2, 3...)
+  content    Json     // Contenu JSON complet
+  changelog  String?  // "Optimisation IA", "Restauration depuis v2"
+  changeType String?  // 'optimization' | 'adaptation' | 'restore'
+  sourceFile String?  // Pour adaptation: CV source de référence
+  createdAt  DateTime @default(now())
+
+  // Score data (copié depuis CvFile au moment de la création de version)
+  matchScore             Int?
+  scoreBreakdown         String?  @db.Text
+  improvementSuggestions String?  @db.Text
+  missingSkills          String?  @db.Text
+  matchingSkills         String?  @db.Text
 
   cvFile CvFile @relation(fields: [cvFileId], references: [id], onDelete: Cascade)
 
   @@unique([cvFileId, version])
   @@index([cvFileId, createdAt(sort: Desc)])
+}
+
+model JobOffer {
+  id              String   @id @default(cuid())
+  userId          String
+  sourceType      String   // 'url' | 'pdf'
+  sourceValue     String   // URL ou nom fichier PDF
+  contentHash     String?  // Hash SHA256 du contenu PDF (null pour URLs)
+  content         Json     // Extraction structurée JSON
+  extractedAt     DateTime @default(now())
+  extractionModel String   // Modèle IA utilisé pour l'extraction
+  tokensUsed      Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cvFiles CvFile[] // CVs générés à partir de cette offre
+
+  @@unique([userId, sourceValue])
+  @@index([userId])
+  @@index([sourceType])
+  @@index([userId, contentHash])
 }
 
 model BackgroundTask {
@@ -403,7 +441,6 @@ model SubscriptionPlanFeatureLimit {
   featureName           String
   isEnabled             Boolean          @default(true)
   usageLimit            Int              @default(-1)
-  allowedAnalysisLevels String?
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
   plan                  SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)

@@ -20,7 +20,7 @@ export async function GET() {
       return NextResponse.json({
         sourceType: null,
         sourceValue: null,
-        hasExtractedJobOffer: false,
+        hasJobOffer: false,
       });
     }
 
@@ -34,7 +34,7 @@ export async function GET() {
       select: {
         sourceType: true,
         sourceValue: true,
-        extractedJobOffer: true,
+        jobOfferId: true, // Vérifier si un JobOffer est associé
       },
     });
 
@@ -42,14 +42,14 @@ export async function GET() {
       return NextResponse.json({
         sourceType: null,
         sourceValue: null,
-        hasExtractedJobOffer: false,
+        hasJobOffer: false,
       });
     }
 
     return NextResponse.json({
       sourceType: cvFile.sourceType,
       sourceValue: cvFile.sourceValue,
-      hasExtractedJobOffer: !!cvFile.extractedJobOffer,
+      hasJobOffer: !!cvFile.jobOfferId,
     });
   } catch (error) {
     console.error("Erreur lors de la récupération de la source du CV:", error);

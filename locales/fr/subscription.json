@@ -2,7 +2,9 @@
   "subscription": {
     "page": {
       "title": "Abonnements & Crédits",
+      "title_credits_only": "Gérer mes crédits",
       "description": "Gérez votre abonnement, achetez des crédits et consultez votre historique.",
+      "description_credits_only": "Achetez des crédits pour utiliser les fonctionnalités avancées.",
       "backToCvs": "Retour",
       "loadingTitle": "Chargement...",
       "errorLoading": "Erreur lors du chargement des données",
