@@ -606,20 +606,42 @@ model PromoCode {
   @@index([validUntil])
 }
 
-model EmailTemplate {
-  id          String     @id @default(cuid())
-  name        String     @unique
-  subject     String
-  designJson  String
-  htmlContent String
-  variables   String
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  emailLogs   EmailLog[]
+model EmailTrigger {
+  id          String          @id @default(cuid())
+  name        String          @unique  // email_verification, password_reset, etc.
+  label       String                   // Nom affichable
+  description String?
+  variables   String                   // JSON array des variables disponibles
+  category    String          @default("general")
+  icon        String?
+  isSystem    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  templates   EmailTemplate[]
 
   @@index([name])
+  @@index([category])
+}
+
+model EmailTemplate {
+  id          String        @id @default(cuid())
+  name        String        // Nom du template (pas unique - plusieurs par trigger)
+  triggerId   String?
+  trigger     EmailTrigger? @relation(fields: [triggerId], references: [id], onDelete: SetNull)
+  subject     String
+  designJson  String        // JSON Maily/TipTap
+  htmlContent String
+  variables   String
+  isActive    Boolean       @default(false)
+  isDefault   Boolean       @default(false)  // Template par defaut global pour nouveaux templates
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  emailLogs   EmailLog[]
+
+  @@index([triggerId])
   @@index([isActive])
+  @@index([isDefault])
+  @@index([name])
 }
 
 model EmailLog {

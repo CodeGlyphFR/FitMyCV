@@ -73,10 +73,10 @@ export default function AnalyticsDashboard() {
     };
   }, [activeTab]);
 
-  // Auto-refresh every 10 seconds (skip for Settings tab)
+  // Auto-refresh every 10 seconds (skip for Settings and Emails tabs)
   useEffect(() => {
-    // Don't auto-refresh the Settings tab
-    if (activeTab === 'settings') return;
+    // Don't auto-refresh the Settings or Emails tabs (editor loses focus)
+    if (activeTab === 'settings' || activeTab === 'emails') return;
 
     const interval = setInterval(() => {
       setRefreshKey(prev => prev + 1);
