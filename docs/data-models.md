@@ -1,663 +1,497 @@
 # Modèles de Données - FitMyCV.io
 
-> Document généré automatiquement le 2026-01-07 par scan exhaustif du projet
-> **29 modèles Prisma** documentés
+> 33 modèles Prisma | PostgreSQL | Généré le 2026-01-07
+
+---
 
 ## Vue d'Ensemble
 
-- **ORM** : Prisma 6.16.2
-- **Base de données** : PostgreSQL 14+
-- **Stockage CV** : JSONB (colonne `CvFile.content`)
-
----
-
-## Schéma de Relations
-
 ```
-                    ┌─────────────────┐
-                    │      User       │
-                    └────────┬────────┘
-         ┌──────────────────┬┴───────────────────┬───────────────────┐
-         │                  │                    │                   │
-         ▼                  ▼                    ▼                   ▼
-┌─────────────────┐ ┌───────────────┐ ┌──────────────────┐ ┌──────────────────┐
-│    Account      │ │   CvFile      │ │  Subscription    │ │ CreditBalance    │
-│  (OAuth links)  │ │   (CVs)       │ │  (Plans)         │ │ (Crédits)        │
-└─────────────────┘ └───────┬───────┘ └────────┬─────────┘ └────────┬─────────┘
-                            │                  │                    │
-                    ┌───────┴───────┐          │                    │
-                    ▼               ▼          ▼                    ▼
-            ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-            │  CvVersion   │ │   JobOffer   │ │ FeatureLimit │ │CreditTrans.  │
-            │ (Historique) │ │ (Offres)     │ │ (Limites)    │ │(Transactions)│
-            └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                         USER DOMAIN                              │
+│  User ─┬─ Account (OAuth)                                       │
+│        ├─ CvFile ── CvVersion                                   │
+│        ├─ JobOffer                                              │
+│        ├─ Subscription ── SubscriptionPlan                      │
+│        ├─ CreditBalance ── CreditTransaction                    │
+│        └─ BackgroundTask                                        │
+├─────────────────────────────────────────────────────────────────┤
+│                       SYSTEM DOMAIN                              │
+│  Setting, FeatureMapping, OpenAIPricing, OpenAIAlert            │
+│  EmailTrigger ── EmailTemplate ── EmailLog                      │
+│  SubscriptionPlan ── SubscriptionPlanFeatureLimit               │
+│  CreditPack, PromoCode, Referral                                │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Modèles Détaillés
+## User & Authentication
 
 ### User
+Utilisateur principal de l'application.
 
-Utilisateur de l'application.
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | String (cuid) | Identifiant unique |
+| `name` | String? | Nom affiché |
+| `email` | String? (unique) | Email (login) |
+| `emailVerified` | DateTime? | Date vérification email |
+| `passwordHash` | String? | Hash bcrypt (credentials) |
+| `image` | String? | URL avatar |
+| `role` | String | "USER" \| "ADMIN" |
+| `stripeCustomerId` | String? | ID client Stripe |
+| `referralCode` | String? | Code parrainage unique |
+| `referredBy` | String? | Code du parrain |
+| `onboardingState` | Json? | État onboarding complet |
+| `createdAt` | DateTime | Date création |
+| `updatedAt` | DateTime | Dernière modification |
 
-```prisma
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  password      String?   // Hash bcrypt (null si OAuth uniquement)
-  role          Role      @default(USER)
-  emailVerified DateTime?
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Relations
-  accounts          Account[]
-  sessions          Session[]
-  cvFiles           CvFile[]
-  subscription      Subscription?
-  creditBalance     CreditBalance?
-  creditTransactions CreditTransaction[]
-  featureCounters   FeatureCounter[]
-  backgroundTasks   BackgroundTask[]
-  feedbacks         Feedback[]
-  telemetryEvents   TelemetryEvent[]
-  autoSignInTokens  AutoSignInToken[]
-  verificationTokens VerificationToken[]
-  passwordResetTokens PasswordResetToken[]
-  emailChangeRequests EmailChangeRequest[]
-  consentLogs       ConsentLog[]
-  onboardingState   Json?
-}
-
-enum Role {
-  USER
-  ADMIN
-}
-```
-
----
+**Relations** : accounts, cvs, subscription, creditBalance, backgroundTasks, featureUsage, referrals...
 
 ### Account
-
 Comptes OAuth liés (Google, GitHub, Apple).
 
-```prisma
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | String | Identifiant |
+| `userId` | String | → User.id |
+| `provider` | String | "google" \| "github" \| "apple" |
+| `providerAccountId` | String | ID chez le provider |
+| `access_token` | String? | Token d'accès |
+| `refresh_token` | String? | Token de refresh |
+| `expires_at` | Int? | Expiration (timestamp) |
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+**Contrainte** : `@@unique([provider, providerAccountId])`
 
-  @@unique([provider, providerAccountId])
-}
-```
+### VerificationToken
+Tokens de vérification email (NextAuth).
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `identifier` | String | Email |
+| `token` | String | Token unique |
+| `expires` | DateTime | Expiration |
 
 ---
+
+## CV Domain
 
 ### CvFile
+Document CV principal stocké en JSON.
 
-Fichier CV stocké en base de données.
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | String | Identifiant |
+| `userId` | String | → User.id |
+| `filename` | String | Nom fichier unique/user |
+| `content` | Json? | **Contenu CV complet** |
+| `contentVersion` | Int | Version courante |
+| `sourceType` | String? | "url" \| "pdf" \| "manual" \| "template" |
+| `sourceValue` | String? | URL source ou nom fichier |
+| `jobOfferId` | String? | → JobOffer.id |
+| `language` | String? | "fr" \| "en" \| "de" \| "es" |
+| `matchScore` | Int? | Score correspondance (0-100) |
+| `scoreBefore` | Int? | Score avant optimisation |
+| `optimiseStatus` | String? | "idle" \| "pending" \| "done" |
+| `pendingChanges` | Json? | Modifications IA en attente |
+| `blocked` | Boolean | CV bloqué (limite atteinte) |
 
-```prisma
-model CvFile {
-  id              String    @id @default(cuid())
-  userId          String
-  filename        String    // Ex: "1704067200000.json"
-  content         Json?     // Contenu CV complet (JSONB)
-
-  // Métadonnées source
-  sourceType      String?   // "link" | "pdf"
-  sourceValue     String?   // URL ou nom du fichier PDF
-  createdBy       String?   // "generate-cv" | "import-pdf" | "translate-cv"
-  language        String?   // "fr" | "en" | "de" | "es"
-
-  // Score de correspondance
-  matchScore            Int?
-  matchScoreBreakdown   Json?
-  scoreBefore           Int?      // Score avant optimisation
-  suggestions           Json?     // Suggestions d'amélioration
-  missingSkills         Json?
-  matchingSkills        Json?
-
-  // Versioning
-  contentVersion  Int       @default(1)
-
-  // Soft delete
-  deletedAt       DateTime?
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  // Relations
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  versions  CvVersion[]
-  jobOffer  JobOffer?   @relation(fields: [jobOfferId], references: [id])
-  jobOfferId String?
-
-  @@unique([userId, filename])
-}
-```
-
-**Structure JSON `content` :**
-```json
-{
-  "header": {
-    "full_name": "string",
-    "current_title": "string",
-    "email": "string",
-    "phone": "string",
-    "city": "string",
-    "region": "string",
-    "country_code": "string",
-    "links": [{"type": "linkedin|github|portfolio|other", "url": "string"}]
-  },
-  "summary": {
-    "headline": "string",
-    "description": "string",
-    "domains": ["string"],
-    "key_strengths": ["string"]
-  },
-  "skills": {
-    "hard_skills": ["string"],
-    "soft_skills": ["string"],
-    "tools": ["string"],
-    "methodologies": ["string"]
-  },
-  "experience": [{
-    "title": "string",
-    "company": "string",
-    "start_date": "YYYY-MM",
-    "end_date": "YYYY-MM|Present|null",
-    "location": "string",
-    "description": "string",
-    "responsibilities": ["string"],
-    "deliverables": ["string"],
-    "skills_used": ["string"]
-  }],
-  "education": [{
-    "degree": "string",
-    "institution": "string",
-    "year": "string",
-    "field": "string"
-  }],
-  "languages": [{
-    "name": "string",
-    "level": "Native|Fluent|Professional|Intermediate|Basic"
-  }],
-  "extras": [{
-    "category": "string",
-    "items": ["string"]
-  }],
-  "projects": [{
-    "title": "string",
-    "description": "string",
-    "technologies": ["string"],
-    "url": "string"
-  }],
-  "section_titles": {
-    "summary": "string",
-    "skills": "string",
-    "experience": "string",
-    "education": "string",
-    "languages": "string",
-    "extras": "string",
-    "projects": "string"
-  }
-}
-```
-
----
+**Index** : `@@unique([userId, filename])`, `@@index([jobOfferId])`
 
 ### CvVersion
+Historique des versions CV (pour rollback).
 
-Historique des versions d'un CV.
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | String | Identifiant |
+| `cvFileId` | String | → CvFile.id |
+| `version` | Int | Numéro de version |
+| `content` | Json | Contenu complet à cette version |
+| `changelog` | String? | Description du changement |
+| `changeType` | String? | "optimization" \| "adaptation" \| "restore" |
+| `matchScore` | Int? | Score à cette version |
 
-```prisma
-model CvVersion {
-  id          String   @id @default(cuid())
-  cvFileId    String
-  version     Int
-  content     Json     // Snapshot du CV
-  changelog   String?  // Description des changements
-  changeType  String?  // Type de modification
-  matchScore  Int?     // Score au moment de la version
-  createdAt   DateTime @default(now())
-
-  cvFile CvFile @relation(fields: [cvFileId], references: [id], onDelete: Cascade)
-
-  @@unique([cvFileId, version])
-}
-```
-
----
+**Contrainte** : `@@unique([cvFileId, version])`
 
 ### JobOffer
+Offre d'emploi extraite (source du CV généré).
 
-Offre d'emploi parsée.
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | String | Identifiant |
+| `userId` | String | → User.id |
+| `sourceType` | String | "url" \| "pdf" |
+| `sourceValue` | String | URL ou nom fichier |
+| `contentHash` | String? | Hash SHA256 du PDF |
+| `content` | Json | **Extraction structurée** |
+| `extractionModel` | String | Modèle IA utilisé |
+| `tokensUsed` | Int | Tokens consommés |
 
-```prisma
-model JobOffer {
-  id            String   @id @default(cuid())
-  contentHash   String   @unique  // SHA256 pour déduplication
-  rawContent    String   @db.Text // Contenu brut
-  parsedData    Json?    // Données structurées extraites
-  sourceUrl     String?  // URL source
-  sourceFilename String? // Nom fichier PDF
-  createdAt     DateTime @default(now())
-
-  cvFiles CvFile[]
-}
-```
+**Contrainte** : `@@unique([userId, sourceValue])`
 
 ---
 
-### Subscription
-
-Abonnement utilisateur.
-
-```prisma
-model Subscription {
-  id                    String   @id @default(cuid())
-  userId                String   @unique
-  planId                Int
-  status                String   @default("active") // active|inactive|cancelled|past_due
-  billingPeriod         String   @default("monthly") // monthly|yearly
-  stripeCustomerId      String?
-  stripeSubscriptionId  String?
-  currentPeriodStart    DateTime
-  currentPeriodEnd      DateTime
-  cancelAtPeriodEnd     Boolean  @default(false)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan SubscriptionPlan @relation(fields: [planId], references: [id])
-}
-```
-
----
-
-### SubscriptionPlan
-
-Plans d'abonnement disponibles.
-
-```prisma
-model SubscriptionPlan {
-  id                    Int      @id @default(autoincrement())
-  name                  String
-  tier                  Int      @default(0) // 0=Free, 1=Basic, 2=Pro, 3=Enterprise
-  priceMonthly          Float
-  priceYearly           Float
-  stripePriceIdMonthly  String?
-  stripePriceIdYearly   String?
-  isActive              Boolean  @default(true)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  subscriptions Subscription[]
-  featureLimits SubscriptionPlanFeatureLimit[]
-}
-```
-
----
-
-### SubscriptionPlanFeatureLimit
-
-Limites de features par plan.
-
-```prisma
-model SubscriptionPlanFeatureLimit {
-  id           Int      @id @default(autoincrement())
-  planId       Int
-  featureName  String
-  monthlyLimit Int?     // null = illimité
-  creditCost   Int?     // Coût si dépassement
-  createdAt    DateTime @default(now())
-
-  plan SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-
-  @@unique([planId, featureName])
-}
-```
-
----
-
-### CreditBalance
-
-Solde de crédits utilisateur.
-
-```prisma
-model CreditBalance {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-  balance        Int      @default(0)
-  totalPurchased Int      @default(0)
-  totalUsed      Int      @default(0)
-  totalRefunded  Int      @default(0)
-  totalGifted    Int      @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-```
-
----
-
-### CreditTransaction
-
-Transactions de crédits.
-
-```prisma
-model CreditTransaction {
-  id           String    @id @default(cuid())
-  userId       String
-  amount       Int       // Positif = crédit, négatif = débit
-  type         String    // purchase|usage|refund|gift
-  featureName  String?   // Feature concernée
-  metadata     Json?
-  refundedAt   DateTime?
-  refundReason String?
-  createdAt    DateTime  @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-```
-
----
-
-### FeatureCounter
-
-Compteurs d'usage mensuels.
-
-```prisma
-model FeatureCounter {
-  id          String   @id @default(cuid())
-  userId      String
-  featureName String
-  count       Int      @default(0)
-  periodStart DateTime
-  periodEnd   DateTime
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, featureName, periodStart])
-}
-```
-
----
-
-### CreditPack
-
-Packs de crédits à l'achat.
-
-```prisma
-model CreditPack {
-  id            Int      @id @default(autoincrement())
-  creditAmount  Int
-  priceInCents  Int
-  currency      String   @default("eur")
-  stripePriceId String?
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-```
-
----
+## Background Tasks
 
 ### BackgroundTask
+Tâches asynchrones (génération CV, import PDF...).
 
-Tâches en arrière-plan.
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | String | Identifiant (UUID) |
+| `title` | String | Titre affiché |
+| `type` | String | Type de tâche |
+| `status` | String | "queued" \| "running" \| "completed" \| "failed" |
+| `createdAt` | BigInt | Timestamp création |
+| `result` | String? | Résultat JSON |
+| `error` | String? | Message d'erreur |
+| `payload` | String? | Payload JSON |
+| `deviceId` | String | ID device client |
+| `userId` | String? | → User.id |
+| `cvFile` | String? | Filename concerné |
+| `creditUsed` | Boolean | Crédit débité |
+| `featureName` | String? | Feature associée |
 
-```prisma
-model BackgroundTask {
-  id        String   @id @default(cuid())
-  userId    String
-  title     String
-  type      String   // generation|import|improve-cv|translate|match-score
-  status    String   @default("queued") // queued|running|completed|failed|cancelled
-  payload   Json?    // Paramètres d'entrée
-  result    Json?    // Résultat (success ou erreur)
-  error     String?
-  deviceId  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+**Index** : `@@index([deviceId])`, `@@index([status])`, `@@index([cvFile, status])`
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-```
+---
+
+## Subscription & Credits
+
+### SubscriptionPlan
+Plans d'abonnement disponibles.
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | Int | Identifiant auto |
+| `name` | String | "free" \| "starter" \| "pro" \| "enterprise" |
+| `description` | String? | Description |
+| `isFree` | Boolean | Plan gratuit |
+| `tier` | Int | Niveau (0, 1, 2, 3) |
+| `priceMonthly` | Float | Prix mensuel EUR |
+| `priceYearly` | Float | Prix annuel EUR |
+| `yearlyDiscountPercent` | Float | % réduction annuel |
+| `stripeProductId` | String? | ID produit Stripe |
+| `stripePriceIdMonthly` | String? | ID prix mensuel |
+| `stripePriceIdYearly` | String? | ID prix annuel |
+
+### SubscriptionPlanFeatureLimit
+Limites par feature par plan.
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `planId` | Int | → SubscriptionPlan.id |
+| `featureName` | String | Nom feature |
+| `isEnabled` | Boolean | Feature activée |
+| `usageLimit` | Int | Limite (-1 = illimité) |
+
+**Contrainte** : `@@unique([planId, featureName])`
+
+### Subscription
+Abonnement utilisateur actif.
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | String | Identifiant |
+| `userId` | String | → User.id (unique) |
+| `stripeCustomerId` | String | ID client Stripe |
+| `stripeSubscriptionId` | String? | ID abonnement Stripe |
+| `planId` | Int | → SubscriptionPlan.id |
+| `status` | String | "active" \| "canceled" \| "past_due" |
+| `billingPeriod` | String | "monthly" \| "yearly" |
+| `currentPeriodStart` | DateTime | Début période |
+| `currentPeriodEnd` | DateTime | Fin période |
+| `cancelAtPeriodEnd` | Boolean | Annulation programmée |
+
+### CreditBalance
+Solde de crédits utilisateur.
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `userId` | String | → User.id (unique) |
+| `balance` | Int | Solde actuel |
+| `totalPurchased` | Int | Total acheté |
+| `totalUsed` | Int | Total utilisé |
+| `totalRefunded` | Int | Total remboursé |
+| `totalGifted` | Int | Total offert |
+
+### CreditTransaction
+Historique transactions crédits.
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | String | Identifiant |
+| `userId` | String | → User.id |
+| `amount` | Int | Montant (+/-) |
+| `type` | String | "purchase" \| "usage" \| "refund" \| "gift" \| "welcome" |
+| `featureName` | String? | Feature concernée |
+| `taskId` | String? | → BackgroundTask.id |
+| `cvFileId` | String? | CV concerné |
+| `stripePaymentIntentId` | String? | ID paiement Stripe |
+| `refunded` | Boolean | Transaction remboursée |
+
+### CreditPack
+Packs de crédits à acheter.
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | Int | Identifiant |
+| `name` | String | Nom du pack |
+| `creditAmount` | Int | Nombre de crédits |
+| `price` | Float | Prix EUR |
+| `isActive` | Boolean | Pack disponible |
+| `stripePriceId` | String? | ID prix Stripe |
+
+### FeatureUsageCounter
+Compteur mensuel par feature/user.
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `userId` | String | → User.id |
+| `featureName` | String | Nom feature |
+| `count` | Int | Compteur actuel |
+| `periodStart` | DateTime | Début période |
+| `periodEnd` | DateTime | Fin période |
+
+**Contrainte** : `@@unique([userId, featureName])`
 
 ---
 
-### EmailTemplate
-
-Templates email Maily.to.
-
-```prisma
-model EmailTemplate {
-  id          String   @id @default(cuid())
-  name        String
-  subject     String
-  htmlContent String?  @db.Text
-  designJson  String?  @db.Text  // JSON Maily.to
-  variables   String?  // Variables disponibles (JSON)
-  triggerId   String?
-  isDefault   Boolean  @default(false)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  trigger EmailTrigger? @relation(fields: [triggerId], references: [id])
-}
-```
-
----
+## Email System
 
 ### EmailTrigger
+Déclencheurs d'emails (événements système).
 
-Déclencheurs d'envoi email.
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | String | Identifiant |
+| `name` | String | "email_verification" \| "password_reset" \| ... |
+| `label` | String | Nom affichable |
+| `variables` | String | Variables disponibles (JSON) |
+| `category` | String | Catégorie |
+| `isSystem` | Boolean | Trigger système (non supprimable) |
 
-```prisma
-model EmailTrigger {
-  id          String   @id @default(cuid())
-  name        String   @unique // email_verification, password_reset, etc.
-  description String?
-  createdAt   DateTime @default(now())
+### EmailTemplate
+Templates email avec design Maily.
 
-  templates EmailTemplate[]
-}
-```
-
----
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | String | Identifiant |
+| `name` | String | Nom du template |
+| `triggerId` | String? | → EmailTrigger.id |
+| `subject` | String | Sujet email |
+| `designJson` | String | Design Maily/TipTap |
+| `htmlContent` | String | HTML généré |
+| `variables` | String | Variables utilisées |
+| `isActive` | Boolean | Template actif |
+| `isDefault` | Boolean | Template par défaut |
 
 ### EmailLog
+Historique des emails envoyés.
 
-Logs d'envoi email.
-
-```prisma
-model EmailLog {
-  id         String   @id @default(cuid())
-  userId     String?
-  to         String
-  subject    String
-  templateId String?
-  provider   String   // smtp|resend
-  status     String   // sent|failed
-  error      String?
-  messageId  String?
-  createdAt  DateTime @default(now())
-}
-```
+| Champ | Type | Description |
+|-------|------|-------------|
+| `templateId` | String? | → EmailTemplate.id |
+| `templateName` | String | Nom (snapshot) |
+| `recipientEmail` | String | Destinataire |
+| `recipientUserId` | String? | → User.id |
+| `subject` | String | Sujet |
+| `status` | String | "sent" \| "failed" \| "bounced" |
+| `error` | String? | Erreur si échec |
+| `provider` | String | "smtp" \| "resend" |
+| `providerId` | String? | ID message provider |
 
 ---
+
+## Analytics & Monitoring
 
 ### TelemetryEvent
+Événements utilisateur trackés.
 
-Événements analytics.
+| Champ | Type | Description |
+|-------|------|-------------|
+| `userId` | String? | → User.id |
+| `type` | String | Type événement |
+| `category` | String | Catégorie |
+| `metadata` | String? | Données JSON |
+| `deviceId` | String? | ID device |
+| `duration` | Int? | Durée (ms) |
+| `status` | String? | Statut |
+| `error` | String? | Erreur |
+| `timestamp` | DateTime | Horodatage |
 
-```prisma
-model TelemetryEvent {
-  id        String   @id @default(cuid())
-  userId    String?
-  type      String   // CV_GENERATED, USER_LOGIN, etc.
-  status    String?  // success|error
-  metadata  Json?
-  duration  Int?     // Durée en ms
-  createdAt DateTime @default(now())
+### FeatureUsage
+Usage agrégé par feature/user.
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
-}
-```
+| Champ | Type | Description |
+|-------|------|-------------|
+| `userId` | String | → User.id |
+| `featureName` | String | Nom feature |
+| `usageCount` | Int | Total utilisations |
+| `totalDuration` | Int | Durée totale (ms) |
+| `lastUsedAt` | DateTime | Dernière utilisation |
+
+### OpenAIUsage
+Usage OpenAI agrégé par jour/feature/model.
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `userId` | String | → User.id |
+| `featureName` | String | Feature |
+| `model` | String | Modèle GPT |
+| `date` | DateTime | Jour |
+| `promptTokens` | Int | Tokens prompt |
+| `cachedTokens` | Int | Tokens cachés |
+| `completionTokens` | Int | Tokens completion |
+| `estimatedCost` | Float | Coût estimé USD |
+| `callsCount` | Int | Nombre d'appels |
+
+### OpenAICall
+Détail de chaque appel OpenAI.
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `userId` | String | → User.id |
+| `featureName` | String | Feature |
+| `model` | String | Modèle |
+| `promptTokens` | Int | Tokens prompt |
+| `completionTokens` | Int | Tokens completion |
+| `estimatedCost` | Float | Coût USD |
+| `duration` | Int? | Durée (ms) |
+
+### OpenAIPricing
+Tarification par modèle.
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `modelName` | String | Nom modèle |
+| `inputPricePerMToken` | Float | Prix input/M tokens |
+| `outputPricePerMToken` | Float | Prix output/M tokens |
+| `cachePricePerMToken` | Float | Prix cache/M tokens |
+| `isActive` | Boolean | Modèle actif |
+
+### OpenAIAlert
+Alertes budget OpenAI.
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `type` | String | Type alerte |
+| `threshold` | Float | Seuil |
+| `enabled` | Boolean | Alerte active |
+| `name` | String | Nom |
 
 ---
+
+## Other Models
 
 ### Setting
+Paramètres globaux application.
 
-Paramètres système.
+| Champ | Type | Description |
+|-------|------|-------------|
+| `settingName` | String | Clé unique |
+| `value` | String | Valeur |
+| `category` | String | Catégorie |
+| `description` | String? | Description |
 
-```prisma
-model Setting {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  value     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-```
+### FeatureMapping
+Mapping features → settings/pricing.
 
-**Settings importants :**
-- `subscription_mode_enabled` : Active/désactive le mode abonnement
-- `maintenance_enabled` : Mode maintenance
-- `registration_enabled` : Autorise les inscriptions
-- `welcome_credits` : Bonus crédits de bienvenue
-- `cv_max_versions` : Nombre max de versions conservées
-- `cv_generation_model` : Modèle GPT utilisé
-
----
+| Champ | Type | Description |
+|-------|------|-------------|
+| `featureKey` | String | Clé feature |
+| `displayName` | String | Nom affiché |
+| `settingNames` | Json | Settings associés |
+| `openAICallNames` | Json | Appels OpenAI |
+| `planFeatureNames` | Json | Features plan |
 
 ### Feedback
+Retours utilisateurs.
 
-Feedbacks utilisateurs.
-
-```prisma
-model Feedback {
-  id            String   @id @default(cuid())
-  userId        String
-  rating        Int      // 1-5
-  comment       String?
-  isBugReport   Boolean  @default(false)
-  currentCvFile String?
-  userAgent     String?
-  pageUrl       String?
-  createdAt     DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-```
-
----
+| Champ | Type | Description |
+|-------|------|-------------|
+| `userId` | String | → User.id |
+| `rating` | Int | Note (1-5) |
+| `comment` | String | Commentaire |
+| `isBugReport` | Boolean | Est un bug report |
+| `status` | String | "new" \| "reviewed" \| "resolved" |
 
 ### ConsentLog
+Historique consentements RGPD.
 
-Logs de consentement RGPD.
+| Champ | Type | Description |
+|-------|------|-------------|
+| `userId` | String | → User.id |
+| `action` | String | Action ("accept" \| "reject" \| "update") |
+| `preferences` | String | Préférences JSON |
+| `ip` | String? | Adresse IP |
 
-```prisma
-model ConsentLog {
-  id          String   @id @default(cuid())
-  userId      String
-  consentType String
-  accepted    Boolean
-  createdAt   DateTime @default(now())
+### Referral
+Parrainages.
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+| Champ | Type | Description |
+|-------|------|-------------|
+| `referrerId` | String | → User.id (parrain) |
+| `referredUserId` | String | → User.id (filleul) |
+| `referralCode` | String | Code utilisé |
+| `status` | String | "pending" \| "completed" |
+| `referrerReward` | Int | Crédits parrain |
+| `referredReward` | Int | Crédits filleul |
+
+### PromoCode
+Codes promotionnels.
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `code` | String | Code unique |
+| `type` | String | Type promo |
+| `discountType` | String? | "percentage" \| "fixed" |
+| `discountValue` | Float? | Valeur réduction |
+| `creditBonus` | Int? | Crédits bonus |
+| `maxUses` | Int? | Utilisations max |
+| `currentUses` | Int | Utilisations actuelles |
+| `validFrom` | DateTime | Début validité |
+| `validUntil` | DateTime? | Fin validité |
+| `isActive` | Boolean | Code actif |
+
+### StripeWebhookLog
+Logs webhooks Stripe.
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `eventId` | String | ID événement Stripe |
+| `eventType` | String | Type événement |
+| `payload` | String | Payload JSON |
+| `processed` | Boolean | Traité |
+| `error` | String? | Erreur |
+
+---
+
+## Schéma Relationnel
+
 ```
+User (1) ─────────────── (N) Account
+  │
+  ├── (1) ─────────────── (N) CvFile ──── (N) CvVersion
+  │                          │
+  │                          └── (N) ──── (1) JobOffer
+  │
+  ├── (1) ─────────────── (1) Subscription ──── SubscriptionPlan
+  │
+  ├── (1) ─────────────── (1) CreditBalance
+  │
+  ├── (1) ─────────────── (N) CreditTransaction
+  │
+  ├── (1) ─────────────── (N) BackgroundTask
+  │
+  ├── (1) ─────────────── (N) FeatureUsage
+  │
+  ├── (1) ─────────────── (N) TelemetryEvent
+  │
+  └── (1) ─────────────── (N) Referral (as referrer & referred)
 
----
+SubscriptionPlan (1) ── (N) SubscriptionPlanFeatureLimit
 
-### Tokens d'Authentification
-
-```prisma
-model VerificationToken {
-  id      String   @id @default(cuid())
-  userId  String
-  token   String   @unique
-  expires DateTime
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model PasswordResetToken {
-  id      String   @id @default(cuid())
-  userId  String
-  token   String   @unique
-  expires DateTime
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model AutoSignInToken {
-  id      String   @id @default(cuid())
-  userId  String
-  token   String   @unique
-  expires DateTime
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model EmailChangeRequest {
-  id       String   @id @default(cuid())
-  userId   String
-  newEmail String
-  token    String   @unique
-  expires  DateTime
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+EmailTrigger (1) ────── (N) EmailTemplate ──── (N) EmailLog
 ```
-
----
-
-## Index et Contraintes
-
-### Index Principaux
-- `User.email` : UNIQUE
-- `Account.provider + providerAccountId` : UNIQUE
-- `CvFile.userId + filename` : UNIQUE
-- `CvVersion.cvFileId + version` : UNIQUE
-- `JobOffer.contentHash` : UNIQUE
-- `FeatureCounter.userId + featureName + periodStart` : UNIQUE
-
-### Cascade Delete
-- Suppression User → Supprime tous les CVs, abonnements, crédits, tâches
-- Suppression CvFile → Supprime toutes les versions
-
----
-
-## Migrations
-
-14 migrations appliquées, incluant :
-1. `0_init_baseline` - Schema initial
-2. `20251204154619_refactor_feature_usage_counter` - Compteurs features
-3. `20251205180457_add_cv_content_and_versioning` - Stockage CV en JSONB
-4. `20251206180000_add_job_offer_table` - Table JobOffer
-5. `20260105111045_add_email_triggers` - Système triggers email

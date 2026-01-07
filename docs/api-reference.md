@@ -1,680 +1,684 @@
 # Référence API - FitMyCV.io
 
-> Document généré automatiquement le 2026-01-07 par scan exhaustif du projet
-> **110 endpoints** documentés
+> 127 endpoints documentés | Généré le 2026-01-07
+
+---
 
 ## Vue d'Ensemble
 
-- **Base URL** : `/api`
-- **Authentification** : NextAuth.js JWT (cookie automatique)
-- **Format** : JSON
+Base URL: `/api`
+Authentication: JWT via NextAuth (header `Authorization: Bearer <token>` ou cookie session)
 
----
-
-## Table des Matières
-
-1. [Authentification (9 endpoints)](#authentification)
-2. [Gestion Compte (6 endpoints)](#gestion-compte)
-3. [Opérations CV (13 endpoints)](#opérations-cv)
-4. [Tâches Background (8 endpoints)](#tâches-background)
-5. [Abonnements (11 endpoints)](#abonnements)
-6. [Crédits (3 endpoints)](#crédits)
-7. [Checkout (3 endpoints)](#checkout)
-8. [Administration (33 endpoints)](#administration)
-9. [Analytics (8 endpoints)](#analytics)
-10. [Webhooks (1 endpoint)](#webhooks)
-11. [Divers (5+ endpoints)](#divers)
-
----
-
-## Authentification
-
-### `POST /api/auth/register`
-Inscription utilisateur avec email/password.
-
-**Body :**
-```json
-{
-  "firstName": "string",
-  "lastName": "string",
-  "email": "string",
-  "password": "string",
-  "recaptchaToken": "string (optionnel)"
-}
-```
-
-**Réponse :** `{ "ok": true, "userId": "string" }`
-
----
-
-### `GET /api/auth/verify-email?token=xxx`
-Vérifie l'email utilisateur.
-
-**Réponse :** `{ "success": true, "user": {...} }`
-
----
-
-### `POST /api/auth/resend-verification`
-Renvoie l'email de vérification.
-
-**Auth requise** : Oui
-
----
-
-### `POST /api/auth/request-reset`
-Demande réinitialisation mot de passe.
-
-**Body :** `{ "email": "string" }`
-
----
-
-### `POST /api/auth/reset-password`
-Réinitialise le mot de passe.
-
-**Body :** `{ "token": "string", "newPassword": "string" }`
-
----
-
-### `GET /api/auth/verify-reset-token?token=xxx`
-Vérifie validité du token de reset.
-
----
-
-### `POST /api/auth/[...nextauth]`
-Endpoints NextAuth (signin, signout, callback).
-
----
-
-## Gestion Compte
-
-### `PUT /api/account/profile`
-Met à jour nom et/ou email.
-
-**Auth requise** : Oui
-
-**Body :**
-```json
-{
-  "name": "string (optionnel)",
-  "email": "string (optionnel)"
-}
-```
-
----
-
-### `PUT /api/account/password`
-Change le mot de passe.
-
-**Auth requise** : Oui
-
-**Body :**
-```json
-{
-  "currentPassword": "string",
-  "newPassword": "string"
-}
-```
-
----
-
-### `DELETE /api/account/delete`
-Supprime définitivement le compte.
-
-**Auth requise** : Oui
-
-**Body :**
-```json
-{
-  "password": "string (pour non-OAuth)",
-  "email": "string (pour OAuth)"
-}
-```
-
----
-
-### `GET /api/account/linked-accounts`
-Liste les comptes OAuth liés.
-
-**Auth requise** : Oui
-
----
-
-### `POST /api/account/link-oauth`
-Initie la liaison d'un compte OAuth.
-
-**Body :** `{ "provider": "google|github|apple" }`
-
----
-
-### `POST /api/account/unlink-oauth`
-Délie un compte OAuth.
-
-**Body :** `{ "provider": "google|github|apple" }`
-
----
-
-## Opérations CV
-
-### `GET /api/cvs`
-Liste tous les CVs de l'utilisateur.
-
-**Auth requise** : Oui
-
-**Réponse :**
-```json
-{
-  "items": [{
-    "file": "timestamp.json",
-    "label": "date - title",
-    "title": "string",
-    "sourceType": "link|pdf|null",
-    "isGenerated": boolean,
-    "language": "fr|en|de|es",
-    "createdAt": "ISO date"
-  }],
-  "current": "filename"
-}
-```
-
----
-
-### `GET /api/cvs/read?file=xxx.json`
-Récupère le contenu d'un CV.
-
-**Auth requise** : Oui
-
-**Réponse :** `{ "cv": {...} }`
-
----
-
-### `POST /api/cvs/create`
-Crée un nouveau CV vide.
-
-**Auth requise** : Oui
-
-**Body :**
-```json
-{
-  "full_name": "string",
-  "current_title": "string",
-  "email": "string"
-}
-```
-
----
-
-### `POST /api/cvs/delete`
-Supprime un CV.
-
-**Body :** `{ "file": "filename.json" }`
-
----
-
-### `GET /api/cvs/versions?file=xxx.json`
-Récupère l'historique des versions.
-
-**Réponse :**
-```json
-{
-  "versions": [{
-    "version": number,
-    "changelog": "string",
-    "createdAt": "ISO date",
-    "matchScore": number
-  }]
-}
-```
-
----
-
-### `POST /api/cvs/versions`
-Restaure une version précédente.
-
-**Body :**
-```json
-{
-  "filename": "string",
-  "version": number,
-  "action": "restore"
-}
-```
-
----
-
-### `POST /api/cv/improve`
-Optimise un CV avec l'IA.
-
-**Auth requise** : Oui
-
-**Body :**
-```json
-{
-  "cvFile": "filename.json",
-  "replaceExisting": boolean
-}
-```
-
-**Réponse :** `{ "success": true, "taskId": "string" }` (202)
-
----
-
-### `POST /api/cv/match-score`
-Calcule le score de correspondance.
-
-**Body :** `{ "cvFile": "filename.json" }`
-
-**Réponse :**
-```json
-{
-  "score": number,
-  "scoreBreakdown": {...},
-  "suggestions": [...],
-  "missingSkills": [...],
-  "matchingSkills": [...]
-}
-```
-
----
-
-### `GET /api/cv/match-score?file=xxx.json`
-Récupère le score existant (sans recalcul).
-
----
-
-### `POST /api/cv/can-create`
-Vérifie si l'utilisateur peut créer un CV.
-
-**Réponse :** `{ "canCreate": boolean, "limit": number, "current": number }`
-
----
-
-## Tâches Background
-
-### `POST /api/background-tasks/generate-cv`
-Lance la génération CV depuis une offre.
-
-**Content-Type** : `multipart/form-data`
-
-**Form Fields :**
-- `links` : JSON array d'URLs
-- `files` : Fichiers PDF
-- `baseFile` : CV source (optionnel)
-- `deviceId` : Identifiant appareil
-
-**Réponse :** `{ "success": true, "queued": true, "taskIds": [...] }` (202)
-
----
-
-### `POST /api/background-tasks/import-pdf`
-Importe un PDF comme CV.
-
-**Content-Type** : `multipart/form-data`
-
-**Form Fields :**
-- `pdfFile` : Fichier PDF
-- `deviceId` : Identifiant appareil
-
-**Réponse :** `{ "success": true, "taskId": "string" }` (202)
-
----
-
-### `POST /api/background-tasks/translate-cv`
-Traduit un CV.
-
-**Body :**
-```json
-{
-  "cvFile": "filename.json",
-  "targetLanguage": "fr|en|de|es"
-}
-```
-
----
-
-### `GET /api/background-tasks/sync`
-Synchronise l'état des tâches.
-
-**Query :** `?deviceId=xxx&since=timestamp`
-
-**Réponse :**
-```json
-{
-  "tasks": [{
-    "id": "string",
-    "type": "generation|import|improve-cv|translate",
-    "status": "queued|running|completed|failed",
-    "result": {...}
-  }]
-}
-```
-
----
-
-### `DELETE /api/background-tasks/sync?taskId=xxx&action=cancel`
-Annule ou supprime une tâche.
-
----
-
-## Abonnements
-
-### `GET /api/subscription/current`
-Récupère l'abonnement actuel.
-
-**Réponse :**
-```json
-{
-  "id": "string",
-  "status": "active|inactive|cancelled",
-  "plan": {
-    "name": "string",
-    "tier": number,
-    "priceMonthly": number
-  },
-  "billingPeriod": "monthly|yearly",
-  "currentPeriodEnd": "ISO date"
-}
-```
-
----
-
-### `GET /api/subscription/plans`
-Liste les plans disponibles (public).
-
----
-
-### `POST /api/subscription/change`
-Change de plan.
-
-**Body :**
-```json
-{
-  "planId": number,
-  "billingPeriod": "monthly|yearly"
-}
-```
-
----
-
-### `POST /api/subscription/cancel`
-Annule l'abonnement.
-
-**Body :** `{ "immediate": boolean }`
-
----
-
-### `POST /api/subscription/reactivate`
-Réactive un abonnement annulé.
-
----
-
-### `GET /api/subscription/billing-portal`
-URL du portail Stripe.
-
-**Réponse :** `{ "url": "https://billing.stripe.com/..." }`
-
----
-
-## Crédits
-
-### `GET /api/credits/balance`
-Solde de crédits.
-
-**Réponse :** `{ "balance": number }`
-
----
-
-### `GET /api/credits/transactions`
-Historique des transactions.
-
----
-
-### `GET /api/credits/costs`
-Coûts des features en crédits.
-
-**Réponse :**
-```json
-{
-  "features": {
-    "gpt_cv_generation": number,
-    "import_pdf": number,
-    "translate_cv": number,
-    "export_cv": number
-  }
-}
-```
-
----
-
-## Checkout
-
-### `POST /api/checkout/subscription`
-Crée une session Stripe pour abonnement.
-
-**Body :**
-```json
-{
-  "planId": number,
-  "billingPeriod": "monthly|yearly"
-}
-```
-
-**Réponse :** `{ "url": "https://checkout.stripe.com/..." }`
-
----
-
-### `POST /api/checkout/credits`
-Crée une session pour achat de crédits.
-
-**Body :** `{ "packId": number }`
-
----
-
-### `POST /api/checkout/verify`
-Vérifie une session checkout.
-
----
-
-## Administration
-
-> Tous les endpoints admin nécessitent `role: ADMIN`
-
-### `GET /api/admin/users`
-Liste les utilisateurs avec pagination.
-
-**Query :** `?page=1&limit=10&role=USER&search=xxx`
-
----
-
-### `POST /api/admin/users`
-Crée un utilisateur manuellement.
-
----
-
-### `GET /api/admin/settings`
-Récupère tous les paramètres système.
-
----
-
-### `POST /api/admin/settings`
-Met à jour un paramètre.
-
-**Body :** `{ "settingName": "string", "value": "string" }`
-
----
-
-### `GET /api/admin/email-templates`
-Liste les templates email.
-
----
-
-### `POST /api/admin/email-templates`
-Crée un template email.
-
----
-
-### `PUT /api/admin/email-templates/[id]`
-Met à jour un template.
-
----
-
-### `POST /api/admin/email-test`
-Envoie un email de test.
-
----
-
-### `GET /api/admin/subscription-plans`
-Liste les plans (vue admin).
-
----
-
-### `POST /api/admin/subscription-plans`
-Crée un plan.
-
----
-
-### `GET /api/admin/credit-packs`
-Liste les packs de crédits.
-
----
-
-### `GET /api/admin/revenue`
-Statistiques de revenus.
-
----
-
-### `GET /api/admin/openai-balance`
-Solde OpenAI.
-
----
-
-## Analytics
-
-### `GET /api/analytics/summary?period=30d`
-KPIs résumés.
-
-**Réponse :**
-```json
-{
-  "kpis": {
-    "totalUsers": number,
-    "activeUsers": number,
-    "cvGenerated": number,
-    "jobSuccessRate": number
-  }
-}
-```
-
----
-
-### `GET /api/analytics/events`
-Liste les événements télémétrie.
-
----
-
-### `GET /api/analytics/features`
-Usage des features.
-
----
-
-### `GET /api/analytics/openai-usage`
-Usage API OpenAI.
-
----
-
-## Webhooks
-
-### `POST /api/webhooks/stripe`
-Webhook Stripe (signature vérifiée).
-
-**Events gérés :**
-- `checkout.session.completed`
-- `customer.subscription.created`
-- `customer.subscription.updated`
-- `customer.subscription.deleted`
-- `invoice.paid`
-- `invoice.payment_failed`
-- `charge.dispute.created`
-
----
-
-## Divers
-
-### `POST /api/export-pdf`
-Génère et télécharge un CV en PDF.
-
-**Body :**
-```json
-{
-  "filename": "string",
-  "language": "fr|en|de|es",
-  "selections": {...}
-}
-```
-
-**Réponse :** PDF binaire
-
----
-
-### `POST /api/feedback`
-Soumet un feedback.
-
-**Body :**
-```json
-{
-  "rating": 1-5,
-  "comment": "string",
-  "isBugReport": boolean
-}
-```
-
----
-
-### `POST /api/telemetry/track`
-Enregistre des événements.
-
-**Body :**
-```json
-{
-  "events": [{
-    "type": "string",
-    "metadata": {...}
-  }]
-}
-```
-
----
-
-### `GET /api/events/stream`
-Stream SSE pour mises à jour temps réel.
-
----
-
-### `GET /api/settings`
-Paramètres publics de l'application.
-
----
-
-## Codes d'Erreur
+### Codes de Réponse
 
 | Code | Signification |
 |------|---------------|
+| 200 | Succès |
+| 201 | Créé |
 | 400 | Requête invalide |
 | 401 | Non authentifié |
-| 403 | Non autorisé (limite, permissions) |
-| 404 | Ressource non trouvée |
-| 409 | Conflit (email existant) |
-| 429 | Rate limit dépassé |
+| 403 | Non autorisé |
+| 404 | Non trouvé |
 | 500 | Erreur serveur |
 
 ---
 
-## Format d'Erreur
+## Authentication (`/api/auth/*`)
 
-```json
-{
-  "error": "Message d'erreur",
-  "details": "Détails optionnels",
-  "actionRequired": "Action suggérée",
-  "redirectUrl": "URL de redirection"
+### NextAuth Handler
+```
+GET/POST /api/auth/[...nextauth]
+```
+Handler NextAuth pour sessions et callbacks OAuth.
+
+### Register
+```
+POST /api/auth/register
+Body: { email, password, name?, referralCode? }
+Response: { user: { id, email, name } }
+```
+Création de compte utilisateur avec email/password.
+
+### Request Password Reset
+```
+POST /api/auth/request-reset
+Body: { email }
+Response: { success: true }
+```
+Envoie un email de réinitialisation.
+
+### Reset Password
+```
+POST /api/auth/reset-password
+Body: { token, password }
+Response: { success: true }
+```
+Réinitialise le mot de passe avec token valide.
+
+### Verify Email
+```
+GET /api/auth/verify-email?token=<token>
+Response: Redirect to app with auto-signin
+```
+
+### Verify Email Change
+```
+GET /api/auth/verify-email-change?token=<token>
+Response: { success: true, newEmail }
+```
+
+### Resend Verification
+```
+POST /api/auth/resend-verification
+Body: { email }
+Response: { success: true }
+```
+
+---
+
+## Account (`/api/account/*`)
+
+### Delete Account
+```
+DELETE /api/account/delete
+Response: { success: true }
+```
+Suppression complète du compte et données.
+
+### Linked Accounts
+```
+GET /api/account/linked-accounts
+Response: { accounts: [{ provider, providerAccountId }] }
+```
+
+### Link OAuth
+```
+POST /api/account/link-oauth
+Body: { provider }
+Response: { authUrl }
+```
+
+### Unlink OAuth
+```
+DELETE /api/account/unlink-oauth
+Body: { provider }
+Response: { success: true }
+```
+
+### Change Password
+```
+PUT /api/account/password
+Body: { currentPassword, newPassword }
+Response: { success: true }
+```
+
+### Update Profile
+```
+PUT /api/account/profile
+Body: { name?, email? }
+Response: { user }
+```
+
+---
+
+## CVs CRUD (`/api/cvs/*`)
+
+### List CVs
+```
+GET /api/cvs
+Response: {
+  cvs: [{
+    filename, sourceType, sourceValue, language,
+    matchScore, optimiseStatus, createdAt, updatedAt
+  }]
 }
+```
+
+### Create CV
+```
+POST /api/cvs/create
+Body: { filename, content, sourceType?, sourceValue? }
+Response: { cv: { filename, ... } }
+```
+
+### Read CV
+```
+GET /api/cvs/read?file=<filename>
+Response: { content: <JSON CV data> }
+```
+
+### Delete CV
+```
+POST /api/cvs/delete
+Body: { filename }
+Response: { success: true }
+```
+
+### Restore Version
+```
+POST /api/cvs/restore
+Body: { filename, version }
+Response: { cv }
+```
+
+### Get Versions
+```
+GET /api/cvs/versions?file=<filename>
+Response: { versions: [{ version, changelog, createdAt }] }
+```
+
+### Save Version
+```
+POST /api/cvs/versions
+Body: { filename, changelog?, changeType? }
+Response: { version }
+```
+
+### Get Changes
+```
+GET /api/cvs/changes?file=<filename>
+Response: { changes: [...] }
+```
+
+### Save Changes
+```
+POST /api/cvs/changes
+Body: { filename, changes }
+Response: { success: true }
+```
+
+---
+
+## CV Operations (`/api/cv/*`)
+
+### Improve CV
+```
+POST /api/cv/improve
+Body: { filename, sections? }
+Response: { taskId }
+```
+Lance une amélioration IA du CV (background task).
+
+### Calculate Match Score
+```
+POST /api/cv/match-score
+Body: { filename, jobOfferId }
+Response: { taskId }
+```
+
+### Get Match Score
+```
+GET /api/cv/match-score?file=<filename>
+Response: {
+  matchScore, scoreBreakdown,
+  improvementSuggestions, missingSkills, matchingSkills
+}
+```
+
+### Can Create CV
+```
+GET /api/cv/can-create
+Response: { canCreate: boolean, reason?, needsCredit? }
+```
+
+### Can Edit CV
+```
+GET /api/cv/can-edit?file=<filename>
+Response: { canEdit: boolean, reason? }
+```
+
+### Debit Edit
+```
+POST /api/cv/debit-edit
+Body: { filename }
+Response: { success: true, creditUsed? }
+```
+
+### Get Metadata
+```
+GET /api/cv/metadata?file=<filename>
+Response: { sourceType, sourceValue, language, ... }
+```
+
+### Get Source
+```
+GET /api/cv/source?file=<filename>
+Response: { source: { type, value, jobOffer? } }
+```
+
+---
+
+## Background Tasks (`/api/background-tasks/*`)
+
+### Generate CV from Job Offer
+```
+POST /api/background-tasks/generate-cv
+Body: { jobUrl | jobPdf, baseCvFilename? }
+Response: { taskId, filename }
+```
+
+### Generate CV from Job Title
+```
+POST /api/background-tasks/generate-cv-from-job-title
+Body: { jobTitle, baseCvFilename? }
+Response: { taskId, filename }
+```
+
+### Import PDF
+```
+POST /api/background-tasks/import-pdf
+Body: FormData { pdf: File }
+Response: { taskId, filename }
+```
+
+### Translate CV
+```
+POST /api/background-tasks/translate-cv
+Body: { filename, targetLanguage }
+Response: { taskId, newFilename }
+```
+
+### Calculate Match Score
+```
+POST /api/background-tasks/calculate-match-score
+Body: { filename }
+Response: { taskId }
+```
+
+### Create Template CV
+```
+POST /api/background-tasks/create-template-cv
+Response: { taskId, filename }
+```
+
+### Sync Tasks
+```
+GET /api/background-tasks/sync?deviceId=<id>
+Response: { tasks: [{ id, status, result?, error? }] }
+
+POST /api/background-tasks/sync
+Body: { taskId, status, result?, error? }
+Response: { success: true }
+
+DELETE /api/background-tasks/sync
+Body: { taskId }
+Response: { success: true }
+```
+
+---
+
+## Subscription (`/api/subscription/*`)
+
+### Current Subscription
+```
+GET /api/subscription/current
+Response: {
+  subscription: { planId, status, billingPeriod, ... },
+  plan: { name, tier, features }
+}
+```
+
+### List Plans
+```
+GET /api/subscription/plans
+Response: { plans: [{ id, name, priceMonthly, priceYearly, features }] }
+```
+
+### Change Plan
+```
+POST /api/subscription/change
+Body: { planId, billingPeriod }
+Response: { subscription }
+```
+
+### Cancel Subscription
+```
+POST /api/subscription/cancel
+Response: { subscription }
+```
+
+### Reactivate Subscription
+```
+POST /api/subscription/reactivate
+Response: { subscription }
+```
+
+### Cancel Downgrade
+```
+POST /api/subscription/cancel-downgrade
+Response: { subscription }
+```
+
+### Get Invoices
+```
+GET /api/subscription/invoices
+Response: { invoices: [{ id, amount, status, date, pdfUrl }] }
+```
+
+### Billing Portal
+```
+POST /api/subscription/billing-portal
+Response: { url }
+```
+
+### Preview Upgrade
+```
+POST /api/subscription/preview-upgrade
+Body: { planId, billingPeriod }
+Response: { preview: { amount, prorationDate } }
+```
+
+### Credit Packs
+```
+GET /api/subscription/credit-packs
+Response: { packs: [{ id, name, creditAmount, price }] }
+```
+
+---
+
+## Credits (`/api/credits/*`)
+
+### Balance
+```
+GET /api/credits/balance
+Response: {
+  balance, totalPurchased, totalUsed,
+  totalRefunded, totalGifted
+}
+```
+
+### Costs
+```
+GET /api/credits/costs
+Response: { costs: { gpt_cv_generation: 1, pdf_import: 1, ... } }
+```
+
+### Transactions
+```
+GET /api/credits/transactions?limit=50&offset=0
+Response: {
+  transactions: [{ id, amount, type, featureName, createdAt }],
+  total
+}
+```
+
+---
+
+## Checkout (`/api/checkout/*`)
+
+### Subscription Checkout
+```
+POST /api/checkout/subscription
+Body: { planId, billingPeriod, promoCode? }
+Response: { sessionId, url }
+```
+
+### Credits Checkout
+```
+POST /api/checkout/credits
+Body: { packId, promoCode? }
+Response: { sessionId, url }
+```
+
+### Verify Session
+```
+GET /api/checkout/verify?sessionId=<id>
+Response: { success: boolean, type, details }
+```
+
+---
+
+## Export PDF (`/api/export-pdf`)
+
+```
+POST /api/export-pdf
+Body: {
+  filename,
+  sections?: { header, summary, experience, education, skills, languages, projects, extras },
+  format?: 'pdf' | 'png'
+}
+Response: Binary (PDF/PNG file)
+```
+
+---
+
+## Analytics (`/api/analytics/*`)
+
+### Summary
+```
+GET /api/analytics/summary?period=7d|30d|90d|all
+Response: {
+  users: { total, new, active },
+  cvs: { total, generated, imported },
+  revenue: { mrr, arr },
+  openai: { cost, calls }
+}
+```
+
+### Events
+```
+GET /api/analytics/events?type=<type>&limit=100
+Response: { events: [...] }
+```
+
+### Errors
+```
+GET /api/analytics/errors?limit=100
+Response: { errors: [...] }
+```
+
+### Features Usage
+```
+GET /api/analytics/features
+Response: { features: [{ name, usageCount, uniqueUsers }] }
+```
+
+### Feedbacks
+```
+GET /api/analytics/feedbacks?status=new|reviewed
+Response: { feedbacks: [...] }
+
+PATCH /api/analytics/feedbacks
+Body: { id, status }
+
+DELETE /api/analytics/feedbacks
+Body: { id }
+```
+
+### Users
+```
+GET /api/analytics/users?limit=50&offset=0
+Response: { users: [...], total }
+```
+
+### User Summary
+```
+GET /api/analytics/users/:userId/summary
+Response: { user, cvs, subscription, activity }
+```
+
+### OpenAI Usage
+```
+GET /api/analytics/openai-usage?period=7d
+Response: { usage: [{ date, feature, tokens, cost }] }
+```
+
+---
+
+## Admin (`/api/admin/*`)
+
+### Settings
+```
+GET /api/admin/settings
+POST /api/admin/settings - Body: { settingName, value, category }
+GET /api/admin/settings/:id
+PUT /api/admin/settings/:id - Body: { value }
+DELETE /api/admin/settings/:id
+GET /api/admin/settings/history
+```
+
+### Users Management
+```
+GET /api/admin/users
+POST /api/admin/users - Body: { email, name, role }
+PATCH /api/admin/users/:userId - Body: { role?, credits? }
+DELETE /api/admin/users/:userId
+```
+
+### Subscription Plans
+```
+GET /api/admin/subscription-plans
+POST /api/admin/subscription-plans - Body: { name, priceMonthly, ... }
+PATCH /api/admin/subscription-plans/:id
+DELETE /api/admin/subscription-plans/:id
+GET /api/admin/subscription-mode
+POST /api/admin/subscription-mode - Body: { mode }
+```
+
+### Credit Packs
+```
+GET /api/admin/credit-packs
+POST /api/admin/credit-packs - Body: { name, creditAmount, price }
+PATCH /api/admin/credit-packs/:id
+DELETE /api/admin/credit-packs/:id
+```
+
+### Email Management
+```
+GET /api/admin/email-templates
+POST /api/admin/email-templates
+GET/PUT/DELETE /api/admin/email-templates/:id
+POST /api/admin/email-templates/:id/activate
+DELETE /api/admin/email-templates/:id/activate
+POST /api/admin/email-templates/:id/set-default
+GET /api/admin/email-triggers
+POST /api/admin/email-triggers
+GET/POST /api/admin/email-triggers/:name/templates
+GET /api/admin/email-logs
+GET /api/admin/email-stats
+POST /api/admin/email-test - Body: { templateId, email }
+```
+
+### OpenAI Management
+```
+GET /api/admin/openai-balance
+GET /api/admin/openai-pricing
+POST /api/admin/openai-pricing - Body: { modelName, inputPrice, outputPrice }
+DELETE /api/admin/openai-pricing - Body: { modelName }
+GET /api/admin/openai-alerts
+POST /api/admin/openai-alerts - Body: { type, threshold, name }
+DELETE /api/admin/openai-alerts - Body: { id }
+GET /api/admin/openai-alerts/triggered
+```
+
+### Monitoring
+```
+GET /api/admin/revenue
+GET /api/admin/plan-costs
+GET /api/admin/onboarding/users
+GET /api/admin/onboarding/analytics
+POST /api/admin/onboarding/reset - Body: { userId }
+GET /api/admin/maintenance/active-sessions
+GET /api/admin/public-images
+POST /api/admin/public-images - FormData
+POST /api/admin/sync-stripe
+DELETE /api/admin/telemetry/cleanup
+```
+
+---
+
+## Onboarding (`/api/user/onboarding`)
+
+```
+GET /api/user/onboarding
+Response: { state: { currentStep, completedSteps, ... } }
+
+PUT /api/user/onboarding
+Body: { step, data? }
+Response: { state }
+
+PATCH /api/user/onboarding
+Body: { completedSteps: [...] }
+Response: { state }
+
+POST /api/user/onboarding
+Body: { action, payload? }
+Response: { state }
+
+GET /api/user/onboarding/subscribe
+Response: { plans }
+```
+
+---
+
+## Telemetry (`/api/telemetry/*`)
+
+```
+POST /api/telemetry/track
+Body: { type, category, metadata?, duration? }
+Response: { success: true }
+
+GET /api/telemetry/average-task-duration?type=<taskType>
+Response: { averageDuration }
+
+GET /api/telemetry/first-import-duration
+Response: { duration }
+```
+
+---
+
+## Other Endpoints
+
+### Consent
+```
+GET /api/consent/history
+Response: { history: [...] }
+
+POST /api/consent/log
+Body: { action, preferences }
+Response: { success: true }
+```
+
+### Settings
+```
+GET /api/settings
+Response: { settings: {...} }
+```
+
+### Link History
+```
+GET /api/link-history
+Response: { links: [...] }
+
+POST /api/link-history
+Body: { url }
+Response: { link }
+```
+
+### Feedback
+```
+POST /api/feedback
+Body: { rating, comment, isBugReport?, currentCvFile? }
+Response: { feedback }
+```
+
+### reCAPTCHA
+```
+POST /api/recaptcha/verify
+Body: { token }
+Response: { success: boolean, score? }
+```
+
+### SSE Events
+```
+GET /api/events/stream
+Response: Server-Sent Events stream
+```
+
+### Stripe Webhook
+```
+POST /api/webhooks/stripe
+Body: Stripe event payload
+Headers: { stripe-signature }
+Response: { received: true }
 ```

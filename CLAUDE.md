@@ -1,86 +1,52 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Instructions pour Claude Code sur le repository FitMyCV.io.
 
-## Project Overview
+## Vue d'Ensemble
 
-FitMyCV.io is a Next.js 14 application that creates AI-optimized CVs tailored to specific job offers. Built with React 18, Tailwind CSS, Prisma ORM, and OpenAI integration.
+**FitMyCV.io** - Application SaaS de génération de CV optimisés par IA.
+- Next.js 14 (App Router) + React 18 + Tailwind CSS
+- PostgreSQL via Prisma 6 (33 modèles)
+- OpenAI GPT-4o + Stripe + NextAuth.js
 
-## Essential Commands
+## Commandes Essentielles
 
 ```bash
-# Development
-npm run dev                    # Start dev server (port 3001)
-npm run build                  # Production build
-npm start                      # Start production server (port 3000)
-
-# Database
-npx prisma migrate dev --name <name>  # Create migration
-npx prisma migrate deploy             # Apply migrations
-npx prisma generate                   # Regenerate Prisma client
-npx prisma studio                     # Visual DB editor
-npx prisma db seed                    # Seed database
-npm run db:reset                      # Reset database (dev only)
+npm run dev                    # Dev (port 3001)
+npm run build                  # Build production
+npx prisma migrate deploy      # Migrations
+npx prisma generate            # Régénérer client
+npx prisma studio              # GUI DB
 ```
 
-## Architecture
+## Structure Projet
 
-### Tech Stack
-- **Frontend**: React 18, Next.js 14 App Router, Tailwind CSS
-- **Backend**: Next.js API Routes, Prisma 6, PostgreSQL (prod) / SQLite (dev)
-- **AI**: OpenAI API (GPT-4o models)
-- **Services**: Stripe (payments), Resend (email), Puppeteer (scraping/PDF)
-- **Auth**: NextAuth.js with credentials + OAuth (Google, GitHub, Apple)
-
-### Directory Structure
 ```
-app/                    # Next.js App Router (pages + API routes)
-├── api/               # 96 API endpoints
-├── auth/              # Authentication pages
-├── admin/             # Admin dashboard
-└── account/           # User settings
-
-components/            # React components (100+)
-├── TopBar/           # Main navigation + modals
-├── ui/               # Reusable UI components
-├── admin/            # Admin components
-└── [CV sections]     # Header, Skills, Experience, Education...
-
-lib/                   # Core libraries
-├── auth/             # NextAuth config & session
-├── cv/               # CV storage, validation, encryption
-├── openai/           # AI functions (generate, translate, improve)
-├── backgroundTasks/  # Job queue system (max 3 concurrent)
-├── subscription/     # Plans, credits, feature limits
-├── email/            # Resend email service
-└── api/              # API errors & i18n
-
-prisma/               # Database schema (30+ models)
-locales/              # Translations (en, fr, de, es)
+app/api/           # 127 API Routes (auth, cv, admin, subscription...)
+components/        # ~150 composants React
+lib/               # 25 modules métier (auth, cv, openai, subscription...)
+prisma/            # 33 modèles de données
+locales/           # i18n (fr, en, de, es)
 ```
 
-### Background Task System
-Long-running tasks (CV generation, PDF import, translation) use a job queue:
-- Max 3 concurrent jobs
-- Tasks tracked in `BackgroundTask` model
-- Status: queued → running → completed/failed
+**Documentation complète** : `docs/index.md`
 
-### CV Storage
-CVs are stored as JSON in PostgreSQL (`CvFile.content` field), with versioning for AI optimizations (`CvVersion` model).
+## Patterns Critiques
 
-## Code Patterns
-
-### API Route Pattern
+### API Route
 ```javascript
-import { getSession } from '@/lib/auth/session';
+import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
+import { apiError, CommonErrors } from '@/lib/api/apiErrors';
 
 export async function GET(request) {
-  const session = await getSession();
+  const session = await auth();
   if (!session?.user?.id) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError(CommonErrors.notAuthenticated());
   }
-  // ... logic
+  const data = await prisma.example.findMany({
+    where: { userId: session.user.id }
+  });
   return Response.json({ data });
 }
 ```
@@ -88,59 +54,72 @@ export async function GET(request) {
 ### CV Operations
 ```javascript
 import { readUserCvFile, writeUserCvFile } from '@/lib/cv/storage';
-import { validateCvData } from '@/lib/cv/validation';
+import { validateCv } from '@/lib/cv/validation';
 
-const cvContent = await readUserCvFile(userId, filename);
-const { valid, data, errors } = validateCvData(JSON.parse(cvContent));
+const cvData = await readUserCvFile(userId, filename);
+const { valid, errors } = validateCv(cvData);
 await writeUserCvFile(userId, filename, modifiedData);
 ```
 
-### Background Job Pattern
+### Background Jobs
 ```javascript
 import { enqueueJob } from '@/lib/backgroundTasks/jobQueue';
-import { runMyJob } from '@/lib/backgroundTasks/myJob';
 
-const task = await prisma.backgroundTask.create({ data: { ... } });
-enqueueJob(() => runMyJob(task));
+// Max 3 concurrent, tracked in BackgroundTask model
+const task = await prisma.backgroundTask.create({
+  data: { id: crypto.randomUUID(), type: 'generate_cv', status: 'queued', ... }
+});
+enqueueJob(() => generateCvJob(task.id, userId, payload));
 ```
 
-### Feature Usage Limits
+### Feature Limits & Credits
 ```javascript
-import { checkFeatureLimit, incrementFeatureUsage } from '@/lib/subscription/featureUsage';
+import { canUseFeature, incrementFeatureCounter } from '@/lib/subscription/featureUsage';
+import { debitCredit } from '@/lib/subscription/credits';
 
-const { allowed, needsCredit } = await checkFeatureLimit(userId, 'gpt_cv_generation');
-if (!allowed) return Response.json({ error: 'Limit reached' }, { status: 403 });
-// ... do work
-await incrementFeatureUsage(userId, 'gpt_cv_generation');
+const { allowed, needsCredit } = await canUseFeature(userId, 'gpt_cv_generation');
+if (!allowed) return apiError({ error: 'Limit reached', status: 403 });
+if (needsCredit) await debitCredit(userId, 1, 'gpt_cv_generation');
+// ... action
+await incrementFeatureCounter(userId, 'gpt_cv_generation');
 ```
+
+## Modèles de Données Clés
+
+| Modèle | Purpose |
+|--------|---------|
+| `User` | Utilisateur (auth, profile, relations) |
+| `CvFile` | CV stocké en JSON (`content` field) |
+| `CvVersion` | Historique versions (rollback) |
+| `JobOffer` | Offre emploi extraite |
+| `BackgroundTask` | Tâches async (generation, import) |
+| `Subscription` | Abonnement Stripe actif |
+| `CreditBalance` | Solde crédits |
+| `FeatureUsageCounter` | Compteurs mensuels |
+
+## Fichiers Clés
+
+| Domaine | Fichiers |
+|---------|----------|
+| Auth | `lib/auth/options.js`, `lib/auth/session.js` |
+| CV | `lib/cv/storage.js`, `lib/cv/validation.js` |
+| OpenAI | `lib/openai/generateCv.js`, `lib/openai/improveCv.js` |
+| Jobs | `lib/backgroundTasks/jobQueue.js` |
+| Subscription | `lib/subscription/featureUsage.js`, `lib/subscription/credits.js` |
+| Errors | `lib/api/apiErrors.js` |
 
 ## Git Workflow
 
-3-branch strategy: `main` ← `release` ← `dev`
-
-- **Branches**: `feature/`, `improvement/`, `bug/` from `dev`; `hotfix/` from `main`
-- **PRs required**: Always for merges to `dev`, `release`, `main`
-- **Tags**: `-rc` on release, final version on main
-- **Commits**: Conventional format (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`)
-
-## Key Files Reference
-
-| Area | Files |
-|------|-------|
-| Auth config | `lib/auth/options.js`, `lib/auth/session.js` |
-| CV validation | `lib/cv/validation.js`, `data/schema.json` |
-| AI functions | `lib/openai/*.js` |
-| Job queue | `lib/backgroundTasks/jobQueue.js` |
-| Subscription | `lib/subscription/featureUsage.js`, `lib/subscription/credits.js` |
-| API errors | `lib/api/apiErrors.js` |
-| Translations | `locales/{lang}/*.json` |
+- **Branches** : `main` ← `release` ← `dev`
+- **Préfixes** : `feature/`, `improvement/`, `bug/`, `hotfix/`
+- **Commits** : `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`
 
 ## Documentation
 
-Full documentation available in `docs/`:
-- `ARCHITECTURE.md` - System architecture, data flows
-- `API_REFERENCE.md` - All 96 API endpoints
-- `CODE_PATTERNS.md` - Reusable code patterns with examples
-- `DEVELOPMENT.md` - Git workflow, standards, debugging
-- `SUBSCRIPTION.md` - Plans, credits, feature limits
-- `DESIGN_SYSTEM.md` - UI/UX guidelines, Tailwind patterns
+Consultez `docs/` pour la documentation technique complète :
+- `docs/index.md` - Index maître (point d'entrée)
+- `docs/architecture.md` - Architecture technique
+- `docs/api-reference.md` - 127 endpoints
+- `docs/data-models.md` - 33 modèles Prisma
+- `docs/components.md` - ~150 composants
+- `docs/development.md` - Guide développement
