@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow CV Generator - Architecture Complète v8</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #fff;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+        .subtitle {
+            color: #8892b0;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+        .diagram-container {
+            background: #fff;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+        .section-title {
+            color: #64ffda;
+            font-size: 1.2rem;
+            margin: 30px 0 15px 0;
+            padding-left: 10px;
+            border-left: 3px solid #64ffda;
+        }
+        .section-title.phase0 { border-color: #2196f3; color: #2196f3; }
+        .section-title.phase1 { border-color: #ff9800; color: #ff9800; }
+        .section-title.phase2 { border-color: #4caf50; color: #4caf50; }
+        .section-title.credits { border-color: #e91e63; color: #e91e63; }
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .legend-item {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 15px 20px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .legend-icon {
+            font-size: 1.5rem;
+        }
+        .legend-text {
+            font-size: 0.9rem;
+        }
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+        .stat {
+            text-align: center;
+            color: #fff;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #64ffda;
+        }
+        .stat-label {
+            font-size: 0.85rem;
+            color: #8892b0;
+            margin-top: 5px;
+        }
+        .note {
+            background: rgba(100, 255, 218, 0.1);
+            border-left: 4px solid #64ffda;
+            padding: 15px 20px;
+            border-radius: 0 10px 10px 0;
+            color: #ccd6f6;
+            margin-bottom: 20px;
+        }
+        .note-title {
+            color: #64ffda;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .warning {
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid #ffc107;
+        }
+        .warning .note-title {
+            color: #ffc107;
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid #4caf50;
+        }
+        .success .note-title {
+            color: #4caf50;
+        }
+        .info {
+            background: rgba(33, 150, 243, 0.1);
+            border-left: 4px solid #2196f3;
+        }
+        .info .note-title {
+            color: #2196f3;
+        }
+        .credits-note {
+            background: rgba(233, 30, 99, 0.1);
+            border-left: 4px solid #e91e63;
+        }
+        .credits-note .note-title {
+            color: #e91e63;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            color: #ccd6f6;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        th {
+            background: rgba(100, 255, 218, 0.1);
+            color: #64ffda;
+        }
+        tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+        }
+        .timeline {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            color: #8892b0;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        .timeline .complete { color: #4caf50; }
+        .timeline .processing { color: #ffc107; }
+        .timeline .header { color: #64ffda; font-weight: bold; }
+        .timeline .phase0 { color: #2196f3; }
+        .timeline .phase1 { color: #ff9800; }
+        .timeline .phase2 { color: #4caf50; }
+        .timeline .error { color: #f44336; }
+        .timeline .refund { color: #e91e63; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Workflow CV Generator — Architecture Complète</h1>
+        <p class="subtitle">Du scraping des offres jusqu'à la génération progressive des CV — avec gestion des crédits</p>
+        
+        <!-- ========== VUE D'ENSEMBLE ========== -->
+        <h2 class="section-title">Vue d'ensemble — 3 Phases + Gestion Crédits</h2>
+
+        <div class="diagram-container">
+            <div class="mermaid">
+flowchart TB
+    subgraph INPUT["📥 ENTRÉE UTILISATEUR"]
+        USER["Utilisateur sélectionne<br/>1 CV + N sources d'offres"]
+        CV_SELECT["CV sélectionné"]
+        SOURCES["Sources des offres<br/>(URLs ou fichiers PDF)"]
+        USER --> CV_SELECT
+        USER --> SOURCES
+    end
+
+    subgraph CREDITS_INIT["💳 DÉDUCTION CRÉDITS"]
+        CHECK_BALANCE{"Solde suffisant ?<br/>(N × COST_PER_OFFER)"}
+        DEDUCT["Déduire N × COST_PER_OFFER<br/>du compte utilisateur"]
+        REJECT["❌ Rejeter la demande<br/>Solde insuffisant"]
+        
+        SOURCES --> CHECK_BALANCE
+        CHECK_BALANCE -->|"Oui"| DEDUCT
+        CHECK_BALANCE -->|"Non"| REJECT
+    end
+
+    subgraph PHASE0["🔍 PHASE 0 — SCRAPING & ANALYSE"]
+        TASK_SCRAPE["Créer Tâche principale<br/><small>status: scraping</small>"]
+        SCRAPE_PROCESS["Pour chaque source (parallèle):<br/>🌐 Scraper/Extraire → 🤖 Analyser → ✅ Valider"]
+        SAVE_OFFERS["💾 Sauvegarder offres JSON"]
+        
+        DEDUCT --> TASK_SCRAPE --> SCRAPE_PROCESS --> SAVE_OFFERS
+        
+        ERROR_P0{"Échec ?"}
+        SCRAPE_PROCESS --> ERROR_P0
+        ERROR_P0 -->|"Oui"| REFUND_P0["💳 Rembourser<br/>COST_PER_OFFER"]
+    end
+
+    subgraph TRANSITION["🔄 TRANSITION"]
+        CREATE_SUBS["Créer sous-tâches<br/>(1 par offre validée)"]
+        SAVE_OFFERS --> CREATE_SUBS
+    end
+
+    subgraph DATA["🗄️ DONNÉES"]
+        CV_DB[("CV JSON")]
+        OFFERS_DB[("Offres JSON")]
+        CV_SELECT --> CV_DB
+        CREATE_SUBS --> OFFERS_DB
+    end
+
+    subgraph PHASE1["⚡ PHASE 1 — BATCHES PAR SECTION"]
+        SPLIT["🔪 Split CV"]
+        BATCHES["Batches Exp1..N + Proj1..N"]
+        
+        CV_DB --> SPLIT --> BATCHES
+        OFFERS_DB -.-> BATCHES
+        
+        ERROR_P1{"Échec ?"}
+        BATCHES --> ERROR_P1
+        ERROR_P1 -->|"Oui"| REFUND_P1["💳 Rembourser<br/>COST_PER_OFFER"]
+    end
+
+    subgraph COLLECTOR["🎯 COLLECTEUR"]
+        CHECK{"Offre complète ?"}
+        BATCHES --> CHECK
+    end
+
+    subgraph PHASE2["🔄 PHASE 2 — PIPELINES PAR OFFRE"]
+        PIPES["Merge → Skills → WhoAmI<br/>→ Recompose → Diff → Save"]
+        
+        CHECK -->|"Oui"| PIPES
+        CHECK -->|"Non"| CHECK
+        
+        ERROR_P2{"Échec ?"}
+        PIPES --> ERROR_P2
+        ERROR_P2 -->|"Oui"| REFUND_P2["💳 Rembourser<br/>COST_PER_OFFER"]
+    end
+
+    subgraph OUTPUT["📤 SORTIES"]
+        EMIT["📡 Événements temps réel"]
+        UI["🖥️ Interface Utilisateur"]
+        
+        PIPES --> EMIT --> UI
+    end
+
+    CV_DB -.-> PIPES
+    SPLIT -.-> PIPES
+    OFFERS_DB -.-> PIPES
+
+    style INPUT fill:#e3f2fd,stroke:#1976d2
+    style CREDITS_INIT fill:#fce4ec,stroke:#e91e63
+    style PHASE0 fill:#e3f2fd,stroke:#2196f3
+    style TRANSITION fill:#f3e5f5,stroke:#9c27b0
+    style DATA fill:#fff3e0,stroke:#f57c00
+    style PHASE1 fill:#fff8e1,stroke:#ff9800
+    style COLLECTOR fill:#f3e5f5,stroke:#7b1fa2
+    style PHASE2 fill:#e8f5e9,stroke:#4caf50
+    style OUTPUT fill:#e1f5fe,stroke:#0288d1
+    style REFUND_P0 fill:#ffcdd2,stroke:#f44336
+    style REFUND_P1 fill:#ffcdd2,stroke:#f44336
+    style REFUND_P2 fill:#ffcdd2,stroke:#f44336
+    style REJECT fill:#ffcdd2,stroke:#f44336
+            </div>
+        </div>
+
+        <!-- ========== SYSTÈME DE CRÉDITS ========== -->
+        <h2 class="section-title credits">Système de Crédits — Flux détaillé</h2>
+
+        <div class="diagram-container">
+            <div class="mermaid">
+flowchart TB
+    subgraph START["Début de tâche"]
+        USER_REQ["Utilisateur demande<br/>1 CV × N offres"]
+        CALC["Calcul: N × COST_PER_OFFER"]
+        USER_REQ --> CALC
+    end
+
+    subgraph CHECK["Vérification solde"]
+        GET_BALANCE["Récupérer solde utilisateur"]
+        COMPARE{"solde >= N × COST_PER_OFFER ?"}
+        
+        CALC --> GET_BALANCE --> COMPARE
+    end
+
+    subgraph INSUFFICIENT["Solde insuffisant"]
+        REJECT["❌ Rejeter la demande"]
+        NOTIFY_REJECT["📡 Notifier: 'Crédits insuffisants'"]
+        
+        COMPARE -->|"Non"| REJECT --> NOTIFY_REJECT
+    end
+
+    subgraph DEDUCTION["Déduction initiale"]
+        DEDUCT["💳 Déduire N × COST_PER_OFFER"]
+        LOG_DEDUCT["📝 Log transaction:<br/>type: DEDUCTION<br/>amount: -N × COST_PER_OFFER"]
+        CREATE_TASK["Créer Tâche + N sous-tâches"]
+        
+        COMPARE -->|"Oui"| DEDUCT --> LOG_DEDUCT --> CREATE_TASK
+    end
+
+    subgraph PROCESSING["Traitement..."]
+        WORK["Phase 0 → 1 → 2"]
+        CREATE_TASK --> WORK
+    end
+
+    subgraph SUCCESS["Succès (par offre)"]
+        OK["✅ CV généré"]
+        NO_REFUND["Pas de remboursement"]
+        
+        WORK -->|"Offre OK"| OK --> NO_REFUND
+    end
+
+    subgraph FAILURE["Échec (par offre)"]
+        FAIL["❌ Erreur détectée"]
+        REFUND["💳 Rembourser COST_PER_OFFER"]
+        LOG_REFUND["📝 Log transaction:<br/>type: REFUND<br/>amount: +COST_PER_OFFER"]
+        UPDATE_SUB["Sous-tâche → status: failed"]
+        NOTIFY_FAIL["📡 Notifier: 'Offre échouée,<br/>COST_PER_OFFER remboursé'"]
+        
+        WORK -->|"Offre KO"| FAIL --> REFUND --> LOG_REFUND --> UPDATE_SUB --> NOTIFY_FAIL
+    end
+
+    subgraph FINAL["État final"]
+        RESULT["Coût final =<br/>(N - échecs) × COST_PER_OFFER"]
+    end
+
+    NO_REFUND --> RESULT
+    NOTIFY_FAIL --> RESULT
+
+    style START fill:#e3f2fd,stroke:#1976d2
+    style CHECK fill:#fff3e0,stroke:#f57c00
+    style INSUFFICIENT fill:#ffcdd2,stroke:#f44336
+    style DEDUCTION fill:#fce4ec,stroke:#e91e63
+    style PROCESSING fill:#f3e5f5,stroke:#7b1fa2
+    style SUCCESS fill:#e8f5e9,stroke:#4caf50
+    style FAILURE fill:#ffcdd2,stroke:#f44336
+    style FINAL fill:#e1f5fe,stroke:#0288d1
+            </div>
+        </div>
+
+        <div class="note credits-note">
+            <div class="note-title">💳 Points de remboursement</div>
+            <table>
+                <tr>
+                    <th>Phase</th>
+                    <th>Point d'échec</th>
+                    <th>Action</th>
+                </tr>
+                <tr>
+                    <td>Phase 0</td>
+                    <td>Scraping échoue (URL inaccessible, timeout)</td>
+                    <td>Rembourser COST_PER_OFFER</td>
+                </tr>
+                <tr>
+                    <td>Phase 0</td>
+                    <td>Parsing IA échoue (contenu non parsable)</td>
+                    <td>Rembourser COST_PER_OFFER</td>
+                </tr>
+                <tr>
+                    <td>Phase 0</td>
+                    <td>Validation échoue (JSON invalide)</td>
+                    <td>Rembourser COST_PER_OFFER</td>
+                </tr>
+                <tr>
+                    <td>Phase 1</td>
+                    <td>Appel IA échoue pour une section</td>
+                    <td>Rembourser COST_PER_OFFER</td>
+                </tr>
+                <tr>
+                    <td>Phase 2</td>
+                    <td>Appel IA Skills/WhoAmI échoue</td>
+                    <td>Rembourser COST_PER_OFFER</td>
+                </tr>
+                <tr>
+                    <td>Phase 2</td>
+                    <td>Sauvegarde échoue</td>
+                    <td>Rembourser COST_PER_OFFER</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- ========== PHASE 0 DÉTAIL ========== -->
+        <h2 class="section-title phase0">Phase 0 — Scraping & Analyse (Détail)</h2>
+
+        <div class="diagram-container">
+            <div class="mermaid">
+flowchart TB
+    subgraph INPUT["Entrées"]
+        URL1["URL 1"]
+        URL2["URL 2"]
+        PDF1["PDF 1"]
+        PDF2["PDF 2"]
+    end
+
+    subgraph TASK["Initialisation"]
+        CREATE["Créer Tâche principale<br/><small>status: scraping</small><br/><small>total_offers: 4</small>"]
+    end
+
+    INPUT --> CREATE
+
+    subgraph PARALLEL["⚡ Traitement parallèle par source"]
+        direction TB
+        
+        subgraph PIPE1["Pipeline Source 1"]
+            FETCH1["🌐 Fetch URL 1"]
+            CLEAN1["Nettoyer"]
+            AI1["🤖 Analyser"]
+            VAL1["✅ Valider"]
+            FETCH1 --> CLEAN1 --> AI1 --> VAL1
+        end
+        
+        subgraph PIPE2["Pipeline Source 2"]
+            FETCH2["🌐 Fetch URL 2"]
+            ERR2["❌ Timeout"]
+            FETCH2 --> ERR2
+        end
+        
+        subgraph PIPE3["Pipeline Source 3"]
+            PARSE3["📄 Parser PDF 1"]
+            AI3["🤖 Analyser"]
+            VAL3["✅ Valider"]
+            PARSE3 --> AI3 --> VAL3
+        end
+        
+        subgraph PIPE4["Pipeline Source 4"]
+            PARSE4["📄 Parser PDF 2"]
+            AI4["🤖 Analyser"]
+            AI4_ERR["❌ Parse error"]
+            PARSE4 --> AI4 --> AI4_ERR
+        end
+    end
+
+    CREATE --> PARALLEL
+
+    subgraph REFUNDS["💳 Remboursements"]
+        REFUND2["Rembourser COST_PER_OFFER<br/>pour Source 2"]
+        REFUND4["Rembourser COST_PER_OFFER<br/>pour Source 4"]
+        ERR2 --> REFUND2
+        AI4_ERR --> REFUND4
+    end
+
+    subgraph READY["✅ Offres prêtes"]
+        DB[("PostgreSQL")]
+        VAL1 -->|"Offre 1 prête"| DB
+        VAL3 -->|"Offre 3 prête"| DB
+    end
+
+    subgraph CONTINUE["→ Suite du workflow"]
+        NOTE1["Dès qu'une offre est prête,<br/>elle peut continuer vers Phase 1"]
+        DB --> NOTE1
+    end
+
+    style INPUT fill:#e3f2fd,stroke:#1976d2
+    style TASK fill:#e3f2fd,stroke:#2196f3
+    style PARALLEL fill:#fff8e1,stroke:#ff9800
+    style REFUNDS fill:#ffcdd2,stroke:#f44336
+    style READY fill:#e8f5e9,stroke:#388e3c
+    style CONTINUE fill:#e1f5fe,stroke:#0288d1
+    style ERR2 fill:#ffcdd2,stroke:#f44336
+    style AI4_ERR fill:#ffcdd2,stroke:#f44336
+            </div>
+        </div>
+
+        <div class="note info">
+            <div class="note-title">💡 Traitement parallèle et progressif</div>
+            <p>Chaque source est traitée <strong>indépendamment et en parallèle</strong>. Dès qu'une offre est validée, elle peut immédiatement continuer vers la Phase 1 sans attendre les autres sources.</p>
+        </div>
+
+        <!-- ========== PHASE 1 DÉTAIL ========== -->
+        <h2 class="section-title phase1">Phase 1 — Batches Parallèles (Détail)</h2>
+
+        <div class="diagram-container">
+            <div class="mermaid">
+flowchart TB
+    subgraph INPUT_P1["Entrées Phase 1"]
+        CV[("CV JSON")]
+        OFFERS[("Offres JSON<br/>O1..ON")]
+        SUBS["Sous-tâches<br/>ST1..STN"]
+    end
+
+    subgraph SPLIT["🔪 Split CV (JavaScript)"]
+        direction LR
+        HEADER["Header"]
+        WHOAMI["WhoAmI"]
+        SKILLS["Skills"]
+        EXPS["Exp1..ExpN"]
+        PROJS["Proj1..ProjN"]
+        EXTRA["Extra"]
+    end
+
+    CV --> SPLIT
+
+    subgraph BATCHES["⚡ Batches (parallèles entre sections)"]
+        direction TB
+        
+        subgraph B_EXP["Batch Exp1..ExpN"]
+            direction LR
+            BE["Pour chaque Exp:<br/>🤖 O1 → O2 → ... → ON<br/><small>(séquentiel par offre, cache actif)</small>"]
+        end
+        
+        subgraph B_PROJ["Batch Proj1..ProjN"]
+            direction LR
+            BP["Pour chaque Proj:<br/>🤖 O1 → O2 → ... → ON<br/><small>(séquentiel par offre, cache actif)</small>"]
+        end
+    end
+
+    EXPS --> B_EXP
+    PROJS --> B_PROJ
+    OFFERS -.->|"contexte"| BATCHES
+
+    subgraph ERROR_HANDLING["Gestion erreurs"]
+        ERR{"Échec pour<br/>une offre ?"}
+        REFUND_ERR["💳 Rembourser COST_PER_OFFER<br/>Sous-tâche → failed"]
+        
+        BATCHES --> ERR
+        ERR -->|"Oui"| REFUND_ERR
+    end
+
+    subgraph OUTPUTS["Sorties"]
+        OUT["exp1_O1..ON, exp2_O1..ON, ...<br/>proj1_O1..ON, proj2_O1..ON, ...<br/><small>+ raisons</small>"]
+    end
+
+    B_EXP --> OUT
+    B_PROJ --> OUT
+
+    subgraph COLLECTOR["🎯 Collecteur"]
+        STATE["Tracker progression par offre:<br/>offerProgress[offerId][section]"]
+        
+        CHECK_O{"Offre X:<br/>toutes sections ?"}
+        
+        OUT --> STATE --> CHECK_O
+        
+        TRIGGER["→ Déclencher Pipeline Phase 2"]
+        WAIT["Attendre sections manquantes"]
+        
+        CHECK_O -->|"Oui"| TRIGGER
+        CHECK_O -->|"Non"| WAIT
+    end
+
+    style INPUT_P1 fill:#e3f2fd,stroke:#1976d2
+    style SPLIT fill:#fff3e0,stroke:#f57c00
+    style BATCHES fill:#fff8e1,stroke:#ff9800
+    style ERROR_HANDLING fill:#ffcdd2,stroke:#f44336
+    style OUTPUTS fill:#e8f5e9,stroke:#388e3c
+    style COLLECTOR fill:#f3e5f5,stroke:#7b1fa2
+            </div>
+        </div>
+
+        <div class="note warning">
+            <div class="note-title">⚠️ Ordre pour le cache OpenAI</div>
+            <p>Dans chaque batch, les appels sont <strong>séquentiels par offre</strong> : O1 → O2 → ... → ON. Cela permet au cache OpenAI de réutiliser le préfixe (SYSTEM + SECTION) entre les appels.</p>
+        </div>
+
+        <!-- ========== PHASE 2 DÉTAIL ========== -->
+        <h2 class="section-title phase2">Phase 2 — Pipelines par Offre (Détail)</h2>
+
+        <div class="diagram-container">
+            <div class="mermaid">
+flowchart TB
+    subgraph TRIGGER["Déclenchement"]
+        T["Offre X complète !<br/>(toutes sections prêtes)"]
+    end
+
+    subgraph CONTEXT["Données disponibles"]
+        direction TB
+        CV_ORIG[("CV original")]
+        SKILLS_ORIG["Skills originaux"]
+        WHOAMI_ORIG["WhoAmI original"]
+        EXTRA_ORIG["Extra original"]
+        OFFER_X[("Offre X JSON")]
+        JOBTITLE["Offre X → jobTitle"]
+    end
+
+    subgraph PIPELINE["🔄 Pipeline Offre X"]
+        direction TB
+        
+        M["🔗 Merge Exp+Proj<br/><small>Toutes les exp et proj retravaillées pour cette offre</small>"]
+        
+        S["🤖 IA Skills"]
+        S_CHECK{"Succès ?"}
+        
+        W["🤖 IA WhoAmI"]
+        W_CHECK{"Succès ?"}
+        
+        R["📄 Recompose CV<br/><small>header.title = jobTitle</small>"]
+        
+        D["⚖️ Calcul Diff"]
+        
+        SAVE["💾 Sauvegarde"]
+        SAVE_CHECK{"Succès ?"}
+        
+        EMIT["📡 Emit: offer_complete"]
+        
+        M --> S --> S_CHECK
+        S_CHECK -->|"Oui"| W --> W_CHECK
+        W_CHECK -->|"Oui"| R --> D --> SAVE --> SAVE_CHECK
+        SAVE_CHECK -->|"Oui"| EMIT
+    end
+
+    T --> M
+
+    SKILLS_ORIG -.-> S
+    OFFER_X -.-> S
+    
+    WHOAMI_ORIG -.-> W
+    OFFER_X -.-> W
+    
+    JOBTITLE -.->|"pour header.title"| R
+    EXTRA_ORIG -.-> R
+    
+    CV_ORIG -.-> D
+
+    subgraph FAILURE["💳 Remboursement si échec"]
+        REFUND_S["Rembourser COST_PER_OFFER"]
+        REFUND_W["Rembourser COST_PER_OFFER"]
+        REFUND_SAVE["Rembourser COST_PER_OFFER"]
+        
+        S_CHECK -->|"Non"| REFUND_S
+        W_CHECK -->|"Non"| REFUND_W
+        SAVE_CHECK -->|"Non"| REFUND_SAVE
+        
+        UPDATE_FAILED["Sous-tâche → status: failed"]
+        NOTIFY_FAILED["📡 Emit: offer_failed"]
+        
+        REFUND_S --> UPDATE_FAILED
+        REFUND_W --> UPDATE_FAILED
+        REFUND_SAVE --> UPDATE_FAILED
+        UPDATE_FAILED --> NOTIFY_FAILED
+    end
+
+    subgraph OUTPUT["📤 Sortie"]
+        UI["🖥️ Interface"]
+        EMIT -->|"CV prêt !"| UI
+        NOTIFY_FAILED -->|"Échec, remboursé"| UI
+    end
+
+    style TRIGGER fill:#e8f5e9,stroke:#4caf50
+    style CONTEXT fill:#fff3e0,stroke:#f57c00
+    style PIPELINE fill:#e8f5e9,stroke:#388e3c
+    style FAILURE fill:#ffcdd2,stroke:#f44336
+    style OUTPUT fill:#e1f5fe,stroke:#0288d1
+            </div>
+        </div>
+
+        <div class="note">
+            <div class="note-title">📄 Étape Recompose — Clarification</div>
+            <p>L'offre JSON n'est utilisée que pour extraire <code>jobTitle</code> qui devient <code>header.title</code> du CV. Aucune autre donnée de l'offre n'est utilisée à cette étape.</p>
+        </div>
+
+        <!-- ========== TIMELINE ========== -->
+        <h2 class="section-title">Timeline avec crédits (exemple)</h2>
+        
+        <div class="timeline"><span class="header">Crédits: Solde initial = 10 | COST_PER_OFFER = 2 | Demande = 4 offres</span>
+
+<span class="refund">💳 DÉDUCTION: -8 crédits (4 × 2) → Solde = 2</span>
+
+<span class="phase0">┌─────────────────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="phase0">│ PHASE 0 — Scraping & Analyse (PARALLÈLE)                                                │</span>
+<span class="phase0">│                                                                                         │</span>
+<span class="phase0">│ Source 1:  [🌐 Fetch]─[Clean]─[🤖 Analyse]─[✅ Valid]──► Offre 1 prête → Phase 1        │</span>
+<span class="phase0">│ Source 2:  [🌐 Fetch]─[<span class="error">❌ timeout</span>]──► <span class="refund">💳 +COST_PER_OFFER → Solde = 4</span>                  │</span>
+<span class="phase0">│ Source 3:  [📄 Parse PDF]─[🤖 Analyse]─[✅ Valid]──► Offre 3 prête → Phase 1            │</span>
+<span class="phase0">│ Source 4:  [📄 Parse PDF]─[🤖 Analyse]─[<span class="error">❌ parse error</span>]──► <span class="refund">💳 +COST_PER_OFFER → Solde = 6</span>│</span>
+<span class="phase0">│                                                                                         │</span>
+<span class="phase0">│ Bilan: 2 offres valides | 2 × COST_PER_OFFER remboursés                                 │</span>
+<span class="phase0">└─────────────────────────────────────────────────────────────────────────────────────────┘</span>
+
+<span class="phase1">┌─────────────────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="phase1">│ PHASE 1 — Batches (par section, séquentiel par offre pour cache)                        │</span>
+<span class="phase1">│                                                                                         │</span>
+<span class="phase1">│ Batch Exp1:    [🤖 O1]──[🤖 O3]                                                          │</span>
+<span class="phase1">│ Batch Exp2:    [🤖 O1]──[🤖 O3 <span class="error">❌</span>]──► <span class="refund">💳 +COST_PER_OFFER → Solde = 8</span>                    │</span>
+<span class="phase1">│ Batch Proj1:   [🤖 O1]──[🤖 O3 ─ abandonné]                                              │</span>
+<span class="phase1">│                                                                                         │</span>
+<span class="phase1">│ Collecteur: O1 complète ✅ | O3 abandonnée ❌                                            │</span>
+<span class="phase1">└─────────────────────────────────────────────────────────────────────────────────────────┘</span>
+
+<span class="phase2">┌─────────────────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="phase2">│ PHASE 2 — Pipeline                                                                      │</span>
+<span class="phase2">│                                                                                         │</span>
+<span class="phase2">│ Pipeline O1:  [Merge]─[Skills ✅]─[WhoAmI ✅]─[Recomp]─[Diff]─[💾 ✅]──► ✅ CV PRÊT     │</span>
+<span class="phase2">└─────────────────────────────────────────────────────────────────────────────────────────┘</span>
+
+<span class="header">═══════════════════════════════════════════════════════════════════════════════════════════</span>
+<span class="header">BILAN FINAL</span>
+<span class="header">═══════════════════════════════════════════════════════════════════════════════════════════</span>
+
+  Offres demandées:       4
+  CV générés:             1 (O1)
+  Offres échouées:        3
+  
+  Crédits déduits:        8 (4 × COST_PER_OFFER)
+  Crédits remboursés:     6 (3 × COST_PER_OFFER)
+  <span class="complete">Coût final:             2 crédits (1 × COST_PER_OFFER)</span>
+  <span class="complete">Solde final:            8 crédits</span></div>
+
+        <!-- ========== STRUCTURES DB ========== -->
+        <h2 class="section-title">Structures de données</h2>
+
+        <div class="note credits-note">
+            <div class="note-title">📊 Table: credit_transactions</div>
+            <code>id</code> | <code>user_id</code> | <code>type</code> (DEDUCTION | REFUND) | <code>amount</code> | <code>balance_after</code> | <code>task_id</code> | <code>offer_id</code> | <code>reason</code> | <code>created_at</code>
+        </div>
+
+        <div class="note info">
+            <div class="note-title">📊 Table: job_offers</div>
+            <code>id</code> | <code>user_id</code> | <code>source_url</code> | <code>source_type</code> (url | pdf) | <code>raw_text</code> | <code>parsed_data</code> | <code>job_title</code> | <code>company</code> | <code>status</code> (pending | scraping | parsing | ready | error) | <code>error_message</code> | <code>refunded</code> (boolean) | <code>scraped_at</code> | <code>parsed_at</code>
+        </div>
+
+        <div class="note">
+            <div class="note-title">📊 Table: cv_generation_tasks</div>
+            <code>id</code> | <code>user_id</code> | <code>cv_input_id</code> | <code>status</code> | <code>total_offers</code> | <code>scraped_offers</code> | <code>completed_offers</code> | <code>failed_offers</code> | <code>credits_charged</code> | <code>credits_refunded</code> | <code>created_at</code> | <code>completed_at</code>
+        </div>
+
+        <div class="note">
+            <div class="note-title">📊 Table: cv_generation_subtasks</div>
+            <code>id</code> | <code>task_id</code> | <code>offer_id</code> | <code>status</code> | <code>progress</code> | <code>cv_output_id</code> | <code>diff_json</code> | <code>reasons_json</code> | <code>error</code> | <code>refunded</code> (boolean) | <code>refund_reason</code> | <code>completed_at</code>
+        </div>
+
+        <!-- ========== LÉGENDE ========== -->
+        <h2 class="section-title">Légende</h2>
+
+        <div class="legend">
+            <div class="legend-item">
+                <span class="legend-icon">💳</span>
+                <span class="legend-text"><strong>Crédits</strong> — Déduction/Remboursement de COST_PER_OFFER</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon">🌐</span>
+                <span class="legend-text"><strong>Scraping</strong> — Extraction contenu URL</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon">📄</span>
+                <span class="legend-text"><strong>Parse PDF</strong> — Extraction contenu PDF</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon">🤖</span>
+                <span class="legend-text"><strong>IA</strong> — Appel API OpenAI</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon">🔪</span>
+                <span class="legend-text"><strong>Split</strong> — Découpage JavaScript</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon">🔗</span>
+                <span class="legend-text"><strong>Merge</strong> — Fusion JavaScript</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon">⚖️</span>
+                <span class="legend-text"><strong>Diff</strong> — Comparaison CV original vs généré</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon">🎯</span>
+                <span class="legend-text"><strong>Collecteur</strong> — Détecte complétion par offre</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon">📡</span>
+                <span class="legend-text"><strong>Emit</strong> — Événement WebSocket</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon">❌</span>
+                <span class="legend-text"><strong>Échec</strong> — Déclenche remboursement</span>
+            </div>
+        </div>
+
+        <div class="note success">
+            <div class="note-title">✅ Principe clé</div>
+            <p><strong>L'utilisateur ne paie que pour les CV effectivement générés.</strong> Tout échec à n'importe quelle étape déclenche automatiquement un remboursement de COST_PER_OFFER pour cette offre.</p>
+        </div>
+
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#e3f2fd',
+                primaryTextColor: '#1a1a2e',
+                primaryBorderColor: '#1976d2',
+                lineColor: '#5c6bc0',
+                secondaryColor: '#fff8e1',
+                tertiaryColor: '#f3e5f5',
+                fontSize: '12px'
+            },
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis',
+                rankSpacing: 50,
+                nodeSpacing: 30
+            }
+        });
+    </script>
+</body>
+</html>
