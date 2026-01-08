@@ -32,6 +32,7 @@ export default function CvGeneratorModal({
   generatorBaseItem,
   generatorError,
   linkHistory,
+  deleteLinkHistory,
   linkHistoryDropdowns,
   setLinkHistoryDropdowns,
   tickerResetKey,
@@ -188,24 +189,55 @@ export default function CvGeneratorModal({
                       {t("cvGenerator.recentLinks")}
                     </div>
                     <ul className="py-1">
-                      {linkHistory.map((link, histIndex) => (
-                        <li key={histIndex}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              updateLink(link, index);
-                              setLinkHistoryDropdowns(prev => ({
-                                ...prev,
-                                [index]: false
-                              }));
-                            }}
-                            className="w-full px-3 py-2 text-left text-xs text-white hover:bg-white/25 truncate transition-colors duration-200"
-                            title={link}
-                          >
-                            {link}
-                          </button>
-                        </li>
-                      ))}
+                      {linkHistory.map((linkItem, histIndex) => {
+                        // linkItem est maintenant un objet {url, title, domain}
+                        const url = typeof linkItem === 'string' ? linkItem : linkItem.url;
+                        const title = typeof linkItem === 'object' ? linkItem.title : null;
+                        const domain = typeof linkItem === 'object' ? linkItem.domain : null;
+
+                        // Formater l'affichage: "Titre (Domaine)" ou juste le lien si pas de titre
+                        let displayText;
+                        if (title) {
+                          // Tronquer le titre à 40 caractères
+                          const truncatedTitle = title.length > 40 ? title.slice(0, 37) + '...' : title;
+                          displayText = domain ? `${truncatedTitle} (${domain})` : truncatedTitle;
+                        } else {
+                          // Fallback: juste le lien
+                          displayText = url;
+                        }
+
+                        return (
+                          <li key={histIndex} className="flex items-center">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateLink(url, index);
+                                setLinkHistoryDropdowns(prev => ({
+                                  ...prev,
+                                  [index]: false
+                                }));
+                              }}
+                              className="flex-1 px-3 py-2 text-left text-xs text-white hover:bg-white/25 truncate transition-colors duration-200"
+                              title={url}
+                            >
+                              {displayText}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (linkItem.id) {
+                                  deleteLinkHistory(linkItem.id);
+                                }
+                              }}
+                              className="px-2 py-2 text-white/50 hover:text-red-400 hover:bg-white/10 transition-colors duration-200"
+                              title={t("topbar.delete")}
+                            >
+                              ✕
+                            </button>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}
