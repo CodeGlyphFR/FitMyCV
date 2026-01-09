@@ -19,6 +19,15 @@
       "cancelled": "Annulé",
       "unknown": "Inconnu"
     },
+    "steps": {
+      "classify": "Classification",
+      "experiences": "Expériences",
+      "projects": "Projets",
+      "extras": "Extras",
+      "skills": "Compétences",
+      "summary": "Résumé",
+      "recompose": "Finalisation"
+    },
     "messages": {
       "task": "Tâche",
       "importInProgress": "Import en cours ...",
@@ -40,7 +49,18 @@
       "matchScoreQueued": "Calcul du score de match en attente ...",
       "matchScoreCompleted": "Score de match calculé avec succès",
       "matchScoreCancelled": "Calcul du score de match annulé",
-      "matchScoreFailed": "Calcul du score de match échoué"
+      "matchScoreFailed": "Calcul du score de match échoué",
+      "pipelineInProgress": "Génération CV en cours",
+      "pipelineQueued": "Génération CV en attente",
+      "pipelineCompleted": "Génération CV terminée",
+      "pipelineFailed": "Génération CV échouée",
+      "pipelineCancelled": "Génération CV annulée",
+      "pipelinePartial": "Génération partiellement réussie",
+      "offers": "offres",
+      "cvReadyForOffer": "CV prêt pour l'offre {index}",
+      "cvGenerated": "{count} CV généré(s)",
+      "offerFailed": "Échec pour l'offre {index} - {credits} crédit remboursé",
+      "generatingOffer": "Génération ({current}/{total})"
     },
     "errors": {
       "noJobOfferDetected": "Aucune offre d'emploi détectée : {source}",

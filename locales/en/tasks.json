@@ -19,6 +19,15 @@
       "cancelled": "Cancelled",
       "unknown": "Unknown"
     },
+    "steps": {
+      "classify": "Classification",
+      "experiences": "Experiences",
+      "projects": "Projects",
+      "extras": "Extras",
+      "skills": "Skills",
+      "summary": "Summary",
+      "recompose": "Finalizing"
+    },
     "messages": {
       "task": "Task",
       "importInProgress": "Import in progress ...",
@@ -40,7 +49,18 @@
       "matchScoreQueued": "Match score calculation queued ...",
       "matchScoreCompleted": "Match score calculated successfully",
       "matchScoreCancelled": "Match score calculation cancelled",
-      "matchScoreFailed": "Match score calculation failed"
+      "matchScoreFailed": "Match score calculation failed",
+      "pipelineInProgress": "CV generation in progress",
+      "pipelineQueued": "CV generation queued",
+      "pipelineCompleted": "CV generation completed",
+      "pipelineFailed": "CV generation failed",
+      "pipelineCancelled": "CV generation cancelled",
+      "pipelinePartial": "Generation partially successful",
+      "offers": "offers",
+      "cvReadyForOffer": "CV ready for offer {index}",
+      "cvGenerated": "{count} CV(s) generated",
+      "offerFailed": "Failed for offer {index} - {credits} credit refunded",
+      "generatingOffer": "Generating ({current}/{total})"
     },
     "errors": {
       "noJobOfferDetected": "No job offer detected: {source}",

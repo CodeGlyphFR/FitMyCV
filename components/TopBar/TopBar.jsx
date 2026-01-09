@@ -61,7 +61,7 @@ export default function TopBar() {
   const { addNotification } = useNotifications();
   const { t, language } = useLanguage();
   const { settings } = useSettings();
-  const { history: linkHistory, addLinksToHistory, deleteLink: deleteLinkHistory } = useLinkHistory();
+  const { history: linkHistory, addLinksToHistory, deleteLink: deleteLinkHistory, refreshHistory: refreshLinkHistory } = useLinkHistory();
   const { currentStep, onboardingState } = useOnboarding();
   const { showCosts, getCost } = useCreditCost();
   const jobTitleCost = getCost("generate_from_job_title");
@@ -1094,6 +1094,7 @@ export default function TopBar() {
         generatorError={generator.generatorError}
         linkHistory={linkHistory}
         deleteLinkHistory={deleteLinkHistory}
+        refreshLinkHistory={refreshLinkHistory}
         linkHistoryDropdowns={generator.linkHistoryDropdowns}
         setLinkHistoryDropdowns={generator.setLinkHistoryDropdowns}
         tickerResetKey={state.tickerResetKey}

@@ -13,6 +13,7 @@ import { SettingsProvider } from "@/lib/settings/SettingsContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import RecaptchaProvider from "@/components/RecaptchaProvider";
 import OnboardingProvider from "@/components/onboarding/OnboardingProvider";
+import PipelineProgressProvider from "@/components/PipelineProgressProvider";
 
 export default function RootProviders({ session, initialSettings, children }){
   const pathname = usePathname();
@@ -35,9 +36,11 @@ export default function RootProviders({ session, initialSettings, children }){
             ) : (
               <RealtimeRefreshProvider>
                 <BackgroundTasksProvider>
-                  {children}
-                  <NotificationContainer />
-                  <LanguageSwitcher />
+                  <PipelineProgressProvider>
+                    {children}
+                    <NotificationContainer />
+                    <LanguageSwitcher />
+                  </PipelineProgressProvider>
                 </BackgroundTasksProvider>
               </RealtimeRefreshProvider>
             )}

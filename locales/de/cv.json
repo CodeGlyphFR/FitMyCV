@@ -291,6 +291,36 @@
     "restore": "Wiederherstellen",
     "restoreTitle": "Diese Version wiederherstellen (löscht die aktuelle Version)"
   },
+  "cvReview": {
+    "title": "KI-Änderungen",
+    "total": "gesamt",
+    "modifications": "Änderungen",
+    "noModifications": "Keine Änderungen",
+    "noModificationsFound": "Keine Änderungen gefunden",
+    "before": "Vorher",
+    "after": "Nachher",
+    "reason": "Grund",
+    "reviewed": "überprüft",
+    "acceptAllSection": "Alle akzeptieren",
+    "preservesPreviousDecisions": "(behält Ihre vorherigen Entscheidungen)",
+    "sections": {
+      "summary": "Zusammenfassung",
+      "experiences": "Erfahrungen",
+      "projects": "Projekte",
+      "skills": "Fähigkeiten",
+      "extras": "Extras",
+      "languages": "Sprachen"
+    },
+    "actions": {
+      "added": "Hinzugefügt",
+      "removed": "Entfernt",
+      "modified": "Geändert",
+      "adjusted": "Angepasst",
+      "reordered": "Neu sortiert",
+      "highlighted": "Hervorgehoben",
+      "generated": "Generiert"
+    }
+  },
   "review": {
     "title": "Änderung überprüfen",
     "before": "Vorher",
@@ -309,6 +339,11 @@
     "progress": "{reviewed}/{total} überprüft",
     "allReviewed": "Alle Änderungen überprüft",
     "processing": "Verarbeitung läuft...",
-    "reason": "Grund"
+    "reason": "Grund",
+    "validateAndSave": "Bestätigen und speichern",
+    "validating": "Wird bestätigt...",
+    "pendingWarning": "{count} nicht überprüfte Änderung(en). Sie werden standardmäßig akzeptiert.",
+    "validationSuccess": "Lebenslauf erfolgreich gespeichert",
+    "validationError": "Fehler beim Speichern"
   }
 }

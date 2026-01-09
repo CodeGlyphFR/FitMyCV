@@ -123,6 +123,13 @@
         "noJobOfferProvided": "Kein Stellenangebot bereitgestellt (Link oder Datei erforderlich)",
         "gptGenerationFailed": "GPT konnte die Lebenslauf-Vorlage nicht generieren",
         "promptNotFound": "Prompt-Datei nicht gefunden"
+      },
+      "generateV2": {
+        "noOffersProvided": "Keine Stellenangebote angegeben",
+        "maxOffersExceeded": "Maximale Anzahl an Angeboten überschritten ({max} max, {provided} angegeben)",
+        "invalidOfferIds": "Eine oder mehrere Angebots-IDs sind ungültig",
+        "invalidMode": "Ungültiger Generierungsmodus (erwartet: adapt oder rebuild)",
+        "jobOfferNotFound": "{count} Stellenangebot(e) nicht gefunden oder nicht autorisiert"
       }
     }
   }

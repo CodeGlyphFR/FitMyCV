@@ -33,6 +33,7 @@ export default function CvGeneratorModal({
   generatorError,
   linkHistory,
   deleteLinkHistory,
+  refreshLinkHistory,
   linkHistoryDropdowns,
   setLinkHistoryDropdowns,
   tickerResetKey,
@@ -172,6 +173,10 @@ export default function CvGeneratorModal({
                 <button
                   type="button"
                   onClick={() => {
+                    const isOpening = !linkHistoryDropdowns[index];
+                    if (isOpening && refreshLinkHistory) {
+                      refreshLinkHistory();
+                    }
                     setLinkHistoryDropdowns(prev => ({
                       ...prev,
                       [index]: !prev[index]
@@ -179,7 +184,6 @@ export default function CvGeneratorModal({
                   }}
                   className="h-full rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200 disabled:opacity-50"
                   title={t("cvGenerator.loadRecentLink")}
-                  disabled={linkHistory.length === 0}
                 >
                   📋
                 </button>

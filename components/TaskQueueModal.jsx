@@ -4,7 +4,9 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Modal from "./ui/Modal";
 import DonutProgress from "./ui/DonutProgress";
+import PipelineTaskProgress from "./ui/PipelineTaskProgress";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
+import { usePipelineProgressContext } from "@/components/PipelineProgressProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { emitOnboardingEvent, ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
@@ -44,6 +46,45 @@ function TaskProgressIndicator({ task, onComplete }) {
       size={28}
       strokeWidth={3}
       showPercent={false}
+    />
+  );
+}
+
+/**
+ * Indicateur de progression pour les tâches cv_generation_v2
+ * Affiche les étapes du pipeline sous forme de points
+ */
+function PipelineProgressIndicator({ task, onComplete }) {
+  const { getProgress } = usePipelineProgressContext();
+  const [showProgress, setShowProgress] = React.useState(true);
+
+  // Récupérer la progression SSE pour cette tâche
+  const progress = getProgress(task.id);
+
+  // Quand la tâche est terminée, attendre puis masquer
+  React.useEffect(() => {
+    if (task.status === 'completed' || task.status === 'failed') {
+      const timer = setTimeout(() => {
+        setShowProgress(false);
+        onComplete?.();
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [task.status, onComplete]);
+
+  if (!showProgress) return null;
+
+  // Extraire les infos du payload pour multi-offres
+  const payload = task?.payload && typeof task.payload === 'object' ? task.payload : null;
+  const totalOffers = payload?.totalOffers || 1;
+
+  return (
+    <PipelineTaskProgress
+      currentOffer={progress?.currentOffer ?? 0}
+      totalOffers={totalOffers}
+      currentStep={progress?.currentStep}
+      status={task.status}
+      completedSteps={progress?.completedSteps || {}}
     />
   );
 }
@@ -163,6 +204,20 @@ function TaskItem({ task, onCancel, onTaskClick }) {
     } else if (task.status === 'failed') {
       description = t("taskQueue.messages.templateCreationFailed");
     }
+  } else if (task.type === 'cv_generation_v2') {
+    const totalOffers = payload?.totalOffers || 1;
+    const offerLabel = totalOffers > 1 ? ` (${totalOffers} ${t("taskQueue.messages.offers") || 'offres'})` : '';
+    if (task.status === 'running') {
+      description = `${t("taskQueue.messages.pipelineInProgress") || 'Génération CV en cours'}${offerLabel}`;
+    } else if (task.status === 'queued') {
+      description = `${t("taskQueue.messages.pipelineQueued") || 'Génération CV en attente'}${offerLabel}`;
+    } else if (task.status === 'completed') {
+      description = `${t("taskQueue.messages.pipelineCompleted") || 'Génération CV terminée'}${offerLabel}`;
+    } else if (task.status === 'cancelled') {
+      description = `${t("taskQueue.messages.pipelineCancelled") || 'Génération CV annulée'}${offerLabel}`;
+    } else if (task.status === 'failed') {
+      description = `${t("taskQueue.messages.pipelineFailed") || 'Génération CV échouée'}${offerLabel}`;
+    }
   }
   // Note: Les tâches 'calculate-match-score' sont filtrées et n'apparaissent pas dans le gestionnaire
 
@@ -253,7 +308,12 @@ function TaskItem({ task, onCancel, onTaskClick }) {
       </div>
       <div className="flex items-center gap-2 ml-4">
         {showProgressDonut && (task.status === 'running' || task.status === 'completed') ? (
-          <TaskProgressIndicator task={task} onComplete={() => setShowProgressDonut(false)} />
+          // Utiliser PipelineProgressIndicator pour les tâches cv_generation_v2
+          task.type === 'cv_generation_v2' ? (
+            <PipelineProgressIndicator task={task} onComplete={() => setShowProgressDonut(false)} />
+          ) : (
+            <TaskProgressIndicator task={task} onComplete={() => setShowProgressDonut(false)} />
+          )
         ) : (
           <span className={`text-sm font-medium ${statusDisplay.color}`}>
             {statusDisplay.label}

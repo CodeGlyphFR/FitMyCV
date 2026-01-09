@@ -291,6 +291,36 @@
     "restore": "Restaurar",
     "restoreTitle": "Restaurar esta versión (elimina la versión actual)"
   },
+  "cvReview": {
+    "title": "Cambios IA",
+    "total": "total",
+    "modifications": "cambios",
+    "noModifications": "Sin cambios",
+    "noModificationsFound": "No se encontraron cambios",
+    "before": "Antes",
+    "after": "Después",
+    "reason": "Razón",
+    "reviewed": "revisados",
+    "acceptAllSection": "Aceptar todo",
+    "preservesPreviousDecisions": "(conserva sus decisiones anteriores)",
+    "sections": {
+      "summary": "Resumen",
+      "experiences": "Experiencias",
+      "projects": "Proyectos",
+      "skills": "Habilidades",
+      "extras": "Extras",
+      "languages": "Idiomas"
+    },
+    "actions": {
+      "added": "Añadido",
+      "removed": "Eliminado",
+      "modified": "Modificado",
+      "adjusted": "Ajustado",
+      "reordered": "Reordenado",
+      "highlighted": "Destacado",
+      "generated": "Generado"
+    }
+  },
   "review": {
     "title": "Revisar cambio",
     "before": "Antes",
@@ -309,6 +339,11 @@
     "progress": "{reviewed}/{total} revisados",
     "allReviewed": "Todos los cambios revisados",
     "processing": "Procesando...",
-    "reason": "Razón"
+    "reason": "Razón",
+    "validateAndSave": "Validar y guardar",
+    "validating": "Validando...",
+    "pendingWarning": "{count} cambio(s) sin revisar. Se aceptarán por defecto.",
+    "validationSuccess": "CV guardado correctamente",
+    "validationError": "Error al guardar el CV"
   }
 }
