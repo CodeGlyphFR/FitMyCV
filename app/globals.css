@@ -1,5 +1,6 @@
 /* Tailwind CSS 4 */
 @import "tailwindcss";
+@config "../tailwind.config.js";
 
 /* Optimisations LCP - Chargement critique */
 @layer base {
