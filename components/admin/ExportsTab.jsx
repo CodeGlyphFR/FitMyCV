@@ -179,7 +179,7 @@ export function ExportsTab({ userId }) {
           <div>
             <h4 className="font-semibold text-white mb-2">GET /api/analytics/summary</h4>
             <p className="text-sm text-white/60 mb-2">Vue d'ensemble des KPIs</p>
-            <code className="block bg-black/20 p-3 rounded text-sm text-white/80">
+            <code className="block bg-black/20 p-3 rounded-sm text-sm text-white/80">
               ?period=24h|7d|30d|all
             </code>
           </div>
@@ -187,7 +187,7 @@ export function ExportsTab({ userId }) {
           <div>
             <h4 className="font-semibold text-white mb-2">GET /api/analytics/events</h4>
             <p className="text-sm text-white/60 mb-2">Liste des événements avec filtres</p>
-            <code className="block bg-black/20 p-3 rounded text-sm text-white/80">
+            <code className="block bg-black/20 p-3 rounded-sm text-sm text-white/80">
               ?userId=xxx&type=CV_GENERATED&limit=100&offset=0
             </code>
           </div>
@@ -200,7 +200,7 @@ export function ExportsTab({ userId }) {
           <div>
             <h4 className="font-semibold text-white mb-2">GET /api/analytics/sessions</h4>
             <p className="text-sm text-white/60 mb-2">Statistiques de sessions</p>
-            <code className="block bg-black/20 p-3 rounded text-sm text-white/80">
+            <code className="block bg-black/20 p-3 rounded-sm text-sm text-white/80">
               ?period=30d&limit=50
             </code>
           </div>
@@ -213,7 +213,7 @@ export function ExportsTab({ userId }) {
           <div>
             <h4 className="font-semibold text-white mb-2">GET /api/analytics/errors</h4>
             <p className="text-sm text-white/60 mb-2">Analyse des erreurs</p>
-            <code className="block bg-black/20 p-3 rounded text-sm text-white/80">
+            <code className="block bg-black/20 p-3 rounded-sm text-sm text-white/80">
               ?period=7d&limit=100
             </code>
           </div>

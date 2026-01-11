@@ -310,14 +310,20 @@ export default function OnboardingProvider({ children }) {
           setShowWelcomeModal(false);
         });
 
-        eventSource.onerror = (error) => {
-          onboardingLogger.error('[SSE] Erreur connexion:', error);
+        eventSource.onerror = () => {
+          // Note: L'objet error de EventSource n'a pas de propriétés utiles
+          // readyState: 0=CONNECTING, 1=OPEN, 2=CLOSED
           eventSource.close();
 
           // Reconnect avec exponential backoff
           if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
             const delay = RECONNECT_DELAYS[reconnectAttempts] || 16000;
-            onboardingLogger.log(`[SSE] Reconnexion dans ${delay}ms (tentative ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
+
+            // Log silencieux sur les premières tentatives (race condition session normale)
+            // Log warning uniquement après 2+ échecs
+            if (reconnectAttempts >= 2) {
+              onboardingLogger.log(`[SSE] Reconnexion dans ${delay}ms (tentative ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
+            }
 
             reconnectTimeout = setTimeout(() => {
               reconnectAttempts++;

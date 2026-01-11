@@ -18,7 +18,8 @@ export async function GET(request, { params }) {
       );
     }
 
-    const { userId } = params;
+    // Next.js 16: params est maintenant async
+    const { userId } = await params;
 
     // Get user info
     const user = await prisma.user.findUnique({

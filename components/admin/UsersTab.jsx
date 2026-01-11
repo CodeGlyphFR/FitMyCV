@@ -528,7 +528,7 @@ export function UsersTab({ refreshKey }) {
               placeholder="Nom ou prénom..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
             />
           </div>
 
@@ -674,7 +674,7 @@ export function UsersTab({ refreshKey }) {
                     <button
                       onClick={() => !updating && openEditUserModal(user)}
                       disabled={updating}
-                      className="px-3 py-1.5 text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded transition w-28 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-1.5 text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-sm transition w-28 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Éditer
                     </button>
@@ -684,7 +684,7 @@ export function UsersTab({ refreshKey }) {
                       <button
                         onClick={() => handleValidateEmail(user.id)}
                         disabled={updating}
-                        className="px-3 py-1.5 text-xs bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded transition w-28 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-1.5 text-xs bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-sm transition w-28 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Valider email
                       </button>
@@ -694,7 +694,7 @@ export function UsersTab({ refreshKey }) {
                     <button
                       onClick={() => !updating && handleDeleteUser(user)}
                       disabled={updating}
-                      className="px-3 py-1.5 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded transition w-28 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-1.5 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-sm transition w-28 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Supprimer
                     </button>
@@ -716,7 +716,7 @@ export function UsersTab({ refreshKey }) {
               <button
                 onClick={() => setPage(Math.max(1, page - 1))}
                 disabled={page === 1}
-                className="px-3 py-1.5 bg-white/10 hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition text-sm"
+                className="px-3 py-1.5 bg-white/10 hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-sm transition text-sm"
               >
                 Précédent
               </button>
@@ -724,7 +724,7 @@ export function UsersTab({ refreshKey }) {
               <button
                 onClick={() => setPage(Math.min(data.pagination.totalPages, page + 1))}
                 disabled={!data.pagination.hasMore}
-                className="px-3 py-1.5 bg-white/10 hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition text-sm"
+                className="px-3 py-1.5 bg-white/10 hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-sm transition text-sm"
               >
                 Suivant
               </button>
@@ -753,7 +753,7 @@ export function UsersTab({ refreshKey }) {
                   type="email"
                   value={newUserEmail}
                   onChange={(e) => setNewUserEmail(e.target.value)}
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
                   placeholder="utilisateur@exemple.com"
                 />
               </div>
@@ -764,7 +764,7 @@ export function UsersTab({ refreshKey }) {
                   type="text"
                   value={newUserName}
                   onChange={(e) => setNewUserName(e.target.value)}
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
                   placeholder="John Doe"
                 />
               </div>
@@ -775,7 +775,7 @@ export function UsersTab({ refreshKey }) {
                   type="password"
                   value={newUserPassword}
                   onChange={(e) => setNewUserPassword(e.target.value)}
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
                   placeholder="Minimum 8 caractères"
                 />
               </div>
@@ -792,7 +792,7 @@ export function UsersTab({ refreshKey }) {
                 />
               </div>
 
-              <div className="text-xs text-white/40 bg-white/5 p-3 rounded border border-white/10">
+              <div className="text-xs text-white/40 bg-white/5 p-3 rounded-sm border border-white/10">
                 ℹ️ L'email sera automatiquement marqué comme vérifié.
               </div>
             </div>
@@ -838,7 +838,7 @@ export function UsersTab({ refreshKey }) {
                   value={editedEmail}
                   onChange={(e) => setEditedEmail(e.target.value)}
                   disabled={selectedUserForEdit?.hasOAuth}
-                  className={`w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition ${selectedUserForEdit?.hasOAuth ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition ${selectedUserForEdit?.hasOAuth ? 'opacity-50 cursor-not-allowed' : ''}`}
                 />
                 {selectedUserForEdit?.hasOAuth && (
                   <p className="text-xs text-orange-400 mt-1 flex items-center gap-1">
@@ -849,7 +849,7 @@ export function UsersTab({ refreshKey }) {
               </div>
             </div>
 
-            <div className="text-xs text-white/40 bg-white/5 p-3 rounded border border-white/10 mt-4 mb-4">
+            <div className="text-xs text-white/40 bg-white/5 p-3 rounded-sm border border-white/10 mt-4 mb-4">
               <div>⚠️ La modification de l'email réinitialisera le statut de vérification.</div>
             </div>
 

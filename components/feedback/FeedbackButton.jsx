@@ -24,19 +24,7 @@ export default function FeedbackButton() {
     <>
       <button
         onClick={() => setIsModalOpen(true)}
-        className="
-          no-print fixed bottom-6 left-[76px] z-50
-          w-10 h-10 rounded-full
-          bg-amber-500/20 backdrop-blur-xl text-white
-          shadow-2xl hover:shadow-xl
-          flex items-center justify-center
-          transition-all duration-300
-          hover:scale-110 hover:bg-amber-500/30
-          focus:outline-none focus:ring-4 focus:ring-amber-400/40
-          pointer-events-auto
-          border-2 border-amber-500/30
-          cursor-pointer
-        "
+        className="no-print fixed bottom-6 left-[76px] z-50 w-10 h-10 rounded-full bg-amber-500/20 backdrop-blur-xl text-white shadow-2xl hover:shadow-xs-xl flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-amber-500/30 focus:outline-hidden focus:ring-4 focus:ring-amber-400/40 pointer-events-auto border-2 border-amber-500/30 cursor-pointer"
         style={{
           transform: 'translateZ(0)',
           backfaceVisibility: 'hidden',

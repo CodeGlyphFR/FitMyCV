@@ -65,10 +65,19 @@ function extractModifications(batchResults) {
   }
 
   // Skills - modifications directes sur l'objet skills
+  // Note: skills modifications use {category, skill, action, reason} format
+  // We need to transform to {field, action, before, after, reason} for ModificationCard
   if (batchResults.skills?.modifications) {
-    result.skills = Array.isArray(batchResults.skills.modifications)
+    const skillsMods = Array.isArray(batchResults.skills.modifications)
       ? batchResults.skills.modifications
       : [];
+    result.skills = skillsMods.map((mod) => ({
+      field: `${mod.category || 'skill'}: ${mod.skill}`,
+      action: mod.action,
+      before: mod.action === 'removed' ? mod.skill : null,
+      after: mod.action === 'added' ? mod.skill : null,
+      reason: mod.reason,
+    }));
   }
 
   // Extras - peut être un tableau ou un objet avec modifications

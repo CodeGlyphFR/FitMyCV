@@ -114,7 +114,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder={t("feedback.commentPlaceholder")}
-              className="w-full h-32 px-3 py-2 pr-14 pb-12 border border-white/20 rounded-lg resize-none bg-white/5 text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+              className="w-full h-32 px-3 py-2 pr-14 pb-12 border border-white/20 rounded-lg resize-none bg-white/5 text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
               maxLength={500}
             />
 

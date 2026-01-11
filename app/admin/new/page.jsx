@@ -62,11 +62,11 @@ export default function NewCVPage(){
   }
 
   return (<main className="max-w-2xl mx-auto p-4"><h1 className="text-xl font-semibold mb-4">{t("newCv.title")}</h1><div className="rounded-2xl border p-4 space-y-3">
-    <div><label className="text-sm block mb-1">{t("newCv.fullName")}<span className="text-red-500" aria-hidden="true"> *</span></label><input className="w-full rounded border px-3 py-2" value={full_name} onChange={e=>setFullName(e.target.value)} placeholder={t("newCv.fullNamePlaceholder")} required /></div>
-    <div><label className="text-sm block mb-1">{t("newCv.currentTitle")}<span className="text-red-500" aria-hidden="true"> *</span></label><input className="w-full rounded border px-3 py-2" value={current_title} onChange={e=>setCurrentTitle(e.target.value)} placeholder={t("newCv.currentTitlePlaceholder")} required /></div>
-    <div><label className="text-sm block mb-1">{t("newCv.email")}</label><input className="w-full rounded border px-3 py-2" value={email} onChange={e=>setEmail(e.target.value)} placeholder={t("newCv.emailPlaceholder")} /></div>
+    <div><label className="text-sm block mb-1">{t("newCv.fullName")}<span className="text-red-500" aria-hidden="true"> *</span></label><input className="w-full rounded-sm border px-3 py-2" value={full_name} onChange={e=>setFullName(e.target.value)} placeholder={t("newCv.fullNamePlaceholder")} required /></div>
+    <div><label className="text-sm block mb-1">{t("newCv.currentTitle")}<span className="text-red-500" aria-hidden="true"> *</span></label><input className="w-full rounded-sm border px-3 py-2" value={current_title} onChange={e=>setCurrentTitle(e.target.value)} placeholder={t("newCv.currentTitlePlaceholder")} required /></div>
+    <div><label className="text-sm block mb-1">{t("newCv.email")}</label><input className="w-full rounded-sm border px-3 py-2" value={email} onChange={e=>setEmail(e.target.value)} placeholder={t("newCv.emailPlaceholder")} /></div>
     {error ? <div className="text-sm text-red-600">{String(error)}</div> : null}
-    <div className="flex gap-2"><button onClick={create} disabled={busy || !full_name.trim() || !current_title.trim()} className="rounded border px-3 py-2 hover:shadow disabled:opacity-50 disabled:cursor-not-allowed">{busy? t("newCv.creating"):t("newCv.createButton")}</button><button onClick={()=>router.push("/")} className="rounded border px-3 py-2">{t("newCv.cancel")}</button></div>
+    <div className="flex gap-2"><button onClick={create} disabled={busy || !full_name.trim() || !current_title.trim()} className="rounded-sm border px-3 py-2 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">{busy? t("newCv.creating"):t("newCv.createButton")}</button><button onClick={()=>router.push("/")} className="rounded-sm border px-3 py-2">{t("newCv.cancel")}</button></div>
     <p className="text-xs opacity-70">{t("newCv.tip")}</p>
   </div></main>);
 }

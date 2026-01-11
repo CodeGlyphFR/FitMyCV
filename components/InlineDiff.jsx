@@ -128,7 +128,7 @@ export default function InlineDiff({
           return (
             <span
               key={index}
-              className="text-emerald-300 bg-emerald-500/20 px-0.5 rounded border-b border-emerald-400/50"
+              className="text-emerald-300 bg-emerald-500/20 px-0.5 rounded-sm border-b border-emerald-400/50"
               title="Ajouté"
             >
               {segment.value}
@@ -202,7 +202,7 @@ export function SideBySideDiff({ beforeText, afterText }) {
         <div className="text-xs font-medium text-red-400 uppercase tracking-wider">
           Avant
         </div>
-        <div className="p-2 bg-red-500/10 border border-red-500/30 rounded text-sm text-white/80 whitespace-pre-wrap">
+        <div className="p-2 bg-red-500/10 border border-red-500/30 rounded-sm text-sm text-white/80 whitespace-pre-wrap">
           {beforeText || <span className="text-white/30 italic">(vide)</span>}
         </div>
       </div>
@@ -212,7 +212,7 @@ export function SideBySideDiff({ beforeText, afterText }) {
         <div className="text-xs font-medium text-emerald-400 uppercase tracking-wider">
           Après
         </div>
-        <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded text-sm text-white/80 whitespace-pre-wrap">
+        <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-sm text-sm text-white/80 whitespace-pre-wrap">
           {afterText || <span className="text-white/30 italic">(vide)</span>}
         </div>
       </div>

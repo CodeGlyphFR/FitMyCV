@@ -405,25 +405,14 @@ export default function CVImprovementPanel({ cvFile }) {
         data-onboarding="optimize"
         onClick={() => setIsOpen(true)}
         disabled={shouldDisableButton}
-        className={`
-          relative w-9 h-9 rounded-full flex items-center justify-center
-          bg-white/20 backdrop-blur-md ios-blur-medium border-2 border-white/30 shadow-2xl gpu-accelerate
-          transition-all duration-300
-          ${shouldDisableButton
-            ? 'cursor-not-allowed'
-            : 'cursor-pointer hover:shadow-xl hover:bg-white/30'
-          }
-        `}
+        className={`relative w-9 h-9 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-md ios-blur-medium border-2 border-white/30 shadow-2xl gpu-accelerate transition-all duration-300 ${shouldDisableButton ? 'cursor-not-allowed' : 'cursor-pointer hover:shadow-xs-xl hover:bg-white/30'}`}
         title={shouldDisableButton
           ? (cvData?.optimiseStatus === 'inprogress' ? labels.improvementInProgress : labels.calculatingScore)
           : labels.title}
       >
         {/* Icône principale avec blur pendant le chargement */}
         <span
-          className={`
-            transition-all duration-300
-            ${shouldDisableButton ? 'blur-sm' : 'blur-0'}
-          `}
+          className={`transition-all duration-300 ${shouldDisableButton ? 'blur-sm' : 'blur-0'}`}
         >
           <img src="/icons/analyzer.png" alt="Analyzer" className="h-4 w-4" />
         </span>
@@ -773,27 +762,10 @@ export default function CVImprovementPanel({ cvFile }) {
                                 <div
                                   key={index}
                                   style={{ animationDelay: `${index * 0.1}s` }}
-                                  className={`
-                                    p-3 rounded-xl border-l-4 transition-all duration-300 hover:-translate-y-0.5
-                                    ${suggestion.priority?.toLowerCase() === 'high'
-                                      ? 'bg-red-500/10 border-red-500 hover:bg-red-500/20'
-                                      : suggestion.priority?.toLowerCase() === 'medium'
-                                      ? 'bg-yellow-500/10 border-yellow-500 hover:bg-yellow-500/20'
-                                      : 'bg-green-500/10 border-green-500 hover:bg-green-500/20'
-                                    }
-                                    animate-scale-in
-                                  `}
+                                  className={`p-3 rounded-xl border-l-4 transition-all duration-300 hover:-translate-y-0.5 animate-scale-in ${suggestion.priority?.toLowerCase() === 'high' ? 'bg-red-500/10 border-red-500 hover:bg-red-500/20' : suggestion.priority?.toLowerCase() === 'medium' ? 'bg-yellow-500/10 border-yellow-500 hover:bg-yellow-500/20' : 'bg-green-500/10 border-green-500 hover:bg-green-500/20'}`}
                                 >
                                   <div className="flex items-start justify-between mb-1.5 gap-2">
-                                    <span className={`
-                                      inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full whitespace-nowrap
-                                      ${suggestion.priority?.toLowerCase() === 'high'
-                                        ? 'bg-red-500/30 text-white animate-pulse'
-                                        : suggestion.priority?.toLowerCase() === 'medium'
-                                        ? 'bg-yellow-500/30 text-white'
-                                        : 'bg-green-500/30 text-white'
-                                      }
-                                    `}>
+                                    <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full whitespace-nowrap ${suggestion.priority?.toLowerCase() === 'high' ? 'bg-red-500/30 text-white animate-pulse' : suggestion.priority?.toLowerCase() === 'medium' ? 'bg-yellow-500/30 text-white' : 'bg-green-500/30 text-white'}`}>
                                       {suggestion.priority?.toLowerCase() === 'high' ? '🔥' :
                                        suggestion.priority?.toLowerCase() === 'medium' ? '⚡' : '✨'}
                                       {labels[suggestion.priority?.toLowerCase()] || suggestion.priority}
@@ -840,11 +812,7 @@ export default function CVImprovementPanel({ cvFile }) {
                               {visibleMissingSkills.map((skill, index) => (
                                 <span
                                   key={index}
-                                  className="
-                                    px-3 py-1 bg-red-500/20 text-white
-                                    rounded-full text-xs font-medium border border-red-400/30
-                                    hover:scale-105 hover:bg-red-500/30 transition-all duration-200
-                                  "
+                                  className="px-3 py-1 bg-red-500/20 text-white rounded-full text-xs font-medium border border-red-400/30 hover:scale-105 hover:bg-red-500/30 transition-all duration-200"
                                 >
                                   {skill}
                                 </span>
@@ -853,13 +821,7 @@ export default function CVImprovementPanel({ cvFile }) {
                               {hiddenMissingCount > 0 && (
                                 <button
                                   onClick={() => setShowAllMissingSkills(!showAllMissingSkills)}
-                                  className="
-                                    px-3 py-1 bg-red-500/20 text-red-300
-                                    rounded-full text-xs font-medium border border-red-400/40
-                                    hover:bg-red-500/30 hover:border-red-400/60
-                                    transition-all duration-200 cursor-pointer
-                                    inline-flex items-center gap-1
-                                  "
+                                  className="px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-xs font-medium border border-red-400/40 hover:bg-red-500/30 hover:border-red-400/60 transition-all duration-200 cursor-pointer inline-flex items-center gap-1"
                                 >
                                   {showAllMissingSkills ? (
                                     <>
@@ -889,12 +851,7 @@ export default function CVImprovementPanel({ cvFile }) {
                               {visibleMatchingSkills.map((skill, index) => (
                                 <span
                                   key={index}
-                                  className="
-                                    px-3 py-1 bg-green-500/20 text-white
-                                    rounded-full text-xs font-medium border border-green-400/30
-                                    hover:scale-105 hover:bg-green-500/30 transition-all duration-200
-                                    inline-flex items-center gap-1
-                                  "
+                                  className="px-3 py-1 bg-green-500/20 text-white rounded-full text-xs font-medium border border-green-400/30 hover:scale-105 hover:bg-green-500/30 transition-all duration-200 inline-flex items-center gap-1"
                                 >
                                   <span className="text-green-300">✓</span>
                                   {skill}
@@ -904,13 +861,7 @@ export default function CVImprovementPanel({ cvFile }) {
                               {hiddenMatchingCount > 0 && (
                                 <button
                                   onClick={() => setShowAllMatchingSkills(!showAllMatchingSkills)}
-                                  className="
-                                    px-3 py-1 bg-green-500/20 text-green-300
-                                    rounded-full text-xs font-medium border border-green-400/40
-                                    hover:bg-green-500/30 hover:border-green-400/60
-                                    transition-all duration-200 cursor-pointer
-                                    inline-flex items-center gap-1
-                                  "
+                                  className="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-xs font-medium border border-green-400/40 hover:bg-green-500/30 hover:border-green-400/60 transition-all duration-200 cursor-pointer inline-flex items-center gap-1"
                                 >
                                   {showAllMatchingSkills ? (
                                     <>
@@ -973,12 +924,7 @@ export default function CVImprovementPanel({ cvFile }) {
                       // Bouton actif
                       <button
                         onClick={handleImprove}
-                        className="
-                          px-6 py-2.5 rounded-lg text-sm font-semibold
-                          bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600
-                          text-white hover:shadow-lg
-                          transition-all duration-200
-                        "
+                        className="px-6 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600 text-white hover:shadow-xs-lg transition-all duration-200"
                       >
                         {labels.autoImprove}
                       </button>
@@ -989,11 +935,7 @@ export default function CVImprovementPanel({ cvFile }) {
                 {/* Bouton fermer */}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="
-                    px-4 py-2.5 text-sm
-                    text-slate-400 hover:text-white
-                    transition-colors
-                  "
+                  className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors"
                 >
                   {labels.close}
                 </button>

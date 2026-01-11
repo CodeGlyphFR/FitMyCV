@@ -1,30 +1,14 @@
 # Projet a Adapter
 
-## Projet Source (index {projectIndex})
+{movedFromExperienceNote}
 
 ```json
 {projectJson}
 ```
 
-{movedFromExperienceNote}
+# Langue de sortie: {targetLanguage}
 
-## Offre d'Emploi Cible
-
-**Titre du poste:** {jobTitle}
-
-**Technologies requises:**
-{requiredSkills}
-
-**Technologies appreciees:**
-{niceToHaveSkills}
-
-## Langue de sortie
-
-Le CV adapte doit etre redige en **{targetLanguage}**.
-
-## Ta Tache
-
-Adapte ce projet pour qu'il corresponde mieux a l'offre d'emploi.
+Adapte ce projet pour correspondre a l'offre d'emploi ci-dessus.
 
 **Champs a remplir obligatoirement:**
 - **name**: Nom du projet
@@ -40,5 +24,7 @@ Adapte ce projet pour qu'il corresponde mieux a l'offre d'emploi.
 - Deduis le **role** depuis le titre de l'experience originale
 - Combine description, responsibilities et deliverables en un **summary** coherent
 - Ne jamais inventer de donnees - reformuler, reordonner et filtrer uniquement
+
+**IMPORTANT**: Documente TOUTES tes modifications dans le champ `modifications[]` avec avant/apres/raison.
 
 Reponds en JSON valide avec tous les champs requis.

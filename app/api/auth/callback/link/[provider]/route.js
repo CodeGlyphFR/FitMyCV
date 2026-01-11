@@ -53,7 +53,8 @@ export async function GET(request, { params }) {
   }
 
   // Vérifier le state depuis le cookie
-  const cookieStore = cookies();
+  // Next.js 16: cookies() est maintenant async
+  const cookieStore = await cookies();
   const storedState = cookieStore.get("oauth_link_state")?.value;
 
   if (!storedState || storedState !== state) {

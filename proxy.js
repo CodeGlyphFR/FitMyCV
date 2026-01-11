@@ -60,10 +60,10 @@ function checkRateLimit(ip, pathname) {
   };
 }
 
-export async function middleware(request) {
+export async function proxy(request) {
   const { pathname } = request.nextUrl;
 
-  // ⚡ CRITICAL: Bypass ALL middleware logic for WebSocket HMR
+  // ⚡ CRITICAL: Bypass ALL proxy logic for WebSocket HMR
   // WebSocket upgrade requests cannot handle redirects or extra headers
   if (pathname.startsWith('/_next/webpack-hmr')) {
     return NextResponse.next();
@@ -103,7 +103,7 @@ export async function middleware(request) {
         return NextResponse.redirect(url);
       }
     } catch (error) {
-      console.error('[middleware] Erreur vérification email:', error);
+      console.error('[proxy] Erreur vérification email:', error);
       // Ne pas bloquer en cas d'erreur
     }
   }

@@ -44,7 +44,9 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    const planId = parseInt(params.id, 10);
+    // Next.js 16: params est maintenant async
+    const { id } = await params;
+    const planId = parseInt(id, 10);
     if (isNaN(planId)) {
       return NextResponse.json(
         { error: 'ID de plan invalide' },
@@ -227,7 +229,9 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    const planId = parseInt(params.id, 10);
+    // Next.js 16: params est maintenant async
+    const { id } = await params;
+    const planId = parseInt(id, 10);
     if (isNaN(planId)) {
       return NextResponse.json(
         { error: 'ID de plan invalide' },

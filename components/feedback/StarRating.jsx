@@ -13,7 +13,7 @@ export default function StarRating({ rating, setRating }) {
           onClick={() => setRating(star)}
           onMouseEnter={() => setHoverRating(star)}
           onMouseLeave={() => setHoverRating(0)}
-          className="text-3xl transition-transform duration-150 hover:scale-110 focus:outline-none"
+          className="text-3xl transition-transform duration-150 hover:scale-110 focus:outline-hidden"
           aria-label={`${star} étoile${star > 1 ? 's' : ''}`}
         >
           <span className={

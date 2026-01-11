@@ -1,47 +1,42 @@
-# Skills du CV Source
+# Compétences Source à Adapter
 
-**Hard Skills:**
+## Hard Skills
 ```json
 {hardSkillsJson}
 ```
 
-**Soft Skills:**
+## Soft Skills
 ```json
 {softSkillsJson}
 ```
 
-**Tools:**
+## Tools
 ```json
 {toolsJson}
 ```
 
-**Methodologies:**
+## Methodologies
 ```json
 {methodologiesJson}
 ```
 
-# Expériences et Projets Conservés
+---
 
-**Expériences:**
-```json
-{experiencesSummary}
-```
+# Instructions
 
-**Projets:**
-```json
-{projectsSummary}
-```
+**Langue de sortie:** {targetLanguage}
 
-# Offre d'Emploi
+## Rappel du processus
 
-**Poste:** {jobTitle}
+1. **SCORER** chaque compétence de 0 à 10 selon sa pertinence pour l'offre
+2. **SUPPRIMER** celles avec score ≤ 5
+3. **AJUSTER** les niveaux des compétences conservées selon l'expérience du candidat
 
-**Compétences techniques requises:** {requiredSkills}
+## Règles strictes
 
-**Compétences techniques appréciées:** {niceToHaveSkills}
+- **JAMAIS D'AJOUT** : Tu ne peux que supprimer ou ajuster les niveaux
+- Documente chaque suppression avec le score dans la raison (ex: "Score 3/10 - non pertinent")
+- Documente chaque ajustement de niveau (ex: "Ajusté de Débutant à Intermédiaire")
+- Limite les soft_skills à 6 maximum
 
-**Soft skills demandés:** {requiredSoftSkills}
-
-**Méthodologies demandées:** {requiredMethodologies}
-
-# Langue de sortie: {targetLanguage}
+Réponds en JSON valide avec le champ `modifications[]` documentant tous les changements.

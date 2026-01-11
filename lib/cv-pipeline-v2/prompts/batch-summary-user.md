@@ -1,55 +1,37 @@
-# Donnees pour Generation du Summary
+# Données du candidat
 
-## CV Source
+## Expérience par domaine (total agrégé)
 
-**Experiences:**
+{experiencesByDomain}
+
+## Titres actuels
+
+{currentTitles}
+
+## Années d'expérience totales
+
+{totalYears} ans
+
+## Expériences complètes (conservées et retravaillées)
+
 ```json
 {experiencesJson}
 ```
 
-**Projets:**
-```json
-{projectsJson}
-```
+## Skills
 
-**Skills:**
 ```json
 {skillsJson}
 ```
 
-**Extras:**
-```json
-{extrasJson}
-```
+---
 
-## Summary Actuel du CV (si existe)
-```json
-{currentSummaryJson}
-```
+# Instructions
 
-## Offre d'Emploi Cible
+**Langue de sortie** : {targetLanguage}
 
-**Titre:** {jobTitle}
+Génère :
+1. `description` : résumé du profil en utilisant les données ci-dessus
+2. `domains` : 2-3 domaines d'expertise triés par pertinence pour l'offre
 
-**Description:**
-{jobDescription}
-
-**Competences requises:**
-{requiredSkills}
-
-**Competences appreciees:**
-{niceToHaveSkills}
-
-## Langue de sortie
-
-Le summary doit etre redige en **{targetLanguage}**.
-
-## Ta Tache
-
-Genere un summary professionnel qui:
-1. Presente AUTHENTIQUEMENT le candidat (NFR3)
-2. Integre NATURELLEMENT les mots-cles pertinents (NFR4)
-3. Met en valeur les points forts pour CE poste
-4. Calcule correctement les annees d'experience
-
-Reponds en JSON valide.
+Réponds en JSON valide.

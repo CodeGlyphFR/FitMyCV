@@ -307,7 +307,7 @@ export function OverviewTab({ period, userId, refreshKey, isInitialLoad, trigger
                     <span className={`font-semibold ${alertStatus.colorClass}`}>{alertStatus.label}</span>
                   </div>
                   {alertCount > 0 && (
-                    <div className="mt-2 p-2 bg-orange-500/10 rounded border border-orange-500/20">
+                    <div className="mt-2 p-2 bg-orange-500/10 rounded-sm border border-orange-500/20">
                       <p className="text-xs text-orange-300">
                         {alertCount} alerte{alertCount > 1 ? 's' : ''} déclenchée{alertCount > 1 ? 's' : ''}
                       </p>

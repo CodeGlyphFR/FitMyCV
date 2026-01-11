@@ -82,7 +82,7 @@ export default function ForgotPasswordPage() {
                 </p>
                 <Link
                   href="/auth"
-                  className="inline-block rounded border border-emerald-500 bg-emerald-500 px-6 py-2 text-sm font-medium text-white hover:bg-emerald-600 transition"
+                  className="inline-block rounded-sm border border-emerald-500 bg-emerald-500 px-6 py-2 text-sm font-medium text-white hover:bg-emerald-600 transition"
                 >
                   Retour à la connexion
                 </Link>
@@ -119,14 +119,14 @@ export default function ForgotPasswordPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+                  className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                   placeholder="email@example.com"
                   autoComplete="email"
                 />
               </div>
 
               {error ? (
-                <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                   {error}
                 </div>
               ) : null}
@@ -134,7 +134,7 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded border border-emerald-500 bg-emerald-500 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60 transition"
+                className="w-full rounded-sm border border-emerald-500 bg-emerald-500 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60 transition"
               >
                 {loading ? "Envoi en cours..." : "Envoyer le lien"}
               </button>

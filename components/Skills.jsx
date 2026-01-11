@@ -8,7 +8,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getSkillLevelLabel } from "@/lib/i18n/cvLabels";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import { capitalizeSkillName } from "@/lib/utils/textFormatting";
-import SkillItemHighlight, { RemovedSkillsDisplay } from "./SkillItemHighlight";
+import SkillItemHighlight, { RemovedSkillsDisplay, RemovedSkillsDisplayBlock, useRemovedItems } from "./SkillItemHighlight";
 import SectionReviewActions from "./SectionReviewActions";
 import SkillsReviewActions from "./SkillsReviewActions";
 
@@ -132,7 +132,17 @@ export default function Skills(props){
         {(() => {
           const showHard = hasHard || editing; // en édition, on montre le bloc même vide
           const hideHardBecauseOthersFull = !hasHard && hasTools && hasMethods && !editing;
-          const twoColsToolsMethods = hasTools && hasMethods;
+
+          // Vérifier s'il y a des items supprimés à reviewer
+          const removedTools = useRemovedItems("skills", "tools");
+          const removedMethods = useRemovedItems("skills", "methodologies");
+
+          // Déterminer si on doit afficher chaque colonne
+          const showToolsColumn = hasTools || editing || removedTools.length > 0;
+          const showMethodsColumn = hasMethods || editing || removedMethods.length > 0;
+
+          // Grille à 2 colonnes seulement si les deux colonnes ont du contenu
+          const useTwoColumns = showToolsColumn && showMethodsColumn;
 
           return (
             <>
@@ -173,11 +183,16 @@ export default function Skills(props){
                   )}
                 </div>
               )}
+              {/* Hard skills orphelins (tous supprimés) */}
+              {!hasHard && !editing && (
+                <RemovedSkillsDisplayBlock field="hard_skills" title={cvT("cvSections.hardSkills")} />
+              )}
 
-              {/* Outils + Méthodologies */}
-              <div className={twoColsToolsMethods ? "grid md:grid-cols-2 gap-4" : "grid grid-cols-1 gap-4"}>
-                {/* Outils */}
-                {(hasTools || editing) && (
+              {/* Outils + Méthodologies (grille) */}
+              {(showToolsColumn || showMethodsColumn) && (
+              <div className={`grid gap-4 ${useTwoColumns ? "md:grid-cols-2" : "grid-cols-1"}`}>
+                {/* Outils - affiche soit le bloc normal, soit les orphelins */}
+                {showToolsColumn && ((hasTools || editing) ? (
                   <div className="w-full rounded-2xl border border-white/15 p-3">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold">{cvT("cvSections.tools")}</h3>
@@ -212,10 +227,12 @@ export default function Skills(props){
                       editing && <div className="text-sm opacity-60">{t("cvSections.noTools")}</div>
                     )}
                   </div>
-                )}
+                ) : (
+                  <RemovedSkillsDisplayBlock field="tools" title={cvT("cvSections.tools")} />
+                ))}
 
-                {/* Méthodologies */}
-                {(hasMethods || editing) && (
+                {/* Méthodologies - affiche soit le bloc normal, soit les orphelins */}
+                {showMethodsColumn && ((hasMethods || editing) ? (
                   <div className="w-full rounded-2xl border border-white/15 p-3">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold">{cvT("cvSections.methodologies")}</h3>
@@ -233,7 +250,7 @@ export default function Skills(props){
                           const methodName = typeof m === "string" ? m : (m?.name || m?.label || m?.title || m?.value || "");
                           return (
                             <SkillItemHighlight key={i} section="skills" field="methodologies" itemName={methodName}>
-                              <span className="inline-block rounded border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
+                              <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
                                 {capitalizeSkillName(methodName)}
                               </span>
                             </SkillItemHighlight>
@@ -246,10 +263,13 @@ export default function Skills(props){
                       editing && <div className="text-sm opacity-60">{t("cvSections.noMethodologies")}</div>
                     )}
                   </div>
-                )}
+                ) : (
+                  <RemovedSkillsDisplayBlock field="methodologies" title={cvT("cvSections.methodologies")} />
+                ))}
               </div>
+              )}
 
-              {/* Soft skills */}
+              {/* Soft skills - affiche soit le bloc normal, soit les orphelins */}
               {hasSoft ? (
                 <div>
                   <div className="flex flex-wrap gap-1">
@@ -257,7 +277,7 @@ export default function Skills(props){
                       const softName = typeof m === "string" ? m : (m?.name || m?.label || m?.title || m?.value || "");
                       return (
                         <SkillItemHighlight key={i} section="skills" field="soft_skills" itemName={softName}>
-                          <span className="inline-block rounded border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
+                          <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
                             {capitalizeSkillName(softName)}
                           </span>
                         </SkillItemHighlight>
@@ -265,32 +285,26 @@ export default function Skills(props){
                     })}
                     <RemovedSkillsDisplay section="skills" field="soft_skills" />
                     {editing && (
-                      <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center rounded border border-white/15 bg-white/20 opacity-90 cursor-pointer hover:bg-white/30 transition-all duration-200" style={{height: '23px', width: '23px', minHeight: '23px', minWidth: '23px', maxHeight: '23px', maxWidth: '23px'}}>
+                      <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center rounded-sm border border-white/15 bg-white/20 opacity-90 cursor-pointer hover:bg-white/30 transition-all duration-200" style={{height: '23px', width: '23px', minHeight: '23px', minWidth: '23px', maxHeight: '23px', maxWidth: '23px'}}>
                         <img src="/icons/edit.png" alt="Edit" className="h-[11px] w-[11px]" />
                       </span>
                     )}
                   </div>
                 </div>
-              ) : (
-                editing && (
-                  <div className="rounded-2xl border border-white/15 p-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold mb-2">{cvT("cvSections.softSkills")}</h3>
-                      <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center rounded border border-white/15 bg-white/20 opacity-90 cursor-pointer hover:bg-white/30 transition-all duration-200" style={{height: '23px', width: '23px', minHeight: '23px', minWidth: '23px', maxHeight: '23px', maxWidth: '23px'}}><img src="/icons/edit.png" alt="Edit" className="h-[11px] w-[11px]" /></span>
-                    </div>
-                    <div className="text-sm opacity-60">{t("cvSections.noSoftSkills")}</div>
+              ) : editing ? (
+                <div className="rounded-2xl border border-white/15 p-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold mb-2">{cvT("cvSections.softSkills")}</h3>
+                    <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center rounded-sm border border-white/15 bg-white/20 opacity-90 cursor-pointer hover:bg-white/30 transition-all duration-200" style={{height: '23px', width: '23px', minHeight: '23px', minWidth: '23px', maxHeight: '23px', maxWidth: '23px'}}><img src="/icons/edit.png" alt="Edit" className="h-[11px] w-[11px]" /></span>
                   </div>
-                )
+                  <div className="text-sm opacity-60">{t("cvSections.noSoftSkills")}</div>
+                </div>
+              ) : (
+                <RemovedSkillsDisplayBlock field="soft_skills" title={cvT("cvSections.softSkills")} />
               )}
             </>
           );
         })()}
-
-        {/* Afficher les items supprimés orphelins (si le bloc parent est caché) */}
-        {!hasHard && !editing && <RemovedSkillsDisplay section="skills" field="hard_skills" />}
-        {!hasTools && !editing && <RemovedSkillsDisplay section="skills" field="tools" />}
-        {!hasMethods && !editing && <RemovedSkillsDisplay section="skills" field="methodologies" />}
-        {!hasSoft && !editing && <RemovedSkillsDisplay section="skills" field="soft_skills" />}
       </div>
 
       {/* Modals */}
@@ -298,9 +312,9 @@ export default function Skills(props){
         <div className="space-y-2">
           {hardLocal.map((row,idx)=>(
             <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...hardLocal]; arr[idx]={...arr[idx], name:e.target.value}; setHardLocal(arr); }} />
+              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...hardLocal]; arr[idx]={...arr[idx], name:e.target.value}; setHardLocal(arr); }} />
               <select
-                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
+                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
                 value={row.proficiency ?? ""}
                 onChange={e => { const arr=[...hardLocal]; arr[idx]={ ...arr[idx], proficiency:e.target.value }; setHardLocal(arr); }}
               >
@@ -324,9 +338,9 @@ export default function Skills(props){
         <div className="space-y-2">
           {toolsLocal.map((row,idx)=>(
             <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...toolsLocal]; arr[idx]={...arr[idx], name:e.target.value}; setToolsLocal(arr); }} />
+              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...toolsLocal]; arr[idx]={...arr[idx], name:e.target.value}; setToolsLocal(arr); }} />
               <select
-                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
+                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
                 value={row.proficiency ?? ""}
                 onChange={e => { const arr=[...toolsLocal]; arr[idx]={ ...arr[idx], proficiency:e.target.value }; setToolsLocal(arr); }}
               >
@@ -350,7 +364,7 @@ export default function Skills(props){
         <div className="space-y-2">
           {methLocal.map((row,idx)=>(
             <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...methLocal]; arr[idx]=e.target.value; setMethLocal(arr); }} />
+              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...methLocal]; arr[idx]=e.target.value; setMethLocal(arr); }} />
               <button onClick={()=>{ const arr=[...methLocal]; arr.splice(idx,1); setMethLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 p-1.5 text-white hover:bg-red-500/40 transition-colors shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
             </div>
           ))}
@@ -366,7 +380,7 @@ export default function Skills(props){
         <div className="space-y-2">
           {softLocal.map((row,idx)=>(
             <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...softLocal]; arr[idx]=e.target.value; setSoftLocal(arr); }} />
+              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...softLocal]; arr[idx]=e.target.value; setSoftLocal(arr); }} />
               <button onClick={()=>{ const arr=[...softLocal]; arr.splice(idx,1); setSoftLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 p-1.5 text-white hover:bg-red-500/40 transition-colors shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
             </div>
           ))}

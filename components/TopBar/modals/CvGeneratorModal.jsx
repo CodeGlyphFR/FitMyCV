@@ -69,7 +69,7 @@ export default function CvGeneratorModal({
             <button
               type="button"
               onClick={() => setBaseSelectorOpen((prev) => !prev)}
-              className="w-full min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm flex items-center justify-between gap-3 text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+              className="w-full min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm flex items-center justify-between gap-3 text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
             >
               <span className="flex items-center gap-3 min-w-0 overflow-hidden">
                 {generatorBaseFile === CREATE_TEMPLATE_OPTION ? (
@@ -247,7 +247,7 @@ export default function CvGeneratorModal({
                 )}
               </div>
               <input
-                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                 placeholder={t("cvGenerator.linkPlaceholder")}
                 value={value}
                 onChange={(event) => updateLink(event.target.value, index)}
@@ -320,7 +320,7 @@ export default function CvGeneratorModal({
         </div>
 
         {generatorError ? (
-          <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {generatorError}
           </div>
         ) : null}

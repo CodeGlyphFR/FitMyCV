@@ -326,7 +326,7 @@ function TaskItem({ task, onCancel, onTaskClick }) {
               e.stopPropagation();
               onCancel(task.id);
             }}
-            className="ml-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/20 px-2 py-1 rounded transition-all duration-200 drop-shadow"
+            className="ml-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/20 px-2 py-1 rounded-sm transition-all duration-200 drop-shadow"
             title={t("taskQueue.cancelTask")}
           >
             ✕

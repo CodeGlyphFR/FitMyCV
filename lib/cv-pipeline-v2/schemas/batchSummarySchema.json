@@ -4,54 +4,41 @@
   "schema": {
     "type": "object",
     "properties": {
-      "headline": {
-        "type": "string",
-        "description": "Titre accrocheur du profil (ex: Developpeur Full-Stack Senior | Expert React & Node.js)"
-      },
       "description": {
         "type": "string",
-        "description": "Le 'Who I am' - paragraphe presentant authentiquement le candidat (3-5 phrases)"
-      },
-      "years_experience": {
-        "type": "integer",
-        "description": "Nombre d'annees d'experience calcule depuis les experiences"
+        "description": "Le résumé du profil professionnel (2-4 lignes, 50-75 mots)"
       },
       "domains": {
         "type": "array",
-        "description": "Domaines d'expertise (3-5 max)",
-        "items": { "type": "string" }
-      },
-      "key_strengths": {
-        "type": "array",
-        "description": "Points forts cles bases sur les realisations concretes (3-5 max)",
+        "description": "Domaines d'expertise du candidat (2-3 max), triés par pertinence pour l'offre",
         "items": { "type": "string" }
       },
       "modifications": {
         "type": "array",
-        "description": "Liste detaillee des modifications effectuees avec avant/apres/raison",
+        "description": "Liste des modifications effectuées avec avant/après/raison",
         "items": {
           "type": "object",
           "properties": {
             "field": {
               "type": "string",
-              "description": "Nom du champ modifie (headline, description, domains, key_strengths)"
+              "description": "Nom du champ modifié (description, domains)"
             },
             "action": {
               "type": "string",
-              "enum": ["generated", "modified", "added", "removed"],
-              "description": "Type de modification (generated si creation, modified si adaptation)"
+              "enum": ["generated", "modified"],
+              "description": "Type de modification"
             },
             "before": {
               "type": "string",
-              "description": "Valeur originale avant modification (vide si generation pure)"
+              "description": "Valeur originale (vide si génération)"
             },
             "after": {
               "type": "string",
-              "description": "Valeur apres modification ou generation"
+              "description": "Nouvelle valeur"
             },
             "reason": {
               "type": "string",
-              "description": "Raison IA expliquant pourquoi cette modification a ete faite"
+              "description": "Raison de la modification"
             }
           },
           "required": ["field", "action", "before", "after", "reason"],
@@ -59,7 +46,7 @@
         }
       }
     },
-    "required": ["headline", "description", "years_experience", "domains", "key_strengths", "modifications"],
+    "required": ["description", "domains", "modifications"],
     "additionalProperties": false
   }
 }

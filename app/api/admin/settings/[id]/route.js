@@ -20,7 +20,8 @@ export async function PUT(request, { params }) {
       );
     }
 
-    const { id } = params;
+    // Next.js 16: params est maintenant async
+    const { id } = await params;
     const body = await request.json();
     const { value, category, description } = body;
 
@@ -86,7 +87,8 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    const { id } = params;
+    // Next.js 16: params est maintenant async
+    const { id } = await params;
 
     // Check if setting exists
     const existing = await prisma.setting.findUnique({

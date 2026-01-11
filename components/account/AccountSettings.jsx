@@ -258,7 +258,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
               type="text"
               value={name}
               onChange={event => setName(event.target.value)}
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
               placeholder={t('account.profile.fullNamePlaceholder')}
             />
           </div>
@@ -268,7 +268,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
               type="email"
               value={email}
               onChange={event => setEmail(event.target.value)}
-              className={`w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none ${isOAuthUser ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden ${isOAuthUser ? 'opacity-50 cursor-not-allowed' : ''}`}
               placeholder={t('account.profile.emailPlaceholder')}
               disabled={isOAuthUser}
             />
@@ -314,7 +314,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                 name="currentPassword"
                 value={currentPassword}
                 onChange={event => setCurrentPassword(event.target.value)}
-                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                 placeholder="••••••••"
                 autoComplete="current-password"
               />
@@ -327,7 +327,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                 name="newPassword"
                 value={newPassword}
                 onChange={event => setNewPassword(event.target.value)}
-                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                 placeholder="••••••••"
                 autoComplete="new-password"
               />
@@ -384,7 +384,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                 name="confirmPassword"
                 value={confirmPassword}
                 onChange={event => setConfirmPassword(event.target.value)}
-                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                 placeholder="••••••••"
                 autoComplete="new-password"
               />
@@ -461,7 +461,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                   name="deleteEmail"
                   value={deleteEmail}
                   onChange={event => setDeleteEmail(event.target.value)}
-                  className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-red-400 focus:ring-2 focus:ring-red-400/50 focus:outline-none"
+                  className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-red-400 focus:ring-2 focus:ring-red-400/50 focus:outline-hidden"
                   placeholder={user?.email || t('account.profile.emailPlaceholder')}
                   autoComplete="email"
                 />
@@ -474,7 +474,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                   name="deletePassword"
                   value={deletePassword}
                   onChange={event => setDeletePassword(event.target.value)}
-                  className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-red-400 focus:ring-2 focus:ring-red-400/50 focus:outline-none"
+                  className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-red-400 focus:ring-2 focus:ring-red-400/50 focus:outline-hidden"
                   placeholder="••••••••"
                   autoComplete="current-password"
                 />
@@ -551,7 +551,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                   type="checkbox"
                   checked={acceptedDeleteTerms}
                   onChange={(e) => setAcceptedDeleteTerms(e.target.checked)}
-                  className="mt-1 w-4 h-4 rounded-sm border-2 border-white/30 bg-white/5 appearance-none cursor-pointer transition-all checked:bg-gradient-to-br checked:from-red-500/40 checked:to-red-600/40 checked:border-red-400/60 focus:ring-2 focus:ring-red-500/50 focus:ring-offset-0 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
+                  className="mt-1 w-4 h-4 rounded-xs border-2 border-white/30 bg-white/5 appearance-none cursor-pointer transition-all checked:bg-gradient-to-br checked:from-red-500/40 checked:to-red-600/40 checked:border-red-400/60 focus:ring-2 focus:ring-red-500/50 focus:ring-offset-0 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
                   disabled={deleteLoading}
                 />
                 <span className="text-sm text-white/80 group-hover:text-white transition-colors">

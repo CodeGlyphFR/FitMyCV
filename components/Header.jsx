@@ -573,7 +573,7 @@ export default function Header(props){
         <button
           data-onboarding="edit-button"
           onClick={()=>setOpen(true)}
-          className="no-print absolute bottom-3 right-3 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-xs hover:bg-white/30 hover:shadow-xl transition-all duration-200"
+          className="no-print absolute bottom-3 right-3 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-xs hover:bg-white/30 hover:shadow-sm-xl transition-all duration-200"
           type="button"
         >
           <img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " />
@@ -615,7 +615,7 @@ export default function Header(props){
                       bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl
                       flex items-center justify-center
                       overflow-hidden
-                      hover:shadow-xl hover:bg-white/30
+                      hover:shadow-sm-xl hover:bg-white/30
                       transition-all duration-200
                       cursor-pointer
                       p-0.5
@@ -646,7 +646,7 @@ export default function Header(props){
                 w-8 h-8 rounded-full
                 bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl
                 flex items-center justify-center
-                hover:shadow-xl hover:bg-white/30
+                hover:shadow-sm-xl hover:bg-white/30
                 transition-all duration-300
                 cursor-pointer
                 ${isTranslateDropdownOpen ? 'shadow-xl' : ''}
@@ -669,27 +669,27 @@ export default function Header(props){
       <Modal open={open} onClose={()=>setOpen(false)} title={t("header.modalTitle")}>
         <div className="grid gap-3 md:grid-cols-2">
           <FormRow label={t("header.fullName")}>
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.full_name} onChange={e=>setF({...f,full_name:e.target.value})} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.full_name} onChange={e=>setF({...f,full_name:e.target.value})} />
           </FormRow>
           <FormRow label={t("header.currentTitle")}>
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.current_title} onChange={e=>setF({...f,current_title:e.target.value})} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.current_title} onChange={e=>setF({...f,current_title:e.target.value})} />
           </FormRow>
           <FormRow label={t("header.email")}>
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.email} onChange={e=>setF({...f,email:e.target.value})} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.email} onChange={e=>setF({...f,email:e.target.value})} />
           </FormRow>
           <FormRow label={t("header.phone")}>
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.phone} onChange={e=>setF({...f,phone:e.target.value})} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.phone} onChange={e=>setF({...f,phone:e.target.value})} />
           </FormRow>
 
           <div className="md:col-span-2 grid grid-cols-3 gap-3">
             <FormRow label={t("header.city")}>
-              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.city} onChange={e=>setF({...f,city:e.target.value})} />
+              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.city} onChange={e=>setF({...f,city:e.target.value})} />
             </FormRow>
             <FormRow label={t("header.region")}>
-              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.region} onChange={e=>setF({...f,region:e.target.value})} />
+              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.region} onChange={e=>setF({...f,region:e.target.value})} />
             </FormRow>
             <FormRow label={t("header.countryCode")}>
-              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none transition-all duration-200" value={f.country_code} onChange={e=>setF({...f,country_code:e.target.value})} />
+              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.country_code} onChange={e=>setF({...f,country_code:e.target.value})} />
             </FormRow>
           </div>
 
@@ -698,14 +698,14 @@ export default function Header(props){
             <div className="text-xs font-medium mb-2 uppercase tracking-wide text-white drop-shadow">{t("header.links")}</div>
             <div className="space-y-2">
               {linksLocal.length === 0 && (
-                <div className="rounded border border-white/40 bg-white/20 px-2 py-1 text-xs text-white/60">
+                <div className="rounded-sm border border-white/40 bg-white/20 px-2 py-1 text-xs text-white/60">
                   {t("header.noLinks")}
                 </div>
               )}
               {linksLocal.map((row, idx) => (
                 <div key={idx} className="flex gap-2 items-center">
                   <input
-                    className="w-32 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:outline-none transition-all duration-200"
+                    className="w-32 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:outline-hidden transition-all duration-200"
                     placeholder={t("header.labelPlaceholder")}
                     value={row.label}
                     onChange={e=>{
@@ -713,7 +713,7 @@ export default function Header(props){
                     }}
                   />
                   <input
-                    className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:outline-none transition-all duration-200"
+                    className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:outline-hidden transition-all duration-200"
                     placeholder={t("header.urlPlaceholder")}
                     value={row.url}
                     onChange={e=>{

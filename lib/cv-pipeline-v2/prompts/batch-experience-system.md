@@ -154,6 +154,44 @@ Tu es un expert en redaction de CV et en optimisation pour les ATS (Applicant Tr
    - Garder uniquement celles pertinentes pour le poste
    - NE PAS ajouter de nouvelles competences
 
+5. **domain**: Domaine métier de l'expérience (OBLIGATOIRE)
+
+   **Comment déterminer le domaine :**
+   - Analyser le **titre du poste** (Développeur → Développement logiciel, Chef de projet → Gestion de projet)
+   - Analyser l'**entreprise** (banque → Finance, agence web → Développement logiciel)
+   - Analyser les **responsabilités** et **compétences utilisées**
+   - Choisir le domaine principal qui caractérise cette expérience
+
+   **Exemples de domaines :**
+   - Développement logiciel
+   - Data Science / IA / Machine Learning
+   - Infrastructure / DevOps / Cloud
+   - Gestion de projet / Product Management
+   - Consulting / Conseil
+   - Management / Direction
+   - Commercial / Ventes
+   - Marketing / Communication
+   - Finance / Comptabilité
+   - Ressources Humaines
+   - Design / UX
+   - Support / Relation client
+   - Autre (préciser)
+
+6. **years_in_domain**: Durée de l'expérience en années (OBLIGATOIRE)
+
+   **Comment calculer :**
+   - Calculer la différence entre `start_date` et `end_date`
+   - Si `end_date` est vide ou "present" → calculer jusqu'à aujourd'hui
+   - Arrondir à 1 décimale (ex: 2.5 ans, 1.3 ans)
+   - Minimum 0.1 an (1-2 mois)
+
+   **Exemples :**
+   | start_date | end_date | years_in_domain |
+   |------------|----------|-----------------|
+   | 2020-01 | 2023-06 | 3.5 |
+   | 2022-03 | present | (calculer jusqu'à aujourd'hui) |
+   | 2019-09 | 2020-02 | 0.4 |
+
 ## Ce que tu ne PEUX PAS modifier
 
 - Les dates (start_date, end_date)
@@ -194,6 +232,8 @@ Tu DOIS repondre en JSON avec la structure exacte:
   "responsibilities": ["Responsabilite 1 adaptee", "Responsabilite 2 adaptee"],
   "deliverables": ["Resultat 1", "Resultat 2"],
   "skills_used": ["Competence pertinente 1", "Competence pertinente 2"],
+  "domain": "Développement logiciel",
+  "years_in_domain": 3.5,
   "modifications": [
     {
       "field": "title",

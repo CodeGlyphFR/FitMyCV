@@ -22,6 +22,7 @@ export default function ChangeHighlight({
   section,
   field,
   path,
+  expIndex,
   className = "",
 }) {
   const [showPopover, setShowPopover] = useState(false);
@@ -35,12 +36,27 @@ export default function ChangeHighlight({
   } = useHighlight();
 
   // Trouver le changement correspondant
-  const changePath = path || `${section}.${field}`;
-  const change = pendingChanges.find(
-    (c) =>
-      c.path === changePath ||
-      (c.section === section && c.field === field)
-  );
+  // Si expIndex est fourni, on doit aussi matcher sur expIndex
+  const changePath = path || (expIndex !== undefined
+    ? `${section}[${expIndex}].${field}`
+    : `${section}.${field}`);
+
+  const change = pendingChanges.find((c) => {
+    // Match par path exact
+    if (c.path === changePath) return true;
+
+    // Match par section/field, avec expIndex si fourni
+    if (c.section === section && c.field === field) {
+      // Si expIndex est fourni, il doit matcher
+      if (expIndex !== undefined) {
+        return c.expIndex === expIndex;
+      }
+      // Si pas d'expIndex, match simple
+      return true;
+    }
+
+    return false;
+  });
 
   // Déterminer si on doit afficher la surbrillance
   const isPending = change?.status === "pending";
@@ -73,6 +89,7 @@ export default function ChangeHighlight({
                       typeof change.afterDisplay === 'string';
 
   // Pour les champs texte, afficher le diff inline
+  // On préserve le style du children (text-sm, etc.) via le className
   if (hasTextDiff) {
     return (
       <>
@@ -81,12 +98,12 @@ export default function ChangeHighlight({
           onClick={handleClick}
           className={`relative cursor-pointer ${className}`}
         >
-          {/* Diff inline */}
+          {/* Diff inline - hérite des classes de style du parent */}
           <InlineDiff
             beforeText={change.beforeDisplay}
             afterText={change.afterDisplay}
             showRemoved={true}
-            className="leading-relaxed"
+            className={`leading-relaxed ${className}`}
           />
         </span>
 

@@ -213,7 +213,9 @@ export async function GET(){
 
   const items = rawItems.map(({ sortKey, ...rest }) => rest);
 
-  const currentCookie = (cookies().get("cvFile") || {}).value;
+  // Next.js 16: cookies() est maintenant async
+  const cookieStore = await cookies();
+  const currentCookie = (cookieStore.get("cvFile") || {}).value;
   const current = files.includes(currentCookie) ? currentCookie : (files[0] || null);
 
   return NextResponse.json({ items, current });

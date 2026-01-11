@@ -120,7 +120,7 @@ export function EmailLogsTable({ templateFilter, refreshKey, limit = 10 }) {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-1.5 bg-white/10 border border-white/20 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500/50"
+          className="px-3 py-1.5 bg-white/10 border border-white/20 rounded-lg text-sm text-white focus:outline-hidden focus:border-emerald-500/50"
         >
           <option value="">Tous les statuts</option>
           <option value="sent">Envoyes</option>

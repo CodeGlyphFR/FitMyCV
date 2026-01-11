@@ -40,7 +40,7 @@ function GlassCheckbox({ checked, onChange, label }) {
           e.preventDefault();
           onChange();
         }}
-        className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 cursor-pointer ${
+        className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center transition-all duration-200 cursor-pointer ${
           checked
             ? 'bg-emerald-500 border-emerald-400'
             : 'bg-transparent border-white/50 group-hover:border-white/70'

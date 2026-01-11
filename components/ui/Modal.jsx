@@ -180,7 +180,7 @@ export default function Modal({
           aria-modal="true"
           aria-labelledby="modal-title"
           tabIndex={-1}
-          className={`relative z-10 w-full ${maxWidthClass} rounded-xl border border-white/20 bg-[rgb(2,6,23)] shadow-2xl overflow-hidden outline-none`}
+          className={`relative z-10 w-full ${maxWidthClass} rounded-xl border border-white/20 bg-[rgb(2,6,23)] shadow-2xl overflow-hidden outline-hidden`}
           onClick={(e) => e.stopPropagation()}
           onTouchEnd={(e) => e.stopPropagation()}
           style={{

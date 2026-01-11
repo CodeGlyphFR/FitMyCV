@@ -625,7 +625,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                     value={pricingForm.modelName}
                     onChange={(e) => setPricingForm({ ...pricingForm, modelName: e.target.value })}
                     disabled={editingPricing !== null}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white text-sm disabled:opacity-50"
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm disabled:opacity-50"
                     required
                   />
                 </div>
@@ -636,7 +636,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                     step="0.01"
                     value={pricingForm.inputPricePerMToken}
                     onChange={(e) => setPricingForm({ ...pricingForm, inputPricePerMToken: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white text-sm"
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
                     required
                   />
                 </div>
@@ -647,7 +647,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                     step="0.01"
                     value={pricingForm.outputPricePerMToken}
                     onChange={(e) => setPricingForm({ ...pricingForm, outputPricePerMToken: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white text-sm"
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
                     required
                   />
                 </div>
@@ -658,7 +658,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                     step="0.01"
                     value={pricingForm.cachePricePerMToken}
                     onChange={(e) => setPricingForm({ ...pricingForm, cachePricePerMToken: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white text-sm"
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
                     placeholder="0.00"
                   />
                 </div>
@@ -668,7 +668,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                     type="text"
                     value={pricingForm.description}
                     onChange={(e) => setPricingForm({ ...pricingForm, description: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white text-sm"
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
                   />
                 </div>
               </div>
@@ -684,7 +684,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm transition"
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-sm text-sm transition"
                 >
                   {editingPricing ? 'Mettre à jour' : 'Ajouter'}
                 </button>
@@ -702,7 +702,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                         isActive: true,
                       });
                     }}
-                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded text-sm transition"
+                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-sm text-sm transition"
                   >
                     Annuler
                   </button>
@@ -1064,7 +1064,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
               return true;
             })
             .map((alert) => (
-              <div key={alert.id} className="flex items-center justify-between p-3 bg-white/5 rounded border border-white/10">
+              <div key={alert.id} className="flex items-center justify-between p-3 bg-white/5 rounded-sm border border-white/10">
                 <div className="flex-1">
                   <div className="text-white font-medium">{alert.name}</div>
                   <div className="text-white/60 text-sm">

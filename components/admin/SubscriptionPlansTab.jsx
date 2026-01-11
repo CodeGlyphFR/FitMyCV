@@ -947,7 +947,7 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                 min="0"
                 value={formData.tier}
                 onChange={(e) => setFormData({ ...formData, tier: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:border-blue-400/50 transition"
+                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-hidden focus:border-blue-400/50 transition"
                 placeholder="0, 1, 2, 3, 4..."
               />
               <div className="mt-2 px-3 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
@@ -1001,7 +1001,7 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                   inputMode="decimal"
                   value={formData.priceMonthly}
                   onChange={(e) => setFormData({ ...formData, priceMonthly: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
                   placeholder="9.99"
                 />
               </div>
@@ -1013,7 +1013,7 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                   inputMode="decimal"
                   value={formData.priceYearly}
                   onChange={(e) => setFormData({ ...formData, priceYearly: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
                   placeholder="99.99"
                 />
               </div>
@@ -1123,7 +1123,7 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                               }
                               disabled={!limit.isEnabled || isUnlimited}
                               placeholder={isUnlimited ? '∞' : '0'}
-                              className="w-16 mx-auto block px-2 py-1 bg-white/10 border border-white/20 rounded text-white text-xs text-center focus:outline-none focus:border-blue-400/50 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-white/5"
+                              className="w-16 mx-auto block px-2 py-1 bg-white/10 border border-white/20 rounded-sm text-white text-xs text-center focus:outline-hidden focus:border-blue-400/50 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-white/5"
                             />
                           </td>
 
@@ -1201,7 +1201,7 @@ function PackModal({ title, formData, setFormData, onSave, onCancel, updating })
               min="1"
               value={formData.creditAmount}
               onChange={(e) => setFormData({ ...formData, creditAmount: parseInt(e.target.value, 10) || 0 })}
-              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
             />
           </div>
 
@@ -1214,7 +1214,7 @@ function PackModal({ title, formData, setFormData, onSave, onCancel, updating })
                 inputMode="decimal"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
               />
             </div>
 
@@ -1234,7 +1234,7 @@ function PackModal({ title, formData, setFormData, onSave, onCancel, updating })
 
           {/* Prix unitaire calculé */}
           {formData.creditAmount > 0 && formData.price > 0 && (
-            <div className="text-sm text-white/40 bg-white/5 p-3 rounded border border-white/10">
+            <div className="text-sm text-white/40 bg-white/5 p-3 rounded-sm border border-white/10">
               Prix par crédit : <strong className="text-white/60">{(formData.price / formData.creditAmount).toFixed(2)} {formData.priceCurrency}</strong>
             </div>
           )}

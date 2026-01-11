@@ -243,7 +243,7 @@ function TaskItem({ task, onCancel, onTaskClick, compact = false }) {
               e.stopPropagation();
               onCancel(task.id);
             }}
-            className="text-xs text-red-400 hover:text-red-300 hover:bg-red-500/20 px-1 py-0.5 rounded transition-colors duration-200"
+            className="text-xs text-red-400 hover:text-red-300 hover:bg-red-500/20 px-1 py-0.5 rounded-sm transition-colors duration-200"
             title={t("taskQueue.cancelTask")}
           >
             ✕
@@ -366,7 +366,7 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
                   <div className="flex justify-end">
                     <button
                       onClick={clearCompletedTasks}
-                      className="text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 px-2 py-1 rounded transition-colors duration-200"
+                      className="text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 px-2 py-1 rounded-sm transition-colors duration-200"
                     >
                       {t("taskQueue.clearCompleted")} ({completedTasksCount})
                     </button>

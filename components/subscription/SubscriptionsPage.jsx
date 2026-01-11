@@ -317,7 +317,7 @@ export default function SubscriptionsPage({ user }) {
                 onKeyDown={(e) => handleTabKeyDown(e, index)}
                 className={`
                   flex items-center gap-2 px-4 py-3 font-medium transition-all whitespace-nowrap
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-t-lg
+                  focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-t-lg
                   ${isActive
                     ? 'text-white border-b-2 border-white'
                     : 'text-white/60 hover:text-white/80'

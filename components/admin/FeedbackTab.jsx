@@ -365,7 +365,7 @@ export function FeedbackTab({ period, userId, refreshKey }) {
                   </div>
                   <button
                     onClick={() => handleDeleteFeedback(feedback.id)}
-                    className="px-3 py-1.5 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded transition w-28"
+                    className="px-3 py-1.5 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-sm transition w-28"
                   >
                     Supprimer
                   </button>

@@ -516,7 +516,7 @@ export function EmailTemplatesTab({ refreshKey }) {
                         value={newTemplateName}
                         onChange={(e) => setNewTemplateName(e.target.value)}
                         placeholder="Nom du nouveau template..."
-                        className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-emerald-500/50"
+                        className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-hidden focus:border-emerald-500/50"
                       />
                     </div>
                     <div className="flex items-center gap-3">
@@ -524,7 +524,7 @@ export function EmailTemplatesTab({ refreshKey }) {
                       <select
                         value={copyFromTemplateId}
                         onChange={(e) => setCopyFromTemplateId(e.target.value)}
-                        className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-emerald-500/50"
+                        className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-hidden focus:border-emerald-500/50"
                       >
                         <option value="">-- Commencer vide --</option>
                         {templates.find(t => t.isDefault) && (
@@ -679,7 +679,7 @@ export function EmailTemplatesTab({ refreshKey }) {
                       type="text"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-emerald-500/50"
+                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-hidden focus:border-emerald-500/50"
                     />
                   </div>
                   <div className="bg-white/5 rounded-xl border border-white/10 p-4">
@@ -688,7 +688,7 @@ export function EmailTemplatesTab({ refreshKey }) {
                       type="text"
                       value={editSubject}
                       onChange={(e) => setEditSubject(e.target.value)}
-                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-emerald-500/50"
+                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-hidden focus:border-emerald-500/50"
                     />
                   </div>
                 </div>
@@ -751,11 +751,11 @@ export function EmailTemplatesTab({ refreshKey }) {
                       <label className="text-sm text-white/60">Fond email:</label>
                       {/* Mini preview */}
                       <div
-                        className="w-8 h-6 rounded border border-white/30 flex items-center justify-center"
+                        className="w-8 h-6 rounded-sm border border-white/30 flex items-center justify-center"
                         style={{ backgroundColor }}
                         title={`Apercu: ${backgroundColor}`}
                       >
-                        <div className="w-4 h-3 bg-white/80 rounded-sm" />
+                        <div className="w-4 h-3 bg-white/80 rounded-xs" />
                       </div>
                       {/* Quick color presets - site colors */}
                       {[
@@ -769,7 +769,7 @@ export function EmailTemplatesTab({ refreshKey }) {
                         <button
                           key={color}
                           onClick={() => setBackgroundColor(color)}
-                          className={`w-5 h-5 rounded border-2 transition-all ${
+                          className={`w-5 h-5 rounded-sm border-2 transition-all ${
                             backgroundColor === color
                               ? 'border-emerald-400 scale-110'
                               : 'border-white/20 hover:border-white/40'

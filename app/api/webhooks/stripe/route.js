@@ -50,7 +50,9 @@ export const runtime = 'nodejs';
 
 export async function POST(request) {
   const body = await request.text();
-  const signature = headers().get('stripe-signature');
+  // Next.js 16: headers() est maintenant async
+  const headerStore = await headers();
+  const signature = headerStore.get('stripe-signature');
 
   if (!signature) {
     console.error('[Webhook] Signature manquante');

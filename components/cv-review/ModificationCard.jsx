@@ -118,7 +118,7 @@ export default function ModificationCard({
             )}
             {/* Badge action */}
             <span
-              className={`px-2 py-0.5 rounded text-xs font-medium ${colors.text} bg-white/5`}
+              className={`px-2 py-0.5 rounded-sm text-xs font-medium ${colors.text} bg-white/5`}
             >
               {colors.label}
             </span>
@@ -200,7 +200,7 @@ export default function ModificationCard({
                 <span className="text-xs text-white/40 w-12 flex-shrink-0 pt-0.5">
                   {t('cvReview.after') || 'Après'}
                 </span>
-                <div className={`flex-1 p-2 rounded border ${
+                <div className={`flex-1 p-2 rounded-sm border ${
                   decision === 'rejected'
                     ? 'bg-white/5 border-white/10'
                     : 'bg-emerald-500/10 border-emerald-500/20'

@@ -21,7 +21,9 @@ export async function POST(req){
     var body=await req.json(); var op=body.op, fieldPath=body.path, value=body.value, index=body.index, to=body.to; if(!fieldPath||!op) return NextResponse.json({ error:"Paramètres manquants"},{ status:400 });
     const userId = session.user.id;
     const files = await listUserCvFiles(userId);
-    const currentCookie = (cookies().get("cvFile")||{}).value;
+    // Next.js 16: cookies() est maintenant async
+    const cookieStore = await cookies();
+    const currentCookie = (cookieStore.get("cvFile")||{}).value;
     var selected = files.includes(currentCookie) ? currentCookie : (files[0] || null);
     if (!selected) return NextResponse.json({ error: "Aucun CV disponible" }, { status: 404 });
     var cv=JSON.parse(await readUserCvFile(userId, selected));

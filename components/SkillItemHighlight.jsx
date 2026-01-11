@@ -50,6 +50,7 @@ export default function SkillItemHighlight({
 
   const isAdded = change?.changeType === "added";
   const isRemoved = change?.changeType === "removed";
+  const isLevelAdjusted = change?.changeType === "level_adjusted";
 
   const handleClick = (e) => {
     e.stopPropagation();
@@ -76,6 +77,8 @@ export default function SkillItemHighlight({
             ? "text-emerald-300 bg-emerald-500/20 rounded"
             : isRemoved
             ? "line-through text-red-400/70 bg-red-500/10 rounded font-semibold"
+            : isLevelAdjusted
+            ? "text-amber-300 bg-amber-500/20 rounded"
             : ""
         } ${className}`}
       >
@@ -97,23 +100,28 @@ export default function SkillItemHighlight({
 }
 
 /**
+ * Hook pour récupérer les items supprimés pour une section/field
+ */
+export function useRemovedItems(section, field, expIndex) {
+  const { pendingChanges, isLatestVersion } = useHighlight();
+
+  if (!isLatestVersion) return [];
+
+  return pendingChanges.filter((c) => {
+    if (c.section !== section || c.field !== field) return false;
+    if (c.changeType !== "removed" || c.status !== "pending") return false;
+    if (expIndex !== undefined && c.expIndex !== undefined && c.expIndex !== expIndex) return false;
+    return true;
+  });
+}
+
+/**
  * Composant pour afficher les items supprimés
  * Ces items ne sont plus dans le tableau actuel mais doivent être affichés barrés
  * Le rendu s'adapte au type de champ (hard_skills, tools avec niveau, soft_skills/methodologies en tags)
  */
 export function RemovedSkillsDisplay({ section, field, expIndex }) {
-  const { pendingChanges, isLatestVersion } = useHighlight();
-
-  if (!isLatestVersion) return null;
-
-  // Filtrer les items supprimés pour cette section/field (et expIndex si fourni)
-  const removedItems = pendingChanges.filter((c) => {
-    if (c.section !== section || c.field !== field) return false;
-    if (c.changeType !== "removed" || c.status !== "pending") return false;
-    // Si expIndex est fourni, vérifier qu'il correspond
-    if (expIndex !== undefined && c.expIndex !== undefined && c.expIndex !== expIndex) return false;
-    return true;
-  });
+  const removedItems = useRemovedItems(section, field, expIndex);
 
   if (removedItems.length === 0) return null;
 
@@ -132,7 +140,7 @@ export function RemovedSkillsDisplay({ section, field, expIndex }) {
             itemName={change.itemName}
             expIndex={expIndex}
           >
-            <span className="inline-block rounded border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
+            <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
               {change.itemName}
             </span>
           </SkillItemHighlight>
@@ -151,5 +159,37 @@ export function RemovedSkillsDisplay({ section, field, expIndex }) {
         )
       ))}
     </>
+  );
+}
+
+/**
+ * Composant bloc pour afficher les items supprimés avec un titre
+ * Utilisé quand tous les items d'une catégorie ont été supprimés
+ * Affiche le bloc uniquement s'il y a des items à afficher
+ */
+export function RemovedSkillsDisplayBlock({ field, title }) {
+  const removedItems = useRemovedItems("skills", field, undefined);
+
+  // Ne rien afficher s'il n'y a pas d'items supprimés
+  if (removedItems.length === 0) return null;
+
+  // Pour soft_skills et methodologies, afficher comme tags
+  const isTagStyle = field === "soft_skills" || field === "methodologies";
+
+  return (
+    <div className="w-full rounded-2xl border border-white/15 p-3">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-semibold">{title}</h3>
+      </div>
+      {isTagStyle ? (
+        <div className="flex flex-wrap gap-1">
+          <RemovedSkillsDisplay section="skills" field={field} />
+        </div>
+      ) : (
+        <ul className="space-y-1">
+          <RemovedSkillsDisplay section="skills" field={field} />
+        </ul>
+      )}
+    </div>
   );
 }

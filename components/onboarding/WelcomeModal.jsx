@@ -360,11 +360,7 @@ export default function WelcomeModal({
             handleMorphComplete();
           }
         }}
-        className={`
-          relative bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl
-          overflow-hidden
-          ${isMorphing ? '' : 'w-full max-w-full mx-2 md:mx-4 md:max-w-2xl'}
-        `}
+        className={`relative bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl overflow-hidden ${isMorphing ? '' : 'w-full max-w-full mx-2 md:mx-4 md:max-w-2xl'}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Contenu avec fade-out pendant le morphing */}
@@ -599,21 +595,11 @@ export default function WelcomeModal({
                 animate={idx === currentScreen ? 'active' : 'inactive'}
                 {...createDotAnimations(shouldReduceMotion)}
                 transition={transitions.snappy}
-                className="
-                  relative w-8 h-8
-                  flex items-center justify-center
-                "
+                className="relative w-8 h-8 flex items-center justify-center"
                 aria-label={t('onboarding.common.aria.goToScreen', { current: idx + 1, total: WELCOME_SCREENS.length })}
               >
                 <span
-                  className={`
-                  block rounded-full transition-colors duration-200
-                  ${
-                    idx === currentScreen
-                      ? 'w-2 h-2 bg-emerald-500'
-                      : 'w-[5px] h-[5px] bg-white/40'
-                  }
-                `}
+                  className={`block rounded-full transition-colors duration-200 ${idx === currentScreen ? 'w-2 h-2 bg-emerald-500' : 'w-[5px] h-[5px] bg-white/40'}`}
                 />
               </motion.button>
             ))}
@@ -626,11 +612,7 @@ export default function WelcomeModal({
           {currentScreen > 0 ? (
             <button
               onClick={handlePrev}
-              className="
-                px-3 md:px-4 py-2 text-xs md:text-sm
-                text-slate-400 hover:text-white
-                transition-colors
-              "
+              className="px-3 md:px-4 py-2 text-xs md:text-sm text-slate-400 hover:text-white transition-colors"
             >
               {t('onboarding.common.buttons.previous')}
             </button>
@@ -641,12 +623,7 @@ export default function WelcomeModal({
           {/* Bouton Suivant ou Compris (droite) */}
           <button
             onClick={handleNext}
-            className="
-              px-6 md:px-8 py-2.5 md:py-3 rounded-lg
-              bg-emerald-500 hover:bg-emerald-600
-              text-white text-sm md:text-base font-semibold
-              transition-colors
-            "
+            className="px-6 md:px-8 py-2.5 md:py-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm md:text-base font-semibold transition-colors"
           >
             {isLastScreen ? t('onboarding.common.buttons.understood') : t('onboarding.common.buttons.next')}
           </button>
