@@ -27,7 +27,7 @@ import prisma from '@/lib/prisma';
 import { getOrExtractJobOfferFromUrl, extractJobOfferFromUrl } from '@/lib/openai/generateCv';
 import { getOpenAIClient } from '@/lib/openai/client';
 import { getAiModelSetting } from '@/lib/settings/aiModels';
-import { applyClassification } from '@/lib/cv-pipeline-v2/phases/classify.js';
+import { applyClassification, classifyCore } from '@/lib/cv-pipeline-v2/phases/classify.js';
 import { detectJobOfferLanguage } from '@/lib/cv-pipeline-v2/utils/language.js';
 
 // Chemins des fichiers de prompts et schemas
@@ -190,46 +190,14 @@ function sanitizeAdaptedExperience(experience) {
 
 /**
  * Execute la classification en mode test (sans DB)
+ * Utilise classifyCore du backend pour garantir la coherence
  */
 async function executeClassificationTest({ sourceCv, jobOffer }) {
-  const startTime = Date.now();
-  const model = await getAiModelSetting('model_cv_classify');
-
-  const systemPrompt = await loadPrompt('classify-system.md');
-  const userPromptTemplate = await loadPrompt('classify-user.md');
-  const schema = await loadSchema('classificationSchema.json');
-
-  const experiences = sourceCv.experience || [];
-  const projects = sourceCv.projects || [];
-
-  const userPrompt = replaceVariables(userPromptTemplate, {
-    experiencesJson: JSON.stringify(experiences, null, 2),
-    projectsJson: JSON.stringify(projects, null, 2),
-    jobOfferJson: JSON.stringify(jobOffer, null, 2),
-  });
-
-  const client = getOpenAIClient();
-  const response = await client.chat.completions.create({
-    model,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-    response_format: {
-      type: 'json_schema',
-      json_schema: schema,
-    },
-    temperature: 0.1,
-    max_completion_tokens: 2000,
-  });
-
-  const content = response.choices?.[0]?.message?.content;
-  const classification = JSON.parse(content);
-  const durationMs = Date.now() - startTime;
+  const result = await classifyCore({ sourceCv, jobOffer });
 
   return {
-    classification,
-    metrics: extractMetrics(response, model, durationMs),
+    classification: result.classification,
+    metrics: extractMetrics(result.response, result.model, result.duration),
   };
 }
 
@@ -1173,11 +1141,7 @@ export async function GET(request) {
       },
 
       jobOffer: {
-        title: jobOffer.title,
-        company: jobOffer.company,
-        experience: jobOffer.experience,
-        skills: jobOffer.skills,
-        responsibilities: jobOffer.responsibilities,
+        ...jobOffer,
         fromCache: jobOfferResult.fromCache,
       },
 
