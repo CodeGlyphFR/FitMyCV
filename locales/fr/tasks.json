@@ -20,6 +20,7 @@
       "unknown": "Inconnu"
     },
     "steps": {
+      "extraction": "Extraction de l'offre",
       "classify": "Classification",
       "experiences": "Expériences",
       "projects": "Projets",
@@ -60,7 +61,8 @@
       "cvReadyForOffer": "CV prêt pour l'offre {index}",
       "cvGenerated": "{count} CV généré(s)",
       "offerFailed": "Échec pour l'offre {index} - {credits} crédit remboursé",
-      "generatingOffer": "Génération ({current}/{total})"
+      "generatingOffer": "Génération ({current}/{total})",
+      "moreOffers": "autre(s) offre(s)"
     },
     "errors": {
       "noJobOfferDetected": "Aucune offre d'emploi détectée : {source}",

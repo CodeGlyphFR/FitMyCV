@@ -706,9 +706,10 @@ model CvGenerationTask {
 model CvGenerationOffer {
   id                  String                @id @default(cuid())
   taskId              String
-  jobOfferId          String                // Offre d'emploi cible
+  sourceUrl           String?               // URL source de l'offre (pour extraction async)
+  jobOfferId          String?               // Offre d'emploi cible (null avant extraction)
   offerIndex          Int                   @default(0) // Position dans le batch (0, 1, 2...)
-  status              String                @default("pending") // pending | running | completed | failed
+  status              String                @default("pending") // pending | extracting | running | completed | failed
   classificationResult Json?                // Résultat de la phase classification
   batchResults        Json?                 // Résultats des batches (experiences, projects, skills, etc.)
   generatedCvFileId   String?               // CV généré (null si échec)
@@ -725,7 +726,6 @@ model CvGenerationOffer {
   subtasks            CvGenerationSubtask[]
 
   @@index([taskId])
-  @@index([jobOfferId])
   @@index([status])
   @@index([taskId, offerIndex])
 }

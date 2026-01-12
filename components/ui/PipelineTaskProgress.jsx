@@ -2,23 +2,246 @@
 
 import React from 'react';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { usePipelineProgressContext } from '@/components/PipelineProgressProvider';
+import { PIPELINE_STEPS, calculateOfferProgress } from '@/hooks/usePipelineProgress';
+
+/**
+ * Labels traduits pour chaque étape
+ */
+const STEP_LABELS = {
+  extraction: 'taskQueue.steps.extraction',
+  classify: 'taskQueue.steps.classify',
+  experiences: 'taskQueue.steps.experiences',
+  projects: 'taskQueue.steps.projects',
+  extras: 'taskQueue.steps.extras',
+  skills: 'taskQueue.steps.skills',
+  summary: 'taskQueue.steps.summary',
+  recompose: 'taskQueue.steps.recompose',
+};
+
+/**
+ * Fallback labels (si pas de traduction)
+ */
+const STEP_FALLBACKS = {
+  extraction: 'Extraction',
+  classify: 'Classification',
+  experiences: 'Experiences',
+  projects: 'Projets',
+  extras: 'Extras',
+  skills: 'Competences',
+  summary: 'Resume',
+  recompose: 'Finalisation',
+};
+
+/**
+ * Ligne de progression pour une offre
+ *
+ * En cours:
+ * Heure | Titre de l'offre                                         x %
+ * ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ * Étape en cours (ex: Expériences 3/5)
+ *
+ * Terminé:
+ * Titre de l'offre                                              Terminé
+ * Heure | Génération de CV IA
+ */
+function OfferProgressLine({ offer, t, createdAt }) {
+  const progress = calculateOfferProgress(offer);
+  const currentStep = offer.currentStep;
+  const status = offer.status;
+  const isFinished = status === 'completed' || status === 'failed';
+
+  // Titre de l'offre (jobTitle ou URL tronquée)
+  const offerTitle = offer.jobTitle || (offer.sourceUrl ? truncateUrl(offer.sourceUrl) : `Offre ${offer.offerIndex + 1}`);
+
+  // Label de l'étape en cours
+  let stepLabel = '';
+  if (currentStep) {
+    const label = t(STEP_LABELS[currentStep]) || STEP_FALLBACKS[currentStep];
+    if (offer.currentItem !== null && offer.totalItems !== null) {
+      stepLabel = `${label} ${offer.currentItem + 1}/${offer.totalItems}`;
+    } else {
+      stepLabel = label;
+    }
+  } else {
+    stepLabel = t('taskQueue.status.queued') || 'En attente';
+  }
+
+  // Status label
+  const statusLabel = status === 'completed'
+    ? (t('taskQueue.status.completed') || 'Terminé')
+    : status === 'failed'
+      ? (t('taskQueue.status.failed') || 'Échec')
+      : '';
+
+  // Feature name
+  const featureName = t('taskQueue.messages.pipelineInProgress')?.replace(' en cours', '') || 'Génération CV IA';
+
+  // Classes pour la barre
+  const barClasses = status === 'failed'
+    ? 'bg-gradient-to-r from-red-500 to-red-400'
+    : status === 'completed'
+      ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
+      : 'bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-400';
+
+  if (isFinished) {
+    // Layout TERMINÉ
+    return (
+      <div className="py-1">
+        {/* Ligne 1: Titre + Status */}
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-white truncate flex-1 mr-2" title={offer.sourceUrl || offerTitle}>
+            {offerTitle}
+          </span>
+          <span className={`text-xs font-medium ${status === 'completed' ? 'text-emerald-400' : 'text-red-400'}`}>
+            {statusLabel}
+          </span>
+        </div>
+        {/* Ligne 2: Heure | Feature name */}
+        <div className="text-[10px] text-white/50 mt-0.5">
+          {createdAt} <span className="text-white/30">|</span> {featureName}
+        </div>
+      </div>
+    );
+  }
+
+  // Layout EN COURS
+  return (
+    <div className="py-1">
+      {/* Ligne 1: Heure | Titre + Pourcentage */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5 flex-1 min-w-0 mr-2">
+          <span className="text-[10px] text-white/50 flex-shrink-0">{createdAt}</span>
+          <span className="text-white/30">|</span>
+          <span className="text-xs font-medium text-white truncate" title={offer.sourceUrl || offerTitle}>
+            {offerTitle}
+          </span>
+        </div>
+        <span className="text-xs font-medium text-blue-400 tabular-nums flex-shrink-0">
+          {progress}%
+        </span>
+      </div>
+
+      {/* Ligne 2: Barre de progression */}
+      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mt-1">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ease-out ${barClasses}`}
+          style={{ width: `${Math.max(progress, 2)}%` }}
+        />
+      </div>
+
+      {/* Ligne 3: Étape en cours */}
+      <div className="text-[10px] text-white/50 mt-0.5">
+        {stepLabel}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Tronque une URL pour l'affichage
+ */
+function truncateUrl(url) {
+  try {
+    const urlObj = new URL(url);
+    const host = urlObj.hostname.replace('www.', '');
+    const path = urlObj.pathname.slice(0, 20);
+    return `${host}${path}${urlObj.pathname.length > 20 ? '...' : ''}`;
+  } catch {
+    return url.slice(0, 30) + (url.length > 30 ? '...' : '');
+  }
+}
 
 /**
  * PipelineTaskProgress - Progression visuelle du pipeline CV v2
  *
- * Affiche une série de points représentant les étapes du pipeline:
- * Classification → Expériences → Projets → Extras → Skills → Summary → Finalisation
+ * Affiche une ligne de progression par offre avec deux layouts:
+ *
+ * En cours:
+ * Heure | Titre de l'offre                                         x %
+ * ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ * Étape en cours
+ *
+ * Terminé:
+ * Titre de l'offre                                              Terminé
+ * Heure | Génération de CV IA
  *
  * @param {Object} props
- * @param {number} props.currentOffer - Index de l'offre en cours (0-based)
- * @param {number} props.totalOffers - Nombre total d'offres
- * @param {string} props.currentPhase - Phase en cours (classify, batches, recompose)
- * @param {string} props.currentStep - Étape en cours (classify, experiences, projects, extras, skills, summary, recompose)
- * @param {string} props.status - Statut global (running, completed, failed)
- * @param {Object} props.completedSteps - Map des étapes terminées { classify: true, experiences: true, ... }
+ * @param {string} props.taskId - ID de la tâche
+ * @param {number} [props.totalOffers] - Nombre total d'offres (fallback si pas de SSE)
+ * @param {string} [props.createdAt] - Heure de création formatée
  * @param {string} props.className - Classes CSS additionnelles
  */
 export default function PipelineTaskProgress({
+  taskId,
+  totalOffers: fallbackTotalOffers = 1,
+  createdAt = '',
+  className = '',
+}) {
+  const { t } = useLanguage();
+  const { getProgress, getOffersArray } = usePipelineProgressContext();
+
+  // Récupérer la progression de la tâche
+  const taskProgress = getProgress(taskId);
+  const offers = getOffersArray(taskId);
+
+  // Si pas encore de données SSE, afficher un placeholder
+  if (!taskProgress || offers.length === 0) {
+    return (
+      <div className={`${className}`}>
+        <div className="py-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 flex-1 min-w-0 mr-2">
+              <span className="text-[10px] text-white/50 flex-shrink-0">{createdAt}</span>
+              <span className="text-white/30">|</span>
+              <span className="text-xs text-white/70">{t('taskQueue.status.queued') || 'En attente'}...</span>
+            </div>
+            <span className="text-xs text-white/40">—</span>
+          </div>
+          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mt-1">
+            <div className="h-full w-[8%] rounded-full bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-400 animate-pulse" />
+          </div>
+          <div className="text-[10px] text-white/40 mt-0.5">
+            {t('taskQueue.messages.pipelineQueued') || 'Initialisation'}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Limiter l'affichage à 3 offres max
+  const displayedOffers = offers.slice(0, 3);
+  const hiddenCount = offers.length - 3;
+
+  return (
+    <div className={`${className}`}>
+      {/* Lignes de progression par offre */}
+      <div className="divide-y divide-white/5">
+        {displayedOffers.map((offer) => (
+          <OfferProgressLine
+            key={offer.offerId}
+            offer={offer}
+            t={t}
+            createdAt={createdAt}
+          />
+        ))}
+      </div>
+
+      {/* Indicateur si plus de 3 offres */}
+      {hiddenCount > 0 && (
+        <div className="text-[10px] text-white/40 text-center py-1 border-t border-white/5">
+          +{hiddenCount} {t('taskQueue.messages.moreOffers') || 'autre(s) offre(s)'}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Version compacte pour l'affichage dans TaskQueueModal (anciens 7 points)
+ * Garde la rétrocompatibilité avec l'ancien système
+ */
+export function PipelineTaskProgressCompact({
   currentOffer = 0,
   totalOffers = 1,
   currentStep = null,
@@ -28,42 +251,22 @@ export default function PipelineTaskProgress({
 }) {
   const { t } = useLanguage();
 
-  // Définition des étapes dans l'ordre (les labels sont traduits via i18n)
-  const stepIds = ['classify', 'experiences', 'projects', 'extras', 'skills', 'summary', 'recompose'];
-  const steps = stepIds.map(id => ({
+  // Définition des étapes dans l'ordre
+  const steps = PIPELINE_STEPS.map(id => ({
     id,
-    label: t(`taskQueue.steps.${id}`) || id,
+    label: t(`taskQueue.steps.${id}`) || STEP_FALLBACKS[id] || id,
   }));
 
   // Déterminer l'état de chaque étape
   const getStepState = (stepId) => {
-    // Si la tâche est terminée, toutes les étapes sont complétées
-    if (status === 'completed') {
-      return 'completed';
-    }
-
-    // Si la tâche a échoué, marquer selon l'état connu
+    if (status === 'completed') return 'completed';
     if (status === 'failed') {
-      if (completedSteps[stepId]) {
-        return 'completed';
-      }
-      if (stepId === currentStep) {
-        return 'failed';
-      }
+      if (completedSteps[stepId]) return 'completed';
+      if (stepId === currentStep) return 'failed';
       return 'pending';
     }
-
-    // Étape terminée
-    if (completedSteps[stepId]) {
-      return 'completed';
-    }
-
-    // Étape en cours
-    if (stepId === currentStep) {
-      return 'running';
-    }
-
-    // Étape à venir
+    if (completedSteps[stepId]) return 'completed';
+    if (stepId === currentStep) return 'running';
     return 'pending';
   };
 
@@ -93,7 +296,7 @@ export default function PipelineTaskProgress({
 
       {/* Points de progression */}
       <div className="flex items-center gap-1">
-        {steps.map((step, index) => {
+        {steps.map((step) => {
           const state = getStepState(step.id);
           return (
             <div

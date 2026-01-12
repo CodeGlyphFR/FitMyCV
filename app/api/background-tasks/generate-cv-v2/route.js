@@ -2,7 +2,10 @@
  * POST /api/background-tasks/generate-cv-v2
  *
  * Version 2 de la génération de CV utilisant le nouveau pipeline.
- * Accepte des URLs d'offres d'emploi, les parse, puis utilise le pipeline v2.
+ * Accepte des URLs d'offres d'emploi et démarre le pipeline async.
+ *
+ * L'extraction des offres d'emploi est maintenant faite en async
+ * dans le pipeline (Phase 0) pour permettre le suivi de progression.
  */
 
 import { NextResponse } from 'next/server';
@@ -11,7 +14,6 @@ import prisma from '@/lib/prisma';
 import { CommonErrors, apiError } from '@/lib/api/apiErrors';
 import { canStartTaskType, registerTaskTypeStart, enqueueJob } from '@/lib/backgroundTasks/jobQueue';
 import { startCvGenerationV2 } from '@/lib/cv-pipeline-v2';
-import { getOrExtractJobOfferFromUrl } from '@/lib/openai/generateCv';
 import { incrementFeatureCounter, refundFeatureUsage } from '@/lib/subscription/featureUsage';
 import { verifyRecaptcha } from '@/lib/recaptcha/verifyRecaptcha';
 
@@ -21,6 +23,18 @@ function sanitizeLinks(raw) {
     .map(link => (typeof link === 'string' ? link : String(link || '')))
     .map(link => link.trim())
     .filter(link => !!link);
+}
+
+/**
+ * Valide le format d'une URL
+ */
+function isValidUrl(string) {
+  try {
+    new URL(string);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(request) {
@@ -80,8 +94,14 @@ export async function POST(request) {
       return apiError('errors.api.generateV2.noLinksProvided', { status: 400 });
     }
 
-    // Note: Pour l'instant, le pipeline v2 ne supporte pas les fichiers PDF joints
-    // On se concentre sur les URLs d'offres d'emploi
+    // Valider le format des URLs
+    const invalidUrls = links.filter(url => !isValidUrl(url));
+    if (invalidUrls.length > 0) {
+      return apiError('errors.api.generateV2.invalidUrlFormat', {
+        status: 400,
+        params: { urls: invalidUrls },
+      });
+    }
 
     // 4. Valider le CV de base
     const baseFile = (rawBaseFile || '').trim();
@@ -100,39 +120,9 @@ export async function POST(request) {
       return apiError('errors.api.cv.notFound', { status: 404 });
     }
 
-    // 5. Extraire les offres d'emploi depuis les URLs
-    console.log(`[generate-cv-v2] Extracting ${links.length} job offer(s) from URLs...`);
+    const totalOffers = links.length;
 
-    const jobOfferResults = [];
-    const extractionErrors = [];
-
-    for (const url of links) {
-      try {
-        const result = await getOrExtractJobOfferFromUrl(userId, url);
-        jobOfferResults.push({
-          url,
-          jobOfferId: result.jobOfferId,
-          title: result.title || result.extraction?.title || 'Offre',
-          fromCache: result.fromCache,
-        });
-        console.log(`[generate-cv-v2] Extracted: ${result.title || 'Unknown'} (cache: ${result.fromCache})`);
-      } catch (error) {
-        console.error(`[generate-cv-v2] Failed to extract ${url}:`, error.message);
-        extractionErrors.push({ url, error: error.message });
-      }
-    }
-
-    if (jobOfferResults.length === 0) {
-      return apiError('errors.api.generateV2.allExtractionsFailed', {
-        status: 400,
-        params: { errors: extractionErrors },
-      });
-    }
-
-    const jobOfferIds = jobOfferResults.map(r => r.jobOfferId);
-    const totalOffers = jobOfferIds.length;
-
-    // 6. Vérifier et débiter les crédits/limites pour chaque offre
+    // 5. Vérifier et débiter les crédits/limites pour chaque offre
     const usageResults = [];
     for (let i = 0; i < totalOffers; i++) {
       const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation');
@@ -155,7 +145,7 @@ export async function POST(request) {
       usageResults.push(usageResult);
     }
 
-    // 7. Créer la CvGenerationTask
+    // 6. Créer la CvGenerationTask
     const task = await prisma.cvGenerationTask.create({
       data: {
         userId,
@@ -169,7 +159,7 @@ export async function POST(request) {
       },
     });
 
-    console.log(`[generate-cv-v2] Task created: ${task.id}`);
+    console.log(`[generate-cv-v2] Task created: ${task.id} with ${totalOffers} URL(s)`);
 
     // Enregistrer le type de tâche comme actif
     registerTaskTypeStart(userId, taskType);
@@ -192,19 +182,19 @@ export async function POST(request) {
           sourceCvFile: baseFile,
           totalOffers,
           mode: 'adapt',
-          jobOfferIds,
           urls: links,
         }),
       },
     });
 
-    // 8. Créer une CvGenerationOffer par offre
+    // 7. Créer une CvGenerationOffer par URL (sans jobOfferId, sera rempli après extraction)
     await Promise.all(
-      jobOfferIds.map((jobOfferId, index) =>
+      links.map((url, index) =>
         prisma.cvGenerationOffer.create({
           data: {
             taskId: task.id,
-            jobOfferId,
+            sourceUrl: url,
+            jobOfferId: null, // Sera rempli après extraction async
             offerIndex: index,
             status: 'pending',
           },
@@ -214,17 +204,16 @@ export async function POST(request) {
 
     console.log(`[generate-cv-v2] ${totalOffers} offer(s) created for task ${task.id}`);
 
-    // 9. Démarrer l'orchestrateur v2 en arrière-plan
+    // 8. Démarrer l'orchestrateur v2 en arrière-plan
     enqueueJob(() => startCvGenerationV2(task.id));
 
-    // 10. Retourner le succès
+    // 9. Retourner le succès immédiatement
     return NextResponse.json({
       success: true,
       queued: true,
       taskId: task.id,
       tasksCount: totalOffers,
-      extractedOffers: jobOfferResults.map(r => ({ url: r.url, title: r.title })),
-      extractionErrors: extractionErrors.length > 0 ? extractionErrors : undefined,
+      urls: links,
     }, { status: 202 });
 
   } catch (error) {

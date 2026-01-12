@@ -12,7 +12,13 @@ export function usePipelineProgressContext() {
   const context = useContext(PipelineProgressContext);
   if (!context) {
     // Retourner un objet vide si pas de provider (composant optionnel)
-    return { getProgress: () => null, allProgress: {} };
+    return {
+      getProgress: () => null,
+      getOfferProgress: () => null,
+      getOffersArray: () => [],
+      calculateOfferProgress: () => 0,
+      allProgress: {},
+    };
   }
   return context;
 }

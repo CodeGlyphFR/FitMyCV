@@ -4,6 +4,7 @@ import React from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import DonutProgress from "./ui/DonutProgress";
+import PipelineTaskProgress from "./ui/PipelineTaskProgress";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -44,6 +45,35 @@ function TaskProgressIndicator({ task, onComplete }) {
       size={24}
       strokeWidth={2.5}
       showPercent={false}
+    />
+  );
+}
+
+/**
+ * Indicateur de progression pour les tâches cv_generation_v2 (version compact)
+ * Affiche les lignes de progression par offre
+ * Note: Ne se cache pas quand terminé car il affiche le contenu complet de la ligne
+ */
+function PipelineProgressIndicator({ task }) {
+  const { t } = useLanguage();
+
+  // Extraire les infos du payload pour multi-offres
+  const payload = task?.payload && typeof task.payload === 'object' ? task.payload : null;
+  const totalOffers = payload?.totalOffers || 1;
+
+  // Formater l'heure
+  const locale = t("common.locale") || 'fr-FR';
+  const createdAt = new Date(task.createdAt).toLocaleTimeString(locale, {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  return (
+    <PipelineTaskProgress
+      taskId={task.id}
+      totalOffers={totalOffers}
+      createdAt={createdAt}
+      className="w-full"
     />
   );
 }
@@ -157,6 +187,20 @@ function TaskItem({ task, onCancel, onTaskClick, compact = false }) {
     } else if (task.status === 'failed') {
       description = t("taskQueue.messages.templateCreationFailed");
     }
+  } else if (task.type === 'cv_generation_v2') {
+    const totalOffers = payload?.totalOffers || 1;
+    const offersLabel = totalOffers > 1 ? ` (${totalOffers} ${t("taskQueue.messages.offers")})` : '';
+    if (task.status === 'running') {
+      description = t("taskQueue.messages.pipelineInProgress") + offersLabel;
+    } else if (task.status === 'queued') {
+      description = t("taskQueue.messages.pipelineQueued") + offersLabel;
+    } else if (task.status === 'completed') {
+      description = t("taskQueue.messages.pipelineCompleted") + offersLabel;
+    } else if (task.status === 'cancelled') {
+      description = t("taskQueue.messages.pipelineCancelled") + offersLabel;
+    } else if (task.status === 'failed') {
+      description = t("taskQueue.messages.pipelineFailed") + offersLabel;
+    }
   }
   // Note: Les tâches 'calculate-match-score' sont filtrées et n'apparaissent pas dans le gestionnaire
 
@@ -208,6 +252,35 @@ function TaskItem({ task, onCancel, onTaskClick, compact = false }) {
     }
   };
 
+  // Layout spécial pour cv_generation_v2 : PipelineProgressIndicator prend toute la largeur
+  if (task.type === 'cv_generation_v2') {
+    return (
+      <div
+        className={`${compact ? 'px-2 py-1' : 'px-3 py-2'} border-b border-white/10 last:border-b-0 hover:bg-white/5 transition-colors duration-200 ${isClickable ? 'cursor-pointer' : ''}`}
+        onClick={handleClick}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <PipelineProgressIndicator task={task} />
+          </div>
+          {canCancel && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onCancel(task.id);
+              }}
+              className="text-xs text-red-400/70 hover:text-red-300 hover:bg-red-500/20 px-1 py-0.5 rounded-sm transition-colors duration-200 mt-1 flex-shrink-0"
+              title={t("taskQueue.cancelTask")}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Layout standard pour les autres types de tâches
   return (
     <div
       className={`flex items-center justify-between ${compact ? 'p-2' : 'p-3'} border-b border-white/10 last:border-b-0 hover:bg-white/20 transition-colors duration-200 ${isClickable ? 'cursor-pointer' : ''}`}

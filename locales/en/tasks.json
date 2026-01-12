@@ -20,6 +20,7 @@
       "unknown": "Unknown"
     },
     "steps": {
+      "extraction": "Extracting job offer",
       "classify": "Classification",
       "experiences": "Experiences",
       "projects": "Projects",
@@ -60,7 +61,8 @@
       "cvReadyForOffer": "CV ready for offer {index}",
       "cvGenerated": "{count} CV(s) generated",
       "offerFailed": "Failed for offer {index} - {credits} credit refunded",
-      "generatingOffer": "Generating ({current}/{total})"
+      "generatingOffer": "Generating ({current}/{total})",
+      "moreOffers": "more offer(s)"
     },
     "errors": {
       "noJobOfferDetected": "No job offer detected: {source}",

@@ -6,7 +6,6 @@ import Modal from "./ui/Modal";
 import DonutProgress from "./ui/DonutProgress";
 import PipelineTaskProgress from "./ui/PipelineTaskProgress";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
-import { usePipelineProgressContext } from "@/components/PipelineProgressProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { emitOnboardingEvent, ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
@@ -52,14 +51,10 @@ function TaskProgressIndicator({ task, onComplete }) {
 
 /**
  * Indicateur de progression pour les tâches cv_generation_v2
- * Affiche les étapes du pipeline sous forme de points
+ * Affiche les barres de progression par offre
  */
 function PipelineProgressIndicator({ task, onComplete }) {
-  const { getProgress } = usePipelineProgressContext();
   const [showProgress, setShowProgress] = React.useState(true);
-
-  // Récupérer la progression SSE pour cette tâche
-  const progress = getProgress(task.id);
 
   // Quand la tâche est terminée, attendre puis masquer
   React.useEffect(() => {
@@ -80,11 +75,8 @@ function PipelineProgressIndicator({ task, onComplete }) {
 
   return (
     <PipelineTaskProgress
-      currentOffer={progress?.currentOffer ?? 0}
+      taskId={task.id}
       totalOffers={totalOffers}
-      currentStep={progress?.currentStep}
-      status={task.status}
-      completedSteps={progress?.completedSteps || {}}
     />
   );
 }
