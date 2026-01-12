@@ -2,20 +2,24 @@
  * POST /api/background-tasks/generate-cv-v2
  *
  * Version 2 de la génération de CV utilisant le nouveau pipeline.
- * Accepte des URLs d'offres d'emploi et démarre le pipeline async.
+ * Accepte des URLs d'offres d'emploi ET des fichiers PDF.
  *
- * L'extraction des offres d'emploi est maintenant faite en async
- * dans le pipeline (Phase 0) pour permettre le suivi de progression.
+ * Chaque URL/PDF crée une tâche indépendante dans le gestionnaire de tâches.
+ * Les tâches s'exécutent en parallèle (max 3 concurrentes).
  */
 
 import { NextResponse } from 'next/server';
+import { promises as fs } from 'fs';
+import path from 'path';
+import os from 'os';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 import { CommonErrors, apiError } from '@/lib/api/apiErrors';
-import { canStartTaskType, registerTaskTypeStart, enqueueJob } from '@/lib/backgroundTasks/jobQueue';
-import { startCvGenerationV2 } from '@/lib/cv-pipeline-v2';
+import { registerTaskTypeStart, enqueueJob } from '@/lib/backgroundTasks/jobQueue';
+import { startSingleOfferGeneration } from '@/lib/cv-pipeline-v2';
 import { incrementFeatureCounter, refundFeatureUsage } from '@/lib/subscription/featureUsage';
 import { verifyRecaptcha } from '@/lib/recaptcha/verifyRecaptcha';
+import { validateUploadedFile, sanitizeFilename } from '@/lib/security/fileValidation';
 
 function sanitizeLinks(raw) {
   if (!Array.isArray(raw)) return [];
@@ -37,6 +41,57 @@ function isValidUrl(string) {
   }
 }
 
+/**
+ * Extrait le domaine d'une URL pour l'affichage
+ */
+function extractDomain(url) {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname.replace('www.', '');
+  } catch {
+    return 'offre';
+  }
+}
+
+/**
+ * Sauvegarde les fichiers PDF uploadés dans un répertoire temporaire
+ */
+async function saveUploadedFiles(files) {
+  if (!files.length) {
+    return { directory: null, saved: [], errors: [] };
+  }
+
+  const uploadDir = await fs.mkdtemp(path.join(os.tmpdir(), 'cv-gen-v2-uploads-'));
+  const saved = [];
+  const errors = [];
+
+  for (const file of files) {
+    const validation = await validateUploadedFile(file, {
+      allowedTypes: ['application/pdf'],
+      maxSize: 10 * 1024 * 1024, // 10 MB
+    });
+
+    if (!validation.valid) {
+      console.warn(`[generate-cv-v2] Validation échouée pour ${file.name}: ${validation.error}`);
+      errors.push({ file: file.name, error: validation.error });
+      continue;
+    }
+
+    const originalName = file.name || `offre-${saved.length + 1}.pdf`;
+    const safeName = sanitizeFilename(originalName);
+    const targetPath = path.join(uploadDir, safeName || `offre-${saved.length + 1}.pdf`);
+    await fs.writeFile(targetPath, validation.buffer);
+    saved.push({
+      path: targetPath,
+      name: originalName,
+      size: validation.buffer.length,
+      type: file.type || 'application/pdf',
+    });
+  }
+
+  return { directory: uploadDir, saved, errors };
+}
+
 export async function POST(request) {
   // 1. Vérifier l'authentification
   const session = await auth();
@@ -46,25 +101,14 @@ export async function POST(request) {
 
   const userId = session.user.id;
 
-  // 2. Vérifier la concurrence
-  const taskType = 'cv_generation';
-  const concurrencyCheck = canStartTaskType(userId, taskType);
-
-  if (!concurrencyCheck.allowed) {
-    console.log(`[generate-cv-v2] Concurrence refusée pour user ${userId}: ${concurrencyCheck.reason}`);
-    return apiError(`errors.api.generateV2.${concurrencyCheck.reason}`, {
-      status: 409,
-      params: { taskType },
-    });
-  }
-
   try {
-    // 3. Parser le FormData
+    // 2. Parser le FormData
     const formData = await request.formData();
     const rawLinks = formData.get('links');
     const rawBaseFile = formData.get('baseFile');
     const deviceId = formData.get('deviceId') || 'unknown-device';
     const recaptchaToken = formData.get('recaptchaToken');
+    const files = formData.getAll('files').filter(Boolean);
 
     // Vérification reCAPTCHA
     if (recaptchaToken) {
@@ -90,10 +134,6 @@ export async function POST(request) {
 
     const links = sanitizeLinks(parsedLinks);
 
-    if (!links.length) {
-      return apiError('errors.api.generateV2.noLinksProvided', { status: 400 });
-    }
-
     // Valider le format des URLs
     const invalidUrls = links.filter(url => !isValidUrl(url));
     if (invalidUrls.length > 0) {
@@ -103,7 +143,19 @@ export async function POST(request) {
       });
     }
 
-    // 4. Valider le CV de base
+    // Sauvegarder les fichiers PDF uploadés
+    const { saved: savedFiles, errors: uploadErrors } = await saveUploadedFiles(files);
+
+    if (uploadErrors.length > 0) {
+      console.warn(`[generate-cv-v2] ${uploadErrors.length} fichier(s) rejeté(s):`, uploadErrors);
+    }
+
+    // Vérifier qu'il y a au moins une source (URL ou fichier)
+    if (!links.length && !savedFiles.length) {
+      return apiError('errors.api.generateV2.noLinksProvided', { status: 400 });
+    }
+
+    // 3. Valider le CV de base
     const baseFile = (rawBaseFile || '').trim();
     if (!baseFile) {
       return apiError('errors.api.cv.missingFilename', { status: 400 });
@@ -120,9 +172,9 @@ export async function POST(request) {
       return apiError('errors.api.cv.notFound', { status: 404 });
     }
 
-    const totalOffers = links.length;
+    const totalOffers = links.length + savedFiles.length;
 
-    // 5. Vérifier et débiter les crédits/limites pour chaque offre
+    // 4. Vérifier et débiter les crédits/limites pour TOUTES les offres d'abord
     const usageResults = [];
     for (let i = 0; i < totalOffers; i++) {
       const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation');
@@ -145,75 +197,144 @@ export async function POST(request) {
       usageResults.push(usageResult);
     }
 
-    // 6. Créer la CvGenerationTask
-    const task = await prisma.cvGenerationTask.create({
-      data: {
-        userId,
-        sourceCvFileId: cvFile.id,
-        mode: 'adapt',
-        status: 'pending',
-        totalOffers,
-        completedOffers: 0,
-        creditsDebited: usageResults.filter(r => r.usedCredit).length,
-        creditsRefunded: 0,
-      },
-    });
+    // 5. Créer une tâche par source (URL ou PDF)
+    const createdTasks = [];
+    let taskIndex = 0;
 
-    console.log(`[generate-cv-v2] Task created: ${task.id} with ${totalOffers} URL(s)`);
+    // 5a. Créer les tâches pour les URLs
+    for (let i = 0; i < links.length; i++) {
+      const url = links[i];
+      const usageResult = usageResults[taskIndex];
+      const domain = extractDomain(url);
 
-    // Enregistrer le type de tâche comme actif
-    registerTaskTypeStart(userId, taskType);
-
-    // Créer une BackgroundTask pour l'affichage
-    await prisma.backgroundTask.create({
-      data: {
-        id: task.id,
-        userId,
-        type: 'cv_generation_v2',
-        title: totalOffers > 1
-          ? `Génération de ${totalOffers} CV (v2)`
-          : 'Génération de CV (v2)',
-        status: 'queued',
-        createdAt: BigInt(Date.now()),
-        shouldUpdateCvList: true,
-        deviceId,
-        payload: JSON.stringify({
-          taskId: task.id,
-          sourceCvFile: baseFile,
-          totalOffers,
+      const task = await prisma.cvGenerationTask.create({
+        data: {
+          userId,
+          sourceCvFileId: cvFile.id,
           mode: 'adapt',
-          urls: links,
-        }),
-      },
-    });
+          status: 'pending',
+          totalOffers: 1,
+          completedOffers: 0,
+          creditsDebited: usageResult.usedCredit ? 1 : 0,
+          creditsRefunded: 0,
+        },
+      });
 
-    // 7. Créer une CvGenerationOffer par URL (sans jobOfferId, sera rempli après extraction)
-    await Promise.all(
-      links.map((url, index) =>
-        prisma.cvGenerationOffer.create({
-          data: {
+      const offer = await prisma.cvGenerationOffer.create({
+        data: {
+          taskId: task.id,
+          sourceUrl: url,
+          jobOfferId: null,
+          offerIndex: 0,
+          status: 'pending',
+        },
+      });
+
+      const title = totalOffers > 1
+        ? `Génération CV (${taskIndex + 1}/${totalOffers}) - ${domain}`
+        : `Génération CV - ${domain}`;
+
+      await prisma.backgroundTask.create({
+        data: {
+          id: task.id,
+          userId,
+          type: 'cv_generation_v2',
+          title,
+          status: 'queued',
+          createdAt: BigInt(Date.now() + taskIndex),
+          shouldUpdateCvList: true,
+          deviceId,
+          payload: JSON.stringify({
             taskId: task.id,
-            sourceUrl: url,
-            jobOfferId: null, // Sera rempli après extraction async
-            offerIndex: index,
-            status: 'pending',
-          },
-        })
-      )
-    );
+            offerId: offer.id,
+            sourceCvFile: baseFile,
+            url,
+            offerIndex: taskIndex,
+            totalOffersInBatch: totalOffers,
+          }),
+        },
+      });
 
-    console.log(`[generate-cv-v2] ${totalOffers} offer(s) created for task ${task.id}`);
+      registerTaskTypeStart(userId, 'cv_generation');
+      enqueueJob(() => startSingleOfferGeneration(task.id, offer.id));
 
-    // 8. Démarrer l'orchestrateur v2 en arrière-plan
-    enqueueJob(() => startCvGenerationV2(task.id));
+      createdTasks.push({ taskId: task.id, offerId: offer.id, url });
+      console.log(`[generate-cv-v2] Task ${task.id} created for URL: ${url}`);
+      taskIndex++;
+    }
 
-    // 9. Retourner le succès immédiatement
+    // 5b. Créer les tâches pour les fichiers PDF
+    for (let i = 0; i < savedFiles.length; i++) {
+      const pdfFile = savedFiles[i];
+      const usageResult = usageResults[taskIndex];
+      const displayName = pdfFile.name.replace(/\.pdf$/i, '').slice(0, 30);
+
+      const task = await prisma.cvGenerationTask.create({
+        data: {
+          userId,
+          sourceCvFileId: cvFile.id,
+          mode: 'adapt',
+          status: 'pending',
+          totalOffers: 1,
+          completedOffers: 0,
+          creditsDebited: usageResult.usedCredit ? 1 : 0,
+          creditsRefunded: 0,
+        },
+      });
+
+      // Pour les PDFs, on utilise un préfixe file:// pour distinguer des URLs
+      const offer = await prisma.cvGenerationOffer.create({
+        data: {
+          taskId: task.id,
+          sourceUrl: `file://${pdfFile.path}`,
+          jobOfferId: null,
+          offerIndex: 0,
+          status: 'pending',
+        },
+      });
+
+      const title = totalOffers > 1
+        ? `Génération CV (${taskIndex + 1}/${totalOffers}) - ${displayName}`
+        : `Génération CV - ${displayName}`;
+
+      await prisma.backgroundTask.create({
+        data: {
+          id: task.id,
+          userId,
+          type: 'cv_generation_v2',
+          title,
+          status: 'queued',
+          createdAt: BigInt(Date.now() + taskIndex),
+          shouldUpdateCvList: true,
+          deviceId,
+          payload: JSON.stringify({
+            taskId: task.id,
+            offerId: offer.id,
+            sourceCvFile: baseFile,
+            pdfPath: pdfFile.path,
+            pdfName: pdfFile.name,
+            offerIndex: taskIndex,
+            totalOffersInBatch: totalOffers,
+          }),
+        },
+      });
+
+      registerTaskTypeStart(userId, 'cv_generation');
+      enqueueJob(() => startSingleOfferGeneration(task.id, offer.id));
+
+      createdTasks.push({ taskId: task.id, offerId: offer.id, pdfName: pdfFile.name });
+      console.log(`[generate-cv-v2] Task ${task.id} created for PDF: ${pdfFile.name}`);
+      taskIndex++;
+    }
+
+    console.log(`[generate-cv-v2] ${createdTasks.length} task(s) created for user ${userId}`);
+
+    // 6. Retourner le succès immédiatement
     return NextResponse.json({
       success: true,
       queued: true,
-      taskId: task.id,
-      tasksCount: totalOffers,
-      urls: links,
+      tasks: createdTasks,
+      totalTasks: createdTasks.length,
     }, { status: 202 });
 
   } catch (error) {
