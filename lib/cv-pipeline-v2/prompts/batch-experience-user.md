@@ -6,19 +6,12 @@
 
 # Langue de sortie: {targetLanguage}
 
-Adapte cette experience pour correspondre a l'offre d'emploi ci-dessus.
-- Reformule le titre si necessaire
-- Reordonne et reformule les responsabilites (les plus pertinentes en premier)
-- Mets en valeur les resultats (deliverables) pertinents
-- Filtre les skills_used pour ne garder que les pertinents
+Adapte cette experience pour l'offre d'emploi ci-dessus.
 
-**OBLIGATOIRE - Champs à remplir :**
-- **domain** : Détermine le domaine métier en analysant le titre, l'entreprise et les responsabilités
-- **years_in_domain** : Utilise la valeur `_calculated_years` fournie (déjà calculée)
+**Champs obligatoires :**
+- **domain** : Domaine metier (analyse titre, entreprise, responsabilites)
+- **years_in_domain** : Valeur `_calculated_years` fournie
 
-RAPPEL: Ne jamais inventer de donnees. Tu peux seulement reformuler, reordonner et filtrer.
-
-**IMPORTANT**: Documente TOUTES tes modifications dans le champ `modifications[]` avec avant/apres/raison.
-Meme pour les reordonnancements ou reformulations mineures, cree une entree.
+**Documente tes modifications dans `modifications[]`** (avant/apres/raison).
 
 Reponds en JSON valide.
