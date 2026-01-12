@@ -107,7 +107,33 @@ export async function GET(request) {
       const totalCachedTokens = allSubtasks.reduce((sum, s) => sum + (s.cachedTokens || 0), 0);
       const totalCompletionTokens = allSubtasks.reduce((sum, s) => sum + (s.completionTokens || 0), 0);
       const totalCost = allSubtasks.reduce((sum, s) => sum + (s.estimatedCost || 0), 0);
-      const totalDurationMs = allSubtasks.reduce((sum, s) => sum + (s.durationMs || 0), 0);
+
+      // Calculate real duration accounting for parallel execution
+      // Pipeline structure:
+      // - Phase 0.5: classify (sequential)
+      // - Phase 1: batch_experience, batch_project, batch_extras (parallel)
+      // - Phase 2: batch_skills, batch_summary (parallel)
+      // - Phase 3: recompose (sequential)
+      const getMaxDurationByType = (type) => {
+        const subtasksOfType = allSubtasks.filter(s => s.type === type);
+        if (subtasksOfType.length === 0) return 0;
+        return Math.max(...subtasksOfType.map(s => s.durationMs || 0));
+      };
+
+      const classifyDuration = getMaxDurationByType('classify');
+      const phase1Duration = Math.max(
+        getMaxDurationByType('batch_experience'),
+        getMaxDurationByType('batch_project'),
+        getMaxDurationByType('batch_extras')
+      );
+      const phase2Duration = Math.max(
+        getMaxDurationByType('batch_skills'),
+        getMaxDurationByType('batch_summary')
+      );
+      const recomposeDuration = getMaxDurationByType('recompose');
+
+      const totalDurationMs = classifyDuration + phase1Duration + phase2Duration + recomposeDuration;
+      const summedDurationMs = allSubtasks.reduce((sum, s) => sum + (s.durationMs || 0), 0);
 
       // Group subtasks by type for summary
       const subtasksByType = {};
@@ -176,7 +202,8 @@ export async function GET(request) {
           completionTokens: totalCompletionTokens,
           totalTokens: totalPromptTokens + totalCompletionTokens,
           estimatedCost: totalCost,
-          durationMs: totalDurationMs,
+          durationMs: totalDurationMs, // Real duration accounting for parallel execution
+          summedDurationMs, // Sum of all individual durations (for reference)
           subtaskCount: allSubtasks.length,
         },
         // Breakdown by subtask type

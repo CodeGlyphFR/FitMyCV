@@ -1,6 +1,6 @@
-# Données du candidat
+# Donnees du candidat
 
-## Expérience par domaine (total agrégé)
+## Experience par domaine (total agrege)
 
 {experiencesByDomain}
 
@@ -8,15 +8,13 @@
 
 {currentTitles}
 
-## Années d'expérience totales
+## Annees d'experience totales
 
 {totalYears} ans
 
-## Expériences complètes (conservées et retravaillées)
+## Realisations chiffrees (pour la partie Accomplissement)
 
-```json
-{experiencesJson}
-```
+{deliverables}
 
 ## Skills
 
@@ -26,12 +24,10 @@
 
 ---
 
-# Instructions
+# Langue de sortie: {targetLanguage}
 
-**Langue de sortie** : {targetLanguage}
+Genere :
+1. `description` : resume du profil (Identite + Accomplissement + Valeur)
+2. `domains` : 2-3 domaines d'expertise tries par pertinence pour l'offre
 
-Génère :
-1. `description` : résumé du profil en utilisant les données ci-dessus
-2. `domains` : 2-3 domaines d'expertise triés par pertinence pour l'offre
-
-Réponds en JSON valide.
+Reponds en JSON valide.

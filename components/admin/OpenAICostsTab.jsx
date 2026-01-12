@@ -29,12 +29,17 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
 
   // Pricing management state
   const [pricings, setPricings] = useState([]);
+  const [isPriorityMode, setIsPriorityMode] = useState(false);
+  const [priorityModeLoading, setPriorityModeLoading] = useState(false);
   const [editingPricing, setEditingPricing] = useState(null);
   const [pricingForm, setPricingForm] = useState({
     modelName: '',
     inputPricePerMToken: '',
     outputPricePerMToken: '',
     cachePricePerMToken: '',
+    inputPricePerMTokenPriority: '',
+    outputPricePerMTokenPriority: '',
+    cachePricePerMTokenPriority: '',
     description: '',
     isActive: true,
   });
@@ -293,8 +298,33 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
       if (!response.ok) throw new Error('Failed to fetch pricings');
       const result = await response.json();
       setPricings(result.pricings || []);
+      setIsPriorityMode(result.isPriorityMode || false);
     } catch (err) {
       console.error('Error fetching pricings:', err);
+    }
+  };
+
+  const togglePriorityMode = async (newValue) => {
+    try {
+      setPriorityModeLoading(true);
+      const response = await fetch('/api/admin/openai-pricing', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPriorityMode: newValue }),
+      });
+
+      if (!response.ok) throw new Error('Failed to toggle priority mode');
+
+      setIsPriorityMode(newValue);
+      setToast({
+        type: 'success',
+        message: `Mode ${newValue ? 'Priority' : 'Standard'} activé`,
+      });
+    } catch (err) {
+      console.error('Error toggling priority mode:', err);
+      setToast({ type: 'error', message: 'Erreur lors du changement de mode' });
+    } finally {
+      setPriorityModeLoading(false);
     }
   };
 
@@ -379,6 +409,9 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
         inputPricePerMToken: parseFloat(pricingForm.inputPricePerMToken),
         outputPricePerMToken: parseFloat(pricingForm.outputPricePerMToken),
         cachePricePerMToken: pricingForm.cachePricePerMToken ? parseFloat(pricingForm.cachePricePerMToken) : 0,
+        inputPricePerMTokenPriority: pricingForm.inputPricePerMTokenPriority ? parseFloat(pricingForm.inputPricePerMTokenPriority) : null,
+        outputPricePerMTokenPriority: pricingForm.outputPricePerMTokenPriority ? parseFloat(pricingForm.outputPricePerMTokenPriority) : null,
+        cachePricePerMTokenPriority: pricingForm.cachePricePerMTokenPriority ? parseFloat(pricingForm.cachePricePerMTokenPriority) : null,
         description: pricingForm.description || null,
         isActive: pricingForm.isActive,
       };
@@ -398,6 +431,9 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
         inputPricePerMToken: '',
         outputPricePerMToken: '',
         cachePricePerMToken: '',
+        inputPricePerMTokenPriority: '',
+        outputPricePerMTokenPriority: '',
+        cachePricePerMTokenPriority: '',
         description: '',
         isActive: true,
       });
@@ -439,6 +475,9 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
       inputPricePerMToken: pricing.inputPricePerMToken.toString(),
       outputPricePerMToken: pricing.outputPricePerMToken.toString(),
       cachePricePerMToken: pricing.cachePricePerMToken?.toString() || '0',
+      inputPricePerMTokenPriority: pricing.inputPricePerMTokenPriority?.toString() || '',
+      outputPricePerMTokenPriority: pricing.outputPricePerMTokenPriority?.toString() || '',
+      cachePricePerMTokenPriority: pricing.cachePricePerMTokenPriority?.toString() || '',
       description: pricing.description || '',
       isActive: pricing.isActive,
     });
@@ -838,55 +877,130 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
 
         {showPricing && (
           <div className="mb-4 p-4 bg-blue-500/10 rounded-lg border border-blue-500/20 space-y-4">
-            <h4 className="text-white font-semibold">Gestion des tarifs OpenAI</h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-white font-semibold">Gestion des tarifs OpenAI</h4>
+
+              {/* Priority Mode Toggle */}
+              <div className="flex items-center gap-3">
+                <span className={`text-sm ${!isPriorityMode ? 'text-green-400 font-medium' : 'text-white/60'}`}>
+                  Standard
+                </span>
+                <button
+                  onClick={() => togglePriorityMode(!isPriorityMode)}
+                  disabled={priorityModeLoading}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    isPriorityMode ? 'bg-orange-500' : 'bg-green-500'
+                  } ${priorityModeLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      isPriorityMode ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className={`text-sm ${isPriorityMode ? 'text-orange-400 font-medium' : 'text-white/60'}`}>
+                  Priority
+                </span>
+                {isPriorityMode && (
+                  <span className="text-xs text-orange-400/70">(+70% coût)</span>
+                )}
+              </div>
+            </div>
 
             {/* Pricing Form */}
             <form onSubmit={handleSavePricing} className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-white/60 text-sm">Nom du modèle</label>
-                  <input
-                    type="text"
-                    value={pricingForm.modelName}
-                    onChange={(e) => setPricingForm({ ...pricingForm, modelName: e.target.value })}
-                    disabled={editingPricing !== null}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm disabled:opacity-50"
-                    required
-                  />
+              {/* Standard Pricing */}
+              <div className="p-3 bg-green-500/10 rounded border border-green-500/20">
+                <div className="text-green-400 text-sm font-medium mb-2">Tarifs Standard</div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="text-white/60 text-sm">Nom du modèle</label>
+                    <input
+                      type="text"
+                      value={pricingForm.modelName}
+                      onChange={(e) => setPricingForm({ ...pricingForm, modelName: e.target.value })}
+                      disabled={editingPricing !== null}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm disabled:opacity-50"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-white/60 text-sm">Input ($/MTok)</label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      value={pricingForm.inputPricePerMToken}
+                      onChange={(e) => setPricingForm({ ...pricingForm, inputPricePerMToken: e.target.value })}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-white/60 text-sm">Cache ($/MTok)</label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      value={pricingForm.cachePricePerMToken}
+                      onChange={(e) => setPricingForm({ ...pricingForm, cachePricePerMToken: e.target.value })}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-white/60 text-sm">Output ($/MTok)</label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      value={pricingForm.outputPricePerMToken}
+                      onChange={(e) => setPricingForm({ ...pricingForm, outputPricePerMToken: e.target.value })}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
+                      required
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-white/60 text-sm">Prix input ($/MTok)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={pricingForm.inputPricePerMToken}
-                    onChange={(e) => setPricingForm({ ...pricingForm, inputPricePerMToken: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
-                    required
-                  />
+              </div>
+
+              {/* Priority Pricing */}
+              <div className="p-3 bg-orange-500/10 rounded border border-orange-500/20">
+                <div className="text-orange-400 text-sm font-medium mb-2">Tarifs Priority <span className="text-orange-400/60">(optionnel)</span></div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-white/60 text-sm">Input ($/MTok)</label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      value={pricingForm.inputPricePerMTokenPriority}
+                      onChange={(e) => setPricingForm({ ...pricingForm, inputPricePerMTokenPriority: e.target.value })}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
+                      placeholder="Non défini"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-white/60 text-sm">Cache ($/MTok)</label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      value={pricingForm.cachePricePerMTokenPriority}
+                      onChange={(e) => setPricingForm({ ...pricingForm, cachePricePerMTokenPriority: e.target.value })}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
+                      placeholder="Non défini"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-white/60 text-sm">Output ($/MTok)</label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      value={pricingForm.outputPricePerMTokenPriority}
+                      onChange={(e) => setPricingForm({ ...pricingForm, outputPricePerMTokenPriority: e.target.value })}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
+                      placeholder="Non défini"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-white/60 text-sm">Prix output ($/MTok)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={pricingForm.outputPricePerMToken}
-                    onChange={(e) => setPricingForm({ ...pricingForm, outputPricePerMToken: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-white/60 text-sm">Prix cache ($/MTok)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={pricingForm.cachePricePerMToken}
-                    onChange={(e) => setPricingForm({ ...pricingForm, cachePricePerMToken: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
-                    placeholder="0.00"
-                  />
-                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
                 <div>
                   <label className="text-white/60 text-sm">Description</label>
                   <input
@@ -896,15 +1010,15 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                     className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
                   />
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={pricingForm.isActive}
-                  onChange={(e) => setPricingForm({ ...pricingForm, isActive: e.target.checked })}
-                  className="w-4 h-4"
-                />
-                <label className="text-white/60 text-sm">Actif</label>
+                <div className="flex items-center gap-2 pt-5">
+                  <input
+                    type="checkbox"
+                    checked={pricingForm.isActive}
+                    onChange={(e) => setPricingForm({ ...pricingForm, isActive: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <label className="text-white/60 text-sm">Actif</label>
+                </div>
               </div>
               <div className="flex gap-2">
                 <button
@@ -923,6 +1037,9 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                         inputPricePerMToken: '',
                         outputPricePerMToken: '',
                         cachePricePerMToken: '',
+                        inputPricePerMTokenPriority: '',
+                        outputPricePerMTokenPriority: '',
+                        cachePricePerMTokenPriority: '',
                         description: '',
                         isActive: true,
                       });
@@ -936,41 +1053,60 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
             </form>
 
             {/* Pricing List */}
-            <div ref={pricingScrollRef} className="space-y-2 max-h-64 overflow-y-auto [overscroll-behavior:contain]">
+            <div ref={pricingScrollRef} className="space-y-2 max-h-80 overflow-y-auto [overscroll-behavior:contain]">
               {pricings.length === 0 ? (
                 <div className="text-center py-4 text-white/60 text-sm">
                   Aucun tarif configuré
                 </div>
               ) : (
-                pricings.map((pricing) => (
-                  <div key={pricing.modelName} className="flex items-center justify-between p-3 bg-white/5 rounded">
-                    <div className="flex-1">
-                      <div className="text-white font-medium">{pricing.modelName}</div>
-                      <div className="text-white/60 text-sm">
-                        Input: ${pricing.inputPricePerMToken}/MTok • Output: ${pricing.outputPricePerMToken}/MTok
-                        {pricing.cachePricePerMToken > 0 && <span> • Cache: ${pricing.cachePricePerMToken}/MTok</span>}
-                        {pricing.description && <span> • {pricing.description}</span>}
+                pricings.map((pricing) => {
+                  const hasPriority = pricing.inputPricePerMTokenPriority != null;
+                  return (
+                    <div key={pricing.modelName} className="p-3 bg-white/5 rounded">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-white font-medium">{pricing.modelName}</div>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-1 text-xs rounded ${pricing.isActive ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
+                            {pricing.isActive ? 'Actif' : 'Inactif'}
+                          </span>
+                          <button
+                            onClick={() => handleEditPricing(pricing)}
+                            className="px-2 py-1 text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded"
+                          >
+                            Éditer
+                          </button>
+                          <button
+                            onClick={() => handleDeletePricing(pricing.modelName)}
+                            className="px-2 py-1 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded"
+                          >
+                            Supprimer
+                          </button>
+                        </div>
                       </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className={`p-2 rounded ${!isPriorityMode ? 'bg-green-500/10 border border-green-500/30' : 'bg-white/5'}`}>
+                          <div className="text-green-400 text-xs mb-1">Standard {!isPriorityMode && '(actif)'}</div>
+                          <div className="text-white/80">
+                            In: ${pricing.inputPricePerMToken} • Cache: ${pricing.cachePricePerMToken} • Out: ${pricing.outputPricePerMToken}
+                          </div>
+                        </div>
+                        <div className={`p-2 rounded ${isPriorityMode ? 'bg-orange-500/10 border border-orange-500/30' : 'bg-white/5'}`}>
+                          <div className="text-orange-400 text-xs mb-1">Priority {isPriorityMode && '(actif)'}</div>
+                          {hasPriority ? (
+                            <div className="text-white/80">
+                              In: ${pricing.inputPricePerMTokenPriority} • Cache: ${pricing.cachePricePerMTokenPriority || 0} • Out: ${pricing.outputPricePerMTokenPriority}
+                            </div>
+                          ) : (
+                            <div className="text-white/40 italic">Non défini</div>
+                          )}
+                        </div>
+                      </div>
+                      {pricing.description && (
+                        <div className="text-white/50 text-xs mt-2">{pricing.description}</div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 text-xs rounded ${pricing.isActive ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
-                        {pricing.isActive ? 'Actif' : 'Inactif'}
-                      </span>
-                      <button
-                        onClick={() => handleEditPricing(pricing)}
-                        className="px-2 py-1 text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded"
-                      >
-                        Éditer
-                      </button>
-                      <button
-                        onClick={() => handleDeletePricing(pricing.modelName)}
-                        className="px-2 py-1 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded"
-                      >
-                        Supprimer
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
