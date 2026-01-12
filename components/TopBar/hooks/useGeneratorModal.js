@@ -29,6 +29,7 @@ export function useGeneratorModal({
   const [generatorBaseFile, setGeneratorBaseFile] = React.useState("");
   const [baseSelectorOpen, setBaseSelectorOpen] = React.useState(false);
   const [linkHistoryDropdowns, setLinkHistoryDropdowns] = React.useState({});
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const fileInputRef = React.useRef(null);
   const isMountedRef = React.useRef(true);
@@ -131,6 +132,7 @@ export function useGeneratorModal({
     setGeneratorError("");
     setBaseSelectorOpen(false);
     setLinkHistoryDropdowns({});
+    setIsSubmitting(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -193,6 +195,9 @@ export function useGeneratorModal({
     if (cleanedLinks.length > 0) {
       addLinksToHistory(cleanedLinks);
     }
+
+    // Désactiver le bouton pendant la soumission
+    setIsSubmitting(true);
 
     let endpoint, taskType, taskLabel, notificationMessage;
 
@@ -347,6 +352,7 @@ export function useGeneratorModal({
     setBaseSelectorOpen,
     linkHistoryDropdowns,
     setLinkHistoryDropdowns,
+    isSubmitting,
     fileInputRef,
     generatorSourceItems,
     generatorBaseItem,

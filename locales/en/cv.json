@@ -42,6 +42,7 @@
     "clearFiles": "Clear files",
     "cancel": "Cancel",
     "validate": "Validate",
+    "submitting": "Submitting...",
     "upgradeTooltipLine1": "Upgrade to {planName}",
     "upgradeTooltipLine2": "to access this level",
     "errors": {

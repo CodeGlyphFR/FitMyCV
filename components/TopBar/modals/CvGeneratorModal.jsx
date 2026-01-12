@@ -36,6 +36,7 @@ export default function CvGeneratorModal({
   refreshLinkHistory,
   linkHistoryDropdowns,
   setLinkHistoryDropdowns,
+  isSubmitting,
   tickerResetKey,
   t,
   baseSelectorRef,
@@ -172,6 +173,7 @@ export default function CvGeneratorModal({
               <div className="relative">
                 <button
                   type="button"
+                  data-link-history-dropdown="true"
                   onClick={() => {
                     const isOpening = !linkHistoryDropdowns[index];
                     if (isOpening && refreshLinkHistory) {
@@ -188,7 +190,11 @@ export default function CvGeneratorModal({
                   📋
                 </button>
                 {linkHistoryDropdowns[index] && linkHistory.length > 0 && (
-                  <div className="absolute left-0 top-full mt-1 w-80 max-h-60 overflow-y-auto bg-slate-900/95 backdrop-blur-3xl border-2 border-white/30 rounded-lg shadow-2xl z-10" style={{ backdropFilter: 'blur(40px)' }}>
+                  <div
+                    data-link-history-dropdown="true"
+                    className="absolute left-0 top-full mt-1 w-80 max-h-48 overflow-y-auto scrollbar-hidden bg-slate-900/95 backdrop-blur-3xl border-2 border-white/30 rounded-lg shadow-2xl z-10"
+                    style={{ backdropFilter: 'blur(40px)' }}
+                  >
                     <div className="p-2 border-b border-white/20 bg-white/10 text-xs font-medium text-white drop-shadow">
                       {t("cvGenerator.recentLinks")}
                     </div>
@@ -342,10 +348,10 @@ export default function CvGeneratorModal({
           </button>
           <button
             type="submit"
-            className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60"
-            disabled={!generatorBaseFile}
+            className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            disabled={!generatorBaseFile || isSubmitting}
           >
-            {t("cvGenerator.validate")}
+            {isSubmitting ? t("cvGenerator.submitting") : t("cvGenerator.validate")}
           </button>
         </div>
       </form>

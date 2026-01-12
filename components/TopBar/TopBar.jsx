@@ -507,6 +507,50 @@ export default function TopBar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generator.baseSelectorOpen]);
 
+  // Link history dropdown outside click handler
+  React.useEffect(() => {
+    const hasOpenDropdown = Object.values(generator.linkHistoryDropdowns).some(Boolean);
+    if (!hasOpenDropdown) return undefined;
+
+    let touchHandled = false;
+    let touchTimeout = null;
+
+    function handleClick(event) {
+      if (event.type === 'touchstart') {
+        touchHandled = true;
+        if (touchTimeout) clearTimeout(touchTimeout);
+        touchTimeout = setTimeout(() => {
+          touchHandled = false;
+        }, 500);
+      } else if (event.type === 'mousedown' && touchHandled) {
+        return;
+      }
+
+      // Check if click is inside any link history dropdown element
+      if (event.target.closest('[data-link-history-dropdown="true"]')) {
+        return;
+      }
+
+      // Close all dropdowns
+      generator.setLinkHistoryDropdowns({});
+    }
+
+    function handleKey(event) {
+      if (event.key === "Escape") generator.setLinkHistoryDropdowns({});
+    }
+
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("touchstart", handleClick, { passive: true });
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("touchstart", handleClick);
+      document.removeEventListener("keydown", handleKey);
+      if (touchTimeout) clearTimeout(touchTimeout);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generator.linkHistoryDropdowns]);
+
   // Ticker reset on visibility change
   React.useEffect(() => {
     if (typeof document === "undefined") return;
@@ -1097,6 +1141,7 @@ export default function TopBar() {
         refreshLinkHistory={refreshLinkHistory}
         linkHistoryDropdowns={generator.linkHistoryDropdowns}
         setLinkHistoryDropdowns={generator.setLinkHistoryDropdowns}
+        isSubmitting={generator.isSubmitting}
         tickerResetKey={state.tickerResetKey}
         t={t}
         baseSelectorRef={baseSelectorRef}
