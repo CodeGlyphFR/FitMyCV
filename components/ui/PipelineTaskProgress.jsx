@@ -1,9 +1,36 @@
 "use client";
 
 import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { usePipelineProgressContext } from '@/components/PipelineProgressProvider';
 import { PIPELINE_STEPS, calculateOfferProgress } from '@/hooks/usePipelineProgress';
+
+/**
+ * Composant pour animer la transition du texte d'étape (effet "Sims")
+ * Le texte sort vers la gauche et le nouveau entre depuis la droite
+ */
+function AnimatedStepLabel({ text, className = '' }) {
+  return (
+    <div className={`relative overflow-hidden h-[14px] pr-2 ${className}`}>
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.div
+          key={text}
+          initial={{ x: 30, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: -30, opacity: 0 }}
+          transition={{
+            x: { type: 'spring', stiffness: 400, damping: 30 },
+            opacity: { duration: 0.12 }
+          }}
+          className="absolute inset-0"
+        >
+          {text}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+}
 
 /**
  * Labels traduits pour chaque étape
@@ -138,10 +165,11 @@ function OfferProgressLine({ offer, t, createdAt }) {
         />
       </div>
 
-      {/* Ligne 3: Étape en cours */}
-      <div className="text-[10px] text-white/50 mt-0.5">
-        {stepLabel}
-      </div>
+      {/* Ligne 3: Étape en cours (avec animation de transition) */}
+      <AnimatedStepLabel
+        text={stepLabel}
+        className="text-[10px] text-white/50 mt-0.5"
+      />
     </div>
   );
 }
