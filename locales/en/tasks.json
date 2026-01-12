@@ -29,6 +29,13 @@
       "summary": "Summary",
       "recompose": "Finalizing"
     },
+    "taskTypes": {
+      "import": "PDF Import",
+      "generation": "CV Generation",
+      "templateCreation": "Template Creation",
+      "translateCv": "CV Translation",
+      "improveCv": "CV Improvement"
+    },
     "messages": {
       "task": "Task",
       "importInProgress": "Import in progress ...",

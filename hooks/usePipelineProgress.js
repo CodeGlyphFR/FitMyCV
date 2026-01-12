@@ -30,7 +30,7 @@ const STEP_WEIGHTS = {
 function calculateOfferProgress(offerProgress) {
   if (!offerProgress) return 0;
   if (offerProgress.status === 'completed') return 100;
-  if (offerProgress.status === 'failed') return 0;
+  if (offerProgress.status === 'failed' || offerProgress.status === 'cancelled') return 0;
 
   const { completedSteps = {}, currentStep } = offerProgress;
   let totalWeight = 0;
@@ -236,16 +236,20 @@ export function usePipelineProgress() {
       }
     });
 
-    // Événement offre échouée
+    // Événement offre échouée ou annulée
     eventSource.addEventListener('cv_generation_v2:offer_failed', (event) => {
       try {
         const data = JSON.parse(event.data);
         const { taskId, offerId, offerIndex, error, creditsRefunded } = data;
 
+        // Détecter si c'est une annulation
+        const isCancelled = error === 'Task cancelled' || error?.includes('cancelled');
+        const offerStatus = isCancelled ? 'cancelled' : 'failed';
+
         setProgressMap(prev => {
           const task = prev[taskId] || { offers: {}, failedOffers: [] };
           const failedOffers = [...(task.failedOffers || [])];
-          failedOffers.push({ id: offerId, offerIndex, error, creditsRefunded });
+          failedOffers.push({ id: offerId, offerIndex, error, creditsRefunded, cancelled: isCancelled });
 
           const offer = task.offers[offerId] || {};
 
@@ -257,7 +261,7 @@ export function usePipelineProgress() {
                 ...task.offers,
                 [offerId]: {
                   ...offer,
-                  status: 'failed',
+                  status: offerStatus,
                   error,
                 },
               },

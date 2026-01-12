@@ -49,10 +49,11 @@ function OfferProgressLine({ offer, t, createdAt }) {
   const progress = calculateOfferProgress(offer);
   const currentStep = offer.currentStep;
   const status = offer.status;
-  const isFinished = status === 'completed' || status === 'failed';
+  const isFinished = status === 'completed' || status === 'failed' || status === 'cancelled';
 
-  // Titre de l'offre (jobTitle ou URL tronquée)
-  const offerTitle = offer.jobTitle || (offer.sourceUrl ? truncateUrl(offer.sourceUrl) : `Offre ${offer.offerIndex + 1}`);
+  // Titre de l'offre (jobTitle ou URL tronquée ou fallback)
+  const offerIndex = typeof offer.offerIndex === 'number' ? offer.offerIndex + 1 : 1;
+  const offerTitle = offer.jobTitle || (offer.sourceUrl ? truncateUrl(offer.sourceUrl) : `Offre ${offerIndex}`);
 
   // Label de l'étape en cours
   let stepLabel = '';
@@ -72,17 +73,24 @@ function OfferProgressLine({ offer, t, createdAt }) {
     ? (t('taskQueue.status.completed') || 'Terminé')
     : status === 'failed'
       ? (t('taskQueue.status.failed') || 'Échec')
-      : '';
+      : status === 'cancelled'
+        ? (t('taskQueue.status.cancelled') || 'Annulé')
+        : '';
 
   // Feature name
   const featureName = t('taskQueue.messages.pipelineInProgress')?.replace(' en cours', '') || 'Génération CV IA';
 
   // Classes pour la barre
-  const barClasses = status === 'failed'
+  const barClasses = status === 'failed' || status === 'cancelled'
     ? 'bg-gradient-to-r from-red-500 to-red-400'
     : status === 'completed'
       ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
       : 'bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-400';
+
+  // Classes pour le status (rouge pour failed et cancelled, comme les autres tâches)
+  const statusColorClass = status === 'completed'
+    ? 'text-emerald-400'
+    : 'text-red-400';
 
   if (isFinished) {
     // Layout TERMINÉ
@@ -93,7 +101,7 @@ function OfferProgressLine({ offer, t, createdAt }) {
           <span className="text-xs font-medium text-white truncate flex-1 mr-2" title={offer.sourceUrl || offerTitle}>
             {offerTitle}
           </span>
-          <span className={`text-xs font-medium ${status === 'completed' ? 'text-emerald-400' : 'text-red-400'}`}>
+          <span className={`text-xs font-medium ${statusColorClass}`}>
             {statusLabel}
           </span>
         </div>
@@ -176,6 +184,9 @@ export default function PipelineTaskProgress({
   taskId,
   totalOffers: fallbackTotalOffers = 1,
   createdAt = '',
+  taskStatus = null,
+  taskTitle = null,
+  sourceUrl: fallbackSourceUrl = null,
   className = '',
 }) {
   const { t } = useLanguage();
@@ -185,7 +196,48 @@ export default function PipelineTaskProgress({
   const taskProgress = getProgress(taskId);
   const offers = getOffersArray(taskId);
 
-  // Si pas encore de données SSE, afficher un placeholder
+  // Feature name pour l'affichage (utiliser taskTitle si disponible)
+  const featureName = t('taskQueue.messages.pipelineInProgress')?.replace(' en cours', '') || 'Génération CV IA';
+  const displayTitle = taskTitle || featureName;
+
+  // Si la tâche est terminée selon BackgroundTask mais pas de données SSE,
+  // afficher le statut de la BackgroundTask
+  const isTaskFinished = taskStatus === 'completed' || taskStatus === 'failed' || taskStatus === 'cancelled';
+
+  if (isTaskFinished && (!taskProgress || offers.length === 0)) {
+    // Afficher le statut de la BackgroundTask comme fallback
+    const statusLabel = taskStatus === 'completed'
+      ? (t('taskQueue.status.completed') || 'Terminé')
+      : taskStatus === 'cancelled'
+        ? (t('taskQueue.status.cancelled') || 'Annulé')
+        : (t('taskQueue.status.failed') || 'Échec');
+
+    const statusColorClass = taskStatus === 'completed'
+      ? 'text-emerald-400'
+      : 'text-red-400';
+
+    return (
+      <div className={`${className}`}>
+        <div className="py-1">
+          {/* Ligne 1: Titre (depuis BackgroundTask.title ou fallback) + Status */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-white truncate flex-1 mr-2">
+              {displayTitle}
+            </span>
+            <span className={`text-xs font-medium ${statusColorClass}`}>
+              {statusLabel}
+            </span>
+          </div>
+          {/* Ligne 2: Heure | Type */}
+          <div className="text-[10px] text-white/50 mt-0.5">
+            {createdAt} <span className="text-white/30">|</span> {featureName}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Si pas encore de données SSE et tâche en cours, afficher un placeholder
   if (!taskProgress || offers.length === 0) {
     return (
       <div className={`${className}`}>
@@ -209,9 +261,18 @@ export default function PipelineTaskProgress({
     );
   }
 
+  // Si la tâche est terminée selon BackgroundTask, forcer le statut des offres
+  // pour éviter les incohérences entre les données SSE et le statut réel
+  // Injecter aussi fallbackSourceUrl si l'offre n'a pas de sourceUrl
+  const finalOffers = offers.map(offer => ({
+    ...offer,
+    sourceUrl: offer.sourceUrl || fallbackSourceUrl,
+    ...(isTaskFinished ? { status: taskStatus } : {}),
+  }));
+
   // Limiter l'affichage à 3 offres max
-  const displayedOffers = offers.slice(0, 3);
-  const hiddenCount = offers.length - 3;
+  const displayedOffers = finalOffers.slice(0, 3);
+  const hiddenCount = finalOffers.length - 3;
 
   return (
     <div className={`${className}`}>

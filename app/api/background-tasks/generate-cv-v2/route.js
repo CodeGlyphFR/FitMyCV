@@ -230,9 +230,8 @@ export async function POST(request) {
         },
       });
 
-      const title = totalOffers > 1
-        ? `Génération CV (${taskIndex + 1}/${totalOffers}) - ${domain}`
-        : `Génération CV - ${domain}`;
+      // Titre initial = juste le domaine (sera mis à jour avec le titre de l'offre après extraction)
+      const title = domain;
 
       await prisma.backgroundTask.create({
         data: {
@@ -293,9 +292,8 @@ export async function POST(request) {
         },
       });
 
-      const title = totalOffers > 1
-        ? `Génération CV (${taskIndex + 1}/${totalOffers}) - ${displayName}`
-        : `Génération CV - ${displayName}`;
+      // Titre initial = juste le nom du PDF (sera mis à jour avec le titre de l'offre après extraction)
+      const title = displayName;
 
       await prisma.backgroundTask.create({
         data: {

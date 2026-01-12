@@ -126,7 +126,8 @@ export async function POST(request) {
         linkDisplay = link.slice(0, 50);
       }
 
-      const title = `Création de CV modèle depuis ${linkDisplay} ...`;
+      // Titre initial = juste le domaine (sera mis à jour avec le titre de l'offre après extraction)
+      const title = linkDisplay;
       const successMessage = "CV modèle créé avec succès (lien)";
 
       const taskPayload = {
@@ -188,7 +189,8 @@ export async function POST(request) {
       }
 
       const attachmentTaskId = `task_template_file_${now}_${i}_${Math.random().toString(36).substr(2, 9)}`;
-      const title = `Création de CV modèle depuis ${upload.name} ...`;
+      // Titre initial = juste le nom du fichier (sera mis à jour avec le titre de l'offre après extraction)
+      const title = upload.name;
       const successMessage = `CV modèle créé avec succès (${upload.name})`;
 
       const taskPayload = {

@@ -20,6 +20,7 @@
       "unknown": "Desconocido"
     },
     "steps": {
+      "extraction": "Extracción de oferta",
       "classify": "Clasificación",
       "experiences": "Experiencias",
       "projects": "Proyectos",
@@ -27,6 +28,13 @@
       "skills": "Habilidades",
       "summary": "Resumen",
       "recompose": "Finalización"
+    },
+    "taskTypes": {
+      "import": "Importación PDF",
+      "generation": "Generación CV",
+      "templateCreation": "Creación plantilla",
+      "translateCv": "Traducción CV",
+      "improveCv": "Mejora CV"
     },
     "messages": {
       "task": "Tarea",

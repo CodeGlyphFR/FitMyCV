@@ -20,6 +20,7 @@
       "unknown": "Unbekannt"
     },
     "steps": {
+      "extraction": "Stellenanzeige extrahieren",
       "classify": "Klassifizierung",
       "experiences": "Erfahrungen",
       "projects": "Projekte",
@@ -27,6 +28,13 @@
       "skills": "Fähigkeiten",
       "summary": "Zusammenfassung",
       "recompose": "Fertigstellung"
+    },
+    "taskTypes": {
+      "import": "PDF-Import",
+      "generation": "Lebenslauf-Erstellung",
+      "templateCreation": "Vorlage erstellen",
+      "translateCv": "Lebenslauf-Übersetzung",
+      "improveCv": "Lebenslauf-Verbesserung"
     },
     "messages": {
       "task": "Aufgabe",

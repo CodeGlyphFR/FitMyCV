@@ -3,51 +3,12 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import DonutProgress from "./ui/DonutProgress";
 import PipelineTaskProgress from "./ui/PipelineTaskProgress";
+import GenericTaskProgressBar from "./ui/GenericTaskProgressBar";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from "@/lib/onboarding/onboardingEvents";
-import { useTaskProgress } from "@/hooks/useTaskProgress";
-
-/**
- * Indicateur de progression compact pour le dropdown
- * Taille réduite (24px) pour s'adapter au design compact
- * Disparaît après l'animation de completion pour afficher le status texte
- */
-function TaskProgressIndicator({ task, onComplete }) {
-  const [showDonut, setShowDonut] = React.useState(true);
-  const { progress } = useTaskProgress({
-    taskId: task.id,
-    taskType: task.type,
-    taskStatus: task.status,
-    startTime: Number(task.createdAt),
-    payload: task.payload,
-  });
-
-  // Quand progress atteint 100% et tâche completed, attendre puis masquer
-  React.useEffect(() => {
-    if (progress >= 100 && task.status === 'completed') {
-      const timer = setTimeout(() => {
-        setShowDonut(false);
-        onComplete?.();
-      }, 600); // 600ms pour laisser voir le 100%
-      return () => clearTimeout(timer);
-    }
-  }, [progress, task.status, onComplete]);
-
-  if (!showDonut) return null;
-
-  return (
-    <DonutProgress
-      progress={progress}
-      size={24}
-      strokeWidth={2.5}
-      showPercent={false}
-    />
-  );
-}
 
 /**
  * Indicateur de progression pour les tâches cv_generation_v2 (version compact)
@@ -60,6 +21,7 @@ function PipelineProgressIndicator({ task }) {
   // Extraire les infos du payload pour multi-offres
   const payload = task?.payload && typeof task.payload === 'object' ? task.payload : null;
   const totalOffers = payload?.totalOffers || 1;
+  const sourceUrl = payload?.url || null;
 
   // Formater l'heure
   const locale = t("common.locale") || 'fr-FR';
@@ -73,6 +35,9 @@ function PipelineProgressIndicator({ task }) {
       taskId={task.id}
       totalOffers={totalOffers}
       createdAt={createdAt}
+      taskStatus={task.status}
+      taskTitle={task.title}
+      sourceUrl={sourceUrl}
       className="w-full"
     />
   );
@@ -80,31 +45,7 @@ function PipelineProgressIndicator({ task }) {
 
 function TaskItem({ task, onCancel, onTaskClick, compact = false }) {
   const { t } = useLanguage();
-  const [showProgressDonut, setShowProgressDonut] = React.useState(task.status === 'running');
 
-  // Réinitialiser showProgressDonut quand la tâche passe à running
-  React.useEffect(() => {
-    if (task.status === 'running') {
-      setShowProgressDonut(true);
-    }
-  }, [task.status]);
-
-  const getStatusDisplay = (status) => {
-    const colors = {
-      'queued': 'text-white/70',
-      'running': 'text-blue-300',
-      'completed': 'text-green-400',
-      'failed': 'text-red-400',
-      'cancelled': 'text-red-300'
-    };
-
-    return {
-      label: t(`taskQueue.status.${status}`) || t("taskQueue.status.unknown"),
-      color: colors[status] || 'text-white/60'
-    };
-  };
-
-  const statusDisplay = getStatusDisplay(task.status);
   const locale = t("common.locale") || 'fr-FR'; // fr-FR ou en-US
   const createdAt = new Date(task.createdAt).toLocaleTimeString(locale, {
     hour: '2-digit',
@@ -152,17 +93,8 @@ function TaskItem({ task, onCancel, onTaskClick, compact = false }) {
       }
     }
   } else if (task.type === 'import') {
-    if (task.status === 'running') {
-      description = t("taskQueue.messages.importInProgress");
-    } else if (task.status === 'queued') {
-      description = t("taskQueue.messages.importQueued");
-    } else if (task.status === 'completed') {
-      description = t("taskQueue.messages.importCompleted");
-    } else if (task.status === 'cancelled') {
-      description = t("taskQueue.messages.importCancelled");
-    } else if (task.status === 'failed') {
-      description = t("taskQueue.messages.importFailed");
-    }
+    // Utiliser task.title qui contient le nom du fichier PDF
+    description = task.title || importName || t("taskQueue.messages.importInProgress");
   } else if (task.type === 'generation') {
     if (task.status === 'running') {
       description = `${t("taskQueue.messages.creationInProgress")}${generationName ? ` : '${generationName}'` : ''}`;
@@ -176,17 +108,8 @@ function TaskItem({ task, onCancel, onTaskClick, compact = false }) {
       description = `${t("taskQueue.messages.creationFailed")}${generationName ? ` : '${generationName}'` : ''}`;
     }
   } else if (task.type === 'template-creation') {
-    if (task.status === 'running') {
-      description = t("taskQueue.messages.templateCreationInProgress");
-    } else if (task.status === 'queued') {
-      description = t("taskQueue.messages.templateCreationQueued");
-    } else if (task.status === 'completed') {
-      description = t("taskQueue.messages.templateCreationCompleted");
-    } else if (task.status === 'cancelled') {
-      description = t("taskQueue.messages.templateCreationCancelled");
-    } else if (task.status === 'failed') {
-      description = t("taskQueue.messages.templateCreationFailed");
-    }
+    // Utiliser task.title qui contient le titre de l'offre ou le lien
+    description = task.title || t("taskQueue.messages.templateCreationInProgress");
   } else if (task.type === 'cv_generation_v2') {
     const totalOffers = payload?.totalOffers || 1;
     const offersLabel = totalOffers > 1 ? ` (${totalOffers} ${t("taskQueue.messages.offers")})` : '';
@@ -204,18 +127,6 @@ function TaskItem({ task, onCancel, onTaskClick, compact = false }) {
   }
   // Note: Les tâches 'calculate-match-score' sont filtrées et n'apparaissent pas dans le gestionnaire
 
-  let sourceInfo = null;
-  if (task.type === 'generation' && payload) {
-    if (Array.isArray(payload.links) && payload.links.length > 0) {
-      sourceInfo = payload.links[0];
-    } else if (Array.isArray(payload.uploads) && payload.uploads.length > 0) {
-      sourceInfo = payload.uploads[0].name;
-    }
-  } else if (task.type === 'import' && payload?.savedName) {
-    sourceInfo = payload.savedName;
-  }
-  const hasSourceInfo = (task.type === 'generation' || task.type === 'import') && sourceInfo;
-
   // Déterminer si la tâche a un CV associé
   let cvFileName = null;
 
@@ -224,11 +135,12 @@ function TaskItem({ task, onCancel, onTaskClick, compact = false }) {
     if (task.cvFile) {
       cvFileName = task.cvFile;
     }
-    // Sinon vérifier le result (pour generation, import, template-creation)
+    // Sinon vérifier le result (pour generation, import, template-creation, cv_generation_v2)
     else if (task.result && task.status === 'completed') {
       // task.result est déjà un objet (parsé par l'API)
       const result = typeof task.result === 'string' ? JSON.parse(task.result) : task.result;
-      cvFileName = result.file || (result.files && result.files.length > 0 ? result.files[0] : null);
+      // cv_generation_v2 utilise 'filename', les autres utilisent 'file' ou 'files'
+      cvFileName = result.filename || result.file || (result.files && result.files.length > 0 ? result.files[0] : null);
     }
   } catch (err) {
     console.error('[TaskItem Dropdown] Erreur extraction cvFileName:', err);
@@ -280,43 +192,28 @@ function TaskItem({ task, onCancel, onTaskClick, compact = false }) {
     );
   }
 
-  // Layout standard pour les autres types de tâches
+  // Layout standard pour les autres types de tâches - utilise le même style que le pipeline
   return (
     <div
-      className={`flex items-center justify-between ${compact ? 'p-2' : 'p-3'} border-b border-white/10 last:border-b-0 hover:bg-white/20 transition-colors duration-200 ${isClickable ? 'cursor-pointer' : ''}`}
+      className={`${compact ? 'px-2 py-1' : 'px-3 py-2'} border-b border-white/10 last:border-b-0 hover:bg-white/5 transition-colors duration-200 ${isClickable ? 'cursor-pointer' : ''}`}
       onClick={handleClick}
     >
-      <div className="flex-1 min-w-0 mr-2">
-        <div className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-white truncate drop-shadow`}>
-          {description}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <GenericTaskProgressBar
+            task={task}
+            description={description}
+            createdAt={createdAt}
+            className="w-full"
+          />
         </div>
-        <div className="flex items-center gap-1 text-xs text-white/60 drop-shadow">
-          <span>{createdAt}</span>
-          {hasSourceInfo && (
-            <>
-              <span className="text-white/40">•</span>
-              <span className="truncate" title={sourceInfo}>
-                {sourceInfo}
-              </span>
-            </>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        {showProgressDonut && (task.status === 'running' || task.status === 'completed') ? (
-          <TaskProgressIndicator task={task} onComplete={() => setShowProgressDonut(false)} />
-        ) : (
-          <span className={`text-xs font-medium ${statusDisplay.color} drop-shadow`}>
-            {statusDisplay.label}
-          </span>
-        )}
         {canCancel && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               onCancel(task.id);
             }}
-            className="text-xs text-red-400 hover:text-red-300 hover:bg-red-500/20 px-1 py-0.5 rounded-sm transition-colors duration-200"
+            className="text-xs text-red-400/70 hover:text-red-300 hover:bg-red-500/20 px-1 py-0.5 rounded-sm transition-colors duration-200 mt-1 flex-shrink-0"
             title={t("taskQueue.cancelTask")}
           >
             ✕
@@ -330,7 +227,7 @@ function TaskItem({ task, onCancel, onTaskClick, compact = false }) {
 export default function TaskQueueDropdown({ isOpen, onClose, className = "", buttonRef }) {
   const { t } = useLanguage();
   const router = useRouter();
-  const { tasks, clearCompletedTasks, cancelTask, isApiSyncEnabled } = useBackgroundTasks();
+  const { tasks, clearCompletedTasks, cancelTask } = useBackgroundTasks();
   const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0 });
 
   // Filtrer les tâches de calcul de match score (elles ne doivent apparaître que dans l'animation du bouton)
@@ -463,14 +360,7 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
         </div>
 
         <div className="p-3 border-t border-white/20 bg-white/10 rounded-b-lg">
-          <div className="flex items-center justify-between text-xs text-white/70 drop-shadow">
-            <div className="flex items-center gap-1">
-              <div
-                className={`w-2 h-2 rounded-full drop-shadow ${isApiSyncEnabled ? 'bg-green-400' : 'bg-orange-400'}`}
-                title={isApiSyncEnabled ? t("taskQueue.cloudSyncActive") : t("taskQueue.localSyncOnly")}
-              />
-              <span>{isApiSyncEnabled ? t("taskQueue.cloud") : t("taskQueue.localStorage")}</span>
-            </div>
+          <div className="flex items-center justify-center text-xs text-white/70 drop-shadow">
             <div>{t("taskQueue.total")}: {visibleTasks.length}</div>
           </div>
         </div>
