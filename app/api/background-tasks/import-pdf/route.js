@@ -123,7 +123,7 @@ export async function POST(request) {
     };
 
     const taskData = {
-      title: `Import en cours ...`,
+      title: saved.name,
       successMessage: `'${saved.name}' importé avec succès`,
       type: 'import',
       status: 'queued',

@@ -1,0 +1,52 @@
+{
+  "name": "cv_summary",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "description": {
+        "type": "string",
+        "description": "Le résumé du profil professionnel (2-4 lignes, 50-75 mots)"
+      },
+      "domains": {
+        "type": "array",
+        "description": "Domaines d'expertise du candidat (2-3 max), triés par pertinence pour l'offre",
+        "items": { "type": "string" }
+      },
+      "modifications": {
+        "type": "array",
+        "description": "Liste des modifications effectuées avec avant/après/raison",
+        "items": {
+          "type": "object",
+          "properties": {
+            "field": {
+              "type": "string",
+              "description": "Nom du champ modifié (description, domains)"
+            },
+            "action": {
+              "type": "string",
+              "enum": ["generated", "modified"],
+              "description": "Type de modification"
+            },
+            "before": {
+              "type": "string",
+              "description": "Valeur originale (vide si génération)"
+            },
+            "after": {
+              "type": "string",
+              "description": "Nouvelle valeur"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Raison de la modification"
+            }
+          },
+          "required": ["field", "action", "before", "after", "reason"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": ["description", "domains", "modifications"],
+    "additionalProperties": false
+  }
+}

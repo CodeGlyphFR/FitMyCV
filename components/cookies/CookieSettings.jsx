@@ -213,7 +213,7 @@ export default function CookieSettings() {
                   onChange={() => handleToggleCategory(COOKIE_CATEGORIES.FUNCTIONAL)}
                   className="sr-only peer"
                 />
-                <div className="w-14 h-7 bg-white/20 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-400/50 rounded-full peer backdrop-blur-sm peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1/2 after:-translate-y-1/2 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-400"></div>
+                <div className="w-14 h-7 bg-white/20 peer-focus:outline-hidden peer-focus:ring-4 peer-focus:ring-emerald-400/50 rounded-full peer backdrop-blur-sm peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1/2 after:-translate-y-1/2 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-400"></div>
               </label>
             </div>
             <p className="text-sm text-white/90 mb-3 drop-shadow">
@@ -239,7 +239,7 @@ export default function CookieSettings() {
                   onChange={() => handleToggleCategory(COOKIE_CATEGORIES.ANALYTICS)}
                   className="sr-only peer"
                 />
-                <div className="w-14 h-7 bg-white/20 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-400/50 rounded-full peer backdrop-blur-sm peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1/2 after:-translate-y-1/2 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-400"></div>
+                <div className="w-14 h-7 bg-white/20 peer-focus:outline-hidden peer-focus:ring-4 peer-focus:ring-emerald-400/50 rounded-full peer backdrop-blur-sm peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1/2 after:-translate-y-1/2 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-400"></div>
               </label>
             </div>
             <p className="text-sm text-white/90 mb-3 drop-shadow">
@@ -265,7 +265,7 @@ export default function CookieSettings() {
                   onChange={() => handleToggleCategory(COOKIE_CATEGORIES.MARKETING)}
                   className="sr-only peer"
                 />
-                <div className="w-14 h-7 bg-white/20 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-400/50 rounded-full peer backdrop-blur-sm peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1/2 after:-translate-y-1/2 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-400"></div>
+                <div className="w-14 h-7 bg-white/20 peer-focus:outline-hidden peer-focus:ring-4 peer-focus:ring-emerald-400/50 rounded-full peer backdrop-blur-sm peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1/2 after:-translate-y-1/2 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-400"></div>
               </label>
             </div>
             <p className="text-sm text-white/90 mb-3 drop-shadow">

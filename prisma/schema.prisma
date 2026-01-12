@@ -29,6 +29,7 @@ model User {
   creditBalance          CreditBalance?
   creditTransactions     CreditTransaction[]
   cvs                    CvFile[]
+  cvGenerationTasks      CvGenerationTask[]
   featureUsage           FeatureUsage[]
   featureCounters        FeatureUsageCounter[]
   feedbacks              Feedback[]
@@ -362,15 +363,20 @@ model OpenAIUsage {
 }
 
 model OpenAIPricing {
-  id                   String   @id @default(cuid())
-  modelName            String   @unique
-  inputPricePerMToken  Float
-  outputPricePerMToken Float
-  cachePricePerMToken  Float    @default(0)
-  description          String?
-  isActive             Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                          String   @id @default(cuid())
+  modelName                   String   @unique
+  // Standard tier pricing (per million tokens)
+  inputPricePerMToken         Float
+  outputPricePerMToken        Float
+  cachePricePerMToken         Float    @default(0)
+  // Priority tier pricing (per million tokens) - ~70% more expensive
+  inputPricePerMTokenPriority  Float?
+  outputPricePerMTokenPriority Float?
+  cachePricePerMTokenPriority  Float?
+  description                 String?
+  isActive                    Boolean  @default(true)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
 
   @@index([modelName])
   @@index([isActive])
@@ -666,4 +672,90 @@ model EmailLog {
   @@index([status])
   @@index([createdAt])
   @@index([provider])
+}
+
+// ============================================
+// CV Generation Pipeline v2
+// ============================================
+
+model CvGenerationTask {
+  id              String              @id @default(cuid())
+  userId          String
+  sourceCvFileId  String              // CV source utilisé pour la génération
+  mode            String              @default("adapt") // 'adapt' | 'optimize'
+  status          String              @default("pending") // pending | running | completed | failed
+  totalOffers     Int                 @default(1)
+  completedOffers Int                 @default(0)
+  creditsDebited  Int                 @default(0)
+  creditsRefunded Int                 @default(0)
+  error           String?
+  createdAt       DateTime            @default(now())
+  startedAt       DateTime?
+  completedAt     DateTime?
+  updatedAt       DateTime            @updatedAt
+
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offers          CvGenerationOffer[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId, status])
+}
+
+model CvGenerationOffer {
+  id                  String                @id @default(cuid())
+  taskId              String
+  sourceUrl           String?               // URL source de l'offre (pour extraction async)
+  jobOfferId          String?               // Offre d'emploi cible (null avant extraction)
+  offerIndex          Int                   @default(0) // Position dans le batch (0, 1, 2...)
+  status              String                @default("pending") // pending | extracting | running | completed | failed
+  classificationResult Json?                // Résultat de la phase classification
+  batchResults        Json?                 // Résultats des batches (experiences, projects, skills, etc.)
+  generatedCvFileId   String?               // CV généré (null si échec)
+  generatedCvFileName String?               // Nom du fichier CV généré
+  retryCount          Int                   @default(0)
+  error               String?
+  creditsRefunded     Boolean               @default(false)
+  createdAt           DateTime              @default(now())
+  startedAt           DateTime?
+  completedAt         DateTime?
+  updatedAt           DateTime              @updatedAt
+
+  task                CvGenerationTask      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  subtasks            CvGenerationSubtask[]
+
+  @@index([taskId])
+  @@index([status])
+  @@index([taskId, offerIndex])
+}
+
+model CvGenerationSubtask {
+  id               String            @id @default(cuid())
+  offerId          String
+  type             String            // classify | batch_experience | batch_project | batch_extras | batch_skills | batch_summary | recompose
+  itemIndex        Int?              // Pour les batches: index de l'item (exp 0, exp 1, proj 0...)
+  status           String            @default("pending") // pending | running | completed | failed
+  input            Json?             // Données d'entrée pour debug
+  output           Json?             // Résultat du traitement
+  modifications    Json?             // Array des modifications {field, before, after, reason, action}
+  modelUsed        String?           // Modèle IA effectivement utilisé
+  promptTokens     Int               @default(0)
+  cachedTokens     Int               @default(0)  // Tokens en cache (prompt caching)
+  completionTokens Int               @default(0)
+  estimatedCost    Float             @default(0)  // Coût estimé en USD
+  durationMs       Int?              // Durée d'exécution en ms
+  retryCount       Int               @default(0)
+  error            String?
+  createdAt        DateTime          @default(now())
+  startedAt        DateTime?
+  completedAt      DateTime?
+  updatedAt        DateTime          @updatedAt
+
+  offer            CvGenerationOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@index([offerId])
+  @@index([type])
+  @@index([status])
+  @@index([offerId, type])
 }

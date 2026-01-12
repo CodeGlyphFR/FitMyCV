@@ -291,6 +291,36 @@
     "restore": "Restaurer",
     "restoreTitle": "Restaurer cette version (supprime la version actuelle)"
   },
+  "cvReview": {
+    "title": "Modifications IA",
+    "total": "total",
+    "modifications": "modifications",
+    "noModifications": "Aucune modification",
+    "noModificationsFound": "Aucune modification trouvée",
+    "before": "Avant",
+    "after": "Après",
+    "reason": "Raison",
+    "reviewed": "revues",
+    "acceptAllSection": "Tout accepter",
+    "preservesPreviousDecisions": "(préserve vos choix précédents)",
+    "sections": {
+      "summary": "Résumé",
+      "experiences": "Expériences",
+      "projects": "Projets",
+      "skills": "Compétences",
+      "extras": "Extras",
+      "languages": "Langues"
+    },
+    "actions": {
+      "added": "Ajouté",
+      "removed": "Supprimé",
+      "modified": "Modifié",
+      "adjusted": "Ajusté",
+      "reordered": "Réordonné",
+      "highlighted": "Mis en valeur",
+      "generated": "Généré"
+    }
+  },
   "review": {
     "title": "Revoir la modification",
     "before": "Avant",
@@ -309,6 +339,11 @@
     "progress": "{reviewed}/{total} revues",
     "allReviewed": "Toutes les modifications revues",
     "processing": "Traitement en cours...",
-    "reason": "Raison"
+    "reason": "Raison",
+    "validateAndSave": "Valider et sauvegarder",
+    "validating": "Validation en cours...",
+    "pendingWarning": "{count} modification(s) non reviewée(s). Elles seront acceptées par défaut.",
+    "validationSuccess": "CV sauvegardé avec succès",
+    "validationError": "Erreur lors de la sauvegarde"
   }
 }

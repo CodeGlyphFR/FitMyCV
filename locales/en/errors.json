@@ -123,6 +123,13 @@
         "noJobOfferProvided": "No job offer provided (link or file required)",
         "gptGenerationFailed": "GPT could not generate CV template",
         "promptNotFound": "Prompt file not found"
+      },
+      "generateV2": {
+        "noOffersProvided": "No job offers provided",
+        "maxOffersExceeded": "Maximum offers exceeded ({max} max, {provided} provided)",
+        "invalidOfferIds": "One or more offer IDs are invalid",
+        "invalidMode": "Invalid generation mode (expected: adapt or rebuild)",
+        "jobOfferNotFound": "{count} job offer(s) not found or unauthorized"
       }
     }
   }

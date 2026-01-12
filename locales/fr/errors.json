@@ -123,6 +123,13 @@
         "noJobOfferProvided": "Aucune offre d'emploi fournie (lien ou fichier requis)",
         "gptGenerationFailed": "GPT n'a pas su générer le CV modèle",
         "promptNotFound": "Fichier prompt introuvable"
+      },
+      "generateV2": {
+        "noOffersProvided": "Aucune offre d'emploi fournie",
+        "maxOffersExceeded": "Nombre maximum d'offres dépassé ({max} max, {provided} fourni(s))",
+        "invalidOfferIds": "Un ou plusieurs IDs d'offres sont invalides",
+        "invalidMode": "Mode de génération invalide (attendu: adapt ou rebuild)",
+        "jobOfferNotFound": "{count} offre(s) d'emploi introuvable(s) ou non autorisée(s)"
       }
     }
   }

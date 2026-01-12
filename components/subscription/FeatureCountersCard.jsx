@@ -87,7 +87,7 @@ export default function FeatureCountersCard({ featureCounters, plan }) {
             return (
               <div key={featureLimit.featureName} className="flex items-center justify-between opacity-50">
                 <span className="text-sm text-white/60">{featureLabel}</span>
-                <span className="text-xs px-2 py-0.5 bg-white/10 rounded text-white/40">
+                <span className="text-xs px-2 py-0.5 bg-white/10 rounded-sm text-white/40">
                   {t('subscription.features.disabled')}
                 </span>
               </div>

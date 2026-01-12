@@ -291,6 +291,36 @@
     "restore": "Restore",
     "restoreTitle": "Restore this version (deletes current version)"
   },
+  "cvReview": {
+    "title": "AI Changes",
+    "total": "total",
+    "modifications": "changes",
+    "noModifications": "No changes",
+    "noModificationsFound": "No changes found",
+    "before": "Before",
+    "after": "After",
+    "reason": "Reason",
+    "reviewed": "reviewed",
+    "acceptAllSection": "Accept all",
+    "preservesPreviousDecisions": "(preserves your previous choices)",
+    "sections": {
+      "summary": "Summary",
+      "experiences": "Experiences",
+      "projects": "Projects",
+      "skills": "Skills",
+      "extras": "Extras",
+      "languages": "Languages"
+    },
+    "actions": {
+      "added": "Added",
+      "removed": "Removed",
+      "modified": "Modified",
+      "adjusted": "Adjusted",
+      "reordered": "Reordered",
+      "highlighted": "Highlighted",
+      "generated": "Generated"
+    }
+  },
   "review": {
     "title": "Review change",
     "before": "Before",
@@ -309,6 +339,11 @@
     "progress": "{reviewed}/{total} reviewed",
     "allReviewed": "All changes reviewed",
     "processing": "Processing...",
-    "reason": "Reason"
+    "reason": "Reason",
+    "validateAndSave": "Validate and save",
+    "validating": "Validating...",
+    "pendingWarning": "{count} change(s) not reviewed. They will be accepted by default.",
+    "validationSuccess": "CV saved successfully",
+    "validationError": "Error saving CV"
   }
 }

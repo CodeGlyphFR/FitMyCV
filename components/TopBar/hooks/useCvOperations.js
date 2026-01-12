@@ -56,7 +56,14 @@ export function useCvOperations({
     try {
       const res = await fetch("/api/cvs", { cache: "no-store" });
       if (!res.ok) {
-        throw new Error("API CV non disponible");
+        // 401 = session expirée, pas une vraie erreur - juste ignorer silencieusement
+        if (res.status === 401) {
+          setRawItems([]);
+          setCurrent("");
+          return;
+        }
+        // Autres erreurs HTTP
+        throw new Error(`API CV error: ${res.status}`);
       }
       const data = await res.json();
       const cache = titleCacheRef.current;

@@ -23,7 +23,8 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    const { userId } = params;
+    // Next.js 16: params est maintenant async
+    const { userId } = await params;
     const body = await request.json();
     const { action, role, email, tokens } = body;
 
@@ -182,7 +183,8 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    const { userId } = params;
+    // Next.js 16: params est maintenant async
+    const { userId } = await params;
 
     // Empêcher un admin de se supprimer lui-même
     if (session.user.id === userId) {

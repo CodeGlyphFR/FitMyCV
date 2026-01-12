@@ -412,7 +412,7 @@ export function SettingsTab({ refreshKey }) {
                     type="text"
                     value={currentValue}
                     onChange={(e) => handleValueChange(setting.id, e.target.value)}
-                    className="px-3 py-1 bg-white/10 border border-white/20 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/50 backdrop-blur-xl w-full md:w-64 font-mono"
+                    className="px-3 py-1 bg-white/10 border border-white/20 rounded-sm text-white text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-400/50 backdrop-blur-xl w-full md:w-64 font-mono"
                   />
                 )}
               </div>
@@ -590,7 +590,7 @@ export function SettingsTab({ refreshKey }) {
                           min="0"
                           value={currentValue}
                           onChange={(e) => handleValueChange(setting.id, e.target.value)}
-                          className="px-3 py-1 bg-white/10 border border-white/20 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/50 backdrop-blur-xl w-20 text-center font-mono"
+                          className="px-3 py-1 bg-white/10 border border-white/20 rounded-sm text-white text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-400/50 backdrop-blur-xl w-20 text-center font-mono"
                         />
                         <span className="text-sm text-white/60">crédit(s)</span>
                       </div>

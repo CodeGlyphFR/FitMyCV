@@ -522,6 +522,43 @@ const AI_MODEL_SETTINGS = [
     category: 'ai_models',
     description: 'Modèle pour détection de langue de CV (léger, 50 chars max)',
   },
+  // Pipeline CV v2 - Models par phase
+  {
+    settingName: 'model_cv_classify',
+    value: 'gpt-4o-mini',
+    category: 'ai_models',
+    description: 'Pipeline v2: Modèle pour la phase classification (KEEP/REMOVE/MOVE)',
+  },
+  {
+    settingName: 'model_cv_batch_experience',
+    value: 'gpt-4o-mini',
+    category: 'ai_models',
+    description: 'Pipeline v2: Modèle pour adaptation des expériences',
+  },
+  {
+    settingName: 'model_cv_batch_projects',
+    value: 'gpt-4o-mini',
+    category: 'ai_models',
+    description: 'Pipeline v2: Modèle pour adaptation des projets',
+  },
+  {
+    settingName: 'model_cv_batch_extras',
+    value: 'gpt-4o-mini',
+    category: 'ai_models',
+    description: 'Pipeline v2: Modèle pour adaptation des extras',
+  },
+  {
+    settingName: 'model_cv_batch_skills',
+    value: 'gpt-4o-mini',
+    category: 'ai_models',
+    description: 'Pipeline v2: Modèle pour déduction des compétences',
+  },
+  {
+    settingName: 'model_cv_batch_summary',
+    value: 'gpt-4o-mini',
+    category: 'ai_models',
+    description: 'Pipeline v2: Modèle pour génération du summary',
+  },
 ];
 
 // ============================================================================

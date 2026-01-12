@@ -29,7 +29,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 async function getCV(userId, versionNumber = null){
-  const cvCookie = (cookies().get("cvFile") || {}).value;
+  const cookieStore = await cookies();
+  const cvCookie = (cookieStore.get("cvFile") || {}).value;
   await ensureUserCvDir(userId);
   const availableFiles = await listUserCvFiles(userId);
 
@@ -82,11 +83,14 @@ async function getCV(userId, versionNumber = null){
   };
 }
 
-export default async function Page({ searchParams }){
+export default async function Page(props){
   const session = await auth();
   if (!session?.user?.id){
     redirect("/auth");
   }
+
+  // Next.js 16: searchParams est maintenant async
+  const searchParams = await props.searchParams;
 
   // Extraire le paramètre version de l'URL (?version=2)
   const versionParam = searchParams?.version;

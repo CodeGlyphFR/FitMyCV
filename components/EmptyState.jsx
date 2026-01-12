@@ -515,7 +515,7 @@ export default function EmptyState() {
           {settings.feature_import && (
             <button
               onClick={() => setOpenPdfImport(true)}
-              className="group bg-white/15 backdrop-blur-md rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/30 hover:border-blue-400 hover:bg-blue-500/25 text-left gpu-accelerate"
+              className="group bg-white/15 backdrop-blur-md rounded-2xl p-8 shadow-lg hover:shadow-sm-xl transition-all duration-300 border-2 border-white/30 hover:border-blue-400 hover:bg-blue-500/25 text-left gpu-accelerate"
             >
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center group-hover:scale-110 group-hover:bg-white/30 transition-all duration-300">
@@ -550,7 +550,7 @@ export default function EmptyState() {
                 resetNewCvForm();
                 setOpenNewCv(true);
               }}
-              className="group bg-white/15 backdrop-blur-md rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/30 hover:border-emerald-400 hover:bg-emerald-500/25 text-left gpu-accelerate"
+              className="group bg-white/15 backdrop-blur-md rounded-2xl p-8 shadow-lg hover:shadow-sm-xl transition-all duration-300 border-2 border-white/30 hover:border-emerald-400 hover:bg-emerald-500/25 text-left gpu-accelerate"
             >
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center group-hover:scale-110 group-hover:bg-white/30 transition-all duration-300">

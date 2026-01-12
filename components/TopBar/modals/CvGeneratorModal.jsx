@@ -32,6 +32,8 @@ export default function CvGeneratorModal({
   generatorBaseItem,
   generatorError,
   linkHistory,
+  deleteLinkHistory,
+  refreshLinkHistory,
   linkHistoryDropdowns,
   setLinkHistoryDropdowns,
   tickerResetKey,
@@ -67,7 +69,7 @@ export default function CvGeneratorModal({
             <button
               type="button"
               onClick={() => setBaseSelectorOpen((prev) => !prev)}
-              className="w-full min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm flex items-center justify-between gap-3 text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+              className="w-full min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm flex items-center justify-between gap-3 text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
             >
               <span className="flex items-center gap-3 min-w-0 overflow-hidden">
                 {generatorBaseFile === CREATE_TEMPLATE_OPTION ? (
@@ -171,6 +173,10 @@ export default function CvGeneratorModal({
                 <button
                   type="button"
                   onClick={() => {
+                    const isOpening = !linkHistoryDropdowns[index];
+                    if (isOpening && refreshLinkHistory) {
+                      refreshLinkHistory();
+                    }
                     setLinkHistoryDropdowns(prev => ({
                       ...prev,
                       [index]: !prev[index]
@@ -178,7 +184,6 @@ export default function CvGeneratorModal({
                   }}
                   className="h-full rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200 disabled:opacity-50"
                   title={t("cvGenerator.loadRecentLink")}
-                  disabled={linkHistory.length === 0}
                 >
                   📋
                 </button>
@@ -188,30 +193,61 @@ export default function CvGeneratorModal({
                       {t("cvGenerator.recentLinks")}
                     </div>
                     <ul className="py-1">
-                      {linkHistory.map((link, histIndex) => (
-                        <li key={histIndex}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              updateLink(link, index);
-                              setLinkHistoryDropdowns(prev => ({
-                                ...prev,
-                                [index]: false
-                              }));
-                            }}
-                            className="w-full px-3 py-2 text-left text-xs text-white hover:bg-white/25 truncate transition-colors duration-200"
-                            title={link}
-                          >
-                            {link}
-                          </button>
-                        </li>
-                      ))}
+                      {linkHistory.map((linkItem, histIndex) => {
+                        // linkItem est maintenant un objet {url, title, domain}
+                        const url = typeof linkItem === 'string' ? linkItem : linkItem.url;
+                        const title = typeof linkItem === 'object' ? linkItem.title : null;
+                        const domain = typeof linkItem === 'object' ? linkItem.domain : null;
+
+                        // Formater l'affichage: "Titre (Domaine)" ou juste le lien si pas de titre
+                        let displayText;
+                        if (title) {
+                          // Tronquer le titre à 40 caractères
+                          const truncatedTitle = title.length > 40 ? title.slice(0, 37) + '...' : title;
+                          displayText = domain ? `${truncatedTitle} (${domain})` : truncatedTitle;
+                        } else {
+                          // Fallback: juste le lien
+                          displayText = url;
+                        }
+
+                        return (
+                          <li key={histIndex} className="flex items-center">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateLink(url, index);
+                                setLinkHistoryDropdowns(prev => ({
+                                  ...prev,
+                                  [index]: false
+                                }));
+                              }}
+                              className="flex-1 px-3 py-2 text-left text-xs text-white hover:bg-white/25 truncate transition-colors duration-200"
+                              title={url}
+                            >
+                              {displayText}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (linkItem.id) {
+                                  deleteLinkHistory(linkItem.id);
+                                }
+                              }}
+                              className="px-2 py-2 text-white/50 hover:text-red-400 hover:bg-white/10 transition-colors duration-200"
+                              title={t("topbar.delete")}
+                            >
+                              ✕
+                            </button>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}
               </div>
               <input
-                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                 placeholder={t("cvGenerator.linkPlaceholder")}
                 value={value}
                 onChange={(event) => updateLink(event.target.value, index)}
@@ -284,7 +320,7 @@ export default function CvGeneratorModal({
         </div>
 
         {generatorError ? (
-          <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {generatorError}
           </div>
         ) : null}

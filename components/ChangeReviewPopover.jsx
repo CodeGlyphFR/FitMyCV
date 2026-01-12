@@ -144,6 +144,15 @@ export default function ChangeReviewPopover({
       style={{ top: position.top, left: position.left, zIndex: 99999 }}
     >
       <div className="px-3 pt-2.5 pb-2 space-y-1.5">
+        {/* Pour les changements de niveau, afficher avant/après */}
+        {change.changeType === "level_adjusted" && change.beforeValue && change.afterValue && (
+          <p className="text-xs text-amber-300/90 max-w-[250px]">
+            <span className="line-through opacity-70">{change.beforeValue}</span>
+            <span className="mx-1.5">→</span>
+            <span className="font-medium">{change.afterValue}</span>
+          </p>
+        )}
+
         {/* Raison (si disponible) */}
         {change.reason && (
           <p className="text-xs text-white/70 max-w-[250px]">

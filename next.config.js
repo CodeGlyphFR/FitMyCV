@@ -8,6 +8,7 @@ const nextConfig = {
     NEXT_PUBLIC_APP_VERSION: version,
     NEXT_PUBLIC_SITE_NAME: SITE_NAME,
   },
+
   // Optimisations pour LCP et CLS
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -15,17 +16,29 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60,
   },
+
   // Compiler les modules pour améliorer les performances
   transpilePackages: ['swiper'],
+
   // Optimiser la compression
   compress: true,
-  // Optimiser le chunking
+
+  // Next.js 16: Autoriser les requêtes cross-origin en développement
+  allowedDevOrigins: ['dev.fitmycv.io'],
+
+  // Next.js 16: serverComponentsExternalPackages déplacé hors de experimental
+  serverExternalPackages: ['puppeteer', 'puppeteer-extra', 'puppeteer-extra-plugin-stealth'],
+
+  // Next.js 16: Turbopack est le bundler par défaut
+  // Config vide pour accepter Turbopack (la config webpack ci-dessous est ignorée)
+  turbopack: {},
+
   experimental: {
     optimizePackageImports: ['lucide-react', 'next-auth'],
-    instrumentationHook: true, // Activer le hook instrumentation.js
-    serverComponentsExternalPackages: ['puppeteer', 'puppeteer-extra', 'puppeteer-extra-plugin-stealth'],
+    // instrumentationHook supprimé (plus nécessaire en Next.js 16)
   },
-  // Optimiser le splitting des chunks
+
+  // Config Webpack (ignorée avec Turbopack, conservée pour compatibilité --webpack)
   webpack: (config, { isServer }) => {
     // Exclure puppeteer du bundling côté client
     if (!isServer) {
@@ -43,7 +56,6 @@ const nextConfig = {
           cacheGroups: {
             default: false,
             vendors: false,
-            // Vendor chunk pour les dépendances communes
             framework: {
               name: 'framework',
               chunks: 'all',
@@ -51,7 +63,6 @@ const nextConfig = {
               priority: 40,
               enforce: true,
             },
-            // Auth chunk séparé
             auth: {
               name: 'auth',
               chunks: 'all',
@@ -59,14 +70,12 @@ const nextConfig = {
               priority: 35,
               enforce: true,
             },
-            // Lib chunk pour le reste
             lib: {
               test: /[\\/]node_modules[\\/]/,
               name: 'lib',
               chunks: 'all',
               priority: 30,
             },
-            // Commons chunk pour le code partagé
             commons: {
               name: 'commons',
               minChunks: 2,

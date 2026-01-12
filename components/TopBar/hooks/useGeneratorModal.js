@@ -206,7 +206,7 @@ export function useGeneratorModal({
       taskType = TASK_TYPES.GENERATION;
       taskLabel = `Adaptation du CV '${baseCvName}'`;
       notificationMessage = t("cvGenerator.notifications.scheduled", { baseCvName });
-      endpoint = "/api/background-tasks/generate-cv";
+      endpoint = "/api/background-tasks/generate-cv-v2";
     }
 
     try {
@@ -236,12 +236,18 @@ export function useGeneratorModal({
         formData.append("files", file);
       });
 
+      console.log('[Generator] Sending request to:', endpoint);
       const response = await fetch(endpoint, {
         method: "POST",
         body: formData,
       });
+      console.log('[Generator] Response received:', response.status);
 
-      const data = await response.json().catch(() => ({}));
+      const data = await response.json().catch((e) => {
+        console.error('[Generator] JSON parse error:', e);
+        return {};
+      });
+      console.log('[Generator] Data:', data);
 
       // Fermer le modal IMMÉDIATEMENT pour feedback utilisateur
       // IMPORTANT: Faire ceci AVANT toutes les vérifications pour garantir la fermeture
@@ -285,6 +291,11 @@ export function useGeneratorModal({
         message: notificationMessage,
         duration: 2500,
       });
+
+      // Rafraîchir le compteur de crédits (les crédits ont été débités)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('credits-updated'));
+      }
 
       // Nettoyer la tâche optimiste après notification
       removeOptimisticTask(optimisticTaskId);

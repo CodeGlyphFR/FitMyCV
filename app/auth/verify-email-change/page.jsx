@@ -12,7 +12,9 @@ export const metadata = {
 /**
  * Server Component pour vérification du changement d'email
  */
-export default async function VerifyEmailChangePage({ searchParams }) {
+export default async function VerifyEmailChangePage(props) {
+  // Next.js 16: searchParams est maintenant async
+  const searchParams = await props.searchParams;
   const token = searchParams?.token;
 
   // Pas de token = rediriger vers compte avec erreur

@@ -185,7 +185,7 @@ export default function ChecklistPanel() {
               {/* Bouton expand/collapse */}
               <button
                 onClick={toggleChecklist}
-                className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-1.5 rounded-sm text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
                 aria-label={checklistExpanded ? t('onboarding.common.aria.collapseChecklist') : t('onboarding.common.aria.expandChecklist')}
                 aria-expanded={checklistExpanded}
               >
@@ -200,7 +200,7 @@ export default function ChecklistPanel() {
               {/* Bouton close (skip) */}
               <button
                 onClick={handleSkip}
-                className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-1.5 rounded-sm text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
                 aria-label={t('onboarding.common.aria.closeGuide')}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

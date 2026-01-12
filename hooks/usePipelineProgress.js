@@ -1,0 +1,386 @@
+"use client";
+
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { useSession } from 'next-auth/react';
+
+/**
+ * Liste des étapes du pipeline dans l'ordre
+ */
+const PIPELINE_STEPS = ['extraction', 'classify', 'experiences', 'projects', 'extras', 'skills', 'summary', 'recompose'];
+
+/**
+ * Poids de chaque étape pour le calcul du pourcentage
+ */
+const STEP_WEIGHTS = {
+  extraction: 10,
+  classify: 10,
+  experiences: 20,
+  projects: 15,
+  extras: 10,
+  skills: 15,
+  summary: 10,
+  recompose: 10,
+};
+
+/**
+ * Calcule le pourcentage de progression pour une offre
+ * @param {Object} offerProgress - Progression de l'offre
+ * @returns {number} - Pourcentage (0-100)
+ */
+function calculateOfferProgress(offerProgress) {
+  if (!offerProgress) return 0;
+  if (offerProgress.status === 'completed') return 100;
+  if (offerProgress.status === 'failed' || offerProgress.status === 'cancelled') return 0;
+
+  const { completedSteps = {}, currentStep } = offerProgress;
+  let totalWeight = 0;
+  let completedWeight = 0;
+
+  PIPELINE_STEPS.forEach(step => {
+    totalWeight += STEP_WEIGHTS[step];
+    if (completedSteps[step]) {
+      completedWeight += STEP_WEIGHTS[step];
+    }
+  });
+
+  // Ajouter une progression partielle pour l'étape en cours
+  if (currentStep && !completedSteps[currentStep]) {
+    completedWeight += STEP_WEIGHTS[currentStep] * 0.5; // 50% de l'étape en cours
+  }
+
+  return Math.round((completedWeight / totalWeight) * 100);
+}
+
+/**
+ * Hook pour suivre la progression du pipeline CV v2 via SSE
+ *
+ * Structure de progression par offre pour une granularité fine.
+ *
+ * Écoute les événements SSE:
+ * - cv_generation_v2:offer_progress - Progression par étape
+ * - cv_generation_v2:offer_completed - Offre terminée
+ * - cv_generation_v2:offer_failed - Offre échouée
+ * - cv_generation_v2:completed - Tâche terminée
+ *
+ * @returns {Object} { getProgress, getOfferProgress, calculateProgress, allProgress }
+ */
+export function usePipelineProgress() {
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
+
+  // Map des progressions par taskId
+  const [progressMap, setProgressMap] = useState({});
+  const eventSourceRef = useRef(null);
+
+  // Mise à jour de la progression pour une offre spécifique
+  const updateOfferProgress = useCallback((taskId, offerId, offerIndex, update) => {
+    setProgressMap(prev => {
+      const task = prev[taskId] || { offers: {}, status: 'running' };
+      const offer = task.offers[offerId] || { offerIndex, completedSteps: {} };
+
+      return {
+        ...prev,
+        [taskId]: {
+          ...task,
+          offers: {
+            ...task.offers,
+            [offerId]: {
+              ...offer,
+              ...update,
+            },
+          },
+          lastUpdate: Date.now(),
+        },
+      };
+    });
+  }, []);
+
+  // Marquer une étape comme terminée pour une offre
+  const markStepCompleted = useCallback((taskId, offerId, step) => {
+    setProgressMap(prev => {
+      const task = prev[taskId] || { offers: {} };
+      const offer = task.offers[offerId] || { completedSteps: {} };
+      const completedSteps = { ...offer.completedSteps, [step]: true };
+
+      return {
+        ...prev,
+        [taskId]: {
+          ...task,
+          offers: {
+            ...task.offers,
+            [offerId]: {
+              ...offer,
+              completedSteps,
+            },
+          },
+          lastUpdate: Date.now(),
+        },
+      };
+    });
+  }, []);
+
+  // Mise à jour globale de la tâche
+  const updateTaskProgress = useCallback((taskId, update) => {
+    setProgressMap(prev => ({
+      ...prev,
+      [taskId]: {
+        ...prev[taskId],
+        ...update,
+        lastUpdate: Date.now(),
+      },
+    }));
+  }, []);
+
+  // Connexion au SSE
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    const eventSource = new EventSource('/api/events/stream');
+    eventSourceRef.current = eventSource;
+
+    eventSource.onerror = (err) => {
+      console.error('[usePipelineProgress] EventSource error:', err);
+    };
+
+    // Événement de progression
+    eventSource.addEventListener('cv_generation_v2:offer_progress', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const {
+          taskId,
+          offerId,
+          offerIndex,
+          totalOffers,
+          phase,
+          step,
+          status,
+          sourceUrl,
+          jobTitle,
+          currentItem,
+          totalItems,
+        } = data;
+
+        // Si status === 'completed', marquer l'étape comme terminée
+        if (status === 'completed') {
+          markStepCompleted(taskId, offerId, step);
+        }
+
+        // Mettre à jour la progression de l'offre
+        updateOfferProgress(taskId, offerId, offerIndex, {
+          offerIndex,
+          sourceUrl: sourceUrl || null,
+          jobTitle: jobTitle || null,
+          currentPhase: phase,
+          currentStep: step,
+          currentItem: currentItem ?? null,
+          totalItems: totalItems ?? null,
+          status: 'running',
+        });
+
+        // Mettre à jour les infos globales de la tâche
+        updateTaskProgress(taskId, {
+          totalOffers,
+          status: 'running',
+        });
+
+      } catch (err) {
+        console.error('[usePipelineProgress] Erreur parsing offer_progress:', err);
+      }
+    });
+
+    // Événement offre terminée
+    eventSource.addEventListener('cv_generation_v2:offer_completed', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const { taskId, offerId, offerIndex, generatedCvFileId, generatedCvFileName } = data;
+
+        setProgressMap(prev => {
+          const task = prev[taskId] || { offers: {}, completedOffers: [] };
+          const completedOffers = [...(task.completedOffers || [])];
+          completedOffers.push({
+            id: offerId,
+            offerIndex,
+            cvFileId: generatedCvFileId,
+            cvFileName: generatedCvFileName,
+          });
+
+          // Marquer toutes les étapes comme terminées pour cette offre
+          const offer = task.offers[offerId] || {};
+          const completedSteps = {};
+          PIPELINE_STEPS.forEach(step => {
+            completedSteps[step] = true;
+          });
+
+          return {
+            ...prev,
+            [taskId]: {
+              ...task,
+              offers: {
+                ...task.offers,
+                [offerId]: {
+                  ...offer,
+                  completedSteps,
+                  currentStep: null,
+                  status: 'completed',
+                },
+              },
+              completedOffers,
+              lastUpdate: Date.now(),
+            },
+          };
+        });
+      } catch (err) {
+        console.error('[usePipelineProgress] Erreur parsing offer_completed:', err);
+      }
+    });
+
+    // Événement offre échouée ou annulée
+    eventSource.addEventListener('cv_generation_v2:offer_failed', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const { taskId, offerId, offerIndex, error, creditsRefunded } = data;
+
+        // Détecter si c'est une annulation
+        const isCancelled = error === 'Task cancelled' || error?.includes('cancelled');
+        const offerStatus = isCancelled ? 'cancelled' : 'failed';
+
+        setProgressMap(prev => {
+          const task = prev[taskId] || { offers: {}, failedOffers: [] };
+          const failedOffers = [...(task.failedOffers || [])];
+          failedOffers.push({ id: offerId, offerIndex, error, creditsRefunded, cancelled: isCancelled });
+
+          const offer = task.offers[offerId] || {};
+
+          return {
+            ...prev,
+            [taskId]: {
+              ...task,
+              offers: {
+                ...task.offers,
+                [offerId]: {
+                  ...offer,
+                  status: offerStatus,
+                  error,
+                },
+              },
+              failedOffers,
+              lastUpdate: Date.now(),
+            },
+          };
+        });
+      } catch (err) {
+        console.error('[usePipelineProgress] Erreur parsing offer_failed:', err);
+      }
+    });
+
+    // Événement tâche terminée
+    eventSource.addEventListener('cv_generation_v2:completed', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const { taskId, totalGenerated, totalFailed, creditsRefunded } = data;
+
+        updateTaskProgress(taskId, {
+          status: totalFailed === 0 ? 'completed' : (totalGenerated > 0 ? 'partial' : 'failed'),
+          totalGenerated,
+          totalFailed,
+          creditsRefunded,
+        });
+
+        // Déclencher immédiatement le rafraîchissement des tâches et de la liste CV
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('cv_generation_v2:task_completed', { detail: { taskId } }));
+          window.dispatchEvent(new Event('cv:list:changed'));
+        }
+      } catch (err) {
+        console.error('[usePipelineProgress] Erreur parsing completed:', err);
+      }
+    });
+
+    // Cleanup
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
+  }, [isAuthenticated, updateOfferProgress, markStepCompleted, updateTaskProgress]);
+
+  // Détection des tâches "stale"
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    const STALE_TIMEOUT_MS = 5 * 60 * 1000;
+    const CHECK_INTERVAL_MS = 30 * 1000;
+
+    const checkStaleTasks = () => {
+      const now = Date.now();
+      let hasStale = false;
+
+      Object.entries(progressMap).forEach(([taskId, progress]) => {
+        if (
+          progress.status === 'running' &&
+          progress.lastUpdate &&
+          (now - progress.lastUpdate) > STALE_TIMEOUT_MS
+        ) {
+          console.log(`[usePipelineProgress] Tâche ${taskId} stale, demande de rafraîchissement`);
+          hasStale = true;
+        }
+      });
+
+      if (hasStale && typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('realtime:task:updated'));
+      }
+    };
+
+    const interval = setInterval(checkStaleTasks, CHECK_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, progressMap]);
+
+  // Récupérer la progression pour une tâche spécifique
+  const getProgress = useCallback((taskId) => {
+    return progressMap[taskId] || null;
+  }, [progressMap]);
+
+  // Récupérer la progression d'une offre spécifique
+  const getOfferProgress = useCallback((taskId, offerId) => {
+    const task = progressMap[taskId];
+    if (!task || !task.offers) return null;
+    return task.offers[offerId] || null;
+  }, [progressMap]);
+
+  // Récupérer les offres triées par index
+  const getOffersArray = useCallback((taskId) => {
+    const task = progressMap[taskId];
+    if (!task || !task.offers) return [];
+
+    return Object.entries(task.offers)
+      .map(([offerId, data]) => ({ offerId, ...data }))
+      .sort((a, b) => a.offerIndex - b.offerIndex);
+  }, [progressMap]);
+
+  return {
+    getProgress,
+    getOfferProgress,
+    getOffersArray,
+    calculateOfferProgress,
+    allProgress: progressMap,
+  };
+}
+
+/**
+ * Hook pour écouter la progression d'une tâche spécifique du pipeline CV v2
+ *
+ * @param {string} taskId - ID de la tâche à suivre
+ * @returns {Object|null} Progression de la tâche
+ */
+export function useSSEPipelineProgress(taskId) {
+  const { getProgress } = usePipelineProgress();
+  return taskId ? getProgress(taskId) : null;
+}
+
+// Exporter les constantes pour le composant UI
+export { PIPELINE_STEPS, STEP_WEIGHTS, calculateOfferProgress };

@@ -1,15 +1,16 @@
-Extrait les informations de cette offre d'emploi au format JSON structure.
+Analyse cette offre d'emploi en suivant la méthode en 3 phases (LECTURE → ANALYSE → EXTRACTION).
+
+## TITRE DU POSTE (source fiable)
+
+{jobTitle}
 
 ## CONTENU DE L'OFFRE
 
 {sourceContent}
 
-## INSTRUCTIONS
+## RAPPELS
 
-1. Analyse le contenu ci-dessus
-2. Extrait TOUTES les informations pertinentes
-3. Utilise null pour les informations absentes (ne pas inventer)
-4. Conserve les termes exacts pour les skills
-5. Distingue skills required vs nice_to_have
-
-Retourne le JSON structure uniquement.
+- Utilise le titre ci-dessus comme base, puis nettoie-le (préfixes contrat, écriture inclusive, capitalisation)
+- Langues parlées (anglais, français...) → champ `languages`, JAMAIS dans skills
+- Information absente → `null` (ne jamais inventer)
+- Skills : extraire les termes exacts, distinguer required vs nice_to_have vs soft_skills

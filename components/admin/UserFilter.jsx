@@ -175,7 +175,7 @@ export function UserFilter({ value, onChange }) {
                 placeholder="Rechercher un utilisateur..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-9 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 focus:bg-white/10 transition-colors"
+                className="w-full pl-10 pr-9 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 focus:bg-white/10 transition-colors"
                 autoFocus
               />
               {searchQuery && (

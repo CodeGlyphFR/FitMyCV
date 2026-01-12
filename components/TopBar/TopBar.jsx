@@ -61,7 +61,7 @@ export default function TopBar() {
   const { addNotification } = useNotifications();
   const { t, language } = useLanguage();
   const { settings } = useSettings();
-  const { history: linkHistory, addLinksToHistory } = useLinkHistory();
+  const { history: linkHistory, addLinksToHistory, deleteLink: deleteLinkHistory, refreshHistory: refreshLinkHistory } = useLinkHistory();
   const { currentStep, onboardingState } = useOnboarding();
   const { showCosts, getCost } = useCreditCost();
   const jobTitleCost = getCost("generate_from_job_title");
@@ -637,7 +637,7 @@ export default function TopBar() {
               ref={userMenuButtonRef}
               type="button"
               onClick={() => modals.setUserMenuOpen((prev) => !prev)}
-              className="h-8 w-8 flex items-center justify-center rounded-full border border-white/40 bg-white/20 backdrop-blur-sm hover:bg-white/30 hover:shadow-xl transition-all duration-200"
+              className="h-8 w-8 flex items-center justify-center rounded-full border border-white/40 bg-white/20 backdrop-blur-sm hover:bg-white/30 hover:shadow-sm-xl transition-all duration-200"
               aria-label={t("topbar.userMenu")}
             >
               <img
@@ -660,7 +660,7 @@ export default function TopBar() {
               className={`cv-selector-trigger w-full min-w-0 rounded-lg border backdrop-blur-sm px-3 py-1 text-sm flex items-center justify-between gap-3 overflow-hidden transition-all duration-500 text-white ${
                 state.cvSelectorGlow
                   ? 'border-emerald-400 bg-emerald-500/40 shadow-[0_0_20px_rgba(52,211,153,0.6)] hover:bg-emerald-500/50'
-                  : 'border-white/40 bg-white/20 hover:bg-white/30 hover:shadow-xl'
+                  : 'border-white/40 bg-white/20 hover:bg-white/30 hover:shadow-sm-xl'
               }`}
               ref={triggerRef}
             >
@@ -924,7 +924,7 @@ export default function TopBar() {
                   modals.setOpenTaskDropdown(!modals.openTaskDropdown);
                 }
               }}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 transition-all duration-200"
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 transition-all duration-200"
               type="button"
               title={t("topbar.taskQueue")}
             >
@@ -952,7 +952,7 @@ export default function TopBar() {
               ref={filterButtonRef}
               type="button"
               onClick={() => filter.setFilterMenuOpen(!filter.filterMenuOpen)}
-              className={`rounded-lg border backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 transition-all duration-200 ${
+              className={`rounded-lg border backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 transition-all duration-200 ${
                 filter.hasActiveFilters
                   ? 'border-emerald-400 bg-emerald-500/30'
                   : 'border-white/40 bg-white/20'
@@ -1000,7 +1000,7 @@ export default function TopBar() {
                     modals.handleJobTitleSubmit(e, language, showCosts, jobTitleCost);
                   }}
                   placeholder={state.isMobile ? t("topbar.jobTitlePlaceholderMobile") : t("topbar.jobTitlePlaceholder")}
-                  className="w-full bg-transparent border-0 border-b-2 pl-8 pr-2 py-1 text-sm italic text-white placeholder-white/50 focus:outline-none transition-colors duration-200 border-white/30 focus:border-emerald-400 cursor-text"
+                  className="w-full bg-transparent border-0 border-b-2 pl-8 pr-2 py-1 text-sm italic text-white placeholder-white/50 focus:outline-hidden transition-colors duration-200 border-white/30 focus:border-emerald-400 cursor-text"
                   style={{ caretColor: '#10b981' }}
                 />
               </div>
@@ -1012,7 +1012,7 @@ export default function TopBar() {
             <button
               data-onboarding="ai-generate"
               onClick={generator.openGeneratorModal}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-5 transition-all duration-200"
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-5 transition-all duration-200"
               type="button"
             >
               <GptLogo className="h-4 w-4" />
@@ -1021,7 +1021,7 @@ export default function TopBar() {
           {settings.feature_manual_cv && (
             <button
               onClick={() => modals.setOpenNewCv(true)}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center h-8 w-8 order-9 md:order-6 transition-all duration-200"
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center h-8 w-8 order-9 md:order-6 transition-all duration-200"
               type="button"
             >
               <img src="/icons/add.png" alt="Add" className="h-4 w-4 " />
@@ -1030,7 +1030,7 @@ export default function TopBar() {
           {settings.feature_import && (
             <button
               onClick={() => modals.setOpenPdfImport(true)}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7 transition-all duration-200"
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7 transition-all duration-200"
               type="button"
               title={t("pdfImport.title")}
             >
@@ -1041,7 +1041,7 @@ export default function TopBar() {
             <button
               data-onboarding="export"
               onClick={exportModal.openModal}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-11 md:order-8 transition-all duration-200"
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 order-11 md:order-8 transition-all duration-200"
               type="button"
               title="Exporter en PDF"
             >
@@ -1050,7 +1050,7 @@ export default function TopBar() {
           )}
           <button
             onClick={() => modals.setOpenDelete(true)}
-            className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center h-8 w-8 order-12 md:order-9 transition-all duration-200"
+            className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center h-8 w-8 order-12 md:order-9 transition-all duration-200"
             title={t("topbar.delete")}
           >
             <img src="/icons/delete.png" alt="Delete" className="h-4 w-4 " />
@@ -1061,7 +1061,7 @@ export default function TopBar() {
             <button
               type="button"
               onClick={() => { window.location.href = '/account/subscriptions?tab=credits'; }}
-              className="rounded-lg border border-amber-400/50 bg-amber-500/20 backdrop-blur-sm text-white text-sm hover:bg-amber-500/30 hover:shadow-xl inline-flex items-center gap-1.5 px-2.5 h-8 order-5 md:order-11 transition-all duration-200"
+              className="rounded-lg border border-amber-400/50 bg-amber-500/20 backdrop-blur-sm text-white text-sm hover:bg-amber-500/30 hover:shadow-sm-xl inline-flex items-center gap-1.5 px-2.5 h-8 order-5 md:order-11 transition-all duration-200"
               title={`${creditBalance} ${t("topbar.credits")}`}
             >
               {!isSmallScreen && <span className="text-amber-300">⚡</span>}
@@ -1093,6 +1093,8 @@ export default function TopBar() {
         plans={generator.plans}
         generatorError={generator.generatorError}
         linkHistory={linkHistory}
+        deleteLinkHistory={deleteLinkHistory}
+        refreshLinkHistory={refreshLinkHistory}
         linkHistoryDropdowns={generator.linkHistoryDropdowns}
         setLinkHistoryDropdowns={generator.setLinkHistoryDropdowns}
         tickerResetKey={state.tickerResetKey}

@@ -14,7 +14,9 @@ export const metadata = {
  * Server Component pour vérification email
  * Aucun JavaScript client ne se charge = pas de loading visible
  */
-export default async function VerifyEmailPage({ searchParams }) {
+export default async function VerifyEmailPage(props) {
+  // Next.js 16: searchParams est maintenant async
+  const searchParams = await props.searchParams;
   const token = searchParams?.token;
 
   // Pas de token = rediriger vers auth avec erreur

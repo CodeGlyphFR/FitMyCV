@@ -216,7 +216,7 @@ export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
                         </span>
                       </div>
                     </div>
-                    <span className="px-2 py-1 bg-red-500/20 text-red-300 border border-red-400/30 rounded text-sm font-bold">
+                    <span className="px-2 py-1 bg-red-500/20 text-red-300 border border-red-400/30 rounded-sm text-sm font-bold">
                       {error.count}
                     </span>
                   </div>
@@ -252,7 +252,7 @@ export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
                         {error.types.slice(0, 3).map((type, i) => (
                           <span
                             key={i}
-                            className="px-2 py-0.5 bg-white/10 text-white/60 rounded text-xs border border-white/20"
+                            className="px-2 py-0.5 bg-white/10 text-white/60 rounded-sm text-xs border border-white/20"
                           >
                             {type.replace(/_/g, ' ')}
                           </span>
@@ -336,7 +336,7 @@ export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                          <span className="px-2 py-1 bg-white/10 text-white/70 rounded text-xs border border-white/20">
+                          <span className="px-2 py-1 bg-white/10 text-white/70 rounded-sm text-xs border border-white/20">
                             {error.type}
                           </span>
                         </td>

@@ -109,7 +109,7 @@ export default function SectionCard({
 
             {/* Checkbox visuel */}
             <div
-              className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 ${
+              className={`flex-shrink-0 w-5 h-5 rounded-sm border-2 flex items-center justify-center transition-all duration-200 ${
                 enabled
                   ? 'bg-emerald-400 border-emerald-400'
                   : 'bg-transparent border-white/40'
@@ -161,11 +161,11 @@ export default function SectionCard({
                 key={subKey}
                 type="button"
                 onClick={() => onToggleSubsection(sectionKey, subKey)}
-                className="w-full flex items-center gap-2 cursor-pointer hover:bg-white/10 p-2 rounded transition-colors"
+                className="w-full flex items-center gap-2 cursor-pointer hover:bg-white/10 p-2 rounded-sm transition-colors"
               >
                 {/* Checkbox custom glassmorphism */}
                 <div
-                  className={`w-4 h-4 flex-shrink-0 rounded border-2 flex items-center justify-center transition-all duration-200 ${
+                  className={`w-4 h-4 flex-shrink-0 rounded-sm border-2 flex items-center justify-center transition-all duration-200 ${
                     subEnabled
                       ? 'bg-emerald-400 border-emerald-400'
                       : 'bg-white/10 border-white/40'
@@ -229,10 +229,10 @@ export default function SectionCard({
                         <button
                           type="button"
                           onClick={() => onToggleItem(sectionKey, index)}
-                          className="w-full flex items-start gap-2 cursor-pointer hover:bg-white/10 p-1 rounded transition-colors text-left"
+                          className="w-full flex items-start gap-2 cursor-pointer hover:bg-white/10 p-1 rounded-sm transition-colors text-left"
                         >
                           <div
-                            className={`mt-0.5 w-4 h-4 flex-shrink-0 rounded border-2 flex items-center justify-center transition-all duration-200 ${
+                            className={`mt-0.5 w-4 h-4 flex-shrink-0 rounded-sm border-2 flex items-center justify-center transition-all duration-200 ${
                               isSelected
                                 ? 'bg-emerald-400 border-emerald-400'
                                 : 'bg-white/10 border-white/40'
@@ -262,10 +262,10 @@ export default function SectionCard({
                           <button
                             type="button"
                             onClick={() => onToggleItemOption(sectionKey, index, 'includeDeliverables')}
-                            className="inline-flex items-center justify-center cursor-pointer hover:bg-white/10 p-1 rounded transition-colors"
+                            className="inline-flex items-center justify-center cursor-pointer hover:bg-white/10 p-1 rounded-sm transition-colors"
                           >
                             <div
-                              className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${
+                              className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center transition-all duration-200 ${
                                 includeDeliverables
                                   ? 'bg-emerald-400 border-emerald-400'
                                   : 'bg-white/10 border-white/40'
@@ -309,11 +309,11 @@ export default function SectionCard({
                     key={index}
                     type="button"
                     onClick={() => onToggleItem(sectionKey, index)}
-                    className="w-full flex items-start gap-2 cursor-pointer hover:bg-white/10 p-2 rounded transition-colors text-left"
+                    className="w-full flex items-start gap-2 cursor-pointer hover:bg-white/10 p-2 rounded-sm transition-colors text-left"
                   >
                     {/* Checkbox custom glassmorphism */}
                     <div
-                      className={`mt-0.5 w-4 h-4 flex-shrink-0 rounded border-2 flex items-center justify-center transition-all duration-200 ${
+                      className={`mt-0.5 w-4 h-4 flex-shrink-0 rounded-sm border-2 flex items-center justify-center transition-all duration-200 ${
                         isSelected
                           ? 'bg-emerald-400 border-emerald-400'
                           : 'bg-white/10 border-white/40'

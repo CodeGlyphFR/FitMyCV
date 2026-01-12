@@ -66,7 +66,7 @@ function NotificationItem({ notification, onRemove }) {
           {redirectUrl && (
             <button
               onClick={handleActionClick}
-              className={`mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold ${styles.actionButton} border-2 transition-all duration-200 inline-flex items-center gap-1 shadow-sm hover:shadow-md`}
+              className={`mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold ${styles.actionButton} border-2 transition-all duration-200 inline-flex items-center gap-1 shadow-xs hover:shadow-sm-md`}
             >
               {linkText || "Voir les options"}
               <span className="text-base">→</span>
@@ -78,7 +78,7 @@ function NotificationItem({ notification, onRemove }) {
             e.stopPropagation();
             onRemove(id);
           }}
-          className={`ml-2 ${styles.button} text-lg leading-none px-1.5 rounded transition-all duration-200`}
+          className={`ml-2 ${styles.button} text-lg leading-none px-1.5 rounded-sm transition-all duration-200`}
           aria-label="Fermer la notification"
         >
           ×

@@ -14,7 +14,9 @@ export async function GET() {
   }
 
   try {
-    const cvCookie = (cookies().get("cvFile") || {}).value;
+    // Next.js 16: cookies() est maintenant async
+    const cookieStore = await cookies();
+    const cvCookie = (cookieStore.get("cvFile") || {}).value;
 
     if (!cvCookie) {
       return NextResponse.json({
