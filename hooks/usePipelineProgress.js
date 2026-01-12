@@ -287,6 +287,12 @@ export function usePipelineProgress() {
           totalFailed,
           creditsRefunded,
         });
+
+        // Déclencher immédiatement le rafraîchissement des tâches et de la liste CV
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('cv_generation_v2:task_completed', { detail: { taskId } }));
+          window.dispatchEvent(new Event('cv:list:changed'));
+        }
       } catch (err) {
         console.error('[usePipelineProgress] Erreur parsing completed:', err);
       }

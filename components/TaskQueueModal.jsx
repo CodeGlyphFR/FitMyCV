@@ -6,6 +6,7 @@ import Modal from "./ui/Modal";
 import PipelineTaskProgress from "./ui/PipelineTaskProgress";
 import GenericTaskProgressBar from "./ui/GenericTaskProgressBar";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
+import { usePipelineProgressContext } from "@/components/PipelineProgressProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { emitOnboardingEvent, ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
@@ -51,6 +52,7 @@ function extractQuotedName(text) {
 function TaskItem({ task, onCancel, onTaskClick }) {
   const { t } = useLanguage();
   const router = useRouter();
+  const { getProgress } = usePipelineProgressContext();
 
   const locale = t("common.locale") || 'fr-FR'; // fr-FR ou en-US
   const createdAt = new Date(task.createdAt).toLocaleTimeString(locale, {
@@ -58,7 +60,16 @@ function TaskItem({ task, onCancel, onTaskClick }) {
     minute: '2-digit'
   });
 
-  const canCancel = task.status === 'queued' || task.status === 'running';
+  // Pour cv_generation_v2, utiliser le statut SSE s'il est disponible (plus à jour que le polling)
+  let effectiveStatus = task.status;
+  if (task.type === 'cv_generation_v2') {
+    const sseProgress = getProgress(task.id);
+    if (sseProgress?.status && sseProgress.status !== 'running') {
+      effectiveStatus = sseProgress.status;
+    }
+  }
+
+  const canCancel = effectiveStatus === 'queued' || effectiveStatus === 'running';
 
   const payload = task?.payload && typeof task.payload === 'object' ? task.payload : null;
 

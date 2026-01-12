@@ -86,9 +86,24 @@ export default function BackgroundTasksProvider({ children }) {
       }, 500);
     };
 
+    // Rafraîchissement immédiat quand une tâche cv_generation_v2 est terminée (pas de debounce)
+    const handleTaskCompleted = () => {
+      // Annuler le debounce en cours s'il y en a un
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+      }
+      // Rafraîchir immédiatement
+      refreshTasksRef.current().catch(err => {
+        console.error('[BackgroundTasksProvider] Erreur refresh après complétion:', err);
+      });
+    };
+
     window.addEventListener('realtime:task:updated', handleRealtimeTaskUpdate);
+    window.addEventListener('cv_generation_v2:task_completed', handleTaskCompleted);
     return () => {
       window.removeEventListener('realtime:task:updated', handleRealtimeTaskUpdate);
+      window.removeEventListener('cv_generation_v2:task_completed', handleTaskCompleted);
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
