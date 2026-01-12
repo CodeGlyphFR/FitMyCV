@@ -47,16 +47,26 @@ export default function BulletHighlight({
     if (c.section !== section || c.field !== field) return false;
     if (c.expIndex !== expIndex) return false;
 
-    // Comparer le texte du bullet
-    const changeText = c.afterValue || c.itemValue || c.itemName || '';
+    // Pour les items REMOVED, comparer avec beforeValue/itemValue
+    // Pour les items ADDED/MODIFIED, comparer avec afterValue/itemValue
+    const changeText = c.changeType === 'removed'
+      ? (c.beforeValue || c.itemValue || c.itemName || '')
+      : (c.afterValue || c.itemValue || c.itemName || '');
     const targetText = bulletText || '';
 
-    // Match par texte normalisé ou par début
+    // Match par texte normalisé - EXACT uniquement pour éviter les faux positifs
     const normalizedChange = normalizeBullet(changeText);
     const normalizedTarget = normalizeBullet(targetText);
 
-    return normalizedChange === normalizedTarget ||
-           normalizedTarget.startsWith(normalizedChange.substring(0, 50)) ||
+    // Match exact ou très proche (différence de longueur < 10%)
+    if (normalizedChange === normalizedTarget) return true;
+
+    // Match partiel seulement si les longueurs sont similaires
+    const lenDiff = Math.abs(normalizedChange.length - normalizedTarget.length);
+    const maxLen = Math.max(normalizedChange.length, normalizedTarget.length);
+    if (maxLen > 0 && lenDiff / maxLen > 0.15) return false; // Plus de 15% de différence = pas de match partiel
+
+    return normalizedTarget.startsWith(normalizedChange.substring(0, 50)) ||
            normalizedChange.startsWith(normalizedTarget.substring(0, 50));
   });
 

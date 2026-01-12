@@ -286,6 +286,11 @@ export function useGeneratorModal({
         duration: 2500,
       });
 
+      // Rafraîchir le compteur de crédits (les crédits ont été débités)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('credits-updated'));
+      }
+
       // Nettoyer la tâche optimiste après notification
       removeOptimisticTask(optimisticTaskId);
 

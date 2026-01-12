@@ -12,9 +12,9 @@ Adapte cette experience pour correspondre a l'offre d'emploi ci-dessus.
 - Mets en valeur les resultats (deliverables) pertinents
 - Filtre les skills_used pour ne garder que les pertinents
 
-**OBLIGATOIRE - Nouveaux champs à remplir :**
-- **domain** : Détermine le domaine métier de cette expérience en analysant le titre, l'entreprise et les responsabilités
-- **years_in_domain** : Calcule la durée en années (start_date → end_date, ou jusqu'à aujourd'hui si en cours)
+**OBLIGATOIRE - Champs à remplir :**
+- **domain** : Détermine le domaine métier en analysant le titre, l'entreprise et les responsabilités
+- **years_in_domain** : Utilise la valeur `_calculated_years` fournie (déjà calculée)
 
 RAPPEL: Ne jamais inventer de donnees. Tu peux seulement reformuler, reordonner et filtrer.
 
