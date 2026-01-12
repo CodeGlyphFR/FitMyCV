@@ -98,7 +98,7 @@ function OfferProgressLine({ offer, t, createdAt }) {
       <div className="py-1">
         {/* Ligne 1: Titre + Status */}
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-white truncate flex-1 mr-2" title={offer.sourceUrl || offerTitle}>
+          <span className="text-xs font-medium text-white truncate flex-1 mr-2">
             {offerTitle}
           </span>
           <span className={`text-xs font-medium ${statusColorClass}`}>
@@ -121,7 +121,7 @@ function OfferProgressLine({ offer, t, createdAt }) {
         <div className="flex items-center gap-1.5 flex-1 min-w-0 mr-2">
           <span className="text-[10px] text-white/50 flex-shrink-0">{createdAt}</span>
           <span className="text-white/30">|</span>
-          <span className="text-xs font-medium text-white truncate" title={offer.sourceUrl || offerTitle}>
+          <span className="text-xs font-medium text-white truncate">
             {offerTitle}
           </span>
         </div>
@@ -148,8 +148,18 @@ function OfferProgressLine({ offer, t, createdAt }) {
 
 /**
  * Tronque une URL pour l'affichage
+ * Gère aussi les chemins file:// en extrayant juste le nom du fichier
  */
 function truncateUrl(url) {
+  // Pour les chemins file://, extraire juste le nom du fichier
+  if (url && url.startsWith('file://')) {
+    const filePath = url.replace('file://', '');
+    const fileName = filePath.split('/').pop() || filePath;
+    // Retirer l'extension .pdf et tronquer si nécessaire
+    const displayName = fileName.replace(/\.pdf$/i, '');
+    return displayName.length > 35 ? displayName.slice(0, 35) + '...' : displayName;
+  }
+
   try {
     const urlObj = new URL(url);
     const host = urlObj.hostname.replace('www.', '');
