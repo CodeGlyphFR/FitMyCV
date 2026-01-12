@@ -6,13 +6,8 @@
 
 # Langue de sortie: {targetLanguage}
 
-Adapte ces extras pour correspondre a l'offre d'emploi ci-dessus.
-- Mets en valeur les extras qui correspondent aux requirements de l'offre
-- Reformule si necessaire pour insister sur la pertinence
-- Garde les autres extras tels quels
+Adapte ces extras selon les regles de classification (FAITS / PREFERENCES / PERSONNELS).
 
-RAPPEL: Ne jamais inventer d'extras. Tu peux seulement reformuler ceux existants.
-
-**IMPORTANT**: Documente TOUTES tes modifications dans le champ `modifications[]` avec avant/apres/raison.
+**IMPORTANT**: Documente TOUTES tes modifications dans `modifications[]`.
 
 Reponds en JSON valide.

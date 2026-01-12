@@ -1,4 +1,4 @@
-# Compétences Source à Adapter
+# Competences Source a Adapter
 
 ## Hard Skills
 ```json
@@ -22,21 +22,25 @@
 
 ---
 
-# Instructions
+# Langue de sortie: {targetLanguage}
 
-**Langue de sortie:** {targetLanguage}
+## Tes 7 missions
 
-## Rappel du processus
+1. **SUPPRIMER** les competences non pertinentes (score ≤ 5)
+2. **AJUSTER** les proficiency selon l'experience du candidat
+3. **NETTOYER** les noms (parentheses, phrases → mots-cles, max 3 mots)
+4. **SPLITTER** les competences multiples (slash, virgule, "et")
+5. **REARRANGER** entre hard_skills / tools / methodologies
+6. **FUSIONNER** les doublons entre categories
+7. **DEDUIRE** les methodologies depuis les experiences (sprints → Scrum, CI/CD → DevOps...)
 
-1. **SCORER** chaque compétence de 0 à 10 selon sa pertinence pour l'offre
-2. **SUPPRIMER** celles avec score ≤ 5
-3. **AJUSTER** les niveaux des compétences conservées selon l'expérience du candidat
+## Regles
 
-## Règles strictes
+- **ZERO DOUBLON** : chaque competence dans UNE SEULE categorie (hard_skills OU tools OU methodologies)
+- Soft skills : **max 6**, juste filtrer par pertinence
+- Technos/outils : garder les noms en **anglais**
+- Documenter CHAQUE modification dans `modifications[]`
 
-- **JAMAIS D'AJOUT** : Tu ne peux que supprimer ou ajuster les niveaux
-- Documente chaque suppression avec le score dans la raison (ex: "Score 3/10 - non pertinent")
-- Documente chaque ajustement de niveau (ex: "Ajusté de Débutant à Intermédiaire")
-- Limite les soft_skills à 6 maximum
+**Question cle pour les doublons** : "C'est quelque chose que je SAIS FAIRE ou que j'UTILISE ?"
 
-Réponds en JSON valide avec le champ `modifications[]` documentant tous les changements.
+Reponds en JSON valide.

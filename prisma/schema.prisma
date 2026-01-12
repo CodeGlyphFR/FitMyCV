@@ -736,7 +736,9 @@ model CvGenerationSubtask {
   modifications    Json?             // Array des modifications {field, before, after, reason, action}
   modelUsed        String?           // Modèle IA effectivement utilisé
   promptTokens     Int               @default(0)
+  cachedTokens     Int               @default(0)  // Tokens en cache (prompt caching)
   completionTokens Int               @default(0)
+  estimatedCost    Float             @default(0)  // Coût estimé en USD
   durationMs       Int?              // Durée d'exécution en ms
   retryCount       Int               @default(0)
   error            String?

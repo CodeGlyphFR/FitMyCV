@@ -47,7 +47,7 @@
             },
             "action": {
               "type": "string",
-              "enum": ["modified", "added", "removed", "reordered", "converted"],
+              "enum": ["modified", "removed", "reordered", "converted"],
               "description": "Type de modification"
             },
             "before": {

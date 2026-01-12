@@ -63,8 +63,8 @@
             },
             "action": {
               "type": "string",
-              "enum": ["removed", "level_adjusted"],
-              "description": "Type de modification: removed ou level_adjusted"
+              "enum": ["removed", "level_adjusted", "renamed", "split", "moved", "merged", "inferred"],
+              "description": "Type de modification"
             },
             "reason": {
               "type": "string",
