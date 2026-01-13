@@ -217,7 +217,10 @@
   },
   "sourceInfo": {
     "createdFromLink": "Created from link",
-    "createdFromPdf": "Created from PDF"
+    "createdFromPdf": "Created from PDF",
+    "jobOfferLink": "Job offer",
+    "sourceCv": "Source CV",
+    "createdOn": "Created on"
   },
   "translate": {
     "buttonTitle": "Translate CV",

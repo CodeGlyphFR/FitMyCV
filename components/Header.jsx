@@ -32,7 +32,7 @@ export default function Header(props){
   const translateCost = getCost("translate_cv");
   const [open, setOpen] = React.useState(false);
   const [isTranslateDropdownOpen, setIsTranslateDropdownOpen] = React.useState(false);
-  const [sourceInfo, setSourceInfo] = React.useState({ sourceType: null, sourceValue: null });
+  const [sourceInfo, setSourceInfo] = React.useState({ sourceType: null, sourceValue: null, jobOfferInfo: null, sourceCvInfo: null });
   const translateDropdownRef = React.useRef(null);
   const [matchScore, setMatchScore] = React.useState(null);
   const [scoreBefore, setScoreBefore] = React.useState(null);
@@ -209,7 +209,12 @@ export default function Header(props){
       })
       .then(data => {
         // Mettre à jour les infos de source
-        setSourceInfo({ sourceType: data.sourceType, sourceValue: data.sourceValue });
+        setSourceInfo({
+          sourceType: data.sourceType,
+          sourceValue: data.sourceValue,
+          jobOfferInfo: data.jobOfferInfo,
+          sourceCvInfo: data.sourceCvInfo,
+        });
 
         // Ne récupérer le score que si le CV a une offre d'emploi associée
         if (data.hasJobOffer) {
@@ -536,7 +541,12 @@ export default function Header(props){
         <div className="relative w-20 h-20">
           {/* Icône info en haut à droite */}
           <div className="absolute top-0 right-0">
-            <SourceInfo sourceType={sourceInfo.sourceType} sourceValue={sourceInfo.sourceValue} />
+            <SourceInfo
+              sourceType={sourceInfo.sourceType}
+              sourceValue={sourceInfo.sourceValue}
+              jobOfferInfo={sourceInfo.jobOfferInfo}
+              sourceCvInfo={sourceInfo.sourceCvInfo}
+            />
           </div>
 
           {/* Bouton Score au milieu à gauche */}

@@ -217,7 +217,10 @@
   },
   "sourceInfo": {
     "createdFromLink": "Aus einem Link erstellt",
-    "createdFromPdf": "Aus einem PDF erstellt"
+    "createdFromPdf": "Aus einem PDF erstellt",
+    "jobOfferLink": "Stellenangebot",
+    "sourceCv": "Quell-Lebenslauf",
+    "createdOn": "Erstellt am"
   },
   "translate": {
     "buttonTitle": "Lebenslauf übersetzen",
