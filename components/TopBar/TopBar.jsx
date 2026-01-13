@@ -227,14 +227,21 @@ export default function TopBar() {
     return { availableTypes, availableLanguages, availableDateRanges };
   }, [state.items, filter.filters]);
 
-  // Active tasks count
+  // Active tasks count (exclut calculate-match-score qui a sa propre animation)
   const activeTasksCount = React.useMemo(() => {
-    return tasks.filter(t => t.status === 'running' || t.status === 'queued').length;
+    return tasks.filter(t =>
+      (t.status === 'running' || t.status === 'queued') &&
+      t.type !== 'calculate-match-score'
+    ).length;
   }, [tasks]);
 
   // Global task progress (0-100)
   const globalTaskProgress = React.useMemo(() => {
-    const activeTasks = tasks.filter(t => t.status === 'running' || t.status === 'queued');
+    // Exclut calculate-match-score qui a sa propre animation sur le bouton MatchScore
+    const activeTasks = tasks.filter(t =>
+      (t.status === 'running' || t.status === 'queued') &&
+      t.type !== 'calculate-match-score'
+    );
     if (activeTasks.length === 0) return 0;
 
     let totalProgress = 0;
