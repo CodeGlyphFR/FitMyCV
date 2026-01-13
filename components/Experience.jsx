@@ -19,14 +19,65 @@ import { useHighlight } from "./HighlightProvider";
 export default function Experience(props){
   const { t } = useLanguage();
   const rawExperience = Array.isArray(props.experience) ? props.experience : [];
+  // Normalise une date vers le format YYYY-MM pour comparaison
+  // Gère : YYYY-MM, YYYY, MM/YYYY, YYYY/MM
+  const normalizeDate = React.useCallback((date) => {
+    if (!date) return "";
+    const d = date.trim().toLowerCase();
+    if (d === "present") return "";
+
+    // Format YYYY-MM ou YYYY
+    if (/^\d{4}(-\d{2})?$/.test(d)) {
+      return d.length === 4 ? `${d}-01` : d;
+    }
+
+    // Format avec slash : MM/YYYY ou YYYY/MM
+    if (d.includes("/")) {
+      const parts = d.split("/");
+      if (parts.length === 2) {
+        const [p1, p2] = parts;
+        // Si p1 a 4 chiffres -> YYYY/MM
+        if (/^\d{4}$/.test(p1) && /^\d{1,2}$/.test(p2)) {
+          return `${p1}-${p2.padStart(2, "0")}`;
+        }
+        // Si p2 a 4 chiffres -> MM/YYYY
+        if (/^\d{4}$/.test(p2) && /^\d{1,2}$/.test(p1)) {
+          return `${p2}-${p1.padStart(2, "0")}`;
+        }
+      }
+    }
+
+    return d;
+  }, []);
+
   // Tri par date décroissante (plus récent en premier)
+  // 1. Expériences en cours en premier, triées par date de début (plus récent en premier)
+  // 2. Expériences terminées ensuite, triées par date de fin (plus récent en premier)
+  // On garde _originalIndex pour que les mutations utilisent le bon index
   const experience = React.useMemo(() => {
-    return [...rawExperience].sort((a, b) => {
-      const dateA = a.end_date === "present" ? "9999-99" : (a.end_date || a.start_date || "");
-      const dateB = b.end_date === "present" ? "9999-99" : (b.end_date || b.start_date || "");
-      return dateB.localeCompare(dateA);
-    });
-  }, [rawExperience]);
+    return rawExperience
+      .map((e, idx) => ({ ...e, _originalIndex: idx }))
+      .sort((a, b) => {
+        const aIsCurrent = !a.end_date || a.end_date === "present";
+        const bIsCurrent = !b.end_date || b.end_date === "present";
+
+        // Les expériences en cours en premier
+        if (aIsCurrent && !bIsCurrent) return -1;
+        if (!aIsCurrent && bIsCurrent) return 1;
+
+        // Si les deux sont en cours, trier par start_date (plus ancien en premier = plus d'expérience)
+        if (aIsCurrent && bIsCurrent) {
+          const startA = normalizeDate(a.start_date);
+          const startB = normalizeDate(b.start_date);
+          return startA.localeCompare(startB);
+        }
+
+        // Sinon, trier par end_date (plus récent en premier)
+        const endA = normalizeDate(a.end_date) || normalizeDate(a.start_date);
+        const endB = normalizeDate(b.end_date) || normalizeDate(b.start_date);
+        return endB.localeCompare(endA);
+      });
+  }, [rawExperience, normalizeDate]);
 
   const sectionTitles = props.sectionTitles || {};
   const cvLanguage = props.cvLanguage || 'fr';
@@ -47,11 +98,34 @@ export default function Experience(props){
   const [f,  setF]  = React.useState({});
 
   // ---- Helpers ----
+  // Normalise une date saisie vers le format YYYY-MM
+  // Gère : YYYY-MM, YYYY, MM/YYYY, YYYY/MM
   const norm = React.useCallback((s) => {
     const v = (s || "").trim();
     if (!v) return "";
     if (v.toLowerCase() === "present") return "present";
-    if (/^\d{4}(-\d{2})?$/.test(v)) return v.length === 4 ? `${v}-01` : v;
+
+    // Format YYYY-MM ou YYYY
+    if (/^\d{4}(-\d{2})?$/.test(v)) {
+      return v.length === 4 ? `${v}-01` : v;
+    }
+
+    // Format avec slash : MM/YYYY ou YYYY/MM
+    if (v.includes("/")) {
+      const parts = v.split("/");
+      if (parts.length === 2) {
+        const [p1, p2] = parts;
+        // Si p1 a 4 chiffres -> YYYY/MM
+        if (/^\d{4}$/.test(p1) && /^\d{1,2}$/.test(p2)) {
+          return `${p1}-${p2.padStart(2, "0")}`;
+        }
+        // Si p2 a 4 chiffres -> MM/YYYY
+        if (/^\d{4}$/.test(p2) && /^\d{1,2}$/.test(p1)) {
+          return `${p2}-${p1.padStart(2, "0")}`;
+        }
+      }
+    }
+
     return v;
   }, []);
 
@@ -77,7 +151,8 @@ export default function Experience(props){
       deliverables: Array.isArray(e.deliverables) ? e.deliverables.join("\n") : "",
       skills_used: Array.isArray(e.skills_used) ? e.skills_used.join(", ") : ""
     });
-    setEditIndex(i);
+    // Utiliser l'index original pour la mutation
+    setEditIndex(e._originalIndex ?? i);
   };
 
   const saveEdit = async () => {
@@ -184,7 +259,7 @@ export default function Experience(props){
               <div className={isProcessing ? 'blur-md pointer-events-none' : ''}>
               <div className="flex flex-wrap items-baseline gap-2">
                 <div className="font-semibold flex-1 min-w-0">
-                  <ChangeHighlight section="experience" field="title" expIndex={i} className="font-semibold">
+                  <ChangeHighlight section="experience" field="title" expIndex={e._originalIndex ?? i} className="font-semibold">
                     <span>{e.title || ""}</span>
                   </ChangeHighlight>
                   {e.company ? " • " : ""}{e.company || ""}{e.department_or_client ? ` (${e.department_or_client})` : ""}
@@ -192,7 +267,7 @@ export default function Experience(props){
                 <div className="ml-3 text-sm opacity-80 whitespace-nowrap">
                   {ym(e.start_date)} — {(!e.end_date || e.end_date === "present") ? cvT("cvSections.present") : ym(e.end_date)}
                 </div>
-                <ExperienceReviewActions expIndex={i} />
+                <ExperienceReviewActions expIndex={e._originalIndex ?? i} />
                 {editing && (
                   <div className="no-print flex gap-2 shrink-0">
                     <button
@@ -204,7 +279,7 @@ export default function Experience(props){
                     </button>
                     <button
                       type="button"
-                      onClick={() => setDelIndex(i)}
+                      onClick={() => setDelIndex(e._originalIndex ?? i)}
                       className="rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-1 text-xs text-white hover:bg-red-500/40 transition-all duration-200"
                     >
                       <img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " />
@@ -224,7 +299,7 @@ export default function Experience(props){
                   <ChangeHighlight
                     section="experience"
                     field="description"
-                    expIndex={i}
+                    expIndex={e._originalIndex ?? i}
                     className="text-sm text-justify opacity-95 whitespace-pre-line"
                   >
                     <p className="text-sm text-justify opacity-95 whitespace-pre-line">{e.description}</p>
@@ -238,7 +313,7 @@ export default function Experience(props){
                       <ChangeHighlight
                         section="experience"
                         field="responsibilities"
-                        expIndex={i}
+                        expIndex={e._originalIndex ?? i}
                       >
                         <ul className="list-disc pl-5 text-sm space-y-1">
                           {e.responsibilities.map((r, j) => (
@@ -257,7 +332,7 @@ export default function Experience(props){
                         <ChangeHighlight
                           section="experience"
                           field="deliverables"
-                          expIndex={i}
+                          expIndex={e._originalIndex ?? i}
                         >
                           <ul className="list-disc pl-5 text-sm space-y-1">
                             {e.deliverables.map((d, j) => (
@@ -279,13 +354,13 @@ export default function Experience(props){
                     section="experience"
                     field="skills_used"
                     itemName={m}
-                    expIndex={i}
+                    expIndex={e._originalIndex ?? i}
                   >
                     <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">{capitalizeSkillName(m)}</span>
                   </SkillItemHighlight>
                 ))}
                 {/* Toujours afficher les compétences supprimées (même si tableau vide) */}
-                <RemovedSkillsDisplay section="experience" field="skills_used" expIndex={i} />
+                <RemovedSkillsDisplay section="experience" field="skills_used" expIndex={e._originalIndex ?? i} />
               </div>
               </div>
             </div>

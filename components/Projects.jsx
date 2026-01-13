@@ -10,11 +10,35 @@ import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib
 import SectionReviewActions from "./SectionReviewActions";
 import ProjectReviewActions, { useProjectHasChanges } from "./ProjectReviewActions";
 
-function norm(s){
+// Normalise une date vers le format YYYY-MM pour comparaison et sauvegarde
+// Gère : YYYY-MM, YYYY, MM/YYYY, YYYY/MM
+function normalizeDate(s){
   const m = (s || "").trim();
   if (!m) return "";
   if (m.toLowerCase() === "present") return "present";
-  return /^\d{4}(-\d{2})?$/.test(m) ? (m.length === 4 ? m + "-01" : m) : m;
+
+  // Format YYYY-MM ou YYYY
+  if (/^\d{4}(-\d{2})?$/.test(m)) {
+    return m.length === 4 ? `${m}-01` : m;
+  }
+
+  // Format avec slash : MM/YYYY ou YYYY/MM
+  if (m.includes("/")) {
+    const parts = m.split("/");
+    if (parts.length === 2) {
+      const [p1, p2] = parts;
+      // Si p1 a 4 chiffres -> YYYY/MM
+      if (/^\d{4}$/.test(p1) && /^\d{1,2}$/.test(p2)) {
+        return `${p1}-${p2.padStart(2, "0")}`;
+      }
+      // Si p2 a 4 chiffres -> MM/YYYY
+      if (/^\d{4}$/.test(p2) && /^\d{1,2}$/.test(p1)) {
+        return `${p2}-${p1.padStart(2, "0")}`;
+      }
+    }
+  }
+
+  return m;
 }
 
 /**
@@ -22,6 +46,8 @@ function norm(s){
  */
 function ProjectCard({ project, index, isEditing, onEdit, onDelete, cvT }) {
   const { hasChanges, isAdded } = useProjectHasChanges(project.name);
+  // Utiliser l'index original pour les mutations (edit/delete)
+  const originalIndex = project._originalIndex ?? index;
 
   // Classes conditionnelles pour le highlight
   const cardClasses = [
@@ -45,14 +71,14 @@ function ProjectCard({ project, index, isEditing, onEdit, onDelete, cvT }) {
       {/* Boutons review pour nouveau projet OU boutons edit en mode édition */}
       {hasChanges && !isEditing && (
         <div className="no-print absolute top-2 right-2 z-20">
-          <ProjectReviewActions projectIndex={index} projectName={project.name} />
+          <ProjectReviewActions projectIndex={originalIndex} projectName={project.name} />
         </div>
       )}
 
       {isEditing && (
         <div className="no-print absolute top-2 right-2 z-20 flex gap-2">
           <button type="button" onClick={() => onEdit(index)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3" /></button>
-          <button type="button" onClick={() => onDelete(index)} className="text-[11px] rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-red-500/40 transition-all duration-200"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3" /></button>
+          <button type="button" onClick={() => onDelete(originalIndex)} className="text-[11px] rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-red-500/40 transition-all duration-200"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3" /></button>
         </div>
       )}
 
@@ -72,7 +98,37 @@ function ProjectCard({ project, index, isEditing, onEdit, onDelete, cvT }) {
 
 export default function Projects(props){
   const { t } = useLanguage();
-  const projects = Array.isArray(props.projects) ? props.projects : [];
+  const rawProjects = Array.isArray(props.projects) ? props.projects : [];
+
+  // Tri par date décroissante (plus récent en premier)
+  // 1. Projets en cours en premier, triés par date de début (plus récent en premier)
+  // 2. Projets terminés ensuite, triés par date de fin (plus récent en premier)
+  // On garde _originalIndex pour que les mutations utilisent le bon index
+  const projects = React.useMemo(() => {
+    return rawProjects
+      .map((p, idx) => ({ ...p, _originalIndex: idx }))
+      .sort((a, b) => {
+        const aIsCurrent = !a.end_date || a.end_date === "present";
+        const bIsCurrent = !b.end_date || b.end_date === "present";
+
+        // Les projets en cours en premier
+        if (aIsCurrent && !bIsCurrent) return -1;
+        if (!aIsCurrent && bIsCurrent) return 1;
+
+        // Si les deux sont en cours, trier par start_date (plus récent en premier)
+        if (aIsCurrent && bIsCurrent) {
+          const startA = normalizeDate(a.start_date);
+          const startB = normalizeDate(b.start_date);
+          return startB.localeCompare(startA);
+        }
+
+        // Sinon, trier par end_date (plus récent en premier)
+        const endA = normalizeDate(a.end_date) || normalizeDate(a.start_date);
+        const endB = normalizeDate(b.end_date) || normalizeDate(b.start_date);
+        return endB.localeCompare(endA);
+      });
+  }, [rawProjects]);
+
   const sectionTitles = props.sectionTitles || {};
   const cvLanguage = props.cvLanguage || 'fr';
   const cvT = getTranslatorForCvLanguage(cvLanguage);
@@ -94,7 +150,7 @@ export default function Projects(props){
 
   function openEdit(i){
     const p = projects[i] || {};
-    const isCurrentProject = p.end_date === "present";
+    const isCurrentProject = !p.end_date || p.end_date === "present";
     setF({
       name: p.name || "",
       role: p.role || "",
@@ -104,18 +160,19 @@ export default function Projects(props){
       summary: p.summary || "",
       tech_stack: Array.isArray(p.tech_stack) ? p.tech_stack.join(", ") : (p.tech_stack || "")
     });
-    setEditIndex(i);
+    // Utiliser l'index original pour la mutation
+    setEditIndex(p._originalIndex);
   }
 
   async function save(){
     const p = {};
     if (f.name) p.name = f.name;
     if (f.role) p.role = f.role;
-    if (f.start) p.start_date = norm(f.start);
+    if (f.start) p.start_date = normalizeDate(f.start);
     if (f.inProgress) {
       p.end_date = "present";
     } else if (f.end) {
-      p.end_date = norm(f.end);
+      p.end_date = normalizeDate(f.end);
     }
     if (f.summary) p.summary = f.summary;
     const tech_stack = (f.tech_stack || "").split(",").map(t => t.trim()).filter(Boolean);
@@ -129,11 +186,11 @@ export default function Projects(props){
     const p = {};
     if (nf.name) p.name = nf.name;
     if (nf.role) p.role = nf.role;
-    if (nf.start) p.start_date = norm(nf.start);
+    if (nf.start) p.start_date = normalizeDate(nf.start);
     if (nf.inProgress) {
       p.end_date = "present";
     } else if (nf.end) {
-      p.end_date = norm(nf.end);
+      p.end_date = normalizeDate(nf.end);
     }
     if (nf.summary) p.summary = nf.summary;
     const tech_stack = (nf.tech_stack || "").split(",").map(t => t.trim()).filter(Boolean);
