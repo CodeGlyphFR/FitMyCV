@@ -4,6 +4,51 @@
   "schema": {
     "type": "object",
     "properties": {
+      "reasoning": {
+        "type": "object",
+        "description": "Analyse du document AVANT extraction - remplir cette section en premier",
+        "properties": {
+          "document_structure": {
+            "type": "string",
+            "description": "Description de la structure: nombre de pages, colonnes, sections identifiées, mise en page"
+          },
+          "detected_language": {
+            "type": "string",
+            "enum": ["fr", "en", "es", "de"],
+            "description": "The detected language code based on experience descriptions analysis"
+          },
+          "language_confirmation": {
+            "type": "string",
+            "description": "Explain HOW you detected the language: quote experience descriptions, list mixed-language content to translate"
+          },
+          "ocr_issues": {
+            "type": ["string", "null"],
+            "description": "Problèmes OCR détectés (caractères corrompus, texte mal encodé) et corrections à appliquer"
+          },
+          "key_observations": {
+            "type": "string",
+            "description": "Observations importantes: éléments ambigus, informations manquantes, sections inhabituelles"
+          },
+          "education_analysis": {
+            "type": "string",
+            "description": "For each item in education section: classify as education (school+degree), experience (company+job), or extras (certification/training)"
+          },
+          "extras_detection": {
+            "type": "string",
+            "description": "List hobbies, volunteering, availability, driving license, and other personal info found for extras"
+          },
+          "extraction_strategy": {
+            "type": "string",
+            "description": "Stratégie d'extraction: ordre de lecture, gestion des colonnes, regroupements à faire"
+          },
+          "skills_analysis": {
+            "type": "string",
+            "description": "For EACH skill: (1) Split compounds, (2) Translate if needed, (3) Ask: installable?→tool, language/discipline?→hard_skill, (4) Format: 'Python: LANGUAGE→hard_skill, 5yr→Advanced'"
+          }
+        },
+        "required": ["document_structure", "detected_language", "language_confirmation", "ocr_issues", "key_observations", "education_analysis", "extras_detection", "extraction_strategy", "skills_analysis"],
+        "additionalProperties": false
+      },
       "header": {
         "type": "object",
         "description": "Informations personnelles et contact",
@@ -36,7 +81,7 @@
         "type": ["object", "null"],
         "description": "Résumé professionnel",
         "properties": {
-          "description": { "type": ["string", "null"], "description": "Resume professionnel (1-3 phrases)" },
+          "description": { "type": ["string", "null"], "description": "REQUIRED: Professional summary 2-3 sentences. Generate if not present in CV!" },
           "years_experience": { "type": ["integer", "null"], "description": "Années d'expérience" },
           "domains": {
             "type": "array",
@@ -104,12 +149,12 @@
           "properties": {
             "title": { "type": "string", "description": "Intitulé du poste" },
             "company": { "type": "string", "description": "Entreprise" },
-            "department_or_client": { "type": ["string", "null"], "description": "Département ou client" },
+            "department_or_client": { "type": ["string", "null"], "description": "Organizational department (Direction IT, R&D, Finance) OR client name if consultant. NOT geographic!" },
             "start_date": { "type": "string", "description": "Date début (YYYY-MM)" },
             "end_date": { "type": ["string", "null"], "description": "Date fin (YYYY-MM ou null si actuel)" },
-            "city": { "type": ["string", "null"], "description": "Ville" },
-            "region": { "type": ["string", "null"], "description": "Région" },
-            "country_code": { "type": ["string", "null"], "description": "Code pays" },
+            "city": { "type": ["string", "null"], "description": "GEOGRAPHIC city (Paris, Lyon, Berlin). NOT a department!" },
+            "region": { "type": ["string", "null"], "description": "GEOGRAPHIC region/state (Île-de-France, California). NOT a department!" },
+            "country_code": { "type": ["string", "null"], "description": "ISO country code (FR, US, DE)" },
             "description": { "type": ["string", "null"], "description": "Description du poste" },
             "responsibilities": {
               "type": "array",
@@ -140,9 +185,9 @@
             "institution": { "type": "string", "description": "Etablissement ou organisme" },
             "degree": { "type": ["string", "null"], "description": "Niveau d'etude (ex: Master, Licence, Diplome d'ingenieur)" },
             "field_of_study": { "type": ["string", "null"], "description": "Domaine d'etude (ex: Informatique, Commerce)" },
-            "city": { "type": ["string", "null"], "description": "Ville" },
-            "region": { "type": ["string", "null"], "description": "Région" },
-            "country_code": { "type": ["string", "null"], "description": "Code pays" },
+            "city": { "type": ["string", "null"], "description": "GEOGRAPHIC city (Paris, Lyon, Berlin). NOT a department!" },
+            "region": { "type": ["string", "null"], "description": "GEOGRAPHIC region/state (Île-de-France, California). NOT a department!" },
+            "country_code": { "type": ["string", "null"], "description": "ISO country code (FR, US, DE)" },
             "start_date": { "type": ["string", "null"], "description": "Date début" },
             "end_date": { "type": ["string", "null"], "description": "Date fin" }
           },
@@ -165,7 +210,7 @@
       },
       "extras": {
         "type": "array",
-        "description": "Bénévolat, hobbies, disponibilité, remote, permis etc...",
+        "description": "ONLY: hobbies, certifications, volunteering, availability, driving license. NEVER put work experiences here - those go in 'experience' array!",
         "items": {
           "type": "object",
           "properties": {
@@ -198,7 +243,7 @@
         }
       }
     },
-    "required": ["header", "summary", "skills", "experience", "education", "languages", "extras", "projects"],
+    "required": ["reasoning", "header", "summary", "skills", "experience", "education", "languages", "extras", "projects"],
     "additionalProperties": false
   }
 }
