@@ -67,6 +67,7 @@ export default function OrphanedChangesDisplay() {
     header: t("cvSections.header") || "En-tête",
     experience: t("cvSections.experience") || "Expérience",
     skills: t("cvSections.skills") || "Compétences",
+    extras: t("cvSections.extras") || "Extras",
   };
 
   return (

@@ -37,15 +37,15 @@ export function normalizeBoolean(value) {
 /**
  * Retourne l'icône appropriée selon le type de création du CV
  */
-export function getCvIcon(createdBy, originalCreatedBy, className) {
-  // createdBy = 'translate-cv' => Translate icon (traduit)
+export function getCvIcon(createdBy, originalCreatedBy, className, isTranslated = false) {
+  // createdBy = 'translate-cv' OU isTranslated = true => Translate icon (traduit)
   // createdBy = 'generate-cv' => GPT icon (généré par IA)
   // createdBy = 'create-template' => GPT icon (CV modèle créé par IA)
   // createdBy = 'generate-cv-job-title' => Search icon (CV généré depuis titre de poste)
   // createdBy = 'improve-cv' => Rocket icon (CV amélioré par IA)
   // createdBy = 'import-pdf' => Import icon (importé depuis PDF)
   // createdBy = null => Add icon (créé manuellement)
-  if (createdBy === 'translate-cv') {
+  if (createdBy === 'translate-cv' || isTranslated) {
     return <img src="/icons/translate.png" alt="Translate" className={className} loading="eager" />;
   }
   if (createdBy === 'improve-cv') {

@@ -8,7 +8,7 @@ import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import { capitalizeSkillName } from "@/lib/utils/textFormatting";
-import BulletHighlight, { RemovedBulletsDisplay } from "./BulletHighlight";
+// BulletHighlight n'est plus utilisé - responsibilities/deliverables sont maintenant en field-level
 import SkillItemHighlight, { RemovedSkillsDisplay } from "./SkillItemHighlight";
 import SectionReviewActions from "./SectionReviewActions";
 import ExperienceReviewActions from "./ExperienceReviewActions";
@@ -232,55 +232,41 @@ export default function Experience(props){
                 ) : null}
 
                 <div className="grid gap-4 md:grid-cols-3">
-                  {/* Responsibilities */}
+                  {/* Responsibilities - UN SEUL changement pour tout le bloc */}
                   <div className="md:col-span-2">
                     {(Array.isArray(e.responsibilities) && e.responsibilities.length > 0) && (
-                      <ul className="list-disc pl-5 text-sm space-y-1">
-                        {e.responsibilities.map((r, j) => (
-                          <li key={j}>
-                            <BulletHighlight
-                              section="experience"
-                              field="responsibilities"
-                              expIndex={i}
-                              bulletText={r}
-                            >
-                              {r}
-                            </BulletHighlight>
-                          </li>
-                        ))}
-                      </ul>
+                      <ChangeHighlight
+                        section="experience"
+                        field="responsibilities"
+                        expIndex={i}
+                      >
+                        <ul className="list-disc pl-5 text-sm space-y-1">
+                          {e.responsibilities.map((r, j) => (
+                            <li key={j}>{r}</li>
+                          ))}
+                        </ul>
+                      </ChangeHighlight>
                     )}
-                    {/* Toujours afficher les responsabilités supprimées (même si tableau vide) */}
-                    <ul className="list-disc pl-5 text-sm space-y-1">
-                      <RemovedBulletsDisplay section="experience" field="responsibilities" expIndex={i} />
-                    </ul>
                   </div>
 
-                  {/* Deliverables */}
+                  {/* Deliverables - UN SEUL changement pour tout le bloc */}
                   <div className="md:col-span-1">
                     {(Array.isArray(e.deliverables) && e.deliverables.length > 0) && (
                       <>
                         <div className="text-sm font-medium mb-1">{cvT("cvSections.deliverables")}</div>
-                        <ul className="list-disc pl-5 text-sm space-y-1">
-                          {e.deliverables.map((d, j) => (
-                            <li key={j}>
-                              <BulletHighlight
-                                section="experience"
-                                field="deliverables"
-                                expIndex={i}
-                                bulletText={d}
-                              >
-                                {d}
-                              </BulletHighlight>
-                            </li>
-                          ))}
-                        </ul>
+                        <ChangeHighlight
+                          section="experience"
+                          field="deliverables"
+                          expIndex={i}
+                        >
+                          <ul className="list-disc pl-5 text-sm space-y-1">
+                            {e.deliverables.map((d, j) => (
+                              <li key={j}>{d}</li>
+                            ))}
+                          </ul>
+                        </ChangeHighlight>
                       </>
                     )}
-                    {/* Toujours afficher les résultats supprimés (même si tableau vide) */}
-                    <ul className="list-disc pl-5 text-sm space-y-1">
-                      <RemovedBulletsDisplay section="experience" field="deliverables" expIndex={i} />
-                    </ul>
                   </div>
                 </div>
               </div>

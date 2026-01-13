@@ -88,7 +88,7 @@ export default function CvGeneratorModal({
                       key={`gen-base-icon-${generatorBaseFile}-${generatorBaseItem.createdBy}`}
                       className="flex h-6 w-6 items-center justify-center shrink-0"
                     >
-                      {getCvIcon(generatorBaseItem.createdBy, generatorBaseItem.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
+                      {getCvIcon(generatorBaseItem.createdBy, generatorBaseItem.originalCreatedBy, "h-4 w-4", generatorBaseItem.isTranslated) || <DefaultCvIcon className="h-4 w-4" size={16} />}
                     </span>
                     <span className="min-w-0">
                       <ItemLabel
@@ -148,7 +148,7 @@ export default function CvGeneratorModal({
                           key={`gen-dropdown-icon-${item.file}-${item.createdBy}`}
                           className="flex h-6 w-6 items-center justify-center shrink-0"
                         >
-                          {getCvIcon(item.createdBy, item.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
+                          {getCvIcon(item.createdBy, item.originalCreatedBy, "h-4 w-4", item.isTranslated) || <DefaultCvIcon className="h-4 w-4" size={16} />}
                         </span>
                         <ItemLabel
                           item={item}

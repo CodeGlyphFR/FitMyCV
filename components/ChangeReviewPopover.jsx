@@ -151,13 +151,23 @@ export default function ChangeReviewPopover({
       style={{ top: position.top, left: position.left, zIndex: 99999 }}
     >
       <div className="px-3 pt-2.5 pb-2 space-y-2">
-        {/* Ancien texte pour les champs texte (summary, etc.) */}
-        {showBeforeText && change.beforeDisplay && (
-          <div className="max-w-[300px]">
+        {/* Ancien contenu - format différent selon le type de champ */}
+        {showBeforeText && change.beforeValue && (
+          <div className="max-w-[320px]">
             <p className="text-xs font-medium text-white/60 mb-1">{t("review.previousText") || "Texte précédent"} :</p>
-            <p className="text-xs text-white/50 italic leading-relaxed max-h-24 overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
-              {change.beforeDisplay}
-            </p>
+            {/* Pour responsibilities/deliverables: afficher en liste */}
+            {(change.field === 'responsibilities' || change.field === 'deliverables') && Array.isArray(change.beforeValue) ? (
+              <ul className="list-disc pl-4 text-sm text-white/50 italic leading-relaxed max-h-40 overflow-y-auto pr-2 space-y-0.5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
+                {change.beforeValue.map((item, idx) => (
+                  <li key={idx}>{item}</li>
+                ))}
+              </ul>
+            ) : (
+              /* Pour les autres champs (description, summary, etc.): texte simple */
+              <p className="text-sm text-white/50 italic leading-relaxed max-h-40 overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
+                {change.beforeDisplay || change.beforeValue}
+              </p>
+            )}
           </div>
         )}
 

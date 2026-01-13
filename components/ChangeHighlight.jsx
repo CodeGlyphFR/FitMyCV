@@ -82,13 +82,16 @@ export default function ChangeHighlight({
     setShowPopover(false);
   };
 
-  // Vérifier si c'est un champ texte avec before/after (comme le summary)
-  const hasTextDiff = change.beforeDisplay !== undefined &&
+  // Vérifier si c'est un champ texte simple (comme description, title, summary)
+  // EXCLURE responsibilities et deliverables qui sont des arrays affichés en liste
+  const isArrayField = field === 'responsibilities' || field === 'deliverables';
+  const hasTextDiff = !isArrayField &&
+                      change.beforeDisplay !== undefined &&
                       change.afterDisplay !== undefined &&
                       typeof change.beforeDisplay === 'string' &&
                       typeof change.afterDisplay === 'string';
 
-  // Pour les champs texte, afficher seulement le nouveau texte en vert
+  // Pour les champs texte simples, afficher seulement le nouveau texte en vert
   // L'ancien texte sera visible dans le popover
   if (hasTextDiff) {
     return (
@@ -116,19 +119,20 @@ export default function ChangeHighlight({
     );
   }
 
-  // Pour les autres types (arrays, objects), utiliser le wrapper classique
-  // Vérifier si on a un texte précédent à afficher dans le popover
-  const hasBeforeText = change.beforeDisplay && typeof change.beforeDisplay === 'string' && change.beforeDisplay.length > 0;
+  // Pour les arrays (responsibilities, deliverables) et autres types, utiliser un wrapper block
+  // qui préserve le layout du contenu enfant
+  const hasBeforeText = change.beforeValue !== undefined ||
+                        (change.beforeDisplay && typeof change.beforeDisplay === 'string' && change.beforeDisplay.length > 0);
 
   return (
     <>
-      <span
+      <div
         ref={highlightRef}
         onClick={handleClick}
-        className={`relative cursor-pointer inline bg-emerald-400/20 hover:bg-emerald-400/30 rounded px-1 transition-all duration-200 ${className}`}
+        className={`relative cursor-pointer text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 rounded px-1 py-0.5 transition-all duration-200 ${className}`}
       >
         {children}
-      </span>
+      </div>
 
       {/* Popover de review */}
       {showPopover && (
