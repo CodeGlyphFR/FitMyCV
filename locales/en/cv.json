@@ -341,6 +341,7 @@
     "allReviewed": "All changes reviewed",
     "processing": "Processing...",
     "reason": "Reason",
+    "previousText": "Previous text",
     "validateAndSave": "Validate and save",
     "validating": "Validating...",
     "pendingWarning": "{count} change(s) not reviewed. They will be accepted by default.",

@@ -82,32 +82,26 @@ export default function ChangeHighlight({
     setShowPopover(false);
   };
 
-  // Vérifier si on peut faire un diff inline (champ texte avec before/after)
+  // Vérifier si c'est un champ texte avec before/after (comme le summary)
   const hasTextDiff = change.beforeDisplay !== undefined &&
                       change.afterDisplay !== undefined &&
                       typeof change.beforeDisplay === 'string' &&
                       typeof change.afterDisplay === 'string';
 
-  // Pour les champs texte, afficher le diff inline
-  // On préserve le style du children (text-sm, etc.) via le className
+  // Pour les champs texte, afficher seulement le nouveau texte en vert
+  // L'ancien texte sera visible dans le popover
   if (hasTextDiff) {
     return (
       <>
         <span
           ref={highlightRef}
           onClick={handleClick}
-          className={`relative cursor-pointer ${className}`}
+          className={`relative cursor-pointer text-emerald-300 bg-emerald-500/10 rounded transition-all duration-200 hover:bg-emerald-500/20 ${className}`}
         >
-          {/* Diff inline - hérite des classes de style du parent */}
-          <InlineDiff
-            beforeText={change.beforeDisplay}
-            afterText={change.afterDisplay}
-            showRemoved={true}
-            className={`leading-relaxed ${className}`}
-          />
+          {change.afterDisplay}
         </span>
 
-        {/* Popover de review */}
+        {/* Popover de review avec l'ancien texte */}
         {showPopover && (
           <ChangeReviewPopover
             change={change}
@@ -115,6 +109,7 @@ export default function ChangeHighlight({
             onReject={handleReject}
             onClose={() => setShowPopover(false)}
             anchorRef={highlightRef}
+            showBeforeText={true}
           />
         )}
       </>
@@ -122,6 +117,9 @@ export default function ChangeHighlight({
   }
 
   // Pour les autres types (arrays, objects), utiliser le wrapper classique
+  // Vérifier si on a un texte précédent à afficher dans le popover
+  const hasBeforeText = change.beforeDisplay && typeof change.beforeDisplay === 'string' && change.beforeDisplay.length > 0;
+
   return (
     <>
       <span
@@ -140,6 +138,7 @@ export default function ChangeHighlight({
           onReject={handleReject}
           onClose={() => setShowPopover(false)}
           anchorRef={highlightRef}
+          showBeforeText={hasBeforeText}
         />
       )}
     </>

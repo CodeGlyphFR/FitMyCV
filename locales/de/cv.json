@@ -341,6 +341,7 @@
     "allReviewed": "Alle Änderungen überprüft",
     "processing": "Verarbeitung läuft...",
     "reason": "Grund",
+    "previousText": "Vorheriger Text",
     "validateAndSave": "Bestätigen und speichern",
     "validating": "Wird bestätigt...",
     "pendingWarning": "{count} nicht überprüfte Änderung(en). Sie werden standardmäßig akzeptiert.",

@@ -13,39 +13,31 @@ export default function OrphanedChangesDisplay() {
   const { t } = useLanguage();
   const { pendingChanges, isLatestVersion, acceptChange, rejectChange } = useHighlight();
 
-  // Sections qui ont un highlighting approprié dans l'UI
-  const handledSections = new Set([
-    "summary",
-    "skills", // hard_skills, soft_skills, tools, methodologies ont SkillItemHighlight
-  ]);
-
-  // Fields qui ont un highlighting approprié dans Experience
-  const handledExperienceFields = new Set([
-    "responsibilities",
-    "deliverables",
-    "skills_used",
-  ]);
-
-  // Trouver les changements orphelins (non gérés par l'UI)
+  // Filtrer pour n'afficher que les suppressions importantes et les move_to_projects
+  // Les compétences (skills) sont gérées visuellement dans leur section
   const orphanedChanges = pendingChanges.filter((c) => {
     if (c.status !== "pending") return false;
 
-    // Summary est géré
-    if (c.section === "summary") return false;
+    // Expériences supprimées
+    if (c.section === "experience" && c.changeType === "experience_removed") return true;
 
-    // Skills item-level sont gérés
-    if (c.section === "skills" && c.itemName) return false;
+    // Expériences déplacées vers projets
+    if (c.section === "experience" && c.changeType === "move_to_projects") return true;
 
-    // Experience bullets/skills_used sont gérés
-    if (c.section === "experience" && c.itemName && handledExperienceFields.has(c.field)) {
-      return false;
-    }
+    // Suppressions d'extras (certifications, publications, etc.)
+    if (c.section === "extras" && c.changeType === "removed") return true;
 
-    // Header current_title est géré inline dans Header.jsx
-    if (c.section === "header" && c.field === "current_title") return false;
+    // Suppressions de langues
+    if (c.section === "languages" && c.changeType === "removed") return true;
 
-    // Tout le reste est potentiellement orphelin
-    return true;
+    // Suppressions de formations
+    if (c.section === "education" && c.changeType === "removed") return true;
+
+    // Suppressions de projets
+    if (c.section === "projects" && c.changeType === "removed") return true;
+
+    // Tout le reste n'est pas affiché dans ce bloc
+    return false;
   });
 
   if (!isLatestVersion || orphanedChanges.length === 0) {
