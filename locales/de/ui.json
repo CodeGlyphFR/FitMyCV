@@ -69,6 +69,24 @@
       "deleteFailed": "Löschen nicht möglich:"
     }
   },
+  "bulkDeleteModal": {
+    "title": "Mehrfachlöschung",
+    "hint": "Strg+Klick auf Löschen-Button",
+    "selectCvs": "Wählen Sie die Lebensläufe zum Löschen aus:",
+    "selectAll": "Alle auswählen",
+    "deselectAll": "Alle abwählen",
+    "selected": "{count} Lebenslauf/Lebensläufe ausgewählt",
+    "currentCvDisabled": "Aktueller Lebenslauf (nicht löschbar)",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "deleting": "Wird gelöscht...",
+    "confirmMessage": "Möchten Sie wirklich {count} Lebenslauf/Lebensläufe löschen? Diese Aktion ist unwiderruflich.",
+    "errors": {
+      "deleteFailed": "Fehler beim Löschen:"
+    },
+    "success": "{count} Lebenslauf/Lebensläufe erfolgreich gelöscht",
+    "noCvsToDelete": "Keine anderen Lebensläufe zum Löschen"
+  },
   "export": {
     "noCvSelected": "Kein Lebenslauf für den Export ausgewählt.",
     "errors": {

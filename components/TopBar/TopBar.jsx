@@ -34,6 +34,7 @@ import FilterDropdown from "./components/FilterDropdown";
 import CvGeneratorModal from "./modals/CvGeneratorModal";
 import PdfImportModal from "./modals/PdfImportModal";
 import DeleteCvModal from "./modals/DeleteCvModal";
+import BulkDeleteCvModal from "./modals/BulkDeleteCvModal";
 import NewCvModal from "./modals/NewCvModal";
 import ExportPdfModal from "./modals/ExportPdfModal";
 
@@ -1132,7 +1133,14 @@ export default function TopBar() {
             </button>
           )}
           <button
-            onClick={() => modals.setOpenDelete(true)}
+            onClick={(e) => {
+              // Ctrl+clic (Windows/Linux) ou Cmd+clic (macOS) ouvre le modal de suppression multiple
+              if (e.ctrlKey || e.metaKey) {
+                modals.setOpenBulkDelete(true);
+              } else {
+                modals.setOpenDelete(true);
+              }
+            }}
             className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center h-8 w-8 order-12 md:order-9 transition-all duration-200"
             title={t("topbar.delete")}
           >
@@ -1207,6 +1215,21 @@ export default function TopBar() {
         }}
         currentItem={state.currentItem}
         current={state.current}
+        t={t}
+      />
+
+      <BulkDeleteCvModal
+        open={modals.openBulkDelete}
+        onClose={() => modals.setOpenBulkDelete(false)}
+        onConfirm={async (selectedFiles) => {
+          const result = await operations.deleteMultiple(selectedFiles);
+          if (result.success) {
+            modals.setOpenBulkDelete(false);
+          }
+          return result;
+        }}
+        items={state.items}
+        currentFile={state.current}
         t={t}
       />
 

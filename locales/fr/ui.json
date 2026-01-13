@@ -69,6 +69,24 @@
       "deleteFailed": "Suppression impossible:"
     }
   },
+  "bulkDeleteModal": {
+    "title": "Suppression multiple",
+    "hint": "Ctrl+clic sur le bouton supprimer",
+    "selectCvs": "Sélectionnez les CV à supprimer :",
+    "selectAll": "Tout sélectionner",
+    "deselectAll": "Tout désélectionner",
+    "selected": "{count} CV sélectionné(s)",
+    "currentCvDisabled": "CV actuel (non supprimable)",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "deleting": "Suppression...",
+    "confirmMessage": "Voulez-vous vraiment supprimer {count} CV ? Cette action est irréversible.",
+    "errors": {
+      "deleteFailed": "Erreur lors de la suppression :"
+    },
+    "success": "{count} CV supprimé(s) avec succès",
+    "noCvsToDelete": "Aucun autre CV à supprimer"
+  },
   "export": {
     "noCvSelected": "Aucun CV sélectionné pour l'export.",
     "errors": {
