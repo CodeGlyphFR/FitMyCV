@@ -34,7 +34,8 @@
       "generation": "Lebenslauf-Erstellung",
       "templateCreation": "Vorlage erstellen",
       "translateCv": "Lebenslauf-Übersetzung",
-      "improveCv": "Lebenslauf-Verbesserung"
+      "improveCv": "Lebenslauf-Verbesserung",
+      "jobTitleGeneration": "Jobtitel-Generierung"
     },
     "messages": {
       "task": "Aufgabe",

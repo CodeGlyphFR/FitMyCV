@@ -34,7 +34,8 @@
       "generation": "Generación CV",
       "templateCreation": "Creación plantilla",
       "translateCv": "Traducción CV",
-      "improveCv": "Mejora CV"
+      "improveCv": "Mejora CV",
+      "jobTitleGeneration": "Generación de título"
     },
     "messages": {
       "task": "Tarea",
