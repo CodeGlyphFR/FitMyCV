@@ -217,7 +217,10 @@
   },
   "sourceInfo": {
     "createdFromLink": "Created from link",
-    "createdFromPdf": "Created from PDF"
+    "createdFromPdf": "Created from PDF",
+    "jobOfferLink": "Job offer",
+    "sourceCv": "Source CV",
+    "createdOn": "Created on"
   },
   "translate": {
     "buttonTitle": "Translate CV",
@@ -341,6 +344,7 @@
     "allReviewed": "All changes reviewed",
     "processing": "Processing...",
     "reason": "Reason",
+    "previousText": "Previous text",
     "validateAndSave": "Validate and save",
     "validating": "Validating...",
     "pendingWarning": "{count} change(s) not reviewed. They will be accepted by default.",

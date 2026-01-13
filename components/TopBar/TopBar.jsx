@@ -14,6 +14,8 @@ import GptLogo from "@/components/ui/GptLogo";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
 import TaskQueueModal from "@/components/TaskQueueModal";
 import TaskQueueDropdown from "@/components/TaskQueueDropdown";
+import { usePipelineProgressContext } from "@/components/PipelineProgressProvider";
+import { calculateOfferProgress } from "@/hooks/usePipelineProgress";
 
 // Custom hooks
 import { useTopBarState } from "./hooks/useTopBarState";
@@ -32,6 +34,7 @@ import FilterDropdown from "./components/FilterDropdown";
 import CvGeneratorModal from "./modals/CvGeneratorModal";
 import PdfImportModal from "./modals/PdfImportModal";
 import DeleteCvModal from "./modals/DeleteCvModal";
+import BulkDeleteCvModal from "./modals/BulkDeleteCvModal";
 import NewCvModal from "./modals/NewCvModal";
 import ExportPdfModal from "./modals/ExportPdfModal";
 
@@ -64,6 +67,7 @@ export default function TopBar() {
   const { history: linkHistory, addLinksToHistory, deleteLink: deleteLinkHistory, refreshHistory: refreshLinkHistory } = useLinkHistory();
   const { currentStep, onboardingState } = useOnboarding();
   const { showCosts, getCost } = useCreditCost();
+  const { getProgress } = usePipelineProgressContext();
   const jobTitleCost = getCost("generate_from_job_title");
 
   // Main state hook
@@ -136,6 +140,10 @@ export default function TopBar() {
   const userMenuButtonRef = React.useRef(null);
   const filterButtonRef = React.useRef(null);
   const flexContainerRef = React.useRef(null);
+
+  // Long press refs pour le bouton de suppression (mobile)
+  const deleteLongPressTimerRef = React.useRef(null);
+  const deleteIsLongPressRef = React.useRef(false);
 
   // Filter state hook
   const filter = useFilterState();
@@ -224,10 +232,50 @@ export default function TopBar() {
     return { availableTypes, availableLanguages, availableDateRanges };
   }, [state.items, filter.filters]);
 
-  // Active tasks count
+  // Active tasks count (exclut calculate-match-score qui a sa propre animation)
   const activeTasksCount = React.useMemo(() => {
-    return tasks.filter(t => t.status === 'running' || t.status === 'queued').length;
+    return tasks.filter(t =>
+      (t.status === 'running' || t.status === 'queued') &&
+      t.type !== 'calculate-match-score'
+    ).length;
   }, [tasks]);
+
+  // Global task progress (0-100)
+  const globalTaskProgress = React.useMemo(() => {
+    // Exclut calculate-match-score qui a sa propre animation sur le bouton MatchScore
+    const activeTasks = tasks.filter(t =>
+      (t.status === 'running' || t.status === 'queued') &&
+      t.type !== 'calculate-match-score'
+    );
+    if (activeTasks.length === 0) return 0;
+
+    let totalProgress = 0;
+
+    activeTasks.forEach(task => {
+      if (task.type === 'cv_generation_v2') {
+        // Use SSE progress data for pipeline tasks
+        const sseProgress = getProgress(task.id);
+        if (sseProgress?.offers) {
+          const offers = Object.values(sseProgress.offers);
+          if (offers.length > 0) {
+            const avgOfferProgress = offers.reduce((sum, offer) => sum + calculateOfferProgress(offer), 0) / offers.length;
+            totalProgress += avgOfferProgress;
+          } else {
+            // Task started but no offers yet - 5% progress
+            totalProgress += 5;
+          }
+        } else {
+          // No SSE data yet - estimate based on task status
+          totalProgress += task.status === 'running' ? 10 : 0;
+        }
+      } else {
+        // For other task types, estimate progress based on status
+        totalProgress += task.status === 'running' ? 50 : 0;
+      }
+    });
+
+    return Math.round(totalProgress / activeTasks.length);
+  }, [tasks, getProgress]);
 
   // État pour l'onboarding : CV récemment généré à mettre en surbrillance
   const [recentlyGeneratedCv, setRecentlyGeneratedCv] = React.useState(null);
@@ -714,7 +762,7 @@ export default function TopBar() {
                     key={`icon-${state.current}-${state.resolvedCurrentItem.createdBy}-${state.iconRefreshKey}`}
                     className="flex h-6 w-6 items-center justify-center shrink-0"
                   >
-                    {getCvIcon(state.resolvedCurrentItem.createdBy, state.resolvedCurrentItem.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
+                    {getCvIcon(state.resolvedCurrentItem.createdBy, state.resolvedCurrentItem.originalCreatedBy, "h-4 w-4", state.resolvedCurrentItem.isTranslated) || <DefaultCvIcon className="h-4 w-4" size={16} />}
                   </span>
                 ) : null}
                 <span className="min-w-0">
@@ -817,7 +865,7 @@ export default function TopBar() {
                                 key={`dropdown-icon-${it.file}-${it.createdBy}`}
                                 className="flex h-6 w-6 items-center justify-center shrink-0"
                               >
-                                {getCvIcon(it.createdBy, it.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
+                                {getCvIcon(it.createdBy, it.originalCreatedBy, "h-4 w-4", it.isTranslated) || <DefaultCvIcon className="h-4 w-4" size={16} />}
                               </span>
                               <ItemLabel
                                 item={it}
@@ -968,18 +1016,14 @@ export default function TopBar() {
                   modals.setOpenTaskDropdown(!modals.openTaskDropdown);
                 }
               }}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 transition-all duration-200"
+              className={`rounded-lg border border-white/40 backdrop-blur-sm text-white text-sm hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 transition-all duration-200 ${activeTasksCount > 0 ? 'task-progress-button' : 'bg-white/20 hover:bg-white/30'}`}
+              style={activeTasksCount > 0 ? {
+                '--task-progress': `${globalTaskProgress}%`
+              } : undefined}
               type="button"
               title={t("topbar.taskQueue")}
             >
               <img src="/icons/task.png" alt={t("topbar.taskQueue")} className="h-4 w-4 " />
-              {activeTasksCount > 0 && (
-                <span
-                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-300 border-2 border-white flex items-center justify-center text-gray-900 text-[10px] font-bold drop-shadow-lg animate-pulse"
-                >
-                  {activeTasksCount}
-                </span>
-              )}
             </button>
 
             <TaskQueueDropdown
@@ -1093,11 +1137,44 @@ export default function TopBar() {
             </button>
           )}
           <button
-            onClick={() => modals.setOpenDelete(true)}
-            className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center h-8 w-8 order-12 md:order-9 transition-all duration-200"
+            onTouchStart={() => {
+              deleteIsLongPressRef.current = false;
+              deleteLongPressTimerRef.current = setTimeout(() => {
+                deleteIsLongPressRef.current = true;
+                // Ouvre le modal directement pendant le long press
+                modals.setOpenBulkDelete(true);
+              }, 1000);
+            }}
+            onTouchEnd={() => {
+              clearTimeout(deleteLongPressTimerRef.current);
+            }}
+            onTouchMove={() => {
+              clearTimeout(deleteLongPressTimerRef.current);
+              deleteIsLongPressRef.current = false;
+            }}
+            onTouchCancel={() => {
+              clearTimeout(deleteLongPressTimerRef.current);
+              deleteIsLongPressRef.current = false;
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+            onClick={(e) => {
+              // Si long press déjà traité, on ignore le clic
+              if (deleteIsLongPressRef.current) {
+                deleteIsLongPressRef.current = false;
+                return;
+              }
+              // Desktop: Ctrl+clic (Windows/Linux) ou Cmd+clic (macOS) → suppression multiple
+              if (e.ctrlKey || e.metaKey) {
+                modals.setOpenBulkDelete(true);
+              } else {
+                modals.setOpenDelete(true);
+              }
+            }}
+            className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center h-8 w-8 order-12 md:order-9 transition-all duration-200 select-none"
+            style={{ WebkitTouchCallout: 'none' }}
             title={t("topbar.delete")}
           >
-            <img src="/icons/delete.png" alt="Delete" className="h-4 w-4 " />
+            <img src="/icons/delete.png" alt="Delete" className="h-4 w-4 pointer-events-none select-none" draggable="false" />
           </button>
 
           {/* Credits Badge - Mode crédits-only uniquement (tout à droite) */}
@@ -1168,6 +1245,21 @@ export default function TopBar() {
         }}
         currentItem={state.currentItem}
         current={state.current}
+        t={t}
+      />
+
+      <BulkDeleteCvModal
+        open={modals.openBulkDelete}
+        onClose={() => modals.setOpenBulkDelete(false)}
+        onConfirm={async (selectedFiles) => {
+          const result = await operations.deleteMultiple(selectedFiles);
+          if (result.success) {
+            modals.setOpenBulkDelete(false);
+          }
+          return result;
+        }}
+        items={state.items}
+        currentFile={state.current}
         t={t}
       />
 
@@ -1342,6 +1434,31 @@ export default function TopBar() {
           animation: none;
           transform: scale(1.1);
           color: #3B82F6;
+        }
+
+        /* Task progress button - animatable CSS property */
+        @property --task-progress {
+          syntax: '<percentage>';
+          initial-value: 0%;
+          inherits: false;
+        }
+
+        .task-progress-button {
+          --task-progress: 0%;
+          background: conic-gradient(from 0deg, rgba(52, 211, 153, 0.7) 0% var(--task-progress), rgba(255, 255, 255, 0.2) var(--task-progress) 100%);
+          animation: task-button-pulse 2s ease-in-out infinite;
+          transition: --task-progress 0.5s ease-out;
+        }
+
+        @keyframes task-button-pulse {
+          0%, 100% {
+            opacity: 1;
+            box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+          }
+          50% {
+            opacity: 0.85;
+            box-shadow: 0 0 8px 2px rgba(52, 211, 153, 0.4);
+          }
         }
       `}</style>
     </>

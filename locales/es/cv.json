@@ -217,7 +217,10 @@
   },
   "sourceInfo": {
     "createdFromLink": "Creado desde enlace",
-    "createdFromPdf": "Creado desde PDF"
+    "createdFromPdf": "Creado desde PDF",
+    "jobOfferLink": "Oferta de empleo",
+    "sourceCv": "CV de origen",
+    "createdOn": "Creado el"
   },
   "translate": {
     "buttonTitle": "Traducir CV",
@@ -341,6 +344,7 @@
     "allReviewed": "Todos los cambios revisados",
     "processing": "Procesando...",
     "reason": "Razón",
+    "previousText": "Texto anterior",
     "validateAndSave": "Validar y guardar",
     "validating": "Validando...",
     "pendingWarning": "{count} cambio(s) sin revisar. Se aceptarán por defecto.",

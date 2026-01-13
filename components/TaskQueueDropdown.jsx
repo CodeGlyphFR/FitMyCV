@@ -241,7 +241,7 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
   const { tasks, clearCompletedTasks, cancelTask } = useBackgroundTasks();
   const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0 });
 
-  // Filtrer les tâches de calcul de match score (elles ne doivent apparaître que dans l'animation du bouton)
+  // Filtrer les tâches de calcul de match score (complètement transparentes - le bouton MatchScore a sa propre animation)
   const visibleTasks = tasks.filter(task => task.type !== 'calculate-match-score');
 
   // Sort tasks so running ones appear first (newest to oldest) and limit to 8

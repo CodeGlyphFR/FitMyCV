@@ -217,7 +217,10 @@
   },
   "sourceInfo": {
     "createdFromLink": "Aus einem Link erstellt",
-    "createdFromPdf": "Aus einem PDF erstellt"
+    "createdFromPdf": "Aus einem PDF erstellt",
+    "jobOfferLink": "Stellenangebot",
+    "sourceCv": "Quell-Lebenslauf",
+    "createdOn": "Erstellt am"
   },
   "translate": {
     "buttonTitle": "Lebenslauf übersetzen",
@@ -341,6 +344,7 @@
     "allReviewed": "Alle Änderungen überprüft",
     "processing": "Verarbeitung läuft...",
     "reason": "Grund",
+    "previousText": "Vorheriger Text",
     "validateAndSave": "Bestätigen und speichern",
     "validating": "Wird bestätigt...",
     "pendingWarning": "{count} nicht überprüfte Änderung(en). Sie werden standardmäßig akzeptiert.",

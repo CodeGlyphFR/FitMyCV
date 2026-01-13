@@ -82,32 +82,29 @@ export default function ChangeHighlight({
     setShowPopover(false);
   };
 
-  // Vérifier si on peut faire un diff inline (champ texte avec before/after)
-  const hasTextDiff = change.beforeDisplay !== undefined &&
+  // Vérifier si c'est un champ texte simple (comme description, title, summary)
+  // EXCLURE responsibilities et deliverables qui sont des arrays affichés en liste
+  const isArrayField = field === 'responsibilities' || field === 'deliverables';
+  const hasTextDiff = !isArrayField &&
+                      change.beforeDisplay !== undefined &&
                       change.afterDisplay !== undefined &&
                       typeof change.beforeDisplay === 'string' &&
                       typeof change.afterDisplay === 'string';
 
-  // Pour les champs texte, afficher le diff inline
-  // On préserve le style du children (text-sm, etc.) via le className
+  // Pour les champs texte simples, afficher seulement le nouveau texte en vert
+  // L'ancien texte sera visible dans le popover
   if (hasTextDiff) {
     return (
       <>
         <span
           ref={highlightRef}
           onClick={handleClick}
-          className={`relative cursor-pointer ${className}`}
+          className={`relative cursor-pointer text-emerald-300 bg-emerald-500/10 rounded transition-all duration-200 hover:bg-emerald-500/20 ${className}`}
         >
-          {/* Diff inline - hérite des classes de style du parent */}
-          <InlineDiff
-            beforeText={change.beforeDisplay}
-            afterText={change.afterDisplay}
-            showRemoved={true}
-            className={`leading-relaxed ${className}`}
-          />
+          {change.afterDisplay}
         </span>
 
-        {/* Popover de review */}
+        {/* Popover de review avec l'ancien texte */}
         {showPopover && (
           <ChangeReviewPopover
             change={change}
@@ -115,22 +112,27 @@ export default function ChangeHighlight({
             onReject={handleReject}
             onClose={() => setShowPopover(false)}
             anchorRef={highlightRef}
+            showBeforeText={true}
           />
         )}
       </>
     );
   }
 
-  // Pour les autres types (arrays, objects), utiliser le wrapper classique
+  // Pour les arrays (responsibilities, deliverables) et autres types, utiliser un wrapper block
+  // qui préserve le layout du contenu enfant
+  const hasBeforeText = change.beforeValue !== undefined ||
+                        (change.beforeDisplay && typeof change.beforeDisplay === 'string' && change.beforeDisplay.length > 0);
+
   return (
     <>
-      <span
+      <div
         ref={highlightRef}
         onClick={handleClick}
-        className={`relative cursor-pointer inline bg-emerald-400/20 hover:bg-emerald-400/30 rounded px-1 transition-all duration-200 ${className}`}
+        className={`relative cursor-pointer text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 rounded px-1 py-0.5 transition-all duration-200 ${className}`}
       >
         {children}
-      </span>
+      </div>
 
       {/* Popover de review */}
       {showPopover && (
@@ -140,6 +142,7 @@ export default function ChangeHighlight({
           onReject={handleReject}
           onClose={() => setShowPopover(false)}
           anchorRef={highlightRef}
+          showBeforeText={hasBeforeText}
         />
       )}
     </>

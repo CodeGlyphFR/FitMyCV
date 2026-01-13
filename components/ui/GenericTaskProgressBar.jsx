@@ -13,6 +13,7 @@ const TASK_TYPE_LABELS = {
   'template-creation': 'taskQueue.taskTypes.templateCreation',
   'translate-cv': 'taskQueue.taskTypes.translateCv',
   'improve-cv': 'taskQueue.taskTypes.improveCv',
+  'job-title-generation': 'taskQueue.taskTypes.jobTitleGeneration',
 };
 
 /**
@@ -24,6 +25,7 @@ const TASK_TYPE_FALLBACKS = {
   'template-creation': 'Création template',
   'translate-cv': 'Traduction CV',
   'improve-cv': 'Amélioration CV',
+  'job-title-generation': 'Génération intitulé',
 };
 
 /**
@@ -62,8 +64,9 @@ export default function GenericTaskProgressBar({
   const status = task.status;
   const isFinished = status === 'completed' || status === 'failed' || status === 'cancelled';
 
-  // Type de tâche traduit
-  const taskTypeLabel = t(TASK_TYPE_LABELS[task.type]) || TASK_TYPE_FALLBACKS[task.type] || task.type;
+  // Type de tâche traduit (vérifier que la clé existe avant d'appeler t())
+  const taskTypeKey = TASK_TYPE_LABELS[task.type];
+  const taskTypeLabel = taskTypeKey ? t(taskTypeKey) : (TASK_TYPE_FALLBACKS[task.type] || task.type);
 
   // Status label
   const statusLabel = status === 'completed'

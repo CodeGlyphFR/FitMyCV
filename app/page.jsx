@@ -96,7 +96,10 @@ export default async function Page(props){
   const versionParam = searchParams?.version;
   const versionNumber = versionParam ? parseInt(versionParam, 10) : null;
 
-  const cvResult = await getCV(session.user.id, versionNumber);
+  // Extraire le paramètre cv de l'URL (?cv=filename.json) pour ouvrir un CV spécifique
+  const cvParam = searchParams?.cv;
+
+  const cvResult = await getCV(session.user.id, versionNumber, cvParam);
 
   // Si aucun CV n'existe, afficher l'EmptyState
   if (!cvResult) {

@@ -29,7 +29,7 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
       const url = `/api/analytics/features?period=${period}${userId ? `&userId=${userId}` : ''}`;
       const res = await fetch(url);
       const data = await res.json();
-      setFeatures(data.features);
+      setFeatures(data.features || []);
     } catch (error) {
       console.error('Error fetching features:', error);
     } finally {

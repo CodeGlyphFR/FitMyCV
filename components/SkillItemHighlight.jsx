@@ -76,7 +76,7 @@ export default function SkillItemHighlight({
           isAdded
             ? "text-emerald-300 bg-emerald-500/20 rounded"
             : isRemoved
-            ? "line-through text-red-400/70 bg-red-500/10 rounded font-semibold"
+            ? "text-red-400 bg-red-500/15 rounded px-1 italic"
             : isLevelAdjusted
             ? "text-amber-300 bg-amber-500/20 rounded"
             : ""
@@ -116,49 +116,34 @@ export function useRemovedItems(section, field, expIndex) {
 }
 
 /**
- * Composant pour afficher les items supprimés
- * Ces items ne sont plus dans le tableau actuel mais doivent être affichés barrés
- * Le rendu s'adapte au type de champ (hard_skills, tools avec niveau, soft_skills/methodologies en tags)
+ * Composant pour afficher les items supprimés de manière condensée
+ * Affiche : "X éléments supprimés : Skill1, Skill2, Skill3"
+ * Chaque skill est cliquable pour review individuel
  */
 export function RemovedSkillsDisplay({ section, field, expIndex }) {
   const removedItems = useRemovedItems(section, field, expIndex);
 
   if (removedItems.length === 0) return null;
 
-  // Pour soft_skills, methodologies et skills_used, afficher comme tags inline
-  const isTagStyle = field === "soft_skills" || field === "methodologies" || field === "skills_used";
-
   return (
-    <>
+    <div className="w-full mt-2 text-sm text-red-400/80">
+      <span className="font-medium italic">Supprimé : </span>
       {removedItems.map((change, i) => (
-        isTagStyle ? (
-          // Tags inline (soft_skills, methodologies, skills_used)
+        <span key={`removed-${change.id || i}`}>
           <SkillItemHighlight
-            key={`removed-${change.id || i}`}
             section={section}
             field={field}
             itemName={change.itemName}
             expIndex={expIndex}
           >
-            <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
+            <span className="cursor-pointer hover:text-red-300 transition-colors">
               {change.itemName}
             </span>
           </SkillItemHighlight>
-        ) : (
-          // Hard skills et tools - wrapper dans un div comme les skills existants
-          <div key={`removed-${change.id || i}`} className="text-sm">
-            <SkillItemHighlight
-              section={section}
-              field={field}
-              itemName={change.itemName}
-              expIndex={expIndex}
-            >
-              <span className="font-semibold">{change.itemName}</span>
-            </SkillItemHighlight>
-          </div>
-        )
+          {i < removedItems.length - 1 && <span className="text-white/50">, </span>}
+        </span>
       ))}
-    </>
+    </div>
   );
 }
 
@@ -173,23 +158,12 @@ export function RemovedSkillsDisplayBlock({ field, title }) {
   // Ne rien afficher s'il n'y a pas d'items supprimés
   if (removedItems.length === 0) return null;
 
-  // Pour soft_skills et methodologies, afficher comme tags
-  const isTagStyle = field === "soft_skills" || field === "methodologies";
-
   return (
-    <div className="w-full rounded-2xl border border-white/15 p-3">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold">{title}</h3>
+    <div className="w-full rounded-2xl border border-red-500/20 bg-red-500/5 p-3">
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="font-semibold text-red-400/80">{title}</h3>
       </div>
-      {isTagStyle ? (
-        <div className="flex flex-wrap gap-1">
-          <RemovedSkillsDisplay section="skills" field={field} />
-        </div>
-      ) : (
-        <ul className="space-y-1">
-          <RemovedSkillsDisplay section="skills" field={field} />
-        </ul>
-      )}
+      <RemovedSkillsDisplay section="skills" field={field} />
     </div>
   );
 }

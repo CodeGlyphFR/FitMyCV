@@ -205,10 +205,43 @@ export function useCvOperations({
     }
   }
 
+  /**
+   * Supprime plusieurs CVs en une seule requête
+   * @param {string[]} files - Liste des noms de fichiers à supprimer
+   * @returns {Promise<{success: boolean, deletedCount?: number}>}
+   */
+  async function deleteMultiple(files) {
+    if (!files.length || isDeletingRef.current) return { success: false };
+
+    isDeletingRef.current = true;
+
+    try {
+      const res = await fetch("/api/cvs/delete-bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error((data && data.error) || "Erreur");
+
+      // Actualiser la liste
+      emitListChanged();
+      router.refresh();
+
+      return { success: true, deletedCount: data.deletedCount || 0 };
+    } catch (e) {
+      console.error('[deleteMultiple] Error:', e);
+      return { success: false, error: e?.message || String(e) };
+    } finally {
+      isDeletingRef.current = false;
+    }
+  }
+
   return {
     reload,
     selectFile,
     deleteCurrent,
+    deleteMultiple,
     emitListChanged,
   };
 }

@@ -69,6 +69,24 @@
       "deleteFailed": "Delete failed:"
     }
   },
+  "bulkDeleteModal": {
+    "title": "Bulk Delete",
+    "hint": "Ctrl+click on delete button",
+    "selectCvs": "Select CVs to delete:",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "selected": "{count} CV(s) selected",
+    "currentCvDisabled": "Current CV (cannot delete)",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "confirmMessage": "Are you sure you want to delete {count} CV(s)? This action is irreversible.",
+    "errors": {
+      "deleteFailed": "Deletion failed:"
+    },
+    "success": "{count} CV(s) deleted successfully",
+    "noCvsToDelete": "No other CVs to delete"
+  },
   "export": {
     "noCvSelected": "No CV selected for export.",
     "errors": {

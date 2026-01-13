@@ -52,12 +52,13 @@ export async function GET(request) {
         startDate.setDate(now.getDate() - 30);
     }
 
-    // Get CV generation tasks with their offers and subtasks
+    // Get CV generation tasks with their offers and subtasks (only completed ones)
     const tasks = await prisma.cvGenerationTask.findMany({
       where: {
         createdAt: {
           gte: startDate,
         },
+        status: 'completed',
       },
       orderBy: {
         createdAt: 'desc',

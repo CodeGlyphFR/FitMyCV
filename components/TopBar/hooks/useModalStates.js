@@ -10,6 +10,9 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
   // Delete modal
   const [openDelete, setOpenDelete] = React.useState(false);
 
+  // Bulk Delete modal
+  const [openBulkDelete, setOpenBulkDelete] = React.useState(false);
+
   // PDF Import modal
   const [openPdfImport, setOpenPdfImport] = React.useState(false);
   const [pdfFile, setPdfFile] = React.useState(null);
@@ -351,6 +354,10 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     // Delete modal
     openDelete,
     setOpenDelete,
+
+    // Bulk Delete modal
+    openBulkDelete,
+    setOpenBulkDelete,
 
     // PDF Import
     openPdfImport,
