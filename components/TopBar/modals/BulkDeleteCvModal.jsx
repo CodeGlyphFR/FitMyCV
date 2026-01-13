@@ -47,10 +47,10 @@ export default function BulkDeleteCvModal({
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
 
-  // Filtrer les items pour exclure le CV actuel
+  // Tous les items sont supprimables (y compris le CV actuel)
   const deletableItems = React.useMemo(() => {
-    return items.filter((item) => item.file !== currentFile);
-  }, [items, currentFile]);
+    return items;
+  }, [items]);
 
   // Calculer les types disponibles parmi les items supprimables
   const availableTypes = React.useMemo(() => {

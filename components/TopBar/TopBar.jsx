@@ -141,6 +141,10 @@ export default function TopBar() {
   const filterButtonRef = React.useRef(null);
   const flexContainerRef = React.useRef(null);
 
+  // Long press refs pour le bouton de suppression (mobile)
+  const deleteLongPressTimerRef = React.useRef(null);
+  const deleteIsLongPressRef = React.useRef(false);
+
   // Filter state hook
   const filter = useFilterState();
 
@@ -1133,18 +1137,44 @@ export default function TopBar() {
             </button>
           )}
           <button
+            onTouchStart={() => {
+              deleteIsLongPressRef.current = false;
+              deleteLongPressTimerRef.current = setTimeout(() => {
+                deleteIsLongPressRef.current = true;
+                // Ouvre le modal directement pendant le long press
+                modals.setOpenBulkDelete(true);
+              }, 1000);
+            }}
+            onTouchEnd={() => {
+              clearTimeout(deleteLongPressTimerRef.current);
+            }}
+            onTouchMove={() => {
+              clearTimeout(deleteLongPressTimerRef.current);
+              deleteIsLongPressRef.current = false;
+            }}
+            onTouchCancel={() => {
+              clearTimeout(deleteLongPressTimerRef.current);
+              deleteIsLongPressRef.current = false;
+            }}
+            onContextMenu={(e) => e.preventDefault()}
             onClick={(e) => {
-              // Ctrl+clic (Windows/Linux) ou Cmd+clic (macOS) ouvre le modal de suppression multiple
+              // Si long press déjà traité, on ignore le clic
+              if (deleteIsLongPressRef.current) {
+                deleteIsLongPressRef.current = false;
+                return;
+              }
+              // Desktop: Ctrl+clic (Windows/Linux) ou Cmd+clic (macOS) → suppression multiple
               if (e.ctrlKey || e.metaKey) {
                 modals.setOpenBulkDelete(true);
               } else {
                 modals.setOpenDelete(true);
               }
             }}
-            className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center h-8 w-8 order-12 md:order-9 transition-all duration-200"
+            className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center h-8 w-8 order-12 md:order-9 transition-all duration-200 select-none"
+            style={{ WebkitTouchCallout: 'none' }}
             title={t("topbar.delete")}
           >
-            <img src="/icons/delete.png" alt="Delete" className="h-4 w-4 " />
+            <img src="/icons/delete.png" alt="Delete" className="h-4 w-4 pointer-events-none select-none" draggable="false" />
           </button>
 
           {/* Credits Badge - Mode crédits-only uniquement (tout à droite) */}
