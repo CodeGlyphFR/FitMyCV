@@ -26,7 +26,7 @@
 
 ## Tes 7 missions
 
-1. **SUPPRIMER** les competences non pertinentes (score ≤ 5)
+1. **SUPPRIMER** les competences non mentionnees dans l'offre (match semantique)
 2. **AJUSTER** les proficiency selon l'experience du candidat
 3. **NETTOYER** les noms (parentheses, phrases → mots-cles, max 3 mots)
 4. **SPLITTER** les competences multiples (slash, virgule, "et")
