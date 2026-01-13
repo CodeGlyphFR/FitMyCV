@@ -132,6 +132,51 @@ export async function GET(request) {
       lastUsedAt: stats.lastUsedAt,
     }));
 
+    // Add CV generation stats from BackgroundTask (cv_generation_v2)
+    // Note: createdAt/updatedAt are BigInt (Unix timestamp in ms) in BackgroundTask
+    const taskWhereClause = {
+      type: 'cv_generation_v2',
+      status: 'completed',
+      ...(startDate ? { createdAt: { gte: BigInt(startDate.getTime()) } } : {}),
+      ...(userId ? { userId } : {}),
+    };
+
+    const cvGenerationTasks = await prisma.backgroundTask.findMany({
+      where: taskWhereClause,
+      select: {
+        userId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (cvGenerationTasks.length > 0) {
+      const userIds = new Set();
+      let totalDuration = 0;
+      let lastUsedAt = Number(cvGenerationTasks[0].createdAt);
+
+      cvGenerationTasks.forEach(task => {
+        if (task.userId) userIds.add(task.userId);
+        // Calculate duration from createdAt to updatedAt (both are BigInt timestamps)
+        if (task.createdAt && task.updatedAt) {
+          totalDuration += Number(task.updatedAt) - Number(task.createdAt);
+        }
+        const taskCreatedAt = Number(task.createdAt);
+        if (taskCreatedAt > lastUsedAt) {
+          lastUsedAt = taskCreatedAt;
+        }
+      });
+
+      features.push({
+        featureName: 'gpt_cv_generation',
+        totalUsage: cvGenerationTasks.length,
+        totalDuration,
+        avgDuration: cvGenerationTasks.length > 0 ? Math.round(totalDuration / cvGenerationTasks.length) : 0,
+        userCount: userIds.size,
+        lastUsedAt: new Date(lastUsedAt),
+      });
+    }
+
     // Sort by total usage
     features.sort((a, b) => b.totalUsage - a.totalUsage);
 
