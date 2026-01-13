@@ -36,6 +36,10 @@ export default function OrphanedChangesDisplay() {
     // Suppressions de projets
     if (c.section === "projects" && c.changeType === "removed") return true;
 
+    // Ajouts de projets (nouveaux projets créés)
+    // Affiché ici ET visuellement dans la section Projects
+    if (c.section === "projects" && c.changeType === "added") return true;
+
     // Tout le reste n'est pas affiché dans ce bloc
     return false;
   });
@@ -97,13 +101,6 @@ export default function OrphanedChangesDisplay() {
                     <div className="text-sm text-white/80 truncate">
                       {change.change || change.field || "Modification"}
                     </div>
-                    {change.afterDisplay && (
-                      <div className="text-xs text-emerald-400 truncate mt-0.5">
-                        → {typeof change.afterDisplay === 'string'
-                            ? change.afterDisplay.substring(0, 50) + (change.afterDisplay.length > 50 ? '...' : '')
-                            : JSON.stringify(change.afterDisplay).substring(0, 50)}
-                      </div>
-                    )}
                     {change.reason && (
                       <div className="text-xs text-white/50 mt-0.5 italic">
                         {t("review.reason") || "Raison"} : {change.reason}

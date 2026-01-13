@@ -4,12 +4,12 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 
 /**
- * Liste des étapes du pipeline dans l'ordre
+ * Liste des étapes du pipeline CV Generation V2 dans l'ordre
  */
 const PIPELINE_STEPS = ['extraction', 'classify', 'experiences', 'projects', 'extras', 'skills', 'summary', 'recompose'];
 
 /**
- * Poids de chaque étape pour le calcul du pourcentage
+ * Poids de chaque étape pour le calcul du pourcentage (CV Generation)
  */
 const STEP_WEIGHTS = {
   extraction: 10,
@@ -20,6 +20,23 @@ const STEP_WEIGHTS = {
   skills: 15,
   summary: 10,
   recompose: 10,
+};
+
+/**
+ * Liste des étapes du pipeline CV Improvement V2 dans l'ordre
+ */
+const IMPROVEMENT_STEPS = ['preprocess', 'classify_skills', 'experiences', 'projects', 'summary', 'finalize'];
+
+/**
+ * Poids de chaque étape pour le calcul du pourcentage (CV Improvement)
+ */
+const IMPROVEMENT_STEP_WEIGHTS = {
+  preprocess: 15,
+  classify_skills: 15,
+  experiences: 30,
+  projects: 20,
+  summary: 10,
+  finalize: 10,
 };
 
 /**
@@ -295,6 +312,92 @@ export function usePipelineProgress() {
         }
       } catch (err) {
         console.error('[usePipelineProgress] Erreur parsing completed:', err);
+      }
+    });
+
+    // ============================================================
+    // Événements CV Improvement V2
+    // ============================================================
+
+    // Événement progression amélioration
+    eventSource.addEventListener('cv_improvement:progress', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const { taskId, stage, step, status, current, total, itemType } = data;
+
+        setProgressMap(prev => {
+          const task = prev[taskId] || { stages: {}, completedSteps: {}, status: 'running', type: 'cv_improvement' };
+          const completedSteps = { ...task.completedSteps };
+
+          // Si l'étape est terminée, la marquer
+          if (status === 'completed') {
+            completedSteps[step] = true;
+          }
+
+          return {
+            ...prev,
+            [taskId]: {
+              ...task,
+              type: 'cv_improvement',
+              currentStage: stage,
+              currentStep: step,
+              currentItem: current ?? null,
+              totalItems: total ?? null,
+              itemType: itemType ?? null,
+              completedSteps,
+              status: 'running',
+              lastUpdate: Date.now(),
+            },
+          };
+        });
+      } catch (err) {
+        console.error('[usePipelineProgress] Erreur parsing cv_improvement:progress:', err);
+      }
+    });
+
+    // Événement amélioration terminée
+    eventSource.addEventListener('cv_improvement:completed', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const { taskId, changesCount, pipelineVersion, stageMetrics } = data;
+
+        updateTaskProgress(taskId, {
+          type: 'cv_improvement',
+          status: 'completed',
+          changesCount,
+          pipelineVersion,
+          stageMetrics,
+        });
+
+        // Déclencher le rafraîchissement
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('cv_improvement:task_completed', { detail: { taskId } }));
+          window.dispatchEvent(new Event('cv:list:changed'));
+        }
+      } catch (err) {
+        console.error('[usePipelineProgress] Erreur parsing cv_improvement:completed:', err);
+      }
+    });
+
+    // Événement amélioration échouée
+    eventSource.addEventListener('cv_improvement:failed', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const { taskId, error } = data;
+
+        const isCancelled = error === 'Task cancelled' || error?.includes('cancelled');
+
+        updateTaskProgress(taskId, {
+          type: 'cv_improvement',
+          status: isCancelled ? 'cancelled' : 'failed',
+          error,
+        });
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('cv:list:changed'));
+        }
+      } catch (err) {
+        console.error('[usePipelineProgress] Erreur parsing cv_improvement:failed:', err);
       }
     });
 

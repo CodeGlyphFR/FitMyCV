@@ -77,6 +77,25 @@ export async function GET(request) {
         }
       };
 
+      // Handlers pour CV Improvement v2
+      const handleCvImprovementProgress = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('cv_improvement:progress', { ...data, timestamp: Date.now() });
+        }
+      };
+
+      const handleCvImprovementCompleted = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('cv_improvement:completed', { ...data, timestamp: Date.now() });
+        }
+      };
+
+      const handleCvImprovementFailed = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('cv_improvement:failed', { ...data, timestamp: Date.now() });
+        }
+      };
+
       // S'abonner aux événements
       dbEmitter.on('task:updated', handleTaskUpdate);
       dbEmitter.on('cv:updated', handleCvUpdate);
@@ -85,6 +104,9 @@ export async function GET(request) {
       dbEmitter.on('cv_generation_v2:offer_completed', handleCvGenerationOfferCompleted);
       dbEmitter.on('cv_generation_v2:offer_failed', handleCvGenerationOfferFailed);
       dbEmitter.on('cv_generation_v2:completed', handleCvGenerationCompleted);
+      dbEmitter.on('cv_improvement:progress', handleCvImprovementProgress);
+      dbEmitter.on('cv_improvement:completed', handleCvImprovementCompleted);
+      dbEmitter.on('cv_improvement:failed', handleCvImprovementFailed);
 
       // Envoyer un message de connexion réussie
       sendEvent('connected', { userId, timestamp: Date.now() });
@@ -98,6 +120,9 @@ export async function GET(request) {
         dbEmitter.off('cv_generation_v2:offer_completed', handleCvGenerationOfferCompleted);
         dbEmitter.off('cv_generation_v2:offer_failed', handleCvGenerationOfferFailed);
         dbEmitter.off('cv_generation_v2:completed', handleCvGenerationCompleted);
+        dbEmitter.off('cv_improvement:progress', handleCvImprovementProgress);
+        dbEmitter.off('cv_improvement:completed', handleCvImprovementCompleted);
+        dbEmitter.off('cv_improvement:failed', handleCvImprovementFailed);
         controller.close();
       });
 

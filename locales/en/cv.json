@@ -264,7 +264,12 @@
     "calculatingScore": "Calculating score...",
     "showMore": "more",
     "showLess": "Show less",
-    "languageNote": "Analysis and suggestions are displayed in the CV's language, not the interface language."
+    "languageNote": "Analysis and suggestions are displayed in the CV's language, not the interface language.",
+    "noSelection": "Select at least one improvement",
+    "deselect": "Deselect",
+    "cancel": "Cancel",
+    "contextPlaceholder": "Add context (optional)...",
+    "skillsAddedSuccess": "Skills added successfully"
   },
   "changes": {
     "title": "Change History",

@@ -264,7 +264,12 @@
     "calculatingScore": "Calculando puntuación...",
     "showMore": "más",
     "showLess": "Mostrar menos",
-    "languageNote": "El análisis y las sugerencias se muestran en el idioma del CV, no en el idioma de la interfaz."
+    "languageNote": "El análisis y las sugerencias se muestran en el idioma del CV, no en el idioma de la interfaz.",
+    "noSelection": "Seleccione al menos una mejora",
+    "deselect": "Deseleccionar",
+    "cancel": "Cancelar",
+    "contextPlaceholder": "Añadir contexto (opcional)...",
+    "skillsAddedSuccess": "Competencias añadidas con éxito"
   },
   "changes": {
     "title": "Historial de cambios",

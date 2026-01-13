@@ -559,6 +559,37 @@ const AI_MODEL_SETTINGS = [
     category: 'ai_models',
     description: 'Pipeline v2: Modèle pour génération du summary',
   },
+  // Pipeline Amélioration CV v2 - Models par stage
+  {
+    settingName: 'model_improve_preprocess',
+    value: 'gpt-4o-mini',
+    category: 'ai_models',
+    description: 'Pipeline Amélioration v2: Modèle pour classifier les suggestions',
+  },
+  {
+    settingName: 'model_improve_experience',
+    value: 'gpt-4o-mini',
+    category: 'ai_models',
+    description: 'Pipeline Amélioration v2: Modèle pour améliorer une expérience',
+  },
+  {
+    settingName: 'model_improve_project',
+    value: 'gpt-4o-mini',
+    category: 'ai_models',
+    description: 'Pipeline Amélioration v2: Modèle pour améliorer ou créer un projet',
+  },
+  {
+    settingName: 'model_improve_summary',
+    value: 'gpt-4o-mini',
+    category: 'ai_models',
+    description: 'Pipeline Amélioration v2: Modèle pour mettre à jour le summary',
+  },
+  {
+    settingName: 'model_improve_classify_skills',
+    value: 'gpt-4o-mini',
+    category: 'ai_models',
+    description: 'Pipeline Amélioration v2: Modèle pour classifier les skills ajoutées',
+  },
 ];
 
 // ============================================================================

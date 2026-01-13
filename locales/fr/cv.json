@@ -264,7 +264,12 @@
     "calculatingScore": "Calcul du score en cours...",
     "showMore": "autres",
     "showLess": "Voir moins",
-    "languageNote": "L'analyse et les suggestions sont affichées dans la langue du CV, pas dans la langue de l'interface."
+    "languageNote": "L'analyse et les suggestions sont affichées dans la langue du CV, pas dans la langue de l'interface.",
+    "noSelection": "Sélectionnez au moins une amélioration",
+    "deselect": "Désélectionner",
+    "cancel": "Annuler",
+    "contextPlaceholder": "Ajoutez du contexte (optionnel)...",
+    "skillsAddedSuccess": "Compétences ajoutées avec succès"
   },
   "changes": {
     "title": "Historique des modifications",

@@ -48,34 +48,63 @@ Avant de supprimer une competence, verifier si elle appartient au **MEME DOMAINE
 
 ### Classification stricte (mutuellement exclusive)
 
-| Categorie | Definition | Exemples |
-|-----------|------------|----------|
-| hard_skills | Domaine d'expertise | JavaScript, Data Analysis, SEO, Comptabilite, Gestion de projet |
-| soft_skills | Qualite comportementale | Leadership, Communication, Autonomie, Adaptabilite |
-| tools | Logiciel qu'on installe | VS Code, Docker, Excel, Figma, Jira, AWS |
-| methodologies | Framework/methode formelle | Agile, Scrum, CI/CD, Lean, ISO 9001 |
+**ARBRE DE DECISION** - Poser ces questions dans l'ordre :
 
-### Erreurs frequentes
+1. **Est-ce une qualite personnelle/comportementale ?** (trait de personnalite, attitude)
+   → OUI = `soft_skills` (Leadership, Communication, Autonomie, Rigueur, Adaptabilite)
 
-| ERREUR | CORRECTION |
-|--------|------------|
-| Autonomie → methodologies | → soft_skills |
-| Communication → methodologies | → soft_skills |
-| Gestion de projet → methodologies | → hard_skills (domaine) |
-| Docker → hard_skills | → tools (logiciel) |
-| **Supprimer OpenAI API pour poste GenAI** | → **NE JAMAIS FAIRE** |
-| **Supprimer Git pour poste dev** | → **NE JAMAIS FAIRE** |
+2. **Est-ce un logiciel/service/plateforme qu'on installe, configure ou auquel on s'abonne ?**
+   → OUI = `tools` (Docker, AWS, Jira, Figma, VS Code, OpenAI API, Notion)
 
-### Logiciels par categorie (tous → tools)
+3. **Est-ce un framework de travail, une methode formelle, une norme ou un processus documente ?**
+   → OUI = `methodologies` (Scrum, Agile, CI/CD, Lean, ISO 9001, TDD, DevOps)
 
-- **Bureautique :** Excel, Word, PowerPoint, Google Sheets
-- **CAO :** CATIA, SolidWorks, AutoCAD
-- **Design :** Photoshop, Figma, Sketch
-- **Dev :** VS Code, Git, Docker, Jenkins
-- **Cloud :** AWS, Azure, GCP
-- **IA/LLM :** OpenAI API, Claude API, Cursor, Copilot
+4. **Est-ce un savoir-faire technique, un langage, un domaine d'expertise ?**
+   → OUI = `hard_skills` (JavaScript, Python, SEO, Data Analysis, Gestion de projet, UX Design)
 
-**Regle simple :** Si c'est un logiciel qu'on installe → tools
+| Categorie | Question cle | Exemples |
+|-----------|--------------|----------|
+| soft_skills | "Est-ce un trait de personnalite ?" | Leadership, Communication, Autonomie, Rigueur, Esprit d'equipe |
+| tools | "Ca s'installe ou on s'y connecte ?" | Docker, AWS, Jira, Excel, Figma, Git, OpenAI API, Slack |
+| methodologies | "C'est une methode/processus formel ?" | Scrum, Agile, CI/CD, Lean, Kanban, TDD, SAFe |
+| hard_skills | "C'est un savoir-faire technique ?" | JavaScript, Python, SEO, Machine Learning, Gestion de projet |
+
+### Erreurs frequentes A EVITER
+
+| ERREUR COURANTE | POURQUOI C'EST FAUX | CORRECTION |
+|-----------------|---------------------|------------|
+| Docker → hard_skills | Docker est un logiciel qu'on installe | → `tools` |
+| AWS → hard_skills | AWS est une plateforme/service | → `tools` |
+| Git → hard_skills | Git est un logiciel de versioning | → `tools` |
+| Autonomie → methodologies | C'est un trait de personnalite | → `soft_skills` |
+| Communication → methodologies | C'est un trait de personnalite | → `soft_skills` |
+| Gestion de projet → methodologies | C'est un domaine d'expertise | → `hard_skills` |
+| DevOps → tools | DevOps est une approche/methodologie | → `methodologies` |
+| CI/CD → tools | CI/CD est un processus/methode | → `methodologies` |
+
+### Exemples par categorie (reference)
+
+**tools** (logiciels/services) :
+- Bureautique : Excel, Word, PowerPoint, Google Sheets, Notion
+- Design : Photoshop, Figma, Sketch, Canva
+- Dev : VS Code, Git, Docker, Jenkins, GitHub, GitLab
+- Cloud : AWS, Azure, GCP, Heroku, Vercel
+- IA/API : OpenAI API, Claude API, Cursor, Copilot, Hugging Face
+- Gestion : Jira, Trello, Asana, Monday, Slack
+
+**methodologies** (methodes/processus) :
+- Agile, Scrum, Kanban, SAFe, Lean
+- CI/CD, TDD, BDD, DevOps, GitFlow
+- ISO 9001, ITIL, Six Sigma
+
+**hard_skills** (savoir-faire techniques) :
+- Langages : JavaScript, Python, Java, SQL, TypeScript
+- Domaines : Machine Learning, Data Analysis, SEO, UX Design, Cybersecurite
+- Metiers : Gestion de projet, Architecture logicielle, Business Analysis
+
+**soft_skills** (qualites personnelles) :
+- Leadership, Communication, Autonomie, Adaptabilite
+- Rigueur, Esprit d'equipe, Resolution de problemes, Creativite
 
 ### Niveaux
 
@@ -97,7 +126,11 @@ Avant de supprimer une competence, verifier si elle appartient au **MEME DOMAINE
 [Verbe infinitif] + [Tache precise] + [Resultat chiffre si disponible]
 ```
 
-**Maximum 5 bullets** par experience.
+**Maximum 5 bullets** par experience (responsibilities ET deliverables).
+
+**INTERDIT d'ajouter des bullets sans raison** : Si une experience a 2 bullets, elle reste a 2 bullets. Ne jamais "remplir" jusqu'a 5.
+
+**Strategie de remplacement** : Si un ajout est demande ET que le champ contient deja 5 elements, identifier l'element le moins pertinent pour l'offre d'emploi et le remplacer.
 
 ### Verbes d'action
 
@@ -175,10 +208,67 @@ Toute information DOIT etre :
 
 ---
 
-## 6. SECTIONS A NE PAS TOUCHER
+## 6. SECTIONS MODIFIABLES ET INTERDITES (POUR L'AMÉLIORATION)
 
-- education (sauf reordonnancement)
-- languages (sauf reordonnancement)
-- projects
-- extras
-- Informations de contact
+### Sections MODIFIABLES
+
+- **summary** : Le resume peut etre enrichi avec le contexte utilisateur
+- **experience** : Les experiences professionnelles
+- **projects** : Les projets personnels
+
+### Sections INTERDITES (NE JAMAIS MODIFIER)
+
+- **skills** : Les competences (hard_skills, soft_skills, tools, methodologies) ne doivent jamais etre modifiees
+- **header** : Le titre et les informations de contact ne doivent jamais etre modifies
+- **education** : La formation ne doit jamais etre modifiee
+- **languages** : Les langues ne doivent jamais etre modifiees
+- **extras** : Les certifications et extras ne doivent jamais etre modifies
+
+---
+
+## 7. REGLES DE MODIFICATION DU SUMMARY
+
+### Structure du summary (40-60 mots, 2-3 phrases)
+
+1. [TOTAL] ans d'experience en [DOMAINE PRINCIPAL DU CV]
+2. Competences transferables OU orientation vers le domaine cible
+3. Element differenciateur ou realisation majeure
+
+### Templates par profil
+
+**Junior (< 3 ans)** :
+> "[Diplome] avec [X] experience(s) en [domaine]. Competences en [skill 1, 2, 3]. [Objectif]."
+
+**Confirme (3-10 ans)** :
+> "[X] ans d'experience en [domaine], specialise en [expertise]. [Realisation majeure]."
+
+**Senior (> 10 ans)** :
+> "[Titre] avec [X]+ ans d'experience. Expert en [domaines]. [Impact strategique majeur]."
+
+### Champs du summary modifiables
+
+| Champ | Description | Modification autorisee |
+|-------|-------------|----------------------|
+| `description` | Le "Who am I" (2-3 phrases) | Reformuler, enrichir avec contexte utilisateur |
+| `domains` | Domaines d'expertise (3-5 items) | Ajouter si mentionne dans contexte, reordonner |
+| `key_strengths` | Forces cles (3-5 items) | Ajouter si prouve par contexte, reordonner |
+
+### Regles anti-hallucination pour le summary
+
+| Tu PEUX | Tu NE PEUX PAS |
+|---------|----------------|
+| Ajouter un domaine si le contexte utilisateur le mentionne | Inventer un domaine non mentionne |
+| Ajouter une force cle si le contexte utilisateur la prouve | Augmenter les annees d'experience |
+| Reformuler pour mieux matcher l'offre | Ajouter des realisations non mentionnees |
+| Aligner le vocabulaire avec l'offre | Changer le nombre d'annees d'experience |
+| Mettre en avant un accomplissement fourni par l'utilisateur | Inventer des metriques ou resultats |
+
+### Quand modifier le summary
+
+Modifier le summary UNIQUEMENT si :
+1. Le contexte utilisateur mentionne un accomplissement majeur a ajouter
+2. Le contexte mentionne un domaine d'expertise non visible
+3. Les suggestions demandent d'ameliorer le positionnement global
+4. L'utilisateur fournit des informations sur ses forces/atouts
+
+**ATTENTION** : Le summary doit rester DEFENDABLE en entretien. Chaque affirmation doit etre prouvable par le CV ou le contexte utilisateur.

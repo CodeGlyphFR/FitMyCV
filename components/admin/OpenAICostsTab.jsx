@@ -7,6 +7,7 @@ import { Toast } from './Toast';
 import { ConfirmDialog } from './ConfirmDialog';
 import EditAlertModal from './EditAlertModal';
 import { CvGenerationCostsSection } from './CvGenerationCostsSection';
+import { CvImprovementCostsSection } from './CvImprovementCostsSection';
 import { getFeatureConfig } from '@/lib/analytics/featureConfig';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList } from 'recharts';
 
@@ -862,6 +863,9 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
 
       {/* CV Generation Costs Section */}
       <CvGenerationCostsSection period={period} refreshKey={refreshKey} />
+
+      {/* CV Improvement Costs Section */}
+      <CvImprovementCostsSection period={period} refreshKey={refreshKey} />
 
       {/* Feature Breakdown Table */}
       <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-6">

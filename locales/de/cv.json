@@ -264,7 +264,12 @@
     "calculatingScore": "Score wird berechnet...",
     "showMore": "weitere",
     "showLess": "Weniger anzeigen",
-    "languageNote": "Die Analyse und Vorschläge werden in der Sprache des Lebenslaufs angezeigt, nicht in der Sprache der Oberfläche."
+    "languageNote": "Die Analyse und Vorschläge werden in der Sprache des Lebenslaufs angezeigt, nicht in der Sprache der Oberfläche.",
+    "noSelection": "Wählen Sie mindestens eine Verbesserung aus",
+    "deselect": "Auswahl aufheben",
+    "cancel": "Abbrechen",
+    "contextPlaceholder": "Kontext hinzufügen (optional)...",
+    "skillsAddedSuccess": "Fähigkeiten erfolgreich hinzugefügt"
   },
   "changes": {
     "title": "Änderungsverlauf",

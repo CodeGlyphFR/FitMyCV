@@ -7,12 +7,67 @@ import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import SectionReviewActions from "./SectionReviewActions";
+import ProjectReviewActions, { useProjectHasChanges } from "./ProjectReviewActions";
 
 function norm(s){
   const m = (s || "").trim();
   if (!m) return "";
   if (m.toLowerCase() === "present") return "present";
   return /^\d{4}(-\d{2})?$/.test(m) ? (m.length === 4 ? m + "-01" : m) : m;
+}
+
+/**
+ * Composant carte projet individuelle avec highlight review
+ */
+function ProjectCard({ project, index, isEditing, onEdit, onDelete, cvT }) {
+  const { hasChanges, isAdded } = useProjectHasChanges(project.name);
+
+  // Classes conditionnelles pour le highlight
+  const cardClasses = [
+    "flex flex-col h-full rounded-xl p-3 relative z-0 overflow-visible",
+    isAdded
+      ? "border-2 border-emerald-500/50 bg-emerald-500/10" // Nouveau projet = vert
+      : "border border-white/15", // Normal
+  ].join(" ");
+
+  return (
+    <div className={cardClasses}>
+      <div className={"flex items-start gap-2" + (isEditing ? " pr-20" : "")}>
+        <div className="font-semibold flex-1 min-w-0 break-words">{project.name || ""}</div>
+        <div className="text-sm opacity-80 whitespace-nowrap ml-auto mt-1">
+          {(project.start_date || project.end_date)
+            ? [ym(project.start_date) || "", project.end_date === "present" ? cvT("cvSections.present") : (ym(project.end_date) || "")].filter(Boolean).join(" → ")
+            : ""}
+        </div>
+      </div>
+
+      {/* Boutons review pour nouveau projet OU boutons edit en mode édition */}
+      {hasChanges && !isEditing && (
+        <div className="no-print absolute top-2 right-2 z-20">
+          <ProjectReviewActions projectIndex={index} projectName={project.name} />
+        </div>
+      )}
+
+      {isEditing && (
+        <div className="no-print absolute top-2 right-2 z-20 flex gap-2">
+          <button type="button" onClick={() => onEdit(index)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3" /></button>
+          <button type="button" onClick={() => onDelete(index)} className="text-[11px] rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-red-500/40 transition-all duration-200"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3" /></button>
+        </div>
+      )}
+
+      <div className="text-sm opacity-80">{project.role || ""}</div>
+      {project.summary ? <div className="text-sm text-justify mt-1">{project.summary}</div> : null}
+
+      <div className="flex flex-wrap gap-1 mt-auto pt-3">
+        {Array.isArray(project.tech_stack) && project.tech_stack.map((m, idx) => (
+          <span key={idx} className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
+            {m}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function Projects(props){
@@ -99,15 +154,18 @@ export default function Projects(props){
       title={
         <div className="flex items-center justify-between gap-2">
           <span>{title}</span>
-          {isEditing && (
-            <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="no-print text-xs rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-all duration-200"
-            >
-              {t("common.add")}
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            <SectionReviewActions section="projects" />
+            {isEditing && (
+              <button
+                type="button"
+                onClick={() => setAddOpen(true)}
+                className="no-print text-xs rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-all duration-200"
+              >
+                {t("common.add")}
+              </button>
+            )}
+          </div>
         </div>
       }
     >
@@ -121,34 +179,15 @@ export default function Projects(props){
       ) : (
         <div className={projects.length > 1 ? "grid md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
           {projects.map((p, i) => (
-            <div key={i} className="flex flex-col h-full rounded-xl border border-white/15 p-3 relative z-0 overflow-visible">
-              <div className={"flex items-start gap-2" + (isEditing ? " pr-20" : "")}>
-                <div className="font-semibold flex-1 min-w-0 break-words">{p.name || ""}</div>
-                <div className="text-sm opacity-80 whitespace-nowrap ml-auto mt-1">
-                  {(p.start_date || p.end_date)
-                    ? [ym(p.start_date) || "", p.end_date === "present" ? cvT("cvSections.present") : (ym(p.end_date) || "")].filter(Boolean).join(" → ")
-                    : ""}
-                </div>
-              </div>
-
-              {isEditing && (
-                <div className="no-print absolute top-2 right-2 z-20 flex gap-2">
-                  <button type="button" onClick={() => openEdit(i)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
-                  <button type="button" onClick={() => setDelIndex(i)} className="text-[11px] rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-red-500/40 transition-all duration-200"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
-                </div>
-              )}
-
-              <div className="text-sm opacity-80">{p.role || ""}</div>
-              {p.summary ? <div className="text-sm text-justify mt-1">{p.summary}</div> : null}
-
-              <div className="flex flex-wrap gap-1 mt-auto pt-3">
-                {Array.isArray(p.tech_stack) && p.tech_stack.map((m, idx) => (
-                  <span key={idx} className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
-                    {m}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <ProjectCard
+              key={i}
+              project={p}
+              index={i}
+              isEditing={isEditing}
+              onEdit={openEdit}
+              onDelete={setDelIndex}
+              cvT={cvT}
+            />
           ))}
         </div>
       )}

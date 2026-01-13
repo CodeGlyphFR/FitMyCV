@@ -12,6 +12,170 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { emitOnboardingEvent, ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
 
 /**
+ * Labels des étapes improve-cv pour l'affichage
+ */
+const IMPROVEMENT_STEP_LABELS = {
+  preprocess: 'Préparation',
+  classify_skills: 'Classification',
+  experiences: 'Expériences',
+  projects: 'Projets',
+  summary: 'Summary',
+  finalize: 'Finalisation',
+};
+
+/**
+ * Poids de chaque étape pour le calcul du pourcentage (CV Improvement)
+ */
+const IMPROVEMENT_STEP_WEIGHTS = {
+  preprocess: 15,
+  classify_skills: 15,
+  experiences: 30,
+  projects: 20,
+  summary: 10,
+  finalize: 10,
+};
+
+/**
+ * Calcule le pourcentage de progression pour une tâche improve-cv
+ */
+function calculateImprovementProgress(progressData) {
+  if (!progressData) return 0;
+  if (progressData.status === 'completed') return 100;
+  if (progressData.status === 'failed' || progressData.status === 'cancelled') return 0;
+
+  const { completedSteps = {}, currentStep, currentItem, totalItems } = progressData;
+  const steps = ['preprocess', 'classify_skills', 'experiences', 'projects', 'summary', 'finalize'];
+  let totalWeight = 0;
+  let completedWeight = 0;
+
+  steps.forEach(step => {
+    totalWeight += IMPROVEMENT_STEP_WEIGHTS[step];
+    if (completedSteps[step]) {
+      completedWeight += IMPROVEMENT_STEP_WEIGHTS[step];
+    }
+  });
+
+  // Ajouter une progression partielle pour l'étape en cours
+  if (currentStep && !completedSteps[currentStep]) {
+    const stepWeight = IMPROVEMENT_STEP_WEIGHTS[currentStep] || 0;
+    if (totalItems && totalItems > 0 && currentItem != null) {
+      // Progression par item (ex: 3/5 expériences)
+      completedWeight += stepWeight * (currentItem / totalItems);
+    } else {
+      // 50% de l'étape en cours si pas d'items
+      completedWeight += stepWeight * 0.5;
+    }
+  }
+
+  return Math.round((completedWeight / totalWeight) * 100);
+}
+
+/**
+ * Indicateur de progression pour les tâches improve-cv
+ * Affiche les étapes avec progression temps réel via SSE
+ */
+function ImprovementProgressIndicator({ task }) {
+  const { t } = useLanguage();
+  const { getProgress } = usePipelineProgressContext();
+
+  const progress = getProgress(task.id);
+  const percentage = calculateImprovementProgress(progress);
+
+  const locale = t("common.locale") || 'fr-FR';
+  const createdAt = new Date(task.createdAt).toLocaleTimeString(locale, {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const isFinished = task.status === 'completed' || task.status === 'failed' || task.status === 'cancelled';
+
+  // Status label
+  const statusLabel = task.status === 'completed'
+    ? (t('taskQueue.status.completed') || 'Terminé')
+    : task.status === 'failed'
+      ? (t('taskQueue.status.failed') || 'Échec')
+      : task.status === 'cancelled'
+        ? (t('taskQueue.status.cancelled') || 'Annulé')
+        : (t('taskQueue.status.queued') || 'En attente');
+
+  // Classes pour la barre
+  const barClasses = task.status === 'failed' || task.status === 'cancelled'
+    ? 'bg-gradient-to-r from-red-500 to-red-400'
+    : task.status === 'completed'
+      ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
+      : 'bg-gradient-to-r from-violet-500 via-purple-400 to-fuchsia-400';
+
+  // Classes pour le status
+  const statusColorClasses = task.status === 'completed'
+    ? 'text-emerald-400'
+    : task.status === 'failed' || task.status === 'cancelled'
+      ? 'text-red-400'
+      : 'text-white/60';
+
+  // Déterminer l'étape courante à afficher
+  let currentStepLabel = t('taskQueue.taskTypes.improveCv') || 'Amélioration CV';
+  if (progress && task.status === 'running') {
+    const stepKey = progress.currentStep;
+    if (stepKey && IMPROVEMENT_STEP_LABELS[stepKey]) {
+      currentStepLabel = IMPROVEMENT_STEP_LABELS[stepKey];
+      // Ajouter le compteur si disponible
+      if (progress.totalItems && progress.totalItems > 0 && progress.currentItem != null) {
+        currentStepLabel += ` (${progress.currentItem}/${progress.totalItems})`;
+      }
+    }
+  }
+
+  if (isFinished) {
+    return (
+      <div className="py-1">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-white truncate flex-1 mr-2">
+            {t('taskQueue.taskTypes.improveCv') || 'Amélioration CV'}
+          </span>
+          <span className={`text-xs font-medium ${statusColorClasses}`}>
+            {statusLabel}
+          </span>
+        </div>
+        <div className="text-[10px] text-white/50 mt-0.5">
+          {createdAt} <span className="text-white/30">|</span> {t('taskQueue.taskTypes.improveCv') || 'Amélioration CV'}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="py-1">
+      {/* Ligne 1: Heure | Description + Pourcentage */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5 flex-1 min-w-0 mr-2">
+          <span className="text-[10px] text-white/50 flex-shrink-0">{createdAt}</span>
+          <span className="text-white/30">|</span>
+          <span className="text-xs font-medium text-white truncate">
+            {t('taskQueue.taskTypes.improveCv') || 'Amélioration CV'}
+          </span>
+        </div>
+        <span className="text-xs font-medium text-purple-400 tabular-nums flex-shrink-0">
+          {task.status === 'running' ? `${percentage}%` : '—'}
+        </span>
+      </div>
+
+      {/* Ligne 2: Barre de progression */}
+      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mt-1">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ease-out ${barClasses} ${task.status === 'queued' ? 'animate-pulse' : ''}`}
+          style={{ width: `${Math.max(task.status === 'queued' ? 8 : percentage, 2)}%` }}
+        />
+      </div>
+
+      {/* Ligne 3: Étape courante */}
+      <div className="text-[10px] text-white/50 mt-0.5">
+        {task.status === 'running' ? currentStepLabel : statusLabel}
+      </div>
+    </div>
+  );
+}
+
+/**
  * Indicateur de progression pour les tâches cv_generation_v2
  * Affiche les barres de progression par offre
  */
@@ -191,6 +355,48 @@ function TaskItem({ task, onCancel, onTaskClick }) {
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <PipelineProgressIndicator task={task} />
+          </div>
+          {canCancel && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCancel(task.id);
+              }}
+              className="text-xs text-red-400/70 hover:text-red-300 hover:bg-red-500/20 px-2 py-1 rounded-sm transition-all duration-200 mt-1 flex-shrink-0"
+              title={t("taskQueue.cancelTask")}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        {/* Show action button if error has redirectUrl */}
+        {task.status === 'failed' && errorRedirectUrl && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(errorRedirectUrl);
+            }}
+            className="mt-2 px-3 py-1 rounded-lg text-xs font-semibold bg-red-500/30 hover:bg-red-500/40 border border-red-500/50 text-white transition-all duration-200 inline-flex items-center gap-1"
+          >
+            {t("subscription.viewOptions") || "Voir les options"}
+            <span className="text-base">→</span>
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // Layout spécial pour improve-cv : ImprovementProgressIndicator avec progression SSE
+  if (task.type === 'improve-cv') {
+    return (
+      <div
+        className={`p-3 border border-white/20 rounded-lg bg-white/5 ${isClickable ? 'cursor-pointer hover:bg-white/10 transition-all duration-200' : ''}`}
+        onClick={handleClick}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <ImprovementProgressIndicator task={task} />
           </div>
           {canCancel && (
             <button
