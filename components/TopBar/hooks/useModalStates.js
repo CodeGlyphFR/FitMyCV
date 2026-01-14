@@ -350,6 +350,39 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
   const [listOpen, setListOpen] = React.useState(false);
   const [dropdownRect, setDropdownRect] = React.useState(null);
 
+  // Protection contre le "ghost click" iOS lors de la fermeture du dropdown
+  const listCloseTimestampRef = React.useRef(0);
+
+  // Wrapper pour setListOpen qui empêche les réouvertures trop rapides (iOS ghost click)
+  const setListOpenSafe = React.useCallback((valueOrUpdater) => {
+    const now = Date.now();
+
+    // Si c'est une fonction (toggle), vérifier si on essaie de ré-ouvrir trop vite
+    if (typeof valueOrUpdater === 'function') {
+      setListOpen((prev) => {
+        const newValue = valueOrUpdater(prev);
+        // Si on passe de false à true et que la fermeture était récente (< 300ms), bloquer
+        if (!prev && newValue && (now - listCloseTimestampRef.current < 300)) {
+          return prev; // Garder fermé
+        }
+        // Si on ferme, enregistrer le timestamp
+        if (prev && !newValue) {
+          listCloseTimestampRef.current = now;
+        }
+        return newValue;
+      });
+    } else {
+      // Valeur directe
+      if (valueOrUpdater === true && (now - listCloseTimestampRef.current < 300)) {
+        return; // Bloquer la réouverture trop rapide
+      }
+      if (valueOrUpdater === false) {
+        listCloseTimestampRef.current = now;
+      }
+      setListOpen(valueOrUpdater);
+    }
+  }, []);
+
   return {
     // Delete modal
     openDelete,
@@ -407,7 +440,7 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
 
     // CV Selector
     listOpen,
-    setListOpen,
+    setListOpen: setListOpenSafe, // Version protégée contre le ghost click iOS
     dropdownRect,
     setDropdownRect,
   };
