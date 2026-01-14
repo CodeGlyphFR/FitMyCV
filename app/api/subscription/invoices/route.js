@@ -75,46 +75,8 @@ export async function GET(request) {
       }
     }
 
-    // Fallback 2 : Essayer de récupérer le customer via l'email de l'utilisateur
-    if (!stripeCustomerId || stripeCustomerId.startsWith('local_')) {
-      console.log('[Invoices] Tentative de récupération via email utilisateur');
-
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { email: true },
-      });
-
-      if (user?.email) {
-        try {
-          // Rechercher un customer Stripe avec cet email
-          const customers = await stripe.customers.list({
-            email: user.email,
-            limit: 1,
-          });
-
-          if (customers.data.length > 0) {
-            stripeCustomerId = customers.data[0].id;
-            console.log('[Invoices] Customer Stripe trouvé via email:', stripeCustomerId);
-
-            // Mettre à jour la subscription si elle existe
-            if (subscription) {
-              await prisma.subscription.update({
-                where: { userId },
-                data: { stripeCustomerId },
-              });
-            }
-
-            // Aussi mettre à jour User pour le mode full crédit
-            await prisma.user.update({
-              where: { id: userId },
-              data: { stripeCustomerId },
-            });
-          }
-        } catch (error) {
-          console.error('[Invoices] Erreur lors de la recherche par email:', error);
-        }
-      }
-    }
+    // Note: Pas de fallback par email pour éviter de récupérer les factures
+    // d'un ancien compte supprimé avec le même email (problème de confidentialité)
 
     // Fallback 3 : Chercher dans la table User (pour les utilisateurs qui ont acheté des crédits mais n'ont jamais eu d'abonnement)
     if (!stripeCustomerId || stripeCustomerId.startsWith('local_')) {
