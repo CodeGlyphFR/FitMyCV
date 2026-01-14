@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { History, Loader2, ChevronLeft, ChevronRight, ArrowUpCircle, ArrowDownCircle, RotateCcw, Gift, Plus } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, ArrowUpCircle, ArrowDownCircle, RotateCcw, Gift, Plus } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const TYPE_ICONS = {
@@ -76,10 +76,7 @@ export default function CreditTransactionsTable() {
 
   return (
     <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6 shadow-lg">
-      <div className="flex items-center gap-2 mb-6">
-        <History className="text-white" size={24} />
-        <h2 className="text-xl font-semibold text-white">{t('subscription.transactions.title')}</h2>
-      </div>
+      <h2 className="text-xl font-semibold text-white mb-6">{t('subscription.transactions.title')}</h2>
 
       {transactions.length === 0 ? (
         <div className="text-center text-white/60 py-8">
@@ -94,7 +91,7 @@ export default function CreditTransactionsTable() {
                 <tr className="border-b border-white/20">
                   <th className="text-left py-3 px-2 text-sm font-medium text-white/70">{t('subscription.transactions.columns.type')}</th>
                   <th className="text-left py-3 px-2 text-sm font-medium text-white/70">{t('subscription.transactions.columns.details')}</th>
-                  <th className="text-right py-3 px-2 text-sm font-medium text-white/70">{t('subscription.transactions.columns.amount')}</th>
+                  <th className="text-center py-3 px-2 text-sm font-medium text-white/70">{t('subscription.transactions.columns.amount')}</th>
                   <th className="text-right py-3 px-2 text-sm font-medium text-white/70">{t('subscription.transactions.columns.date')}</th>
                 </tr>
               </thead>
@@ -127,15 +124,12 @@ export default function CreditTransactionsTable() {
                               )}
                             </div>
                           )}
-                          {transaction.refunded && (
-                            <span className="text-xs text-purple-300">{t('subscription.transactions.refunded')}</span>
-                          )}
                           {transaction.metadata && transaction.metadata.reason && (
                             <div className="text-xs text-white/50">{transaction.metadata.reason}</div>
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-2 text-right">
+                      <td className="py-3 px-2 text-center">
                         <span
                           className={`text-sm font-semibold ${
                             transaction.amount > 0 ? "text-green-300" : "text-blue-300"

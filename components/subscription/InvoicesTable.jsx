@@ -73,13 +73,13 @@ export default function InvoicesTable({ creditBalance: creditBalanceProp, curren
     if (type === 'credit_pack') {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/20 border border-blue-500/50 text-blue-200 text-xs">
-          💎 {t('subscription.invoices.types.creditPack')}
+          {t('subscription.invoices.types.creditPack')}
         </span>
       );
     }
     return (
       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-purple-500/20 border border-purple-500/50 text-purple-200 text-xs">
-        👑 {t('subscription.invoices.types.subscription')}
+        {t('subscription.invoices.types.subscription')}
       </span>
     );
   };
@@ -201,8 +201,7 @@ export default function InvoicesTable({ creditBalance: creditBalanceProp, curren
 
   return (
     <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-6 shadow-lg">
-      <h2 className="text-xl font-semibold text-white mb-4 drop-shadow-lg flex items-center gap-2">
-        <FileText size={24} />
+      <h2 className="text-xl font-semibold text-white mb-4 drop-shadow-lg">
         {t('subscription.invoices.title')}
       </h2>
 
@@ -230,7 +229,7 @@ export default function InvoicesTable({ creditBalance: creditBalanceProp, curren
                 : 'bg-white/5 text-white/60 hover:bg-purple-500/10 hover:text-purple-200 border border-white/10'
             }`}
           >
-            👑 {t('subscription.invoices.filters.subscriptions', { count: filterCounts.subscription })}
+            {t('subscription.invoices.filters.subscriptions', { count: filterCounts.subscription })}
           </button>
         )}
         <button
@@ -241,7 +240,7 @@ export default function InvoicesTable({ creditBalance: creditBalanceProp, curren
               : 'bg-white/5 text-white/60 hover:bg-blue-500/10 hover:text-blue-200 border border-white/10'
           }`}
         >
-          💎 {t('subscription.invoices.filters.credits', { count: filterCounts.credit_pack })}
+          {t('subscription.invoices.filters.credits', { count: filterCounts.credit_pack })}
         </button>
       </div>
 
