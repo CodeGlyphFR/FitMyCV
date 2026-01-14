@@ -17,6 +17,7 @@ export function useSubscriptionData() {
     planName: null,
     planIcon: null,
     creditBalance: 0,
+    creditRatio: 1,
     creditsOnlyMode: false,
     loading: true,
     error: null,
@@ -53,10 +54,15 @@ export function useSubscriptionData() {
 
       if (isMounted) {
         const newBalance = creditsData?.balance || 0;
+        const balanceAfterLastPurchase = creditsData?.balanceAfterLastPurchase || 0;
+        const creditRatio = balanceAfterLastPurchase > 0
+          ? Math.min(1, Math.max(0, newBalance / balanceAfterLastPurchase))
+          : (newBalance > 0 ? 1 : 0);
         setData({
           planName: translatedName,
           planIcon: icon,
           creditBalance: newBalance,
+          creditRatio,
           creditsOnlyMode,
           loading: false,
           error: null,

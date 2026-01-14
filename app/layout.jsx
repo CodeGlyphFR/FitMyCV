@@ -1,5 +1,13 @@
 import "./globals.css";
 import React from "react";
+import { Oswald } from "next/font/google";
+
+const oswald = Oswald({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-oswald",
+  display: "swap",
+});
 import ConditionalTopBar from "@/components/ConditionalTopBar";
 import ConditionalTopBarSpacer from "@/components/ConditionalTopBarSpacer";
 import ConditionalFooter from "@/components/ConditionalFooter";
@@ -60,7 +68,7 @@ export default async function RootLayout(props){
   }
 
   return (
-    <html lang="fr">
+    <html lang="fr" className={oswald.variable}>
       <head>
         {/* Préchargement des ressources critiques pour LCP */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />

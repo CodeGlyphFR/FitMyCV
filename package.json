@@ -47,6 +47,7 @@
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "react": "^19.2.3",
+    "react-animated-counter": "^1.8.4",
     "react-dom": "^19.2.3",
     "react-google-recaptcha-v3": "^1.11.0",
     "recharts": "^3.6.0",
