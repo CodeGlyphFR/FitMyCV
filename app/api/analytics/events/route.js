@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
+import { CommonErrors } from '@/lib/api/apiErrors';
 import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -19,12 +20,16 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request) {
   try {
+    // Vérifier l'authentification
     const session = await auth();
+    if (!session?.user?.id) {
+      return CommonErrors.notAuthenticated();
+    }
 
     // Only admin can access analytics
-    if (session?.user?.role !== 'ADMIN') {
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: 'Unauthorized - Admin access required' },
+        { error: 'Forbidden - Admin access required' },
         { status: 403 }
       );
     }

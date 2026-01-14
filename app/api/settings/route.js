@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/session';
+import { CommonErrors } from '@/lib/api/apiErrors';
 import prisma from '@/lib/prisma';
 
 // Cache en mémoire pour éviter trop de requêtes à la base
@@ -16,6 +18,12 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request) {
   try {
+    // Vérifier l'authentification
+    const session = await auth();
+    if (!session?.user?.id) {
+      return CommonErrors.notAuthenticated();
+    }
+
     const now = Date.now();
 
     // Utiliser le cache si valide

@@ -11,6 +11,8 @@
  */
 
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/session';
+import { CommonErrors } from '@/lib/api/apiErrors';
 import { getNumericSettingValue, getBooleanSettingValue } from '@/lib/settings/settingsUtils';
 
 export const dynamic = 'force-dynamic';
@@ -43,6 +45,12 @@ const DEFAULT_COSTS = {
 
 export async function GET() {
   try {
+    // Vérifier l'authentification
+    const session = await auth();
+    if (!session?.user?.id) {
+      return CommonErrors.notAuthenticated();
+    }
+
     // Récupérer le mode
     const subscriptionModeEnabled = await getBooleanSettingValue('subscription_mode_enabled', true);
 

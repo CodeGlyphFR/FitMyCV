@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 
 const CreditCostsContext = createContext();
 
@@ -17,9 +18,16 @@ const defaultState = {
  * Remplace les multiples appels indépendants de useCreditCost par UN SEUL fetch
  */
 export function CreditCostsProvider({ children }) {
+  const { data: session, status } = useSession();
   const [state, setState] = useState(defaultState);
 
   const fetchCosts = useCallback(async () => {
+    // Ne pas fetcher si non connecté
+    if (status !== "authenticated") {
+      setState({ ...defaultState, loading: false });
+      return;
+    }
+
     try {
       const response = await fetch('/api/credits/costs', {
         cache: 'no-store',
@@ -44,12 +52,14 @@ export function CreditCostsProvider({ children }) {
         error: error.message,
       }));
     }
-  }, []);
+  }, [status]);
 
-  // Fetch initial au montage
+  // Fetch quand l'utilisateur se connecte
   useEffect(() => {
-    fetchCosts();
-  }, [fetchCosts]);
+    if (status !== "loading") {
+      fetchCosts();
+    }
+  }, [status, fetchCosts]);
 
   // Écouter les mises à jour des settings ET des crédits
   useEffect(() => {
