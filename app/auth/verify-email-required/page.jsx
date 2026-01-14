@@ -6,7 +6,7 @@ import { signOut, useSession } from 'next-auth/react';
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 export default function VerifyEmailRequiredPage() {
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { executeRecaptcha } = useRecaptcha();
@@ -14,6 +14,19 @@ export default function VerifyEmailRequiredPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const isNewUser = searchParams.get('new') === 'true';
+
+  // Écouter l'événement SSE de validation d'email pour rediriger automatiquement
+  useEffect(() => {
+    const handleEmailVerified = async () => {
+      // Rafraîchir la session pour obtenir le nouveau statut emailVerified
+      await updateSession();
+      // Rediriger vers la page d'accueil
+      router.push('/');
+    };
+
+    window.addEventListener('email:verified', handleEmailVerified);
+    return () => window.removeEventListener('email:verified', handleEmailVerified);
+  }, [router, updateSession]);
 
   const handleResendEmail = async () => {
     setLoading(true);

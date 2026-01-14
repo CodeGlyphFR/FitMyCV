@@ -110,6 +110,14 @@ export function useRealtimeSync(options = {}) {
         }
       });
 
+      // Validation d'email - dispatcher l'événement client
+      eventSource.addEventListener('email:verified', (event) => {
+        const data = JSON.parse(event.data);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('email:verified', { detail: data }));
+        }
+      });
+
       // Gestion des erreurs
       eventSource.onerror = (err) => {
         setConnected(false);

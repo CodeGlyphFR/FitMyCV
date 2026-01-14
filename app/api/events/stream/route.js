@@ -125,6 +125,13 @@ export async function GET(request) {
         }
       };
 
+      // Handler pour la validation d'email
+      const handleEmailVerified = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('email:verified', { ...data, timestamp: Date.now() });
+        }
+      };
+
       // S'abonner aux événements
       dbEmitter.on('task:updated', handleTaskUpdate);
       dbEmitter.on('cv:updated', handleCvUpdate);
@@ -140,6 +147,7 @@ export async function GET(request) {
       dbEmitter.on('settings:updated', handleSettingsUpdate);
       dbEmitter.on('onboarding:updated', handleOnboardingUpdate);
       dbEmitter.on('onboarding:reset', handleOnboardingReset);
+      dbEmitter.on('email:verified', handleEmailVerified);
 
       // Envoyer un message de connexion réussie
       sendEvent('connected', { userId, timestamp: Date.now() });
@@ -160,6 +168,7 @@ export async function GET(request) {
         dbEmitter.off('settings:updated', handleSettingsUpdate);
         dbEmitter.off('onboarding:updated', handleOnboardingUpdate);
         dbEmitter.off('onboarding:reset', handleOnboardingReset);
+        dbEmitter.off('email:verified', handleEmailVerified);
         controller.close();
       });
 
