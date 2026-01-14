@@ -70,7 +70,7 @@ export default function CvGeneratorModal({
             <button
               type="button"
               onClick={() => setBaseSelectorOpen((prev) => !prev)}
-              className="w-full min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm flex items-center justify-between gap-3 text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
+              className="w-full min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm flex items-center justify-between gap-3 text-white transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
             >
               <span className="flex items-center gap-3 min-w-0 overflow-hidden">
                 {generatorBaseFile === CREATE_TEMPLATE_OPTION ? (
@@ -184,7 +184,7 @@ export default function CvGeneratorModal({
                       [index]: !prev[index]
                     }));
                   }}
-                  className="h-full rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200 disabled:opacity-50"
+                  className="h-full rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 hover:border-white/30 transition-colors duration-200 disabled:opacity-50"
                   title={t("cvGenerator.loadRecentLink")}
                 >
                   📋
@@ -253,7 +253,7 @@ export default function CvGeneratorModal({
                 )}
               </div>
               <input
-                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
+                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                 placeholder={t("cvGenerator.linkPlaceholder")}
                 value={value}
                 onChange={(event) => updateLink(event.target.value, index)}
@@ -261,7 +261,7 @@ export default function CvGeneratorModal({
               <button
                 type="button"
                 onClick={() => removeLinkField(index)}
-                className="rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200"
+                className="rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 hover:border-white/30 transition-colors duration-200"
                 title={t("topbar.delete")}
               >
                 ✕
@@ -272,7 +272,7 @@ export default function CvGeneratorModal({
             <button
               type="button"
               onClick={addLinkField}
-              className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200 inline-flex items-center gap-1"
+              className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 hover:border-white/30 transition-colors duration-200 inline-flex items-center gap-1"
             >
               <img src="/icons/add.png" alt="" className="h-3 w-3 " /> {t("cvGenerator.addLink")}
             </button>
@@ -292,7 +292,7 @@ export default function CvGeneratorModal({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200 flex items-center justify-center gap-2 group"
+            className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-white hover:bg-white/10 hover:border-white/30 transition-colors duration-200 flex items-center justify-center gap-2 group"
           >
             <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -317,7 +317,7 @@ export default function CvGeneratorModal({
               <button
                 type="button"
                 onClick={clearFiles}
-                className="mt-1 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200"
+                className="mt-1 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 hover:border-white/30 transition-colors duration-200"
               >
                 {t("cvGenerator.clearFiles")}
               </button>

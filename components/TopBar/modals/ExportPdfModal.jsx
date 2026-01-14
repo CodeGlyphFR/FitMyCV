@@ -205,7 +205,7 @@ export default function ExportPdfModal({
               type="text"
               value={filename}
               onChange={(e) => setFilename(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
+              className="w-full px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
               placeholder="Mon_CV"
             />
           </div>
@@ -246,7 +246,7 @@ export default function ExportPdfModal({
                       setTemplateError('');
                     }
                   }}
-                  className="flex-1 px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
+                  className="flex-1 px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                   placeholder={t('exportModal.templates.namePlaceholder')}
                   autoFocus
                 />
@@ -305,7 +305,7 @@ export default function ExportPdfModal({
                     type="button"
                     onClick={() => setShowTemplateDropdown(!showTemplateDropdown)}
                     disabled={isLoadingTemplates || templates.length === 0}
-                    className="w-full px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
+                    className="w-full px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-white transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
                   >
                     <span className={selectedTemplateId ? 'text-white' : 'text-white/50'}>
                       {isLoadingTemplates
