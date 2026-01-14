@@ -1298,6 +1298,8 @@ export default function TopBar() {
         selectAll={exportModal.selectAll}
         deselectAll={exportModal.deselectAll}
         exportPdf={exportModal.exportPdf}
+        exportWord={exportModal.exportWord}
+        isExportingWord={exportModal.isExportingWord}
         counters={exportModal.counters}
         subCounters={exportModal.subCounters}
         cvData={exportModal.cvData}

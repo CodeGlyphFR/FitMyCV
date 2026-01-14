@@ -255,16 +255,6 @@ const EMAIL_TEMPLATES = [
 ];
 
 // ============================================================================
-// 2. CREDIT PACKS (Données prod)
-// ============================================================================
-const CREDIT_PACKS = [
-  { name: '15 Crédits', creditAmount: 15, price: 1.99, priceCurrency: 'EUR' },
-  { name: '60 Crédits', creditAmount: 60, price: 6.99, priceCurrency: 'EUR' },
-  { name: '150 Crédits', creditAmount: 150, price: 12.99, priceCurrency: 'EUR' },
-  { name: '300 Crédits', creditAmount: 300, price: 19.99, priceCurrency: 'EUR' },
-];
-
-// ============================================================================
 // 3. SUBSCRIPTION PLANS (Données prod)
 // ============================================================================
 const SUBSCRIPTION_PLANS = [
@@ -290,51 +280,7 @@ const SUBSCRIPTION_PLANS = [
       create_cv_manual: { enabled: true, limit: 5 },
     },
   },
-  {
-    name: 'Pro',
-    description: 'Plan professionnel avec toutes les fonctionnalités',
-    isFree: false,
-    tier: 1,
-    isPopular: true,
-    priceMonthly: 9.99,
-    priceYearly: 99.99,
-    yearlyDiscountPercent: 16.59,
-    priceCurrency: 'EUR',
-    features: {
-      gpt_cv_generation: { enabled: true, limit: 25 },
-      import_pdf: { enabled: true, limit: 25 },
-      generate_from_job_title: { enabled: true, limit: 25 },
-      export_cv: { enabled: true, limit: -1 },
-      translate_cv: { enabled: true, limit: 25 },
-      match_score: { enabled: true, limit: 25 },
-      optimize_cv: { enabled: true, limit: 25 },
-      edit_cv: { enabled: true, limit: -1 },
-      create_cv_manual: { enabled: true, limit: -1 },
-    },
-  },
-  {
-    name: 'Premium',
-    description: 'Plan premium avec accès illimité à toutes les fonctionnalités',
-    isFree: false,
-    tier: 2,
-    isPopular: false,
-    priceMonthly: 19.99,
-    priceYearly: 199.99,
-    yearlyDiscountPercent: 16.63,
-    priceCurrency: 'EUR',
-    features: {
-      gpt_cv_generation: { enabled: true, limit: 60 },
-      import_pdf: { enabled: true, limit: 60 },
-      generate_from_job_title: { enabled: true, limit: 60 },
-      export_cv: { enabled: true, limit: -1 },
-      translate_cv: { enabled: true, limit: 60 },
-      match_score: { enabled: true, limit: 60 },
-      optimize_cv: { enabled: true, limit: 60 },
-      edit_cv: { enabled: true, limit: -1 },
-      create_cv_manual: { enabled: true, limit: -1 },
-    },
-  },
-];
+]
 
 // ============================================================================
 // 4. OPENAI PRICING (Données prod - prix/MTok)
