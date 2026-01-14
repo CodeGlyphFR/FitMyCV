@@ -787,20 +787,18 @@ export default function TopBar() {
           {/* CV Dropdown Portal */}
           {modals.listOpen && state.portalReady && modals.dropdownRect
             ? createPortal(
-                <>
-                  <div className="fixed inset-0 z-[10001] bg-transparent cv-dropdown-no-animation" onClick={() => modals.setListOpen(false)} />
-                  <div
-                    ref={dropdownPortalRef}
-                    style={{
-                      position: "fixed",
-                      top: modals.dropdownRect.bottom + 4,
-                      left: modals.dropdownRect.left,
-                      width: modals.dropdownRect.width,
-                      zIndex: 10002,
-                      opacity: 1,
-                    }}
-                    className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-md shadow-2xl cv-dropdown-no-animation"
-                  >
+                <div
+                  ref={dropdownPortalRef}
+                  style={{
+                    position: "fixed",
+                    top: modals.dropdownRect.bottom + 4,
+                    left: modals.dropdownRect.left,
+                    width: modals.dropdownRect.width,
+                    zIndex: 10002,
+                    opacity: 1,
+                  }}
+                  className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-md shadow-2xl cv-dropdown-no-animation"
+                >
                     <ul
                       className="max-h-[240px] overflow-y-auto custom-scrollbar py-1"
                       onScroll={() => {
@@ -880,8 +878,7 @@ export default function TopBar() {
                         })
                       )}
                     </ul>
-                  </div>
-                </>,
+                </div>,
                 document.body,
               )
             : null}
@@ -889,16 +886,14 @@ export default function TopBar() {
           {/* User Menu Portal */}
           {modals.userMenuOpen && state.portalReady && modals.userMenuRect
             ? createPortal(
-                <>
-                  <div className="fixed inset-0 z-[10001] bg-transparent" onClick={() => modals.setUserMenuOpen(false)} />
-                  <div
-                    ref={userMenuRef}
-                    style={{
-                      position: "fixed",
-                      top: modals.userMenuRect.bottom + 8,
-                      left: modals.userMenuRect.left,
-                      zIndex: 10002,
-                    }}
+                <div
+                  ref={userMenuRef}
+                  style={{
+                    position: "fixed",
+                    top: modals.userMenuRect.bottom + 8,
+                    left: modals.userMenuRect.left,
+                    zIndex: 10002,
+                  }}
                     className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-md shadow-2xl p-2 text-sm space-y-1 min-w-[10rem] max-w-[16rem]"
                   >
                     {/* Header - User name */}
@@ -998,8 +993,7 @@ export default function TopBar() {
                         </div>
                       </div>
                     )}
-                  </div>
-                </>,
+                </div>,
                 document.body,
               )
             : null}
