@@ -55,9 +55,17 @@ export async function GET(request) {
             stripeCustomerId = paymentIntent.customer;
             console.log('[Invoices] Customer Stripe trouvé:', stripeCustomerId);
 
-            // Mettre à jour la subscription avec le vrai customer ID
-            await prisma.subscription.update({
-              where: { userId },
+            // Mettre à jour la subscription si elle existe
+            if (subscription) {
+              await prisma.subscription.update({
+                where: { userId },
+                data: { stripeCustomerId },
+              });
+            }
+
+            // Aussi mettre à jour User pour le mode full crédit
+            await prisma.user.update({
+              where: { id: userId },
               data: { stripeCustomerId },
             });
           }
@@ -88,9 +96,17 @@ export async function GET(request) {
             stripeCustomerId = customers.data[0].id;
             console.log('[Invoices] Customer Stripe trouvé via email:', stripeCustomerId);
 
-            // Mettre à jour la subscription avec le vrai customer ID
-            await prisma.subscription.update({
-              where: { userId },
+            // Mettre à jour la subscription si elle existe
+            if (subscription) {
+              await prisma.subscription.update({
+                where: { userId },
+                data: { stripeCustomerId },
+              });
+            }
+
+            // Aussi mettre à jour User pour le mode full crédit
+            await prisma.user.update({
+              where: { id: userId },
               data: { stripeCustomerId },
             });
           }
