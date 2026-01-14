@@ -890,7 +890,7 @@ export default function TopBar() {
           {modals.userMenuOpen && state.portalReady && modals.userMenuRect
             ? createPortal(
                 <>
-                  <div className="fixed inset-0 z-[10001] backdrop-blur-sm bg-transparent" onClick={() => modals.setUserMenuOpen(false)} />
+                  <div className="fixed inset-0 z-[10001] bg-transparent" onClick={() => modals.setUserMenuOpen(false)} />
                   <div
                     ref={userMenuRef}
                     style={{

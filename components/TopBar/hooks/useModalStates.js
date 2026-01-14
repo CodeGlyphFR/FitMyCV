@@ -346,6 +346,34 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const [userMenuRect, setUserMenuRect] = React.useState(null);
 
+  // Protection contre le "ghost click" iOS lors de la fermeture du menu utilisateur
+  const userMenuCloseTimestampRef = React.useRef(0);
+
+  const setUserMenuOpenSafe = React.useCallback((valueOrUpdater) => {
+    const now = Date.now();
+
+    if (typeof valueOrUpdater === 'function') {
+      setUserMenuOpen((prev) => {
+        const newValue = valueOrUpdater(prev);
+        if (!prev && newValue && (now - userMenuCloseTimestampRef.current < 300)) {
+          return prev;
+        }
+        if (prev && !newValue) {
+          userMenuCloseTimestampRef.current = now;
+        }
+        return newValue;
+      });
+    } else {
+      if (valueOrUpdater === true && (now - userMenuCloseTimestampRef.current < 300)) {
+        return;
+      }
+      if (valueOrUpdater === false) {
+        userMenuCloseTimestampRef.current = now;
+      }
+      setUserMenuOpen(valueOrUpdater);
+    }
+  }, []);
+
   // CV Selector
   const [listOpen, setListOpen] = React.useState(false);
   const [dropdownRect, setDropdownRect] = React.useState(null);
@@ -434,7 +462,7 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
 
     // User Menu
     userMenuOpen,
-    setUserMenuOpen,
+    setUserMenuOpen: setUserMenuOpenSafe, // Version protégée contre le ghost click iOS
     userMenuRect,
     setUserMenuRect,
 
