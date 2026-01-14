@@ -25,7 +25,11 @@ export default function Modal({
   React.useEffect(()=>{ setMounted(true); },[]);
 
   // Déterminer la largeur maximale selon size
-  const maxWidthClass = size === "large" ? "max-w-4xl" : "max-w-lg";
+  const maxWidthClass = {
+    large: "max-w-4xl",
+    medium: "max-w-2xl",
+    default: "max-w-lg"
+  }[size] || "max-w-lg";
 
   // Désactiver le scroll quand la modal est ouverte
   React.useEffect(() => {

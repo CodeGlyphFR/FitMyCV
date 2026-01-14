@@ -122,7 +122,29 @@
     "options": {
       "hideProficiency": "Ocultar niveles",
       "hideDescription": "Ocultar descripciones",
-      "hideTechnologies": "Ocultar tecnologías"
+      "hideTechnologies": "Ocultar tecnologías",
+      "hideDeliverables": "Ocultar resultados"
+    },
+    "templates": {
+      "label": "Plantilla",
+      "placeholder": "Aplicar plantilla...",
+      "loading": "Cargando...",
+      "noTemplates": "Sin plantillas",
+      "save": "Guardar",
+      "namePlaceholder": "Nombre de la plantilla",
+      "confirmDelete": "¿Eliminar esta plantilla?",
+      "confirmOverwrite": "Sobrescribir la plantilla",
+      "update": "Actualizar",
+      "createNew": "Crear nuevo",
+      "delete": "Eliminar",
+      "hint": "Guarda tus selecciones como plantilla reutilizable"
+    },
+    "order": {
+      "button": "Orden de secciones",
+      "title": "Orden de secciones",
+      "hint": "Mueve las secciones para personalizar el orden de visualización",
+      "reset": "Restablecer",
+      "close": "Cerrar"
     }
   },
   "newCvModal": {

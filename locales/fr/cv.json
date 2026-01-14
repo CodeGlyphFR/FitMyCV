@@ -122,7 +122,29 @@
     "options": {
       "hideProficiency": "Masquer les niveaux",
       "hideDescription": "Masquer les descriptions",
-      "hideTechnologies": "Masquer les technologies"
+      "hideTechnologies": "Masquer les technologies",
+      "hideDeliverables": "Masquer les résultats"
+    },
+    "templates": {
+      "label": "Template",
+      "placeholder": "Appliquer un template...",
+      "loading": "Chargement...",
+      "noTemplates": "Aucun template",
+      "save": "Enregistrer",
+      "namePlaceholder": "Nom du template",
+      "confirmDelete": "Supprimer ce template ?",
+      "confirmOverwrite": "Écraser le template",
+      "update": "Mettre à jour",
+      "createNew": "Créer nouveau",
+      "delete": "Supprimer",
+      "hint": "Sauvegardez vos sélections comme template réutilisable"
+    },
+    "order": {
+      "button": "Ordre des sections",
+      "title": "Ordre des sections",
+      "hint": "Déplacez les sections pour personnaliser l'ordre d'affichage",
+      "reset": "Réinitialiser",
+      "close": "Fermer"
     }
   },
   "newCvModal": {

@@ -1307,6 +1307,15 @@ export default function TopBar() {
         isLoadingPreview={exportModal.isLoadingPreview}
         loadPreview={exportModal.loadPreview}
         closePreview={exportModal.closePreview}
+        templates={exportModal.templates}
+        isLoadingTemplates={exportModal.isLoadingTemplates}
+        isSavingTemplate={exportModal.isSavingTemplate}
+        saveAsTemplate={exportModal.saveAsTemplate}
+        applyTemplate={exportModal.applyTemplate}
+        deleteTemplate={exportModal.deleteTemplate}
+        sectionsOrder={exportModal.sectionsOrder}
+        setSectionsOrder={exportModal.setSectionsOrder}
+        resetSectionsOrder={exportModal.resetSectionsOrder}
         t={t}
       />
 

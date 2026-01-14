@@ -41,6 +41,7 @@ model User {
   referrals              Referral[]            @relation("Referrer")
   subscription           Subscription?
   telemetryEvents        TelemetryEvent[]
+  exportTemplates        ExportTemplate[]
 }
 
 model Account {
@@ -758,4 +759,22 @@ model CvGenerationSubtask {
   @@index([type])
   @@index([status])
   @@index([offerId, type])
+}
+
+// ============================================
+// Export Templates (PDF export configurations)
+// ============================================
+
+model ExportTemplate {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  selections  Json     // Configuration macro des sections (enabled, options, subsections)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([userId])
 }

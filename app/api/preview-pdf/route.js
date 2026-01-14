@@ -115,6 +115,7 @@ export async function POST(request) {
     let filename = requestData.filename;
     const language = requestData.language || 'fr';
     const selections = requestData.selections || null;
+    const sectionsOrder = requestData.sectionsOrder || ['summary', 'skills', 'experience', 'education', 'languages', 'projects', 'extras'];
 
     if (typeof filename === 'object' && filename !== null) {
       filename = filename.file || filename.name || filename.filename || String(filename);
@@ -139,7 +140,7 @@ export async function POST(request) {
     }
 
     // Générer le HTML du CV avec indicateurs de saut de page
-    const htmlContent = generatePreviewHtml(cvData, cvLanguage, selections);
+    const htmlContent = generatePreviewHtml(cvData, cvLanguage, selections, sectionsOrder);
 
     return NextResponse.json({ html: htmlContent });
 
@@ -149,8 +150,12 @@ export async function POST(request) {
   }
 }
 
-function generatePreviewHtml(cvData, language = 'fr', selections = null) {
+function generatePreviewHtml(cvData, language = 'fr', selections = null, sectionsOrder = null) {
   const t = (path) => getTranslation(language, path);
+
+  // Ordre par défaut des sections si non spécifié
+  const defaultOrder = ['summary', 'skills', 'experience', 'education', 'languages', 'projects', 'extras'];
+  const order = sectionsOrder || defaultOrder;
 
   const isSectionEnabled = (sectionKey) => {
     if (!selections || !selections.sections) return true;
@@ -221,9 +226,9 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null) {
 
   // Hauteur de page A4 en pixels
   // A4 = 297mm, marges Puppeteer = 15mm top + 15mm bottom = 30mm
-  // Contenu = 267mm. À 96 DPI = 1009px, mais Puppeteer rend légèrement plus
-  // Valeur calibrée empiriquement pour correspondre au rendu réel
-  const PAGE_HEIGHT_PX = 1020;
+  // Contenu = 267mm. À 96 DPI = 1009px
+  // Ajusté pour correspondre au rendu navigateur dans le preview
+  const PAGE_HEIGHT_PX = 1055;
 
   return `
 <!DOCTYPE html>
@@ -246,15 +251,19 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null) {
       background: #9ca3af;
       font-size: 11px;
       padding: 20px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
     }
 
     .page-wrapper {
       width: 210mm;
-      min-height: 297mm;
       background: white;
-      margin: 0 auto;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
       position: relative;
+      transform-origin: top center;
+      flex-shrink: 0;
+      padding-bottom: 15mm; /* Marge basse pour que le contenu ne touche pas le bord */
     }
 
     .cv-container {
@@ -405,14 +414,11 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null) {
     }
 
     .experience-location {
-      font-size: 12px;
       color: #9ca3af;
-      margin-bottom: 6px;
-      margin-top: 2px;
     }
 
     .experience-description {
-      margin-bottom: 12px;
+      margin-bottom: 4px;
       line-height: 1.6;
       text-align: justify;
     }
@@ -470,8 +476,38 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null) {
       color: #6b7280;
     }
 
-    .project-item, .extra-item {
+    .project-item {
       margin-bottom: 12px;
+    }
+
+    /* Extras courts (grille 3 colonnes) */
+    .extras-grid-short {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px 16px;
+      margin-bottom: 12px;
+    }
+
+    .extra-item-short {
+      font-size: 11px;
+    }
+
+    .extra-item-short:nth-child(3n+1) {
+      text-align: left;
+    }
+
+    .extra-item-short:nth-child(3n+2) {
+      text-align: center;
+    }
+
+    .extra-item-short:nth-child(3n) {
+      text-align: right;
+    }
+
+    /* Extras longs */
+    .extra-item {
+      margin-bottom: 8px;
+      font-size: 11px;
     }
 
     .project-header {
@@ -506,14 +542,25 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null) {
     }
 
     .languages-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px 16px;
     }
 
     .language-item {
       font-size: 11px;
-      margin-bottom: 4px;
+    }
+
+    .language-item:nth-child(3n+1) {
+      text-align: left;
+    }
+
+    .language-item:nth-child(3n+2) {
+      text-align: center;
+    }
+
+    .language-item:nth-child(3n) {
+      text-align: right;
     }
   </style>
 </head>
@@ -537,157 +584,181 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null) {
       ` : ''}
     </header>
 
-    ${isSectionEnabled('summary') && isSubsectionEnabled('summary', 'description') && summary.description && summary.description.trim() ? `
-      <section class="section">
-        <h2 class="section-title">${getSectionTitle('summary', section_titles.summary, language)}</h2>
-        <div class="summary-content">${summary.description}</div>
-      </section>
-    ` : ''}
-
-    ${isSectionEnabled('skills') && Object.values(skills).some(skillArray => Array.isArray(skillArray) && skillArray.length > 0) ? (() => {
-      const hideProficiency = selections?.sections?.skills?.options?.hideProficiency === true;
-      return `
-      <section class="section">
-        <h2 class="section-title">${getSectionTitle('skills', section_titles.skills, language)}</h2>
-        <div class="skills-grid">
-          ${isSubsectionEnabled('skills', 'hard_skills') && skills.hard_skills && skills.hard_skills.filter(skill => skill.name && skill.proficiency).length > 0 ? `
-            <div class="skill-category">
-              <strong>${t('cvSections.hardSkills')}:</strong> ${skills.hard_skills.filter(skill => skill.name && skill.proficiency).map(skill => hideProficiency ? capitalizeSkillName(skill.name) : `${capitalizeSkillName(skill.name)} (${translateLevel(language, skill.proficiency, 'skill')})`).join(', ')}
-            </div>
-          ` : ''}
-          ${isSubsectionEnabled('skills', 'tools') && skills.tools && skills.tools.filter(tool => tool.name && tool.proficiency).length > 0 ? `
-            <div class="skill-category">
-              <strong>${t('cvSections.tools')}:</strong> ${skills.tools.filter(tool => tool.name && tool.proficiency).map(tool => hideProficiency ? capitalizeSkillName(tool.name) : `${capitalizeSkillName(tool.name)} (${translateLevel(language, tool.proficiency, 'skill')})`).join(', ')}
-            </div>
-          ` : ''}
-          ${isSubsectionEnabled('skills', 'soft_skills') && skills.soft_skills && skills.soft_skills.filter(s => s && s.trim()).length > 0 ? `
-            <div class="skill-category">
-              <strong>${t('cvSections.softSkills')}:</strong> ${skills.soft_skills.filter(s => s && s.trim()).map(s => capitalizeSkillName(s)).join(', ')}
-            </div>
-          ` : ''}
-          ${isSubsectionEnabled('skills', 'methodologies') && skills.methodologies && skills.methodologies.filter(m => m && m.trim()).length > 0 ? `
-            <div class="skill-category">
-              <strong>${t('cvSections.methodologies')}:</strong> ${skills.methodologies.filter(m => m && m.trim()).map(m => capitalizeSkillName(m)).join(', ')}
-            </div>
-          ` : ''}
-        </div>
-      </section>
-    `;
-    })() : ''}
-
-    ${isSectionEnabled('experience') && experience && experience.length > 0 ? (() => {
-      const hideDescription = selections?.sections?.experience?.options?.hideDescription === true;
-      const hideTechnologies = selections?.sections?.experience?.options?.hideTechnologies === true;
-      return `
-      <section class="section">
-        <h2 class="section-title">${getSectionTitle('experience', section_titles.experience, language)}</h2>
-        ${experience.map((exp, index) => `
-          <div class="experience-item">
-            <div class="experience-header-block">
-              <div class="experience-header">
-                <div>
-                  ${exp.title ? `<div class="experience-title">${exp.title}</div>` : ''}
-                  ${exp.company ? `<div class="experience-company">${exp.company}${exp.department_or_client ? ` (${exp.department_or_client})` : ''}</div>` : ''}
-                </div>
-                ${exp.start_date || exp.end_date ? `<div class="experience-dates">${formatDate(exp.start_date, language)} – ${formatDate(exp.end_date, language)}</div>` : ''}
-              </div>
-              ${exp.location ? `<div class="experience-location">${formatLocation(exp.location)}</div>` : ''}
-              ${!hideDescription && exp.description && exp.description.trim() ? `<div class="experience-description">${exp.description}</div>` : ''}
-            </div>
-
-            ${exp.responsibilities && exp.responsibilities.length > 0 ? `
-              <div class="experience-responsibilities-block">
-                <div class="responsibilities">
-                  ${!hideDescription ? `<h4>${t('cvSections.responsibilities')}</h4>` : ''}
-                  <ul>
-                    ${exp.responsibilities.map(resp => `<li>${resp}</li>`).join('')}
-                  </ul>
-                </div>
-              </div>
-            ` : ''}
-
-            ${((exp.deliverables && exp.deliverables.length > 0 && (selections?.sections?.experience?.itemsOptions?.[exp._originalIndex]?.includeDeliverables !== false)) || (!hideTechnologies && exp.skills_used && exp.skills_used.length > 0)) ? `
-              <div class="experience-deliverables-block">
-                ${exp.deliverables && exp.deliverables.length > 0 && (selections?.sections?.experience?.itemsOptions?.[exp._originalIndex]?.includeDeliverables !== false) ? `
-                  <div class="deliverables-inline">
-                    <strong>${t('cvSections.deliverables')}:</strong> ${exp.deliverables.join(', ')}
+    ${(() => {
+      // Générateurs de sections
+      const sectionGenerators = {
+        summary: () => {
+          if (!isSectionEnabled('summary') || !isSubsectionEnabled('summary', 'description') || !summary.description || !summary.description.trim()) return '';
+          return `
+            <section class="section">
+              <h2 class="section-title">${getSectionTitle('summary', section_titles.summary, language)}</h2>
+              <div class="summary-content">${summary.description}</div>
+            </section>
+          `;
+        },
+        skills: () => {
+          if (!isSectionEnabled('skills') || !Object.values(skills).some(skillArray => Array.isArray(skillArray) && skillArray.length > 0)) return '';
+          const hideProficiency = selections?.sections?.skills?.options?.hideProficiency === true;
+          return `
+            <section class="section">
+              <h2 class="section-title">${getSectionTitle('skills', section_titles.skills, language)}</h2>
+              <div class="skills-grid">
+                ${isSubsectionEnabled('skills', 'hard_skills') && skills.hard_skills && skills.hard_skills.filter(skill => skill.name && skill.proficiency).length > 0 ? `
+                  <div class="skill-category">
+                    <strong>${t('cvSections.hardSkills')}:</strong> ${skills.hard_skills.filter(skill => skill.name && skill.proficiency).map(skill => hideProficiency ? capitalizeSkillName(skill.name) : `${capitalizeSkillName(skill.name)} (${translateLevel(language, skill.proficiency, 'skill')})`).join(', ')}
                   </div>
                 ` : ''}
-
-                ${!hideTechnologies && exp.skills_used && exp.skills_used.length > 0 ? `
-                  <div class="skills-used">
-                    <strong>${t('cvSections.technologies')}:</strong> ${exp.skills_used.join(', ')}
+                ${isSubsectionEnabled('skills', 'tools') && skills.tools && skills.tools.filter(tool => tool.name && tool.proficiency).length > 0 ? `
+                  <div class="skill-category">
+                    <strong>${t('cvSections.tools')}:</strong> ${skills.tools.filter(tool => tool.name && tool.proficiency).map(tool => hideProficiency ? capitalizeSkillName(tool.name) : `${capitalizeSkillName(tool.name)} (${translateLevel(language, tool.proficiency, 'skill')})`).join(', ')}
+                  </div>
+                ` : ''}
+                ${isSubsectionEnabled('skills', 'soft_skills') && skills.soft_skills && skills.soft_skills.filter(s => s && s.trim()).length > 0 ? `
+                  <div class="skill-category">
+                    <strong>${t('cvSections.softSkills')}:</strong> ${skills.soft_skills.filter(s => s && s.trim()).map(s => capitalizeSkillName(s)).join(', ')}
+                  </div>
+                ` : ''}
+                ${isSubsectionEnabled('skills', 'methodologies') && skills.methodologies && skills.methodologies.filter(m => m && m.trim()).length > 0 ? `
+                  <div class="skill-category">
+                    <strong>${t('cvSections.methodologies')}:</strong> ${skills.methodologies.filter(m => m && m.trim()).map(m => capitalizeSkillName(m)).join(', ')}
                   </div>
                 ` : ''}
               </div>
-            ` : ''}
-          </div>
-        `).join('')}
-      </section>
-    `;
-    })() : ''}
-
-    ${isSectionEnabled('education') && education && education.length > 0 ? `
-      <section class="section">
-        <h2 class="section-title">${getSectionTitle('education', section_titles.education, language)}</h2>
-        ${education.map(edu => `
-          <div class="education-item">
-            <strong>${edu.institution || ''}</strong>${edu.degree || edu.field_of_study ? ` - ${edu.degree || ''}${edu.degree && edu.field_of_study ? ' • ' : ''}${edu.field_of_study || ''}` : ''}${edu.start_date || edu.end_date ? ` <span class="education-dates">(${edu.start_date && edu.start_date !== edu.end_date ? `${formatDate(edu.start_date, language)} – ` : ''}${formatDate(edu.end_date, language)})</span>` : ''}
-          </div>
-        `).join('')}
-      </section>
-    ` : ''}
-
-    ${isSectionEnabled('languages') && languages && languages.filter(lang => lang.name && lang.level).length > 0 ? `
-      <section class="section">
-        <h2 class="section-title">${getSectionTitle('languages', section_titles.languages, language)}</h2>
-        <div class="languages-grid">
-          ${languages.filter(lang => lang.name && lang.level).map(lang => `
-            <div class="language-item">
-              <strong>${lang.name}:</strong> ${translateLevel(language, lang.level, 'language')}
-            </div>
-          `).join('')}
-        </div>
-      </section>
-    ` : ''}
-
-    ${isSectionEnabled('projects') && projects && projects.length > 0 ? `
-      <section class="section">
-        <h2 class="section-title">${getSectionTitle('projects', section_titles.projects, language)}</h2>
-        ${projects.map(project => `
-          <div class="project-item">
-            <div class="project-header">
-              <div>
-                ${project.name ? `<div class="project-name">${project.name}</div>` : ''}
-                ${project.role ? `<div class="project-role">${project.role}</div>` : ''}
+            </section>
+          `;
+        },
+        experience: () => {
+          if (!isSectionEnabled('experience') || !experience || experience.length === 0) return '';
+          const hideDescription = selections?.sections?.experience?.options?.hideDescription === true;
+          const hideTechnologies = selections?.sections?.experience?.options?.hideTechnologies === true;
+          return `
+            <section class="section">
+              <h2 class="section-title">${getSectionTitle('experience', section_titles.experience, language)}</h2>
+              ${experience.map((exp, index) => `
+                <div class="experience-item">
+                  <div class="experience-header-block">
+                    <div class="experience-header">
+                      <div>
+                        ${exp.title ? `<div class="experience-title">${exp.title}</div>` : ''}
+                        ${exp.company ? `<div class="experience-company">${exp.company}${exp.department_or_client ? ` (${exp.department_or_client})` : ''}${exp.location ? `<span class="experience-location"> - ${formatLocation(exp.location)}</span>` : ''}</div>` : ''}
+                      </div>
+                      ${exp.start_date || exp.end_date ? `<div class="experience-dates">${formatDate(exp.start_date, language)} – ${formatDate(exp.end_date, language)}</div>` : ''}
+                    </div>
+                    ${!hideDescription && exp.description && exp.description.trim() ? `<div class="experience-description">${exp.description}</div>` : ''}
+                  </div>
+                  ${exp.responsibilities && exp.responsibilities.length > 0 ? `
+                    <div class="experience-responsibilities-block">
+                      <div class="responsibilities">
+                        <ul>
+                          ${exp.responsibilities.map(resp => `<li>${resp}</li>`).join('')}
+                        </ul>
+                      </div>
+                    </div>
+                  ` : ''}
+                  ${((exp.deliverables && exp.deliverables.length > 0 && (selections?.sections?.experience?.itemsOptions?.[exp._originalIndex]?.includeDeliverables !== false)) || (!hideTechnologies && exp.skills_used && exp.skills_used.length > 0)) ? `
+                    <div class="experience-deliverables-block">
+                      ${exp.deliverables && exp.deliverables.length > 0 && (selections?.sections?.experience?.itemsOptions?.[exp._originalIndex]?.includeDeliverables !== false) ? `
+                        <div class="deliverables-inline">
+                          <strong>${t('cvSections.deliverables')}:</strong> ${exp.deliverables.join(', ')}
+                        </div>
+                      ` : ''}
+                      ${!hideTechnologies && exp.skills_used && exp.skills_used.length > 0 ? `
+                        <div class="skills-used">
+                          <strong>${t('cvSections.technologies')}:</strong> ${exp.skills_used.join(', ')}
+                        </div>
+                      ` : ''}
+                    </div>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </section>
+          `;
+        },
+        education: () => {
+          if (!isSectionEnabled('education') || !education || education.length === 0) return '';
+          return `
+            <section class="section">
+              <h2 class="section-title">${getSectionTitle('education', section_titles.education, language)}</h2>
+              ${education.map(edu => `
+                <div class="education-item">
+                  <strong>${edu.institution || ''}</strong>${edu.degree || edu.field_of_study ? ` - ${edu.degree || ''}${edu.degree && edu.field_of_study ? ' • ' : ''}${edu.field_of_study || ''}` : ''}${edu.start_date || edu.end_date ? ` <span class="education-dates">(${edu.start_date && edu.start_date !== edu.end_date ? `${formatDate(edu.start_date, language)} – ` : ''}${formatDate(edu.end_date, language)})</span>` : ''}
+                </div>
+              `).join('')}
+            </section>
+          `;
+        },
+        languages: () => {
+          if (!isSectionEnabled('languages') || !languages || languages.filter(lang => lang.name && lang.level).length === 0) return '';
+          return `
+            <section class="section">
+              <h2 class="section-title">${getSectionTitle('languages', section_titles.languages, language)}</h2>
+              <div class="languages-grid">
+                ${languages.filter(lang => lang.name && lang.level).map(lang => `
+                  <div class="language-item">
+                    <strong>${lang.name}:</strong> ${translateLevel(language, lang.level, 'language')}
+                  </div>
+                `).join('')}
               </div>
-              ${project.start_date || project.end_date ? `
-                <div class="project-dates">${formatDate(project.start_date, language)}${project.end_date ? ` – ${formatDate(project.end_date, language)}` : ''}</div>
+            </section>
+          `;
+        },
+        projects: () => {
+          if (!isSectionEnabled('projects') || !projects || projects.length === 0) return '';
+          return `
+            <section class="section">
+              <h2 class="section-title">${getSectionTitle('projects', section_titles.projects, language)}</h2>
+              ${projects.map(project => `
+                <div class="project-item">
+                  <div class="project-header">
+                    <div>
+                      ${project.name ? `<div class="project-name">${project.name}</div>` : ''}
+                      ${project.role ? `<div class="project-role">${project.role}</div>` : ''}
+                    </div>
+                    ${project.start_date || project.end_date ? `
+                      <div class="project-dates">${formatDate(project.start_date, language)}${project.end_date ? ` – ${formatDate(project.end_date, language)}` : ''}</div>
+                    ` : ''}
+                  </div>
+                  ${project.summary && project.summary.trim() ? `<div class="project-summary">${project.summary}</div>` : ''}
+                  ${project.tech_stack && project.tech_stack.length > 0 ? `
+                    <div class="skills-used">
+                      <strong>${t('cvSections.technologies')}:</strong> ${project.tech_stack.join(', ')}
+                    </div>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </section>
+          `;
+        },
+        extras: () => {
+          if (!isSectionEnabled('extras') || !extras || extras.filter(extra => extra.name && extra.summary).length === 0) return '';
+          return `
+            <section class="section">
+              <h2 class="section-title">${getSectionTitle('extras', section_titles.extras, language)}</h2>
+              ${extras.filter(extra => extra.name && extra.summary && (extra.summary || '').length <= 40).length > 0 ? `
+                <div class="extras-grid-short">
+                  ${extras.filter(extra => extra.name && extra.summary && (extra.summary || '').length <= 40).map(extra => `
+                    <div class="extra-item-short">
+                      <strong>${extra.name}:</strong> ${extra.summary}
+                    </div>
+                  `).join('')}
+                </div>
               ` : ''}
-            </div>
-            ${project.summary && project.summary.trim() ? `<div class="project-summary">${project.summary}</div>` : ''}
-            ${project.tech_stack && project.tech_stack.length > 0 ? `
-              <div class="skills-used">
-                <strong>${t('cvSections.technologies')}:</strong> ${project.tech_stack.join(', ')}
-              </div>
-            ` : ''}
-          </div>
-        `).join('')}
-      </section>
-    ` : ''}
+              ${extras.filter(extra => extra.name && extra.summary && (extra.summary || '').length > 40).map(extra => `
+                <div class="extra-item">
+                  <strong>${extra.name}:</strong> ${extra.summary}
+                </div>
+              `).join('')}
+            </section>
+          `;
+        }
+      };
 
-    ${isSectionEnabled('extras') && extras && extras.filter(extra => extra.name && extra.summary).length > 0 ? `
-      <section class="section">
-        <h2 class="section-title">${getSectionTitle('extras', section_titles.extras, language)}</h2>
-        <div class="extras-grid">
-          ${extras.filter(extra => extra.name && extra.summary).map(extra => `
-            <div class="extra-item">
-              <strong>${extra.name}:</strong> ${extra.summary}
-            </div>
-          `).join('')}
-        </div>
-      </section>
-    ` : ''}
+      // Générer les sections dans l'ordre spécifié
+      return order.map(sectionKey => {
+        const generator = sectionGenerators[sectionKey];
+        return generator ? generator() : '';
+      }).join('');
+    })()}
     </div>
   </div>
 
@@ -697,15 +768,11 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null) {
       const container = document.getElementById('cv-container');
       const pageWrapper = document.querySelector('.page-wrapper');
 
-      // Calculer dynamiquement la hauteur de contenu par page en mm convertis en pixels
-      // A4 = 297mm, marges = 15mm top + 15mm bottom = 30mm
-      // Contenu par page = 267mm
-      // Créer un élément temporaire pour mesurer 267mm en pixels
-      const measureDiv = document.createElement('div');
-      measureDiv.style.cssText = 'position:absolute;width:267mm;height:267mm;visibility:hidden;';
-      document.body.appendChild(measureDiv);
-      const PAGE_HEIGHT = measureDiv.offsetHeight;
-      document.body.removeChild(measureDiv);
+      // Hauteur de contenu par page calibrée pour Puppeteer
+      // A4 = 297mm, marges = 15mm top + 15mm bottom = 30mm, contenu = 267mm
+      // Sur mobile, le contenu est rendu plus grand, donc on augmente PAGE_HEIGHT
+      const isMobile = window.innerWidth < 500;
+      const PAGE_HEIGHT = isMobile ? 1760 : 1055; // 1055 * 1.67 pour mobile
 
       // Position de départ du contenu (après le padding top du container)
       const containerStyle = getComputedStyle(container);
@@ -759,7 +826,7 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null) {
           // Trouver le premier élément suivant dans la même section
           const section = el.closest('.section');
           if (section) {
-            const firstChild = section.querySelector('.experience-item, .skill-category, .education-item, .project-item, .extra-item, .languages-grid, .summary-content');
+            const firstChild = section.querySelector('.experience-item, .skill-category, .education-item, .project-item, .extra-item, .extras-grid-short, .languages-grid, .summary-content');
             if (firstChild) {
               const childRect = firstChild.getBoundingClientRect();
               // Le bloc = titre + premier enfant (ils ne doivent pas être séparés)
@@ -800,20 +867,9 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null) {
       // Tolérance pour les différences de rendu entre navigateur et Puppeteer
       const TOLERANCE = 20;
 
-      // Debug - afficher les blocs détectés
-      console.log('PAGE_HEIGHT:', PAGE_HEIGHT);
-      console.log('totalHeight:', totalHeight);
-      console.log('Blocs détectés:', uniqueBlocks.map(b => ({
-        type: b.type,
-        top: Math.round(b.top),
-        bottom: Math.round(b.bottom),
-        element: b.element?.className || b.element?.tagName
-      })));
-
       // Si le contenu tient sur une seule page (avec tolérance), pas de saut de page
       if (totalHeight <= PAGE_HEIGHT + TOLERANCE) {
-        console.log('Content fits on one page');
-        return; // Pas besoin d'ajouter des indicateurs
+        return;
       }
 
       // Continuer tant qu'on n'a pas parcouru tout le document
@@ -833,22 +889,58 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null) {
 
         if (blockToCut) {
           // Un bloc serait coupé -> saut de page juste avant ce bloc
-          console.log('Bloc coupé à', currentPageEnd, ':', {
-            type: blockToCut.type,
-            top: Math.round(blockToCut.top),
-            bottom: Math.round(blockToCut.bottom),
-            element: blockToCut.element?.className
-          });
-          pageBreaks.push(blockToCut.top);
-          currentPageStart = blockToCut.top;
-          currentPageEnd = blockToCut.top + PAGE_HEIGHT;
-        } else {
-          // Pas de bloc coupé, passer à la page suivante
-          if (currentPageEnd < totalHeight) {
-            pageBreaks.push(currentPageEnd);
+          // Mais d'abord vérifier s'il y a un titre juste avant ce bloc qui devrait aussi être déplacé
+          let breakPosition = blockToCut.top;
+
+          for (const block of uniqueBlocks) {
+            // Chercher un titre qui se termine proche du début du bloc coupé (dans les 100px avant)
+            if (block.type === 'title-with-content' &&
+                block.bottom < blockToCut.top &&
+                block.bottom > blockToCut.top - 100) {
+              // Utiliser le début du titre comme position de saut
+              breakPosition = block.top;
+              break;
+            }
           }
-          currentPageStart = currentPageEnd;
-          currentPageEnd = currentPageStart + PAGE_HEIGHT;
+
+          pageBreaks.push(breakPosition);
+          currentPageStart = breakPosition;
+          currentPageEnd = breakPosition + PAGE_HEIGHT;
+        } else {
+          // Pas de bloc coupé directement, mais vérifier si un titre est en fin de page
+          // avec son contenu qui serait sur la page suivante (break-after: avoid)
+          let titleToMove = null;
+          const TITLE_MARGIN = 100; // Marge en pixels pour considérer qu'un titre est "en fin de page"
+
+          for (const block of uniqueBlocks) {
+            // Chercher un bloc title-with-content qui se termine proche de la fin de page
+            if (block.type === 'title-with-content' &&
+                block.bottom > currentPageEnd - TITLE_MARGIN &&
+                block.bottom <= currentPageEnd) {
+              // Vérifier s'il y a du contenu après ce titre qui serait sur la page suivante
+              const hasContentAfter = uniqueBlocks.some(b =>
+                b.top > block.bottom && b.top < currentPageEnd + PAGE_HEIGHT
+              );
+              if (hasContentAfter) {
+                titleToMove = block;
+                break;
+              }
+            }
+          }
+
+          if (titleToMove) {
+            // Déplacer le saut de page avant ce titre
+            pageBreaks.push(titleToMove.top);
+            currentPageStart = titleToMove.top;
+            currentPageEnd = titleToMove.top + PAGE_HEIGHT;
+          } else {
+            // Pas de cas spécial, passer à la page suivante
+            if (currentPageEnd < totalHeight) {
+              pageBreaks.push(currentPageEnd);
+            }
+            currentPageStart = currentPageEnd;
+            currentPageEnd = currentPageStart + PAGE_HEIGHT;
+          }
         }
       }
 
@@ -860,6 +952,46 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null) {
         indicator.style.top = (position + paddingTop) + 'px';
         container.appendChild(indicator);
       });
+
+      // Scaling responsive : adapter la page A4 à la largeur disponible
+      function applyResponsiveScale() {
+        const pageWrapper = document.querySelector('.page-wrapper');
+        if (!pageWrapper) return;
+
+        // Reset pour mesurer correctement
+        pageWrapper.style.transform = 'none';
+        pageWrapper.style.marginBottom = '';
+
+        // Largeur de la page A4 en pixels (210mm ≈ 794px)
+        const pageWidthPx = pageWrapper.offsetWidth;
+        // Hauteur originale AVANT le scale
+        const originalHeight = pageWrapper.offsetHeight;
+
+        // Largeur disponible dans le viewport avec marge pour la bordure grise
+        const minMargin = 20; // marge grise minimale de chaque côté
+        const availableWidth = window.innerWidth - (minMargin * 2);
+
+        // Ne pas appliquer de scale si on est proche de la taille originale (évite le flou)
+        // Seulement scaler si on doit réduire de plus de 2%
+        if (availableWidth < pageWidthPx * 0.98) {
+          // Calculer le scale pour que la page tienne dans la largeur dispo
+          const scale = availableWidth / pageWidthPx;
+
+          // Appliquer le scale (transform-origin: top center pour garder le centrage)
+          pageWrapper.style.transform = 'scale(' + scale + ')';
+
+          // La hauteur visuelle après scale
+          const visualHeight = originalHeight * scale;
+          // Espace perdu = hauteur originale - hauteur visuelle
+          const spaceSaved = originalHeight - visualHeight;
+          // Marge négative pour récupérer cet espace
+          pageWrapper.style.marginBottom = '-' + spaceSaved + 'px';
+        }
+      }
+
+      // Appliquer le scale au chargement et au resize
+      applyResponsiveScale();
+      window.addEventListener('resize', applyResponsiveScale);
     });
   </script>
 </body>

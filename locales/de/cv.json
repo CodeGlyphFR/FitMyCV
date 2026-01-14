@@ -122,7 +122,29 @@
     "options": {
       "hideProficiency": "Niveau ausblenden",
       "hideDescription": "Beschreibungen ausblenden",
-      "hideTechnologies": "Technologien ausblenden"
+      "hideTechnologies": "Technologien ausblenden",
+      "hideDeliverables": "Ergebnisse ausblenden"
+    },
+    "templates": {
+      "label": "Vorlage",
+      "placeholder": "Vorlage anwenden...",
+      "loading": "Laden...",
+      "noTemplates": "Keine Vorlagen",
+      "save": "Speichern",
+      "namePlaceholder": "Vorlagenname",
+      "confirmDelete": "Diese Vorlage löschen?",
+      "confirmOverwrite": "Vorlage überschreiben",
+      "update": "Aktualisieren",
+      "createNew": "Neu erstellen",
+      "delete": "Löschen",
+      "hint": "Speichern Sie Ihre Auswahl als wiederverwendbare Vorlage"
+    },
+    "order": {
+      "button": "Abschnittsreihenfolge",
+      "title": "Abschnittsreihenfolge",
+      "hint": "Verschieben Sie Abschnitte, um die Anzeigereihenfolge anzupassen",
+      "reset": "Zurücksetzen",
+      "close": "Schließen"
     }
   },
   "newCvModal": {

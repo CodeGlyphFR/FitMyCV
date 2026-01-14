@@ -36,17 +36,51 @@ export function useExportModal({ currentItem, language, addNotification }) {
   const [previewHtml, setPreviewHtml] = useState('');
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
+  // États pour les templates
+  const [templates, setTemplates] = useState([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+
+  // Ordre par défaut des sections (sans header qui est toujours premier)
+  const DEFAULT_SECTIONS_ORDER = ['summary', 'skills', 'experience', 'education', 'languages', 'projects', 'extras'];
+  const [sectionsOrder, setSectionsOrder] = useState(DEFAULT_SECTIONS_ORDER);
+
   // Structure par défaut des sélections
+  // Les sections vides sont désactivées par défaut
   const getDefaultSelections = (cvData) => {
+    // Helper pour vérifier si une section a du contenu
+    const hasContent = (key) => {
+      if (!cvData) return false;
+      switch (key) {
+        case 'summary':
+          return !!(cvData.summary?.description);
+        case 'skills':
+          return !!(cvData.skills?.hard_skills?.length || cvData.skills?.soft_skills?.length ||
+                   cvData.skills?.tools?.length || cvData.skills?.methodologies?.length);
+        case 'experience':
+          return !!(cvData.experience?.length);
+        case 'education':
+          return !!(cvData.education?.length);
+        case 'languages':
+          return !!(cvData.languages?.length);
+        case 'projects':
+          return !!(cvData.projects?.length);
+        case 'extras':
+          return !!(cvData.extras?.length);
+        default:
+          return true;
+      }
+    };
+
     const selections = {
       sections: {
         header: {
           enabled: true,
           subsections: { links: true }
         },
-        summary: { enabled: true },
+        summary: { enabled: hasContent('summary') },
         skills: {
-          enabled: true,
+          enabled: hasContent('skills'),
           subsections: {
             hard_skills: true,
             soft_skills: true,
@@ -58,31 +92,28 @@ export function useExportModal({ currentItem, language, addNotification }) {
           }
         },
         experience: {
-          enabled: true,
+          enabled: hasContent('experience'),
           items: cvData?.experience ? cvData.experience.map((_, index) => index) : [],
-          itemsOptions: cvData?.experience ? cvData.experience.reduce((acc, _, index) => {
-            acc[index] = { includeDeliverables: true };
-            return acc;
-          }, {}) : {},
           options: {
             hideTechnologies: false,
-            hideDescription: false
+            hideDescription: false,
+            hideDeliverables: false
           }
         },
         education: {
-          enabled: true,
+          enabled: hasContent('education'),
           items: cvData?.education ? cvData.education.map((_, index) => index) : []
         },
         languages: {
-          enabled: true,
+          enabled: hasContent('languages'),
           items: cvData?.languages ? cvData.languages.map((_, index) => index) : []
         },
         projects: {
-          enabled: true,
+          enabled: hasContent('projects'),
           items: cvData?.projects ? cvData.projects.map((_, index) => index) : []
         },
         extras: {
-          enabled: true,
+          enabled: hasContent('extras'),
           items: cvData?.extras ? cvData.extras.map((_, index) => index) : []
         }
       }
@@ -187,9 +218,17 @@ export function useExportModal({ currentItem, language, addNotification }) {
                 updated.sections.experience.options = { hideTechnologies: false, hideDescription: false };
               }
               setSelections(updated);
+
+              // Charger l'ordre des sections si sauvegardé
+              if (parsed.sectionsOrder && Array.isArray(parsed.sectionsOrder)) {
+                setSectionsOrder(parsed.sectionsOrder);
+              } else {
+                setSectionsOrder(DEFAULT_SECTIONS_ORDER);
+              }
             } else {
               // Pas de préférences sauvegardées pour ce CV, utiliser les valeurs par défaut
               setSelections(getDefaultSelections(data.cv));
+              setSectionsOrder(DEFAULT_SECTIONS_ORDER);
             }
           } catch (err) {
             console.error('[useExportModal] Erreur chargement préférences:', err);
@@ -204,27 +243,25 @@ export function useExportModal({ currentItem, language, addNotification }) {
       });
   }, [isOpen, currentItem, getStorageKey]);
 
-  // Calculer les compteurs pour chaque section
+  // Calculer les compteurs pour chaque section (basé sur le contenu réel du CV, pas les sélections)
   const counters = useMemo(() => {
     if (!cvData) return {};
 
     return {
       header: 1, // toujours 1
       summary: cvData.summary?.description ? 1 : 0,
-      skills: selections.sections.skills?.subsections
-        ? Object.keys(selections.sections.skills.subsections).reduce((total, subKey) => {
-            const isEnabled = selections.sections.skills.subsections[subKey];
-            const count = cvData.skills?.[subKey]?.length || 0;
-            return total + (isEnabled ? count : 0);
-          }, 0)
-        : 0,
+      // Skills: compter le total des compétences dans le CV (pas ce qui est sélectionné)
+      skills: (cvData.skills?.hard_skills?.length || 0) +
+              (cvData.skills?.soft_skills?.length || 0) +
+              (cvData.skills?.tools?.length || 0) +
+              (cvData.skills?.methodologies?.length || 0),
       experience: cvData.experience?.length || 0,
       education: cvData.education?.length || 0,
       languages: cvData.languages?.length || 0,
       projects: cvData.projects?.length || 0,
       extras: cvData.extras?.length || 0
     };
-  }, [cvData, selections.sections.skills]);
+  }, [cvData]);
 
   // Calculer les sous-compteurs pour les sections granulaires
   const subCounters = useMemo(() => {
@@ -353,13 +390,23 @@ export function useExportModal({ currentItem, language, addNotification }) {
     });
   }, []);
 
-  // Tout sélectionner
+  // Tout sélectionner (y compris tous les items)
   const selectAll = useCallback(() => {
     setSelections(prev => {
       const newSelections = { sections: {} };
       Object.keys(prev.sections).forEach(key => {
         const section = prev.sections[key];
+        // Recalculer tous les indices d'items depuis cvData
+        let allItems = undefined;
+        if (section.items !== undefined && cvData?.[key]) {
+          allItems = cvData[key].map((_, index) => index);
+        } else if (section.items !== undefined) {
+          // Fallback si cvData n'est pas disponible
+          allItems = section.items;
+        }
+
         newSelections.sections[key] = {
+          ...section,
           enabled: true,
           subsections: section.subsections
             ? Object.keys(section.subsections).reduce((acc, subKey) => {
@@ -367,12 +414,12 @@ export function useExportModal({ currentItem, language, addNotification }) {
                 return acc;
               }, {})
             : undefined,
-          items: section.items ? section.items : undefined
+          items: allItems
         };
       });
       return newSelections;
     });
-  }, []);
+  }, [cvData]);
 
   // Tout désélectionner (sauf header)
   const deselectAll = useCallback(() => {
@@ -385,6 +432,7 @@ export function useExportModal({ currentItem, language, addNotification }) {
           newSelections.sections[key] = { ...section, enabled: true };
         } else {
           newSelections.sections[key] = {
+            ...section, // Conserver options, itemsOptions, etc.
             enabled: false,
             subsections: section.subsections
               ? Object.keys(section.subsections).reduce((acc, subKey) => {
@@ -398,6 +446,33 @@ export function useExportModal({ currentItem, language, addNotification }) {
       });
       return newSelections;
     });
+  }, []);
+
+  // Déplacer une section vers le haut
+  const moveSectionUp = useCallback((sectionKey) => {
+    setSectionsOrder(prev => {
+      const index = prev.indexOf(sectionKey);
+      if (index <= 0) return prev; // Déjà en haut
+      const newOrder = [...prev];
+      [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
+      return newOrder;
+    });
+  }, []);
+
+  // Déplacer une section vers le bas
+  const moveSectionDown = useCallback((sectionKey) => {
+    setSectionsOrder(prev => {
+      const index = prev.indexOf(sectionKey);
+      if (index < 0 || index >= prev.length - 1) return prev; // Déjà en bas
+      const newOrder = [...prev];
+      [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
+      return newOrder;
+    });
+  }, []);
+
+  // Réinitialiser l'ordre des sections
+  const resetSectionsOrder = useCallback(() => {
+    setSectionsOrder(DEFAULT_SECTIONS_ORDER);
   }, []);
 
   // Ouvrir le modal
@@ -444,8 +519,11 @@ export function useExportModal({ currentItem, language, addNotification }) {
       }
     });
 
+    // Inclure l'ordre des sections
+    selectionsToSave.sectionsOrder = sectionsOrder;
+
     localStorage.setItem(storageKey, JSON.stringify(selectionsToSave));
-  }, [currentItem, selections, cvData, getStorageKey]);
+  }, [currentItem, selections, cvData, getStorageKey, sectionsOrder]);
 
   // Fermer le modal (et sauvegarder les sélections)
   const closeModal = useCallback(() => {
@@ -492,6 +570,7 @@ export function useExportModal({ currentItem, language, addNotification }) {
           filename: currentFilename,
           language: cvData?.language || 'fr',  // Utiliser la langue du CV, pas de l'interface
           selections: selections,
+          sectionsOrder: sectionsOrder,
           customFilename: filename
         }),
       });
@@ -605,6 +684,7 @@ export function useExportModal({ currentItem, language, addNotification }) {
           filename: currentItem,
           language,
           selections,
+          sectionsOrder,
         }),
       });
 
@@ -638,6 +718,163 @@ export function useExportModal({ currentItem, language, addNotification }) {
     setPreviewHtml('');
   }, []);
 
+  // ============================================
+  // Gestion des templates d'export
+  // ============================================
+
+  // Charger les templates depuis l'API
+  const fetchTemplates = useCallback(async () => {
+    setIsLoadingTemplates(true);
+    try {
+      const response = await fetch('/api/export-templates');
+      if (!response.ok) {
+        throw new Error('Erreur lors du chargement des templates');
+      }
+      const data = await response.json();
+      setTemplates(data.templates || []);
+    } catch (error) {
+      console.error('[useExportModal] Erreur chargement templates:', error);
+      setTemplates([]);
+    } finally {
+      setIsLoadingTemplates(false);
+    }
+  }, []);
+
+  // Charger les templates au montage du modal
+  useEffect(() => {
+    if (isOpen) {
+      fetchTemplates();
+    }
+  }, [isOpen, fetchTemplates]);
+
+  // Extraire la configuration macro des sélections courantes (sans les items individuels)
+  const extractMacroSelections = useCallback(() => {
+    const macroSelections = { sections: {}, sectionsOrder: sectionsOrder };
+
+    Object.keys(selections.sections).forEach(sectionKey => {
+      const section = selections.sections[sectionKey];
+      macroSelections.sections[sectionKey] = {
+        enabled: section.enabled,
+      };
+
+      // Copier les subsections si elles existent
+      if (section.subsections) {
+        macroSelections.sections[sectionKey].subsections = { ...section.subsections };
+      }
+
+      // Copier les options si elles existent
+      if (section.options) {
+        macroSelections.sections[sectionKey].options = { ...section.options };
+      }
+
+      // Ne PAS copier les items (c'est le niveau micro)
+    });
+
+    return macroSelections;
+  }, [selections, sectionsOrder]);
+
+  // Sauvegarder les sélections actuelles comme template
+  const saveAsTemplate = useCallback(async (templateName) => {
+    if (!templateName || !templateName.trim()) {
+      return { ok: false, error: 'Le nom du template est requis' };
+    }
+
+    setIsSavingTemplate(true);
+    try {
+      const macroSelections = extractMacroSelections();
+
+      const response = await fetch('/api/export-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: templateName.trim(),
+          selections: macroSelections,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { ok: false, error: data.error || 'Erreur lors de la sauvegarde', code: data.code };
+      }
+
+      // Rafraîchir la liste des templates
+      await fetchTemplates();
+
+      return { ok: true, template: data.template };
+    } catch (error) {
+      console.error('[useExportModal] Erreur sauvegarde template:', error);
+      return { ok: false, error: error.message || 'Erreur lors de la sauvegarde' };
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  }, [extractMacroSelections, fetchTemplates]);
+
+  // Appliquer un template aux sélections courantes
+  const applyTemplate = useCallback((template) => {
+    if (!template?.selections?.sections) return;
+
+    setSelections(prev => {
+      const newSelections = { sections: {} };
+
+      Object.keys(prev.sections).forEach(sectionKey => {
+        const prevSection = prev.sections[sectionKey];
+        const templateSection = template.selections.sections[sectionKey];
+
+        if (templateSection) {
+          newSelections.sections[sectionKey] = {
+            // Garder les items et itemsOptions existants (niveau micro)
+            ...prevSection,
+            // Appliquer enabled du template
+            enabled: templateSection.enabled,
+          };
+
+          // Appliquer les subsections du template si elles existent
+          if (templateSection.subsections) {
+            newSelections.sections[sectionKey].subsections = { ...templateSection.subsections };
+          }
+
+          // Appliquer les options du template si elles existent
+          if (templateSection.options) {
+            newSelections.sections[sectionKey].options = { ...templateSection.options };
+          }
+        } else {
+          // Section non présente dans le template, garder l'état actuel
+          newSelections.sections[sectionKey] = { ...prevSection };
+        }
+      });
+
+      return newSelections;
+    });
+
+    // Appliquer l'ordre des sections du template si disponible
+    if (template.selections.sectionsOrder && Array.isArray(template.selections.sectionsOrder)) {
+      setSectionsOrder(template.selections.sectionsOrder);
+    }
+  }, []);
+
+  // Supprimer un template
+  const deleteTemplate = useCallback(async (templateId) => {
+    try {
+      const response = await fetch(`/api/export-templates/${templateId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        return { ok: false, error: data.error || 'Erreur lors de la suppression' };
+      }
+
+      // Rafraîchir la liste des templates
+      await fetchTemplates();
+
+      return { ok: true };
+    } catch (error) {
+      console.error('[useExportModal] Erreur suppression template:', error);
+      return { ok: false, error: error.message || 'Erreur lors de la suppression' };
+    }
+  }, [fetchTemplates]);
+
   return {
     isOpen,
     openModal,
@@ -661,6 +898,17 @@ export function useExportModal({ currentItem, language, addNotification }) {
     previewHtml,
     isLoadingPreview,
     loadPreview,
-    closePreview
+    closePreview,
+    // Templates
+    templates,
+    isLoadingTemplates,
+    isSavingTemplate,
+    saveAsTemplate,
+    applyTemplate,
+    deleteTemplate,
+    // Ordre des sections
+    sectionsOrder,
+    setSectionsOrder,
+    resetSectionsOrder
   };
 }
