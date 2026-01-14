@@ -96,6 +96,13 @@ export async function GET(request) {
         }
       };
 
+      // Handler pour les mises à jour de crédits
+      const handleCreditsUpdate = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('credits:updated', { ...data, timestamp: Date.now() });
+        }
+      };
+
       // S'abonner aux événements
       dbEmitter.on('task:updated', handleTaskUpdate);
       dbEmitter.on('cv:updated', handleCvUpdate);
@@ -107,6 +114,7 @@ export async function GET(request) {
       dbEmitter.on('cv_improvement:progress', handleCvImprovementProgress);
       dbEmitter.on('cv_improvement:completed', handleCvImprovementCompleted);
       dbEmitter.on('cv_improvement:failed', handleCvImprovementFailed);
+      dbEmitter.on('credits:updated', handleCreditsUpdate);
 
       // Envoyer un message de connexion réussie
       sendEvent('connected', { userId, timestamp: Date.now() });
@@ -123,6 +131,7 @@ export async function GET(request) {
         dbEmitter.off('cv_improvement:progress', handleCvImprovementProgress);
         dbEmitter.off('cv_improvement:completed', handleCvImprovementCompleted);
         dbEmitter.off('cv_improvement:failed', handleCvImprovementFailed);
+        dbEmitter.off('credits:updated', handleCreditsUpdate);
         controller.close();
       });
 

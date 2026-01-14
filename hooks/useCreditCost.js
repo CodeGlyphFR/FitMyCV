@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCreditCostsContext } from '@/lib/creditCosts/CreditCostsContext';
 
 /**
  * Hook pour récupérer les coûts en crédits des features
+ *
+ * OPTIMISATION: Utilise désormais un Context centralisé au lieu de faire
+ * un fetch indépendant par composant. Cela réduit les appels API de ~8 à 1.
  *
  * @returns {Object}
  * - showCosts: boolean - true si on doit afficher les coûts (mode crédits-only)
@@ -15,79 +18,7 @@ import { useState, useEffect, useCallback } from 'react';
  * - refetch: () => void
  */
 export function useCreditCost() {
-  const [state, setState] = useState({
-    showCosts: false,
-    costs: {},
-    loading: true,
-    error: null,
-  });
-
-  const fetchCosts = useCallback(async (isMounted = true) => {
-    try {
-      const response = await fetch('/api/credits/costs', {
-        cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache' },
-      });
-
-      if (!response.ok) throw new Error('Erreur API');
-
-      const data = await response.json();
-
-      if (isMounted) {
-        setState({
-          showCosts: data.showCosts,
-          costs: data.costs || {},
-          loading: false,
-          error: null,
-        });
-      }
-    } catch (error) {
-      if (isMounted) {
-        setState((prev) => ({
-          ...prev,
-          loading: false,
-          error: error.message,
-        }));
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-    fetchCosts(isMounted);
-
-    // Écouter les mises à jour des settings
-    const handleSettingsUpdate = () => fetchCosts(true);
-    window.addEventListener('settings:updated', handleSettingsUpdate);
-
-    return () => {
-      isMounted = false;
-      window.removeEventListener('settings:updated', handleSettingsUpdate);
-    };
-  }, [fetchCosts]);
-
-  // Helper pour récupérer le coût d'une feature spécifique
-  const getCost = useCallback(
-    (featureName) => {
-      return state.costs[featureName] ?? 0;
-    },
-    [state.costs]
-  );
-
-  // Calcul du coût total pour plusieurs opérations
-  const getTotalCost = useCallback(
-    (featureName, count = 1) => {
-      return getCost(featureName) * count;
-    },
-    [getCost]
-  );
-
-  return {
-    ...state,
-    getCost,
-    getTotalCost,
-    refetch: () => fetchCosts(true),
-  };
+  return useCreditCostsContext();
 }
 
 export default useCreditCost;

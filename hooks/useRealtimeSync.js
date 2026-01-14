@@ -76,6 +76,15 @@ export function useRealtimeSync(options = {}) {
         }
       });
 
+      // Mise à jour des crédits - dispatcher directement l'événement client
+      eventSource.addEventListener('credits:updated', (event) => {
+        const data = JSON.parse(event.data);
+        // Dispatcher l'événement pour que tous les composants se mettent à jour
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('credits-updated', { detail: data }));
+        }
+      });
+
       // Gestion des erreurs
       eventSource.onerror = (err) => {
         setConnected(false);

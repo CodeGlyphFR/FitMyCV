@@ -79,8 +79,13 @@ export async function POST(request) {
       return BackgroundErrors.jobOfferUrlNotFound();
     }
 
+    // Créer un identifiant de tâche AVANT le débit pour pouvoir le lier à la transaction
+    const taskIdentifier = typeof taskId === "string" && taskId.trim()
+      ? taskId.trim()
+      : `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     // Vérifier les limites ET incrémenter le compteur/débiter le crédit
-    const usageResult = await incrementFeatureCounter(userId, 'match_score', {});
+    const usageResult = await incrementFeatureCounter(userId, 'match_score', { taskId: taskIdentifier });
 
     if (!usageResult.success) {
       return NextResponse.json({
@@ -89,11 +94,6 @@ export async function POST(request) {
         redirectUrl: usageResult.redirectUrl
       }, { status: 403 });
     }
-
-    // Créer un identifiant de tâche
-    const taskIdentifier = typeof taskId === "string" && taskId.trim()
-      ? taskId.trim()
-      : `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     const existingTask = await prisma.backgroundTask.findUnique({ where: { id: taskIdentifier } });
 
