@@ -85,6 +85,15 @@ export function useRealtimeSync(options = {}) {
         }
       });
 
+      // Mise à jour des settings (broadcast) - dispatcher l'événement client
+      eventSource.addEventListener('settings:updated', (event) => {
+        const data = JSON.parse(event.data);
+        // Dispatcher l'événement pour que SettingsContext se mette à jour
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('settings:updated', { detail: data }));
+        }
+      });
+
       // Gestion des erreurs
       eventSource.onerror = (err) => {
         setConnected(false);

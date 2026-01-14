@@ -103,6 +103,14 @@ export async function GET(request) {
         }
       };
 
+      // Handler pour les mises à jour de settings (broadcast à tous)
+      const handleSettingsUpdate = ({ userId: eventUserId, data }) => {
+        // '*' = broadcast à tous les utilisateurs connectés
+        if (eventUserId === '*') {
+          sendEvent('settings:updated', { ...data, timestamp: Date.now() });
+        }
+      };
+
       // S'abonner aux événements
       dbEmitter.on('task:updated', handleTaskUpdate);
       dbEmitter.on('cv:updated', handleCvUpdate);
@@ -115,6 +123,7 @@ export async function GET(request) {
       dbEmitter.on('cv_improvement:completed', handleCvImprovementCompleted);
       dbEmitter.on('cv_improvement:failed', handleCvImprovementFailed);
       dbEmitter.on('credits:updated', handleCreditsUpdate);
+      dbEmitter.on('settings:updated', handleSettingsUpdate);
 
       // Envoyer un message de connexion réussie
       sendEvent('connected', { userId, timestamp: Date.now() });
@@ -132,6 +141,7 @@ export async function GET(request) {
         dbEmitter.off('cv_improvement:completed', handleCvImprovementCompleted);
         dbEmitter.off('cv_improvement:failed', handleCvImprovementFailed);
         dbEmitter.off('credits:updated', handleCreditsUpdate);
+        dbEmitter.off('settings:updated', handleSettingsUpdate);
         controller.close();
       });
 
