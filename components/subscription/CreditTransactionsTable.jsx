@@ -85,7 +85,7 @@ export default function CreditTransactionsTable() {
       ) : (
         <>
           {/* Table */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/20">

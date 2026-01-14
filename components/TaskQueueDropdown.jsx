@@ -361,7 +361,7 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
         left: `${dropdownPosition.left}px`
       }}
       >
-        <div className="max-h-80 overflow-y-auto">
+        <div className="max-h-80 overflow-y-auto custom-scrollbar">
           {sortedTasks.length === 0 ? (
             <div className="p-6 text-center text-white/70">
               <div className="text-sm drop-shadow">{t("taskQueue.noTasks")}</div>

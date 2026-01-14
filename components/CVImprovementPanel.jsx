@@ -656,7 +656,7 @@ export default function CVImprovementPanel({ cvFile }) {
 
             {/* Content - Scrollable */}
             <div
-              className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 custom-scrollbar"
               style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
               onTouchStart={() => { isDraggingRef.current = false; }}
               onTouchMove={() => { isDraggingRef.current = true; }}

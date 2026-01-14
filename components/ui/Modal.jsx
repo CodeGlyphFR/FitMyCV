@@ -229,7 +229,7 @@ export default function Modal({
 
           {/* Content */}
           <div
-            className="text-white/90 overflow-y-auto overflow-x-hidden flex-1 p-4 md:p-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="text-white/90 overflow-y-auto overflow-x-hidden flex-1 p-4 md:p-6 custom-scrollbar"
             style={{
               WebkitOverflowScrolling: 'touch',
               overscrollBehavior: 'contain'

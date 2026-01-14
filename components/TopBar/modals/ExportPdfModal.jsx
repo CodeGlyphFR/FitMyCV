@@ -323,7 +323,7 @@ export default function ExportPdfModal({
                   </button>
                   {showTemplateDropdown && templates.length > 0 && (
                     <div className="absolute left-0 right-0 top-full mt-1 bg-slate-800 border border-white/20 rounded-lg shadow-xl z-50 overflow-hidden">
-                      <div className="py-1 max-h-48 overflow-y-auto">
+                      <div className="py-1 max-h-48 overflow-y-auto custom-scrollbar">
                         {templates.map(template => (
                           <button
                             key={template.id}

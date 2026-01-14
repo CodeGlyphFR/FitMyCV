@@ -146,7 +146,7 @@ export default function CookieBanner() {
                 </button>
               </div>
 
-              <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
+              <div className="space-y-2 mb-4 max-h-60 overflow-y-auto custom-scrollbar">
                 {/* Cookies nécessaires - toujours actifs */}
                 <div className="border border-gray-200 dark:border-gray-700 rounded p-3">
                   <div className="flex items-center justify-between mb-1">

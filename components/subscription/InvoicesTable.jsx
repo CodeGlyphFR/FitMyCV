@@ -245,7 +245,7 @@ export default function InvoicesTable({ creditBalance: creditBalanceProp, curren
       </div>
 
       {/* Table Desktop */}
-      <div className="hidden md:block overflow-x-auto">
+      <div className="hidden md:block overflow-x-auto custom-scrollbar">
         <table className="w-full">
           <thead>
             <tr className="border-b border-white/20">

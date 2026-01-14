@@ -1057,7 +1057,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
             </form>
 
             {/* Pricing List */}
-            <div ref={pricingScrollRef} className="space-y-2 max-h-80 overflow-y-auto [overscroll-behavior:contain]">
+            <div ref={pricingScrollRef} className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar [overscroll-behavior:contain]">
               {pricings.length === 0 ? (
                 <div className="text-center py-4 text-white/60 text-sm">
                   Aucun tarif configuré

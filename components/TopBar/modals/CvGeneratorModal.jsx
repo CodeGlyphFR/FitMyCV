@@ -110,7 +110,7 @@ export default function CvGeneratorModal({
             {baseSelectorOpen ? (
               <div
                 ref={baseDropdownRef}
-                className="absolute z-10 mt-1 w-full rounded-lg border-2 border-white/30 bg-slate-900/95 backdrop-blur-3xl shadow-2xl max-h-60 overflow-y-auto"
+                className="absolute z-10 mt-1 w-full rounded-lg border-2 border-white/30 bg-slate-900/95 backdrop-blur-3xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar"
                 style={{ backdropFilter: 'blur(40px)' }}
               >
                 <ul className="py-1">

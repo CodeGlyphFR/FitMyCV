@@ -290,7 +290,7 @@ export default function SectionCard({
           {/* Liste d'éléments sous forme de cartes compactes */}
           {hasItems && (
             <div className={`px-3 py-3 ${(hasSubsections || sectionOptions) ? 'border-t border-white/5' : ''}`}>
-              <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.2)_transparent]">
+              <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1 custom-scrollbar-light">
                 {itemsData.map((item, index) => {
                   const isSelected = items.includes(index);
                   const itemTitle = formatItemTitle(item, sectionKey);

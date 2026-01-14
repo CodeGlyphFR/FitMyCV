@@ -151,7 +151,7 @@ export default function VersionSelector() {
         )}
 
         {/* Liste des versions */}
-        <div className="max-h-48 overflow-y-auto py-1">
+        <div className="max-h-48 overflow-y-auto custom-scrollbar py-1">
           {/* Version actuelle */}
           <button
             onClick={() => {
