@@ -46,11 +46,13 @@ export default function SectionCard({
   subCounts,
   enabled,
   subsections,
+  sectionOptions,
   items,
   itemsData,
   itemsOptions,
   onToggle,
   onToggleSubsection,
+  onToggleSectionOption,
   onToggleItem,
   onToggleItemOption,
   isHeaderSection,
@@ -196,6 +198,40 @@ export default function SectionCard({
               </button>
             );
           })}
+
+          {/* Option spéciale pour skills: masquer les niveaux de proficiency */}
+          {sectionKey === 'skills' && sectionOptions && (
+            <button
+              type="button"
+              onClick={() => onToggleSectionOption(sectionKey, 'hideProficiency')}
+              className="w-full flex items-center gap-2 cursor-pointer hover:bg-white/10 p-2 rounded-sm transition-colors border-t border-white/10 mt-2 pt-3"
+            >
+              <div
+                className={`w-4 h-4 flex-shrink-0 rounded-sm border-2 flex items-center justify-center transition-all duration-200 ${
+                  sectionOptions.hideProficiency
+                    ? 'bg-emerald-400 border-emerald-400'
+                    : 'bg-white/10 border-white/40'
+                }`}
+              >
+                {sectionOptions.hideProficiency && (
+                  <svg
+                    className="w-3 h-3 text-gray-900"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="3"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </div>
+              <span className="text-sm text-white flex-1 text-left">
+                {t('exportModal.options.hideProficiency')}
+              </span>
+            </button>
+          )}
         </div>
       )}
 
@@ -204,6 +240,7 @@ export default function SectionCard({
         <div className="border-t border-white/20 px-4 pb-3 pt-2 max-h-64 overflow-y-auto [overscroll-behavior:contain] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {sectionKey === 'experience' ? (
             // Tableau pour les expériences avec colonne deliverables
+            <>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/20">
@@ -297,6 +334,74 @@ export default function SectionCard({
                 })}
               </tbody>
             </table>
+
+            {/* Options globales pour experience */}
+            {sectionOptions && (
+              <div className="border-t border-white/10 mt-3 pt-3 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => onToggleSectionOption(sectionKey, 'hideDescription')}
+                  className="w-full flex items-center gap-2 cursor-pointer hover:bg-white/10 p-2 rounded-sm transition-colors"
+                >
+                  <div
+                    className={`w-4 h-4 flex-shrink-0 rounded-sm border-2 flex items-center justify-center transition-all duration-200 ${
+                      sectionOptions.hideDescription
+                        ? 'bg-emerald-400 border-emerald-400'
+                        : 'bg-white/10 border-white/40'
+                    }`}
+                  >
+                    {sectionOptions.hideDescription && (
+                      <svg
+                        className="w-3 h-3 text-gray-900"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="3"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-sm text-white flex-1 text-left">
+                    {t('exportModal.options.hideDescription')}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onToggleSectionOption(sectionKey, 'hideTechnologies')}
+                  className="w-full flex items-center gap-2 cursor-pointer hover:bg-white/10 p-2 rounded-sm transition-colors"
+                >
+                  <div
+                    className={`w-4 h-4 flex-shrink-0 rounded-sm border-2 flex items-center justify-center transition-all duration-200 ${
+                      sectionOptions.hideTechnologies
+                        ? 'bg-emerald-400 border-emerald-400'
+                        : 'bg-white/10 border-white/40'
+                    }`}
+                  >
+                    {sectionOptions.hideTechnologies && (
+                      <svg
+                        className="w-3 h-3 text-gray-900"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="3"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-sm text-white flex-1 text-left">
+                    {t('exportModal.options.hideTechnologies')}
+                  </span>
+                </button>
+              </div>
+            )}
+            </>
           ) : (
             // Liste simple pour les autres sections
             <div className="space-y-2">

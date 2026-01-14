@@ -72,12 +72,15 @@
   },
   "exportModal": {
     "title": "Personnaliser et exporter en PDF",
+    "previewTitle": "Prévisualisation du PDF",
     "filename": "Nom du fichier",
     "filenameHint": "Le fichier sera exporté avec l'extension .pdf",
     "selectAll": "Tout sélectionner",
     "deselectAll": "Tout désélectionner",
     "export": "Exporter",
     "exporting": "Export en cours...",
+    "preview": "Prévisualiser",
+    "backToOptions": "Retour aux options",
     "cancel": "Annuler",
     "sectionsTitle": "Sélectionnez les sections à inclure",
     "showOptions": "Afficher les options",
@@ -115,6 +118,11 @@
       "item": "élément",
       "items": "éléments",
       "selected": "sélectionné(s)"
+    },
+    "options": {
+      "hideProficiency": "Masquer les niveaux",
+      "hideDescription": "Masquer les descriptions",
+      "hideTechnologies": "Masquer les technologies"
     }
   },
   "newCvModal": {
@@ -175,10 +183,10 @@
     "deliverables": "Résultats",
     "skillsUsed": "Compétences utilisées",
     "technologies": "Technologies",
-    "hardSkills": "Compétences techniques",
+    "hardSkills": "Techniques",
     "tools": "Outils",
     "methodologies": "Méthodologies",
-    "softSkills": "Compétences comportementales",
+    "softSkills": "Comportementales",
     "noTools": "Aucun outil pour le moment.",
     "noMethodologies": "Aucune méthodologie pour le moment.",
     "noSoftSkills": "Aucun soft skill pour le moment.",

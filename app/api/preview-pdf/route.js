@@ -1,86 +1,37 @@
 import { NextResponse } from "next/server";
-import puppeteer from "puppeteer";
-import { promises as fs } from "fs";
-import path from "path";
 import { auth } from "@/lib/auth/session";
 import { readUserCvFileWithMeta } from "@/lib/cv/storage";
 import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
 
 // French translations (split by category)
 import frUi from "@/locales/fr/ui.json";
-import frErrors from "@/locales/fr/errors.json";
-import frAuth from "@/locales/fr/auth.json";
 import frCv from "@/locales/fr/cv.json";
 import frEnums from "@/locales/fr/enums.json";
-import frSubscription from "@/locales/fr/subscription.json";
-import frTasks from "@/locales/fr/tasks.json";
-import frOnboarding from "@/locales/fr/onboarding.json";
-import frAccount from "@/locales/fr/account.json";
 
 // English translations (split by category)
 import enUi from "@/locales/en/ui.json";
-import enErrors from "@/locales/en/errors.json";
-import enAuth from "@/locales/en/auth.json";
 import enCv from "@/locales/en/cv.json";
 import enEnums from "@/locales/en/enums.json";
-import enSubscription from "@/locales/en/subscription.json";
-import enTasks from "@/locales/en/tasks.json";
-import enOnboarding from "@/locales/en/onboarding.json";
-import enAccount from "@/locales/en/account.json";
 
 // Spanish translations (split by category)
 import esUi from "@/locales/es/ui.json";
-import esErrors from "@/locales/es/errors.json";
-import esAuth from "@/locales/es/auth.json";
 import esCv from "@/locales/es/cv.json";
 import esEnums from "@/locales/es/enums.json";
-import esSubscription from "@/locales/es/subscription.json";
-import esTasks from "@/locales/es/tasks.json";
-import esOnboarding from "@/locales/es/onboarding.json";
-import esAccount from "@/locales/es/account.json";
 
 // German translations (split by category)
 import deUi from "@/locales/de/ui.json";
-import deErrors from "@/locales/de/errors.json";
-import deAuth from "@/locales/de/auth.json";
 import deCv from "@/locales/de/cv.json";
 import deEnums from "@/locales/de/enums.json";
-import deSubscription from "@/locales/de/subscription.json";
-import deTasks from "@/locales/de/tasks.json";
-import deOnboarding from "@/locales/de/onboarding.json";
-import deAccount from "@/locales/de/account.json";
 
-import { trackCvExport } from "@/lib/telemetry/server";
-import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
-import { refundCredit } from "@/lib/subscription/credits";
 import { capitalizeSkillName } from "@/lib/utils/textFormatting";
-import { CommonErrors, CvErrors, OtherErrors } from "@/lib/api/apiErrors";
+import { CommonErrors, CvErrors } from "@/lib/api/apiErrors";
 
 const translations = {
-  fr: { ...frUi, ...frErrors, ...frAuth, ...frCv, ...frEnums, ...frSubscription, ...frTasks, ...frOnboarding, ...frAccount },
-  en: { ...enUi, ...enErrors, ...enAuth, ...enCv, ...enEnums, ...enSubscription, ...enTasks, ...enOnboarding, ...enAccount },
-  es: { ...esUi, ...esErrors, ...esAuth, ...esCv, ...esEnums, ...esSubscription, ...esTasks, ...esOnboarding, ...esAccount },
-  de: { ...deUi, ...deErrors, ...deAuth, ...deCv, ...deEnums, ...deSubscription, ...deTasks, ...deOnboarding, ...deAccount },
+  fr: { ...frUi, ...frCv, ...frEnums },
+  en: { ...enUi, ...enCv, ...enEnums },
+  es: { ...esUi, ...esCv, ...esEnums },
+  de: { ...deUi, ...deCv, ...deEnums },
 };
-
-/**
- * Sanitize filename for HTTP Content-Disposition header
- * Returns both ASCII-safe and RFC 5987 encoded versions
- */
-function sanitizeFilenameForHeader(filename) {
-  // ASCII-safe version: replace non-ASCII chars with underscore
-  const asciiSafe = filename
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
-    .replace(/[^\x20-\x7E]/g, '_')   // Replace non-printable ASCII with _
-    .replace(/["\\]/g, '_');          // Replace quotes and backslashes
-
-  // RFC 5987 encoded version for full Unicode support
-  const encoded = encodeURIComponent(filename)
-    .replace(/'/g, '%27');
-
-  return { asciiSafe, encoded };
-}
 
 // Helper function to get translation
 function getTranslation(language, path) {
@@ -105,7 +56,6 @@ function translateLevel(language, level, type = 'skill') {
   const path = type === 'skill' ? `skillLevels.${level}` : `languageLevels.${level}`;
   const translated = getTranslation(language, path);
 
-  // Si la traduction retourne le path (non trouvé), retourner le niveau original
   return translated === path ? level : translated;
 }
 
@@ -113,12 +63,10 @@ function translateLevel(language, level, type = 'skill') {
 function getSectionTitle(sectionKey, customTitle, language) {
   const t = (path) => getTranslation(language, path);
 
-  // Si pas de titre personnalisé, utiliser la traduction par défaut
   if (!customTitle || !customTitle.trim()) {
     return t(`cvSections.${sectionKey}`);
   }
 
-  // Titres par défaut en français (avec variantes)
   const defaultTitlesFr = {
     header: ["En-tête"],
     summary: ["Résumé"],
@@ -130,7 +78,6 @@ function getSectionTitle(sectionKey, customTitle, language) {
     extras: ["Informations complémentaires", "Extras"]
   };
 
-  // Titres par défaut en anglais
   const defaultTitlesEn = {
     header: ["Header"],
     summary: ["Summary"],
@@ -142,212 +89,74 @@ function getSectionTitle(sectionKey, customTitle, language) {
     extras: ["Additional Information", "Extras"]
   };
 
-  // Vérifier si le titre correspond à un titre par défaut (FR ou EN)
   const trimmedTitle = customTitle.trim();
   const isFrenchDefault = defaultTitlesFr[sectionKey] && defaultTitlesFr[sectionKey].includes(trimmedTitle);
   const isEnglishDefault = defaultTitlesEn[sectionKey] && defaultTitlesEn[sectionKey].includes(trimmedTitle);
 
-  // Si c'est un titre par défaut, utiliser la traduction
   if (isFrenchDefault || isEnglishDefault) {
     return t(`cvSections.${sectionKey}`);
   }
 
-  // Sinon, c'est un titre personnalisé, on le garde tel quel
   return customTitle;
 }
 
+/**
+ * Route API pour prévisualiser le CV en HTML avec indicateurs de saut de page
+ * Ne consomme pas de crédits
+ */
 export async function POST(request) {
-  console.log('[PDF Export] Request received'); // Log pour debug
-  const startTime = Date.now();
-
-  // Variables pour tracking du crédit (remboursement si échec)
-  // Déclarées hors du try pour être accessibles dans le catch
-  let creditTransactionId = null;
-  let creditUsed = false;
-  let userId = null;
-
   try {
-    // Vérifier l'authentification
     const session = await auth();
     if (!session?.user?.id) {
       return CommonErrors.notAuthenticated();
     }
-    userId = session.user.id;
 
     const requestData = await request.json();
     let filename = requestData.filename;
     const language = requestData.language || 'fr';
     const selections = requestData.selections || null;
-    const customFilename = requestData.customFilename || null;
 
-    // Si filename est un objet, extraire le nom du fichier
     if (typeof filename === 'object' && filename !== null) {
       filename = filename.file || filename.name || filename.filename || String(filename);
     }
 
-    // Assurer que filename est une string
     filename = String(filename || '');
 
     if (!filename || filename === 'undefined') {
       return CvErrors.missingFilename();
     }
 
-    // Vérifier les limites et incrémenter le compteur
-    const usageResult = await incrementFeatureCounter(session.user.id, 'export_cv', {});
-    if (!usageResult.success) {
-      return NextResponse.json({
-        error: usageResult.error,
-        actionRequired: usageResult.actionRequired,
-        redirectUrl: usageResult.redirectUrl
-      }, { status: 403 });
-    }
-    // Sauvegarder pour remboursement potentiel si échec
-    creditTransactionId = usageResult.transactionId;
-    creditUsed = usageResult.usedCredit;
-
-    // Charger les données du CV via le système de stockage utilisateur
+    // Charger les données du CV
     let cvData;
     let cvLanguage;
     try {
       const cvResult = await readUserCvFileWithMeta(session.user.id, filename);
       cvData = cvResult.content;
-      // Utiliser la langue de la DB, ou celle de la requête, ou fallback vers cv.language ou 'fr'
       cvLanguage = cvResult.language || language || cvData?.language || 'fr';
-      console.log('[PDF Export] CV loaded successfully for user:', session.user.id);
     } catch (error) {
-      console.error('[PDF Export] Error loading CV:', error);
-      // Rembourser le crédit si utilisé
-      if (creditUsed && creditTransactionId) {
-        try {
-          await refundCredit(session.user.id, creditTransactionId, 'CV introuvable lors de l\'export');
-          console.log('[PDF Export] Crédit remboursé suite à CV introuvable');
-        } catch (refundError) {
-          console.error('[PDF Export] Erreur lors du remboursement:', refundError);
-        }
-      }
+      console.error('[PDF Preview] Error loading CV:', error);
       return CvErrors.notFound();
     }
 
-    // Lancer Puppeteer avec options compatibles
-    const browser = await puppeteer.launch({
-      headless: 'new',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-        '--disable-web-security',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-        '--disable-features=TranslateUI',
-        '--disable-ipc-flooding-protection'
-      ],
-      executablePath: puppeteer.executablePath(),
-      timeout: 60000
-    });
+    // Générer le HTML du CV avec indicateurs de saut de page
+    const htmlContent = generatePreviewHtml(cvData, cvLanguage, selections);
 
-    const page = await browser.newPage();
-
-    // Générer le HTML du CV avec les sélections (utilise la langue depuis DB)
-    const htmlContent = generateCvHtml(cvData, cvLanguage, selections);
-
-    await page.setContent(htmlContent, {
-      waitUntil: 'networkidle0',
-      timeout: 30000
-    });
-
-    // Générer le PDF avec gestion intelligente des sauts de page
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '15mm',
-        right: '12mm',
-        bottom: '15mm',
-        left: '12mm'
-      },
-      preferCSSPageSize: true,
-      displayHeaderFooter: false
-    });
-
-    await browser.close();
-
-    // Tracking télémétrie - Succès
-    const duration = Date.now() - startTime;
-    try {
-      await trackCvExport({
-        userId: session.user.id,
-        deviceId: null,
-        language,
-        duration,
-        status: 'success',
-      });
-    } catch (trackError) {
-      console.error('[PDF Export] Erreur tracking télémétrie:', trackError);
-    }
-
-    // Retourner le PDF
-    const pdfFilename = customFilename || filename.replace('.json', '');
-    const { asciiSafe, encoded } = sanitizeFilenameForHeader(pdfFilename);
-
-    return new NextResponse(pdfBuffer, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${asciiSafe}.pdf"; filename*=UTF-8''${encoded}.pdf`
-      }
-    });
+    return NextResponse.json({ html: htmlContent });
 
   } catch (error) {
-    console.error("Erreur lors de la génération PDF:", error);
-    console.error("Stack trace:", error.stack);
-
-    // Rembourser le crédit si utilisé
-    if (creditUsed && creditTransactionId && userId) {
-      try {
-        await refundCredit(userId, creditTransactionId, `Échec export PDF: ${error.message}`);
-        console.log('[PDF Export] Crédit remboursé suite à erreur:', error.message);
-      } catch (refundError) {
-        console.error('[PDF Export] Erreur lors du remboursement:', refundError);
-      }
-    }
-
-    // Tracking télémétrie - Erreur
-    const duration = Date.now() - startTime;
-    try {
-      const session = await auth();
-      if (session?.user?.id) {
-        await trackCvExport({
-          userId: session.user.id,
-          deviceId: null,
-          language: 'fr', // Valeur par défaut si la langue n'est pas disponible
-          duration,
-          status: 'error',
-          error: error.message,
-        });
-      }
-    } catch (trackError) {
-      console.error('[PDF Export] Erreur tracking télémétrie:', trackError);
-    }
-
-    // Erreurs spécifiques de Puppeteer
-    return OtherErrors.exportPdfFailed();
+    console.error("Erreur lors de la prévisualisation:", error);
+    return NextResponse.json({ error: "Erreur lors de la prévisualisation" }, { status: 500 });
   }
 }
 
-function generateCvHtml(cvData, language = 'fr', selections = null) {
+function generatePreviewHtml(cvData, language = 'fr', selections = null) {
   const t = (path) => getTranslation(language, path);
 
-  // Fonction helper pour vérifier si une section est activée
   const isSectionEnabled = (sectionKey) => {
     if (!selections || !selections.sections) return true;
     return selections.sections[sectionKey]?.enabled !== false;
   };
 
-  // Fonction helper pour vérifier si une sous-section est activée
   const isSubsectionEnabled = (sectionKey, subsectionKey) => {
     if (!selections || !selections.sections) return true;
     const section = selections.sections[sectionKey];
@@ -404,12 +213,17 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
     });
   const education = filterItems(sortedEducation, 'education');
 
-  // Filtrer les autres listes selon les sélections
   const languages = filterItems(rawLanguages, 'languages');
   const projects = filterItems(rawProjects, 'projects');
   const extras = filterItems(rawExtras, 'extras');
 
   const contact = header.contact || {};
+
+  // Hauteur de page A4 en pixels
+  // A4 = 297mm, marges Puppeteer = 15mm top + 15mm bottom = 30mm
+  // Contenu = 267mm. À 96 DPI = 1009px, mais Puppeteer rend légèrement plus
+  // Valeur calibrée empiriquement pour correspondre au rendu réel
+  const PAGE_HEIGHT_PX = 1020;
 
   return `
 <!DOCTYPE html>
@@ -417,7 +231,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CV - ${header.full_name || t('cvSections.header')}</title>
+  <title>CV Preview - ${header.full_name || t('cvSections.header')}</title>
   <style>
     * {
       margin: 0;
@@ -429,50 +243,47 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       line-height: 1.4;
       color: #1f2937;
-      background: white;
+      background: #9ca3af;
       font-size: 11px;
+      padding: 20px;
     }
 
-    .break-point {
-      break-after: auto;
-      page-break-after: auto;
-      margin-bottom: 20px;
-    }
-
-    .experience-item:not(:first-child) {
-      margin-top: 8px;
-      page-break-before: auto;
-    }
-
-    /* Forcer l'espacement après les sauts de page */
-    .experience-item {
-      orphans: 2;
-      widows: 2;
-    }
-
-    @media print {
-      .experience-item {
-        margin-top: 8px !important;
-        margin-bottom: 8px !important;
-      }
-
-      .experience-item:first-child {
-        margin-top: 0 !important;
-      }
-    }
-
-    .experience-header {
-      orphans: 3;
-      widows: 3;
+    .page-wrapper {
+      width: 210mm;
+      min-height: 297mm;
+      background: white;
+      margin: 0 auto;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      position: relative;
     }
 
     .cv-container {
-      max-width: 100%;
-      margin: 0 auto;
-      padding: 0;
+      padding: 15mm;
+      position: relative;
     }
 
-    /* Header Section */
+    /* Indicateur de saut de page */
+    .page-break-indicator {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 0;
+      border-top: 2px dashed #ef4444;
+      z-index: 1000;
+    }
+
+    .page-break-indicator::before {
+      content: 'Saut de page';
+      position: absolute;
+      right: 0;
+      top: -10px;
+      background: #ef4444;
+      color: white;
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
     .header {
       padding-bottom: 6px;
       margin-bottom: 6px;
@@ -512,7 +323,6 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       margin-right: 15px;
     }
 
-    /* Section Styling */
     .section {
       margin-bottom: 10px;
     }
@@ -530,29 +340,12 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       margin-bottom: 10px;
     }
 
-    /* Summary */
     .summary-content {
       margin-bottom: 15px;
       line-height: 1.6;
       text-align: justify;
     }
 
-    .domains {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .domain-tag {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-      color: #374151;
-    }
-
-    /* Skills */
     .skills-grid {
       display: flex;
       flex-direction: column;
@@ -560,8 +353,6 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
     }
 
     .skill-category {
-      break-inside: avoid;
-      page-break-inside: avoid;
       font-size: 11px;
       color: #374151;
       line-height: 1.5;
@@ -571,37 +362,20 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       font-weight: 600;
     }
 
-    .skill-item {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-    }
-
-    /* Experience */
     .experience-item {
       margin-bottom: 15px;
       border-left: 3px solid #e5e7eb;
       padding-left: 15px;
     }
 
-    /* Bloc 1 : Header + Description (INDIVISIBLE) */
-    .experience-header-block {
-      break-inside: avoid;
-      page-break-inside: avoid;
+    .experience-item:not(:first-child) {
+      margin-top: 8px;
     }
 
-    /* Bloc 2 : Responsabilités seules (INDIVISIBLE) */
-    .experience-responsibilities-block {
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-
-    /* Bloc 3 : Livrables + Technologies (INDIVISIBLE) */
+    .experience-header-block,
+    .experience-responsibilities-block,
     .experience-deliverables-block {
-      break-inside: avoid;
-      page-break-inside: avoid;
+      /* Ces blocs sont indivisibles dans le PDF */
     }
 
     .experience-header {
@@ -643,16 +417,9 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       text-align: justify;
     }
 
-    .experience-lists {
-      display: block;
-      margin-bottom: 6px;
-    }
-
     .responsibilities, .deliverables {
       font-size: 11px;
       margin-bottom: 6px;
-      break-inside: avoid;
-      -webkit-column-break-inside: avoid;
     }
 
     .responsibilities h4, .deliverables h4 {
@@ -678,8 +445,6 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       font-size: 11px;
       color: #6b7280;
       line-height: 1.4;
-      break-inside: avoid;
-      -webkit-column-break-inside: avoid;
     }
 
     .skills-used {
@@ -687,24 +452,10 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       font-size: 11px;
       color: #6b7280;
       line-height: 1.4;
-      break-inside: avoid;
-      -webkit-column-break-inside: avoid;
     }
 
-    .skill-tag {
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-size: 9px;
-      color: #374151;
-    }
-
-    /* Education */
     .education-item {
       margin-bottom: 4px;
-      break-inside: avoid;
-      page-break-inside: avoid;
       font-size: 11px;
       line-height: 1.5;
       color: #374151;
@@ -719,11 +470,8 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       color: #6b7280;
     }
 
-    /* Projects and Extras */
     .project-item, .extra-item {
       margin-bottom: 12px;
-      break-inside: avoid;
-      page-break-inside: avoid;
     }
 
     .project-header {
@@ -757,68 +505,21 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       text-align: justify;
     }
 
-    /* Languages */
     .languages-grid {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      break-inside: avoid;
-      page-break-inside: avoid;
     }
 
     .language-item {
       font-size: 11px;
       margin-bottom: 4px;
     }
-
-
-    /* Page break utilities */
-    .page-break-before {
-      page-break-before: always;
-    }
-
-    .page-break-after {
-      page-break-after: always;
-    }
-
-    .page-break-inside-avoid {
-      page-break-inside: avoid;
-    }
-
-    @media print {
-      body {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-
-      .section-title {
-        break-after: avoid !important;
-        page-break-after: avoid !important;
-      }
-
-      /* Blocs indivisibles pour les expériences */
-      .experience-header-block,
-      .experience-responsibilities-block,
-      .experience-deliverables-block {
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
-      }
-
-      /* Autres sections indivisibles */
-      .education-item,
-      .languages-grid,
-      .project-item,
-      .extra-item,
-      .skill-category {
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
-      }
-    }
   </style>
 </head>
 <body>
-  <div class="cv-container">
-    <!-- Header -->
+  <div class="page-wrapper">
+    <div class="cv-container" id="cv-container">
     <header class="header">
       <h1>${header.full_name || ''}</h1>
       ${header.current_title ? `<div class="title">${header.current_title}</div>` : ''}
@@ -836,7 +537,6 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       ` : ''}
     </header>
 
-    <!-- Summary -->
     ${isSectionEnabled('summary') && isSubsectionEnabled('summary', 'description') && summary.description && summary.description.trim() ? `
       <section class="section">
         <h2 class="section-title">${getSectionTitle('summary', section_titles.summary, language)}</h2>
@@ -844,7 +544,6 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       </section>
     ` : ''}
 
-    <!-- Skills -->
     ${isSectionEnabled('skills') && Object.values(skills).some(skillArray => Array.isArray(skillArray) && skillArray.length > 0) ? (() => {
       const hideProficiency = selections?.sections?.skills?.options?.hideProficiency === true;
       return `
@@ -876,7 +575,6 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
     `;
     })() : ''}
 
-    <!-- Experience -->
     ${isSectionEnabled('experience') && experience && experience.length > 0 ? (() => {
       const hideDescription = selections?.sections?.experience?.options?.hideDescription === true;
       const hideTechnologies = selections?.sections?.experience?.options?.hideTechnologies === true;
@@ -885,7 +583,6 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
         <h2 class="section-title">${getSectionTitle('experience', section_titles.experience, language)}</h2>
         ${experience.map((exp, index) => `
           <div class="experience-item">
-            <!-- Bloc 1 : Header + Description (INDIVISIBLE) -->
             <div class="experience-header-block">
               <div class="experience-header">
                 <div>
@@ -898,7 +595,6 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
               ${!hideDescription && exp.description && exp.description.trim() ? `<div class="experience-description">${exp.description}</div>` : ''}
             </div>
 
-            <!-- Bloc 2 : Responsabilités seules (INDIVISIBLE) -->
             ${exp.responsibilities && exp.responsibilities.length > 0 ? `
               <div class="experience-responsibilities-block">
                 <div class="responsibilities">
@@ -910,7 +606,6 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
               </div>
             ` : ''}
 
-            <!-- Bloc 3 : Livrables + Technologies (INDIVISIBLE - restent ensemble) -->
             ${((exp.deliverables && exp.deliverables.length > 0 && (selections?.sections?.experience?.itemsOptions?.[exp._originalIndex]?.includeDeliverables !== false)) || (!hideTechnologies && exp.skills_used && exp.skills_used.length > 0)) ? `
               <div class="experience-deliverables-block">
                 ${exp.deliverables && exp.deliverables.length > 0 && (selections?.sections?.experience?.itemsOptions?.[exp._originalIndex]?.includeDeliverables !== false) ? `
@@ -932,7 +627,6 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
     `;
     })() : ''}
 
-    <!-- Education -->
     ${isSectionEnabled('education') && education && education.length > 0 ? `
       <section class="section">
         <h2 class="section-title">${getSectionTitle('education', section_titles.education, language)}</h2>
@@ -944,7 +638,6 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       </section>
     ` : ''}
 
-    <!-- Languages -->
     ${isSectionEnabled('languages') && languages && languages.filter(lang => lang.name && lang.level).length > 0 ? `
       <section class="section">
         <h2 class="section-title">${getSectionTitle('languages', section_titles.languages, language)}</h2>
@@ -958,7 +651,6 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       </section>
     ` : ''}
 
-    <!-- Projects -->
     ${isSectionEnabled('projects') && projects && projects.length > 0 ? `
       <section class="section">
         <h2 class="section-title">${getSectionTitle('projects', section_titles.projects, language)}</h2>
@@ -984,7 +676,6 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       </section>
     ` : ''}
 
-    <!-- Extras -->
     ${isSectionEnabled('extras') && extras && extras.filter(extra => extra.name && extra.summary).length > 0 ? `
       <section class="section">
         <h2 class="section-title">${getSectionTitle('extras', section_titles.extras, language)}</h2>
@@ -997,7 +688,180 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
         </div>
       </section>
     ` : ''}
+    </div>
   </div>
+
+  <script>
+    // Simuler les sauts de page exactement comme Puppeteer/CSS le fait
+    window.addEventListener('load', function() {
+      const container = document.getElementById('cv-container');
+      const pageWrapper = document.querySelector('.page-wrapper');
+
+      // Calculer dynamiquement la hauteur de contenu par page en mm convertis en pixels
+      // A4 = 297mm, marges = 15mm top + 15mm bottom = 30mm
+      // Contenu par page = 267mm
+      // Créer un élément temporaire pour mesurer 267mm en pixels
+      const measureDiv = document.createElement('div');
+      measureDiv.style.cssText = 'position:absolute;width:267mm;height:267mm;visibility:hidden;';
+      document.body.appendChild(measureDiv);
+      const PAGE_HEIGHT = measureDiv.offsetHeight;
+      document.body.removeChild(measureDiv);
+
+      // Position de départ du contenu (après le padding top du container)
+      const containerStyle = getComputedStyle(container);
+      const paddingTop = parseFloat(containerStyle.paddingTop);
+      const containerRect = container.getBoundingClientRect();
+      const containerTop = containerRect.top + window.scrollY + paddingTop;
+
+      // Éléments avec break-inside: avoid (ne doivent pas être coupés)
+      // Exactement les mêmes que dans export-pdf @media print
+      const breakInsideAvoidSelectors = [
+        '.experience-header-block',
+        '.experience-responsibilities-block',
+        '.experience-deliverables-block',
+        '.skill-category',
+        '.education-item',
+        '.project-item',
+        '.extra-item',
+        '.languages-grid'
+      ];
+
+      // Éléments avec break-after: avoid (doivent rester avec l'élément suivant)
+      const breakAfterAvoidSelectors = [
+        '.section-title'
+      ];
+
+      // Construire la liste des blocs indivisibles
+      const blocks = [];
+
+      // Ajouter les blocs break-inside: avoid
+      breakInsideAvoidSelectors.forEach(selector => {
+        container.querySelectorAll(selector).forEach(el => {
+          const rect = el.getBoundingClientRect();
+          blocks.push({
+            element: el,
+            top: rect.top + window.scrollY - containerTop,
+            bottom: rect.bottom + window.scrollY - containerTop,
+            height: rect.height,
+            type: 'break-inside-avoid'
+          });
+        });
+      });
+
+      // Pour les section-title avec break-after: avoid,
+      // on les groupe avec l'élément suivant
+      breakAfterAvoidSelectors.forEach(selector => {
+        container.querySelectorAll(selector).forEach(el => {
+          const rect = el.getBoundingClientRect();
+          const titleTop = rect.top + window.scrollY - containerTop;
+          const titleBottom = rect.bottom + window.scrollY - containerTop;
+
+          // Trouver le premier élément suivant dans la même section
+          const section = el.closest('.section');
+          if (section) {
+            const firstChild = section.querySelector('.experience-item, .skill-category, .education-item, .project-item, .extra-item, .languages-grid, .summary-content');
+            if (firstChild) {
+              const childRect = firstChild.getBoundingClientRect();
+              // Le bloc = titre + premier enfant (ils ne doivent pas être séparés)
+              blocks.push({
+                element: el,
+                top: titleTop,
+                bottom: childRect.bottom + window.scrollY - containerTop,
+                height: (childRect.bottom + window.scrollY - containerTop) - titleTop,
+                type: 'title-with-content'
+              });
+            }
+          }
+        });
+      });
+
+      // Trier par position verticale
+      blocks.sort((a, b) => a.top - b.top);
+
+      // Supprimer les doublons (blocs qui se chevauchent)
+      const uniqueBlocks = [];
+      for (const block of blocks) {
+        const isDuplicate = uniqueBlocks.some(existing =>
+          block.top >= existing.top && block.bottom <= existing.bottom
+        );
+        if (!isDuplicate) {
+          uniqueBlocks.push(block);
+        }
+      }
+
+      // Simuler la pagination - parcourir tout le document
+      const pageBreaks = [];
+      let currentPageStart = 0;
+      let currentPageEnd = PAGE_HEIGHT;
+      // Calculer la hauteur du contenu (sans le padding)
+      const paddingBottom = parseFloat(containerStyle.paddingBottom);
+      const totalHeight = container.scrollHeight - paddingTop - paddingBottom;
+
+      // Tolérance pour les différences de rendu entre navigateur et Puppeteer
+      const TOLERANCE = 20;
+
+      // Debug - afficher les blocs détectés
+      console.log('PAGE_HEIGHT:', PAGE_HEIGHT);
+      console.log('totalHeight:', totalHeight);
+      console.log('Blocs détectés:', uniqueBlocks.map(b => ({
+        type: b.type,
+        top: Math.round(b.top),
+        bottom: Math.round(b.bottom),
+        element: b.element?.className || b.element?.tagName
+      })));
+
+      // Si le contenu tient sur une seule page (avec tolérance), pas de saut de page
+      if (totalHeight <= PAGE_HEIGHT + TOLERANCE) {
+        console.log('Content fits on one page');
+        return; // Pas besoin d'ajouter des indicateurs
+      }
+
+      // Continuer tant qu'on n'a pas parcouru tout le document
+      while (currentPageEnd < totalHeight + PAGE_HEIGHT) {
+        // Trouver si un bloc serait coupé à currentPageEnd
+        let blockToCut = null;
+
+        for (const block of uniqueBlocks) {
+          // Le bloc commence avant la fin de page ET se termine après
+          if (block.top < currentPageEnd && block.bottom > currentPageEnd) {
+            // Ce bloc serait coupé
+            if (!blockToCut || block.top < blockToCut.top) {
+              blockToCut = block;
+            }
+          }
+        }
+
+        if (blockToCut) {
+          // Un bloc serait coupé -> saut de page juste avant ce bloc
+          console.log('Bloc coupé à', currentPageEnd, ':', {
+            type: blockToCut.type,
+            top: Math.round(blockToCut.top),
+            bottom: Math.round(blockToCut.bottom),
+            element: blockToCut.element?.className
+          });
+          pageBreaks.push(blockToCut.top);
+          currentPageStart = blockToCut.top;
+          currentPageEnd = blockToCut.top + PAGE_HEIGHT;
+        } else {
+          // Pas de bloc coupé, passer à la page suivante
+          if (currentPageEnd < totalHeight) {
+            pageBreaks.push(currentPageEnd);
+          }
+          currentPageStart = currentPageEnd;
+          currentPageEnd = currentPageStart + PAGE_HEIGHT;
+        }
+      }
+
+      // Ajouter les indicateurs visuels
+      // Les positions sont relatives au contenu (après padding), donc on ajoute paddingTop pour positionner dans le container
+      pageBreaks.forEach(position => {
+        const indicator = document.createElement('div');
+        indicator.className = 'page-break-indicator';
+        indicator.style.top = (position + paddingTop) + 'px';
+        container.appendChild(indicator);
+      });
+    });
+  </script>
 </body>
 </html>
   `;
@@ -1009,10 +873,9 @@ function formatDate(dateStr, language = 'fr') {
     return getTranslation(language, "cvSections.present");
   }
 
-  // Format YYYY-MM to MM/YYYY or YYYY only
   const parts = String(dateStr).split("-");
   const year = parts[0];
-  if (!parts[1]) return year; // Retourne uniquement l'année si pas de mois
+  if (!parts[1]) return year;
   const month = parts[1];
   const mm = String(Number(month)).padStart(2, "0");
   return `${mm}/${year}`;

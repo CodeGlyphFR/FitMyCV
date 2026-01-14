@@ -1292,6 +1292,7 @@ export default function TopBar() {
         selections={exportModal.selections}
         toggleSection={exportModal.toggleSection}
         toggleSubsection={exportModal.toggleSubsection}
+        toggleSectionOption={exportModal.toggleSectionOption}
         toggleItem={exportModal.toggleItem}
         toggleItemOption={exportModal.toggleItemOption}
         selectAll={exportModal.selectAll}
@@ -1301,6 +1302,11 @@ export default function TopBar() {
         subCounters={exportModal.subCounters}
         cvData={exportModal.cvData}
         isExporting={exportModal.isExporting}
+        isPreview={exportModal.isPreview}
+        previewHtml={exportModal.previewHtml}
+        isLoadingPreview={exportModal.isLoadingPreview}
+        loadPreview={exportModal.loadPreview}
+        closePreview={exportModal.closePreview}
         t={t}
       />
 

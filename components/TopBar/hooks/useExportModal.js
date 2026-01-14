@@ -32,6 +32,9 @@ export function useExportModal({ currentItem, language, addNotification }) {
   const [filename, setFilename] = useState('');
   const [cvData, setCvData] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isPreview, setIsPreview] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState('');
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
   // Structure par défaut des sélections
   const getDefaultSelections = (cvData) => {
@@ -49,6 +52,9 @@ export function useExportModal({ currentItem, language, addNotification }) {
             soft_skills: true,
             tools: true,
             methodologies: true
+          },
+          options: {
+            hideProficiency: false
           }
         },
         experience: {
@@ -57,7 +63,11 @@ export function useExportModal({ currentItem, language, addNotification }) {
           itemsOptions: cvData?.experience ? cvData.experience.reduce((acc, _, index) => {
             acc[index] = { includeDeliverables: true };
             return acc;
-          }, {}) : {}
+          }, {}) : {},
+          options: {
+            hideTechnologies: false,
+            hideDescription: false
+          }
         },
         education: {
           enabled: true,
@@ -82,16 +92,21 @@ export function useExportModal({ currentItem, language, addNotification }) {
 
   const [selections, setSelections] = useState(() => getDefaultSelections(null));
 
+  // Générer la clé localStorage pour un CV spécifique
+  const getStorageKey = useCallback((cvFilename) => {
+    return `pdf-export-cv-${cvFilename}`;
+  }, []);
+
   // Charger les données du CV quand le modal s'ouvre
   useEffect(() => {
     if (!isOpen || !currentItem) return;
 
-    const filename = typeof currentItem === 'string'
+    const cvFilename = typeof currentItem === 'string'
       ? currentItem
       : (currentItem.file || currentItem.filename || currentItem.name);
 
     // Charger les données du CV via l'API cvs (qui retourne les métadonnées + le contenu)
-    fetch(`/api/cvs?current=${encodeURIComponent(filename)}`)
+    fetch(`/api/cvs?current=${encodeURIComponent(cvFilename)}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to load CV');
         return res.json();
@@ -99,7 +114,7 @@ export function useExportModal({ currentItem, language, addNotification }) {
       .then(data => {
         // L'API /api/cvs retourne { items: [...], current: "..." }
         // On doit charger le CV individuellement
-        return fetch(`/api/cvs/read?file=${encodeURIComponent(filename)}`);
+        return fetch(`/api/cvs/read?file=${encodeURIComponent(cvFilename)}`);
       })
       .then(res => {
         if (!res.ok) throw new Error('Failed to read CV content');
@@ -114,22 +129,42 @@ export function useExportModal({ currentItem, language, addNotification }) {
           const title = data.cv?.header?.current_title?.replace(/\s+/g, '_') || '';
           const defaultFilename = initials && title
             ? `CV_${initials}_${title}`
-            : filename.replace('.json', '');
+            : cvFilename.replace('.json', '');
           setFilename(defaultFilename);
 
           // Initialiser les sélections avec les données du CV
+          // Essayer d'abord de charger les préférences spécifiques à ce CV
           try {
-            const saved = localStorage.getItem('pdf-export-preferences');
+            const storageKey = getStorageKey(cvFilename);
+            const saved = localStorage.getItem(storageKey);
+
             if (saved) {
               const parsed = JSON.parse(saved);
               // Mettre à jour les items avec les données actuelles du CV
+              // (au cas où des éléments ont été ajoutés/supprimés depuis la dernière sauvegarde)
               const updated = { ...parsed };
+
               ['experience', 'education', 'languages', 'projects', 'extras'].forEach(key => {
                 if (data.cv[key]) {
+                  const currentCount = data.cv[key].length;
+                  const savedItems = updated.sections[key]?.items || [];
+
+                  // Filtrer les items qui n'existent plus et ajouter les nouveaux
+                  const validItems = savedItems.filter(i => i < currentCount);
+                  // Si de nouveaux items ont été ajoutés, les inclure par défaut
+                  const newItems = [];
+                  for (let i = 0; i < currentCount; i++) {
+                    if (!savedItems.includes(i) && i >= (parsed.sections[key]?.maxIndex || 0)) {
+                      newItems.push(i);
+                    }
+                  }
+
                   updated.sections[key] = {
                     ...updated.sections[key],
-                    items: data.cv[key].map((_, index) => index)
+                    items: [...validItems, ...newItems].sort((a, b) => a - b),
+                    maxIndex: currentCount // Garder trace du nombre d'items lors de la sauvegarde
                   };
+
                   // Pour experience, s'assurer que itemsOptions existe pour chaque item
                   if (key === 'experience') {
                     const itemsOptions = updated.sections[key].itemsOptions || {};
@@ -142,8 +177,18 @@ export function useExportModal({ currentItem, language, addNotification }) {
                   }
                 }
               });
+
+              // S'assurer que skills.options existe (migration des anciennes préférences)
+              if (updated.sections.skills && !updated.sections.skills.options) {
+                updated.sections.skills.options = { hideProficiency: false };
+              }
+              // S'assurer que experience.options existe (migration des anciennes préférences)
+              if (updated.sections.experience && !updated.sections.experience.options) {
+                updated.sections.experience.options = { hideTechnologies: false, hideDescription: false };
+              }
               setSelections(updated);
             } else {
+              // Pas de préférences sauvegardées pour ce CV, utiliser les valeurs par défaut
               setSelections(getDefaultSelections(data.cv));
             }
           } catch (err) {
@@ -157,7 +202,7 @@ export function useExportModal({ currentItem, language, addNotification }) {
         // En cas d'erreur, initialiser avec des valeurs par défaut
         setSelections(getDefaultSelections(null));
       });
-  }, [isOpen, currentItem]);
+  }, [isOpen, currentItem, getStorageKey]);
 
   // Calculer les compteurs pour chaque section
   const counters = useMemo(() => {
@@ -231,6 +276,29 @@ export function useExportModal({ currentItem, language, addNotification }) {
         }
       }
     }));
+  }, []);
+
+  // Toggle une option de section (ex: hideProficiency pour skills)
+  const toggleSectionOption = useCallback((sectionKey, optionKey) => {
+    setSelections(prev => {
+      const section = prev.sections[sectionKey];
+      if (!section) return prev;
+
+      const currentOptions = section.options || {};
+      return {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [sectionKey]: {
+            ...section,
+            options: {
+              ...currentOptions,
+              [optionKey]: !currentOptions[optionKey]
+            }
+          }
+        }
+      };
+    });
   }, []);
 
   // Toggle un élément individuel (pour experience, education, etc.)
@@ -351,11 +419,43 @@ export function useExportModal({ currentItem, language, addNotification }) {
     };
   }, []);
 
-  // Fermer le modal
+  // Sauvegarder les sélections pour le CV actuel
+  const saveSelections = useCallback(() => {
+    if (!currentItem) return;
+
+    const cvFilename = typeof currentItem === 'string'
+      ? currentItem
+      : (currentItem.file || currentItem.filename || currentItem.name);
+
+    const storageKey = getStorageKey(cvFilename);
+
+    // Ajouter maxIndex pour chaque section avec items pour gérer les ajouts futurs
+    const selectionsToSave = {
+      ...selections,
+      sections: { ...selections.sections }
+    };
+
+    ['experience', 'education', 'languages', 'projects', 'extras'].forEach(key => {
+      if (selectionsToSave.sections[key]?.items) {
+        selectionsToSave.sections[key] = {
+          ...selectionsToSave.sections[key],
+          maxIndex: cvData?.[key]?.length || 0
+        };
+      }
+    });
+
+    localStorage.setItem(storageKey, JSON.stringify(selectionsToSave));
+  }, [currentItem, selections, cvData, getStorageKey]);
+
+  // Fermer le modal (et sauvegarder les sélections)
   const closeModal = useCallback(() => {
+    // Sauvegarder les sélections avant de fermer
+    saveSelections();
     setIsOpen(false);
     setIsExporting(false);
-  }, []);
+    setIsPreview(false);
+    setPreviewHtml('');
+  }, [saveSelections]);
 
   // Exporter le PDF
   const exportPdf = useCallback(async () => {
@@ -374,8 +474,8 @@ export function useExportModal({ currentItem, language, addNotification }) {
     setIsExporting(true);
 
     try {
-      // Sauvegarder les préférences
-      localStorage.setItem('pdf-export-preferences', JSON.stringify(selections));
+      // Sauvegarder les préférences pour ce CV
+      saveSelections();
 
       // Préparer le nom du fichier
       const currentFilename = typeof currentItem === 'string'
@@ -490,7 +590,53 @@ export function useExportModal({ currentItem, language, addNotification }) {
     } finally {
       setIsExporting(false);
     }
-  }, [currentItem, filename, selections, language, closeModal, addNotification, router]);
+  }, [currentItem, filename, selections, language, closeModal, addNotification, router, saveSelections]);
+
+  // Charger la prévisualisation HTML avec indicateurs de saut de page
+  const loadPreview = useCallback(async () => {
+    if (!currentItem) return;
+
+    setIsLoadingPreview(true);
+    try {
+      const response = await fetch('/api/preview-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: currentItem,
+          language,
+          selections,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de la prévisualisation');
+      }
+
+      const data = await response.json();
+      setPreviewHtml(data.html);
+      setIsPreview(true);
+
+      // Sauvegarder les sélections lors de la prévisualisation
+      saveSelections();
+
+    } catch (error) {
+      console.error('[useExportModal] Erreur prévisualisation:', error);
+      addNotification({
+        type: 'error',
+        message: error.message || 'Erreur lors de la prévisualisation',
+        duration: 4000,
+      });
+    } finally {
+      setIsLoadingPreview(false);
+    }
+  }, [currentItem, language, selections, addNotification, saveSelections]);
+
+  // Fermer la prévisualisation et revenir aux options
+  const closePreview = useCallback(() => {
+    setIsPreview(false);
+    setPreviewHtml('');
+  }, []);
 
   return {
     isOpen,
@@ -501,6 +647,7 @@ export function useExportModal({ currentItem, language, addNotification }) {
     selections,
     toggleSection,
     toggleSubsection,
+    toggleSectionOption,
     toggleItem,
     toggleItemOption,
     selectAll,
@@ -509,6 +656,11 @@ export function useExportModal({ currentItem, language, addNotification }) {
     counters,
     subCounters,
     cvData,
-    isExporting
+    isExporting,
+    isPreview,
+    previewHtml,
+    isLoadingPreview,
+    loadPreview,
+    closePreview
   };
 }
