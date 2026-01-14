@@ -120,7 +120,7 @@
       "save": "Enregistrer",
       "necessary": {
         "title": "Cookies nécessaires",
-        "description": "Essentiels au fonctionnement du site.",
+        "description": "Essentiels au fonctionnement du site (session, sécurité, langue).",
         "active": "Actifs"
       },
       "functional": {
@@ -129,7 +129,7 @@
       },
       "analytics": {
         "title": "Cookies analytiques",
-        "description": "Statistiques d'utilisation du site."
+        "description": "Mesure d'audience respectueuse de la vie privée."
       },
       "marketing": {
         "title": "Cookies marketing",
@@ -149,8 +149,8 @@
       "necessary": {
         "title": "Cookies nécessaires",
         "alwaysActive": "Toujours actifs",
-        "description": "Ces cookies sont essentiels au fonctionnement du site. Ils permettent l'authentification, la sécurité, et la navigation de base. Ils ne peuvent pas être désactivés.",
-        "examples": "Session utilisateur, tokens CSRF, préférences de langue"
+        "description": "Ces cookies sont essentiels au fonctionnement du site. Ils permettent l'authentification, la sécurité, la navigation de base et la mémorisation de votre langue. Ils ne peuvent pas être désactivés.",
+        "examples": "Session utilisateur, tokens CSRF, préférence de langue"
       },
       "functional": {
         "title": "Cookies fonctionnels",
@@ -159,8 +159,8 @@
       },
       "analytics": {
         "title": "Cookies analytiques",
-        "description": "Ces cookies nous aident à comprendre comment vous utilisez notre site pour l'améliorer. Les données sont anonymisées et agrégées.",
-        "examples": "Pages visitées, temps passé, parcours utilisateur"
+        "description": "Ces cookies nous aident à comprendre comment vous utilisez notre site pour l'améliorer. Nous utilisons des outils respectueux de la vie privée.",
+        "examples": "Pages visitées, temps passé, origine du trafic"
       },
       "marketing": {
         "title": "Cookies marketing",

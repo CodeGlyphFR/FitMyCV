@@ -120,7 +120,7 @@
       "save": "Save",
       "necessary": {
         "title": "Necessary cookies",
-        "description": "Essential for the site to function.",
+        "description": "Essential for the site to function (session, security, language).",
         "active": "Active"
       },
       "functional": {
@@ -129,7 +129,7 @@
       },
       "analytics": {
         "title": "Analytics cookies",
-        "description": "Site usage statistics."
+        "description": "Privacy-friendly audience measurement."
       },
       "marketing": {
         "title": "Marketing cookies",
@@ -149,8 +149,8 @@
       "necessary": {
         "title": "Necessary cookies",
         "alwaysActive": "Always active",
-        "description": "These cookies are essential for the site to function. They enable authentication, security, and basic navigation. They cannot be disabled.",
-        "examples": "User session, CSRF tokens, language preferences"
+        "description": "These cookies are essential for the site to function. They enable authentication, security, basic navigation and language preference. They cannot be disabled.",
+        "examples": "User session, CSRF tokens, language preference"
       },
       "functional": {
         "title": "Functional cookies",
@@ -159,8 +159,8 @@
       },
       "analytics": {
         "title": "Analytics cookies",
-        "description": "These cookies help us understand how you use our site to improve it. Data is anonymized and aggregated.",
-        "examples": "Pages visited, time spent, user journey"
+        "description": "These cookies help us understand how you use our site to improve it. We use privacy-friendly tools.",
+        "examples": "Pages visited, time spent, traffic source"
       },
       "marketing": {
         "title": "Marketing cookies",
