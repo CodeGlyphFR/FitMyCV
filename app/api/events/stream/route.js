@@ -111,6 +111,20 @@ export async function GET(request) {
         }
       };
 
+      // Handler pour les mises à jour de l'onboarding
+      const handleOnboardingUpdate = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('onboarding:updated', { ...data, timestamp: Date.now() });
+        }
+      };
+
+      // Handler pour le reset de l'onboarding
+      const handleOnboardingReset = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('onboarding:reset', { ...data, timestamp: Date.now() });
+        }
+      };
+
       // S'abonner aux événements
       dbEmitter.on('task:updated', handleTaskUpdate);
       dbEmitter.on('cv:updated', handleCvUpdate);
@@ -124,6 +138,8 @@ export async function GET(request) {
       dbEmitter.on('cv_improvement:failed', handleCvImprovementFailed);
       dbEmitter.on('credits:updated', handleCreditsUpdate);
       dbEmitter.on('settings:updated', handleSettingsUpdate);
+      dbEmitter.on('onboarding:updated', handleOnboardingUpdate);
+      dbEmitter.on('onboarding:reset', handleOnboardingReset);
 
       // Envoyer un message de connexion réussie
       sendEvent('connected', { userId, timestamp: Date.now() });
@@ -142,6 +158,8 @@ export async function GET(request) {
         dbEmitter.off('cv_improvement:failed', handleCvImprovementFailed);
         dbEmitter.off('credits:updated', handleCreditsUpdate);
         dbEmitter.off('settings:updated', handleSettingsUpdate);
+        dbEmitter.off('onboarding:updated', handleOnboardingUpdate);
+        dbEmitter.off('onboarding:reset', handleOnboardingReset);
         controller.close();
       });
 

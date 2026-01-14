@@ -94,6 +94,22 @@ export function useRealtimeSync(options = {}) {
         }
       });
 
+      // Mise à jour de l'onboarding - dispatcher l'événement client
+      eventSource.addEventListener('onboarding:updated', (event) => {
+        const data = JSON.parse(event.data);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('onboarding:updated', { detail: data }));
+        }
+      });
+
+      // Reset de l'onboarding - dispatcher l'événement client
+      eventSource.addEventListener('onboarding:reset', (event) => {
+        const data = JSON.parse(event.data);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('onboarding:reset', { detail: data }));
+        }
+      });
+
       // Gestion des erreurs
       eventSource.onerror = (err) => {
         setConnected(false);
