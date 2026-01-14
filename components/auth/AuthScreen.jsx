@@ -249,7 +249,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
               type="button"
               onClick={()=>oauthClick(provider.id)}
               disabled={!provider.enabled}
-              className={`h-12 w-12 rounded-full border flex items-center justify-center transition ${provider.enabled ? "hover:shadow-sm" : "opacity-40 cursor-not-allowed"}`}
+              className={`group relative h-12 w-12 rounded-full border border-white/40 flex items-center justify-center transition ${provider.enabled ? "hover:shadow-sm hover:border-white/60" : "opacity-40 cursor-not-allowed"}`}
               aria-label={provider.label}
             >
               <Image
@@ -260,6 +260,14 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
                 className={`object-contain ${["github", "apple"].includes(provider.id) ? "invert" : ""}`}
                 priority
               />
+              {!provider.enabled && (
+                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="12" cy="12" r="9" />
+                    <line x1="7" y1="7" x2="17" y2="17" />
+                  </svg>
+                </span>
+              )}
             </button>
           ))}
         </div>
