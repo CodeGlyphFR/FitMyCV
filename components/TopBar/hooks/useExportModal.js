@@ -41,6 +41,9 @@ export function useExportModal({ currentItem, language, addNotification }) {
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
 
+  // État pour les éléments de saut de page calculés par la preview
+  const [pageBreakElements, setPageBreakElements] = useState([]);
+
   // Ordre par défaut des sections (sans header qui est toujours premier)
   const DEFAULT_SECTIONS_ORDER = ['summary', 'skills', 'experience', 'education', 'languages', 'projects', 'extras'];
   const [sectionsOrder, setSectionsOrder] = useState(DEFAULT_SECTIONS_ORDER);
@@ -494,6 +497,21 @@ export function useExportModal({ currentItem, language, addNotification }) {
     };
   }, []);
 
+  // Écouter les messages de l'iframe de preview pour recevoir les éléments de saut de page
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data?.type === 'pageBreakElements') {
+        setPageBreakElements(event.data.elements || []);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, []);
+
   // Sauvegarder les sélections pour le CV actuel
   const saveSelections = useCallback(() => {
     if (!currentItem) return;
@@ -535,6 +553,9 @@ export function useExportModal({ currentItem, language, addNotification }) {
     setPreviewHtml('');
   }, [saveSelections]);
 
+  // État pour l'export Word
+  const [isExportingWord, setIsExportingWord] = useState(false);
+
   // Exporter le PDF
   const exportPdf = useCallback(async () => {
     if (!currentItem || !filename.trim()) {
@@ -571,7 +592,8 @@ export function useExportModal({ currentItem, language, addNotification }) {
           language: cvData?.language || 'fr',  // Utiliser la langue du CV, pas de l'interface
           selections: selections,
           sectionsOrder: sectionsOrder,
-          customFilename: filename
+          customFilename: filename,
+          pageBreakElements: pageBreakElements  // Éléments où forcer les sauts de page
         }),
       });
 
@@ -669,7 +691,131 @@ export function useExportModal({ currentItem, language, addNotification }) {
     } finally {
       setIsExporting(false);
     }
-  }, [currentItem, filename, selections, language, closeModal, addNotification, router, saveSelections]);
+  }, [currentItem, filename, selections, language, closeModal, addNotification, router, saveSelections, pageBreakElements, sectionsOrder, cvData]);
+
+  // Exporter en Word
+  const exportWord = useCallback(async () => {
+    if (!currentItem || !filename.trim()) {
+      alert('Nom de fichier manquant');
+      return;
+    }
+
+    // Vérifier qu'au moins une section est sélectionnée (header est toujours sélectionné)
+    const hasSelection = Object.values(selections.sections).some(s => s.enabled);
+    if (!hasSelection) {
+      alert('Veuillez sélectionner au moins une section');
+      return;
+    }
+
+    setIsExportingWord(true);
+
+    try {
+      // Sauvegarder les préférences pour ce CV
+      saveSelections();
+
+      // Préparer le nom du fichier
+      const currentFilename = typeof currentItem === 'string'
+        ? currentItem
+        : (currentItem.file || currentItem.filename || currentItem.name);
+
+      // Appeler l'API d'export Word
+      const response = await fetch('/api/export-word', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filename: currentFilename,
+          language: cvData?.language || 'fr',
+          selections: selections,
+          sectionsOrder: sectionsOrder,
+          customFilename: filename
+        }),
+      });
+
+      if (!response.ok) {
+        console.log('[useExportModal] Erreur API Word, status:', response.status);
+
+        // Arrêter le loading immédiatement
+        setIsExportingWord(false);
+
+        // Parser l'erreur de l'API avec gestion d'erreur
+        let errorData = {};
+        try {
+          errorData = await response.json();
+          console.log('[useExportModal] Error data:', errorData);
+        } catch (parseError) {
+          console.error('[useExportModal] Erreur parsing JSON:', parseError);
+          errorData = { error: 'Erreur lors de l\'export Word' };
+        }
+
+        // Fermer le modal immédiatement
+        closeModal();
+
+        // Si l'API retourne actionRequired et redirectUrl (quota/feature désactivée)
+        if (errorData.actionRequired && errorData.redirectUrl) {
+          addNotification({
+            type: 'error',
+            message: errorData.error || 'Accès à cette fonctionnalité limité',
+            redirectUrl: errorData.redirectUrl,
+            linkText: 'Voir les options',
+            duration: 10000,
+          });
+        } else {
+          // Notification d'erreur simple sans redirect
+          addNotification({
+            type: 'error',
+            message: errorData.error || 'Erreur lors de l\'export Word',
+            duration: 4000,
+          });
+        }
+
+        return;
+      }
+
+      // Télécharger le fichier Word
+      console.log('[useExportModal] Début téléchargement Word:', filename);
+      const blob = await response.blob();
+      const forcedBlob = new Blob([blob], { type: 'application/octet-stream' });
+      const url = window.URL.createObjectURL(forcedBlob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `${filename}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      console.log('[useExportModal] Téléchargement Word déclenché');
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      // Fermer le modal
+      closeModal();
+
+      // Rafraîchir le compteur de crédits
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          console.log('[useExportModal] Dispatch événement credits-updated');
+          window.dispatchEvent(new Event('credits-updated'));
+        }
+      }, 100);
+
+    } catch (error) {
+      console.error('[useExportModal] Erreur catch générale Word:', error);
+
+      // Arrêter le loading et fermer le modal
+      setIsExportingWord(false);
+      closeModal();
+
+      // Notification d'erreur
+      addNotification({
+        type: 'error',
+        message: error.message || 'Erreur lors de l\'export Word',
+        duration: 4000,
+      });
+    } finally {
+      setIsExportingWord(false);
+    }
+  }, [currentItem, filename, selections, cvData, sectionsOrder, closeModal, addNotification, saveSelections]);
 
   // Charger la prévisualisation HTML avec indicateurs de saut de page
   const loadPreview = useCallback(async () => {
@@ -890,6 +1036,8 @@ export function useExportModal({ currentItem, language, addNotification }) {
     selectAll,
     deselectAll,
     exportPdf,
+    exportWord,
+    isExportingWord,
     counters,
     subCounters,
     cvData,

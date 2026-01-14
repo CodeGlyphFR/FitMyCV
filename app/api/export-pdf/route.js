@@ -157,7 +157,7 @@ function getSectionTitle(sectionKey, customTitle, language) {
 }
 
 export async function POST(request) {
-  console.log('[PDF Export] Request received'); // Log pour debug
+  console.log('[PDF Export] Request received');
   const startTime = Date.now();
 
   // Variables pour tracking du crédit (remboursement si échec)
@@ -180,6 +180,7 @@ export async function POST(request) {
     const selections = requestData.selections || null;
     const sectionsOrder = requestData.sectionsOrder || ['summary', 'skills', 'experience', 'education', 'languages', 'projects', 'extras'];
     const customFilename = requestData.customFilename || null;
+    const pageBreakElements = requestData.pageBreakElements || [];
 
     // Si filename est un objet, extraire le nom du fichier
     if (typeof filename === 'object' && filename !== null) {
@@ -254,7 +255,7 @@ export async function POST(request) {
     const page = await browser.newPage();
 
     // Générer le HTML du CV avec les sélections (utilise la langue depuis DB)
-    const htmlContent = generateCvHtml(cvData, cvLanguage, selections, sectionsOrder);
+    const htmlContent = generateCvHtml(cvData, cvLanguage, selections, sectionsOrder, pageBreakElements);
 
     await page.setContent(htmlContent, {
       waitUntil: 'networkidle0',
@@ -339,12 +340,18 @@ export async function POST(request) {
   }
 }
 
-function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrder = null) {
+function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrder = null, pageBreakElements = []) {
   const t = (path) => getTranslation(language, path);
 
   // Ordre par défaut des sections si non spécifié
   const defaultOrder = ['summary', 'skills', 'experience', 'education', 'languages', 'projects', 'extras'];
   const order = sectionsOrder || defaultOrder;
+
+  // Fonction helper pour vérifier si un élément doit avoir un saut de page avant
+  // DÉSACTIVÉ: les calculs preview/Puppeteer sont trop différents, on laisse Puppeteer gérer naturellement
+  const shouldBreakBefore = (type, identifier) => {
+    return false; // Désactivé - laisser Puppeteer gérer les sauts de page naturellement
+  };
 
   // Fonction helper pour vérifier si une section est activée
   const isSectionEnabled = (sectionKey) => {
@@ -446,7 +453,6 @@ function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrde
 
     .experience-item:not(:first-child) {
       margin-top: 8px;
-      page-break-before: auto;
     }
 
     /* Forcer l'espacement après les sauts de page */
@@ -819,15 +825,18 @@ function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrde
 
     /* Page break utilities */
     .page-break-before {
-      page-break-before: always;
+      page-break-before: always !important;
+      break-before: page !important;
     }
 
     .page-break-after {
-      page-break-after: always;
+      page-break-after: always !important;
+      break-after: page !important;
     }
 
     .page-break-inside-avoid {
-      page-break-inside: avoid;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
     }
 
     @media print {
@@ -886,9 +895,11 @@ function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrde
       const sectionGenerators = {
         summary: () => {
           if (!isSectionEnabled('summary') || !isSubsectionEnabled('summary', 'description') || !summary.description || !summary.description.trim()) return '';
+          const sectionTitle = getSectionTitle('summary', section_titles.summary, language);
+          const breakClass = shouldBreakBefore('section', sectionTitle) ? ' page-break-before' : '';
           return `
-            <section class="section">
-              <h2 class="section-title">${getSectionTitle('summary', section_titles.summary, language)}</h2>
+            <section class="section${breakClass}">
+              <h2 class="section-title">${sectionTitle}</h2>
               <div class="summary-content">${summary.description}</div>
             </section>
           `;
@@ -896,9 +907,11 @@ function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrde
         skills: () => {
           if (!isSectionEnabled('skills') || !Object.values(skills).some(skillArray => Array.isArray(skillArray) && skillArray.length > 0)) return '';
           const hideProficiency = selections?.sections?.skills?.options?.hideProficiency === true;
+          const sectionTitle = getSectionTitle('skills', section_titles.skills, language);
+          const breakClass = shouldBreakBefore('section', sectionTitle) ? ' page-break-before' : '';
           return `
-            <section class="section">
-              <h2 class="section-title">${getSectionTitle('skills', section_titles.skills, language)}</h2>
+            <section class="section${breakClass}">
+              <h2 class="section-title">${sectionTitle}</h2>
               <div class="skills-grid">
                 ${isSubsectionEnabled('skills', 'hard_skills') && skills.hard_skills && skills.hard_skills.filter(skill => skill.name && skill.proficiency).length > 0 ? `
                   <div class="skill-category">
@@ -929,12 +942,20 @@ function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrde
           const hideDescription = selections?.sections?.experience?.options?.hideDescription === true;
           const hideTechnologies = selections?.sections?.experience?.options?.hideTechnologies === true;
           const hideDeliverables = selections?.sections?.experience?.options?.hideDeliverables === true;
+          const sectionTitle = getSectionTitle('experience', section_titles.experience, language);
+          const sectionBreakClass = shouldBreakBefore('section', sectionTitle) ? ' page-break-before' : '';
           return `
-            <section class="section">
-              <h2 class="section-title">${getSectionTitle('experience', section_titles.experience, language)}</h2>
-              ${experience.map((exp, index) => `
-                <div class="experience-item">
-                  <div class="experience-header-block">
+            <section class="section${sectionBreakClass}">
+              <h2 class="section-title">${sectionTitle}</h2>
+              ${experience.map((exp, index) => {
+                // Vérifier les différents types de breaks pour cet item
+                const itemBreak = shouldBreakBefore('experience-item', index) ? ' page-break-before' : '';
+                const headerBreak = shouldBreakBefore('experience-header-block', index) ? ' page-break-before' : '';
+                const respBreak = shouldBreakBefore('experience-responsibilities-block', index) ? ' page-break-before' : '';
+                const delivBreak = shouldBreakBefore('experience-deliverables-block', index) ? ' page-break-before' : '';
+                return `
+                <div class="experience-item${itemBreak}">
+                  <div class="experience-header-block${headerBreak}">
                     <div class="experience-header">
                       <div>
                         ${exp.title ? `<div class="experience-title">${exp.title}</div>` : ''}
@@ -945,7 +966,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrde
                     ${!hideDescription && exp.description && exp.description.trim() ? `<div class="experience-description">${exp.description}</div>` : ''}
                   </div>
                   ${exp.responsibilities && exp.responsibilities.length > 0 ? `
-                    <div class="experience-responsibilities-block">
+                    <div class="experience-responsibilities-block${respBreak}">
                       <div class="responsibilities">
                         <ul>
                           ${exp.responsibilities.map(resp => `<li>${resp}</li>`).join('')}
@@ -954,7 +975,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrde
                     </div>
                   ` : ''}
                   ${((!hideDeliverables && exp.deliverables && exp.deliverables.length > 0) || (!hideTechnologies && exp.skills_used && exp.skills_used.length > 0)) ? `
-                    <div class="experience-deliverables-block">
+                    <div class="experience-deliverables-block${delivBreak}">
                       ${!hideDeliverables && exp.deliverables && exp.deliverables.length > 0 ? `
                         <div class="deliverables-inline">
                           <strong>${t('cvSections.deliverables')}:</strong> ${exp.deliverables.join(', ')}
@@ -968,28 +989,34 @@ function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrde
                     </div>
                   ` : ''}
                 </div>
-              `).join('')}
+              `}).join('')}
             </section>
           `;
         },
         education: () => {
           if (!isSectionEnabled('education') || !education || education.length === 0) return '';
+          const sectionTitle = getSectionTitle('education', section_titles.education, language);
+          const breakClass = shouldBreakBefore('section', sectionTitle) ? ' page-break-before' : '';
           return `
-            <section class="section">
-              <h2 class="section-title">${getSectionTitle('education', section_titles.education, language)}</h2>
-              ${education.map(edu => `
-                <div class="education-item">
+            <section class="section${breakClass}">
+              <h2 class="section-title">${sectionTitle}</h2>
+              ${education.map((edu, index) => {
+                const itemBreak = shouldBreakBefore('education-item', index) ? ' page-break-before' : '';
+                return `
+                <div class="education-item${itemBreak}">
                   <strong>${edu.institution || ''}</strong>${edu.degree || edu.field_of_study ? ` - ${edu.degree || ''}${edu.degree && edu.field_of_study ? ' • ' : ''}${edu.field_of_study || ''}` : ''}${edu.start_date || edu.end_date ? ` <span class="education-dates">(${edu.start_date && edu.start_date !== edu.end_date ? `${formatDate(edu.start_date, language)} – ` : ''}${formatDate(edu.end_date, language)})</span>` : ''}
                 </div>
-              `).join('')}
+              `}).join('')}
             </section>
           `;
         },
         languages: () => {
           if (!isSectionEnabled('languages') || !languages || languages.filter(lang => lang.name && lang.level).length === 0) return '';
+          const sectionTitle = getSectionTitle('languages', section_titles.languages, language);
+          const breakClass = shouldBreakBefore('section', sectionTitle) ? ' page-break-before' : '';
           return `
-            <section class="section">
-              <h2 class="section-title">${getSectionTitle('languages', section_titles.languages, language)}</h2>
+            <section class="section${breakClass}">
+              <h2 class="section-title">${sectionTitle}</h2>
               <div class="languages-grid">
                 ${languages.filter(lang => lang.name && lang.level).map(lang => `
                   <div class="language-item">
@@ -1002,11 +1029,15 @@ function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrde
         },
         projects: () => {
           if (!isSectionEnabled('projects') || !projects || projects.length === 0) return '';
+          const sectionTitle = getSectionTitle('projects', section_titles.projects, language);
+          const breakClass = shouldBreakBefore('section', sectionTitle) ? ' page-break-before' : '';
           return `
-            <section class="section">
-              <h2 class="section-title">${getSectionTitle('projects', section_titles.projects, language)}</h2>
-              ${projects.map(project => `
-                <div class="project-item">
+            <section class="section${breakClass}">
+              <h2 class="section-title">${sectionTitle}</h2>
+              ${projects.map((project, index) => {
+                const itemBreak = shouldBreakBefore('project-item', index) ? ' page-break-before' : '';
+                return `
+                <div class="project-item${itemBreak}">
                   <div class="project-header">
                     <div>
                       ${project.name ? `<div class="project-name">${project.name}</div>` : ''}
@@ -1023,29 +1054,35 @@ function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrde
                     </div>
                   ` : ''}
                 </div>
-              `).join('')}
+              `}).join('')}
             </section>
           `;
         },
         extras: () => {
           if (!isSectionEnabled('extras') || !extras || extras.filter(extra => extra.name && extra.summary).length === 0) return '';
+          const sectionTitle = getSectionTitle('extras', section_titles.extras, language);
+          const breakClass = shouldBreakBefore('section', sectionTitle) ? ' page-break-before' : '';
           return `
-            <section class="section">
-              <h2 class="section-title">${getSectionTitle('extras', section_titles.extras, language)}</h2>
+            <section class="section${breakClass}">
+              <h2 class="section-title">${sectionTitle}</h2>
               ${extras.filter(extra => extra.name && extra.summary && (extra.summary || '').length <= 40).length > 0 ? `
                 <div class="extras-grid-short">
-                  ${extras.filter(extra => extra.name && extra.summary && (extra.summary || '').length <= 40).map(extra => `
-                    <div class="extra-item-short">
+                  ${extras.filter(extra => extra.name && extra.summary && (extra.summary || '').length <= 40).map((extra, index) => {
+                    const itemBreak = shouldBreakBefore('extra-item', index) ? ' page-break-before' : '';
+                    return `
+                    <div class="extra-item-short${itemBreak}">
                       <strong>${extra.name}:</strong> ${extra.summary}
                     </div>
-                  `).join('')}
+                  `}).join('')}
                 </div>
               ` : ''}
-              ${extras.filter(extra => extra.name && extra.summary && (extra.summary || '').length > 40).map(extra => `
-                <div class="extra-item">
+              ${extras.filter(extra => extra.name && extra.summary && (extra.summary || '').length > 40).map((extra, index) => {
+                const itemBreak = shouldBreakBefore('extra-item', index) ? ' page-break-before' : '';
+                return `
+                <div class="extra-item${itemBreak}">
                   <strong>${extra.name}:</strong> ${extra.summary}
                 </div>
-              `).join('')}
+              `}).join('')}
             </section>
           `;
         }

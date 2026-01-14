@@ -226,22 +226,27 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null, section
 
   // Hauteur de page A4 en pixels
   // A4 = 297mm, marges Puppeteer = 15mm top + 15mm bottom = 30mm
-  // Contenu = 267mm. À 96 DPI = 1009px
-  // Ajusté pour correspondre au rendu navigateur dans le preview
-  const PAGE_HEIGHT_PX = 1055;
+  // A4 = 297mm, marges = 30mm (15+15), zone contenu = 267mm
+  // À 96 DPI = 1008px (correspond au calcul Puppeteer)
+  const PAGE_HEIGHT_PX = 1008;
 
   return `
 <!DOCTYPE html>
 <html lang="${language}">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>CV Preview - ${header.full_name || t('cvSections.header')}</title>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
 
     body {
@@ -770,9 +775,11 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null, section
 
       // Hauteur de contenu par page calibrée pour Puppeteer
       // A4 = 297mm, marges = 15mm top + 15mm bottom = 30mm, contenu = 267mm
-      // Sur mobile, le contenu est rendu plus grand, donc on augmente PAGE_HEIGHT
-      const isMobile = window.innerWidth < 500;
-      const PAGE_HEIGHT = isMobile ? 1760 : 1055; // 1055 * 1.67 pour mobile
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      const isMobile = window.innerWidth < 500 && !isIOS;
+      // A4 = 297mm, marges = 30mm (15+15), zone contenu = 267mm ≈ 1008px à 96 DPI
+      // Ajusté pour correspondre au comportement réel de Puppeteer
+      const PAGE_HEIGHT = isMobile ? 1680 : 1008;
 
       // Position de départ du contenu (après le padding top du container)
       const containerStyle = getComputedStyle(container);
@@ -865,93 +872,7 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null, section
       const totalHeight = container.scrollHeight - paddingTop - paddingBottom;
 
       // Tolérance pour les différences de rendu entre navigateur et Puppeteer
-      const TOLERANCE = 20;
-
-      // Si le contenu tient sur une seule page (avec tolérance), pas de saut de page
-      if (totalHeight <= PAGE_HEIGHT + TOLERANCE) {
-        return;
-      }
-
-      // Continuer tant qu'on n'a pas parcouru tout le document
-      while (currentPageEnd < totalHeight + PAGE_HEIGHT) {
-        // Trouver si un bloc serait coupé à currentPageEnd
-        let blockToCut = null;
-
-        for (const block of uniqueBlocks) {
-          // Le bloc commence avant la fin de page ET se termine après
-          if (block.top < currentPageEnd && block.bottom > currentPageEnd) {
-            // Ce bloc serait coupé
-            if (!blockToCut || block.top < blockToCut.top) {
-              blockToCut = block;
-            }
-          }
-        }
-
-        if (blockToCut) {
-          // Un bloc serait coupé -> saut de page juste avant ce bloc
-          // Mais d'abord vérifier s'il y a un titre juste avant ce bloc qui devrait aussi être déplacé
-          let breakPosition = blockToCut.top;
-
-          for (const block of uniqueBlocks) {
-            // Chercher un titre qui se termine proche du début du bloc coupé (dans les 100px avant)
-            if (block.type === 'title-with-content' &&
-                block.bottom < blockToCut.top &&
-                block.bottom > blockToCut.top - 100) {
-              // Utiliser le début du titre comme position de saut
-              breakPosition = block.top;
-              break;
-            }
-          }
-
-          pageBreaks.push(breakPosition);
-          currentPageStart = breakPosition;
-          currentPageEnd = breakPosition + PAGE_HEIGHT;
-        } else {
-          // Pas de bloc coupé directement, mais vérifier si un titre est en fin de page
-          // avec son contenu qui serait sur la page suivante (break-after: avoid)
-          let titleToMove = null;
-          const TITLE_MARGIN = 100; // Marge en pixels pour considérer qu'un titre est "en fin de page"
-
-          for (const block of uniqueBlocks) {
-            // Chercher un bloc title-with-content qui se termine proche de la fin de page
-            if (block.type === 'title-with-content' &&
-                block.bottom > currentPageEnd - TITLE_MARGIN &&
-                block.bottom <= currentPageEnd) {
-              // Vérifier s'il y a du contenu après ce titre qui serait sur la page suivante
-              const hasContentAfter = uniqueBlocks.some(b =>
-                b.top > block.bottom && b.top < currentPageEnd + PAGE_HEIGHT
-              );
-              if (hasContentAfter) {
-                titleToMove = block;
-                break;
-              }
-            }
-          }
-
-          if (titleToMove) {
-            // Déplacer le saut de page avant ce titre
-            pageBreaks.push(titleToMove.top);
-            currentPageStart = titleToMove.top;
-            currentPageEnd = titleToMove.top + PAGE_HEIGHT;
-          } else {
-            // Pas de cas spécial, passer à la page suivante
-            if (currentPageEnd < totalHeight) {
-              pageBreaks.push(currentPageEnd);
-            }
-            currentPageStart = currentPageEnd;
-            currentPageEnd = currentPageStart + PAGE_HEIGHT;
-          }
-        }
-      }
-
-      // Ajouter les indicateurs visuels
-      // Les positions sont relatives au contenu (après padding), donc on ajoute paddingTop pour positionner dans le container
-      pageBreaks.forEach(position => {
-        const indicator = document.createElement('div');
-        indicator.className = 'page-break-indicator';
-        indicator.style.top = (position + paddingTop) + 'px';
-        container.appendChild(indicator);
-      });
+      const TOLERANCE = 5;
 
       // Scaling responsive : adapter la page A4 à la largeur disponible
       function applyResponsiveScale() {
@@ -974,9 +895,7 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null, section
         // Ne pas appliquer de scale si on est proche de la taille originale (évite le flou)
         // Seulement scaler si on doit réduire de plus de 2%
         if (availableWidth < pageWidthPx * 0.98) {
-          // Calculer le scale pour que la page tienne dans la largeur dispo
           const scale = availableWidth / pageWidthPx;
-
           // Appliquer le scale (transform-origin: top center pour garder le centrage)
           pageWrapper.style.transform = 'scale(' + scale + ')';
 
@@ -989,7 +908,203 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null, section
         }
       }
 
-      // Appliquer le scale au chargement et au resize
+      // Si le contenu tient sur une seule page (avec tolérance), pas de saut de page
+      if (totalHeight <= PAGE_HEIGHT + TOLERANCE) {
+        // Appliquer le scale et quitter (pas de page breaks à calculer)
+        applyResponsiveScale();
+        window.addEventListener('resize', applyResponsiveScale);
+        return;
+      }
+
+      // Continuer tant qu'on n'a pas parcouru tout le document
+      while (currentPageEnd < totalHeight + PAGE_HEIGHT) {
+        // Trouver si un bloc serait coupé à currentPageEnd
+        let blockToCut = null;
+
+        const MIN_CUT_THRESHOLD = 5; // Ne déplacer que si plus de 5px seraient coupés
+        for (const block of uniqueBlocks) {
+          // Le bloc commence avant la fin de page ET se termine après
+          if (block.top < currentPageEnd && block.bottom > currentPageEnd) {
+            // Calculer combien du bloc serait coupé
+            const cutAmount = block.bottom - currentPageEnd;
+            // Ne considérer comme "coupé" que si plus de MIN_CUT_THRESHOLD pixels dépassent
+            if (cutAmount > MIN_CUT_THRESHOLD) {
+              if (!blockToCut || block.top < blockToCut.top) {
+                blockToCut = block;
+              }
+            }
+          }
+        }
+
+        if (blockToCut) {
+          // Un bloc serait coupé -> saut de page juste avant ce bloc
+          // Mais d'abord vérifier s'il y a un titre juste avant ce bloc qui devrait aussi être déplacé
+          let breakPosition = blockToCut.top;
+          let movedForTitle = false;
+
+          for (const block of uniqueBlocks) {
+            // Chercher un titre qui se termine proche du début du bloc coupé (dans les 30px avant)
+            if (block.type === 'title-with-content' &&
+                block.bottom < blockToCut.top &&
+                block.bottom > blockToCut.top - 30) {
+              // Utiliser le début du titre comme position de saut
+              breakPosition = block.top;
+              movedForTitle = true;
+              break;
+            }
+          }
+
+          pageBreaks.push(breakPosition);
+          currentPageStart = breakPosition;
+          currentPageEnd = breakPosition + PAGE_HEIGHT;
+        } else {
+          // Pas de bloc coupé directement, mais vérifier si un titre est en fin de page
+          // avec son contenu qui serait sur la page suivante (break-after: avoid)
+          let titleToMove = null;
+          const TITLE_MARGIN = 100; // Marge en pixels pour considérer qu'un titre est "en fin de page"
+
+          for (const block of uniqueBlocks) {
+            // Chercher un bloc title-with-content qui se termine proche de la fin de page
+            if (block.type === 'title-with-content' &&
+                block.bottom > currentPageEnd - TITLE_MARGIN &&
+                block.bottom <= currentPageEnd) {
+              // Vérifier s'il y a du contenu après ce titre qui serait COUPÉ par la fin de page
+              const contentCut = uniqueBlocks.some(b =>
+                b.top > block.bottom && b.top < currentPageEnd && b.bottom > currentPageEnd
+              );
+              if (contentCut) {
+                titleToMove = block;
+                break;
+              }
+            }
+          }
+
+          if (titleToMove) {
+            // Déplacer le saut de page avant ce titre
+            pageBreaks.push(titleToMove.top);
+            currentPageStart = titleToMove.top;
+            currentPageEnd = titleToMove.top + PAGE_HEIGHT;
+          } else {
+            // Pas de cas spécial, passer à la page suivante
+            if (currentPageEnd < totalHeight) {
+              pageBreaks.push(currentPageEnd);
+            }
+            currentPageStart = currentPageEnd;
+            currentPageEnd = currentPageStart + PAGE_HEIGHT;
+          }
+        }
+      }
+
+      // Identifier les éléments où insérer les sauts de page
+      // On cherche l'élément qui commence juste après chaque position de saut
+      const pageBreakElements = [];
+
+      // Tous les éléments qui peuvent recevoir un saut de page
+      const breakableElements = [
+        ...Array.from(container.querySelectorAll('.section')),
+        ...Array.from(container.querySelectorAll('.experience-item')),
+        ...Array.from(container.querySelectorAll('.experience-header-block')),
+        ...Array.from(container.querySelectorAll('.experience-responsibilities-block')),
+        ...Array.from(container.querySelectorAll('.experience-deliverables-block')),
+        ...Array.from(container.querySelectorAll('.education-item')),
+        ...Array.from(container.querySelectorAll('.project-item')),
+        ...Array.from(container.querySelectorAll('.extra-item'))
+      ].map(el => {
+        const rect = el.getBoundingClientRect();
+        return {
+          element: el,
+          top: rect.top + window.scrollY - containerTop
+        };
+      }).sort((a, b) => a.top - b.top);
+
+      // Seuil minimum: ne forcer un saut que si l'élément est clairement sur la nouvelle page
+      // Cela évite de forcer des sauts pour des éléments qui pourraient tenir sur la page précédente
+      // dans Puppeteer (qui calcule légèrement différemment)
+      const MIN_OVERFLOW_THRESHOLD = 50;
+
+      pageBreaks.forEach(breakPosition => {
+        // Trouver l'élément qui commence le plus proche après cette position
+        let closestElement = null;
+        let closestDistance = Infinity;
+
+        for (const item of breakableElements) {
+          // L'élément doit commencer après la position de coupure + seuil
+          if (item.top >= breakPosition + MIN_OVERFLOW_THRESHOLD) {
+            const distance = item.top - breakPosition;
+            if (distance < closestDistance) {
+              closestDistance = distance;
+              closestElement = item.element;
+            }
+          }
+        }
+
+        if (closestElement) {
+          // Créer un identifiant unique pour cet élément
+          let identifier = null;
+
+          // Vérifier le type d'élément et créer l'identifiant
+          if (closestElement.classList.contains('section')) {
+            // Trouver quelle section c'est
+            const sectionTitle = closestElement.querySelector('.section-title');
+            if (sectionTitle) {
+              identifier = { type: 'section', title: sectionTitle.textContent.trim() };
+            }
+          } else if (closestElement.classList.contains('experience-item')) {
+            const index = Array.from(container.querySelectorAll('.experience-item')).indexOf(closestElement);
+            identifier = { type: 'experience-item', index: index };
+          } else if (closestElement.classList.contains('experience-header-block')) {
+            const expItem = closestElement.closest('.experience-item');
+            if (expItem) {
+              const index = Array.from(container.querySelectorAll('.experience-item')).indexOf(expItem);
+              identifier = { type: 'experience-header-block', index: index };
+            }
+          } else if (closestElement.classList.contains('experience-responsibilities-block')) {
+            const expItem = closestElement.closest('.experience-item');
+            if (expItem) {
+              const index = Array.from(container.querySelectorAll('.experience-item')).indexOf(expItem);
+              identifier = { type: 'experience-responsibilities-block', index: index };
+            }
+          } else if (closestElement.classList.contains('experience-deliverables-block')) {
+            const expItem = closestElement.closest('.experience-item');
+            if (expItem) {
+              const index = Array.from(container.querySelectorAll('.experience-item')).indexOf(expItem);
+              identifier = { type: 'experience-deliverables-block', index: index };
+            }
+          } else if (closestElement.classList.contains('education-item')) {
+            const index = Array.from(container.querySelectorAll('.education-item')).indexOf(closestElement);
+            identifier = { type: 'education-item', index: index };
+          } else if (closestElement.classList.contains('project-item')) {
+            const index = Array.from(container.querySelectorAll('.project-item')).indexOf(closestElement);
+            identifier = { type: 'project-item', index: index };
+          } else if (closestElement.classList.contains('extra-item')) {
+            const index = Array.from(container.querySelectorAll('.extra-item')).indexOf(closestElement);
+            identifier = { type: 'extra-item', index: index };
+          }
+
+          if (identifier) {
+            pageBreakElements.push(identifier);
+          }
+        }
+      });
+
+      // Envoyer les éléments de coupure au parent
+      if (window.parent !== window) {
+        window.parent.postMessage({
+          type: 'pageBreakElements',
+          elements: pageBreakElements
+        }, '*');
+      }
+
+      // Ajouter les indicateurs visuels
+      // Les positions sont relatives au contenu (après padding), donc on ajoute paddingTop pour positionner dans le container
+      pageBreaks.forEach(position => {
+        const indicator = document.createElement('div');
+        indicator.className = 'page-break-indicator';
+        indicator.style.top = (position + paddingTop) + 'px';
+        container.appendChild(indicator);
+      });
+
+      // Appliquer le scale APRÈS avoir calculé et ajouté les indicateurs de page break
       applyResponsiveScale();
       window.addEventListener('resize', applyResponsiveScale);
     });
