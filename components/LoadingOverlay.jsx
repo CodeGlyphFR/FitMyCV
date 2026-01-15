@@ -17,9 +17,6 @@ export default function LoadingOverlay() {
     const removeInitialLoader = (trigger) => {
       // Éviter les appels multiples
       if (isRemovalInProgress) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[LoadingOverlay] Removal already in progress, ignoring trigger:', trigger);
-        }
         return;
       }
 
@@ -28,11 +25,6 @@ export default function LoadingOverlay() {
 
       // Marquer comme en cours
       isRemovalInProgress = true;
-
-      // Log en développement
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[LoadingOverlay] Hiding initial CSS loader, trigger:', trigger);
-      }
 
       // Émettre événement AVANT de commencer à cacher
       emitLoadingEvent(LOADING_EVENTS.LOADING_HIDING, {
@@ -49,11 +41,11 @@ export default function LoadingOverlay() {
       // Ajouter classe pour fade-out CSS
       initialOverlay.classList.add('hiding');
 
-      // Après la transition (300ms), supprimer complètement du DOM
+      // Après la transition (300ms), cacher avec display:none au lieu de supprimer du DOM
+      // (supprimer du DOM casse la réconciliation React lors des navigations)
       setTimeout(() => {
-        // Vérifier que l'élément existe encore et a un parent
-        if (initialOverlay && initialOverlay.parentNode) {
-          initialOverlay.parentNode.removeChild(initialOverlay);
+        if (initialOverlay) {
+          initialOverlay.style.display = 'none';
         }
 
         // Émettre événement de fin
@@ -71,28 +63,19 @@ export default function LoadingOverlay() {
     }
 
     // Écouter l'événement TOPBAR_READY (émis par TopBar)
-    const cleanupTopBar = onLoadingEvent(LOADING_EVENTS.TOPBAR_READY, (data) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[LoadingOverlay] TopBar ready, hiding loading screen', data);
-      }
+    const cleanupTopBar = onLoadingEvent(LOADING_EVENTS.TOPBAR_READY, () => {
       removeInitialLoader('topBarReady');
     });
     cleanupFunctions.push(cleanupTopBar);
 
     // Écouter l'événement PAGE_READY (émis par EmptyState)
-    const cleanupPageReady = onLoadingEvent(LOADING_EVENTS.PAGE_READY, (data) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[LoadingOverlay] Page ready, hiding loading screen', data);
-      }
+    const cleanupPageReady = onLoadingEvent(LOADING_EVENTS.PAGE_READY, () => {
       removeInitialLoader('pageReady');
     });
     cleanupFunctions.push(cleanupPageReady);
 
     // Timeout de sécurité absolu : masquer le loader après 3 secondes maximum
     safetyTimeout = setTimeout(() => {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('[LoadingOverlay] Safety timeout reached, forcing hide');
-      }
       removeInitialLoader('safetyTimeout');
     }, 3000);
 

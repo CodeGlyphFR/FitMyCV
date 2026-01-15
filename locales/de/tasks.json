@@ -19,6 +19,24 @@
       "cancelled": "Abgebrochen",
       "unknown": "Unbekannt"
     },
+    "steps": {
+      "extraction": "Stellenanzeige extrahieren",
+      "classify": "Klassifizierung",
+      "experiences": "Erfahrungen",
+      "projects": "Projekte",
+      "extras": "Extras",
+      "skills": "Fähigkeiten",
+      "summary": "Zusammenfassung",
+      "recompose": "Fertigstellung"
+    },
+    "taskTypes": {
+      "import": "PDF-Import",
+      "generation": "Lebenslauf-Erstellung",
+      "templateCreation": "Vorlage erstellen",
+      "translateCv": "Lebenslauf-Übersetzung",
+      "improveCv": "Lebenslauf-Verbesserung",
+      "jobTitleGeneration": "Jobtitel-Generierung"
+    },
     "messages": {
       "task": "Aufgabe",
       "importInProgress": "Import läuft ...",
@@ -40,10 +58,22 @@
       "matchScoreQueued": "Match-Score-Berechnung wartet ...",
       "matchScoreCompleted": "Match-Score erfolgreich berechnet",
       "matchScoreCancelled": "Match-Score-Berechnung abgebrochen",
-      "matchScoreFailed": "Match-Score-Berechnung fehlgeschlagen"
+      "matchScoreFailed": "Match-Score-Berechnung fehlgeschlagen",
+      "pipelineInProgress": "Lebenslauf-Erstellung läuft",
+      "pipelineQueued": "Lebenslauf-Erstellung wartet",
+      "pipelineCompleted": "Lebenslauf-Erstellung abgeschlossen",
+      "pipelineFailed": "Lebenslauf-Erstellung fehlgeschlagen",
+      "pipelineCancelled": "Lebenslauf-Erstellung abgebrochen",
+      "pipelinePartial": "Erstellung teilweise erfolgreich",
+      "offers": "Angebote",
+      "cvReadyForOffer": "Lebenslauf bereit für Angebot {index}",
+      "cvGenerated": "{count} Lebenslauf(e) erstellt",
+      "offerFailed": "Fehlgeschlagen für Angebot {index} - {credits} Kredit erstattet",
+      "generatingOffer": "Erstellung ({current}/{total})"
     },
     "errors": {
-      "noJobOfferDetected": "Keine Stellenanzeige erkannt: {source}"
+      "noJobOfferDetected": "Keine Stellenanzeige erkannt: {source}",
+      "loginRequired": "Diese Seite erfordert eine Anmeldung. Laden Sie das Stellenangebot als PDF von der Website herunter und laden Sie es hoch."
     }
   }
 }

@@ -7,7 +7,8 @@ import Modal from "./ui/Modal";
 import FormRow from "./ui/FormRow";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
-import ChangesPanel from "./ChangesPanel";
+import VersionSelector from "./VersionSelector";
+import ChangeHighlight, { ReviewProgressBar } from "./ChangeHighlight";
 
 export default function Summary(props){
   const { t } = useLanguage();
@@ -47,23 +48,27 @@ export default function Summary(props){
               <div className="flex gap-2">
                 <button
                   onClick={()=>setOpen(true)}
-                  className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"
+                  className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-colors duration-200"
                 >
                   <img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " />
                 </button>
                 {!isEmpty && (
                   <button
                     onClick={clear}
-                    className="no-print text-xs rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-red-500/40 transition-all duration-200"
+                    className="no-print text-xs rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-red-500/40 transition-colors duration-200"
                   >
                     <img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " />
                   </button>
                 )}
               </div>
             )}
-            {/* Bouton Historique des modifications */}
+            {/* Barre de progression review */}
             <div className="no-print">
-              <ChangesPanel />
+              <ReviewProgressBar />
+            </div>
+            {/* Sélecteur de version */}
+            <div className="no-print">
+              <VersionSelector />
             </div>
           </div>
         </div>
@@ -78,7 +83,13 @@ export default function Summary(props){
           className="text-sm text-justify leading-relaxed opacity-95 whitespace-pre-line"
           suppressHydrationWarning
         >
-          {summary.description}
+          <ChangeHighlight
+            section="summary"
+            field="description"
+            className="text-sm text-justify leading-relaxed opacity-95 whitespace-pre-line"
+          >
+            {summary.description}
+          </ChangeHighlight>
         </p>
       )}
 
@@ -86,7 +97,7 @@ export default function Summary(props){
         <div className="space-y-2">
           <FormRow label={t("cvSections.summary")}>
             <textarea
-              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none leading-relaxed"
+              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden leading-relaxed"
               rows={8}
               value={text}
               onChange={e=>setText(e.target.value)}

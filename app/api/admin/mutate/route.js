@@ -21,7 +21,9 @@ export async function POST(req){
     var body=await req.json(); var op=body.op, fieldPath=body.path, value=body.value, index=body.index, to=body.to; if(!fieldPath||!op) return NextResponse.json({ error:"Paramètres manquants"},{ status:400 });
     const userId = session.user.id;
     const files = await listUserCvFiles(userId);
-    const currentCookie = (cookies().get("cvFile")||{}).value;
+    // Next.js 16: cookies() est maintenant async
+    const cookieStore = await cookies();
+    const currentCookie = (cookieStore.get("cvFile")||{}).value;
     var selected = files.includes(currentCookie) ? currentCookie : (files[0] || null);
     if (!selected) return NextResponse.json({ error: "Aucun CV disponible" }, { status: 404 });
     var cv=JSON.parse(await readUserCvFile(userId, selected));
@@ -43,19 +45,14 @@ export async function POST(req){
       console.warn(`[mutate] CV validation errors for ${userId}/${selected}:`, errors);
     }
 
-    const isoNow = new Date().toISOString();
-    // Préserver les métadonnées importantes du CV original
-    const originalMeta = cv.meta || {};
-    const meta = {
-      ...originalMeta, // Préserve improved_from, changes_made, etc.
-      updated_at: isoNow,
-    };
-    if (!meta.created_at) meta.created_at = isoNow;
-    if (!meta.generator) meta.generator = selected === "main.json" ? "raw" : "manual";
-    if (!meta.source){
-      meta.source = selected === "main.json" ? "raw" : "manual";
-    }
-    sanitized.meta = meta;
+    // Métadonnées stockées en DB (CvFile.*), pas dans le JSON
+    // Supprimer meta du JSON si présent (migration progressive)
+    if (sanitized.meta) delete sanitized.meta;
+    if (sanitized.order_hint) delete sanitized.order_hint;
+    if (sanitized.section_titles) delete sanitized.section_titles;
+    if (sanitized.generated_at) delete sanitized.generated_at;
+    if (sanitized.language) delete sanitized.language;
+
     await writeUserCvFile(userId, selected, JSON.stringify(sanitized,null,2));
 
     // Re-détecter la langue si summary.description a été modifié (synchrone pour refresh immédiat)

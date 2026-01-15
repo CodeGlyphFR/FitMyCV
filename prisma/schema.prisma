@@ -29,9 +29,11 @@ model User {
   creditBalance          CreditBalance?
   creditTransactions     CreditTransaction[]
   cvs                    CvFile[]
+  cvGenerationTasks      CvGenerationTask[]
   featureUsage           FeatureUsage[]
   featureCounters        FeatureUsageCounter[]
   feedbacks              Feedback[]
+  jobOffers              JobOffer[]
   linkHistory            LinkHistory[]
   openaiCalls            OpenAICall[]
   openaiUsage            OpenAIUsage[]
@@ -39,6 +41,7 @@ model User {
   referrals              Referral[]            @relation("Referrer")
   subscription           Subscription?
   telemetryEvents        TelemetryEvent[]
+  exportTemplates        ExportTemplate[]
 }
 
 model Account {
@@ -74,14 +77,17 @@ model CvFile {
   id                     String             @id @default(cuid())
   userId                 String
   filename               String
+  content                Json?              // Contenu CV JSON (migré depuis filesystem)
+  contentVersion         Int                @default(1) // Numéro de version courante
   sourceType             String?
   sourceValue            String?
-  extractedJobOffer      String?
+  jobOfferId             String?            // Relation vers JobOffer (extraction structurée)
   createdBy              String?
   originalCreatedBy      String?
-  analysisLevel          String?
   isTranslated           Boolean            @default(false)
+  language               String?            // Langue du CV (fr, en, es, de) - détectée à l'import
   matchScore             Int?
+  scoreBefore            Int?               // Score avant optimisation IA (conservé pour affichage)
   matchScoreUpdatedAt    DateTime?
   matchScoreStatus       String?            @default("idle")
   scoreBreakdown         String?
@@ -96,12 +102,64 @@ model CvFile {
   blocked                Boolean            @default(false)
   blockedAt              DateTime?
   blockedReason          String?
+  // Review state pour modifications IA
+  pendingChanges         Json?              // Array des changements avec statut (pending/accepted/rejected)
+  pendingSourceVersion   Int?               // Version à comparer pour les diffs
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
   user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   creditTransaction      CreditTransaction? @relation(fields: [creditTransactionId], references: [id])
+  jobOffer               JobOffer?          @relation(fields: [jobOfferId], references: [id], onDelete: SetNull)
+  versions               CvVersion[]        // Historique des versions (optimisation IA)
 
   @@unique([userId, filename])
+  @@index([jobOfferId])
+}
+
+model CvVersion {
+  id         String   @id @default(cuid())
+  cvFileId   String
+  version    Int      // Numéro de version (1, 2, 3...)
+  content    Json     // Contenu JSON complet
+  changelog  String?  // "Optimisation IA", "Restauration depuis v2"
+  changeType String?  // 'optimization' | 'adaptation' | 'restore'
+  sourceFile String?  // Pour adaptation: CV source de référence
+  createdAt  DateTime @default(now())
+
+  // Score data (copié depuis CvFile au moment de la création de version)
+  matchScore             Int?
+  scoreBreakdown         String?  @db.Text
+  improvementSuggestions String?  @db.Text
+  missingSkills          String?  @db.Text
+  matchingSkills         String?  @db.Text
+
+  cvFile CvFile @relation(fields: [cvFileId], references: [id], onDelete: Cascade)
+
+  @@unique([cvFileId, version])
+  @@index([cvFileId, createdAt(sort: Desc)])
+}
+
+model JobOffer {
+  id              String   @id @default(cuid())
+  userId          String
+  sourceType      String   // 'url' | 'pdf'
+  sourceValue     String   // URL ou nom fichier PDF
+  contentHash     String?  // Hash SHA256 du contenu PDF (null pour URLs)
+  content         Json     // Extraction structurée JSON
+  extractedAt     DateTime @default(now())
+  extractionModel String   // Modèle IA utilisé pour l'extraction
+  tokensUsed      Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cvFiles CvFile[] // CVs générés à partir de cette offre
+
+  @@unique([userId, sourceValue])
+  @@index([userId])
+  @@index([sourceType])
+  @@index([userId, contentHash])
 }
 
 model BackgroundTask {
@@ -306,15 +364,20 @@ model OpenAIUsage {
 }
 
 model OpenAIPricing {
-  id                   String   @id @default(cuid())
-  modelName            String   @unique
-  inputPricePerMToken  Float
-  outputPricePerMToken Float
-  cachePricePerMToken  Float    @default(0)
-  description          String?
-  isActive             Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                          String   @id @default(cuid())
+  modelName                   String   @unique
+  // Standard tier pricing (per million tokens)
+  inputPricePerMToken         Float
+  outputPricePerMToken        Float
+  cachePricePerMToken         Float    @default(0)
+  // Priority tier pricing (per million tokens) - ~70% more expensive
+  inputPricePerMTokenPriority  Float?
+  outputPricePerMTokenPriority Float?
+  cachePricePerMTokenPriority  Float?
+  description                 String?
+  isActive                    Boolean  @default(true)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
 
   @@index([modelName])
   @@index([isActive])
@@ -385,7 +448,6 @@ model SubscriptionPlanFeatureLimit {
   featureName           String
   isEnabled             Boolean          @default(true)
   usageLimit            Int              @default(-1)
-  allowedAnalysisLevels String?
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
   plan                  SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
@@ -437,16 +499,17 @@ model Subscription {
 }
 
 model CreditBalance {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-  balance        Int      @default(0)
-  totalPurchased Int      @default(0)
-  totalUsed      Int      @default(0)
-  totalRefunded  Int      @default(0)
-  totalGifted    Int      @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                       String   @id @default(cuid())
+  userId                   String   @unique
+  balance                  Int      @default(0)
+  totalPurchased           Int      @default(0)
+  totalUsed                Int      @default(0)
+  totalRefunded            Int      @default(0)
+  totalGifted              Int      @default(0)
+  balanceAfterLastPurchase Int      @default(0)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -551,20 +614,42 @@ model PromoCode {
   @@index([validUntil])
 }
 
-model EmailTemplate {
-  id          String     @id @default(cuid())
-  name        String     @unique
-  subject     String
-  designJson  String
-  htmlContent String
-  variables   String
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  emailLogs   EmailLog[]
+model EmailTrigger {
+  id          String          @id @default(cuid())
+  name        String          @unique  // email_verification, password_reset, etc.
+  label       String                   // Nom affichable
+  description String?
+  variables   String                   // JSON array des variables disponibles
+  category    String          @default("general")
+  icon        String?
+  isSystem    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  templates   EmailTemplate[]
 
   @@index([name])
+  @@index([category])
+}
+
+model EmailTemplate {
+  id          String        @id @default(cuid())
+  name        String        // Nom du template (pas unique - plusieurs par trigger)
+  triggerId   String?
+  trigger     EmailTrigger? @relation(fields: [triggerId], references: [id], onDelete: SetNull)
+  subject     String
+  designJson  String        // JSON Maily/TipTap
+  htmlContent String
+  variables   String
+  isActive    Boolean       @default(false)
+  isDefault   Boolean       @default(false)  // Template par defaut global pour nouveaux templates
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  emailLogs   EmailLog[]
+
+  @@index([triggerId])
   @@index([isActive])
+  @@index([isDefault])
+  @@index([name])
 }
 
 model EmailLog {
@@ -576,7 +661,8 @@ model EmailLog {
   subject         String
   status          String
   error           String?
-  resendId        String?
+  provider        String         @default("resend") // "smtp" ou "resend"
+  providerId      String?        // ID du message (SMTP messageId ou Resend ID)
   isTestEmail     Boolean        @default(false)
   createdAt       DateTime       @default(now())
   template        EmailTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
@@ -587,4 +673,109 @@ model EmailLog {
   @@index([recipientUserId])
   @@index([status])
   @@index([createdAt])
+  @@index([provider])
+}
+
+// ============================================
+// CV Generation Pipeline v2
+// ============================================
+
+model CvGenerationTask {
+  id              String              @id @default(cuid())
+  userId          String
+  sourceCvFileId  String              // CV source utilisé pour la génération
+  mode            String              @default("adapt") // 'adapt' | 'optimize'
+  status          String              @default("pending") // pending | running | completed | failed
+  totalOffers     Int                 @default(1)
+  completedOffers Int                 @default(0)
+  creditsDebited  Int                 @default(0)
+  creditsRefunded Int                 @default(0)
+  error           String?
+  createdAt       DateTime            @default(now())
+  startedAt       DateTime?
+  completedAt     DateTime?
+  updatedAt       DateTime            @updatedAt
+
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offers          CvGenerationOffer[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId, status])
+}
+
+model CvGenerationOffer {
+  id                  String                @id @default(cuid())
+  taskId              String
+  sourceUrl           String?               // URL source de l'offre (pour extraction async)
+  jobOfferId          String?               // Offre d'emploi cible (null avant extraction)
+  offerIndex          Int                   @default(0) // Position dans le batch (0, 1, 2...)
+  status              String                @default("pending") // pending | extracting | running | completed | failed
+  classificationResult Json?                // Résultat de la phase classification
+  batchResults        Json?                 // Résultats des batches (experiences, projects, skills, etc.)
+  generatedCvFileId   String?               // CV généré (null si échec)
+  generatedCvFileName String?               // Nom du fichier CV généré
+  retryCount          Int                   @default(0)
+  error               String?
+  creditsRefunded     Boolean               @default(false)
+  createdAt           DateTime              @default(now())
+  startedAt           DateTime?
+  completedAt         DateTime?
+  updatedAt           DateTime              @updatedAt
+
+  task                CvGenerationTask      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  subtasks            CvGenerationSubtask[]
+
+  @@index([taskId])
+  @@index([status])
+  @@index([taskId, offerIndex])
+}
+
+model CvGenerationSubtask {
+  id               String            @id @default(cuid())
+  offerId          String
+  type             String            // classify | batch_experience | batch_project | batch_extras | batch_skills | batch_summary | recompose
+  itemIndex        Int?              // Pour les batches: index de l'item (exp 0, exp 1, proj 0...)
+  status           String            @default("pending") // pending | running | completed | failed
+  input            Json?             // Données d'entrée pour debug
+  output           Json?             // Résultat du traitement
+  modifications    Json?             // Array des modifications {field, before, after, reason, action}
+  modelUsed        String?           // Modèle IA effectivement utilisé
+  promptTokens     Int               @default(0)
+  cachedTokens     Int               @default(0)  // Tokens en cache (prompt caching)
+  completionTokens Int               @default(0)
+  estimatedCost    Float             @default(0)  // Coût estimé en USD
+  durationMs       Int?              // Durée d'exécution en ms
+  retryCount       Int               @default(0)
+  error            String?
+  createdAt        DateTime          @default(now())
+  startedAt        DateTime?
+  completedAt      DateTime?
+  updatedAt        DateTime          @updatedAt
+
+  offer            CvGenerationOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@index([offerId])
+  @@index([type])
+  @@index([status])
+  @@index([offerId, type])
+}
+
+// ============================================
+// Export Templates (PDF export configurations)
+// ============================================
+
+model ExportTemplate {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  selections  Json     // Configuration macro des sections (enabled, options, subsections)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([userId])
 }

@@ -29,11 +29,28 @@ export default function AdminProvider(props){
     }
   }, []);
 
-  // Check if user has any CVs
+  // Check if user has any CVs (avec debounce pour éviter les 429)
   React.useEffect(() => {
     if (!session?.user?.id) return;
 
+    let debounceTimer = null;
+    let lastCheckTime = 0;
+    const DEBOUNCE_MS = 500;
+
     async function checkCvs() {
+      // Debounce: ignorer si un check récent a eu lieu
+      const now = Date.now();
+      if (now - lastCheckTime < DEBOUNCE_MS) {
+        if (!debounceTimer) {
+          debounceTimer = setTimeout(() => {
+            debounceTimer = null;
+            checkCvs();
+          }, DEBOUNCE_MS);
+        }
+        return;
+      }
+      lastCheckTime = now;
+
       try {
         const res = await fetch("/api/cvs", { cache: "no-store" });
         if (res.ok) {
@@ -44,6 +61,7 @@ export default function AdminProvider(props){
             setEditingState(false);
           }
         }
+        // Ignorer silencieusement les erreurs 429 (rate limit)
       } catch (error) {
         console.error("Failed to check CVs:", error);
       }
@@ -51,10 +69,13 @@ export default function AdminProvider(props){
 
     checkCvs();
 
-    // Listen for CV list changes
+    // Listen for CV list changes (debounced)
     const handleCvListChanged = () => checkCvs();
     window.addEventListener("cv:list:changed", handleCvListChanged);
-    return () => window.removeEventListener("cv:list:changed", handleCvListChanged);
+    return () => {
+      window.removeEventListener("cv:list:changed", handleCvListChanged);
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
   }, [session?.user?.id]);
 
   React.useEffect(function(){
@@ -144,7 +165,7 @@ export default function AdminProvider(props){
       {session?.user?.role === 'ADMIN' && pathname !== "/admin/analytics" ? (
         <button
           onClick={() => window.location.href = '/admin/analytics'}
-          className="fixed bottom-[4.5rem] right-6 z-50 no-print w-10 h-10 rounded-full shadow-2xl hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-110 border-2 pointer-events-auto backdrop-blur-xl bg-white/20 border-white/30"
+          className="fixed bottom-[4.5rem] right-6 z-50 no-print w-10 h-10 rounded-full shadow-2xl hover:shadow-sm-xl flex items-center justify-center transition-all duration-200 hover:scale-110 border-2 pointer-events-auto backdrop-blur-xl bg-white/20 border-white/30"
           title="Analytics Dashboard"
           aria-label="Analytics Dashboard"
           style={{
@@ -171,7 +192,7 @@ export default function AdminProvider(props){
           className={`
             fixed bottom-6 right-6 z-50 no-print
             w-10 h-10 rounded-full
-            shadow-2xl hover:shadow-xl
+            shadow-2xl hover:shadow-sm-xl
             flex items-center justify-center
             transition-all duration-200
             hover:scale-110

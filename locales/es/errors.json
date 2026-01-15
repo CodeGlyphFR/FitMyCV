@@ -50,7 +50,9 @@
         "debitError": "Error al debitar créditos",
         "sourceError": "Error al obtener la fuente del CV",
         "metadataError": "Error al obtener los metadatos del CV",
-        "improveError": "Error al mejorar el CV"
+        "improveError": "Error al mejorar el CV",
+        "invalidVersion": "Número de versión inválido",
+        "versionNotFound": "Versión no encontrada"
       },
       "background": {
         "noSourceProvided": "Añada al menos un enlace o archivo",
@@ -100,6 +102,7 @@
         "pdfAnalysisFailed": "No se pudo analizar el PDF de la oferta de empleo",
         "cvContentMissing": "Falta el contenido del CV de referencia",
         "noAiResponse": "Sin respuesta de la IA",
+        "responseTruncated": "La respuesta de la IA fue truncada (demasiado larga). Por favor, inténtelo de nuevo.",
         "invalidResponseFormat": "Formato de respuesta inválido",
         "cvAndJobRequired": "El contenido del CV y de la oferta de empleo son obligatorios",
         "jobTitleValidationFailed": "No se pudo validar el título del puesto",
@@ -107,17 +110,26 @@
         "noGptResponse": "Sin respuesta de GPT",
         "invalidJsonResponse": "La respuesta de GPT no es un JSON válido",
         "incompleteCv": "El CV generado está incompleto (falta nombre o título)",
-        "noTextExtracted": "El PDF no contiene texto extraíble",
+        "pdfTooManyPages": "El PDF contiene {pageCount} páginas. Máximo permitido: {maxPages} páginas.",
+        "pdfConversionFailed": "No se pudo convertir el PDF a imágenes.",
+        "pdfNoPages": "El PDF no contiene páginas.",
         "gptExtractionFailed": "ChatGPT no pudo extraer la información del CV",
         "openaiKeyMissing": "Falta la clave API de OpenAI",
         "openaiQuotaExceeded": "Cuota de OpenAI excedida. Verifique su facturación.",
         "invalidCvFormat": "Formato de CV inválido",
-        "extractedJobOfferMissing": "Falta la oferta de empleo extraída - el CV debe generarse con una oferta extraída",
+        "jobOfferMissing": "Falta la oferta de empleo - el CV debe generarse con una oferta de empleo asociada",
         "emptyOpenaiResponse": "Respuesta vacía de OpenAI",
         "noTranslationResponse": "No se recibió respuesta de traducción",
         "noJobOfferProvided": "No se proporcionó ninguna oferta de empleo (enlace o archivo requerido)",
         "gptGenerationFailed": "GPT no pudo generar la plantilla de CV",
         "promptNotFound": "Archivo de prompt no encontrado"
+      },
+      "generateV2": {
+        "noOffersProvided": "No se proporcionaron ofertas de empleo",
+        "maxOffersExceeded": "Número máximo de ofertas excedido ({max} máx, {provided} proporcionado(s))",
+        "invalidOfferIds": "Uno o más IDs de ofertas son inválidos",
+        "invalidMode": "Modo de generación inválido (esperado: adapt o rebuild)",
+        "jobOfferNotFound": "{count} oferta(s) de empleo no encontrada(s) o no autorizada(s)"
       }
     }
   }

@@ -74,8 +74,8 @@ export async function GET(request) {
         ORDER BY prix_mensuel ASC
       `;
     } catch (dbError) {
-      console.error('[plan-costs] Error querying view:', dbError);
-      // Return empty data if view doesn't exist
+      // La vue v_cout_api_par_plan est optionnelle - retourne des données vides si elle n'existe pas
+      // Pour créer la vue, voir docs/database-views.md
       viewData = [];
     }
 

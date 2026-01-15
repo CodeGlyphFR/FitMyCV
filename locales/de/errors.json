@@ -50,7 +50,9 @@
         "debitError": "Fehler beim Abbuchen von Credits",
         "sourceError": "Fehler beim Abrufen der Lebenslauf-Quelle",
         "metadataError": "Fehler beim Abrufen der Lebenslauf-Metadaten",
-        "improveError": "Fehler bei der Verbesserung des Lebenslaufs"
+        "improveError": "Fehler bei der Verbesserung des Lebenslaufs",
+        "invalidVersion": "Ungültige Versionsnummer",
+        "versionNotFound": "Version nicht gefunden"
       },
       "background": {
         "noSourceProvided": "Fügen Sie mindestens einen Link oder eine Datei hinzu",
@@ -100,6 +102,7 @@
         "pdfAnalysisFailed": "PDF des Stellenangebots konnte nicht analysiert werden",
         "cvContentMissing": "Referenz-Lebenslauf fehlt",
         "noAiResponse": "Keine Antwort von der KI",
+        "responseTruncated": "Die KI-Antwort wurde abgeschnitten (zu lang). Bitte versuchen Sie es erneut.",
         "invalidResponseFormat": "Ungültiges Antwortformat",
         "cvAndJobRequired": "Lebenslauf und Stellenangebot sind erforderlich",
         "jobTitleValidationFailed": "Stellenbezeichnung konnte nicht validiert werden",
@@ -107,17 +110,26 @@
         "noGptResponse": "Keine Antwort von GPT",
         "invalidJsonResponse": "GPT-Antwort ist kein gültiges JSON",
         "incompleteCv": "Der generierte Lebenslauf ist unvollständig (Name oder Titel fehlt)",
-        "noTextExtracted": "Das PDF enthält keinen extrahierbaren Text",
+        "pdfTooManyPages": "Das PDF enthält {pageCount} Seiten. Maximal erlaubt: {maxPages} Seiten.",
+        "pdfConversionFailed": "Das PDF konnte nicht in Bilder konvertiert werden.",
+        "pdfNoPages": "Das PDF enthält keine Seiten.",
         "gptExtractionFailed": "ChatGPT konnte die Lebenslauf-Informationen nicht extrahieren",
         "openaiKeyMissing": "OpenAI API-Schlüssel fehlt",
         "openaiQuotaExceeded": "OpenAI-Kontingent überschritten. Überprüfen Sie Ihre Abrechnung.",
         "invalidCvFormat": "Ungültiges Lebenslauf-Format",
-        "extractedJobOfferMissing": "Extrahiertes Stellenangebot fehlt - Lebenslauf muss mit extrahiertem Angebot generiert werden",
+        "jobOfferMissing": "Stellenangebot fehlt - Lebenslauf muss mit einem zugehörigen Stellenangebot erstellt werden",
         "emptyOpenaiResponse": "Leere Antwort von OpenAI",
         "noTranslationResponse": "Keine Übersetzungsantwort erhalten",
         "noJobOfferProvided": "Kein Stellenangebot bereitgestellt (Link oder Datei erforderlich)",
         "gptGenerationFailed": "GPT konnte die Lebenslauf-Vorlage nicht generieren",
         "promptNotFound": "Prompt-Datei nicht gefunden"
+      },
+      "generateV2": {
+        "noOffersProvided": "Keine Stellenangebote angegeben",
+        "maxOffersExceeded": "Maximale Anzahl an Angeboten überschritten ({max} max, {provided} angegeben)",
+        "invalidOfferIds": "Eine oder mehrere Angebots-IDs sind ungültig",
+        "invalidMode": "Ungültiger Generierungsmodus (erwartet: adapt oder rebuild)",
+        "jobOfferNotFound": "{count} Stellenangebot(e) nicht gefunden oder nicht autorisiert"
       }
     }
   }

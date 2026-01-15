@@ -73,17 +73,53 @@ export default function AnalyticsDashboard() {
     };
   }, [activeTab]);
 
-  // Auto-refresh every 10 seconds (skip for Settings tab)
+  // Auto-refresh every 10 seconds (skip for Settings and Emails tabs)
+  // Utilise Page Visibility API pour stopper le polling quand l'onglet est inactif
   useEffect(() => {
-    // Don't auto-refresh the Settings tab
-    if (activeTab === 'settings') return;
+    // Don't auto-refresh the Settings or Emails tabs (editor loses focus)
+    if (activeTab === 'settings' || activeTab === 'emails') return;
 
-    const interval = setInterval(() => {
-      setRefreshKey(prev => prev + 1);
-      setIsInitialLoad(false); // Disable animations for auto-refresh only
-    }, 10000);
+    let interval = null;
 
-    return () => clearInterval(interval);
+    const startPolling = () => {
+      // Ne pas démarrer si déjà en cours
+      if (interval) return;
+      interval = setInterval(() => {
+        setRefreshKey(prev => prev + 1);
+        setIsInitialLoad(false); // Disable animations for auto-refresh only
+      }, 10000);
+    };
+
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Refresh immédiat au retour sur l'onglet + redémarrer le polling
+        setRefreshKey(prev => prev + 1);
+        setIsInitialLoad(false);
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    };
+
+    // Démarrer le polling seulement si l'onglet est visible
+    if (document.visibilityState === 'visible') {
+      startPolling();
+    }
+
+    // Écouter les changements de visibilité
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [activeTab]);
 
   return (

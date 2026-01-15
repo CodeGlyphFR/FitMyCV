@@ -51,4 +51,7 @@ CaddyFile.txt
 env.txt
 prisma/get_job_offers.sh
 rebuild-prod.sh
+
+# pdf-parse test file workaround
+test/data/
 deploy.sh

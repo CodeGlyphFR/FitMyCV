@@ -50,7 +50,9 @@
         "debitError": "Erreur lors du débit des crédits",
         "sourceError": "Erreur lors de la récupération de la source du CV",
         "metadataError": "Erreur lors de la récupération des métadonnées du CV",
-        "improveError": "Erreur lors de l'amélioration du CV"
+        "improveError": "Erreur lors de l'amélioration du CV",
+        "invalidVersion": "Numéro de version invalide",
+        "versionNotFound": "Version introuvable"
       },
       "background": {
         "noSourceProvided": "Ajoutez au moins un lien ou un fichier",
@@ -100,6 +102,7 @@
         "pdfAnalysisFailed": "Impossible d'analyser le PDF de l'offre d'emploi",
         "cvContentMissing": "Contenu du CV de référence manquant",
         "noAiResponse": "Pas de réponse de l'IA",
+        "responseTruncated": "La réponse de l'IA a été tronquée (trop longue). Veuillez réessayer.",
         "invalidResponseFormat": "Format de réponse invalide",
         "cvAndJobRequired": "Le contenu du CV et de l'offre d'emploi sont requis",
         "jobTitleValidationFailed": "Impossible de valider le titre de poste",
@@ -107,17 +110,26 @@
         "noGptResponse": "Aucune réponse de GPT",
         "invalidJsonResponse": "La réponse de GPT n'est pas un JSON valide",
         "incompleteCv": "Le CV généré est incomplet (nom ou titre manquant)",
-        "noTextExtracted": "Le PDF ne contient pas de texte extractible",
+        "pdfTooManyPages": "Le PDF contient {pageCount} pages. Maximum autorisé : {maxPages} pages.",
+        "pdfConversionFailed": "Impossible de convertir le PDF en images.",
+        "pdfNoPages": "Le PDF ne contient aucune page.",
         "gptExtractionFailed": "ChatGPT n'a pas pu extraire les informations du CV",
         "openaiKeyMissing": "La clé API OpenAI est manquante",
         "openaiQuotaExceeded": "Quota OpenAI dépassé. Vérifiez votre facturation.",
         "invalidCvFormat": "Format de CV invalide",
-        "extractedJobOfferMissing": "Offre d'emploi extraite manquante - le CV doit être généré avec une offre extraite",
+        "jobOfferMissing": "Offre d'emploi manquante - le CV doit être généré avec une offre d'emploi associée",
         "emptyOpenaiResponse": "Réponse vide d'OpenAI",
         "noTranslationResponse": "Aucune réponse de traduction reçue",
         "noJobOfferProvided": "Aucune offre d'emploi fournie (lien ou fichier requis)",
         "gptGenerationFailed": "GPT n'a pas su générer le CV modèle",
         "promptNotFound": "Fichier prompt introuvable"
+      },
+      "generateV2": {
+        "noOffersProvided": "Aucune offre d'emploi fournie",
+        "maxOffersExceeded": "Nombre maximum d'offres dépassé ({max} max, {provided} fourni(s))",
+        "invalidOfferIds": "Un ou plusieurs IDs d'offres sont invalides",
+        "invalidMode": "Mode de génération invalide (attendu: adapt ou rebuild)",
+        "jobOfferNotFound": "{count} offre(s) d'emploi introuvable(s) ou non autorisée(s)"
       }
     }
   }

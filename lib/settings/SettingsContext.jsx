@@ -63,14 +63,7 @@ export function SettingsProvider({ initialSettings, children }) {
     }
   }, [fetchSettings]);
 
-  // Polling toutes les 30 secondes pour les mises à jour
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchSettings();
-    }, 30000); // 30 secondes
-
-    return () => clearInterval(interval);
-  }, [fetchSettings]);
+  // Plus de polling - les settings sont maintenant mis à jour via SSE (event-driven)
 
   // Écouter les événements de mise à jour des settings
   useEffect(() => {

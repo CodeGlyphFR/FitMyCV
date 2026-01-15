@@ -245,105 +245,64 @@ export default function OnboardingProvider({ children }) {
   }, [isAuthenticated, session?.user?.id, fetchOnboardingState]);
 
   /**
-   * SSE: Synchronisation temps réel multi-device
-   * Écoute les événements onboarding:updated et onboarding:reset
+   * Synchronisation temps réel multi-device via SSE principal
+   * Écoute les événements window 'onboarding:updated' et 'onboarding:reset'
+   * dispatchés par useRealtimeSync depuis /api/events/stream
    */
   useEffect(() => {
     if (!isAuthenticated || !session?.user?.id) return;
 
-    let eventSource = null;
-    let reconnectTimeout = null;
-    let reconnectAttempts = 0;
-    const MAX_RECONNECT_ATTEMPTS = 5;
-    const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000]; // Exponential backoff
+    const handleOnboardingUpdate = (event) => {
+      const data = event.detail;
+      onboardingLogger.log('[SSE] onboarding:updated reçu:', data);
 
-    const connect = () => {
-      try {
-        eventSource = new EventSource('/api/user/onboarding/subscribe');
+      // Protection anti-régression multi-device :
+      // N'accepter que les updates avec un step >= au step local actuel
+      const localStep = stateRef.current.currentStep || 0;
+      const serverStep = data.currentStep ?? localStep;
 
-        eventSource.addEventListener('connected', (event) => {
-          onboardingLogger.log('[SSE] Connexion établie:', JSON.parse(event.data));
-          reconnectAttempts = 0; // Reset counter on success
-        });
+      if (serverStep < localStep) {
+        onboardingLogger.log(
+          `[SSE] Ignoring update with inferior step: server=${serverStep}, local=${localStep}`
+        );
+        return;
+      }
 
-        eventSource.addEventListener('onboarding:updated', (event) => {
-          const data = JSON.parse(event.data);
-          onboardingLogger.log('[SSE] onboarding:updated reçu:', data);
-
-          // Protection anti-régression multi-device :
-          // N'accepter que les updates avec un step >= au step local actuel
-          // Cela évite qu'un client désynchronisé propage une régression via SSE
-          const localStep = stateRef.current.currentStep || 0;
-          const serverStep = data.currentStep ?? localStep;
-
-          if (serverStep < localStep) {
-            onboardingLogger.log(
-              `[SSE] Ignoring update with inferior step: server=${serverStep}, local=${localStep}`
-            );
-            return; // Ignorer cette update (notre état local est plus avancé)
-          }
-
-          // Mise à jour de l'état depuis autre device
-          if (data.onboardingState) {
-            setOnboardingState(data.onboardingState);
-            setCompletedSteps(data.onboardingState.completedSteps || []);
-          }
-          if (data.currentStep !== undefined) {
-            setCurrentStep(data.currentStep);
-          }
-          if (data.hasCompleted !== undefined) {
-            setHasCompleted(data.hasCompleted);
-          }
-        });
-
-        eventSource.addEventListener('onboarding:reset', (event) => {
-          const data = JSON.parse(event.data);
-          onboardingLogger.log('[SSE] onboarding:reset reçu, reset complet UI');
-
-          // Reset complet de l'UI
-          setOnboardingState(data.onboardingState);
-          setCompletedSteps(data.onboardingState.completedSteps || []);
-          setCurrentStep(0);
-          setHasCompleted(false);
-          setHasSkipped(false);
-          setIsActive(false);
-          setShowWelcomeModal(false);
-        });
-
-        eventSource.onerror = (error) => {
-          onboardingLogger.error('[SSE] Erreur connexion:', error);
-          eventSource.close();
-
-          // Reconnect avec exponential backoff
-          if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-            const delay = RECONNECT_DELAYS[reconnectAttempts] || 16000;
-            onboardingLogger.log(`[SSE] Reconnexion dans ${delay}ms (tentative ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
-
-            reconnectTimeout = setTimeout(() => {
-              reconnectAttempts++;
-              connect();
-            }, delay);
-          } else {
-            onboardingLogger.error('[SSE] Max reconnect attempts atteint, abandon');
-          }
-        };
-
-      } catch (error) {
-        onboardingLogger.error('[SSE] Erreur création EventSource:', error);
+      // Mise à jour de l'état depuis autre device
+      if (data.onboardingState) {
+        setOnboardingState(data.onboardingState);
+        setCompletedSteps(data.onboardingState.completedSteps || []);
+      }
+      if (data.currentStep !== undefined) {
+        setCurrentStep(data.currentStep);
+      }
+      if (data.hasCompleted !== undefined) {
+        setHasCompleted(data.hasCompleted);
       }
     };
 
-    // Établir connexion SSE
-    connect();
+    const handleOnboardingReset = (event) => {
+      const data = event.detail;
+      onboardingLogger.log('[SSE] onboarding:reset reçu, reset complet UI');
 
-    // Cleanup
+      // Reset complet de l'UI
+      if (data.onboardingState) {
+        setOnboardingState(data.onboardingState);
+        setCompletedSteps(data.onboardingState.completedSteps || []);
+      }
+      setCurrentStep(0);
+      setHasCompleted(false);
+      setHasSkipped(false);
+      setIsActive(false);
+      setShowWelcomeModal(false);
+    };
+
+    window.addEventListener('onboarding:updated', handleOnboardingUpdate);
+    window.addEventListener('onboarding:reset', handleOnboardingReset);
+
     return () => {
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
-      }
-      if (eventSource) {
-        eventSource.close();
-      }
+      window.removeEventListener('onboarding:updated', handleOnboardingUpdate);
+      window.removeEventListener('onboarding:reset', handleOnboardingReset);
     };
   }, [isAuthenticated, session?.user?.id]);
 

@@ -1,5 +1,8 @@
 {
   "jobTitleGenerator": {
+    "confirmTitle": "Confirmación",
+    "confirmMessage": "Esta función consumirá {credits} crédito(s). ¿Desea continuar?",
+    "confirmJobTitle": "Título del puesto: \"{jobTitle}\"",
     "notifications": {
       "scheduled": "Generando CV para '{jobTitle}'...",
       "invalidTitle": "El título '{jobTitle}' no parece ser un puesto válido",
@@ -37,14 +40,9 @@
     "files": "Ofertas de empleo PDF",
     "selection": "Selección:",
     "clearFiles": "Borrar archivos",
-    "analysisQuality": "Calidad del análisis",
-    "analysisHints": {
-      "rapid": "Análisis más rápido, para una vista general.",
-      "medium": "Equilibrio entre velocidad y calidad (recomendado).",
-      "deep": "Análisis completo para resultados optimizados."
-    },
     "cancel": "Cancelar",
     "validate": "Validar",
+    "submitting": "Enviando...",
     "upgradeTooltipLine1": "Actualiza al plan {planName}",
     "upgradeTooltipLine2": "para acceder a este nivel",
     "errors": {
@@ -66,6 +64,7 @@
     "analysisQuality": "Calidad del análisis",
     "cancel": "Cancelar",
     "import": "Importar",
+    "importing": "Importando...",
     "notifications": {
       "scheduled": "Importación de '{fileName}' programada",
       "error": "Error al programar la importación"
@@ -73,14 +72,17 @@
   },
   "exportModal": {
     "title": "Personalizar y Exportar a PDF",
+    "previewTitle": "Vista previa del PDF",
     "filename": "Nombre del archivo",
     "filenameHint": "El archivo se exportará con la extensión .pdf",
     "selectAll": "Seleccionar todo",
     "deselectAll": "Deseleccionar todo",
     "experienceColumn": "Experiencia",
-    "includeDeliverables": "Incluir entregables",
+    "includeDeliverables": "Incluir Resultados",
     "export": "Exportar",
     "exporting": "Exportando...",
+    "preview": "Vista previa",
+    "backToOptions": "Volver a opciones",
     "cancel": "Cancelar",
     "sectionsTitle": "Seleccionar secciones a incluir",
     "showOptions": "Mostrar opciones",
@@ -116,6 +118,33 @@
       "item": "elemento",
       "items": "elementos",
       "selected": "seleccionado"
+    },
+    "options": {
+      "hideProficiency": "Ocultar niveles",
+      "hideDescription": "Ocultar descripciones",
+      "hideTechnologies": "Ocultar tecnologías",
+      "hideDeliverables": "Ocultar resultados"
+    },
+    "templates": {
+      "label": "Plantilla",
+      "placeholder": "Aplicar plantilla...",
+      "loading": "Cargando...",
+      "noTemplates": "Sin plantillas",
+      "save": "Guardar",
+      "namePlaceholder": "Nombre de la plantilla",
+      "confirmDelete": "¿Eliminar esta plantilla?",
+      "confirmOverwrite": "Sobrescribir la plantilla",
+      "update": "Actualizar",
+      "createNew": "Crear nuevo",
+      "delete": "Eliminar",
+      "hint": "Guarda tus selecciones como plantilla reutilizable"
+    },
+    "order": {
+      "button": "Orden de secciones",
+      "title": "Orden de secciones",
+      "hint": "Mueve las secciones para personalizar el orden de visualización",
+      "reset": "Restablecer",
+      "close": "Cerrar"
     }
   },
   "newCvModal": {
@@ -173,13 +202,13 @@
     "inProgress": "Puesto actual",
     "projectInProgress": "Proyecto en curso",
     "responsibilities": "Responsabilidades",
-    "deliverables": "Entregables",
+    "deliverables": "Resultados",
     "skillsUsed": "Habilidades utilizadas",
     "technologies": "Tecnologías",
-    "hardSkills": "Habilidades técnicas",
+    "hardSkills": "Técnicas",
     "tools": "Herramientas",
     "methodologies": "Metodologías",
-    "softSkills": "Habilidades blandas",
+    "softSkills": "Blandas",
     "noTools": "Sin herramientas todavía.",
     "noMethodologies": "Sin metodologías todavía.",
     "noSoftSkills": "Sin habilidades blandas todavía.",
@@ -218,7 +247,10 @@
   },
   "sourceInfo": {
     "createdFromLink": "Creado desde enlace",
-    "createdFromPdf": "Creado desde PDF"
+    "createdFromPdf": "Creado desde PDF",
+    "jobOfferLink": "Oferta de empleo",
+    "sourceCv": "CV de origen",
+    "createdOn": "Creado el"
   },
   "translate": {
     "buttonTitle": "Traducir CV",
@@ -262,7 +294,12 @@
     "calculatingScore": "Calculando puntuación...",
     "showMore": "más",
     "showLess": "Mostrar menos",
-    "languageNote": "El análisis y las sugerencias se muestran en el idioma del CV, no en el idioma de la interfaz."
+    "languageNote": "El análisis y las sugerencias se muestran en el idioma del CV, no en el idioma de la interfaz.",
+    "noSelection": "Seleccione al menos una mejora",
+    "deselect": "Deseleccionar",
+    "cancel": "Cancelar",
+    "contextPlaceholder": "Añadir contexto (opcional)...",
+    "skillsAddedSuccess": "Competencias añadidas con éxito"
   },
   "changes": {
     "title": "Historial de cambios",
@@ -280,5 +317,73 @@
       "languages": "Idiomas",
       "projects": "Proyectos"
     }
+  },
+  "versions": {
+    "title": "Versiones",
+    "current": "Versión actual",
+    "currentShort": "Actual",
+    "latest": "Última versión",
+    "previous": "Versión anterior",
+    "selectVersion": "Seleccionar una versión",
+    "noVersions": "Sin versiones anteriores",
+    "noDescription": "Sin descripción",
+    "restore": "Restaurar",
+    "restoreTitle": "Restaurar esta versión (elimina la versión actual)"
+  },
+  "cvReview": {
+    "title": "Cambios IA",
+    "total": "total",
+    "modifications": "cambios",
+    "noModifications": "Sin cambios",
+    "noModificationsFound": "No se encontraron cambios",
+    "before": "Antes",
+    "after": "Después",
+    "reason": "Razón",
+    "reviewed": "revisados",
+    "acceptAllSection": "Aceptar todo",
+    "preservesPreviousDecisions": "(conserva sus decisiones anteriores)",
+    "sections": {
+      "summary": "Resumen",
+      "experiences": "Experiencias",
+      "projects": "Proyectos",
+      "skills": "Habilidades",
+      "extras": "Extras",
+      "languages": "Idiomas"
+    },
+    "actions": {
+      "added": "Añadido",
+      "removed": "Eliminado",
+      "modified": "Modificado",
+      "adjusted": "Ajustado",
+      "reordered": "Reordenado",
+      "highlighted": "Destacado",
+      "generated": "Generado"
+    }
+  },
+  "review": {
+    "title": "Revisar cambio",
+    "before": "Antes",
+    "after": "Después",
+    "empty": "(vacío)",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "acceptAll": "Aceptar todo",
+    "rejectAll": "Rechazar todo",
+    "accepted": "Aceptado",
+    "rejected": "Rechazado",
+    "pending": "cambio(s) pendiente(s)",
+    "pendingImportantSingular": "cambio importante pendiente",
+    "pendingImportantPlural": "cambios importantes pendientes",
+    "modifications": "cambio(s)",
+    "progress": "{reviewed}/{total} revisados",
+    "allReviewed": "Todos los cambios revisados",
+    "processing": "Procesando...",
+    "reason": "Razón",
+    "previousText": "Texto anterior",
+    "validateAndSave": "Validar y guardar",
+    "validating": "Validando...",
+    "pendingWarning": "{count} cambio(s) sin revisar. Se aceptarán por defecto.",
+    "validationSuccess": "CV guardado correctamente",
+    "validationError": "Error al guardar el CV"
   }
 }

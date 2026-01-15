@@ -40,7 +40,7 @@ function GlassCheckbox({ checked, onChange, label }) {
           e.preventDefault();
           onChange();
         }}
-        className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 cursor-pointer ${
+        className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center transition-all duration-200 cursor-pointer ${
           checked
             ? 'bg-emerald-500 border-emerald-400'
             : 'bg-transparent border-white/50 group-hover:border-white/70'
@@ -191,10 +191,12 @@ export default function FilterDropdown({
     }
 
     document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
     document.addEventListener("keydown", handleEscape);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
       document.removeEventListener("keydown", handleEscape);
     };
   }, [isOpen, onClose, buttonRef]);
@@ -226,29 +228,21 @@ export default function FilterDropdown({
   const showDateRangesSection = visibleDateRanges.length > 1; // More than just "all"
 
   const dropdownContent = (
-    <>
-      {/* Overlay transparent pour fermer au click */}
-      <div
-        className="fixed inset-0 z-[10001] bg-transparent"
-        onClick={onClose}
-      />
-
-      {/* Menu dropdown */}
-      <div
-        ref={dropdownRef}
-        style={{
-          position: "fixed",
-          top: rect.bottom + 8,
-          ...(isMobile
-            ? { right: 12 } // Mobile: aligné à droite avec marge
-            : { left: Math.max(8, rect.left - 100) } // Desktop: relatif au bouton
-          ),
-          zIndex: 10002,
-          minWidth: "200px",
-          maxWidth: "260px",
-        }}
-        className="rounded-xl border border-white/25 bg-white/10 backdrop-blur-xl shadow-2xl py-2"
-      >
+    <div
+      ref={dropdownRef}
+      style={{
+        position: "fixed",
+        top: rect.bottom + 8,
+        ...(isMobile
+          ? { right: 12 } // Mobile: aligné à droite avec marge
+          : { left: Math.max(8, rect.left - 100) } // Desktop: relatif au bouton
+        ),
+        zIndex: 10002,
+        minWidth: "200px",
+        maxWidth: "260px",
+      }}
+      className="rounded-xl border border-white/25 bg-white/10 backdrop-blur-xl shadow-2xl py-2"
+    >
         {/* Type de CV */}
         {showTypesSection && (
           <>
@@ -312,8 +306,7 @@ export default function FilterDropdown({
             </button>
           </>
         )}
-      </div>
-    </>
+    </div>
   );
 
   return createPortal(dropdownContent, document.body);

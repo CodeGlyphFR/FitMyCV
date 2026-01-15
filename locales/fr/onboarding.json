@@ -118,21 +118,6 @@
             "historyBlock": {
               "title": "Historique",
               "description": "Retrouvez toutes les offres déjà utilisées. Réutilisez-les pour générer de nouveaux CV sans les rechercher à nouveau."
-            },
-            "subtitle2": "3 niveaux d'analyse :",
-            "analysisLevels": {
-              "rapid": {
-                "title": "Rapide",
-                "description": "Adaptation essentielle"
-              },
-              "normal": {
-                "title": "Normal",
-                "description": "Analyse complète"
-              },
-              "deep": {
-                "title": "Approfondi",
-                "description": "Optimisation maximale"
-              }
             }
           },
           "screen3": {

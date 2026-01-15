@@ -52,10 +52,102 @@ export async function GET(request) {
         }
       };
 
+      // Handlers pour CV Generation v2
+      const handleCvGenerationProgress = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('cv_generation_v2:offer_progress', { ...data, timestamp: Date.now() });
+        }
+      };
+
+      const handleCvGenerationOfferCompleted = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('cv_generation_v2:offer_completed', { ...data, timestamp: Date.now() });
+        }
+      };
+
+      const handleCvGenerationOfferFailed = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('cv_generation_v2:offer_failed', { ...data, timestamp: Date.now() });
+        }
+      };
+
+      const handleCvGenerationCompleted = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('cv_generation_v2:completed', { ...data, timestamp: Date.now() });
+        }
+      };
+
+      // Handlers pour CV Improvement v2
+      const handleCvImprovementProgress = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('cv_improvement:progress', { ...data, timestamp: Date.now() });
+        }
+      };
+
+      const handleCvImprovementCompleted = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('cv_improvement:completed', { ...data, timestamp: Date.now() });
+        }
+      };
+
+      const handleCvImprovementFailed = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('cv_improvement:failed', { ...data, timestamp: Date.now() });
+        }
+      };
+
+      // Handler pour les mises à jour de crédits
+      const handleCreditsUpdate = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('credits:updated', { ...data, timestamp: Date.now() });
+        }
+      };
+
+      // Handler pour les mises à jour de settings (broadcast à tous)
+      const handleSettingsUpdate = ({ userId: eventUserId, data }) => {
+        // '*' = broadcast à tous les utilisateurs connectés
+        if (eventUserId === '*') {
+          sendEvent('settings:updated', { ...data, timestamp: Date.now() });
+        }
+      };
+
+      // Handler pour les mises à jour de l'onboarding
+      const handleOnboardingUpdate = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('onboarding:updated', { ...data, timestamp: Date.now() });
+        }
+      };
+
+      // Handler pour le reset de l'onboarding
+      const handleOnboardingReset = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('onboarding:reset', { ...data, timestamp: Date.now() });
+        }
+      };
+
+      // Handler pour la validation d'email
+      const handleEmailVerified = ({ userId: eventUserId, data }) => {
+        if (eventUserId === userId) {
+          sendEvent('email:verified', { ...data, timestamp: Date.now() });
+        }
+      };
+
       // S'abonner aux événements
       dbEmitter.on('task:updated', handleTaskUpdate);
       dbEmitter.on('cv:updated', handleCvUpdate);
       dbEmitter.on('db:change', handleDbChange);
+      dbEmitter.on('cv_generation_v2:offer_progress', handleCvGenerationProgress);
+      dbEmitter.on('cv_generation_v2:offer_completed', handleCvGenerationOfferCompleted);
+      dbEmitter.on('cv_generation_v2:offer_failed', handleCvGenerationOfferFailed);
+      dbEmitter.on('cv_generation_v2:completed', handleCvGenerationCompleted);
+      dbEmitter.on('cv_improvement:progress', handleCvImprovementProgress);
+      dbEmitter.on('cv_improvement:completed', handleCvImprovementCompleted);
+      dbEmitter.on('cv_improvement:failed', handleCvImprovementFailed);
+      dbEmitter.on('credits:updated', handleCreditsUpdate);
+      dbEmitter.on('settings:updated', handleSettingsUpdate);
+      dbEmitter.on('onboarding:updated', handleOnboardingUpdate);
+      dbEmitter.on('onboarding:reset', handleOnboardingReset);
+      dbEmitter.on('email:verified', handleEmailVerified);
 
       // Envoyer un message de connexion réussie
       sendEvent('connected', { userId, timestamp: Date.now() });
@@ -65,6 +157,18 @@ export async function GET(request) {
         dbEmitter.off('task:updated', handleTaskUpdate);
         dbEmitter.off('cv:updated', handleCvUpdate);
         dbEmitter.off('db:change', handleDbChange);
+        dbEmitter.off('cv_generation_v2:offer_progress', handleCvGenerationProgress);
+        dbEmitter.off('cv_generation_v2:offer_completed', handleCvGenerationOfferCompleted);
+        dbEmitter.off('cv_generation_v2:offer_failed', handleCvGenerationOfferFailed);
+        dbEmitter.off('cv_generation_v2:completed', handleCvGenerationCompleted);
+        dbEmitter.off('cv_improvement:progress', handleCvImprovementProgress);
+        dbEmitter.off('cv_improvement:completed', handleCvImprovementCompleted);
+        dbEmitter.off('cv_improvement:failed', handleCvImprovementFailed);
+        dbEmitter.off('credits:updated', handleCreditsUpdate);
+        dbEmitter.off('settings:updated', handleSettingsUpdate);
+        dbEmitter.off('onboarding:updated', handleOnboardingUpdate);
+        dbEmitter.off('onboarding:reset', handleOnboardingReset);
+        dbEmitter.off('email:verified', handleEmailVerified);
         controller.close();
       });
 

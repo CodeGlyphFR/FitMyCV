@@ -147,17 +147,18 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
         </div>
 
         {/* Preview iframe */}
-        <div className="flex-1 overflow-auto p-6 bg-gray-800/50">
+        <div className="flex-1 overflow-auto p-6 bg-gray-800/50 custom-scrollbar">
           <div
-            className={`mx-auto bg-white rounded-lg shadow-lg transition-all duration-300 ${
+            className={`mx-auto rounded-lg shadow-lg transition-all duration-300 overflow-hidden ${
               viewMode === 'mobile' ? 'max-w-[375px]' : 'max-w-[600px]'
             }`}
           >
             <iframe
               srcDoc={previewHtml}
               title="Email Preview"
-              className="w-full h-[500px] rounded-lg"
+              className="w-full h-[500px] border-0"
               sandbox="allow-same-origin"
+              style={{ display: 'block' }}
             />
           </div>
         </div>
@@ -172,7 +173,7 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
                 value={testEmail}
                 onChange={(e) => setTestEmail(e.target.value)}
                 placeholder="votre@email.com"
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-emerald-500/50"
+                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-hidden focus:border-emerald-500/50"
               />
             </div>
             <button

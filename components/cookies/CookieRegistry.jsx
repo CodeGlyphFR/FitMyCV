@@ -10,11 +10,10 @@ export default function CookieRegistry() {
   const [expandedCategory, setExpandedCategory] = useState(null);
   const scrollPositionRef = useRef(0);
 
+  // RGPD v2.0: seulement 2 catégories (NECESSARY + ANALYTICS)
   const categories = [
     { key: COOKIE_CATEGORIES.NECESSARY, icon: '🔒' },
-    { key: COOKIE_CATEGORIES.FUNCTIONAL, icon: '⚙️' },
     { key: COOKIE_CATEGORIES.ANALYTICS, icon: '📊' },
-    { key: COOKIE_CATEGORIES.MARKETING, icon: '📢' }
   ];
 
   const toggleCategory = (category) => {
@@ -29,9 +28,7 @@ export default function CookieRegistry() {
   const getCategoryLabel = (category) => {
     const labels = {
       [COOKIE_CATEGORIES.NECESSARY]: t('cookies.settings.necessary.title'),
-      [COOKIE_CATEGORIES.FUNCTIONAL]: t('cookies.settings.functional.title'),
       [COOKIE_CATEGORIES.ANALYTICS]: t('cookies.settings.analytics.title'),
-      [COOKIE_CATEGORIES.MARKETING]: t('cookies.settings.marketing.title'),
     };
     return labels[category] || category;
   };
@@ -120,7 +117,7 @@ export default function CookieRegistry() {
         })}
       </div>
 
-      <div className="mt-4 p-3 bg-emerald-500/20 backdrop-blur-sm rounded text-sm">
+      <div className="mt-4 p-3 bg-emerald-500/20 backdrop-blur-sm rounded-sm text-sm">
         <p className="text-white drop-shadow">
           <strong>ℹ️ Note:</strong> {t('cookies.registry.note')}
         </p>

@@ -32,7 +32,6 @@ export async function GET(request) {
         sourceType: true,
         sourceValue: true,
         createdBy: true,
-        analysisLevel: true,
         matchScore: true,
         matchScoreUpdatedAt: true,
         matchScoreStatus: true,

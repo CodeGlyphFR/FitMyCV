@@ -68,8 +68,13 @@ export default function SubscriptionsPage({ user }) {
       setSuccessMessage(t('subscription.messages.creditsPurchased'));
       setActiveTab("credits");
       setTimeout(() => setSuccessMessage(""), 5000);
-      // Rafraîchir les données après un délai
-      setTimeout(() => refreshData(), 2000);
+      // Rafraîchir les données après un délai et notifier le compteur TopBar
+      setTimeout(() => {
+        refreshData();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('credits-updated'));
+        }
+      }, 2000);
     } else if (searchParams.get('canceled') === 'true') {
       setError(t('subscription.messages.paymentCanceled'));
       setTimeout(() => setError(null), 5000);
@@ -147,11 +152,25 @@ export default function SubscriptionsPage({ user }) {
     }
   }, [refreshData, t]);
 
-  const tabs = [
+  // Vérifier si on est en mode crédits uniquement
+  const creditsOnlyMode = subscriptionData?.creditsOnlyMode || false;
+
+  // Changer l'onglet par défaut en mode crédits-only
+  React.useEffect(() => {
+    if (creditsOnlyMode && activeTab === 'subscription') {
+      setActiveTab('credits');
+    }
+  }, [creditsOnlyMode, activeTab]);
+
+  // Filtrer les onglets selon le mode
+  const allTabs = [
     { id: "subscription", label: t('subscription.page.tabs.subscription'), icon: Crown },
     { id: "credits", label: t('subscription.page.tabs.credits'), icon: Zap },
     { id: "history", label: t('subscription.page.tabs.history'), icon: History },
   ];
+  const tabs = creditsOnlyMode
+    ? allTabs.filter(tab => tab.id !== 'subscription')
+    : allTabs;
 
   // Gestion navigation clavier des onglets
   const handleTabKeyDown = React.useCallback((e, tabIndex) => {
@@ -228,10 +247,10 @@ export default function SubscriptionsPage({ user }) {
             <span>{t('subscription.page.backToCvs')}</span>
           </Link>
           <h1 className="text-2xl font-semibold text-white drop-shadow-lg">
-            {t('subscription.page.title')}
+            {creditsOnlyMode ? t('subscription.page.title_credits_only') : t('subscription.page.title')}
           </h1>
           <p className="text-sm text-white/70 drop-shadow">
-            {t('subscription.page.description')}
+            {creditsOnlyMode ? t('subscription.page.description_credits_only') : t('subscription.page.description')}
           </p>
         </div>
 
@@ -281,7 +300,7 @@ export default function SubscriptionsPage({ user }) {
         <div
           role="tablist"
           aria-label={t('subscription.page.tabsAriaLabel')}
-          className="flex gap-2 border-b border-white/20 overflow-x-auto"
+          className="flex gap-2 border-b border-white/20 overflow-x-auto custom-scrollbar"
         >
           {tabs.map((tab, index) => {
             const Icon = tab.icon;
@@ -298,7 +317,7 @@ export default function SubscriptionsPage({ user }) {
                 onKeyDown={(e) => handleTabKeyDown(e, index)}
                 className={`
                   flex items-center gap-2 px-4 py-3 font-medium transition-all whitespace-nowrap
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-t-lg
+                  focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-t-lg
                   ${isActive
                     ? 'text-white border-b-2 border-white'
                     : 'text-white/60 hover:text-white/80'
@@ -398,7 +417,7 @@ export default function SubscriptionsPage({ user }) {
             >
               <div className="space-y-4">
                 <CreditTransactionsTable />
-                <InvoicesTable currentPlan={subscriptionData?.subscription} />
+                <InvoicesTable currentPlan={subscriptionData?.subscription} creditsOnlyMode={creditsOnlyMode} />
               </div>
             </div>
           )}

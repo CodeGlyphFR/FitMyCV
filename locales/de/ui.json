@@ -12,6 +12,7 @@
     "myCvs": "Meine Lebensläufe",
     "myAccount": "Mein Konto",
     "subscriptions": "Abonnements & Credits",
+    "subscriptions_credits_only": "Meine Credits verwalten",
     "logout": "Abmelden",
     "analyzeOffers": "Stellenanzeigen analysieren",
     "coverLetters": "Anschreiben",
@@ -25,11 +26,6 @@
     "cvInProgress": "Lebenslauf wird bearbeitet",
     "jobTitlePlaceholder": "Geben Sie eine Stellenbezeichnung ein (z.B. Full-Stack-Entwickler)",
     "jobTitlePlaceholderMobile": "z.B. Full-Stack-Entwickler",
-    "analysisLevels": {
-      "rapid": "Schnell",
-      "medium": "Mittel",
-      "deep": "Tiefgehend"
-    },
     "filter": "Filtern",
     "filterTitle": "Filter",
     "filterCvType": "Lebenslauf-Typ",
@@ -73,6 +69,24 @@
       "deleteFailed": "Löschen nicht möglich:"
     }
   },
+  "bulkDeleteModal": {
+    "title": "Mehrfachlöschung",
+    "hint": "Strg+Klick auf Löschen-Button",
+    "selectCvs": "Wählen Sie die Lebensläufe zum Löschen aus:",
+    "selectAll": "Alle auswählen",
+    "deselectAll": "Alle abwählen",
+    "selected": "{count} Lebenslauf/Lebensläufe ausgewählt",
+    "currentCvDisabled": "Aktueller Lebenslauf (nicht löschbar)",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "deleting": "Wird gelöscht...",
+    "confirmMessage": "Möchten Sie wirklich {count} Lebenslauf/Lebensläufe löschen? Diese Aktion ist unwiderruflich.",
+    "errors": {
+      "deleteFailed": "Fehler beim Löschen:"
+    },
+    "success": "{count} Lebenslauf/Lebensläufe erfolgreich gelöscht",
+    "noCvsToDelete": "Keine anderen Lebensläufe zum Löschen"
+  },
   "export": {
     "noCvSelected": "Kein Lebenslauf für den Export ausgewählt.",
     "errors": {
@@ -106,7 +120,7 @@
       "save": "Meine Einstellungen speichern",
       "necessary": {
         "title": "Notwendige Cookies",
-        "description": "Wesentlich für den Betrieb der Website.",
+        "description": "Wesentlich für den Betrieb der Website (Sitzung, Sicherheit, Sprache).",
         "active": "Aktiv"
       },
       "functional": {
@@ -115,7 +129,7 @@
       },
       "analytics": {
         "title": "Analytische Cookies",
-        "description": "Nutzungsstatistiken der Website."
+        "description": "Datenschutzfreundliche Nutzungsmessung."
       },
       "marketing": {
         "title": "Marketing-Cookies",
@@ -135,8 +149,8 @@
       "necessary": {
         "title": "Notwendige Cookies",
         "alwaysActive": "Immer aktiv",
-        "description": "Diese Cookies sind für den Betrieb der Website unerlässlich. Sie ermöglichen Authentifizierung, Sicherheit und grundlegende Navigation. Sie können nicht deaktiviert werden.",
-        "examples": "Benutzersitzung, CSRF-Token, Spracheinstellungen"
+        "description": "Diese Cookies sind für den Betrieb der Website unerlässlich. Sie ermöglichen Authentifizierung, Sicherheit, grundlegende Navigation und Spracheinstellung. Sie können nicht deaktiviert werden.",
+        "examples": "Benutzersitzung, CSRF-Token, Spracheinstellung"
       },
       "functional": {
         "title": "Funktionale Cookies",
@@ -145,8 +159,8 @@
       },
       "analytics": {
         "title": "Analytische Cookies",
-        "description": "Diese Cookies helfen uns zu verstehen, wie Sie unsere Website nutzen, um sie zu verbessern. Die Daten werden anonymisiert und aggregiert.",
-        "examples": "Besuchte Seiten, verbrachte Zeit, Benutzerweg"
+        "description": "Diese Cookies helfen uns zu verstehen, wie Sie unsere Website nutzen, um sie zu verbessern. Wir verwenden datenschutzfreundliche Tools.",
+        "examples": "Besuchte Seiten, verbrachte Zeit, Herkunft des Traffics"
       },
       "marketing": {
         "title": "Marketing-Cookies",
@@ -256,7 +270,9 @@
     "success": "Erfolg",
     "close": "Schließen",
     "confirmation": "Bestätigung",
-    "locale": "de-DE"
+    "locale": "de-DE",
+    "yes": "Ja",
+    "no": "Nein"
   },
   "editMode": {
     "on": "✏️ Bearbeitung AN",
@@ -359,5 +375,11 @@
         "4": "Enterprise"
       }
     }
+  },
+  "credits": {
+    "costLabel": "Kosten",
+    "unit": "Kredit",
+    "unitPlural": "Kredite",
+    "useCredits": "{count} Cr. verwenden"
   }
 }

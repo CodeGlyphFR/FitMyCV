@@ -52,7 +52,65 @@ function runStripeSync() {
 }
 
 // ============================================================================
-// 1. EMAIL TEMPLATES
+// 1. EMAIL TRIGGERS
+// ============================================================================
+const EMAIL_TRIGGERS = [
+  {
+    name: 'email_verification',
+    label: 'Verification Email',
+    description: "Envoye lors de l'inscription pour verifier l'adresse email",
+    variables: JSON.stringify(['userName', 'verificationUrl']),
+    category: 'authentication',
+    icon: '✉️',
+    isSystem: true,
+  },
+  {
+    name: 'password_reset',
+    label: 'Reset Mot de passe',
+    description: "Envoye lors d'une demande de reinitialisation du mot de passe",
+    variables: JSON.stringify(['userName', 'resetUrl']),
+    category: 'authentication',
+    icon: '🔐',
+    isSystem: true,
+  },
+  {
+    name: 'email_change',
+    label: 'Changement Email',
+    description: "Envoye pour confirmer un changement d'adresse email",
+    variables: JSON.stringify(['userName', 'verificationUrl', 'newEmail']),
+    category: 'authentication',
+    icon: '📧',
+    isSystem: true,
+  },
+  {
+    name: 'welcome',
+    label: 'Bienvenue',
+    description: "Envoye apres la verification de l'email pour souhaiter la bienvenue",
+    variables: JSON.stringify(['userName', 'loginUrl', 'welcomeCredits']),
+    category: 'account',
+    icon: '👋',
+    isSystem: true,
+  },
+  {
+    name: 'purchase_credits',
+    label: 'Achat Credits',
+    description: "Envoye apres un achat de credits avec le lien vers la facture Stripe",
+    variables: JSON.stringify(['userName', 'creditsAmount', 'totalPrice', 'invoiceUrl']),
+    category: 'payments',
+    icon: '💳',
+    isSystem: true,
+  },
+];
+
+// Mapping ancien nom -> nouveau nom de trigger
+const TEMPLATE_TO_TRIGGER_MAPPING = {
+  verification: 'email_verification',
+  password_reset: 'password_reset',
+  email_change: 'email_change',
+};
+
+// ============================================================================
+// 2. EMAIL TEMPLATES
 // ============================================================================
 const EMAIL_TEMPLATES = [
   {
@@ -197,22 +255,22 @@ const EMAIL_TEMPLATES = [
 ];
 
 // ============================================================================
-// 2. CREDIT PACKS (Données prod)
+// 3. CREDIT PACKS (Données DEV)
 // ============================================================================
 const CREDIT_PACKS = [
-  { name: '15 Crédits', creditAmount: 15, price: 1.99, priceCurrency: 'EUR' },
-  { name: '60 Crédits', creditAmount: 60, price: 6.99, priceCurrency: 'EUR' },
-  { name: '150 Crédits', creditAmount: 150, price: 12.99, priceCurrency: 'EUR' },
-  { name: '300 Crédits', creditAmount: 300, price: 19.99, priceCurrency: 'EUR' },
+  { name: '15 Crédits', creditAmount: 15, price: 4.99, priceCurrency: 'EUR', isActive: true },
+  { name: '50 Crédits', creditAmount: 50, price: 14.99, priceCurrency: 'EUR', isActive: true },
+  { name: '100 Crédits', creditAmount: 100, price: 26.99, priceCurrency: 'EUR', isActive: true },
+  { name: '150 Crédits', creditAmount: 150, price: 35.99, priceCurrency: 'EUR', isActive: true },
 ];
 
 // ============================================================================
-// 3. SUBSCRIPTION PLANS (Données prod)
+// 4. SUBSCRIPTION PLANS (Données DEV)
 // ============================================================================
 const SUBSCRIPTION_PLANS = [
   {
     name: 'Gratuit',
-    description: 'Plan gratuit avec fonctionnalités de base',
+    description: '',
     isFree: true,
     tier: 0,
     isPopular: false,
@@ -221,15 +279,15 @@ const SUBSCRIPTION_PLANS = [
     yearlyDiscountPercent: 0,
     priceCurrency: 'EUR',
     features: {
-      gpt_cv_generation: { enabled: true, limit: 5, analysisLevels: ['rapid', 'medium'] },
-      import_pdf: { enabled: true, limit: 5 },
-      generate_from_job_title: { enabled: true, limit: 5 },
-      export_cv: { enabled: true, limit: 5 },
-      translate_cv: { enabled: true, limit: 5 },
-      match_score: { enabled: true, limit: 5 },
-      optimize_cv: { enabled: true, limit: 5 },
+      create_cv_manual: { enabled: true, limit: -1 },
       edit_cv: { enabled: true, limit: -1 },
-      create_cv_manual: { enabled: true, limit: 5 },
+      export_cv: { enabled: false, limit: 0 },
+      generate_from_job_title: { enabled: false, limit: 0 },
+      gpt_cv_generation: { enabled: false, limit: 0 },
+      import_pdf: { enabled: false, limit: 0 },
+      match_score: { enabled: false, limit: 0 },
+      optimize_cv: { enabled: false, limit: 0 },
+      translate_cv: { enabled: false, limit: 0 },
     },
   },
   {
@@ -243,15 +301,15 @@ const SUBSCRIPTION_PLANS = [
     yearlyDiscountPercent: 16.59,
     priceCurrency: 'EUR',
     features: {
-      gpt_cv_generation: { enabled: true, limit: 25, analysisLevels: ['rapid', 'medium'] },
-      import_pdf: { enabled: true, limit: 25 },
-      generate_from_job_title: { enabled: true, limit: 25 },
+      create_cv_manual: { enabled: true, limit: -1 },
+      edit_cv: { enabled: true, limit: -1 },
       export_cv: { enabled: true, limit: -1 },
-      translate_cv: { enabled: true, limit: 25 },
+      generate_from_job_title: { enabled: true, limit: 25 },
+      gpt_cv_generation: { enabled: true, limit: 25 },
+      import_pdf: { enabled: true, limit: 25 },
       match_score: { enabled: true, limit: 25 },
       optimize_cv: { enabled: true, limit: 25 },
-      edit_cv: { enabled: true, limit: -1 },
-      create_cv_manual: { enabled: true, limit: -1 },
+      translate_cv: { enabled: true, limit: 25 },
     },
   },
   {
@@ -265,45 +323,55 @@ const SUBSCRIPTION_PLANS = [
     yearlyDiscountPercent: 16.63,
     priceCurrency: 'EUR',
     features: {
-      gpt_cv_generation: { enabled: true, limit: 60, analysisLevels: ['rapid', 'medium', 'deep'] },
-      import_pdf: { enabled: true, limit: 60 },
-      generate_from_job_title: { enabled: true, limit: 60 },
+      create_cv_manual: { enabled: true, limit: -1 },
+      edit_cv: { enabled: true, limit: -1 },
       export_cv: { enabled: true, limit: -1 },
-      translate_cv: { enabled: true, limit: 60 },
+      generate_from_job_title: { enabled: true, limit: 60 },
+      gpt_cv_generation: { enabled: true, limit: 60 },
+      import_pdf: { enabled: true, limit: 60 },
       match_score: { enabled: true, limit: 60 },
       optimize_cv: { enabled: true, limit: 60 },
-      edit_cv: { enabled: true, limit: -1 },
-      create_cv_manual: { enabled: true, limit: -1 },
+      translate_cv: { enabled: true, limit: 60 },
     },
   },
-];
+]
 
 // ============================================================================
-// 4. OPENAI PRICING (Données prod - prix/MTok)
+// 5. OPENAI PRICING (Données DEV - prix/MTok)
 // ============================================================================
 const OPENAI_PRICING = [
+  // GPT-4.1 series
   {
-    modelName: 'gpt-5-nano-2025-08-07',
-    inputPricePerMToken: 0.05,
-    outputPricePerMToken: 0.40,
-    cachePricePerMToken: 0.005,
-    description: 'GPT-5 Nano - Fast and economical model',
+    modelName: 'gpt-4.1-2025-04-14',
+    inputPricePerMToken: 2.00,
+    outputPricePerMToken: 8.00,
+    cachePricePerMToken: 0.5,
+    description: 'GPT-4.1 - Improved reasoning model',
     isActive: true,
   },
   {
-    modelName: 'gpt-5-mini-2025-08-07',
-    inputPricePerMToken: 0.25,
-    outputPricePerMToken: 2.00,
+    modelName: 'gpt-4.1-mini-2025-04-14',
+    inputPricePerMToken: 0.4,
+    outputPricePerMToken: 1.6,
+    cachePricePerMToken: 0.1,
+    description: 'GPT-4.1 Mini - Compact reasoning model',
+    isActive: true,
+  },
+  {
+    modelName: 'gpt-4.1-nano',
+    inputPricePerMToken: 0.1,
+    outputPricePerMToken: 0.4,
     cachePricePerMToken: 0.025,
-    description: 'GPT-5 Mini - Standard model for most tasks',
+    description: '',
     isActive: true,
   },
+  // GPT-4o series
   {
-    modelName: 'gpt-5-2025-08-07',
-    inputPricePerMToken: 1.25,
+    modelName: 'gpt-4o',
+    inputPricePerMToken: 2.50,
     outputPricePerMToken: 10.00,
-    cachePricePerMToken: 0.125,
-    description: 'GPT-5 - Advanced model with extended context',
+    cachePricePerMToken: 1.25,
+    description: 'GPT-4o - Multimodal flagship model',
     isActive: true,
   },
   {
@@ -312,14 +380,6 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 0.60,
     cachePricePerMToken: 0.075,
     description: 'GPT-4o Mini - Affordable and intelligent small model',
-    isActive: true,
-  },
-  {
-    modelName: 'gpt-4o',
-    inputPricePerMToken: 2.50,
-    outputPricePerMToken: 10.00,
-    cachePricePerMToken: 1.25,
-    description: 'GPT-4o - Multimodal flagship model',
     isActive: true,
   },
   {
@@ -338,42 +398,92 @@ const OPENAI_PRICING = [
     description: 'GPT-4o Mini Transcribe - Audio transcription model',
     isActive: true,
   },
+  // GPT-5 series
   {
-    modelName: 'gpt-4.1-2025-04-14',
+    modelName: 'gpt-5-2025-08-07',
+    inputPricePerMToken: 1.25,
+    outputPricePerMToken: 10.00,
+    cachePricePerMToken: 0.125,
+    description: 'GPT-5 - Advanced model with extended context',
+    isActive: true,
+  },
+  {
+    modelName: 'gpt-5-mini-2025-08-07',
+    inputPricePerMToken: 0.25,
+    outputPricePerMToken: 2.00,
+    cachePricePerMToken: 0.025,
+    description: 'GPT-5 Mini - Standard model for most tasks',
+    isActive: true,
+  },
+  {
+    modelName: 'gpt-5-mini',
+    inputPricePerMToken: 0.25,
+    outputPricePerMToken: 2.00,
+    cachePricePerMToken: 0.025,
+    description: '',
+    isActive: true,
+  },
+  {
+    modelName: 'gpt-5-nano-2025-08-07',
+    inputPricePerMToken: 0.05,
+    outputPricePerMToken: 0.40,
+    cachePricePerMToken: 0.005,
+    description: 'GPT-5 Nano - Fast and economical model',
+    isActive: true,
+  },
+  {
+    modelName: 'gpt-5-nano',
+    inputPricePerMToken: 0.05,
+    outputPricePerMToken: 0.40,
+    cachePricePerMToken: 0.005,
+    description: '',
+    isActive: true,
+  },
+  // o-series (reasoning models)
+  {
+    modelName: 'o3',
     inputPricePerMToken: 2.00,
     outputPricePerMToken: 8.00,
-    cachePricePerMToken: 1.00,
-    description: 'GPT-4.1 - Improved reasoning model',
+    cachePricePerMToken: 0.5,
+    description: '',
     isActive: true,
   },
   {
-    modelName: 'gpt-4.1-mini-2025-04-14',
-    inputPricePerMToken: 1.00,
-    outputPricePerMToken: 4.00,
-    cachePricePerMToken: 0.50,
-    description: 'GPT-4.1 Mini - Compact reasoning model',
-    isActive: true,
-  },
-  {
-    modelName: 'o4-mini-deep-research-2025-06-26',
-    inputPricePerMToken: 1.50,
-    outputPricePerMToken: 6.00,
-    cachePricePerMToken: 0.75,
-    description: 'o4 Mini - Compact deep research reasoning model',
+    modelName: 'o3-deep-research',
+    inputPricePerMToken: 10.00,
+    outputPricePerMToken: 40.00,
+    cachePricePerMToken: 2.5,
+    description: '',
     isActive: true,
   },
   {
     modelName: 'o3-deep-research-2025-06-26',
-    inputPricePerMToken: 5.00,
-    outputPricePerMToken: 20.00,
-    cachePricePerMToken: 2.50,
+    inputPricePerMToken: 10.00,
+    outputPricePerMToken: 40.00,
+    cachePricePerMToken: 2.5,
     description: 'o3 - Advanced deep research reasoning model',
+    isActive: true,
+  },
+  {
+    modelName: 'o4-mini',
+    inputPricePerMToken: 1.1,
+    outputPricePerMToken: 4.4,
+    cachePricePerMToken: 0.275,
+    description: '',
+    isActive: true,
+  },
+  {
+    modelName: 'o4-mini-deep-research-2025-06-26',
+    inputPricePerMToken: 2.00,
+    outputPricePerMToken: 8.00,
+    cachePricePerMToken: 0.5,
+    description: 'o4 Mini - Compact deep research reasoning model',
     isActive: true,
   },
 ];
 
 // ============================================================================
-// 5. OPENAI ALERTS
+// 6. OPENAI ALERTS
 // ============================================================================
 const OPENAI_ALERTS = [
   {
@@ -407,36 +517,30 @@ const OPENAI_ALERTS = [
 ];
 
 // ============================================================================
-// 6. SETTINGS - AI MODELS (Données prod)
+// 7. SETTINGS - AI MODELS (Données DEV)
 // ============================================================================
 const AI_MODEL_SETTINGS = [
   {
-    settingName: 'model_analysis_rapid',
-    value: 'gpt-5-nano-2025-08-07',
+    settingName: 'model_cv_generation',
+    value: 'gpt-4.1-mini-2025-04-14',
     category: 'ai_models',
-    description: 'Modèle rapide et économique pour analyse rapide',
+    description: 'Modèle utilisé pour la génération de CV',
   },
   {
-    settingName: 'model_analysis_medium',
-    value: 'gpt-4.1-2025-04-14',
+    settingName: 'model_cv_planning',
+    value: '',
     category: 'ai_models',
-    description: 'Modèle standard pour analyse équilibrée',
-  },
-  {
-    settingName: 'model_analysis_deep',
-    value: 'gpt-5-2025-08-07',
-    category: 'ai_models',
-    description: 'Modèle avancé pour analyse approfondie',
+    description: 'Model for CV planning phase (empty = use default CV model)',
   },
   {
     settingName: 'model_match_score',
-    value: 'gpt-4o-mini',
+    value: 'gpt-4.1-mini-2025-04-14',
     category: 'ai_models',
     description: 'Modèle pour calcul du score de correspondance',
   },
   {
     settingName: 'model_translate_cv',
-    value: 'gpt-4o-mini',
+    value: 'gpt-4.1-mini-2025-04-14',
     category: 'ai_models',
     description: 'Modèle pour traduction de CV',
   },
@@ -448,25 +552,25 @@ const AI_MODEL_SETTINGS = [
   },
   {
     settingName: 'model_generate_from_job_title',
-    value: 'gpt-5-mini-2025-08-07',
+    value: 'gpt-4.1-mini-2025-04-14',
     category: 'ai_models',
     description: 'Modèle pour génération de CV depuis titre de poste',
   },
   {
     settingName: 'model_import_pdf',
-    value: 'gpt-4.1-2025-04-14',
+    value: 'gpt-4.1-mini-2025-04-14',
     category: 'ai_models',
     description: 'Modèle pour import de CV depuis PDF',
   },
   {
     settingName: 'model_first_import_pdf',
-    value: 'gpt-4.1-2025-04-14',
+    value: 'gpt-4.1-mini-2025-04-14',
     category: 'ai_models',
     description: "Modèle IA utilisé pour le premier import PDF d'un utilisateur (sans historique d'import)",
   },
   {
     settingName: 'model_optimize_cv',
-    value: 'gpt-5-mini-2025-08-07',
+    value: 'gpt-4o',
     category: 'ai_models',
     description: 'Modèle pour optimisation de CV',
   },
@@ -476,21 +580,95 @@ const AI_MODEL_SETTINGS = [
     category: 'ai_models',
     description: 'Modèle pour détection de langue de CV (léger, 50 chars max)',
   },
+  // Pipeline CV v2 - Models par phase
+  {
+    settingName: 'model_cv_classify',
+    value: 'gpt-4o',
+    category: 'ai_models',
+    description: 'Pipeline v2: Modèle pour la phase classification (KEEP/REMOVE/MOVE)',
+  },
+  {
+    settingName: 'model_cv_batch_experience',
+    value: 'gpt-4o',
+    category: 'ai_models',
+    description: 'Pipeline v2: Modèle pour adaptation des expériences',
+  },
+  {
+    settingName: 'model_cv_batch_projects',
+    value: 'gpt-4o',
+    category: 'ai_models',
+    description: 'Pipeline v2: Modèle pour adaptation des projets',
+  },
+  {
+    settingName: 'model_cv_batch_extras',
+    value: 'gpt-4o',
+    category: 'ai_models',
+    description: 'Pipeline v2: Modèle pour adaptation des extras',
+  },
+  {
+    settingName: 'model_cv_batch_skills',
+    value: 'gpt-4o-mini',
+    category: 'ai_models',
+    description: 'Pipeline v2: Modèle pour déduction des compétences',
+  },
+  {
+    settingName: 'model_cv_batch_summary',
+    value: 'gpt-4o-mini',
+    category: 'ai_models',
+    description: 'Pipeline v2: Modèle pour génération du summary',
+  },
+  // Pipeline Amélioration CV v2 - Models par stage
+  {
+    settingName: 'model_improve_preprocess',
+    value: 'gpt-4o',
+    category: 'ai_models',
+    description: 'Pipeline Amélioration v2: Modèle pour classifier les suggestions',
+  },
+  {
+    settingName: 'model_improve_experience',
+    value: 'gpt-4.1-2025-04-14',
+    category: 'ai_models',
+    description: 'Pipeline Amélioration v2: Modèle pour améliorer une expérience',
+  },
+  {
+    settingName: 'model_improve_project',
+    value: 'gpt-4.1-2025-04-14',
+    category: 'ai_models',
+    description: 'Pipeline Amélioration v2: Modèle pour améliorer ou créer un projet',
+  },
+  {
+    settingName: 'model_improve_summary',
+    value: 'gpt-4.1-mini-2025-04-14',
+    category: 'ai_models',
+    description: 'Pipeline Amélioration v2: Modèle pour mettre à jour le summary',
+  },
+  {
+    settingName: 'model_improve_classify_skills',
+    value: 'gpt-4o',
+    category: 'ai_models',
+    description: 'Pipeline Amélioration v2: Modèle pour classifier les skills ajoutées',
+  },
+  {
+    settingName: 'model_improve_languages',
+    value: 'gpt-4.1-mini-2025-04-14',
+    category: 'ai_models',
+    description: 'Modèle pour optimisation des langues (Pipeline V2)',
+  },
 ];
 
 // ============================================================================
-// 7. SETTINGS - CREDITS
+// 8. SETTINGS - CREDITS (Données DEV)
 // ============================================================================
 const CREDIT_SETTINGS = [
   {
     settingName: 'credits_create_cv_manual',
-    value: '1',
+    value: '0',
     category: 'credits',
     description: 'Crédits pour création manuelle CV',
   },
   {
     settingName: 'credits_edit_cv',
-    value: '1',
+    value: '0',
     category: 'credits',
     description: 'Crédits pour édition CV',
   },
@@ -513,22 +691,10 @@ const CREDIT_SETTINGS = [
     description: 'Crédits pour traduction CV',
   },
   {
-    settingName: 'credits_gpt_cv_generation_rapid',
-    value: '1',
+    settingName: 'credits_gpt_cv_generation',
+    value: '3',
     category: 'credits',
-    description: 'Crédits pour génération CV rapide',
-  },
-  {
-    settingName: 'credits_gpt_cv_generation_medium',
-    value: '2',
-    category: 'credits',
-    description: 'Crédits pour génération CV normal',
-  },
-  {
-    settingName: 'credits_gpt_cv_generation_deep',
-    value: '0',
-    category: 'credits',
-    description: '0 = Abonnement Premium requis',
+    description: 'Crédits pour génération CV',
   },
   {
     settingName: 'credits_optimize_cv',
@@ -538,20 +704,26 @@ const CREDIT_SETTINGS = [
   },
   {
     settingName: 'credits_generate_from_job_title',
-    value: '3',
+    value: '1',
     category: 'credits',
     description: 'Crédits pour génération depuis titre',
   },
   {
     settingName: 'credits_import_pdf',
-    value: '5',
+    value: '2',
     category: 'credits',
     description: 'Crédits pour import PDF',
+  },
+  {
+    settingName: 'welcome_credits',
+    value: '15',
+    category: 'credits',
+    description: "Crédits offerts à l'inscription (mode crédits uniquement)",
   },
 ];
 
 // ============================================================================
-// 8. SETTINGS - FEATURES
+// 9. SETTINGS - FEATURES
 // ============================================================================
 const FEATURE_SETTINGS = [
   {
@@ -629,7 +801,7 @@ const FEATURE_SETTINGS = [
 ];
 
 // ============================================================================
-// 9. SETTINGS - SYSTEM
+// 10. SETTINGS - SYSTEM (Données DEV)
 // ============================================================================
 const SYSTEM_SETTINGS = [
   {
@@ -644,10 +816,94 @@ const SYSTEM_SETTINGS = [
     category: 'system',
     description: 'Mode maintenance - bloque tous les utilisateurs non-admin (1 = activé, 0 = désactivé)',
   },
+  {
+    settingName: 'subscription_mode_enabled',
+    value: '0',
+    category: 'system',
+    description: 'Mode abonnement activé (1) ou mode crédits uniquement (0)',
+  },
+  {
+    settingName: 'cv_max_versions',
+    value: '5',
+    category: 'system',
+    description: 'Nombre maximum de versions historisées par CV (optimisation IA)',
+  },
 ];
 
 // ============================================================================
-// 10. FEATURE MAPPINGS (Complet avec features non-IA)
+// 11. SETTINGS - PDF IMPORT (Données DEV)
+// ============================================================================
+const PDF_IMPORT_SETTINGS = [
+  {
+    settingName: 'pdf_image_max_width',
+    value: '1000',
+    category: 'pdf_import',
+    description: 'Largeur max image PDF (px)',
+  },
+  {
+    settingName: 'pdf_image_density',
+    value: '92',
+    category: 'pdf_import',
+    description: 'DPI conversion PDF',
+  },
+  {
+    settingName: 'pdf_image_quality',
+    value: '65',
+    category: 'pdf_import',
+    description: 'Qualité JPEG (1-100)',
+  },
+  {
+    settingName: 'pdf_vision_detail',
+    value: 'auto',
+    category: 'pdf_import',
+    description: 'Détail Vision API (low/auto/high)',
+  },
+  {
+    settingName: 'temperature_import_pdf',
+    value: '0',
+    category: 'pdf_import',
+    description: 'Température GPT pour import PDF (0=déterministe, 2=créatif)',
+  },
+  {
+    settingName: 'top_p_import_pdf',
+    value: '1',
+    category: 'pdf_import',
+    description: 'Top P (nucleus sampling) pour import PDF (0-1)',
+  },
+  {
+    settingName: 'seed_import_pdf',
+    value: '447',
+    category: 'pdf_import',
+    description: 'Seed pour reproductibilité (0 = désactivé)',
+  },
+];
+
+// ============================================================================
+// 12. SETTINGS - OPENAI (Données DEV)
+// ============================================================================
+const OPENAI_SETTINGS = [
+  {
+    settingName: 'openai_priority_mode',
+    value: 'false',
+    category: 'openai',
+    description: 'Si activé, utilise les tarifs Priority OpenAI (~70% plus cher). Désactiver pour les tarifs Standard.',
+  },
+];
+
+// ============================================================================
+// 13. SETTINGS - CV DISPLAY (Données DEV)
+// ============================================================================
+const CV_DISPLAY_SETTINGS = [
+  {
+    settingName: 'cv_section_order',
+    value: '["header","summary","skills","experience","education","languages","extras","projects"]',
+    category: 'cv_display',
+    description: 'Ordre affichage sections CV',
+  },
+];
+
+// ============================================================================
+// 14. FEATURE MAPPINGS (Complet avec features non-IA)
 // ============================================================================
 const FEATURE_MAPPINGS = [
   {
@@ -681,7 +937,7 @@ const FEATURE_MAPPINGS = [
   {
     featureKey: 'gpt_cv_generation',
     displayName: 'Génération CV',
-    settingNames: ['model_analysis_rapid', 'model_analysis_medium', 'model_analysis_deep', 'model_extract_job_offer'],
+    settingNames: ['model_cv_generation', 'model_extract_job_offer'],
     openAICallNames: ['generate_cv_url', 'generate_cv_pdf', 'extract_job_offer_url', 'extract_job_offer_pdf', 'create_template_cv_url', 'create_template_cv_pdf'],
     planFeatureNames: ['gpt_cv_generation'],
   },
@@ -691,6 +947,13 @@ const FEATURE_MAPPINGS = [
     settingNames: ['model_import_pdf', 'model_first_import_pdf'],
     openAICallNames: ['import_pdf', 'first_import_pdf'],
     planFeatureNames: ['import_pdf'],
+  },
+  {
+    featureKey: 'extract_job_offer',
+    displayName: 'Extraction offre emploi',
+    settingNames: ['model_extract_job_offer'],
+    openAICallNames: ['extract_job_offer_url', 'extract_job_offer_pdf'],
+    planFeatureNames: ['gpt_cv_generation'],
   },
   {
     featureKey: 'detect_language',
@@ -748,127 +1011,272 @@ async function main() {
   let totalCreated = 0;
   let totalSkipped = 0;
 
-  // ===== 1. Email Templates =====
+  // ===== 1. Email Triggers =====
+  let triggersCreated = 0;
+  let triggersUpdated = 0;
+  const triggerMap = {}; // Store trigger IDs for template association
+  for (const trigger of EMAIL_TRIGGERS) {
+    try {
+      // Use upsert to create or update triggers (variables may have changed)
+      const result = await prisma.emailTrigger.upsert({
+        where: { name: trigger.name },
+        update: {
+          label: trigger.label,
+          description: trigger.description,
+          variables: trigger.variables,
+          category: trigger.category,
+          icon: trigger.icon,
+        },
+        create: trigger,
+      });
+      triggerMap[trigger.name] = result.id;
+      // Check if it was created or updated by comparing timestamps
+      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
+        triggersCreated++;
+      } else {
+        triggersUpdated++;
+      }
+    } catch (error) { /* ignore */ }
+  }
+  console.log(formatLine('🎯', 'Email Triggers', EMAIL_TRIGGERS.length, EMAIL_TRIGGERS.length));
+  results.push({ created: triggersCreated, updated: triggersUpdated });
+
+  // ===== 2. Email Templates =====
   let templatesCreated = 0;
   let templatesSkipped = 0;
   for (const template of EMAIL_TEMPLATES) {
     try {
-      const existing = await prisma.emailTemplate.findUnique({ where: { name: template.name } });
-      if (existing) { templatesSkipped++; continue; }
-      await prisma.emailTemplate.create({ data: template });
+      // Check if template already exists with this name
+      const existingTemplates = await prisma.emailTemplate.findMany({ where: { name: template.name } });
+      if (existingTemplates.length > 0) {
+        // Update existing template to associate with trigger if not already
+        const triggerName = TEMPLATE_TO_TRIGGER_MAPPING[template.name];
+        if (triggerName && triggerMap[triggerName]) {
+          const needsUpdate = existingTemplates.find(t => !t.triggerId);
+          if (needsUpdate) {
+            await prisma.emailTemplate.update({
+              where: { id: needsUpdate.id },
+              data: { triggerId: triggerMap[triggerName], isActive: true },
+            });
+          }
+        }
+        templatesSkipped++;
+        continue;
+      }
+      // Create new template with trigger association
+      const triggerName = TEMPLATE_TO_TRIGGER_MAPPING[template.name];
+      const templateData = {
+        ...template,
+        isActive: true, // Mark as active by default for existing templates
+      };
+      if (triggerName && triggerMap[triggerName]) {
+        templateData.triggerId = triggerMap[triggerName];
+      }
+      await prisma.emailTemplate.create({ data: templateData });
       templatesCreated++;
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('📧', 'Email Templates', EMAIL_TEMPLATES.length, EMAIL_TEMPLATES.length));
   results.push({ created: templatesCreated, skipped: templatesSkipped });
 
-  // ===== 2. Credit Packs =====
+  // ===== 3. Credit Packs (upsert - préserve IDs Stripe) =====
   let packsCreated = 0;
-  let packsSkipped = 0;
+  let packsUpdated = 0;
   for (const pack of CREDIT_PACKS) {
     try {
-      const existing = await prisma.creditPack.findUnique({ where: { creditAmount: pack.creditAmount } });
-      if (existing) { packsSkipped++; continue; }
-      await prisma.creditPack.create({ data: pack });
-      packsCreated++;
+      const result = await prisma.creditPack.upsert({
+        where: { creditAmount: pack.creditAmount },
+        update: {
+          name: pack.name,
+          price: pack.price,
+          priceCurrency: pack.priceCurrency,
+          isActive: pack.isActive,
+          // Note: stripeProductId et stripePriceId sont préservés
+        },
+        create: pack,
+      });
+      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
+        packsCreated++;
+      } else {
+        packsUpdated++;
+      }
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('💰', 'Credit Packs', CREDIT_PACKS.length, CREDIT_PACKS.length));
-  results.push({ created: packsCreated, skipped: packsSkipped });
+  results.push({ created: packsCreated, updated: packsUpdated });
 
-  // ===== 3. Subscription Plans =====
+  // ===== 4. Subscription Plans (upsert - préserve IDs Stripe, recrée featureLimits) =====
   let plansCreated = 0;
-  let plansSkipped = 0;
+  let plansUpdated = 0;
   for (const planData of SUBSCRIPTION_PLANS) {
     try {
       const existing = await prisma.subscriptionPlan.findUnique({ where: { name: planData.name } });
-      if (existing) { plansSkipped++; continue; }
-      await prisma.subscriptionPlan.create({
-        data: {
-          name: planData.name,
-          description: planData.description,
-          isFree: planData.isFree,
-          tier: planData.tier,
-          isPopular: planData.isPopular,
-          priceMonthly: planData.priceMonthly,
-          priceYearly: planData.priceYearly,
-          yearlyDiscountPercent: planData.yearlyDiscountPercent,
-          priceCurrency: planData.priceCurrency,
-          featureLimits: {
-            create: Object.entries(planData.features).map(([featureName, config]) => ({
-              featureName,
-              isEnabled: config.enabled,
-              usageLimit: config.limit,
-              allowedAnalysisLevels: config.analysisLevels ? JSON.stringify(config.analysisLevels) : null,
-            })),
+
+      if (existing) {
+        // Update plan (préserve les IDs Stripe)
+        await prisma.subscriptionPlan.update({
+          where: { id: existing.id },
+          data: {
+            description: planData.description,
+            isFree: planData.isFree,
+            tier: planData.tier,
+            isPopular: planData.isPopular,
+            priceMonthly: planData.priceMonthly,
+            priceYearly: planData.priceYearly,
+            yearlyDiscountPercent: planData.yearlyDiscountPercent,
+            priceCurrency: planData.priceCurrency,
+            // Note: stripeProductId, stripePriceIdMonthly, stripePriceIdYearly sont préservés
           },
-        },
-      });
-      plansCreated++;
+        });
+
+        // Recréer les feature limits (delete + create)
+        await prisma.subscriptionPlanFeatureLimit.deleteMany({
+          where: { planId: existing.id },
+        });
+        await prisma.subscriptionPlanFeatureLimit.createMany({
+          data: Object.entries(planData.features).map(([featureName, config]) => ({
+            planId: existing.id,
+            featureName,
+            isEnabled: config.enabled,
+            usageLimit: config.limit,
+          })),
+        });
+        plansUpdated++;
+      } else {
+        // Create new plan
+        await prisma.subscriptionPlan.create({
+          data: {
+            name: planData.name,
+            description: planData.description,
+            isFree: planData.isFree,
+            tier: planData.tier,
+            isPopular: planData.isPopular,
+            priceMonthly: planData.priceMonthly,
+            priceYearly: planData.priceYearly,
+            yearlyDiscountPercent: planData.yearlyDiscountPercent,
+            priceCurrency: planData.priceCurrency,
+            featureLimits: {
+              create: Object.entries(planData.features).map(([featureName, config]) => ({
+                featureName,
+                isEnabled: config.enabled,
+                usageLimit: config.limit,
+              })),
+            },
+          },
+        });
+        plansCreated++;
+      }
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('💳', 'Subscription Plans', SUBSCRIPTION_PLANS.length, SUBSCRIPTION_PLANS.length));
-  results.push({ created: plansCreated, skipped: plansSkipped });
+  results.push({ created: plansCreated, updated: plansUpdated });
 
-  // ===== 4. Stripe Sync =====
+  // ===== 5. Stripe Sync =====
   let stripeSynced = false;
   if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_TODO') {
     stripeSynced = await runStripeSync();
   }
   console.log(formatStripeLine(stripeSynced));
 
-  // ===== 5. OpenAI Pricing =====
+  // ===== 6. OpenAI Pricing (upsert) =====
   let pricingCreated = 0;
-  let pricingSkipped = 0;
+  let pricingUpdated = 0;
   for (const pricing of OPENAI_PRICING) {
     try {
-      const existing = await prisma.openAIPricing.findUnique({ where: { modelName: pricing.modelName } });
-      if (existing) { pricingSkipped++; continue; }
-      await prisma.openAIPricing.create({ data: pricing });
-      pricingCreated++;
+      const result = await prisma.openAIPricing.upsert({
+        where: { modelName: pricing.modelName },
+        update: {
+          inputPricePerMToken: pricing.inputPricePerMToken,
+          outputPricePerMToken: pricing.outputPricePerMToken,
+          cachePricePerMToken: pricing.cachePricePerMToken,
+          description: pricing.description,
+          isActive: pricing.isActive,
+        },
+        create: pricing,
+      });
+      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
+        pricingCreated++;
+      } else {
+        pricingUpdated++;
+      }
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('🤖', 'OpenAI Pricing', OPENAI_PRICING.length, OPENAI_PRICING.length));
-  results.push({ created: pricingCreated, skipped: pricingSkipped });
+  results.push({ created: pricingCreated, updated: pricingUpdated });
 
-  // ===== 6. OpenAI Alerts =====
+  // ===== 7. OpenAI Alerts (upsert) =====
   let alertsCreated = 0;
-  let alertsSkipped = 0;
+  let alertsUpdated = 0;
   for (const alert of OPENAI_ALERTS) {
     try {
       const existing = await prisma.openAIAlert.findFirst({ where: { type: alert.type } });
-      if (existing) { alertsSkipped++; continue; }
-      await prisma.openAIAlert.create({ data: alert });
-      alertsCreated++;
+      if (existing) {
+        await prisma.openAIAlert.update({
+          where: { id: existing.id },
+          data: {
+            threshold: alert.threshold,
+            enabled: alert.enabled,
+            name: alert.name,
+            description: alert.description,
+          },
+        });
+        alertsUpdated++;
+      } else {
+        await prisma.openAIAlert.create({ data: alert });
+        alertsCreated++;
+      }
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('🔔', 'OpenAI Alerts', OPENAI_ALERTS.length, OPENAI_ALERTS.length));
-  results.push({ created: alertsCreated, skipped: alertsSkipped });
+  results.push({ created: alertsCreated, updated: alertsUpdated });
 
-  // ===== 7. Settings =====
-  const allSettings = [...AI_MODEL_SETTINGS, ...CREDIT_SETTINGS, ...FEATURE_SETTINGS, ...SYSTEM_SETTINGS];
+  // ===== 8. Settings (upsert) =====
+  const allSettings = [
+    ...AI_MODEL_SETTINGS,
+    ...CREDIT_SETTINGS,
+    ...FEATURE_SETTINGS,
+    ...SYSTEM_SETTINGS,
+    ...PDF_IMPORT_SETTINGS,
+    ...OPENAI_SETTINGS,
+    ...CV_DISPLAY_SETTINGS,
+  ];
   let settingsCreated = 0;
-  let settingsSkipped = 0;
+  let settingsUpdated = 0;
   for (const setting of allSettings) {
     try {
-      const existing = await prisma.setting.findUnique({ where: { settingName: setting.settingName } });
-      if (existing) { settingsSkipped++; continue; }
-      await prisma.setting.create({ data: setting });
-      settingsCreated++;
+      const result = await prisma.setting.upsert({
+        where: { settingName: setting.settingName },
+        update: {
+          value: setting.value,
+          category: setting.category,
+          description: setting.description,
+        },
+        create: setting,
+      });
+      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
+        settingsCreated++;
+      } else {
+        settingsUpdated++;
+      }
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('⚙️ ', 'Settings', allSettings.length, allSettings.length));
-  results.push({ created: settingsCreated, skipped: settingsSkipped });
+  results.push({ created: settingsCreated, updated: settingsUpdated });
 
-  // ===== 8. Feature Mappings =====
+  // ===== 9. Feature Mappings (upsert) =====
   let mappingsCreated = 0;
-  let mappingsSkipped = 0;
+  let mappingsUpdated = 0;
   for (const mapping of FEATURE_MAPPINGS) {
     try {
-      const existing = await prisma.featureMapping.findUnique({ where: { featureKey: mapping.featureKey } });
-      if (existing) { mappingsSkipped++; continue; }
-      await prisma.featureMapping.create({
-        data: {
+      const result = await prisma.featureMapping.upsert({
+        where: { featureKey: mapping.featureKey },
+        update: {
+          displayName: mapping.displayName,
+          settingNames: mapping.settingNames,
+          openAICallNames: mapping.openAICallNames,
+          planFeatureNames: mapping.planFeatureNames,
+        },
+        create: {
           featureKey: mapping.featureKey,
           displayName: mapping.displayName,
           settingNames: mapping.settingNames,
@@ -876,18 +1284,23 @@ async function main() {
           planFeatureNames: mapping.planFeatureNames,
         },
       });
-      mappingsCreated++;
+      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
+        mappingsCreated++;
+      } else {
+        mappingsUpdated++;
+      }
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('🔗', 'Feature Mappings', FEATURE_MAPPINGS.length, FEATURE_MAPPINGS.length));
-  results.push({ created: mappingsCreated, skipped: mappingsSkipped });
+  results.push({ created: mappingsCreated, updated: mappingsUpdated });
 
   // ===== Summary =====
-  totalCreated = results.reduce((sum, r) => sum + r.created, 0);
-  totalSkipped = results.reduce((sum, r) => sum + r.skipped, 0);
+  totalCreated = results.reduce((sum, r) => sum + (r.created || 0), 0);
+  totalSkipped = results.reduce((sum, r) => sum + (r.skipped || 0), 0);
+  const totalUpdated = results.reduce((sum, r) => sum + (r.updated || 0), 0);
 
   console.log('\n────────────────────────────────────────────────────');
-  console.log(`✨ Seeding complete! ${COLORS.green}${totalCreated} created${COLORS.reset}, ${COLORS.dim}${totalSkipped} skipped${COLORS.reset}\n`);
+  console.log(`✨ Seeding complete! ${COLORS.green}${totalCreated} created${COLORS.reset}, ${COLORS.cyan}${totalUpdated} updated${COLORS.reset}, ${COLORS.dim}${totalSkipped} skipped${COLORS.reset}\n`);
 }
 
 main()

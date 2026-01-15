@@ -93,7 +93,7 @@ export default function LanguageSwitcher() {
                 bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl
                 flex items-center justify-center
                 overflow-hidden
-                hover:shadow-xl hover:bg-white/30
+                hover:shadow-sm-xl hover:bg-white/30
                 transition-all duration-200
                 cursor-pointer
                 p-1
@@ -123,7 +123,7 @@ export default function LanguageSwitcher() {
           bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl
           flex items-center justify-center
           overflow-hidden
-          hover:shadow-xl hover:bg-white/30
+          hover:shadow-sm-xl hover:bg-white/30
           transition-all duration-200
           cursor-pointer
           p-1

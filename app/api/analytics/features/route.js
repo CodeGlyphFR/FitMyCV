@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
+import { CommonErrors } from '@/lib/api/apiErrors';
 import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -13,12 +14,16 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request) {
   try {
+    // Vérifier l'authentification
     const session = await auth();
+    if (!session?.user?.id) {
+      return CommonErrors.notAuthenticated();
+    }
 
     // Only admin can access analytics
-    if (session?.user?.role !== 'ADMIN') {
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: 'Unauthorized - Admin access required' },
+        { error: 'Forbidden - Admin access required' },
         { status: 403 }
       );
     }
@@ -106,7 +111,6 @@ export async function GET(request) {
           totalDuration: 0,
           userIds: new Set(),
           lastUsedAt: event.timestamp,
-          analysisLevelBreakdown: {},
         };
       }
 
@@ -118,19 +122,6 @@ export async function GET(request) {
       }
       if (new Date(event.timestamp) > new Date(stats.lastUsedAt)) {
         stats.lastUsedAt = event.timestamp;
-      }
-
-      // Parse metadata for analysis level breakdown (for generate_cv)
-      if (event.metadata && featureName === 'generate_cv') {
-        try {
-          const meta = JSON.parse(event.metadata);
-          if (meta.analysisLevel) {
-            stats.analysisLevelBreakdown[meta.analysisLevel] =
-              (stats.analysisLevelBreakdown[meta.analysisLevel] || 0) + 1;
-          }
-        } catch (e) {
-          // Ignore parsing errors
-        }
       }
     });
 
@@ -144,10 +135,52 @@ export async function GET(request) {
         : 0,
       userCount: stats.userIds.size,
       lastUsedAt: stats.lastUsedAt,
-      analysisLevelBreakdown: Object.keys(stats.analysisLevelBreakdown).length > 0
-        ? stats.analysisLevelBreakdown
-        : null,
     }));
+
+    // Add CV generation stats from BackgroundTask (cv_generation_v2)
+    // Note: createdAt/updatedAt are BigInt (Unix timestamp in ms) in BackgroundTask
+    const taskWhereClause = {
+      type: 'cv_generation_v2',
+      status: 'completed',
+      ...(startDate ? { createdAt: { gte: BigInt(startDate.getTime()) } } : {}),
+      ...(userId ? { userId } : {}),
+    };
+
+    const cvGenerationTasks = await prisma.backgroundTask.findMany({
+      where: taskWhereClause,
+      select: {
+        userId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (cvGenerationTasks.length > 0) {
+      const userIds = new Set();
+      let totalDuration = 0;
+      let lastUsedAt = Number(cvGenerationTasks[0].createdAt);
+
+      cvGenerationTasks.forEach(task => {
+        if (task.userId) userIds.add(task.userId);
+        // Calculate duration from createdAt to updatedAt (both are BigInt timestamps)
+        if (task.createdAt && task.updatedAt) {
+          totalDuration += Number(task.updatedAt) - Number(task.createdAt);
+        }
+        const taskCreatedAt = Number(task.createdAt);
+        if (taskCreatedAt > lastUsedAt) {
+          lastUsedAt = taskCreatedAt;
+        }
+      });
+
+      features.push({
+        featureName: 'gpt_cv_generation',
+        totalUsage: cvGenerationTasks.length,
+        totalDuration,
+        avgDuration: cvGenerationTasks.length > 0 ? Math.round(totalDuration / cvGenerationTasks.length) : 0,
+        userCount: userIds.size,
+        lastUsedAt: new Date(lastUsedAt),
+      });
+    }
 
     // Sort by total usage
     features.sort((a, b) => b.totalUsage - a.totalUsage);

@@ -249,7 +249,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
               type="button"
               onClick={()=>oauthClick(provider.id)}
               disabled={!provider.enabled}
-              className={`h-12 w-12 rounded-full border flex items-center justify-center transition ${provider.enabled ? "hover:shadow" : "opacity-40 cursor-not-allowed"}`}
+              className={`group relative h-12 w-12 rounded-full border border-white/40 flex items-center justify-center transition ${provider.enabled ? "hover:shadow-sm hover:border-white/60" : "opacity-40 cursor-not-allowed"}`}
               aria-label={provider.label}
             >
               <Image
@@ -260,6 +260,14 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
                 className={`object-contain ${["github", "apple"].includes(provider.id) ? "invert" : ""}`}
                 priority
               />
+              {!provider.enabled && (
+                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="12" cy="12" r="9" />
+                    <line x1="7" y1="7" x2="17" y2="17" />
+                  </svg>
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -299,7 +307,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
                     type="text"
                     value={firstName}
                     onChange={event => setFirstName(event.target.value)}
-                    className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+                    className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                     placeholder={t("auth.firstName")}
                     autoComplete="given-name"
                   />
@@ -312,7 +320,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
                     type="text"
                     value={lastName}
                     onChange={event => setLastName(event.target.value)}
-                    className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+                    className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                     placeholder={t("auth.lastName")}
                     autoComplete="family-name"
                   />
@@ -330,7 +338,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
               inputMode="email"
               value={email}
               onChange={event => setEmail(event.target.value)}
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
               placeholder="email@example.com"
               autoComplete={isRegister ? "email" : "username"}
             />
@@ -343,7 +351,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
               name="password"
               value={password}
               onChange={event => setPassword(event.target.value)}
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
               placeholder="••••••••"
               autoComplete={isRegister ? "new-password" : "current-password"}
             />
@@ -358,7 +366,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
                 name="confirmPassword"
                 value={confirmPassword}
                 onChange={event => setConfirmPassword(event.target.value)}
-                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                 placeholder="••••••••"
                 autoComplete="new-password"
               />
@@ -366,17 +374,17 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           ) : null}
 
           {successMessage ? (
-            <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{successMessage}</div>
+            <div className="rounded-sm border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{successMessage}</div>
           ) : null}
 
           {error ? (
-            <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+            <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
           ) : null}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded border border-emerald-500 bg-emerald-500 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60"
+            className="w-full rounded-sm border border-emerald-500 bg-emerald-500 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60"
           >
             {loading ? t("auth.pleaseWait") : (isRegister ? t("auth.createAccount") : t("auth.login"))}
           </button>

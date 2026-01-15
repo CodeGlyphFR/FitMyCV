@@ -2,13 +2,12 @@
 
 import React from "react";
 import Modal from "@/components/ui/Modal";
-import { ANALYSIS_OPTIONS } from "@/lib/i18n/cvLabels";
 import { getCvIcon } from "../utils/cvUtils";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
 import ItemLabel from "../components/ItemLabel";
 import { CREATE_TEMPLATE_OPTION } from "../utils/constants";
-import { getPlanTier } from "@/lib/subscription/planUtils";
-import Tooltip from "@/components/ui/Tooltip";
+import { useCreditCost } from "@/hooks/useCreditCost";
+import CreditCostDisplay from "@/components/ui/CreditCostDisplay";
 
 /**
  * Modal de génération de CV à partir d'une offre d'emploi
@@ -31,63 +30,29 @@ export default function CvGeneratorModal({
   setBaseSelectorOpen,
   generatorSourceItems,
   generatorBaseItem,
-  analysisLevel,
-  setAnalysisLevel,
-  currentAnalysisOption,
   generatorError,
   linkHistory,
+  deleteLinkHistory,
+  refreshLinkHistory,
   linkHistoryDropdowns,
   setLinkHistoryDropdowns,
+  isSubmitting,
   tickerResetKey,
   t,
   baseSelectorRef,
   baseDropdownRef,
-  allowedAnalysisLevels = ['rapid', 'medium', 'deep'],
-  plans = [],
 }) {
-  // Fonction pour déterminer quel badge afficher pour un niveau bloqué
-  // en trouvant le plan avec le tier le plus bas qui autorise ce niveau
-  // Retourne { planName, planId } pour le tooltip et la redirection
-  const getLevelBadge = (levelId) => {
-    // Si le niveau est autorisé, pas de badge
-    if (allowedAnalysisLevels.includes(levelId)) {
-      return { planName: null, planId: null };
-    }
+  // Récupérer les coûts en crédits
+  const { showCosts, getCost } = useCreditCost();
 
-    // Trouver tous les plans qui autorisent ce niveau
-    const plansWithLevel = plans.filter(plan => {
-      const featureLimit = plan.featureLimits?.find(
-        limit => limit.featureName === 'gpt_cv_generation'
-      );
+  // Calculer le coût total (liens non vides + fichiers)
+  const linkCount = linkInputs.filter((l) => l.trim() !== "").length;
+  const fileCount = (fileSelection || []).length;
+  const totalOperations = Math.max(linkCount + fileCount, 1);
+  const unitCost = getCost("gpt_cv_generation");
+  const totalCost = unitCost * totalOperations;
+  const costDetail = totalOperations > 1 ? `${totalOperations} × ${unitCost}` : null;
 
-      if (!featureLimit?.allowedAnalysisLevels) return false;
-
-      try {
-        const levels = JSON.parse(featureLimit.allowedAnalysisLevels);
-        return levels.includes(levelId);
-      } catch {
-        return false;
-      }
-    });
-
-    // Si aucun plan n'autorise ce niveau, ne pas afficher de badge
-    if (plansWithLevel.length === 0) return { planName: null, planId: null };
-
-    // Trouver le plan avec le tier le plus bas
-    const minTierPlan = plansWithLevel.reduce((min, plan) => {
-      const planTier = getPlanTier(plan);
-      const minTier = getPlanTier(min);
-      return planTier < minTier ? plan : min;
-    }, plansWithLevel[0]);
-
-    // Retourner le nom et l'ID du plan
-    return { planName: minTierPlan.name, planId: minTierPlan.id };
-  };
-
-  // Handler pour le clic sur un niveau bloqué - redirige vers le plan spécifique
-  const handleBlockedLevelClick = (planId) => {
-    window.location.href = `/account/subscriptions?highlightPlan=${planId}`;
-  };
   return (
     <Modal
       open={open}
@@ -105,7 +70,7 @@ export default function CvGeneratorModal({
             <button
               type="button"
               onClick={() => setBaseSelectorOpen((prev) => !prev)}
-              className="w-full min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm flex items-center justify-between gap-3 text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+              className="w-full min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm flex items-center justify-between gap-3 text-white transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
             >
               <span className="flex items-center gap-3 min-w-0 overflow-hidden">
                 {generatorBaseFile === CREATE_TEMPLATE_OPTION ? (
@@ -123,7 +88,7 @@ export default function CvGeneratorModal({
                       key={`gen-base-icon-${generatorBaseFile}-${generatorBaseItem.createdBy}`}
                       className="flex h-6 w-6 items-center justify-center shrink-0"
                     >
-                      {getCvIcon(generatorBaseItem.createdBy, generatorBaseItem.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
+                      {getCvIcon(generatorBaseItem.createdBy, generatorBaseItem.originalCreatedBy, "h-4 w-4", generatorBaseItem.isTranslated) || <DefaultCvIcon className="h-4 w-4" size={16} />}
                     </span>
                     <span className="min-w-0">
                       <ItemLabel
@@ -145,7 +110,7 @@ export default function CvGeneratorModal({
             {baseSelectorOpen ? (
               <div
                 ref={baseDropdownRef}
-                className="absolute z-10 mt-1 w-full rounded-lg border-2 border-white/30 bg-slate-900/95 backdrop-blur-3xl shadow-2xl max-h-60 overflow-y-auto"
+                className="absolute z-10 mt-1 w-full rounded-lg border-2 border-white/30 bg-slate-900/95 backdrop-blur-3xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar"
                 style={{ backdropFilter: 'blur(40px)' }}
               >
                 <ul className="py-1">
@@ -183,7 +148,7 @@ export default function CvGeneratorModal({
                           key={`gen-dropdown-icon-${item.file}-${item.createdBy}`}
                           className="flex h-6 w-6 items-center justify-center shrink-0"
                         >
-                          {getCvIcon(item.createdBy, item.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
+                          {getCvIcon(item.createdBy, item.originalCreatedBy, "h-4 w-4", item.isTranslated) || <DefaultCvIcon className="h-4 w-4" size={16} />}
                         </span>
                         <ItemLabel
                           item={item}
@@ -208,48 +173,87 @@ export default function CvGeneratorModal({
               <div className="relative">
                 <button
                   type="button"
+                  data-link-history-dropdown="true"
                   onClick={() => {
+                    const isOpening = !linkHistoryDropdowns[index];
+                    if (isOpening && refreshLinkHistory) {
+                      refreshLinkHistory();
+                    }
                     setLinkHistoryDropdowns(prev => ({
                       ...prev,
                       [index]: !prev[index]
                     }));
                   }}
-                  className="h-full rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200 disabled:opacity-50"
+                  className="h-full rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 hover:border-white/30 transition-colors duration-200 disabled:opacity-50"
                   title={t("cvGenerator.loadRecentLink")}
-                  disabled={linkHistory.length === 0}
                 >
                   📋
                 </button>
                 {linkHistoryDropdowns[index] && linkHistory.length > 0 && (
-                  <div className="absolute left-0 top-full mt-1 w-80 max-h-60 overflow-y-auto bg-slate-900/95 backdrop-blur-3xl border-2 border-white/30 rounded-lg shadow-2xl z-10" style={{ backdropFilter: 'blur(40px)' }}>
+                  <div
+                    data-link-history-dropdown="true"
+                    className="absolute left-0 top-full mt-1 w-80 max-h-48 overflow-y-auto scrollbar-hidden bg-slate-900/95 backdrop-blur-3xl border-2 border-white/30 rounded-lg shadow-2xl z-10"
+                    style={{ backdropFilter: 'blur(40px)' }}
+                  >
                     <div className="p-2 border-b border-white/20 bg-white/10 text-xs font-medium text-white drop-shadow">
                       {t("cvGenerator.recentLinks")}
                     </div>
                     <ul className="py-1">
-                      {linkHistory.map((link, histIndex) => (
-                        <li key={histIndex}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              updateLink(link, index);
-                              setLinkHistoryDropdowns(prev => ({
-                                ...prev,
-                                [index]: false
-                              }));
-                            }}
-                            className="w-full px-3 py-2 text-left text-xs text-white hover:bg-white/25 truncate transition-colors duration-200"
-                            title={link}
-                          >
-                            {link}
-                          </button>
-                        </li>
-                      ))}
+                      {linkHistory.map((linkItem, histIndex) => {
+                        // linkItem est maintenant un objet {url, title, domain}
+                        const url = typeof linkItem === 'string' ? linkItem : linkItem.url;
+                        const title = typeof linkItem === 'object' ? linkItem.title : null;
+                        const domain = typeof linkItem === 'object' ? linkItem.domain : null;
+
+                        // Formater l'affichage: "Titre (Domaine)" ou juste le lien si pas de titre
+                        let displayText;
+                        if (title) {
+                          // Tronquer le titre à 40 caractères
+                          const truncatedTitle = title.length > 40 ? title.slice(0, 37) + '...' : title;
+                          displayText = domain ? `${truncatedTitle} (${domain})` : truncatedTitle;
+                        } else {
+                          // Fallback: juste le lien
+                          displayText = url;
+                        }
+
+                        return (
+                          <li key={histIndex} className="flex items-center">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateLink(url, index);
+                                setLinkHistoryDropdowns(prev => ({
+                                  ...prev,
+                                  [index]: false
+                                }));
+                              }}
+                              className="flex-1 px-3 py-2 text-left text-xs text-white hover:bg-white/25 truncate transition-colors duration-200"
+                              title={url}
+                            >
+                              {displayText}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (linkItem.id) {
+                                  deleteLinkHistory(linkItem.id);
+                                }
+                              }}
+                              className="px-2 py-2 text-white/50 hover:text-red-400 hover:bg-white/10 transition-colors duration-200"
+                              title={t("topbar.delete")}
+                            >
+                              ✕
+                            </button>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}
               </div>
               <input
-                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                 placeholder={t("cvGenerator.linkPlaceholder")}
                 value={value}
                 onChange={(event) => updateLink(event.target.value, index)}
@@ -257,7 +261,7 @@ export default function CvGeneratorModal({
               <button
                 type="button"
                 onClick={() => removeLinkField(index)}
-                className="rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200"
+                className="rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 hover:border-white/30 transition-colors duration-200"
                 title={t("topbar.delete")}
               >
                 ✕
@@ -268,7 +272,7 @@ export default function CvGeneratorModal({
             <button
               type="button"
               onClick={addLinkField}
-              className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200 inline-flex items-center gap-1"
+              className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 hover:border-white/30 transition-colors duration-200 inline-flex items-center gap-1"
             >
               <img src="/icons/add.png" alt="" className="h-3 w-3 " /> {t("cvGenerator.addLink")}
             </button>
@@ -288,7 +292,7 @@ export default function CvGeneratorModal({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200 flex items-center justify-center gap-2 group"
+            className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-white hover:bg-white/10 hover:border-white/30 transition-colors duration-200 flex items-center justify-center gap-2 group"
           >
             <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -313,7 +317,7 @@ export default function CvGeneratorModal({
               <button
                 type="button"
                 onClick={clearFiles}
-                className="mt-1 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200"
+                className="mt-1 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 hover:border-white/30 transition-colors duration-200"
               >
                 {t("cvGenerator.clearFiles")}
               </button>
@@ -321,76 +325,18 @@ export default function CvGeneratorModal({
           ) : null}
         </div>
 
-        <div className="space-y-2">
-          <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("cvGenerator.analysisQuality")}</div>
-          <div className="grid grid-cols-3 gap-1 rounded-lg border border-white/20 bg-white/5 p-1 text-xs sm:text-sm">
-            {ANALYSIS_OPTIONS(t).map((option) => {
-              const active = option.id === analysisLevel;
-              const isAllowed = allowedAnalysisLevels.includes(option.id);
-              const { planName, planId } = getLevelBadge(option.id);
-
-              const buttonContent = (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => {
-                    if (isAllowed) {
-                      setAnalysisLevel(option.id);
-                    } else {
-                      handleBlockedLevelClick(planId);
-                    }
-                  }}
-                  className={`
-                    rounded-md px-2 py-1 font-medium transition-all duration-200 relative w-full
-                    ${active && isAllowed ? "bg-emerald-400 text-white shadow" : ""}
-                    ${!active && isAllowed ? "text-white/80 hover:bg-white/20" : ""}
-                    ${!isAllowed ? "text-white/80 hover:bg-white/20 hover:ring-2 hover:ring-white/30 cursor-pointer" : ""}
-                  `}
-                  aria-pressed={active && isAllowed}
-                >
-                  {option.label}
-                  {planName && (
-                    <span className={`
-                      absolute -top-1 -right-1
-                      text-[9px] px-1.5 py-0.5 rounded-full font-semibold
-                      shadow-lg
-                      ${planName === 'Premium' || planName.toLowerCase().includes('premium') ? 'bg-gradient-to-r from-purple-500 to-violet-600 border border-purple-300 text-white' : ''}
-                      ${planName === 'Pro' || planName.toLowerCase().includes('pro') ? 'bg-gradient-to-r from-blue-500 to-cyan-600 border border-blue-300 text-white' : ''}
-                      ${!planName.toLowerCase().includes('premium') && !planName.toLowerCase().includes('pro') ? 'bg-gradient-to-r from-blue-500 to-cyan-600 border border-blue-300 text-white' : ''}
-                    `}>
-                      {planName}
-                    </span>
-                  )}
-                </button>
-              );
-
-              // Si le niveau est bloqué, wrapper avec Tooltip (2 lignes)
-              if (!isAllowed && planName) {
-                return (
-                  <Tooltip
-                    key={option.id}
-                    content={<>{t("cvGenerator.upgradeTooltipLine1", { planName })}<br/>{t("cvGenerator.upgradeTooltipLine2")}</>}
-                    position="top"
-                    className="w-full"
-                  >
-                    {buttonContent}
-                  </Tooltip>
-                );
-              }
-
-              return buttonContent;
-            })}
-          </div>
-          <p className="text-xs text-white/70 drop-shadow">
-            {currentAnalysisOption.hint}
-          </p>
-        </div>
-
         {generatorError ? (
-          <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {generatorError}
           </div>
         ) : null}
+
+        {/* Affichage du coût en crédits (mode crédits-only uniquement) */}
+        <CreditCostDisplay
+          cost={totalCost}
+          show={showCosts}
+          detail={costDetail}
+        />
 
         <div className="flex justify-end gap-2">
           <button
@@ -402,10 +348,10 @@ export default function CvGeneratorModal({
           </button>
           <button
             type="submit"
-            className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60"
-            disabled={!generatorBaseFile}
+            className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            disabled={!generatorBaseFile || isSubmitting}
           >
-            {t("cvGenerator.validate")}
+            {isSubmitting ? t("cvGenerator.submitting") : t("cvGenerator.validate")}
           </button>
         </div>
       </form>

@@ -10,9 +10,11 @@ import BackgroundTasksProvider from "@/components/BackgroundTasksProvider";
 import RealtimeRefreshProvider from "@/components/RealtimeRefreshProvider";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { SettingsProvider } from "@/lib/settings/SettingsContext";
+import { CreditCostsProvider } from "@/lib/creditCosts/CreditCostsContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import RecaptchaProvider from "@/components/RecaptchaProvider";
 import OnboardingProvider from "@/components/onboarding/OnboardingProvider";
+import PipelineProgressProvider from "@/components/PipelineProgressProvider";
 
 export default function RootProviders({ session, initialSettings, children }){
   const pathname = usePathname();
@@ -22,6 +24,7 @@ export default function RootProviders({ session, initialSettings, children }){
     <SessionProvider session={session}>
       <RecaptchaProvider>
         <SettingsProvider initialSettings={initialSettings}>
+        <CreditCostsProvider>
         <LanguageProvider>
         <NotificationProvider>
         <AdminProvider>
@@ -35,9 +38,11 @@ export default function RootProviders({ session, initialSettings, children }){
             ) : (
               <RealtimeRefreshProvider>
                 <BackgroundTasksProvider>
-                  {children}
-                  <NotificationContainer />
-                  <LanguageSwitcher />
+                  <PipelineProgressProvider>
+                    {children}
+                    <NotificationContainer />
+                    <LanguageSwitcher />
+                  </PipelineProgressProvider>
                 </BackgroundTasksProvider>
               </RealtimeRefreshProvider>
             )}
@@ -45,6 +50,7 @@ export default function RootProviders({ session, initialSettings, children }){
         </AdminProvider>
         </NotificationProvider>
         </LanguageProvider>
+        </CreditCostsProvider>
       </SettingsProvider>
       </RecaptchaProvider>
     </SessionProvider>

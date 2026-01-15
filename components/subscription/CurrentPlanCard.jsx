@@ -526,7 +526,7 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
                 type="checkbox"
                 checked={acceptedYearlyTerms}
                 onChange={(e) => setAcceptedYearlyTerms(e.target.checked)}
-                className="mt-1 w-4 h-4 rounded-sm border-2 border-white/30 bg-white/5 appearance-none cursor-pointer transition-all checked:bg-gradient-to-br checked:from-emerald-500/40 checked:to-emerald-600/40 checked:border-emerald-400/60 focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-0 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
+                className="mt-1 w-4 h-4 rounded-xs border-2 border-white/30 bg-white/5 appearance-none cursor-pointer transition-all checked:bg-gradient-to-br checked:from-emerald-500/40 checked:to-emerald-600/40 checked:border-emerald-400/60 focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-0 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
               />
               <span className="text-sm text-white/80 group-hover:text-white transition-colors">
                 {t('subscription.currentPlan.yearlyWarningModal.termsLabel', 'J\'accepte les')}{' '}

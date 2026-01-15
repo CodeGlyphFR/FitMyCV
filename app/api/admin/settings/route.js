@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
+import dbEmitter from '@/lib/events/dbEmitter';
 
 /**
  * GET /api/admin/settings
@@ -90,6 +91,13 @@ export async function POST(request) {
         category,
         description: description || null,
       },
+    });
+
+    // Émettre l'événement SSE pour notifier tous les clients (broadcast)
+    dbEmitter.emitSettingsUpdate({
+      action: 'created',
+      settingName,
+      category,
     });
 
     return NextResponse.json({ setting }, { status: 201 });

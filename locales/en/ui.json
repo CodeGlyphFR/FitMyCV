@@ -12,6 +12,7 @@
     "myCvs": "My CVs",
     "myAccount": "My account",
     "subscriptions": "Subscriptions & Credits",
+    "subscriptions_credits_only": "Manage my credits",
     "logout": "Log out",
     "analyzeOffers": "Offer Analysis",
     "coverLetters": "Cover Letters",
@@ -25,11 +26,6 @@
     "cvInProgress": "CV in progress",
     "jobTitlePlaceholder": "Enter a job title (e.g., Full-Stack Developer)",
     "jobTitlePlaceholderMobile": "e.g., Full-Stack Developer",
-    "analysisLevels": {
-      "rapid": "Fast",
-      "medium": "Medium",
-      "deep": "Deep"
-    },
     "filter": "Filter",
     "filterTitle": "Filters",
     "filterCvType": "CV Type",
@@ -73,6 +69,24 @@
       "deleteFailed": "Delete failed:"
     }
   },
+  "bulkDeleteModal": {
+    "title": "Bulk Delete",
+    "hint": "Ctrl+click on delete button",
+    "selectCvs": "Select CVs to delete:",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "selected": "{count} CV(s) selected",
+    "currentCvDisabled": "Current CV (cannot delete)",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "confirmMessage": "Are you sure you want to delete {count} CV(s)? This action is irreversible.",
+    "errors": {
+      "deleteFailed": "Deletion failed:"
+    },
+    "success": "{count} CV(s) deleted successfully",
+    "noCvsToDelete": "No other CVs to delete"
+  },
   "export": {
     "noCvSelected": "No CV selected for export.",
     "errors": {
@@ -106,7 +120,7 @@
       "save": "Save",
       "necessary": {
         "title": "Necessary cookies",
-        "description": "Essential for the site to function.",
+        "description": "Essential for the site to function (session, security, language).",
         "active": "Active"
       },
       "functional": {
@@ -115,7 +129,7 @@
       },
       "analytics": {
         "title": "Analytics cookies",
-        "description": "Site usage statistics."
+        "description": "Privacy-friendly audience measurement."
       },
       "marketing": {
         "title": "Marketing cookies",
@@ -135,8 +149,8 @@
       "necessary": {
         "title": "Necessary cookies",
         "alwaysActive": "Always active",
-        "description": "These cookies are essential for the site to function. They enable authentication, security, and basic navigation. They cannot be disabled.",
-        "examples": "User session, CSRF tokens, language preferences"
+        "description": "These cookies are essential for the site to function. They enable authentication, security, basic navigation and language preference. They cannot be disabled.",
+        "examples": "User session, CSRF tokens, language preference"
       },
       "functional": {
         "title": "Functional cookies",
@@ -145,8 +159,8 @@
       },
       "analytics": {
         "title": "Analytics cookies",
-        "description": "These cookies help us understand how you use our site to improve it. Data is anonymized and aggregated.",
-        "examples": "Pages visited, time spent, user journey"
+        "description": "These cookies help us understand how you use our site to improve it. We use privacy-friendly tools.",
+        "examples": "Pages visited, time spent, traffic source"
       },
       "marketing": {
         "title": "Marketing cookies",
@@ -256,7 +270,9 @@
     "success": "Success",
     "close": "Close",
     "confirmation": "Confirmation",
-    "locale": "en-US"
+    "locale": "en-US",
+    "yes": "Yes",
+    "no": "No"
   },
   "editMode": {
     "on": "✏️ Edit ON",
@@ -359,5 +375,11 @@
         "4": "Enterprise"
       }
     }
+  },
+  "credits": {
+    "costLabel": "Cost",
+    "unit": "credit",
+    "unitPlural": "credits",
+    "useCredits": "Use {count} Cr."
   }
 }

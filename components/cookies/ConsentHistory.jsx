@@ -180,7 +180,7 @@ export default function ConsentHistory() {
             ))}
           </div>
 
-          <div className="mt-4 p-3 bg-emerald-500/20 backdrop-blur-sm rounded text-xs">
+          <div className="mt-4 p-3 bg-emerald-500/20 backdrop-blur-sm rounded-sm text-xs">
             <p className="text-white drop-shadow">
               <strong>ℹ️ {t('cookies.history.gdprCompliant')} :</strong> {t('cookies.history.gdprNote')}
             </p>

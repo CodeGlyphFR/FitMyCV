@@ -6,6 +6,7 @@ import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import { capitalizeSkillName, toTitleCase } from "@/lib/utils/textFormatting";
 
 export default function Extras(props){
   const { t } = useLanguage();
@@ -50,7 +51,7 @@ export default function Extras(props){
   if (extras.length===0 && !editing) return null;
 
   return (
-    <Section title={<div className="flex items-center justify-between gap-2"><span>{title}</span>{editing && (<button onClick={()=>setAddOpen(true)} className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-all duration-200">{t("common.add")}</button>)}</div>}>
+    <Section title={<div className="flex items-center justify-between gap-2"><span>{title}</span>{editing && (<button onClick={()=>setAddOpen(true)} className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-colors duration-200">{t("common.add")}</button>)}</div>}>
       {extras.length === 0 ? (
         editing ? (
           <div className="rounded-xl border border-white/15 p-3 text-sm opacity-60">
@@ -66,7 +67,7 @@ export default function Extras(props){
               return (
                 <div key={originalIndex} className="relative inline-block rounded-full border border-white/15 px-3 py-1 text-sm overflow-visible">
                   <div className={editing ? "pr-12" : ""}>
-                    <span className="font-semibold">{e.name || ""}</span>
+                    <span className="font-semibold">{toTitleCase(e.name) || ""}</span>
                     <span className="text-sm opacity-80"> : {e.summary || ""}</span>
                   </div>
                   {editing && (
@@ -87,7 +88,7 @@ export default function Extras(props){
                 return (
                   <div key={originalIndex} className="rounded-xl border border-white/15 p-3 relative z-0 overflow-visible">
                     <div className={editing ? "pr-12" : ""}>
-                      <div className="font-semibold">{e.name || ""}</div>
+                      <div className="font-semibold">{toTitleCase(e.name) || ""}</div>
                       <div className="text-sm opacity-80">{e.summary || ""}</div>
                     </div>
                     {editing && (
@@ -106,8 +107,8 @@ export default function Extras(props){
 
       <Modal open={editIndex!==null} onClose={()=>setEditIndex(null)} title={t("cvSections.editExtras")}>
         <div className="grid gap-2">
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.extraTitle")} value={f.name} onChange={e=>setF({...f,name:e.target.value})} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.extraSummary")} value={f.summary} onChange={e=>setF({...f,summary:e.target.value})} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.extraTitle")} value={f.name} onChange={e=>setF({...f,name:e.target.value})} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.extraSummary")} value={f.summary} onChange={e=>setF({...f,summary:e.target.value})} />
           <div className="flex justify-end gap-2">
             <button onClick={()=>setEditIndex(null)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
             <button onClick={save} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.save")}</button>
@@ -117,8 +118,8 @@ export default function Extras(props){
 
       <Modal open={addOpen} onClose={()=>setAddOpen(false)} title={t("cvSections.addExtra")}>
         <div className="grid gap-2">
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.extraTitle")} value={nf.name} onChange={e=>setNf({...nf,name:e.target.value})} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.extraSummary")} value={nf.summary} onChange={e=>setNf({...nf,summary:e.target.value})} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.extraTitle")} value={nf.name} onChange={e=>setNf({...nf,name:e.target.value})} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.extraSummary")} value={nf.summary} onChange={e=>setNf({...nf,summary:e.target.value})} />
           <div className="flex justify-end gap-2">
             <button onClick={()=>setAddOpen(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
             <button onClick={add} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.add")}</button>

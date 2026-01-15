@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 import { clearAiModelCache } from '@/lib/settings/aiModels';
+import { invalidatePdfConfigCache } from '@/lib/openai/pdfToImages';
+import dbEmitter from '@/lib/events/dbEmitter';
 
 /**
  * PUT /api/admin/settings/[id]
@@ -19,7 +21,8 @@ export async function PUT(request, { params }) {
       );
     }
 
-    const { id } = params;
+    // Next.js 16: params est maintenant async
+    const { id } = await params;
     const body = await request.json();
     const { value, category, description } = body;
 
@@ -52,6 +55,19 @@ export async function PUT(request, { params }) {
       console.log(`[Settings API] Cache des modèles IA vidé après modification de ${existing.settingName}`);
     }
 
+    // Vider le cache PDF si on modifie un setting pdf_import
+    if (existing.category === 'pdf_import') {
+      invalidatePdfConfigCache();
+      console.log(`[Settings API] Cache PDF vidé après modification de ${existing.settingName}`);
+    }
+
+    // Émettre l'événement SSE pour notifier tous les clients (broadcast)
+    dbEmitter.emitSettingsUpdate({
+      action: 'updated',
+      settingName: existing.settingName,
+      category: existing.category,
+    });
+
     return NextResponse.json({ setting });
 
   } catch (error) {
@@ -79,7 +95,8 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    const { id } = params;
+    // Next.js 16: params est maintenant async
+    const { id } = await params;
 
     // Check if setting exists
     const existing = await prisma.setting.findUnique({
@@ -95,6 +112,13 @@ export async function DELETE(request, { params }) {
 
     await prisma.setting.delete({
       where: { id },
+    });
+
+    // Émettre l'événement SSE pour notifier tous les clients (broadcast)
+    dbEmitter.emitSettingsUpdate({
+      action: 'deleted',
+      settingName: existing.settingName,
+      category: existing.category,
     });
 
     return NextResponse.json({ success: true });

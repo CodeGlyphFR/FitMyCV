@@ -28,6 +28,7 @@ export function useLinkHistory() {
 
       const data = await response.json();
       if (data.success && Array.isArray(data.links)) {
+        // Les liens sont maintenant des objets {url, title, domain}
         setHistory(data.links);
       }
     } catch (error) {
@@ -75,10 +76,31 @@ export function useLinkHistory() {
     }
   }, [isAuthenticated, loadHistory]);
 
+  // Delete a link by ID
+  const deleteLink = useCallback(async (linkId) => {
+    if (!isAuthenticated || !linkId) return false;
+
+    try {
+      const response = await fetch(`/api/link-history?id=${linkId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete link');
+
+      // Mettre à jour l'état local immédiatement
+      setHistory(prev => prev.filter(link => link.id !== linkId));
+      return true;
+    } catch (error) {
+      console.warn('Failed to delete link:', error);
+      return false;
+    }
+  }, [isAuthenticated]);
+
   return {
     history,
     loading,
     addLinksToHistory,
+    deleteLink,
     refreshHistory: loadHistory,
   };
 }

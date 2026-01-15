@@ -10,11 +10,14 @@ export const metadata = {
 
 export const runtime = "nodejs";
 
-export default async function AuthPage({ searchParams }){
+export default async function AuthPage(props){
   const session = await auth();
   if (session?.user?.id){
     redirect("/");
   }
+
+  // Next.js 16: searchParams est maintenant async
+  const searchParams = await props.searchParams;
 
   // Récupérer les settings registration_enabled et maintenance_enabled depuis la base
   let registrationEnabled = true; // Valeur par défaut

@@ -16,14 +16,12 @@ import {
  * Query params:
  * - taskType (required): Type de tâche (generation, import-pdf, etc.)
  * - model (optional): Modèle OpenAI utilisé
- * - analysisLevel (optional): Niveau d'analyse (rapid, medium, deep)
  */
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const taskType = searchParams.get('taskType');
     const model = searchParams.get('model');
-    const analysisLevel = searchParams.get('analysisLevel');
 
     if (!taskType) {
       return NextResponse.json(

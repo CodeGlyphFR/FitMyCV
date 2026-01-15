@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 import { killRegisteredProcess } from '@/lib/backgroundTasks/processRegistry';
 import { updateCvFile } from '@/lib/events/prismaWithEvents';
+import { refundCredit } from '@/lib/subscription/credits';
 
 const MAX_PERSISTED_TASKS = 100;
 const MAX_RETURNED_TASKS = 150;
@@ -343,8 +344,32 @@ export async function DELETE(request) {
         select: { type: true, cvFile: true, userId: true, status: true }
       });
 
-      // Ne rembourser le token que si la tâche était en attente ou en cours (pas déjà terminée)
-      const shouldRefundToken = task && (task.status === 'queued' || task.status === 'running');
+      // Ne rembourser les crédits que si la tâche était en attente ou en cours (pas déjà terminée)
+      const shouldRefund = task && (task.status === 'queued' || task.status === 'running');
+
+      // Rembourser les crédits si nécessaire
+      let refundResult = null;
+      if (shouldRefund && task.userId === userId) {
+        // Trouver la transaction de débit associée à cette tâche
+        const creditTransaction = await prisma.creditTransaction.findFirst({
+          where: {
+            taskId: taskId,
+            userId: userId,
+            amount: { lt: 0 }, // Débit (montant négatif)
+            refunded: false,
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        if (creditTransaction) {
+          refundResult = await refundCredit(userId, creditTransaction.id, 'Annulation de tâche');
+          if (refundResult.success) {
+            console.log(`[cancel] ✅ Crédits remboursés pour tâche ${taskId}`);
+          } else {
+            console.error(`[cancel] ❌ Échec remboursement crédits:`, refundResult.error);
+          }
+        }
+      }
 
       const updateResult = await prisma.backgroundTask.updateMany({
         where: { id: taskId, userId },
@@ -394,6 +419,8 @@ export async function DELETE(request) {
         success: updateResult.count > 0,
         cancelled: updateResult.count > 0,
         killInfo: killedProcesses,
+        refunded: refundResult?.success || false,
+        refundedAmount: refundResult?.success ? Math.abs(refundResult.transaction?.amount || 0) : 0,
         timestamp: Date.now(),
       });
     }

@@ -12,6 +12,7 @@
     "myCvs": "Mis CVs",
     "myAccount": "Mi cuenta",
     "subscriptions": "Suscripciones y Créditos",
+    "subscriptions_credits_only": "Gestionar mis créditos",
     "logout": "Cerrar sesión",
     "analyzeOffers": "Análisis de ofertas",
     "coverLetters": "Cartas de presentación",
@@ -25,11 +26,6 @@
     "cvInProgress": "CV en edición",
     "jobTitlePlaceholder": "Introduce un título de puesto (ej: Desarrollador Full-Stack)",
     "jobTitlePlaceholderMobile": "ej: Desarrollador Full-Stack",
-    "analysisLevels": {
-      "rapid": "Rápido",
-      "medium": "Medio",
-      "deep": "Profundo"
-    },
     "filter": "Filtrar",
     "filterTitle": "Filtros",
     "filterCvType": "Tipo de CV",
@@ -73,6 +69,24 @@
       "deleteFailed": "Error al eliminar:"
     }
   },
+  "bulkDeleteModal": {
+    "title": "Eliminación múltiple",
+    "hint": "Ctrl+clic en el botón eliminar",
+    "selectCvs": "Selecciona los CVs a eliminar:",
+    "selectAll": "Seleccionar todo",
+    "deselectAll": "Deseleccionar todo",
+    "selected": "{count} CV(s) seleccionado(s)",
+    "currentCvDisabled": "CV actual (no eliminable)",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "deleting": "Eliminando...",
+    "confirmMessage": "¿Estás seguro de que quieres eliminar {count} CV(s)? Esta acción es irreversible.",
+    "errors": {
+      "deleteFailed": "Error al eliminar:"
+    },
+    "success": "{count} CV(s) eliminado(s) con éxito",
+    "noCvsToDelete": "No hay otros CVs para eliminar"
+  },
   "export": {
     "noCvSelected": "Ningún CV seleccionado para exportar.",
     "errors": {
@@ -106,7 +120,7 @@
       "save": "Guardar",
       "necessary": {
         "title": "Cookies necesarias",
-        "description": "Esenciales para que el sitio funcione.",
+        "description": "Esenciales para que el sitio funcione (sesión, seguridad, idioma).",
         "active": "Activo"
       },
       "functional": {
@@ -115,7 +129,7 @@
       },
       "analytics": {
         "title": "Cookies de análisis",
-        "description": "Estadísticas de uso del sitio."
+        "description": "Medición de audiencia respetuosa con la privacidad."
       },
       "marketing": {
         "title": "Cookies de marketing",
@@ -135,8 +149,8 @@
       "necessary": {
         "title": "Cookies necesarias",
         "alwaysActive": "Siempre activo",
-        "description": "Estas cookies son esenciales para que el sitio funcione. Permiten la autenticación, seguridad y navegación básica. No se pueden desactivar.",
-        "examples": "Sesión de usuario, tokens CSRF, preferencias de idioma"
+        "description": "Estas cookies son esenciales para que el sitio funcione. Permiten la autenticación, seguridad, navegación básica y preferencia de idioma. No se pueden desactivar.",
+        "examples": "Sesión de usuario, tokens CSRF, preferencia de idioma"
       },
       "functional": {
         "title": "Cookies funcionales",
@@ -145,8 +159,8 @@
       },
       "analytics": {
         "title": "Cookies de análisis",
-        "description": "Estas cookies nos ayudan a entender cómo usas nuestro sitio para mejorarlo. Los datos son anónimos y agregados.",
-        "examples": "Páginas visitadas, tiempo en el sitio, recorrido del usuario"
+        "description": "Estas cookies nos ayudan a entender cómo usas nuestro sitio para mejorarlo. Usamos herramientas respetuosas con la privacidad.",
+        "examples": "Páginas visitadas, tiempo en el sitio, origen del tráfico"
       },
       "marketing": {
         "title": "Cookies de marketing",
@@ -256,7 +270,9 @@
     "success": "Éxito",
     "close": "Cerrar",
     "confirmation": "Confirmación",
-    "locale": "es-ES"
+    "locale": "es-ES",
+    "yes": "Sí",
+    "no": "No"
   },
   "editMode": {
     "on": "✏️ Edición ON",
@@ -359,5 +375,11 @@
         "4": "Enterprise"
       }
     }
+  },
+  "credits": {
+    "costLabel": "Costo",
+    "unit": "crédito",
+    "unitPlural": "créditos",
+    "useCredits": "Usar {count} Cr."
   }
 }

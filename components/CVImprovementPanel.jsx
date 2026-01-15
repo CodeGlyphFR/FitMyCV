@@ -7,6 +7,8 @@ import { useSettings } from "@/lib/settings/SettingsContext";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
 import { RefreshCw, X, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
 import { parseApiError } from "@/lib/utils/errorHandler";
+import { useCreditCost } from "@/hooks/useCreditCost";
+import CreditCostDisplay from "@/components/ui/CreditCostDisplay";
 
 export default function CVImprovementPanel({ cvFile }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,9 +20,16 @@ export default function CVImprovementPanel({ cvFile }) {
   const [mounted, setMounted] = useState(false);
   const [showAllMissingSkills, setShowAllMissingSkills] = useState(false);
   const [showAllMatchingSkills, setShowAllMatchingSkills] = useState(false);
+  // États pour la sélection des améliorations
+  const [selectedSuggestions, setSelectedSuggestions] = useState(new Set()); // indices sélectionnés
+  const [selectedMissingSkills, setSelectedMissingSkills] = useState(new Map()); // skill → niveau
+  const [openSkillMenu, setOpenSkillMenu] = useState(null); // index du skill avec menu ouvert
+  const [suggestionContexts, setSuggestionContexts] = useState(new Map()); // index → contexte utilisateur
   const { t, language } = useLanguage();
   const { settings } = useSettings();
   const { addNotification } = useNotifications();
+  const { showCosts, getCost } = useCreditCost();
+  const optimizeCost = getCost("optimize_cv");
   const animationRef = useRef(null);
   const scrollYRef = useRef(0);
   const modalRef = useRef(null);
@@ -240,6 +249,90 @@ export default function CVImprovementPanel({ cvFile }) {
     }
   };
 
+  // Niveaux de compétences disponibles
+  const SKILL_LEVELS = [
+    { value: 'awareness', label: t('skillLevels.awareness') || 'Notions' },
+    { value: 'beginner', label: t('skillLevels.beginner') || 'Débutant' },
+    { value: 'intermediate', label: t('skillLevels.intermediate') || 'Intermédiaire' },
+    { value: 'proficient', label: t('skillLevels.proficient') || 'Compétent' },
+    { value: 'advanced', label: t('skillLevels.advanced') || 'Avancé' },
+    { value: 'expert', label: t('skillLevels.expert') || 'Expert' },
+  ];
+
+  // Fonction pour toggle une suggestion
+  const toggleSuggestion = (index) => {
+    setSelectedSuggestions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+        // Supprimer le contexte associé si on désélectionne
+        setSuggestionContexts(prevContexts => {
+          const newContexts = new Map(prevContexts);
+          newContexts.delete(index);
+          return newContexts;
+        });
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
+
+  // Fonction pour mettre à jour le contexte d'une suggestion
+  const updateSuggestionContext = (index, context) => {
+    setSuggestionContexts(prev => {
+      const newMap = new Map(prev);
+      if (context.trim()) {
+        newMap.set(index, context);
+      } else {
+        newMap.delete(index);
+      }
+      return newMap;
+    });
+  };
+
+  // Fonction pour sélectionner une compétence avec un niveau
+  const selectMissingSkill = (skill, level) => {
+    setSelectedMissingSkills(prev => {
+      const newMap = new Map(prev);
+      newMap.set(skill, level);
+      return newMap;
+    });
+    setOpenSkillMenu(null);
+  };
+
+  // Fonction pour désélectionner une compétence
+  const deselectMissingSkill = (skill) => {
+    setSelectedMissingSkills(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(skill);
+      return newMap;
+    });
+    setOpenSkillMenu(null);
+  };
+
+  // Fermer le dropdown skill quand on clique en dehors (phase de capture)
+  useEffect(() => {
+    if (!openSkillMenu) return;
+
+    const handleClickOutside = (e) => {
+      const dropdown = document.querySelector(`[data-skill-dropdown="${openSkillMenu}"]`);
+      if (dropdown && !dropdown.contains(e.target)) {
+        setOpenSkillMenu(null);
+      }
+    };
+
+    // Utiliser capture: true pour intercepter avant stopPropagation
+    document.addEventListener('mousedown', handleClickOutside, true);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+    };
+  }, [openSkillMenu]);
+
+  // Vérifier si au moins une sélection est faite
+  const hasSelection = selectedSuggestions.size > 0 || selectedMissingSkills.size > 0;
+
   // Fonction pour obtenir la couleur du score (texte)
   const getScoreColor = (score) => {
     if (score >= 80) return 'text-green-600';
@@ -257,6 +350,7 @@ export default function CVImprovementPanel({ cvFile }) {
   };
 
   // Fonction pour lancer l'amélioration automatique
+  // Tous les cas (skills seuls, suggestions seules, ou les deux) passent par /api/cv/improve
   const handleImprove = async () => {
     // Bloquer si optimisation déjà en cours (sécurité anti-spam)
     if (!canOptimize) {
@@ -264,7 +358,26 @@ export default function CVImprovementPanel({ cvFile }) {
       return;
     }
 
+    // Bloquer si aucune sélection
+    if (!hasSelection) {
+      console.log('[CVImprovementPanel] Aucune sélection, clic ignoré');
+      return;
+    }
+
+    // Préparer les skills à ajouter
+    const missingSkillsToAdd = Array.from(selectedMissingSkills.entries()).map(([skill, level]) => ({
+      skill,
+      level
+    }));
+
+    // Préparer les suggestions avec leur contexte
+    const suggestionsWithContext = Array.from(selectedSuggestions).map(index => ({
+      index,
+      context: suggestionContexts.get(index) || ''
+    }));
+
     try {
+      // Toujours utiliser /api/cv/improve (unifié pour skills et suggestions)
       const response = await fetch("/api/cv/improve", {
         method: "POST",
         headers: {
@@ -272,8 +385,9 @@ export default function CVImprovementPanel({ cvFile }) {
         },
         body: JSON.stringify({
           cvFile,
-          analysisLevel: "deep", // Utiliser le niveau max pour l'amélioration
-          replaceExisting: true, // Remplacer le CV existant au lieu d'en créer un nouveau
+          replaceExisting: true,
+          suggestionsWithContext: suggestionsWithContext.length > 0 ? suggestionsWithContext : [],
+          missingSkillsToAdd: missingSkillsToAdd.length > 0 ? missingSkillsToAdd : [],
         }),
       });
 
@@ -281,13 +395,11 @@ export default function CVImprovementPanel({ cvFile }) {
         const errorData = await response.json();
         const apiError = parseApiError(response, errorData);
 
-        // Gestion spéciale pour la limite de rate
         if (response.status === 429) {
           alert(`⏱️ ${errorData.details || apiError.message}`);
           return;
         }
 
-        // Check if action is required (e.g., need to buy credits)
         if (apiError.actionRequired && apiError.redirectUrl) {
           setIsOpen(false);
           addNotification({
@@ -402,25 +514,14 @@ export default function CVImprovementPanel({ cvFile }) {
         data-onboarding="optimize"
         onClick={() => setIsOpen(true)}
         disabled={shouldDisableButton}
-        className={`
-          relative w-9 h-9 rounded-full flex items-center justify-center
-          bg-white/20 backdrop-blur-md ios-blur-medium border-2 border-white/30 shadow-2xl gpu-accelerate
-          transition-all duration-300
-          ${shouldDisableButton
-            ? 'cursor-not-allowed'
-            : 'cursor-pointer hover:shadow-xl hover:bg-white/30'
-          }
-        `}
+        className={`relative w-9 h-9 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-md ios-blur-medium border-2 border-white/30 shadow-2xl gpu-accelerate transition-all duration-300 ${shouldDisableButton ? 'cursor-not-allowed' : 'cursor-pointer hover:shadow-xs-xl hover:bg-white/30'}`}
         title={shouldDisableButton
           ? (cvData?.optimiseStatus === 'inprogress' ? labels.improvementInProgress : labels.calculatingScore)
           : labels.title}
       >
         {/* Icône principale avec blur pendant le chargement */}
         <span
-          className={`
-            transition-all duration-300
-            ${shouldDisableButton ? 'blur-sm' : 'blur-0'}
-          `}
+          className={`transition-all duration-300 ${shouldDisableButton ? 'blur-sm' : 'blur-0'}`}
         >
           <img src="/icons/analyzer.png" alt="Analyzer" className="h-4 w-4" />
         </span>
@@ -555,7 +656,7 @@ export default function CVImprovementPanel({ cvFile }) {
 
             {/* Content - Scrollable */}
             <div
-              className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 custom-scrollbar"
               style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
               onTouchStart={() => { isDraggingRef.current = false; }}
               onTouchMove={() => { isDraggingRef.current = true; }}
@@ -766,51 +867,94 @@ export default function CVImprovementPanel({ cvFile }) {
                               {labels.suggestions}
                             </h3>
                             <div className="space-y-2">
-                              {suggestions.map((suggestion, index) => (
-                                <div
-                                  key={index}
-                                  style={{ animationDelay: `${index * 0.1}s` }}
-                                  className={`
-                                    p-3 rounded-xl border-l-4 transition-all duration-300 hover:-translate-y-0.5
-                                    ${suggestion.priority?.toLowerCase() === 'high'
-                                      ? 'bg-red-500/10 border-red-500 hover:bg-red-500/20'
-                                      : suggestion.priority?.toLowerCase() === 'medium'
-                                      ? 'bg-yellow-500/10 border-yellow-500 hover:bg-yellow-500/20'
-                                      : 'bg-green-500/10 border-green-500 hover:bg-green-500/20'
-                                    }
-                                    animate-scale-in
-                                  `}
-                                >
-                                  <div className="flex items-start justify-between mb-1.5 gap-2">
-                                    <span className={`
-                                      inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full whitespace-nowrap
-                                      ${suggestion.priority?.toLowerCase() === 'high'
-                                        ? 'bg-red-500/30 text-white animate-pulse'
-                                        : suggestion.priority?.toLowerCase() === 'medium'
-                                        ? 'bg-yellow-500/30 text-white'
-                                        : 'bg-green-500/30 text-white'
-                                      }
-                                    `}>
-                                      {suggestion.priority?.toLowerCase() === 'high' ? '🔥' :
-                                       suggestion.priority?.toLowerCase() === 'medium' ? '⚡' : '✨'}
-                                      {labels[suggestion.priority?.toLowerCase()] || suggestion.priority}
-                                    </span>
-                                    {suggestion.impact && (
-                                      <span className="text-[10px] font-semibold text-white whitespace-nowrap bg-white/10 px-2 py-0.5 rounded-full">
-                                        {suggestion.impact}
-                                      </span>
+                              {suggestions.map((suggestion, index) => {
+                                const isSelected = selectedSuggestions.has(index);
+                                const priorityLower = suggestion.priority?.toLowerCase();
+                                return (
+                                  <div
+                                    key={index}
+                                    style={{ animationDelay: `${index * 0.1}s` }}
+                                    onClick={() => toggleSuggestion(index)}
+                                    className={`p-3 rounded-xl border-l-4 transition-all duration-300 cursor-pointer animate-scale-in ${
+                                      priorityLower === 'high'
+                                        ? isSelected
+                                          ? 'bg-red-500/30 border-red-500 ring-2 ring-red-500/50 ring-inset'
+                                          : 'bg-red-500/10 border-red-500 hover:bg-red-500/20'
+                                        : priorityLower === 'medium'
+                                        ? isSelected
+                                          ? 'bg-yellow-500/30 border-yellow-500 ring-2 ring-yellow-500/50 ring-inset'
+                                          : 'bg-yellow-500/10 border-yellow-500 hover:bg-yellow-500/20'
+                                        : isSelected
+                                          ? 'bg-green-500/30 border-green-500 ring-2 ring-green-500/50 ring-inset'
+                                          : 'bg-green-500/10 border-green-500 hover:bg-green-500/20'
+                                    }`}
+                                  >
+                                    <div className="flex items-start justify-between mb-1.5 gap-2">
+                                      <div className="flex items-center gap-2">
+                                        {/* Checkbox */}
+                                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+                                          isSelected
+                                            ? priorityLower === 'high'
+                                              ? 'bg-red-500 border-red-500'
+                                              : priorityLower === 'medium'
+                                              ? 'bg-yellow-500 border-yellow-500'
+                                              : 'bg-green-500 border-green-500'
+                                            : 'border-white/40 bg-transparent'
+                                        }`}>
+                                          {isSelected && (
+                                            <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                          )}
+                                        </div>
+                                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full whitespace-nowrap ${
+                                          priorityLower === 'high'
+                                            ? 'bg-red-500/30 text-white'
+                                            : priorityLower === 'medium'
+                                            ? 'bg-yellow-500/30 text-white'
+                                            : 'bg-green-500/30 text-white'
+                                        } ${priorityLower === 'high' && !isSelected ? 'animate-pulse' : ''}`}>
+                                          {priorityLower === 'high' ? '🔥' :
+                                           priorityLower === 'medium' ? '⚡' : '✨'}
+                                          {labels[priorityLower] || suggestion.priority}
+                                        </span>
+                                      </div>
+                                      {suggestion.impact && (
+                                        <span className="text-[10px] font-semibold text-white whitespace-nowrap bg-white/10 px-2 py-0.5 rounded-full">
+                                          {suggestion.impact}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {suggestion.title && (
+                                      <h4 className="text-sm font-semibold text-white mb-1">
+                                        {suggestion.title}
+                                      </h4>
+                                    )}
+                                    <p className="text-xs leading-relaxed text-white/80 break-words">
+                                      {suggestion.suggestion}
+                                    </p>
+                                    {/* Champ contexte visible quand la suggestion est sélectionnée */}
+                                    {isSelected && (
+                                      <div className="mt-3 pt-3 border-t border-white/10">
+                                        <textarea
+                                          onClick={(e) => e.stopPropagation()}
+                                          value={suggestionContexts.get(index) || ''}
+                                          onChange={(e) => updateSuggestionContext(index, e.target.value)}
+                                          placeholder={t('optimization.contextPlaceholder') || 'Ajoutez du contexte (optionnel)...'}
+                                          maxLength={500}
+                                          rows={2}
+                                          className="w-full px-3 py-2 text-xs bg-black/20 border border-white/10 rounded-lg text-white placeholder-white/40 resize-none focus:outline-none focus:ring-1 focus:ring-white/30 focus:border-white/20"
+                                        />
+                                        <div className="flex justify-end mt-1">
+                                          <span className="text-[10px] text-white/40">
+                                            {(suggestionContexts.get(index) || '').length}/500
+                                          </span>
+                                        </div>
+                                      </div>
                                     )}
                                   </div>
-                                  {suggestion.title && (
-                                    <h4 className="text-sm font-semibold text-white mb-1">
-                                      {suggestion.title}
-                                    </h4>
-                                  )}
-                                  <p className="text-xs leading-relaxed text-white/80 break-words">
-                                    {suggestion.suggestion}
-                                  </p>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                             {/* Note sur la langue du contenu */}
                             <div className="mt-4 text-center">
@@ -834,29 +978,96 @@ export default function CVImprovementPanel({ cvFile }) {
                               {labels.missingSkills}
                             </h3>
                             <div className="flex flex-wrap gap-2">
-                              {visibleMissingSkills.map((skill, index) => (
-                                <span
-                                  key={index}
-                                  className="
-                                    px-3 py-1 bg-red-500/20 text-white
-                                    rounded-full text-xs font-medium border border-red-400/30
-                                    hover:scale-105 hover:bg-red-500/30 transition-all duration-200
-                                  "
-                                >
-                                  {skill}
-                                </span>
-                              ))}
+                              {visibleMissingSkills.map((skill, index) => {
+                                const isSelected = selectedMissingSkills.has(skill);
+                                const selectedLevel = selectedMissingSkills.get(skill);
+                                const isMenuOpen = openSkillMenu === skill;
+
+                                return (
+                                  <div key={index} className="relative">
+                                    {isMenuOpen ? (
+                                      // Dropdown inline pour sélectionner le niveau
+                                      <div
+                                        data-skill-dropdown={skill}
+                                        className="relative z-20 flex flex-col bg-slate-800 rounded-lg border border-red-400/50 overflow-hidden min-w-[160px]"
+                                      >
+                                        <div className="px-3 py-1.5 text-xs font-medium text-white border-b border-white/10 bg-slate-900/50">
+                                          {skill}
+                                        </div>
+                                        {/* Liste scrollable des niveaux - affiche 2 et scroll pour le reste */}
+                                        <div className="max-h-[76px] overflow-y-auto scrollbar-thin scrollbar-thumb-red-500/50 scrollbar-track-slate-700/30">
+                                          {SKILL_LEVELS.map((level) => (
+                                            <button
+                                              key={level.value}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                selectMissingSkill(skill, level.value);
+                                              }}
+                                              className={`w-full px-3 py-1.5 text-xs text-left hover:bg-red-500/30 transition-colors ${
+                                                selectedLevel === level.value ? 'bg-red-500/40 text-white font-medium' : 'text-white/80'
+                                              }`}
+                                            >
+                                              {level.label}
+                                            </button>
+                                          ))}
+                                        </div>
+                                        {/* Bouton désélectionner uniquement si déjà sélectionné */}
+                                        {isSelected && (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              deselectMissingSkill(skill);
+                                            }}
+                                            className="px-3 py-1.5 text-xs text-center text-red-400 hover:bg-red-500/20 border-t border-white/10 transition-colors"
+                                          >
+                                            {t('optimization.deselect') || 'Désélectionner'}
+                                          </button>
+                                        )}
+                                      </div>
+                                    ) : isSelected ? (
+                                      // Badge sélectionné avec niveau - reste rouge avec coche
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setOpenSkillMenu(skill);
+                                        }}
+                                        className="flex flex-col items-start px-3 py-1.5 bg-red-400/20 text-white rounded-lg text-xs font-medium border border-red-400/40 hover:bg-red-400/30 transition-all duration-200 cursor-pointer"
+                                      >
+                                        <span className="flex items-center gap-1.5">
+                                          {/* Checkbox cochée */}
+                                          <div className="w-3.5 h-3.5 rounded border-2 border-red-400 bg-red-500 flex items-center justify-center flex-shrink-0">
+                                            <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                          </div>
+                                          {skill}
+                                        </span>
+                                        <span className="text-[10px] text-white/50 mt-0.5 ml-5">
+                                          {SKILL_LEVELS.find(l => l.value === selectedLevel)?.label || selectedLevel}
+                                        </span>
+                                      </button>
+                                    ) : (
+                                      // Badge normal (non sélectionné) avec checkbox vide
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setOpenSkillMenu(skill);
+                                        }}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-400/20 text-white rounded-lg text-xs font-medium border border-red-400/40 hover:bg-red-400/30 hover:border-red-400/60 transition-all duration-200 cursor-pointer"
+                                      >
+                                        {/* Checkbox vide pour indiquer que c'est cliquable */}
+                                        <div className="w-3.5 h-3.5 rounded border-2 border-red-400/60 bg-transparent flex-shrink-0" />
+                                        {skill}
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              })}
                               {/* Bouton toggle si plus de 5 skills */}
                               {hiddenMissingCount > 0 && (
                                 <button
                                   onClick={() => setShowAllMissingSkills(!showAllMissingSkills)}
-                                  className="
-                                    px-3 py-1 bg-red-500/20 text-red-300
-                                    rounded-full text-xs font-medium border border-red-400/40
-                                    hover:bg-red-500/30 hover:border-red-400/60
-                                    transition-all duration-200 cursor-pointer
-                                    inline-flex items-center gap-1
-                                  "
+                                  className="px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-xs font-medium border border-red-400/40 hover:bg-red-500/30 hover:border-red-400/60 transition-all duration-200 cursor-pointer inline-flex items-center gap-1"
                                 >
                                   {showAllMissingSkills ? (
                                     <>
@@ -886,12 +1097,7 @@ export default function CVImprovementPanel({ cvFile }) {
                               {visibleMatchingSkills.map((skill, index) => (
                                 <span
                                   key={index}
-                                  className="
-                                    px-3 py-1 bg-green-500/20 text-white
-                                    rounded-full text-xs font-medium border border-green-400/30
-                                    hover:scale-105 hover:bg-green-500/30 transition-all duration-200
-                                    inline-flex items-center gap-1
-                                  "
+                                  className="px-3 py-1 bg-green-500/20 text-white rounded-full text-xs font-medium border border-green-400/30 hover:scale-105 hover:bg-green-500/30 transition-all duration-200 inline-flex items-center gap-1"
                                 >
                                   <span className="text-green-300">✓</span>
                                   {skill}
@@ -901,13 +1107,7 @@ export default function CVImprovementPanel({ cvFile }) {
                               {hiddenMatchingCount > 0 && (
                                 <button
                                   onClick={() => setShowAllMatchingSkills(!showAllMatchingSkills)}
-                                  className="
-                                    px-3 py-1 bg-green-500/20 text-green-300
-                                    rounded-full text-xs font-medium border border-green-400/40
-                                    hover:bg-green-500/30 hover:border-green-400/60
-                                    transition-all duration-200 cursor-pointer
-                                    inline-flex items-center gap-1
-                                  "
+                                  className="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-xs font-medium border border-green-400/40 hover:bg-green-500/30 hover:border-green-400/60 transition-all duration-200 cursor-pointer inline-flex items-center gap-1"
                                 >
                                   {showAllMatchingSkills ? (
                                     <>
@@ -943,9 +1143,17 @@ export default function CVImprovementPanel({ cvFile }) {
             {/* Footer avec divider */}
             <div className="flex-shrink-0">
               <div className="border-t border-white/10" />
+
+              {/* Affichage du coût en crédits (mode crédits-only uniquement) */}
+              {suggestions.length > 0 && showCosts && optimizeCost > 0 && (
+                <div className="px-4 pt-4 md:px-6 md:pt-6">
+                  <CreditCostDisplay cost={optimizeCost} show={true} />
+                </div>
+              )}
+
               <div className="flex justify-center items-center gap-3 p-4 md:p-6">
                 {/* Bouton amélioration automatique */}
-                {suggestions.length > 0 && (
+                {(suggestions.length > 0 || missingSkills.length > 0) && (
                   <>
                     {!canOptimize ? (
                       // Amélioration ou calcul en cours
@@ -958,18 +1166,25 @@ export default function CVImprovementPanel({ cvFile }) {
                           ? labels.improvementInProgress
                           : labels.calculatingScore}
                       </button>
-                    ) : (
-                      // Bouton actif
+                    ) : !hasSelection ? (
+                      // Aucune sélection - bouton désactivé
                       <button
-                        onClick={handleImprove}
-                        className="
-                          px-6 py-2.5 rounded-lg text-sm font-semibold
-                          bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600
-                          text-white hover:shadow-lg
-                          transition-all duration-200
-                        "
+                        disabled
+                        className="px-6 py-2.5 rounded-lg text-sm font-semibold bg-white/10 text-white/40 cursor-not-allowed"
+                        title={t('optimization.noSelection') || 'Sélectionnez au moins une amélioration'}
                       >
                         {labels.autoImprove}
+                      </button>
+                    ) : (
+                      // Bouton actif avec sélections
+                      <button
+                        onClick={handleImprove}
+                        className="px-6 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600 text-white hover:shadow-lg transition-all duration-200"
+                      >
+                        {labels.autoImprove}
+                        <span className="ml-2 px-1.5 py-0.5 text-xs bg-white/20 rounded">
+                          {selectedSuggestions.size + selectedMissingSkills.size}
+                        </span>
                       </button>
                     )}
                   </>
@@ -978,11 +1193,7 @@ export default function CVImprovementPanel({ cvFile }) {
                 {/* Bouton fermer */}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="
-                    px-4 py-2.5 text-sm
-                    text-slate-400 hover:text-white
-                    transition-colors
-                  "
+                  className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors"
                 >
                   {labels.close}
                 </button>

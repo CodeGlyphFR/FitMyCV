@@ -87,7 +87,7 @@ export function CustomSelect({ value, onChange, options, className = '', placeho
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-full px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-400/50 backdrop-blur-xl flex items-center justify-between ${className}`}
+          className={`w-full px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm bg-white/10 border border-white/20 rounded-lg text-white focus:outline-hidden focus:ring-2 focus:ring-blue-400/50 backdrop-blur-xl flex items-center justify-between ${className}`}
         >
           <span className={`truncate ${selectedOption ? '' : 'text-white/40'}`}>
             {selectedOption ? selectedOption.label : placeholder}
@@ -109,7 +109,7 @@ export function CustomSelect({ value, onChange, options, className = '', placeho
             width: dropdownRect.width,
             zIndex: 10003,
           }}
-          className="rounded-lg border border-white/30 bg-gray-900/95 backdrop-blur-xl backdrop-saturate-150 shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-h-60 overflow-y-auto [overscroll-behavior:contain]"
+          className="rounded-lg border border-white/30 bg-gray-900/95 backdrop-blur-xl backdrop-saturate-150 shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-h-60 overflow-y-auto custom-scrollbar [overscroll-behavior:contain]"
         >
           {options.map((option) => (
             <button

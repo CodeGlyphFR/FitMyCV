@@ -26,7 +26,9 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    const packId = parseInt(params.id, 10);
+    // Next.js 16: params est maintenant async
+    const { id } = await params;
+    const packId = parseInt(id, 10);
     if (isNaN(packId)) {
       return NextResponse.json(
         { error: 'ID de pack invalide' },
@@ -133,7 +135,9 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    const packId = parseInt(params.id, 10);
+    // Next.js 16: params est maintenant async
+    const { id } = await params;
+    const packId = parseInt(id, 10);
     if (isNaN(packId)) {
       return NextResponse.json(
         { error: 'ID de pack invalide' },

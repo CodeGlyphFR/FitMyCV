@@ -1,0 +1,100 @@
+{
+  "name": "adapted_experience",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string",
+        "description": "Titre du poste adapte aux termes de l'offre"
+      },
+      "company": {
+        "type": "string",
+        "description": "Nom de l'entreprise (inchange)"
+      },
+      "location": {
+        "type": "string",
+        "description": "Localisation (inchange)"
+      },
+      "type": {
+        "type": "string",
+        "description": "Type de contrat (inchange)"
+      },
+      "start_date": {
+        "type": "string",
+        "description": "Date de debut (inchange)"
+      },
+      "end_date": {
+        "type": "string",
+        "description": "Date de fin ou 'Present' (inchange)"
+      },
+      "description": {
+        "type": "string",
+        "description": "Description courte adaptee"
+      },
+      "responsibilities": {
+        "type": "array",
+        "description": "Responsabilites reformulees et reordonnees par pertinence",
+        "items": {
+          "type": "string"
+        }
+      },
+      "deliverables": {
+        "type": "array",
+        "description": "Resultats et accomplissements mis en valeur",
+        "items": {
+          "type": "string"
+        }
+      },
+      "skills_used": {
+        "type": "array",
+        "description": "Competences filtrees pour ne garder que les pertinentes",
+        "items": {
+          "type": "string"
+        }
+      },
+      "domain": {
+        "type": "string",
+        "description": "Domaine métier de l'expérience, déterminé en analysant le titre du poste, l'entreprise et les responsabilités (ex: Développement logiciel, Gestion de projet, Data Science, Commercial, Marketing, Finance, etc.)"
+      },
+      "years_in_domain": {
+        "type": "number",
+        "description": "Durée de cette expérience en années (calculée depuis start_date jusqu'à end_date ou aujourd'hui si en cours)"
+      },
+      "modifications": {
+        "type": "array",
+        "description": "Liste detaillee des modifications effectuees avec avant/apres/raison",
+        "items": {
+          "type": "object",
+          "properties": {
+            "field": {
+              "type": "string",
+              "description": "Nom du champ modifie (title, description, responsibilities, deliverables, skills_used)"
+            },
+            "action": {
+              "type": "string",
+              "enum": ["modified", "added", "removed", "reordered"],
+              "description": "Type de modification"
+            },
+            "before": {
+              "type": "string",
+              "description": "Valeur originale avant modification (null si ajout)"
+            },
+            "after": {
+              "type": "string",
+              "description": "Valeur apres modification (null si suppression)"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Raison IA expliquant pourquoi cette modification a ete faite"
+            }
+          },
+          "required": ["field", "action", "before", "after", "reason"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": ["title", "company", "location", "type", "start_date", "end_date", "description", "responsibilities", "deliverables", "skills_used", "domain", "years_in_domain", "modifications"],
+    "additionalProperties": false
+  }
+}

@@ -43,13 +43,16 @@ import prisma from '@/lib/prisma';
 import { grantCredits, debitCredits } from '@/lib/subscription/credits';
 import { changeSubscription, cancelSubscription } from '@/lib/subscription/subscriptions';
 import { resetFeatureCounters } from '@/lib/subscription/featureUsage';
+import { sendPurchaseCreditsEmail } from '@/lib/email/emailService';
 
 // Désactiver le parsing du body par Next.js (requis pour webhooks Stripe)
 export const runtime = 'nodejs';
 
 export async function POST(request) {
   const body = await request.text();
-  const signature = headers().get('stripe-signature');
+  // Next.js 16: headers() est maintenant async
+  const headerStore = await headers();
+  const signature = headerStore.get('stripe-signature');
 
   if (!signature) {
     console.error('[Webhook] Signature manquante');
@@ -565,9 +568,8 @@ async function handleCheckoutCompleted(session) {
   }
 
   console.log(`[Webhook] ${creditAmount} crédits attribués à user ${userId} (checkout.session.completed)`);
-  console.log(`[Webhook] → La facture sera créée dans payment_intent.succeeded (billing details garantis disponibles)`);
-
-  // TODO: Envoyer email de confirmation via Resend
+  console.log(`[Webhook] → La facture sera créée dans charge.succeeded (billing details garantis disponibles)`);
+  // Note: L'email de confirmation est envoyé dans handleChargeSucceeded après création de la facture
 }
 
 /**
@@ -623,8 +625,7 @@ async function handlePaymentSuccess(paymentIntent) {
 
   console.log(`[Webhook] ${creditAmount} crédits attribués à user ${userId} (payment_intent.succeeded fallback)`);
   console.log(`[Webhook] → La facture sera créée dans charge.succeeded (billing_details garantis disponibles)`);
-
-  // TODO: Envoyer email de confirmation via Resend
+  // Note: L'email de confirmation est envoyé dans handleChargeSucceeded après création de la facture
 }
 
 /**
@@ -733,7 +734,40 @@ async function handleChargeSucceeded(charge) {
 
   console.log(`[Webhook] ✅ Facture ${invoiceId} créée et associée à la transaction ${existingTransaction.id}`);
 
-  // TODO: Envoyer email de confirmation via Resend
+  // Envoyer email de confirmation avec lien facture
+  try {
+    // Récupérer l'utilisateur pour l'email
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, name: true },
+    });
+
+    if (user?.email) {
+      // Récupérer l'URL de la facture depuis Stripe
+      const invoice = await stripe.invoices.retrieve(invoiceId);
+      const invoiceUrl = invoice.hosted_invoice_url || invoice.invoice_pdf;
+
+      // Formater le prix (amount est en centimes)
+      const totalPrice = new Intl.NumberFormat('fr-FR', {
+        style: 'currency',
+        currency: paymentIntent.currency.toUpperCase(),
+      }).format(paymentIntent.amount / 100);
+
+      await sendPurchaseCreditsEmail({
+        email: user.email,
+        name: user.name,
+        userId,
+        creditsAmount: creditAmount,
+        totalPrice,
+        invoiceUrl,
+      });
+
+      console.log(`[Webhook] ✅ Email purchase_credits envoyé à ${user.email}`);
+    }
+  } catch (emailError) {
+    // Ne pas bloquer le webhook si l'email échoue
+    console.error('[Webhook] Erreur envoi email purchase_credits (non-bloquant):', emailError);
+  }
 }
 
 /**

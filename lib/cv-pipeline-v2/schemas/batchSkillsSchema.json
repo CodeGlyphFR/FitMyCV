@@ -1,0 +1,82 @@
+{
+  "name": "adapted_skills",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "hard_skills": {
+        "type": "array",
+        "description": "Competences techniques adaptees",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "proficiency": {
+              "type": "string",
+              "enum": ["Notions", "Débutant", "Intermédiaire", "Compétent", "Avancé", "Expert"]
+            }
+          },
+          "required": ["name", "proficiency"],
+          "additionalProperties": false
+        }
+      },
+      "soft_skills": {
+        "type": "array",
+        "description": "Competences comportementales adaptees",
+        "items": { "type": "string" }
+      },
+      "tools": {
+        "type": "array",
+        "description": "Outils adaptes (jamais d'ajout)",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "proficiency": {
+              "type": "string",
+              "enum": ["Notions", "Débutant", "Intermédiaire", "Compétent", "Avancé", "Expert"]
+            }
+          },
+          "required": ["name", "proficiency"],
+          "additionalProperties": false
+        }
+      },
+      "methodologies": {
+        "type": "array",
+        "description": "Methodologies adaptees",
+        "items": { "type": "string" }
+      },
+      "modifications": {
+        "type": "array",
+        "description": "Liste des ajouts/suppressions uniquement (pas de reordering)",
+        "items": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "enum": ["hard_skills", "soft_skills", "tools", "methodologies"],
+              "description": "Categorie du skill modifie"
+            },
+            "skill": {
+              "type": "string",
+              "description": "Nom du skill concerne"
+            },
+            "action": {
+              "type": "string",
+              "enum": ["removed", "level_adjusted", "renamed", "split", "moved", "merged", "inferred"],
+              "description": "Type de modification"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Raison courte (max 15 mots)"
+            }
+          },
+          "required": ["category", "skill", "action", "reason"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": ["hard_skills", "soft_skills", "tools", "methodologies", "modifications"],
+    "additionalProperties": false
+  }
+}

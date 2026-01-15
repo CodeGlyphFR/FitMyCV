@@ -13,7 +13,14 @@ export async function POST(request) {
   }
 
   try {
-    const { cvFile, replaceExisting = false } = await request.json();
+    const {
+      cvFile,
+      replaceExisting = false,
+      selectedSuggestionIndices = null, // [LEGACY] array d'indices, null = toutes les suggestions
+      suggestionsWithContext = null,    // [NEW] array de {index, context}
+      missingSkillsToAdd = [],          // [{skill: string, level: string}]
+      pipelineVersion = 2               // 2 = new 4-stage pipeline (default), 1 = legacy
+    } = await request.json();
 
     if (!cvFile) {
       return CvErrors.missingFilename();
@@ -21,7 +28,7 @@ export async function POST(request) {
 
     const userId = session.user.id;
 
-    // Récupérer les métadonnées du CV depuis la DB
+    // Récupérer les métadonnées du CV depuis la DB avec la relation JobOffer
     const cvRecord = await prisma.cvFile.findUnique({
       where: {
         userId_filename: {
@@ -30,7 +37,7 @@ export async function POST(request) {
         },
       },
       select: {
-        extractedJobOffer: true,
+        jobOffer: true, // Relation vers JobOffer
         scoreBreakdown: true,
         improvementSuggestions: true,
         sourceValue: true,
@@ -52,17 +59,40 @@ export async function POST(request) {
     }
 
     // Parser les suggestions existantes
-    let suggestions = [];
+    let allSuggestions = [];
     try {
-      suggestions = JSON.parse(cvRecord.improvementSuggestions);
+      allSuggestions = JSON.parse(cvRecord.improvementSuggestions);
     } catch (e) {
       console.error("Erreur parsing suggestions:", e);
     }
 
-    if (!suggestions || suggestions.length === 0) {
+    // Filtrer et enrichir les suggestions avec le contexte utilisateur
+    let suggestions = [];
+    if (suggestionsWithContext !== null && Array.isArray(suggestionsWithContext)) {
+      // Nouveau format avec contexte: [{index, context}, ...]
+      suggestions = suggestionsWithContext
+        .filter(s => s.index >= 0 && s.index < allSuggestions.length)
+        .map(s => ({
+          ...allSuggestions[s.index],
+          userContext: s.context || ''
+        }));
+    } else if (selectedSuggestionIndices !== null && Array.isArray(selectedSuggestionIndices)) {
+      // Legacy format sans contexte
+      suggestions = selectedSuggestionIndices
+        .filter(i => i >= 0 && i < allSuggestions.length)
+        .map(i => allSuggestions[i]);
+    } else {
+      suggestions = allSuggestions;
+    }
+
+    // Vérifier qu'il y a soit des suggestions soit des compétences à ajouter
+    const hasSuggestions = suggestions && suggestions.length > 0;
+    const hasSkillsToAdd = missingSkillsToAdd && missingSkillsToAdd.length > 0;
+
+    if (!hasSuggestions && !hasSkillsToAdd) {
       return NextResponse.json({
-        error: "Aucune suggestion d'amélioration disponible",
-        details: "Générez d'abord un CV depuis une offre pour obtenir des suggestions"
+        error: "Aucune amélioration sélectionnée",
+        details: "Sélectionnez au moins une suggestion ou une compétence à ajouter"
       }, { status: 400 });
     }
 
@@ -96,6 +126,7 @@ export async function POST(request) {
           jobOfferUrl: cvRecord.sourceValue,
           currentScore: cvRecord.matchScore || 0,
           suggestions,
+          missingSkillsToAdd,
           replaceExisting
         }),
         creditUsed: usageResult.usedCredit,
@@ -105,17 +136,24 @@ export async function POST(request) {
       }
     });
 
+    // Formater le contenu de l'offre pour l'amélioration
+    const jobOfferContent = cvRecord.jobOffer?.content
+      ? JSON.stringify(cvRecord.jobOffer.content)
+      : null;
+
     // Lancer l'amélioration en arrière-plan via la job queue
     scheduleImproveCvJob({
       taskId,
       user: session.user,
       cvFile,
-      jobOfferContent: cvRecord.extractedJobOffer,
+      jobOfferContent,
       jobOfferUrl: cvRecord.sourceValue, // Gardé pour les métadonnées uniquement
       currentScore: cvRecord.matchScore || 0,
       suggestions,
+      missingSkillsToAdd,
       replaceExisting,
-      deviceId: request.headers.get('x-device-id') || 'unknown'
+      deviceId: request.headers.get('x-device-id') || 'unknown',
+      pipelineVersion // Always pass (default is 2)
     });
 
     return NextResponse.json({

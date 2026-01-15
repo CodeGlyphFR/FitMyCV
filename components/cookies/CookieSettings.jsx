@@ -29,11 +29,10 @@ export default function CookieSettings() {
     setConsent(currentConsent);
     if (currentConsent) {
       // Ne garder que les catégories de cookies (sans timestamp et version)
+      // RGPD v2.0: seulement NECESSARY et ANALYTICS
       const cleanPreferences = {
         [COOKIE_CATEGORIES.NECESSARY]: currentConsent[COOKIE_CATEGORIES.NECESSARY] ?? true,
-        [COOKIE_CATEGORIES.FUNCTIONAL]: currentConsent[COOKIE_CATEGORIES.FUNCTIONAL] ?? false,
         [COOKIE_CATEGORIES.ANALYTICS]: currentConsent[COOKIE_CATEGORIES.ANALYTICS] ?? false,
-        [COOKIE_CATEGORIES.MARKETING]: currentConsent[COOKIE_CATEGORIES.MARKETING] ?? false,
       };
       setPreferences(cleanPreferences);
     }
@@ -198,33 +197,7 @@ export default function CookieSettings() {
             </p>
           </div>
 
-          {/* Cookies fonctionnels */}
-          <div className="bg-white/15 backdrop-blur-xl rounded-lg shadow-2xl p-6">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-emerald-300 mb-2 drop-shadow">
-                  {t('cookies.settings.functional.title')}
-                </h3>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={preferences[COOKIE_CATEGORIES.FUNCTIONAL]}
-                  onChange={() => handleToggleCategory(COOKIE_CATEGORIES.FUNCTIONAL)}
-                  className="sr-only peer"
-                />
-                <div className="w-14 h-7 bg-white/20 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-400/50 rounded-full peer backdrop-blur-sm peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1/2 after:-translate-y-1/2 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-400"></div>
-              </label>
-            </div>
-            <p className="text-sm text-white/90 mb-3 drop-shadow">
-              {t('cookies.settings.functional.description')}
-            </p>
-            <p className="text-xs text-white/70 drop-shadow">
-              <strong>{t('cookies.settings.examplesLabel')}</strong> {t('cookies.settings.functional.examples')}
-            </p>
-          </div>
-
-          {/* Cookies analytiques */}
+          {/* Cookies analytiques (préparé pour Plausible) */}
           <div className="bg-white/15 backdrop-blur-xl rounded-lg shadow-2xl p-6">
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
@@ -239,7 +212,7 @@ export default function CookieSettings() {
                   onChange={() => handleToggleCategory(COOKIE_CATEGORIES.ANALYTICS)}
                   className="sr-only peer"
                 />
-                <div className="w-14 h-7 bg-white/20 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-400/50 rounded-full peer backdrop-blur-sm peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1/2 after:-translate-y-1/2 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-400"></div>
+                <div className="w-14 h-7 bg-white/20 peer-focus:outline-hidden peer-focus:ring-4 peer-focus:ring-emerald-400/50 rounded-full peer backdrop-blur-sm peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1/2 after:-translate-y-1/2 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-400"></div>
               </label>
             </div>
             <p className="text-sm text-white/90 mb-3 drop-shadow">
@@ -250,31 +223,6 @@ export default function CookieSettings() {
             </p>
           </div>
 
-          {/* Cookies marketing */}
-          <div className="bg-white/15 backdrop-blur-xl rounded-lg shadow-2xl p-6">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-emerald-300 mb-2 drop-shadow">
-                  {t('cookies.settings.marketing.title')}
-                </h3>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={preferences[COOKIE_CATEGORIES.MARKETING]}
-                  onChange={() => handleToggleCategory(COOKIE_CATEGORIES.MARKETING)}
-                  className="sr-only peer"
-                />
-                <div className="w-14 h-7 bg-white/20 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-400/50 rounded-full peer backdrop-blur-sm peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1/2 after:-translate-y-1/2 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-400"></div>
-              </label>
-            </div>
-            <p className="text-sm text-white/90 mb-3 drop-shadow">
-              {t('cookies.settings.marketing.description')}
-            </p>
-            <p className="text-xs text-white/70 drop-shadow">
-              <strong>{t('cookies.settings.examplesLabel')}</strong> {t('cookies.settings.marketing.examples')}
-            </p>
-          </div>
         </div>
 
         {/* Boutons d'action */}

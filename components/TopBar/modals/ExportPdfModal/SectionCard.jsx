@@ -1,19 +1,7 @@
 "use client";
 import React, { useState } from 'react';
-
-/**
- * Icônes pour chaque section
- */
-const SECTION_ICONS = {
-  header: '📄',
-  summary: '📝',
-  skills: '💡',
-  experience: '💼',
-  education: '🎓',
-  languages: '🌐',
-  projects: '🚀',
-  extras: '✨'
-};
+import { useSortable } from '@dnd-kit/sortable';
+import { capitalizeSkillName } from "@/lib/utils/textFormatting";
 
 /**
  * Formatte le titre d'un élément de liste (pour experience, education, etc.)
@@ -25,7 +13,7 @@ function formatItemTitle(item, sectionKey) {
     case 'education':
       return `${item.degree || item.field_of_study || 'Formation'} - ${item.institution || 'Établissement inconnu'}`;
     case 'languages':
-      return `${item.name || 'Langue'} (${item.level || 'Niveau inconnu'})`;
+      return `${item.name || 'Langue'} (${capitalizeSkillName(item.level) || 'Niveau inconnu'})`;
     case 'projects':
       return item.name || 'Projet sans nom';
     case 'extras':
@@ -36,7 +24,41 @@ function formatItemTitle(item, sectionKey) {
 }
 
 /**
- * Card de section pour le modal d'export PDF
+ * Composant Checkbox réutilisable
+ */
+function Checkbox({ checked, small = false, disabled = false }) {
+  const size = small ? 'w-4 h-4' : 'w-5 h-5';
+  const iconSize = small ? 'w-2.5 h-2.5' : 'w-3 h-3';
+
+  return (
+    <div
+      className={`${size} flex-shrink-0 rounded border-2 flex items-center justify-center transition-all duration-200 ${
+        disabled
+          ? 'bg-white/5 border-white/20 opacity-40'
+          : checked
+            ? 'bg-emerald-400 border-emerald-400'
+            : 'bg-white/10 border-white/40'
+      }`}
+    >
+      {checked && !disabled && (
+        <svg
+          className={`${iconSize} text-gray-900`}
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="3"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path d="M5 13l4 4L19 7" />
+        </svg>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Card de section pour le modal d'export PDF avec support drag & drop
  */
 export default function SectionCard({
   sectionKey,
@@ -45,299 +67,261 @@ export default function SectionCard({
   subCounts,
   enabled,
   subsections,
+  sectionOptions,
   items,
   itemsData,
   itemsOptions,
   onToggle,
   onToggleSubsection,
+  onToggleSectionOption,
   onToggleItem,
   onToggleItemOption,
   isHeaderSection,
+  isDraggable = true,
+  isEmpty = false,
   t
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Configuration du drag & drop
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: sectionKey,
+    disabled: isHeaderSection || !isDraggable
+  });
+
+  const style = {
+    transform: transform ? `translate3d(0, ${transform.y}px, 0)` : undefined,
+    // Aucune transition pour un réarrangement instantané sans lag
+    transition: 'none',
+  };
+
   const hasSubsections = subsections && Object.keys(subsections).length > 0;
   const hasItems = items !== undefined && itemsData && itemsData.length > 0;
-  const icon = SECTION_ICONS[sectionKey] || '📋';
-
-  // Pour la section header, on affiche "Toujours inclus" au lieu du compteur
-  const displayCount = isHeaderSection
-    ? t('exportModal.counters.always')
-    : count === 0
-    ? t('exportModal.counters.empty')
-    : `${count} ${count > 1 ? t('exportModal.counters.items') : t('exportModal.counters.item')}`;
+  const canExpand = (hasSubsections || hasItems || sectionOptions) && enabled;
 
   // Compteur d'éléments sélectionnés
   const selectedItemsCount = hasItems ? items.length : null;
   const totalItemsCount = hasItems ? itemsData.length : null;
 
+  // Texte du compteur
+  const getCountText = () => {
+    if (isHeaderSection) return t('exportModal.counters.always');
+    if (hasItems && selectedItemsCount !== null) {
+      return `${selectedItemsCount}/${totalItemsCount}`;
+    }
+    if (count === 0) return t('exportModal.counters.empty');
+    return `${count} ${count > 1 ? t('exportModal.counters.items') : t('exportModal.counters.item')}`;
+  };
+
   return (
     <div
-      className={`relative rounded-lg border backdrop-blur-sm transition-all duration-300 ${
-        enabled
-          ? 'border-emerald-400 bg-emerald-500/20 shadow-lg'
-          : 'border-white/30 bg-white/10 opacity-60'
+      ref={setNodeRef}
+      style={style}
+      className={`relative rounded-lg border transition-all duration-200 ${
+        isEmpty
+          ? isDragging
+            ? 'border-white/30 bg-white/10 shadow-lg scale-[1.02] z-50 opacity-50'
+            : 'border-white/10 bg-white/[0.02] opacity-50'
+          : isDragging
+          ? 'bg-emerald-500/30 border-emerald-400 shadow-lg scale-[1.02] z-50'
+          : enabled
+          ? 'border-emerald-400/50 bg-emerald-500/10'
+          : 'border-white/20 bg-white/5 opacity-60'
       }`}
     >
-      {/* Card principale */}
-      <button
-        type="button"
-        onClick={() => !isHeaderSection && onToggle()}
-        disabled={isHeaderSection}
-        className={`w-full p-4 pb-2 text-left flex items-start gap-3 ${
-          isHeaderSection ? 'cursor-default' : 'cursor-pointer hover:bg-white/10'
-        } transition-colors duration-200 rounded-t-lg`}
-      >
-        {/* Icône */}
-        <span className="text-3xl flex-shrink-0">{icon}</span>
-
-        {/* Contenu */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <h3 className="font-semibold text-white text-sm mb-1">
-                {sectionName}
-              </h3>
-              <p className="text-xs text-white/70">
-                {hasItems && selectedItemsCount !== null
-                  ? `${selectedItemsCount}/${totalItemsCount} ${t('exportModal.counters.selected')}`
-                  : displayCount}
-              </p>
-            </div>
-
-            {/* Checkbox visuel */}
-            <div
-              className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 ${
-                enabled
-                  ? 'bg-emerald-400 border-emerald-400'
-                  : 'bg-transparent border-white/40'
-              }`}
-            >
-              {enabled && (
-                <svg
-                  className="w-3 h-3 text-gray-900"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="3"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path d="M5 13l4 4L19 7" />
-                </svg>
-              )}
-            </div>
+      {/* Ligne principale */}
+      <div className="flex items-center gap-2 p-3">
+        {/* Handle de drag (masqué pour l'en-tête qui est fixe) */}
+        {isDraggable && !isHeaderSection && (
+          <div
+            {...attributes}
+            {...listeners}
+            className="flex-shrink-0 p-1 rounded cursor-grab active:cursor-grabbing text-white/40 hover:text-white/70 hover:bg-white/10"
+            style={{ touchAction: 'none' }}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="9" cy="6" r="1.5" />
+              <circle cx="15" cy="6" r="1.5" />
+              <circle cx="9" cy="12" r="1.5" />
+              <circle cx="15" cy="12" r="1.5" />
+              <circle cx="9" cy="18" r="1.5" />
+              <circle cx="15" cy="18" r="1.5" />
+            </svg>
           </div>
-        </div>
-      </button>
+        )}
 
-      {/* Bouton expand (en dehors du bouton principal pour être toujours cliquable) */}
-      {(hasSubsections || hasItems) && enabled && (
+        {/* Checkbox + Titre */}
         <button
           type="button"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full px-4 pb-2 text-xs text-emerald-300 hover:text-emerald-200 flex items-center gap-1 transition-colors text-left"
+          onClick={() => !isHeaderSection && !isEmpty && onToggle()}
+          disabled={isHeaderSection || isEmpty}
+          className={`flex items-center gap-3 flex-1 min-w-0 text-left ${
+            isHeaderSection || isEmpty ? 'cursor-default' : 'cursor-pointer'
+          }`}
         >
-          <span className="ml-14">{isExpanded ? '▾' : '▸'}</span>
-          <span>
-            {isExpanded
-              ? t('exportModal.hideOptions')
-              : t('exportModal.showOptions')}
+          {!isHeaderSection && <Checkbox checked={enabled} disabled={isEmpty} />}
+          <span className={`font-medium text-sm truncate ${isEmpty ? 'text-white/50' : 'text-white'}`}>
+            {sectionName}
           </span>
         </button>
-      )}
 
-      {/* Sous-sections (pour skills et header) */}
-      {hasSubsections && enabled && isExpanded && (
-        <div className="border-t border-white/20 px-4 pb-3 pt-2 space-y-2">
-          {Object.entries(subsections).map(([subKey, subEnabled]) => {
-            const subCount = subCounts?.[subKey] || 0;
-            const subName = t(`exportModal.subsections.${sectionKey}.${subKey}`);
+        {/* Compteur */}
+        <span className="text-xs text-white/50 flex-shrink-0">
+          {getCountText()}
+        </span>
 
-            return (
-              <button
-                key={subKey}
-                type="button"
-                onClick={() => onToggleSubsection(sectionKey, subKey)}
-                className="w-full flex items-center gap-2 cursor-pointer hover:bg-white/10 p-2 rounded transition-colors"
-              >
-                {/* Checkbox custom glassmorphism */}
-                <div
-                  className={`w-4 h-4 flex-shrink-0 rounded border-2 flex items-center justify-center transition-all duration-200 ${
-                    subEnabled
-                      ? 'bg-emerald-400 border-emerald-400'
-                      : 'bg-white/10 border-white/40'
+        {/* Bouton expand */}
+        {canExpand && (
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex-shrink-0 p-1.5 rounded hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+          >
+            <svg
+              className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {/* Contenu déplié */}
+      {canExpand && isExpanded && (
+        <div className="border-t border-white/10">
+          {/* Options de section pour skills (en premier, avant les catégories) */}
+          {sectionOptions && sectionKey === 'skills' && (
+            <div className="px-3 py-3">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => onToggleSectionOption(sectionKey, 'hideProficiency')}
+                  className={`px-3 py-1.5 rounded-lg text-xs transition-all ${
+                    sectionOptions.hideProficiency
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-400/30'
+                      : 'bg-white/5 text-white/60 border border-white/10 hover:border-white/30'
                   }`}
                 >
-                  {subEnabled && (
-                    <svg
-                      className="w-3 h-3 text-gray-900"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="3"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </div>
-                <span className="text-sm text-white flex-1 text-left">
-                  {subName}
-                </span>
-                {subCount > 0 && (
-                  <span className="text-xs text-white/60">
-                    ({subCount})
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
+                  {t('exportModal.options.hideProficiency')}
+                </button>
+              </div>
+            </div>
+          )}
 
-      {/* Liste d'éléments (pour experience, education, etc.) */}
-      {hasItems && enabled && isExpanded && (
-        <div className="border-t border-white/20 px-4 pb-3 pt-2 max-h-64 overflow-y-auto [overscroll-behavior:contain] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {sectionKey === 'experience' ? (
-            // Tableau pour les expériences avec colonne deliverables
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-white/20">
-                  <th className="text-left py-2 px-2 text-white/80 font-medium">
-                    {t('exportModal.experienceColumn')}
-                  </th>
-                  <th className="text-center py-2 px-2 text-white/80 font-medium w-32">
-                    {t('exportModal.includeDeliverables')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+          {/* Sous-sections sous forme de pills cliquables */}
+          {hasSubsections && (
+            <div className={`px-3 py-3 ${sectionKey === 'skills' && sectionOptions ? 'border-t border-white/5' : ''}`}>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(subsections).map(([subKey, subEnabled]) => {
+                  const subCount = subCounts?.[subKey] || 0;
+                  const subName = t(`exportModal.subsections.${sectionKey}.${subKey}`);
+
+                  return (
+                    <button
+                      key={subKey}
+                      type="button"
+                      onClick={() => onToggleSubsection(sectionKey, subKey)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        subEnabled
+                          ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-400/50'
+                          : 'bg-white/5 text-white/50 border border-white/10 hover:border-white/30'
+                      }`}
+                    >
+                      {subName}
+                      {subCount > 0 && <span className="ml-1 opacity-60">({subCount})</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Options de section pour experience (après les items) */}
+          {sectionOptions && sectionKey === 'experience' && (
+            <div className={`px-3 py-3 ${hasSubsections ? 'border-t border-white/5' : ''}`}>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => onToggleSectionOption(sectionKey, 'hideDescription')}
+                  className={`px-3 py-1.5 rounded-lg text-xs transition-all ${
+                    sectionOptions.hideDescription
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-400/30'
+                      : 'bg-white/5 text-white/60 border border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  {t('exportModal.options.hideDescription')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onToggleSectionOption(sectionKey, 'hideTechnologies')}
+                  className={`px-3 py-1.5 rounded-lg text-xs transition-all ${
+                    sectionOptions.hideTechnologies
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-400/30'
+                      : 'bg-white/5 text-white/60 border border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  {t('exportModal.options.hideTechnologies')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onToggleSectionOption(sectionKey, 'hideDeliverables')}
+                  className={`px-3 py-1.5 rounded-lg text-xs transition-all ${
+                    sectionOptions.hideDeliverables
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-400/30'
+                      : 'bg-white/5 text-white/60 border border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  {t('exportModal.options.hideDeliverables')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Liste d'éléments sous forme de cartes compactes */}
+          {hasItems && (
+            <div className={`px-3 py-3 ${(hasSubsections || sectionOptions) ? 'border-t border-white/5' : ''}`}>
+              <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1 custom-scrollbar-light">
                 {itemsData.map((item, index) => {
                   const isSelected = items.includes(index);
                   const itemTitle = formatItemTitle(item, sectionKey);
-                  const hasDeliverables = item.deliverables && item.deliverables.length > 0;
-                  const includeDeliverables = itemsOptions?.[index]?.includeDeliverables ?? true;
 
                   return (
-                    <tr key={index} className="border-b border-white/10 last:border-0">
-                      {/* Colonne Expérience */}
-                      <td className="py-2 px-2">
-                        <button
-                          type="button"
-                          onClick={() => onToggleItem(sectionKey, index)}
-                          className="w-full flex items-start gap-2 cursor-pointer hover:bg-white/10 p-1 rounded transition-colors text-left"
-                        >
-                          <div
-                            className={`mt-0.5 w-4 h-4 flex-shrink-0 rounded border-2 flex items-center justify-center transition-all duration-200 ${
-                              isSelected
-                                ? 'bg-emerald-400 border-emerald-400'
-                                : 'bg-white/10 border-white/40'
-                            }`}
-                          >
-                            {isSelected && (
-                              <svg
-                                className="w-3 h-3 text-gray-900"
-                                fill="none"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="3"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
-                          <span className="text-white flex-1 leading-tight">{itemTitle}</span>
-                        </button>
-                      </td>
-
-                      {/* Colonne Inclure livrables */}
-                      <td className="py-2 px-2 text-center">
-                        {hasDeliverables && isSelected ? (
-                          <button
-                            type="button"
-                            onClick={() => onToggleItemOption(sectionKey, index, 'includeDeliverables')}
-                            className="inline-flex items-center justify-center cursor-pointer hover:bg-white/10 p-1 rounded transition-colors"
-                          >
-                            <div
-                              className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${
-                                includeDeliverables
-                                  ? 'bg-emerald-400 border-emerald-400'
-                                  : 'bg-white/10 border-white/40'
-                              }`}
-                            >
-                              {includeDeliverables && (
-                                <svg
-                                  className="w-3 h-3 text-gray-900"
-                                  fill="none"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="3"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path d="M5 13l4 4L19 7" />
-                                </svg>
-                              )}
-                            </div>
-                          </button>
-                        ) : (
-                          <span className="text-white/30 text-xs">
-                            {!hasDeliverables ? '—' : ''}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          ) : (
-            // Liste simple pour les autres sections
-            <div className="space-y-2">
-              {itemsData.map((item, index) => {
-                const isSelected = items.includes(index);
-                const itemTitle = formatItemTitle(item, sectionKey);
-
-                return (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => onToggleItem(sectionKey, index)}
-                    className="w-full flex items-start gap-2 cursor-pointer hover:bg-white/10 p-2 rounded transition-colors text-left"
-                  >
-                    {/* Checkbox custom glassmorphism */}
-                    <div
-                      className={`mt-0.5 w-4 h-4 flex-shrink-0 rounded border-2 flex items-center justify-center transition-all duration-200 ${
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => onToggleItem(sectionKey, index)}
+                      className={`w-full flex items-center gap-2.5 p-2.5 rounded-lg text-left transition-all ${
                         isSelected
-                          ? 'bg-emerald-400 border-emerald-400'
-                          : 'bg-white/10 border-white/40'
+                          ? 'bg-emerald-500/10 border border-emerald-400/30'
+                          : 'bg-white/[0.02] border border-transparent hover:bg-white/5 hover:border-white/10'
                       }`}
                     >
-                      {isSelected && (
-                        <svg
-                          className="w-3 h-3 text-gray-900"
-                          fill="none"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="3"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                    <span className="text-sm text-white flex-1 leading-tight">
-                      {itemTitle}
-                    </span>
-                  </button>
-                );
-              })}
+                      <div className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center transition-all ${
+                        isSelected ? 'bg-emerald-500 text-white' : 'bg-white/10 border border-white/20'
+                      }`}>
+                        {isSelected && (
+                          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      <span className={`text-sm truncate ${isSelected ? 'text-white' : 'text-white/70'}`}>
+                        {itemTitle}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>

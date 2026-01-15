@@ -14,6 +14,8 @@ import GptLogo from "@/components/ui/GptLogo";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
 import TaskQueueModal from "@/components/TaskQueueModal";
 import TaskQueueDropdown from "@/components/TaskQueueDropdown";
+import { usePipelineProgressContext } from "@/components/PipelineProgressProvider";
+import { calculateOfferProgress } from "@/hooks/usePipelineProgress";
 
 // Custom hooks
 import { useTopBarState } from "./hooks/useTopBarState";
@@ -24,6 +26,7 @@ import { useModalStates } from "./hooks/useModalStates";
 import { useExportModal } from "./hooks/useExportModal";
 import { useSubscriptionData } from "./hooks/useSubscriptionData";
 import { useFilterState } from "./hooks/useFilterState";
+import { useWrapDetection } from "./hooks/useWrapDetection";
 
 // Components
 import ItemLabel from "./components/ItemLabel";
@@ -31,6 +34,7 @@ import FilterDropdown from "./components/FilterDropdown";
 import CvGeneratorModal from "./modals/CvGeneratorModal";
 import PdfImportModal from "./modals/PdfImportModal";
 import DeleteCvModal from "./modals/DeleteCvModal";
+import BulkDeleteCvModal from "./modals/BulkDeleteCvModal";
 import NewCvModal from "./modals/NewCvModal";
 import ExportPdfModal from "./modals/ExportPdfModal";
 
@@ -39,6 +43,9 @@ import { getCvIcon } from "./utils/cvUtils";
 import { CREATE_TEMPLATE_OPTION } from "./utils/constants";
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from "@/lib/onboarding/onboardingEvents";
 import { LOADING_EVENTS, emitLoadingEvent } from "@/lib/loading/loadingEvents";
+import { useCreditCost } from "@/hooks/useCreditCost";
+import Modal from "@/components/ui/Modal";
+import CreditCounter from "@/components/ui/CreditCounter";
 
 // Date range constants in milliseconds
 const DATE_RANGE_MS = {
@@ -58,8 +65,11 @@ export default function TopBar() {
   const { addNotification } = useNotifications();
   const { t, language } = useLanguage();
   const { settings } = useSettings();
-  const { history: linkHistory, addLinksToHistory } = useLinkHistory();
+  const { history: linkHistory, addLinksToHistory, deleteLink: deleteLinkHistory, refreshHistory: refreshLinkHistory } = useLinkHistory();
   const { currentStep, onboardingState } = useOnboarding();
+  const { showCosts, getCost } = useCreditCost();
+  const { getProgress } = usePipelineProgressContext();
+  const jobTitleCost = getCost("generate_from_job_title");
 
   // Main state hook
   const state = useTopBarState(language);
@@ -118,7 +128,7 @@ export default function TopBar() {
   });
 
   // Subscription data hook
-  const { planName, planIcon, creditBalance, loading: subscriptionLoading } = useSubscriptionData();
+  const { planName, planIcon, creditBalance, creditRatio, creditsOnlyMode, loading: subscriptionLoading } = useSubscriptionData();
 
   // Refs
   const triggerRef = React.useRef(null);
@@ -130,9 +140,17 @@ export default function TopBar() {
   const userMenuRef = React.useRef(null);
   const userMenuButtonRef = React.useRef(null);
   const filterButtonRef = React.useRef(null);
+  const flexContainerRef = React.useRef(null);
+
+  // Long press refs pour le bouton de suppression (mobile)
+  const deleteLongPressTimerRef = React.useRef(null);
+  const deleteIsLongPressRef = React.useRef(false);
 
   // Filter state hook
   const filter = useFilterState();
+
+  // Détection dynamique du wrapping
+  const hasWrapped = useWrapDetection(flexContainerRef, isAuthenticated);
 
   // Filtered items based on active filters
   const filteredItems = React.useMemo(() => {
@@ -215,10 +233,50 @@ export default function TopBar() {
     return { availableTypes, availableLanguages, availableDateRanges };
   }, [state.items, filter.filters]);
 
-  // Active tasks count
+  // Active tasks count (exclut calculate-match-score qui a sa propre animation)
   const activeTasksCount = React.useMemo(() => {
-    return tasks.filter(t => t.status === 'running' || t.status === 'queued').length;
+    return tasks.filter(t =>
+      (t.status === 'running' || t.status === 'queued') &&
+      t.type !== 'calculate-match-score'
+    ).length;
   }, [tasks]);
+
+  // Global task progress (0-100)
+  const globalTaskProgress = React.useMemo(() => {
+    // Exclut calculate-match-score qui a sa propre animation sur le bouton MatchScore
+    const activeTasks = tasks.filter(t =>
+      (t.status === 'running' || t.status === 'queued') &&
+      t.type !== 'calculate-match-score'
+    );
+    if (activeTasks.length === 0) return 0;
+
+    let totalProgress = 0;
+
+    activeTasks.forEach(task => {
+      if (task.type === 'cv_generation_v2') {
+        // Use SSE progress data for pipeline tasks
+        const sseProgress = getProgress(task.id);
+        if (sseProgress?.offers) {
+          const offers = Object.values(sseProgress.offers);
+          if (offers.length > 0) {
+            const avgOfferProgress = offers.reduce((sum, offer) => sum + calculateOfferProgress(offer), 0) / offers.length;
+            totalProgress += avgOfferProgress;
+          } else {
+            // Task started but no offers yet - 5% progress
+            totalProgress += 5;
+          }
+        } else {
+          // No SSE data yet - estimate based on task status
+          totalProgress += task.status === 'running' ? 10 : 0;
+        }
+      } else {
+        // For other task types, estimate progress based on status
+        totalProgress += task.status === 'running' ? 50 : 0;
+      }
+    });
+
+    return Math.round(totalProgress / activeTasks.length);
+  }, [tasks, getProgress]);
 
   // État pour l'onboarding : CV récemment généré à mettre en surbrillance
   const [recentlyGeneratedCv, setRecentlyGeneratedCv] = React.useState(null);
@@ -336,16 +394,26 @@ export default function TopBar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Detect mobile
+  // State pour détecter les très petits écrans (< 640px) - pour cacher l'éclair
+  const [isSmallScreen, setIsSmallScreen] = React.useState(
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false
+  );
+
+  // Mettre à jour isSmallScreen au resize
   React.useEffect(() => {
-    const checkMobile = () => {
-      state.setIsMobile(window.innerWidth <= 990);
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth < 640);
     };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Detect mobile - Basé sur le wrapping dynamique
+  React.useEffect(() => {
+    // Mode mobile = wrapping détecté OU écran vraiment petit (< 640px)
+    state.setIsMobile(hasWrapped || isSmallScreen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasWrapped, isSmallScreen]);
 
   // Dropdown position updates
   React.useEffect(() => {
@@ -488,6 +556,50 @@ export default function TopBar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generator.baseSelectorOpen]);
 
+  // Link history dropdown outside click handler
+  React.useEffect(() => {
+    const hasOpenDropdown = Object.values(generator.linkHistoryDropdowns).some(Boolean);
+    if (!hasOpenDropdown) return undefined;
+
+    let touchHandled = false;
+    let touchTimeout = null;
+
+    function handleClick(event) {
+      if (event.type === 'touchstart') {
+        touchHandled = true;
+        if (touchTimeout) clearTimeout(touchTimeout);
+        touchTimeout = setTimeout(() => {
+          touchHandled = false;
+        }, 500);
+      } else if (event.type === 'mousedown' && touchHandled) {
+        return;
+      }
+
+      // Check if click is inside any link history dropdown element
+      if (event.target.closest('[data-link-history-dropdown="true"]')) {
+        return;
+      }
+
+      // Close all dropdowns
+      generator.setLinkHistoryDropdowns({});
+    }
+
+    function handleKey(event) {
+      if (event.key === "Escape") generator.setLinkHistoryDropdowns({});
+    }
+
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("touchstart", handleClick, { passive: true });
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("touchstart", handleClick);
+      document.removeEventListener("keydown", handleKey);
+      if (touchTimeout) clearTimeout(touchTimeout);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generator.linkHistoryDropdowns]);
+
   // Ticker reset on visibility change
   React.useEffect(() => {
     if (typeof document === "undefined") return;
@@ -608,14 +720,17 @@ export default function TopBar() {
           pointerEvents: 'auto'
         }}
       >
-        <div className="w-full p-3 flex flex-wrap items-center gap-x-2 gap-y-2 sm:gap-3">
+        <div
+          ref={flexContainerRef}
+          className="w-full p-3 flex flex-wrap md:flex-nowrap items-center gap-x-2 gap-y-2 sm:gap-3"
+        >
           {/* User Icon */}
           <div className="relative order-1 md:order-1">
             <button
               ref={userMenuButtonRef}
               type="button"
               onClick={() => modals.setUserMenuOpen((prev) => !prev)}
-              className="h-8 w-8 flex items-center justify-center rounded-full border border-white/40 bg-white/20 backdrop-blur-sm hover:bg-white/30 hover:shadow-xl transition-all duration-200"
+              className="h-8 w-8 flex items-center justify-center rounded-full border border-white/40 bg-white/20 backdrop-blur-sm hover:bg-white/30 hover:shadow-sm-xl transition-all duration-200"
               aria-label={t("topbar.userMenu")}
             >
               <img
@@ -638,7 +753,7 @@ export default function TopBar() {
               className={`cv-selector-trigger w-full min-w-0 rounded-lg border backdrop-blur-sm px-3 py-1 text-sm flex items-center justify-between gap-3 overflow-hidden transition-all duration-500 text-white ${
                 state.cvSelectorGlow
                   ? 'border-emerald-400 bg-emerald-500/40 shadow-[0_0_20px_rgba(52,211,153,0.6)] hover:bg-emerald-500/50'
-                  : 'border-white/40 bg-white/20 hover:bg-white/30 hover:shadow-xl'
+                  : 'border-white/40 bg-white/20 hover:bg-white/30 hover:shadow-sm-xl'
               }`}
               ref={triggerRef}
             >
@@ -648,7 +763,7 @@ export default function TopBar() {
                     key={`icon-${state.current}-${state.resolvedCurrentItem.createdBy}-${state.iconRefreshKey}`}
                     className="flex h-6 w-6 items-center justify-center shrink-0"
                   >
-                    {getCvIcon(state.resolvedCurrentItem.createdBy, state.resolvedCurrentItem.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
+                    {getCvIcon(state.resolvedCurrentItem.createdBy, state.resolvedCurrentItem.originalCreatedBy, "h-4 w-4", state.resolvedCurrentItem.isTranslated) || <DefaultCvIcon className="h-4 w-4" size={16} />}
                   </span>
                 ) : null}
                 <span className="min-w-0">
@@ -673,20 +788,18 @@ export default function TopBar() {
           {/* CV Dropdown Portal */}
           {modals.listOpen && state.portalReady && modals.dropdownRect
             ? createPortal(
-                <>
-                  <div className="fixed inset-0 z-[10001] bg-transparent cv-dropdown-no-animation" onClick={() => modals.setListOpen(false)} />
-                  <div
-                    ref={dropdownPortalRef}
-                    style={{
-                      position: "fixed",
-                      top: modals.dropdownRect.bottom + 4,
-                      left: modals.dropdownRect.left,
-                      width: modals.dropdownRect.width,
-                      zIndex: 10002,
-                      opacity: 1,
-                    }}
-                    className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-md shadow-2xl cv-dropdown-no-animation"
-                  >
+                <div
+                  ref={dropdownPortalRef}
+                  style={{
+                    position: "fixed",
+                    top: modals.dropdownRect.bottom + 4,
+                    left: modals.dropdownRect.left,
+                    width: modals.dropdownRect.width,
+                    zIndex: 10002,
+                    opacity: 1,
+                  }}
+                  className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-md shadow-2xl cv-dropdown-no-animation"
+                >
                     <ul
                       className="max-h-[240px] overflow-y-auto custom-scrollbar py-1"
                       onScroll={() => {
@@ -751,7 +864,7 @@ export default function TopBar() {
                                 key={`dropdown-icon-${it.file}-${it.createdBy}`}
                                 className="flex h-6 w-6 items-center justify-center shrink-0"
                               >
-                                {getCvIcon(it.createdBy, it.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
+                                {getCvIcon(it.createdBy, it.originalCreatedBy, "h-4 w-4", it.isTranslated) || <DefaultCvIcon className="h-4 w-4" size={16} />}
                               </span>
                               <ItemLabel
                                 item={it}
@@ -766,8 +879,7 @@ export default function TopBar() {
                         })
                       )}
                     </ul>
-                  </div>
-                </>,
+                </div>,
                 document.body,
               )
             : null}
@@ -775,16 +887,14 @@ export default function TopBar() {
           {/* User Menu Portal */}
           {modals.userMenuOpen && state.portalReady && modals.userMenuRect
             ? createPortal(
-                <>
-                  <div className="fixed inset-0 z-[10001] backdrop-blur-sm bg-transparent" onClick={() => modals.setUserMenuOpen(false)} />
-                  <div
-                    ref={userMenuRef}
-                    style={{
-                      position: "fixed",
-                      top: modals.userMenuRect.bottom + 8,
-                      left: modals.userMenuRect.left,
-                      zIndex: 10002,
-                    }}
+                <div
+                  ref={userMenuRef}
+                  style={{
+                    position: "fixed",
+                    top: modals.userMenuRect.bottom + 8,
+                    left: modals.userMenuRect.left,
+                    zIndex: 10002,
+                  }}
                     className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-md shadow-2xl p-2 text-sm space-y-1 min-w-[10rem] max-w-[16rem]"
                   >
                     {/* Header - User name */}
@@ -858,7 +968,7 @@ export default function TopBar() {
                         window.location.href = "/account/subscriptions";
                       }}
                     >
-                      {t("topbar.subscriptions")}
+                      {creditsOnlyMode ? t("topbar.subscriptions_credits_only") : t("topbar.subscriptions")}
                     </button>
                     <button
                       className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
@@ -871,15 +981,20 @@ export default function TopBar() {
                     </button>
 
                     {/* Footer - Plan & Credits */}
-                    {!subscriptionLoading && planName && (
+                    {!subscriptionLoading && (planName || creditsOnlyMode) && (
                       <div className="border-t border-white/20 mt-2 pt-2">
                         <div className="text-center text-[11px] text-white/60 drop-shadow">
-                          {planIcon} {planName} • {creditBalance} {t("topbar.credits")}
+                          {creditsOnlyMode ? (
+                            // Mode crédits uniquement: afficher seulement les crédits
+                            <>{creditBalance} {t("topbar.credits")}</>
+                          ) : (
+                            // Mode abonnement: afficher plan + crédits
+                            <>{planIcon} {planName} • {creditBalance} {t("topbar.credits")}</>
+                          )}
                         </div>
                       </div>
                     )}
-                  </div>
-                </>,
+                </div>,
                 document.body,
               )
             : null}
@@ -896,18 +1011,14 @@ export default function TopBar() {
                   modals.setOpenTaskDropdown(!modals.openTaskDropdown);
                 }
               }}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 transition-all duration-200"
+              className={`rounded-lg border border-white/40 backdrop-blur-sm text-white text-sm hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 transition-all duration-200 ${activeTasksCount > 0 ? 'task-progress-button' : 'bg-white/20 hover:bg-white/30'}`}
+              style={activeTasksCount > 0 ? {
+                '--task-progress': `${globalTaskProgress}%`
+              } : undefined}
               type="button"
               title={t("topbar.taskQueue")}
             >
               <img src="/icons/task.png" alt={t("topbar.taskQueue")} className="h-4 w-4 " />
-              {activeTasksCount > 0 && (
-                <span
-                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-300 border-2 border-white flex items-center justify-center text-gray-900 text-[10px] font-bold drop-shadow-lg animate-pulse"
-                >
-                  {activeTasksCount}
-                </span>
-              )}
             </button>
 
             <TaskQueueDropdown
@@ -924,7 +1035,7 @@ export default function TopBar() {
               ref={filterButtonRef}
               type="button"
               onClick={() => filter.setFilterMenuOpen(!filter.filterMenuOpen)}
-              className={`rounded-lg border backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 transition-all duration-200 ${
+              className={`rounded-lg border backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 transition-all duration-200 ${
                 filter.hasActiveFilters
                   ? 'border-emerald-400 bg-emerald-500/30'
                   : 'border-white/40 bg-white/20'
@@ -954,13 +1065,13 @@ export default function TopBar() {
             />
           </div>
 
-          {/* Break line on mobile */}
-          <div className="w-full md:hidden order-5"></div>
+          {/* Break line - visible en dessous de 1025px (md:), caché au-dessus */}
+          <div className="w-full md:hidden order-6"></div>
 
           {/* Job Title Input */}
           {settings.feature_search_bar && (
-            <div className="w-auto flex-1 order-6 md:order-9 md:flex-none flex justify-start md:justify-end px-4 py-1 min-w-0">
-              <div className="relative w-full md:w-[400px] flex items-center group job-title-input-wrapper">
+            <div className="flex-1 order-7 md:order-10 lg:flex-none flex justify-start lg:justify-end px-2 md:px-4 py-1 min-w-0">
+              <div className="relative w-full md:max-w-[280px] lg:max-w-[400px] flex items-center group job-title-input-wrapper">
                 <span className="absolute left-0 text-white/70 drop-shadow flex items-center justify-center w-6 h-6">
                   <img src="/icons/search.png" alt="Search" className="h-4 w-4" />
                 </span>
@@ -969,10 +1080,10 @@ export default function TopBar() {
                   value={modals.jobTitleInput}
                   onChange={(e) => modals.setJobTitleInput(e.target.value)}
                   onKeyDown={(e) => {
-                    modals.handleJobTitleSubmit(e, language);
+                    modals.handleJobTitleSubmit(e, language, showCosts, jobTitleCost);
                   }}
                   placeholder={state.isMobile ? t("topbar.jobTitlePlaceholderMobile") : t("topbar.jobTitlePlaceholder")}
-                  className="w-full bg-transparent border-0 border-b-2 pl-8 pr-2 py-1 text-sm italic text-white placeholder-white/50 focus:outline-none transition-colors duration-200 border-white/30 focus:border-emerald-400 cursor-text"
+                  className="w-full bg-transparent border-0 border-b-2 pl-8 pr-2 py-1 text-sm italic text-white placeholder-white/50 focus:outline-hidden transition-colors duration-200 border-white/30 focus:border-emerald-400 cursor-text"
                   style={{ caretColor: '#10b981' }}
                 />
               </div>
@@ -984,7 +1095,7 @@ export default function TopBar() {
             <button
               data-onboarding="ai-generate"
               onClick={generator.openGeneratorModal}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-4 transition-all duration-200"
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-5 transition-all duration-200"
               type="button"
             >
               <GptLogo className="h-4 w-4" />
@@ -993,7 +1104,7 @@ export default function TopBar() {
           {settings.feature_manual_cv && (
             <button
               onClick={() => modals.setOpenNewCv(true)}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center h-8 w-8 order-7 md:order-5 transition-all duration-200"
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center h-8 w-8 order-9 md:order-6 transition-all duration-200"
               type="button"
             >
               <img src="/icons/add.png" alt="Add" className="h-4 w-4 " />
@@ -1002,7 +1113,7 @@ export default function TopBar() {
           {settings.feature_import && (
             <button
               onClick={() => modals.setOpenPdfImport(true)}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-9 md:order-6 transition-all duration-200"
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7 transition-all duration-200"
               type="button"
               title={t("pdfImport.title")}
             >
@@ -1013,7 +1124,7 @@ export default function TopBar() {
             <button
               data-onboarding="export"
               onClick={exportModal.openModal}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7 transition-all duration-200"
+              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 order-11 md:order-8 transition-all duration-200"
               type="button"
               title="Exporter en PDF"
             >
@@ -1021,12 +1132,57 @@ export default function TopBar() {
             </button>
           )}
           <button
-            onClick={() => modals.setOpenDelete(true)}
-            className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-xl inline-flex items-center justify-center h-8 w-8 order-4 md:order-8 transition-all duration-200"
+            onTouchStart={() => {
+              deleteIsLongPressRef.current = false;
+              deleteLongPressTimerRef.current = setTimeout(() => {
+                deleteIsLongPressRef.current = true;
+                // Ouvre le modal directement pendant le long press
+                modals.setOpenBulkDelete(true);
+              }, 1000);
+            }}
+            onTouchEnd={() => {
+              clearTimeout(deleteLongPressTimerRef.current);
+            }}
+            onTouchMove={() => {
+              clearTimeout(deleteLongPressTimerRef.current);
+              deleteIsLongPressRef.current = false;
+            }}
+            onTouchCancel={() => {
+              clearTimeout(deleteLongPressTimerRef.current);
+              deleteIsLongPressRef.current = false;
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+            onClick={(e) => {
+              // Si long press déjà traité, on ignore le clic
+              if (deleteIsLongPressRef.current) {
+                deleteIsLongPressRef.current = false;
+                return;
+              }
+              // Desktop: Ctrl+clic (Windows/Linux) ou Cmd+clic (macOS) → suppression multiple
+              if (e.ctrlKey || e.metaKey) {
+                modals.setOpenBulkDelete(true);
+              } else {
+                modals.setOpenDelete(true);
+              }
+            }}
+            className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center h-8 w-8 order-12 md:order-9 transition-all duration-200 select-none"
+            style={{ WebkitTouchCallout: 'none' }}
             title={t("topbar.delete")}
           >
-            <img src="/icons/delete.png" alt="Delete" className="h-4 w-4 " />
+            <img src="/icons/delete.png" alt="Delete" className="h-4 w-4 pointer-events-none select-none" draggable="false" />
           </button>
+
+          {/* Credits Counter - Mode crédits-only uniquement (tout à droite) */}
+          {creditsOnlyMode && !subscriptionLoading && (
+            <div className="order-5 md:order-11">
+              <CreditCounter
+                balance={creditBalance}
+                ratio={creditRatio}
+                onClick={() => { window.location.href = '/account/subscriptions?tab=credits'; }}
+                title={`${creditBalance} ${t("topbar.credits")}`}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -1049,15 +1205,14 @@ export default function TopBar() {
         setBaseSelectorOpen={generator.setBaseSelectorOpen}
         generatorSourceItems={generator.generatorSourceItems}
         generatorBaseItem={generator.generatorBaseItem}
-        analysisLevel={generator.analysisLevel}
-        setAnalysisLevel={generator.setAnalysisLevel}
-        allowedAnalysisLevels={generator.allowedAnalysisLevels}
         plans={generator.plans}
-        currentAnalysisOption={generator.currentAnalysisOption}
         generatorError={generator.generatorError}
         linkHistory={linkHistory}
+        deleteLinkHistory={deleteLinkHistory}
+        refreshLinkHistory={refreshLinkHistory}
         linkHistoryDropdowns={generator.linkHistoryDropdowns}
         setLinkHistoryDropdowns={generator.setLinkHistoryDropdowns}
+        isSubmitting={generator.isSubmitting}
         tickerResetKey={state.tickerResetKey}
         t={t}
         baseSelectorRef={baseSelectorRef}
@@ -1071,6 +1226,7 @@ export default function TopBar() {
         pdfFile={modals.pdfFile}
         onPdfFileChanged={modals.onPdfFileChanged}
         pdfFileInputRef={modals.pdfFileInputRef}
+        busy={modals.pdfImportBusy}
         t={t}
       />
 
@@ -1083,6 +1239,21 @@ export default function TopBar() {
         }}
         currentItem={state.currentItem}
         current={state.current}
+        t={t}
+      />
+
+      <BulkDeleteCvModal
+        open={modals.openBulkDelete}
+        onClose={() => modals.setOpenBulkDelete(false)}
+        onConfirm={async (selectedFiles) => {
+          const result = await operations.deleteMultiple(selectedFiles);
+          if (result.success) {
+            modals.setOpenBulkDelete(false);
+          }
+          return result;
+        }}
+        items={state.items}
+        currentFile={state.current}
         t={t}
       />
 
@@ -1115,17 +1286,68 @@ export default function TopBar() {
         selections={exportModal.selections}
         toggleSection={exportModal.toggleSection}
         toggleSubsection={exportModal.toggleSubsection}
+        toggleSectionOption={exportModal.toggleSectionOption}
         toggleItem={exportModal.toggleItem}
         toggleItemOption={exportModal.toggleItemOption}
         selectAll={exportModal.selectAll}
         deselectAll={exportModal.deselectAll}
         exportPdf={exportModal.exportPdf}
+        exportWord={exportModal.exportWord}
+        isExportingWord={exportModal.isExportingWord}
         counters={exportModal.counters}
         subCounters={exportModal.subCounters}
         cvData={exportModal.cvData}
         isExporting={exportModal.isExporting}
+        isPreview={exportModal.isPreview}
+        previewHtml={exportModal.previewHtml}
+        isLoadingPreview={exportModal.isLoadingPreview}
+        loadPreview={exportModal.loadPreview}
+        closePreview={exportModal.closePreview}
+        templates={exportModal.templates}
+        isLoadingTemplates={exportModal.isLoadingTemplates}
+        isSavingTemplate={exportModal.isSavingTemplate}
+        saveAsTemplate={exportModal.saveAsTemplate}
+        applyTemplate={exportModal.applyTemplate}
+        deleteTemplate={exportModal.deleteTemplate}
+        sectionsOrder={exportModal.sectionsOrder}
+        setSectionsOrder={exportModal.setSectionsOrder}
+        resetSectionsOrder={exportModal.resetSectionsOrder}
         t={t}
       />
+
+      {/* Modal de confirmation pour génération par titre de poste */}
+      <Modal
+        open={modals.jobTitleConfirmModal.open}
+        onClose={modals.cancelJobTitleConfirmation}
+        title={t("jobTitleGenerator.confirmTitle") || "Confirmation"}
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-white drop-shadow">
+            {t("jobTitleGenerator.confirmMessage", { credits: modals.jobTitleConfirmModal.creditCost }) ||
+              `Cette fonctionnalité va consommer ${modals.jobTitleConfirmModal.creditCost} crédit(s). Voulez-vous continuer ?`}
+          </p>
+          <p className="text-xs text-white/70 drop-shadow">
+            {t("jobTitleGenerator.confirmJobTitle", { jobTitle: modals.jobTitleConfirmModal.jobTitle }) ||
+              `Titre de poste : "${modals.jobTitleConfirmModal.jobTitle}"`}
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={modals.cancelJobTitleConfirmation}
+              className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors"
+            >
+              {t("common.no") || "Non"}
+            </button>
+            <button
+              type="button"
+              onClick={modals.confirmJobTitleGeneration}
+              className="px-6 py-2.5 rounded-lg bg-emerald-500/30 hover:bg-emerald-500/40 border border-emerald-500/50 text-white text-sm font-semibold transition-colors"
+            >
+              {t("common.yes") || "Oui"}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Styles */}
       <style jsx global>{`
@@ -1223,6 +1445,31 @@ export default function TopBar() {
           animation: none;
           transform: scale(1.1);
           color: #3B82F6;
+        }
+
+        /* Task progress button - animatable CSS property */
+        @property --task-progress {
+          syntax: '<percentage>';
+          initial-value: 0%;
+          inherits: false;
+        }
+
+        .task-progress-button {
+          --task-progress: 0%;
+          background: conic-gradient(from 0deg, rgba(52, 211, 153, 0.7) 0% var(--task-progress), rgba(255, 255, 255, 0.2) var(--task-progress) 100%);
+          animation: task-button-pulse 2s ease-in-out infinite;
+          transition: --task-progress 0.5s ease-out;
+        }
+
+        @keyframes task-button-pulse {
+          0%, 100% {
+            opacity: 1;
+            box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+          }
+          50% {
+            opacity: 0.85;
+            box-shadow: 0 0 8px 2px rgba(52, 211, 153, 0.4);
+          }
         }
       `}</style>
     </>

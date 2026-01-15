@@ -94,7 +94,7 @@ export function MRRHistoryChart({
           <select
             value={year}
             onChange={(e) => onYearChange?.(parseInt(e.target.value))}
-            className="px-2 py-1 text-xs bg-white/10 border border-white/20 rounded-md text-white/80 focus:outline-none focus:border-emerald-500/50"
+            className="px-2 py-1 text-xs bg-white/10 border border-white/20 rounded-md text-white/80 focus:outline-hidden focus:border-emerald-500/50"
           >
             {availableYears.map(y => (
               <option key={y} value={y} className="bg-slate-800 text-white">{y}</option>

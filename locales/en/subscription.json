@@ -2,7 +2,9 @@
   "subscription": {
     "page": {
       "title": "Subscriptions & Credits",
+      "title_credits_only": "Manage my credits",
       "description": "Manage your subscription, purchase credits, and view your history.",
+      "description_credits_only": "Purchase credits to use features.",
       "backToCvs": "Back",
       "loadingTitle": "Loading...",
       "errorLoading": "Error loading data",
@@ -183,16 +185,16 @@
       "needMore": "Need more?",
       "needMoreInfo": "Purchase credits to exceed your monthly limits without changing plans.",
       "labels": {
-        "gpt_cv_generation": "🤖 AI CV Adaptation",
-        "import_pdf": "📥 CV Import",
-        "translate_cv": "🌍 CV Translation",
-        "match_score": "🎯 Match Score",
-        "calculate_match_score": "🎯 Match Score",
-        "optimize_cv": "✨ Optimization",
-        "generate_from_job_title": "💼 Fictional CV Creation",
-        "export_cv": "💾 CV Export",
-        "edit_cv": "✏️ CV Editing",
-        "create_cv_manual": "📝 CV Creation"
+        "gpt_cv_generation": "AI CV Adaptation",
+        "import_pdf": "CV Import",
+        "translate_cv": "CV Translation",
+        "match_score": "Match Score",
+        "calculate_match_score": "Match Score",
+        "optimize_cv": "Optimization",
+        "generate_from_job_title": "Fictional CV Creation",
+        "export_cv": "CV Export",
+        "edit_cv": "CV Editing",
+        "create_cv_manual": "CV Creation"
       }
     },
     "credits": {

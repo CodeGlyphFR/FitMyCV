@@ -98,8 +98,11 @@ export async function POST(request) {
 
     const userId = session.user.id;
 
+    // Générer le taskId AVANT le débit pour pouvoir le lier à la transaction
+    const taskIdentifier = typeof taskId === "string" && taskId.trim() ? taskId.trim() : `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     // Vérifier les limites ET incrémenter le compteur/débiter le crédit
-    const usageResult = await incrementFeatureCounter(userId, 'import_pdf', {});
+    const usageResult = await incrementFeatureCounter(userId, 'import_pdf', { taskId: taskIdentifier });
 
     if (!usageResult.success) {
       // Nettoyer le fichier temporaire
@@ -115,15 +118,13 @@ export async function POST(request) {
       }, { status: 403 });
     }
 
-    const taskIdentifier = typeof taskId === "string" && taskId.trim() ? taskId.trim() : `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
     const existingTask = await prisma.backgroundTask.findUnique({ where: { id: taskIdentifier } });
     const payload = {
       savedName: saved.name,
     };
 
     const taskData = {
-      title: `Import en cours ...`,
+      title: saved.name,
       successMessage: `'${saved.name}' importé avec succès`,
       type: 'import',
       status: 'queued',

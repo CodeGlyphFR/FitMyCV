@@ -44,7 +44,9 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    const planId = parseInt(params.id, 10);
+    // Next.js 16: params est maintenant async
+    const { id } = await params;
+    const planId = parseInt(id, 10);
     if (isNaN(planId)) {
       return NextResponse.json(
         { error: 'ID de plan invalide' },
@@ -179,7 +181,6 @@ export async function PATCH(request, { params }) {
           featureName: fl.featureName,
           isEnabled: fl.isEnabled ?? true,
           usageLimit: fl.usageLimit ?? -1,
-          allowedAnalysisLevels: fl.allowedAnalysisLevels ? JSON.stringify(fl.allowedAnalysisLevels) : null,
         })),
       };
     }
@@ -228,7 +229,9 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    const planId = parseInt(params.id, 10);
+    // Next.js 16: params est maintenant async
+    const { id } = await params;
+    const planId = parseInt(id, 10);
     if (isNaN(planId)) {
       return NextResponse.json(
         { error: 'ID de plan invalide' },

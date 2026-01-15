@@ -7,19 +7,77 @@ import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import { capitalizeSkillName } from "@/lib/utils/textFormatting";
+// BulletHighlight n'est plus utilisé - responsibilities/deliverables sont maintenant en field-level
+import SkillItemHighlight, { RemovedSkillsDisplay } from "./SkillItemHighlight";
+import SectionReviewActions from "./SectionReviewActions";
+import ExperienceReviewActions from "./ExperienceReviewActions";
+import ChangeHighlight from "./ChangeHighlight";
+import { useHighlight } from "./HighlightProvider";
 
 
 export default function Experience(props){
   const { t } = useLanguage();
   const rawExperience = Array.isArray(props.experience) ? props.experience : [];
+  // Normalise une date vers le format YYYY-MM pour comparaison
+  // Gère : YYYY-MM, YYYY, MM/YYYY, YYYY/MM
+  const normalizeDate = React.useCallback((date) => {
+    if (!date) return "";
+    const d = date.trim().toLowerCase();
+    if (d === "present") return "";
+
+    // Format YYYY-MM ou YYYY
+    if (/^\d{4}(-\d{2})?$/.test(d)) {
+      return d.length === 4 ? `${d}-01` : d;
+    }
+
+    // Format avec slash : MM/YYYY ou YYYY/MM
+    if (d.includes("/")) {
+      const parts = d.split("/");
+      if (parts.length === 2) {
+        const [p1, p2] = parts;
+        // Si p1 a 4 chiffres -> YYYY/MM
+        if (/^\d{4}$/.test(p1) && /^\d{1,2}$/.test(p2)) {
+          return `${p1}-${p2.padStart(2, "0")}`;
+        }
+        // Si p2 a 4 chiffres -> MM/YYYY
+        if (/^\d{4}$/.test(p2) && /^\d{1,2}$/.test(p1)) {
+          return `${p2}-${p1.padStart(2, "0")}`;
+        }
+      }
+    }
+
+    return d;
+  }, []);
+
   // Tri par date décroissante (plus récent en premier)
+  // 1. Expériences en cours en premier, triées par date de début (plus récent en premier)
+  // 2. Expériences terminées ensuite, triées par date de fin (plus récent en premier)
+  // On garde _originalIndex pour que les mutations utilisent le bon index
   const experience = React.useMemo(() => {
-    return [...rawExperience].sort((a, b) => {
-      const dateA = a.end_date === "present" ? "9999-99" : (a.end_date || a.start_date || "");
-      const dateB = b.end_date === "present" ? "9999-99" : (b.end_date || b.start_date || "");
-      return dateB.localeCompare(dateA);
-    });
-  }, [rawExperience]);
+    return rawExperience
+      .map((e, idx) => ({ ...e, _originalIndex: idx }))
+      .sort((a, b) => {
+        const aIsCurrent = !a.end_date || a.end_date === "present";
+        const bIsCurrent = !b.end_date || b.end_date === "present";
+
+        // Les expériences en cours en premier
+        if (aIsCurrent && !bIsCurrent) return -1;
+        if (!aIsCurrent && bIsCurrent) return 1;
+
+        // Si les deux sont en cours, trier par start_date (plus ancien en premier = plus d'expérience)
+        if (aIsCurrent && bIsCurrent) {
+          const startA = normalizeDate(a.start_date);
+          const startB = normalizeDate(b.start_date);
+          return startA.localeCompare(startB);
+        }
+
+        // Sinon, trier par end_date (plus récent en premier)
+        const endA = normalizeDate(a.end_date) || normalizeDate(a.start_date);
+        const endB = normalizeDate(b.end_date) || normalizeDate(b.start_date);
+        return endB.localeCompare(endA);
+      });
+  }, [rawExperience, normalizeDate]);
 
   const sectionTitles = props.sectionTitles || {};
   const cvLanguage = props.cvLanguage || 'fr';
@@ -27,6 +85,7 @@ export default function Experience(props){
   const title = getCvSectionTitleInCvLanguage('experience', sectionTitles.experience, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
+  const { batchProcessingExpIndex } = useHighlight();
 
   // ---- UI State ----
   const [editIndex, setEditIndex] = React.useState(null);
@@ -39,11 +98,34 @@ export default function Experience(props){
   const [f,  setF]  = React.useState({});
 
   // ---- Helpers ----
+  // Normalise une date saisie vers le format YYYY-MM
+  // Gère : YYYY-MM, YYYY, MM/YYYY, YYYY/MM
   const norm = React.useCallback((s) => {
     const v = (s || "").trim();
     if (!v) return "";
     if (v.toLowerCase() === "present") return "present";
-    if (/^\d{4}(-\d{2})?$/.test(v)) return v.length === 4 ? `${v}-01` : v;
+
+    // Format YYYY-MM ou YYYY
+    if (/^\d{4}(-\d{2})?$/.test(v)) {
+      return v.length === 4 ? `${v}-01` : v;
+    }
+
+    // Format avec slash : MM/YYYY ou YYYY/MM
+    if (v.includes("/")) {
+      const parts = v.split("/");
+      if (parts.length === 2) {
+        const [p1, p2] = parts;
+        // Si p1 a 4 chiffres -> YYYY/MM
+        if (/^\d{4}$/.test(p1) && /^\d{1,2}$/.test(p2)) {
+          return `${p1}-${p2.padStart(2, "0")}`;
+        }
+        // Si p2 a 4 chiffres -> MM/YYYY
+        if (/^\d{4}$/.test(p2) && /^\d{1,2}$/.test(p1)) {
+          return `${p2}-${p1.padStart(2, "0")}`;
+        }
+      }
+    }
+
     return v;
   }, []);
 
@@ -53,7 +135,7 @@ export default function Experience(props){
   // ---- Actions ----
   const openEdit = (i) => {
     const e = experience[i] || {};
-    const isCurrentPosition = e.end_date === "present";
+    const isCurrentPosition = !e.end_date || e.end_date === "present";
     setF({
       title: e.title || "",
       company: e.company || "",
@@ -69,7 +151,8 @@ export default function Experience(props){
       deliverables: Array.isArray(e.deliverables) ? e.deliverables.join("\n") : "",
       skills_used: Array.isArray(e.skills_used) ? e.skills_used.join(", ") : ""
     });
-    setEditIndex(i);
+    // Utiliser l'index original pour la mutation
+    setEditIndex(e._originalIndex ?? i);
   };
 
   const saveEdit = async () => {
@@ -139,42 +222,65 @@ export default function Experience(props){
       title={
         <div className="flex items-center justify-between gap-2">
           <span>{title}</span>
-          {editing && (
-            <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="no-print rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white hover:bg-white/30 transition-all duration-200"
-            >
-              {t("common.add")}
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            <SectionReviewActions section="experience" />
+            {editing && (
+              <button
+                type="button"
+                onClick={() => setAddOpen(true)}
+                className="no-print rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white hover:bg-white/30 transition-colors duration-200"
+              >
+                {t("common.add")}
+              </button>
+            )}
+          </div>
         </div>
       }
     >
       <div className="space-y-3">
         {experience.length > 0 ? (
-          experience.map((e, i) => (
-            <div key={i} className="rounded-2xl border border-white/15 p-3">
+          experience.map((e, i) => {
+            const isProcessing = batchProcessingExpIndex === i;
+            return (
+            <div key={i} className="rounded-2xl border border-white/15 p-3 relative overflow-hidden">
+              {/* Overlay de chargement pendant le batch processing */}
+              {isProcessing && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-slate-900/85">
+                  <div className="flex items-center gap-3 text-white">
+                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    <span className="text-sm font-medium">{t("review.processing") || "Traitement..."}</span>
+                  </div>
+                </div>
+              )}
+              {/* Contenu flouté pendant le traitement */}
+              <div className={isProcessing ? 'blur-md pointer-events-none' : ''}>
               <div className="flex flex-wrap items-baseline gap-2">
                 <div className="font-semibold flex-1 min-w-0">
-                  {e.title || ""}{e.company ? " • " : ""}{e.company || ""}{e.department_or_client ? ` (${e.department_or_client})` : ""}
+                  <ChangeHighlight section="experience" field="title" expIndex={e._originalIndex ?? i} className="font-semibold">
+                    <span>{e.title || ""}</span>
+                  </ChangeHighlight>
+                  {e.company ? " • " : ""}{e.company || ""}{e.department_or_client ? ` (${e.department_or_client})` : ""}
                 </div>
                 <div className="ml-3 text-sm opacity-80 whitespace-nowrap">
-                  {ym(e.start_date)} — {e.end_date === "present" ? cvT("cvSections.present") : ym(e.end_date)}
+                  {ym(e.start_date)} — {(!e.end_date || e.end_date === "present") ? cvT("cvSections.present") : ym(e.end_date)}
                 </div>
+                <ExperienceReviewActions expIndex={e._originalIndex ?? i} />
                 {editing && (
                   <div className="no-print flex gap-2 shrink-0">
                     <button
                       type="button"
                       onClick={() => openEdit(i)}
-                      className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white hover:bg-white/30 transition-all duration-200"
+                      className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white hover:bg-white/30 transition-colors duration-200"
                     >
                       <img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " />
                     </button>
                     <button
                       type="button"
-                      onClick={() => setDelIndex(i)}
-                      className="rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-1 text-xs text-white hover:bg-red-500/40 transition-all duration-200"
+                      onClick={() => setDelIndex(e._originalIndex ?? i)}
+                      className="rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-1 text-xs text-white hover:bg-red-500/40 transition-colors duration-200"
                     >
                       <img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " />
                     </button>
@@ -190,38 +296,76 @@ export default function Experience(props){
 
               <div className="mt-3 space-y-3">
                 {e.description ? (
-                  <p className="text-sm text-justify opacity-95 whitespace-pre-line">{e.description}</p>
+                  <ChangeHighlight
+                    section="experience"
+                    field="description"
+                    expIndex={e._originalIndex ?? i}
+                    className="text-sm text-justify opacity-95 whitespace-pre-line"
+                  >
+                    <p className="text-sm text-justify opacity-95 whitespace-pre-line">{e.description}</p>
+                  </ChangeHighlight>
                 ) : null}
 
-                {(Array.isArray(e.responsibilities) && e.responsibilities.length > 0) || (Array.isArray(e.deliverables) && e.deliverables.length > 0) ? (
-                  <div className="grid gap-4 md:grid-cols-3">
-                    {Array.isArray(e.responsibilities) && e.responsibilities.length > 0 ? (
-                      <div className="md:col-span-2">
+                <div className="grid gap-4 md:grid-cols-3">
+                  {/* Responsibilities - UN SEUL changement pour tout le bloc */}
+                  <div className="md:col-span-2">
+                    {(Array.isArray(e.responsibilities) && e.responsibilities.length > 0) && (
+                      <ChangeHighlight
+                        section="experience"
+                        field="responsibilities"
+                        expIndex={e._originalIndex ?? i}
+                      >
                         <ul className="list-disc pl-5 text-sm space-y-1">
-                          {e.responsibilities.map((r, j) => <li key={j}>{r}</li>)}
+                          {e.responsibilities.map((r, j) => (
+                            <li key={j}>{r}</li>
+                          ))}
                         </ul>
-                      </div>
-                    ) : <div className="md:col-span-2" />}
-
-                    {Array.isArray(e.deliverables) && e.deliverables.length > 0 ? (
-                      <div className="md:col-span-1">
-                        <div className="text-sm font-medium mb-1">{cvT("cvSections.deliverables")}</div>
-                        <ul className="list-disc pl-5 text-sm space-y-1">
-                          {e.deliverables.map((d, j) => <li key={j}>{d}</li>)}
-                        </ul>
-                      </div>
-                    ) : null}
+                      </ChangeHighlight>
+                    )}
                   </div>
-                ) : null}
+
+                  {/* Deliverables - UN SEUL changement pour tout le bloc */}
+                  <div className="md:col-span-1">
+                    {(Array.isArray(e.deliverables) && e.deliverables.length > 0) && (
+                      <>
+                        <div className="text-sm font-medium mb-1">{cvT("cvSections.deliverables")}</div>
+                        <ChangeHighlight
+                          section="experience"
+                          field="deliverables"
+                          expIndex={e._originalIndex ?? i}
+                        >
+                          <ul className="list-disc pl-5 text-sm space-y-1">
+                            {e.deliverables.map((d, j) => (
+                              <li key={j}>{d}</li>
+                            ))}
+                          </ul>
+                        </ChangeHighlight>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
 
+              {/* Skills used */}
               <div className="flex flex-wrap gap-1 mt-4">
                 {Array.isArray(e.skills_used) && e.skills_used.map((m, k) => (
-                  <span key={k} className="inline-block rounded border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">{m}</span>
+                  <SkillItemHighlight
+                    key={k}
+                    section="experience"
+                    field="skills_used"
+                    itemName={m}
+                    expIndex={e._originalIndex ?? i}
+                  >
+                    <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">{capitalizeSkillName(m)}</span>
+                  </SkillItemHighlight>
                 ))}
+                {/* Toujours afficher les compétences supprimées (même si tableau vide) */}
+                <RemovedSkillsDisplay section="experience" field="skills_used" expIndex={e._originalIndex ?? i} />
+              </div>
               </div>
             </div>
-          ))
+          );
+          })
         ) : (
           editing && (
             <div className="rounded-2xl border border-white/15 p-3 text-sm opacity-60">
@@ -234,28 +378,28 @@ export default function Experience(props){
       {/* Edit Modal */}
       <Modal open={editIndex !== null} onClose={() => setEditIndex(null)} title={t("cvSections.editExperience")}>
         <div className="grid gap-2 md:grid-cols-2">
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.experienceTitleShort")} value={f.title || ""} onChange={e => setF({ ...f, title: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.experienceCompanyShort")} value={f.company || ""} onChange={e => setF({ ...f, company: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.experienceDepartment")} value={f.department_or_client || ""} onChange={e => setF({ ...f, department_or_client: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceTitleShort")} value={f.title || ""} onChange={e => setF({ ...f, title: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceCompanyShort")} value={f.company || ""} onChange={e => setF({ ...f, company: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceDepartment")} value={f.department_or_client || ""} onChange={e => setF({ ...f, department_or_client: e.target.value })} />
 
           <div className="grid grid-cols-2 gap-2">
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.experienceStartShort")} value={f.start || ""} onChange={e => setF({ ...f, start: e.target.value })} />
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.experienceEndShort")} value={f.end || ""} onChange={e => setF({ ...f, end: e.target.value })} disabled={f.inProgress} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceStartShort")} value={f.start || ""} onChange={e => setF({ ...f, start: e.target.value })} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceEndShort")} value={f.end || ""} onChange={e => setF({ ...f, end: e.target.value })} disabled={f.inProgress} />
             <label className="text-xs col-span-2 inline-flex items-center gap-2 text-white drop-shadow">
               <input type="checkbox" checked={!!f.inProgress} onChange={e => setF({ ...f, inProgress: e.target.checked })} /> {t("cvSections.inProgress")}
             </label>
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.city")} value={f.city || ""} onChange={e => setF({ ...f, city: e.target.value })} />
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.region")} value={f.region || ""} onChange={e => setF({ ...f, region: e.target.value })} />
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.countryCode")} value={f.country_code || ""} onChange={e => setF({ ...f, country_code: e.target.value })} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.city")} value={f.city || ""} onChange={e => setF({ ...f, city: e.target.value })} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.region")} value={f.region || ""} onChange={e => setF({ ...f, region: e.target.value })} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.countryCode")} value={f.country_code || ""} onChange={e => setF({ ...f, country_code: e.target.value })} />
           </div>
 
-          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none md:col-span-2" placeholder="Description" rows={3} value={f.description || ""} onChange={e => setF({ ...f, description: e.target.value })} />
-          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none md:col-span-2" placeholder={t("cvSections.responsibilities")} rows={3} value={f.responsibilities || ""} onChange={e => setF({ ...f, responsibilities: e.target.value })} />
-          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none md:col-span-2" placeholder={t("cvSections.deliverables")} rows={3} value={f.deliverables || ""} onChange={e => setF({ ...f, deliverables: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none md:col-span-2" placeholder={t("cvSections.skillsUsed")} value={f.skills_used || ""} onChange={e => setF({ ...f, skills_used: e.target.value })} />
+          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder="Description" rows={3} value={f.description || ""} onChange={e => setF({ ...f, description: e.target.value })} />
+          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.responsibilities")} rows={3} value={f.responsibilities || ""} onChange={e => setF({ ...f, responsibilities: e.target.value })} />
+          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.deliverables")} rows={3} value={f.deliverables || ""} onChange={e => setF({ ...f, deliverables: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.skillsUsed")} value={f.skills_used || ""} onChange={e => setF({ ...f, skills_used: e.target.value })} />
 
           <div className="md:col-span-2 flex justify-end gap-2">
             <button type="button" onClick={() => setEditIndex(null)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
@@ -267,28 +411,28 @@ export default function Experience(props){
       {/* Add Modal */}
       <Modal open={!!addOpen} onClose={() => setAddOpen(false)} title={t("cvSections.addExperience")}>
         <div className="grid gap-2 md:grid-cols-2">
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.experienceTitleShort")} value={nf.title || ""} onChange={e => setNf({ ...nf, title: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.experienceCompanyShort")} value={nf.company || ""} onChange={e => setNf({ ...nf, company: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.experienceDepartment")} value={nf.department_or_client || ""} onChange={e => setNf({ ...nf, department_or_client: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceTitleShort")} value={nf.title || ""} onChange={e => setNf({ ...nf, title: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceCompanyShort")} value={nf.company || ""} onChange={e => setNf({ ...nf, company: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceDepartment")} value={nf.department_or_client || ""} onChange={e => setNf({ ...nf, department_or_client: e.target.value })} />
 
           <div className="grid grid-cols-2 gap-2">
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.experienceStartShort")} value={nf.start || ""} onChange={e => setNf({ ...nf, start: e.target.value })} />
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.experienceEndShortWithPresent")} value={nf.end || ""} onChange={e => setNf({ ...nf, end: e.target.value })} disabled={nf.inProgress} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceStartShort")} value={nf.start || ""} onChange={e => setNf({ ...nf, start: e.target.value })} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceEndShortWithPresent")} value={nf.end || ""} onChange={e => setNf({ ...nf, end: e.target.value })} disabled={nf.inProgress} />
           </div>
           <label className="text-xs flex items-center gap-2 text-white drop-shadow">
             <input type="checkbox" checked={!!nf.inProgress} onChange={e => setNf({ ...nf, inProgress: e.target.checked })} /> {t("cvSections.inProgress")}
           </label>
 
           <div className="grid grid-cols-3 gap-2">
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.city")} value={nf.city || ""} onChange={e => setNf({ ...nf, city: e.target.value })} />
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.region")} value={nf.region || ""} onChange={e => setNf({ ...nf, region: e.target.value })} />
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.countryCode")} value={nf.country_code || ""} onChange={e => setNf({ ...nf, country_code: e.target.value })} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.city")} value={nf.city || ""} onChange={e => setNf({ ...nf, city: e.target.value })} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.region")} value={nf.region || ""} onChange={e => setNf({ ...nf, region: e.target.value })} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.countryCode")} value={nf.country_code || ""} onChange={e => setNf({ ...nf, country_code: e.target.value })} />
           </div>
 
-          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none md:col-span-2" placeholder="Description" rows={3} value={nf.description || ""} onChange={e => setNf({ ...nf, description: e.target.value })} />
-          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.responsibilities")} rows={3} value={nf.responsibilities || ""} onChange={e => setNf({ ...nf, responsibilities: e.target.value })} />
-          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.deliverables")} rows={3} value={nf.deliverables || ""} onChange={e => setNf({ ...nf, deliverables: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none md:col-span-2" placeholder={t("cvSections.skillsUsed")} value={nf.skills_used || ""} onChange={e => setNf({ ...nf, skills_used: e.target.value })} />
+          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder="Description" rows={3} value={nf.description || ""} onChange={e => setNf({ ...nf, description: e.target.value })} />
+          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.responsibilities")} rows={3} value={nf.responsibilities || ""} onChange={e => setNf({ ...nf, responsibilities: e.target.value })} />
+          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.deliverables")} rows={3} value={nf.deliverables || ""} onChange={e => setNf({ ...nf, deliverables: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.skillsUsed")} value={nf.skills_used || ""} onChange={e => setNf({ ...nf, skills_used: e.target.value })} />
 
           <div className="md:col-span-2 flex justify-end gap-2">
             <button type="button" onClick={() => setAddOpen(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>

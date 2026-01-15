@@ -54,7 +54,6 @@ export async function POST(request) {
   try {
     const formData = await request.formData();
     const rawLinks = formData.get("links");
-    const rawAnalysisLevel = formData.get("analysisLevel");
     const rawModel = formData.get("model");
     const deviceId = formData.get("deviceId") || "unknown-device";
     const recaptchaToken = formData.get("recaptchaToken");
@@ -87,7 +86,6 @@ export async function POST(request) {
       return BackgroundErrors.noSourceProvided();
     }
 
-    const requestedAnalysisLevel = typeof rawAnalysisLevel === "string" ? rawAnalysisLevel.trim().toLowerCase() : "medium";
     const requestedModel = typeof rawModel === "string" ? rawModel.trim() : "";
 
     const { directory: uploadsDirectory, saved: savedUploads } = await saveUploads(files);
@@ -102,10 +100,11 @@ export async function POST(request) {
     for (let i = 0; i < links.length; i++) {
       const link = links[i];
 
+      // Générer le taskId AVANT le débit pour pouvoir le lier à la transaction
+      const linkTaskId = `task_template_link_${now}_${i}_${Math.random().toString(36).substr(2, 9)}`;
+
       // Vérifier les limites ET incrémenter le compteur/débiter le crédit
-      const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation', {
-        analysisLevel: requestedAnalysisLevel,
-      });
+      const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation', { taskId: linkTaskId });
 
       if (!usageResult.success) {
         if (i === 0 && links.length === 1 && savedUploads.length === 0) {
@@ -119,8 +118,6 @@ export async function POST(request) {
         continue;
       }
 
-      const linkTaskId = `task_template_link_${now}_${i}_${Math.random().toString(36).substr(2, 9)}`;
-
       // Extraire un nom court du lien pour l'affichage
       let linkDisplay = link;
       try {
@@ -130,12 +127,12 @@ export async function POST(request) {
         linkDisplay = link.slice(0, 50);
       }
 
-      const title = `Création de CV modèle depuis ${linkDisplay} ...`;
+      // Titre initial = juste le domaine (sera mis à jour avec le titre de l'offre après extraction)
+      const title = linkDisplay;
       const successMessage = "CV modèle créé avec succès (lien)";
 
       const taskPayload = {
         links: [link],
-        analysisLevel: requestedAnalysisLevel,
         model: requestedModel,
         uploads: [],
         uploadDirectory: null,
@@ -177,10 +174,11 @@ export async function POST(request) {
     for (let i = 0; i < savedUploads.length; i++) {
       const upload = savedUploads[i];
 
+      // Générer le taskId AVANT le débit pour pouvoir le lier à la transaction
+      const attachmentTaskId = `task_template_file_${now}_${i}_${Math.random().toString(36).substr(2, 9)}`;
+
       // Vérifier les limites ET incrémenter le compteur/débiter le crédit
-      const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation', {
-        analysisLevel: requestedAnalysisLevel,
-      });
+      const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation', { taskId: attachmentTaskId });
 
       if (!usageResult.success) {
         if (createdTasks.length === 0 && i === 0 && savedUploads.length === 1) {
@@ -193,14 +191,12 @@ export async function POST(request) {
         console.warn(`[create-template-cv] Limite atteinte pour le fichier ${i}, ignoré: ${usageResult.error}`);
         continue;
       }
-
-      const attachmentTaskId = `task_template_file_${now}_${i}_${Math.random().toString(36).substr(2, 9)}`;
-      const title = `Création de CV modèle depuis ${upload.name} ...`;
+      // Titre initial = juste le nom du fichier (sera mis à jour avec le titre de l'offre après extraction)
+      const title = upload.name;
       const successMessage = `CV modèle créé avec succès (${upload.name})`;
 
       const taskPayload = {
         links: [],
-        analysisLevel: requestedAnalysisLevel,
         model: requestedModel,
         uploads: [upload],
         uploadDirectory: uploadsDirectory,

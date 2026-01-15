@@ -58,7 +58,7 @@ export async function POST(request) {
         },
       },
       select: {
-        extractedJobOffer: true,
+        jobOfferId: true, // Vérifier si un JobOffer est associé
         sourceValue: true,
         sourceType: true,
       },
@@ -68,9 +68,9 @@ export async function POST(request) {
       return CvErrors.notFound();
     }
 
-    // Vérifier que le CV a une analyse d'offre d'emploi en base
-    if (!cvRecord.extractedJobOffer) {
-      console.log("[calculate-match-score] CV non éligible - pas d'extractedJobOffer");
+    // Vérifier que le CV a une offre d'emploi associée
+    if (!cvRecord.jobOfferId) {
+      console.log("[calculate-match-score] CV non éligible - pas de jobOffer");
       return BackgroundErrors.noJobOfferAnalysis();
     }
 
@@ -79,8 +79,13 @@ export async function POST(request) {
       return BackgroundErrors.jobOfferUrlNotFound();
     }
 
+    // Créer un identifiant de tâche AVANT le débit pour pouvoir le lier à la transaction
+    const taskIdentifier = typeof taskId === "string" && taskId.trim()
+      ? taskId.trim()
+      : `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     // Vérifier les limites ET incrémenter le compteur/débiter le crédit
-    const usageResult = await incrementFeatureCounter(userId, 'match_score', {});
+    const usageResult = await incrementFeatureCounter(userId, 'match_score', { taskId: taskIdentifier });
 
     if (!usageResult.success) {
       return NextResponse.json({
@@ -89,11 +94,6 @@ export async function POST(request) {
         redirectUrl: usageResult.redirectUrl
       }, { status: 403 });
     }
-
-    // Créer un identifiant de tâche
-    const taskIdentifier = typeof taskId === "string" && taskId.trim()
-      ? taskId.trim()
-      : `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     const existingTask = await prisma.backgroundTask.findUnique({ where: { id: taskIdentifier } });
 

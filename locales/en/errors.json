@@ -50,7 +50,9 @@
         "debitError": "Error debiting credits",
         "sourceError": "Error retrieving CV source",
         "metadataError": "Error retrieving CV metadata",
-        "improveError": "Error improving CV"
+        "improveError": "Error improving CV",
+        "invalidVersion": "Invalid version number",
+        "versionNotFound": "Version not found"
       },
       "background": {
         "noSourceProvided": "Add at least one link or file",
@@ -100,6 +102,7 @@
         "pdfAnalysisFailed": "Unable to analyze job offer PDF",
         "cvContentMissing": "Reference CV content missing",
         "noAiResponse": "No response from AI",
+        "responseTruncated": "The AI response was truncated (too long). Please try again.",
         "invalidResponseFormat": "Invalid response format",
         "cvAndJobRequired": "CV content and job offer are required",
         "jobTitleValidationFailed": "Unable to validate job title",
@@ -107,17 +110,26 @@
         "noGptResponse": "No response from GPT",
         "invalidJsonResponse": "GPT response is not valid JSON",
         "incompleteCv": "Generated CV is incomplete (missing name or title)",
-        "noTextExtracted": "PDF contains no extractable text",
+        "pdfTooManyPages": "The PDF contains {pageCount} pages. Maximum allowed: {maxPages} pages.",
+        "pdfConversionFailed": "Unable to convert the PDF to images.",
+        "pdfNoPages": "The PDF contains no pages.",
         "gptExtractionFailed": "ChatGPT could not extract CV information",
         "openaiKeyMissing": "OpenAI API key is missing",
         "openaiQuotaExceeded": "OpenAI quota exceeded. Check your billing.",
         "invalidCvFormat": "Invalid CV format",
-        "extractedJobOfferMissing": "Extracted job offer missing - CV must be generated with an extracted offer",
+        "jobOfferMissing": "Job offer missing - CV must be generated with an associated job offer",
         "emptyOpenaiResponse": "Empty response from OpenAI",
         "noTranslationResponse": "No translation response received",
         "noJobOfferProvided": "No job offer provided (link or file required)",
         "gptGenerationFailed": "GPT could not generate CV template",
         "promptNotFound": "Prompt file not found"
+      },
+      "generateV2": {
+        "noOffersProvided": "No job offers provided",
+        "maxOffersExceeded": "Maximum offers exceeded ({max} max, {provided} provided)",
+        "invalidOfferIds": "One or more offer IDs are invalid",
+        "invalidMode": "Invalid generation mode (expected: adapt or rebuild)",
+        "jobOfferNotFound": "{count} job offer(s) not found or unauthorized"
       }
     }
   }

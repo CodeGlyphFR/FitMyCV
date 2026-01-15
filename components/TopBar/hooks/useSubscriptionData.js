@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { translatePlanName } from '@/lib/subscription/planTranslations';
 import { getPlanIcon } from '@/lib/subscription/planUtils';
@@ -6,6 +6,10 @@ import { getPlanIcon } from '@/lib/subscription/planUtils';
 /**
  * Hook custom pour récupérer les données d'abonnement et de crédits
  * Utilisé dans le TopBar pour afficher le plan actuel et la balance de crédits
+ *
+ * Features:
+ * - Écoute l'événement 'credits-updated' pour mise à jour immédiate
+ * - Fonction refetch() pour forcer une mise à jour
  */
 export function useSubscriptionData() {
   const { language } = useLanguage();
@@ -13,60 +17,93 @@ export function useSubscriptionData() {
     planName: null,
     planIcon: null,
     creditBalance: 0,
+    creditRatio: 1,
+    creditsOnlyMode: false,
     loading: true,
     error: null,
   });
 
+  const fetchData = useCallback(async (isMounted = true) => {
+    try {
+      // Headers pour éviter le cache navigateur
+      const fetchOptions = {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      };
+
+      const [subResponse, creditsResponse] = await Promise.all([
+        fetch('/api/subscription/current', fetchOptions),
+        fetch('/api/credits/balance', fetchOptions),
+      ]);
+
+      if (!isMounted) return;
+
+      if (!subResponse.ok || !creditsResponse.ok) {
+        throw new Error('Erreur lors de la récupération des données');
+      }
+
+      const subData = await subResponse.json();
+      const creditsData = await creditsResponse.json();
+
+      const plan = subData?.subscription?.plan;
+      const translatedName = plan ? translatePlanName(plan.name, language) : null;
+      const icon = plan ? getPlanIcon(plan) : null;
+      const creditsOnlyMode = subData?.creditsOnlyMode || false;
+
+      if (isMounted) {
+        const newBalance = creditsData?.balance || 0;
+        const balanceAfterLastPurchase = creditsData?.balanceAfterLastPurchase || 0;
+        const creditRatio = balanceAfterLastPurchase > 0
+          ? Math.min(1, Math.max(0, newBalance / balanceAfterLastPurchase))
+          : (newBalance > 0 ? 1 : 0);
+        setData({
+          planName: translatedName,
+          planIcon: icon,
+          creditBalance: newBalance,
+          creditRatio,
+          creditsOnlyMode,
+          loading: false,
+          error: null,
+        });
+      }
+    } catch (error) {
+      console.error('[useSubscriptionData] Erreur:', error);
+      if (isMounted) {
+        setData((prev) => ({
+          ...prev,
+          loading: false,
+          error: error.message,
+        }));
+      }
+    }
+  }, [language]);
+
   useEffect(() => {
     let isMounted = true;
 
-    async function fetchData() {
-      try {
-        const [subResponse, creditsResponse] = await Promise.all([
-          fetch('/api/subscription/current'),
-          fetch('/api/credits/balance'),
-        ]);
+    // Fetch initial
+    fetchData(isMounted);
 
-        if (!isMounted) return;
-
-        if (!subResponse.ok || !creditsResponse.ok) {
-          throw new Error('Erreur lors de la récupération des données');
-        }
-
-        const subData = await subResponse.json();
-        const creditsData = await creditsResponse.json();
-
-        const plan = subData?.subscription?.plan;
-        const translatedName = plan ? translatePlanName(plan.name, language) : null;
-        const icon = plan ? getPlanIcon(plan) : null;
-
-        if (isMounted) {
-          setData({
-            planName: translatedName,
-            planIcon: icon,
-            creditBalance: creditsData?.balance || 0,
-            loading: false,
-            error: null,
-          });
-        }
-      } catch (error) {
-        console.error('[useSubscriptionData] Erreur:', error);
-        if (isMounted) {
-          setData((prev) => ({
-            ...prev,
-            loading: false,
-            error: error.message,
-          }));
-        }
+    // Écouter l'événement custom 'credits-updated' pour mise à jour immédiate
+    const handleCreditsUpdated = () => {
+      if (isMounted) {
+        fetchData(isMounted);
       }
-    }
-
-    fetchData();
+    };
+    window.addEventListener('credits-updated', handleCreditsUpdated);
 
     return () => {
       isMounted = false;
+      window.removeEventListener('credits-updated', handleCreditsUpdated);
     };
-  }, [language]);
+  }, [fetchData]);
 
-  return data;
+  // Fonction pour forcer un refresh manuel
+  const refetch = useCallback(() => {
+    fetchData(true);
+  }, [fetchData]);
+
+  return { ...data, refetch };
 }

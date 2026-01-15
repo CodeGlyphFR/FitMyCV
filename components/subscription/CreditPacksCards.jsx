@@ -62,14 +62,24 @@ export default function CreditPacksCards({ onPurchaseSuccess }) {
     return "from-yellow-500/20 to-orange-500/20 border-yellow-500/50";
   };
 
-  const getPackIcon = (credits) => {
-    if (credits >= 50) return "💎";
-    if (credits >= 25) return "⚡";
+  const getPackIcon = (price) => {
+    if (price >= 35) return "💎";
+    if (price >= 25) return "⚡";
+    if (price >= 14) return "🔥";
     return "✨";
   };
 
-  const calculateUnitPrice = (price, credits) => {
-    return (price / credits).toFixed(2);
+  // Calculer le prix de base (pack le plus cher par crédit) pour déterminer les réductions
+  const baseUnitPrice = React.useMemo(() => {
+    if (packs.length === 0) return 0;
+    return Math.max(...packs.map(p => p.price / p.creditAmount));
+  }, [packs]);
+
+  const calculateDiscount = (price, credits) => {
+    if (baseUnitPrice === 0) return 0;
+    const unitPrice = price / credits;
+    const discount = ((baseUnitPrice - unitPrice) / baseUnitPrice) * 100;
+    return Math.round(discount / 5) * 5; // Arrondi à 0 ou 5
   };
 
   if (loading) {
@@ -87,34 +97,37 @@ export default function CreditPacksCards({ onPurchaseSuccess }) {
         {t('subscription.packs.title')}
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {packs.map((pack) => {
           const colorClass = getPackColor(pack.name);
-          const icon = getPackIcon(pack.creditAmount);
-          const unitPrice = calculateUnitPrice(pack.price, pack.creditAmount);
+          const icon = getPackIcon(pack.price);
+          const discount = calculateDiscount(pack.price, pack.creditAmount);
 
           return (
             <div
               key={pack.id}
               className={`
-                backdrop-blur-md bg-gradient-to-br ${colorClass}
+                relative backdrop-blur-md bg-gradient-to-br ${colorClass}
                 border rounded-xl p-4 shadow-lg transition-all md:hover:scale-105
               `}
             >
-              {/* Header */}
-              <div className="text-center mb-3">
-                <div className="text-3xl mb-2">{icon}</div>
-                <h3 className="text-lg font-bold text-white mb-0.5">
-                  {pack.creditAmount} {t('subscription.packs.credits')}
-                </h3>
-                {pack.description && (
-                  <div className="text-xs text-white/70">{pack.description}</div>
-                )}
+              {/* Badge réduction - style ruban */}
+              {discount > 0 && (
+                <div className="absolute top-0 right-0 z-10 overflow-hidden w-16 h-16 pointer-events-none">
+                  <div className="absolute top-2 -right-5 rotate-45 bg-green-500 text-white text-[10px] font-bold py-1 w-20 text-center shadow-[0_2px_8px_rgba(34,197,94,0.6)]">
+                    -{discount}%
+                  </div>
+                </div>
+              )}
+
+              {/* Header avec icône */}
+              <div className="text-center mb-2">
+                <div className="text-2xl mb-1">{icon}</div>
               </div>
 
               {/* Credits */}
-              <div className="text-center mb-3">
-                <div className="text-4xl font-bold text-white mb-0.5">
+              <div className="text-center mb-2">
+                <div className="text-3xl font-bold text-white mb-0.5">
                   {pack.creditAmount}
                 </div>
                 <div className="text-xs text-white/60">{t('subscription.packs.credits')}</div>
@@ -122,10 +135,7 @@ export default function CreditPacksCards({ onPurchaseSuccess }) {
 
               {/* Price */}
               <div className="text-center mb-3">
-                <div className="text-2xl font-bold text-white">{pack.price}€</div>
-                <div className="text-xs text-white/60 mt-0.5">
-                  {t('subscription.packs.pricePerCredit', { price: unitPrice })}
-                </div>
+                <div className="text-xl font-bold text-white">{pack.price}€</div>
               </div>
 
               {/* CTA Button */}

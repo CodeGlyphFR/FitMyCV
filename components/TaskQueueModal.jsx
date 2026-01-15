@@ -3,47 +3,206 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Modal from "./ui/Modal";
-import DonutProgress from "./ui/DonutProgress";
+import PipelineTaskProgress from "./ui/PipelineTaskProgress";
+import GenericTaskProgressBar from "./ui/GenericTaskProgressBar";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
+import { usePipelineProgressContext } from "@/components/PipelineProgressProvider";
 import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { emitOnboardingEvent, ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
-import { useTaskProgress } from "@/hooks/useTaskProgress";
 
 /**
- * Indicateur de progression pour les tâches en cours
- * Affiche un donut avec le pourcentage basé sur le temps estimé
- * Disparaît après l'animation de completion pour afficher le status texte
+ * Labels des étapes improve-cv pour l'affichage
  */
-function TaskProgressIndicator({ task, onComplete }) {
-  const [showDonut, setShowDonut] = React.useState(true);
-  const { progress } = useTaskProgress({
-    taskId: task.id,
-    taskType: task.type,
-    taskStatus: task.status,
-    startTime: Number(task.createdAt),
-    payload: task.payload,
+const IMPROVEMENT_STEP_LABELS = {
+  preprocess: 'Préparation',
+  classify_skills: 'Classification',
+  experiences: 'Expériences',
+  projects: 'Projets',
+  summary: 'Summary',
+  finalize: 'Finalisation',
+};
+
+/**
+ * Poids de chaque étape pour le calcul du pourcentage (CV Improvement)
+ */
+const IMPROVEMENT_STEP_WEIGHTS = {
+  preprocess: 15,
+  classify_skills: 15,
+  experiences: 30,
+  projects: 20,
+  summary: 10,
+  finalize: 10,
+};
+
+/**
+ * Calcule le pourcentage de progression pour une tâche improve-cv
+ */
+function calculateImprovementProgress(progressData) {
+  if (!progressData) return 0;
+  if (progressData.status === 'completed') return 100;
+  if (progressData.status === 'failed' || progressData.status === 'cancelled') return 0;
+
+  const { completedSteps = {}, currentStep, currentItem, totalItems } = progressData;
+  const steps = ['preprocess', 'classify_skills', 'experiences', 'projects', 'summary', 'finalize'];
+  let totalWeight = 0;
+  let completedWeight = 0;
+
+  steps.forEach(step => {
+    totalWeight += IMPROVEMENT_STEP_WEIGHTS[step];
+    if (completedSteps[step]) {
+      completedWeight += IMPROVEMENT_STEP_WEIGHTS[step];
+    }
   });
 
-  // Quand progress atteint 100% et tâche completed, attendre puis masquer
-  React.useEffect(() => {
-    if (progress >= 100 && task.status === 'completed') {
-      const timer = setTimeout(() => {
-        setShowDonut(false);
-        onComplete?.();
-      }, 600); // 600ms pour laisser voir le 100%
-      return () => clearTimeout(timer);
+  // Ajouter une progression partielle pour l'étape en cours
+  if (currentStep && !completedSteps[currentStep]) {
+    const stepWeight = IMPROVEMENT_STEP_WEIGHTS[currentStep] || 0;
+    if (totalItems && totalItems > 0 && currentItem != null) {
+      // Progression par item (ex: 3/5 expériences)
+      completedWeight += stepWeight * (currentItem / totalItems);
+    } else {
+      // 50% de l'étape en cours si pas d'items
+      completedWeight += stepWeight * 0.5;
     }
-  }, [progress, task.status, onComplete]);
+  }
 
-  if (!showDonut) return null;
+  return Math.round((completedWeight / totalWeight) * 100);
+}
+
+/**
+ * Indicateur de progression pour les tâches improve-cv
+ * Affiche les étapes avec progression temps réel via SSE
+ */
+function ImprovementProgressIndicator({ task }) {
+  const { t } = useLanguage();
+  const { getProgress } = usePipelineProgressContext();
+
+  const progress = getProgress(task.id);
+  const percentage = calculateImprovementProgress(progress);
+
+  const locale = t("common.locale") || 'fr-FR';
+  const createdAt = new Date(task.createdAt).toLocaleTimeString(locale, {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const isFinished = task.status === 'completed' || task.status === 'failed' || task.status === 'cancelled';
+
+  // Status label
+  const statusLabel = task.status === 'completed'
+    ? (t('taskQueue.status.completed') || 'Terminé')
+    : task.status === 'failed'
+      ? (t('taskQueue.status.failed') || 'Échec')
+      : task.status === 'cancelled'
+        ? (t('taskQueue.status.cancelled') || 'Annulé')
+        : (t('taskQueue.status.queued') || 'En attente');
+
+  // Classes pour la barre
+  const barClasses = task.status === 'failed' || task.status === 'cancelled'
+    ? 'bg-gradient-to-r from-red-500 to-red-400'
+    : task.status === 'completed'
+      ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
+      : 'bg-gradient-to-r from-violet-500 via-purple-400 to-fuchsia-400';
+
+  // Classes pour le status
+  const statusColorClasses = task.status === 'completed'
+    ? 'text-emerald-400'
+    : task.status === 'failed' || task.status === 'cancelled'
+      ? 'text-red-400'
+      : 'text-white/60';
+
+  // Déterminer l'étape courante à afficher
+  let currentStepLabel = t('taskQueue.taskTypes.improveCv') || 'Amélioration CV';
+  if (progress && task.status === 'running') {
+    const stepKey = progress.currentStep;
+    if (stepKey && IMPROVEMENT_STEP_LABELS[stepKey]) {
+      currentStepLabel = IMPROVEMENT_STEP_LABELS[stepKey];
+      // Ajouter le compteur si disponible
+      if (progress.totalItems && progress.totalItems > 0 && progress.currentItem != null) {
+        currentStepLabel += ` (${progress.currentItem}/${progress.totalItems})`;
+      }
+    }
+  }
+
+  if (isFinished) {
+    return (
+      <div className="py-1">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-white truncate flex-1 mr-2">
+            {t('taskQueue.taskTypes.improveCv') || 'Amélioration CV'}
+          </span>
+          <span className={`text-xs font-medium ${statusColorClasses}`}>
+            {statusLabel}
+          </span>
+        </div>
+        <div className="text-[10px] text-white/50 mt-0.5">
+          {createdAt} <span className="text-white/30">|</span> {t('taskQueue.taskTypes.improveCv') || 'Amélioration CV'}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <DonutProgress
-      progress={progress}
-      size={28}
-      strokeWidth={3}
-      showPercent={false}
+    <div className="py-1">
+      {/* Ligne 1: Heure | Description + Pourcentage */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5 flex-1 min-w-0 mr-2">
+          <span className="text-[10px] text-white/50 flex-shrink-0">{createdAt}</span>
+          <span className="text-white/30">|</span>
+          <span className="text-xs font-medium text-white truncate">
+            {t('taskQueue.taskTypes.improveCv') || 'Amélioration CV'}
+          </span>
+        </div>
+        <span className="text-xs font-medium text-purple-400 tabular-nums flex-shrink-0">
+          {task.status === 'running' ? `${percentage}%` : '—'}
+        </span>
+      </div>
+
+      {/* Ligne 2: Barre de progression */}
+      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mt-1">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ease-out ${barClasses} ${task.status === 'queued' ? 'animate-pulse' : ''}`}
+          style={{ width: `${Math.max(task.status === 'queued' ? 8 : percentage, 2)}%` }}
+        />
+      </div>
+
+      {/* Ligne 3: Étape courante */}
+      <div className="text-[10px] text-white/50 mt-0.5">
+        {task.status === 'running' ? currentStepLabel : statusLabel}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Indicateur de progression pour les tâches cv_generation_v2
+ * Affiche les barres de progression par offre
+ */
+function PipelineProgressIndicator({ task }) {
+  const { t } = useLanguage();
+
+  // Extraire les infos du payload pour multi-offres
+  const payload = task?.payload && typeof task.payload === 'object' ? task.payload : null;
+  const totalOffers = payload?.totalOffers || 1;
+  const sourceUrl = payload?.url || null;
+
+  // Formater l'heure
+  const locale = t("common.locale") || 'fr-FR';
+  const createdAt = new Date(task.createdAt).toLocaleTimeString(locale, {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  return (
+    <PipelineTaskProgress
+      taskId={task.id}
+      totalOffers={totalOffers}
+      createdAt={createdAt}
+      taskStatus={task.status}
+      taskTitle={task.title}
+      sourceUrl={sourceUrl}
+      className="w-full"
     />
   );
 }
@@ -56,38 +215,25 @@ function extractQuotedName(text) {
 
 function TaskItem({ task, onCancel, onTaskClick }) {
   const { t } = useLanguage();
-  const [showProgressDonut, setShowProgressDonut] = React.useState(task.status === 'running');
+  const router = useRouter();
+  const { getProgress } = usePipelineProgressContext();
 
-  // Réinitialiser showProgressDonut quand la tâche passe à running
-  React.useEffect(() => {
-    if (task.status === 'running') {
-      setShowProgressDonut(true);
-    }
-  }, [task.status]);
-
-  const getStatusDisplay = (status) => {
-    const colors = {
-      'queued': 'text-white/70 drop-shadow',
-      'running': 'text-blue-300 drop-shadow',
-      'completed': 'text-green-400 drop-shadow',
-      'failed': 'text-red-400 drop-shadow',
-      'cancelled': 'text-red-300 drop-shadow'
-    };
-
-    return {
-      label: t(`taskQueue.status.${status}`) || t("taskQueue.status.unknown"),
-      color: colors[status] || 'text-white/60 drop-shadow'
-    };
-  };
-
-  const statusDisplay = getStatusDisplay(task.status);
   const locale = t("common.locale") || 'fr-FR'; // fr-FR ou en-US
   const createdAt = new Date(task.createdAt).toLocaleTimeString(locale, {
     hour: '2-digit',
     minute: '2-digit'
   });
 
-  const canCancel = task.status === 'queued' || task.status === 'running';
+  // Pour cv_generation_v2, utiliser le statut SSE s'il est disponible (plus à jour que le polling)
+  let effectiveStatus = task.status;
+  if (task.type === 'cv_generation_v2') {
+    const sseProgress = getProgress(task.id);
+    if (sseProgress?.status && sseProgress.status !== 'running') {
+      effectiveStatus = sseProgress.status;
+    }
+  }
+
+  const canCancel = effectiveStatus === 'queued' || effectiveStatus === 'running';
 
   const payload = task?.payload && typeof task.payload === 'object' ? task.payload : null;
 
@@ -128,17 +274,8 @@ function TaskItem({ task, onCancel, onTaskClick }) {
       }
     }
   } else if (task.type === 'import') {
-    if (task.status === 'running') {
-      description = t("taskQueue.messages.importInProgress");
-    } else if (task.status === 'queued') {
-      description = t("taskQueue.messages.importQueued");
-    } else if (task.status === 'completed') {
-      description = t("taskQueue.messages.importCompleted");
-    } else if (task.status === 'cancelled') {
-      description = t("taskQueue.messages.importCancelled");
-    } else if (task.status === 'failed') {
-      description = t("taskQueue.messages.importFailed");
-    }
+    // Utiliser task.title qui contient le nom du fichier PDF
+    description = task.title || importName || t("taskQueue.messages.importInProgress");
   } else if (task.type === 'generation') {
     if (task.status === 'running') {
       description = `${t("taskQueue.messages.creationInProgress")}${generationName ? ` : '${generationName}'` : ''}`;
@@ -152,32 +289,24 @@ function TaskItem({ task, onCancel, onTaskClick }) {
       description = `${t("taskQueue.messages.creationFailed")}${generationName ? ` : '${generationName}'` : ''}`;
     }
   } else if (task.type === 'template-creation') {
+    // Utiliser task.title qui contient le titre de l'offre ou le lien
+    description = task.title || t("taskQueue.messages.templateCreationInProgress");
+  } else if (task.type === 'cv_generation_v2') {
+    const totalOffers = payload?.totalOffers || 1;
+    const offerLabel = totalOffers > 1 ? ` (${totalOffers} ${t("taskQueue.messages.offers") || 'offres'})` : '';
     if (task.status === 'running') {
-      description = t("taskQueue.messages.templateCreationInProgress");
+      description = `${t("taskQueue.messages.pipelineInProgress") || 'Génération CV en cours'}${offerLabel}`;
     } else if (task.status === 'queued') {
-      description = t("taskQueue.messages.templateCreationQueued");
+      description = `${t("taskQueue.messages.pipelineQueued") || 'Génération CV en attente'}${offerLabel}`;
     } else if (task.status === 'completed') {
-      description = t("taskQueue.messages.templateCreationCompleted");
+      description = `${t("taskQueue.messages.pipelineCompleted") || 'Génération CV terminée'}${offerLabel}`;
     } else if (task.status === 'cancelled') {
-      description = t("taskQueue.messages.templateCreationCancelled");
+      description = `${t("taskQueue.messages.pipelineCancelled") || 'Génération CV annulée'}${offerLabel}`;
     } else if (task.status === 'failed') {
-      description = t("taskQueue.messages.templateCreationFailed");
+      description = `${t("taskQueue.messages.pipelineFailed") || 'Génération CV échouée'}${offerLabel}`;
     }
   }
   // Note: Les tâches 'calculate-match-score' sont filtrées et n'apparaissent pas dans le gestionnaire
-
-  // Extraire le lien ou la pièce jointe du payload
-  let sourceInfo = null;
-  if ((task.type === 'generation' || task.type === 'template-creation') && payload) {
-    if (Array.isArray(payload.links) && payload.links.length > 0) {
-      sourceInfo = payload.links[0];
-    } else if (Array.isArray(payload.uploads) && payload.uploads.length > 0) {
-      sourceInfo = payload.uploads[0].name;
-    }
-  } else if (task.type === 'import' && payload?.savedName) {
-    sourceInfo = payload.savedName;
-  }
-  const hasSourceInfo = (task.type === 'generation' || task.type === 'template-creation' || task.type === 'import') && sourceInfo;
 
   // Déterminer si la tâche a un CV associé
   let cvFileName = null;
@@ -187,11 +316,12 @@ function TaskItem({ task, onCancel, onTaskClick }) {
     if (task.cvFile) {
       cvFileName = task.cvFile;
     }
-    // Sinon vérifier le result (pour generation, import, template-creation)
+    // Sinon vérifier le result (pour generation, import, template-creation, cv_generation_v2)
     else if (task.result && task.status === 'completed') {
       // task.result est déjà un objet (parsé par l'API)
       const result = typeof task.result === 'string' ? JSON.parse(task.result) : task.result;
-      cvFileName = result.file || (result.files && result.files.length > 0 ? result.files[0] : null);
+      // cv_generation_v2 utilise 'filename', les autres utilisent 'file' ou 'files'
+      cvFileName = result.filename || result.file || (result.files && result.files.length > 0 ? result.files[0] : null);
     }
   } catch (err) {
     console.error('[TaskItem] Erreur extraction cvFileName:', err);
@@ -215,26 +345,29 @@ function TaskItem({ task, onCancel, onTaskClick }) {
     }
   };
 
-  return (
-    <div
-      className={`flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5 ${isClickable ? 'cursor-pointer hover:bg-white/10 transition-all duration-200' : ''}`}
-      onClick={handleClick}
-    >
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <div className="text-sm font-medium text-white drop-shadow truncate">
-            {description}
+  // Layout spécial pour cv_generation_v2 : PipelineProgressIndicator prend toute la largeur
+  if (task.type === 'cv_generation_v2') {
+    return (
+      <div
+        className={`p-3 border border-white/20 rounded-lg bg-white/5 ${isClickable ? 'cursor-pointer hover:bg-white/10 transition-all duration-200' : ''}`}
+        onClick={handleClick}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <PipelineProgressIndicator task={task} />
           </div>
-        </div>
-        <div className="flex items-center gap-1 text-xs text-white/60 drop-shadow">
-          <span>{createdAt}</span>
-          {hasSourceInfo && (
-            <>
-              <span className="text-white/40">•</span>
-              <span className="truncate" title={sourceInfo}>
-                {sourceInfo}
-              </span>
-            </>
+          {canCancel && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCancel(task.id);
+              }}
+              className="text-xs text-red-400/70 hover:text-red-300 hover:bg-red-500/20 px-2 py-1 rounded-sm transition-all duration-200 mt-1 flex-shrink-0"
+              title={t("taskQueue.cancelTask")}
+            >
+              ✕
+            </button>
           )}
         </div>
         {/* Show action button if error has redirectUrl */}
@@ -251,14 +384,66 @@ function TaskItem({ task, onCancel, onTaskClick }) {
           </button>
         )}
       </div>
-      <div className="flex items-center gap-2 ml-4">
-        {showProgressDonut && (task.status === 'running' || task.status === 'completed') ? (
-          <TaskProgressIndicator task={task} onComplete={() => setShowProgressDonut(false)} />
-        ) : (
-          <span className={`text-sm font-medium ${statusDisplay.color}`}>
-            {statusDisplay.label}
-          </span>
+    );
+  }
+
+  // Layout spécial pour improve-cv : ImprovementProgressIndicator avec progression SSE
+  if (task.type === 'improve-cv') {
+    return (
+      <div
+        className={`p-3 border border-white/20 rounded-lg bg-white/5 ${isClickable ? 'cursor-pointer hover:bg-white/10 transition-all duration-200' : ''}`}
+        onClick={handleClick}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <ImprovementProgressIndicator task={task} />
+          </div>
+          {canCancel && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCancel(task.id);
+              }}
+              className="text-xs text-red-400/70 hover:text-red-300 hover:bg-red-500/20 px-2 py-1 rounded-sm transition-all duration-200 mt-1 flex-shrink-0"
+              title={t("taskQueue.cancelTask")}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        {/* Show action button if error has redirectUrl */}
+        {task.status === 'failed' && errorRedirectUrl && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(errorRedirectUrl);
+            }}
+            className="mt-2 px-3 py-1 rounded-lg text-xs font-semibold bg-red-500/30 hover:bg-red-500/40 border border-red-500/50 text-white transition-all duration-200 inline-flex items-center gap-1"
+          >
+            {t("subscription.viewOptions") || "Voir les options"}
+            <span className="text-base">→</span>
+          </button>
         )}
+      </div>
+    );
+  }
+
+  // Layout standard pour les autres types de tâches - utilise le même style que le pipeline
+  return (
+    <div
+      className={`p-3 border border-white/20 rounded-lg bg-white/5 ${isClickable ? 'cursor-pointer hover:bg-white/10 transition-all duration-200' : ''}`}
+      onClick={handleClick}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <GenericTaskProgressBar
+            task={task}
+            description={description}
+            createdAt={createdAt}
+            className="w-full"
+          />
+        </div>
         {canCancel && (
           <button
             type="button"
@@ -266,13 +451,26 @@ function TaskItem({ task, onCancel, onTaskClick }) {
               e.stopPropagation();
               onCancel(task.id);
             }}
-            className="ml-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/20 px-2 py-1 rounded transition-all duration-200 drop-shadow"
+            className="text-xs text-red-400/70 hover:text-red-300 hover:bg-red-500/20 px-2 py-1 rounded-sm transition-all duration-200 mt-1 flex-shrink-0"
             title={t("taskQueue.cancelTask")}
           >
             ✕
           </button>
         )}
       </div>
+      {/* Show action button if error has redirectUrl */}
+      {task.status === 'failed' && errorRedirectUrl && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(errorRedirectUrl);
+          }}
+          className="mt-2 px-3 py-1 rounded-lg text-xs font-semibold bg-red-500/30 hover:bg-red-500/40 border border-red-500/50 text-white transition-all duration-200 inline-flex items-center gap-1"
+        >
+          {t("subscription.viewOptions") || "Voir les options"}
+          <span className="text-base">→</span>
+        </button>
+      )}
     </div>
   );
 }
@@ -280,7 +478,7 @@ function TaskItem({ task, onCancel, onTaskClick }) {
 export default function TaskQueueModal({ open, onClose }) {
   const { t } = useLanguage();
   const router = useRouter();
-  const { tasks, clearCompletedTasks, cancelTask, isApiSyncEnabled } = useBackgroundTasks();
+  const { tasks, clearCompletedTasks, cancelTask } = useBackgroundTasks();
 
   // Émettre l'événement onboarding quand le modal s'ouvre (pour valider l'étape 3)
   useEffect(() => {
@@ -364,21 +562,8 @@ export default function TaskQueueModal({ open, onClose }) {
           </div>
         )}
 
-        <div className="flex justify-between items-center pt-4 border-t border-white/10 text-xs text-white/70">
-          <div className="flex items-center gap-1">
-            <div
-              className={`w-2 h-2 rounded-full ${isApiSyncEnabled ? 'bg-green-400' : 'bg-orange-400'}`}
-              title={isApiSyncEnabled ? t("taskQueue.cloudSyncActive") : t("taskQueue.localSyncOnly")}
-            />
-            <span>{isApiSyncEnabled ? t("taskQueue.cloud") : t("taskQueue.localStorage")}</span>
-          </div>
+        <div className="flex justify-center items-center pt-4 border-t border-white/10 text-xs text-white/70">
           <div>{t("taskQueue.total")}: {tasks.length}</div>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
-          >
-            {t("common.close")}
-          </button>
         </div>
       </div>
     </Modal>

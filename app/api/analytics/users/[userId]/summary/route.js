@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
+import { CommonErrors } from '@/lib/api/apiErrors';
 import prisma from '@/lib/prisma';
 
 /**
@@ -8,17 +9,22 @@ import prisma from '@/lib/prisma';
  */
 export async function GET(request, { params }) {
   try {
+    // Vérifier l'authentification
     const session = await auth();
+    if (!session?.user?.id) {
+      return CommonErrors.notAuthenticated();
+    }
 
     // Only admin can access analytics
-    if (session?.user?.role !== 'ADMIN') {
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: 'Unauthorized - Admin access required' },
+        { error: 'Forbidden - Admin access required' },
         { status: 403 }
       );
     }
 
-    const { userId } = params;
+    // Next.js 16: params est maintenant async
+    const { userId } = await params;
 
     // Get user info
     const user = await prisma.user.findUnique({

@@ -10,12 +10,15 @@ import Projects from "@/components/Projects";
 import EmptyState from "@/components/EmptyState";
 import ScrollToTopOnMount from "@/components/ScrollToTopOnMount";
 import { HighlightProvider } from "@/components/HighlightProvider";
+import OrphanedChangesDisplay from "@/components/OrphanedChangesDisplay";
 
 import { sanitizeInMemory } from "@/lib/sanitize";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/session";
-import { ensureUserCvDir, listUserCvFiles, readUserCvFile } from "@/lib/cv/storage";
+import { ensureUserCvDir, listUserCvFiles, readUserCvFileWithMeta } from "@/lib/cv/storage";
+import { getCvVersionContent } from "@/lib/cv/versioning";
+import { getSectionOrder, getSectionTitles } from "@/lib/openai/cvConstants";
 
 export const metadata = {
   title: "Mes CVs - FitMyCV.io",
@@ -25,8 +28,9 @@ export const metadata = {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function getCV(userId){
-  const cvCookie = (cookies().get("cvFile") || {}).value;
+async function getCV(userId, versionNumber = null){
+  const cookieStore = await cookies();
+  const cvCookie = (cookieStore.get("cvFile") || {}).value;
   await ensureUserCvDir(userId);
   const availableFiles = await listUserCvFiles(userId);
 
@@ -37,41 +41,73 @@ async function getCV(userId){
 
   const file = (cvCookie && availableFiles.includes(cvCookie)) ? cvCookie : availableFiles[0];
 
-  let raw;
+  let cvData;
   try {
-    raw = await readUserCvFile(userId, file);
+    // Récupérer le CV avec ses métadonnées depuis la DB
+    cvData = await readUserCvFileWithMeta(userId, file);
   } catch (error) {
     // Si le fichier n'existe pas, retourner null
     return null;
   }
 
-  // Pas de sanitize ni validation à l'affichage - uniquement parsing
-  const cv = JSON.parse(raw);
+  // Si une version spécifique est demandée, charger son contenu
+  let cvContent = cvData.content;
+  let isViewingVersion = false;
 
-  return { cv };
+  if (versionNumber !== null && versionNumber >= 0) {
+    const versionContent = await getCvVersionContent(userId, file, versionNumber);
+    if (versionContent) {
+      cvContent = versionContent;
+      isViewingVersion = true;
+    }
+  }
+
+  // Récupérer l'ordre des sections depuis Settings (global)
+  const orderHint = await getSectionOrder();
+
+  // Langue depuis la DB (ou fallback vers cv.language pour rétrocompatibilité, ou 'fr')
+  const language = cvData.language || cvContent?.language || 'fr';
+
+  // Calculer les titres de sections depuis la langue
+  const sectionTitles = getSectionTitles(language);
+
+  return {
+    cv: cvContent,
+    filename: file,
+    language,
+    orderHint,
+    sectionTitles,
+    isViewingVersion,
+    viewingVersionNumber: versionNumber,
+    contentVersion: cvData.contentVersion || 1,
+  };
 }
 
-export default async function Page(){
+export default async function Page(props){
   const session = await auth();
   if (!session?.user?.id){
     redirect("/auth");
   }
 
-  const cvResult = await getCV(session.user.id);
+  // Next.js 16: searchParams est maintenant async
+  const searchParams = await props.searchParams;
+
+  // Extraire le paramètre version de l'URL (?version=2)
+  const versionParam = searchParams?.version;
+  const versionNumber = versionParam ? parseInt(versionParam, 10) : null;
+
+  // Extraire le paramètre cv de l'URL (?cv=filename.json) pour ouvrir un CV spécifique
+  const cvParam = searchParams?.cv;
+
+  const cvResult = await getCV(session.user.id, versionNumber, cvParam);
 
   // Si aucun CV n'existe, afficher l'EmptyState
   if (!cvResult) {
     return <EmptyState />;
   }
 
-  const { cv } = cvResult;
-  // Ne passer sectionTitles que s'ils sont vraiment personnalisés (non vides et non par défaut)
-  const rawSectionTitles = cv.section_titles || {};
-  const hasCustomTitles = Object.keys(rawSectionTitles).length > 0;
-  const sectionTitles = hasCustomTitles ? rawSectionTitles : {};
-
-  // Langue du CV pour les titres de sections (indépendant de la langue du site)
-  const cvLanguage = cv.language || 'fr';
+  // Extraire les données depuis cvResult
+  const { cv, filename, language: cvLanguage, orderHint, sectionTitles, isViewingVersion, viewingVersionNumber, contentVersion } = cvResult;
 
   const sections = {
     header:     <Header header={cv.header} cvLanguage={cvLanguage} />,
@@ -84,9 +120,8 @@ export default async function Page(){
     projects:   <Projects projects={cv.projects} sectionTitles={sectionTitles} cvLanguage={cvLanguage} />,
   };
 
-  // ---- ORDRE DES SECTIONS (toujours inclure "projects") ----
-  const defaultOrder = ["header","summary","skills","experience","education","languages","extras"];
-  const base = Array.isArray(cv.order_hint) && cv.order_hint.length ? [...cv.order_hint] : [...defaultOrder];
+  // ---- ORDRE DES SECTIONS (depuis Settings, toujours inclure "projects") ----
+  const base = [...orderHint];
 
   if (!base.includes("projects")) {
     const idx = base.indexOf("extras");
@@ -97,12 +132,16 @@ export default async function Page(){
   const order = base;
 
   return (
-    <HighlightProvider cv={cv}>
+    <HighlightProvider cv={cv} filename={filename} initialVersion={isViewingVersion ? viewingVersionNumber : 'latest'} contentVersion={contentVersion}>
       <main className="max-w-4xl mx-auto p-4 pb-2 md:pt-8">
         <ScrollToTopOnMount />
 
         {order.map(k => (
-          <div key={k} className="cv-section">{sections[k]}</div>
+          <React.Fragment key={k}>
+            <div className="cv-section">{sections[k]}</div>
+            {/* Affiche les changements orphelins juste après le header */}
+            {k === "header" && <OrphanedChangesDisplay />}
+          </React.Fragment>
         ))}
 
       </main>

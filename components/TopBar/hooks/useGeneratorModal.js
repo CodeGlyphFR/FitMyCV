@@ -1,6 +1,5 @@
 import React from "react";
 import { CREATE_TEMPLATE_OPTION } from "../utils/constants";
-import { getAnalysisOption } from "../utils/cvUtils";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { parseApiError } from "@/lib/utils/errorHandler";
 import { TASK_TYPES } from "@/lib/backgroundTasks/taskTypes";
@@ -29,10 +28,8 @@ export function useGeneratorModal({
   const [generatorError, setGeneratorError] = React.useState("");
   const [generatorBaseFile, setGeneratorBaseFile] = React.useState("");
   const [baseSelectorOpen, setBaseSelectorOpen] = React.useState(false);
-  const [analysisLevel, setAnalysisLevel] = React.useState("medium");
   const [linkHistoryDropdowns, setLinkHistoryDropdowns] = React.useState({});
-  const [allowedAnalysisLevels, setAllowedAnalysisLevels] = React.useState(['rapid', 'medium', 'deep']); // Par défaut tous autorisés
-  const [plans, setPlans] = React.useState([]); // Liste des plans pour calculer les badges
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const fileInputRef = React.useRef(null);
   const isMountedRef = React.useRef(true);
@@ -55,12 +52,6 @@ export function useGeneratorModal({
     [generatorSourceItems, generatorBaseFile]
   );
 
-  // Calculate currentAnalysisOption internally
-  const currentAnalysisOption = React.useMemo(
-    () => getAnalysisOption(analysisLevel, t),
-    [analysisLevel, t]
-  );
-
   React.useEffect(() => {
     if (!generatorSourceItems.length) {
       setGeneratorBaseFile(CREATE_TEMPLATE_OPTION);
@@ -79,48 +70,6 @@ export function useGeneratorModal({
       return preferred ? preferred.file : prev;
     });
   }, [generatorSourceItems, current]);
-
-  // Récupérer les niveaux d'analyse autorisés et les plans depuis l'API quand le modal s'ouvre
-  React.useEffect(() => {
-    if (!openGenerator) return;
-
-    async function fetchSubscriptionData() {
-      try {
-        // Fetch en parallèle des niveaux autorisés et des plans
-        const [currentResponse, plansResponse] = await Promise.all([
-          fetch('/api/subscription/current'),
-          fetch('/api/subscription/plans')
-        ]);
-
-        if (!currentResponse.ok) throw new Error('Erreur lors de la récupération des niveaux autorisés');
-        if (!plansResponse.ok) throw new Error('Erreur lors de la récupération des plans');
-
-        const currentData = await currentResponse.json();
-        const plansData = await plansResponse.json();
-
-        const levels = currentData.allowedAnalysisLevels || ['rapid', 'medium', 'deep'];
-        setAllowedAnalysisLevels(levels);
-        setPlans(plansData.plans || []);
-
-        // Auto-sélectionner le meilleur niveau autorisé si le niveau actuel n'est pas autorisé
-        setAnalysisLevel((currentLevel) => {
-          if (levels.includes(currentLevel)) {
-            return currentLevel;
-          }
-          // Priorité : deep > medium > rapid
-          if (levels.includes('deep')) return 'deep';
-          if (levels.includes('medium')) return 'medium';
-          if (levels.includes('rapid')) return 'rapid';
-          return currentLevel;
-        });
-      } catch (error) {
-        console.error('[Generator Modal] Erreur fetch subscription data:', error);
-        // En cas d'erreur, garder les valeurs par défaut
-      }
-    }
-
-    fetchSubscriptionData();
-  }, [openGenerator]);
 
   const openGeneratorModal = React.useCallback(() => {
     setBaseSelectorOpen(false);
@@ -181,9 +130,9 @@ export function useGeneratorModal({
     setLinkInputs([""]);
     setFileSelection([]);
     setGeneratorError("");
-    setAnalysisLevel("medium");
     setBaseSelectorOpen(false);
     setLinkHistoryDropdowns({});
+    setIsSubmitting(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -247,7 +196,8 @@ export function useGeneratorModal({
       addLinksToHistory(cleanedLinks);
     }
 
-    const selectedAnalysis = currentAnalysisOption;
+    // Désactiver le bouton pendant la soumission
+    setIsSubmitting(true);
 
     let endpoint, taskType, taskLabel, notificationMessage;
 
@@ -261,7 +211,7 @@ export function useGeneratorModal({
       taskType = TASK_TYPES.GENERATION;
       taskLabel = `Adaptation du CV '${baseCvName}'`;
       notificationMessage = t("cvGenerator.notifications.scheduled", { baseCvName });
-      endpoint = "/api/background-tasks/generate-cv";
+      endpoint = "/api/background-tasks/generate-cv-v2";
     }
 
     try {
@@ -282,8 +232,7 @@ export function useGeneratorModal({
         formData.append("baseFileLabel", baseCvName || "");
       }
 
-      formData.append("analysisLevel", selectedAnalysis.id);
-      formData.append("model", selectedAnalysis.model);
+      // Le modèle sera récupéré depuis les settings DB côté serveur
       if (localDeviceId) {
         formData.append("deviceId", localDeviceId);
       }
@@ -292,12 +241,18 @@ export function useGeneratorModal({
         formData.append("files", file);
       });
 
+      console.log('[Generator] Sending request to:', endpoint);
       const response = await fetch(endpoint, {
         method: "POST",
         body: formData,
       });
+      console.log('[Generator] Response received:', response.status);
 
-      const data = await response.json().catch(() => ({}));
+      const data = await response.json().catch((e) => {
+        console.error('[Generator] JSON parse error:', e);
+        return {};
+      });
+      console.log('[Generator] Data:', data);
 
       // Fermer le modal IMMÉDIATEMENT pour feedback utilisateur
       // IMPORTANT: Faire ceci AVANT toutes les vérifications pour garantir la fermeture
@@ -327,7 +282,6 @@ export function useGeneratorModal({
         label: taskLabel,
         metadata: {
           baseFile: isTemplateCreation ? undefined : generatorBaseFile,
-          analysisLevel: selectedAnalysis.id,
           linksCount: cleanedLinks.length,
           filesCount: (fileSelection || []).length,
         },
@@ -342,6 +296,11 @@ export function useGeneratorModal({
         message: notificationMessage,
         duration: 2500,
       });
+
+      // Rafraîchir le compteur de crédits (les crédits ont été débités)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('credits-updated'));
+      }
 
       // Nettoyer la tâche optimiste après notification
       removeOptimisticTask(optimisticTaskId);
@@ -391,13 +350,9 @@ export function useGeneratorModal({
     setGeneratorBaseFile,
     baseSelectorOpen,
     setBaseSelectorOpen,
-    analysisLevel,
-    setAnalysisLevel,
-    currentAnalysisOption,
     linkHistoryDropdowns,
     setLinkHistoryDropdowns,
-    allowedAnalysisLevels,
-    plans,
+    isSubmitting,
     fileInputRef,
     generatorSourceItems,
     generatorBaseItem,

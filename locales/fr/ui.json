@@ -12,6 +12,7 @@
     "myCvs": "Mes CVs",
     "myAccount": "Mon compte",
     "subscriptions": "Abonnements & Crédits",
+    "subscriptions_credits_only": "Gérer mes crédits",
     "logout": "Déconnexion",
     "analyzeOffers": "Analyse d'offres",
     "coverLetters": "Lettres de motivation",
@@ -25,11 +26,6 @@
     "cvInProgress": "CV en cours d'édition",
     "jobTitlePlaceholder": "Entrez un titre de poste (ex: Développeur Full-Stack)",
     "jobTitlePlaceholderMobile": "ex: Développeur Full-Stack",
-    "analysisLevels": {
-      "rapid": "Rapide",
-      "medium": "Moyen",
-      "deep": "Approfondi"
-    },
     "filter": "Filtrer",
     "filterTitle": "Filtres",
     "filterCvType": "Type de CV",
@@ -73,6 +69,24 @@
       "deleteFailed": "Suppression impossible:"
     }
   },
+  "bulkDeleteModal": {
+    "title": "Suppression multiple",
+    "hint": "Ctrl+clic sur le bouton supprimer",
+    "selectCvs": "Sélectionnez les CV à supprimer :",
+    "selectAll": "Tout sélectionner",
+    "deselectAll": "Tout désélectionner",
+    "selected": "{count} CV sélectionné(s)",
+    "currentCvDisabled": "CV actuel (non supprimable)",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "deleting": "Suppression...",
+    "confirmMessage": "Voulez-vous vraiment supprimer {count} CV ? Cette action est irréversible.",
+    "errors": {
+      "deleteFailed": "Erreur lors de la suppression :"
+    },
+    "success": "{count} CV supprimé(s) avec succès",
+    "noCvsToDelete": "Aucun autre CV à supprimer"
+  },
   "export": {
     "noCvSelected": "Aucun CV sélectionné pour l'export.",
     "errors": {
@@ -106,7 +120,7 @@
       "save": "Enregistrer",
       "necessary": {
         "title": "Cookies nécessaires",
-        "description": "Essentiels au fonctionnement du site.",
+        "description": "Essentiels au fonctionnement du site (session, sécurité, langue).",
         "active": "Actifs"
       },
       "functional": {
@@ -115,7 +129,7 @@
       },
       "analytics": {
         "title": "Cookies analytiques",
-        "description": "Statistiques d'utilisation du site."
+        "description": "Mesure d'audience respectueuse de la vie privée."
       },
       "marketing": {
         "title": "Cookies marketing",
@@ -135,8 +149,8 @@
       "necessary": {
         "title": "Cookies nécessaires",
         "alwaysActive": "Toujours actifs",
-        "description": "Ces cookies sont essentiels au fonctionnement du site. Ils permettent l'authentification, la sécurité, et la navigation de base. Ils ne peuvent pas être désactivés.",
-        "examples": "Session utilisateur, tokens CSRF, préférences de langue"
+        "description": "Ces cookies sont essentiels au fonctionnement du site. Ils permettent l'authentification, la sécurité, la navigation de base et la mémorisation de votre langue. Ils ne peuvent pas être désactivés.",
+        "examples": "Session utilisateur, tokens CSRF, préférence de langue"
       },
       "functional": {
         "title": "Cookies fonctionnels",
@@ -145,8 +159,8 @@
       },
       "analytics": {
         "title": "Cookies analytiques",
-        "description": "Ces cookies nous aident à comprendre comment vous utilisez notre site pour l'améliorer. Les données sont anonymisées et agrégées.",
-        "examples": "Pages visitées, temps passé, parcours utilisateur"
+        "description": "Ces cookies nous aident à comprendre comment vous utilisez notre site pour l'améliorer. Nous utilisons des outils respectueux de la vie privée.",
+        "examples": "Pages visitées, temps passé, origine du trafic"
       },
       "marketing": {
         "title": "Cookies marketing",
@@ -256,7 +270,9 @@
     "success": "Succès",
     "close": "Fermer",
     "confirmation": "Confirmation",
-    "locale": "fr-FR"
+    "locale": "fr-FR",
+    "yes": "Oui",
+    "no": "Non"
   },
   "editMode": {
     "on": "✏️ Édition ON",
@@ -359,5 +375,11 @@
         "4": "Enterprise"
       }
     }
+  },
+  "credits": {
+    "costLabel": "Coût",
+    "unit": "crédit",
+    "unitPlural": "crédits",
+    "useCredits": "Utiliser {count} Cr."
   }
 }

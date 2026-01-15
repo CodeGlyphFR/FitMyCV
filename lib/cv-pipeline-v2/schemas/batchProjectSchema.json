@@ -1,0 +1,74 @@
+{
+  "name": "adapted_project",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Nom du projet"
+      },
+      "role": {
+        "type": "string",
+        "description": "Role de la personne sur le projet (ex: Developpeur, Architecte, Lead technique)"
+      },
+      "start_date": {
+        "type": "string",
+        "description": "Date de debut au format YYYY-MM ou YYYY"
+      },
+      "end_date": {
+        "type": "string",
+        "description": "Date de fin au format YYYY-MM, YYYY, ou 'present' si en cours"
+      },
+      "summary": {
+        "type": "string",
+        "description": "Description adaptee du projet avec mots-cles pertinents"
+      },
+      "tech_stack": {
+        "type": "array",
+        "description": "Technologies utilisees, reordonnees par pertinence",
+        "items": {
+          "type": "string"
+        }
+      },
+      "url": {
+        "type": ["string", "null"],
+        "description": "URL du projet (inchangee)"
+      },
+      "modifications": {
+        "type": "array",
+        "description": "Liste detaillee des modifications effectuees avec avant/apres/raison",
+        "items": {
+          "type": "object",
+          "properties": {
+            "field": {
+              "type": "string",
+              "description": "Nom du champ modifie (name, role, summary, tech_stack)"
+            },
+            "action": {
+              "type": "string",
+              "enum": ["modified", "removed", "reordered", "converted"],
+              "description": "Type de modification"
+            },
+            "before": {
+              "type": "string",
+              "description": "Valeur originale avant modification"
+            },
+            "after": {
+              "type": "string",
+              "description": "Valeur apres modification"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Raison IA expliquant pourquoi cette modification a ete faite"
+            }
+          },
+          "required": ["field", "action", "before", "after", "reason"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": ["name", "role", "start_date", "end_date", "summary", "tech_stack", "url", "modifications"],
+    "additionalProperties": false
+  }
+}
