@@ -51,3 +51,4 @@ CaddyFile.txt
 env.txt
 prisma/get_job_offers.sh
 rebuild-prod.sh
+deploy.sh
