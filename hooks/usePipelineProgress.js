@@ -148,261 +148,277 @@ export function usePipelineProgress() {
     }));
   }, []);
 
-  // Connexion au SSE
+  // Connexion au SSE avec reconnexion automatique
   useEffect(() => {
     if (!isAuthenticated) {
       return;
     }
 
-    const eventSource = new EventSource('/api/events/stream');
-    eventSourceRef.current = eventSource;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 5;
+    const BASE_RECONNECT_DELAY = 1000;
+    let reconnectTimeout = null;
+    let isMounted = true;
 
-    eventSource.onerror = (err) => {
-      console.error('[usePipelineProgress] EventSource error:', err);
-    };
+    const connect = () => {
+      if (!isMounted) return;
 
-    // Événement de progression
-    eventSource.addEventListener('cv_generation_v2:offer_progress', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        const {
-          taskId,
-          offerId,
-          offerIndex,
-          totalOffers,
-          phase,
-          step,
-          status,
-          sourceUrl,
-          jobTitle,
-          currentItem,
-          totalItems,
-        } = data;
+      const eventSource = new EventSource('/api/events/stream');
+      eventSourceRef.current = eventSource;
 
-        // Si status === 'completed', marquer l'étape comme terminée
-        if (status === 'completed') {
-          markStepCompleted(taskId, offerId, step);
+      eventSource.onopen = () => {
+        reconnectAttempts = 0;
+      };
+
+      eventSource.onerror = () => {
+        const readyState = eventSource.readyState;
+
+        if (readyState === EventSource.CLOSED) {
+          eventSource.close();
+          eventSourceRef.current = null;
+
+          if (isMounted && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            const delay = Math.min(BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempts), 30000);
+            reconnectAttempts++;
+            console.log(`[usePipelineProgress] SSE reconnecting in ${delay}ms (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+            reconnectTimeout = setTimeout(connect, delay);
+          }
         }
+      };
 
-        // Mettre à jour la progression de l'offre
-        updateOfferProgress(taskId, offerId, offerIndex, {
-          offerIndex,
-          sourceUrl: sourceUrl || null,
-          jobTitle: jobTitle || null,
-          currentPhase: phase,
-          currentStep: step,
-          currentItem: currentItem ?? null,
-          totalItems: totalItems ?? null,
-          status: 'running',
-        });
-
-        // Mettre à jour les infos globales de la tâche
-        updateTaskProgress(taskId, {
-          totalOffers,
-          status: 'running',
-        });
-
-      } catch (err) {
-        console.error('[usePipelineProgress] Erreur parsing offer_progress:', err);
-      }
-    });
-
-    // Événement offre terminée
-    eventSource.addEventListener('cv_generation_v2:offer_completed', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        const { taskId, offerId, offerIndex, generatedCvFileId, generatedCvFileName } = data;
-
-        setProgressMap(prev => {
-          const task = prev[taskId] || { offers: {}, completedOffers: [] };
-          const completedOffers = [...(task.completedOffers || [])];
-          completedOffers.push({
-            id: offerId,
+      // Événement de progression
+      eventSource.addEventListener('cv_generation_v2:offer_progress', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const {
+            taskId,
+            offerId,
             offerIndex,
-            cvFileId: generatedCvFileId,
-            cvFileName: generatedCvFileName,
-          });
+            totalOffers,
+            phase,
+            step,
+            status,
+            sourceUrl,
+            jobTitle,
+            currentItem,
+            totalItems,
+          } = data;
 
-          // Marquer toutes les étapes comme terminées pour cette offre
-          const offer = task.offers[offerId] || {};
-          const completedSteps = {};
-          PIPELINE_STEPS.forEach(step => {
-            completedSteps[step] = true;
-          });
-
-          return {
-            ...prev,
-            [taskId]: {
-              ...task,
-              offers: {
-                ...task.offers,
-                [offerId]: {
-                  ...offer,
-                  completedSteps,
-                  currentStep: null,
-                  status: 'completed',
-                },
-              },
-              completedOffers,
-              lastUpdate: Date.now(),
-            },
-          };
-        });
-      } catch (err) {
-        console.error('[usePipelineProgress] Erreur parsing offer_completed:', err);
-      }
-    });
-
-    // Événement offre échouée ou annulée
-    eventSource.addEventListener('cv_generation_v2:offer_failed', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        const { taskId, offerId, offerIndex, error, creditsRefunded } = data;
-
-        // Détecter si c'est une annulation
-        const isCancelled = error === 'Task cancelled' || error?.includes('cancelled');
-        const offerStatus = isCancelled ? 'cancelled' : 'failed';
-
-        setProgressMap(prev => {
-          const task = prev[taskId] || { offers: {}, failedOffers: [] };
-          const failedOffers = [...(task.failedOffers || [])];
-          failedOffers.push({ id: offerId, offerIndex, error, creditsRefunded, cancelled: isCancelled });
-
-          const offer = task.offers[offerId] || {};
-
-          return {
-            ...prev,
-            [taskId]: {
-              ...task,
-              offers: {
-                ...task.offers,
-                [offerId]: {
-                  ...offer,
-                  status: offerStatus,
-                  error,
-                },
-              },
-              failedOffers,
-              lastUpdate: Date.now(),
-            },
-          };
-        });
-      } catch (err) {
-        console.error('[usePipelineProgress] Erreur parsing offer_failed:', err);
-      }
-    });
-
-    // Événement tâche terminée
-    eventSource.addEventListener('cv_generation_v2:completed', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        const { taskId, totalGenerated, totalFailed, creditsRefunded } = data;
-
-        updateTaskProgress(taskId, {
-          status: totalFailed === 0 ? 'completed' : (totalGenerated > 0 ? 'partial' : 'failed'),
-          totalGenerated,
-          totalFailed,
-          creditsRefunded,
-        });
-
-        // Déclencher immédiatement le rafraîchissement des tâches et de la liste CV
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('cv_generation_v2:task_completed', { detail: { taskId } }));
-          window.dispatchEvent(new Event('cv:list:changed'));
-        }
-      } catch (err) {
-        console.error('[usePipelineProgress] Erreur parsing completed:', err);
-      }
-    });
-
-    // ============================================================
-    // Événements CV Improvement V2
-    // ============================================================
-
-    // Événement progression amélioration
-    eventSource.addEventListener('cv_improvement:progress', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        const { taskId, stage, step, status, current, total, itemType } = data;
-
-        setProgressMap(prev => {
-          const task = prev[taskId] || { stages: {}, completedSteps: {}, status: 'running', type: 'cv_improvement' };
-          const completedSteps = { ...task.completedSteps };
-
-          // Si l'étape est terminée, la marquer
           if (status === 'completed') {
-            completedSteps[step] = true;
+            markStepCompleted(taskId, offerId, step);
           }
 
-          return {
-            ...prev,
-            [taskId]: {
-              ...task,
-              type: 'cv_improvement',
-              currentStage: stage,
-              currentStep: step,
-              currentItem: current ?? null,
-              totalItems: total ?? null,
-              itemType: itemType ?? null,
-              completedSteps,
-              status: 'running',
-              lastUpdate: Date.now(),
-            },
-          };
-        });
-      } catch (err) {
-        console.error('[usePipelineProgress] Erreur parsing cv_improvement:progress:', err);
-      }
-    });
+          updateOfferProgress(taskId, offerId, offerIndex, {
+            offerIndex,
+            sourceUrl: sourceUrl || null,
+            jobTitle: jobTitle || null,
+            currentPhase: phase,
+            currentStep: step,
+            currentItem: currentItem ?? null,
+            totalItems: totalItems ?? null,
+            status: 'running',
+          });
 
-    // Événement amélioration terminée
-    eventSource.addEventListener('cv_improvement:completed', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        const { taskId, changesCount, pipelineVersion, stageMetrics } = data;
-
-        updateTaskProgress(taskId, {
-          type: 'cv_improvement',
-          status: 'completed',
-          changesCount,
-          pipelineVersion,
-          stageMetrics,
-        });
-
-        // Déclencher le rafraîchissement
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('cv_improvement:task_completed', { detail: { taskId } }));
-          window.dispatchEvent(new Event('cv:list:changed'));
+          updateTaskProgress(taskId, {
+            totalOffers,
+            status: 'running',
+          });
+        } catch (err) {
+          console.error('[usePipelineProgress] Erreur parsing offer_progress:', err);
         }
-      } catch (err) {
-        console.error('[usePipelineProgress] Erreur parsing cv_improvement:completed:', err);
-      }
-    });
+      });
 
-    // Événement amélioration échouée
-    eventSource.addEventListener('cv_improvement:failed', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        const { taskId, error } = data;
+      // Événement offre terminée
+      eventSource.addEventListener('cv_generation_v2:offer_completed', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const { taskId, offerId, offerIndex, generatedCvFileId, generatedCvFileName } = data;
 
-        const isCancelled = error === 'Task cancelled' || error?.includes('cancelled');
+          setProgressMap(prev => {
+            const task = prev[taskId] || { offers: {}, completedOffers: [] };
+            const completedOffers = [...(task.completedOffers || [])];
+            completedOffers.push({
+              id: offerId,
+              offerIndex,
+              cvFileId: generatedCvFileId,
+              cvFileName: generatedCvFileName,
+            });
 
-        updateTaskProgress(taskId, {
-          type: 'cv_improvement',
-          status: isCancelled ? 'cancelled' : 'failed',
-          error,
-        });
+            const offer = task.offers[offerId] || {};
+            const completedSteps = {};
+            PIPELINE_STEPS.forEach(step => {
+              completedSteps[step] = true;
+            });
 
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('cv:list:changed'));
+            return {
+              ...prev,
+              [taskId]: {
+                ...task,
+                offers: {
+                  ...task.offers,
+                  [offerId]: {
+                    ...offer,
+                    completedSteps,
+                    currentStep: null,
+                    status: 'completed',
+                  },
+                },
+                completedOffers,
+                lastUpdate: Date.now(),
+              },
+            };
+          });
+        } catch (err) {
+          console.error('[usePipelineProgress] Erreur parsing offer_completed:', err);
         }
-      } catch (err) {
-        console.error('[usePipelineProgress] Erreur parsing cv_improvement:failed:', err);
-      }
-    });
+      });
 
-    // Cleanup
+      // Événement offre échouée ou annulée
+      eventSource.addEventListener('cv_generation_v2:offer_failed', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const { taskId, offerId, offerIndex, error, creditsRefunded } = data;
+
+          const isCancelled = error === 'Task cancelled' || error?.includes('cancelled');
+          const offerStatus = isCancelled ? 'cancelled' : 'failed';
+
+          setProgressMap(prev => {
+            const task = prev[taskId] || { offers: {}, failedOffers: [] };
+            const failedOffers = [...(task.failedOffers || [])];
+            failedOffers.push({ id: offerId, offerIndex, error, creditsRefunded, cancelled: isCancelled });
+
+            const offer = task.offers[offerId] || {};
+
+            return {
+              ...prev,
+              [taskId]: {
+                ...task,
+                offers: {
+                  ...task.offers,
+                  [offerId]: {
+                    ...offer,
+                    status: offerStatus,
+                    error,
+                  },
+                },
+                failedOffers,
+                lastUpdate: Date.now(),
+              },
+            };
+          });
+        } catch (err) {
+          console.error('[usePipelineProgress] Erreur parsing offer_failed:', err);
+        }
+      });
+
+      // Événement tâche terminée
+      eventSource.addEventListener('cv_generation_v2:completed', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const { taskId, totalGenerated, totalFailed, creditsRefunded } = data;
+
+          updateTaskProgress(taskId, {
+            status: totalFailed === 0 ? 'completed' : (totalGenerated > 0 ? 'partial' : 'failed'),
+            totalGenerated,
+            totalFailed,
+            creditsRefunded,
+          });
+
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('cv_generation_v2:task_completed', { detail: { taskId } }));
+            window.dispatchEvent(new Event('cv:list:changed'));
+          }
+        } catch (err) {
+          console.error('[usePipelineProgress] Erreur parsing completed:', err);
+        }
+      });
+
+      // Événements CV Improvement V2
+      eventSource.addEventListener('cv_improvement:progress', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const { taskId, stage, step, status, current, total, itemType } = data;
+
+          setProgressMap(prev => {
+            const task = prev[taskId] || { stages: {}, completedSteps: {}, status: 'running', type: 'cv_improvement' };
+            const completedSteps = { ...task.completedSteps };
+
+            if (status === 'completed') {
+              completedSteps[step] = true;
+            }
+
+            return {
+              ...prev,
+              [taskId]: {
+                ...task,
+                type: 'cv_improvement',
+                currentStage: stage,
+                currentStep: step,
+                currentItem: current ?? null,
+                totalItems: total ?? null,
+                itemType: itemType ?? null,
+                completedSteps,
+                status: 'running',
+                lastUpdate: Date.now(),
+              },
+            };
+          });
+        } catch (err) {
+          console.error('[usePipelineProgress] Erreur parsing cv_improvement:progress:', err);
+        }
+      });
+
+      eventSource.addEventListener('cv_improvement:completed', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const { taskId, changesCount, pipelineVersion, stageMetrics } = data;
+
+          updateTaskProgress(taskId, {
+            type: 'cv_improvement',
+            status: 'completed',
+            changesCount,
+            pipelineVersion,
+            stageMetrics,
+          });
+
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('cv_improvement:task_completed', { detail: { taskId } }));
+            window.dispatchEvent(new Event('cv:list:changed'));
+          }
+        } catch (err) {
+          console.error('[usePipelineProgress] Erreur parsing cv_improvement:completed:', err);
+        }
+      });
+
+      eventSource.addEventListener('cv_improvement:failed', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const { taskId, error } = data;
+
+          const isCancelled = error === 'Task cancelled' || error?.includes('cancelled');
+
+          updateTaskProgress(taskId, {
+            type: 'cv_improvement',
+            status: isCancelled ? 'cancelled' : 'failed',
+            error,
+          });
+
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('cv:list:changed'));
+          }
+        } catch (err) {
+          console.error('[usePipelineProgress] Erreur parsing cv_improvement:failed:', err);
+        }
+      });
+    };
+
+    connect();
+
     return () => {
+      isMounted = false;
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
