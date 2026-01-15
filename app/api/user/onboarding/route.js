@@ -19,7 +19,7 @@ import prisma from '@/lib/prisma';
 import { getTotalSteps } from '@/lib/onboarding/onboardingSteps';
 import { DEFAULT_ONBOARDING_STATE, normalizeOnboardingState } from '@/lib/onboarding/onboardingState';
 import { ONBOARDING_API } from '@/lib/onboarding/onboardingConfig';
-import { sseManager } from '@/lib/sse/sseManager';
+import dbEmitter from '@/lib/events/dbEmitter';
 import { CommonErrors, OtherErrors } from '@/lib/api/apiErrors';
 
 // Constante : nombre d'étapes total
@@ -200,7 +200,7 @@ export async function PUT(request) {
     });
 
     // Broadcast SSE
-    sseManager.broadcast(session.user.id, 'onboarding:updated', {
+    dbEmitter.emitOnboardingUpdate(session.user.id, {
       currentStep: step,
       onboardingState: updatedUser.onboardingState,
     });
@@ -306,7 +306,7 @@ export async function PATCH(request) {
     }
 
     // Broadcast SSE pour synchroniser les autres devices
-    sseManager.broadcast(session.user.id, 'onboarding:updated', {
+    dbEmitter.emitOnboardingUpdate(session.user.id, {
       onboardingState: updatedUser.onboardingState,
       currentStep: updatedUser.onboardingState.currentStep,
     });
@@ -370,7 +370,7 @@ export async function POST(request) {
       });
 
       // Broadcast SSE
-      sseManager.broadcast(session.user.id, 'onboarding:updated', {
+      dbEmitter.emitOnboardingUpdate(session.user.id, {
         hasCompleted: true,
         completedAt,
         onboardingState: updatedUser.onboardingState,
@@ -413,7 +413,7 @@ export async function POST(request) {
       });
 
       // Broadcast SSE
-      sseManager.broadcast(session.user.id, 'onboarding:updated', {
+      dbEmitter.emitOnboardingUpdate(session.user.id, {
         hasCompleted: false, // Cohérent avec newState
         isSkipped: true,
         skippedAt,
@@ -438,7 +438,7 @@ export async function POST(request) {
       updateCache.delete(String(session.user.id));
 
       // Broadcast SSE RESET
-      sseManager.broadcast(session.user.id, 'onboarding:reset', {
+      dbEmitter.emitOnboardingReset(session.user.id, {
         onboardingState: DEFAULT_ONBOARDING_STATE,
       });
 

@@ -4,7 +4,7 @@
       "title": "Abonnements & Credits",
       "title_credits_only": "Meine Credits verwalten",
       "description": "Verwalten Sie Ihr Abonnement, kaufen Sie Credits und sehen Sie Ihren Verlauf ein.",
-      "description_credits_only": "Kaufen Sie Credits, um erweiterte Funktionen zu nutzen.",
+      "description_credits_only": "Kaufen Sie Credits, um Funktionen zu nutzen.",
       "backToCvs": "Zurück",
       "loadingTitle": "Laden...",
       "errorLoading": "Fehler beim Laden der Daten",
@@ -185,16 +185,16 @@
       "needMore": "Mehr benötigt?",
       "needMoreInfo": "Kaufen Sie Credits, um Ihre monatlichen Limits zu überschreiten, ohne den Plan zu wechseln.",
       "labels": {
-        "gpt_cv_generation": "🤖 KI-Lebenslauf-Anpassung",
-        "import_pdf": "📥 Lebenslauf-Import",
-        "translate_cv": "🌍 Lebenslauf-Übersetzung",
-        "match_score": "🎯 Match-Score",
-        "calculate_match_score": "🎯 Match-Score",
-        "optimize_cv": "✨ Optimierung",
-        "generate_from_job_title": "💼 Fiktive Lebenslauf-Erstellung",
-        "export_cv": "💾 Lebenslauf-Export",
-        "edit_cv": "✏️ Lebenslauf-Bearbeitung",
-        "create_cv_manual": "📝 Lebenslauf-Erstellung"
+        "gpt_cv_generation": "KI-Lebenslauf-Anpassung",
+        "import_pdf": "Lebenslauf-Import",
+        "translate_cv": "Lebenslauf-Übersetzung",
+        "match_score": "Match-Score",
+        "calculate_match_score": "Match-Score",
+        "optimize_cv": "Optimierung",
+        "generate_from_job_title": "Fiktive Lebenslauf-Erstellung",
+        "export_cv": "Lebenslauf-Export",
+        "edit_cv": "Lebenslauf-Bearbeitung",
+        "create_cv_manual": "Lebenslauf-Erstellung"
       }
     },
     "credits": {

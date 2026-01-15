@@ -159,7 +159,7 @@ export function CvGenerationCostsSection({ period, refreshKey }) {
       </div>
 
       {/* Generations List - Limited to ~3 visible with scroll */}
-      <div className="space-y-2 max-h-[400px] overflow-y-auto">
+      <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
         {validGenerations.map((gen) => (
           <div
             key={gen.taskId}
@@ -208,7 +208,7 @@ export function CvGenerationCostsSection({ period, refreshKey }) {
                 <h4 className="text-white/80 text-sm font-medium mb-2">
                   {validSubtasks.length} subtask{validSubtasks.length > 1 ? 's' : ''}
                 </h4>
-                <div className="max-h-64 overflow-y-auto">
+                <div className="max-h-64 overflow-y-auto custom-scrollbar">
                   <table className="w-full text-xs">
                     <thead className="sticky top-0 bg-black/80">
                       <tr className="text-left text-white/60 border-b border-white/10">

@@ -154,7 +154,7 @@ export default function Skills(props){
                     <div className="flex items-center gap-2">
                       <SkillsReviewActions field="hard_skills" />
                       {editing && (
-                        <button onClick={() => setOpenHard(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
+                        <button onClick={() => setOpenHard(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-colors duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
                       )}
                     </div>
                   </div>
@@ -199,7 +199,7 @@ export default function Skills(props){
                       <div className="flex items-center gap-2">
                         <SkillsReviewActions field="tools" />
                         {editing && (
-                          <button onClick={() => setOpenTools(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
+                          <button onClick={() => setOpenTools(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-colors duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
                         )}
                       </div>
                     </div>
@@ -239,7 +239,7 @@ export default function Skills(props){
                       <div className="flex items-center gap-2">
                         <SkillsReviewActions field="methodologies" />
                         {editing && (
-                          <button onClick={() => setOpenMeth(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
+                          <button onClick={() => setOpenMeth(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-colors duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
                         )}
                       </div>
                     </div>
@@ -285,7 +285,7 @@ export default function Skills(props){
                     })}
                     <RemovedSkillsDisplay section="skills" field="soft_skills" />
                     {editing && (
-                      <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center rounded-sm border border-white/15 bg-white/20 opacity-90 cursor-pointer hover:bg-white/30 transition-all duration-200" style={{height: '23px', width: '23px', minHeight: '23px', minWidth: '23px', maxHeight: '23px', maxWidth: '23px'}}>
+                      <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center rounded-sm border border-white/15 bg-white/20 opacity-90 cursor-pointer hover:bg-white/30 transition-colors duration-200" style={{height: '23px', width: '23px', minHeight: '23px', minWidth: '23px', maxHeight: '23px', maxWidth: '23px'}}>
                         <img src="/icons/edit.png" alt="Edit" className="h-[11px] w-[11px]" />
                       </span>
                     )}
@@ -295,7 +295,7 @@ export default function Skills(props){
                 <div className="rounded-2xl border border-white/15 p-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold mb-2">{cvT("cvSections.softSkills")}</h3>
-                    <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center rounded-sm border border-white/15 bg-white/20 opacity-90 cursor-pointer hover:bg-white/30 transition-all duration-200" style={{height: '23px', width: '23px', minHeight: '23px', minWidth: '23px', maxHeight: '23px', maxWidth: '23px'}}><img src="/icons/edit.png" alt="Edit" className="h-[11px] w-[11px]" /></span>
+                    <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center rounded-sm border border-white/15 bg-white/20 opacity-90 cursor-pointer hover:bg-white/30 transition-colors duration-200" style={{height: '23px', width: '23px', minHeight: '23px', minWidth: '23px', maxHeight: '23px', maxWidth: '23px'}}><img src="/icons/edit.png" alt="Edit" className="h-[11px] w-[11px]" /></span>
                   </div>
                   <div className="text-sm opacity-60">{t("cvSections.noSoftSkills")}</div>
                 </div>
@@ -312,9 +312,9 @@ export default function Skills(props){
         <div className="space-y-2">
           {hardLocal.map((row,idx)=>(
             <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...hardLocal]; arr[idx]={...arr[idx], name:e.target.value}; setHardLocal(arr); }} />
+              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...hardLocal]; arr[idx]={...arr[idx], name:e.target.value}; setHardLocal(arr); }} />
               <select
-                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
+                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
                 value={row.proficiency ?? ""}
                 onChange={e => { const arr=[...hardLocal]; arr[idx]={ ...arr[idx], proficiency:e.target.value }; setHardLocal(arr); }}
               >
@@ -338,9 +338,9 @@ export default function Skills(props){
         <div className="space-y-2">
           {toolsLocal.map((row,idx)=>(
             <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...toolsLocal]; arr[idx]={...arr[idx], name:e.target.value}; setToolsLocal(arr); }} />
+              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...toolsLocal]; arr[idx]={...arr[idx], name:e.target.value}; setToolsLocal(arr); }} />
               <select
-                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
+                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
                 value={row.proficiency ?? ""}
                 onChange={e => { const arr=[...toolsLocal]; arr[idx]={ ...arr[idx], proficiency:e.target.value }; setToolsLocal(arr); }}
               >
@@ -364,7 +364,7 @@ export default function Skills(props){
         <div className="space-y-2">
           {methLocal.map((row,idx)=>(
             <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...methLocal]; arr[idx]=e.target.value; setMethLocal(arr); }} />
+              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...methLocal]; arr[idx]=e.target.value; setMethLocal(arr); }} />
               <button onClick={()=>{ const arr=[...methLocal]; arr.splice(idx,1); setMethLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 p-1.5 text-white hover:bg-red-500/40 transition-colors shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
             </div>
           ))}
@@ -380,7 +380,7 @@ export default function Skills(props){
         <div className="space-y-2">
           {softLocal.map((row,idx)=>(
             <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...softLocal]; arr[idx]=e.target.value; setSoftLocal(arr); }} />
+              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...softLocal]; arr[idx]=e.target.value; setSoftLocal(arr); }} />
               <button onClick={()=>{ const arr=[...softLocal]; arr.splice(idx,1); setSoftLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 p-1.5 text-white hover:bg-red-500/40 transition-colors shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
             </div>
           ))}

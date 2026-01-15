@@ -10,6 +10,7 @@ import BackgroundTasksProvider from "@/components/BackgroundTasksProvider";
 import RealtimeRefreshProvider from "@/components/RealtimeRefreshProvider";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { SettingsProvider } from "@/lib/settings/SettingsContext";
+import { CreditCostsProvider } from "@/lib/creditCosts/CreditCostsContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import RecaptchaProvider from "@/components/RecaptchaProvider";
 import OnboardingProvider from "@/components/onboarding/OnboardingProvider";
@@ -23,6 +24,7 @@ export default function RootProviders({ session, initialSettings, children }){
     <SessionProvider session={session}>
       <RecaptchaProvider>
         <SettingsProvider initialSettings={initialSettings}>
+        <CreditCostsProvider>
         <LanguageProvider>
         <NotificationProvider>
         <AdminProvider>
@@ -48,6 +50,7 @@ export default function RootProviders({ session, initialSettings, children }){
         </AdminProvider>
         </NotificationProvider>
         </LanguageProvider>
+        </CreditCostsProvider>
       </SettingsProvider>
       </RecaptchaProvider>
     </SessionProvider>

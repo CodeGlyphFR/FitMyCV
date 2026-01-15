@@ -14,10 +14,12 @@ import { CommonErrors, OtherErrors } from '@/lib/api/apiErrors';
  */
 export async function POST(request) {
   try {
-    // Vérifier l'authentification
+    // Vérifier l'authentification (gracieux si non connecté)
     const session = await auth();
     if (!session?.user?.id) {
-      return CommonErrors.notAuthenticated();
+      // Utilisateur non connecté - retourner succès silencieux
+      // Le consentement sera loggé quand il se connectera
+      return NextResponse.json({ success: true, skipped: true });
     }
 
     // Parser le body

@@ -72,12 +72,15 @@
   },
   "exportModal": {
     "title": "Personnaliser et exporter en PDF",
+    "previewTitle": "Prévisualisation du PDF",
     "filename": "Nom du fichier",
     "filenameHint": "Le fichier sera exporté avec l'extension .pdf",
     "selectAll": "Tout sélectionner",
     "deselectAll": "Tout désélectionner",
     "export": "Exporter",
     "exporting": "Export en cours...",
+    "preview": "Prévisualiser",
+    "backToOptions": "Retour aux options",
     "cancel": "Annuler",
     "sectionsTitle": "Sélectionnez les sections à inclure",
     "showOptions": "Afficher les options",
@@ -115,6 +118,33 @@
       "item": "élément",
       "items": "éléments",
       "selected": "sélectionné(s)"
+    },
+    "options": {
+      "hideProficiency": "Masquer les niveaux",
+      "hideDescription": "Masquer les descriptions",
+      "hideTechnologies": "Masquer les technologies",
+      "hideDeliverables": "Masquer les résultats"
+    },
+    "templates": {
+      "label": "Template",
+      "placeholder": "Appliquer un template...",
+      "loading": "Chargement...",
+      "noTemplates": "Aucun template",
+      "save": "Enregistrer",
+      "namePlaceholder": "Nom du template",
+      "confirmDelete": "Supprimer ce template ?",
+      "confirmOverwrite": "Écraser le template",
+      "update": "Mettre à jour",
+      "createNew": "Créer nouveau",
+      "delete": "Supprimer",
+      "hint": "Sauvegardez vos sélections comme template réutilisable"
+    },
+    "order": {
+      "button": "Ordre des sections",
+      "title": "Ordre des sections",
+      "hint": "Déplacez les sections pour personnaliser l'ordre d'affichage",
+      "reset": "Réinitialiser",
+      "close": "Fermer"
     }
   },
   "newCvModal": {
@@ -175,10 +205,10 @@
     "deliverables": "Résultats",
     "skillsUsed": "Compétences utilisées",
     "technologies": "Technologies",
-    "hardSkills": "Compétences techniques",
+    "hardSkills": "Techniques",
     "tools": "Outils",
     "methodologies": "Méthodologies",
-    "softSkills": "Compétences comportementales",
+    "softSkills": "Comportementales",
     "noTools": "Aucun outil pour le moment.",
     "noMethodologies": "Aucune méthodologie pour le moment.",
     "noSoftSkills": "Aucun soft skill pour le moment.",
@@ -264,7 +294,12 @@
     "calculatingScore": "Calcul du score en cours...",
     "showMore": "autres",
     "showLess": "Voir moins",
-    "languageNote": "L'analyse et les suggestions sont affichées dans la langue du CV, pas dans la langue de l'interface."
+    "languageNote": "L'analyse et les suggestions sont affichées dans la langue du CV, pas dans la langue de l'interface.",
+    "noSelection": "Sélectionnez au moins une amélioration",
+    "deselect": "Désélectionner",
+    "cancel": "Annuler",
+    "contextPlaceholder": "Ajoutez du contexte (optionnel)...",
+    "skillsAddedSuccess": "Compétences ajoutées avec succès"
   },
   "changes": {
     "title": "Historique des modifications",

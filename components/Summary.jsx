@@ -48,14 +48,14 @@ export default function Summary(props){
               <div className="flex gap-2">
                 <button
                   onClick={()=>setOpen(true)}
-                  className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"
+                  className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-colors duration-200"
                 >
                   <img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " />
                 </button>
                 {!isEmpty && (
                   <button
                     onClick={clear}
-                    className="no-print text-xs rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-red-500/40 transition-all duration-200"
+                    className="no-print text-xs rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-red-500/40 transition-colors duration-200"
                   >
                     <img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " />
                   </button>
@@ -97,7 +97,7 @@ export default function Summary(props){
         <div className="space-y-2">
           <FormRow label={t("cvSections.summary")}>
             <textarea
-              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden leading-relaxed"
+              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden leading-relaxed"
               rows={8}
               value={text}
               onChange={e=>setText(e.target.value)}

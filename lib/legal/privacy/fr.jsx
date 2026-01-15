@@ -96,10 +96,39 @@ export default function PrivacyContentFR() {
         </h2>
         <ul className="list-disc list-inside text-sm text-white/90 space-y-1 drop-shadow">
           <li><strong>Exécution du contrat</strong> : fourniture du service de création de CV</li>
-          <li><strong>Consentement</strong> : cookies non nécessaires, newsletters (si applicable)</li>
-          <li><strong>Intérêt légitime</strong> : amélioration du service, sécurité</li>
+          <li><strong>Consentement</strong> : cookies analytiques (mesure d'audience)</li>
+          <li><strong>Intérêt légitime</strong> : amélioration du service, sécurité, télémétrie interne</li>
           <li><strong>Obligation légale</strong> : conservation des données pour obligations fiscales</li>
         </ul>
+      </section>
+
+      <section className="mb-4 bg-white/15 backdrop-blur-xl p-4 rounded-lg shadow-2xl">
+        <h2 className="text-xl font-semibold mb-3 text-emerald-300 drop-shadow">
+          5bis. Télémétrie interne (Intérêt légitime)
+        </h2>
+        <p className="text-sm text-white/90 mb-2 drop-shadow">
+          Dans le cadre de notre intérêt légitime à fournir un service fiable et sécurisé, nous collectons certaines données techniques <strong>sans consentement préalable</strong> :
+        </p>
+        <ul className="list-disc list-inside text-sm text-white/90 space-y-1 drop-shadow mb-3">
+          <li><strong>Logs d'erreurs</strong> : pour identifier et corriger les dysfonctionnements</li>
+          <li><strong>Métriques de performance</strong> : temps de réponse des appels IA, taux de succès</li>
+          <li><strong>Événements système</strong> : création de CV, imports, générations (sans contenu personnel)</li>
+          <li><strong>Usage des appels API</strong> : pour détecter les abus et garantir la disponibilité du service</li>
+        </ul>
+        <p className="text-sm text-white/90 mb-2 drop-shadow">
+          Ces données sont :
+        </p>
+        <ul className="list-disc list-inside text-sm text-white/90 space-y-1 drop-shadow">
+          <li>Stockées exclusivement dans notre base de données (pas de transmission à des tiers)</li>
+          <li>Utilisées uniquement pour améliorer le service et détecter les problèmes</li>
+          <li>Conservées 12 mois maximum</li>
+          <li>Non partagées avec des tiers à des fins commerciales</li>
+        </ul>
+        <div className="mt-3 p-3 bg-emerald-500/20 backdrop-blur-sm rounded">
+          <p className="text-sm text-white drop-shadow">
+            <strong>Votre droit d'opposition :</strong> Conformément à l'article 21 du RGPD, vous pouvez vous opposer à cette collecte en nous contactant. Notez que cela pourrait affecter notre capacité à diagnostiquer les problèmes sur votre compte et à garantir la sécurité du service.
+          </p>
+        </div>
       </section>
 
       <section className="mb-4 bg-white/15 backdrop-blur-xl p-4 rounded-lg shadow-2xl">

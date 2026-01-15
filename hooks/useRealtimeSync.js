@@ -76,6 +76,48 @@ export function useRealtimeSync(options = {}) {
         }
       });
 
+      // Mise à jour des crédits - dispatcher directement l'événement client
+      eventSource.addEventListener('credits:updated', (event) => {
+        const data = JSON.parse(event.data);
+        // Dispatcher l'événement pour que tous les composants se mettent à jour
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('credits-updated', { detail: data }));
+        }
+      });
+
+      // Mise à jour des settings (broadcast) - dispatcher l'événement client
+      eventSource.addEventListener('settings:updated', (event) => {
+        const data = JSON.parse(event.data);
+        // Dispatcher l'événement pour que SettingsContext se mette à jour
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('settings:updated', { detail: data }));
+        }
+      });
+
+      // Mise à jour de l'onboarding - dispatcher l'événement client
+      eventSource.addEventListener('onboarding:updated', (event) => {
+        const data = JSON.parse(event.data);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('onboarding:updated', { detail: data }));
+        }
+      });
+
+      // Reset de l'onboarding - dispatcher l'événement client
+      eventSource.addEventListener('onboarding:reset', (event) => {
+        const data = JSON.parse(event.data);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('onboarding:reset', { detail: data }));
+        }
+      });
+
+      // Validation d'email - dispatcher l'événement client
+      eventSource.addEventListener('email:verified', (event) => {
+        const data = JSON.parse(event.data);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('email:verified', { detail: data }));
+        }
+      });
+
       // Gestion des erreurs
       eventSource.onerror = (err) => {
         setConnected(false);

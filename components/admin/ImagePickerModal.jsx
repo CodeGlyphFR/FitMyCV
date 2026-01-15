@@ -143,7 +143,7 @@ export function ImagePickerModal({ isOpen, onClose, onSelect }) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="w-8 h-8 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin" />

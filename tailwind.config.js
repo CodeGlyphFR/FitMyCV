@@ -110,6 +110,6 @@ module.exports = {
   },
   darkMode: "class",
   plugins: [
-    require('tailwind-scrollbar'),
+    require('tailwind-scrollbar')({ nocompatible: true, preferredStrategy: 'pseudoelements' }),
   ],
 };

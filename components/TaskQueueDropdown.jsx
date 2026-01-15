@@ -240,6 +240,7 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
   const router = useRouter();
   const { tasks, clearCompletedTasks, cancelTask } = useBackgroundTasks();
   const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0 });
+  const dropdownRef = React.useRef(null);
 
   // Filtrer les tâches de calcul de match score (complètement transparentes - le bouton MatchScore a sa propre animation)
   const visibleTasks = tasks.filter(task => task.type !== 'calculate-match-score');
@@ -317,25 +318,50 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
     }
   }, [isOpen, buttonRef]);
 
+  // Click outside handler
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    function handleClickOutside(event) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        buttonRef?.current &&
+        !buttonRef.current.contains(event.target)
+      ) {
+        onClose();
+      }
+    }
+
+    function handleEscape(event) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen, onClose, buttonRef]);
+
   if (!isOpen) return null;
 
   return createPortal(
-    <>
-      {/* Overlay for click outside - covers entire viewport */}
-      <div
-        className="fixed inset-0 z-[10000] bg-transparent"
-        onClick={onClose}
-      />
-
-      {/* Dropdown content */}
-      <div
-        className={`fixed w-96 bg-white/15 backdrop-blur-md border-2 border-white/30 rounded-lg shadow-2xl z-[10001] gpu-accelerate ${className}`}
-        style={{
-          top: `${dropdownPosition.top}px`,
-          left: `${dropdownPosition.left}px`
-        }}
+    <div
+      ref={dropdownRef}
+      className={`fixed w-96 bg-white/15 backdrop-blur-md border-2 border-white/30 rounded-lg shadow-2xl z-[10001] gpu-accelerate ${className}`}
+      style={{
+        top: `${dropdownPosition.top}px`,
+        left: `${dropdownPosition.left}px`
+      }}
       >
-        <div className="max-h-80 overflow-y-auto">
+        <div className="max-h-80 overflow-y-auto custom-scrollbar">
           {sortedTasks.length === 0 ? (
             <div className="p-6 text-center text-white/70">
               <div className="text-sm drop-shadow">{t("taskQueue.noTasks")}</div>
@@ -375,8 +401,7 @@ export default function TaskQueueDropdown({ isOpen, onClose, className = "", but
             <div>{t("taskQueue.total")}: {visibleTasks.length}</div>
           </div>
         </div>
-      </div>
-    </>,
+    </div>,
     document.body
   );
 }

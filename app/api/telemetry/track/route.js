@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
+import { CommonErrors } from '@/lib/api/apiErrors';
 import { trackEvent } from '@/lib/telemetry/server';
 
 /**
@@ -8,8 +9,12 @@ import { trackEvent } from '@/lib/telemetry/server';
  */
 export async function POST(request) {
   try {
+    // Vérifier l'authentification
     const session = await auth();
-    const userId = session?.user?.id || null;
+    if (!session?.user?.id) {
+      return CommonErrors.notAuthenticated();
+    }
+    const userId = session.user.id;
 
     const body = await request.json();
     const { events } = body;

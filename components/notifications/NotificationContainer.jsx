@@ -99,7 +99,7 @@ export default function NotificationContainer() {
   const sortedNotifications = [...notifications].sort((a, b) => b.timestamp - a.timestamp);
 
   return (
-    <div className="fixed top-4 right-4 z-[10003] space-y-2">
+    <div className="fixed top-20 right-4 z-[10003] space-y-2">
       {sortedNotifications.map(notification => (
         <NotificationItem
           key={notification.id}

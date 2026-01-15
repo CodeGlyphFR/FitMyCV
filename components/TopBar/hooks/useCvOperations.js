@@ -28,6 +28,9 @@ export function useCvOperations({
   const isReloadingRef = React.useRef(false);
   const pendingReloadRef = React.useRef(null);
   const isDeletingRef = React.useRef(false);
+  const lastReloadTimeRef = React.useRef(0);
+  const reloadDebounceRef = React.useRef(null);
+  const RELOAD_DEBOUNCE_MS = 500; // Debounce de 500ms entre les reloads
 
   const emitListChanged = React.useCallback(() => {
     if (typeof window !== "undefined") {
@@ -35,7 +38,7 @@ export function useCvOperations({
     }
   }, []);
 
-  const reload = React.useCallback(async (preferredCurrent) => {
+  const reload = React.useCallback(async (preferredCurrent, { immediate = false } = {}) => {
     if (!isAuthenticated) {
       setRawItems([]);
       setCurrent("");
@@ -45,6 +48,25 @@ export function useCvOperations({
       return;
     }
 
+    // Debounce: ignorer si un reload récent a eu lieu (sauf si immediate=true)
+    const now = Date.now();
+    if (!immediate && now - lastReloadTimeRef.current < RELOAD_DEBOUNCE_MS) {
+      // Planifier un reload debounced si pas déjà prévu
+      if (!reloadDebounceRef.current) {
+        reloadDebounceRef.current = setTimeout(() => {
+          reloadDebounceRef.current = null;
+          reload(preferredCurrent, { immediate: true });
+        }, RELOAD_DEBOUNCE_MS);
+      }
+      return;
+    }
+
+    // Annuler tout debounce en attente
+    if (reloadDebounceRef.current) {
+      clearTimeout(reloadDebounceRef.current);
+      reloadDebounceRef.current = null;
+    }
+
     // Si un reload est déjà en cours, mémoriser la demande pour plus tard
     if (isReloadingRef.current) {
       pendingReloadRef.current = preferredCurrent !== undefined ? preferredCurrent : null;
@@ -52,6 +74,7 @@ export function useCvOperations({
     }
 
     isReloadingRef.current = true;
+    lastReloadTimeRef.current = now;
 
     try {
       const res = await fetch("/api/cvs", { cache: "no-store" });
@@ -60,6 +83,10 @@ export function useCvOperations({
         if (res.status === 401) {
           setRawItems([]);
           setCurrent("");
+          return;
+        }
+        // 429 = rate limited - ignorer silencieusement, un reload debounced suivra
+        if (res.status === 429) {
           return;
         }
         // Autres erreurs HTTP

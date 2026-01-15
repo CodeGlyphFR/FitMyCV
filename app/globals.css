@@ -323,7 +323,7 @@ select:-moz-autofill:focus {
   }
 }
 
-/* Custom scrollbar styling for glassmorphism design */
+/* Custom scrollbar styling for glassmorphism design - Emerald theme */
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(16, 185, 129, 0.5) rgba(255, 255, 255, 0.1);
@@ -336,17 +336,41 @@ select:-moz-autofill:focus {
 
 .custom-scrollbar::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  border-radius: 9999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(16, 185, 129, 0.5);
-  border-radius: 4px;
-  transition: background 0.2s ease;
+  border-radius: 9999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(16, 185, 129, 0.7);
+}
+
+/* Custom scrollbar - Light variant for dark backgrounds */
+.custom-scrollbar-light {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.custom-scrollbar-light::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar-light::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar-light::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar-light::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 /* Prevent horizontal scroll/drag while allowing vertical scroll */
@@ -366,4 +390,71 @@ select:-moz-autofill:focus {
 
 .animate-pulse-glow {
   animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+/* CreditToken - Energy Token animations */
+@keyframes credit-pulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+.animate-credit-pulse {
+  animation: credit-pulse 2s ease-in-out infinite;
+}
+
+/* CreditCounter - Color transition glow effects */
+.credit-glow-green {
+  animation: credit-fade-green 1.5s ease-in-out;
+}
+
+.credit-glow-red {
+  animation: credit-fade-red 1.5s ease-in-out;
+}
+
+@keyframes credit-fade-green {
+  0% {
+    filter: drop-shadow(0 0 0px transparent);
+  }
+  10% {
+    filter: drop-shadow(0 0 12px rgba(74, 222, 128, 0.9));
+  }
+  30% {
+    filter: drop-shadow(0 0 10px rgba(74, 222, 128, 0.8));
+  }
+  60% {
+    filter: drop-shadow(0 0 6px rgba(74, 222, 128, 0.5));
+  }
+  80% {
+    filter: drop-shadow(0 0 3px rgba(74, 222, 128, 0.3));
+  }
+  100% {
+    filter: drop-shadow(0 0 0px transparent);
+  }
+}
+
+@keyframes credit-fade-red {
+  0% {
+    filter: drop-shadow(0 0 0px transparent);
+  }
+  10% {
+    filter: drop-shadow(0 0 12px rgba(248, 113, 113, 0.9));
+  }
+  30% {
+    filter: drop-shadow(0 0 10px rgba(248, 113, 113, 0.8));
+  }
+  60% {
+    filter: drop-shadow(0 0 6px rgba(248, 113, 113, 0.5));
+  }
+  80% {
+    filter: drop-shadow(0 0 3px rgba(248, 113, 113, 0.3));
+  }
+  100% {
+    filter: drop-shadow(0 0 0px transparent);
+  }
 }

@@ -96,10 +96,39 @@ export default function PrivacyContentEN() {
         </h2>
         <ul className="list-disc list-inside text-sm text-white/90 space-y-1 drop-shadow">
           <li><strong>Contract execution</strong>: provision of CV creation service</li>
-          <li><strong>Consent</strong>: non-essential cookies, newsletters (if applicable)</li>
-          <li><strong>Legitimate interest</strong>: service improvement, security</li>
+          <li><strong>Consent</strong>: analytics cookies (audience measurement)</li>
+          <li><strong>Legitimate interest</strong>: service improvement, security, internal telemetry</li>
           <li><strong>Legal obligation</strong>: data retention for tax obligations</li>
         </ul>
+      </section>
+
+      <section className="mb-4 bg-white/15 backdrop-blur-xl p-4 rounded-lg shadow-2xl">
+        <h2 className="text-xl font-semibold mb-3 text-emerald-300 drop-shadow">
+          5bis. Internal Telemetry (Legitimate Interest)
+        </h2>
+        <p className="text-sm text-white/90 mb-2 drop-shadow">
+          As part of our legitimate interest in providing a reliable and secure service, we collect certain technical data <strong>without prior consent</strong>:
+        </p>
+        <ul className="list-disc list-inside text-sm text-white/90 space-y-1 drop-shadow mb-3">
+          <li><strong>Error logs</strong>: to identify and fix malfunctions</li>
+          <li><strong>Performance metrics</strong>: AI call response times, success rates</li>
+          <li><strong>System events</strong>: CV creation, imports, generations (without personal content)</li>
+          <li><strong>API usage</strong>: to detect abuse and ensure service availability</li>
+        </ul>
+        <p className="text-sm text-white/90 mb-2 drop-shadow">
+          This data is:
+        </p>
+        <ul className="list-disc list-inside text-sm text-white/90 space-y-1 drop-shadow">
+          <li>Stored exclusively in our database (not transmitted to third parties)</li>
+          <li>Used only to improve the service and detect issues</li>
+          <li>Retained for a maximum of 12 months</li>
+          <li>Not shared with third parties for commercial purposes</li>
+        </ul>
+        <div className="mt-3 p-3 bg-emerald-500/20 backdrop-blur-sm rounded">
+          <p className="text-sm text-white drop-shadow">
+            <strong>Your right to object:</strong> In accordance with Article 21 of the GDPR, you can object to this collection by contacting us. Please note that this may affect our ability to diagnose issues with your account and ensure service security.
+          </p>
+        </div>
       </section>
 
       <section className="mb-4 bg-white/15 backdrop-blur-xl p-4 rounded-lg shadow-2xl">

@@ -300,7 +300,7 @@ export default function SubscriptionsPage({ user }) {
         <div
           role="tablist"
           aria-label={t('subscription.page.tabsAriaLabel')}
-          className="flex gap-2 border-b border-white/20 overflow-x-auto"
+          className="flex gap-2 border-b border-white/20 overflow-x-auto custom-scrollbar"
         >
           {tabs.map((tab, index) => {
             const Icon = tab.icon;

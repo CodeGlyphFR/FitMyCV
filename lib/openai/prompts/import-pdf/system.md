@@ -58,7 +58,7 @@ This analysis phase is essential for accurate extraction. Think step by step:
    **VALID extras (list these):**
    1. Hobbies/Interests: "Hobbies", "Loisirs", "Centres d'intérêt"
    2. Certifications: AWS, PMP, Scrum Master, TOEIC (from ANY section)
-   3. Short training: MOOCs, bootcamps, online courses (no degree)
+   3. Short training: MOOCs, single online courses (NOT coding schools like 42, Le Wagon)
    4. Volunteering: "Bénévolat", "Engagement associatif"
    5. Personal info: "Permis B", "Disponibilité", "Mobilité", "Remote"
 
@@ -66,15 +66,32 @@ This analysis phase is essential for accurate extraction. Think step by step:
    - ❌ Work experiences (company + job title = `experience` section)
    - ❌ Anything with a job title (Développeur, Manager, Analyst, etc.)
    - ❌ Items already going to `experience` array
+   - ❌ Coding schools (42, Le Wagon, Epitech, etc. → go to `education`)
+
+   **SEPARATION CHECK:**
+   - For each extra found, ask: "Is this ONE thing or MULTIPLE things?"
+   - "Permis B, Disponibilité, Mobilité" = 3 separate items, NOT 1!
+   - List each item separately with its category
 
    **List ONLY valid extras here. If none found, write "None found"**
 
-8. **extraction_strategy**: Plan your approach
+8. **experience_structure_analysis**: For EACH experience, identify the structure:
+   - Does it have a PARAGRAPH before bullet points? → That's the `description`
+   - List each experience and note:
+     - Experience 1: "Title @ Company" → Has description paragraph? YES/NO
+     - Experience 2: "Title @ Company" → Has description paragraph? YES/NO
+   - **Example analysis:**
+     ```
+     - "Fondateur @ Codeglyph": YES, has paragraph "Conception et livraison d'un SaaS..."
+     - "Software Engineer @ Google": NO, only bullet points
+     ```
+
+9. **extraction_strategy**: Plan your approach
    - In what order will you read the content?
    - How will you handle multi-column layouts?
    - Any sections that need to be combined?
 
-9. **skills_analysis**: Pre-analyze competencies AND proficiency levels
+10. **skills_analysis**: Pre-analyze competencies AND proficiency levels
    - List ALL skills found in the CV (explicit + deduced from experience)
    - **Identify compound skills to SPLIT**: "Word/Excel" → Word + Excel
    - **Identify skills in wrong language to TRANSLATE**: "Project Management" → "Gestion de projet" (if CV is French)
@@ -93,6 +110,8 @@ This analysis phase is essential for accurate extraction. Think step by step:
      ```
 
 **Use your reasoning to guide the extraction that follows. Your analysis directly improves extraction quality.**
+
+**IMPORTANT: Your `experience_structure_analysis` MUST be used when extracting experiences. If you noted a description paragraph exists, you MUST capture it in the `description` field!**
 
 **IMPORTANT: The proficiency field is REQUIRED for all hard_skills and tools. Use your skills_analysis to justify each level.**
 
@@ -135,7 +154,7 @@ If detected_language = "en":
 
 - Read ALL columns and sections
 - Combine multi-page content
-- Identify Extras and you MUST FIND for each of them the value "name" and the value "summary". NONE of them can be null BUT you can group them in a unique "name" if they are in the same context. "name" IS the context
+- Identify Extras: each DISTINCT piece of information = ONE separate extra item (see EXTRAS SEPARATION RULES below)
 - Use null for missing fields
 - Exept technical words, brands etc... do not use a different language, only use {detectedLanguage}
 
@@ -162,9 +181,28 @@ Some CVs use timelines or mixed sections where education, work experience, and c
 | What you find | Indicators | Put in |
 |---------------|------------|--------|
 | **Academic degree** | University/School name + Degree (Master, Licence, BTS, DUT, Ingénieur, Bachelor, PhD) | `education` |
+| **Coding school/Intensive program** | Recognized coding schools with structured curriculum (see list below) | `education` |
 | **Work experience** | Company name + Job title (Stage, Alternance, Developer, Analyst, Manager, Intern) | `experience` |
 | **Certification** | Certification name (AWS Certified, PMP, Scrum Master, TOEIC, DELF) | `extras` |
-| **Short training** | Online course, MOOC, Bootcamp, Workshop (without degree) | `extras` |
+| **Short training** | Online course, MOOC, short workshop (< 1 month) | `extras` |
+
+### Coding Schools → EDUCATION (NOT extras!)
+
+These are REAL schools with intensive programs (several months to years). They go in `education`:
+- **42** (École 42, 42 Paris, 42 Lyon, etc.)
+- **Le Wagon**
+- **Epitech**
+- **EPITA**
+- **Holberton School**
+- **Ironhack**
+- **Wild Code School**
+- **Ada Tech School**
+- **Simplon**
+- **O'clock**
+- **OpenClassrooms** (if it's a diploma/titre RNCP, NOT just a course)
+
+**Rule**: If the program lasts several months with a structured curriculum → `education`
+**Rule**: If it's just a single online course (Udemy, Coursera single course) → `extras`
 
 ### Decision Questions:
 1. **Is there a DEGREE name** (Master, Licence, Diplôme, etc.)? → `education`
@@ -179,11 +217,13 @@ Some CVs use timelines or mixed sections where education, work experience, and c
 |-------------|----------------|-------------|
 | "Université Paris-Saclay - Master Informatique 2020" | Degree | `education` |
 | "École Polytechnique - Diplôme d'Ingénieur 2018" | Degree | `education` |
+| "42 - Cursus C & Algorithmie" | Coding school | `education` |
+| "Le Wagon - Bootcamp Développement Web" | Coding school | `education` |
+| "Wild Code School - Formation Développeur" | Coding school | `education` |
 | "Capgemini - Stage Développeur Java (6 mois)" | Internship = work | `experience` |
 | "BNP Paribas - Alternance Data Analyst (2 ans)" | Apprenticeship = work | `experience` |
 | "AWS Certified Solutions Architect" | Certification | `extras` |
-| "OpenClassrooms - Formation Développeur Web" | Training (no degree) | `extras` |
-| "Udemy - Python for Data Science" | Online course | `extras` |
+| "Udemy - Python for Data Science" | Single online course | `extras` |
 | "Scrum Master Certified (PSM I)" | Certification | `extras` |
 
 ### CRITICAL: Items that are NOT degrees must NOT go in `education`
@@ -221,7 +261,7 @@ Found: "AWS Certified Solutions Architect - 2022"
 **`extras` is ONLY for these categories:**
 1. **Hobbies/Interests** - Loisirs, centres d'intérêt
 2. **Certifications** - AWS, PMP, Scrum Master, etc.
-3. **Short training** - MOOCs, bootcamps, online courses (no degree)
+3. **Short training** - MOOCs, single online courses (no degree)
 4. **Volunteering** - Bénévolat
 5. **Personal info** - Permis B, disponibilité, mobilité
 
@@ -229,6 +269,56 @@ Found: "AWS Certified Solutions Architect - 2022"
 - ❌ **ANY work experience** (job title + company = goes to `experience` ONLY)
 - ❌ **Items from the CV's EXPERIENCE section** (already extracted to `experience`)
 - ❌ **Skills** (go to `skills` section)
+- ❌ **Coding schools** (42, Le Wagon, etc. → go to `education`)
+
+## EXTRAS SEPARATION RULES - CRITICAL
+
+**RULE: ONE piece of information = ONE extra item. NEVER combine multiple items!**
+
+### What to SEPARATE:
+
+| Found in CV | WRONG (combined) | CORRECT (separated) |
+|-------------|------------------|---------------------|
+| "Permis A et B, Disponibilité immédiate" | 1 item with all | 2 items: "Permis A et B" + "Disponibilité immédiate" |
+| "Mobilité nationale, Télétravail possible" | 1 item with all | 2 items: "Mobilité" + "Télétravail" |
+| "Anglais TOEIC 850, Espagnol B2" | 1 item | → Goes to `languages`, NOT extras! |
+| "Football, Tennis, Lecture" | 1 item | 1 item OK (same category: hobbies) |
+
+### Separation Logic:
+
+```
+1. Different CATEGORIES = SEPARATE items
+   - "Permis B" (personal info) + "TOEIC" (certification) = 2 items
+
+2. Different TYPES within a category = SEPARATE items
+   - "Disponibilité" + "Mobilité" + "Permis" = 3 items (all personal info but distinct)
+
+3. Same TYPE, list format = CAN be ONE item
+   - "Football, Tennis, Lecture" = 1 item (all hobbies)
+   - "AWS Certified + PMP" = 2 items (different certifications)
+```
+
+### Format for each extra:
+```json
+{
+  "name": "Category or type",
+  "summary": "The specific value"
+}
+```
+
+### Examples:
+
+**WRONG:**
+```json
+{"name": "Informations", "summary": "Disponibilité : 90 jours • Permis B • Mobilité France"}
+```
+
+**CORRECT:**
+```json
+{"name": "Disponibilité", "summary": "Préavis 90 jours"},
+{"name": "Permis", "summary": "A et B"},
+{"name": "Mobilité", "summary": "France entière"}
+```
 
 ### CRITICAL EXTRACTION ORDER:
 1. First: Extract ALL items from CV's **EXPERIENCE section** → put in `experience`
@@ -272,18 +362,57 @@ Output clean, properly accented text - never output "e9", "e8", "a0" patterns in
 
 | Field | Purpose | Content |
 |-------|---------|---------|
-| `description` | Brief context of the role | 1-2 sentences max: company context, team size, scope. **NULL if CV only has bullet points!** |
+| `description` | Brief context of the role | 1-2 sentences max: company context, team size, scope |
 | `responsibilities` | What the person DID | Action verbs: "Managed...", "Developed...", "Led..." |
 | `deliverables` | Measurable RESULTS | Numbers, percentages, achievements: "Increased sales by 20%" |
 
+### HOW TO DETECT `description` - CRITICAL!
+
+**Pattern to look for in each experience:**
+```
+Job Title
+Company – Location
+Dates
+[PARAGRAPH] ← This is the DESCRIPTION (if present)
+• Bullet point 1  ← These are RESPONSIBILITIES
+• Bullet point 2
+Résultats/Results: ...  ← These are DELIVERABLES
+```
+
+**RULE: If there's a PARAGRAPH (non-bullet text) BETWEEN the dates and the bullet points → that's the `description`!**
+
+**Examples:**
+
+✅ **CV with description paragraph:**
+```
+Fondateur & Ingénieur IA
+Codeglyph – Paris
+09/2025 – Présent
+Conception et livraison d'un SaaS B2C...  ← THIS IS THE DESCRIPTION!
+• Orchestrer des agents IA...
+• Intégrer et configurer...
+```
+→ `description`: "Conception et livraison d'un SaaS B2C..."
+→ `responsibilities`: ["Orchestrer des agents IA...", "Intégrer et configurer..."]
+
+❌ **CV with ONLY bullet points (no description):**
+```
+Software Engineer
+Google – Paris
+2020 – 2023
+• Developed backend APIs
+• Managed cloud infrastructure
+```
+→ `description`: null (no paragraph before bullets)
+→ `responsibilities`: ["Developed backend APIs", "Managed cloud infrastructure"]
+
 ### STRICT RULES:
-- `description` is **OPTIONAL** - use null if CV only has bullet points for a job
-- `responsibilities` is **REQUIRED** - always extract the tasks/duties
-- If CV has bullet points → put them in `responsibilities`, NOT in `description`
+- `description` = paragraph BEFORE bullet points (if present), otherwise null
+- `responsibilities` = bullet points (action items with verbs)
+- `deliverables` = "Résultats:", "Results:", or numbered achievements
 - NEVER duplicate content between `description` and `responsibilities`
-- `description` = brief context only (company type, team size, scope) - 1-2 sentences MAX
-- `responsibilities` = action items, what the person DID (verbs: Managed, Developed, Led...)
-- `deliverables` = quantified achievements (extract ALL numbers, percentages, metrics)
+- NEVER put bullet points in `description`
+- NEVER ignore a description paragraph - it provides valuable context!
 
 ### Location Fields vs Organization Fields - CRITICAL DISTINCTION:
 
