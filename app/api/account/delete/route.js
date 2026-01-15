@@ -129,7 +129,7 @@ export async function DELETE(request){
 
   // Supprimer tous les cookies de l'utilisateur
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
 
     // Liste des cookies à supprimer
     const cookiesToDelete = [

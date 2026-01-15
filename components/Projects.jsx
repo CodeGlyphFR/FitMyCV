@@ -7,17 +7,128 @@ import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import SectionReviewActions from "./SectionReviewActions";
+import ProjectReviewActions, { useProjectHasChanges } from "./ProjectReviewActions";
 
-function norm(s){
+// Normalise une date vers le format YYYY-MM pour comparaison et sauvegarde
+// Gère : YYYY-MM, YYYY, MM/YYYY, YYYY/MM
+function normalizeDate(s){
   const m = (s || "").trim();
   if (!m) return "";
   if (m.toLowerCase() === "present") return "present";
-  return /^\d{4}(-\d{2})?$/.test(m) ? (m.length === 4 ? m + "-01" : m) : m;
+
+  // Format YYYY-MM ou YYYY
+  if (/^\d{4}(-\d{2})?$/.test(m)) {
+    return m.length === 4 ? `${m}-01` : m;
+  }
+
+  // Format avec slash : MM/YYYY ou YYYY/MM
+  if (m.includes("/")) {
+    const parts = m.split("/");
+    if (parts.length === 2) {
+      const [p1, p2] = parts;
+      // Si p1 a 4 chiffres -> YYYY/MM
+      if (/^\d{4}$/.test(p1) && /^\d{1,2}$/.test(p2)) {
+        return `${p1}-${p2.padStart(2, "0")}`;
+      }
+      // Si p2 a 4 chiffres -> MM/YYYY
+      if (/^\d{4}$/.test(p2) && /^\d{1,2}$/.test(p1)) {
+        return `${p2}-${p1.padStart(2, "0")}`;
+      }
+    }
+  }
+
+  return m;
+}
+
+/**
+ * Composant carte projet individuelle avec highlight review
+ */
+function ProjectCard({ project, index, isEditing, onEdit, onDelete, cvT }) {
+  const { hasChanges, isAdded } = useProjectHasChanges(project.name);
+  // Utiliser l'index original pour les mutations (edit/delete)
+  const originalIndex = project._originalIndex ?? index;
+
+  // Classes conditionnelles pour le highlight
+  const cardClasses = [
+    "flex flex-col h-full rounded-xl p-3 relative z-0 overflow-visible",
+    isAdded
+      ? "border-2 border-emerald-500/50 bg-emerald-500/10" // Nouveau projet = vert
+      : "border border-white/15", // Normal
+  ].join(" ");
+
+  return (
+    <div className={cardClasses}>
+      <div className={"flex items-start gap-2" + (isEditing ? " pr-20" : "")}>
+        <div className="font-semibold flex-1 min-w-0 break-words">{project.name || ""}</div>
+        <div className="text-sm opacity-80 whitespace-nowrap ml-auto mt-1">
+          {(project.start_date || project.end_date)
+            ? [ym(project.start_date) || "", project.end_date === "present" ? cvT("cvSections.present") : (ym(project.end_date) || "")].filter(Boolean).join(" → ")
+            : ""}
+        </div>
+      </div>
+
+      {/* Boutons review pour nouveau projet OU boutons edit en mode édition */}
+      {hasChanges && !isEditing && (
+        <div className="no-print absolute top-2 right-2 z-20">
+          <ProjectReviewActions projectIndex={originalIndex} projectName={project.name} />
+        </div>
+      )}
+
+      {isEditing && (
+        <div className="no-print absolute top-2 right-2 z-20 flex gap-2">
+          <button type="button" onClick={() => onEdit(index)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-colors duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3" /></button>
+          <button type="button" onClick={() => onDelete(originalIndex)} className="text-[11px] rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-red-500/40 transition-colors duration-200"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3" /></button>
+        </div>
+      )}
+
+      <div className="text-sm opacity-80">{project.role || ""}</div>
+      {project.summary ? <div className="text-sm text-justify mt-1">{project.summary}</div> : null}
+
+      <div className="flex flex-wrap gap-1 mt-auto pt-3">
+        {Array.isArray(project.tech_stack) && project.tech_stack.map((m, idx) => (
+          <span key={idx} className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
+            {m}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function Projects(props){
   const { t } = useLanguage();
-  const projects = Array.isArray(props.projects) ? props.projects : [];
+  const rawProjects = Array.isArray(props.projects) ? props.projects : [];
+
+  // Tri par date décroissante (plus récent en premier)
+  // 1. Projets en cours en premier, triés par date de début (plus récent en premier)
+  // 2. Projets terminés ensuite, triés par date de fin (plus récent en premier)
+  // On garde _originalIndex pour que les mutations utilisent le bon index
+  const projects = React.useMemo(() => {
+    return rawProjects
+      .map((p, idx) => ({ ...p, _originalIndex: idx }))
+      .sort((a, b) => {
+        const aIsCurrent = !a.end_date || a.end_date === "present";
+        const bIsCurrent = !b.end_date || b.end_date === "present";
+
+        // Les projets en cours en premier
+        if (aIsCurrent && !bIsCurrent) return -1;
+        if (!aIsCurrent && bIsCurrent) return 1;
+
+        // Si les deux sont en cours, trier par start_date (plus récent en premier)
+        if (aIsCurrent && bIsCurrent) {
+          const startA = normalizeDate(a.start_date);
+          const startB = normalizeDate(b.start_date);
+          return startB.localeCompare(startA);
+        }
+
+        // Sinon, trier par end_date (plus récent en premier)
+        const endA = normalizeDate(a.end_date) || normalizeDate(a.start_date);
+        const endB = normalizeDate(b.end_date) || normalizeDate(b.start_date);
+        return endB.localeCompare(endA);
+      });
+  }, [rawProjects]);
+
   const sectionTitles = props.sectionTitles || {};
   const cvLanguage = props.cvLanguage || 'fr';
   const cvT = getTranslatorForCvLanguage(cvLanguage);
@@ -39,7 +150,7 @@ export default function Projects(props){
 
   function openEdit(i){
     const p = projects[i] || {};
-    const isCurrentProject = p.end_date === "present";
+    const isCurrentProject = !p.end_date || p.end_date === "present";
     setF({
       name: p.name || "",
       role: p.role || "",
@@ -49,18 +160,19 @@ export default function Projects(props){
       summary: p.summary || "",
       tech_stack: Array.isArray(p.tech_stack) ? p.tech_stack.join(", ") : (p.tech_stack || "")
     });
-    setEditIndex(i);
+    // Utiliser l'index original pour la mutation
+    setEditIndex(p._originalIndex);
   }
 
   async function save(){
     const p = {};
     if (f.name) p.name = f.name;
     if (f.role) p.role = f.role;
-    if (f.start) p.start_date = norm(f.start);
+    if (f.start) p.start_date = normalizeDate(f.start);
     if (f.inProgress) {
       p.end_date = "present";
     } else if (f.end) {
-      p.end_date = norm(f.end);
+      p.end_date = normalizeDate(f.end);
     }
     if (f.summary) p.summary = f.summary;
     const tech_stack = (f.tech_stack || "").split(",").map(t => t.trim()).filter(Boolean);
@@ -74,11 +186,11 @@ export default function Projects(props){
     const p = {};
     if (nf.name) p.name = nf.name;
     if (nf.role) p.role = nf.role;
-    if (nf.start) p.start_date = norm(nf.start);
+    if (nf.start) p.start_date = normalizeDate(nf.start);
     if (nf.inProgress) {
       p.end_date = "present";
     } else if (nf.end) {
-      p.end_date = norm(nf.end);
+      p.end_date = normalizeDate(nf.end);
     }
     if (nf.summary) p.summary = nf.summary;
     const tech_stack = (nf.tech_stack || "").split(",").map(t => t.trim()).filter(Boolean);
@@ -99,15 +211,18 @@ export default function Projects(props){
       title={
         <div className="flex items-center justify-between gap-2">
           <span>{title}</span>
-          {isEditing && (
-            <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="no-print text-xs rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-all duration-200"
-            >
-              {t("common.add")}
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            <SectionReviewActions section="projects" />
+            {isEditing && (
+              <button
+                type="button"
+                onClick={() => setAddOpen(true)}
+                className="no-print text-xs rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-colors duration-200"
+              >
+                {t("common.add")}
+              </button>
+            )}
+          </div>
         </div>
       }
     >
@@ -121,34 +236,15 @@ export default function Projects(props){
       ) : (
         <div className={projects.length > 1 ? "grid md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
           {projects.map((p, i) => (
-            <div key={i} className="flex flex-col h-full rounded-xl border border-white/15 p-3 relative z-0 overflow-visible">
-              <div className={"flex items-start gap-2" + (isEditing ? " pr-20" : "")}>
-                <div className="font-semibold flex-1 min-w-0 break-words">{p.name || ""}</div>
-                <div className="text-sm opacity-80 whitespace-nowrap ml-auto mt-1">
-                  {(p.start_date || p.end_date)
-                    ? [ym(p.start_date) || "", p.end_date === "present" ? cvT("cvSections.present") : (ym(p.end_date) || "")].filter(Boolean).join(" → ")
-                    : ""}
-                </div>
-              </div>
-
-              {isEditing && (
-                <div className="no-print absolute top-2 right-2 z-20 flex gap-2">
-                  <button type="button" onClick={() => openEdit(i)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
-                  <button type="button" onClick={() => setDelIndex(i)} className="text-[11px] rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-red-500/40 transition-all duration-200"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
-                </div>
-              )}
-
-              <div className="text-sm opacity-80">{p.role || ""}</div>
-              {p.summary ? <div className="text-sm text-justify mt-1">{p.summary}</div> : null}
-
-              <div className="flex flex-wrap gap-1 mt-auto pt-3">
-                {Array.isArray(p.tech_stack) && p.tech_stack.map((m, idx) => (
-                  <span key={idx} className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
-                    {m}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <ProjectCard
+              key={i}
+              project={p}
+              index={i}
+              isEditing={isEditing}
+              onEdit={openEdit}
+              onDelete={setDelIndex}
+              cvT={cvT}
+            />
           ))}
         </div>
       )}
@@ -156,16 +252,16 @@ export default function Projects(props){
       {/* Edit Modal */}
       <Modal open={editIndex !== null} onClose={() => setEditIndex(null)} title={t("cvSections.editProjects")}>
         <div className="grid gap-2 md:grid-cols-2">
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.projectName")} value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.role")} value={f.role} onChange={e => setF({ ...f, role: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.startDate")} value={f.start} onChange={e => setF({ ...f, start: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.endDate")} value={f.end} onChange={e => setF({ ...f, end: e.target.value })} disabled={f.inProgress} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.projectName")} value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.role")} value={f.role} onChange={e => setF({ ...f, role: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.startDate")} value={f.start} onChange={e => setF({ ...f, start: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.endDate")} value={f.end} onChange={e => setF({ ...f, end: e.target.value })} disabled={f.inProgress} />
           <div className="md:col-span-2 flex items-center gap-2">
             <input type="checkbox" id="edit-inProgress" checked={f.inProgress} onChange={e => setF({ ...f, inProgress: e.target.checked, end: e.target.checked ? "" : f.end })} />
             <label htmlFor="edit-inProgress" className="text-sm text-white drop-shadow">{t("cvSections.projectInProgress")}</label>
           </div>
-          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.placeholders.description")} value={f.summary} onChange={e => setF({ ...f, summary: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.technologies")} value={f.tech_stack || ""} onChange={e => setF({ ...f, tech_stack: e.target.value })} />
+          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.placeholders.description")} value={f.summary} onChange={e => setF({ ...f, summary: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.technologies")} value={f.tech_stack || ""} onChange={e => setF({ ...f, tech_stack: e.target.value })} />
           <div className="md:col-span-2 flex justify-end gap-2">
             <button type="button" onClick={() => setEditIndex(null)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
             <button type="button" onClick={save} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.save")}</button>
@@ -176,19 +272,19 @@ export default function Projects(props){
       {/* Add Modal */}
       <Modal open={!!addOpen} onClose={() => setAddOpen(false)} title={t("cvSections.addProject")}>
         <div className="grid gap-2 md:grid-cols-2">
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.projectName")} value={nf.name} onChange={e => setNf({ ...nf, name: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.role")} value={nf.role} onChange={e => setNf({ ...nf, role: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.startDate")} value={nf.start} onChange={e => setNf({ ...nf, start: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.endDate")} value={nf.end} onChange={e => setNf({ ...nf, end: e.target.value })} disabled={nf.inProgress} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.projectName")} value={nf.name} onChange={e => setNf({ ...nf, name: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.role")} value={nf.role} onChange={e => setNf({ ...nf, role: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.startDate")} value={nf.start} onChange={e => setNf({ ...nf, start: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.endDate")} value={nf.end} onChange={e => setNf({ ...nf, end: e.target.value })} disabled={nf.inProgress} />
           <div className="md:col-span-2 flex items-center gap-2">
             <input type="checkbox" id="add-inProgress" checked={nf.inProgress} onChange={e => setNf({ ...nf, inProgress: e.target.checked, end: e.target.checked ? "" : nf.end })} />
             <label htmlFor="add-inProgress" className="text-sm text-white drop-shadow">{t("cvSections.projectInProgress")}</label>
           </div>
-          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.placeholders.description")} value={nf.summary} onChange={e => setNf({ ...nf, summary: e.target.value })} />
+          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.placeholders.description")} value={nf.summary} onChange={e => setNf({ ...nf, summary: e.target.value })} />
 
           {/* ✅ Champ tech_stack ajouté */}
           <input
-            className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2"
+            className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2"
             placeholder={t("cvSections.technologies")}
             value={nf.tech_stack || ""}
             onChange={e => setNf({ ...nf, tech_stack: e.target.value })}

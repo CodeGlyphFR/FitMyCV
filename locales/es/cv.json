@@ -72,6 +72,7 @@
   },
   "exportModal": {
     "title": "Personalizar y Exportar a PDF",
+    "previewTitle": "Vista previa del PDF",
     "filename": "Nombre del archivo",
     "filenameHint": "El archivo se exportará con la extensión .pdf",
     "selectAll": "Seleccionar todo",
@@ -80,6 +81,8 @@
     "includeDeliverables": "Incluir Resultados",
     "export": "Exportar",
     "exporting": "Exportando...",
+    "preview": "Vista previa",
+    "backToOptions": "Volver a opciones",
     "cancel": "Cancelar",
     "sectionsTitle": "Seleccionar secciones a incluir",
     "showOptions": "Mostrar opciones",
@@ -115,6 +118,33 @@
       "item": "elemento",
       "items": "elementos",
       "selected": "seleccionado"
+    },
+    "options": {
+      "hideProficiency": "Ocultar niveles",
+      "hideDescription": "Ocultar descripciones",
+      "hideTechnologies": "Ocultar tecnologías",
+      "hideDeliverables": "Ocultar resultados"
+    },
+    "templates": {
+      "label": "Plantilla",
+      "placeholder": "Aplicar plantilla...",
+      "loading": "Cargando...",
+      "noTemplates": "Sin plantillas",
+      "save": "Guardar",
+      "namePlaceholder": "Nombre de la plantilla",
+      "confirmDelete": "¿Eliminar esta plantilla?",
+      "confirmOverwrite": "Sobrescribir la plantilla",
+      "update": "Actualizar",
+      "createNew": "Crear nuevo",
+      "delete": "Eliminar",
+      "hint": "Guarda tus selecciones como plantilla reutilizable"
+    },
+    "order": {
+      "button": "Orden de secciones",
+      "title": "Orden de secciones",
+      "hint": "Mueve las secciones para personalizar el orden de visualización",
+      "reset": "Restablecer",
+      "close": "Cerrar"
     }
   },
   "newCvModal": {
@@ -175,10 +205,10 @@
     "deliverables": "Resultados",
     "skillsUsed": "Habilidades utilizadas",
     "technologies": "Tecnologías",
-    "hardSkills": "Habilidades técnicas",
+    "hardSkills": "Técnicas",
     "tools": "Herramientas",
     "methodologies": "Metodologías",
-    "softSkills": "Habilidades blandas",
+    "softSkills": "Blandas",
     "noTools": "Sin herramientas todavía.",
     "noMethodologies": "Sin metodologías todavía.",
     "noSoftSkills": "Sin habilidades blandas todavía.",
@@ -264,7 +294,12 @@
     "calculatingScore": "Calculando puntuación...",
     "showMore": "más",
     "showLess": "Mostrar menos",
-    "languageNote": "El análisis y las sugerencias se muestran en el idioma del CV, no en el idioma de la interfaz."
+    "languageNote": "El análisis y las sugerencias se muestran en el idioma del CV, no en el idioma de la interfaz.",
+    "noSelection": "Seleccione al menos una mejora",
+    "deselect": "Deseleccionar",
+    "cancel": "Cancelar",
+    "contextPlaceholder": "Añadir contexto (opcional)...",
+    "skillsAddedSuccess": "Competencias añadidas con éxito"
   },
   "changes": {
     "title": "Historial de cambios",

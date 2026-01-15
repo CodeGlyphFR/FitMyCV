@@ -43,8 +43,14 @@ export async function POST(request) {
 
     const userId = session.user.id;
 
+    await ensureUserCvDir(userId);
+
+    // Générer le taskId AVANT le débit pour pouvoir le lier à la transaction
+    const timestamp = Date.now();
+    const taskId = `task_job_title_${timestamp}_${Math.random().toString(36).substr(2, 9)}`;
+
     // Vérifier les limites ET incrémenter le compteur/débiter le crédit
-    const usageResult = await incrementFeatureCounter(userId, 'generate_from_job_title');
+    const usageResult = await incrementFeatureCounter(userId, 'generate_from_job_title', { taskId });
 
     if (!usageResult.success) {
       return NextResponse.json({
@@ -53,11 +59,6 @@ export async function POST(request) {
         redirectUrl: usageResult.redirectUrl
       }, { status: 403 });
     }
-
-    await ensureUserCvDir(userId);
-
-    const timestamp = Date.now();
-    const taskId = `task_job_title_${timestamp}_${Math.random().toString(36).substr(2, 9)}`;
 
     const title = `Génération de CV pour "${trimmedJobTitle}"`;
     const successMessage = `CV pour "${trimmedJobTitle}" créé avec succès`;

@@ -99,16 +99,31 @@ Une responsibility decrit CE QUE TU FAIS, pas ce que tu as obtenu.
 - Tableau VIDE [] preferable a des items invalides
 
 ### 5. skills_used (3-6 skills)
-Aligner les competences avec l'offre cible.
+
+**REGLE STRICTE : NE JAMAIS AJOUTER de skills qui ne sont pas EXPLICITEMENT dans l'experience source.**
+
+Tu peux UNIQUEMENT :
+- GARDER les skills existantes pertinentes pour l'offre
+- SUPPRIMER les skills non pertinentes
+- REFORMULER/TRADUIRE les skills existantes
+
+**INTERDIT :**
+- Ajouter une skill parce qu'elle est dans l'offre
+- Deduire une skill non mentionnee (meme si "logique")
+- Inventer des skills pour matcher l'offre
 
 **Langue :**
 - Competences generiques → TRADUIRE dans la langue cible
 - Noms de technos → GARDER en anglais (React, Python, AWS, Scrum)
 
-**Terminologie EXACTE :** "architectures avancees" ≠ "Architecture avancee"
+**Terminologie EXACTE :** Utiliser les termes exacts de l'offre SI la skill existe deja dans l'experience.
 
-**Enrichissement :** Ajouter des skills de l'offre SI justifiables par l'experience.
-Ex: Experience mentionne "Claude Code" → ajouter "LLM" (Claude est un LLM)
+**Exemple :**
+| Experience source | Offre demande | Action |
+|-------------------|---------------|--------|
+| skills: ["Python", "API"] | "LLMs, Agents IA" | GARDER Python, API (pas d'ajout de LLMs/Agents) |
+| skills: ["React", "Node"] | "Vue.js" | GARDER React, Node (pas de remplacement par Vue) |
+| responsibilities mentionne "Claude" | "LLMs" | OK d'ajouter "LLM" car Claude EST un LLM (equivalence directe) |
 
 ### 6. domain (OBLIGATOIRE)
 Domaine metier : Developpement logiciel, Data Science, Gestion de projet, Consulting, Commercial, DevOps...

@@ -109,7 +109,7 @@ export function CustomSelect({ value, onChange, options, className = '', placeho
             width: dropdownRect.width,
             zIndex: 10003,
           }}
-          className="rounded-lg border border-white/30 bg-gray-900/95 backdrop-blur-xl backdrop-saturate-150 shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-h-60 overflow-y-auto [overscroll-behavior:contain]"
+          className="rounded-lg border border-white/30 bg-gray-900/95 backdrop-blur-xl backdrop-saturate-150 shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-h-60 overflow-y-auto custom-scrollbar [overscroll-behavior:contain]"
         >
           {options.map((option) => (
             <button

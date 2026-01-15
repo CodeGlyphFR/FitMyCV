@@ -72,6 +72,7 @@
   },
   "exportModal": {
     "title": "Customize and Export to PDF",
+    "previewTitle": "PDF Preview",
     "filename": "File name",
     "filenameHint": "The file will be exported with the .pdf extension",
     "selectAll": "Select all",
@@ -80,6 +81,8 @@
     "includeDeliverables": "Include Results",
     "export": "Export",
     "exporting": "Exporting...",
+    "preview": "Preview",
+    "backToOptions": "Back to options",
     "cancel": "Cancel",
     "sectionsTitle": "Select sections to include",
     "showOptions": "Show options",
@@ -115,6 +118,33 @@
       "item": "item",
       "items": "items",
       "selected": "selected"
+    },
+    "options": {
+      "hideProficiency": "Hide proficiency levels",
+      "hideDescription": "Hide descriptions",
+      "hideTechnologies": "Hide technologies",
+      "hideDeliverables": "Hide results"
+    },
+    "templates": {
+      "label": "Template",
+      "placeholder": "Apply a template...",
+      "loading": "Loading...",
+      "noTemplates": "No templates",
+      "save": "Save",
+      "namePlaceholder": "Template name",
+      "confirmDelete": "Delete this template?",
+      "confirmOverwrite": "Overwrite template",
+      "update": "Update",
+      "createNew": "Create new",
+      "delete": "Delete",
+      "hint": "Save your selections as a reusable template"
+    },
+    "order": {
+      "button": "Section order",
+      "title": "Section order",
+      "hint": "Move sections to customize the display order",
+      "reset": "Reset",
+      "close": "Close"
     }
   },
   "newCvModal": {
@@ -175,10 +205,10 @@
     "deliverables": "Results",
     "skillsUsed": "Skills used",
     "technologies": "Technologies",
-    "hardSkills": "Technical skills",
+    "hardSkills": "Technical",
     "tools": "Tools",
     "methodologies": "Methodologies",
-    "softSkills": "Soft skills",
+    "softSkills": "Soft",
     "noTools": "No tools yet.",
     "noMethodologies": "No methodologies yet.",
     "noSoftSkills": "No soft skills yet.",
@@ -264,7 +294,12 @@
     "calculatingScore": "Calculating score...",
     "showMore": "more",
     "showLess": "Show less",
-    "languageNote": "Analysis and suggestions are displayed in the CV's language, not the interface language."
+    "languageNote": "Analysis and suggestions are displayed in the CV's language, not the interface language.",
+    "noSelection": "Select at least one improvement",
+    "deselect": "Deselect",
+    "cancel": "Cancel",
+    "contextPlaceholder": "Add context (optional)...",
+    "skillsAddedSuccess": "Skills added successfully"
   },
   "changes": {
     "title": "Change History",

@@ -17,6 +17,7 @@ export function useSubscriptionData() {
     planName: null,
     planIcon: null,
     creditBalance: 0,
+    creditRatio: 1,
     creditsOnlyMode: false,
     loading: true,
     error: null,
@@ -53,11 +54,15 @@ export function useSubscriptionData() {
 
       if (isMounted) {
         const newBalance = creditsData?.balance || 0;
-        console.log('[useSubscriptionData] Mise à jour balance:', newBalance);
+        const balanceAfterLastPurchase = creditsData?.balanceAfterLastPurchase || 0;
+        const creditRatio = balanceAfterLastPurchase > 0
+          ? Math.min(1, Math.max(0, newBalance / balanceAfterLastPurchase))
+          : (newBalance > 0 ? 1 : 0);
         setData({
           planName: translatedName,
           planIcon: icon,
           creditBalance: newBalance,
+          creditRatio,
           creditsOnlyMode,
           loading: false,
           error: null,
@@ -83,14 +88,11 @@ export function useSubscriptionData() {
 
     // Écouter l'événement custom 'credits-updated' pour mise à jour immédiate
     const handleCreditsUpdated = () => {
-      console.log('[useSubscriptionData] Événement credits-updated reçu, isMounted:', isMounted);
       if (isMounted) {
-        console.log('[useSubscriptionData] Lancement fetchData...');
         fetchData(isMounted);
       }
     };
     window.addEventListener('credits-updated', handleCreditsUpdated);
-    console.log('[useSubscriptionData] Event listener credits-updated ajouté');
 
     return () => {
       isMounted = false;

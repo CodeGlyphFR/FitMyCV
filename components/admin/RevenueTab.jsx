@@ -194,7 +194,7 @@ export function RevenueTab({ refreshKey }) {
           Détails par Plan
         </h3>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/10">
@@ -257,7 +257,7 @@ export function RevenueTab({ refreshKey }) {
             Ventes de Crédits
           </h3>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/10">

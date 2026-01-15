@@ -4,7 +4,7 @@
       "title": "Suscripciones y Créditos",
       "title_credits_only": "Gestionar mis créditos",
       "description": "Gestiona tu suscripción, compra créditos y consulta tu historial.",
-      "description_credits_only": "Compra créditos para usar funciones avanzadas.",
+      "description_credits_only": "Compra créditos para usar funciones.",
       "backToCvs": "Volver",
       "loadingTitle": "Cargando...",
       "errorLoading": "Error al cargar los datos",
@@ -185,16 +185,16 @@
       "needMore": "¿Necesitas más?",
       "needMoreInfo": "Compra créditos para superar tus límites mensuales sin cambiar de plan.",
       "labels": {
-        "gpt_cv_generation": "🤖 Adaptación de CV con IA",
-        "import_pdf": "📥 Importación de CV",
-        "translate_cv": "🌍 Traducción de CV",
-        "match_score": "🎯 Puntuación de coincidencia",
-        "calculate_match_score": "🎯 Puntuación de coincidencia",
-        "optimize_cv": "✨ Optimización",
-        "generate_from_job_title": "💼 Creación de CV ficticio",
-        "export_cv": "💾 Exportación de CV",
-        "edit_cv": "✏️ Edición de CV",
-        "create_cv_manual": "📝 Creación de CV"
+        "gpt_cv_generation": "Adaptación de CV con IA",
+        "import_pdf": "Importación de CV",
+        "translate_cv": "Traducción de CV",
+        "match_score": "Puntuación de coincidencia",
+        "calculate_match_score": "Puntuación de coincidencia",
+        "optimize_cv": "Optimización",
+        "generate_from_job_title": "Creación de CV ficticio",
+        "export_cv": "Exportación de CV",
+        "edit_cv": "Edición de CV",
+        "create_cv_manual": "Creación de CV"
       }
     },
     "credits": {

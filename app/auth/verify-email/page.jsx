@@ -4,6 +4,7 @@ import { createAutoSignInToken } from '@/lib/auth/autoSignIn';
 import EmailVerificationError from '@/components/auth/EmailVerificationError';
 import logger from '@/lib/security/secureLogger';
 import prisma from '@/lib/prisma';
+import dbEmitter from '@/lib/events/dbEmitter';
 
 export const metadata = {
   title: "Vérification d'email - FitMyCV.io",
@@ -37,6 +38,9 @@ export default async function VerifyEmailPage(props) {
     await markEmailAsVerified(verification.userId);
     await deleteVerificationToken(token);
     logger.context('verify-email', 'info', `Email vérifié avec succès pour user ${verification.userId}`);
+
+    // Émettre l'événement SSE pour notifier les autres onglets/devices
+    dbEmitter.emitEmailVerified(verification.userId, { verified: true });
 
     // Envoyer l'email de bienvenue
     try {

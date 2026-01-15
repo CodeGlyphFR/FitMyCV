@@ -258,7 +258,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
               type="text"
               value={name}
               onChange={event => setName(event.target.value)}
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
               placeholder={t('account.profile.fullNamePlaceholder')}
             />
           </div>
@@ -268,7 +268,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
               type="email"
               value={email}
               onChange={event => setEmail(event.target.value)}
-              className={`w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden ${isOAuthUser ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden ${isOAuthUser ? 'opacity-50 cursor-not-allowed' : ''}`}
               placeholder={t('account.profile.emailPlaceholder')}
               disabled={isOAuthUser}
             />
@@ -283,7 +283,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
           <button
             type="submit"
             disabled={profileLoading || emailCooldown > 0}
-            className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500/40 transition-all duration-200 disabled:opacity-60 drop-shadow"
+            className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500/40 transition-colors duration-200 disabled:opacity-60 drop-shadow"
           >
             {profileLoading
               ? t('account.profile.saving')
@@ -314,7 +314,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                 name="currentPassword"
                 value={currentPassword}
                 onChange={event => setCurrentPassword(event.target.value)}
-                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
+                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                 placeholder="••••••••"
                 autoComplete="current-password"
               />
@@ -327,7 +327,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                 name="newPassword"
                 value={newPassword}
                 onChange={event => setNewPassword(event.target.value)}
-                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
+                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                 placeholder="••••••••"
                 autoComplete="new-password"
               />
@@ -384,7 +384,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                 name="confirmPassword"
                 value={confirmPassword}
                 onChange={event => setConfirmPassword(event.target.value)}
-                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
+                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                 placeholder="••••••••"
                 autoComplete="new-password"
               />
@@ -394,7 +394,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
             <button
               type="submit"
               disabled={passwordLoading}
-              className="rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-white/30 transition-all duration-200 disabled:opacity-60 drop-shadow"
+              className="rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-white/30 transition-colors duration-200 disabled:opacity-60 drop-shadow"
             >
               {passwordLoading ? t('account.security.updating') : t('account.security.updateButton')}
             </button>
@@ -439,7 +439,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
         <button
           onClick={handleResetOnboarding}
           disabled={onboardingLoading}
-          className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500/40 transition-all duration-200 disabled:opacity-60 drop-shadow"
+          className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500/40 transition-colors duration-200 disabled:opacity-60 drop-shadow"
         >
           {onboardingLoading ? t('account.tutorial.resetting') : t('account.tutorial.resetButton')}
         </button>
@@ -461,7 +461,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                   name="deleteEmail"
                   value={deleteEmail}
                   onChange={event => setDeleteEmail(event.target.value)}
-                  className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-red-400 focus:ring-2 focus:ring-red-400/50 focus:outline-hidden"
+                  className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-red-400 focus:ring-2 focus:ring-red-400/50 focus:outline-hidden"
                   placeholder={user?.email || t('account.profile.emailPlaceholder')}
                   autoComplete="email"
                 />
@@ -474,7 +474,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                   name="deletePassword"
                   value={deletePassword}
                   onChange={event => setDeletePassword(event.target.value)}
-                  className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-red-400 focus:ring-2 focus:ring-red-400/50 focus:outline-hidden"
+                  className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-red-400 focus:ring-2 focus:ring-red-400/50 focus:outline-hidden"
                   placeholder="••••••••"
                   autoComplete="current-password"
                 />
@@ -490,7 +490,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
           <button
             type="submit"
             disabled={deleteLoading}
-            className="rounded-lg border-2 border-red-400/50 bg-red-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-red-500/40 transition-all duration-200 disabled:opacity-60 drop-shadow"
+            className="rounded-lg border-2 border-red-400/50 bg-red-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-red-500/40 transition-colors duration-200 disabled:opacity-60 drop-shadow"
           >
             {deleteLoading ? t('account.deleteAccount.deleting') : t('account.deleteAccount.deleteButton')}
           </button>

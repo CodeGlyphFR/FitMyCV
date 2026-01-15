@@ -72,12 +72,15 @@
   },
   "exportModal": {
     "title": "Anpassen und als PDF exportieren",
+    "previewTitle": "PDF-Vorschau",
     "filename": "Dateiname",
     "filenameHint": "Die Datei wird mit der Erweiterung .pdf exportiert",
     "selectAll": "Alles auswählen",
     "deselectAll": "Alles abwählen",
     "export": "Exportieren",
     "exporting": "Export läuft...",
+    "preview": "Vorschau",
+    "backToOptions": "Zurück zu Optionen",
     "cancel": "Abbrechen",
     "sectionsTitle": "Wählen Sie die einzuschließenden Abschnitte",
     "showOptions": "Optionen anzeigen",
@@ -115,6 +118,33 @@
       "item": "Element",
       "items": "Elemente",
       "selected": "ausgewählt"
+    },
+    "options": {
+      "hideProficiency": "Niveau ausblenden",
+      "hideDescription": "Beschreibungen ausblenden",
+      "hideTechnologies": "Technologien ausblenden",
+      "hideDeliverables": "Ergebnisse ausblenden"
+    },
+    "templates": {
+      "label": "Vorlage",
+      "placeholder": "Vorlage anwenden...",
+      "loading": "Laden...",
+      "noTemplates": "Keine Vorlagen",
+      "save": "Speichern",
+      "namePlaceholder": "Vorlagenname",
+      "confirmDelete": "Diese Vorlage löschen?",
+      "confirmOverwrite": "Vorlage überschreiben",
+      "update": "Aktualisieren",
+      "createNew": "Neu erstellen",
+      "delete": "Löschen",
+      "hint": "Speichern Sie Ihre Auswahl als wiederverwendbare Vorlage"
+    },
+    "order": {
+      "button": "Abschnittsreihenfolge",
+      "title": "Abschnittsreihenfolge",
+      "hint": "Verschieben Sie Abschnitte, um die Anzeigereihenfolge anzupassen",
+      "reset": "Zurücksetzen",
+      "close": "Schließen"
     }
   },
   "newCvModal": {
@@ -175,10 +205,10 @@
     "deliverables": "Ergebnisse",
     "skillsUsed": "Verwendete Fähigkeiten",
     "technologies": "Technologien",
-    "hardSkills": "Technische Fähigkeiten",
+    "hardSkills": "Technische",
     "tools": "Werkzeuge",
     "methodologies": "Methodologien",
-    "softSkills": "Soft Skills",
+    "softSkills": "Soft",
     "noTools": "Keine Werkzeuge vorhanden.",
     "noMethodologies": "Keine Methodologien vorhanden.",
     "noSoftSkills": "Keine Soft Skills vorhanden.",
@@ -264,7 +294,12 @@
     "calculatingScore": "Score wird berechnet...",
     "showMore": "weitere",
     "showLess": "Weniger anzeigen",
-    "languageNote": "Die Analyse und Vorschläge werden in der Sprache des Lebenslaufs angezeigt, nicht in der Sprache der Oberfläche."
+    "languageNote": "Die Analyse und Vorschläge werden in der Sprache des Lebenslaufs angezeigt, nicht in der Sprache der Oberfläche.",
+    "noSelection": "Wählen Sie mindestens eine Verbesserung aus",
+    "deselect": "Auswahl aufheben",
+    "cancel": "Abbrechen",
+    "contextPlaceholder": "Kontext hinzufügen (optional)...",
+    "skillsAddedSuccess": "Fähigkeiten erfolgreich hinzugefügt"
   },
   "changes": {
     "title": "Änderungsverlauf",
