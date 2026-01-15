@@ -77,7 +77,7 @@ function decryptString(base64Payload) {
 
 // Résolution du chemin base CV
 function resolveCvBaseDir() {
-  const baseDir = process.env.CV_BASE_DIR || 'data/users';
+  const baseDir = process.env.CV_BASE_DIR || '/mnt/DATA/FitMyCV/PROD/users';
   if (baseDir.startsWith('/') || baseDir.match(/^[A-Z]:\\/i)) {
     return baseDir;
   }
