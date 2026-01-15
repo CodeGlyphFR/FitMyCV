@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const { spawn } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 
 const prisma = new PrismaClient();
@@ -102,157 +103,39 @@ const EMAIL_TRIGGERS = [
   },
 ];
 
-// Mapping ancien nom -> nouveau nom de trigger
-const TEMPLATE_TO_TRIGGER_MAPPING = {
-  verification: 'email_verification',
-  password_reset: 'password_reset',
-  email_change: 'email_change',
-};
+// ============================================================================
+// 2. EMAIL TEMPLATES (chargés depuis prisma/email-templates/)
+// ============================================================================
+const EMAIL_TEMPLATES_DIR = path.join(__dirname, 'email-templates');
 
-// ============================================================================
-// 2. EMAIL TEMPLATES
-// ============================================================================
-const EMAIL_TEMPLATES = [
-  {
-    name: 'verification',
-    subject: 'Vérifiez votre adresse email - FitMyCV.io',
-    variables: JSON.stringify(['userName', 'verificationUrl']),
-    htmlContent: `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vérifiez votre adresse email</title>
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-    <h1 style="color: white; margin: 0; font-size: 28px;">FitMyCV.io</h1>
-  </div>
-  <div style="background: #ffffff; padding: 40px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 10px 10px;">
-    <h2 style="color: #333; margin-top: 0;">Bienvenue {{userName}} !</h2>
-    <p style="font-size: 16px; color: #555;">
-      Merci de vous être inscrit sur FitMyCV.io. Pour commencer à utiliser votre compte, veuillez vérifier votre adresse email en cliquant sur le bouton ci-dessous.
-    </p>
-    <div style="text-align: center; margin: 40px 0;">
-      <a href="{{verificationUrl}}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 40px; text-decoration: none; border-radius: 5px; font-weight: 600; font-size: 16px; display: inline-block;">
-        Vérifier mon email
-      </a>
-    </div>
-    <p style="font-size: 14px; color: #666; margin-top: 30px;">
-      Si le bouton ne fonctionne pas, vous pouvez copier et coller ce lien dans votre navigateur :
-    </p>
-    <p style="font-size: 13px; color: #667eea; word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 5px;">
-      {{verificationUrl}}
-    </p>
-    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
-    <p style="font-size: 12px; color: #999;">
-      Ce lien expire dans 24 heures. Si vous n'avez pas créé de compte, vous pouvez ignorer cet email.
-    </p>
-  </div>
-  <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-    <p>© 2024 FitMyCV.io. Tous droits réservés.</p>
-  </div>
-</body>
-</html>`,
-    designJson: JSON.stringify({ body: { rows: [] } }),
-  },
-  {
-    name: 'password_reset',
-    subject: 'Réinitialisation de votre mot de passe - FitMyCV.io',
-    variables: JSON.stringify(['userName', 'resetUrl']),
-    htmlContent: `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Réinitialisation de votre mot de passe</title>
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-    <h1 style="color: white; margin: 0; font-size: 28px;">FitMyCV.io</h1>
-  </div>
-  <div style="background: #ffffff; padding: 40px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 10px 10px;">
-    <h2 style="color: #333; margin-top: 0;">Bonjour {{userName}} !</h2>
-    <p style="font-size: 16px; color: #555;">
-      Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe.
-    </p>
-    <div style="text-align: center; margin: 40px 0;">
-      <a href="{{resetUrl}}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 40px; text-decoration: none; border-radius: 5px; font-weight: 600; font-size: 16px; display: inline-block;">
-        Réinitialiser mon mot de passe
-      </a>
-    </div>
-    <p style="font-size: 14px; color: #666; margin-top: 30px;">
-      Si le bouton ne fonctionne pas, vous pouvez copier et coller ce lien dans votre navigateur :
-    </p>
-    <p style="font-size: 13px; color: #667eea; word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 5px;">
-      {{resetUrl}}
-    </p>
-    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
-    <p style="font-size: 14px; color: #e63946; font-weight: 600;">
-      Attention
-    </p>
-    <p style="font-size: 13px; color: #666;">
-      Ce lien expire dans 1 heure. Si vous n'avez pas demandé de réinitialisation de mot de passe, vous pouvez ignorer cet email en toute sécurité.
-    </p>
-  </div>
-  <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-    <p>© 2024 FitMyCV.io. Tous droits réservés.</p>
-  </div>
-</body>
-</html>`,
-    designJson: JSON.stringify({ body: { rows: [] } }),
-  },
-  {
-    name: 'email_change',
-    subject: 'Confirmez votre nouvelle adresse email - FitMyCV.io',
-    variables: JSON.stringify(['userName', 'verificationUrl', 'newEmail']),
-    htmlContent: `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Confirmez votre nouvelle adresse email</title>
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-    <h1 style="color: white; margin: 0; font-size: 28px;">FitMyCV.io</h1>
-  </div>
-  <div style="background: #ffffff; padding: 40px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 10px 10px;">
-    <h2 style="color: #333; margin-top: 0;">Bonjour {{userName}} !</h2>
-    <p style="font-size: 16px; color: #555;">
-      Vous avez demandé à modifier votre adresse email. Pour confirmer ce changement, veuillez cliquer sur le bouton ci-dessous.
-    </p>
-    <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-      <p style="margin: 0; font-size: 14px; color: #666;">Nouvelle adresse email :</p>
-      <p style="margin: 5px 0 0; font-size: 16px; font-weight: 600; color: #333;">{{newEmail}}</p>
-    </div>
-    <div style="text-align: center; margin: 40px 0;">
-      <a href="{{verificationUrl}}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 40px; text-decoration: none; border-radius: 5px; font-weight: 600; font-size: 16px; display: inline-block;">
-        Confirmer la modification
-      </a>
-    </div>
-    <p style="font-size: 14px; color: #666; margin-top: 30px;">
-      Si le bouton ne fonctionne pas, vous pouvez copier et coller ce lien dans votre navigateur :
-    </p>
-    <p style="font-size: 13px; color: #667eea; word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 5px;">
-      {{verificationUrl}}
-    </p>
-    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
-    <p style="font-size: 14px; color: #e63946; font-weight: 600;">
-      Important
-    </p>
-    <p style="font-size: 13px; color: #666;">
-      Ce lien expire dans 24 heures. Si vous n'avez pas demandé ce changement, veuillez ignorer cet email et votre adresse actuelle restera inchangée.
-    </p>
-  </div>
-  <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-    <p>© 2024 FitMyCV.io. Tous droits réservés.</p>
-  </div>
-</body>
-</html>`,
-    designJson: JSON.stringify({ body: { rows: [] } }),
-  },
-];
+function loadEmailTemplates() {
+  const templates = [];
+  if (!fs.existsSync(EMAIL_TEMPLATES_DIR)) {
+    console.log(`  ${COLORS.yellow}Warning: ${EMAIL_TEMPLATES_DIR} not found${COLORS.reset}`);
+    return templates;
+  }
+
+  const files = fs.readdirSync(EMAIL_TEMPLATES_DIR).filter((f) => f.endsWith('.json'));
+  for (const file of files) {
+    try {
+      const content = fs.readFileSync(path.join(EMAIL_TEMPLATES_DIR, file), 'utf8');
+      const data = JSON.parse(content);
+      templates.push({
+        name: data.name,
+        triggerName: data.triggerName,
+        subject: data.subject,
+        variables: data.variables,
+        htmlContent: data.htmlContent,
+        designJson: data.designJson,
+        isActive: data.isActive ?? true,
+        isDefault: data.isDefault ?? false,
+      });
+    } catch (error) {
+      console.log(`  ${COLORS.yellow}Warning: Failed to load ${file}${COLORS.reset}`);
+    }
+  }
+  return templates;
+}
 
 // ============================================================================
 // 3. CREDIT PACKS (Données DEV)
@@ -1041,43 +924,57 @@ async function main() {
   console.log(formatLine('🎯', 'Email Triggers', EMAIL_TRIGGERS.length, EMAIL_TRIGGERS.length));
   results.push({ created: triggersCreated, updated: triggersUpdated });
 
-  // ===== 2. Email Templates =====
+  // ===== 2. Email Templates (chargés depuis fichiers JSON) =====
+  const emailTemplates = loadEmailTemplates();
   let templatesCreated = 0;
-  let templatesSkipped = 0;
-  for (const template of EMAIL_TEMPLATES) {
+  let templatesUpdated = 0;
+  for (const template of emailTemplates) {
     try {
-      // Check if template already exists with this name
-      const existingTemplates = await prisma.emailTemplate.findMany({ where: { name: template.name } });
-      if (existingTemplates.length > 0) {
-        // Update existing template to associate with trigger if not already
-        const triggerName = TEMPLATE_TO_TRIGGER_MAPPING[template.name];
-        if (triggerName && triggerMap[triggerName]) {
-          const needsUpdate = existingTemplates.find(t => !t.triggerId);
-          if (needsUpdate) {
-            await prisma.emailTemplate.update({
-              where: { id: needsUpdate.id },
-              data: { triggerId: triggerMap[triggerName], isActive: true },
-            });
-          }
-        }
-        templatesSkipped++;
-        continue;
+      // Get trigger ID from triggerName stored in file
+      const triggerId = template.triggerName ? triggerMap[template.triggerName] : null;
+
+      // Check if template already exists with this name + trigger combination
+      const existingTemplate = await prisma.emailTemplate.findFirst({
+        where: {
+          name: template.name,
+          triggerId: triggerId || undefined,
+        },
+      });
+
+      if (existingTemplate) {
+        // Update existing template
+        await prisma.emailTemplate.update({
+          where: { id: existingTemplate.id },
+          data: {
+            subject: template.subject,
+            variables: template.variables,
+            htmlContent: template.htmlContent,
+            designJson: template.designJson,
+            isActive: template.isActive,
+            isDefault: template.isDefault,
+          },
+        });
+        templatesUpdated++;
+      } else {
+        // Create new template
+        await prisma.emailTemplate.create({
+          data: {
+            name: template.name,
+            subject: template.subject,
+            variables: template.variables,
+            htmlContent: template.htmlContent,
+            designJson: template.designJson,
+            isActive: template.isActive,
+            isDefault: template.isDefault,
+            triggerId: triggerId,
+          },
+        });
+        templatesCreated++;
       }
-      // Create new template with trigger association
-      const triggerName = TEMPLATE_TO_TRIGGER_MAPPING[template.name];
-      const templateData = {
-        ...template,
-        isActive: true, // Mark as active by default for existing templates
-      };
-      if (triggerName && triggerMap[triggerName]) {
-        templateData.triggerId = triggerMap[triggerName];
-      }
-      await prisma.emailTemplate.create({ data: templateData });
-      templatesCreated++;
     } catch (error) { /* ignore */ }
   }
-  console.log(formatLine('📧', 'Email Templates', EMAIL_TEMPLATES.length, EMAIL_TEMPLATES.length));
-  results.push({ created: templatesCreated, skipped: templatesSkipped });
+  console.log(formatLine('📧', 'Email Templates', emailTemplates.length, emailTemplates.length));
+  results.push({ created: templatesCreated, updated: templatesUpdated });
 
   // ===== 3. Credit Packs (upsert - préserve IDs Stripe) =====
   let packsCreated = 0;
