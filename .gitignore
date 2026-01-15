@@ -54,3 +54,4 @@ rebuild-prod.sh
 
 # pdf-parse test file workaround
 test/data/
+deploy.sh
