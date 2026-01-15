@@ -3,11 +3,12 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { stripHtml, sanitizeUrl } from "@/lib/security/xssSanitization";
 import logger from "@/lib/security/secureLogger";
+import { CommonErrors, OtherErrors } from "@/lib/api/apiErrors";
 
 export async function POST(request) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    return CommonErrors.notAuthenticated();
   }
 
   try {
@@ -79,6 +80,6 @@ export async function POST(request) {
 
   } catch (error) {
     logger.error("Error creating feedback:", error);
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+    return OtherErrors.feedbackFailed();
   }
 }

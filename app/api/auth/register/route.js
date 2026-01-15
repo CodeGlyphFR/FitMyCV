@@ -7,13 +7,15 @@ import { createVerificationToken, sendVerificationEmail } from "@/lib/email/emai
 import logger from "@/lib/security/secureLogger";
 import { assignDefaultPlan } from "@/lib/subscription/subscriptions";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
+import { DEFAULT_ONBOARDING_STATE } from "@/lib/onboarding/onboardingState";
+import { CommonErrors, AuthErrors } from "@/lib/api/apiErrors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request){
   const body = await request.json().catch(() => null);
-  if (!body) return NextResponse.json({ error: "Payload invalide." }, { status: 400 });
+  if (!body) return CommonErrors.invalidPayload();
 
   const { firstName, lastName, name, email, password, recaptchaToken } = body;
 
@@ -25,11 +27,17 @@ export async function POST(request){
     });
 
     if (!recaptchaResult.success) {
-      return NextResponse.json(
-        { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
-        { status: recaptchaResult.statusCode || 403 }
-      );
+      return AuthErrors.recaptchaFailed();
     }
+  }
+
+  // Vérifier si les inscriptions sont autorisées
+  const regSetting = await prisma.setting.findUnique({
+    where: { settingName: 'registration_enabled' }
+  });
+  if (regSetting?.value === '0') {
+    logger.context('auth', 'warn', `Tentative d'inscription bloquée (registration_disabled) pour ${email}`);
+    return AuthErrors.registrationDisabled();
   }
 
   // Support both formats: new (firstName/lastName) and legacy (name)
@@ -39,11 +47,11 @@ export async function POST(request){
   } else if (name) {
     fullName = name.trim();
   } else {
-    return NextResponse.json({ error: "Prénom, nom, email et mot de passe sont requis." }, { status: 400 });
+    return AuthErrors.nameRequired();
   }
 
   if (!email || !password){
-    return NextResponse.json({ error: "Email et mot de passe sont requis." }, { status: 400 });
+    return AuthErrors.emailAndPasswordRequired();
   }
 
   // Sanitization XSS
@@ -51,11 +59,11 @@ export async function POST(request){
   const normalizedEmail = sanitizeEmail(email);
 
   if (!normalizedEmail) {
-    return NextResponse.json({ error: "Adresse email invalide." }, { status: 400 });
+    return AuthErrors.emailInvalid();
   }
 
   if (!cleanName || cleanName.length < 2) {
-    return NextResponse.json({ error: "Nom invalide." }, { status: 400 });
+    return AuthErrors.nameInvalid();
   }
 
   // Validation des prénoms/noms séparés si fournis
@@ -64,27 +72,24 @@ export async function POST(request){
     const cleanLastName = stripHtml(lastName.trim());
 
     if (!cleanFirstName || cleanFirstName.length < 2) {
-      return NextResponse.json({ error: "Prénom invalide." }, { status: 400 });
+      return AuthErrors.firstNameInvalid();
     }
 
     if (!cleanLastName || cleanLastName.length < 2) {
-      return NextResponse.json({ error: "Nom invalide." }, { status: 400 });
+      return AuthErrors.lastNameInvalid();
     }
   }
 
   // Validation de la force du mot de passe
   const passwordValidation = validatePassword(password);
   if (!passwordValidation.valid) {
-    return NextResponse.json({
-      error: "Mot de passe trop faible",
-      details: passwordValidation.errors
-    }, { status: 400 });
+    return AuthErrors.passwordWeak();
   }
 
   const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
   if (existing){
     // Message générique pour éviter l'énumération des utilisateurs
-    return NextResponse.json({ error: "Impossible de créer le compte. Veuillez vérifier vos informations." }, { status: 400 });
+    return AuthErrors.accountCreateFailed();
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
@@ -95,8 +100,7 @@ export async function POST(request){
       email: normalizedEmail,
       passwordHash,
       emailVerified: null, // Email non vérifié à l'inscription
-      hasCompletedOnboarding: false, // Nouveaux users doivent faire l'onboarding
-      onboardingStep: 0, // Commencer à l'étape 0
+      onboardingState: DEFAULT_ONBOARDING_STATE, // Initialiser l'état d'onboarding complet
     },
   });
 

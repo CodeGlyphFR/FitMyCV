@@ -7,16 +7,14 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 import stripe from '@/lib/stripe';
+import { CommonErrors, SubscriptionErrors } from '@/lib/api/apiErrors';
 
 export async function POST(request) {
   try {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Non authentifié' },
-        { status: 401 }
-      );
+      return CommonErrors.notAuthenticated();
     }
 
     const userId = session.user.id;
@@ -25,10 +23,7 @@ export async function POST(request) {
 
     // Validation
     if (!packId || typeof packId !== 'number') {
-      return NextResponse.json(
-        { error: 'packId requis' },
-        { status: 400 }
-      );
+      return SubscriptionErrors.packRequired();
     }
 
     // Récupérer le pack
@@ -36,25 +31,8 @@ export async function POST(request) {
       where: { id: packId },
     });
 
-    if (!pack) {
-      return NextResponse.json(
-        { error: 'Pack introuvable' },
-        { status: 404 }
-      );
-    }
-
-    if (!pack.isActive) {
-      return NextResponse.json(
-        { error: 'Pack non disponible' },
-        { status: 400 }
-      );
-    }
-
-    if (!pack.stripePriceId) {
-      return NextResponse.json(
-        { error: 'Prix Stripe non configuré pour ce pack' },
-        { status: 400 }
-      );
+    if (!pack || !pack.isActive || !pack.stripePriceId) {
+      return SubscriptionErrors.invalidPlan();
     }
 
     // Récupérer ou créer le customer Stripe
@@ -130,9 +108,6 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('[Checkout Credits] Erreur:', error);
-    return NextResponse.json(
-      { error: error.message || 'Erreur lors de la création de la session' },
-      { status: 500 }
-    );
+    return SubscriptionErrors.checkoutError();
   }
 }

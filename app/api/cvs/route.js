@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth/session";
 import { listUserCvFiles, readUserCvFile } from "@/lib/cv/storage";
 import { sanitizeInMemory } from "@/lib/sanitize";
 import prisma from "@/lib/prisma";
+import { CommonErrors } from "@/lib/api/apiErrors";
 
 function parseNumericTimestamp(value){
   if (!value) return null;
@@ -67,13 +68,13 @@ export const dynamic = "force-dynamic";
 export async function GET(){
   const session = await auth();
   if (!session?.user?.id){
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    return CommonErrors.notAuthenticated();
   }
 
   const userId = session.user.id;
   const files = await listUserCvFiles(userId);
 
-  // Récupérer tous les sourceType, createdBy, analysisLevel, isTranslated, originalCreatedBy et createdAt depuis la DB en une seule requête
+  // Récupérer tous les sourceType, createdBy, isTranslated, originalCreatedBy et createdAt depuis la DB en une seule requête
   const cvFilesData = await prisma.cvFile.findMany({
     where: {
       userId,
@@ -85,7 +86,6 @@ export async function GET(){
       sourceValue: true,
       createdBy: true,
       originalCreatedBy: true,
-      analysisLevel: true,
       isTranslated: true,
       createdAt: true,
     },
@@ -97,7 +97,6 @@ export async function GET(){
     sourceValue: cf.sourceValue,
     createdBy: cf.createdBy,
     originalCreatedBy: cf.originalCreatedBy,
-    analysisLevel: cf.analysisLevel,
     isTranslated: cf.isTranslated,
     dbCreatedAt: cf.createdAt,
   }]));
@@ -120,7 +119,6 @@ export async function GET(){
       const sourceValue = sourceData?.sourceValue || null;
       const createdBy = sourceData?.createdBy || null;
       const originalCreatedBy = sourceData?.originalCreatedBy || null;
-      const analysisLevel = sourceData?.analysisLevel || null;
       const isTranslated = sourceData?.isTranslated || false;
       const dbCreatedAt = sourceData?.dbCreatedAt || null;
 
@@ -132,17 +130,19 @@ export async function GET(){
       const isGenerated = createdBy === 'generate-cv';
       const isImported = createdBy === 'import-pdf';
       const isManual = createdBy === null;
-      // Get all timestamps
-      const createdTimestamp = toTimestamp(json?.meta?.created_at) || toTimestamp(json?.generated_at) || toTimestamp(json?.meta?.generated_at) || timestampFromFilename(file);
+      // Get all timestamps - priorité à la DB car generated_at peut être supprimé lors des éditions
+      const dbCreatedAtTimestamp = dbCreatedAt ? new Date(dbCreatedAt).getTime() : null;
+      const jsonCreatedTimestamp = toTimestamp(json?.meta?.created_at) || toTimestamp(json?.generated_at) || toTimestamp(json?.meta?.generated_at) || timestampFromFilename(file);
+      const createdTimestamp = dbCreatedAtTimestamp || jsonCreatedTimestamp;
       const updatedTimestamp = toTimestamp(json?.meta?.updated_at);
 
       // Use the most recent timestamp for sorting and display
       const mostRecentTimestamp = updatedTimestamp && updatedTimestamp > createdTimestamp ? updatedTimestamp : createdTimestamp;
 
       // Utiliser dbCreatedAt pour le tri (priorité à la base de données)
-      const sortTimestamp = dbCreatedAt ? new Date(dbCreatedAt).getTime() : mostRecentTimestamp;
+      const sortTimestamp = dbCreatedAtTimestamp || mostRecentTimestamp;
 
-      const createdAtIso = createdTimestamp ? new Date(createdTimestamp).toISOString() : (json?.meta?.created_at || null);
+      const createdAtIso = createdTimestamp ? new Date(createdTimestamp).toISOString() : null;
       const updatedAtIso = updatedTimestamp ? new Date(updatedTimestamp).toISOString() : (json?.meta?.updated_at || null);
       const dateLabel = formatDateLabel(mostRecentTimestamp);
       const hasTitle = trimmedTitle.length > 0;
@@ -158,7 +158,6 @@ export async function GET(){
         sourceValue, // URL ou nom de fichier PDF
         createdBy, // 'generate-cv', 'import-pdf', 'translate-cv', ou null
         originalCreatedBy, // createdBy original pour les CV traduits
-        analysisLevel, // 'rapid', 'medium', 'deep', ou null
         isGenerated, // true si createdBy === 'generate-cv'
         isImported, // true si createdBy === 'import-pdf'
         isManual, // true si createdBy === null
@@ -175,7 +174,6 @@ export async function GET(){
       const sourceValue = sourceData?.sourceValue || null;
       const createdBy = sourceData?.createdBy || null;
       const originalCreatedBy = sourceData?.originalCreatedBy || null;
-      const analysisLevel = sourceData?.analysisLevel || null;
       const isTranslated = sourceData?.isTranslated || false;
       const dbCreatedAt = sourceData?.dbCreatedAt || null;
 
@@ -196,7 +194,6 @@ export async function GET(){
         sourceValue,
         createdBy,
         originalCreatedBy,
-        analysisLevel,
         isGenerated,
         isImported,
         isManual,
@@ -218,7 +215,9 @@ export async function GET(){
 
   const items = rawItems.map(({ sortKey, ...rest }) => rest);
 
-  const currentCookie = (cookies().get("cvFile") || {}).value;
+  // Next.js 16: cookies() est maintenant async
+  const cookieStore = await cookies();
+  const currentCookie = (cookieStore.get("cvFile") || {}).value;
   const current = files.includes(currentCookie) ? currentCookie : (files[0] || null);
 
   return NextResponse.json({ items, current });

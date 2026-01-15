@@ -14,10 +14,14 @@ import { SkeletonPlanCard } from "@/components/ui/SkeletonLoader";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { translatePlanName } from "@/lib/subscription/planTranslations";
 
-export default function PlanComparisonCards({ currentPlan, subscription, scheduledDowngrade, onUpgradeSuccess }) {
+export default function PlanComparisonCards({ currentPlan, subscription, scheduledDowngrade, onUpgradeSuccess, highlightPlanId }) {
   const { t, language } = useLanguage();
   const [plans, setPlans] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+
+  // Refs et state pour l'animation de mise en avant
+  const highlightedCardRef = React.useRef(null);
+  const [isHighlighting, setIsHighlighting] = React.useState(false);
   const [processingPlanId, setProcessingPlanId] = React.useState(null);
   const [showDowngradeModal, setShowDowngradeModal] = React.useState(false);
   const [showDowngradeToFreeModal, setShowDowngradeToFreeModal] = React.useState(false);
@@ -51,6 +55,28 @@ export default function PlanComparisonCards({ currentPlan, subscription, schedul
     }
     fetchPlans();
   }, []);
+
+  // Scroll vers le plan mis en avant et déclencher l'animation pulse glow (infinie)
+  React.useEffect(() => {
+    if (highlightPlanId && !loading && plans.length > 0) {
+      // Attendre que le DOM soit prêt
+      const timeoutId = setTimeout(() => {
+        if (highlightedCardRef.current) {
+          // Scroll vers la card avec un petit décalage pour le confort visuel
+          highlightedCardRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+          // Déclencher l'animation après le scroll (continue indéfiniment)
+          setTimeout(() => {
+            setIsHighlighting(true);
+          }, 500);
+        }
+      }, 300);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [highlightPlanId, loading, plans.length]);
 
   const getFeatureLabel = (featureName) => {
     return t(`subscription.features.labels.${featureName}`,
@@ -406,11 +432,13 @@ export default function PlanComparisonCards({ currentPlan, subscription, schedul
           return (
             <div
               key={plan.id}
+              ref={plan.id === highlightPlanId ? highlightedCardRef : null}
               className={`
                 backdrop-blur-md bg-gradient-to-br ${colorClass}
                 border rounded-xl p-4 shadow-lg transition-all relative
                 ${isCurrentPlan ? 'ring-2 ring-white/50' : ''}
                 ${isPopularPlan(plan) && !isCurrentPlan ? 'ring-2 ring-yellow-500/50 shadow-xl shadow-yellow-500/10 md:scale-105' : ''}
+                ${plan.id === highlightPlanId && isHighlighting ? 'ring-2 ring-emerald-400 animate-pulse-glow' : ''}
               `}
             >
               {/* Header */}
@@ -643,7 +671,7 @@ export default function PlanComparisonCards({ currentPlan, subscription, schedul
                                 : t('subscription.comparison.buttons.yearly', 'Annuel')}
                           </span>
                           {getYearlyDiscount(plan) > 0 && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 bg-green-500/40 border border-green-400/50 rounded text-white text-xs font-bold shadow-sm">
+                            <span className="inline-flex items-center px-1.5 py-0.5 bg-green-500/40 border border-green-400/50 rounded-sm text-white text-xs font-bold shadow-xs">
                               -{getYearlyDiscount(plan)}%
                             </span>
                           )}
@@ -734,7 +762,7 @@ export default function PlanComparisonCards({ currentPlan, subscription, schedul
                       type="checkbox"
                       checked={acceptedDowngradeTerms}
                       onChange={(e) => setAcceptedDowngradeTerms(e.target.checked)}
-                      className="mt-1 w-4 h-4 rounded-sm border-2 border-white/30 bg-white/5 appearance-none cursor-pointer transition-all checked:bg-gradient-to-br checked:from-emerald-500/40 checked:to-emerald-600/40 checked:border-emerald-400/60 focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-0 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
+                      className="mt-1 w-4 h-4 rounded-xs border-2 border-white/30 bg-white/5 appearance-none cursor-pointer transition-all checked:bg-gradient-to-br checked:from-emerald-500/40 checked:to-emerald-600/40 checked:border-emerald-400/60 focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-0 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
                     />
                     <span className="text-sm text-white/80 group-hover:text-white transition-colors">
                       {t('subscription.comparison.downgradePaidModal.termsLabel', 'J\'accepte les')}{' '}
@@ -980,7 +1008,7 @@ export default function PlanComparisonCards({ currentPlan, subscription, schedul
                     type="checkbox"
                     checked={acceptedTerms}
                     onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    className="mt-1 w-4 h-4 rounded-sm border-2 border-white/30 bg-white/5 appearance-none cursor-pointer transition-all checked:bg-gradient-to-br checked:from-emerald-500/40 checked:to-emerald-600/40 checked:border-emerald-400/60 focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-0 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
+                    className="mt-1 w-4 h-4 rounded-xs border-2 border-white/30 bg-white/5 appearance-none cursor-pointer transition-all checked:bg-gradient-to-br checked:from-emerald-500/40 checked:to-emerald-600/40 checked:border-emerald-400/60 focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-0 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
                   />
                   <span className="text-sm text-white/80 group-hover:text-white transition-colors">
                     {t('subscription.comparison.upgradeModal.termsLabel', 'J\'accepte les')}{' '}

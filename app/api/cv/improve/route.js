@@ -4,23 +4,24 @@ import prisma from "@/lib/prisma";
 import { v4 as uuidv4 } from "uuid";
 import { scheduleImproveCvJob } from "@/lib/backgroundTasks/improveCvJob";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
+import { CommonErrors, CvErrors } from "@/lib/api/apiErrors";
 
 export async function POST(request) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    return CommonErrors.notAuthenticated();
   }
 
   try {
     const { cvFile, replaceExisting = false } = await request.json();
 
     if (!cvFile) {
-      return NextResponse.json({ error: "CV file missing" }, { status: 400 });
+      return CvErrors.missingFilename();
     }
 
     const userId = session.user.id;
 
-    // Récupérer les métadonnées du CV depuis la DB
+    // Récupérer les métadonnées du CV depuis la DB avec la relation JobOffer
     const cvRecord = await prisma.cvFile.findUnique({
       where: {
         userId_filename: {
@@ -29,7 +30,7 @@ export async function POST(request) {
         },
       },
       select: {
-        extractedJobOffer: true,
+        jobOffer: true, // Relation vers JobOffer
         scoreBreakdown: true,
         improvementSuggestions: true,
         sourceValue: true,
@@ -39,7 +40,7 @@ export async function POST(request) {
     });
 
     if (!cvRecord) {
-      return NextResponse.json({ error: "CV not found" }, { status: 404 });
+      return CvErrors.notFound();
     }
 
     // Vérifier que le CV a un scoreBreakdown (score calculé) et des suggestions
@@ -104,12 +105,17 @@ export async function POST(request) {
       }
     });
 
+    // Formater le contenu de l'offre pour l'amélioration
+    const jobOfferContent = cvRecord.jobOffer?.content
+      ? JSON.stringify(cvRecord.jobOffer.content)
+      : null;
+
     // Lancer l'amélioration en arrière-plan via la job queue
     scheduleImproveCvJob({
       taskId,
       user: session.user,
       cvFile,
-      jobOfferContent: cvRecord.extractedJobOffer,
+      jobOfferContent,
       jobOfferUrl: cvRecord.sourceValue, // Gardé pour les métadonnées uniquement
       currentScore: cvRecord.matchScore || 0,
       suggestions,
@@ -125,9 +131,6 @@ export async function POST(request) {
 
   } catch (error) {
     console.error("Error improving CV:", error);
-    return NextResponse.json({
-      error: "Internal server error",
-      details: error.message
-    }, { status: 500 });
+    return CvErrors.improveError();
   }
 }

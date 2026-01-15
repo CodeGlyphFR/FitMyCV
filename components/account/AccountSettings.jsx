@@ -5,6 +5,7 @@ import { signOut } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import PasswordStrengthIndicator from "@/components/auth/PasswordStrengthIndicator";
 import PasswordInput from "@/components/ui/PasswordInput";
+import LinkedAccountsSection from "@/components/account/LinkedAccountsSection";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
@@ -19,11 +20,15 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
   const [profileMessage, setProfileMessage] = React.useState("");
   const [profileError, setProfileError] = React.useState("");
   const [profileLoading, setProfileLoading] = React.useState(false);
+  const [emailCooldown, setEmailCooldown] = React.useState(0);
 
   const [onboardingMessage, setOnboardingMessage] = React.useState("");
   const [onboardingError, setOnboardingError] = React.useState("");
   const [onboardingLoading, setOnboardingLoading] = React.useState(false);
   const [onboardingCompletedAt, setOnboardingCompletedAt] = React.useState(null);
+
+  // Mode crédits-only (pas d'abonnements)
+  const [creditsOnlyMode, setCreditsOnlyMode] = React.useState(false);
 
   // Vérifier si l'email a été changé avec succès
   React.useEffect(() => {
@@ -52,6 +57,25 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
     fetchOnboardingState();
   }, []);
 
+  // Fetch du mode crédits-only
+  React.useEffect(() => {
+    fetch('/api/subscription/current')
+      .then(res => res.json())
+      .then(data => setCreditsOnlyMode(data.creditsOnlyMode || false))
+      .catch(() => {});
+  }, []);
+
+  // Timer pour le cooldown email
+  React.useEffect(() => {
+    if (emailCooldown <= 0) return;
+
+    const timer = setInterval(() => {
+      setEmailCooldown(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [emailCooldown]);
+
   const [currentPassword, setCurrentPassword] = React.useState("");
   const [newPassword, setNewPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
@@ -60,6 +84,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
   const [passwordLoading, setPasswordLoading] = React.useState(false);
 
   const [deletePassword, setDeletePassword] = React.useState("");
+  const [deleteEmail, setDeleteEmail] = React.useState("");
   const [deleteError, setDeleteError] = React.useState("");
   const [deleteLoading, setDeleteLoading] = React.useState(false);
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
@@ -80,10 +105,14 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       const res = await fetch("/api/account/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email }),
+        body: JSON.stringify(isOAuthUser ? { name } : { name, email }),
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok){
+        // Gérer le cooldown (rate limiting)
+        if (res.status === 429 && payload?.cooldownRemaining) {
+          setEmailCooldown(payload.cooldownRemaining);
+        }
         setProfileError(payload?.error || t('account.profile.errors.updateFailed'));
         return;
       }
@@ -91,6 +120,8 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       // Gérer le message de succès en fonction de la réponse
       if (payload?.emailChangeRequested) {
         setProfileMessage(payload?.message || t('account.profile.success'));
+        // Activer le cooldown après envoi réussi
+        setEmailCooldown(60);
       } else {
         setProfileMessage(payload?.message || t('account.profile.success'));
       }
@@ -148,9 +179,16 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
     event.preventDefault();
     setDeleteError("");
 
-    if (!deletePassword){
-      setDeleteError(t('account.deleteAccount.modal.errors.passwordRequired'));
-      return;
+    if (isOAuthUser) {
+      if (!deleteEmail){
+        setDeleteError(t('account.deleteAccount.modal.errors.emailRequired'));
+        return;
+      }
+    } else {
+      if (!deletePassword){
+        setDeleteError(t('account.deleteAccount.modal.errors.passwordRequired'));
+        return;
+      }
     }
 
     // Ouvrir le modal de confirmation
@@ -163,7 +201,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       const res = await fetch("/api/account/delete", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: deletePassword }),
+        body: JSON.stringify(isOAuthUser ? { email: deleteEmail } : { password: deletePassword }),
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok){
@@ -220,7 +258,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
               type="text"
               value={name}
               onChange={event => setName(event.target.value)}
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
               placeholder={t('account.profile.fullNamePlaceholder')}
             />
           </div>
@@ -230,7 +268,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
               type="email"
               value={email}
               onChange={event => setEmail(event.target.value)}
-              className={`w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none ${isOAuthUser ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden ${isOAuthUser ? 'opacity-50 cursor-not-allowed' : ''}`}
               placeholder={t('account.profile.emailPlaceholder')}
               disabled={isOAuthUser}
             />
@@ -244,110 +282,125 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
           {profileMessage ? <div className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/20 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow">{profileMessage}</div> : null}
           <button
             type="submit"
-            disabled={profileLoading}
+            disabled={profileLoading || emailCooldown > 0}
             className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/30 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500/40 transition-all duration-200 disabled:opacity-60 drop-shadow"
           >
-            {profileLoading ? t('account.profile.saving') : t('account.profile.saveButton')}
+            {profileLoading
+              ? t('account.profile.saving')
+              : emailCooldown > 0
+                ? `${t('account.profile.saveButton')} (${emailCooldown}s)`
+                : t('account.profile.saveButton')
+            }
           </button>
         </form>
       </section>
 
+      {/* Section Comptes liés */}
       <section className="rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-xl p-6 shadow-2xl">
-        <h2 className="text-lg font-semibold mb-4 text-emerald-300 drop-shadow">{t('account.security.title')}</h2>
-        <form onSubmit={updatePassword} className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.security.currentPassword')}</label>
-            <PasswordInput
-              id="currentPassword"
-              name="currentPassword"
-              value={currentPassword}
-              onChange={event => setCurrentPassword(event.target.value)}
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
-              placeholder="••••••••"
-              autoComplete="current-password"
-            />
-            <p className="text-xs text-white/60 drop-shadow">{t('account.security.currentPasswordHint')}</p>
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.security.newPassword')}</label>
-            <PasswordInput
-              id="newPassword"
-              name="newPassword"
-              value={newPassword}
-              onChange={event => setNewPassword(event.target.value)}
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
-              placeholder="••••••••"
-              autoComplete="new-password"
-            />
-            {/* Indicateur de force du mot de passe (adapté pour fond blanc) */}
-            {newPassword && (
-              <div className="mt-3 space-y-3">
-                {/* Barre de progression */}
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-white/70 drop-shadow">{t('account.security.passwordStrength.label')}</span>
-                    <span className={`font-medium ${getStrengthColor(newPassword)}`}>
-                      {getStrengthLabel(newPassword, t)}
-                    </span>
+        <h2 className="text-lg font-semibold mb-4 text-emerald-300 drop-shadow">
+          {t('account.linkedAccounts.title')}
+        </h2>
+        <LinkedAccountsSection />
+      </section>
+
+      {!isOAuthUser && (
+        <section className="rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-xl p-6 shadow-2xl">
+          <h2 className="text-lg font-semibold mb-4 text-emerald-300 drop-shadow">{t('account.security.title')}</h2>
+          <form onSubmit={updatePassword} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.security.currentPassword')}</label>
+              <PasswordInput
+                id="currentPassword"
+                name="currentPassword"
+                value={currentPassword}
+                onChange={event => setCurrentPassword(event.target.value)}
+                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
+                placeholder="••••••••"
+                autoComplete="current-password"
+              />
+              <p className="text-xs text-white/60 drop-shadow">{t('account.security.currentPasswordHint')}</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.security.newPassword')}</label>
+              <PasswordInput
+                id="newPassword"
+                name="newPassword"
+                value={newPassword}
+                onChange={event => setNewPassword(event.target.value)}
+                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
+                placeholder="••••••••"
+                autoComplete="new-password"
+              />
+              {/* Indicateur de force du mot de passe (adapté pour fond blanc) */}
+              {newPassword && (
+                <div className="mt-3 space-y-3">
+                  {/* Barre de progression */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-white/70 drop-shadow">{t('account.security.passwordStrength.label')}</span>
+                      <span className={`font-medium ${getStrengthColor(newPassword)}`}>
+                        {getStrengthLabel(newPassword, t)}
+                      </span>
+                    </div>
+                    <div className="h-1.5 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
+                      <div
+                        className={`h-full ${getStrengthBgColor(newPassword)} transition-all duration-300`}
+                        style={{ width: getStrengthWidth(newPassword) }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-1.5 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
-                    <div
-                      className={`h-full ${getStrengthBgColor(newPassword)} transition-all duration-300`}
-                      style={{ width: getStrengthWidth(newPassword) }}
+
+                  {/* Liste des règles */}
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-white/70 drop-shadow">{t('account.security.passwordRules.title')}</p>
+                    <PasswordRule
+                      valid={newPassword.length >= 8}
+                      text={t('account.security.passwordRules.minLength')}
+                    />
+                    <PasswordRule
+                      valid={/[A-Z]/.test(newPassword)}
+                      text={t('account.security.passwordRules.uppercase')}
+                    />
+                    <PasswordRule
+                      valid={/[a-z]/.test(newPassword)}
+                      text={t('account.security.passwordRules.lowercase')}
+                    />
+                    <PasswordRule
+                      valid={/[0-9]/.test(newPassword)}
+                      text={t('account.security.passwordRules.numbers')}
+                    />
+                    <PasswordRule
+                      valid={/[!@#$%^&*(),.?":{}|<>_\-+=[\]\\';/~`]/.test(newPassword)}
+                      text={t('account.security.passwordRules.specialChars')}
                     />
                   </div>
                 </div>
-
-                {/* Liste des règles */}
-                <div className="space-y-1.5">
-                  <p className="text-xs font-medium text-white/70 drop-shadow">{t('account.security.passwordRules.title')}</p>
-                  <PasswordRule
-                    valid={newPassword.length >= 8}
-                    text={t('account.security.passwordRules.minLength')}
-                  />
-                  <PasswordRule
-                    valid={/[A-Z]/.test(newPassword)}
-                    text={t('account.security.passwordRules.uppercase')}
-                  />
-                  <PasswordRule
-                    valid={/[a-z]/.test(newPassword)}
-                    text={t('account.security.passwordRules.lowercase')}
-                  />
-                  <PasswordRule
-                    valid={/[0-9]/.test(newPassword)}
-                    text={t('account.security.passwordRules.numbers')}
-                  />
-                  <PasswordRule
-                    valid={/[!@#$%^&*(),.?":{}|<>_\-+=[\]\\';/~`]/.test(newPassword)}
-                    text={t('account.security.passwordRules.specialChars')}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.security.confirmPassword')}</label>
-            <PasswordInput
-              id="confirmPassword"
-              name="confirmPassword"
-              value={confirmPassword}
-              onChange={event => setConfirmPassword(event.target.value)}
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
-              placeholder="••••••••"
-              autoComplete="new-password"
-            />
-          </div>
-          {passwordError ? <div className="rounded-lg border-2 border-red-400/50 bg-red-500/20 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow">{passwordError}</div> : null}
-          {passwordMessage ? <div className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/20 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow">{passwordMessage}</div> : null}
-          <button
-            type="submit"
-            disabled={passwordLoading}
-            className="rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-white/30 transition-all duration-200 disabled:opacity-60 drop-shadow"
-          >
-            {passwordLoading ? t('account.security.updating') : t('account.security.updateButton')}
-          </button>
-        </form>
-      </section>
+              )}
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.security.confirmPassword')}</label>
+              <PasswordInput
+                id="confirmPassword"
+                name="confirmPassword"
+                value={confirmPassword}
+                onChange={event => setConfirmPassword(event.target.value)}
+                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
+                placeholder="••••••••"
+                autoComplete="new-password"
+              />
+            </div>
+            {passwordError ? <div className="rounded-lg border-2 border-red-400/50 bg-red-500/20 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow">{passwordError}</div> : null}
+            {passwordMessage ? <div className="rounded-lg border-2 border-emerald-400/50 bg-emerald-500/20 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow">{passwordMessage}</div> : null}
+            <button
+              type="submit"
+              disabled={passwordLoading}
+              className="rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white hover:bg-white/30 transition-all duration-200 disabled:opacity-60 drop-shadow"
+            >
+              {passwordLoading ? t('account.security.updating') : t('account.security.updateButton')}
+            </button>
+          </form>
+        </section>
+      )}
 
       <section className="rounded-2xl border-2 border-white/30 bg-white/15 backdrop-blur-xl p-6 shadow-2xl">
         <h2 className="text-lg font-semibold mb-4 text-emerald-300 drop-shadow">{t('account.tutorial.title')}</h2>
@@ -395,26 +448,44 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
       <section className="rounded-2xl border-2 border-red-400/50 bg-red-500/20 backdrop-blur-xl p-6 shadow-2xl">
         <h2 className="text-lg font-semibold mb-2 text-red-300 drop-shadow">{t('account.deleteAccount.title')}</h2>
         <p className="text-sm text-white drop-shadow mb-3">
-          ⚠️ {t('account.deleteAccount.description')}
+          ⚠️ {t(creditsOnlyMode ? 'account.deleteAccount.description_credits_only' : 'account.deleteAccount.description')}
         </p>
         <form onSubmit={openDeleteModal} className="space-y-3">
           <div className="space-y-1">
-            <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.deleteAccount.passwordLabel')}</label>
-            <PasswordInput
-              id="deletePassword"
-              name="deletePassword"
-              value={deletePassword}
-              onChange={event => setDeletePassword(event.target.value)}
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-red-400 focus:ring-2 focus:ring-red-400/50 focus:outline-none"
-              placeholder="••••••••"
-              autoComplete="current-password"
-            />
+            {isOAuthUser ? (
+              <>
+                <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.deleteAccount.emailLabel')}</label>
+                <input
+                  type="email"
+                  id="deleteEmail"
+                  name="deleteEmail"
+                  value={deleteEmail}
+                  onChange={event => setDeleteEmail(event.target.value)}
+                  className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-red-400 focus:ring-2 focus:ring-red-400/50 focus:outline-hidden"
+                  placeholder={user?.email || t('account.profile.emailPlaceholder')}
+                  autoComplete="email"
+                />
+              </>
+            ) : (
+              <>
+                <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.deleteAccount.passwordLabel')}</label>
+                <PasswordInput
+                  id="deletePassword"
+                  name="deletePassword"
+                  value={deletePassword}
+                  onChange={event => setDeletePassword(event.target.value)}
+                  className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-red-400 focus:ring-2 focus:ring-red-400/50 focus:outline-hidden"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                />
+              </>
+            )}
           </div>
           {deleteError ? (
             <div className="rounded-lg border-2 border-red-400/50 bg-red-500/30 backdrop-blur-sm px-3 py-2 text-sm text-white drop-shadow">{deleteError}</div>
           ) : null}
           <div className="text-xs text-white/70 drop-shadow">
-            {t('account.deleteAccount.passwordHint')}
+            {isOAuthUser ? t('account.deleteAccount.emailHint') : t('account.deleteAccount.passwordHint')}
           </div>
           <button
             type="submit"
@@ -446,18 +517,22 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
               </p>
 
               <ul className="space-y-2 text-sm text-white/80">
-                <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">•</span>
-                  <span>{t('account.deleteAccount.modal.consequences.noRefund')}</span>
-                </li>
+                {!creditsOnlyMode && (
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400 mt-0.5">•</span>
+                    <span>{t('account.deleteAccount.modal.consequences.noRefund')}</span>
+                  </li>
+                )}
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-0.5">•</span>
                   <span>{t('account.deleteAccount.modal.consequences.loseCredits')}</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">•</span>
-                  <span>{t('account.deleteAccount.modal.consequences.cancelSubscription')}</span>
-                </li>
+                {!creditsOnlyMode && (
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400 mt-0.5">•</span>
+                    <span>{t('account.deleteAccount.modal.consequences.cancelSubscription')}</span>
+                  </li>
+                )}
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-0.5">•</span>
                   <span>{t('account.deleteAccount.modal.consequences.deleteCvs')}</span>
@@ -476,7 +551,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                   type="checkbox"
                   checked={acceptedDeleteTerms}
                   onChange={(e) => setAcceptedDeleteTerms(e.target.checked)}
-                  className="mt-1 w-4 h-4 rounded-sm border-2 border-white/30 bg-white/5 appearance-none cursor-pointer transition-all checked:bg-gradient-to-br checked:from-red-500/40 checked:to-red-600/40 checked:border-red-400/60 focus:ring-2 focus:ring-red-500/50 focus:ring-offset-0 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
+                  className="mt-1 w-4 h-4 rounded-xs border-2 border-white/30 bg-white/5 appearance-none cursor-pointer transition-all checked:bg-gradient-to-br checked:from-red-500/40 checked:to-red-600/40 checked:border-red-400/60 focus:ring-2 focus:ring-red-500/50 focus:ring-offset-0 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
                   disabled={deleteLoading}
                 />
                 <span className="text-sm text-white/80 group-hover:text-white transition-colors">

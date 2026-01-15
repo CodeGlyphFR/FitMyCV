@@ -6,9 +6,9 @@ module.exports = {
         'app-bg': 'rgb(2, 6, 23)', // Deep dark blue - application background
       },
       screens: {
-        'sm': '991px',
-        'md': '991px',
-        'topbar': '991px',
+        'sm': '1025px',
+        'md': '1025px',
+        'topbar': '1025px',
       },
       backdropBlur: {
         '4xl': '80px',
@@ -109,5 +109,7 @@ module.exports = {
     },
   },
   darkMode: "class",
-  plugins: [],
+  plugins: [
+    require('tailwind-scrollbar'),
+  ],
 };

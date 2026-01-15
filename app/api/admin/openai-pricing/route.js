@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 
 /**
  * GET /api/admin/openai-pricing
- * Retrieve all OpenAI pricing configurations
+ * Retrieve all OpenAI pricing configurations and priority mode status
  */
 export async function GET(request) {
   try {
@@ -19,7 +19,13 @@ export async function GET(request) {
       },
     });
 
-    return NextResponse.json({ pricings });
+    // Get priority mode setting
+    const priorityModeSetting = await prisma.setting.findUnique({
+      where: { settingName: 'openai_priority_mode' },
+    });
+    const isPriorityMode = priorityModeSetting?.value === 'true';
+
+    return NextResponse.json({ pricings, isPriorityMode });
   } catch (error) {
     console.error('[API /admin/openai-pricing GET] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -36,6 +42,9 @@ export async function GET(request) {
  *   inputPricePerMToken: number,
  *   outputPricePerMToken: number,
  *   cachePricePerMToken?: number,
+ *   inputPricePerMTokenPriority?: number,
+ *   outputPricePerMTokenPriority?: number,
+ *   cachePricePerMTokenPriority?: number,
  *   description?: string,
  *   isActive?: boolean
  * }
@@ -48,7 +57,17 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { modelName, inputPricePerMToken, outputPricePerMToken, cachePricePerMToken, description, isActive } = body;
+    const {
+      modelName,
+      inputPricePerMToken,
+      outputPricePerMToken,
+      cachePricePerMToken,
+      inputPricePerMTokenPriority,
+      outputPricePerMTokenPriority,
+      cachePricePerMTokenPriority,
+      description,
+      isActive,
+    } = body;
 
     // Validate required fields
     if (!modelName || inputPricePerMToken === undefined || outputPricePerMToken === undefined) {
@@ -81,6 +100,9 @@ export async function POST(request) {
         inputPricePerMToken,
         outputPricePerMToken,
         cachePricePerMToken: cachePricePerMToken !== undefined ? cachePricePerMToken : 0,
+        inputPricePerMTokenPriority: inputPricePerMTokenPriority !== undefined ? inputPricePerMTokenPriority : null,
+        outputPricePerMTokenPriority: outputPricePerMTokenPriority !== undefined ? outputPricePerMTokenPriority : null,
+        cachePricePerMTokenPriority: cachePricePerMTokenPriority !== undefined ? cachePricePerMTokenPriority : null,
         description: description || null,
         isActive: isActive !== undefined ? isActive : true,
       },
@@ -89,6 +111,9 @@ export async function POST(request) {
         inputPricePerMToken,
         outputPricePerMToken,
         cachePricePerMToken: cachePricePerMToken !== undefined ? cachePricePerMToken : 0,
+        inputPricePerMTokenPriority: inputPricePerMTokenPriority !== undefined ? inputPricePerMTokenPriority : null,
+        outputPricePerMTokenPriority: outputPricePerMTokenPriority !== undefined ? outputPricePerMTokenPriority : null,
+        cachePricePerMTokenPriority: cachePricePerMTokenPriority !== undefined ? cachePricePerMTokenPriority : null,
         description: description || null,
         isActive: isActive !== undefined ? isActive : true,
       },
@@ -129,6 +154,53 @@ export async function DELETE(request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[API /admin/openai-pricing DELETE] Error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+/**
+ * PATCH /api/admin/openai-pricing
+ * Toggle priority mode setting
+ *
+ * Body:
+ * {
+ *   isPriorityMode: boolean
+ * }
+ */
+export async function PATCH(request) {
+  try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { isPriorityMode } = body;
+
+    if (isPriorityMode === undefined) {
+      return NextResponse.json(
+        { error: 'Missing required field: isPriorityMode' },
+        { status: 400 }
+      );
+    }
+
+    // Upsert the setting
+    await prisma.setting.upsert({
+      where: { settingName: 'openai_priority_mode' },
+      update: {
+        value: isPriorityMode ? 'true' : 'false',
+      },
+      create: {
+        settingName: 'openai_priority_mode',
+        value: isPriorityMode ? 'true' : 'false',
+        category: 'openai',
+        description: 'Si activé, utilise les tarifs Priority OpenAI (~70% plus cher). Désactiver pour les tarifs Standard.',
+      },
+    });
+
+    return NextResponse.json({ isPriorityMode });
+  } catch (error) {
+    console.error('[API /admin/openai-pricing PATCH] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

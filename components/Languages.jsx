@@ -6,13 +6,15 @@ import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getLanguageLevelLabel } from "@/lib/i18n/cvLabels";
-import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import { capitalizeSkillName, toTitleCase } from "@/lib/utils/textFormatting";
 
 export default function Languages(props){
   const { t } = useLanguage();
   const languages = Array.isArray(props.languages)? props.languages:[];
   const sectionTitles = props.sectionTitles || {};
   const cvLanguage = props.cvLanguage || 'fr';
+  const cvT = getTranslatorForCvLanguage(cvLanguage);
   const title = getCvSectionTitleInCvLanguage('languages', sectionTitles.languages, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
@@ -64,8 +66,8 @@ export default function Languages(props){
           {languages.map((l,i)=>(
             <div key={i} className="relative inline-block rounded-full border border-white/15 px-3 py-1 text-sm overflow-visible">
               <div className={editing ? "pr-12" : ""}>
-                <span className="font-semibold">{l.name || ""}</span>
-                <span className="text-sm opacity-80"> : {getLanguageLevelLabel(l.level, t) || l.level || ""}</span>
+                <span className="font-semibold">{toTitleCase(l.name) || ""}</span>
+                <span className="text-sm opacity-80"> : {getLanguageLevelLabel(l.level, cvT) || capitalizeSkillName(l.level) || ""}</span>
               </div>
               {editing && (
                 <div className="no-print absolute top-1/2 -translate-y-1/2 right-0 flex">
@@ -80,16 +82,16 @@ export default function Languages(props){
 
       <Modal open={editIndex!==null} onClose={()=>setEditIndex(null)} title={t("cvSections.editLanguages")}>
         <div className="grid gap-2">
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.languageName")} value={f.name} onChange={e=>setF({...f,name:e.target.value})} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.languageLevel")} value={f.level} onChange={e=>setF({...f,level:e.target.value})} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.languageName")} value={f.name} onChange={e=>setF({...f,name:e.target.value})} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.languageLevel")} value={f.level} onChange={e=>setF({...f,level:e.target.value})} />
           <div className="flex justify-end gap-2"><button onClick={()=>setEditIndex(null)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button><button onClick={save} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.save")}</button></div>
         </div>
       </Modal>
 
       <Modal open={addOpen} onClose={()=>setAddOpen(false)} title={t("cvSections.addLanguage")}>
         <div className="grid gap-2">
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.languageName")} value={nf.name} onChange={e=>setNf({...nf,name:e.target.value})} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.languageLevel")} value={nf.level} onChange={e=>setNf({...nf,level:e.target.value})} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.languageName")} value={nf.name} onChange={e=>setNf({...nf,name:e.target.value})} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.languageLevel")} value={nf.level} onChange={e=>setNf({...nf,level:e.target.value})} />
           <div className="flex justify-end gap-2">
             <button onClick={()=>setAddOpen(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
             <button onClick={add} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.add")}</button>

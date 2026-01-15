@@ -7,6 +7,10 @@ import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getSkillLevelLabel } from "@/lib/i18n/cvLabels";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import { capitalizeSkillName } from "@/lib/utils/textFormatting";
+import SkillItemHighlight, { RemovedSkillsDisplay, RemovedSkillsDisplayBlock, useRemovedItems } from "./SkillItemHighlight";
+import SectionReviewActions from "./SectionReviewActions";
+import SkillsReviewActions from "./SkillsReviewActions";
 
 function Row({children}){ return <div className="flex gap-2">{children}</div>; }
 
@@ -118,132 +122,185 @@ export default function Skills(props){
   async function saveMeth(){ await mutate({ op:"set", path:"skills.methodologies", value: methLocal }); setOpenMeth(false); }
 
   return (
-    <Section title={title}>
+    <Section title={
+      <div className="flex items-center justify-between gap-2">
+        <span>{title}</span>
+        <SectionReviewActions section="skills" />
+      </div>
+    }>
       <div className="space-y-4">
         {(() => {
           const showHard = hasHard || editing; // en édition, on montre le bloc même vide
           const hideHardBecauseOthersFull = !hasHard && hasTools && hasMethods && !editing;
-          const twoColsToolsMethods = hasTools && hasMethods;
+
+          // Vérifier s'il y a des items supprimés à reviewer
+          const removedTools = useRemovedItems("skills", "tools");
+          const removedMethods = useRemovedItems("skills", "methodologies");
+
+          // Déterminer si on doit afficher chaque colonne
+          const showToolsColumn = hasTools || editing || removedTools.length > 0;
+          const showMethodsColumn = hasMethods || editing || removedMethods.length > 0;
+
+          // Grille à 2 colonnes seulement si les deux colonnes ont du contenu
+          const useTwoColumns = showToolsColumn && showMethodsColumn;
 
           return (
             <>
               {/* Compétences techniques */}
               {!hideHardBecauseOthersFull && showHard && (
                 <div className="w-full rounded-2xl border border-white/15 p-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold mb-2">{cvT("cvSections.hardSkills")}</h3>
-                    {editing && (
-                      <button onClick={() => setOpenHard(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
-                    )}
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold">{cvT("cvSections.hardSkills")}</h3>
+                    <div className="flex items-center gap-2">
+                      <SkillsReviewActions field="hard_skills" />
+                      {editing && (
+                        <button onClick={() => setOpenHard(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
+                      )}
+                    </div>
                   </div>
 
                   {hasHard ? (
                     <div className={`grid gap-3 ${hard.length > 5 ? "md:grid-cols-2" : "grid-cols-1"}`}>
                       {hard.map((s, i) => {
+                        const skillName = s && (s.name || s.label || s.title || s.value || (typeof s === "string" ? s : ""));
                         const levelLabel = displaySkillLevel(s, cvT);
                         return (
                           <div key={i} className="text-sm">
-                            <span className="font-medium">
-                              {s && (s.name || s.label || s.title || s.value || (typeof s === "string" ? s : ""))}
-                            </span>
-                            {levelLabel ? <span className="opacity-70"> • {levelLabel}</span> : null}
+                            <SkillItemHighlight section="skills" field="hard_skills" itemName={skillName}>
+                              <span className="font-medium">
+                                {capitalizeSkillName(skillName)}
+                              </span>
+                              {levelLabel ? <span className="opacity-70"> • {levelLabel}</span> : null}
+                            </SkillItemHighlight>
                           </div>
                         );
                       })}
+                      {/* Afficher les skills supprimés */}
+                      <RemovedSkillsDisplay section="skills" field="hard_skills" />
                     </div>
                   ) : (
                     editing && <div className="text-sm opacity-60">{t("cvSections.noSkills")}</div>
                   )}
                 </div>
               )}
+              {/* Hard skills orphelins (tous supprimés) */}
+              {!hasHard && !editing && (
+                <RemovedSkillsDisplayBlock field="hard_skills" title={cvT("cvSections.hardSkills")} />
+              )}
 
-              {/* Outils + Méthodologies */}
-              <div className={twoColsToolsMethods ? "grid md:grid-cols-2 gap-4" : "grid grid-cols-1 gap-4"}>
-                {/* Outils */}
-                {(hasTools || editing) && (
+              {/* Outils + Méthodologies (grille) */}
+              {(showToolsColumn || showMethodsColumn) && (
+              <div className={`grid gap-4 ${useTwoColumns ? "md:grid-cols-2" : "grid-cols-1"}`}>
+                {/* Outils - affiche soit le bloc normal, soit les orphelins */}
+                {showToolsColumn && ((hasTools || editing) ? (
                   <div className="w-full rounded-2xl border border-white/15 p-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold mb-2">{cvT("cvSections.tools")}</h3>
-                      {editing && (
-                        <button onClick={() => setOpenTools(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
-                      )}
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold">{cvT("cvSections.tools")}</h3>
+                      <div className="flex items-center gap-2">
+                        <SkillsReviewActions field="tools" />
+                        {editing && (
+                          <button onClick={() => setOpenTools(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
+                        )}
+                      </div>
                     </div>
 
                     {hasTools ? (
                       <ul className="space-y-1">
                         {tools.map((tool, i) => {
+                          const toolName = tool && (tool.name || tool.label || tool.title || tool.value || (typeof tool === "string" ? tool : ""));
                           const levelLabel = displaySkillLevel(tool, cvT);
                           return (
                             <li key={i} className="text-sm">
-                              <span className="font-medium">
-                                {tool && (tool.name || tool.label || tool.title || tool.value || (typeof tool === "string" ? tool : ""))}
-                              </span>
-                              {levelLabel ? <span className="opacity-70"> • {levelLabel}</span> : null}
+                              <SkillItemHighlight section="skills" field="tools" itemName={toolName}>
+                                <span className="font-medium">
+                                  {capitalizeSkillName(toolName)}
+                                </span>
+                                {levelLabel ? <span className="opacity-70"> • {levelLabel}</span> : null}
+                              </SkillItemHighlight>
                             </li>
                           );
                         })}
+                        {/* Afficher les outils supprimés */}
+                        <RemovedSkillsDisplay section="skills" field="tools" />
                       </ul>
                     ) : (
                       editing && <div className="text-sm opacity-60">{t("cvSections.noTools")}</div>
                     )}
                   </div>
-                )}
+                ) : (
+                  <RemovedSkillsDisplayBlock field="tools" title={cvT("cvSections.tools")} />
+                ))}
 
-                {/* Méthodologies */}
-                {(hasMethods || editing) && (
+                {/* Méthodologies - affiche soit le bloc normal, soit les orphelins */}
+                {showMethodsColumn && ((hasMethods || editing) ? (
                   <div className="w-full rounded-2xl border border-white/15 p-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold mb-2">{cvT("cvSections.methodologies")}</h3>
-                      {editing && (
-                        <button onClick={() => setOpenMeth(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
-                      )}
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold">{cvT("cvSections.methodologies")}</h3>
+                      <div className="flex items-center gap-2">
+                        <SkillsReviewActions field="methodologies" />
+                        {editing && (
+                          <button onClick={() => setOpenMeth(true)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
+                        )}
+                      </div>
                     </div>
 
                     {hasMethods ? (
                       <div className="flex flex-wrap gap-1">
                         {methods.map((m, i) => {
-                          const lab = typeof m === "string" ? m : (m?.name || m?.label || m?.title || m?.value || "");
+                          const methodName = typeof m === "string" ? m : (m?.name || m?.label || m?.title || m?.value || "");
                           return (
-                            <span key={i} className="inline-block rounded border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
-                              {lab}
-                            </span>
+                            <SkillItemHighlight key={i} section="skills" field="methodologies" itemName={methodName}>
+                              <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
+                                {capitalizeSkillName(methodName)}
+                              </span>
+                            </SkillItemHighlight>
                           );
                         })}
+                        {/* Afficher les méthodologies supprimées */}
+                        <RemovedSkillsDisplay section="skills" field="methodologies" />
                       </div>
                     ) : (
                       editing && <div className="text-sm opacity-60">{t("cvSections.noMethodologies")}</div>
                     )}
                   </div>
-                )}
+                ) : (
+                  <RemovedSkillsDisplayBlock field="methodologies" title={cvT("cvSections.methodologies")} />
+                ))}
               </div>
+              )}
 
-              {/* Soft skills */}
+              {/* Soft skills - affiche soit le bloc normal, soit les orphelins */}
               {hasSoft ? (
                 <div>
                   <div className="flex flex-wrap gap-1">
                     {soft.map((m, i) => {
-                      const lab = typeof m === "string" ? m : (m?.name || m?.label || m?.title || m?.value || "");
+                      const softName = typeof m === "string" ? m : (m?.name || m?.label || m?.title || m?.value || "");
                       return (
-                        <span key={i} className="inline-block rounded border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
-                          {lab}
-                        </span>
+                        <SkillItemHighlight key={i} section="skills" field="soft_skills" itemName={softName}>
+                          <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
+                            {capitalizeSkillName(softName)}
+                          </span>
+                        </SkillItemHighlight>
                       );
                     })}
+                    <RemovedSkillsDisplay section="skills" field="soft_skills" />
                     {editing && (
-                      <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center rounded border border-white/15 bg-white/20 opacity-90 cursor-pointer hover:bg-white/30 transition-all duration-200" style={{height: '23px', width: '23px', minHeight: '23px', minWidth: '23px', maxHeight: '23px', maxWidth: '23px'}}><img src="/icons/edit.png" alt="Edit" className="h-[11px] w-[11px]" /></span>
+                      <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center rounded-sm border border-white/15 bg-white/20 opacity-90 cursor-pointer hover:bg-white/30 transition-all duration-200" style={{height: '23px', width: '23px', minHeight: '23px', minWidth: '23px', maxHeight: '23px', maxWidth: '23px'}}>
+                        <img src="/icons/edit.png" alt="Edit" className="h-[11px] w-[11px]" />
+                      </span>
                     )}
                   </div>
                 </div>
-              ) : (
-                editing && (
-                  <div className="rounded-2xl border border-white/15 p-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold mb-2">{cvT("cvSections.softSkills")}</h3>
-                      <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center rounded border border-white/15 bg-white/20 opacity-90 cursor-pointer hover:bg-white/30 transition-all duration-200" style={{height: '23px', width: '23px', minHeight: '23px', minWidth: '23px', maxHeight: '23px', maxWidth: '23px'}}><img src="/icons/edit.png" alt="Edit" className="h-[11px] w-[11px]" /></span>
-                    </div>
-                    <div className="text-sm opacity-60">{t("cvSections.noSoftSkills")}</div>
+              ) : editing ? (
+                <div className="rounded-2xl border border-white/15 p-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold mb-2">{cvT("cvSections.softSkills")}</h3>
+                    <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center rounded-sm border border-white/15 bg-white/20 opacity-90 cursor-pointer hover:bg-white/30 transition-all duration-200" style={{height: '23px', width: '23px', minHeight: '23px', minWidth: '23px', maxHeight: '23px', maxWidth: '23px'}}><img src="/icons/edit.png" alt="Edit" className="h-[11px] w-[11px]" /></span>
                   </div>
-                )
+                  <div className="text-sm opacity-60">{t("cvSections.noSoftSkills")}</div>
+                </div>
+              ) : (
+                <RemovedSkillsDisplayBlock field="soft_skills" title={cvT("cvSections.softSkills")} />
               )}
             </>
           );
@@ -255,9 +312,9 @@ export default function Skills(props){
         <div className="space-y-2">
           {hardLocal.map((row,idx)=>(
             <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...hardLocal]; arr[idx]={...arr[idx], name:e.target.value}; setHardLocal(arr); }} />
+              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...hardLocal]; arr[idx]={...arr[idx], name:e.target.value}; setHardLocal(arr); }} />
               <select
-                className="flex-1 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
+                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
                 value={row.proficiency ?? ""}
                 onChange={e => { const arr=[...hardLocal]; arr[idx]={ ...arr[idx], proficiency:e.target.value }; setHardLocal(arr); }}
               >
@@ -281,9 +338,9 @@ export default function Skills(props){
         <div className="space-y-2">
           {toolsLocal.map((row,idx)=>(
             <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...toolsLocal]; arr[idx]={...arr[idx], name:e.target.value}; setToolsLocal(arr); }} />
+              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...toolsLocal]; arr[idx]={...arr[idx], name:e.target.value}; setToolsLocal(arr); }} />
               <select
-                className="flex-1 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
+                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
                 value={row.proficiency ?? ""}
                 onChange={e => { const arr=[...toolsLocal]; arr[idx]={ ...arr[idx], proficiency:e.target.value }; setToolsLocal(arr); }}
               >
@@ -307,7 +364,7 @@ export default function Skills(props){
         <div className="space-y-2">
           {methLocal.map((row,idx)=>(
             <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...methLocal]; arr[idx]=e.target.value; setMethLocal(arr); }} />
+              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...methLocal]; arr[idx]=e.target.value; setMethLocal(arr); }} />
               <button onClick={()=>{ const arr=[...methLocal]; arr.splice(idx,1); setMethLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 p-1.5 text-white hover:bg-red-500/40 transition-colors shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
             </div>
           ))}
@@ -323,7 +380,7 @@ export default function Skills(props){
         <div className="space-y-2">
           {softLocal.map((row,idx)=>(
             <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...softLocal]; arr[idx]=e.target.value; setSoftLocal(arr); }} />
+              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...softLocal]; arr[idx]=e.target.value; setSoftLocal(arr); }} />
               <button onClick={()=>{ const arr=[...softLocal]; arr.splice(idx,1); setSoftLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 p-1.5 text-white hover:bg-red-500/40 transition-colors shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
             </div>
           ))}

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createPasswordResetToken, sendPasswordResetEmail } from '@/lib/email/emailService';
 import prisma from '@/lib/prisma';
 import { verifyRecaptcha } from '@/lib/recaptcha/verifyRecaptcha';
+import { CommonErrors, AuthErrors } from '@/lib/api/apiErrors';
 
 export const runtime = 'nodejs';
 
@@ -17,19 +18,13 @@ export async function POST(request) {
       });
 
       if (!recaptchaResult.success) {
-        return NextResponse.json(
-          { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
-          { status: recaptchaResult.statusCode || 403 }
-        );
+        return AuthErrors.recaptchaFailed();
       }
     }
 
     // Validation basique
     if (!email || typeof email !== 'string') {
-      return NextResponse.json(
-        { error: 'Email requis' },
-        { status: 400 }
-      );
+      return AuthErrors.emailRequired();
     }
 
     // Normaliser l'email
@@ -40,10 +35,7 @@ export async function POST(request) {
 
     // Si l'utilisateur est OAuth uniquement
     if (!result.success && result.error === 'oauth_only') {
-      return NextResponse.json(
-        { error: 'oauth_only', message: result.message },
-        { status: 400 }
-      );
+      return AuthErrors.oauthOnly();
     }
 
     // Si le token a été créé avec succès et qu'on a un userId
@@ -64,10 +56,7 @@ export async function POST(request) {
 
         if (!emailResult.success) {
           console.error('[request-reset] Erreur lors de l\'envoi de l\'email:', emailResult.error);
-          return NextResponse.json(
-            { error: 'Erreur lors de l\'envoi de l\'email' },
-            { status: 500 }
-          );
+          return CommonErrors.serverError();
         }
       }
     }
@@ -80,9 +69,6 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('[request-reset] Erreur:', error);
-    return NextResponse.json(
-      { error: 'Erreur serveur' },
-      { status: 500 }
-    );
+    return CommonErrors.serverError();
   }
 }

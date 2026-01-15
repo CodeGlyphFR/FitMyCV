@@ -5,16 +5,38 @@ import { KPICard } from './KPICard';
 import { PlanDistributionChart } from './PlanDistributionChart';
 import { MRRHistoryChart } from './MRRHistoryChart';
 
+const currentYear = new Date().getFullYear();
+
+// Fonction pour générer le titre dynamique
+const getPeriodTitle = (period, metric, year) => {
+  const metricLabel = metric.toUpperCase();
+  switch (period) {
+    case '12months':
+      return `Évolution ${metricLabel} (${year})`;
+    case '6months':
+      return `Évolution ${metricLabel} (6 mois - ${year})`;
+    case 'month':
+      return `Évolution ${metricLabel} (ce mois)`;
+    case 'week':
+      return `Évolution ${metricLabel} (cette semaine)`;
+    default:
+      return `Évolution ${metricLabel}`;
+  }
+};
+
 export function RevenueTab({ refreshKey }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [period, setPeriod] = useState('12months');
+  const [year, setYear] = useState(currentYear);
+  const [metric, setMetric] = useState('mrr');
 
   useEffect(() => {
-    fetchData();
+    fetchData(period, year);
   }, [refreshKey]);
 
-  async function fetchData() {
+  async function fetchData(p = period, y = year) {
     try {
       // Only show loader if no data yet (initial load)
       if (!data) {
@@ -22,7 +44,7 @@ export function RevenueTab({ refreshKey }) {
       }
       setError(null);
 
-      const response = await fetch('/api/admin/revenue');
+      const response = await fetch(`/api/admin/revenue?period=${p}&year=${y}`);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Erreur serveur' }));
         throw new Error(errorData.error || 'Failed to fetch revenue data');
@@ -37,6 +59,21 @@ export function RevenueTab({ refreshKey }) {
       setLoading(false);
     }
   }
+
+  const handlePeriodChange = (newPeriod) => {
+    setPeriod(newPeriod);
+    fetchData(newPeriod, year);
+  };
+
+  const handleYearChange = (newYear) => {
+    setYear(newYear);
+    fetchData(period, newYear);
+  };
+
+  const handleMetricChange = (newMetric) => {
+    setMetric(newMetric);
+    // Pas besoin de refetch, le composant affiche déjà les deux métriques
+  };
 
   if (loading) {
     return (
@@ -120,10 +157,10 @@ export function RevenueTab({ refreshKey }) {
         />
       </div>
 
-      {/* Graphiques */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Distribution des plans */}
-        <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-6">
+      {/* Graphiques - Distribution 1/3, MRR 2/3 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Distribution des plans - 1/3 */}
+        <div className="lg:col-span-1 bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-6">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <span>📊</span>
             Distribution des Plans
@@ -131,13 +168,22 @@ export function RevenueTab({ refreshKey }) {
           <PlanDistributionChart distribution={data.planDistribution} />
         </div>
 
-        {/* Historique MRR */}
-        <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-6">
+        {/* Historique MRR/ARR - 2/3 */}
+        <div className="lg:col-span-2 bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-6 overflow-hidden">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <span>📈</span>
-            Évolution MRR (12 derniers mois)
+            {getPeriodTitle(period, metric, year)}
           </h3>
-          <MRRHistoryChart history={data.mrrHistory} />
+          <MRRHistoryChart
+            history={data.revenueHistory}
+            period={period}
+            year={year}
+            metric={metric}
+            availableYears={data.availableYears || []}
+            onPeriodChange={handlePeriodChange}
+            onYearChange={handleYearChange}
+            onMetricChange={handleMetricChange}
+          />
         </div>
       </div>
 

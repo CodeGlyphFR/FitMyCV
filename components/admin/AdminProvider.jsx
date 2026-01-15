@@ -144,7 +144,7 @@ export default function AdminProvider(props){
       {session?.user?.role === 'ADMIN' && pathname !== "/admin/analytics" ? (
         <button
           onClick={() => window.location.href = '/admin/analytics'}
-          className="fixed bottom-[4.5rem] right-6 z-50 no-print w-10 h-10 rounded-full shadow-2xl hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-110 border-2 pointer-events-auto backdrop-blur-xl bg-white/20 border-white/30"
+          className="fixed bottom-[4.5rem] right-6 z-50 no-print w-10 h-10 rounded-full shadow-2xl hover:shadow-sm-xl flex items-center justify-center transition-all duration-200 hover:scale-110 border-2 pointer-events-auto backdrop-blur-xl bg-white/20 border-white/30"
           title="Analytics Dashboard"
           aria-label="Analytics Dashboard"
           style={{
@@ -171,7 +171,7 @@ export default function AdminProvider(props){
           className={`
             fixed bottom-6 right-6 z-50 no-print
             w-10 h-10 rounded-full
-            shadow-2xl hover:shadow-xl
+            shadow-2xl hover:shadow-sm-xl
             flex items-center justify-center
             transition-all duration-200
             hover:scale-110

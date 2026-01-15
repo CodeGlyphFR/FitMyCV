@@ -49,11 +49,11 @@ export default function LoadingOverlay() {
       // Ajouter classe pour fade-out CSS
       initialOverlay.classList.add('hiding');
 
-      // Après la transition (300ms), supprimer complètement du DOM
+      // Après la transition (300ms), cacher avec display:none au lieu de supprimer du DOM
+      // (supprimer du DOM casse la réconciliation React lors des navigations)
       setTimeout(() => {
-        // Vérifier que l'élément existe encore et a un parent
-        if (initialOverlay && initialOverlay.parentNode) {
-          initialOverlay.parentNode.removeChild(initialOverlay);
+        if (initialOverlay) {
+          initialOverlay.style.display = 'none';
         }
 
         // Émettre événement de fin

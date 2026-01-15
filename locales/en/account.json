@@ -1,0 +1,165 @@
+{
+  "feedback": {
+    "title": "Your feedback helps us improve!",
+    "ratingLabel": "How would you rate your experience?",
+    "optional": "optional",
+    "commentLabel": "Your feedback (optional)",
+    "commentPlaceholder": "Share your feedback, suggest new features, or report bugs...",
+    "bugReportLabel": "Bug report",
+    "markAsBug": "Mark as bug",
+    "markedAsBug": "Marked as bug",
+    "charactersCount": "{count}/500 characters",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "submitting": "Submitting...",
+    "errors": {
+      "ratingRequired": "Please select a rating",
+      "commentTooLong": "Comment cannot exceed 500 characters"
+    },
+    "success": "Thank you for your feedback! 🙏"
+  },
+  "account": {
+    "meta": {
+      "title": "My Account - FitMyCV.io",
+      "description": "Manage your personal information and preferences"
+    },
+    "backToCvs": "Back",
+    "title": "My Account",
+    "subtitle": "Manage your personal information and security preferences.",
+    "loading": "Loading...",
+    "profile": {
+      "title": "Profile Information",
+      "fullName": "Full name",
+      "fullNamePlaceholder": "Enter your full name",
+      "email": "Email address",
+      "emailPlaceholder": "Enter your email address",
+      "emailDisabled": "Managed by {provider}",
+      "saveButton": "Save changes",
+      "saving": "Saving...",
+      "success": "Profile updated successfully!",
+      "emailSuccess": "Your email address has been changed successfully!",
+      "noChanges": "No changes detected.",
+      "errors": {
+        "updateFailed": "Unable to update profile.",
+        "unexpected": "Unexpected error."
+      }
+    },
+    "security": {
+      "title": "Security",
+      "oauthInfo": "Your account is managed by {provider}. The password is managed by this provider.",
+      "currentPassword": "Current password",
+      "currentPasswordPlaceholder": "Enter your current password",
+      "currentPasswordHint": "Leave empty if you have never set a password.",
+      "newPassword": "New password",
+      "newPasswordPlaceholder": "Enter a new password",
+      "confirmPassword": "Confirm password",
+      "confirmPasswordPlaceholder": "Confirm the new password",
+      "updateButton": "Update password",
+      "updating": "Updating...",
+      "success": "Password updated successfully!",
+      "passwordStrength": {
+        "label": "Password strength",
+        "weak": "Weak",
+        "medium": "Medium",
+        "strong": "Strong",
+        "veryStrong": "Very strong"
+      },
+      "passwordRules": {
+        "title": "Security rules",
+        "minLength": "At least 8 characters",
+        "uppercase": "At least one uppercase letter",
+        "lowercase": "At least one lowercase letter",
+        "numbers": "At least one number",
+        "specialChars": "At least one special character"
+      },
+      "errors": {
+        "newPasswordRequired": "Please enter a new password.",
+        "minLength": "Password must contain at least 8 characters.",
+        "mismatch": "Passwords do not match.",
+        "updateFailed": "Unable to update password.",
+        "unexpected": "Unexpected error."
+      }
+    },
+    "tutorial": {
+      "title": "Onboarding Tutorial",
+      "description": "Restart the onboarding tutorial to rediscover FitMyCV.io features",
+      "resetButton": "Restart tutorial",
+      "resetting": "Resetting...",
+      "success": "Tutorial has been reset. Redirecting...",
+      "errors": {
+        "resetFailed": "Error resetting the tutorial."
+      }
+    },
+    "linkedAccounts": {
+      "title": "Linked Accounts",
+      "description": "Manage login methods connected to your FitMyCV account.",
+      "status": {
+        "connected": "Connected",
+        "notConnected": "Not connected",
+        "notConfigured": "Not configured"
+      },
+      "actions": {
+        "link": "Link",
+        "unlink": "Unlink",
+        "linking": "Linking...",
+        "unlinking": "Unlinking..."
+      },
+      "errors": {
+        "loadFailed": "Error loading linked accounts.",
+        "linkFailed": "Unable to link {provider} account.",
+        "unlinkFailed": "Unable to unlink {provider} account.",
+        "cannotUnlinkLast": "Cannot unlink: you must have at least one linked account.",
+        "email_mismatch": "The email of this {provider} account does not match your FitMyCV email.",
+        "already_linked_other": "This {provider} account is already linked to another user.",
+        "oauth_error": "Authentication error with {provider}.",
+        "invalid_state": "Session expired. Please try again.",
+        "expired": "Request has expired. Please try again.",
+        "session_expired": "Your session has expired. Please sign in again.",
+        "server_error": "Server error. Please try again."
+      },
+      "success": {
+        "linked": "{provider} account linked successfully!",
+        "unlinked": "{provider} account unlinked successfully.",
+        "alreadyLinked": "{provider} account already linked."
+      },
+      "confirmUnlink": {
+        "title": "Unlink {provider}?",
+        "message": "You will no longer be able to sign in with {provider}. You can always re-link it later.",
+        "confirm": "Unlink",
+        "cancel": "Cancel"
+      }
+    },
+    "deleteAccount": {
+      "title": "Delete Account",
+      "description": "This action is final and non-refundable. All your CVs, credits and data will be deleted. Your subscription will be immediately canceled and your banking data will be removed. Enter your password to continue.",
+      "description_credits_only": "This action is final. All your CVs, credits and data will be deleted. Enter your password to continue.",
+      "passwordLabel": "Password",
+      "passwordHint": "All your CVs (including user folder) will be deleted. This operation is irreversible. If you created your account via an external provider, first set a password in the Security section.",
+      "emailLabel": "Confirmation email",
+      "emailHint": "Enter your account email to confirm deletion. All your CVs and data will be permanently deleted.",
+      "deleteButton": "Delete my account",
+      "deleting": "Deleting...",
+      "modal": {
+        "title": "Confirm account deletion",
+        "description": "You are about to permanently delete your account. This action is irreversible.",
+        "consequences": {
+          "noRefund": "No refund will be issued",
+          "loseCredits": "You will lose all your remaining credits",
+          "cancelSubscription": "Your subscription will be immediately canceled",
+          "deleteCvs": "All your CVs will be permanently deleted",
+          "deleteBankData": "Your banking data will be removed from our servers"
+        },
+        "confirmCheckbox": "I understand that this action is irreversible and that I will not be refunded",
+        "cancelButton": "Cancel",
+        "confirmButton": "Delete permanently",
+        "deleting": "Deleting...",
+        "errors": {
+          "passwordRequired": "Please enter your password to confirm deletion.",
+          "emailRequired": "Please enter your email to confirm deletion.",
+          "deleteFailed": "Unable to delete account. Please try again.",
+          "unexpected": "Unexpected error while deleting account."
+        }
+      }
+    }
+  }
+}

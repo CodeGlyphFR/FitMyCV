@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { scheduleCalculateMatchScoreJob } from "@/lib/backgroundTasks/calculateMatchScoreJob";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
+import { CommonErrors, AuthErrors, BackgroundErrors, CvErrors } from "@/lib/api/apiErrors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ async function updateBackgroundTask(taskId, userId, data) {
 export async function POST(request) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    return CommonErrors.notAuthenticated();
   }
 
   try {
@@ -38,15 +39,12 @@ export async function POST(request) {
       });
 
       if (!recaptchaResult.success) {
-        return NextResponse.json(
-          { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
-          { status: recaptchaResult.statusCode || 403 }
-        );
+        return AuthErrors.recaptchaFailed();
       }
     }
 
     if (!cvFile) {
-      return NextResponse.json({ error: "CV file missing" }, { status: 400 });
+      return CvErrors.missingFilename();
     }
 
     const userId = session.user.id;
@@ -60,25 +58,25 @@ export async function POST(request) {
         },
       },
       select: {
-        extractedJobOffer: true,
+        jobOfferId: true, // Vérifier si un JobOffer est associé
         sourceValue: true,
         sourceType: true,
       },
     });
 
     if (!cvRecord) {
-      return NextResponse.json({ error: "CV not found" }, { status: 404 });
+      return CvErrors.notFound();
     }
 
-    // Vérifier que le CV a une analyse d'offre d'emploi en base
-    if (!cvRecord.extractedJobOffer) {
-      console.log("[calculate-match-score] CV non éligible - pas d'extractedJobOffer");
-      return NextResponse.json({ error: "CV does not have a job offer analysis" }, { status: 400 });
+    // Vérifier que le CV a une offre d'emploi associée
+    if (!cvRecord.jobOfferId) {
+      console.log("[calculate-match-score] CV non éligible - pas de jobOffer");
+      return BackgroundErrors.noJobOfferAnalysis();
     }
 
     const jobOfferUrl = cvRecord.sourceValue;
     if (!jobOfferUrl) {
-      return NextResponse.json({ error: "Job offer URL not found" }, { status: 400 });
+      return BackgroundErrors.jobOfferUrlNotFound();
     }
 
     // Vérifier les limites ET incrémenter le compteur/débiter le crédit
@@ -165,6 +163,6 @@ export async function POST(request) {
     }, { status: 202 });
   } catch (error) {
     console.error('Erreur lors de la mise en file du calcul de score:', error);
-    return NextResponse.json({ error: "Erreur lors de la mise en file du calcul de score." }, { status: 500 });
+    return BackgroundErrors.queueError();
   }
 }

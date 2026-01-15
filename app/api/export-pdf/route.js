@@ -3,16 +3,84 @@ import puppeteer from "puppeteer";
 import { promises as fs } from "fs";
 import path from "path";
 import { auth } from "@/lib/auth/session";
-import { readUserCvFile } from "@/lib/cv/storage";
-import frTranslations from "@/locales/fr.json";
-import enTranslations from "@/locales/en.json";
+import { readUserCvFileWithMeta } from "@/lib/cv/storage";
+import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
+
+// French translations (split by category)
+import frUi from "@/locales/fr/ui.json";
+import frErrors from "@/locales/fr/errors.json";
+import frAuth from "@/locales/fr/auth.json";
+import frCv from "@/locales/fr/cv.json";
+import frEnums from "@/locales/fr/enums.json";
+import frSubscription from "@/locales/fr/subscription.json";
+import frTasks from "@/locales/fr/tasks.json";
+import frOnboarding from "@/locales/fr/onboarding.json";
+import frAccount from "@/locales/fr/account.json";
+
+// English translations (split by category)
+import enUi from "@/locales/en/ui.json";
+import enErrors from "@/locales/en/errors.json";
+import enAuth from "@/locales/en/auth.json";
+import enCv from "@/locales/en/cv.json";
+import enEnums from "@/locales/en/enums.json";
+import enSubscription from "@/locales/en/subscription.json";
+import enTasks from "@/locales/en/tasks.json";
+import enOnboarding from "@/locales/en/onboarding.json";
+import enAccount from "@/locales/en/account.json";
+
+// Spanish translations (split by category)
+import esUi from "@/locales/es/ui.json";
+import esErrors from "@/locales/es/errors.json";
+import esAuth from "@/locales/es/auth.json";
+import esCv from "@/locales/es/cv.json";
+import esEnums from "@/locales/es/enums.json";
+import esSubscription from "@/locales/es/subscription.json";
+import esTasks from "@/locales/es/tasks.json";
+import esOnboarding from "@/locales/es/onboarding.json";
+import esAccount from "@/locales/es/account.json";
+
+// German translations (split by category)
+import deUi from "@/locales/de/ui.json";
+import deErrors from "@/locales/de/errors.json";
+import deAuth from "@/locales/de/auth.json";
+import deCv from "@/locales/de/cv.json";
+import deEnums from "@/locales/de/enums.json";
+import deSubscription from "@/locales/de/subscription.json";
+import deTasks from "@/locales/de/tasks.json";
+import deOnboarding from "@/locales/de/onboarding.json";
+import deAccount from "@/locales/de/account.json";
+
 import { trackCvExport } from "@/lib/telemetry/server";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
+import { refundCredit } from "@/lib/subscription/credits";
+import { capitalizeSkillName } from "@/lib/utils/textFormatting";
+import { CommonErrors, CvErrors, OtherErrors } from "@/lib/api/apiErrors";
 
 const translations = {
-  fr: frTranslations,
-  en: enTranslations,
+  fr: { ...frUi, ...frErrors, ...frAuth, ...frCv, ...frEnums, ...frSubscription, ...frTasks, ...frOnboarding, ...frAccount },
+  en: { ...enUi, ...enErrors, ...enAuth, ...enCv, ...enEnums, ...enSubscription, ...enTasks, ...enOnboarding, ...enAccount },
+  es: { ...esUi, ...esErrors, ...esAuth, ...esCv, ...esEnums, ...esSubscription, ...esTasks, ...esOnboarding, ...esAccount },
+  de: { ...deUi, ...deErrors, ...deAuth, ...deCv, ...deEnums, ...deSubscription, ...deTasks, ...deOnboarding, ...deAccount },
 };
+
+/**
+ * Sanitize filename for HTTP Content-Disposition header
+ * Returns both ASCII-safe and RFC 5987 encoded versions
+ */
+function sanitizeFilenameForHeader(filename) {
+  // ASCII-safe version: replace non-ASCII chars with underscore
+  const asciiSafe = filename
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+    .replace(/[^\x20-\x7E]/g, '_')   // Replace non-printable ASCII with _
+    .replace(/["\\]/g, '_');          // Replace quotes and backslashes
+
+  // RFC 5987 encoded version for full Unicode support
+  const encoded = encodeURIComponent(filename)
+    .replace(/'/g, '%27');
+
+  return { asciiSafe, encoded };
+}
 
 // Helper function to get translation
 function getTranslation(language, path) {
@@ -28,6 +96,17 @@ function getTranslation(language, path) {
   }
 
   return value || path;
+}
+
+// Translate skill/language levels according to CV language
+function translateLevel(language, level, type = 'skill') {
+  if (!level) return '';
+
+  const path = type === 'skill' ? `skillLevels.${level}` : `languageLevels.${level}`;
+  const translated = getTranslation(language, path);
+
+  // Si la traduction retourne le path (non trouvé), retourner le niveau original
+  return translated === path ? level : translated;
 }
 
 // Get section title with smart detection of default vs custom titles
@@ -81,12 +160,19 @@ export async function POST(request) {
   console.log('[PDF Export] Request received'); // Log pour debug
   const startTime = Date.now();
 
+  // Variables pour tracking du crédit (remboursement si échec)
+  // Déclarées hors du try pour être accessibles dans le catch
+  let creditTransactionId = null;
+  let creditUsed = false;
+  let userId = null;
+
   try {
     // Vérifier l'authentification
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+      return CommonErrors.notAuthenticated();
     }
+    userId = session.user.id;
 
     const requestData = await request.json();
     let filename = requestData.filename;
@@ -103,7 +189,7 @@ export async function POST(request) {
     filename = String(filename || '');
 
     if (!filename || filename === 'undefined') {
-      return NextResponse.json({ error: "Nom de fichier manquant" }, { status: 400 });
+      return CvErrors.missingFilename();
     }
 
     // Vérifier les limites et incrémenter le compteur
@@ -115,16 +201,31 @@ export async function POST(request) {
         redirectUrl: usageResult.redirectUrl
       }, { status: 403 });
     }
+    // Sauvegarder pour remboursement potentiel si échec
+    creditTransactionId = usageResult.transactionId;
+    creditUsed = usageResult.usedCredit;
 
     // Charger les données du CV via le système de stockage utilisateur
     let cvData;
+    let cvLanguage;
     try {
-      const cvContent = await readUserCvFile(session.user.id, filename);
-      cvData = JSON.parse(cvContent);
+      const cvResult = await readUserCvFileWithMeta(session.user.id, filename);
+      cvData = cvResult.content;
+      // Utiliser la langue de la DB, ou celle de la requête, ou fallback vers cv.language ou 'fr'
+      cvLanguage = cvResult.language || language || cvData?.language || 'fr';
       console.log('[PDF Export] CV loaded successfully for user:', session.user.id);
     } catch (error) {
       console.error('[PDF Export] Error loading CV:', error);
-      return NextResponse.json({ error: "CV introuvable" }, { status: 404 });
+      // Rembourser le crédit si utilisé
+      if (creditUsed && creditTransactionId) {
+        try {
+          await refundCredit(session.user.id, creditTransactionId, 'CV introuvable lors de l\'export');
+          console.log('[PDF Export] Crédit remboursé suite à CV introuvable');
+        } catch (refundError) {
+          console.error('[PDF Export] Erreur lors du remboursement:', refundError);
+        }
+      }
+      return CvErrors.notFound();
     }
 
     // Lancer Puppeteer avec options compatibles
@@ -151,8 +252,8 @@ export async function POST(request) {
 
     const page = await browser.newPage();
 
-    // Générer le HTML du CV avec les sélections
-    const htmlContent = generateCvHtml(cvData, language, selections);
+    // Générer le HTML du CV avec les sélections (utilise la langue depuis DB)
+    const htmlContent = generateCvHtml(cvData, cvLanguage, selections);
 
     await page.setContent(htmlContent, {
       waitUntil: 'networkidle0',
@@ -191,16 +292,28 @@ export async function POST(request) {
 
     // Retourner le PDF
     const pdfFilename = customFilename || filename.replace('.json', '');
+    const { asciiSafe, encoded } = sanitizeFilenameForHeader(pdfFilename);
+
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${pdfFilename}.pdf"`
+        'Content-Disposition': `attachment; filename="${asciiSafe}.pdf"; filename*=UTF-8''${encoded}.pdf`
       }
     });
 
   } catch (error) {
     console.error("Erreur lors de la génération PDF:", error);
     console.error("Stack trace:", error.stack);
+
+    // Rembourser le crédit si utilisé
+    if (creditUsed && creditTransactionId && userId) {
+      try {
+        await refundCredit(userId, creditTransactionId, `Échec export PDF: ${error.message}`);
+        console.log('[PDF Export] Crédit remboursé suite à erreur:', error.message);
+      } catch (refundError) {
+        console.error('[PDF Export] Erreur lors du remboursement:', refundError);
+      }
+    }
 
     // Tracking télémétrie - Erreur
     const duration = Date.now() - startTime;
@@ -221,21 +334,7 @@ export async function POST(request) {
     }
 
     // Erreurs spécifiques de Puppeteer
-    if (error.message.includes('Could not find expected browser')) {
-      return NextResponse.json({
-        error: "Chromium non trouvé. Installation de Puppeteer incomplète."
-      }, { status: 500 });
-    }
-
-    if (error.message.includes('Failed to launch')) {
-      return NextResponse.json({
-        error: "Impossible de lancer le navigateur. Vérifiez les dépendances système."
-      }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      error: `Erreur lors de la génération du PDF: ${error.message}`
-    }, { status: 500 });
+    return OtherErrors.exportPdfFailed();
   }
 }
 
@@ -456,6 +555,11 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       gap: 20px;
     }
 
+    .skill-category {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
     .skill-category h3 {
       font-size: 12px;
       font-weight: 600;
@@ -480,9 +584,26 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
     /* Experience */
     .experience-item {
       margin-bottom: 25px;
-      page-break-inside: avoid;
       border-left: 3px solid #e5e7eb;
       padding-left: 15px;
+    }
+
+    /* Bloc 1 : Header + Description (INDIVISIBLE) */
+    .experience-header-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    /* Bloc 2 : Responsabilités seules (INDIVISIBLE) */
+    .experience-responsibilities-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    /* Bloc 3 : Livrables + Technologies (INDIVISIBLE) */
+    .experience-deliverables-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
     .experience-header {
@@ -575,6 +696,8 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
     /* Education */
     .education-item {
       margin-bottom: 12px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
     .education-header {
@@ -603,6 +726,8 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
     /* Projects and Extras */
     .project-item, .extra-item {
       margin-bottom: 12px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
     .project-header {
@@ -641,6 +766,8 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       display: flex;
       flex-direction: column;
       gap: 6px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
     .language-item {
@@ -668,13 +795,27 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
         print-color-adjust: exact;
       }
 
-      .section {
-        page-break-inside: avoid;
+      .section-title {
+        break-after: avoid !important;
+        page-break-after: avoid !important;
       }
 
-      .experience-item {
-        break-inside: avoid;
-        page-break-inside: avoid;
+      /* Blocs indivisibles pour les expériences */
+      .experience-header-block,
+      .experience-responsibilities-block,
+      .experience-deliverables-block {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+
+      /* Autres sections indivisibles */
+      .education-item,
+      .languages-grid,
+      .project-item,
+      .extra-item,
+      .skill-category {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
       }
     }
   </style>
@@ -688,7 +829,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
       ${isSubsectionEnabled('header', 'contact') && (contact.email || contact.phone || contact.location) ? `
         <div class="contact-info">
           ${contact.email ? `<span class="contact-item">${contact.email}</span>` : ''}
-          ${contact.phone ? `<span class="contact-item">${formatPhone(contact.phone, contact.location)}</span>` : ''}
+          ${contact.phone ? `<span class="contact-item">${formatPhoneNumber(contact.phone, contact.location?.country_code)}</span>` : ''}
           ${contact.location ? `<span class="contact-item">${formatLocation(contact.location)}</span>` : ''}
         </div>
       ` : ''}
@@ -716,7 +857,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
             <div class="skill-category">
               <h3>${t('cvSections.hardSkills')}</h3>
               <div class="skill-list">
-                ${skills.hard_skills.filter(skill => skill.name && skill.proficiency).map(skill => `${skill.name} (${skill.proficiency})`).join(', ')}
+                ${skills.hard_skills.filter(skill => skill.name && skill.proficiency).map(skill => `${capitalizeSkillName(skill.name)} (${translateLevel(language, skill.proficiency, 'skill')})`).join(', ')}
               </div>
             </div>
           ` : ''}
@@ -725,7 +866,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
             <div class="skill-category">
               <h3>${t('cvSections.tools')}</h3>
               <div class="skill-list">
-                ${skills.tools.filter(tool => tool.name && tool.proficiency).map(tool => `${tool.name} (${tool.proficiency})`).join(', ')}
+                ${skills.tools.filter(tool => tool.name && tool.proficiency).map(tool => `${capitalizeSkillName(tool.name)} (${translateLevel(language, tool.proficiency, 'skill')})`).join(', ')}
               </div>
             </div>
           ` : ''}
@@ -734,7 +875,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
             <div class="skill-category">
               <h3>${t('cvSections.softSkills')}</h3>
               <div class="skill-list">
-                ${skills.soft_skills.filter(s => s && s.trim()).join(', ')}
+                ${skills.soft_skills.filter(s => s && s.trim()).map(s => capitalizeSkillName(s)).join(', ')}
               </div>
             </div>
           ` : ''}
@@ -743,7 +884,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
             <div class="skill-category">
               <h3>${t('cvSections.methodologies')}</h3>
               <div class="skill-list">
-                ${skills.methodologies.filter(m => m && m.trim()).join(', ')}
+                ${skills.methodologies.filter(m => m && m.trim()).map(m => capitalizeSkillName(m)).join(', ')}
               </div>
             </div>
           ` : ''}
@@ -757,27 +898,34 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
         <h2 class="section-title">${getSectionTitle('experience', section_titles.experience, language)}</h2>
         ${experience.map((exp, index) => `
           <div class="experience-item">
-            <div class="experience-header">
-              <div>
-                ${exp.title ? `<div class="experience-title">${exp.title}</div>` : ''}
-                ${exp.company ? `<div class="experience-company">${exp.company}${exp.department_or_client ? ` (${exp.department_or_client})` : ''}</div>` : ''}
+            <!-- Bloc 1 : Header + Description (INDIVISIBLE) -->
+            <div class="experience-header-block">
+              <div class="experience-header">
+                <div>
+                  ${exp.title ? `<div class="experience-title">${exp.title}</div>` : ''}
+                  ${exp.company ? `<div class="experience-company">${exp.company}${exp.department_or_client ? ` (${exp.department_or_client})` : ''}</div>` : ''}
+                </div>
+                ${exp.start_date || exp.end_date ? `<div class="experience-dates">${formatDate(exp.start_date, language)} – ${formatDate(exp.end_date, language)}</div>` : ''}
               </div>
-              ${exp.start_date || exp.end_date ? `<div class="experience-dates">${formatDate(exp.start_date, language)} – ${formatDate(exp.end_date, language)}</div>` : ''}
+              ${exp.location ? `<div class="experience-location">${formatLocation(exp.location)}</div>` : ''}
+              ${exp.description && exp.description.trim() ? `<div class="experience-description">${exp.description}</div>` : ''}
             </div>
-            ${exp.location ? `<div class="experience-location">${formatLocation(exp.location)}</div>` : ''}
-            ${exp.description && exp.description.trim() ? `<div class="experience-description">${exp.description}</div>` : ''}
 
-            ${(exp.responsibilities && exp.responsibilities.length > 0) || (exp.deliverables && exp.deliverables.length > 0) ? `
-              <div class="experience-lists">
-                ${exp.responsibilities && exp.responsibilities.length > 0 ? `
-                  <div class="responsibilities">
-                    <h4>${t('cvSections.responsibilities')}</h4>
-                    <ul>
-                      ${exp.responsibilities.map(resp => `<li>${resp}</li>`).join('')}
-                    </ul>
-                  </div>
-                ` : ''}
+            <!-- Bloc 2 : Responsabilités seules (INDIVISIBLE) -->
+            ${exp.responsibilities && exp.responsibilities.length > 0 ? `
+              <div class="experience-responsibilities-block">
+                <div class="responsibilities">
+                  <h4>${t('cvSections.responsibilities')}</h4>
+                  <ul>
+                    ${exp.responsibilities.map(resp => `<li>${resp}</li>`).join('')}
+                  </ul>
+                </div>
+              </div>
+            ` : ''}
 
+            <!-- Bloc 3 : Livrables + Technologies (INDIVISIBLE - restent ensemble) -->
+            ${((exp.deliverables && exp.deliverables.length > 0 && (selections?.sections?.experience?.itemsOptions?.[exp._originalIndex]?.includeDeliverables !== false)) || (exp.skills_used && exp.skills_used.length > 0)) ? `
+              <div class="experience-deliverables-block">
                 ${exp.deliverables && exp.deliverables.length > 0 && (selections?.sections?.experience?.itemsOptions?.[exp._originalIndex]?.includeDeliverables !== false) ? `
                   <div class="deliverables">
                     <h4>${t('cvSections.deliverables')}</h4>
@@ -786,12 +934,12 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
                     </ul>
                   </div>
                 ` : ''}
-              </div>
-            ` : ''}
 
-            ${exp.skills_used && exp.skills_used.length > 0 ? `
-              <div class="skills-used">
-                <strong>${t('cvSections.technologies')}:</strong> ${exp.skills_used.join(', ')}
+                ${exp.skills_used && exp.skills_used.length > 0 ? `
+                  <div class="skills-used">
+                    <strong>${t('cvSections.technologies')}:</strong> ${exp.skills_used.join(', ')}
+                  </div>
+                ` : ''}
               </div>
             ` : ''}
           </div>
@@ -824,7 +972,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null) {
         <div class="languages-grid">
           ${languages.filter(lang => lang.name && lang.level).map(lang => `
             <div class="language-item">
-              <strong>${lang.name}:</strong> ${lang.level}
+              <strong>${lang.name}:</strong> ${translateLevel(language, lang.level, 'language')}
             </div>
           `).join('')}
         </div>
@@ -889,44 +1037,6 @@ function formatDate(dateStr, language = 'fr') {
   const month = parts[1];
   const mm = String(Number(month)).padStart(2, "0");
   return `${mm}/${year}`;
-}
-
-function getCountryCallingCode(countryCode) {
-  const countryCodes = {
-    'FR': '+33', 'BE': '+32', 'CH': '+41', 'LU': '+352', 'MC': '+377',
-    'US': '+1', 'CA': '+1', 'UK': '+44', 'GB': '+44', 'DE': '+49',
-    'IT': '+39', 'ES': '+34', 'PT': '+351', 'NL': '+31', 'AT': '+43',
-    'SE': '+46', 'NO': '+47', 'DK': '+45', 'FI': '+358', 'PL': '+48',
-    'CZ': '+420', 'SK': '+421', 'HU': '+36', 'RO': '+40', 'BG': '+359',
-    'GR': '+30', 'TR': '+90', 'RU': '+7', 'UA': '+380', 'BY': '+375',
-    'JP': '+81', 'CN': '+86', 'KR': '+82', 'IN': '+91', 'AU': '+61',
-    'NZ': '+64', 'ZA': '+27', 'BR': '+55', 'AR': '+54', 'MX': '+52',
-    'CL': '+56', 'CO': '+57', 'PE': '+51', 'VE': '+58', 'EG': '+20',
-    'MA': '+212', 'TN': '+216', 'DZ': '+213', 'SN': '+221', 'CI': '+225'
-  };
-  return countryCodes[countryCode?.toUpperCase()] || '';
-}
-
-function formatPhone(phone, location) {
-  if (!phone) return "";
-
-  // Si le numéro commence déjà par +, on le laisse tel quel
-  if (phone.startsWith('+')) return phone;
-
-  // Essayer de déterminer l'indicatif à partir du pays
-  let countryCode = '';
-  if (location?.country_code) {
-    countryCode = getCountryCallingCode(location.country_code);
-  }
-
-  // Si on a trouvé un indicatif et que le numéro ne commence pas par +
-  if (countryCode && !phone.startsWith('+')) {
-    // Supprimer le 0 initial s'il existe (format français/européen)
-    const cleanPhone = phone.replace(/^0+/, '');
-    return `${countryCode} ${cleanPhone}`;
-  }
-
-  return phone;
 }
 
 function formatLocation(location) {

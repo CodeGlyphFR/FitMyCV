@@ -1,11 +1,12 @@
 import { redirect } from 'next/navigation';
-import { verifyToken, deleteVerificationToken, markEmailAsVerified } from '@/lib/email/emailService';
+import { verifyToken, deleteVerificationToken, markEmailAsVerified, sendWelcomeEmail } from '@/lib/email/emailService';
 import { createAutoSignInToken } from '@/lib/auth/autoSignIn';
 import EmailVerificationError from '@/components/auth/EmailVerificationError';
 import logger from '@/lib/security/secureLogger';
+import prisma from '@/lib/prisma';
 
 export const metadata = {
-  title: "Vérification d'email - FitMyCv.ai",
+  title: "Vérification d'email - FitMyCV.io",
   description: "Vérification de votre adresse email",
 };
 
@@ -13,7 +14,9 @@ export const metadata = {
  * Server Component pour vérification email
  * Aucun JavaScript client ne se charge = pas de loading visible
  */
-export default async function VerifyEmailPage({ searchParams }) {
+export default async function VerifyEmailPage(props) {
+  // Next.js 16: searchParams est maintenant async
+  const searchParams = await props.searchParams;
   const token = searchParams?.token;
 
   // Pas de token = rediriger vers auth avec erreur
@@ -34,6 +37,26 @@ export default async function VerifyEmailPage({ searchParams }) {
     await markEmailAsVerified(verification.userId);
     await deleteVerificationToken(token);
     logger.context('verify-email', 'info', `Email vérifié avec succès pour user ${verification.userId}`);
+
+    // Envoyer l'email de bienvenue
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: verification.userId },
+        select: { email: true, name: true },
+      });
+
+      if (user?.email) {
+        await sendWelcomeEmail({
+          email: user.email,
+          name: user.name,
+          userId: verification.userId,
+        });
+        logger.context('verify-email', 'info', `Email welcome envoyé pour user ${verification.userId}`);
+      }
+    } catch (welcomeError) {
+      // Ne pas bloquer la vérification si l'email de bienvenue échoue
+      logger.error('[verify-email] Erreur envoi email welcome (non-bloquant):', welcomeError);
+    }
   } catch (error) {
     logger.error('[verify-email] Erreur lors de la mise à jour:', error);
     return <EmailVerificationError message="Erreur lors de la vérification" />;

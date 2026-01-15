@@ -87,7 +87,7 @@ export function CustomSelect({ value, onChange, options, className = '', placeho
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-full px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-400/50 backdrop-blur-xl flex items-center justify-between ${className}`}
+          className={`w-full px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm bg-white/10 border border-white/20 rounded-lg text-white focus:outline-hidden focus:ring-2 focus:ring-blue-400/50 backdrop-blur-xl flex items-center justify-between ${className}`}
         >
           <span className={`truncate ${selectedOption ? '' : 'text-white/40'}`}>
             {selectedOption ? selectedOption.label : placeholder}

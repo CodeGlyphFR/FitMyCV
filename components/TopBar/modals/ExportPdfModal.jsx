@@ -2,6 +2,8 @@
 import React from 'react';
 import Modal from '@/components/ui/Modal';
 import SectionCard from './ExportPdfModal/SectionCard';
+import { useCreditCost } from "@/hooks/useCreditCost";
+import CreditCostDisplay from "@/components/ui/CreditCostDisplay";
 
 /**
  * Modal d'export PDF avec sélection granulaire des sections
@@ -25,6 +27,10 @@ export default function ExportPdfModal({
   isExporting,
   t
 }) {
+
+  // Récupérer les coûts en crédits
+  const { showCosts, getCost } = useCreditCost();
+  const exportCost = getCost("export_cv");
 
   // Sections à afficher
   const sectionsConfig = [
@@ -55,7 +61,7 @@ export default function ExportPdfModal({
             type="text"
             value={filename}
             onChange={(e) => setFilename(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+            className="w-full px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
             placeholder="Mon_CV"
           />
           <p className="mt-1 text-xs text-white/60">
@@ -112,6 +118,9 @@ export default function ExportPdfModal({
             })}
           </div>
         </div>
+
+        {/* Affichage du coût en crédits (mode crédits-only uniquement, si coût > 0) */}
+        {exportCost > 0 && <CreditCostDisplay cost={exportCost} show={showCosts} />}
 
         {/* Footer buttons */}
         <div className="flex justify-end gap-3 pt-4 border-t border-white/10">

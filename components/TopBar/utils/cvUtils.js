@@ -1,7 +1,7 @@
 import React from "react";
 import GptLogo from "@/components/ui/GptLogo";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
-import { ANALYSIS_OPTIONS } from "@/lib/i18n/cvLabels";
+import { toTitleCase } from "@/lib/utils/textFormatting";
 
 /**
  * Formate une date au format DD/MM/YYYY (FR) ou MM/DD/YYYY (EN)
@@ -35,25 +35,17 @@ export function normalizeBoolean(value) {
 }
 
 /**
- * Récupère une option d'analyse par son ID
- */
-export function getAnalysisOption(id, t) {
-  const options = ANALYSIS_OPTIONS(t);
-  return options.find((option) => option.id === id) || options[1];
-}
-
-/**
  * Retourne l'icône appropriée selon le type de création du CV
  */
-export function getCvIcon(createdBy, originalCreatedBy, className) {
-  // createdBy = 'translate-cv' => Translate icon (traduit)
+export function getCvIcon(createdBy, originalCreatedBy, className, isTranslated = false) {
+  // createdBy = 'translate-cv' OU isTranslated = true => Translate icon (traduit)
   // createdBy = 'generate-cv' => GPT icon (généré par IA)
   // createdBy = 'create-template' => GPT icon (CV modèle créé par IA)
   // createdBy = 'generate-cv-job-title' => Search icon (CV généré depuis titre de poste)
   // createdBy = 'improve-cv' => Rocket icon (CV amélioré par IA)
   // createdBy = 'import-pdf' => Import icon (importé depuis PDF)
   // createdBy = null => Add icon (créé manuellement)
-  if (createdBy === 'translate-cv') {
+  if (createdBy === 'translate-cv' || isTranslated) {
     return <img src="/icons/translate.png" alt="Translate" className={className} loading="eager" />;
   }
   if (createdBy === 'improve-cv') {
@@ -90,7 +82,7 @@ export function enhanceItem(item, titleCache = null, fallbackTitle = "CV") {
 
   const isGpt = normalizeBoolean(item?.isGpt);
   const hasTitle = effectiveTitle.length > 0;
-  const displayTitle = hasTitle ? effectiveTitle : fallbackTitle;
+  const displayTitle = hasTitle ? toTitleCase(effectiveTitle) : fallbackTitle;
   if (titleCache && hasTitle && fileId) {
     titleCache.set(fileId, effectiveTitle);
   }

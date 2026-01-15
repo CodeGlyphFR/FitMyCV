@@ -10,7 +10,7 @@ export default function PrivacyContentEN() {
           1. Introduction
         </h2>
         <p className="text-sm text-white/90 mb-2 drop-shadow">
-          This privacy policy describes how FitMyCv.ai collects, uses, stores, and protects your personal data in accordance with the General Data Protection Regulation (GDPR) and applicable French legislation.
+          This privacy policy describes how FitMyCV.io collects, uses, stores, and protects your personal data in accordance with the General Data Protection Regulation (GDPR) and applicable French legislation.
         </p>
         <p className="text-sm text-white/90 drop-shadow">
           We are committed to protecting your privacy and processing your personal data in a transparent, secure, and compliant manner.
@@ -23,7 +23,7 @@ export default function PrivacyContentEN() {
         </h2>
         <div className="bg-white/10 backdrop-blur-sm p-3 rounded-lg">
           <p className="text-sm text-white/90 drop-shadow">
-            <strong>Data Controller:</strong> FitMyCv.ai<br />
+            <strong>Data Controller:</strong> FitMyCV.io<br />
             <strong>Contact:</strong> [To be completed with your email address]
           </p>
         </div>

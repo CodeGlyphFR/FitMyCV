@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Vérification requise - FitMyCv.ai",
+  title: "Vérification requise - FitMyCV.io",
   description: "Vérifiez votre adresse email pour continuer",
 };
 

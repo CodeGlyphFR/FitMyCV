@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
-import { calculateRevenueKPIs, getMRRHistory } from '@/lib/admin/revenueMetrics';
+import {
+  calculateRevenueKPIs,
+  getRevenueHistory,
+  getRevenueHistoryByWeeks,
+  getRevenueHistoryByDays,
+  getYearsWithSubscriptions
+} from '@/lib/admin/revenueMetrics';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -8,6 +14,8 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/admin/revenue
  * Récupère toutes les métriques de revenus pour le dashboard admin
+ * @param {string} period - Période: '12months', '6months', 'month', 'week'
+ * @param {number} year - Année (pour 12months et 6months)
  */
 export async function GET(request) {
   try {
@@ -20,17 +28,42 @@ export async function GET(request) {
       );
     }
 
+    // Récupérer les paramètres
+    const { searchParams } = new URL(request.url);
+    const period = searchParams.get('period') || '12months';
+    const year = parseInt(searchParams.get('year')) || new Date().getFullYear();
+
     // Calculer toutes les KPI
     const kpis = await calculateRevenueKPIs();
 
-    // Récupérer l'historique MRR (12 derniers mois par défaut)
-    const mrrHistory = await getMRRHistory(12);
+    // Récupérer l'historique selon la période
+    let revenueHistory;
+    switch (period) {
+      case '6months':
+        revenueHistory = await getRevenueHistory(6, year);
+        break;
+      case 'month':
+        revenueHistory = await getRevenueHistoryByWeeks();
+        break;
+      case 'week':
+        revenueHistory = await getRevenueHistoryByDays();
+        break;
+      case '12months':
+      default:
+        revenueHistory = await getRevenueHistory(12, year);
+    }
+
+    // Récupérer les années ayant des abonnements
+    const availableYears = await getYearsWithSubscriptions();
 
     return NextResponse.json({
       success: true,
       data: {
         ...kpis,
-        mrrHistory,
+        revenueHistory,
+        period,
+        year,
+        availableYears,
       },
     });
   } catch (error) {

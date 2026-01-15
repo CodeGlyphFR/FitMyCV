@@ -5,13 +5,14 @@ import { ensureUserCvDir, listUserCvFiles, writeUserCvFile } from "@/lib/cv/stor
 import { trackCvCreation } from "@/lib/telemetry/server";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
+import { CommonErrors, AuthErrors, CvErrors } from "@/lib/api/apiErrors";
 
 export const runtime="nodejs"; export const dynamic="force-dynamic";
 export async function POST(req){
   try{
     const session = await auth();
     if (!session?.user?.id){
-      return NextResponse.json({ error:"Non authentifié" }, { status:401 });
+      return CommonErrors.notAuthenticated();
     }
 
     var body=await req.json(); var full_name=(body.full_name||"").trim(); var current_title=(body.current_title||"").trim(); var email=(body.email||"").trim();
@@ -27,10 +28,7 @@ export async function POST(req){
       });
 
       if (!recaptchaResult.success) {
-        return NextResponse.json(
-          { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
-          { status: recaptchaResult.statusCode || 403 }
-        );
+        return AuthErrors.recaptchaFailed();
       }
     }
 
@@ -44,13 +42,16 @@ export async function POST(req){
       }, { status: 403 });
     }
 
-    var now=new Date();
-    var isoNow=now.toISOString();
-    var generated_at=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
-    var cv={ generated_at, header:{ full_name, current_title, contact:{ email, links:[], location:{} } }, summary:{ description:"", domains:[] },
-      skills:{ hard_skills:[], tools:[], methodologies:[] }, experience:[], education:[], languages:[], extras:{ driver_licenses:[] }, projects:[],
-      order_hint:["header","summary","skills","experience","education","languages","extras","projects"], section_titles:{ summary:"Résumé", skills:"Compétences", experience:"Expérience", education:"Éducation", languages:"Langues", extras:"Informations complémentaires", projects:"Projets personnels" },
-      meta:{ generator:"manual", source:"manual", created_at:isoNow, updated_at:isoNow }
+    // CV JSON contient uniquement le contenu (8 sections), métadonnées en DB (CvFile.*)
+    var cv={
+      header:{ full_name, current_title, contact:{ email, links:[], location:{} } },
+      summary:{ description:"", domains:[] },
+      skills:{ hard_skills:[], tools:[], methodologies:[], soft_skills:[] },
+      experience:[],
+      education:[],
+      languages:[],
+      extras:[],
+      projects:[]
     };
     await ensureUserCvDir(userId);
     const existingFiles = await listUserCvFiles(userId).catch(() => []);
@@ -101,5 +102,5 @@ response.cookies.set('cvFile', file, {
   sameSite: 'lax'
 });
 return response;
-  }catch(e){ return NextResponse.json({ error: (e&&e.message)||"Erreur inconnue" }, { status:500 }); }
+  }catch(e){ return CvErrors.createError(); }
 }

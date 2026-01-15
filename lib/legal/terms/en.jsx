@@ -10,7 +10,7 @@ export default function TermsContentEN() {
           1. Acceptance of Terms
         </h2>
         <p className="text-sm text-white/90 mb-2 drop-shadow">
-          By using FitMyCv.ai and making a credit purchase or subscribing to a plan, you unconditionally accept these Terms of Service.
+          By using FitMyCV.io and making a credit purchase or subscribing to a plan, you unconditionally accept these Terms of Service.
         </p>
         <p className="text-sm text-white/90 drop-shadow">
           If you do not accept these terms, please do not use our paid services.
@@ -22,7 +22,7 @@ export default function TermsContentEN() {
           2. Service Description
         </h2>
         <p className="text-sm text-white/90 mb-2 drop-shadow">
-          FitMyCv.ai offers two types of paid services:
+          FitMyCV.io offers two types of paid services:
         </p>
 
         <h3 className="text-lg font-semibold mb-2 text-white drop-shadow">
@@ -142,10 +142,10 @@ export default function TermsContentEN() {
           8. Intellectual Property
         </h2>
         <p className="text-sm text-white/90 mb-2 drop-shadow">
-          The CVs you create via FitMyCv.ai belong to you. You retain all rights to the content you provide.
+          The CVs you create via FitMyCV.io belong to you. You retain all rights to the content you provide.
         </p>
         <p className="text-sm text-white/90 drop-shadow">
-          The interface, source code, algorithms, and all elements of FitMyCv.ai are the exclusive property of the publisher and are protected by copyright.
+          The interface, source code, algorithms, and all elements of FitMyCV.io are the exclusive property of the publisher and are protected by copyright.
         </p>
       </section>
 
@@ -154,7 +154,7 @@ export default function TermsContentEN() {
           9. Limitation of Liability
         </h2>
         <p className="text-sm text-white/90 mb-2 drop-shadow">
-          FitMyCv.ai strives to provide a quality service but does not guarantee:
+          FitMyCV.io strives to provide a quality service but does not guarantee:
         </p>
         <ul className="list-disc list-inside text-sm text-white/90 space-y-1 drop-shadow">
           <li>The absence of interruptions or technical errors</li>
@@ -192,7 +192,7 @@ export default function TermsContentEN() {
           12. Legal Information
         </h2>
         <p className="text-sm text-white/90 mb-2 drop-shadow">
-          Publisher of FitMyCv.ai service:
+          Publisher of FitMyCV.io service:
         </p>
         <div className="mt-3 p-3 bg-sky-500/20 backdrop-blur-sm rounded">
           <p className="text-white drop-shadow space-y-1">

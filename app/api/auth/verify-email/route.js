@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { verifyToken, deleteVerificationToken, markEmailAsVerified } from '@/lib/email/emailService';
 import prisma from '@/lib/prisma';
 import logger from '@/lib/security/secureLogger';
+import { CommonErrors, AuthErrors } from '@/lib/api/apiErrors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,10 +13,7 @@ export async function GET(request) {
     const token = searchParams.get('token');
 
     if (!token) {
-      return NextResponse.json(
-        { error: 'Token manquant' },
-        { status: 400 }
-      );
+      return AuthErrors.tokenRequired();
     }
 
     // Vérifier le token
@@ -23,10 +21,7 @@ export async function GET(request) {
 
     if (!verification.valid) {
       logger.context('verify-email', 'warn', `Échec de vérification: ${verification.error}`);
-      return NextResponse.json(
-        { error: verification.error || 'Token invalide' },
-        { status: 400 }
-      );
+      return AuthErrors.tokenInvalid();
     }
 
     // Marquer l'email comme vérifié
@@ -50,9 +45,6 @@ export async function GET(request) {
     });
   } catch (error) {
     logger.error('[verify-email] Erreur:', error);
-    return NextResponse.json(
-      { error: 'Erreur lors de la vérification' },
-      { status: 500 }
-    );
+    return CommonErrors.serverError();
   }
 }

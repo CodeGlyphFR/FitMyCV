@@ -228,7 +228,7 @@ export function OnboardingUsersTable({ refreshKey }) {
             placeholder="Nom ou email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+            className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
           />
         </div>
 
@@ -348,7 +348,7 @@ export function OnboardingUsersTable({ refreshKey }) {
                   <button
                     onClick={() => handleResetOnboarding(user)}
                     disabled={updating}
-                    className="px-3 py-1.5 text-xs bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 text-xs bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 rounded-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Réinitialiser
                   </button>
@@ -370,14 +370,14 @@ export function OnboardingUsersTable({ refreshKey }) {
             <button
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page === 1}
-              className="px-3 py-1.5 bg-white/10 hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition text-sm"
+              className="px-3 py-1.5 bg-white/10 hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-sm transition text-sm"
             >
               Précédent
             </button>
             <button
               onClick={() => setPage(Math.min(data.pagination.totalPages, page + 1))}
               disabled={!data.pagination.hasMore}
-              className="px-3 py-1.5 bg-white/10 hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition text-sm"
+              className="px-3 py-1.5 bg-white/10 hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-sm transition text-sm"
             >
               Suivant
             </button>

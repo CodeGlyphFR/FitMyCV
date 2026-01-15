@@ -1,0 +1,378 @@
+{
+  "onboarding": {
+    "common": {
+      "buttons": {
+        "skip": "Überspringen",
+        "previous": "Zurück",
+        "next": "Weiter",
+        "understood": "Verstanden",
+        "understoodExclaim": "Verstanden!",
+        "start": "Starten!",
+        "close": "Schließen"
+      },
+      "aria": {
+        "closeModal": "Modal schließen",
+        "closeTooltip": "Tooltip schließen",
+        "closeAndStartOnboarding": "Schließen und Onboarding starten",
+        "expandChecklist": "Erweitern",
+        "collapseChecklist": "Reduzieren",
+        "closeGuide": "Anleitung schließen",
+        "goToScreen": "Zu Bildschirm {current} von {total} gehen",
+        "screenReaderStep": "Schritt {current} von {total}"
+      },
+      "checklist": {
+        "title": "Startanleitung",
+        "inProgress": "In Bearbeitung",
+        "skipTutorial": "Tutorial überspringen",
+        "completed": "Tutorial abgeschlossen!",
+        "confirmSkip": "Sind Sie sicher, dass Sie das Tutorial überspringen möchten? Sie können es in den Einstellungen neu starten.",
+        "progressLabel": "Tutorial-Fortschritt"
+      }
+    },
+    "steps": {
+      "step1": {
+        "title": "Bearbeitungsmodus",
+        "description": "Entdecken Sie den Bearbeitungsmodus, um Ihren Lebenslauf einfach zu ändern",
+        "tooltip": "👉 Klicken Sie hier, um Ihren Lebenslauf zu bearbeiten!",
+        "modal": {
+          "screen1": {
+            "title": "Erstellen Sie Ihren \"Master\"-Lebenslauf",
+            "description": "Die Idee ist einfach: Erstellen Sie einen möglichst vollständigen Lebenslauf mit all Ihren Erfahrungen, Fähigkeiten und Ausbildungen. Je detaillierter Ihr Lebenslauf ist, desto besser kann die KI ihn für jede Stellenausschreibung intelligent filtern.",
+            "checklist": [
+              "Ein einziger vollständiger Lebenslauf zu pflegen",
+              "Die KI extrahiert das Beste für jedes Angebot",
+              "Enorme Zeitersparnis"
+            ],
+            "tip": "Denken Sie \"Mega-Lebenslauf\": Listen Sie alles auf, die KI kümmert sich um das Sortieren. Machen Sie es einmal, der Zauber wirkt danach."
+          },
+          "screen2": {
+            "title": "Sie haben die volle Kontrolle!",
+            "description": "Ihr Lebenslauf gehört Ihnen. Ändern Sie ihn nach Belieben, Abschnitt für Abschnitt.",
+            "subtitle": "3 Aktionen stehen Ihnen zur Verfügung:",
+            "actions": {
+              "edit": {
+                "title": "Bearbeiten",
+                "description": "Bearbeiten Sie den Inhalt jedes Abschnitts mit einem Klick"
+              },
+              "delete": {
+                "title": "Löschen",
+                "description": "Entfernen Sie, was nicht mehr relevant ist"
+              },
+              "add": {
+                "title": "Hinzufügen",
+                "description": "Ergänzen Sie Ihren Lebenslauf mit neuen Erfahrungen, Ausbildungen, Sprachen, Projekten oder Extras"
+              }
+            },
+            "tip": "Je reichhaltiger Ihr Lebenslauf ist, desto mehr Material hat die KI, um ihn anzupassen."
+          },
+          "screen3": {
+            "title": "Zwei Abschnitte, die Sie nicht vernachlässigen sollten",
+            "blocks": {
+              "projects": {
+                "title": "Projekte",
+                "description": "Listen Sie Ihre beruflichen UND persönlichen Projekte auf. Ein Nebenprojekt, ein Open-Source-Beitrag, ein Studentenprojekt... alles zählt für die KI."
+              },
+              "extra": {
+                "title": "Extra",
+                "description": "Geben Sie Ihre zusätzlichen Informationen ein: Hobbys und Interessen, Verfügbarkeit, Homeoffice-Präferenz, Mobilität und Reisen, Führerschein..."
+              }
+            },
+            "tip": "Diese Informationen helfen der KI, die Angebote besser zu finden, die zu Ihnen passen."
+          }
+        }
+      },
+      "step2": {
+        "title": "KI-Generierung",
+        "description": "Einen angepassten Lebenslauf mit KI generieren",
+        "tooltip": "✨ Passen Sie Ihren Lebenslauf mit KI an die Angebote an",
+        "modal": {
+          "screen1": {
+            "title": "Generieren Sie maßgeschneiderte Lebensläufe mit wenigen Klicks",
+            "description": "Das Herzstück von FitMyCV: Ihre Stellenangebote. Fügen Sie sie hinzu, die KI erledigt den Rest. Sie analysiert jedes Angebot, extrahiert die Schlüsselinformationen und passt Ihren Lebenslauf automatisch an.",
+            "subtitle": "2 Möglichkeiten zum Starten:",
+            "blocks": {
+              "existing": {
+                "title": "Von einem bestehenden Lebenslauf ausgehen",
+                "description": "Wählen Sie Ihren vollständigsten Lebenslauf. Je detaillierter er ist, desto präziser kann die KI ihn an jedes Stellenangebot anpassen."
+              },
+              "template": {
+                "title": "Vorlage aus dem Angebot erstellen",
+                "description": "Generieren Sie eine Lebenslauf-Vorlage basierend auf dem Stellenangebot, um sich inspirieren zu lassen und Ihren eigenen zu erstellen."
+              }
+            },
+            "tip": "Kein Kopieren und Einfügen des Angebotsinhalts nötig. Fügen Sie die Links ein oder importieren Sie die PDFs, die KI extrahiert alles automatisch."
+          },
+          "screen2": {
+            "title": "Ein Stellenangebot = Ein angepasster Lebenslauf",
+            "description": "Fügen Sie so viele Angebote hinzu, wie Sie möchten. Für jedes generiert die KI einen perfekt angepassten Lebenslauf.",
+            "blocks": {
+              "url": {
+                "title": "Per URL",
+                "description": "Fügen Sie die Links Ihrer Stellenangebote ein. Die KI öffnet jede Seite und extrahiert die Informationen automatisch."
+              },
+              "pdf": {
+                "title": "Per PDF",
+                "description": "Importieren Sie Angebote, die man Ihnen geschickt hat oder die Sie gespeichert haben."
+              }
+            },
+            "historyBlock": {
+              "title": "Verlauf",
+              "description": "Finden Sie alle bereits verwendeten Angebote. Verwenden Sie sie wieder, um neue Lebensläufe zu generieren, ohne sie erneut zu suchen."
+            }
+          },
+          "screen3": {
+            "title": "Die KI passt an, sie erfindet nichts",
+            "description": "Die KI erfindet keine falschen Erfahrungen. Sie filtert Ihren generischen Lebenslauf, um nur das zu behalten, was für das Stellenangebot zählt.",
+            "subtitle": "Konkret wird die KI:",
+            "checklist": [
+              "Die für das Angebot relevanten Erfahrungen und Fähigkeiten filtern",
+              "Das Unnötige entfernen, um den Lebenslauf nicht zu überladen",
+              "Mit dem Vokabular des Stellenangebots umformulieren (ATS-freundlich)",
+              "Die durch Ihren Werdegang rechtfertigbaren fehlenden Fähigkeiten erkennen",
+              "Ihr Niveau für jede hinzugefügte Fähigkeit bestimmen"
+            ],
+            "tip": "Ergebnis: Ein gezielter, schlanker Lebenslauf, der perfekt auf das ausgerichtet ist, was der Personalvermittler sucht."
+          }
+        }
+      },
+      "step3": {
+        "title": "Task-Manager",
+        "description": "Verfolgen Sie den Fortschritt Ihrer Hintergrundaufgaben",
+        "tooltip": "🔄 Ihr Lebenslauf wird generiert. Verfolgen Sie den Fortschritt hier."
+      },
+      "step4": {
+        "title": "Generierten Lebenslauf öffnen",
+        "description": "Ihren generierten Lebenslauf öffnen und ansehen",
+        "tooltip": "✅ Ihr neuer Lebenslauf ist fertig! Klicken Sie hier, um ihn zu öffnen"
+      },
+      "step5": {
+        "title": "Match-Score",
+        "description": "Kompatibilität mit einem Stellenangebot berechnen",
+        "tooltip": "🎯 Berechnen Sie die Kompatibilität Ihres Lebenslaufs mit einem Stellenangebot",
+        "fallbackMessage": "Dieser Schritt erfordert ein zugeordnetes Stellenangebot. Möchten Sie ihn überspringen?"
+      },
+      "step6": {
+        "title": "KI-Optimierung",
+        "description": "Lebenslauf mit KI-Vorschlägen optimieren",
+        "tooltip": "🚀 Optimieren Sie Ihren Lebenslauf, um Ihren Score zu erhöhen",
+        "modal": {
+          "screen1": {
+            "title": "Messen Sie Ihre Kompatibilität mit dem Angebot",
+            "description": "Für jeden generierten Lebenslauf erhalten Sie einen Match-Score, der anzeigt, wie gut Ihr Profil den Erwartungen des Personalvermittlers entspricht.",
+            "subtitle": "Die detaillierte Analyse zeigt Ihnen:",
+            "blocks": {
+              "breakdown": {
+                "title": "Score-Aufschlüsselung",
+                "description": "Verstehen Sie, was funktioniert und was verbessert werden kann"
+              },
+              "validated": {
+                "title": "Validierte Fähigkeiten",
+                "description": "Was Ihr Lebenslauf bereits für das Stellenangebot abdeckt"
+              },
+              "missing": {
+                "title": "Fehlende Fähigkeiten",
+                "description": "Was der Personalvermittler sucht und noch nicht erscheint"
+              },
+              "improvements": {
+                "title": "Verbesserungspunkte",
+                "description": "Konkrete Empfehlungen zur Steigerung Ihres Scores"
+              }
+            },
+            "tip": "Ein hoher Score = mehr Chancen, vom Personalvermittler bemerkt zu werden."
+          },
+          "screen2": {
+            "title": "Verbesserungen sofort anwenden",
+            "description": "Kein Bedarf, alles manuell zu ändern. Die KI kann die Empfehlungen mit einem einzigen Klick direkt in Ihren Lebenslauf einfügen.",
+            "checklist": [
+              "Automatische Umformulierungen",
+              "Hinzufügen rechtfertigbarer fehlender Fähigkeiten",
+              "Anpassung des Vokabulars an das Stellenangebot"
+            ],
+            "subtitle": "Vollständige Transparenz:",
+            "transparencyText": "Jede Änderung wird im Verlauf mit ihrer Begründung aufgezeichnet. Sie wissen genau, was sich geändert hat und warum.",
+            "tip": "Optimieren, überprüfen, exportieren. Ihr Lebenslauf ist bereit für die Bewerbung."
+          }
+        }
+      },
+      "step7": {
+        "title": "Verlauf",
+        "description": "KI-Änderungsverlauf einsehen",
+        "tooltip": "📝 Entdecken Sie alle von der KI vorgenommenen Änderungen"
+      },
+      "step8": {
+        "title": "PDF-Export",
+        "description": "Ihren optimierten Lebenslauf als PDF exportieren",
+        "tooltip": "📄 Exportieren Sie Ihren optimierten Lebenslauf als PDF",
+        "modal": {
+          "screen1": {
+            "title": "Exportieren Sie einen bewerbungsfertigen Lebenslauf",
+            "description": "Generieren Sie ein professionelles PDF im Standardformat ohne Foto, perfekt lesbar für Personalvermittler und ihre ATS-Tools.",
+            "checklist": [
+              "Universelles Format, erkannt von allen ATS",
+              "Klares und professionelles Layout",
+              "Fertig zum Versenden für Bewerbungen"
+            ]
+          },
+          "screen2": {
+            "title": "Ein 100% anpassbarer Export",
+            "description": "Wählen Sie, was Sie in Ihr PDF aufnehmen möchten: Abschnitte, Erfahrungen, Ausbildungen, Sprachen, Projekte... Sie entscheiden, wir generieren.",
+            "checklist": [
+              "Nicht relevante Abschnitte ausblenden",
+              "Die anzuzeigenden Erfahrungen auswählen",
+              "Schlüssellieferungen einschließen oder nicht"
+            ],
+            "tip": "Ein gezielter Lebenslauf = mehr Wirkung beim Personalvermittler."
+          }
+        },
+        "onComplete": {
+          "message": "🎉 Herzlichen Glückwunsch! Sie beherrschen jetzt alle Funktionen!"
+        }
+      }
+    },
+    "welcome": {
+      "screen1": {
+        "title": "Willkommen bei FitMyCV 👋",
+        "description": "Willkommen! Dieses Tutorial zeigt Ihnen die Grundlagen, um schnell an jedes Angebot angepasste Lebensläufe zu erstellen.",
+        "checklist": [
+          "Ein maßgeschneiderter Lebenslauf pro Angebot",
+          "ATS-optimiertes Format*",
+          "Entwickelt, um Personalvermittler zu überzeugen",
+          "In wenigen Minuten fertig"
+        ],
+        "atsExplanation": "ATS (Applicant Tracking System): Software, die von Personalvermittlern verwendet wird, um Lebensläufe automatisch zu filtern. Ein ATS-optimiertes Format erhöht Ihre Chancen, gesehen zu werden.",
+        "solution": {
+          "title": "Tipp",
+          "description": "Fügen Sie einfach die Links Ihrer Angebote ein, wir analysieren alles automatisch!"
+        }
+      },
+      "screen2": {
+        "title": "Warum bleiben Ihre Bewerbungen ohne Antwort?",
+        "problems": [
+          {
+            "emoji": "😤",
+            "title": "Dutzende von Lebensläufen gesendet, keine Antwort",
+            "description": "Sie verbringen Stunden mit Bewerbungen, erhalten aber nur Schweigen."
+          },
+          {
+            "emoji": "🤖",
+            "title": "Ihr Lebenslauf muss zuerst eine Software überzeugen",
+            "description": "88% der großen Unternehmen verwenden ATS-Systeme, die Struktur und Schlüsselwörter analysieren, bevor ein Mensch Ihren Lebenslauf sieht."
+          },
+          {
+            "emoji": "👤",
+            "title": "Dann in Sekunden einen Personalvermittler überzeugen",
+            "description": "Wenn er den Filter passiert, überfliegt ein Personalvermittler ihn schnell, um zu entscheiden, wen er treffen möchte."
+          },
+          {
+            "emoji": "🎯",
+            "title": "Die Herausforderung: Beide mit einem generischen Lebenslauf bestehen",
+            "description": "Unmöglich, ohne Ihren Lebenslauf an jedes Angebot anzupassen."
+          }
+        ],
+        "solution": {
+          "title": "FitMyCV löst diese doppelte Herausforderung",
+          "description": "Unsere KI passt Ihren Lebenslauf an, um automatische Filter zu passieren UND die Aufmerksamkeit von Personalvermittlern zu gewinnen. Ein maßgeschneiderter Lebenslauf pro Angebot, mit wenigen Klicks, um Ihre Chancen auf ein erstes Gespräch drastisch zu erhöhen."
+        }
+      },
+      "screen3": {
+        "title": "Bereit für eine 2-Minuten-Tour? ⏱️",
+        "subtitle": "Entdecken Sie die 5 Funktionen, die Ihre Art zu bewerben verändern werden",
+        "features": [
+          {
+            "emoji": "✏️",
+            "title": "Ihren Lebenslauf erstellen und bearbeiten",
+            "description": "Intuitive Oberfläche und ATS-optimiertes Format"
+          },
+          {
+            "emoji": "🤖",
+            "title": "Mit KI generieren",
+            "description": "Lebenslauf automatisch an jedes Stellenangebot angepasst"
+          },
+          {
+            "emoji": "📊",
+            "title": "Ihren Score berechnen",
+            "description": "Ihre Kompatibilität mit einem Angebot messen"
+          },
+          {
+            "emoji": "⚡",
+            "title": "Mit 1 Klick optimieren",
+            "description": "Die KI verbessert Ihren Lebenslauf automatisch"
+          },
+          {
+            "emoji": "📄",
+            "title": "Im professionellen Format exportieren",
+            "description": "Perfektes PDF für überall bewerben"
+          }
+        ],
+        "tip": "Folgen Sie der Tour, Sie werden Ihren ersten Lebenslauf direkt danach erstellen!"
+      }
+    },
+    "completion": {
+      "screen1": {
+        "title": "Herzlichen Glückwunsch, Sie sind bereit!",
+        "description": "Sie beherrschen jetzt FitMyCV. Erstellen Sie maßgeschneiderte Lebensläufe, berechnen Sie Ihren Match-Score, optimieren Sie mit einem Klick und exportieren Sie professionelle PDFs.",
+        "checklist": [
+          "Bearbeitungsmodus gemeistert",
+          "KI-Generierung entdeckt",
+          "Score und Optimierung verstanden",
+          "PDF-Export einsatzbereit"
+        ],
+        "highlight": "Es ist Zeit, Ihr nächstes Vorstellungsgespräch zu bekommen!"
+      },
+      "screen2": {
+        "title": "Alles, was Sie jetzt tun können",
+        "description": "FitMyCV bietet Ihnen mehrere Möglichkeiten, Ihre Lebensläufe zu erstellen und zu verwalten.",
+        "features": {
+          "import": {
+            "title": "Bestehenden Lebenslauf importieren",
+            "description": "Fügen Sie Ihre Lebensläufe im PDF- oder Word-Format hinzu, die KI passt sie an das optimierte Format an"
+          },
+          "create": {
+            "title": "Leeren Lebenslauf erstellen",
+            "description": "Beginnen Sie bei Null und erstellen Sie Ihren Lebenslauf Abschnitt für Abschnitt"
+          },
+          "generate": {
+            "title": "Muster-Lebenslauf generieren",
+            "description": "Geben Sie eine beliebige Stellenbezeichnung ein, die KI generiert einen fiktiven Lebenslauf zur Inspiration"
+          },
+          "delete": {
+            "title": "Lebenslauf löschen",
+            "description": "Räumen Sie Ihre Lebensläufe mit einem Klick auf"
+          },
+          "translate": {
+            "title": "Ihren Lebenslauf übersetzen",
+            "description": "Konvertieren Sie Ihren Lebenslauf mit einem Klick ins Französische oder Englische"
+          }
+        },
+        "tip": "Tipp: Die Suchleiste funktioniert auch mit fiktiven Titeln, um neue Karrieren zu erkunden!"
+      },
+      "screen3": {
+        "title": "Bald in FitMyCV",
+        "description": "Wir hören hier nicht auf. Hier ist, was bald kommt, um Ihnen zu helfen, Ihren Traumjob zu bekommen.",
+        "comingSoon": [
+          {
+            "emoji": "🔍",
+            "title": "Angebotsanalyse",
+            "description": "Verstehen Sie genau, was der Personalvermittler sucht"
+          },
+          {
+            "emoji": "✉️",
+            "title": "Anschreiben",
+            "description": "Die KI schreibt sie für Sie"
+          },
+          {
+            "emoji": "🎤",
+            "title": "HR-Vorbereitung",
+            "description": "Simulieren Sie Ihre Vorstellungsgespräche"
+          },
+          {
+            "emoji": "📋",
+            "title": "Bewerbungsverfolgung",
+            "description": "Alles an einem Ort"
+          }
+        ],
+        "tip": "Eine Idee für eine Funktion? Sagen Sie es uns!"
+      }
+    }
+  }
+}

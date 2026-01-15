@@ -2,8 +2,8 @@
 import React from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-export default function SourceInfo({ sourceType, sourceValue }) {
-  const { t } = useLanguage();
+export default function SourceInfo({ sourceType, sourceValue, jobOfferInfo, sourceCvInfo }) {
+  const { t, locale } = useLanguage();
   const [isHovered, setIsHovered] = React.useState(false);
   const [isOpen, setIsOpen] = React.useState(false);
   const [isMobile, setIsMobile] = React.useState(false);
@@ -54,14 +54,37 @@ export default function SourceInfo({ sourceType, sourceValue }) {
     return null;
   };
 
+  // Formater la date pour l'affichage
+  const formatDate = (dateString) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    return date.toLocaleDateString(locale, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
+
+  // Extraire le domaine d'une URL (ex: "linkedin.com" depuis "https://www.linkedin.com/jobs/...")
+  const extractDomain = (url) => {
+    if (!url) return null;
+    try {
+      const parsed = new URL(url);
+      // Enlever le "www." si présent
+      return parsed.hostname.replace(/^www\./, '');
+    } catch {
+      return url;
+    }
+  };
+
   const handleButtonClick = () => {
     if (isMobile) {
       // Sur mobile: toggle le tooltip
       setIsOpen(!isOpen);
     } else {
-      // Sur desktop: ouvrir directement le lien si clickable
-      if (sourceType === "link" && sourceValue) {
-        window.open(sourceValue, "_blank", "noopener,noreferrer");
+      // Sur desktop: ouvrir directement le lien de l'offre d'emploi
+      if (jobOfferInfo?.url) {
+        window.open(jobOfferInfo.url, "_blank", "noopener,noreferrer");
       }
     }
   };
@@ -74,7 +97,7 @@ export default function SourceInfo({ sourceType, sourceValue }) {
     // Second clic ou desktop: le lien s'ouvre normalement
   };
 
-  const isClickable = sourceType === "link";
+  const isClickable = !!jobOfferInfo?.url;
   const content = getTooltipContent();
   const showTooltip = isMobile ? isOpen : isHovered;
 
@@ -112,26 +135,77 @@ export default function SourceInfo({ sourceType, sourceValue }) {
           <div className="absolute top-2 -right-1.5 w-3 h-3 bg-gray-900/95 border-r-2 border-t-2 border-emerald-400/30 rotate-45"></div>
 
           {/* Contenu */}
-          <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm">{content?.icon}</span>
-              <span className="text-xs font-semibold text-emerald-300 drop-shadow">{content?.title}</span>
-            </div>
-            <div className="text-xs text-white/90 drop-shadow break-all">
-              {isClickable ? (
-                <a
-                  href={sourceValue}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-emerald-400 hover:text-emerald-300 hover:underline transition-colors duration-200"
-                  onClick={handleLinkClick}
-                >
-                  {content?.value}
-                </a>
-              ) : (
-                <span>{content?.value}</span>
-              )}
-            </div>
+          <div className="relative z-10 space-y-2">
+            {/* Offre d'emploi */}
+            {jobOfferInfo && (
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm">🔗</span>
+                  <span className="text-xs font-semibold text-emerald-300 drop-shadow">{t("sourceInfo.jobOfferLink")}</span>
+                </div>
+                <div className="text-xs text-white/90 drop-shadow">
+                  {jobOfferInfo.title && (
+                    <div className="font-medium">{jobOfferInfo.title}</div>
+                  )}
+                  {jobOfferInfo.url && (
+                    <div className="text-white/60 text-[10px] mt-0.5">
+                      <a
+                        href={jobOfferInfo.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-emerald-400/70 hover:text-emerald-300 hover:underline transition-colors duration-200"
+                        onClick={handleLinkClick}
+                      >
+                        {extractDomain(jobOfferInfo.url)}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* CV source */}
+            {sourceCvInfo && (
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm">📄</span>
+                  <span className="text-xs font-semibold text-emerald-300 drop-shadow">{t("sourceInfo.sourceCv")}</span>
+                </div>
+                <div className="text-xs text-white/90 drop-shadow">
+                  <div className="font-medium">{sourceCvInfo.title}</div>
+                  {sourceCvInfo.createdAt && (
+                    <div className="text-white/60 text-[10px] mt-0.5">
+                      {t("sourceInfo.createdOn")} {formatDate(sourceCvInfo.createdAt)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Fallback: ancienne info si pas de nouvelles données */}
+            {!jobOfferInfo && !sourceCvInfo && (
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm">{content?.icon}</span>
+                  <span className="text-xs font-semibold text-emerald-300 drop-shadow">{content?.title}</span>
+                </div>
+                <div className="text-xs text-white/90 drop-shadow break-all">
+                  {isClickable ? (
+                    <a
+                      href={sourceValue}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-400 hover:text-emerald-300 hover:underline transition-colors duration-200"
+                      onClick={handleLinkClick}
+                    >
+                      {content?.value}
+                    </a>
+                  ) : (
+                    <span>{content?.value}</span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

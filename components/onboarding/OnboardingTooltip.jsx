@@ -269,11 +269,7 @@ export default function OnboardingTooltip({
   const tooltipContent = (
     <div
       ref={tooltipRef}
-      className={`
-        fixed z-[10005]
-        ${transformClasses[calculatedPosition] || transformClasses.bottom}
-        animate-tooltip-fade-in
-      `}
+      className={`fixed z-[10005] animate-tooltip-fade-in ${transformClasses[calculatedPosition] || transformClasses.bottom}`}
       style={{
         top: tooltipPosition.top,
         left: tooltipPosition.left,
@@ -285,25 +281,12 @@ export default function OnboardingTooltip({
     >
       {/* Flèche */}
       <div
-        className={`
-          absolute w-4 h-4
-          bg-emerald-500
-          ${arrowPositionClasses[calculatedPosition] || arrowPositionClasses.bottom}
-        `}
+        className={`absolute w-4 h-4 bg-emerald-500 ${arrowPositionClasses[calculatedPosition] || arrowPositionClasses.bottom}`}
         style={getArrowStyle()}
       />
 
       {/* Contenu */}
-      <div
-        className="
-          bg-emerald-500
-          text-white
-          rounded-xl
-          px-4 py-3
-          shadow-2xl
-          border-2 border-emerald-400
-        "
-      >
+      <div className="bg-emerald-500 text-white rounded-xl px-4 py-3 shadow-2xl border-2 border-emerald-400">
         <div className="flex items-start justify-between gap-3">
           {/* Texte */}
           <div className="text-sm leading-relaxed">
@@ -314,14 +297,7 @@ export default function OnboardingTooltip({
           {closable && onClose && (
             <button
               onClick={handleClose}
-              className="
-                flex-shrink-0
-                p-1 -mt-1 -mr-1
-                text-white/70 hover:text-white
-                hover:bg-white/10
-                rounded
-                transition-colors
-              "
+              className="flex-shrink-0 p-1 -mt-1 -mr-1 text-white/70 hover:text-white hover:bg-white/10 rounded-sm transition-colors"
               aria-label={t('onboarding.common.aria.closeTooltip')}
             >
               <svg

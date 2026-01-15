@@ -62,9 +62,10 @@ export default function CreditPacksCards({ onPurchaseSuccess }) {
     return "from-yellow-500/20 to-orange-500/20 border-yellow-500/50";
   };
 
-  const getPackIcon = (credits) => {
-    if (credits >= 50) return "💎";
-    if (credits >= 25) return "⚡";
+  const getPackIcon = (price) => {
+    if (price >= 35) return "💎";
+    if (price >= 25) return "⚡";
+    if (price >= 14) return "🔥";
     return "✨";
   };
 
@@ -90,7 +91,7 @@ export default function CreditPacksCards({ onPurchaseSuccess }) {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {packs.map((pack) => {
           const colorClass = getPackColor(pack.name);
-          const icon = getPackIcon(pack.creditAmount);
+          const icon = getPackIcon(pack.price);
           const unitPrice = calculateUnitPrice(pack.price, pack.creditAmount);
 
           return (

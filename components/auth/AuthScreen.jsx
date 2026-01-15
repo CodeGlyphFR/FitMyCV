@@ -16,11 +16,14 @@ const getProviders = (t) => [
   { id: "github", label: t("auth.continueWithGithub"), image: "/icons/github.png", width: 28, height: 28 },
 ];
 
-export default function AuthScreen({ initialMode = "login", providerAvailability = {}, registrationEnabled = true }){
+export default function AuthScreen({ initialMode = "login", providerAvailability = {}, registrationEnabled = true, maintenanceEnabled = false, oauthError = null }){
   const router = useRouter();
   const { t } = useLanguage();
   const { executeRecaptcha } = useRecaptcha();
-  const [mode, setMode] = React.useState(initialMode);
+  // Protection: forcer login si initialMode=register mais registration bloquée ou maintenance
+  const [mode, setMode] = React.useState(
+    initialMode === "register" && (!registrationEnabled || maintenanceEnabled) ? "login" : initialMode
+  );
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
@@ -29,15 +32,48 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
   const [error, setError] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [successMessage, setSuccessMessage] = React.useState("");
+  const [oauthErrorMessage, setOauthErrorMessage] = React.useState("");
 
   const isRegister = mode === "register";
+
+  // Gérer les erreurs OAuth (notamment OAuthAccountNotLinked)
+  React.useEffect(() => {
+    if (oauthError) {
+      let message = "";
+      switch (oauthError) {
+        case "OAuthAccountNotLinked":
+          message = t("auth.errors.oauthAccountNotLinked");
+          break;
+        case "OAuthSignin":
+        case "OAuthCallback":
+          message = t("auth.errors.oauthSigninError");
+          break;
+        case "OAuthCreateAccount":
+          message = t("auth.errors.oauthCreateError");
+          break;
+        case "EmailCreateAccount":
+          message = t("auth.errors.emailCreateError");
+          break;
+        case "Callback":
+          message = t("auth.errors.callbackError");
+          break;
+        default:
+          message = t("auth.errors.oauthGeneric");
+      }
+      setOauthErrorMessage(message);
+      // Nettoyer l'URL
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, '', '/auth');
+      }
+    }
+  }, [oauthError, t]);
 
   // Vérifier si l'utilisateur vient de vérifier son email
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('verified') === 'true') {
-        setSuccessMessage('Email vérifié avec succès ! Vous pouvez maintenant vous connecter.');
+        setSuccessMessage(t('auth.emailVerifiedSuccess'));
         // Nettoyer l'URL
         window.history.replaceState({}, '', '/auth');
       }
@@ -45,8 +81,8 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
   }, []);
 
   function switchMode(next){
-    // Empêcher le passage en mode "register" si les inscriptions sont désactivées
-    if (next === "register" && !registrationEnabled) {
+    // Empêcher le passage en mode "register" si inscriptions désactivées OU maintenance
+    if (next === "register" && (!registrationEnabled || maintenanceEnabled)) {
       return;
     }
     setMode(next);
@@ -64,6 +100,11 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
 
     try {
       setLoading(true);
+
+      // Obtenir le token reCAPTCHA pour toutes les actions (le serveur gère BYPASS_RECAPTCHA)
+      const recaptchaToken = await executeRecaptcha(isRegister ? 'signup' : 'login');
+      // Ne pas bloquer si null - le serveur décidera avec BYPASS_RECAPTCHA
+
       if (isRegister){
         if (!firstName || !lastName){
           setError(t("auth.errors.nameRequired"));
@@ -77,14 +118,6 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         }
         if (password !== confirmPassword){
           setError(t("auth.errors.passwordMismatch"));
-          setLoading(false);
-          return;
-        }
-
-        // Obtenir le token reCAPTCHA (vérification côté serveur uniquement)
-        const recaptchaToken = await executeRecaptcha('signup');
-        if (!recaptchaToken) {
-          setError(t("auth.errors.recaptchaFailed") || "Échec de la vérification anti-spam. Veuillez réessayer.");
           setLoading(false);
           return;
         }
@@ -105,10 +138,18 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         // Après inscription réussie, on continue pour se connecter
       }
 
+      // Pour le login après inscription, générer un nouveau token
+      // (le précédent a été consommé par l'API register)
+      let loginRecaptchaToken = recaptchaToken;
+      if (isRegister) {
+        loginRecaptchaToken = await executeRecaptcha('login');
+      }
+
       const result = await signIn("credentials", {
         redirect: false,
         email,
         password,
+        recaptchaToken: loginRecaptchaToken || undefined,
       });
 
       if (result?.error){
@@ -167,7 +208,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         <div className="flex justify-center mb-4">
           <Image
             src="/icons/logo.png"
-            alt="FitMyCv.ai"
+            alt="FitMyCV.io"
             width={250}
             height={75}
             className="object-contain"
@@ -180,6 +221,27 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           </p>
         </div>
 
+        {/* Afficher l'erreur OAuth si présente */}
+        {oauthErrorMessage && (
+          <div className="rounded-lg border-2 border-amber-400/50 bg-amber-500/20 backdrop-blur-sm px-4 py-3 text-sm">
+            <div className="flex items-start gap-2">
+              <span className="text-amber-400 text-lg flex-shrink-0">⚠️</span>
+              <p className="text-white drop-shadow flex-1">
+                {oauthErrorMessage}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Bandeau mode maintenance */}
+        {maintenanceEnabled && (
+          <div className="rounded-lg border-2 border-orange-400/50 bg-orange-500/20 backdrop-blur-sm px-4 py-4 text-center">
+            <p className="text-white/90 drop-shadow text-sm">
+              {t("maintenance.modeEnabled")}
+            </p>
+          </div>
+        )}
+
         <div className="flex items-center justify-center gap-3">
           {providers.map(provider => (
             <button
@@ -187,7 +249,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
               type="button"
               onClick={()=>oauthClick(provider.id)}
               disabled={!provider.enabled}
-              className={`h-12 w-12 rounded-full border flex items-center justify-center transition ${provider.enabled ? "hover:shadow" : "opacity-40 cursor-not-allowed"}`}
+              className={`h-12 w-12 rounded-full border flex items-center justify-center transition ${provider.enabled ? "hover:shadow-sm" : "opacity-40 cursor-not-allowed"}`}
               aria-label={provider.label}
             >
               <Image
@@ -195,19 +257,26 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
                 alt={provider.label}
                 width={provider.width}
                 height={provider.height}
-                className="object-contain"
+                className={`object-contain ${["github", "apple"].includes(provider.id) ? "invert" : ""}`}
                 priority
               />
             </button>
           ))}
         </div>
 
+        {/* Message subtil quand les inscriptions sont désactivées */}
+        {!registrationEnabled && !maintenanceEnabled && (
+          <p className="text-xs text-white/60 text-center -mt-2">
+            {t("auth.oauthLoginOnly")}
+          </p>
+        )}
+
         <div className="relative flex items-center justify-center">
           <div className="h-px bg-white/30 w-full"></div>
         </div>
 
-        {/* Bandeau de maintenance si les inscriptions sont désactivées */}
-        {!registrationEnabled && (
+        {/* Bandeau inscriptions désactivées (formulaire login reste visible) */}
+        {!registrationEnabled && !maintenanceEnabled && (
           <div className="rounded-lg border-2 border-yellow-400/50 bg-yellow-500/20 backdrop-blur-sm px-4 py-3 text-sm">
             <div className="flex items-start gap-2">
               <span className="text-yellow-400 text-lg">⚠️</span>
@@ -230,7 +299,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
                     type="text"
                     value={firstName}
                     onChange={event => setFirstName(event.target.value)}
-                    className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+                    className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                     placeholder={t("auth.firstName")}
                     autoComplete="given-name"
                   />
@@ -243,7 +312,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
                     type="text"
                     value={lastName}
                     onChange={event => setLastName(event.target.value)}
-                    className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+                    className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                     placeholder={t("auth.lastName")}
                     autoComplete="family-name"
                   />
@@ -261,7 +330,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
               inputMode="email"
               value={email}
               onChange={event => setEmail(event.target.value)}
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
               placeholder="email@example.com"
               autoComplete={isRegister ? "email" : "username"}
             />
@@ -274,7 +343,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
               name="password"
               value={password}
               onChange={event => setPassword(event.target.value)}
-              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+              className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
               placeholder="••••••••"
               autoComplete={isRegister ? "new-password" : "current-password"}
             />
@@ -289,7 +358,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
                 name="confirmPassword"
                 value={confirmPassword}
                 onChange={event => setConfirmPassword(event.target.value)}
-                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-sm transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+                className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
                 placeholder="••••••••"
                 autoComplete="new-password"
               />
@@ -297,17 +366,17 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           ) : null}
 
           {successMessage ? (
-            <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{successMessage}</div>
+            <div className="rounded-sm border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{successMessage}</div>
           ) : null}
 
           {error ? (
-            <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+            <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
           ) : null}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded border border-emerald-500 bg-emerald-500 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60"
+            className="w-full rounded-sm border border-emerald-500 bg-emerald-500 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60"
           >
             {loading ? t("auth.pleaseWait") : (isRegister ? t("auth.createAccount") : t("auth.login"))}
           </button>
@@ -316,7 +385,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         {!isRegister && (
           <div className="text-center text-sm text-slate-100 drop-shadow">
             <a href="/auth/forgot-password" className="font-medium text-emerald-300 hover:text-emerald-200 hover:underline">
-              Mot de passe oublié ?
+              {t("auth.forgotPassword")}
             </a>
           </div>
         )}
@@ -331,7 +400,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
               </button>
             </span>
           ) : (
-            registrationEnabled && (
+            registrationEnabled && !maintenanceEnabled && (
               <span>
                 {t("auth.new")}
                 {" "}

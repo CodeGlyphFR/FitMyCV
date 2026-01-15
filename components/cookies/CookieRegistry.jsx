@@ -120,7 +120,7 @@ export default function CookieRegistry() {
         })}
       </div>
 
-      <div className="mt-4 p-3 bg-emerald-500/20 backdrop-blur-sm rounded text-sm">
+      <div className="mt-4 p-3 bg-emerald-500/20 backdrop-blur-sm rounded-sm text-sm">
         <p className="text-white drop-shadow">
           <strong>ℹ️ Note:</strong> {t('cookies.registry.note')}
         </p>

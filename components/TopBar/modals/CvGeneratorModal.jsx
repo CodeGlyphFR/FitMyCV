@@ -2,12 +2,12 @@
 
 import React from "react";
 import Modal from "@/components/ui/Modal";
-import { ANALYSIS_OPTIONS } from "@/lib/i18n/cvLabels";
 import { getCvIcon } from "../utils/cvUtils";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
 import ItemLabel from "../components/ItemLabel";
 import { CREATE_TEMPLATE_OPTION } from "../utils/constants";
-import { getPlanTier } from "@/lib/subscription/planUtils";
+import { useCreditCost } from "@/hooks/useCreditCost";
+import CreditCostDisplay from "@/components/ui/CreditCostDisplay";
 
 /**
  * Modal de génération de CV à partir d'une offre d'emploi
@@ -30,62 +30,29 @@ export default function CvGeneratorModal({
   setBaseSelectorOpen,
   generatorSourceItems,
   generatorBaseItem,
-  analysisLevel,
-  setAnalysisLevel,
-  currentAnalysisOption,
   generatorError,
   linkHistory,
+  deleteLinkHistory,
+  refreshLinkHistory,
   linkHistoryDropdowns,
   setLinkHistoryDropdowns,
+  isSubmitting,
   tickerResetKey,
   t,
   baseSelectorRef,
   baseDropdownRef,
-  allowedAnalysisLevels = ['rapid', 'medium', 'deep'],
-  plans = [],
 }) {
-  // Fonction pour déterminer quel badge afficher pour un niveau bloqué
-  // en trouvant le plan avec le tier le plus bas qui autorise ce niveau
-  const getLevelBadge = (levelId) => {
-    // Si le niveau est autorisé, pas de badge
-    if (allowedAnalysisLevels.includes(levelId)) {
-      return null;
-    }
+  // Récupérer les coûts en crédits
+  const { showCosts, getCost } = useCreditCost();
 
-    // Trouver tous les plans qui autorisent ce niveau
-    const plansWithLevel = plans.filter(plan => {
-      const featureLimit = plan.featureLimits?.find(
-        limit => limit.featureName === 'gpt_cv_generation'
-      );
+  // Calculer le coût total (liens non vides + fichiers)
+  const linkCount = linkInputs.filter((l) => l.trim() !== "").length;
+  const fileCount = (fileSelection || []).length;
+  const totalOperations = Math.max(linkCount + fileCount, 1);
+  const unitCost = getCost("gpt_cv_generation");
+  const totalCost = unitCost * totalOperations;
+  const costDetail = totalOperations > 1 ? `${totalOperations} × ${unitCost}` : null;
 
-      if (!featureLimit?.allowedAnalysisLevels) return false;
-
-      try {
-        const levels = JSON.parse(featureLimit.allowedAnalysisLevels);
-        return levels.includes(levelId);
-      } catch {
-        return false;
-      }
-    });
-
-    // Si aucun plan n'autorise ce niveau, ne pas afficher de badge
-    if (plansWithLevel.length === 0) return null;
-
-    // Trouver le plan avec le tier le plus bas
-    const minTierPlan = plansWithLevel.reduce((min, plan) => {
-      const planTier = getPlanTier(plan);
-      const minTier = getPlanTier(min);
-      return planTier < minTier ? plan : min;
-    }, plansWithLevel[0]);
-
-    // Retourner le nom du plan
-    return minTierPlan.name;
-  };
-
-  // Handler pour le clic sur un niveau bloqué
-  const handleBlockedLevelClick = () => {
-    window.location.href = '/account/subscriptions';
-  };
   return (
     <Modal
       open={open}
@@ -93,7 +60,7 @@ export default function CvGeneratorModal({
       title={t("cvGenerator.title")}
     >
       <form onSubmit={onSubmit} className="space-y-4">
-        <div className="text-sm text-white/90 drop-shadow">
+        <div className="text-sm text-white/90 drop-shadow bg-emerald-500/10 border border-emerald-500/50 rounded-lg p-3">
           {t("cvGenerator.description")}
         </div>
 
@@ -103,7 +70,7 @@ export default function CvGeneratorModal({
             <button
               type="button"
               onClick={() => setBaseSelectorOpen((prev) => !prev)}
-              className="w-full min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm flex items-center justify-between gap-3 text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
+              className="w-full min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm flex items-center justify-between gap-3 text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
             >
               <span className="flex items-center gap-3 min-w-0 overflow-hidden">
                 {generatorBaseFile === CREATE_TEMPLATE_OPTION ? (
@@ -121,7 +88,7 @@ export default function CvGeneratorModal({
                       key={`gen-base-icon-${generatorBaseFile}-${generatorBaseItem.createdBy}`}
                       className="flex h-6 w-6 items-center justify-center shrink-0"
                     >
-                      {getCvIcon(generatorBaseItem.createdBy, generatorBaseItem.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
+                      {getCvIcon(generatorBaseItem.createdBy, generatorBaseItem.originalCreatedBy, "h-4 w-4", generatorBaseItem.isTranslated) || <DefaultCvIcon className="h-4 w-4" size={16} />}
                     </span>
                     <span className="min-w-0">
                       <ItemLabel
@@ -181,7 +148,7 @@ export default function CvGeneratorModal({
                           key={`gen-dropdown-icon-${item.file}-${item.createdBy}`}
                           className="flex h-6 w-6 items-center justify-center shrink-0"
                         >
-                          {getCvIcon(item.createdBy, item.originalCreatedBy, "h-4 w-4") || <DefaultCvIcon className="h-4 w-4" size={16} />}
+                          {getCvIcon(item.createdBy, item.originalCreatedBy, "h-4 w-4", item.isTranslated) || <DefaultCvIcon className="h-4 w-4" size={16} />}
                         </span>
                         <ItemLabel
                           item={item}
@@ -206,7 +173,12 @@ export default function CvGeneratorModal({
               <div className="relative">
                 <button
                   type="button"
+                  data-link-history-dropdown="true"
                   onClick={() => {
+                    const isOpening = !linkHistoryDropdowns[index];
+                    if (isOpening && refreshLinkHistory) {
+                      refreshLinkHistory();
+                    }
                     setLinkHistoryDropdowns(prev => ({
                       ...prev,
                       [index]: !prev[index]
@@ -214,41 +186,75 @@ export default function CvGeneratorModal({
                   }}
                   className="h-full rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200 disabled:opacity-50"
                   title={t("cvGenerator.loadRecentLink")}
-                  disabled={linkHistory.length === 0}
                 >
                   📋
                 </button>
                 {linkHistoryDropdowns[index] && linkHistory.length > 0 && (
-                  <div className="absolute left-0 top-full mt-1 w-80 max-h-60 overflow-y-auto bg-slate-900/95 backdrop-blur-3xl border-2 border-white/30 rounded-lg shadow-2xl z-10" style={{ backdropFilter: 'blur(40px)' }}>
+                  <div
+                    data-link-history-dropdown="true"
+                    className="absolute left-0 top-full mt-1 w-80 max-h-48 overflow-y-auto scrollbar-hidden bg-slate-900/95 backdrop-blur-3xl border-2 border-white/30 rounded-lg shadow-2xl z-10"
+                    style={{ backdropFilter: 'blur(40px)' }}
+                  >
                     <div className="p-2 border-b border-white/20 bg-white/10 text-xs font-medium text-white drop-shadow">
                       {t("cvGenerator.recentLinks")}
                     </div>
                     <ul className="py-1">
-                      {linkHistory.map((link, histIndex) => (
-                        <li key={histIndex}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              updateLink(link, index);
-                              setLinkHistoryDropdowns(prev => ({
-                                ...prev,
-                                [index]: false
-                              }));
-                            }}
-                            className="w-full px-3 py-2 text-left text-xs text-white hover:bg-white/25 truncate transition-colors duration-200"
-                            title={link}
-                          >
-                            {link}
-                          </button>
-                        </li>
-                      ))}
+                      {linkHistory.map((linkItem, histIndex) => {
+                        // linkItem est maintenant un objet {url, title, domain}
+                        const url = typeof linkItem === 'string' ? linkItem : linkItem.url;
+                        const title = typeof linkItem === 'object' ? linkItem.title : null;
+                        const domain = typeof linkItem === 'object' ? linkItem.domain : null;
+
+                        // Formater l'affichage: "Titre (Domaine)" ou juste le lien si pas de titre
+                        let displayText;
+                        if (title) {
+                          // Tronquer le titre à 40 caractères
+                          const truncatedTitle = title.length > 40 ? title.slice(0, 37) + '...' : title;
+                          displayText = domain ? `${truncatedTitle} (${domain})` : truncatedTitle;
+                        } else {
+                          // Fallback: juste le lien
+                          displayText = url;
+                        }
+
+                        return (
+                          <li key={histIndex} className="flex items-center">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateLink(url, index);
+                                setLinkHistoryDropdowns(prev => ({
+                                  ...prev,
+                                  [index]: false
+                                }));
+                              }}
+                              className="flex-1 px-3 py-2 text-left text-xs text-white hover:bg-white/25 truncate transition-colors duration-200"
+                              title={url}
+                            >
+                              {displayText}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (linkItem.id) {
+                                  deleteLinkHistory(linkItem.id);
+                                }
+                              }}
+                              className="px-2 py-2 text-white/50 hover:text-red-400 hover:bg-white/10 transition-colors duration-200"
+                              title={t("topbar.delete")}
+                            >
+                              ✕
+                            </button>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}
               </div>
               <input
-                className="flex-1 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-none"
-                placeholder="https://..."
+                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
+                placeholder={t("cvGenerator.linkPlaceholder")}
                 value={value}
                 onChange={(event) => updateLink(event.target.value, index)}
               />
@@ -319,60 +325,18 @@ export default function CvGeneratorModal({
           ) : null}
         </div>
 
-        <div className="space-y-2">
-          <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("cvGenerator.analysisQuality")}</div>
-          <div className="grid grid-cols-3 gap-1 rounded-lg border border-white/20 bg-white/5 p-1 text-xs sm:text-sm">
-            {ANALYSIS_OPTIONS(t).map((option) => {
-              const active = option.id === analysisLevel;
-              const isAllowed = allowedAnalysisLevels.includes(option.id);
-              const badge = getLevelBadge(option.id);
-
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => {
-                    if (isAllowed) {
-                      setAnalysisLevel(option.id);
-                    } else {
-                      handleBlockedLevelClick();
-                    }
-                  }}
-                  className={`
-                    rounded-md px-2 py-1 font-medium transition-all duration-200 relative
-                    ${active && isAllowed ? "bg-emerald-400 text-white shadow" : ""}
-                    ${!active && isAllowed ? "text-white/80 hover:bg-white/20" : ""}
-                    ${!isAllowed ? "text-white/80 hover:bg-white/20 hover:ring-2 hover:ring-white/30" : ""}
-                  `}
-                  aria-pressed={active && isAllowed}
-                >
-                  {option.label}
-                  {badge && (
-                    <span className={`
-                      absolute -top-1 -right-1
-                      text-[9px] px-1.5 py-0.5 rounded-full font-semibold
-                      shadow-lg
-                      ${badge === 'Premium' || badge.toLowerCase().includes('premium') ? 'bg-gradient-to-r from-purple-500 to-violet-600 border border-purple-300 text-white' : ''}
-                      ${badge === 'Pro' || badge.toLowerCase().includes('pro') ? 'bg-gradient-to-r from-blue-500 to-cyan-600 border border-blue-300 text-white' : ''}
-                      ${!badge.toLowerCase().includes('premium') && !badge.toLowerCase().includes('pro') ? 'bg-gradient-to-r from-blue-500 to-cyan-600 border border-blue-300 text-white' : ''}
-                    `}>
-                      {badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          <p className="text-xs text-white/70 drop-shadow">
-            {currentAnalysisOption.hint}
-          </p>
-        </div>
-
         {generatorError ? (
-          <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {generatorError}
           </div>
         ) : null}
+
+        {/* Affichage du coût en crédits (mode crédits-only uniquement) */}
+        <CreditCostDisplay
+          cost={totalCost}
+          show={showCosts}
+          detail={costDetail}
+        />
 
         <div className="flex justify-end gap-2">
           <button
@@ -384,10 +348,10 @@ export default function CvGeneratorModal({
           </button>
           <button
             type="submit"
-            className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60"
-            disabled={!generatorBaseFile}
+            className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            disabled={!generatorBaseFile || isSubmitting}
           >
-            {t("cvGenerator.validate")}
+            {isSubmitting ? t("cvGenerator.submitting") : t("cvGenerator.validate")}
           </button>
         </div>
       </form>

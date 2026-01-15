@@ -114,19 +114,19 @@ export default function CookieBanner() {
               <div className="flex flex-col sm:flex-row gap-2 mt-3">
                 <button
                   onClick={handleAcceptAll}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-sm transition-colors"
                 >
                   {t("cookies.banner.acceptAll")}
                 </button>
                 <button
                   onClick={handleRejectAll}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white text-sm font-medium py-2 px-4 rounded transition-colors"
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white text-sm font-medium py-2 px-4 rounded-sm transition-colors"
                 >
                   {t("cookies.banner.rejectAll")}
                 </button>
                 <button
                   onClick={() => setShowPreferences(true)}
-                  className="flex-1 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-sm font-medium py-2 px-4 rounded border border-gray-300 dark:border-gray-600 transition-colors"
+                  className="flex-1 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-sm font-medium py-2 px-4 rounded-sm border border-gray-300 dark:border-gray-600 transition-colors"
                 >
                   {t("cookies.banner.customize")}
                 </button>
@@ -173,7 +173,7 @@ export default function CookieBanner() {
                         onChange={() => handleToggleCategory(COOKIE_CATEGORIES.FUNCTIONAL)}
                         className="sr-only peer"
                       />
-                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-hidden rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
                   <p className="text-xs text-gray-600 dark:text-gray-300">
@@ -193,7 +193,7 @@ export default function CookieBanner() {
                         onChange={() => handleToggleCategory(COOKIE_CATEGORIES.ANALYTICS)}
                         className="sr-only peer"
                       />
-                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-hidden rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
                   <p className="text-xs text-gray-600 dark:text-gray-300">
@@ -213,7 +213,7 @@ export default function CookieBanner() {
                         onChange={() => handleToggleCategory(COOKIE_CATEGORIES.MARKETING)}
                         className="sr-only peer"
                       />
-                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-hidden rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
                   <p className="text-xs text-gray-600 dark:text-gray-300">
@@ -225,13 +225,13 @@ export default function CookieBanner() {
               <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   onClick={handleSavePreferences}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-sm transition-colors"
                 >
                   {t("cookies.preferences.save")}
                 </button>
                 <button
                   onClick={() => setShowPreferences(false)}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white text-sm font-medium py-2 px-4 rounded transition-colors"
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white text-sm font-medium py-2 px-4 rounded-sm transition-colors"
                 >
                   {t("cookies.preferences.back")}
                 </button>

@@ -5,14 +5,16 @@ import logger from '@/lib/security/secureLogger';
 import prisma from '@/lib/prisma';
 
 export const metadata = {
-  title: "Vérification de changement d'email - FitMyCv.ai",
+  title: "Vérification de changement d'email - FitMyCV.io",
   description: "Confirmation de votre nouvelle adresse email",
 };
 
 /**
  * Server Component pour vérification du changement d'email
  */
-export default async function VerifyEmailChangePage({ searchParams }) {
+export default async function VerifyEmailChangePage(props) {
+  // Next.js 16: searchParams est maintenant async
+  const searchParams = await props.searchParams;
   const token = searchParams?.token;
 
   // Pas de token = rediriger vers compte avec erreur

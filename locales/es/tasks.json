@@ -1,0 +1,79 @@
+{
+  "taskQueue": {
+    "title": "Cola de tareas",
+    "noTasks": "Sin tareas en progreso",
+    "tasks": "Tareas",
+    "of": "de",
+    "clearCompleted": "Limpiar completadas",
+    "total": "Total",
+    "cancelTask": "Cancelar tarea",
+    "cloudSyncActive": "Sincronización en la nube activa",
+    "localSyncOnly": "Solo sincronización local",
+    "cloud": "Nube",
+    "localStorage": "Almacenamiento local",
+    "status": {
+      "queued": "En cola",
+      "running": "En ejecución",
+      "completed": "Completado",
+      "failed": "Fallido",
+      "cancelled": "Cancelado",
+      "unknown": "Desconocido"
+    },
+    "steps": {
+      "extraction": "Extracción de oferta",
+      "classify": "Clasificación",
+      "experiences": "Experiencias",
+      "projects": "Proyectos",
+      "extras": "Extras",
+      "skills": "Habilidades",
+      "summary": "Resumen",
+      "recompose": "Finalización"
+    },
+    "taskTypes": {
+      "import": "Importación PDF",
+      "generation": "Generación CV",
+      "templateCreation": "Creación plantilla",
+      "translateCv": "Traducción CV",
+      "improveCv": "Mejora CV",
+      "jobTitleGeneration": "Generación de título"
+    },
+    "messages": {
+      "task": "Tarea",
+      "importInProgress": "Importación en progreso ...",
+      "importQueued": "Importación en cola ...",
+      "importCompleted": "Importación completada",
+      "importCancelled": "Importación cancelada",
+      "importFailed": "Importación fallida",
+      "creationInProgress": "Creación en progreso",
+      "creationQueued": "Creación en cola",
+      "creationCompleted": "Creación completada",
+      "creationCancelled": "Creación cancelada",
+      "creationFailed": "Creación fallida",
+      "templateCreationInProgress": "Creación de plantilla de CV en progreso ...",
+      "templateCreationQueued": "Creación de plantilla de CV en cola ...",
+      "templateCreationCompleted": "Plantilla de CV creada con éxito",
+      "templateCreationCancelled": "Creación de plantilla de CV cancelada",
+      "templateCreationFailed": "Creación de plantilla de CV fallida",
+      "matchScoreInProgress": "Cálculo de puntuación en progreso ...",
+      "matchScoreQueued": "Cálculo de puntuación en cola ...",
+      "matchScoreCompleted": "Puntuación calculada con éxito",
+      "matchScoreCancelled": "Cálculo de puntuación cancelado",
+      "matchScoreFailed": "Cálculo de puntuación fallido",
+      "pipelineInProgress": "Generación de CV en progreso",
+      "pipelineQueued": "Generación de CV en cola",
+      "pipelineCompleted": "Generación de CV completada",
+      "pipelineFailed": "Generación de CV fallida",
+      "pipelineCancelled": "Generación de CV cancelada",
+      "pipelinePartial": "Generación parcialmente exitosa",
+      "offers": "ofertas",
+      "cvReadyForOffer": "CV listo para la oferta {index}",
+      "cvGenerated": "{count} CV(s) generado(s)",
+      "offerFailed": "Fallido para la oferta {index} - {credits} crédito reembolsado",
+      "generatingOffer": "Generando ({current}/{total})"
+    },
+    "errors": {
+      "noJobOfferDetected": "No se detectó ninguna oferta de empleo: {source}",
+      "loginRequired": "Esta página requiere autenticación. Descargue la oferta de empleo en PDF desde el sitio web y súbala."
+    }
+  }
+}

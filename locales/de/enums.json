@@ -1,0 +1,32 @@
+{
+  "skillLevels": {
+    "awareness": "Grundkenntnisse",
+    "beginner": "Anfänger",
+    "intermediate": "Mittelstufe",
+    "proficient": "Kompetent",
+    "advanced": "Fortgeschritten",
+    "expert": "Experte"
+  },
+  "languageLevels": {
+    "A1": "Anfänger (A1)",
+    "A2": "Grundlegend (A2)",
+    "B1": "Mittelstufe (B1)",
+    "B2": "Obere Mittelstufe (B2)",
+    "C1": "Fortgeschritten (C1)",
+    "C2": "Beherrschung (C2)",
+    "native": "Muttersprache",
+    "Native": "Muttersprache",
+    "beginner": "Anfänger",
+    "Beginner": "Anfänger",
+    "elementary": "Grundlegend",
+    "Elementary": "Grundlegend",
+    "intermediate": "Mittelstufe",
+    "Intermediate": "Mittelstufe",
+    "advanced": "Fortgeschritten",
+    "Advanced": "Fortgeschritten",
+    "fluent": "Fließend",
+    "Fluent": "Fließend",
+    "proficient": "Kompetent",
+    "Proficient": "Kompetent"
+  }
+}

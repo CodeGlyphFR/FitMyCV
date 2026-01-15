@@ -3,21 +3,26 @@ import React from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { RefreshCw } from "lucide-react";
+import { useCreditCost } from "@/hooks/useCreditCost";
 
 export default function MatchScore({
   sourceType,
   sourceValue,
   score,
+  scoreBefore = null,
   status,
   isLoading = false,
   onRefresh,
   currentCvFile,
-  hasExtractedJobOffer = false,
+  hasJobOffer = false,
   isOptimizeButtonReady = false,
-  optimiseStatus = "idle"
+  optimiseStatus = "idle",
+  isHistoricalVersion = false
 }) {
   const { t } = useLanguage();
   const { settings } = useSettings();
+  const { showCosts, getCost } = useCreditCost();
+  const matchScoreCost = getCost("match_score");
   const [isHovered, setIsHovered] = React.useState(false);
   const [showSuccessEffect, setShowSuccessEffect] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
@@ -116,14 +121,14 @@ export default function MatchScore({
   const shouldShowLoading = (isActuallyLoading && !isStuckLoading) || isDelayedLoading;
 
 
-  // Afficher le composant uniquement si le CV a une analyse d'offre d'emploi en base ET si la feature est activée
-  if (!hasExtractedJobOffer || !sourceValue || !settings.feature_match_score) {
+  // Afficher le composant uniquement si le CV a une offre d'emploi associée ET si la feature est activée
+  if (!hasJobOffer || !sourceValue || !settings.feature_match_score) {
     return null;
   }
 
   const handleRefresh = async () => {
-    // Bloquer si chargement en cours ou optimisation en cours
-    if (status === "loading" || isRefreshing || isRefreshingRef.current || optimiseStatus === "inprogress") {
+    // Bloquer si chargement en cours, optimisation en cours, ou version historique
+    if (status === "loading" || isRefreshing || isRefreshingRef.current || optimiseStatus === "inprogress" || isHistoricalVersion) {
       return;
     }
 
@@ -202,9 +207,13 @@ export default function MatchScore({
     return "border-red-700";
   };
 
-  const isDisabled = shouldShowLoading;
+  const isDisabled = shouldShowLoading || isHistoricalVersion;
 
   const getScoreTooltip = () => {
+    // Si version historique
+    if (isHistoricalVersion) {
+      return score !== null ? `Score: ${score} (ancien)` : t("matchScore.notCalculated");
+    }
     // Si optimisation en cours
     if (optimiseStatus === "inprogress") {
       return t("cvImprovement.improving") || "Amélioration en cours...";
@@ -213,14 +222,15 @@ export default function MatchScore({
     if (shouldShowLoading) {
       return t("matchScore.calculating");
     }
-    // WORKAROUND iOS: Si on a un score, montrer le score même si status=loading
-    if (score !== null && score !== undefined) {
-      return `Score: ${score}`;
-    }
     if (status === "error") {
       return t("matchScore.failed");
     }
-    return t("matchScore.notCalculated");
+    // Afficher le coût en crédits (mode crédits-only)
+    if (showCosts && matchScoreCost > 0) {
+      return t("credits.useCredits", { count: matchScoreCost }) || `Utiliser ${matchScoreCost} Cr.`;
+    }
+    // Sinon message par défaut
+    return t("matchScore.refresh") || "Recalculer";
   };
 
   return (
@@ -230,10 +240,11 @@ export default function MatchScore({
         data-onboarding="match-score"
         className={`
           relative w-12 h-12 rounded-full flex items-center justify-center
-          bg-white/20 backdrop-blur-xl border-4 ${getBorderColor()} shadow-2xl
+          bg-white/20 backdrop-blur-xl border-4 ${isHistoricalVersion ? 'border-white/30' : getBorderColor()} shadow-2xl
           ${!isDisabled && !isLoading ? "cursor-pointer" : "cursor-not-allowed"}
           transition-all duration-300
           ${showSuccessEffect ? "ring-4 ring-emerald-300" : ""}
+          ${isHistoricalVersion ? "opacity-60" : ""}
         `}
         onClick={handleRefresh}
         onMouseEnter={() => setIsHovered(true)}
@@ -249,12 +260,20 @@ export default function MatchScore({
           `}
         >
           {score !== null && (
-            <div className="relative flex items-center justify-center">
+            <div className="relative flex flex-col items-center justify-center">
+              {/* Score avant optimisation (si disponible) */}
+              {scoreBefore !== null && scoreBefore !== score && (
+                <span className="text-[9px] text-white/50 line-through leading-none -mb-0.5">
+                  {scoreBefore}
+                </span>
+              )}
               <span
                 className={`text-base font-bold drop-shadow-lg ${
-                  score > 90 && status !== "loading"
-                    ? "bg-gold-gradient bg-[length:200%_100%] animate-gold-shimmer text-transparent bg-clip-text"
-                    : getScoreColor() + " text-white"
+                  isHistoricalVersion
+                    ? "text-white/70"
+                    : score > 90 && status !== "loading"
+                      ? "bg-gold-gradient bg-[length:200%_100%] animate-gold-shimmer text-transparent bg-clip-text"
+                      : getScoreColor() + " text-white"
                 }`}
               >
                 {getDisplayText()}

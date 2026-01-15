@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { KPICard } from './KPICard';
 import { CustomSelect } from './CustomSelect';
 import { Toast } from './Toast';
 import { ConfirmDialog } from './ConfirmDialog';
 import EditAlertModal from './EditAlertModal';
+import { CvGenerationCostsSection } from './CvGenerationCostsSection';
 import { getFeatureConfig } from '@/lib/analytics/featureConfig';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList } from 'recharts';
 
@@ -18,20 +19,27 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
   const [alertsFilter, setAlertsFilter] = useState('all'); // 'all', 'active', 'inactive'
   const [toast, setToast] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
-  const [stableTopFeature, setStableTopFeature] = useState({ feature: 'N/A', cost: 0 });
+  const [stableTopFeature, setStableTopFeature] = useState({ feature: 'N/A', name: 'N/A', cost: 0 });
   const [balance, setBalance] = useState(null);
   const [balanceLoading, setBalanceLoading] = useState(true);
+  const [lastGenerationCost, setLastGenerationCost] = useState(null); // Cout reel de la derniere generation CV
+  const [cvGenerationTotals, setCvGenerationTotals] = useState(null); // Totaux des couts de generation CV sur la periode
   const pricingScrollRef = useRef(null);
   const alertsScrollRef = useRef(null);
 
   // Pricing management state
   const [pricings, setPricings] = useState([]);
+  const [isPriorityMode, setIsPriorityMode] = useState(false);
+  const [priorityModeLoading, setPriorityModeLoading] = useState(false);
   const [editingPricing, setEditingPricing] = useState(null);
   const [pricingForm, setPricingForm] = useState({
     modelName: '',
     inputPricePerMToken: '',
     outputPricePerMToken: '',
     cachePricePerMToken: '',
+    inputPricePerMTokenPriority: '',
+    outputPricePerMTokenPriority: '',
+    cachePricePerMTokenPriority: '',
     description: '',
     isActive: true,
   });
@@ -46,6 +54,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
     fetchPricings(); // Fetch pricing data for tooltip calculations
     fetchBalance(); // Fetch OpenAI account balance
     fetchAlerts(); // Fetch alerts on mount
+    fetchLastGenerationCost(); // Fetch real cost of last CV generation
   }, [period, userId, refreshKey]);
 
   useEffect(() => {
@@ -59,21 +68,6 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
       fetchAlerts(); // Refresh alerts when form is shown
     }
   }, [showAlertForm]);
-
-  // Stabiliser la top feature pour éviter les scintillements lors des refreshes
-  useEffect(() => {
-    if (data?.byFeature && data.byFeature.length > 0) {
-      // Trier explicitement par coût TOTAL décroissant pour garantir le bon ordre
-      const sortedByTotalCost = [...data.byFeature].sort((a, b) => (b.cost || 0) - (a.cost || 0));
-      const newTopFeature = sortedByTotalCost[0];
-
-      // Ne mettre à jour que si la feature change réellement (pas juste un re-order temporaire)
-      if (newTopFeature.feature !== stableTopFeature.feature ||
-          Math.abs(newTopFeature.cost - stableTopFeature.cost) > 0.01) {
-        setStableTopFeature(newTopFeature);
-      }
-    }
-  }, [data?.byFeature, stableTopFeature.feature, stableTopFeature.cost]);
 
   // Empêcher le scroll chaining pour la liste de pricing
   useEffect(() => {
@@ -123,6 +117,157 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
     };
   }, [showAlertForm]);
 
+  // Données groupées pour le graphique "Comparaison des derniers coûts"
+  // Note: placé ici (avant les early returns) pour respecter les règles des hooks
+  const groupedChartData = useMemo(() => {
+    if (!data?.byFeature) return [];
+
+    // Regrouper les features cv_pipeline_v2_* en une seule "Génération de CV"
+    const pipelineFeatures = data.byFeature.filter(f => f.feature.startsWith('cv_pipeline_v2_'));
+    const otherFeatures = data.byFeature.filter(f => !f.feature.startsWith('cv_pipeline_v2_'));
+
+    const chartData = [];
+
+    // Ajouter "Génération de CV" si des features du pipeline existent
+    // Utiliser lastGenerationCost (API cv-generation-costs) pour les vraies donnees de la derniere generation
+    if (pipelineFeatures.length > 0) {
+      // Utiliser les donnees reelles de la derniere generation si disponibles
+      // Sinon, fallback sur les donnees agregees (moins precises)
+      const useRealData = lastGenerationCost !== null;
+
+      chartData.push({
+        name: 'Génération de CV',
+        lastCost: useRealData ? lastGenerationCost.cost : pipelineFeatures.reduce((sum, f) => sum + (f.lastCost || 0), 0),
+        lastModel: 'Multiple',
+        lastPromptTokens: useRealData ? lastGenerationCost.promptTokens : pipelineFeatures.reduce((sum, f) => sum + (f.lastPromptTokens || 0), 0),
+        lastCachedTokens: useRealData ? lastGenerationCost.cachedTokens : pipelineFeatures.reduce((sum, f) => sum + (f.lastCachedTokens || 0), 0),
+        lastCompletionTokens: useRealData ? lastGenerationCost.completionTokens : pipelineFeatures.reduce((sum, f) => sum + (f.lastCompletionTokens || 0), 0),
+        lastTokens: useRealData ? lastGenerationCost.totalTokens : pipelineFeatures.reduce((sum, f) => sum + (f.lastTokens || 0), 0),
+        lastCallDate: useRealData ? lastGenerationCost.createdAt : pipelineFeatures.reduce((latest, f) => {
+          if (!f.lastCallDate) return latest;
+          if (!latest) return f.lastCallDate;
+          return new Date(f.lastCallDate) > new Date(latest) ? f.lastCallDate : latest;
+        }, null),
+        lastDuration: useRealData ? lastGenerationCost.durationMs : pipelineFeatures.reduce((sum, f) => sum + (f.lastDuration || 0), 0),
+        fill: '#10B981', // Vert emeraude
+        isGrouped: true,
+        subtaskCount: useRealData ? lastGenerationCost.subtaskCount : pipelineFeatures.length,
+      });
+    }
+
+    // Ajouter les autres features
+    otherFeatures.forEach((feature) => {
+      const featureConfig = getFeatureConfig(feature.feature);
+      chartData.push({
+        name: featureConfig.name || 'Feature non configurée',
+        lastCost: feature.lastCost || 0,
+        lastModel: feature.lastModel || 'N/A',
+        lastPromptTokens: feature.lastPromptTokens || 0,
+        lastCachedTokens: feature.lastCachedTokens || 0,
+        lastCompletionTokens: feature.lastCompletionTokens || 0,
+        lastTokens: feature.lastTokens || 0,
+        lastCallDate: feature.lastCallDate || null,
+        lastDuration: feature.lastDuration || null,
+        fill: featureConfig.colors?.solid || '#6B7280',
+        isGrouped: false,
+      });
+    });
+
+    // Trier par coût décroissant
+    return chartData.sort((a, b) => (b.lastCost || 0) - (a.lastCost || 0));
+  }, [data?.byFeature, lastGenerationCost]);
+
+  // Données groupées pour le tableau "Répartition par feature" et le pie chart
+  // Utilise cvGenerationTotals (API cv-generation-costs) comme source de verite pour les couts CV
+  const groupedFeatureData = useMemo(() => {
+    if (!data?.byFeature) return [];
+
+    // Filtrer les features cv_pipeline_v2_* (on les remplace par cvGenerationTotals)
+    const otherFeatures = data.byFeature.filter(f => !f.feature.startsWith('cv_pipeline_v2_'));
+
+    const result = [];
+
+    // Ajouter "Génération de CV" si on a des donnees de l'API cv-generation-costs
+    // Note: "calls" = nombre de generations (pas le nombre de subtasks)
+    if (cvGenerationTotals && cvGenerationTotals.totalCost > 0) {
+      result.push({
+        feature: 'cv_generation_grouped',
+        name: 'Génération de CV',
+        calls: cvGenerationTotals.generationCount, // Nombre de generations, pas de subtasks
+        tokens: cvGenerationTotals.totalTokens,
+        cost: cvGenerationTotals.totalCost,
+        color: '#10B981', // Vert emeraude
+        isGrouped: true,
+      });
+    }
+
+    // Ajouter les autres features
+    otherFeatures.forEach((feature) => {
+      const featureConfig = getFeatureConfig(feature.feature);
+      result.push({
+        feature: feature.feature,
+        name: featureConfig.name || 'Feature non configurée',
+        calls: feature.calls || 0,
+        tokens: feature.tokens || 0,
+        cost: feature.cost || 0,
+        color: featureConfig.colors?.solid || '#6B7280',
+        isGrouped: false,
+        levelBreakdown: feature.levelBreakdown,
+      });
+    });
+
+    // Trier par coût décroissant
+    return result.sort((a, b) => (b.cost || 0) - (a.cost || 0));
+  }, [data?.byFeature, cvGenerationTotals]);
+
+  // Calculer le cout total corrige (exclut cv_pipeline_v2_* de OpenAIUsage, utilise cvGenerationTotals)
+  const correctedTotalCost = useMemo(() => {
+    if (!data?.byFeature) return 0;
+
+    // Cout des features non-pipeline depuis OpenAIUsage
+    const otherFeaturesCost = data.byFeature
+      .filter(f => !f.feature.startsWith('cv_pipeline_v2_'))
+      .reduce((sum, f) => sum + (f.cost || 0), 0);
+
+    // Ajouter le cout CV depuis cvGenerationTotals (source de verite)
+    const cvCost = cvGenerationTotals?.totalCost || 0;
+
+    return otherFeaturesCost + cvCost;
+  }, [data?.byFeature, cvGenerationTotals]);
+
+  // Calculer le nombre total d'appels corrige
+  const correctedTotalCalls = useMemo(() => {
+    if (!data?.byFeature) return 0;
+
+    const otherFeaturesCalls = data.byFeature
+      .filter(f => !f.feature.startsWith('cv_pipeline_v2_'))
+      .reduce((sum, f) => sum + (f.calls || 0), 0);
+
+    const cvCalls = cvGenerationTotals?.totalCalls || 0;
+
+    return otherFeaturesCalls + cvCalls;
+  }, [data?.byFeature, cvGenerationTotals]);
+
+  // Stabiliser la top feature pour éviter les scintillements lors des refreshes
+  // Utilise groupedFeatureData pour prendre en compte le regroupement "Génération de CV"
+  // Note: placé après les useMemo pour éviter l'erreur "Cannot access before initialization"
+  useEffect(() => {
+    if (groupedFeatureData && groupedFeatureData.length > 0) {
+      // groupedFeatureData est déjà trié par coût décroissant
+      const newTopFeature = groupedFeatureData[0];
+
+      // Ne mettre à jour que si la feature change réellement (pas juste un re-order temporaire)
+      if (newTopFeature.feature !== stableTopFeature.feature ||
+          Math.abs(newTopFeature.cost - stableTopFeature.cost) > 0.01) {
+        setStableTopFeature({
+          feature: newTopFeature.feature,
+          name: newTopFeature.name,
+          cost: newTopFeature.cost,
+        });
+      }
+    }
+  }, [groupedFeatureData, stableTopFeature.feature, stableTopFeature.cost]);
+
   const fetchData = async () => {
     try {
       // Only show loader if no data yet (initial load)
@@ -153,8 +298,33 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
       if (!response.ok) throw new Error('Failed to fetch pricings');
       const result = await response.json();
       setPricings(result.pricings || []);
+      setIsPriorityMode(result.isPriorityMode || false);
     } catch (err) {
       console.error('Error fetching pricings:', err);
+    }
+  };
+
+  const togglePriorityMode = async (newValue) => {
+    try {
+      setPriorityModeLoading(true);
+      const response = await fetch('/api/admin/openai-pricing', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPriorityMode: newValue }),
+      });
+
+      if (!response.ok) throw new Error('Failed to toggle priority mode');
+
+      setIsPriorityMode(newValue);
+      setToast({
+        type: 'success',
+        message: `Mode ${newValue ? 'Priority' : 'Standard'} activé`,
+      });
+    } catch (err) {
+      console.error('Error toggling priority mode:', err);
+      setToast({ type: 'error', message: 'Erreur lors du changement de mode' });
+    } finally {
+      setPriorityModeLoading(false);
     }
   };
 
@@ -184,6 +354,53 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
     }
   };
 
+  const fetchLastGenerationCost = async () => {
+    try {
+      // Recuperer toutes les generations de la periode pour avoir les totaux corrects
+      const url = new URL('/api/analytics/cv-generation-costs', window.location.origin);
+      url.searchParams.set('period', period);
+      url.searchParams.set('limit', '100'); // Suffisant pour couvrir la periode
+
+      const response = await fetch(url.toString());
+      if (!response.ok) throw new Error('Failed to fetch last generation cost');
+
+      const result = await response.json();
+
+      // Stocker les totaux de la periode (pour la repartition par feature)
+      if (result.totals) {
+        setCvGenerationTotals({
+          totalCost: result.totals.totalCost,
+          totalCalls: result.totals.totalSubtasks,
+          totalTokens: result.totals.totalPromptTokens + result.totals.totalCompletionTokens,
+          generationCount: result.totals.generationCount,
+        });
+      } else {
+        setCvGenerationTotals(null);
+      }
+
+      // Si on a au moins une generation, stocker les donnees de la derniere (pour le graphique des derniers couts)
+      if (result.generations && result.generations.length > 0) {
+        const lastGen = result.generations[0];
+        setLastGenerationCost({
+          cost: lastGen.totals.estimatedCost,
+          promptTokens: lastGen.totals.promptTokens,
+          cachedTokens: lastGen.totals.cachedTokens,
+          completionTokens: lastGen.totals.completionTokens,
+          totalTokens: lastGen.totals.totalTokens,
+          durationMs: lastGen.totals.durationMs,
+          createdAt: lastGen.createdAt,
+          subtaskCount: lastGen.totals.subtaskCount,
+        });
+      } else {
+        setLastGenerationCost(null);
+      }
+    } catch (err) {
+      console.error('Error fetching last generation cost:', err);
+      setLastGenerationCost(null);
+      setCvGenerationTotals(null);
+    }
+  };
+
   const handleSavePricing = async (e) => {
     e.preventDefault();
     try {
@@ -192,6 +409,9 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
         inputPricePerMToken: parseFloat(pricingForm.inputPricePerMToken),
         outputPricePerMToken: parseFloat(pricingForm.outputPricePerMToken),
         cachePricePerMToken: pricingForm.cachePricePerMToken ? parseFloat(pricingForm.cachePricePerMToken) : 0,
+        inputPricePerMTokenPriority: pricingForm.inputPricePerMTokenPriority ? parseFloat(pricingForm.inputPricePerMTokenPriority) : null,
+        outputPricePerMTokenPriority: pricingForm.outputPricePerMTokenPriority ? parseFloat(pricingForm.outputPricePerMTokenPriority) : null,
+        cachePricePerMTokenPriority: pricingForm.cachePricePerMTokenPriority ? parseFloat(pricingForm.cachePricePerMTokenPriority) : null,
         description: pricingForm.description || null,
         isActive: pricingForm.isActive,
       };
@@ -211,6 +431,9 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
         inputPricePerMToken: '',
         outputPricePerMToken: '',
         cachePricePerMToken: '',
+        inputPricePerMTokenPriority: '',
+        outputPricePerMTokenPriority: '',
+        cachePricePerMTokenPriority: '',
         description: '',
         isActive: true,
       });
@@ -252,6 +475,9 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
       inputPricePerMToken: pricing.inputPricePerMToken.toString(),
       outputPricePerMToken: pricing.outputPricePerMToken.toString(),
       cachePricePerMToken: pricing.cachePricePerMToken?.toString() || '0',
+      inputPricePerMTokenPriority: pricing.inputPricePerMTokenPriority?.toString() || '',
+      outputPricePerMTokenPriority: pricing.outputPricePerMTokenPriority?.toString() || '',
+      cachePricePerMTokenPriority: pricing.cachePricePerMTokenPriority?.toString() || '',
       description: pricing.description || '',
       isActive: pricing.isActive,
     });
@@ -371,15 +597,14 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
     return levelLabels[level] || level;
   };
 
-  // Calculate average cost per call
-  const avgCostPerCall = data.total.calls > 0 ? data.total.cost / data.total.calls : 0;
+  // Calculate average cost per call (utilise les valeurs corrigees)
+  const avgCostPerCall = correctedTotalCalls > 0 ? correctedTotalCost / correctedTotalCalls : 0;
 
   // Utiliser la top feature stabilisée pour éviter les scintillements
   const topFeature = stableTopFeature;
 
-  const topFeatureLabel = topFeature.feature !== 'N/A'
-    ? (getFeatureConfig(topFeature.feature).name || topFeature.feature)
-    : 'N/A';
+  // Utiliser le nom stocké dans stableTopFeature (inclut "Génération de CV" groupé)
+  const topFeatureLabel = topFeature.name || topFeature.feature || 'N/A';
 
   const alertTypeLabels = {
     user_daily: 'Utilisateur - Journalier',
@@ -421,7 +646,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
         <KPICard
           icon="💰"
           label="Coût total"
-          value={formatCurrency(data.total.cost)}
+          value={formatCurrency(correctedTotalCost)}
           subtitle={balanceSubtitle?.text}
           subtitleClassName={balanceSubtitle?.color}
           trend={null}
@@ -431,7 +656,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
           icon="🎯"
           label="Total tokens"
           value={formatNumber(data.total.totalTokens)}
-          subtitle={`${formatNumber(data.total.calls)} appels`}
+          subtitle={`${formatNumber(correctedTotalCalls)} appels`}
           description={`Nombre total de tokens consommés (input + output). Input: ${formatNumber(data.total.promptTokens)} (dont ${formatNumber(data.total.cachedTokens)} en cache), Output: ${formatNumber(data.total.completionTokens)}`}
         />
         <KPICard
@@ -455,23 +680,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
         <h3 className="text-lg font-semibold text-white mb-4">Comparaison des derniers coûts par feature</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart
-            data={data.byFeature
-              .sort((a, b) => (b.lastCost || 0) - (a.lastCost || 0))
-              .map((feature) => {
-                const featureConfig = getFeatureConfig(feature.feature);
-                return {
-                  name: featureConfig.name || 'Feature non configurée',
-                  lastCost: feature.lastCost || 0,
-                  lastModel: feature.lastModel || 'N/A',
-                  lastPromptTokens: feature.lastPromptTokens || 0,
-                  lastCachedTokens: feature.lastCachedTokens || 0,
-                  lastCompletionTokens: feature.lastCompletionTokens || 0,
-                  lastTokens: feature.lastTokens || 0,
-                  lastCallDate: feature.lastCallDate || null,
-                  lastDuration: feature.lastDuration || null,
-                  fill: featureConfig.colors?.solid || '#6B7280',
-                };
-              })}
+            data={groupedChartData}
             layout="vertical"
           >
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
@@ -512,6 +721,61 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                     return `${(ms / 1000).toFixed(2)}s`;
                   };
 
+                  // Pour les features groupées (Génération de CV), afficher les totaux
+                  if (data.isGrouped) {
+                    return (
+                      <div className="bg-black/95 backdrop-blur-xl border border-white/20 rounded-lg p-3 shadow-2xl">
+                        <p className="text-white font-semibold mb-2">{data.name}</p>
+
+                        {/* Totaux globaux */}
+                        <div className="space-y-1">
+                          <div className="border-b border-white/10 pb-1 mb-1">
+                            <p className="text-xs text-white/60 mb-1">Détail des tokens:</p>
+                            <div className="flex items-center justify-between gap-4">
+                              <span className="text-xs text-cyan-300">Input:</span>
+                              <span className="text-white text-xs">{formatNumber(data.lastPromptTokens - data.lastCachedTokens)}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4">
+                              <span className="text-xs text-indigo-300">Cache:</span>
+                              <span className="text-white text-xs">{formatNumber(data.lastCachedTokens)}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4">
+                              <span className="text-xs text-purple-300">Output:</span>
+                              <span className="text-white text-xs">{formatNumber(data.lastCompletionTokens)}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-sm text-white/80 font-medium">Total:</span>
+                            <span className="text-white text-sm font-medium">{formatNumber(data.lastTokens)} tokens</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-sm text-green-300 font-medium">Coût:</span>
+                            <span className="text-white font-bold">{formatCurrency(data.lastCost)}</span>
+                          </div>
+
+                          <div className="border-t border-white/10 pt-1 mt-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-orange-300">Durée:</span>
+                              <span className="text-white text-xs">{formatDuration(data.lastDuration)}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-yellow-300">Date:</span>
+                              <span className="text-white text-xs">{formatDate(data.lastCallDate)}</span>
+                            </div>
+                            {data.subtaskCount && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-white/60">Phases:</span>
+                                <span className="text-white text-xs">{data.subtaskCount} subtasks</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Pour les features non groupées, afficher le tooltip classique
                   // Find pricing for this model
                   const pricing = pricings.find(p => p.modelName === data.lastModel);
 
@@ -521,7 +785,8 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                   let outputCost = 0;
 
                   if (pricing) {
-                    inputCost = (data.lastPromptTokens / 1_000_000) * pricing.inputPricePerMToken;
+                    const nonCachedTokens = data.lastPromptTokens - data.lastCachedTokens;
+                    inputCost = (nonCachedTokens / 1_000_000) * pricing.inputPricePerMToken;
                     cachedCost = (data.lastCachedTokens / 1_000_000) * pricing.cachePricePerMToken;
                     outputCost = (data.lastCompletionTokens / 1_000_000) * pricing.outputPricePerMToken;
                   }
@@ -540,7 +805,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                           <p className="text-xs text-white/60 mb-1">Détail des tokens:</p>
                           <div className="flex items-center justify-between gap-4">
                             <span className="text-xs text-cyan-300">Input:</span>
-                            <span className="text-white text-xs">{formatNumber(data.lastPromptTokens)} ({formatCurrency(inputCost)})</span>
+                            <span className="text-white text-xs">{formatNumber(data.lastPromptTokens - data.lastCachedTokens)} ({formatCurrency(inputCost)})</span>
                           </div>
                           <div className="flex items-center justify-between gap-4">
                             <span className="text-xs text-indigo-300">Cache:</span>
@@ -581,12 +846,9 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
               }}
             />
             <Bar dataKey="lastCost" radius={[0, 4, 4, 0]} isAnimationActive={isInitialLoad}>
-              {data.byFeature
-                .sort((a, b) => (b.lastCost || 0) - (a.lastCost || 0))
-                .map((feature, index) => {
-                  const featureConfig = getFeatureConfig(feature.feature);
-                  return <Cell key={`cell-${index}`} fill={featureConfig.colors?.solid || '#3B82F6'} />;
-                })}
+              {groupedChartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
+              ))}
               <LabelList
                 dataKey="lastCost"
                 position="right"
@@ -597,6 +859,9 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {/* CV Generation Costs Section */}
+      <CvGenerationCostsSection period={period} refreshKey={refreshKey} />
 
       {/* Feature Breakdown Table */}
       <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-6">
@@ -612,78 +877,153 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
 
         {showPricing && (
           <div className="mb-4 p-4 bg-blue-500/10 rounded-lg border border-blue-500/20 space-y-4">
-            <h4 className="text-white font-semibold">Gestion des tarifs OpenAI</h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-white font-semibold">Gestion des tarifs OpenAI</h4>
+
+              {/* Priority Mode Toggle */}
+              <div className="flex items-center gap-3">
+                <span className={`text-sm ${!isPriorityMode ? 'text-green-400 font-medium' : 'text-white/60'}`}>
+                  Standard
+                </span>
+                <button
+                  onClick={() => togglePriorityMode(!isPriorityMode)}
+                  disabled={priorityModeLoading}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    isPriorityMode ? 'bg-orange-500' : 'bg-green-500'
+                  } ${priorityModeLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      isPriorityMode ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className={`text-sm ${isPriorityMode ? 'text-orange-400 font-medium' : 'text-white/60'}`}>
+                  Priority
+                </span>
+                {isPriorityMode && (
+                  <span className="text-xs text-orange-400/70">(+70% coût)</span>
+                )}
+              </div>
+            </div>
 
             {/* Pricing Form */}
             <form onSubmit={handleSavePricing} className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-white/60 text-sm">Nom du modèle</label>
-                  <input
-                    type="text"
-                    value={pricingForm.modelName}
-                    onChange={(e) => setPricingForm({ ...pricingForm, modelName: e.target.value })}
-                    disabled={editingPricing !== null}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white text-sm disabled:opacity-50"
-                    required
-                  />
+              {/* Standard Pricing */}
+              <div className="p-3 bg-green-500/10 rounded border border-green-500/20">
+                <div className="text-green-400 text-sm font-medium mb-2">Tarifs Standard</div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="text-white/60 text-sm">Nom du modèle</label>
+                    <input
+                      type="text"
+                      value={pricingForm.modelName}
+                      onChange={(e) => setPricingForm({ ...pricingForm, modelName: e.target.value })}
+                      disabled={editingPricing !== null}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm disabled:opacity-50"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-white/60 text-sm">Input ($/MTok)</label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      value={pricingForm.inputPricePerMToken}
+                      onChange={(e) => setPricingForm({ ...pricingForm, inputPricePerMToken: e.target.value })}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-white/60 text-sm">Cache ($/MTok)</label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      value={pricingForm.cachePricePerMToken}
+                      onChange={(e) => setPricingForm({ ...pricingForm, cachePricePerMToken: e.target.value })}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-white/60 text-sm">Output ($/MTok)</label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      value={pricingForm.outputPricePerMToken}
+                      onChange={(e) => setPricingForm({ ...pricingForm, outputPricePerMToken: e.target.value })}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
+                      required
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-white/60 text-sm">Prix input ($/MTok)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={pricingForm.inputPricePerMToken}
-                    onChange={(e) => setPricingForm({ ...pricingForm, inputPricePerMToken: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white text-sm"
-                    required
-                  />
+              </div>
+
+              {/* Priority Pricing */}
+              <div className="p-3 bg-orange-500/10 rounded border border-orange-500/20">
+                <div className="text-orange-400 text-sm font-medium mb-2">Tarifs Priority <span className="text-orange-400/60">(optionnel)</span></div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-white/60 text-sm">Input ($/MTok)</label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      value={pricingForm.inputPricePerMTokenPriority}
+                      onChange={(e) => setPricingForm({ ...pricingForm, inputPricePerMTokenPriority: e.target.value })}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
+                      placeholder="Non défini"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-white/60 text-sm">Cache ($/MTok)</label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      value={pricingForm.cachePricePerMTokenPriority}
+                      onChange={(e) => setPricingForm({ ...pricingForm, cachePricePerMTokenPriority: e.target.value })}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
+                      placeholder="Non défini"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-white/60 text-sm">Output ($/MTok)</label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      value={pricingForm.outputPricePerMTokenPriority}
+                      onChange={(e) => setPricingForm({ ...pricingForm, outputPricePerMTokenPriority: e.target.value })}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
+                      placeholder="Non défini"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-white/60 text-sm">Prix output ($/MTok)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={pricingForm.outputPricePerMToken}
-                    onChange={(e) => setPricingForm({ ...pricingForm, outputPricePerMToken: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-white/60 text-sm">Prix cache ($/MTok)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={pricingForm.cachePricePerMToken}
-                    onChange={(e) => setPricingForm({ ...pricingForm, cachePricePerMToken: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white text-sm"
-                    placeholder="0.00"
-                  />
-                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
                 <div>
                   <label className="text-white/60 text-sm">Description</label>
                   <input
                     type="text"
                     value={pricingForm.description}
                     onChange={(e) => setPricingForm({ ...pricingForm, description: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white text-sm"
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-sm text-white text-sm"
                   />
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={pricingForm.isActive}
-                  onChange={(e) => setPricingForm({ ...pricingForm, isActive: e.target.checked })}
-                  className="w-4 h-4"
-                />
-                <label className="text-white/60 text-sm">Actif</label>
+                <div className="flex items-center gap-2 pt-5">
+                  <input
+                    type="checkbox"
+                    checked={pricingForm.isActive}
+                    onChange={(e) => setPricingForm({ ...pricingForm, isActive: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <label className="text-white/60 text-sm">Actif</label>
+                </div>
               </div>
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm transition"
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-sm text-sm transition"
                 >
                   {editingPricing ? 'Mettre à jour' : 'Ajouter'}
                 </button>
@@ -697,11 +1037,14 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                         inputPricePerMToken: '',
                         outputPricePerMToken: '',
                         cachePricePerMToken: '',
+                        inputPricePerMTokenPriority: '',
+                        outputPricePerMTokenPriority: '',
+                        cachePricePerMTokenPriority: '',
                         description: '',
                         isActive: true,
                       });
                     }}
-                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded text-sm transition"
+                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-sm text-sm transition"
                   >
                     Annuler
                   </button>
@@ -710,41 +1053,60 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
             </form>
 
             {/* Pricing List */}
-            <div ref={pricingScrollRef} className="space-y-2 max-h-64 overflow-y-auto [overscroll-behavior:contain]">
+            <div ref={pricingScrollRef} className="space-y-2 max-h-80 overflow-y-auto [overscroll-behavior:contain]">
               {pricings.length === 0 ? (
                 <div className="text-center py-4 text-white/60 text-sm">
                   Aucun tarif configuré
                 </div>
               ) : (
-                pricings.map((pricing) => (
-                  <div key={pricing.modelName} className="flex items-center justify-between p-3 bg-white/5 rounded">
-                    <div className="flex-1">
-                      <div className="text-white font-medium">{pricing.modelName}</div>
-                      <div className="text-white/60 text-sm">
-                        Input: ${pricing.inputPricePerMToken}/MTok • Output: ${pricing.outputPricePerMToken}/MTok
-                        {pricing.cachePricePerMToken > 0 && <span> • Cache: ${pricing.cachePricePerMToken}/MTok</span>}
-                        {pricing.description && <span> • {pricing.description}</span>}
+                pricings.map((pricing) => {
+                  const hasPriority = pricing.inputPricePerMTokenPriority != null;
+                  return (
+                    <div key={pricing.modelName} className="p-3 bg-white/5 rounded">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-white font-medium">{pricing.modelName}</div>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-1 text-xs rounded ${pricing.isActive ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
+                            {pricing.isActive ? 'Actif' : 'Inactif'}
+                          </span>
+                          <button
+                            onClick={() => handleEditPricing(pricing)}
+                            className="px-2 py-1 text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded"
+                          >
+                            Éditer
+                          </button>
+                          <button
+                            onClick={() => handleDeletePricing(pricing.modelName)}
+                            className="px-2 py-1 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded"
+                          >
+                            Supprimer
+                          </button>
+                        </div>
                       </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className={`p-2 rounded ${!isPriorityMode ? 'bg-green-500/10 border border-green-500/30' : 'bg-white/5'}`}>
+                          <div className="text-green-400 text-xs mb-1">Standard {!isPriorityMode && '(actif)'}</div>
+                          <div className="text-white/80">
+                            In: ${pricing.inputPricePerMToken} • Cache: ${pricing.cachePricePerMToken} • Out: ${pricing.outputPricePerMToken}
+                          </div>
+                        </div>
+                        <div className={`p-2 rounded ${isPriorityMode ? 'bg-orange-500/10 border border-orange-500/30' : 'bg-white/5'}`}>
+                          <div className="text-orange-400 text-xs mb-1">Priority {isPriorityMode && '(actif)'}</div>
+                          {hasPriority ? (
+                            <div className="text-white/80">
+                              In: ${pricing.inputPricePerMTokenPriority} • Cache: ${pricing.cachePricePerMTokenPriority || 0} • Out: ${pricing.outputPricePerMTokenPriority}
+                            </div>
+                          ) : (
+                            <div className="text-white/40 italic">Non défini</div>
+                          )}
+                        </div>
+                      </div>
+                      {pricing.description && (
+                        <div className="text-white/50 text-xs mt-2">{pricing.description}</div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 text-xs rounded ${pricing.isActive ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
-                        {pricing.isActive ? 'Actif' : 'Inactif'}
-                      </span>
-                      <button
-                        onClick={() => handleEditPricing(pricing)}
-                        className="px-2 py-1 text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded"
-                      >
-                        Éditer
-                      </button>
-                      <button
-                        onClick={() => handleDeletePricing(pricing.modelName)}
-                        className="px-2 py-1 text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded"
-                      >
-                        Supprimer
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -765,23 +1127,22 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
               </tr>
             </thead>
             <tbody>
-              {[...data.byFeature]
-                .sort((a, b) => (b.cost || 0) - (a.cost || 0))
-                .map((feature, index) => {
-                const percentage = data.total.cost > 0
-                  ? ((feature.cost / data.total.cost) * 100).toFixed(1)
+              {groupedFeatureData.map((feature, index) => {
+                const percentage = correctedTotalCost > 0
+                  ? ((feature.cost / correctedTotalCost) * 100).toFixed(1)
                   : 0;
                 const avgCost = feature.calls > 0 ? feature.cost / feature.calls : 0;
-                const featureConfig = getFeatureConfig(feature.feature);
-                const featureLabel = featureConfig.name || 'Feature non configurée';
                 const hasLevelBreakdown = feature.levelBreakdown && feature.levelBreakdown.length > 0;
 
                 return (
-                  <>
+                  <React.Fragment key={index}>
                     {/* Main feature row */}
-                    <tr key={index} className="border-b border-white/5 text-white">
+                    <tr className={`border-b border-white/5 text-white ${feature.isGrouped ? 'bg-emerald-500/5' : ''}`}>
                       <td className="py-3">
-                        <span className="font-medium">{featureLabel}</span>
+                        <span className="font-medium">{feature.name}</span>
+                        {feature.isGrouped && (
+                          <span className="ml-2 text-xs text-emerald-400/60">(groupé)</span>
+                        )}
                       </td>
                       <td className="py-3 text-right text-white/80">
                         {formatNumber(feature.calls)}
@@ -830,7 +1191,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                         </tr>
                       );
                     })}
-                  </>
+                  </React.Fragment>
                 );
               })}
             </tbody>
@@ -842,12 +1203,13 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie
-                  data={data.byFeature.map((feature) => ({
-                    name: getFeatureConfig(feature.feature).name || 'Feature non configurée',
+                  data={groupedFeatureData.map((feature) => ({
+                    name: feature.name,
                     value: feature.cost,
-                    percentage: data.total.cost > 0
-                      ? ((feature.cost / data.total.cost) * 100).toFixed(1)
+                    percentage: correctedTotalCost > 0
+                      ? ((feature.cost / correctedTotalCost) * 100).toFixed(1)
                       : 0,
+                    color: feature.color,
                   }))}
                   cx="50%"
                   cy="50%"
@@ -858,25 +1220,23 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                   dataKey="value"
                   isAnimationActive={isInitialLoad}
                 >
-                  {data.byFeature.map((feature, index) => {
-                    const featureConfig = getFeatureConfig(feature.feature);
-                    const color = featureConfig.colors?.solid || '#6B7280';
-                    return <Cell key={`cell-${index}`} fill={color} />;
-                  })}
+                  {groupedFeatureData.map((feature, index) => (
+                    <Cell key={`cell-${index}`} fill={feature.color} />
+                  ))}
                 </Pie>
                 <Tooltip
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
-                      const data = payload[0];
+                      const pieData = payload[0];
                       return (
                         <div className="bg-black/95 backdrop-blur-xl border border-white/20 rounded-lg p-3 shadow-2xl">
-                          <p className="text-white font-semibold mb-2">{data.name}</p>
+                          <p className="text-white font-semibold mb-2">{pieData.name}</p>
                           <div className="space-y-1">
                             <p className="text-sm text-blue-300">
-                              Coût: <span className="font-bold text-white">{formatCurrency(data.value)}</span>
+                              Coût: <span className="font-bold text-white">{formatCurrency(pieData.value)}</span>
                             </p>
                             <p className="text-sm text-green-300">
-                              Part: <span className="font-bold text-white">{data.payload.percentage}%</span>
+                              Part: <span className="font-bold text-white">{pieData.payload.percentage}%</span>
                             </p>
                           </div>
                         </div>
@@ -1063,7 +1423,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
               return true;
             })
             .map((alert) => (
-              <div key={alert.id} className="flex items-center justify-between p-3 bg-white/5 rounded border border-white/10">
+              <div key={alert.id} className="flex items-center justify-between p-3 bg-white/5 rounded-sm border border-white/10">
                 <div className="flex-1">
                   <div className="text-white font-medium">{alert.name}</div>
                   <div className="text-white/60 text-sm">

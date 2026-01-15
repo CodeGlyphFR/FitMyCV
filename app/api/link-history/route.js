@@ -4,6 +4,33 @@ import prisma from '@/lib/prisma';
 
 const MAX_LINKS = 20;
 
+/**
+ * Extrait le nom de domaine simplifié d'une URL
+ * Ex: "https://www.indeed.com/job/123" -> "Indeed"
+ * Ex: "https://fr.indeed.com/job/123" -> "Indeed"
+ * Ex: "https://apec.fr/candidat/offre" -> "Apec"
+ * Ex: "https://www.welcometothejungle.com/fr/companies" -> "Welcome"
+ */
+function extractDomainName(url) {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+    // Enlever www. et les sous-domaines de langue (fr, en, de, es, it, etc.)
+    const langSubdomains = ['www', 'fr', 'en', 'de', 'es', 'it', 'pt', 'nl', 'pl', 'ru', 'jp', 'cn', 'uk', 'm', 'mobile'];
+    const parts = hostname.split('.');
+
+    // Filtrer les sous-domaines de langue/www du début
+    while (parts.length > 2 && langSubdomains.includes(parts[0])) {
+      parts.shift();
+    }
+
+    // Prendre le premier segment restant (le nom du site)
+    const name = parts[0];
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  } catch {
+    return null;
+  }
+}
+
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
@@ -22,9 +49,42 @@ export async function GET() {
       },
     });
 
+    // Récupérer les offres d'emploi correspondantes pour avoir les titres
+    const urls = links.map(link => link.url);
+    const jobOffers = await prisma.jobOffer.findMany({
+      where: {
+        userId: session.user.id,
+        sourceType: 'url',
+        sourceValue: { in: urls },
+      },
+      select: {
+        sourceValue: true,
+        content: true,
+      },
+    });
+
+    // Créer une map URL -> titre
+    const urlToTitle = new Map();
+    for (const offer of jobOffers) {
+      const content = offer.content;
+      // Le titre peut être dans job_title ou title selon le schéma
+      const title = content?.job_title || content?.title || null;
+      if (title) {
+        urlToTitle.set(offer.sourceValue, title);
+      }
+    }
+
+    // Enrichir les liens avec id, titre et domaine
+    const enrichedLinks = links.map(link => ({
+      id: link.id,
+      url: link.url,
+      title: urlToTitle.get(link.url) || null,
+      domain: extractDomainName(link.url),
+    }));
+
     return NextResponse.json({
       success: true,
-      links: links.map(link => link.url),
+      links: enrichedLinks,
     });
   } catch (error) {
     console.error('Error fetching link history:', error);
@@ -97,6 +157,61 @@ export async function POST(request) {
     console.error('Error saving link history:', error);
     return NextResponse.json(
       { error: 'Erreur lors de la sauvegarde de l\'historique' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const linkId = searchParams.get('id');
+
+    if (!linkId) {
+      return NextResponse.json(
+        { error: 'ID du lien requis' },
+        { status: 400 }
+      );
+    }
+
+    const userId = session.user.id;
+
+    // Récupérer le lien pour avoir l'URL
+    const linkRecord = await prisma.linkHistory.findFirst({
+      where: { id: linkId, userId },
+    });
+
+    if (!linkRecord) {
+      return NextResponse.json(
+        { error: 'Lien non trouvé' },
+        { status: 404 }
+      );
+    }
+
+    // Supprimer l'offre d'emploi associée (si elle existe)
+    await prisma.jobOffer.deleteMany({
+      where: {
+        userId,
+        sourceType: 'url',
+        sourceValue: linkRecord.url,
+      },
+    });
+
+    // Supprimer le lien de l'historique
+    await prisma.linkHistory.delete({
+      where: { id: linkId },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting link history:', error);
+    return NextResponse.json(
+      { error: 'Erreur lors de la suppression' },
       { status: 500 }
     );
   }

@@ -1,4 +1,6 @@
-@tailwind base; @tailwind components; @tailwind utilities;
+/* Tailwind CSS 4 */
+@import "tailwindcss";
+@config "../tailwind.config.js";
 
 /* Optimisations LCP - Chargement critique */
 @layer base {
@@ -350,4 +352,18 @@ select:-moz-autofill:focus {
 /* Prevent horizontal scroll/drag while allowing vertical scroll */
 .touch-pan-y {
   touch-action: pan-y !important;
+}
+
+/* Animation pulse-glow pour mise en avant des cards d'abonnement */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3), 0 25px 50px -12px rgba(16, 185, 129, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.6), 0 25px 50px -12px rgba(16, 185, 129, 0.5);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 1.5s ease-in-out infinite;
 }

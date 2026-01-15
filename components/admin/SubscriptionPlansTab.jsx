@@ -24,7 +24,6 @@ const MACRO_FEATURES = {
       'create_template_cv_url',
       'create_template_cv_pdf'
     ],
-    hasAnalysisLevels: true,
     isAIFeature: true
   },
   import_pdf: {
@@ -32,7 +31,6 @@ const MACRO_FEATURES = {
     icon: '📥',
     description: 'Import de CV depuis PDF',
     microFeatures: ['import_pdf', 'first_import_pdf', 'import_cv'],
-    hasAnalysisLevels: false,
     isAIFeature: true
   },
   translate_cv: {
@@ -40,7 +38,6 @@ const MACRO_FEATURES = {
     icon: '🌍',
     description: 'Traduction de CV',
     microFeatures: ['translate_cv'],
-    hasAnalysisLevels: false,
     isAIFeature: true
   },
   match_score: {
@@ -48,7 +45,6 @@ const MACRO_FEATURES = {
     icon: '🎯',
     description: 'Calcul du score de match avec l\'offre',
     microFeatures: ['match_score'],
-    hasAnalysisLevels: false,
     isAIFeature: true
   },
   optimize_cv: {
@@ -56,7 +52,6 @@ const MACRO_FEATURES = {
     icon: '✨',
     description: 'Optimisation automatique du CV',
     microFeatures: ['optimize_cv'],
-    hasAnalysisLevels: false,
     isAIFeature: true
   },
   generate_from_job_title: {
@@ -64,7 +59,6 @@ const MACRO_FEATURES = {
     icon: '💼',
     description: 'Génération depuis un titre de poste',
     microFeatures: ['generate_from_job_title'],
-    hasAnalysisLevels: false,
     isAIFeature: true
   },
   export_cv: {
@@ -72,7 +66,6 @@ const MACRO_FEATURES = {
     icon: '💾',
     description: 'Export du CV en PDF',
     microFeatures: ['export_cv'],
-    hasAnalysisLevels: false,
     isAIFeature: false
   },
   edit_cv: {
@@ -80,7 +73,6 @@ const MACRO_FEATURES = {
     icon: '✏️',
     description: 'Mode édition du CV',
     microFeatures: ['edit_cv'],
-    hasAnalysisLevels: false,
     isAIFeature: false
   },
   create_cv_manual: {
@@ -88,7 +80,6 @@ const MACRO_FEATURES = {
     icon: '📝',
     description: 'Création manuelle de CV (bouton +)',
     microFeatures: ['create_cv_manual'],
-    hasAnalysisLevels: false,
     isAIFeature: false
   }
 };
@@ -96,11 +87,6 @@ const MACRO_FEATURES = {
 // Features IA (avec mode Token)
 const AI_FEATURES = Object.entries(MACRO_FEATURES)
   .filter(([_, config]) => config.isAIFeature)
-  .map(([key]) => key);
-
-// Features avec niveaux d'analyse
-const ANALYSIS_LEVEL_FEATURES = Object.entries(MACRO_FEATURES)
-  .filter(([_, config]) => config.hasAnalysisLevels)
   .map(([key]) => key);
 
 export function SubscriptionPlansTab({ refreshKey }) {
@@ -122,6 +108,11 @@ export function SubscriptionPlansTab({ refreshKey }) {
   // Toast et Confirm
   const [toast, setToast] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
+
+  // Plan costs and margins (from PostgreSQL view)
+  const [planCosts, setPlanCosts] = useState({});
+  const [costsLoading, setCostsLoading] = useState(false);
+  const [exchangeRate, setExchangeRate] = useState(null);
 
   // Formulaire Plans
   const [formData, setFormData] = useState({
@@ -151,6 +142,39 @@ export function SubscriptionPlansTab({ refreshKey }) {
     fetchPlans();
     fetchPacks();
   }, [refreshKey]);
+
+  // Fetch plan costs when plans change
+  useEffect(() => {
+    if (plans.length > 0) {
+      fetchPlanCosts();
+    }
+  }, [plans]);
+
+  async function fetchPlanCosts() {
+    try {
+      setCostsLoading(true);
+      const response = await fetch('/api/admin/plan-costs');
+      if (!response.ok) {
+        console.warn('[SubscriptionPlansTab] Failed to fetch plan costs');
+        return;
+      }
+
+      const data = await response.json();
+      if (data.success && data.data) {
+        // Create a map by plan name for easy lookup
+        const costsMap = {};
+        data.data.costs.forEach((cost) => {
+          costsMap[cost.plan] = cost;
+        });
+        setPlanCosts(costsMap);
+        setExchangeRate(data.data.exchangeRate);
+      }
+    } catch (error) {
+      console.error('[SubscriptionPlansTab] Error fetching plan costs:', error);
+    } finally {
+      setCostsLoading(false);
+    }
+  }
 
   async function fetchPlans() {
     try {
@@ -207,13 +231,9 @@ export function SubscriptionPlansTab({ refreshKey }) {
     // Initialiser les features avec des valeurs par défaut
     const defaultFeatures = {};
     Object.keys(MACRO_FEATURES).forEach((featureName) => {
-      const config = MACRO_FEATURES[featureName];
       defaultFeatures[featureName] = {
         isEnabled: true,
         usageLimit: -1,
-        allowedAnalysisLevels: config.hasAnalysisLevels
-          ? ['rapid', 'medium', 'deep']
-          : null,
       };
     });
     setFeatureLimits(defaultFeatures);
@@ -243,22 +263,15 @@ export function SubscriptionPlansTab({ refreshKey }) {
       existingFeatures[fl.featureName] = {
         isEnabled: fl.isEnabled,
         usageLimit: fl.usageLimit,
-        allowedAnalysisLevels: fl.allowedAnalysisLevels
-          ? JSON.parse(fl.allowedAnalysisLevels)
-          : null,
       };
     });
 
     // Ajouter les features manquantes avec des valeurs par défaut
     Object.keys(MACRO_FEATURES).forEach((featureName) => {
       if (!existingFeatures[featureName]) {
-        const config = MACRO_FEATURES[featureName];
         existingFeatures[featureName] = {
           isEnabled: true,
           usageLimit: -1,
-          allowedAnalysisLevels: config.hasAnalysisLevels
-            ? ['rapid', 'medium', 'deep']
-            : null,
         };
       }
     });
@@ -291,7 +304,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
             featureName,
             isEnabled: config.isEnabled,
             usageLimit: config.usageLimit,
-            allowedAnalysisLevels: config.allowedAnalysisLevels,
           })),
         }),
       });
@@ -336,7 +348,6 @@ export function SubscriptionPlansTab({ refreshKey }) {
             featureName,
             isEnabled: config.isEnabled,
             usageLimit: config.usageLimit,
-            allowedAnalysisLevels: config.allowedAnalysisLevels,
           })),
         }),
       });
@@ -534,6 +545,23 @@ export function SubscriptionPlansTab({ refreshKey }) {
     });
   }
 
+  // Helper function to determine margin text color
+  // Thresholds: red < 50%, orange < 70%, green >= 70%
+  function getMarginColor(marginPercent) {
+    if (marginPercent === null || marginPercent === undefined) return 'text-white/40';
+    if (marginPercent < 50) return 'text-red-400';
+    if (marginPercent < 70) return 'text-orange-400';
+    return 'text-green-400';
+  }
+
+  // Helper function to determine margin background color
+  function getMarginBgColor(marginPercent) {
+    if (marginPercent === null || marginPercent === undefined) return 'bg-white/5 border-white/10';
+    if (marginPercent < 50) return 'bg-red-500/10 border-red-500/30';
+    if (marginPercent < 70) return 'bg-orange-500/10 border-orange-500/30';
+    return 'bg-green-500/10 border-green-500/30';
+  }
+
   if (loading && plans.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -669,6 +697,49 @@ export function SubscriptionPlansTab({ refreshKey }) {
                   </span>
                 </div>
               </div>
+
+              {/* API Costs & Margin Section */}
+              {planCosts[plan.name] ? (
+                <div className={`space-y-2 mb-4 p-3 rounded-lg border ${getMarginBgColor(planCosts[plan.name].marginPercent)}`}>
+                  {/* API Cost Range: Min / Avg / Max */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-white/60 flex items-center gap-1">
+                      <span>💰</span> Coût API
+                    </span>
+                    <span className="text-white text-sm font-medium">
+                      ${planCosts[plan.name].costMinUsd.toFixed(2)} / ${planCosts[plan.name].costAvgUsd.toFixed(2)} / ${planCosts[plan.name].costMaxUsd.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Gross Margin */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-white/60 flex items-center gap-1">
+                      <span>📊</span> Marge
+                    </span>
+                    <span className={`text-sm font-medium ${getMarginColor(planCosts[plan.name].marginPercent)}`}>
+                      {planCosts[plan.name].grossMarginEur.toFixed(2)} € ({planCosts[plan.name].marginPercent.toFixed(0)}%)
+                    </span>
+                  </div>
+
+                  {/* Alert for low margins */}
+                  {planCosts[plan.name].marginPercent < 70 && (
+                    <div className={`text-xs mt-1 ${planCosts[plan.name].marginPercent < 50 ? 'text-red-300' : 'text-orange-300'}`}>
+                      {planCosts[plan.name].marginPercent < 50
+                        ? '⚠️ Marge critique - Risque de perte'
+                        : '⚠️ Marge faible - À surveiller'}
+                    </div>
+                  )}
+                </div>
+              ) : costsLoading ? (
+                <div className="mb-4 p-3 bg-white/5 rounded-lg border border-white/10 animate-pulse">
+                  <div className="h-4 bg-white/10 rounded w-2/3 mb-2"></div>
+                  <div className="h-4 bg-white/10 rounded w-1/2"></div>
+                </div>
+              ) : (
+                <div className="mb-4 p-3 bg-white/5 rounded-lg border border-white/10">
+                  <span className="text-xs text-white/40">Données de coût non disponibles</span>
+                </div>
+              )}
 
               {/* Actions */}
               <div className="flex gap-2 mt-auto">
@@ -876,7 +947,7 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                 min="0"
                 value={formData.tier}
                 onChange={(e) => setFormData({ ...formData, tier: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:border-blue-400/50 transition"
+                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-hidden focus:border-blue-400/50 transition"
                 placeholder="0, 1, 2, 3, 4..."
               />
               <div className="mt-2 px-3 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
@@ -930,7 +1001,7 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                   inputMode="decimal"
                   value={formData.priceMonthly}
                   onChange={(e) => setFormData({ ...formData, priceMonthly: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
                   placeholder="9.99"
                 />
               </div>
@@ -942,7 +1013,7 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                   inputMode="decimal"
                   value={formData.priceYearly}
                   onChange={(e) => setFormData({ ...formData, priceYearly: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
                   placeholder="99.99"
                 />
               </div>
@@ -995,9 +1066,6 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                       <th className="px-3 py-2 text-center text-xs font-medium text-white/60 uppercase">
                         Illimité
                       </th>
-                      <th className="px-3 py-2 text-center text-xs font-medium text-white/60 uppercase">
-                        Niveaux
-                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/10">
@@ -1005,11 +1073,9 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                       const limit = featureLimits[featureName] || {
                         isEnabled: true,
                         usageLimit: -1,
-                        allowedAnalysisLevels: null,
                       };
 
                       const isUnlimited = limit.usageLimit === -1;
-                      const hasAnalysisLevels = ANALYSIS_LEVEL_FEATURES.includes(featureName);
 
                       return (
                         <tr key={featureName} className="hover:bg-white/5 transition">
@@ -1057,7 +1123,7 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                               }
                               disabled={!limit.isEnabled || isUnlimited}
                               placeholder={isUnlimited ? '∞' : '0'}
-                              className="w-16 mx-auto block px-2 py-1 bg-white/10 border border-white/20 rounded text-white text-xs text-center focus:outline-none focus:border-blue-400/50 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-white/5"
+                              className="w-16 mx-auto block px-2 py-1 bg-white/10 border border-white/20 rounded-sm text-white text-xs text-center focus:outline-hidden focus:border-blue-400/50 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-white/5"
                             />
                           </td>
 
@@ -1078,53 +1144,6 @@ function PlanModal({ title, formData, setFormData, featureLimits, setFeatureLimi
                               disabled={!limit.isEnabled}
                               className="w-4 h-4 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             />
-                          </td>
-
-                          {/* Niveaux d'analyse */}
-                          <td className="px-3 py-2">
-                            {hasAnalysisLevels && (
-                              <div className="flex gap-1 justify-center items-center flex-wrap">
-                                {['rapid', 'medium', 'deep'].map((level) => {
-                                  const isChecked = limit.allowedAnalysisLevels?.includes(level) || false;
-                                  const levelLabels = { rapid: 'R', medium: 'M', deep: 'D' };
-                                  return (
-                                    <label
-                                      key={level}
-                                      className={`flex items-center justify-center w-6 h-6 rounded text-xs cursor-pointer transition ${
-                                        !limit.isEnabled
-                                          ? 'opacity-50 cursor-not-allowed bg-white/5 text-white/40'
-                                          : isChecked
-                                          ? 'bg-blue-500/30 text-blue-300 border border-blue-400/50'
-                                          : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10'
-                                      }`}
-                                      title={level}
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                          const currentLevels = limit.allowedAnalysisLevels || [];
-                                          const newLevels = e.target.checked
-                                            ? [...currentLevels, level]
-                                            : currentLevels.filter((l) => l !== level);
-
-                                          setFeatureLimits({
-                                            ...featureLimits,
-                                            [featureName]: {
-                                              ...limit,
-                                              allowedAnalysisLevels: newLevels.length > 0 ? newLevels : null,
-                                            },
-                                          });
-                                        }}
-                                        disabled={!limit.isEnabled}
-                                        className="sr-only"
-                                      />
-                                      {levelLabels[level]}
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                            )}
                           </td>
                         </tr>
                       );
@@ -1182,7 +1201,7 @@ function PackModal({ title, formData, setFormData, onSave, onCancel, updating })
               min="1"
               value={formData.creditAmount}
               onChange={(e) => setFormData({ ...formData, creditAmount: parseInt(e.target.value, 10) || 0 })}
-              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
             />
           </div>
 
@@ -1195,7 +1214,7 @@ function PackModal({ title, formData, setFormData, onSave, onCancel, updating })
                 inputMode="decimal"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-blue-400/50 transition"
+                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
               />
             </div>
 
@@ -1215,7 +1234,7 @@ function PackModal({ title, formData, setFormData, onSave, onCancel, updating })
 
           {/* Prix unitaire calculé */}
           {formData.creditAmount > 0 && formData.price > 0 && (
-            <div className="text-sm text-white/40 bg-white/5 p-3 rounded border border-white/10">
+            <div className="text-sm text-white/40 bg-white/5 p-3 rounded-sm border border-white/10">
               Prix par crédit : <strong className="text-white/60">{(formData.price / formData.creditAmount).toFixed(2)} {formData.priceCurrency}</strong>
             </div>
           )}

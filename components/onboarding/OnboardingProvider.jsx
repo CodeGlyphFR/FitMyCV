@@ -150,7 +150,7 @@ export default function OnboardingProvider({ children }) {
 
   /**
    * Écouter l'événement TOPBAR_READY pour mettre à jour cvCount
-   * Nécessaire pour vérifier si l'utilisateur a des CVs avant de démarrer l'onboarding
+   * et démarrer l'onboarding si les conditions sont remplies
    */
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -158,7 +158,39 @@ export default function OnboardingProvider({ children }) {
     const handleTopBarReady = (event) => {
       const itemsCount = event?.detail?.itemsCount || 0;
       onboardingLogger.log(`[OnboardingProvider] TOPBAR_READY received, cvCount=${itemsCount}`);
+
+      const previousCvCount = stateRef.current.cvCount;
       stateRef.current.cvCount = itemsCount;
+
+      // Si cvCount passe à >= 1 et conditions d'auto-start remplies, démarrer l'onboarding
+      if (itemsCount >= 1 && previousCvCount === 0) {
+        const state = stateRef.current;
+        const shouldAutoStart =
+          state.currentStep === 0 &&
+          !state.hasCompleted &&
+          !state.hasSkipped &&
+          !state.isActive &&
+          !state.showWelcomeModal &&
+          !state.isLoading;
+
+        if (shouldAutoStart) {
+          onboardingLogger.log(
+            `[OnboardingProvider] TOPBAR_READY: cvCount changed 0 → ${itemsCount}, ` +
+            `conditions met, starting onboarding after ${ONBOARDING_TIMINGS.LOADING_TO_ONBOARDING_DELAY}ms`
+          );
+
+          // Clear any existing timer
+          if (loadingToOnboardingTimerRef.current) {
+            clearTimeout(loadingToOnboardingTimerRef.current);
+          }
+
+          // Démarrer l'onboarding avec délai
+          loadingToOnboardingTimerRef.current = setTimeout(() => {
+            setShowWelcomeModal(true);
+            stateRef.current.showWelcomeModal = true;
+          }, ONBOARDING_TIMINGS.LOADING_TO_ONBOARDING_DELAY);
+        }
+      }
     };
 
     window.addEventListener(LOADING_EVENTS.TOPBAR_READY, handleTopBarReady);
@@ -278,14 +310,20 @@ export default function OnboardingProvider({ children }) {
           setShowWelcomeModal(false);
         });
 
-        eventSource.onerror = (error) => {
-          onboardingLogger.error('[SSE] Erreur connexion:', error);
+        eventSource.onerror = () => {
+          // Note: L'objet error de EventSource n'a pas de propriétés utiles
+          // readyState: 0=CONNECTING, 1=OPEN, 2=CLOSED
           eventSource.close();
 
           // Reconnect avec exponential backoff
           if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
             const delay = RECONNECT_DELAYS[reconnectAttempts] || 16000;
-            onboardingLogger.log(`[SSE] Reconnexion dans ${delay}ms (tentative ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
+
+            // Log silencieux sur les premières tentatives (race condition session normale)
+            // Log warning uniquement après 2+ échecs
+            if (reconnectAttempts >= 2) {
+              onboardingLogger.log(`[SSE] Reconnexion dans ${delay}ms (tentative ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
+            }
 
             reconnectTimeout = setTimeout(() => {
               reconnectAttempts++;
@@ -759,7 +797,7 @@ export default function OnboardingProvider({ children }) {
         !state.isActive &&
         !state.showWelcomeModal &&
         !state.isLoading && // Attendre que l'état soit chargé depuis l'API
-        state.cvCount === 0; // Ne démarrer QUE si l'utilisateur n'a AUCUN CV
+        state.cvCount >= 1; // Ne démarrer QUE si l'utilisateur a au moins 1 CV
 
       if (!shouldAutoStart) {
         // Si isLoading=true, marquer le flag pour vérifier plus tard (fallback)
@@ -850,7 +888,7 @@ export default function OnboardingProvider({ children }) {
       !state.hasSkipped &&
       !state.isActive &&
       !state.showWelcomeModal &&
-      state.cvCount === 0;
+      state.cvCount >= 1; // Ne démarrer QUE si l'utilisateur a au moins 1 CV
 
     if (shouldAutoStart) {
       onboardingLogger.log(

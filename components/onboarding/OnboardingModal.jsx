@@ -200,11 +200,7 @@ export default function OnboardingModal({
 
       {/* Modal */}
       <div
-        className={`
-          relative w-full ${sizeClasses[size] || sizeClasses.default}
-          bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl
-          overflow-hidden
-        `}
+        className={`relative w-full ${sizeClasses[size] || sizeClasses.default} bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl overflow-hidden`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -454,22 +450,6 @@ export default function OnboardingModal({
                         </div>
                       </div>
                     )}
-
-                    {/* Sous-titre niveaux d'analyse */}
-                    <p className="text-white font-medium text-sm md:text-base text-left pt-2">
-                      {screens[currentScreen].subtitle2}
-                    </p>
-
-                    {/* Grille niveaux d'analyse (design inspiré de CvGeneratorModal) */}
-                    <div className="grid grid-cols-3 gap-2">
-                      {screens[currentScreen].analysisLevels.map((level, idx) => (
-                        <div key={idx} className="flex flex-col items-center text-center p-2 rounded-lg bg-white/5 border border-white/10">
-                          <span className="text-lg mb-1">{level.emoji}</span>
-                          <p className="text-white font-medium text-xs md:text-sm">{level.title}</p>
-                          <p className="text-white/50 text-[10px] md:text-xs">{level.description}</p>
-                        </div>
-                      ))}
-                    </div>
                   </div>
                   {screens[currentScreen].tip && (
                     <TipBox className="mt-4">
@@ -630,20 +610,10 @@ export default function OnboardingModal({
                 animate={idx === currentScreen ? 'active' : 'inactive'}
                 {...createDotAnimations(shouldReduceMotion)}
                 transition={transitions.snappy}
-                className="
-                  relative w-8 h-8
-                  flex items-center justify-center
-                "
+                className="relative w-8 h-8 flex items-center justify-center"
                 aria-label={t('onboarding.common.aria.goToScreen', { current: idx + 1, total: screens.length })}
               >
-                <span className={`
-                  block rounded-full transition-colors duration-200
-                  ${
-                    idx === currentScreen
-                      ? 'w-2 h-2 bg-emerald-500'
-                      : 'w-[5px] h-[5px] bg-white/40'
-                  }
-                `} />
+                <span className={`block rounded-full transition-colors duration-200 ${idx === currentScreen ? 'w-2 h-2 bg-emerald-500' : 'w-[5px] h-[5px] bg-white/40'}`} />
               </motion.button>
             ))}
           </motion.div>
@@ -655,11 +625,7 @@ export default function OnboardingModal({
           {currentScreen > 0 ? (
             <button
               onClick={handlePrev}
-              className="
-                px-3 md:px-4 py-2 text-xs md:text-sm
-                text-slate-400 hover:text-white
-                transition-colors
-              "
+              className="px-3 md:px-4 py-2 text-xs md:text-sm text-slate-400 hover:text-white transition-colors"
             >
               {t('onboarding.common.buttons.previous')}
             </button>
@@ -670,12 +636,7 @@ export default function OnboardingModal({
           {/* Bouton Suivant ou Compris (droite) */}
           <button
             onClick={handleNext}
-            className="
-              px-6 md:px-8 py-2.5 md:py-3 rounded-lg
-              bg-emerald-500 hover:bg-emerald-600
-              text-white text-sm md:text-base font-semibold
-              transition-colors
-            "
+            className="px-6 md:px-8 py-2.5 md:py-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm md:text-base font-semibold transition-colors"
           >
             {currentScreen >= screens.length - 1 ? t('onboarding.common.buttons.understood') : t('onboarding.common.buttons.next')}
           </button>

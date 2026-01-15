@@ -8,6 +8,7 @@ import os from "os";
 import { validateUploadedFile, sanitizeFilename } from "@/lib/security/fileValidation";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
+import { CommonErrors, AuthErrors, BackgroundErrors } from "@/lib/api/apiErrors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,7 +50,7 @@ async function savePdfUpload(file, validatedBuffer) {
 export async function POST(request) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    return CommonErrors.notAuthenticated();
   }
 
   let tempDirectory = null;
@@ -69,15 +70,12 @@ export async function POST(request) {
       });
 
       if (!recaptchaResult.success) {
-        return NextResponse.json(
-          { error: recaptchaResult.error || "Échec de la vérification anti-spam. Veuillez réessayer." },
-          { status: recaptchaResult.statusCode || 403 }
-        );
+        return AuthErrors.recaptchaFailed();
       }
     }
 
     if (!pdfFile) {
-      return NextResponse.json({ error: "Aucun fichier PDF fourni." }, { status: 400 });
+      return BackgroundErrors.noPdfProvided();
     }
 
     // Validation sécurisée du fichier PDF
@@ -93,7 +91,7 @@ export async function POST(request) {
 
     const { directory, saved } = await savePdfUpload(pdfFile, validation.buffer);
     if (!saved) {
-      return NextResponse.json({ error: "Impossible d'enregistrer le fichier PDF." }, { status: 500 });
+      return BackgroundErrors.pdfSaveError();
     }
 
     tempDirectory = directory;
@@ -125,7 +123,7 @@ export async function POST(request) {
     };
 
     const taskData = {
-      title: `Import en cours ...`,
+      title: saved.name,
       successMessage: `'${saved.name}' importé avec succès`,
       type: 'import',
       status: 'queued',
@@ -172,6 +170,6 @@ export async function POST(request) {
         await fs.rm(tempDirectory, { recursive: true, force: true });
       } catch (_err) {}
     }
-    return NextResponse.json({ error: "Erreur lors de la mise en file de l'import." }, { status: 500 });
+    return BackgroundErrors.queueError();
   }
 }
