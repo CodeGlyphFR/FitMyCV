@@ -36,6 +36,7 @@ function substituteVariables(html, variables) {
  */
 export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templateId, onTestSent }) {
   const [viewMode, setViewMode] = useState('desktop'); // desktop | mobile
+  const [darkMode, setDarkMode] = useState(false);
   const [testEmail, setTestEmail] = useState('');
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState(null);
@@ -47,8 +48,45 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
     return () => setMounted(false);
   }, []);
 
+  // Dark mode override CSS
+  const darkModeCSS = `
+    <style id="dark-mode-override">
+      :root { color-scheme: dark !important; }
+      .email-body, body { background-color: #020617 !important; }
+      .email-container { background-color: #0f172a !important; border-color: #334155 !important; }
+      .email-header { background-color: #1e293b !important; }
+      .text-primary { color: #f1f5f9 !important; }
+      .text-secondary { color: #cbd5e1 !important; }
+      .text-muted { color: #94a3b8 !important; }
+      .text-accent { color: #60a5fa !important; }
+      .divider { border-color: #334155 !important; }
+      .feature-card { background-color: #1e293b !important; border-color: #334155 !important; }
+      .feature-title { color: #f1f5f9 !important; }
+      .credits-box { background-color: #422006 !important; border-color: #fbbf24 !important; }
+      .credits-label { color: #fde68a !important; }
+      .credits-value { color: #fbbf24 !important; }
+      .footer-bg { background-color: #1e293b !important; border-color: #334155 !important; }
+      .icon-circle-blue { background-color: #334155 !important; }
+      .link-box { background-color: #1e293b !important; border-color: #60a5fa !important; }
+      .link-text { color: #60a5fa !important; }
+      .new-email-box { background-color: #1e293b !important; border-color: #60a5fa !important; }
+      .new-email-label { color: #94a3b8 !important; }
+      .new-email-value { color: #f1f5f9 !important; }
+      .receipt-box { background-color: #1e293b !important; border-color: #3d97f0 !important; }
+      .receipt-row { border-color: #334155 !important; }
+      .receipt-label { color: #cbd5e1 !important; }
+      .total-row { background-color: #1e3a5f !important; }
+      .total-label { color: #cbd5e1 !important; }
+      .total-value { color: #f1f5f9 !important; }
+      .warning-box { background-color: #1e293b !important; border-color: #f59e0b !important; }
+      .warning-text { color: #fef3c7 !important; }
+      .icon-circle { background-color: #1e293b !important; }
+    </style>
+  `;
+
   // Substitute test variables
-  const previewHtml = substituteVariables(htmlContent, TEST_DATA);
+  const baseHtml = substituteVariables(htmlContent, TEST_DATA);
+  const previewHtml = darkMode ? baseHtml + darkModeCSS : baseHtml;
   const previewSubject = substituteVariables(subject, TEST_DATA);
 
   // Reset state when modal opens
@@ -138,6 +176,28 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
               }`}
             >
               Mobile
+            </button>
+
+            {/* Dark mode toggle */}
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                darkMode
+                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+              title={darkMode ? 'Mode clair' : 'Mode sombre'}
+            >
+              {darkMode ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+              {darkMode ? 'Clair' : 'Sombre'}
             </button>
 
             {/* Close button */}

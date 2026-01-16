@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Save } from 'lucide-react';
+import { X, Save, Sun, Moon } from 'lucide-react';
 
 /**
  * GrapesJsEditorModal - Fullscreen modal with GrapesJS editor
@@ -24,6 +24,7 @@ export function GrapesJsEditorModal({
   const [editName, setEditName] = useState(templateName);
   const [editSubject, setEditSubject] = useState(templateSubject);
   const [mounted, setMounted] = useState(false);
+  const [darkPreview, setDarkPreview] = useState(false);
 
   // Track mount state for portal
   useEffect(() => {
@@ -195,6 +196,64 @@ export function GrapesJsEditorModal({
     };
   }, [isOpen, htmlContent, variables]);
 
+  // Toggle dark mode preview in canvas
+  useEffect(() => {
+    if (!editorRef.current || !isLoaded) return;
+
+    const canvasDoc = editorRef.current.Canvas.getDocument();
+    if (!canvasDoc) return;
+
+    const styleId = 'dark-preview-override';
+    let existingStyle = canvasDoc.getElementById(styleId);
+
+    if (darkPreview) {
+      // Inject dark mode override styles
+      if (!existingStyle) {
+        existingStyle = canvasDoc.createElement('style');
+        existingStyle.id = styleId;
+        canvasDoc.head.appendChild(existingStyle);
+      }
+      // Force dark mode by applying dark theme styles directly
+      existingStyle.textContent = `
+        :root { color-scheme: dark !important; }
+        .email-body { background-color: #020617 !important; }
+        .email-container { background-color: #0f172a !important; border-color: #334155 !important; }
+        .email-header { background-color: #1e293b !important; }
+        .text-primary { color: #f1f5f9 !important; }
+        .text-secondary { color: #cbd5e1 !important; }
+        .text-muted { color: #94a3b8 !important; }
+        .text-accent { color: #60a5fa !important; }
+        .divider { border-color: #334155 !important; }
+        .feature-card { background-color: #1e293b !important; border-color: #334155 !important; }
+        .feature-title { color: #f1f5f9 !important; }
+        .credits-box { background-color: #422006 !important; border-color: #fbbf24 !important; }
+        .credits-label { color: #fde68a !important; }
+        .credits-value { color: #fbbf24 !important; }
+        .footer-bg { background-color: #1e293b !important; border-color: #334155 !important; }
+        .icon-circle-blue { background-color: #334155 !important; }
+        .link-box { background-color: #1e293b !important; border-color: #60a5fa !important; }
+        .link-text { color: #60a5fa !important; }
+        .new-email-box { background-color: #1e293b !important; border-color: #60a5fa !important; }
+        .new-email-label { color: #94a3b8 !important; }
+        .new-email-value { color: #f1f5f9 !important; }
+        .receipt-box { background-color: #1e293b !important; border-color: #3d97f0 !important; }
+        .receipt-row { border-color: #334155 !important; }
+        .receipt-label { color: #cbd5e1 !important; }
+        .total-row { background-color: #1e3a5f !important; }
+        .total-label { color: #cbd5e1 !important; }
+        .total-value { color: #f1f5f9 !important; }
+        .warning-box { background-color: #1e293b !important; border-color: #f59e0b !important; }
+        .warning-text { color: #fef3c7 !important; }
+        .icon-circle { background-color: #1e293b !important; }
+      `;
+    } else {
+      // Remove dark mode override
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+    }
+  }, [darkPreview, isLoaded]);
+
   // Handle save
   const handleSave = () => {
     if (!editorRef.current) return;
@@ -250,6 +309,21 @@ export function GrapesJsEditorModal({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Dark mode toggle */}
+          <button
+            onClick={() => setDarkPreview(!darkPreview)}
+            disabled={!isLoaded}
+            className={`p-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50 ${
+              darkPreview
+                ? 'bg-slate-700 text-amber-400 border border-amber-500/30'
+                : 'bg-slate-700 text-slate-300 hover:text-white border border-slate-600'
+            }`}
+            title={darkPreview ? 'Mode clair' : 'Mode sombre'}
+          >
+            {darkPreview ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <span className="hidden sm:inline">{darkPreview ? 'Clair' : 'Sombre'}</span>
+          </button>
+
           {/* Variables info */}
           <div className="hidden lg:flex items-center gap-1 px-3 py-1.5 bg-emerald-500/10 rounded-lg border border-emerald-500/30">
             <span className="text-xs text-emerald-400">Variables:</span>
