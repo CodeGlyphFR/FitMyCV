@@ -196,63 +196,102 @@ export function GrapesJsEditorModal({
     };
   }, [isOpen, htmlContent, variables]);
 
-  // Toggle dark mode preview in canvas
+  // Toggle dark/light mode preview in canvas
   useEffect(() => {
     if (!editorRef.current || !isLoaded) return;
 
-    const canvasDoc = editorRef.current.Canvas.getDocument();
-    if (!canvasDoc) return;
+    // Small delay to ensure canvas is fully ready
+    const timeoutId = setTimeout(() => {
+      const canvasDoc = editorRef.current?.Canvas?.getDocument();
+      if (!canvasDoc || !canvasDoc.body) return;
 
-    const styleId = 'dark-preview-override';
-    let existingStyle = canvasDoc.getElementById(styleId);
+      const styleId = 'preview-mode-override';
+      let existingStyle = canvasDoc.getElementById(styleId);
 
-    if (darkPreview) {
-      // Inject dark mode override styles
       if (!existingStyle) {
         existingStyle = canvasDoc.createElement('style');
         existingStyle.id = styleId;
-        canvasDoc.head.appendChild(existingStyle);
+        // Append to body end to ensure highest priority (last styles win)
+        canvasDoc.body.appendChild(existingStyle);
       }
-      // Force dark mode by applying dark theme styles directly
-      existingStyle.textContent = `
-        :root { color-scheme: dark !important; }
-        .email-body { background-color: #020617 !important; }
-        .email-container { background-color: #0f172a !important; border-color: #334155 !important; }
-        .email-header { background-color: #1e293b !important; }
-        .text-primary { color: #f1f5f9 !important; }
-        .text-secondary { color: #cbd5e1 !important; }
-        .text-muted { color: #94a3b8 !important; }
-        .text-accent { color: #60a5fa !important; }
-        .divider { border-color: #334155 !important; }
-        .feature-card { background-color: #1e293b !important; border-color: #334155 !important; }
-        .feature-title { color: #f1f5f9 !important; }
-        .credits-box { background-color: #422006 !important; border-color: #fbbf24 !important; }
-        .credits-label { color: #fde68a !important; }
-        .credits-value { color: #fbbf24 !important; }
-        .footer-bg { background-color: #1e293b !important; border-color: #334155 !important; }
-        .icon-circle-blue { background-color: #334155 !important; }
-        .link-box { background-color: #1e293b !important; border-color: #60a5fa !important; }
-        .link-text { color: #60a5fa !important; }
-        .new-email-box { background-color: #1e293b !important; border-color: #60a5fa !important; }
-        .new-email-label { color: #94a3b8 !important; }
-        .new-email-value { color: #f1f5f9 !important; }
-        .receipt-box { background-color: #1e293b !important; border-color: #3d97f0 !important; }
-        .receipt-row { border-color: #334155 !important; }
-        .receipt-label { color: #cbd5e1 !important; }
-        .total-row { background-color: #1e3a5f !important; }
-        .total-label { color: #cbd5e1 !important; }
-        .total-value { color: #f1f5f9 !important; }
-        .warning-box { background-color: #1e293b !important; border-color: #f59e0b !important; }
-        .warning-text { color: #fef3c7 !important; }
-        .icon-circle { background-color: #1e293b !important; }
-      `;
-    } else {
-      // Remove dark mode override
-      if (existingStyle) {
-        existingStyle.remove();
+
+      if (darkPreview) {
+        // Force dark mode with high specificity
+        existingStyle.textContent = `
+          :root { color-scheme: dark only !important; }
+          html body, html body.email-body { background-color: #020617 !important; }
+          html body .email-container { background-color: #0f172a !important; border-color: #334155 !important; }
+          html body .email-header { background-color: #1e293b !important; }
+          html body .text-primary { color: #f1f5f9 !important; }
+          html body .text-secondary { color: #cbd5e1 !important; }
+          html body .text-muted { color: #94a3b8 !important; }
+          html body .text-accent { color: #60a5fa !important; }
+          html body .divider { border-color: #334155 !important; }
+          html body .feature-card { background-color: #1e293b !important; border-color: #334155 !important; }
+          html body .feature-title { color: #f1f5f9 !important; }
+          html body .credits-box { background-color: #422006 !important; border-color: #fbbf24 !important; }
+          html body .credits-label { color: #fde68a !important; }
+          html body .credits-value { color: #fbbf24 !important; }
+          html body .footer-bg { background-color: #1e293b !important; border-color: #334155 !important; }
+          html body .icon-circle-blue { background-color: #334155 !important; }
+          html body .link-box { background-color: #1e293b !important; border-color: #60a5fa !important; }
+          html body .link-text { color: #60a5fa !important; }
+          html body .new-email-box { background-color: #1e293b !important; border-color: #60a5fa !important; }
+          html body .new-email-label { color: #94a3b8 !important; }
+          html body .new-email-value { color: #f1f5f9 !important; }
+          html body .receipt-box { background-color: #1e293b !important; border-color: #3d97f0 !important; }
+          html body .receipt-row { border-color: #334155 !important; }
+          html body .receipt-label { color: #cbd5e1 !important; }
+          html body .total-row { background-color: #1e3a5f !important; }
+          html body .total-label { color: #cbd5e1 !important; }
+          html body .total-value { color: #f1f5f9 !important; }
+          html body .warning-box { background-color: #1e293b !important; border-color: #f59e0b !important; }
+          html body .warning-text { color: #fef3c7 !important; }
+          html body .icon-circle { background-color: #1e293b !important; }
+          html body .section-title { color: #f1f5f9 !important; }
+          html body .section-title p { color: #f1f5f9 !important; }
+        `;
+      } else {
+        // Force light mode with high specificity
+        existingStyle.textContent = `
+          :root { color-scheme: light only !important; }
+          html body, html body.email-body { background-color: #f8fafc !important; }
+          html body .email-container { background-color: #ffffff !important; border-color: #e2e8f0 !important; }
+          html body .email-header { background-color: #0f172a !important; }
+          html body .text-primary { color: #0f172a !important; }
+          html body .text-secondary { color: #64748b !important; }
+          html body .text-muted { color: #94a3b8 !important; }
+          html body .text-accent { color: #3d97f0 !important; }
+          html body .divider { border-color: #e2e8f0 !important; }
+          html body .feature-card { background-color: #f1f5f9 !important; border-color: #e2e8f0 !important; }
+          html body .feature-title { color: #0f172a !important; }
+          html body .credits-box { background-color: #fef3c7 !important; border-color: #f59e0b !important; }
+          html body .credits-label { color: #92400e !important; }
+          html body .credits-value { color: #d97706 !important; }
+          html body .footer-bg { background-color: #f8fafc !important; border-color: #e2e8f0 !important; }
+          html body .icon-circle-blue { background-color: #0f172a !important; }
+          html body .link-box { background-color: #ebf4ff !important; border-color: #3d97f0 !important; }
+          html body .link-text { color: #3d97f0 !important; }
+          html body .new-email-box { background-color: #ebf4ff !important; border-color: #3d97f0 !important; }
+          html body .new-email-label { color: #64748b !important; }
+          html body .new-email-value { color: #0f172a !important; }
+          html body .receipt-box { background-color: #f8fafc !important; border-color: #3d97f0 !important; }
+          html body .receipt-row { border-color: #e2e8f0 !important; }
+          html body .receipt-label { color: #64748b !important; }
+          html body .total-row { background-color: #ebf4ff !important; }
+          html body .total-label { color: #64748b !important; }
+          html body .total-value { color: #0f172a !important; }
+          html body .warning-box { background-color: #ebf4ff !important; border-color: #3d97f0 !important; }
+          html body .warning-text { color: #0f172a !important; }
+          html body .icon-circle { background-color: #0f172a !important; }
+          html body .section-title { color: #475569 !important; }
+          html body .section-title p { color: #0f172a !important; }
+        `;
       }
-    }
-  }, [darkPreview, isLoaded]);
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [darkPreview, isLoaded, htmlContent]);
 
   // Handle save
   const handleSave = () => {

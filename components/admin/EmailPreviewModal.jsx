@@ -48,10 +48,48 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
     return () => setMounted(false);
   }, []);
 
+  // Light mode override - force light mode even if system prefers dark
+  const lightModeCSS = `
+    <style id="light-mode-override">
+      :root { color-scheme: light only !important; }
+      .email-body, body { background-color: #f8fafc !important; }
+      .email-container { background-color: #ffffff !important; border-color: #e2e8f0 !important; }
+      .email-header { background-color: #0f172a !important; }
+      .text-primary { color: #0f172a !important; }
+      .text-secondary { color: #64748b !important; }
+      .text-muted { color: #94a3b8 !important; }
+      .text-accent { color: #3d97f0 !important; }
+      .divider { border-color: #e2e8f0 !important; }
+      .feature-card { background-color: #f1f5f9 !important; border-color: #e2e8f0 !important; }
+      .feature-title { color: #0f172a !important; }
+      .credits-box { background-color: #fef3c7 !important; border-color: #f59e0b !important; }
+      .credits-label { color: #92400e !important; }
+      .credits-value { color: #d97706 !important; }
+      .footer-bg { background-color: #f8fafc !important; border-color: #e2e8f0 !important; }
+      .icon-circle-blue { background-color: #0f172a !important; }
+      .link-box { background-color: #ebf4ff !important; border-color: #3d97f0 !important; }
+      .link-text { color: #3d97f0 !important; }
+      .new-email-box { background-color: #ebf4ff !important; border-color: #3d97f0 !important; }
+      .new-email-label { color: #64748b !important; }
+      .new-email-value { color: #0f172a !important; }
+      .receipt-box { background-color: #f8fafc !important; border-color: #3d97f0 !important; }
+      .receipt-row { border-color: #e2e8f0 !important; }
+      .receipt-label { color: #64748b !important; }
+      .total-row { background-color: #ebf4ff !important; }
+      .total-label { color: #64748b !important; }
+      .total-value { color: #0f172a !important; }
+      .warning-box { background-color: #ebf4ff !important; border-color: #3d97f0 !important; }
+      .warning-text { color: #0f172a !important; }
+      .icon-circle { background-color: #0f172a !important; }
+      .section-title { color: #475569 !important; }
+      .section-title p { color: #0f172a !important; }
+    </style>
+  `;
+
   // Dark mode override CSS
   const darkModeCSS = `
     <style id="dark-mode-override">
-      :root { color-scheme: dark !important; }
+      :root { color-scheme: dark only !important; }
       .email-body, body { background-color: #020617 !important; }
       .email-container { background-color: #0f172a !important; border-color: #334155 !important; }
       .email-header { background-color: #1e293b !important; }
@@ -81,12 +119,14 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
       .warning-box { background-color: #1e293b !important; border-color: #f59e0b !important; }
       .warning-text { color: #fef3c7 !important; }
       .icon-circle { background-color: #1e293b !important; }
+      .section-title { color: #f1f5f9 !important; }
+      .section-title p { color: #f1f5f9 !important; }
     </style>
   `;
 
   // Substitute test variables
   const baseHtml = substituteVariables(htmlContent, TEST_DATA);
-  const previewHtml = darkMode ? baseHtml + darkModeCSS : baseHtml;
+  const previewHtml = darkMode ? baseHtml + darkModeCSS : baseHtml + lightModeCSS;
   const previewSubject = substituteVariables(subject, TEST_DATA);
 
   // Reset state when modal opens

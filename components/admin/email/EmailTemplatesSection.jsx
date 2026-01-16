@@ -139,6 +139,7 @@ export function EmailTemplatesSection({ refreshKey, onLogsRefresh }) {
       setToast({ type: 'error', message: 'Aucun HTML stocke' });
       return;
     }
+    setSelectedTemplate(template);
     setPreviewHtml(template.htmlContent);
     setPreviewOpen(true);
   };
