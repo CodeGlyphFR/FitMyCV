@@ -188,18 +188,57 @@ export function SettingsTab({ refreshKey }) {
       return;
     }
 
+    // Si on désactive le mode maintenance, appliquer directement
+    if (setting?.settingName === 'maintenance_enabled' && newValue === '0') {
+      try {
+        const res = await fetch(`/api/admin/settings/${settingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: newValue }),
+        });
+
+        if (res.ok) {
+          setToast({ type: 'success', message: 'Mode maintenance désactivé. Le site est de nouveau accessible.' });
+          await fetchSettings();
+        } else {
+          setToast({ type: 'error', message: 'Erreur lors de la désactivation du mode maintenance' });
+        }
+      } catch (error) {
+        console.error('Error disabling maintenance mode:', error);
+        setToast({ type: 'error', message: 'Erreur lors de la désactivation du mode maintenance' });
+      }
+      return;
+    }
+
     setModifiedSettings(prev => ({
       ...prev,
       [settingId]: newValue
     }));
   }
 
-  function confirmMaintenanceToggle() {
+  async function confirmMaintenanceToggle() {
     if (pendingMaintenanceSetting) {
-      setModifiedSettings(prev => ({
-        ...prev,
-        [pendingMaintenanceSetting.settingId]: pendingMaintenanceSetting.newValue
-      }));
+      // Sauvegarder directement via l'API sans passer par modifiedSettings
+      try {
+        const res = await fetch(`/api/admin/settings/${pendingMaintenanceSetting.settingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: pendingMaintenanceSetting.newValue }),
+        });
+
+        if (res.ok) {
+          setToast({
+            type: 'success',
+            message: `Mode maintenance activé ! ${maintenanceInfo?.recentActiveUsers || 0} utilisateurs seront déconnectés.`
+          });
+          await fetchSettings(); // Rafraîchir les settings depuis la DB
+        } else {
+          setToast({ type: 'error', message: 'Erreur lors de l\'activation du mode maintenance' });
+        }
+      } catch (error) {
+        console.error('Error enabling maintenance mode:', error);
+        setToast({ type: 'error', message: 'Erreur lors de l\'activation du mode maintenance' });
+      }
     }
     setShowMaintenanceConfirm(false);
     setPendingMaintenanceSetting(null);
