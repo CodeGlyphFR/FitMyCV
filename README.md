@@ -99,4 +99,4 @@ Propriétaire - Tous droits réservés
 
 ---
 
-**Développé avec Next.js 14 et OpenAI** | Version 1.0.9.4
+**Développé avec Next.js 14 et OpenAI** | Version 1.0.9.2
