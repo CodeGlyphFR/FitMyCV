@@ -257,17 +257,21 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
       // groupedFeatureData est déjà trié par coût décroissant
       const newTopFeature = groupedFeatureData[0];
 
-      // Ne mettre à jour que si la feature change réellement (pas juste un re-order temporaire)
-      if (newTopFeature.feature !== stableTopFeature.feature ||
-          Math.abs(newTopFeature.cost - stableTopFeature.cost) > 0.01) {
-        setStableTopFeature({
-          feature: newTopFeature.feature,
-          name: newTopFeature.name,
-          cost: newTopFeature.cost,
-        });
-      }
+      // Utiliser setState fonctionnel pour accéder à prev sans le mettre dans les deps
+      // Cela évite la boucle infinie de re-renders
+      setStableTopFeature(prev => {
+        if (newTopFeature.feature !== prev.feature ||
+            Math.abs(newTopFeature.cost - prev.cost) > 0.01) {
+          return {
+            feature: newTopFeature.feature,
+            name: newTopFeature.name,
+            cost: newTopFeature.cost,
+          };
+        }
+        return prev;
+      });
     }
-  }, [groupedFeatureData, stableTopFeature.feature, stableTopFeature.cost]);
+  }, [groupedFeatureData]);
 
   const fetchData = async () => {
     try {

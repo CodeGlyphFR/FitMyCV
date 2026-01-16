@@ -62,11 +62,13 @@ export function useModificationReview(batchResults) {
 
   /**
    * Accepter toutes les modifications non décidées
+   * Utilise mod.modIndex (index original) au lieu de l'index d'affichage
    */
   const acceptAll = useCallback((modifications) => {
     const newDecisions = { ...decisions };
     Object.entries(modifications).forEach(([section, mods]) => {
-      mods.forEach((mod, index) => {
+      mods.forEach((mod, displayIndex) => {
+        const index = mod.modIndex ?? displayIndex;
         const key = getModificationKey(section, index, mod.field);
         if (!newDecisions[key]) {
           newDecisions[key] = 'accepted';
@@ -78,11 +80,13 @@ export function useModificationReview(batchResults) {
 
   /**
    * Refuser toutes les modifications non décidées
+   * Utilise mod.modIndex (index original) au lieu de l'index d'affichage
    */
   const rejectAll = useCallback((modifications) => {
     const newDecisions = { ...decisions };
     Object.entries(modifications).forEach(([section, mods]) => {
-      mods.forEach((mod, index) => {
+      mods.forEach((mod, displayIndex) => {
+        const index = mod.modIndex ?? displayIndex;
         const key = getModificationKey(section, index, mod.field);
         if (!newDecisions[key]) {
           newDecisions[key] = 'rejected';
@@ -94,10 +98,12 @@ export function useModificationReview(batchResults) {
 
   /**
    * Accepter toutes les modifications d'une section
+   * Utilise mod.modIndex (index original) au lieu de l'index d'affichage
    */
   const acceptAllInSection = useCallback((section, mods) => {
     const newDecisions = { ...decisions };
-    mods.forEach((mod, index) => {
+    mods.forEach((mod, displayIndex) => {
+      const index = mod.modIndex ?? displayIndex;
       const key = getModificationKey(section, index, mod.field);
       newDecisions[key] = 'accepted';
     });
@@ -106,10 +112,12 @@ export function useModificationReview(batchResults) {
 
   /**
    * Refuser toutes les modifications d'une section
+   * Utilise mod.modIndex (index original) au lieu de l'index d'affichage
    */
   const rejectAllInSection = useCallback((section, mods) => {
     const newDecisions = { ...decisions };
-    mods.forEach((mod, index) => {
+    mods.forEach((mod, displayIndex) => {
+      const index = mod.modIndex ?? displayIndex;
       const key = getModificationKey(section, index, mod.field);
       newDecisions[key] = 'rejected';
     });

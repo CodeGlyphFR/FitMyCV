@@ -33,7 +33,7 @@ export default function ModificationCard({
     onToggle?.(!isExpanded);
   };
 
-  const { field, action, before, after, reason } = modification;
+  const { field, displayField, action, before, after, reason } = modification;
 
   // Couleur selon l'action
   const actionColors = {
@@ -122,8 +122,8 @@ export default function ModificationCard({
             >
               {colors.label}
             </span>
-            {/* Champ modifié */}
-            <span className="text-white/80 text-sm truncate">{field}</span>
+            {/* Champ modifié - utilise displayField pour l'affichage si disponible */}
+            <span className="text-white/80 text-sm truncate">{displayField || field}</span>
           </div>
           {/* Chevron */}
           {isExpanded ? (

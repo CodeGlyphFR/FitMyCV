@@ -69,7 +69,9 @@ export default function SectionDiff({
   ).length;
 
   // Compteur de décisions pour la section
-  const reviewedInSection = modifications.filter((mod, index) => {
+  // On utilise mod.modIndex (index original) au lieu de l'index d'affichage
+  const reviewedInSection = modifications.filter((mod) => {
+    const index = mod.modIndex ?? 0;
     const decision = getDecision?.(sectionName, index, mod.field);
     return decision === 'accepted' || decision === 'rejected';
   }).length;
@@ -148,11 +150,13 @@ export default function SectionDiff({
       {/* Liste des modifications */}
       {isExpanded && (
         <div className="px-4 pb-4 space-y-2">
-          {modifications.map((mod, index) => {
+          {modifications.map((mod, displayIndex) => {
+            // On utilise mod.modIndex (index original) au lieu de displayIndex pour la clé de décision
+            const index = mod.modIndex ?? displayIndex;
             const decision = getDecision?.(sectionName, index, mod.field);
             return (
               <ModificationCard
-                key={`${mod.field}-${index}`}
+                key={`${mod.field}-${displayIndex}`}
                 modification={mod}
                 expanded={false}
                 decision={decision}

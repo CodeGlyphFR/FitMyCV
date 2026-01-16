@@ -29,21 +29,23 @@ function extractModifications(batchResults) {
 
   if (!batchResults) return result;
 
-  // Summary
+  // Summary - modIndex correspond à l'index dans le tableau de modifications
   if (batchResults.summary?.modifications) {
     result.summary = Array.isArray(batchResults.summary.modifications)
-      ? batchResults.summary.modifications
+      ? batchResults.summary.modifications.map((mod, modIndex) => ({ ...mod, modIndex }))
       : [];
   }
 
   // Experiences - peut être un tableau d'expériences adaptées
+  // On conserve le modIndex original pour que la clé de décision corresponde à applySelectiveChanges
   if (Array.isArray(batchResults.experiences)) {
     batchResults.experiences.forEach((exp, index) => {
       if (exp.modifications && Array.isArray(exp.modifications)) {
-        exp.modifications.forEach((mod) => {
+        exp.modifications.forEach((mod, modIndex) => {
           result.experiences.push({
             ...mod,
             field: `${exp.title || exp.company || `Exp ${index + 1}`} - ${mod.field}`,
+            modIndex, // Index original dans le tableau de modifications de cette expérience
           });
         });
       }
@@ -51,13 +53,15 @@ function extractModifications(batchResults) {
   }
 
   // Projects - peut être un tableau de projets adaptés
+  // On conserve le modIndex original pour que la clé de décision corresponde à applySelectiveChanges
   if (Array.isArray(batchResults.projects)) {
     batchResults.projects.forEach((proj, index) => {
       if (proj.modifications && Array.isArray(proj.modifications)) {
-        proj.modifications.forEach((mod) => {
+        proj.modifications.forEach((mod, modIndex) => {
           result.projects.push({
             ...mod,
             field: `${proj.name || `Projet ${index + 1}`} - ${mod.field}`,
+            modIndex, // Index original dans le tableau de modifications de ce projet
           });
         });
       }
@@ -67,48 +71,57 @@ function extractModifications(batchResults) {
   // Skills - modifications directes sur l'objet skills
   // Note: skills modifications use {category, skill, action, reason} format
   // We need to transform to {field, action, before, after, reason} for ModificationCard
+  // Le format du field doit correspondre à applySelectiveChanges: "category.skillName"
+  // modIndex correspond à l'index dans le tableau de modifications skills
   if (batchResults.skills?.modifications) {
     const skillsMods = Array.isArray(batchResults.skills.modifications)
       ? batchResults.skills.modifications
       : [];
-    result.skills = skillsMods.map((mod) => ({
-      field: `${mod.category || 'skill'}: ${mod.skill}`,
+    result.skills = skillsMods.map((mod, modIndex) => ({
+      // Utiliser mod.field si disponible, sinon construire le format "category.skill"
+      field: mod.field || `${mod.category || 'skill'}.${mod.skill}`,
+      // Pour l'affichage, on peut garder un label plus lisible
+      displayField: `${mod.category || 'skill'}: ${mod.skill}`,
       action: mod.action,
       before: mod.action === 'removed' ? mod.skill : null,
       after: mod.action === 'added' ? mod.skill : null,
       reason: mod.reason,
+      modIndex, // Index original dans le tableau de modifications skills
     }));
   }
 
   // Extras - peut être un tableau ou un objet avec modifications
+  // On conserve le modIndex original pour que la clé de décision corresponde à applySelectiveChanges
   if (Array.isArray(batchResults.extras)) {
     batchResults.extras.forEach((extra, index) => {
       if (extra.modifications && Array.isArray(extra.modifications)) {
-        extra.modifications.forEach((mod) => {
+        extra.modifications.forEach((mod, modIndex) => {
           result.extras.push({
             ...mod,
             field: `${extra.name || `Extra ${index + 1}`} - ${mod.field}`,
+            modIndex, // Index original dans le tableau de modifications de cet extra
           });
         });
       }
     });
   } else if (batchResults.extras?.modifications) {
     result.extras = Array.isArray(batchResults.extras.modifications)
-      ? batchResults.extras.modifications
+      ? batchResults.extras.modifications.map((mod, modIndex) => ({ ...mod, modIndex }))
       : [];
   }
 
-  // Languages
+  // Languages - modIndex correspond à l'index dans le tableau adapted
   if (batchResults.languages?.modifications) {
     const langMods = batchResults.languages.modifications;
     if (Array.isArray(langMods.adapted)) {
-      langMods.adapted.forEach((lang) => {
+      langMods.adapted.forEach((lang, modIndex) => {
         result.languages.push({
           field: lang,
           action: 'modified',
           before: '',
           after: lang,
           reason: 'Format adapté selon l\'offre',
+          modIndex, // Index original dans le tableau adapted
         });
       });
     }
