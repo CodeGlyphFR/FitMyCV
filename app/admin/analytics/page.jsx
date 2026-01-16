@@ -11,7 +11,7 @@ import { UsersTab } from '@/components/admin/UsersTab';
 import { SubscriptionPlansTab } from '@/components/admin/SubscriptionPlansTab';
 import { RevenueTab } from '@/components/admin/RevenueTab';
 import { OnboardingTab } from '@/components/admin/OnboardingTab';
-import { EmailTemplatesTab } from '@/components/admin/EmailTemplatesTab';
+import { EmailManagementTab } from '@/components/admin/EmailManagementTab';
 import { DateRangePicker } from '@/components/admin/DateRangePicker';
 import { UserFilter } from '@/components/admin/UserFilter';
 import { TabsBar } from '@/components/admin/TabsBar';
@@ -221,7 +221,7 @@ export default function AnalyticsDashboard() {
         {activeTab === 'onboarding' && <OnboardingTab period={period} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'revenue' && <RevenueTab refreshKey={refreshKey} />}
         {activeTab === 'subscriptions' && <SubscriptionPlansTab refreshKey={refreshKey} />}
-        {activeTab === 'emails' && <EmailTemplatesTab refreshKey={refreshKey} />}
+        {activeTab === 'emails' && <EmailManagementTab refreshKey={refreshKey} />}
         {activeTab === 'settings' && <SettingsTab refreshKey={refreshKey} />}
       </div>
     </div>
