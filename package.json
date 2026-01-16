@@ -11,7 +11,8 @@
     "db:setup": "prisma migrate deploy && prisma db seed",
     "db:reset": "prisma migrate reset",
     "db:seed": "prisma db seed",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "email:preview": "node scripts/preview-emails.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -34,6 +35,8 @@
     "clsx": "^2.1.1",
     "docx": "^9.5.1",
     "framer-motion": "^12.25.0",
+    "grapesjs": "^0.22.14",
+    "grapesjs-preset-newsletter": "^1.0.2",
     "html-to-docx": "^1.8.0",
     "jsdom": "^27.4.0",
     "lucide-react": "^0.562.0",

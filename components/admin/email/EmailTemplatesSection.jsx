@@ -1,12 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronDown, ChevronRight, Plus, ArrowLeft, Image, Eye, Save, Check, Star, Trash2, Zap } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, ArrowLeft, Eye, Check, Star, Trash2, Zap, Pencil } from 'lucide-react';
 import { EmailPreviewModal } from '../EmailPreviewModal';
 import { Toast } from '../Toast';
-import { MailyEditor, getEditorJSON, getEditorHTML } from '../MailyEditor';
-import { ImagePickerModal } from '../ImagePickerModal';
-import { render } from '@maily-to/render';
+import { GrapesJsEditorModal } from '../GrapesJsEditorModal';
 import { CATEGORY_LABELS } from '@/lib/email/triggers';
 
 /**
@@ -24,18 +22,11 @@ export function EmailTemplatesSection({ refreshKey, onLogsRefresh }) {
   const [toast, setToast] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
-  const [editorReady, setEditorReady] = useState(false);
-  const [editSubject, setEditSubject] = useState('');
-  const [editName, setEditName] = useState('');
+  const [editorModalOpen, setEditorModalOpen] = useState(false);
   const [showNewTemplateForm, setShowNewTemplateForm] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [copyFromTemplateId, setCopyFromTemplateId] = useState('');
-  const [imagePickerOpen, setImagePickerOpen] = useState(false);
-  const [backgroundColor, setBackgroundColor] = useState('#ffffff');
   const [expandedCategories, setExpandedCategories] = useState({});
-
-  // Ref for editor instance
-  const editorRef = useRef(null);
 
   // Fetch triggers from API
   const fetchTriggers = async () => {
@@ -89,87 +80,29 @@ export function EmailTemplatesSection({ refreshKey, onLogsRefresh }) {
   const handleSelectTrigger = async (trigger) => {
     setSelectedTrigger(trigger);
     setSelectedTemplate(null);
-    setEditorReady(false);
     setShowNewTemplateForm(false);
-    editorRef.current = null;
-
     await fetchTriggerTemplates(trigger.name);
   };
 
-  // Handle template selection
-  const handleSelectTemplate = (template) => {
+  // Handle edit template (open modal)
+  const handleEditTemplate = (template) => {
     setSelectedTemplate(template);
-    setEditSubject(template?.subject || '');
-    setEditName(template?.name || '');
-    setEditorReady(false);
-    setShowNewTemplateForm(false);
-    editorRef.current = null;
-
-    // Load background color from designJson if available
-    try {
-      const design = template?.designJson ? JSON.parse(template.designJson) : null;
-      setBackgroundColor(design?.backgroundColor || '#ffffff');
-    } catch {
-      setBackgroundColor('#ffffff');
-    }
+    setEditorModalOpen(true);
   };
 
-  // Handle editor ready
-  const handleEditorReady = useCallback((editor) => {
-    editorRef.current = editor;
-    setEditorReady(true);
-  }, []);
-
-  // Handle editor change
-  const handleEditorChange = useCallback((editor) => {
-    editorRef.current = editor;
-  }, []);
-
-  // Handle image selection from picker
-  const handleImageSelect = useCallback((imagePath) => {
-    const editor = editorRef.current;
-    if (!editor) return;
-
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-    const fullUrl = `${siteUrl}${imagePath}`;
-
-    editor.chain().focus().setImage({ src: fullUrl }).run();
-
-    setToast({ type: 'success', message: 'Image insérée' });
-  }, []);
-
-  // Handle save
-  const handleSave = async () => {
+  // Handle save from modal
+  const handleSaveFromModal = async ({ name, subject, htmlContent }) => {
     if (!selectedTemplate) return;
-
-    const editor = editorRef.current;
-    if (!editor) {
-      setToast({ type: 'error', message: 'Éditeur non prêt' });
-      return;
-    }
 
     setSaving(true);
     try {
-      const editorContent = getEditorJSON(editor);
-      const designJson = { ...editorContent, backgroundColor };
-
-      let htmlContent = '';
-      try {
-        htmlContent = await render(editorContent);
-        htmlContent = htmlContent.replace(/background-color:\s*#ffffff/gi, `background-color:${backgroundColor}`);
-        htmlContent = htmlContent.replace(/background-color:\s*white/gi, `background-color:${backgroundColor}`);
-      } catch (renderError) {
-        console.error('Error rendering HTML:', renderError);
-        htmlContent = getEditorHTML(editor);
-      }
-
       const res = await fetch(`/api/admin/email-templates/${selectedTemplate.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: editName,
-          subject: editSubject,
-          designJson: JSON.stringify(designJson),
+          name,
+          subject,
+          designJson: '{}',
           htmlContent,
         }),
       });
@@ -190,7 +123,8 @@ export function EmailTemplatesSection({ refreshKey, onLogsRefresh }) {
         await fetchTriggerTemplates(selectedTrigger.name);
       }
 
-      setToast({ type: 'success', message: 'Template sauvegardé avec succès' });
+      setToast({ type: 'success', message: 'Template sauvegarde avec succes' });
+      setEditorModalOpen(false);
     } catch (error) {
       console.error('Error saving template:', error);
       setToast({ type: 'error', message: error.message || 'Erreur lors de la sauvegarde' });
@@ -199,32 +133,14 @@ export function EmailTemplatesSection({ refreshKey, onLogsRefresh }) {
     }
   };
 
-  // Handle preview
-  const handlePreview = async () => {
-    const editor = editorRef.current;
-    if (!editor) {
-      setToast({ type: 'error', message: 'Éditeur non prêt' });
+  // Handle preview stored HTML
+  const handlePreviewHtml = (template) => {
+    if (!template?.htmlContent) {
+      setToast({ type: 'error', message: 'Aucun HTML stocke' });
       return;
     }
-
-    try {
-      const designJson = getEditorJSON(editor);
-      let html = '';
-
-      try {
-        html = await render(designJson);
-        html = html.replace(/background-color:\s*#ffffff/gi, `background-color:${backgroundColor}`);
-        html = html.replace(/background-color:\s*white/gi, `background-color:${backgroundColor}`);
-      } catch (renderError) {
-        html = getEditorHTML(editor);
-      }
-
-      setPreviewHtml(html);
-      setPreviewOpen(true);
-    } catch (error) {
-      console.error('Error exporting for preview:', error);
-      setToast({ type: 'error', message: "Erreur lors de la génération de l'aperçu" });
-    }
+    setPreviewHtml(template.htmlContent);
+    setPreviewOpen(true);
   };
 
   // Handle activate template
@@ -397,183 +313,6 @@ export function EmailTemplatesSection({ refreshKey, onLogsRefresh }) {
     );
   }
 
-  // Template Editor View
-  if (selectedTemplate) {
-    return (
-      <div className="space-y-4">
-        {/* Toast */}
-        {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
-
-        {/* Back button */}
-        <button
-          onClick={() => setSelectedTemplate(null)}
-          className="text-white/60 hover:text-white flex items-center gap-2 text-sm"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Retour aux templates
-        </button>
-
-        {/* Template name & subject */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <label className="block text-sm text-white/60 mb-2">Nom du template</label>
-            <input
-              type="text"
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-emerald-500/50"
-            />
-          </div>
-          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <label className="block text-sm text-white/60 mb-2">Sujet de l'email</label>
-            <input
-              type="text"
-              value={editSubject}
-              onChange={(e) => setEditSubject(e.target.value)}
-              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-emerald-500/50"
-            />
-          </div>
-        </div>
-
-        {/* Variables reminder */}
-        <div className="bg-emerald-500/10 rounded-xl border border-emerald-500/30 p-3">
-          <p className="text-sm text-emerald-300">
-            <strong>Variables disponibles :</strong>{' '}
-            {selectedTrigger?.variables.map((v) => (
-              <code key={v} className="mx-1 px-1.5 py-0.5 bg-white/10 rounded text-xs">@{v}</code>
-            ))}
-          </p>
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            {selectedTemplate.isActive ? (
-              <span className="text-xs bg-emerald-500 text-white px-3 py-1.5 rounded-lg flex items-center gap-1">
-                <Check className="w-3 h-3" /> Actif
-              </span>
-            ) : (
-              <button
-                onClick={() => handleActivateTemplate(selectedTemplate.id)}
-                className="text-xs bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-lg flex items-center gap-1"
-              >
-                <Zap className="w-3 h-3" /> Activer
-              </button>
-            )}
-            {selectedTemplate.isDefault ? (
-              <span className="text-xs bg-blue-500 text-white px-3 py-1.5 rounded-lg flex items-center gap-1">
-                <Star className="w-3 h-3" /> Défaut
-              </span>
-            ) : (
-              <button
-                onClick={() => handleSetDefault(selectedTemplate.id)}
-                className="text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 px-3 py-1.5 rounded-lg flex items-center gap-1"
-              >
-                <Star className="w-3 h-3" /> Définir défaut
-              </button>
-            )}
-            {!editorReady && (
-              <span className="text-xs text-amber-400">Chargement...</span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => setImagePickerOpen(true)}
-              disabled={!editorReady}
-              className="px-3 py-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 text-white rounded-lg transition-colors flex items-center gap-2 text-sm"
-            >
-              <Image className="w-4 h-4" />
-              <span className="hidden sm:inline">Images</span>
-            </button>
-
-            {/* Background color picker */}
-            <div className="flex items-center gap-1.5 px-2 py-1.5 bg-white/10 rounded-lg">
-              <span className="text-xs text-white/60 hidden sm:inline">Fond:</span>
-              <div
-                className="w-6 h-6 rounded border border-white/30 flex items-center justify-center"
-                style={{ backgroundColor }}
-              >
-                <div className="w-3 h-2 bg-white/80 rounded-xs" />
-              </div>
-              {['#ffffff', '#f9fafb', '#ecfdf5', '#d1fae5', '#020617'].map((color) => (
-                <button
-                  key={color}
-                  onClick={() => setBackgroundColor(color)}
-                  className={`w-5 h-5 rounded border-2 transition-all ${
-                    backgroundColor === color
-                      ? 'border-emerald-400 scale-110'
-                      : 'border-white/20 hover:border-white/40'
-                  }`}
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-              <input
-                type="color"
-                value={backgroundColor}
-                onChange={(e) => setBackgroundColor(e.target.value)}
-                className="w-5 h-5 rounded cursor-pointer border-2 border-white/20"
-              />
-            </div>
-
-            <button
-              onClick={handlePreview}
-              disabled={!editorReady}
-              className="px-3 py-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 text-white rounded-lg transition-colors flex items-center gap-2 text-sm"
-            >
-              <Eye className="w-4 h-4" />
-              <span className="hidden sm:inline">Aperçu</span>
-            </button>
-
-            <button
-              onClick={handleSave}
-              disabled={!editorReady || saving}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-medium rounded-lg transition-colors flex items-center gap-2 text-sm"
-            >
-              {saving ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span className="hidden sm:inline">Sauvegarde...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  <span className="hidden sm:inline">Sauvegarder</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Maily Editor */}
-        <MailyEditor
-          contentJson={selectedTemplate.designJson}
-          variables={selectedTrigger?.variables || []}
-          onReady={handleEditorReady}
-          onChange={handleEditorChange}
-          backgroundColor={backgroundColor}
-        />
-
-        {/* Preview Modal */}
-        <EmailPreviewModal
-          isOpen={previewOpen}
-          onClose={() => setPreviewOpen(false)}
-          htmlContent={previewHtml}
-          subject={editSubject}
-          templateId={selectedTemplate?.id}
-          onTestSent={() => onLogsRefresh?.()}
-        />
-
-        {/* Image Picker Modal */}
-        <ImagePickerModal
-          isOpen={imagePickerOpen}
-          onClose={() => setImagePickerOpen(false)}
-          onSelect={handleImageSelect}
-        />
-      </div>
-    );
-  }
-
   // Trigger Templates List View
   if (selectedTrigger) {
     return (
@@ -729,10 +468,18 @@ export function EmailTemplatesSection({ refreshKey, onLogsRefresh }) {
                       </button>
                     )}
                     <button
-                      onClick={() => handleSelectTemplate(template)}
-                      className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg"
+                      onClick={() => handlePreviewHtml(template)}
+                      className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg flex items-center gap-1"
                     >
-                      Éditer
+                      <Eye className="w-3 h-3" />
+                      Apercu
+                    </button>
+                    <button
+                      onClick={() => handleEditTemplate(template)}
+                      className="px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-sm rounded-lg flex items-center gap-1"
+                    >
+                      <Pencil className="w-3 h-3" />
+                      Editer
                     </button>
                     <button
                       onClick={() => handleDeleteTemplate(template.id)}
@@ -751,10 +498,35 @@ export function EmailTemplatesSection({ refreshKey, onLogsRefresh }) {
             <p className="text-white/60">
               Aucun template pour ce trigger.
               <br />
-              Créez-en un pour commencer.
+              Creez-en un pour commencer.
             </p>
           </div>
         )}
+
+        {/* GrapesJS Editor Modal */}
+        <GrapesJsEditorModal
+          isOpen={editorModalOpen}
+          onClose={() => {
+            setEditorModalOpen(false);
+            setSelectedTemplate(null);
+          }}
+          onSave={handleSaveFromModal}
+          htmlContent={selectedTemplate?.htmlContent || ''}
+          variables={selectedTrigger?.variables || []}
+          templateName={selectedTemplate?.name || ''}
+          templateSubject={selectedTemplate?.subject || ''}
+          saving={saving}
+        />
+
+        {/* Preview Modal */}
+        <EmailPreviewModal
+          isOpen={previewOpen}
+          onClose={() => setPreviewOpen(false)}
+          htmlContent={previewHtml}
+          subject={selectedTemplate?.subject || ''}
+          templateId={selectedTemplate?.id}
+          onTestSent={() => onLogsRefresh?.()}
+        />
       </div>
     );
   }
@@ -831,6 +603,31 @@ export function EmailTemplatesSection({ refreshKey, onLogsRefresh }) {
           </div>
         );
       })}
+
+      {/* GrapesJS Editor Modal */}
+      <GrapesJsEditorModal
+        isOpen={editorModalOpen}
+        onClose={() => {
+          setEditorModalOpen(false);
+          setSelectedTemplate(null);
+        }}
+        onSave={handleSaveFromModal}
+        htmlContent={selectedTemplate?.htmlContent || ''}
+        variables={selectedTrigger?.variables || []}
+        templateName={selectedTemplate?.name || ''}
+        templateSubject={selectedTemplate?.subject || ''}
+        saving={saving}
+      />
+
+      {/* Preview Modal */}
+      <EmailPreviewModal
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        htmlContent={previewHtml}
+        subject={selectedTemplate?.subject || ''}
+        templateId={selectedTemplate?.id}
+        onTestSent={() => onLogsRefresh?.()}
+      />
     </div>
   );
 }

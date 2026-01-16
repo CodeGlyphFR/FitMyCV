@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 // Test data for variable substitution
 const TEST_DATA = {
@@ -38,6 +39,13 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
   const [testEmail, setTestEmail] = useState('');
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Track mount state for portal
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   // Substitute test variables
   const previewHtml = substituteVariables(htmlContent, TEST_DATA);
@@ -55,12 +63,10 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+      return () => {
+        document.body.style.overflow = '';
+      };
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isOpen]);
 
   const handleSendTest = async () => {
@@ -92,10 +98,10 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -149,8 +155,8 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
         {/* Preview iframe */}
         <div className="flex-1 overflow-auto p-6 bg-gray-800/50 custom-scrollbar">
           <div
-            className={`mx-auto rounded-lg shadow-lg transition-all duration-300 overflow-hidden ${
-              viewMode === 'mobile' ? 'max-w-[375px]' : 'max-w-[600px]'
+            className={`mx-auto rounded-lg shadow-lg transition-all duration-300 bg-white ${
+              viewMode === 'mobile' ? 'w-[320px]' : 'max-w-[600px]'
             }`}
           >
             <iframe
@@ -218,6 +224,8 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
 
 export default EmailPreviewModal;
