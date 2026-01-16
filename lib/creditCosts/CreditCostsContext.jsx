@@ -34,7 +34,15 @@ export function CreditCostsProvider({ children }) {
         headers: { 'Cache-Control': 'no-cache' },
       });
 
-      if (!response.ok) throw new Error('Erreur API');
+      if (!response.ok) {
+        // 401 = déconnexion en cours (ex: mode maintenance) - pas une vraie erreur
+        if (response.status === 401) {
+          setState({ ...defaultState, loading: false });
+          return;
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Erreur API ${response.status}: ${errorData.error || response.statusText}`);
+      }
 
       const data = await response.json();
 
