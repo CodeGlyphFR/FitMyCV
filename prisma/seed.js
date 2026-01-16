@@ -894,113 +894,59 @@ async function main() {
   let totalCreated = 0;
   let totalSkipped = 0;
 
-  // ===== 1. Email Triggers =====
+  // ===== 1. Email Triggers (purge + seed) =====
+  // Purge existing templates first (FK dependency), then triggers
+  await prisma.emailTemplate.deleteMany({});
+  await prisma.emailTrigger.deleteMany({});
+
   let triggersCreated = 0;
-  let triggersUpdated = 0;
   const triggerMap = {}; // Store trigger IDs for template association
   for (const trigger of EMAIL_TRIGGERS) {
     try {
-      // Use upsert to create or update triggers (variables may have changed)
-      const result = await prisma.emailTrigger.upsert({
-        where: { name: trigger.name },
-        update: {
-          label: trigger.label,
-          description: trigger.description,
-          variables: trigger.variables,
-          category: trigger.category,
-          icon: trigger.icon,
-        },
-        create: trigger,
-      });
+      const result = await prisma.emailTrigger.create({ data: trigger });
       triggerMap[trigger.name] = result.id;
-      // Check if it was created or updated by comparing timestamps
-      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
-        triggersCreated++;
-      } else {
-        triggersUpdated++;
-      }
+      triggersCreated++;
     } catch (error) { /* ignore */ }
   }
-  console.log(formatLine('🎯', 'Email Triggers', EMAIL_TRIGGERS.length, EMAIL_TRIGGERS.length));
-  results.push({ created: triggersCreated, updated: triggersUpdated });
+  console.log(formatLine('🎯', 'Email Triggers', triggersCreated, EMAIL_TRIGGERS.length));
+  results.push({ created: triggersCreated });
 
-  // ===== 2. Email Templates (chargés depuis fichiers JSON) =====
+  // ===== 2. Email Templates (chargés depuis fichiers JSON, tous actifs) =====
   const emailTemplates = loadEmailTemplates();
   let templatesCreated = 0;
-  let templatesUpdated = 0;
   for (const template of emailTemplates) {
     try {
-      // Get trigger ID from triggerName stored in file
       const triggerId = template.triggerName ? triggerMap[template.triggerName] : null;
-
-      // Check if template already exists with this name + trigger combination
-      const existingTemplate = await prisma.emailTemplate.findFirst({
-        where: {
+      await prisma.emailTemplate.create({
+        data: {
           name: template.name,
-          triggerId: triggerId || undefined,
+          subject: template.subject,
+          variables: template.variables,
+          htmlContent: template.htmlContent,
+          designJson: template.designJson,
+          isActive: true, // Force tous les templates actifs
+          isDefault: template.isDefault,
+          triggerId: triggerId,
         },
       });
-
-      if (existingTemplate) {
-        // Update existing template
-        await prisma.emailTemplate.update({
-          where: { id: existingTemplate.id },
-          data: {
-            subject: template.subject,
-            variables: template.variables,
-            htmlContent: template.htmlContent,
-            designJson: template.designJson,
-            isActive: template.isActive,
-            isDefault: template.isDefault,
-          },
-        });
-        templatesUpdated++;
-      } else {
-        // Create new template
-        await prisma.emailTemplate.create({
-          data: {
-            name: template.name,
-            subject: template.subject,
-            variables: template.variables,
-            htmlContent: template.htmlContent,
-            designJson: template.designJson,
-            isActive: template.isActive,
-            isDefault: template.isDefault,
-            triggerId: triggerId,
-          },
-        });
-        templatesCreated++;
-      }
+      templatesCreated++;
     } catch (error) { /* ignore */ }
   }
-  console.log(formatLine('📧', 'Email Templates', emailTemplates.length, emailTemplates.length));
-  results.push({ created: templatesCreated, updated: templatesUpdated });
+  console.log(formatLine('📧', 'Email Templates', templatesCreated, emailTemplates.length));
+  results.push({ created: templatesCreated });
 
-  // ===== 3. Credit Packs (upsert - préserve IDs Stripe) =====
+  // ===== 3. Credit Packs (purge + seed, Stripe sync après) =====
+  await prisma.creditPack.deleteMany({});
+
   let packsCreated = 0;
-  let packsUpdated = 0;
   for (const pack of CREDIT_PACKS) {
     try {
-      const result = await prisma.creditPack.upsert({
-        where: { creditAmount: pack.creditAmount },
-        update: {
-          name: pack.name,
-          price: pack.price,
-          priceCurrency: pack.priceCurrency,
-          isActive: pack.isActive,
-          // Note: stripeProductId et stripePriceId sont préservés
-        },
-        create: pack,
-      });
-      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
-        packsCreated++;
-      } else {
-        packsUpdated++;
-      }
+      await prisma.creditPack.create({ data: pack });
+      packsCreated++;
     } catch (error) { /* ignore */ }
   }
-  console.log(formatLine('💰', 'Credit Packs', CREDIT_PACKS.length, CREDIT_PACKS.length));
-  results.push({ created: packsCreated, updated: packsUpdated });
+  console.log(formatLine('💰', 'Credit Packs', packsCreated, CREDIT_PACKS.length));
+  results.push({ created: packsCreated });
 
   // ===== 4. Subscription Plans (upsert - préserve IDs Stripe, recrée featureLimits) =====
   let plansCreated = 0;
@@ -1075,31 +1021,18 @@ async function main() {
   }
   console.log(formatStripeLine(stripeSynced));
 
-  // ===== 6. OpenAI Pricing (upsert) =====
+  // ===== 6. OpenAI Pricing (purge + seed) =====
+  await prisma.openAIPricing.deleteMany({});
+
   let pricingCreated = 0;
-  let pricingUpdated = 0;
   for (const pricing of OPENAI_PRICING) {
     try {
-      const result = await prisma.openAIPricing.upsert({
-        where: { modelName: pricing.modelName },
-        update: {
-          inputPricePerMToken: pricing.inputPricePerMToken,
-          outputPricePerMToken: pricing.outputPricePerMToken,
-          cachePricePerMToken: pricing.cachePricePerMToken,
-          description: pricing.description,
-          isActive: pricing.isActive,
-        },
-        create: pricing,
-      });
-      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
-        pricingCreated++;
-      } else {
-        pricingUpdated++;
-      }
+      await prisma.openAIPricing.create({ data: pricing });
+      pricingCreated++;
     } catch (error) { /* ignore */ }
   }
-  console.log(formatLine('🤖', 'OpenAI Pricing', OPENAI_PRICING.length, OPENAI_PRICING.length));
-  results.push({ created: pricingCreated, updated: pricingUpdated });
+  console.log(formatLine('🤖', 'OpenAI Pricing', pricingCreated, OPENAI_PRICING.length));
+  results.push({ created: pricingCreated });
 
   // ===== 7. OpenAI Alerts (upsert) =====
   let alertsCreated = 0;

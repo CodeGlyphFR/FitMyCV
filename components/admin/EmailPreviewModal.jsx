@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 // Test data for variable substitution
 const TEST_DATA = {
@@ -35,12 +36,97 @@ function substituteVariables(html, variables) {
  */
 export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templateId, onTestSent }) {
   const [viewMode, setViewMode] = useState('desktop'); // desktop | mobile
+  const [darkMode, setDarkMode] = useState(false);
   const [testEmail, setTestEmail] = useState('');
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Track mount state for portal
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  // Light mode override - force light mode even if system prefers dark
+  const lightModeCSS = `
+    <style id="light-mode-override">
+      :root { color-scheme: light only !important; }
+      .email-body, body { background-color: #f8fafc !important; }
+      .email-container { background-color: #ffffff !important; border-color: #e2e8f0 !important; }
+      .email-header { background-color: #0f172a !important; }
+      .text-primary { color: #0f172a !important; }
+      .text-secondary { color: #64748b !important; }
+      .text-muted { color: #94a3b8 !important; }
+      .text-accent { color: #3d97f0 !important; }
+      .divider { border-color: #e2e8f0 !important; }
+      .feature-card { background-color: #f1f5f9 !important; border-color: #e2e8f0 !important; }
+      .feature-title { color: #0f172a !important; }
+      .credits-box { background-color: #fef3c7 !important; border-color: #f59e0b !important; }
+      .credits-label { color: #92400e !important; }
+      .credits-value { color: #d97706 !important; }
+      .footer-bg { background-color: #f8fafc !important; border-color: #e2e8f0 !important; }
+      .icon-circle-blue { background-color: #0f172a !important; }
+      .link-box { background-color: #ebf4ff !important; border-color: #3d97f0 !important; }
+      .link-text { color: #3d97f0 !important; }
+      .new-email-box { background-color: #ebf4ff !important; border-color: #3d97f0 !important; }
+      .new-email-label { color: #64748b !important; }
+      .new-email-value { color: #0f172a !important; }
+      .receipt-box { background-color: #f8fafc !important; border-color: #3d97f0 !important; }
+      .receipt-row { border-color: #e2e8f0 !important; }
+      .receipt-label { color: #64748b !important; }
+      .total-row { background-color: #ebf4ff !important; }
+      .total-label { color: #64748b !important; }
+      .total-value { color: #0f172a !important; }
+      .warning-box { background-color: #ebf4ff !important; border-color: #3d97f0 !important; }
+      .warning-text { color: #0f172a !important; }
+      .icon-circle { background-color: #0f172a !important; }
+      .section-title { color: #475569 !important; }
+      .section-title p { color: #0f172a !important; }
+    </style>
+  `;
+
+  // Dark mode override CSS
+  const darkModeCSS = `
+    <style id="dark-mode-override">
+      :root { color-scheme: dark only !important; }
+      .email-body, body { background-color: #020617 !important; }
+      .email-container { background-color: #0f172a !important; border-color: #334155 !important; }
+      .email-header { background-color: #1e293b !important; }
+      .text-primary { color: #f1f5f9 !important; }
+      .text-secondary { color: #cbd5e1 !important; }
+      .text-muted { color: #94a3b8 !important; }
+      .text-accent { color: #60a5fa !important; }
+      .divider { border-color: #334155 !important; }
+      .feature-card { background-color: #1e293b !important; border-color: #334155 !important; }
+      .feature-title { color: #f1f5f9 !important; }
+      .credits-box { background-color: #422006 !important; border-color: #fbbf24 !important; }
+      .credits-label { color: #fde68a !important; }
+      .credits-value { color: #fbbf24 !important; }
+      .footer-bg { background-color: #1e293b !important; border-color: #334155 !important; }
+      .icon-circle-blue { background-color: #334155 !important; }
+      .link-box { background-color: #1e293b !important; border-color: #60a5fa !important; }
+      .link-text { color: #60a5fa !important; }
+      .new-email-box { background-color: #1e293b !important; border-color: #60a5fa !important; }
+      .new-email-label { color: #94a3b8 !important; }
+      .new-email-value { color: #f1f5f9 !important; }
+      .receipt-box { background-color: #1e293b !important; border-color: #3d97f0 !important; }
+      .receipt-row { border-color: #334155 !important; }
+      .receipt-label { color: #cbd5e1 !important; }
+      .total-row { background-color: #1e3a5f !important; }
+      .total-label { color: #cbd5e1 !important; }
+      .total-value { color: #f1f5f9 !important; }
+      .warning-box { background-color: #1e293b !important; border-color: #f59e0b !important; }
+      .warning-text { color: #fef3c7 !important; }
+      .icon-circle { background-color: #1e293b !important; }
+      .section-title { color: #f1f5f9 !important; }
+      .section-title p { color: #f1f5f9 !important; }
+    </style>
+  `;
 
   // Substitute test variables
-  const previewHtml = substituteVariables(htmlContent, TEST_DATA);
+  const baseHtml = substituteVariables(htmlContent, TEST_DATA);
+  const previewHtml = darkMode ? baseHtml + darkModeCSS : baseHtml + lightModeCSS;
   const previewSubject = substituteVariables(subject, TEST_DATA);
 
   // Reset state when modal opens
@@ -55,12 +141,10 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+      return () => {
+        document.body.style.overflow = '';
+      };
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isOpen]);
 
   const handleSendTest = async () => {
@@ -92,10 +176,10 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -134,6 +218,28 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
               Mobile
             </button>
 
+            {/* Dark mode toggle */}
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                darkMode
+                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+              title={darkMode ? 'Mode clair' : 'Mode sombre'}
+            >
+              {darkMode ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+              {darkMode ? 'Clair' : 'Sombre'}
+            </button>
+
             {/* Close button */}
             <button
               onClick={onClose}
@@ -149,8 +255,8 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
         {/* Preview iframe */}
         <div className="flex-1 overflow-auto p-6 bg-gray-800/50 custom-scrollbar">
           <div
-            className={`mx-auto rounded-lg shadow-lg transition-all duration-300 overflow-hidden ${
-              viewMode === 'mobile' ? 'max-w-[375px]' : 'max-w-[600px]'
+            className={`mx-auto rounded-lg shadow-lg transition-all duration-300 bg-white ${
+              viewMode === 'mobile' ? 'w-[320px]' : 'max-w-[600px]'
             }`}
           >
             <iframe
@@ -218,6 +324,8 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
 
 export default EmailPreviewModal;

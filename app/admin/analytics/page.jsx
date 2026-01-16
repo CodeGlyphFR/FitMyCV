@@ -11,10 +11,13 @@ import { UsersTab } from '@/components/admin/UsersTab';
 import { SubscriptionPlansTab } from '@/components/admin/SubscriptionPlansTab';
 import { RevenueTab } from '@/components/admin/RevenueTab';
 import { OnboardingTab } from '@/components/admin/OnboardingTab';
-import { EmailTemplatesTab } from '@/components/admin/EmailTemplatesTab';
+import { EmailManagementTab } from '@/components/admin/EmailManagementTab';
 import { DateRangePicker } from '@/components/admin/DateRangePicker';
 import { UserFilter } from '@/components/admin/UserFilter';
 import { TabsBar } from '@/components/admin/TabsBar';
+
+// Liste des onglets valides
+const VALID_TABS = ['overview', 'features', 'errors', 'openai-costs', 'feedback', 'users', 'onboarding', 'revenue', 'subscriptions', 'emails', 'settings'];
 
 export default function AnalyticsDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -23,6 +26,20 @@ export default function AnalyticsDashboard() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [triggeredAlerts, setTriggeredAlerts] = useState(null);
+
+  // Initialiser l'onglet depuis l'URL au montage
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (VALID_TABS.includes(hash)) {
+      setActiveTab(hash);
+    }
+  }, []);
+
+  // Mettre à jour l'URL quand on change d'onglet
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    window.history.replaceState(null, '', `#${tabId}`);
+  };
 
   // Fetch triggered alerts
   const fetchTriggeredAlerts = async () => {
@@ -180,7 +197,7 @@ export default function AnalyticsDashboard() {
       {/* Tabs */}
       <div className="bg-gray-900/98 backdrop-blur-xl border-b border-white/10 sticky top-12 md:top-[73px] z-40 md:z-30 will-change-transform">
         <div className="max-w-7xl mx-auto md:px-4 sm:px-6 lg:px-8">
-          <TabsBar tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
+          <TabsBar tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
         </div>
       </div>
 
@@ -204,7 +221,7 @@ export default function AnalyticsDashboard() {
         {activeTab === 'onboarding' && <OnboardingTab period={period} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'revenue' && <RevenueTab refreshKey={refreshKey} />}
         {activeTab === 'subscriptions' && <SubscriptionPlansTab refreshKey={refreshKey} />}
-        {activeTab === 'emails' && <EmailTemplatesTab refreshKey={refreshKey} />}
+        {activeTab === 'emails' && <EmailManagementTab refreshKey={refreshKey} />}
         {activeTab === 'settings' && <SettingsTab refreshKey={refreshKey} />}
       </div>
     </div>

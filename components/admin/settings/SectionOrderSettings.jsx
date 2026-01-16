@@ -6,6 +6,7 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -64,7 +65,7 @@ function SortableItem({ id, label, isFirst }) {
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? 'none' : transition,
   };
 
   const Icon = SECTION_ICONS[id] || FileText;
@@ -74,7 +75,7 @@ function SortableItem({ id, label, isFirst }) {
       ref={setNodeRef}
       style={style}
       className={`
-        flex items-center gap-3 p-3 rounded-lg border transition-all
+        flex items-center gap-3 p-3 rounded-lg border transition-all select-none
         ${isDragging
           ? 'bg-sky-500/20 border-sky-400/50 shadow-lg scale-105 z-10'
           : 'bg-white/5 border-white/10 hover:bg-white/10'
@@ -85,7 +86,8 @@ function SortableItem({ id, label, isFirst }) {
       <div
         {...attributes}
         {...listeners}
-        className={`flex-shrink-0 p-1 rounded ${isFirst ? 'text-white/30' : 'text-white/50 hover:text-white/80'}`}
+        className={`flex-shrink-0 p-2 rounded ${isFirst ? 'text-white/30' : 'text-white/50 hover:text-white/80 active:bg-white/10'}`}
+        style={{ touchAction: 'none' }}
       >
         <GripVertical className="w-4 h-4" />
       </div>
@@ -139,7 +141,13 @@ export function SectionOrderSettings({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5,
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200, // Maintenir 200ms avant de commencer le drag
+        tolerance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
