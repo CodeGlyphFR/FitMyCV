@@ -1,7 +1,7 @@
 {
   "name": "FitMyCV",
   "private": true,
-  "version": "1.0.9.2",
+  "version": "1.0.9.4",
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
