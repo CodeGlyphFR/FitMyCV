@@ -109,7 +109,7 @@ export async function POST(request) {
   const state = Buffer.from(JSON.stringify(stateData)).toString("base64url");
 
   // Stocker le state dans un cookie sécurisé (pour vérification au callback)
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set("oauth_link_state", state, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
