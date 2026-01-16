@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import { useSession, signOut } from "next-auth/react";
 
 const SettingsContext = createContext();
 
@@ -27,6 +28,9 @@ export function SettingsProvider({ initialSettings, children }) {
   const [isLoading, setIsLoading] = useState(!initialSettings);
   const hasFetchedOnce = React.useRef(!!initialSettings);
 
+  // Pour la déconnexion automatique si session invalidée côté serveur
+  const { data: session } = useSession();
+
   // Fonction pour récupérer les settings depuis l'API
   const fetchSettings = useCallback(async () => {
     try {
@@ -39,6 +43,13 @@ export function SettingsProvider({ initialSettings, children }) {
       });
 
       if (!response.ok) {
+        // 401 = session invalidée côté serveur (ex: mode maintenance activé)
+        // On force la déconnexion pour synchroniser le client
+        if (response.status === 401 && session?.user) {
+          console.log('[SettingsProvider] Session invalidée côté serveur, déconnexion...');
+          signOut({ callbackUrl: '/auth', redirect: true });
+          return;
+        }
         console.warn('[SettingsProvider] Erreur lors de la récupération des settings, utilisation des valeurs par défaut');
         return;
       }
@@ -54,7 +65,7 @@ export function SettingsProvider({ initialSettings, children }) {
       setIsLoading(false);
       hasFetchedOnce.current = true;
     }
-  }, []);
+  }, [session]);
 
   // Charger les settings au montage (sauf si on a déjà des initialSettings)
   useEffect(() => {
