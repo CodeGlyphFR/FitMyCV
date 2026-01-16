@@ -10,7 +10,7 @@
 | Attribut | Valeur |
 |----------|--------|
 | **Nom** | FitMyCV.io |
-| **Version** | 1.0.9.4 |
+| **Version** | 1.0.9.5 |
 | **Type** | Application Web SaaS (Monolithe) |
 | **Framework** | Next.js 14 (App Router) |
 | **Langage** | JavaScript (React 18) |

@@ -114,6 +114,17 @@ await incrementFeatureCounter(userId, 'gpt_cv_generation');
 - **Préfixes** : `feature/`, `improvement/`, `bug/`, `hotfix/`
 - **Commits** : `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`
 
+## Incrémentation de Version
+
+Lors de l'incrémentation de la version du projet, mettre à jour **tous** les fichiers suivants :
+
+| Fichier | Champ à modifier |
+|---------|------------------|
+| `package.json` | `"version": "x.x.x.x"` |
+| `package-lock.json` | `"version": "x.x.x.x"` (2 occurrences) |
+| `README.md` | `**Version:** x.x.x.x` |
+| `docs/index.md` | `| **Version** | x.x.x.x |` |
+
 ## Documentation
 
 Consultez `docs/` pour la documentation technique complète :

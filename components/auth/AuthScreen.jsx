@@ -6,6 +6,8 @@ import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { SITE_TITLE } from "@/lib/site";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import packageInfo from '@/package.json';
+import Link from 'next/link';
 import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
@@ -427,6 +429,34 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           </a>.
         </div>
           </div>
+
+          {/* Footer avec version et liens légaux */}
+          <footer className="text-center text-xs pt-4 pb-2">
+            <div className="text-white/70 space-y-2">
+              <div>{t('footer.copyright')} (v{packageInfo.version})</div>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-0 sm:gap-1 leading-none -space-y-3 sm:space-y-0">
+                <div className="flex items-baseline justify-center gap-1 leading-none">
+                  <Link href="/about" className="hover:text-white transition-colors">
+                    {t('footer.about')}
+                  </Link>
+                  <span className="text-white/40">•</span>
+                  <Link href="/cookies" className="hover:text-white transition-colors">
+                    {t('footer.cookies')}
+                  </Link>
+                  <span className="text-white/40 hidden sm:inline">•</span>
+                </div>
+                <div className="flex items-baseline justify-center gap-1 leading-none">
+                  <Link href="/terms" className="hover:text-white transition-colors">
+                    {t('footer.terms')}
+                  </Link>
+                  <span className="text-white/40">•</span>
+                  <Link href="/privacy" className="hover:text-white transition-colors">
+                    {t('footer.privacy')}
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </footer>
         </div>
       </div>
     </>

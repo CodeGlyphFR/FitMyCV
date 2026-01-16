@@ -2,7 +2,7 @@
 
 > Application Next.js 14 pour la création de CV personnalisés optimisés par IA
 
-**Version:** 1.0.9.4
+**Version:** 1.0.9.5
 
 ---
 
