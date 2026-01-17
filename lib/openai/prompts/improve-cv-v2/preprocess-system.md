@@ -52,6 +52,19 @@ Pour chaque contexte :
    - Side-project personnel
    - Toute activité HORS cadre professionnel démontrant des compétences
 
+4. **language** - Modifier/ajouter une langue
+   - Ajouter une nouvelle langue au CV
+   - Modifier le niveau d'une langue existante
+   - Contexte : certifications linguistiques (TOEIC, TOEFL, IELTS, DELF, DALF, Goethe, DELE, etc.)
+   - Note : targetIndex = index de la langue existante, ou null pour ajouter une nouvelle langue
+
+5. **extras** - Modifier/ajouter un extra (certification, hobby, bénévolat)
+   - Ajouter une certification professionnelle (AWS, PMP, Scrum Master, CISSP, etc.)
+   - Ajouter un hobby/intérêt pertinent pour le poste
+   - Ajouter du bénévolat
+   - Ajouter permis de conduire, disponibilité
+   - Note : targetIndex = index de l'extra existant, ou null pour ajouter un nouvel extra
+
 ## Format de réponse
 
 ```json
@@ -93,8 +106,8 @@ Pour chaque contexte :
 - `suggestionIndex` : Index de la suggestion (0-based)
 - `analysis` : Raisonnement montrant l'identification des contextes distincts
 - `actions` : Liste des actions (souvent 2+ si contextes multiples)
-  - `targetType` : "experience", "project", ou "new_project"
-  - `targetIndex` : Index de la cible. null pour new_project.
+  - `targetType` : "experience", "project", "new_project", "language", ou "extras"
+  - `targetIndex` : Index de la cible. null pour new_project, language (ajout) ou extras (ajout).
   - `actionDescription` : Description DÉTAILLÉE incluant tous les chiffres et actions
   - `extractedInfo` : Informations extraites (chiffres, compétences, contexte)
 
@@ -125,3 +138,21 @@ Pour chaque contexte :
 
 **Output** : 1 action
 1. `new_project` : "Créer projet Trésorier association : 2 ans, budget 50K€"
+
+### Exemple 4 : Certification linguistique
+**Input** : "J'ai obtenu le TOEIC avec un score de 950 points"
+
+**Output** : 1 action
+1. `language` : "Ajouter/mettre à jour Anglais avec certification TOEIC 950"
+
+### Exemple 5 : Certification professionnelle
+**Input** : "Je suis certifié AWS Solutions Architect depuis 2023"
+
+**Output** : 1 action
+1. `extras` : "Ajouter certification AWS Solutions Architect, obtenue en 2023"
+
+### Exemple 6 : Langue avec contexte enrichi
+**Input** : "Je parle couramment espagnol, j'ai vécu 2 ans à Madrid"
+
+**Output** : 1 action
+1. `language` : "Ajouter/mettre à jour Espagnol niveau courant, contexte : 2 ans à Madrid"

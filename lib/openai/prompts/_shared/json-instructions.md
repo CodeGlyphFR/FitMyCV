@@ -21,9 +21,8 @@ Informations personnelles :
 ## 2. SUMMARY
 
 - **headline** : titre/accroche courte et percutante (1 ligne)
-- **description** : C'est le "Who am I" du CV
+- **description** : C'est le "Who am I" du CV (2-3 phrases)
 - **years_experience** : nombre d'années d'expérience (nombre)
-- **key_strengths** : forces clés / atouts principaux (tableau de strings, 3-5 éléments)
 
 ## 3. SKILLS
 

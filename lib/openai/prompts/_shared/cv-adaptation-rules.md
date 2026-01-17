@@ -253,16 +253,15 @@ Toute information DOIT etre :
 | Champ | Description | Modification autorisee |
 |-------|-------------|----------------------|
 | `description` | Le "Who am I" (2-3 phrases) | Reformuler, enrichir avec contexte utilisateur |
-| `key_strengths` | Forces cles (3-5 items) | Ajouter si prouve par contexte, reordonner |
 
 ### Regles anti-hallucination pour le summary
 
 | Tu PEUX | Tu NE PEUX PAS |
 |---------|----------------|
-| Ajouter une force cle si le contexte utilisateur la prouve | Augmenter les annees d'experience |
-| Reformuler pour mieux matcher l'offre | Ajouter des realisations non mentionnees |
-| Aligner le vocabulaire avec l'offre | Changer le nombre d'annees d'experience |
-| Mettre en avant un accomplissement fourni par l'utilisateur | Inventer des metriques ou resultats |
+| Reformuler pour mieux matcher l'offre | Augmenter les annees d'experience |
+| Aligner le vocabulaire avec l'offre | Ajouter des realisations non mentionnees |
+| Mettre en avant un accomplissement fourni par l'utilisateur | Changer le nombre d'annees d'experience |
+| | Inventer des metriques ou resultats |
 
 ### Quand modifier le summary
 

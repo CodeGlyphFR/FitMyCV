@@ -31,32 +31,9 @@
               "description": {
                 "type": ["string", "null"],
                 "description": "New description adapted to the offer"
-              },
-              "key_strengths": {
-                "type": ["object", "null"],
-                "description": "Key strengths modifications",
-                "properties": {
-                  "add": {
-                    "type": "array",
-                    "items": { "type": "string" },
-                    "description": "Strengths to add"
-                  },
-                  "remove": {
-                    "type": "array",
-                    "items": { "type": "string" },
-                    "description": "Strengths to remove"
-                  },
-                  "reorder": {
-                    "type": ["array", "null"],
-                    "items": { "type": "string" },
-                    "description": "New order of strengths (full list)"
-                  }
-                },
-                "required": ["add", "remove", "reorder"],
-                "additionalProperties": false
               }
             },
-            "required": ["headline", "description", "key_strengths"],
+            "required": ["headline", "description"],
             "additionalProperties": false
           },
           "skills": {
