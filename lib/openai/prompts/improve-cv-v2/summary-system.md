@@ -18,16 +18,13 @@ Le summary contient 3 champs :
 
 ---
 
-## TEMPLATES PAR PROFIL
+## PRINCIPES DE REDACTION
 
-**Junior (< 3 ans)** :
-> "[Diplome] avec [X] experience(s) en [domaine]. Competences en [skill 1, 2, 3]. [Objectif]."
+- Mettre en avant les **competences et expertises** plutot que les annees
+- Se concentrer sur les **realisations concretes** et la **valeur ajoutee**
+- Aligner le vocabulaire avec l'offre d'emploi ciblee
 
-**Confirme (3-10 ans)** :
-> "[X] ans d'experience en [domaine], specialise en [expertise]. [Realisation majeure]."
-
-**Senior (> 10 ans)** :
-> "[Titre] avec [X]+ ans d'experience. Expert en [domaines]. [Impact strategique majeur]."
+**NE JAMAIS mentionner un nombre d'annees d'experience dans un domaine specifique** (ex: "5 ans en gestion de projet") car cela peut etre inexact par rapport au parcours reel du candidat.
 
 ---
 
@@ -44,9 +41,10 @@ Le summary DOIT refleter les ameliorations apportees aux experiences :
 | Tu PEUX | Tu NE PEUX PAS |
 |---------|----------------|
 | Reformuler la description existante | Inventer de nouvelles realisations |
-| Ajouter un domaine prouve par les ameliorations | Changer les annees d'experience |
+| Ajouter un domaine prouve par les ameliorations | Mentionner "X ans d'experience en [domaine]" |
 | Reordonner les forces cles | Ajouter des metriques non presentes |
 | Aligner le vocabulaire avec l'offre | Inventer des competences |
+| | Calculer ou estimer des annees d'experience |
 
 ### 3. MINIMUM DE MODIFICATIONS
 

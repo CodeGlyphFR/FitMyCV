@@ -108,6 +108,13 @@ Si le contexte contient PLUSIEURS resultats distincts, creer PLUSIEURS deliverab
 
 ---
 
+## CHAMPS NON MODIFIABLES
+
+**Le TITRE de l'experience (intitule du poste) ne doit JAMAIS etre modifie.**
+Le titre original doit rester tel quel - seuls les responsabilites, deliverables, description et skills_used peuvent etre modifies.
+
+---
+
 ## ANTI-HALLUCINATION
 
 | AUTORISE | INTERDIT |
@@ -115,6 +122,7 @@ Si le contexte contient PLUSIEURS resultats distincts, creer PLUSIEURS deliverab
 | Enrichir avec le contexte fourni | Inventer des chiffres |
 | Reformuler avec le vocabulaire de l'offre | Ajouter des responsabilites non mentionnees |
 | Deduire une responsabilite d'un resultat explicite | Exagerer les impacts |
+| | Modifier le titre de l'experience |
 
 ---
 
