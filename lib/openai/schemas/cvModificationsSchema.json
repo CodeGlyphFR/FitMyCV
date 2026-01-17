@@ -96,7 +96,7 @@
                       "type": "object",
                       "properties": {
                         "name": { "type": "string" },
-                        "proficiency": { "type": ["string", "null"] }
+                        "proficiency": { "type": ["integer", "null"], "enum": [0, 1, 2, 3, 4, 5, null], "description": "0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert" }
                       },
                       "required": ["name", "proficiency"],
                       "additionalProperties": false
@@ -114,7 +114,7 @@
                       "type": "object",
                       "properties": {
                         "name": { "type": "string" },
-                        "proficiency": { "type": "string" }
+                        "proficiency": { "type": "integer", "enum": [0, 1, 2, 3, 4, 5], "description": "0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert" }
                       },
                       "required": ["name", "proficiency"],
                       "additionalProperties": false
@@ -163,7 +163,7 @@
                       "type": "object",
                       "properties": {
                         "name": { "type": "string" },
-                        "proficiency": { "type": ["string", "null"] }
+                        "proficiency": { "type": ["integer", "null"], "enum": [0, 1, 2, 3, 4, 5, null], "description": "0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert" }
                       },
                       "required": ["name", "proficiency"],
                       "additionalProperties": false
@@ -181,7 +181,7 @@
                       "type": "object",
                       "properties": {
                         "name": { "type": "string" },
-                        "proficiency": { "type": "string" }
+                        "proficiency": { "type": "integer", "enum": [0, 1, 2, 3, 4, 5], "description": "0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert" }
                       },
                       "required": ["name", "proficiency"],
                       "additionalProperties": false

@@ -61,17 +61,19 @@ UNIQUEMENT si la competence appartient a un domaine RADICALEMENT DIFFERENT :
 
 **Documentation** : Pour chaque suppression, utiliser action `removed` avec reason expliquant le domaine radicalement different
 
-### 2. AJUSTER les proficiency
+### 2. AJUSTER les proficiency (NOMBRES 0-5)
 Evaluer le niveau reel selon les experiences et projets du candidat.
 
-| Niveau | Criteres |
-|--------|----------|
-| Notions | Exposition occasionnelle, theorie |
-| Debutant | Mentionne 1 fois, contexte basique |
-| Intermediaire | 1-2 experiences/projets |
-| Competent | Utilisation reguliere, plusieurs contextes |
-| Avance | Role significatif, utilisation intensive |
-| Expert | Expertise reconnue, leadership technique |
+**IMPORTANT** : Retourne TOUJOURS le niveau en NOMBRE (0-5), jamais en texte.
+
+| Niveau | Valeur | Criteres |
+|--------|--------|----------|
+| Awareness | 0 | Exposition occasionnelle, theorie |
+| Beginner | 1 | Mentionne 1 fois, contexte basique |
+| Intermediate | 2 | 1-2 experiences/projets |
+| Proficient | 3 | Utilisation reguliere, plusieurs contextes |
+| Advanced | 4 | Role significatif, utilisation intensive |
+| Expert | 5 | Expertise reconnue, leadership technique |
 
 ### 3. NETTOYER les noms
 - Supprimer les parentheses et leur contenu : "React (framework)" → "React"
@@ -196,7 +198,7 @@ Methodes de travail structurees.
 | Action | Quand | Exemple reason |
 |--------|-------|----------------|
 | `removed` | Competence supprimee | "Score 3/10 - non pertinent pour le poste" |
-| `level_adjusted` | Niveau modifie | "Ajuste de Debutant a Intermediaire - 2 projets React" |
+| `level_adjusted` | Niveau modifie | "Ajuste de 1 a 2 - 2 projets React" |
 | `renamed` | Nom nettoye | "Suppression parentheses" ou "Reformule en mot-cle" |
 | `split` | Competence separee | "Separe en 2 competences distinctes" |
 | `moved` | Change de categorie | "Deplace de hard_skills vers tools - c'est un logiciel" |

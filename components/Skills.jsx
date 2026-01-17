@@ -11,46 +11,33 @@ import { capitalizeSkillName } from "@/lib/utils/textFormatting";
 import SkillItemHighlight, { RemovedSkillsDisplay, RemovedSkillsDisplayBlock, useRemovedItems } from "./SkillItemHighlight";
 import SectionReviewActions from "./SectionReviewActions";
 import SkillsReviewActions from "./SkillsReviewActions";
+import { normalizeToNumber, VALID_SKILL_LEVELS, SKILL_LEVEL_KEYS } from "@/lib/constants/skillLevels";
 
 function Row({children}){ return <div className="flex gap-2">{children}</div>; }
 
+// Normalize proficiency to a number (0-5)
+// Returns the numeric level or null if invalid
 function normalizeProficiency(value){
-  if (value === null || value === undefined) return "";
-  if (typeof value === "number" && !Number.isNaN(value)){
-    if (value >= 4.5) return "expert";
-    if (value >= 3.5) return "advanced";
-    if (value >= 2.5) return "proficient";
-    if (value >= 1.5) return "intermediate";
-    if (value > 0) return "beginner";
-    return "";
-  }
-  const raw = String(value).trim();
-  if (!raw) return "";
-  const key = raw.toLowerCase();
-  if (["awareness", "notion", "notions", "connaissance", "connaissances", "bases", "basic", "basics", "familiar", "exposure"].includes(key)) return "awareness";
-  if (["beginner", "debutant", "débutant", "junior", "novice"].includes(key)) return "beginner";
-  if (["intermediate", "intermediaire", "intermédiaire", "standard", "moyen"].includes(key)) return "intermediate";
-  if (["proficient", "confirme", "confirmé", "confirmee", "experienced", "experience", "solid"].includes(key)) return "proficient";
-  if (["advanced", "avance", "avancé"].includes(key)) return "advanced";
-  if (["expert", "maitre", "maître", "maitrise", "maîtrise", "senior"].includes(key)) return "expert";
-  return key;
+  return normalizeToNumber(value);
 }
 
 function formatProficiency(value, t){
   const normalized = normalizeProficiency(value);
-  if (!normalized) return "";
-  return getSkillLevelLabel(normalized, t) || normalized;
+  if (normalized === null) return "";
+  // Get the i18n key from the number, then get the translated label
+  const key = SKILL_LEVEL_KEYS[normalized];
+  if (!key) return "";
+  return getSkillLevelLabel(key, t) || key;
 }
 
 function toEditableSkill(entry){
   if (entry && typeof entry === "object"){
     const name = entry.name || entry.label || entry.title || entry.value || "";
-    const proficiency = normalizeProficiency(
-      entry.proficiency ?? entry.level ?? entry.rating ?? entry.level_label ?? entry.level_name ?? entry.level_0to5
-    );
+    const raw = entry.proficiency ?? entry.level ?? entry.rating ?? entry.level_label ?? entry.level_name ?? entry.level_0to5;
+    const proficiency = normalizeToNumber(raw);
     return { name, proficiency };
   }
-  return { name: entry ? String(entry) : "", proficiency: "" };
+  return { name: entry ? String(entry) : "", proficiency: null };
 }
 
 function displaySkillLevel(skill, t){
@@ -107,13 +94,14 @@ export default function Skills(props){
   const hideSection = !editing && !hasHard && !hasTools && !hasMethods && !hasSoft;
   if (hideSection) return null;
 
+  // LEVEL_OPTIONS uses numeric values (0-5) as the source of truth
   const LEVEL_OPTIONS = [
-    { value: "awareness", label: getSkillLevelLabel("awareness", t) },
-    { value: "beginner", label: getSkillLevelLabel("beginner", t) },
-    { value: "intermediate", label: getSkillLevelLabel("intermediate", t) },
-    { value: "proficient", label: getSkillLevelLabel("proficient", t) },
-    { value: "advanced", label: getSkillLevelLabel("advanced", t) },
-    { value: "expert", label: getSkillLevelLabel("expert", t) },
+    { value: 0, label: getSkillLevelLabel("awareness", t) },
+    { value: 1, label: getSkillLevelLabel("beginner", t) },
+    { value: 2, label: getSkillLevelLabel("intermediate", t) },
+    { value: 3, label: getSkillLevelLabel("proficient", t) },
+    { value: 4, label: getSkillLevelLabel("advanced", t) },
+    { value: 5, label: getSkillLevelLabel("expert", t) },
   ];
 
   async function saveHard(){ await mutate({ op:"set", path:"skills.hard_skills", value: hardLocal }); setOpenHard(false); }
@@ -316,7 +304,7 @@ export default function Skills(props){
               <select
                 className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
                 value={row.proficiency ?? ""}
-                onChange={e => { const arr=[...hardLocal]; arr[idx]={ ...arr[idx], proficiency:e.target.value }; setHardLocal(arr); }}
+                onChange={e => { const arr=[...hardLocal]; const val = e.target.value; arr[idx]={ ...arr[idx], proficiency: val === "" ? null : parseInt(val, 10) }; setHardLocal(arr); }}
               >
                 <option value="" disabled>{t("cvSections.placeholders.chooseLevel")}</option>
                 {LEVEL_OPTIONS.map(opt => (
@@ -326,7 +314,7 @@ export default function Skills(props){
               <button onClick={()=>{ const arr=[...hardLocal]; arr.splice(idx,1); setHardLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 p-1.5 text-white hover:bg-red-500/40 transition-colors shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
             </div>
           ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setHardLocal([...(hardLocal||[]),{name:"",proficiency:""}])} className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 hover:border-white/30 transition-colors">{t("common.add")}</button></div>
+          <div className="flex justify-end gap-2"><button onClick={()=>setHardLocal([...(hardLocal||[]),{name:"",proficiency:null}])} className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 hover:border-white/30 transition-colors">{t("common.add")}</button></div>
           <div className="flex justify-end gap-2">
             <button onClick={()=>setOpenHard(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
             <button onClick={saveHard} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.save")}</button>
@@ -342,7 +330,7 @@ export default function Skills(props){
               <select
                 className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
                 value={row.proficiency ?? ""}
-                onChange={e => { const arr=[...toolsLocal]; arr[idx]={ ...arr[idx], proficiency:e.target.value }; setToolsLocal(arr); }}
+                onChange={e => { const arr=[...toolsLocal]; const val = e.target.value; arr[idx]={ ...arr[idx], proficiency: val === "" ? null : parseInt(val, 10) }; setToolsLocal(arr); }}
               >
                 <option value="" disabled>{t("cvSections.placeholders.chooseLevel")}</option>
                 {LEVEL_OPTIONS.map(opt => (
@@ -352,7 +340,7 @@ export default function Skills(props){
               <button onClick={()=>{ const arr=[...toolsLocal]; arr.splice(idx,1); setToolsLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 p-1.5 text-white hover:bg-red-500/40 transition-colors shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
             </div>
           ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setToolsLocal([...(toolsLocal||[]),{name:"",proficiency:""}])} className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 hover:border-white/30 transition-colors">{t("common.add")}</button></div>
+          <div className="flex justify-end gap-2"><button onClick={()=>setToolsLocal([...(toolsLocal||[]),{name:"",proficiency:null}])} className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 hover:border-white/30 transition-colors">{t("common.add")}</button></div>
           <div className="flex justify-end gap-2">
             <button onClick={()=>setOpenTools(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
             <button onClick={saveTools} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.save")}</button>

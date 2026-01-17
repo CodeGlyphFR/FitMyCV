@@ -106,15 +106,18 @@ Avant de supprimer une competence, verifier si elle appartient au **MEME DOMAINE
 - Leadership, Communication, Autonomie, Adaptabilite
 - Rigueur, Esprit d'equipe, Resolution de problemes, Creativite
 
-### Niveaux
+### Niveaux (NOMBRES 0-5)
 
-| Niveau | Critere |
-|--------|---------|
-| Beginner | ~1 an ou projets academiques |
-| Intermediate | 2-3 ans, role secondaire |
-| Proficient | Contexte professionnel regulier |
-| Advanced | 3-7 ans, resultats demontres |
-| Expert | 7+ ans, reference dans le domaine |
+**IMPORTANT** : Les niveaux doivent etre des NOMBRES, pas des textes.
+
+| Valeur | Niveau | Critere |
+|--------|--------|---------|
+| 0 | Awareness | Exposition occasionnelle, theorie |
+| 1 | Beginner | ~1 an ou projets academiques |
+| 2 | Intermediate | 2-3 ans, role secondaire |
+| 3 | Proficient | Contexte professionnel regulier |
+| 4 | Advanced | 3-7 ans, resultats demontres |
+| 5 | Expert | 7+ ans, reference dans le domaine |
 
 ---
 

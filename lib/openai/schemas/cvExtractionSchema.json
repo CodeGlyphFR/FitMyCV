@@ -108,7 +108,7 @@
               "type": "object",
               "properties": {
                 "name": { "type": "string", "description": "Nom de la competence" },
-                "proficiency": { "type": ["string", "null"], "description": "Niveau: Awareness, Beginner, Intermediate, Proficient, Advanced, Expert" }
+                "proficiency": { "type": ["integer", "null"], "enum": [0, 1, 2, 3, 4, 5, null], "description": "0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert" }
               },
               "required": ["name", "proficiency"],
               "additionalProperties": false
@@ -126,7 +126,7 @@
               "type": "object",
               "properties": {
                 "name": { "type": "string", "description": "Nom de l'outil" },
-                "proficiency": { "type": ["string", "null"], "description": "Niveau: Awareness, Beginner, Intermediate, Proficient, Advanced, Expert" }
+                "proficiency": { "type": ["integer", "null"], "enum": [0, 1, 2, 3, 4, 5, null], "description": "0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert" }
               },
               "required": ["name", "proficiency"],
               "additionalProperties": false

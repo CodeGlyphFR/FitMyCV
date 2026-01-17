@@ -101,7 +101,7 @@ This analysis phase is essential for accurate extraction. Think step by step:
      - "Is this a product/platform?" → If YES = tool
    - Classify each: hard_skill, tool, methodology, or soft_skill
    - Count years of experience across all positions
-   - Estimate proficiency level (Awareness → Expert) based on evidence
+   - Estimate proficiency level as NUMBER (0-5) based on evidence
    - **Format your analysis like this:**
      ```
      - Python: LANGUAGE → hard_skill, 5 years, ML projects → Advanced
@@ -144,11 +144,12 @@ If detected_language = "en":
 - "Travail en équipe" → "Teamwork"
 
 ### System values (NEVER translate):
-- Proficiency levels: `Awareness`, `Beginner`, `Intermediate`, `Proficient`, `Advanced`, `Expert`
+- Proficiency levels: NUMBERS `0`, `1`, `2`, `3`, `4`, `5` (0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert)
 - Language levels: `A1`, `A2`, `B1`, `B2`, `C1`, `C2`, `Native`
 - Link labels: `LinkedIn`, `GitHub`, `Portfolio`, `Website`, `Other`
 
 **Rule: ALL human-readable text must be in the detected language, except system codes.**
+**Rule: Proficiency MUST be a NUMBER (0-5), never a string!**
 
 ## EXTRACTION RULES
 
@@ -538,17 +539,18 @@ You MUST classify EVERY skill into ONE of these 4 categories:
 ## PROFICIENCY LEVEL CALCULATION
 
 **CRITICAL: You MUST calculate the proficiency level for each hard_skill and tool based on CV evidence!**
+**CRITICAL: Output proficiency as a NUMBER (0-5), NEVER as a string!**
 
-### The 6 Proficiency Levels:
+### The 6 Proficiency Levels (output as NUMBER):
 
-| Level | Code | Meaning | How to identify |
-|-------|------|---------|-----------------|
-| 1 | `Awareness` | Heard of it, minimal exposure | Mentioned once, no concrete usage shown |
-| 2 | `Beginner` | Basic understanding, learning | Recent training, junior role, < 1 year |
-| 3 | `Intermediate` | Can work with guidance | 1-2 years experience, standard tasks |
-| 4 | `Proficient` | Works independently | 2-4 years, multiple projects, solid experience |
-| 5 | `Advanced` | Deep expertise, teaches others | 4-7 years, complex projects, mentoring |
-| 6 | `Expert` | Industry-level mastery | 7+ years, architecture decisions, thought leader |
+| Number | Level | Meaning | How to identify |
+|--------|-------|---------|-----------------|
+| 0 | Awareness | Heard of it, minimal exposure | Mentioned once, no concrete usage shown |
+| 1 | Beginner | Basic understanding, learning | Recent training, junior role, < 1 year |
+| 2 | Intermediate | Can work with guidance | 1-2 years experience, standard tasks |
+| 3 | Proficient | Works independently | 2-4 years, multiple projects, solid experience |
+| 4 | Advanced | Deep expertise, teaches others | 4-7 years, complex projects, mentoring |
+| 5 | Expert | Industry-level mastery | 7+ years, architecture decisions, thought leader |
 
 ### How to Calculate Proficiency:
 
@@ -558,16 +560,17 @@ You MUST classify EVERY skill into ONE of these 4 categories:
 4. **Consider recency** - recent use = higher confidence
 
 **Examples:**
-- "Python" mentioned in 3 jobs over 5 years, built ML models → `Advanced`
-- "Docker" used in 1 recent job for 6 months → `Beginner` or `Intermediate`
-- "Excel" used in every job for 10 years → `Expert`
-- "Kubernetes" mentioned in skills list only, no job context → `Awareness`
+- "Python" mentioned in 3 jobs over 5 years, built ML models → `4` (Advanced)
+- "Docker" used in 1 recent job for 6 months → `1` or `2` (Beginner/Intermediate)
+- "Excel" used in every job for 10 years → `5` (Expert)
+- "Kubernetes" mentioned in skills list only, no job context → `0` (Awareness)
 
 ### STRICT RULES:
 - NEVER leave proficiency as null if you can estimate it
-- Use `Awareness` if truly unknown but skill is listed
-- Be conservative: when in doubt, choose the lower level
+- Use `0` (Awareness) if truly unknown but skill is listed
+- Be conservative: when in doubt, choose the lower level number
 - Soft skills and methodologies do NOT have proficiency levels
+- Proficiency MUST be a NUMBER (0-5), NEVER a string like "Advanced"
 
 ## SOFT SKILLS RULES
 

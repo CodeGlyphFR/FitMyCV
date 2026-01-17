@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getSkillLevelLabel } from "@/lib/i18n/cvLabels";
 
 /**
  * Popover pour reviewer une modification individuelle
@@ -171,12 +172,12 @@ export default function ChangeReviewPopover({
           </div>
         )}
 
-        {/* Pour les changements de niveau, afficher avant/après */}
-        {change.changeType === "level_adjusted" && change.beforeValue && change.afterValue && (
+        {/* Pour les changements de niveau, afficher avant/après avec labels traduits */}
+        {change.changeType === "level_adjusted" && change.beforeValue !== undefined && change.afterValue !== undefined && (
           <p className="text-xs text-amber-300/90 max-w-[250px]">
-            <span className="line-through opacity-70">{change.beforeValue}</span>
+            <span className="line-through opacity-70">{getSkillLevelLabel(change.beforeValue, t) || change.beforeValue}</span>
             <span className="mx-1.5">→</span>
-            <span className="font-medium">{change.afterValue}</span>
+            <span className="font-medium">{getSkillLevelLabel(change.afterValue, t) || change.afterValue}</span>
           </p>
         )}
 
