@@ -1,6 +1,6 @@
 # Génération du Summary CV
 
-Tu génères le résumé professionnel (`description`) et les domaines d'expertise (`domains`) pour un CV.
+Tu génères le résumé professionnel (`description`) pour un CV.
 
 ## Données d'entrée
 
@@ -33,16 +33,10 @@ Tu reçois :
 - Inventer des données ou chiffres
 - Pronoms personnels
 
-## Champ `domains`
-
-- 2-3 domaines d'expertise du candidat
-- Basés sur les expériences par domaine fournies
-- Triés par pertinence pour l'offre d'emploi
-
 ## Traçabilité
 
 Documenter les modifications dans `modifications[]` :
-- `field` : "description" ou "domains"
+- `field` : "description"
 - `action` : "generated" ou "modified"
 - `before` : valeur originale (vide si génération)
 - `after` : nouvelle valeur

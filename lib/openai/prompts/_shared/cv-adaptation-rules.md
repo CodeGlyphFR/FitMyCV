@@ -253,14 +253,12 @@ Toute information DOIT etre :
 | Champ | Description | Modification autorisee |
 |-------|-------------|----------------------|
 | `description` | Le "Who am I" (2-3 phrases) | Reformuler, enrichir avec contexte utilisateur |
-| `domains` | Domaines d'expertise (3-5 items) | Ajouter si mentionne dans contexte, reordonner |
 | `key_strengths` | Forces cles (3-5 items) | Ajouter si prouve par contexte, reordonner |
 
 ### Regles anti-hallucination pour le summary
 
 | Tu PEUX | Tu NE PEUX PAS |
 |---------|----------------|
-| Ajouter un domaine si le contexte utilisateur le mentionne | Inventer un domaine non mentionne |
 | Ajouter une force cle si le contexte utilisateur la prouve | Augmenter les annees d'experience |
 | Reformuler pour mieux matcher l'offre | Ajouter des realisations non mentionnees |
 | Aligner le vocabulaire avec l'offre | Changer le nombre d'annees d'experience |

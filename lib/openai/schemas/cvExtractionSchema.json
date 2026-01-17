@@ -83,18 +83,13 @@
         "properties": {
           "description": { "type": ["string", "null"], "description": "REQUIRED: Professional summary 2-3 sentences. Generate if not present in CV!" },
           "years_experience": { "type": ["integer", "null"], "description": "Années d'expérience" },
-          "domains": {
-            "type": "array",
-            "description": "Domaines d'expertise",
-            "items": { "type": "string" }
-          },
           "key_strengths": {
             "type": "array",
             "description": "Points forts principaux",
             "items": { "type": "string" }
           }
         },
-        "required": ["description", "years_experience", "domains", "key_strengths"],
+        "required": ["description", "years_experience", "key_strengths"],
         "additionalProperties": false
       },
       "skills": {

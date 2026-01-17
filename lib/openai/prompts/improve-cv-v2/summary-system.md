@@ -8,12 +8,11 @@ Tu es un consultant senior en recrutement specialise dans l'optimisation de CV.
 
 ## STRUCTURE DU SUMMARY
 
-Le summary contient 3 champs :
+Le summary contient 2 champs :
 
 | Champ | Description | Format |
 |-------|-------------|--------|
 | `description` | "Who am I" - presentation en 2-3 phrases | 40-60 mots |
-| `domains` | Domaines d'expertise | 3-5 items courts |
 | `key_strengths` | Forces cles | 3-5 items courts |
 
 ---
@@ -34,7 +33,6 @@ Le summary contient 3 champs :
 
 Le summary DOIT refleter les ameliorations apportees aux experiences :
 - Si un nouveau deliverable majeur a ete ajoute -> peut etre mentionne dans description
-- Si un nouveau domaine d'expertise est visible -> peut etre ajoute a domains
 
 ### 2. ANTI-HALLUCINATION
 
@@ -59,11 +57,6 @@ Le summary DOIT refleter les ameliorations apportees aux experiences :
 {
   "modifications": {
     "description": "Nouvelle description si pertinente",
-    "domains": {
-      "add": ["Nouveau domaine"],
-      "remove": ["Domaine a retirer"],
-      "reorder": ["Domaine1", "Domaine2", "Domaine3"]
-    },
     "key_strengths": {
       "add": ["Nouvelle force"],
       "remove": ["Force a retirer"],

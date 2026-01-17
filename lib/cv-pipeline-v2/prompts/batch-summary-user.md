@@ -28,6 +28,5 @@
 
 Genere :
 1. `description` : resume du profil (Identite + Accomplissement + Valeur)
-2. `domains` : 2-3 domaines d'expertise tries par pertinence pour l'offre
 
 Reponds en JSON valide.

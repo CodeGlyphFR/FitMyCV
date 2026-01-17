@@ -46,8 +46,7 @@
     "summary": {
       "type": "object",
       "properties": {
-        "description": { "type": "string" },
-        "domains": { "type": "array", "items": { "type": "string" } }
+        "description": { "type": "string" }
       }
     },
     "skills": {

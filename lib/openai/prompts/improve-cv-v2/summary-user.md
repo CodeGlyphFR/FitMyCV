@@ -35,9 +35,8 @@
 En analysant les ameliorations apportees :
 
 1. **Y a-t-il de nouveaux accomplissements majeurs** qui meritent d'etre reflete dans la description ?
-2. **Y a-t-il un nouveau domaine d'expertise** qui devrait etre ajoute a domains ?
-3. **Y a-t-il une nouvelle force cle** qui devrait etre ajoutee a key_strengths ?
-4. **L'ordre des domaines/forces** doit-il etre ajuste pour mieux matcher l'offre ?
+2. **Y a-t-il une nouvelle force cle** qui devrait etre ajoutee a key_strengths ?
+3. **L'ordre des forces** doit-il etre ajuste pour mieux matcher l'offre ?
 
 Si AUCUNE modification n'est justifiee, retourne :
 ```json

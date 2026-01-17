@@ -23,7 +23,6 @@ Informations personnelles :
 - **headline** : titre/accroche courte et percutante (1 ligne)
 - **description** : C'est le "Who am I" du CV
 - **years_experience** : nombre d'années d'expérience (nombre)
-- **domains** : domaines d'expertise (tableau de strings)
 - **key_strengths** : forces clés / atouts principaux (tableau de strings, 3-5 éléments)
 
 ## 3. SKILLS

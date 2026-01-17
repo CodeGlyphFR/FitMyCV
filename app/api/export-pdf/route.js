@@ -548,21 +548,6 @@ function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrde
       text-align: justify;
     }
 
-    .domains {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .domain-tag {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-      color: #374151;
-    }
-
     /* Skills */
     .skills-grid {
       display: flex;

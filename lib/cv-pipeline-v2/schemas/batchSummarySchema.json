@@ -8,11 +8,6 @@
         "type": "string",
         "description": "Le résumé du profil professionnel (2-4 lignes, 50-75 mots)"
       },
-      "domains": {
-        "type": "array",
-        "description": "Domaines d'expertise du candidat (2-3 max), triés par pertinence pour l'offre",
-        "items": { "type": "string" }
-      },
       "modifications": {
         "type": "array",
         "description": "Liste des modifications effectuées avec avant/après/raison",
@@ -21,7 +16,7 @@
           "properties": {
             "field": {
               "type": "string",
-              "description": "Nom du champ modifié (description, domains)"
+              "description": "Nom du champ modifié (description)"
             },
             "action": {
               "type": "string",
@@ -46,7 +41,7 @@
         }
       }
     },
-    "required": ["description", "domains", "modifications"],
+    "required": ["description", "modifications"],
     "additionalProperties": false
   }
 }
