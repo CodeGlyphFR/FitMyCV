@@ -4,30 +4,6 @@
   "schema": {
     "type": "object",
     "properties": {
-      "title": {
-        "type": "string",
-        "description": "Titre du poste adapte aux termes de l'offre"
-      },
-      "company": {
-        "type": "string",
-        "description": "Nom de l'entreprise (inchange)"
-      },
-      "location": {
-        "type": "string",
-        "description": "Localisation (inchange)"
-      },
-      "type": {
-        "type": "string",
-        "description": "Type de contrat (inchange)"
-      },
-      "start_date": {
-        "type": "string",
-        "description": "Date de debut (inchange)"
-      },
-      "end_date": {
-        "type": "string",
-        "description": "Date de fin ou 'Present' (inchange)"
-      },
       "description": {
         "type": "string",
         "description": "Description courte adaptee"
@@ -69,7 +45,7 @@
           "properties": {
             "field": {
               "type": "string",
-              "description": "Nom du champ modifie (title, description, responsibilities, deliverables, skills_used)"
+              "description": "Nom du champ modifie (description, responsibilities, deliverables, skills_used)"
             },
             "action": {
               "type": "string",
@@ -94,7 +70,7 @@
         }
       }
     },
-    "required": ["title", "company", "location", "type", "start_date", "end_date", "description", "responsibilities", "deliverables", "skills_used", "domain", "years_in_domain", "modifications"],
+    "required": ["description", "responsibilities", "deliverables", "skills_used", "domain", "years_in_domain", "modifications"],
     "additionalProperties": false
   }
 }
