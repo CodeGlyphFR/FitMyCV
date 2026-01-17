@@ -364,6 +364,7 @@
     "title": "Revisar cambio",
     "before": "Antes",
     "after": "Después",
+    "levelChange": "Nivel",
     "empty": "(vacío)",
     "accept": "Aceptar",
     "reject": "Rechazar",

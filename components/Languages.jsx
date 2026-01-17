@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState, useRef } from "react";
 import Section from "./Section";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
@@ -8,6 +8,78 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getLanguageLevelLabel } from "@/lib/i18n/cvLabels";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import { capitalizeSkillName, toTitleCase } from "@/lib/utils/textFormatting";
+import SectionReviewActions from "./SectionReviewActions";
+import { useLanguageHasChanges } from "./LanguageReviewActions";
+import ChangeReviewPopover from "./ChangeReviewPopover";
+import { useHighlight } from "./HighlightProvider";
+
+/**
+ * Composant pour une langue individuelle avec highlight review
+ */
+function LanguageItem({ language, index, isEditing, onEdit, onDelete, cvT }) {
+  const { hasChanges, change } = useLanguageHasChanges(language.name);
+  const { acceptChange, rejectChange } = useHighlight();
+  const [showPopover, setShowPopover] = useState(false);
+  const itemRef = useRef(null);
+
+  // Classes conditionnelles pour le highlight (même pattern que Projects)
+  const itemClasses = [
+    "relative inline-flex items-center rounded-full px-3 py-1 text-sm",
+    hasChanges
+      ? "border-2 border-emerald-500/50 bg-emerald-500/10 cursor-pointer" // Modifié = vert + clickable
+      : "border border-white/15", // Normal
+  ].join(" ");
+
+  const handleClick = () => {
+    if (hasChanges && !isEditing) {
+      setShowPopover(true);
+    }
+  };
+
+  const handleAccept = async () => {
+    if (change) {
+      await acceptChange(change.id);
+      setShowPopover(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (change) {
+      await rejectChange(change.id);
+      setShowPopover(false);
+    }
+  };
+
+  return (
+    <>
+      <div ref={itemRef} className={itemClasses} onClick={handleClick}>
+        <div className={isEditing ? "pr-12" : ""}>
+          <span className="font-semibold">{toTitleCase(language.name) || ""}</span>
+          <span className="text-sm opacity-80"> : {getLanguageLevelLabel(language.level, cvT) || capitalizeSkillName(language.level) || ""}</span>
+        </div>
+
+        {isEditing && (
+          <div className="no-print absolute top-1/2 -translate-y-1/2 right-1 flex">
+            <button onClick={(e) => { e.stopPropagation(); onEdit(index); }} className="text-sm hover:scale-110 transition-transform -mr-[0.8rem]"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3" /></button>
+            <button onClick={(e) => { e.stopPropagation(); onDelete(index); }} className="text-sm hover:scale-110 transition-transform"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3" /></button>
+          </div>
+        )}
+      </div>
+
+      {/* Popover de review au clic */}
+      {showPopover && change && (
+        <ChangeReviewPopover
+          change={change}
+          onAccept={handleAccept}
+          onReject={handleReject}
+          onClose={() => setShowPopover(false)}
+          anchorRef={itemRef}
+          showBeforeText={true}
+        />
+      )}
+    </>
+  );
+}
 
 export default function Languages(props){
   const { t } = useLanguage();
@@ -18,6 +90,7 @@ export default function Languages(props){
   const title = getCvSectionTitleInCvLanguage('languages', sectionTitles.languages, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
+
   const [editIndex, setEditIndex] = React.useState(null);
   const [delIndex, setDelIndex] = React.useState(null);
   const [addOpen, setAddOpen] = React.useState(false);
@@ -53,7 +126,15 @@ export default function Languages(props){
   if (languages.length===0 && !editing) return null;
 
   return (
-    <Section title={<div className="flex items-center justify-between gap-2"><span>{title}</span>{editing && (<button onClick={()=>setAddOpen(true)} className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-colors duration-200">{t("common.add")}</button>)}</div>}>
+    <Section title={
+      <div className="flex items-center justify-between gap-2">
+        <span>{title}</span>
+        <div className="flex items-center gap-2">
+          <SectionReviewActions section="languages" />
+          {editing && (<button onClick={()=>setAddOpen(true)} className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-colors duration-200">{t("common.add")}</button>)}
+        </div>
+      </div>
+    }>
       {languages.length === 0 ? (
         // Édition vide : message bordé
         editing ? (
@@ -63,19 +144,16 @@ export default function Languages(props){
         ) : null
       ) : (
         <div className="flex flex-wrap gap-2">
-          {languages.map((l,i)=>(
-            <div key={i} className="relative inline-block rounded-full border border-white/15 px-3 py-1 text-sm overflow-visible">
-              <div className={editing ? "pr-12" : ""}>
-                <span className="font-semibold">{toTitleCase(l.name) || ""}</span>
-                <span className="text-sm opacity-80"> : {getLanguageLevelLabel(l.level, cvT) || capitalizeSkillName(l.level) || ""}</span>
-              </div>
-              {editing && (
-                <div className="no-print absolute top-1/2 -translate-y-1/2 right-0 flex">
-                  <button onClick={()=>openEdit(i)} className="text-sm hover:scale-110 transition-transform -mr-[0.8rem]"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
-                  <button onClick={()=>setDelIndex(i)} className="text-sm hover:scale-110 transition-transform"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
-                </div>
-              )}
-            </div>
+          {languages.map((l, i) => (
+            <LanguageItem
+              key={i}
+              language={l}
+              index={i}
+              isEditing={editing}
+              onEdit={openEdit}
+              onDelete={setDelIndex}
+              cvT={cvT}
+            />
           ))}
         </div>
       )}

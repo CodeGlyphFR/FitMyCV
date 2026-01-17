@@ -152,8 +152,18 @@ export default function ChangeReviewPopover({
       style={{ top: position.top, left: position.left, zIndex: 99999 }}
     >
       <div className="px-3 pt-2.5 pb-2 space-y-2">
-        {/* Ancien contenu - format différent selon le type de champ */}
-        {showBeforeText && change.beforeValue && (
+        {/* Pour les langues: afficher le changement de niveau de façon lisible */}
+        {change.section === "languages" && change.beforeValue && change.afterValue && (
+          <p className="text-xs text-amber-300/90 max-w-[250px]">
+            <span className="font-medium text-white/90">{t("review.levelChange") || "Niveau"} : </span>
+            <span className="line-through opacity-70">{change.beforeValue?.level || change.beforeValue}</span>
+            <span className="mx-1.5">→</span>
+            <span className="font-medium">{change.afterValue?.level || change.afterValue}</span>
+          </p>
+        )}
+
+        {/* Ancien contenu - format différent selon le type de champ (sauf langues déjà traitées) */}
+        {showBeforeText && change.beforeValue && change.section !== "languages" && (
           <div className="max-w-[320px]">
             <p className="text-xs font-medium text-white/60 mb-1">{t("review.previousText") || "Texte précédent"} :</p>
             {/* Pour responsibilities/deliverables: afficher en liste */}
@@ -172,8 +182,8 @@ export default function ChangeReviewPopover({
           </div>
         )}
 
-        {/* Pour les changements de niveau, afficher avant/après avec labels traduits */}
-        {change.changeType === "level_adjusted" && change.beforeValue !== undefined && change.afterValue !== undefined && (
+        {/* Pour les changements de niveau de skills, afficher avant/après avec labels traduits */}
+        {change.changeType === "level_adjusted" && change.section !== "languages" && change.beforeValue !== undefined && change.afterValue !== undefined && (
           <p className="text-xs text-amber-300/90 max-w-[250px]">
             <span className="line-through opacity-70">{getSkillLevelLabel(change.beforeValue, t) || change.beforeValue}</span>
             <span className="mx-1.5">→</span>

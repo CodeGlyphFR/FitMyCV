@@ -364,6 +364,7 @@
     "title": "Änderung überprüfen",
     "before": "Vorher",
     "after": "Nachher",
+    "levelChange": "Niveau",
     "empty": "(leer)",
     "accept": "Akzeptieren",
     "reject": "Ablehnen",

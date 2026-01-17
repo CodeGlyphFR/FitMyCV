@@ -364,6 +364,7 @@
     "title": "Review change",
     "before": "Before",
     "after": "After",
+    "levelChange": "Level",
     "empty": "(empty)",
     "accept": "Accept",
     "reject": "Reject",

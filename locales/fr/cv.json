@@ -364,6 +364,7 @@
     "title": "Revoir la modification",
     "before": "Avant",
     "after": "Après",
+    "levelChange": "Niveau",
     "empty": "(vide)",
     "accept": "Accepter",
     "reject": "Rejeter",
