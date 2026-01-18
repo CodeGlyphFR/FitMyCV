@@ -81,8 +81,7 @@
         "type": ["object", "null"],
         "description": "Résumé professionnel",
         "properties": {
-          "description": { "type": ["string", "null"], "description": "REQUIRED: Professional summary 2-3 sentences. Generate if not present in CV!" },
-          "years_experience": { "type": ["integer", "null"], "description": "Années d'expérience" }
+          "description": { "type": ["string", "null"], "description": "REQUIRED: Professional summary 2-3 sentences. Generate if not present in CV!" }
         },
         "required": ["description"],
         "additionalProperties": false
