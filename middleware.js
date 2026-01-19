@@ -60,7 +60,7 @@ function checkRateLimit(ip, pathname) {
   };
 }
 
-export async function proxy(request) {
+export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
   // ⚡ CRITICAL: Bypass ALL proxy logic for WebSocket HMR
@@ -103,7 +103,7 @@ export async function proxy(request) {
         return NextResponse.redirect(url);
       }
     } catch (error) {
-      console.error('[proxy] Erreur vérification email:', error);
+      console.error('[middleware] Erreur vérification email:', error);
       // Ne pas bloquer en cas d'erreur
     }
   }
@@ -165,6 +165,9 @@ export async function proxy(request) {
 
     // Politique de referrer stricte
     'Referrer-Policy': 'strict-origin-when-cross-origin',
+
+    // Isolation cross-origin (protection contre les attaques Spectre/side-channel)
+    'Cross-Origin-Opener-Policy': 'same-origin',
 
     // Permissions Policy (anciennement Feature-Policy)
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
