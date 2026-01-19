@@ -150,7 +150,9 @@
           "start_date": { "type": "string" },
           "end_date": { "type": "string" },
           "summary": { "type": "string" },
-          "tech_stack": { "type": "array", "items": { "type": "string" } }
+          "tech_stack": { "type": "array", "items": { "type": "string" } },
+          "url": { "type": ["string", "null"] },
+          "url_label": { "type": ["string", "null"] }
         },
         "required": ["name"]
       }

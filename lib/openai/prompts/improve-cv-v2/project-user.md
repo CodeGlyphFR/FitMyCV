@@ -44,4 +44,5 @@
 - [ ] Mode creation : name, summary, tech_stack, role presents
 - [ ] Aucune techno inventee
 - [ ] Summary : 2-3 phrases max
+- [ ] URL incluse si applicable (GitHub, portfolio, demo)
 - [ ] Contenu en **{{cvLanguage}}**

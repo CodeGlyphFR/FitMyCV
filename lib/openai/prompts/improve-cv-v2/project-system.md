@@ -93,7 +93,9 @@ Avant toute modification :
       "add": ["Nouvelle techno"],
       "remove": ["Techno a retirer"]
     },
-    "role": "Nouveau role si pertinent"
+    "role": "Nouveau role si pertinent",
+    "url": "URL du projet si pertinent (GitHub, portfolio, demo)",
+    "url_label": "Titre du lien si pertinent (ex: 'Voir sur GitHub')"
   },
   "isNew": false
 }
@@ -113,7 +115,9 @@ Avant toute modification :
     "tech_stack": ["Tech1", "Tech2"],
     "role": "Role dans le projet",
     "start_date": "YYYY-MM",
-    "end_date": "YYYY-MM ou null"
+    "end_date": "YYYY-MM ou null",
+    "url": "URL du projet si disponible (optionnel)",
+    "url_label": "Titre du lien (optionnel)"
   },
   "isNew": true
 }

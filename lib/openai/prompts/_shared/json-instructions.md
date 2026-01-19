@@ -13,16 +13,13 @@ Informations personnelles :
 - **contact.email** : adresse email professionnelle (format: prenom.nom@exemple.com)
 - **contact.phone** : numéro de téléphone avec le code pays (ex: +33 6 12 34 56 78)
 - **contact.location** : objet avec city, region, country_code (ex: "Paris", "Île-de-France", "FR")
-- **contact.links** : tableau d'objets avec type, label, url (ex: LinkedIn, GitHub, Portfolio, Site web)
-  - **type** : le type de lien (linkedin, github, portfolio, website, etc.)
+- **contact.links** : tableau d'objets avec label et url (ex: LinkedIn, GitHub, Portfolio, Site web)
   - **label** : le texte affiché (ex: "LinkedIn", "GitHub", "Portfolio")
   - **url** : l'URL complète (ex: "https://linkedin.com/in/john-doe")
 
 ## 2. SUMMARY
 
-- **headline** : titre/accroche courte et percutante (1 ligne)
-- **description** : C'est le "Who am I" du CV (2-3 phrases)
-- **years_experience** : nombre d'années d'expérience (nombre)
+- **description** : C'est le "Who am I" du CV (2-3 phrases). Résumé professionnel décrivant le profil, les compétences clés et le domaine d'expertise.
 
 ## 3. SKILLS
 
@@ -203,8 +200,9 @@ Projets personnels **UNIQUEMENT** si pertinent pour le poste :
 - **role** : rôle/fonction sur le projet
 - **summary** : description du projet
 - **tech_stack** : technologies utilisées (tableau de strings)
-- **keywords** : mots-clés du projet (tableau de strings)
 - **start_date** / **end_date** : dates au format 'YYYY-MM' ou 'YYYY'
+- **url** : lien du projet (optionnel) - GitHub, portfolio, démo live
+- **url_label** : titre/label du lien (optionnel) - ex: "Voir sur GitHub", "Demo live"
 
 ## 8. EXTRAS
 

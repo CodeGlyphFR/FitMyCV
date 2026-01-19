@@ -242,7 +242,9 @@
       "experienceEndShortWithPresent": "Fin (YYYY, YYYY-MM ou present)",
       "city": "Ville",
       "region": "Région",
-      "countryCode": "Pays (code)"
+      "countryCode": "Pays (code)",
+      "projectUrl": "URL du projet (GitHub, portfolio...)",
+      "projectUrlLabel": "Titre du lien (ex: Voir sur GitHub)"
     }
   },
   "sourceInfo": {

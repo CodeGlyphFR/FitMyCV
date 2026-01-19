@@ -225,9 +225,11 @@
               "items": { "type": "string" }
             },
             "start_date": { "type": ["string", "null"], "description": "Date début" },
-            "end_date": { "type": ["string", "null"], "description": "Date fin" }
+            "end_date": { "type": ["string", "null"], "description": "Date fin" },
+            "url": { "type": ["string", "null"], "description": "URL du projet (GitHub, portfolio, demo)" },
+            "url_label": { "type": ["string", "null"], "description": "Label/titre du lien (ex: 'Voir sur GitHub', 'Demo live')" }
           },
-          "required": ["name", "role", "summary", "tech_stack", "start_date", "end_date"],
+          "required": ["name", "role", "summary", "tech_stack", "start_date", "end_date", "url", "url_label"],
           "additionalProperties": false
         }
       }

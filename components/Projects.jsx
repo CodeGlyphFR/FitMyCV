@@ -41,6 +41,13 @@ function normalizeDate(s){
   return m;
 }
 
+// Assure que l'URL est absolue (ajoute https:// si manquant)
+function ensureAbsoluteUrl(u) {
+  const url = (u || "").trim();
+  if (!url) return "";
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 /**
  * Composant carte projet individuelle avec highlight review
  */
@@ -60,7 +67,22 @@ function ProjectCard({ project, index, isEditing, onEdit, onDelete, cvT }) {
   return (
     <div className={cardClasses}>
       <div className={"flex items-start gap-2" + (isEditing ? " pr-20" : "")}>
-        <div className="font-semibold flex-1 min-w-0 break-words">{project.name || ""}</div>
+        <div className="font-semibold flex-1 min-w-0 break-words">
+          {project.name || ""}
+          {project.url && (
+            <a
+              href={project.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 ml-2 font-normal"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+              {project.url_label || project.url}
+            </a>
+          )}
+        </div>
         <div className="text-sm opacity-80 whitespace-nowrap ml-auto mt-1">
           {(project.start_date || project.end_date)
             ? [ym(project.start_date) || "", project.end_date === "present" ? cvT("cvSections.present") : (ym(project.end_date) || "")].filter(Boolean).join(" → ")
@@ -141,8 +163,8 @@ export default function Projects(props){
   const [delIndex, setDelIndex]   = React.useState(null);
   const [addOpen, setAddOpen]     = React.useState(false);
 
-  const [f,  setF]  = React.useState({ name:"", role:"", start:"", end:"", inProgress: false, summary:"", tech_stack:"" });
-  const [nf, setNf] = React.useState({ name:"", role:"", start:"", end:"", inProgress: false, summary:"", tech_stack:"" });
+  const [f,  setF]  = React.useState({ name:"", role:"", start:"", end:"", inProgress: false, summary:"", tech_stack:"", url:"", url_label:"" });
+  const [nf, setNf] = React.useState({ name:"", role:"", start:"", end:"", inProgress: false, summary:"", tech_stack:"", url:"", url_label:"" });
 
   const isEmpty = projects.length === 0;
   const shouldRender = isEditing || !isEmpty; // rend la section si on édite OU si non vide
@@ -158,7 +180,9 @@ export default function Projects(props){
       end: isCurrentProject ? "" : (p.end_date || ""),
       inProgress: isCurrentProject,
       summary: p.summary || "",
-      tech_stack: Array.isArray(p.tech_stack) ? p.tech_stack.join(", ") : (p.tech_stack || "")
+      tech_stack: Array.isArray(p.tech_stack) ? p.tech_stack.join(", ") : (p.tech_stack || ""),
+      url: p.url || "",
+      url_label: p.url_label || ""
     });
     // Utiliser l'index original pour la mutation
     setEditIndex(p._originalIndex);
@@ -177,6 +201,8 @@ export default function Projects(props){
     if (f.summary) p.summary = f.summary;
     const tech_stack = (f.tech_stack || "").split(",").map(t => t.trim()).filter(Boolean);
     if (tech_stack.length) p.tech_stack = tech_stack;
+    if (f.url) p.url = ensureAbsoluteUrl(f.url);
+    if (f.url_label) p.url_label = f.url_label;
 
     await mutate({ op:"set", path:`projects[${editIndex}]`, value:p });
     setEditIndex(null);
@@ -195,9 +221,11 @@ export default function Projects(props){
     if (nf.summary) p.summary = nf.summary;
     const tech_stack = (nf.tech_stack || "").split(",").map(t => t.trim()).filter(Boolean);
     if (tech_stack.length) p.tech_stack = tech_stack;
+    if (nf.url) p.url = ensureAbsoluteUrl(nf.url);
+    if (nf.url_label) p.url_label = nf.url_label;
 
     await mutate({ op:"push", path:"projects", value:p });
-    setNf({ name:"", role:"", start:"", end:"", inProgress: false, summary:"", tech_stack:"" });
+    setNf({ name:"", role:"", start:"", end:"", inProgress: false, summary:"", tech_stack:"", url:"", url_label:"" });
     setAddOpen(false);
   }
 
@@ -262,6 +290,8 @@ export default function Projects(props){
           </div>
           <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.placeholders.description")} value={f.summary} onChange={e => setF({ ...f, summary: e.target.value })} />
           <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.technologies")} value={f.tech_stack || ""} onChange={e => setF({ ...f, tech_stack: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.projectUrlLabel")} value={f.url_label || ""} onChange={e => setF({ ...f, url_label: e.target.value })} />
+          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.projectUrl")} value={f.url || ""} onChange={e => setF({ ...f, url: e.target.value })} />
           <div className="md:col-span-2 flex justify-end gap-2">
             <button type="button" onClick={() => setEditIndex(null)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
             <button type="button" onClick={save} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.save")}</button>
@@ -282,12 +312,23 @@ export default function Projects(props){
           </div>
           <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.placeholders.description")} value={nf.summary} onChange={e => setNf({ ...nf, summary: e.target.value })} />
 
-          {/* ✅ Champ tech_stack ajouté */}
           <input
             className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2"
             placeholder={t("cvSections.technologies")}
             value={nf.tech_stack || ""}
             onChange={e => setNf({ ...nf, tech_stack: e.target.value })}
+          />
+          <input
+            className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
+            placeholder={t("cvSections.placeholders.projectUrlLabel")}
+            value={nf.url_label || ""}
+            onChange={e => setNf({ ...nf, url_label: e.target.value })}
+          />
+          <input
+            className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
+            placeholder={t("cvSections.placeholders.projectUrl")}
+            value={nf.url || ""}
+            onChange={e => setNf({ ...nf, url: e.target.value })}
           />
 
           <div className="md:col-span-2 flex justify-end gap-2">
