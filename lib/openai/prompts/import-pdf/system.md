@@ -145,8 +145,13 @@ If detected_language = "en":
 
 ### System values (NEVER translate):
 - Proficiency levels: NUMBERS `0`, `1`, `2`, `3`, `4`, `5` (0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert)
-- Language levels: `A1`, `A2`, `B1`, `B2`, `C1`, `C2`, `Native`
 - Link labels: `LinkedIn`, `GitHub`, `Portfolio`, `Website`, `Other`
+
+### Language levels (extract AS WRITTEN in the CV):
+- Extract the language level **exactly as written** in the CV
+- DO NOT normalize or convert to a standard format
+- Examples: "C1", "Courant", "Bilingue", "Langue maternelle", "Fluent", "Native", "Professionnel", "B2"
+- Keep the original wording from the CV
 
 **Rule: ALL human-readable text must be in the detected language, except system codes.**
 **Rule: Proficiency MUST be a NUMBER (0-5), never a string!**

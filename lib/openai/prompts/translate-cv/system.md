@@ -16,6 +16,24 @@ Traduire le CV dans la langue cible de maniere professionnelle et naturelle, en 
 4. Assure-toi que le JSON final soit **valide et bien forme**
 5. Traduis de maniere **professionnelle et naturelle**
 
+## TRADUCTION DES NIVEAUX DE LANGUE
+
+Le champ `level` dans la section `languages` doit etre traduit dans la langue cible :
+
+| Source | Français | English | Deutsch | Español |
+|--------|----------|---------|---------|---------|
+| Native/Langue maternelle | Langue maternelle | Native | Muttersprache | Lengua materna |
+| Fluent/Courant | Courant | Fluent | Fließend | Fluido |
+| Bilingual/Bilingue | Bilingue | Bilingual | Zweisprachig | Bilingüe |
+| Professional/Professionnel | Professionnel | Professional | Beruflich | Profesional |
+| Advanced/Avancé | Avancé | Advanced | Fortgeschritten | Avanzado |
+| Intermediate/Intermédiaire | Intermédiaire | Intermediate | Mittelstufe | Intermedio |
+| Basic/Débutant | Débutant | Basic | Grundkenntnisse | Básico |
+
+**Notes:**
+- Les niveaux CECRL (A1, A2, B1, B2, C1, C2) restent **inchangés** car ils sont internationaux
+- Si le niveau n'est pas dans la liste ci-dessus, traduis-le de maniere naturelle
+
 ## STYLE D'ECRITURE
 
 ### UTILISER

@@ -61,3 +61,9 @@ Retourne le CV COMPLET au format JSON :
 - Noms d'entreprises
 - Dates (format YYYY-MM)
 - URLs, emails, numeros de telephone
+- Niveaux CECRL (A1, A2, B1, B2, C1, C2)
+
+**TRADUIRE les niveaux de langue descriptifs :**
+- "Native" ↔ "Langue maternelle" ↔ "Muttersprache" ↔ "Lengua materna"
+- "Fluent" ↔ "Courant" ↔ "Fließend" ↔ "Fluido"
+- "Bilingual" ↔ "Bilingue" ↔ "Zweisprachig" ↔ "Bilingüe"

@@ -246,6 +246,8 @@
   },
   "header": {
     "modalTitle": "Edit header",
+    "identity": "Identity",
+    "contact": "Contact",
     "fullName": "Full name",
     "currentTitle": "Current title",
     "email": "Email",
@@ -275,7 +277,9 @@
     "yes": "Yes",
     "no": "No",
     "noResults": "No results",
-    "clear": "None"
+    "clear": "None",
+    "today": "Today",
+    "ongoing": "Ongoing"
   },
   "editMode": {
     "on": "✏️ Edit ON",

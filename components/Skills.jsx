@@ -12,6 +12,15 @@ import SkillItemHighlight, { RemovedSkillsDisplay, RemovedSkillsDisplayBlock, us
 import SectionReviewActions from "./SectionReviewActions";
 import SkillsReviewActions from "./SkillsReviewActions";
 import { normalizeToNumber, VALID_SKILL_LEVELS, SKILL_LEVEL_KEYS } from "@/lib/constants/skillLevels";
+import { Code, Wrench, Workflow, Heart, Plus, Trash2 } from "lucide-react";
+import {
+  ModalSection,
+  FormField,
+  Input,
+  Select,
+  Grid,
+  ModalFooter,
+} from "./ui/ModalForm";
 
 function Row({children}){ return <div className="flex gap-2">{children}</div>; }
 
@@ -44,6 +53,59 @@ function displaySkillLevel(skill, t){
   if (!skill || typeof skill !== "object") return "";
   const source = skill.proficiency ?? skill.level ?? skill.rating ?? skill.level_label ?? skill.level_name ?? skill.level_0to5;
   return formatProficiency(source, t);
+}
+
+// Composant pour une ligne de compétence avec niveau
+function SkillRow({ skill, index, onChange, onDelete, levelOptions, placeholderName, placeholderLevel }) {
+  return (
+    <div className="flex gap-2 items-center">
+      <Input
+        className="flex-1 min-w-0"
+        placeholder={placeholderName}
+        value={skill.name || ""}
+        onChange={e => onChange(index, { ...skill, name: e.target.value })}
+      />
+      <Select
+        className="flex-1 min-w-0"
+        value={skill.proficiency ?? ""}
+        onChange={e => {
+          const val = e.target.value;
+          onChange(index, { ...skill, proficiency: val === "" ? null : parseInt(val, 10) });
+        }}
+      >
+        <option value="" disabled>{placeholderLevel}</option>
+        {levelOptions.map(opt => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </Select>
+      <button
+        onClick={() => onDelete(index)}
+        className="flex items-center justify-center rounded-md border border-red-500/50 bg-red-500/20 p-1.5 text-red-400 hover:bg-red-500/30 transition-colors shrink-0"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+// Composant pour une ligne simple (sans niveau)
+function SimpleSkillRow({ value, index, onChange, onDelete, placeholder }) {
+  return (
+    <div className="flex gap-2 items-center">
+      <Input
+        className="flex-1 min-w-0"
+        placeholder={placeholder}
+        value={value || ""}
+        onChange={e => onChange(index, e.target.value)}
+      />
+      <button
+        onClick={() => onDelete(index)}
+        className="flex items-center justify-center rounded-md border border-red-500/50 bg-red-500/20 p-1.5 text-red-400 hover:bg-red-500/30 transition-colors shrink-0"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
 }
 
 export default function Skills(props){
@@ -108,6 +170,48 @@ export default function Skills(props){
   async function saveSoft(){ await mutate({ op:"set", path:"skills.soft_skills", value: softLocal }); setOpenSoft(false); }
   async function saveTools(){ await mutate({ op:"set", path:"skills.tools", value: toolsLocal }); setOpenTools(false); }
   async function saveMeth(){ await mutate({ op:"set", path:"skills.methodologies", value: methLocal }); setOpenMeth(false); }
+
+  // Handlers pour les listes
+  const handleHardChange = (idx, value) => {
+    const arr = [...hardLocal];
+    arr[idx] = value;
+    setHardLocal(arr);
+  };
+  const handleHardDelete = (idx) => {
+    const arr = [...hardLocal];
+    arr.splice(idx, 1);
+    setHardLocal(arr);
+  };
+  const handleToolsChange = (idx, value) => {
+    const arr = [...toolsLocal];
+    arr[idx] = value;
+    setToolsLocal(arr);
+  };
+  const handleToolsDelete = (idx) => {
+    const arr = [...toolsLocal];
+    arr.splice(idx, 1);
+    setToolsLocal(arr);
+  };
+  const handleSoftChange = (idx, value) => {
+    const arr = [...softLocal];
+    arr[idx] = value;
+    setSoftLocal(arr);
+  };
+  const handleSoftDelete = (idx) => {
+    const arr = [...softLocal];
+    arr.splice(idx, 1);
+    setSoftLocal(arr);
+  };
+  const handleMethChange = (idx, value) => {
+    const arr = [...methLocal];
+    arr[idx] = value;
+    setMethLocal(arr);
+  };
+  const handleMethDelete = (idx) => {
+    const arr = [...methLocal];
+    arr.splice(idx, 1);
+    setMethLocal(arr);
+  };
 
   return (
     <Section title={
@@ -295,88 +399,143 @@ export default function Skills(props){
         })()}
       </div>
 
-      {/* Modals */}
+      {/* Modal Hard Skills */}
       <Modal open={openHard} onClose={()=>setOpenHard(false)} title={t("cvSections.editSkills")}>
-        <div className="space-y-2">
-          {hardLocal.map((row,idx)=>(
-            <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...hardLocal]; arr[idx]={...arr[idx], name:e.target.value}; setHardLocal(arr); }} />
-              <select
-                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
-                value={row.proficiency ?? ""}
-                onChange={e => { const arr=[...hardLocal]; const val = e.target.value; arr[idx]={ ...arr[idx], proficiency: val === "" ? null : parseInt(val, 10) }; setHardLocal(arr); }}
+        <div className="space-y-3">
+          <ModalSection title={cvT("cvSections.hardSkills")} icon={Code}>
+            <div className="space-y-2">
+              {hardLocal.map((row, idx) => (
+                <SkillRow
+                  key={idx}
+                  skill={row}
+                  index={idx}
+                  onChange={handleHardChange}
+                  onDelete={handleHardDelete}
+                  levelOptions={LEVEL_OPTIONS}
+                  placeholderName={t("cvSections.placeholders.skillName")}
+                  placeholderLevel={t("cvSections.placeholders.chooseLevel")}
+                />
+              ))}
+              <button
+                onClick={() => setHardLocal([...hardLocal, { name: "", proficiency: null }])}
+                className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
               >
-                <option value="" disabled>{t("cvSections.placeholders.chooseLevel")}</option>
-                {LEVEL_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-              <button onClick={()=>{ const arr=[...hardLocal]; arr.splice(idx,1); setHardLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 p-1.5 text-white hover:bg-red-500/40 transition-colors shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
+                <Plus className="w-3 h-3" />
+                {t("common.add")}
+              </button>
             </div>
-          ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setHardLocal([...(hardLocal||[]),{name:"",proficiency:null}])} className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 hover:border-white/30 transition-colors">{t("common.add")}</button></div>
-          <div className="flex justify-end gap-2">
-            <button onClick={()=>setOpenHard(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
-            <button onClick={saveHard} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.save")}</button>
-          </div>
+          </ModalSection>
+
+          <ModalFooter
+            onCancel={() => setOpenHard(false)}
+            onSave={saveHard}
+            saveLabel={t("common.save")}
+            cancelLabel={t("common.cancel")}
+          />
         </div>
       </Modal>
 
+      {/* Modal Tools */}
       <Modal open={openTools} onClose={()=>setOpenTools(false)} title={t("cvSections.editTools")}>
-        <div className="space-y-2">
-          {toolsLocal.map((row,idx)=>(
-            <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillName")} value={row.name||""} onChange={e=>{ const arr=[...toolsLocal]; arr[idx]={...arr[idx], name:e.target.value}; setToolsLocal(arr); }} />
-              <select
-                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
-                value={row.proficiency ?? ""}
-                onChange={e => { const arr=[...toolsLocal]; const val = e.target.value; arr[idx]={ ...arr[idx], proficiency: val === "" ? null : parseInt(val, 10) }; setToolsLocal(arr); }}
+        <div className="space-y-3">
+          <ModalSection title={cvT("cvSections.tools")} icon={Wrench}>
+            <div className="space-y-2">
+              {toolsLocal.map((row, idx) => (
+                <SkillRow
+                  key={idx}
+                  skill={row}
+                  index={idx}
+                  onChange={handleToolsChange}
+                  onDelete={handleToolsDelete}
+                  levelOptions={LEVEL_OPTIONS}
+                  placeholderName={t("cvSections.placeholders.skillName")}
+                  placeholderLevel={t("cvSections.placeholders.chooseLevel")}
+                />
+              ))}
+              <button
+                onClick={() => setToolsLocal([...toolsLocal, { name: "", proficiency: null }])}
+                className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
               >
-                <option value="" disabled>{t("cvSections.placeholders.chooseLevel")}</option>
-                {LEVEL_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-              <button onClick={()=>{ const arr=[...toolsLocal]; arr.splice(idx,1); setToolsLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 p-1.5 text-white hover:bg-red-500/40 transition-colors shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
+                <Plus className="w-3 h-3" />
+                {t("common.add")}
+              </button>
             </div>
-          ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setToolsLocal([...(toolsLocal||[]),{name:"",proficiency:null}])} className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 hover:border-white/30 transition-colors">{t("common.add")}</button></div>
-          <div className="flex justify-end gap-2">
-            <button onClick={()=>setOpenTools(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
-            <button onClick={saveTools} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.save")}</button>
-          </div>
+          </ModalSection>
+
+          <ModalFooter
+            onCancel={() => setOpenTools(false)}
+            onSave={saveTools}
+            saveLabel={t("common.save")}
+            cancelLabel={t("common.cancel")}
+          />
         </div>
       </Modal>
 
+      {/* Modal Methodologies */}
       <Modal open={openMeth} onClose={()=>setOpenMeth(false)} title={t("cvSections.editMethodologies")}>
-        <div className="space-y-2">
-          {methLocal.map((row,idx)=>(
-            <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...methLocal]; arr[idx]=e.target.value; setMethLocal(arr); }} />
-              <button onClick={()=>{ const arr=[...methLocal]; arr.splice(idx,1); setMethLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 p-1.5 text-white hover:bg-red-500/40 transition-colors shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
+        <div className="space-y-3">
+          <ModalSection title={cvT("cvSections.methodologies")} icon={Workflow}>
+            <div className="space-y-2">
+              {methLocal.map((row, idx) => (
+                <SimpleSkillRow
+                  key={idx}
+                  value={row}
+                  index={idx}
+                  onChange={handleMethChange}
+                  onDelete={handleMethDelete}
+                  placeholder={t("cvSections.placeholders.skillLabel")}
+                />
+              ))}
+              <button
+                onClick={() => setMethLocal([...methLocal, ""])}
+                className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                <Plus className="w-3 h-3" />
+                {t("common.add")}
+              </button>
             </div>
-          ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setMethLocal([...(methLocal||[]), ""])} className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 hover:border-white/30 transition-colors">{t("common.add")}</button></div>
-          <div className="flex justify-end gap-2">
-            <button onClick={()=>setOpenMeth(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
-            <button onClick={saveMeth} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.save")}</button>
-          </div>
+          </ModalSection>
+
+          <ModalFooter
+            onCancel={() => setOpenMeth(false)}
+            onSave={saveMeth}
+            saveLabel={t("common.save")}
+            cancelLabel={t("common.cancel")}
+          />
         </div>
       </Modal>
 
+      {/* Modal Soft Skills */}
       <Modal open={openSoft} onClose={()=>setOpenSoft(false)} title={t("cvSections.editSoftSkills")}>
-        <div className="space-y-2">
-          {softLocal.map((row,idx)=>(
-            <div key={idx} className="flex gap-2 items-center">
-              <input className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.skillLabel")} value={row||""} onChange={e=>{ const arr=[...softLocal]; arr[idx]=e.target.value; setSoftLocal(arr); }} />
-              <button onClick={()=>{ const arr=[...softLocal]; arr.splice(idx,1); setSoftLocal(arr); }} className="flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 p-1.5 text-white hover:bg-red-500/40 transition-colors shrink-0"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
+        <div className="space-y-3">
+          <ModalSection title={cvT("cvSections.softSkills")} icon={Heart}>
+            <div className="space-y-2">
+              {softLocal.map((row, idx) => (
+                <SimpleSkillRow
+                  key={idx}
+                  value={row}
+                  index={idx}
+                  onChange={handleSoftChange}
+                  onDelete={handleSoftDelete}
+                  placeholder={t("cvSections.placeholders.skillLabel")}
+                />
+              ))}
+              <button
+                onClick={() => setSoftLocal([...softLocal, ""])}
+                className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                <Plus className="w-3 h-3" />
+                {t("common.add")}
+              </button>
             </div>
-          ))}
-          <div className="flex justify-end gap-2"><button onClick={()=>setSoftLocal([...(softLocal||[]), ""])} className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 hover:border-white/30 transition-colors">{t("common.add")}</button></div>
-          <div className="flex justify-end gap-2">
-            <button onClick={()=>setOpenSoft(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
-            <button onClick={saveSoft} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.save")}</button>
-          </div>
+          </ModalSection>
+
+          <ModalFooter
+            onCancel={() => setOpenSoft(false)}
+            onSave={saveSoft}
+            saveLabel={t("common.save")}
+            cancelLabel={t("common.cancel")}
+          />
         </div>
       </Modal>
     </Section>

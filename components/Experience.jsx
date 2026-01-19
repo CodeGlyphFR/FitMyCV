@@ -5,6 +5,20 @@ import { ym } from "@/lib/utils";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
+import {
+  ModalSection,
+  FormField,
+  Input,
+  Textarea,
+  Grid,
+  Divider,
+  ModalFooter,
+  ModalFooterDelete,
+  Briefcase,
+  Calendar,
+  MapPin,
+  FileText,
+} from "./ui/ModalForm";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import { capitalizeSkillName } from "@/lib/utils/textFormatting";
@@ -15,6 +29,7 @@ import ExperienceReviewActions from "./ExperienceReviewActions";
 import ChangeHighlight from "./ChangeHighlight";
 import { useHighlight } from "./HighlightProvider";
 import CountrySelect from "./CountrySelect";
+import MonthPicker from "./ui/MonthPicker";
 
 
 export default function Experience(props){
@@ -94,7 +109,7 @@ export default function Experience(props){
   const [addOpen, setAddOpen]   = React.useState(false);
 
   // ---- Forms ----
-  const emptyForm = { title:"", company:"", department_or_client:"", start:"", end:"", inProgress:false, city:"", region:"", country_code:"", description:"", responsibilities:"", deliverables:"", skills_used:"" };
+  const emptyForm = { title:"", company:"", department_or_client:"", start:"", end:"", city:"", region:"", country_code:"", description:"", responsibilities:"", deliverables:"", skills_used:"" };
   const [nf, setNf] = React.useState(emptyForm);
   const [f,  setF]  = React.useState({});
 
@@ -136,14 +151,12 @@ export default function Experience(props){
   // ---- Actions ----
   const openEdit = (i) => {
     const e = experience[i] || {};
-    const isCurrentPosition = !e.end_date || e.end_date === "present";
     setF({
       title: e.title || "",
       company: e.company || "",
       department_or_client: e.department_or_client || "",
       start: e.start_date || "",
-      end: isCurrentPosition ? "" : (e.end_date || ""),
-      inProgress: isCurrentPosition,
+      end: e.end_date || "",
       city: e.location?.city || "",
       region: e.location?.region || "",
       country_code: e.location?.country_code || "",
@@ -161,7 +174,9 @@ export default function Experience(props){
     if (f.company) p.company = f.company;
     if (f.department_or_client) p.department_or_client = f.department_or_client;
     if (f.start) p.start_date = norm(f.start);
-    if (f.inProgress) p.end_date = "present"; else if (f.end) p.end_date = norm(f.end);
+    // Si vide ou "present", c'est un poste en cours
+    if (!f.end || f.end.toLowerCase() === "present") p.end_date = "present";
+    else p.end_date = norm(f.end);
 
     const loc = {};
     if (f.city) loc.city = f.city;
@@ -189,7 +204,9 @@ export default function Experience(props){
     if (nf.company) p.company = nf.company;
     if (nf.department_or_client) p.department_or_client = nf.department_or_client;
     if (nf.start) p.start_date = norm(nf.start);
-    if (nf.inProgress) p.end_date = "present"; else if (nf.end) p.end_date = norm(nf.end);
+    // Si vide ou "present", c'est un poste en cours
+    if (!nf.end || nf.end.toLowerCase() === "present") p.end_date = "present";
+    else p.end_date = norm(nf.end);
 
     const loc = {};
     if (nf.city) loc.city = nf.city;
@@ -381,89 +398,179 @@ export default function Experience(props){
       </div>
 
       {/* Edit Modal */}
-      <Modal open={editIndex !== null} onClose={() => setEditIndex(null)} title={t("cvSections.editExperience")}>
-        <div className="grid gap-2 md:grid-cols-2">
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceTitleShort")} value={f.title || ""} onChange={e => setF({ ...f, title: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceCompanyShort")} value={f.company || ""} onChange={e => setF({ ...f, company: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceDepartment")} value={f.department_or_client || ""} onChange={e => setF({ ...f, department_or_client: e.target.value })} />
+      <Modal open={editIndex !== null} onClose={() => setEditIndex(null)} title={t("cvSections.editExperience")} size="medium">
+        <div className="space-y-3">
+          <ModalSection title={t("cvSections.position")} icon={Briefcase}>
+            <Grid cols={2}>
+              <FormField label={t("cvSections.placeholders.experienceTitleShort")}>
+                <Input placeholder={t("cvSections.placeholders.experienceTitleHint")} value={f.title || ""} onChange={e => setF({ ...f, title: e.target.value })} />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.experienceCompanyShort")}>
+                <Input placeholder={t("cvSections.placeholders.experienceCompanyHint")} value={f.company || ""} onChange={e => setF({ ...f, company: e.target.value })} />
+              </FormField>
+            </Grid>
+            <FormField label={t("cvSections.placeholders.experienceDepartment")}>
+              <Input placeholder={t("cvSections.placeholders.experienceDepartmentHint")} value={f.department_or_client || ""} onChange={e => setF({ ...f, department_or_client: e.target.value })} />
+            </FormField>
+          </ModalSection>
 
-          <div className="grid grid-cols-2 gap-2">
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceStartShort")} value={f.start || ""} onChange={e => setF({ ...f, start: e.target.value })} />
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceEndShort")} value={f.end || ""} onChange={e => setF({ ...f, end: e.target.value })} disabled={f.inProgress} />
-            <label className="text-xs col-span-2 inline-flex items-center gap-2 text-white drop-shadow">
-              <input type="checkbox" checked={!!f.inProgress} onChange={e => setF({ ...f, inProgress: e.target.checked })} /> {t("cvSections.inProgress")}
-            </label>
-          </div>
+          <ModalSection title={t("cvSections.period")} icon={Calendar}>
+            <div className="flex flex-wrap items-end gap-2">
+              <FormField label={t("cvSections.placeholders.experienceStartShort")} className="flex-1 min-w-[140px]">
+                <MonthPicker
+                  placeholder={t("cvSections.placeholders.dateFormat")}
+                  value={f.start || ""}
+                  onChange={v => setF({ ...f, start: v })}
+                  todayLabel={t("common.today")}
+                />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.experienceEndShort")} className="flex-1 min-w-[140px]">
+                <MonthPicker
+                  placeholder={t("cvSections.placeholders.dateFormat")}
+                  value={f.end || ""}
+                  onChange={v => setF({ ...f, end: v })}
+                  todayLabel={t("common.ongoing")}
+                  presentLabel={t("common.ongoing")}
+                  presentMode
+                />
+              </FormField>
+            </div>
+          </ModalSection>
 
-          <div className="md:col-span-2 grid grid-cols-3 gap-2">
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.city")} value={f.city || ""} onChange={e => setF({ ...f, city: e.target.value })} />
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.region")} value={f.region || ""} onChange={e => setF({ ...f, region: e.target.value })} />
-            <CountrySelect
-              className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
-              placeholder={t("cvSections.placeholders.selectCountry")}
-              value={f.country_code || ""}
-              onChange={v => setF({ ...f, country_code: v })}
-            />
-          </div>
+          <ModalSection title={t("cvSections.location")} icon={MapPin}>
+            <Grid cols={3}>
+              <FormField label={t("cvSections.placeholders.city")}>
+                <Input placeholder={t("cvSections.placeholders.cityHint")} value={f.city || ""} onChange={e => setF({ ...f, city: e.target.value })} />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.region")}>
+                <Input placeholder={t("cvSections.placeholders.regionHint")} value={f.region || ""} onChange={e => setF({ ...f, region: e.target.value })} />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.selectCountry")}>
+                <CountrySelect
+                  className="w-full rounded-md border border-white/20 bg-white/5 px-2.5 py-1.5 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30 focus:outline-none appearance-none cursor-pointer [&>option]:bg-slate-900 [&>option]:text-white"
+                  placeholder={t("cvSections.placeholders.selectCountry")}
+                  value={f.country_code || ""}
+                  onChange={v => setF({ ...f, country_code: v })}
+                />
+              </FormField>
+            </Grid>
+          </ModalSection>
 
-          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder="Description" rows={3} value={f.description || ""} onChange={e => setF({ ...f, description: e.target.value })} />
-          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.responsibilities")} rows={3} value={f.responsibilities || ""} onChange={e => setF({ ...f, responsibilities: e.target.value })} />
-          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.deliverables")} rows={3} value={f.deliverables || ""} onChange={e => setF({ ...f, deliverables: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.skillsUsed")} value={f.skills_used || ""} onChange={e => setF({ ...f, skills_used: e.target.value })} />
+          <Divider />
 
-          <div className="md:col-span-2 flex justify-end gap-2">
-            <button type="button" onClick={() => setEditIndex(null)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
-            <button type="button" onClick={saveEdit} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.save")}</button>
-          </div>
+          <ModalSection title={t("cvSections.content")} icon={FileText}>
+            <FormField label={t("cvSections.placeholders.description")}>
+              <Textarea placeholder={t("cvSections.placeholders.descriptionHint")} rows={2} value={f.description || ""} onChange={e => setF({ ...f, description: e.target.value })} />
+            </FormField>
+            <Grid cols={2}>
+              <FormField label={t("cvSections.responsibilitiesPerLine")}>
+                <Textarea placeholder={t("cvSections.placeholders.responsibilitiesHint")} rows={3} value={f.responsibilities || ""} onChange={e => setF({ ...f, responsibilities: e.target.value })} />
+              </FormField>
+              <FormField label={t("cvSections.deliverablesPerLine")}>
+                <Textarea placeholder={t("cvSections.placeholders.deliverablesHint")} rows={3} value={f.deliverables || ""} onChange={e => setF({ ...f, deliverables: e.target.value })} />
+              </FormField>
+            </Grid>
+            <FormField label={t("cvSections.skillsUsedComma")}>
+              <Input placeholder={t("cvSections.placeholders.skillsUsedHint")} value={f.skills_used || ""} onChange={e => setF({ ...f, skills_used: e.target.value })} />
+            </FormField>
+          </ModalSection>
+
+          <ModalFooter onCancel={() => setEditIndex(null)} onSave={saveEdit} cancelLabel={t("common.cancel")} saveLabel={t("common.save")} />
         </div>
       </Modal>
 
       {/* Add Modal */}
-      <Modal open={!!addOpen} onClose={() => setAddOpen(false)} title={t("cvSections.addExperience")}>
-        <div className="grid gap-2 md:grid-cols-2">
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceTitleShort")} value={nf.title || ""} onChange={e => setNf({ ...nf, title: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceCompanyShort")} value={nf.company || ""} onChange={e => setNf({ ...nf, company: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceDepartment")} value={nf.department_or_client || ""} onChange={e => setNf({ ...nf, department_or_client: e.target.value })} />
+      <Modal open={!!addOpen} onClose={() => setAddOpen(false)} title={t("cvSections.addExperience")} size="medium">
+        <div className="space-y-3">
+          <ModalSection title={t("cvSections.position")} icon={Briefcase}>
+            <Grid cols={2}>
+              <FormField label={t("cvSections.placeholders.experienceTitleShort")}>
+                <Input placeholder={t("cvSections.placeholders.experienceTitleHint")} value={nf.title || ""} onChange={e => setNf({ ...nf, title: e.target.value })} />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.experienceCompanyShort")}>
+                <Input placeholder={t("cvSections.placeholders.experienceCompanyHint")} value={nf.company || ""} onChange={e => setNf({ ...nf, company: e.target.value })} />
+              </FormField>
+            </Grid>
+            <FormField label={t("cvSections.placeholders.experienceDepartment")}>
+              <Input placeholder={t("cvSections.placeholders.experienceDepartmentHint")} value={nf.department_or_client || ""} onChange={e => setNf({ ...nf, department_or_client: e.target.value })} />
+            </FormField>
+          </ModalSection>
 
-          <div className="grid grid-cols-2 gap-2">
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceStartShort")} value={nf.start || ""} onChange={e => setNf({ ...nf, start: e.target.value })} />
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.experienceEndShortWithPresent")} value={nf.end || ""} onChange={e => setNf({ ...nf, end: e.target.value })} disabled={nf.inProgress} />
-          </div>
-          <label className="text-xs flex items-center gap-2 text-white drop-shadow">
-            <input type="checkbox" checked={!!nf.inProgress} onChange={e => setNf({ ...nf, inProgress: e.target.checked })} /> {t("cvSections.inProgress")}
-          </label>
+          <ModalSection title={t("cvSections.period")} icon={Calendar}>
+            <div className="flex flex-wrap items-end gap-2">
+              <FormField label={t("cvSections.placeholders.experienceStartShort")} className="flex-1 min-w-[140px]">
+                <MonthPicker
+                  placeholder={t("cvSections.placeholders.dateFormat")}
+                  value={nf.start || ""}
+                  onChange={v => setNf({ ...nf, start: v })}
+                  todayLabel={t("common.today")}
+                />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.experienceEndShort")} className="flex-1 min-w-[140px]">
+                <MonthPicker
+                  placeholder={t("cvSections.placeholders.dateFormat")}
+                  value={nf.end || ""}
+                  onChange={v => setNf({ ...nf, end: v })}
+                  todayLabel={t("common.ongoing")}
+                  presentLabel={t("common.ongoing")}
+                  presentMode
+                />
+              </FormField>
+            </div>
+          </ModalSection>
 
-          <div className="md:col-span-2 grid grid-cols-3 gap-2">
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.city")} value={nf.city || ""} onChange={e => setNf({ ...nf, city: e.target.value })} />
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.region")} value={nf.region || ""} onChange={e => setNf({ ...nf, region: e.target.value })} />
-            <CountrySelect
-              className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
-              placeholder={t("cvSections.placeholders.selectCountry")}
-              value={nf.country_code || ""}
-              onChange={v => setNf({ ...nf, country_code: v })}
-            />
-          </div>
+          <ModalSection title={t("cvSections.location")} icon={MapPin}>
+            <Grid cols={3}>
+              <FormField label={t("cvSections.placeholders.city")}>
+                <Input placeholder={t("cvSections.placeholders.cityHint")} value={nf.city || ""} onChange={e => setNf({ ...nf, city: e.target.value })} />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.region")}>
+                <Input placeholder={t("cvSections.placeholders.regionHint")} value={nf.region || ""} onChange={e => setNf({ ...nf, region: e.target.value })} />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.selectCountry")}>
+                <CountrySelect
+                  className="w-full rounded-md border border-white/20 bg-white/5 px-2.5 py-1.5 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30 focus:outline-none appearance-none cursor-pointer [&>option]:bg-slate-900 [&>option]:text-white"
+                  placeholder={t("cvSections.placeholders.selectCountry")}
+                  value={nf.country_code || ""}
+                  onChange={v => setNf({ ...nf, country_code: v })}
+                />
+              </FormField>
+            </Grid>
+          </ModalSection>
 
-          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder="Description" rows={3} value={nf.description || ""} onChange={e => setNf({ ...nf, description: e.target.value })} />
-          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.responsibilities")} rows={3} value={nf.responsibilities || ""} onChange={e => setNf({ ...nf, responsibilities: e.target.value })} />
-          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.deliverables")} rows={3} value={nf.deliverables || ""} onChange={e => setNf({ ...nf, deliverables: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.skillsUsed")} value={nf.skills_used || ""} onChange={e => setNf({ ...nf, skills_used: e.target.value })} />
+          <Divider />
 
-          <div className="md:col-span-2 flex justify-end gap-2">
-            <button type="button" onClick={() => setAddOpen(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
-            <button type="button" onClick={saveAdd} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.add")}</button>
-          </div>
+          <ModalSection title={t("cvSections.content")} icon={FileText}>
+            <FormField label={t("cvSections.placeholders.description")}>
+              <Textarea placeholder={t("cvSections.placeholders.descriptionHint")} rows={2} value={nf.description || ""} onChange={e => setNf({ ...nf, description: e.target.value })} />
+            </FormField>
+            <Grid cols={2}>
+              <FormField label={t("cvSections.responsibilitiesPerLine")}>
+                <Textarea placeholder={t("cvSections.placeholders.responsibilitiesHint")} rows={3} value={nf.responsibilities || ""} onChange={e => setNf({ ...nf, responsibilities: e.target.value })} />
+              </FormField>
+              <FormField label={t("cvSections.deliverablesPerLine")}>
+                <Textarea placeholder={t("cvSections.placeholders.deliverablesHint")} rows={3} value={nf.deliverables || ""} onChange={e => setNf({ ...nf, deliverables: e.target.value })} />
+              </FormField>
+            </Grid>
+            <FormField label={t("cvSections.skillsUsedComma")}>
+              <Input placeholder={t("cvSections.placeholders.skillsUsedHint")} value={nf.skills_used || ""} onChange={e => setNf({ ...nf, skills_used: e.target.value })} />
+            </FormField>
+          </ModalSection>
+
+          <ModalFooter onCancel={() => setAddOpen(false)} onSave={saveAdd} cancelLabel={t("common.cancel")} saveLabel={t("common.add")} />
         </div>
       </Modal>
 
       {/* Delete Modal */}
       <Modal open={delIndex !== null} onClose={() => setDelIndex(null)} title={t("common.confirmation")}>
         <div className="space-y-3">
-          <p className="text-sm text-white drop-shadow">{t("cvSections.deleteExperience")}</p>
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setDelIndex(null)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
-            <button type="button" onClick={confirmDelete} className="px-6 py-2.5 rounded-lg bg-red-500/30 hover:bg-red-500/40 border border-red-500/50 text-white text-sm font-semibold transition-colors">{t("common.delete")}</button>
-          </div>
+          <p className="text-sm text-white/80">
+            {t("cvSections.deleteExperience")}
+            {delIndex !== null && rawExperience[delIndex]?.title && (
+              <span className="font-medium text-white"> "{rawExperience[delIndex].title}"</span>
+            )}
+          </p>
+          <ModalFooterDelete onCancel={() => setDelIndex(null)} onDelete={confirmDelete} cancelLabel={t("common.cancel")} deleteLabel={t("common.delete")} />
         </div>
       </Modal>
     </Section>

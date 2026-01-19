@@ -131,7 +131,7 @@
             },
             "level": {
               "type": ["string", "null"],
-              "description": "Required level: basic, intermediate, fluent, native, or null"
+              "description": "Required level as stated in the offer (e.g., B2, Fluent, Native, Professionnel, Courant...) or null if not specified"
             }
           },
           "required": ["language", "level"],

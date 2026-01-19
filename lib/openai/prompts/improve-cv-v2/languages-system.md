@@ -18,17 +18,19 @@ Placer les langues les plus pertinentes pour l'offre EN PREMIER.
 ### 2. ADAPTER le niveau
 Modifier le champ `level` pour correspondre au vocabulaire de l'offre.
 
-**Équivalences de niveaux :**
+**Le niveau est un champ TEXTE LIBRE.** Voici des équivalences courantes :
 | Offre demande | CV peut afficher |
 |---------------|------------------|
-| "native", "langue maternelle" | "Natif", "Native", "Langue maternelle" |
-| "fluent", "courant", "bilingue" | "Courant", "Bilingue", "C2" |
-| "professional", "professionnel" | "Professionnel", "C1" |
-| "intermediate", "intermédiaire" | "Intermédiaire", "B2" |
-| "basic", "notions" | "Notions", "B1", "A2" |
+| "native", "langue maternelle" | "Langue maternelle", "Native", "Natif" |
+| "fluent", "courant", "bilingue" | "Courant", "Bilingue", "Fluent" |
+| "professional", "professionnel" | "Professionnel", "Professional" |
+| "intermediate", "intermédiaire" | "Intermédiaire", "Intermediate" |
+| "basic", "notions", "débutant" | "Notions", "Débutant", "Basic" |
+| Niveaux CECRL | "A1", "A2", "B1", "B2", "C1", "C2" (ne pas traduire) |
 
 **RÈGLE IMPORTANTE :** Ne JAMAIS upgrader un niveau au-delà de ce que le candidat possède réellement. On peut seulement :
 - Reformuler avec le vocabulaire de l'offre (ex: "C1" → "Professionnel")
+- Traduire le niveau dans la langue du CV (ex: "Fluent" → "Courant" pour un CV français)
 - Conserver ou affiner la formulation existante
 
 ### 3. AJOUTER une certification

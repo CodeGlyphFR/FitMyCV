@@ -29,6 +29,29 @@ Cette politique s'applique à toutes les opérations impliquant la génération 
 - Cas spécial : traduire dans la langue cible `{targetLanguage}`
 - Ne pas traduire : noms propres, emails, URLs, dates, codes pays, noms de technologies
 
+## NIVEAUX DE LANGUE (section languages)
+
+Le champ `level` des langues est un **TEXTE LIBRE**.
+
+### Lors de la génération/adaptation :
+- Utiliser le niveau dans la langue du CV cible
+- Exemples en français : "Langue maternelle", "Courant", "Professionnel", "Intermédiaire", "Notions"
+- Exemples en anglais : "Native", "Fluent", "Professional", "Intermediate", "Basic"
+
+### Niveaux CECRL (A1, A2, B1, B2, C1, C2) :
+- **NE JAMAIS TRADUIRE** - ce sont des codes internationaux
+- Les conserver tels quels dans toutes les langues
+
+### Équivalences courantes :
+| FR | EN | DE | ES |
+|----|----|----|---|
+| Langue maternelle | Native | Muttersprache | Lengua materna |
+| Courant | Fluent | Fließend | Fluido |
+| Bilingue | Bilingual | Zweisprachig | Bilingüe |
+| Professionnel | Professional | Beruflich | Profesional |
+| Intermédiaire | Intermediate | Mittelstufe | Intermedio |
+| Notions | Basic | Grundkenntnisse | Básico |
+
 ## ÉLÉMENTS NON TRADUISIBLES
 
 Peu importe la langue cible, **NE JAMAIS TRADUIRE** :
@@ -40,6 +63,7 @@ Peu importe la langue cible, **NE JAMAIS TRADUIRE** :
 - Noms de technologies et outils (JavaScript, Python, Docker, AWS, etc.)
 - Métadonnées techniques (generated_at, created_at, etc.)
 - Noms propres d'entreprises internationales connues
+- **Niveaux CECRL** (A1, A2, B1, B2, C1, C2)
 
 ## COHÉRENCE
 

@@ -191,7 +191,7 @@
           "type": "object",
           "properties": {
             "name": { "type": "string", "description": "Langue" },
-            "level": { "type": ["string", "null"], "description": "Niveau: A1, A2, B1, B2, C1, C2, Native" }
+            "level": { "type": ["string", "null"], "description": "Niveau de langue tel qu'indiqué dans le CV (ex: C1, Courant, Bilingue, Langue maternelle, Professionnel, Fluent, Native...)" }
           },
           "required": ["name", "level"],
           "additionalProperties": false

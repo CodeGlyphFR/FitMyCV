@@ -12,6 +12,15 @@ import SectionReviewActions from "./SectionReviewActions";
 import { useLanguageHasChanges } from "./LanguageReviewActions";
 import ChangeReviewPopover from "./ChangeReviewPopover";
 import { useHighlight } from "./HighlightProvider";
+import { Languages as LanguagesIcon } from "lucide-react";
+import {
+  ModalSection,
+  FormField,
+  Input,
+  Grid,
+  ModalFooter,
+  ModalFooterDelete,
+} from "./ui/ModalForm";
 
 /**
  * Composant pour une langue individuelle avec highlight review
@@ -50,12 +59,15 @@ function LanguageItem({ language, index, isEditing, onEdit, onDelete, cvT }) {
     }
   };
 
+  // Affichage du niveau : essayer la traduction, sinon afficher tel quel
+  const displayLevel = getLanguageLevelLabel(language.level, cvT) || capitalizeSkillName(language.level) || "";
+
   return (
     <>
       <div ref={itemRef} className={itemClasses} onClick={handleClick}>
         <div className={isEditing ? "pr-12" : ""}>
           <span className="font-semibold">{toTitleCase(language.name) || ""}</span>
-          <span className="text-sm opacity-80"> : {getLanguageLevelLabel(language.level, cvT) || capitalizeSkillName(language.level) || ""}</span>
+          <span className="text-sm opacity-80"> : {displayLevel}</span>
         </div>
 
         {isEditing && (
@@ -122,6 +134,10 @@ export default function Languages(props){
     setDelIndex(null);
   }
 
+  // Nom de la langue à supprimer pour le modal de confirmation
+  const languageToDelete = delIndex !== null ? languages[delIndex] : null;
+  const languageNameToDelete = languageToDelete?.name || "";
+
   // Masquer entièrement la section si aucune langue et pas en édition
   if (languages.length===0 && !editing) return null;
 
@@ -158,32 +174,84 @@ export default function Languages(props){
         </div>
       )}
 
+      {/* Modal Édition */}
       <Modal open={editIndex!==null} onClose={()=>setEditIndex(null)} title={t("cvSections.editLanguages")}>
-        <div className="grid gap-2">
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.languageName")} value={f.name} onChange={e=>setF({...f,name:e.target.value})} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.languageLevel")} value={f.level} onChange={e=>setF({...f,level:e.target.value})} />
-          <div className="flex justify-end gap-2"><button onClick={()=>setEditIndex(null)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button><button onClick={save} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.save")}</button></div>
+        <div className="space-y-3">
+          <ModalSection title={t("cvSections.languages")} icon={LanguagesIcon}>
+            <Grid cols={2}>
+              <FormField label={t("cvSections.placeholders.languageName")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.languageName")}
+                  value={f.name}
+                  onChange={e => setF({...f, name: e.target.value})}
+                />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.languageLevel")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.languageLevel")}
+                  value={f.level}
+                  onChange={e => setF({...f, level: e.target.value})}
+                />
+              </FormField>
+            </Grid>
+          </ModalSection>
+
+          <ModalFooter
+            onCancel={() => setEditIndex(null)}
+            onSave={save}
+            saveLabel={t("common.save")}
+            cancelLabel={t("common.cancel")}
+          />
         </div>
       </Modal>
 
+      {/* Modal Ajout */}
       <Modal open={addOpen} onClose={()=>setAddOpen(false)} title={t("cvSections.addLanguage")}>
-        <div className="grid gap-2">
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.languageName")} value={nf.name} onChange={e=>setNf({...nf,name:e.target.value})} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.languageLevel")} value={nf.level} onChange={e=>setNf({...nf,level:e.target.value})} />
-          <div className="flex justify-end gap-2">
-            <button onClick={()=>setAddOpen(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
-            <button onClick={add} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.add")}</button>
-          </div>
+        <div className="space-y-3">
+          <ModalSection title={t("cvSections.languages")} icon={LanguagesIcon}>
+            <Grid cols={2}>
+              <FormField label={t("cvSections.placeholders.languageName")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.languageName")}
+                  value={nf.name}
+                  onChange={e => setNf({...nf, name: e.target.value})}
+                />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.languageLevel")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.languageLevel")}
+                  value={nf.level}
+                  onChange={e => setNf({...nf, level: e.target.value})}
+                />
+              </FormField>
+            </Grid>
+          </ModalSection>
+
+          <ModalFooter
+            onCancel={() => setAddOpen(false)}
+            onSave={add}
+            saveLabel={t("common.add")}
+            cancelLabel={t("common.cancel")}
+          />
         </div>
       </Modal>
 
+      {/* Modal Suppression */}
       <Modal open={delIndex!==null} onClose={()=>setDelIndex(null)} title={t("common.confirmation")}>
         <div className="space-y-3">
-          <p className="text-sm text-white drop-shadow">{t("cvSections.deleteLanguage")}</p>
-          <div className="flex justify-end gap-2">
-            <button onClick={()=>setDelIndex(null)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
-            <button onClick={confirmDelete} className="px-6 py-2.5 rounded-lg bg-red-500/30 hover:bg-red-500/40 border border-red-500/50 text-white text-sm font-semibold transition-colors">{t("common.delete")}</button>
-          </div>
+          <p className="text-sm text-white/80">
+            {t("cvSections.deleteLanguage")}
+            {languageNameToDelete && (
+              <span className="font-semibold text-white"> "{languageNameToDelete}"</span>
+            )}
+            {" ?"}
+          </p>
+          <ModalFooterDelete
+            onCancel={() => setDelIndex(null)}
+            onDelete={confirmDelete}
+            deleteLabel={t("common.delete")}
+            cancelLabel={t("common.cancel")}
+          />
         </div>
       </Modal>
     </Section>

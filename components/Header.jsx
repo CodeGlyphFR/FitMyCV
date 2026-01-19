@@ -7,7 +7,6 @@ import CVImprovementPanel from "./CVImprovementPanel";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
-import FormRow from "./ui/FormRow";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
@@ -21,6 +20,14 @@ import { useHighlight } from "./HighlightProvider";
 import { useCreditCost } from "@/hooks/useCreditCost";
 import CreditCostTooltip from "@/components/ui/CreditCostTooltip";
 import CountrySelect from "./CountrySelect";
+import { User, Mail, MapPin, Link2, Plus, Trash2 } from "lucide-react";
+import {
+  ModalSection,
+  FormField,
+  Input,
+  Grid,
+  ModalFooter,
+} from "./ui/ModalForm";
 
 export default function Header(props){
   const header = props.header || {};
@@ -680,89 +687,136 @@ export default function Header(props){
       ) : null}
 
       <Modal open={open} onClose={()=>setOpen(false)} title={t("header.modalTitle")}>
-        <div className="grid gap-3 md:grid-cols-2">
-          <FormRow label={t("header.fullName")}>
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.full_name} onChange={e=>setF({...f,full_name:e.target.value})} />
-          </FormRow>
-          <FormRow label={t("header.currentTitle")}>
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.current_title} onChange={e=>setF({...f,current_title:e.target.value})} />
-          </FormRow>
-          <FormRow label={t("header.email")}>
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.email} onChange={e=>setF({...f,email:e.target.value})} />
-          </FormRow>
-          <FormRow label={t("header.phone")}>
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.phone} onChange={e=>setF({...f,phone:e.target.value})} />
-          </FormRow>
+        <div className="space-y-3">
+          {/* Identité */}
+          <ModalSection title={t("header.identity")} icon={User}>
+            <Grid cols={2}>
+              <FormField label={t("header.fullName")}>
+                <Input
+                  value={f.full_name}
+                  onChange={e => setF({...f, full_name: e.target.value})}
+                  placeholder={t("header.fullName")}
+                />
+              </FormField>
+              <FormField label={t("header.currentTitle")}>
+                <Input
+                  value={f.current_title}
+                  onChange={e => setF({...f, current_title: e.target.value})}
+                  placeholder={t("header.currentTitle")}
+                />
+              </FormField>
+            </Grid>
+          </ModalSection>
 
-          <div className="md:col-span-2">
-            <div className="text-xs font-medium mb-2 uppercase tracking-wide text-white drop-shadow">{t("header.location")}</div>
-            <div className="grid grid-cols-3 gap-3">
-              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" placeholder={t("cvSections.placeholders.city")} value={f.city} onChange={e=>setF({...f,city:e.target.value})} />
-              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" placeholder={t("cvSections.placeholders.region")} value={f.region} onChange={e=>setF({...f,region:e.target.value})} />
-              <CountrySelect
-                className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200 appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
-                placeholder={t("cvSections.placeholders.selectCountry")}
-                value={f.country_code}
-                onChange={v => setF({...f, country_code: v})}
-              />
-            </div>
-          </div>
+          {/* Contact */}
+          <ModalSection title={t("header.contact")} icon={Mail}>
+            <Grid cols={2}>
+              <FormField label={t("header.email")}>
+                <Input
+                  value={f.email}
+                  onChange={e => setF({...f, email: e.target.value})}
+                  placeholder={t("header.email")}
+                />
+              </FormField>
+              <FormField label={t("header.phone")}>
+                <Input
+                  value={f.phone}
+                  onChange={e => setF({...f, phone: e.target.value})}
+                  placeholder={t("header.phone")}
+                />
+              </FormField>
+            </Grid>
+          </ModalSection>
+
+          {/* Localisation */}
+          <ModalSection title={t("header.location")} icon={MapPin}>
+            <Grid cols={3}>
+              <FormField label={t("cvSections.placeholders.city")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.city")}
+                  value={f.city}
+                  onChange={e => setF({...f, city: e.target.value})}
+                />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.region")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.region")}
+                  value={f.region}
+                  onChange={e => setF({...f, region: e.target.value})}
+                />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.selectCountry")}>
+                <CountrySelect
+                  className="w-full rounded-md border border-white/20 bg-white/5 px-2.5 py-1.5 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30 focus:outline-none"
+                  placeholder={t("cvSections.placeholders.selectCountry")}
+                  value={f.country_code}
+                  onChange={v => setF({...f, country_code: v})}
+                />
+              </FormField>
+            </Grid>
+          </ModalSection>
 
           {/* Liens */}
-          <div className="md:col-span-2">
-            <div className="text-xs font-medium mb-2 uppercase tracking-wide text-white drop-shadow">{t("header.links")}</div>
+          <ModalSection title={t("header.links")} icon={Link2}>
             <div className="space-y-2">
               {linksLocal.length === 0 && (
-                <div className="rounded-sm border border-white/40 bg-white/20 px-2 py-1 text-xs text-white/60">
+                <div className="rounded-md border border-white/20 bg-white/5 px-2.5 py-1.5 text-xs text-white/50">
                   {t("header.noLinks")}
                 </div>
               )}
               {linksLocal.map((row, idx) => (
                 <div key={idx} className="flex gap-2 items-center">
                   <input
-                    className="w-32 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:outline-hidden transition-all duration-200"
+                    className="w-28 shrink-0 rounded-md border border-white/20 bg-white/5 px-2.5 py-1.5 text-sm text-white placeholder:text-white/40 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30 focus:outline-none"
                     placeholder={t("header.labelPlaceholder")}
                     value={row.label}
-                    onChange={e=>{
-                      const arr=[...linksLocal]; arr[idx]={...arr[idx], label:e.target.value}; setLinksLocal(arr);
+                    onChange={e => {
+                      const arr = [...linksLocal];
+                      arr[idx] = {...arr[idx], label: e.target.value};
+                      setLinksLocal(arr);
                     }}
                   />
                   <input
-                    className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:outline-hidden transition-all duration-200"
+                    className="flex-1 min-w-0 rounded-md border border-white/20 bg-white/5 px-2.5 py-1.5 text-sm text-white placeholder:text-white/40 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30 focus:outline-none"
                     placeholder={t("header.urlPlaceholder")}
                     value={row.url}
-                    onChange={e=>{
-                      const arr=[...linksLocal]; arr[idx]={...arr[idx], url:e.target.value}; setLinksLocal(arr);
+                    onChange={e => {
+                      const arr = [...linksLocal];
+                      arr[idx] = {...arr[idx], url: e.target.value};
+                      setLinksLocal(arr);
                     }}
                   />
                   <button
                     type="button"
-                    onClick={()=>{
-                      const arr=[...linksLocal]; arr.splice(idx,1); setLinksLocal(arr);
+                    onClick={() => {
+                      const arr = [...linksLocal];
+                      arr.splice(idx, 1);
+                      setLinksLocal(arr);
                     }}
-                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 text-white hover:bg-red-500/40 transition-all duration-200"
+                    className="flex items-center justify-center rounded-md border border-red-500/50 bg-red-500/20 p-1.5 text-red-400 hover:bg-red-500/30 transition-colors shrink-0"
                     title={t("common.delete")}
                   >
-                    <img src="/icons/delete.png" alt="Delete" className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               ))}
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={()=>setLinksLocal([...(linksLocal||[]), {label:"", url:""}])}
-                  className="px-2 py-1 text-xs font-medium text-white bg-emerald-500/30 border border-emerald-500/50 rounded-lg hover:bg-emerald-500/40 transition-all duration-200 inline-flex items-center gap-1"
-                >
-                  <img src="/icons/add.png" alt="" className="h-3 w-3 " /> {t("header.addLink")}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setLinksLocal([...(linksLocal || []), {label: "", url: ""}])}
+                className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                <Plus className="w-3 h-3" />
+                {t("header.addLink")}
+              </button>
             </div>
-          </div>
+          </ModalSection>
 
-          <div className="md:col-span-2 flex justify-end gap-2">
-            <button onClick={()=>setOpen(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors" type="button">{t("common.cancel")}</button>
-            <button onClick={save} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors" type="button">{t("common.save")}</button>
-          </div>
+          <ModalFooter
+            onCancel={() => setOpen(false)}
+            onSave={save}
+            saveLabel={t("common.save")}
+            cancelLabel={t("common.cancel")}
+          />
         </div>
       </Modal>
     </header>
