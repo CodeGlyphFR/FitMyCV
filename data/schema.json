@@ -5,7 +5,7 @@
   "properties": {
     "language": {
       "type": "string",
-      "enum": ["fr", "en"],
+      "enum": ["fr", "en", "es", "de"],
       "description": "Language of the CV content (detected from summary)"
     },
     "generated_at": { "type": "string" },
@@ -58,7 +58,7 @@
             "type": "object",
             "properties": {
               "name": { "type": "string" },
-              "proficiency": { "type": "string" }
+              "proficiency": { "type": ["integer", "null"], "minimum": 0, "maximum": 5, "description": "0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert" }
             },
             "required": ["name"]
           }
@@ -70,7 +70,7 @@
             "type": "object",
             "properties": {
               "name": { "type": "string" },
-              "proficiency": { "type": "string" }
+              "proficiency": { "type": ["integer", "null"], "minimum": 0, "maximum": 5, "description": "0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert" }
             },
             "required": ["name"]
           }
@@ -169,5 +169,5 @@
       }
     }
   },
-  "required": ["generated_at", "header", "summary", "skills", "experience"]
+  "required": ["header", "summary", "skills", "experience"]
 }

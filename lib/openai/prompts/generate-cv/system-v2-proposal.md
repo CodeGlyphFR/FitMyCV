@@ -192,7 +192,7 @@ Une experience est un SIDE-PROJECT si AU MOINS UN critere est vrai :
 
 **SUPPRESSION DES EXPERIENCES ANCIENNES HORS-DOMAINE :**
 
-Calculer l'anciennete : `2025 - annee_fin` (ou annee_debut si en cours)
+Calculer l'anciennete : `annee_courante - annee_fin` (ou annee_debut si en cours)
 
 | Anciennete | Domaine | Action |
 |------------|---------|--------|
@@ -307,18 +307,18 @@ Calculer l'anciennete : `2025 - annee_fin` (ou annee_debut si en cours)
     "skills": {
       "hard_skills": {
         "replace": [
-          {"name": "Prompt Engineering", "proficiency": "Advanced"},
-          {"name": "Architecture logicielle", "proficiency": "Proficient"},
-          {"name": "API Design", "proficiency": "Proficient"}
+          {"name": "Prompt Engineering", "proficiency": 4},
+          {"name": "Architecture logicielle", "proficiency": 3},
+          {"name": "API Design", "proficiency": 3}
         ]
       },
       "tools": {
         "replace": [
-          {"name": "OpenAI API", "proficiency": "Advanced"},
-          {"name": "Claude API", "proficiency": "Advanced"},
-          {"name": "Next.js", "proficiency": "Proficient"},
-          {"name": "Docker", "proficiency": "Intermediate"},
-          {"name": "Git", "proficiency": "Advanced"}
+          {"name": "OpenAI API", "proficiency": 4},
+          {"name": "Claude API", "proficiency": 4},
+          {"name": "Next.js", "proficiency": 3},
+          {"name": "Docker", "proficiency": 2},
+          {"name": "Git", "proficiency": 4}
         ]
       },
       "methodologies": {
