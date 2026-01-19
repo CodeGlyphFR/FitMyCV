@@ -22,18 +22,14 @@
           },
           "summary": {
             "type": ["object", "null"],
-            "description": "Summary/profile modifications",
+            "description": "Summary/profile modifications (description uniquement)",
             "properties": {
-              "headline": {
-                "type": ["string", "null"],
-                "description": "New headline if needed"
-              },
               "description": {
                 "type": ["string", "null"],
                 "description": "New description adapted to the offer"
               }
             },
-            "required": ["headline", "description"],
+            "required": ["description"],
             "additionalProperties": false
           },
           "skills": {
@@ -42,10 +38,23 @@
             "properties": {
               "hard_skills": {
                 "type": ["object", "null"],
-                "description": "Hard skills modifications",
+                "description": "Hard skills modifications (CRUD or replace)",
                 "properties": {
+                  "replace": {
+                    "type": ["array", "null"],
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" },
+                        "proficiency": { "type": ["integer", "null"], "enum": [0, 1, 2, 3, 4, 5, null], "description": "0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert" }
+                      },
+                      "required": ["name", "proficiency"],
+                      "additionalProperties": false
+                    },
+                    "description": "Replace all skills with this list (alternative to add/remove/update)"
+                  },
                   "add": {
-                    "type": "array",
+                    "type": ["array", "null"],
                     "items": {
                       "type": "object",
                       "properties": {
@@ -58,12 +67,12 @@
                     "description": "Skills to add with proficiency level"
                   },
                   "remove": {
-                    "type": "array",
+                    "type": ["array", "null"],
                     "items": { "type": "string" },
                     "description": "Skill names to remove"
                   },
                   "update": {
-                    "type": "array",
+                    "type": ["array", "null"],
                     "items": {
                       "type": "object",
                       "properties": {
@@ -81,20 +90,24 @@
                     "description": "New order of skills (by name)"
                   }
                 },
-                "required": ["add", "remove", "update", "reorder"],
                 "additionalProperties": false
               },
               "soft_skills": {
                 "type": ["object", "null"],
-                "description": "Soft skills modifications",
+                "description": "Soft skills modifications (CRUD or replace)",
                 "properties": {
+                  "replace": {
+                    "type": ["array", "null"],
+                    "items": { "type": "string" },
+                    "description": "Replace all soft skills with this list"
+                  },
                   "add": {
-                    "type": "array",
+                    "type": ["array", "null"],
                     "items": { "type": "string" },
                     "description": "Soft skills to add"
                   },
                   "remove": {
-                    "type": "array",
+                    "type": ["array", "null"],
                     "items": { "type": "string" },
                     "description": "Soft skills to remove"
                   },
@@ -104,15 +117,27 @@
                     "description": "New order of soft skills"
                   }
                 },
-                "required": ["add", "remove", "reorder"],
                 "additionalProperties": false
               },
               "tools": {
                 "type": ["object", "null"],
-                "description": "Tools modifications",
+                "description": "Tools modifications (CRUD or replace)",
                 "properties": {
+                  "replace": {
+                    "type": ["array", "null"],
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" },
+                        "proficiency": { "type": ["integer", "null"], "enum": [0, 1, 2, 3, 4, 5, null], "description": "0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert" }
+                      },
+                      "required": ["name", "proficiency"],
+                      "additionalProperties": false
+                    },
+                    "description": "Replace all tools with this list"
+                  },
                   "add": {
-                    "type": "array",
+                    "type": ["array", "null"],
                     "items": {
                       "type": "object",
                       "properties": {
@@ -125,12 +150,12 @@
                     "description": "Tools to add with proficiency"
                   },
                   "remove": {
-                    "type": "array",
+                    "type": ["array", "null"],
                     "items": { "type": "string" },
                     "description": "Tool names to remove"
                   },
                   "update": {
-                    "type": "array",
+                    "type": ["array", "null"],
                     "items": {
                       "type": "object",
                       "properties": {
@@ -148,20 +173,24 @@
                     "description": "New order of tools (by name)"
                   }
                 },
-                "required": ["add", "remove", "update", "reorder"],
                 "additionalProperties": false
               },
               "methodologies": {
                 "type": ["object", "null"],
-                "description": "Methodologies modifications",
+                "description": "Methodologies modifications (CRUD or replace)",
                 "properties": {
+                  "replace": {
+                    "type": ["array", "null"],
+                    "items": { "type": "string" },
+                    "description": "Replace all methodologies with this list"
+                  },
                   "add": {
-                    "type": "array",
+                    "type": ["array", "null"],
                     "items": { "type": "string" },
                     "description": "Methodologies to add"
                   },
                   "remove": {
-                    "type": "array",
+                    "type": ["array", "null"],
                     "items": { "type": "string" },
                     "description": "Methodologies to remove"
                   },
@@ -171,17 +200,25 @@
                     "description": "New order of methodologies"
                   }
                 },
-                "required": ["add", "remove", "reorder"],
                 "additionalProperties": false
               }
             },
-            "required": ["hard_skills", "soft_skills", "tools", "methodologies"],
             "additionalProperties": false
           },
           "experience": {
             "type": ["object", "null"],
             "description": "Experience section modifications",
             "properties": {
+              "remove": {
+                "type": ["array", "null"],
+                "items": { "type": "integer" },
+                "description": "Indexes of experiences to remove (0-based, original positions)"
+              },
+              "move_to_projects": {
+                "type": ["array", "null"],
+                "items": { "type": "integer" },
+                "description": "Indexes of experiences to move to projects section (0-based)"
+              },
               "reorder": {
                 "type": ["array", "null"],
                 "items": { "type": "integer" },
@@ -283,7 +320,6 @@
                 "description": "Updates to apply to specific experiences"
               }
             },
-            "required": ["reorder", "updates"],
             "additionalProperties": false
           },
           "education": {
