@@ -20,6 +20,7 @@ import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
 import { useHighlight } from "./HighlightProvider";
 import { useCreditCost } from "@/hooks/useCreditCost";
 import CreditCostTooltip from "@/components/ui/CreditCostTooltip";
+import CountrySelect from "./CountrySelect";
 
 export default function Header(props){
   const header = props.header || {};
@@ -511,11 +512,13 @@ export default function Header(props){
         <div className="mt-2 text-sm text-white/90 drop-shadow">
           <div>{header.contact?.email || ""}</div>
           <div>{formatPhoneNumber(header.contact?.phone, header.contact?.location?.country_code)}</div>
-          {header.contact?.location ? (
+          {header.contact?.location && (header.contact.location.city || header.contact.location.region || header.contact.location.country_code) ? (
             <div>
-              {header.contact.location.city || ""}{header.contact.location.region? ", ":""}
-              {header.contact.location.region || ""}
-              {header.contact.location.country_code? " (" : ""}{header.contact.location.country_code || ""}{header.contact.location.country_code?")":""}
+              {[
+                header.contact.location.city,
+                header.contact.location.region,
+                header.contact.location.country_code ? (t(`countries.${header.contact.location.country_code}`) || header.contact.location.country_code) : null
+              ].filter(Boolean).join(", ")}
             </div>
           ) : null}
           {Array.isArray(links) && links.length>0 ? (
@@ -691,16 +694,18 @@ export default function Header(props){
             <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.phone} onChange={e=>setF({...f,phone:e.target.value})} />
           </FormRow>
 
-          <div className="md:col-span-2 grid grid-cols-3 gap-3">
-            <FormRow label={t("header.city")}>
-              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.city} onChange={e=>setF({...f,city:e.target.value})} />
-            </FormRow>
-            <FormRow label={t("header.region")}>
-              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.region} onChange={e=>setF({...f,region:e.target.value})} />
-            </FormRow>
-            <FormRow label={t("header.countryCode")}>
-              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.country_code} onChange={e=>setF({...f,country_code:e.target.value})} />
-            </FormRow>
+          <div className="md:col-span-2">
+            <div className="text-xs font-medium mb-2 uppercase tracking-wide text-white drop-shadow">{t("header.location")}</div>
+            <div className="grid grid-cols-3 gap-3">
+              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" placeholder={t("cvSections.placeholders.city")} value={f.city} onChange={e=>setF({...f,city:e.target.value})} />
+              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" placeholder={t("cvSections.placeholders.region")} value={f.region} onChange={e=>setF({...f,region:e.target.value})} />
+              <CountrySelect
+                className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200 appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
+                placeholder={t("cvSections.placeholders.selectCountry")}
+                value={f.country_code}
+                onChange={v => setF({...f, country_code: v})}
+              />
+            </div>
           </div>
 
           {/* Liens */}

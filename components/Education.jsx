@@ -7,6 +7,7 @@ import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import CountrySelect from "./CountrySelect";
 
 export default function Education(props){
   const { t } = useLanguage();
@@ -82,16 +83,20 @@ export default function Education(props){
   const [delIndex, setDelIndex] = React.useState(null);
   const [addOpen, setAddOpen] = React.useState(false);
   const [f, setF] = React.useState({});
-  const [nf, setNf] = React.useState({ institution:"", degree:"", field_of_study:"", start_date:"" , end_date:""});
+  const [nf, setNf] = React.useState({ institution:"", degree:"", field_of_study:"", start_date:"", end_date:"", city:"", region:"", country_code:"" });
 
   function openEdit(i){
     const e = education[i] || {};
+    const loc = e.location || {};
     setF({
       institution: e.institution || "",
       degree: e.degree || "",
       field_of_study: e.field_of_study || "",
       start_date: e.start_date || "",
-      end_date: e.end_date || ""
+      end_date: e.end_date || "",
+      city: loc.city || "",
+      region: loc.region || "",
+      country_code: loc.country_code || ""
     });
     // Utiliser l'index original pour la mutation
     setEditIndex(e._originalIndex ?? i);
@@ -103,6 +108,13 @@ export default function Education(props){
     if(f.field_of_study) p.field_of_study = f.field_of_study;
     if(f.start_date) p.start_date = normalizeDate(f.start_date);
     if(f.end_date) p.end_date = normalizeDate(f.end_date);
+    if(f.city || f.region || f.country_code) {
+      p.location = {
+        city: f.city || "",
+        region: f.region || "",
+        country_code: f.country_code || ""
+      };
+    }
     await mutate({ op:"set", path:`education[${editIndex}]`, value:p });
     setEditIndex(null);
   }
@@ -113,8 +125,15 @@ export default function Education(props){
     if(nf.field_of_study) p.field_of_study = nf.field_of_study;
     if(nf.start_date) p.start_date = normalizeDate(nf.start_date);
     if(nf.end_date) p.end_date = normalizeDate(nf.end_date);
+    if(nf.city || nf.region || nf.country_code) {
+      p.location = {
+        city: nf.city || "",
+        region: nf.region || "",
+        country_code: nf.country_code || ""
+      };
+    }
     await mutate({ op:"push", path:"education", value:p });
-    setNf({ institution:"", degree:"", field_of_study:"", start_date:"", end_date:"" });
+    setNf({ institution:"", degree:"", field_of_study:"", start_date:"", end_date:"", city:"", region:"", country_code:"" });
     setAddOpen(false);
   }
   async function confirmDelete(){
@@ -168,6 +187,16 @@ export default function Education(props){
                   </div>
                 )}
 
+                {e.location && (e.location.city || e.location.region || e.location.country_code) && (
+                  <div className="text-xs opacity-70 mt-0.5">
+                    {[
+                      e.location.city,
+                      e.location.region,
+                      e.location.country_code ? (t(`countries.${e.location.country_code}`) || e.location.country_code) : null
+                    ].filter(Boolean).join(", ")}
+                  </div>
+                )}
+
                 <div className="text-sm opacity-80">
                   {e.degree || ""}
                   {e.degree && e.field_of_study ? " • " : ""}
@@ -183,8 +212,20 @@ export default function Education(props){
           <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.institution")} value={f.institution} onChange={e=>setF({...f,institution:e.target.value})} />
           <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.degree")} value={f.degree} onChange={e=>setF({...f,degree:e.target.value})} />
           <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.fieldOfStudy")} value={f.field_of_study} onChange={e=>setF({...f,field_of_study:e.target.value})} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.startDate")} value={f.start_date} onChange={e=>setF({...f,start_date:e.target.value})} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.endDate")} value={f.end_date} onChange={e=>setF({...f,end_date:e.target.value})} />
+          <div className="grid grid-cols-3 gap-2">
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.city")} value={f.city || ""} onChange={e=>setF({...f,city:e.target.value})} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.region")} value={f.region || ""} onChange={e=>setF({...f,region:e.target.value})} />
+            <CountrySelect
+              className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
+              placeholder={t("cvSections.placeholders.selectCountry")}
+              value={f.country_code || ""}
+              onChange={v => setF({...f, country_code: v})}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.startDate")} value={f.start_date} onChange={e=>setF({...f,start_date:e.target.value})} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.endDate")} value={f.end_date} onChange={e=>setF({...f,end_date:e.target.value})} />
+          </div>
           <div className="flex justify-end gap-2">
             <button onClick={()=>setEditIndex(null)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
             <button onClick={edit} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.save")}</button>
@@ -197,8 +238,20 @@ export default function Education(props){
           <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.institution")} value={nf.institution} onChange={e=>setNf({...nf,institution:e.target.value})} />
           <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.degreeOrCertification")} value={nf.degree} onChange={e=>setNf({...nf,degree:e.target.value})} />
           <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.fieldOfStudy")} value={nf.field_of_study} onChange={e=>setNf({...nf,field_of_study:e.target.value})} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.startDate")} value={nf.start_date} onChange={e=>setNf({...nf,start_date:e.target.value})} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.endDate")} value={nf.end_date} onChange={e=>setNf({...nf,end_date:e.target.value})} />
+          <div className="grid grid-cols-3 gap-2">
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.city")} value={nf.city || ""} onChange={e=>setNf({...nf,city:e.target.value})} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.region")} value={nf.region || ""} onChange={e=>setNf({...nf,region:e.target.value})} />
+            <CountrySelect
+              className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
+              placeholder={t("cvSections.placeholders.selectCountry")}
+              value={nf.country_code || ""}
+              onChange={v => setNf({...nf, country_code: v})}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.startDate")} value={nf.start_date} onChange={e=>setNf({...nf,start_date:e.target.value})} />
+            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.endDate")} value={nf.end_date} onChange={e=>setNf({...nf,end_date:e.target.value})} />
+          </div>
           <div className="flex justify-end gap-2">
             <button onClick={()=>setAddOpen(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
             <button onClick={add} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.add")}</button>

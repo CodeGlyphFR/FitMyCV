@@ -253,6 +253,7 @@
     "city": "Stadt",
     "region": "Region",
     "countryCode": "Land (Code)",
+    "location": "Standort",
     "links": "Links",
     "noLinks": "Keine Links vorhanden.",
     "labelPlaceholder": "Label (z.B. GitHub)",
@@ -272,7 +273,9 @@
     "confirmation": "Bestätigung",
     "locale": "de-DE",
     "yes": "Ja",
-    "no": "Nein"
+    "no": "Nein",
+    "noResults": "Keine Ergebnisse",
+    "clear": "Keines"
   },
   "editMode": {
     "on": "✏️ Bearbeitung AN",

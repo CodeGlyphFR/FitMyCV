@@ -243,6 +243,7 @@
       "city": "Stadt",
       "region": "Region",
       "countryCode": "Land (Code)",
+      "selectCountry": "Land",
       "projectUrl": "Projekt-URL (GitHub, Portfolio...)",
       "projectUrlLabel": "Linktitel (z.B. Auf GitHub ansehen)"
     }

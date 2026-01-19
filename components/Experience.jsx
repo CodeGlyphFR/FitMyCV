@@ -14,6 +14,7 @@ import SectionReviewActions from "./SectionReviewActions";
 import ExperienceReviewActions from "./ExperienceReviewActions";
 import ChangeHighlight from "./ChangeHighlight";
 import { useHighlight } from "./HighlightProvider";
+import CountrySelect from "./CountrySelect";
 
 
 export default function Experience(props){
@@ -288,9 +289,13 @@ export default function Experience(props){
                 )}
               </div>
 
-              {e.location && (
+              {e.location && (e.location.city || e.location.region || e.location.country_code) && (
                 <div className="text-xs opacity-70 mt-0.5">
-                  {e.location.city || ""}{e.location.region ? ", " : ""}{e.location.region || ""}{e.location.country_code ? ` (${e.location.country_code})` : ""}
+                  {[
+                    e.location.city,
+                    e.location.region,
+                    e.location.country_code ? (t(`countries.${e.location.country_code}`) || e.location.country_code) : null
+                  ].filter(Boolean).join(", ")}
               </div>
               )}
 
@@ -390,10 +395,15 @@ export default function Experience(props){
             </label>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="md:col-span-2 grid grid-cols-3 gap-2">
             <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.city")} value={f.city || ""} onChange={e => setF({ ...f, city: e.target.value })} />
             <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.region")} value={f.region || ""} onChange={e => setF({ ...f, region: e.target.value })} />
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.countryCode")} value={f.country_code || ""} onChange={e => setF({ ...f, country_code: e.target.value })} />
+            <CountrySelect
+              className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
+              placeholder={t("cvSections.placeholders.selectCountry")}
+              value={f.country_code || ""}
+              onChange={v => setF({ ...f, country_code: v })}
+            />
           </div>
 
           <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder="Description" rows={3} value={f.description || ""} onChange={e => setF({ ...f, description: e.target.value })} />
@@ -423,10 +433,15 @@ export default function Experience(props){
             <input type="checkbox" checked={!!nf.inProgress} onChange={e => setNf({ ...nf, inProgress: e.target.checked })} /> {t("cvSections.inProgress")}
           </label>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="md:col-span-2 grid grid-cols-3 gap-2">
             <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.city")} value={nf.city || ""} onChange={e => setNf({ ...nf, city: e.target.value })} />
             <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.region")} value={nf.region || ""} onChange={e => setNf({ ...nf, region: e.target.value })} />
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.countryCode")} value={nf.country_code || ""} onChange={e => setNf({ ...nf, country_code: e.target.value })} />
+            <CountrySelect
+              className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden appearance-none [&>option]:bg-gray-800 [&>option]:text-white"
+              placeholder={t("cvSections.placeholders.selectCountry")}
+              value={nf.country_code || ""}
+              onChange={v => setNf({ ...nf, country_code: v })}
+            />
           </div>
 
           <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder="Description" rows={3} value={nf.description || ""} onChange={e => setNf({ ...nf, description: e.target.value })} />

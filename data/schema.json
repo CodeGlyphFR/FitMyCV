@@ -113,7 +113,15 @@
           "degree": { "type": "string" },
           "field_of_study": { "type": "string" },
           "start_date": { "type": "string" },
-          "end_date": { "type": "string" }
+          "end_date": { "type": "string" },
+          "location": {
+            "type": "object",
+            "properties": {
+              "city": { "type": "string" },
+              "region": { "type": "string" },
+              "country_code": { "type": "string" }
+            }
+          }
         },
         "required": ["institution", "end_date"]
       }
