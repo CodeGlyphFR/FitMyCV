@@ -943,7 +943,7 @@ export default function CVImprovementPanel({ cvFile }) {
                                           placeholder={t('optimization.contextPlaceholder') || 'Ajoutez du contexte (optionnel)...'}
                                           maxLength={500}
                                           rows={2}
-                                          className="w-full px-3 py-2 text-xs bg-black/20 border border-white/10 rounded-lg text-white placeholder-white/40 resize-none focus:outline-none focus:ring-1 focus:ring-white/30 focus:border-white/20"
+                                          className="w-full px-3 py-2 !text-xs !leading-relaxed bg-black/20 border border-white/10 rounded-lg text-white placeholder-white/40 resize-none focus:outline-none focus:ring-1 focus:ring-white/30 focus:border-white/20"
                                         />
                                         <div className="flex justify-end mt-1">
                                           <span className="text-[10px] text-white/40">
