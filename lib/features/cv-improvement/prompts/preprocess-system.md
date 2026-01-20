@@ -52,11 +52,9 @@ Pour chaque contexte :
    - Side-project personnel
    - Toute activité HORS cadre professionnel démontrant des compétences
 
-4. **language** - Modifier/ajouter une langue
-   - Ajouter une nouvelle langue au CV
-   - Modifier le niveau d'une langue existante
-   - Contexte : certifications linguistiques (TOEIC, TOEFL, IELTS, DELF, DALF, Goethe, DELE, etc.)
-   - Note : targetIndex = index de la langue existante, ou null pour ajouter une nouvelle langue
+4. **language** - Modifier/ajouter une langue (certification TOEIC/DELF, nouvelle langue, contexte concret)
+   - ⚠️ IGNORER les suggestions vagues ("mettre en avant", "renforcer") → ne pas créer d'action
+   - Note : targetIndex = index existant ou null pour ajout
 
 5. **extras** - Modifier/ajouter un extra (certification, hobby, bénévolat)
    - Ajouter une certification professionnelle (AWS, PMP, Scrum Master, CISSP, etc.)

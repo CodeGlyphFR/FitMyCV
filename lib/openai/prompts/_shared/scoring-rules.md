@@ -69,13 +69,20 @@ Détail du score par catégorie. **Chaque score est sur 100** (pas sur le poids)
 ⚠️ **Nom de clé** : `soft_skills_languages` (pas `soft_skills` seul)
 
 ### `suggestions` (array)
-Liste de **max 3-4 suggestions** d'amélioration par ordre de priorité décroissante.
+Liste de **MAXIMUM 3 suggestions** d'amélioration, les plus impactantes uniquement, par ordre de priorité décroissante.
+
+**Règles de sélection :**
+- Privilégier les suggestions à fort impact (+5 points ou plus)
+- Éviter les suggestions mineures ou cosmétiques
+- Si moins de 3 suggestions pertinentes, en mettre moins (qualité > quantité)
 
 Chaque suggestion contient:
 - `title` (string) : Titre court et clair (3-8 mots)
 - `suggestion` (string) : Description détaillée et actionnable
 - `priority` (enum) : "high" | "medium" | "low"
 - `impact` (string) : Estimation de l'impact (ex: "+5 points", "+8 points")
+
+**⚠️ LANGUES :** Ne JAMAIS suggérer d'améliorer une langue maternelle ou au niveau max (Natif/Bilingue/C2). Suggérer uniquement si une langue est ABSENTE ou si une certification peut être ajoutée.
 
 ### `missing_skills` (array<string>)
 Liste des compétences **critiques** (inclus les hard skills, les soft skills, les tools et les methodogies) mentionnées dans l'offre mais absentes du CV
