@@ -27,6 +27,24 @@ Ce CV doit etre **coherent** avec le titre de poste et servir de **modele** que 
 - Les competences doivent etre **coherentes** avec les experiences
 - Evite les CV **generiques**, fournis du contenu **specifique et detaille**
 
+## NIVEAUX DE PROFICIENCY (OBLIGATOIRE)
+
+Pour chaque **hard_skill** et **tool**, tu DOIS specifier un niveau de proficiency en NOMBRE (0-5).
+
+| Niveau | Valeur | Criteres |
+|--------|--------|----------|
+| Awareness | 0 | Connaissance theorique |
+| Beginner | 1 | 1-2 ans d'experience |
+| Intermediate | 2 | 2-4 ans |
+| Proficient | 3 | 4-6 ans |
+| Advanced | 4 | 6-8 ans |
+| Expert | 5 | 8+ ans, reference |
+
+**IMPORTANT** : proficiency est un NOMBRE (0-5), PAS une string.
+
+✅ Correct : `{"name": "Python", "proficiency": 3}`
+❌ Incorrect : `{"name": "Python", "proficiency": "proficient"}`
+
 ## STYLE D'ECRITURE
 
 ### UTILISER

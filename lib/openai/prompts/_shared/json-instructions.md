@@ -63,7 +63,23 @@ Informations personnelles :
 
 ---
 
-⚠️ **CRUCIAL** : Il est **INDISPENSABLE** de déterminer le niveau de chaque **hard_skills** et de chaque **tools** UNIQUEMENT.
+⚠️ **CRUCIAL** : Le champ **proficiency** est OBLIGATOIRE pour chaque **hard_skills** et **tools**.
+
+### Échelle de proficiency (NOMBRES 0-5)
+
+| Valeur | Niveau | Description |
+|--------|--------|-------------|
+| 0 | Awareness | Exposition occasionnelle, théorie |
+| 1 | Beginner | Débutant, contexte basique |
+| 2 | Intermediate | 1-2 expériences/projets |
+| 3 | Proficient | Utilisation régulière, plusieurs contextes |
+| 4 | Advanced | Rôle significatif, utilisation intensive |
+| 5 | Expert | Expertise reconnue, leadership technique |
+
+**RÈGLE ABSOLUE** : proficiency DOIT être un NOMBRE (0, 1, 2, 3, 4 ou 5), JAMAIS une string.
+
+✅ Correct : `{"name": "Python", "proficiency": 3}`
+❌ Incorrect : `{"name": "Python", "proficiency": "proficient"}`
 
 Cette information doit être **ABSOLUMENT** dans le champ **proficiency** et NON dans le **name** entre parenthèses.
 
@@ -105,7 +121,7 @@ Quand une compétence est mentionnée AVEC un outil (ex: "Modélisation Matlab/S
   - ✅ Design : UI Design, UX Design, Branding, Typographie, Direction artistique...
   - ✅ Marketing : Marketing digital, SEO, Content Marketing, Growth Hacking...
   - ✅ Management : Gestion de projet, Management d'équipe, Planification, Budgétisation...
-  - Détermine le niveau en fonction de l'expérience professionnelle
+  - Proficiency : NOMBRE de 0 à 5 (voir échelle ci-dessus)
 
 - **tools** : Logiciels, applications, plateformes, équipements utilisés pour travailler (name, proficiency)
   - Ce qu'on UTILISE comme outil externe pour réaliser son travail
@@ -118,7 +134,7 @@ Quand une compétence est mentionnée AVEC un outil (ex: "Modélisation Matlab/S
   - ✅ Design : Figma, Photoshop, Illustrator, Sketch, InDesign...
   - ✅ Data/BI : Tableau, Power BI, Jupyter, Databricks, Google Analytics...
   - ✅ Bureautique : Excel, Word, PowerPoint, Google Sheets...
-  - Détermine le niveau en fonction de l'expérience professionnelle
+  - Proficiency : NOMBRE de 0 à 5 (voir échelle ci-dessus)
 
 - **soft_skills** : Qualités personnelles et compétences relationnelles (tableau de strings, PAS de proficiency)
   - Ce qu'on EST, nos traits de caractère et capacités interpersonnelles
