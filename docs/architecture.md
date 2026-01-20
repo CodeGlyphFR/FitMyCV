@@ -365,7 +365,7 @@ L'architecture permet un scaling horizontal :
 |---------|---------|
 | `app/layout.jsx` | Layout racine, providers |
 | `app/page.jsx` | CV Editor principal |
-| `middleware.js` | Auth, i18n, redirects |
+| `proxy.js` | Auth, rate limiting, security headers |
 | `lib/prisma.js` | Singleton Prisma client |
 | `prisma/schema.prisma` | 33 modèles de données |
 | `next.config.js` | Configuration Next.js |

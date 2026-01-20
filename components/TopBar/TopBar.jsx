@@ -10,6 +10,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { useLinkHistory } from "@/hooks/useLinkHistory";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { useOutsideClick } from "@/hooks/useOutsideClick";
 import GptLogo from "@/components/ui/GptLogo";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
 import TaskQueueModal from "@/components/TaskQueueModal";
@@ -430,175 +431,31 @@ export default function TopBar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modals.userMenuOpen]);
 
-  // User menu outside click handler
-  React.useEffect(() => {
-    let touchHandled = false;
-    let touchTimeout = null;
+  // Outside click handlers using shared hook
+  useOutsideClick({
+    isOpen: modals.userMenuOpen,
+    onClose: () => modals.setUserMenuOpen(false),
+    refs: [userMenuButtonRef, userMenuRef],
+  });
 
-    function handleClick(event) {
-      if (event.type === 'touchstart') {
-        touchHandled = true;
-        if (touchTimeout) clearTimeout(touchTimeout);
-        touchTimeout = setTimeout(() => {
-          touchHandled = false;
-        }, 500);
-      } else if (event.type === 'mousedown' && touchHandled) {
-        return;
-      }
+  useOutsideClick({
+    isOpen: modals.listOpen,
+    onClose: () => modals.setListOpen(false),
+    refs: [triggerRef, dropdownPortalRef],
+    shouldSkip: () => state.isScrollingInDropdown,
+  });
 
-      const buttonEl = userMenuButtonRef.current;
-      const menuEl = userMenuRef.current;
-      if (buttonEl && buttonEl.contains(event.target)) return;
-      if (menuEl && menuEl.contains(event.target)) return;
-      modals.setUserMenuOpen(false);
-    }
+  useOutsideClick({
+    isOpen: generator.baseSelectorOpen,
+    onClose: () => generator.setBaseSelectorOpen(false),
+    refs: [baseSelectorRef, baseDropdownRef],
+  });
 
-    function handleKey(event) {
-      if (event.key === "Escape") modals.setUserMenuOpen(false);
-    }
-
-    document.addEventListener("mousedown", handleClick);
-    document.addEventListener("touchstart", handleClick, { passive: true });
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("touchstart", handleClick);
-      document.removeEventListener("keydown", handleKey);
-      if (touchTimeout) clearTimeout(touchTimeout);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modals.userMenuOpen]);
-
-  // CV dropdown outside click handler
-  React.useEffect(() => {
-    let touchHandled = false;
-    let touchTimeout = null;
-
-    function handleClick(event) {
-      if (!modals.listOpen) return;
-      if (state.isScrollingInDropdown) return;
-
-      if (event.type === 'touchstart') {
-        touchHandled = true;
-        if (touchTimeout) clearTimeout(touchTimeout);
-        touchTimeout = setTimeout(() => {
-          touchHandled = false;
-        }, 500);
-      } else if (event.type === 'mousedown' && touchHandled) {
-        return;
-      }
-
-      const triggerEl = triggerRef.current;
-      const dropdownEl = dropdownPortalRef.current;
-
-      if (!triggerEl) return;
-      if (triggerEl.contains(event.target)) return;
-      if (dropdownEl && dropdownEl.contains(event.target)) return;
-
-      modals.setListOpen(false);
-    }
-
-    function handleKey(event) {
-      if (event.key === "Escape" && modals.listOpen) {
-        modals.setListOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClick);
-    document.addEventListener("touchstart", handleClick, { passive: true });
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("touchstart", handleClick);
-      document.removeEventListener("keydown", handleKey);
-      if (touchTimeout) clearTimeout(touchTimeout);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modals.listOpen, state.isScrollingInDropdown]);
-
-  // Base selector outside click handler
-  React.useEffect(() => {
-    if (!generator.baseSelectorOpen) return undefined;
-    let touchHandled = false;
-    let touchTimeout = null;
-
-    function handleClick(event) {
-      if (event.type === 'touchstart') {
-        touchHandled = true;
-        if (touchTimeout) clearTimeout(touchTimeout);
-        touchTimeout = setTimeout(() => {
-          touchHandled = false;
-        }, 500);
-      } else if (event.type === 'mousedown' && touchHandled) {
-        return;
-      }
-
-      const container = baseSelectorRef.current;
-      const dropdown = baseDropdownRef.current;
-      if (container && container.contains(event.target)) return;
-      if (dropdown && dropdown.contains(event.target)) return;
-      generator.setBaseSelectorOpen(false);
-    }
-
-    function handleKey(event) {
-      if (event.key === "Escape") generator.setBaseSelectorOpen(false);
-    }
-
-    document.addEventListener("mousedown", handleClick);
-    document.addEventListener("touchstart", handleClick, { passive: true });
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("touchstart", handleClick);
-      document.removeEventListener("keydown", handleKey);
-      if (touchTimeout) clearTimeout(touchTimeout);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [generator.baseSelectorOpen]);
-
-  // Link history dropdown outside click handler
-  React.useEffect(() => {
-    const hasOpenDropdown = Object.values(generator.linkHistoryDropdowns).some(Boolean);
-    if (!hasOpenDropdown) return undefined;
-
-    let touchHandled = false;
-    let touchTimeout = null;
-
-    function handleClick(event) {
-      if (event.type === 'touchstart') {
-        touchHandled = true;
-        if (touchTimeout) clearTimeout(touchTimeout);
-        touchTimeout = setTimeout(() => {
-          touchHandled = false;
-        }, 500);
-      } else if (event.type === 'mousedown' && touchHandled) {
-        return;
-      }
-
-      // Check if click is inside any link history dropdown element
-      if (event.target.closest('[data-link-history-dropdown="true"]')) {
-        return;
-      }
-
-      // Close all dropdowns
-      generator.setLinkHistoryDropdowns({});
-    }
-
-    function handleKey(event) {
-      if (event.key === "Escape") generator.setLinkHistoryDropdowns({});
-    }
-
-    document.addEventListener("mousedown", handleClick);
-    document.addEventListener("touchstart", handleClick, { passive: true });
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("touchstart", handleClick);
-      document.removeEventListener("keydown", handleKey);
-      if (touchTimeout) clearTimeout(touchTimeout);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [generator.linkHistoryDropdowns]);
+  useOutsideClick({
+    isOpen: Object.values(generator.linkHistoryDropdowns).some(Boolean),
+    onClose: () => generator.setLinkHistoryDropdowns({}),
+    dataAttribute: 'link-history-dropdown',
+  });
 
   // Ticker reset on visibility change
   React.useEffect(() => {
