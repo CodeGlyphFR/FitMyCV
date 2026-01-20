@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
-import { createPortal } from "react-dom";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAdmin } from "@/components/admin/AdminProvider";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
@@ -11,9 +10,7 @@ import { useSettings } from "@/lib/settings/SettingsContext";
 import { useLinkHistory } from "@/hooks/useLinkHistory";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useOutsideClick } from "@/hooks/useOutsideClick";
-import GptLogo from "@/components/ui/GptLogo";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
-import TaskQueueModal from "@/components/TaskQueueModal";
 import TaskQueueDropdown from "@/components/TaskQueueDropdown";
 import { usePipelineProgressContext } from "@/components/PipelineProgressProvider";
 import { calculateOfferProgress } from "@/hooks/usePipelineProgress";
@@ -30,29 +27,27 @@ import { useFilterState } from "./hooks/useFilterState";
 import { useWrapDetection } from "./hooks/useWrapDetection";
 
 // Components
-import ItemLabel from "./components/ItemLabel";
-import FilterDropdown from "./components/FilterDropdown";
-import CvGeneratorModal from "./modals/CvGeneratorModal";
-import PdfImportModal from "./modals/PdfImportModal";
-import DeleteCvModal from "./modals/DeleteCvModal";
-import BulkDeleteCvModal from "./modals/BulkDeleteCvModal";
-import NewCvModal from "./modals/NewCvModal";
-import ExportPdfModal from "./modals/ExportPdfModal";
+import {
+  ItemLabel,
+  FilterDropdown,
+  CvDropdownPortal,
+  UserMenuPortal,
+  TopBarModals,
+  TopBarStyles,
+  TopBarActions
+} from "./components";
 
 // Utils
 import { getCvIcon } from "./utils/cvUtils";
-import { CREATE_TEMPLATE_OPTION } from "./utils/constants";
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from "@/lib/onboarding/onboardingEvents";
 import { LOADING_EVENTS, emitLoadingEvent } from "@/lib/loading/loadingEvents";
 import { useCreditCost } from "@/hooks/useCreditCost";
-import Modal from "@/components/ui/Modal";
-import CreditCounter from "@/components/ui/CreditCounter";
 
 // Date range constants in milliseconds
 const DATE_RANGE_MS = {
-  '24h': 86400000,      // 24 hours
-  '7d': 604800000,      // 7 days
-  '30d': 2592000000,    // 30 days
+  '24h': 86400000,
+  '7d': 604800000,
+  '30d': 2592000000,
 };
 
 export default function TopBar() {
@@ -143,10 +138,6 @@ export default function TopBar() {
   const filterButtonRef = React.useRef(null);
   const flexContainerRef = React.useRef(null);
 
-  // Long press refs pour le bouton de suppression (mobile)
-  const deleteLongPressTimerRef = React.useRef(null);
-  const deleteIsLongPressRef = React.useRef(false);
-
   // Filter state hook
   const filter = useFilterState();
 
@@ -158,26 +149,19 @@ export default function TopBar() {
     if (!filter.hasActiveFilters) return state.items;
 
     return state.items.filter(item => {
-      // Filtre par type
       if (filter.filters.types.length > 0) {
         const itemType = item.createdBy || 'manual';
         if (!filter.filters.types.includes(itemType)) return false;
       }
-
-      // Filtre par langue
       if (filter.filters.language !== null) {
         if (!item.language || item.language !== filter.filters.language) return false;
       }
-
-      // Filtre par date de création
       if (filter.filters.dateRange) {
         const now = Date.now();
         const created = new Date(item.createdAt).getTime();
         if (Number.isNaN(created)) return false;
-
         if (now - created > DATE_RANGE_MS[filter.filters.dateRange]) return false;
       }
-
       return true;
     });
   }, [state.items, filter.filters, filter.hasActiveFilters]);
@@ -185,20 +169,15 @@ export default function TopBar() {
   // Available filter options (progressive filtering)
   const availableFilterOptions = React.useMemo(() => {
     const items = state.items;
-
-    // Helper: filter items by other criteria (excluding the specified filter)
     const getItemsMatchingOtherFilters = (excludeFilter) => {
       return items.filter(item => {
-        // Apply type filter (unless excluded)
         if (excludeFilter !== 'types' && filter.filters.types.length > 0) {
           const itemType = item.createdBy || 'manual';
           if (!filter.filters.types.includes(itemType)) return false;
         }
-        // Apply language filter (unless excluded)
         if (excludeFilter !== 'language' && filter.filters.language !== null) {
           if (!item.language || item.language !== filter.filters.language) return false;
         }
-        // Apply date filter (unless excluded)
         if (excludeFilter !== 'dateRange' && filter.filters.dateRange) {
           const now = Date.now();
           const created = new Date(item.createdAt).getTime();
@@ -209,15 +188,10 @@ export default function TopBar() {
       });
     };
 
-    // Available types (based on items filtered by language + date)
     const itemsForTypes = getItemsMatchingOtherFilters('types');
     const availableTypes = new Set(itemsForTypes.map(i => i.createdBy || 'manual'));
-
-    // Available languages (based on items filtered by type + date)
     const itemsForLanguages = getItemsMatchingOtherFilters('language');
     const availableLanguages = new Set(itemsForLanguages.map(i => i.language).filter(Boolean));
-
-    // Available date ranges (based on items filtered by type + language)
     const itemsForDates = getItemsMatchingOtherFilters('dateRange');
     const now = Date.now();
     const availableDateRanges = new Set();
@@ -234,7 +208,7 @@ export default function TopBar() {
     return { availableTypes, availableLanguages, availableDateRanges };
   }, [state.items, filter.filters]);
 
-  // Active tasks count (exclut calculate-match-score qui a sa propre animation)
+  // Active tasks count
   const activeTasksCount = React.useMemo(() => {
     return tasks.filter(t =>
       (t.status === 'running' || t.status === 'queued') &&
@@ -244,7 +218,6 @@ export default function TopBar() {
 
   // Global task progress (0-100)
   const globalTaskProgress = React.useMemo(() => {
-    // Exclut calculate-match-score qui a sa propre animation sur le bouton MatchScore
     const activeTasks = tasks.filter(t =>
       (t.status === 'running' || t.status === 'queued') &&
       t.type !== 'calculate-match-score'
@@ -252,10 +225,8 @@ export default function TopBar() {
     if (activeTasks.length === 0) return 0;
 
     let totalProgress = 0;
-
     activeTasks.forEach(task => {
       if (task.type === 'cv_generation') {
-        // Use SSE progress data for pipeline tasks
         const sseProgress = getProgress(task.id);
         if (sseProgress?.offers) {
           const offers = Object.values(sseProgress.offers);
@@ -263,15 +234,12 @@ export default function TopBar() {
             const avgOfferProgress = offers.reduce((sum, offer) => sum + calculateOfferProgress(offer), 0) / offers.length;
             totalProgress += avgOfferProgress;
           } else {
-            // Task started but no offers yet - 5% progress
             totalProgress += 5;
           }
         } else {
-          // No SSE data yet - estimate based on task status
           totalProgress += task.status === 'running' ? 10 : 0;
         }
       } else {
-        // For other task types, estimate progress based on status
         totalProgress += task.status === 'running' ? 50 : 0;
       }
     });
@@ -279,8 +247,11 @@ export default function TopBar() {
     return Math.round(totalProgress / activeTasks.length);
   }, [tasks, getProgress]);
 
-  // État pour l'onboarding : CV récemment généré à mettre en surbrillance
+  // État pour l'onboarding : CV récemment généré
   const [recentlyGeneratedCv, setRecentlyGeneratedCv] = React.useState(null);
+  const [isSmallScreen, setIsSmallScreen] = React.useState(
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false
+  );
 
   // Scroll behavior hook
   useScrollBehavior({
@@ -294,29 +265,19 @@ export default function TopBar() {
 
   // ===== CRITICAL useEffect for initial render =====
 
-  // Portal ready (critical for dropdown rendering)
   React.useEffect(() => {
     state.setPortalReady(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Reload CV list (critical for displaying CVs)
   React.useEffect(() => {
     if (!isAuthenticated) return;
     operations.reload();
-    // operations.reload is memoized with useCallback and recreates when isAuthenticated changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, pathname, searchParams?.toString()]);
 
-  // Emit TOPBAR_READY event for LoadingOverlay
   React.useEffect(() => {
-    // Ne pas émettre l'événement sur la page /auth
     if (pathname === "/auth") return;
-
-    // Attendre que le TopBar soit complètement monté avec les items chargés
     if (!isAuthenticated || state.items.length === 0) return;
 
-    // Petit délai pour s'assurer que le rendu est complet
     const timer = setTimeout(() => {
       emitLoadingEvent(LOADING_EVENTS.TOPBAR_READY, {
         hasButtons: true,
@@ -325,10 +286,8 @@ export default function TopBar() {
     }, 50);
 
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, state.items.length, pathname]);
 
-  // Listen for CV list changes
   React.useEffect(() => {
     if (!isAuthenticated) return undefined;
     const onChanged = () => operations.reload();
@@ -340,37 +299,21 @@ export default function TopBar() {
       window.removeEventListener("realtime:cv:list:changed", onChanged);
       window.removeEventListener("focus", onChanged);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
-  // Listen for import event
   React.useEffect(() => {
-    const handleOpenImport = () => {
-      modals.setOpenPdfImport(true);
-    };
+    const handleOpenImport = () => modals.setOpenPdfImport(true);
     window.addEventListener("cv:open-import", handleOpenImport);
     return () => window.removeEventListener("cv:open-import", handleOpenImport);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Listen for onboarding CV generation event
   React.useEffect(() => {
     let isMounted = true;
-
     const handleCvGenerated = (event) => {
-      if (!isMounted) return; // Prevent state updates after unmount
-
-      try {
-        const cvFilename = event.detail?.cvFilename;
-        if (cvFilename) {
-          console.log('[TopBar] CV généré pour onboarding:', cvFilename);
-          setRecentlyGeneratedCv(cvFilename);
-        }
-      } catch (error) {
-        console.error('[TopBar] Error in handleCvGenerated:', error);
-      }
+      if (!isMounted) return;
+      const cvFilename = event.detail?.cvFilename;
+      if (cvFilename) setRecentlyGeneratedCv(cvFilename);
     };
-
     window.addEventListener(ONBOARDING_EVENTS.CV_GENERATED, handleCvGenerated);
     return () => {
       isMounted = false;
@@ -378,60 +321,40 @@ export default function TopBar() {
     };
   }, []);
 
-  // CV selector glow animation
   React.useEffect(() => {
     const handleCvSelected = (event) => {
       if (event.detail?.source === 'task-queue') {
         state.setCvSelectorGlow(true);
-        setTimeout(() => {
-          state.setCvSelectorGlow(false);
-        }, 800);
+        setTimeout(() => state.setCvSelectorGlow(false), 800);
       }
     };
     window.addEventListener("cv:selected", handleCvSelected);
-    return () => {
-      window.removeEventListener("cv:selected", handleCvSelected);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => window.removeEventListener("cv:selected", handleCvSelected);
   }, []);
 
-  // State pour détecter les très petits écrans (< 640px) - pour cacher l'éclair
-  const [isSmallScreen, setIsSmallScreen] = React.useState(
-    typeof window !== 'undefined' ? window.innerWidth < 640 : false
-  );
-
-  // Mettre à jour isSmallScreen au resize
   React.useEffect(() => {
-    const handleResize = () => {
-      setIsSmallScreen(window.innerWidth < 640);
-    };
+    const handleResize = () => setIsSmallScreen(window.innerWidth < 640);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Detect mobile - Basé sur le wrapping dynamique
   React.useEffect(() => {
-    // Mode mobile = wrapping détecté OU écran vraiment petit (< 640px)
     state.setIsMobile(hasWrapped || isSmallScreen);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasWrapped, isSmallScreen]);
 
-  // Dropdown position updates
   React.useEffect(() => {
     if (modals.listOpen && triggerRef.current) {
       modals.setDropdownRect(triggerRef.current.getBoundingClientRect());
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modals.listOpen, state.items, state.current]);
 
   React.useEffect(() => {
     if (modals.userMenuOpen && userMenuButtonRef.current) {
       modals.setUserMenuRect(userMenuButtonRef.current.getBoundingClientRect());
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modals.userMenuOpen]);
 
-  // Outside click handlers using shared hook
+  // Outside click handlers
   useOutsideClick({
     isOpen: modals.userMenuOpen,
     onClose: () => modals.setUserMenuOpen(false),
@@ -457,50 +380,34 @@ export default function TopBar() {
     dataAttribute: 'link-history-dropdown',
   });
 
-  // Ticker reset on visibility change
   React.useEffect(() => {
     if (typeof document === "undefined") return;
     const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        state.setTickerResetKey(Date.now());
-      }
+      if (document.visibilityState === "visible") state.setTickerResetKey(Date.now());
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Ticker reset on intersection
   React.useEffect(() => {
-    if (typeof window === "undefined" || !barRef.current || typeof IntersectionObserver === "undefined") {
-      return;
-    }
+    if (typeof window === "undefined" || !barRef.current || typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          state.setTickerResetKey(Date.now());
-        }
+        if (entry.isIntersecting) state.setTickerResetKey(Date.now());
       });
     }, { threshold: 0.6 });
     observer.observe(barRef.current);
     return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Close dropdown on resize
   React.useEffect(() => {
-    const handleResize = () => {
-      modals.setOpenTaskDropdown(false);
-    };
+    const handleResize = () => modals.setOpenTaskDropdown(false);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Don't render on auth page
-  if (pathname === "/auth") {
-    return null;
-  }
+  if (pathname === "/auth") return null;
 
   // Loading state
   if (status === "loading") {
@@ -523,24 +430,13 @@ export default function TopBar() {
     );
   }
 
-  // Not authenticated
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthenticated) return null;
 
-  // No CVs - Distinguer les différents cas
+  // No CVs
   if (state.items.length === 0) {
-    // Cas 1: Premier chargement terminé et aucun CV → ne pas afficher (EmptyState)
-    if (state.hasLoadedOnce) {
-      return null;
-    }
+    if (state.hasLoadedOnce) return null;
+    if (!state.hadItemsOnceRef.current) return null;
 
-    // Cas 2: Premier chargement en cours mais on n'a jamais eu de CV → ne pas afficher (évite flash)
-    if (!state.hadItemsOnceRef.current) {
-      return null;
-    }
-
-    // Cas 3: On avait des CV avant mais plus maintenant (race condition suppression) → skeleton
     return (
       <div
         ref={barRef}
@@ -590,11 +486,7 @@ export default function TopBar() {
               className="h-8 w-8 flex items-center justify-center rounded-full border border-white/40 bg-white/20 backdrop-blur-sm hover:bg-white/30 hover:shadow-sm-xl transition-all duration-200"
               aria-label={t("topbar.userMenu")}
             >
-              <img
-                src="/icons/user.png"
-                alt={t("topbar.userMenu")}
-                className="h-5 w-5"
-              />
+              <img src="/icons/user.png" alt={t("topbar.userMenu")} className="h-5 w-5" />
             </button>
           </div>
 
@@ -625,236 +517,15 @@ export default function TopBar() {
                 ) : null}
                 <span className="min-w-0">
                   {state.resolvedCurrentItem ? (
-                    <ItemLabel
-                      item={state.resolvedCurrentItem}
-                      tickerKey={state.tickerResetKey}
-                      withHyphen={false}
-                      t={t}
-                    />
+                    <ItemLabel item={state.resolvedCurrentItem} tickerKey={state.tickerResetKey} withHyphen={false} t={t} />
                   ) : (
-                    <span className="truncate italic text-neutral-500">
-                      {t("topbar.loadingInProgress")}
-                    </span>
+                    <span className="truncate italic text-neutral-500">{t("topbar.loadingInProgress")}</span>
                   )}
                 </span>
               </span>
               <span className="text-xs opacity-60">▾</span>
             </button>
           </div>
-
-          {/* CV Dropdown Portal */}
-          {modals.listOpen && state.portalReady && modals.dropdownRect
-            ? createPortal(
-                <div
-                  ref={dropdownPortalRef}
-                  style={{
-                    position: "fixed",
-                    top: modals.dropdownRect.bottom + 4,
-                    left: modals.dropdownRect.left,
-                    width: modals.dropdownRect.width,
-                    zIndex: 10002,
-                    opacity: 1,
-                  }}
-                  className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-md shadow-2xl cv-dropdown-no-animation"
-                >
-                    <ul
-                      className="max-h-[240px] overflow-y-auto custom-scrollbar py-1"
-                      onScroll={() => {
-                        state.setIsScrollingInDropdown(true);
-                      }}
-                      onScrollEnd={() => {
-                        setTimeout(() => state.setIsScrollingInDropdown(false), 100);
-                      }}
-                      onWheel={(e) => {
-                        const target = e.currentTarget;
-                        const isAtTop = target.scrollTop === 0;
-                        const isAtBottom = target.scrollTop + target.clientHeight >= target.scrollHeight;
-
-                        if ((isAtTop && e.deltaY < 0) || (isAtBottom && e.deltaY > 0)) {
-                          return;
-                        }
-                        e.stopPropagation();
-                      }}
-                    >
-                      {filteredItems.length === 0 && filter.hasActiveFilters ? (
-                        <li className="px-3 py-3 text-sm text-white/60 text-center italic">
-                          {t("topbar.filterNoResults")}
-                        </li>
-                      ) : (
-                        filteredItems.map((it) => {
-                          const isRecentlyGenerated = recentlyGeneratedCv && it.file === recentlyGeneratedCv;
-                          const isOnboardingStep4Cv = currentStep === 4 && it.file === onboardingState?.step4?.cvFilename;
-                          return (
-                          <li key={it.file}>
-                            <button
-                              type="button"
-                              data-cv-filename={it.file}
-                              onClick={async () => {
-                                // Si c'est le CV récemment généré OU le CV de l'onboarding step 4, émettre l'événement
-                                if (isRecentlyGenerated || isOnboardingStep4Cv) {
-                                  console.log('[TopBar] CV onboarding sélectionné, émission generatedCvOpened');
-                                  emitOnboardingEvent(ONBOARDING_EVENTS.GENERATED_CV_OPENED, {
-                                    cvFilename: it.file
-                                  });
-                                  // Nettoyer l'état de surbrillance si récent
-                                  if (isRecentlyGenerated) {
-                                    setRecentlyGeneratedCv(null);
-                                  }
-                                }
-
-                                await operations.selectFile(it.file);
-                                modals.setListOpen(false);
-                              }}
-                              className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 hover:bg-white/25 text-white transition-colors duration-200 ${
-                                it.file === state.current
-                                  ? "bg-white/20 border-l-2 border-emerald-400"
-                                  : ""
-                              } ${
-                                isRecentlyGenerated
-                                  ? "bg-emerald-500/30 border border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)] animate-pulse"
-                                  : isOnboardingStep4Cv
-                                  ? "bg-emerald-500/20"
-                                  : ""
-                              }`}
-                            >
-                              <span
-                                key={`dropdown-icon-${it.file}-${it.createdBy}`}
-                                className="flex h-6 w-6 items-center justify-center shrink-0"
-                              >
-                                {getCvIcon(it.createdBy, it.originalCreatedBy, "h-4 w-4", it.isTranslated) || <DefaultCvIcon className="h-4 w-4" size={16} />}
-                              </span>
-                              <ItemLabel
-                                item={it}
-                                className="leading-tight"
-                                tickerKey={state.tickerResetKey}
-                                withHyphen={false}
-                                t={t}
-                              />
-                            </button>
-                          </li>
-                          );
-                        })
-                      )}
-                    </ul>
-                </div>,
-                document.body,
-              )
-            : null}
-
-          {/* User Menu Portal */}
-          {modals.userMenuOpen && state.portalReady && modals.userMenuRect
-            ? createPortal(
-                <div
-                  ref={userMenuRef}
-                  style={{
-                    position: "fixed",
-                    top: modals.userMenuRect.bottom + 8,
-                    left: modals.userMenuRect.left,
-                    zIndex: 10002,
-                  }}
-                    className="rounded-lg border border-white/30 bg-white/15 backdrop-blur-md shadow-2xl p-2 text-sm space-y-1 min-w-[10rem] max-w-[16rem]"
-                  >
-                    {/* Header - User name */}
-                    <div className="px-2 py-1 text-xs uppercase text-white/70 drop-shadow truncate">
-                      {session?.user?.name || t("topbar.user")}
-                    </div>
-
-                    {/* Main navigation */}
-                    <button
-                      className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
-                      onClick={() => {
-                        modals.setUserMenuOpen(false);
-                        router.push("/");
-                      }}
-                    >
-                      {t("topbar.myCvs")}
-                    </button>
-
-                    {/* Coming Soon Features */}
-                    <button
-                      className="w-full text-left rounded px-2 py-1 text-white/50 cursor-not-allowed flex items-center justify-between"
-                      disabled
-                    >
-                      <span>{t("topbar.analyzeOffers")}</span>
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/50 text-emerald-200 text-[10px] uppercase font-semibold">
-                        {t("topbar.soon")}
-                      </span>
-                    </button>
-                    <button
-                      className="w-full text-left rounded px-2 py-1 text-white/50 cursor-not-allowed flex items-center justify-between"
-                      disabled
-                    >
-                      <span>{t("topbar.coverLetters")}</span>
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/50 text-emerald-200 text-[10px] uppercase font-semibold">
-                        {t("topbar.soon")}
-                      </span>
-                    </button>
-                    <button
-                      className="w-full text-left rounded px-2 py-1 text-white/50 cursor-not-allowed flex items-center justify-between"
-                      disabled
-                    >
-                      <span>{t("topbar.interviewPrep")}</span>
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/50 text-emerald-200 text-[10px] uppercase font-semibold">
-                        {t("topbar.soon")}
-                      </span>
-                    </button>
-                    <button
-                      className="w-full text-left rounded px-2 py-1 text-white/50 cursor-not-allowed flex items-center justify-between"
-                      disabled
-                    >
-                      <span>{t("topbar.applicationTracking")}</span>
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/50 text-emerald-200 text-[10px] uppercase font-semibold">
-                        {t("topbar.soon")}
-                      </span>
-                    </button>
-
-                    {/* Account settings */}
-                    <button
-                      className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
-                      onClick={() => {
-                        modals.setUserMenuOpen(false);
-                        window.location.href = "/account";
-                      }}
-                    >
-                      {t("topbar.myAccount")}
-                    </button>
-                    <button
-                      className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
-                      onClick={() => {
-                        modals.setUserMenuOpen(false);
-                        window.location.href = "/account/subscriptions";
-                      }}
-                    >
-                      {creditsOnlyMode ? t("topbar.subscriptions_credits_only") : t("topbar.subscriptions")}
-                    </button>
-                    <button
-                      className="w-full text-left rounded px-2 py-1 hover:bg-white/25 text-white transition-colors duration-200"
-                      onClick={() => {
-                        modals.setUserMenuOpen(false);
-                        signOut({ callbackUrl: state.logoutTarget });
-                      }}
-                    >
-                      {t("topbar.logout")}
-                    </button>
-
-                    {/* Footer - Plan & Credits */}
-                    {!subscriptionLoading && (planName || creditsOnlyMode) && (
-                      <div className="border-t border-white/20 mt-2 pt-2">
-                        <div className="text-center text-[11px] text-white/60 drop-shadow">
-                          {creditsOnlyMode ? (
-                            // Mode crédits uniquement: afficher seulement les crédits
-                            <>{creditBalance} {t("topbar.credits")}</>
-                          ) : (
-                            // Mode abonnement: afficher plan + crédits
-                            <>{planIcon} {planName} • {creditBalance} {t("topbar.credits")}</>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                </div>,
-                document.body,
-              )
-            : null}
 
           {/* Task Manager */}
           <div className="relative order-2 md:order-2">
@@ -869,13 +540,11 @@ export default function TopBar() {
                 }
               }}
               className={`rounded-lg border border-white/40 backdrop-blur-sm text-white text-sm hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 transition-all duration-200 ${activeTasksCount > 0 ? 'task-progress-button' : 'bg-white/20 hover:bg-white/30'}`}
-              style={activeTasksCount > 0 ? {
-                '--task-progress': `${globalTaskProgress}%`
-              } : undefined}
+              style={activeTasksCount > 0 ? { '--task-progress': `${globalTaskProgress}%` } : undefined}
               type="button"
               title={t("topbar.taskQueue")}
             >
-              <img src="/icons/task.png" alt={t("topbar.taskQueue")} className="h-4 w-4 " />
+              <img src="/icons/task.png" alt={t("topbar.taskQueue")} className="h-4 w-4" />
             </button>
 
             <TaskQueueDropdown
@@ -893,9 +562,7 @@ export default function TopBar() {
               type="button"
               onClick={() => filter.setFilterMenuOpen(!filter.filterMenuOpen)}
               className={`rounded-lg border backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 transition-all duration-200 ${
-                filter.hasActiveFilters
-                  ? 'border-emerald-400 bg-emerald-500/30'
-                  : 'border-white/40 bg-white/20'
+                filter.hasActiveFilters ? 'border-emerald-400 bg-emerald-500/30' : 'border-white/40 bg-white/20'
               }`}
               title={t("topbar.filter")}
             >
@@ -922,7 +589,7 @@ export default function TopBar() {
             />
           </div>
 
-          {/* Break line - visible en dessous de 1025px (md:), caché au-dessus */}
+          {/* Break line */}
           <div className="w-full md:hidden order-6"></div>
 
           {/* Job Title Input */}
@@ -936,9 +603,7 @@ export default function TopBar() {
                   type="text"
                   value={modals.jobTitleInput}
                   onChange={(e) => modals.setJobTitleInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    modals.handleJobTitleSubmit(e, language, showCosts, jobTitleCost);
-                  }}
+                  onKeyDown={(e) => modals.handleJobTitleSubmit(e, language, showCosts, jobTitleCost)}
                   placeholder={state.isMobile ? t("topbar.jobTitlePlaceholderMobile") : t("topbar.jobTitlePlaceholder")}
                   className="w-full bg-transparent border-0 border-b-2 pl-8 pr-2 py-1 text-sm italic text-white placeholder-white/50 focus:outline-hidden transition-colors duration-200 border-white/30 focus:border-emerald-400 cursor-text"
                   style={{ caretColor: '#10b981' }}
@@ -948,387 +613,76 @@ export default function TopBar() {
           )}
 
           {/* Action Buttons */}
-          {settings.feature_ai_generation && (
-            <button
-              data-onboarding="ai-generate"
-              onClick={generator.openGeneratorModal}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 order-8 md:order-5 transition-all duration-200"
-              type="button"
-            >
-              <GptLogo className="h-4 w-4" />
-            </button>
-          )}
-          {settings.feature_manual_cv && (
-            <button
-              onClick={() => modals.setOpenNewCv(true)}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center h-8 w-8 order-9 md:order-6 transition-all duration-200"
-              type="button"
-            >
-              <img src="/icons/add.png" alt="Add" className="h-4 w-4 " />
-            </button>
-          )}
-          {settings.feature_import && (
-            <button
-              onClick={() => modals.setOpenPdfImport(true)}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 order-10 md:order-7 transition-all duration-200"
-              type="button"
-              title={t("pdfImport.title")}
-            >
-              <img src="/icons/import.png" alt="Import" className="h-4 w-4 " />
-            </button>
-          )}
-          {settings.feature_export && (
-            <button
-              data-onboarding="export"
-              onClick={exportModal.openModal}
-              className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center leading-none h-8 w-8 order-11 md:order-8 transition-all duration-200"
-              type="button"
-              title="Exporter en PDF"
-            >
-              <img src="/icons/export.png" alt="Export" className="h-4 w-4 " />
-            </button>
-          )}
-          <button
-            onTouchStart={() => {
-              deleteIsLongPressRef.current = false;
-              deleteLongPressTimerRef.current = setTimeout(() => {
-                deleteIsLongPressRef.current = true;
-                // Ouvre le modal directement pendant le long press
-                modals.setOpenBulkDelete(true);
-              }, 1000);
-            }}
-            onTouchEnd={() => {
-              clearTimeout(deleteLongPressTimerRef.current);
-            }}
-            onTouchMove={() => {
-              clearTimeout(deleteLongPressTimerRef.current);
-              deleteIsLongPressRef.current = false;
-            }}
-            onTouchCancel={() => {
-              clearTimeout(deleteLongPressTimerRef.current);
-              deleteIsLongPressRef.current = false;
-            }}
-            onContextMenu={(e) => e.preventDefault()}
-            onClick={(e) => {
-              // Si long press déjà traité, on ignore le clic
-              if (deleteIsLongPressRef.current) {
-                deleteIsLongPressRef.current = false;
-                return;
-              }
-              // Desktop: Ctrl+clic (Windows/Linux) ou Cmd+clic (macOS) → suppression multiple
-              if (e.ctrlKey || e.metaKey) {
-                modals.setOpenBulkDelete(true);
-              } else {
-                modals.setOpenDelete(true);
-              }
-            }}
-            className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center h-8 w-8 order-12 md:order-9 transition-all duration-200 select-none"
-            style={{ WebkitTouchCallout: 'none' }}
-            title={t("topbar.delete")}
-          >
-            <img src="/icons/delete.png" alt="Delete" className="h-4 w-4 pointer-events-none select-none" draggable="false" />
-          </button>
-
-          {/* Credits Counter - Mode crédits-only uniquement (tout à droite) */}
-          {creditsOnlyMode && !subscriptionLoading && (
-            <div className="order-5 md:order-11">
-              <CreditCounter
-                balance={creditBalance}
-                ratio={creditRatio}
-                onClick={() => { window.location.href = '/account/subscriptions?tab=credits'; }}
-                title={`${creditBalance} ${t("topbar.credits")}`}
-              />
-            </div>
-          )}
+          <TopBarActions
+            settings={settings}
+            generator={generator}
+            modals={modals}
+            exportModal={exportModal}
+            creditsOnlyMode={creditsOnlyMode}
+            subscriptionLoading={subscriptionLoading}
+            creditBalance={creditBalance}
+            creditRatio={creditRatio}
+            t={t}
+          />
         </div>
       </div>
 
+      {/* CV Dropdown Portal */}
+      <CvDropdownPortal
+        listOpen={modals.listOpen}
+        portalReady={state.portalReady}
+        dropdownRect={modals.dropdownRect}
+        dropdownPortalRef={dropdownPortalRef}
+        filteredItems={filteredItems}
+        hasActiveFilters={filter.hasActiveFilters}
+        current={state.current}
+        currentStep={currentStep}
+        onboardingState={onboardingState}
+        recentlyGeneratedCv={recentlyGeneratedCv}
+        setRecentlyGeneratedCv={setRecentlyGeneratedCv}
+        tickerResetKey={state.tickerResetKey}
+        isScrollingInDropdown={state.isScrollingInDropdown}
+        setIsScrollingInDropdown={state.setIsScrollingInDropdown}
+        selectFile={operations.selectFile}
+        setListOpen={modals.setListOpen}
+        t={t}
+      />
+
+      {/* User Menu Portal */}
+      <UserMenuPortal
+        userMenuOpen={modals.userMenuOpen}
+        portalReady={state.portalReady}
+        userMenuRect={modals.userMenuRect}
+        userMenuRef={userMenuRef}
+        session={session}
+        creditsOnlyMode={creditsOnlyMode}
+        subscriptionLoading={subscriptionLoading}
+        planName={planName}
+        planIcon={planIcon}
+        creditBalance={creditBalance}
+        logoutTarget={state.logoutTarget}
+        setUserMenuOpen={modals.setUserMenuOpen}
+        router={router}
+        t={t}
+      />
+
       {/* Modals */}
-      <CvGeneratorModal
-        open={generator.openGenerator}
-        onClose={generator.closeGenerator}
-        onSubmit={generator.submitGenerator}
-        linkInputs={generator.linkInputs}
-        updateLink={generator.updateLink}
-        addLinkField={generator.addLinkField}
-        removeLinkField={generator.removeLinkField}
-        fileSelection={generator.fileSelection}
-        onFilesChanged={generator.onFilesChanged}
-        clearFiles={generator.clearFiles}
-        fileInputRef={generator.fileInputRef}
-        generatorBaseFile={generator.generatorBaseFile}
-        setGeneratorBaseFile={generator.setGeneratorBaseFile}
-        baseSelectorOpen={generator.baseSelectorOpen}
-        setBaseSelectorOpen={generator.setBaseSelectorOpen}
-        generatorSourceItems={generator.generatorSourceItems}
-        generatorBaseItem={generator.generatorBaseItem}
-        plans={generator.plans}
-        generatorError={generator.generatorError}
+      <TopBarModals
+        generator={generator}
+        modals={modals}
+        exportModal={exportModal}
+        operations={operations}
+        state={state}
         linkHistory={linkHistory}
         deleteLinkHistory={deleteLinkHistory}
         refreshLinkHistory={refreshLinkHistory}
-        linkHistoryDropdowns={generator.linkHistoryDropdowns}
-        setLinkHistoryDropdowns={generator.setLinkHistoryDropdowns}
-        isSubmitting={generator.isSubmitting}
-        tickerResetKey={state.tickerResetKey}
-        t={t}
         baseSelectorRef={baseSelectorRef}
         baseDropdownRef={baseDropdownRef}
-      />
-
-      <PdfImportModal
-        open={modals.openPdfImport}
-        onClose={modals.closePdfImport}
-        onSubmit={modals.submitPdfImport}
-        pdfFile={modals.pdfFile}
-        onPdfFileChanged={modals.onPdfFileChanged}
-        pdfFileInputRef={modals.pdfFileInputRef}
-        busy={modals.pdfImportBusy}
         t={t}
       />
-
-      <DeleteCvModal
-        open={modals.openDelete}
-        onClose={() => modals.setOpenDelete(false)}
-        onConfirm={() => {
-          operations.deleteCurrent();
-          modals.setOpenDelete(false);
-        }}
-        currentItem={state.currentItem}
-        current={state.current}
-        t={t}
-      />
-
-      <BulkDeleteCvModal
-        open={modals.openBulkDelete}
-        onClose={() => modals.setOpenBulkDelete(false)}
-        onConfirm={async (selectedFiles) => {
-          const result = await operations.deleteMultiple(selectedFiles);
-          if (result.success) {
-            modals.setOpenBulkDelete(false);
-          }
-          return result;
-        }}
-        items={state.items}
-        currentFile={state.current}
-        t={t}
-      />
-
-      <NewCvModal
-        open={modals.openNewCv}
-        onClose={() => modals.setOpenNewCv(false)}
-        onCreate={modals.createNewCv}
-        fullName={modals.newCvFullName}
-        setFullName={modals.setNewCvFullName}
-        currentTitle={modals.newCvCurrentTitle}
-        setCurrentTitle={modals.setNewCvCurrentTitle}
-        email={modals.newCvEmail}
-        setEmail={modals.setNewCvEmail}
-        error={modals.newCvError}
-        setError={modals.setNewCvError}
-        busy={modals.newCvBusy}
-        t={t}
-      />
-
-      <TaskQueueModal
-        open={modals.openTaskQueue}
-        onClose={() => modals.setOpenTaskQueue(false)}
-      />
-
-      <ExportPdfModal
-        isOpen={exportModal.isOpen}
-        onClose={exportModal.closeModal}
-        filename={exportModal.filename}
-        setFilename={exportModal.setFilename}
-        selections={exportModal.selections}
-        toggleSection={exportModal.toggleSection}
-        toggleSubsection={exportModal.toggleSubsection}
-        toggleSectionOption={exportModal.toggleSectionOption}
-        toggleItem={exportModal.toggleItem}
-        toggleItemOption={exportModal.toggleItemOption}
-        selectAll={exportModal.selectAll}
-        deselectAll={exportModal.deselectAll}
-        exportPdf={exportModal.exportPdf}
-        exportWord={exportModal.exportWord}
-        isExportingWord={exportModal.isExportingWord}
-        counters={exportModal.counters}
-        subCounters={exportModal.subCounters}
-        cvData={exportModal.cvData}
-        isExporting={exportModal.isExporting}
-        isPreview={exportModal.isPreview}
-        previewHtml={exportModal.previewHtml}
-        isLoadingPreview={exportModal.isLoadingPreview}
-        loadPreview={exportModal.loadPreview}
-        closePreview={exportModal.closePreview}
-        templates={exportModal.templates}
-        isLoadingTemplates={exportModal.isLoadingTemplates}
-        isSavingTemplate={exportModal.isSavingTemplate}
-        saveAsTemplate={exportModal.saveAsTemplate}
-        applyTemplate={exportModal.applyTemplate}
-        deleteTemplate={exportModal.deleteTemplate}
-        sectionsOrder={exportModal.sectionsOrder}
-        setSectionsOrder={exportModal.setSectionsOrder}
-        resetSectionsOrder={exportModal.resetSectionsOrder}
-        t={t}
-      />
-
-      {/* Modal de confirmation pour génération par titre de poste */}
-      <Modal
-        open={modals.jobTitleConfirmModal.open}
-        onClose={modals.cancelJobTitleConfirmation}
-        title={t("jobTitleGenerator.confirmTitle") || "Confirmation"}
-      >
-        <div className="space-y-3">
-          <p className="text-sm text-white drop-shadow">
-            {t("jobTitleGenerator.confirmMessage", { credits: modals.jobTitleConfirmModal.creditCost }) ||
-              `Cette fonctionnalité va consommer ${modals.jobTitleConfirmModal.creditCost} crédit(s). Voulez-vous continuer ?`}
-          </p>
-          <p className="text-xs text-white/70 drop-shadow">
-            {t("jobTitleGenerator.confirmJobTitle", { jobTitle: modals.jobTitleConfirmModal.jobTitle }) ||
-              `Titre de poste : "${modals.jobTitleConfirmModal.jobTitle}"`}
-          </p>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={modals.cancelJobTitleConfirmation}
-              className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors"
-            >
-              {t("common.no") || "Non"}
-            </button>
-            <button
-              type="button"
-              onClick={modals.confirmJobTitleGeneration}
-              className="px-6 py-2.5 rounded-lg bg-emerald-500/30 hover:bg-emerald-500/40 border border-emerald-500/50 text-white text-sm font-semibold transition-colors"
-            >
-              {t("common.yes") || "Oui"}
-            </button>
-          </div>
-        </div>
-      </Modal>
 
       {/* Styles */}
-      <style jsx global>{`
-        .cv-selector-trigger:active {
-          opacity: 1 !important;
-          transform: none !important;
-        }
-
-        .cv-dropdown-no-animation {
-          animation: none !important;
-          transition: none !important;
-          transform: none !important;
-          will-change: auto !important;
-        }
-
-        .cv-ticker {
-          max-width: 100%;
-          position: relative;
-          display: block;
-          overflow: hidden;
-        }
-
-        .cv-ticker__inner {
-          --cv-ticker-duration: 12s;
-          --cv-ticker-shift: -50%;
-          display: inline-flex;
-          align-items: center;
-          gap: 1.5rem;
-          transform: translate3d(0, 0, 0);
-        }
-
-        .cv-ticker__chunk {
-          display: inline-block;
-          white-space: nowrap;
-        }
-
-        .cv-ticker--active .cv-ticker__inner {
-          animation: cv-ticker-scroll var(--cv-ticker-duration) linear infinite;
-        }
-
-        @keyframes cv-ticker-scroll {
-          0% {
-            transform: translate3d(0, 0, 0);
-          }
-          100% {
-            transform: translate3d(var(--cv-ticker-shift), 0, 0);
-          }
-        }
-
-        .animated-underline {
-          animation: gradient-shift 3s ease infinite;
-          background-size: 200% 100%;
-        }
-
-        @keyframes gradient-shift {
-          0% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-          100% {
-            background-position: 0% 50%;
-          }
-        }
-
-        .sparkle-effect {
-          animation: sparkle-rotate 2s linear infinite;
-        }
-
-        @keyframes sparkle-rotate {
-          0%, 100% {
-            transform: rotate(0deg) scale(1);
-          }
-          25% {
-            transform: rotate(10deg) scale(1.1);
-          }
-          50% {
-            transform: rotate(0deg) scale(1);
-          }
-          75% {
-            transform: rotate(-10deg) scale(1.1);
-          }
-        }
-
-        input[type="text"]::placeholder {
-          opacity: 1;
-        }
-
-        .job-title-input-wrapper:focus-within {
-          animation: none;
-        }
-
-        .job-title-input-wrapper:focus-within .search-icon-pulse {
-          animation: none;
-          transform: scale(1.1);
-          color: #3B82F6;
-        }
-
-        /* Task progress button - animatable CSS property */
-        @property --task-progress {
-          syntax: '<percentage>';
-          initial-value: 0%;
-          inherits: false;
-        }
-
-        .task-progress-button {
-          --task-progress: 0%;
-          background: conic-gradient(from 0deg, rgba(52, 211, 153, 0.7) 0% var(--task-progress), rgba(255, 255, 255, 0.2) var(--task-progress) 100%);
-          animation: task-button-pulse 2s ease-in-out infinite;
-          transition: --task-progress 0.5s ease-out;
-        }
-
-        @keyframes task-button-pulse {
-          0%, 100% {
-            opacity: 1;
-            box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
-          }
-          50% {
-            opacity: 0.85;
-            box-shadow: 0 0 8px 2px rgba(52, 211, 153, 0.4);
-          }
-        }
-      `}</style>
+      <TopBarStyles />
     </>
   );
 }
