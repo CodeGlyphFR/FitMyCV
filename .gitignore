@@ -29,6 +29,9 @@ prisma/dev.db
 .vscode/
 .lh/
 
+# Outils d'analyse
+knip.json
+
 # Données utilisateurs générées
 data/users/
 
