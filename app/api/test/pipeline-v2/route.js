@@ -24,7 +24,7 @@ import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import prisma from '@/lib/prisma';
-import { getOrExtractJobOfferFromUrl, extractJobOfferFromUrl } from '@/lib/openai/generateCv';
+import { getOrExtractJobOfferFromUrl, extractJobOfferFromUrl } from '@/lib/openai/extraction';
 import { getOpenAIClient } from '@/lib/openai/client';
 import { getAiModelSetting } from '@/lib/settings/aiModels';
 import { applyClassification, classifyCore } from '@/lib/cv-pipeline-v2/phases/classify.js';
@@ -634,7 +634,7 @@ async function testJobOfferExtraction(searchParams) {
   try {
     // Import htmlToMarkdown functions for debugging
     const { extractJobOfferContent } = await import('@/lib/utils/htmlToMarkdown.js');
-    const { fetchHtmlWithFallback } = await import('@/lib/openai/generateCv.js');
+    const { fetchHtmlWithFallback } = await import('@/lib/openai/extraction');
 
     // Step 1: Fetch HTML
     console.log('[test-extract-job] Step 1: Fetching HTML...');

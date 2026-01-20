@@ -151,7 +151,7 @@ app/
 | Fichier | Purpose |
 |---------|---------|
 | `client.js` | Client OpenAI avec cache déduplication |
-| `generateCv.js` | Génération CV depuis offre emploi |
+| `extraction/` | Extraction offres d'emploi (URL/PDF) |
 | `improveCv.js` | Amélioration CV existant |
 | `translateCv.js` | Traduction multi-langue |
 | `importPdf.js` | Extraction CV depuis PDF |
@@ -175,12 +175,12 @@ app/
 
 ```javascript
 // Pattern: Queue FIFO avec max 3 concurrent
-enqueueJob(() => generateCvJob(taskId, userId, payload));
+enqueueJob(() => startSingleOfferGeneration(taskId, offerId));
 ```
 
 | Job | Durée typique |
 |-----|---------------|
-| `generateCvJob` | 30-60s |
+| `startSingleOfferGeneration` | 30-60s |
 | `importPdfJob` | 10-30s |
 | `translateCvJob` | 20-40s |
 | `improveCvJob` | 20-40s |
