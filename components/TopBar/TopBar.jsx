@@ -253,7 +253,7 @@ export default function TopBar() {
     let totalProgress = 0;
 
     activeTasks.forEach(task => {
-      if (task.type === 'cv_generation_v2') {
+      if (task.type === 'cv_generation') {
         // Use SSE progress data for pipeline tasks
         const sseProgress = getProgress(task.id);
         if (sseProgress?.offers) {

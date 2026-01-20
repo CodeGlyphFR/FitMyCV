@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 
 /**
- * Liste des étapes du pipeline CV Generation V2 dans l'ordre
+ * Liste des étapes du pipeline CV Generation dans l'ordre
  */
 const PIPELINE_STEPS = ['extraction', 'classify', 'experiences', 'projects', 'extras', 'skills', 'summary', 'recompose'];
 
@@ -23,7 +23,7 @@ const STEP_WEIGHTS = {
 };
 
 /**
- * Liste des étapes du pipeline CV Improvement V2 dans l'ordre
+ * Liste des étapes du pipeline CV Improvement dans l'ordre
  */
 const IMPROVEMENT_STEPS = ['preprocess', 'classify_skills', 'experiences', 'projects', 'summary', 'finalize'];
 
@@ -69,15 +69,15 @@ function calculateOfferProgress(offerProgress) {
 }
 
 /**
- * Hook pour suivre la progression du pipeline CV v2 via SSE
+ * Hook pour suivre la progression du pipeline CV via SSE
  *
  * Structure de progression par offre pour une granularité fine.
  *
  * Écoute les événements SSE:
- * - cv_generation_v2:offer_progress - Progression par étape
- * - cv_generation_v2:offer_completed - Offre terminée
- * - cv_generation_v2:offer_failed - Offre échouée
- * - cv_generation_v2:completed - Tâche terminée
+ * - cv_generation:offer_progress - Progression par étape
+ * - cv_generation:offer_completed - Offre terminée
+ * - cv_generation:offer_failed - Offre échouée
+ * - cv_generation:completed - Tâche terminée
  *
  * @returns {Object} { getProgress, getOfferProgress, calculateProgress, allProgress }
  */
@@ -187,7 +187,7 @@ export function usePipelineProgress() {
       };
 
       // Événement de progression
-      eventSource.addEventListener('cv_generation_v2:offer_progress', (event) => {
+      eventSource.addEventListener('cv_generation:offer_progress', (event) => {
         try {
           const data = JSON.parse(event.data);
           const {
@@ -229,7 +229,7 @@ export function usePipelineProgress() {
       });
 
       // Événement offre terminée
-      eventSource.addEventListener('cv_generation_v2:offer_completed', (event) => {
+      eventSource.addEventListener('cv_generation:offer_completed', (event) => {
         try {
           const data = JSON.parse(event.data);
           const { taskId, offerId, offerIndex, generatedCvFileId, generatedCvFileName } = data;
@@ -274,7 +274,7 @@ export function usePipelineProgress() {
       });
 
       // Événement offre échouée ou annulée
-      eventSource.addEventListener('cv_generation_v2:offer_failed', (event) => {
+      eventSource.addEventListener('cv_generation:offer_failed', (event) => {
         try {
           const data = JSON.parse(event.data);
           const { taskId, offerId, offerIndex, error, creditsRefunded } = data;
@@ -312,7 +312,7 @@ export function usePipelineProgress() {
       });
 
       // Événement tâche terminée
-      eventSource.addEventListener('cv_generation_v2:completed', (event) => {
+      eventSource.addEventListener('cv_generation:completed', (event) => {
         try {
           const data = JSON.parse(event.data);
           const { taskId, totalGenerated, totalFailed, creditsRefunded } = data;
@@ -325,7 +325,7 @@ export function usePipelineProgress() {
           });
 
           if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('cv_generation_v2:task_completed', { detail: { taskId } }));
+            window.dispatchEvent(new CustomEvent('cv_generation:task_completed', { detail: { taskId } }));
             window.dispatchEvent(new Event('cv:list:changed'));
           }
         } catch (err) {
@@ -333,7 +333,7 @@ export function usePipelineProgress() {
         }
       });
 
-      // Événements CV Improvement V2
+      // Événements CV Improvement
       eventSource.addEventListener('cv_improvement:progress', (event) => {
         try {
           const data = JSON.parse(event.data);
@@ -491,7 +491,7 @@ export function usePipelineProgress() {
 }
 
 /**
- * Hook pour écouter la progression d'une tâche spécifique du pipeline CV v2
+ * Hook pour écouter la progression d'une tâche spécifique du pipeline CV
  *
  * @param {string} taskId - ID de la tâche à suivre
  * @returns {Object|null} Progression de la tâche

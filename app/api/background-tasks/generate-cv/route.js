@@ -128,7 +128,7 @@ export async function POST(request) {
       try {
         parsedLinks = JSON.parse(rawLinks);
       } catch {
-        return apiError('errors.api.generateV2.invalidLinksFormat', { status: 400 });
+        return apiError('errors.api.generate.invalidLinksFormat', { status: 400 });
       }
     }
 
@@ -137,7 +137,7 @@ export async function POST(request) {
     // Valider le format des URLs
     const invalidUrls = links.filter(url => !isValidUrl(url));
     if (invalidUrls.length > 0) {
-      return apiError('errors.api.generateV2.invalidUrlFormat', {
+      return apiError('errors.api.generate.invalidUrlFormat', {
         status: 400,
         params: { urls: invalidUrls },
       });
@@ -152,7 +152,7 @@ export async function POST(request) {
 
     // Vérifier qu'il y a au moins une source (URL ou fichier)
     if (!links.length && !savedFiles.length) {
-      return apiError('errors.api.generateV2.noLinksProvided', { status: 400 });
+      return apiError('errors.api.generate.noLinksProvided', { status: 400 });
     }
 
     // 3. Valider le CV de base

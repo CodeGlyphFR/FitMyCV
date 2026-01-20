@@ -176,7 +176,7 @@ function ImprovementProgressIndicator({ task }) {
 }
 
 /**
- * Indicateur de progression pour les tâches cv_generation_v2
+ * Indicateur de progression pour les tâches cv_generation
  * Affiche les barres de progression par offre
  */
 function PipelineProgressIndicator({ task }) {
@@ -224,9 +224,9 @@ function TaskItem({ task, onCancel, onTaskClick }) {
     minute: '2-digit'
   });
 
-  // Pour cv_generation_v2, utiliser le statut SSE s'il est disponible (plus à jour que le polling)
+  // Pour cv_generation, utiliser le statut SSE s'il est disponible (plus à jour que le polling)
   let effectiveStatus = task.status;
-  if (task.type === 'cv_generation_v2') {
+  if (task.type === 'cv_generation') {
     const sseProgress = getProgress(task.id);
     if (sseProgress?.status && sseProgress.status !== 'running') {
       effectiveStatus = sseProgress.status;
@@ -291,7 +291,7 @@ function TaskItem({ task, onCancel, onTaskClick }) {
   } else if (task.type === 'template-creation') {
     // Utiliser task.title qui contient le titre de l'offre ou le lien
     description = task.title || t("taskQueue.messages.templateCreationInProgress");
-  } else if (task.type === 'cv_generation_v2') {
+  } else if (task.type === 'cv_generation') {
     const totalOffers = payload?.totalOffers || 1;
     const offerLabel = totalOffers > 1 ? ` (${totalOffers} ${t("taskQueue.messages.offers") || 'offres'})` : '';
     if (task.status === 'running') {
@@ -316,11 +316,11 @@ function TaskItem({ task, onCancel, onTaskClick }) {
     if (task.cvFile) {
       cvFileName = task.cvFile;
     }
-    // Sinon vérifier le result (pour generation, import, template-creation, cv_generation_v2)
+    // Sinon vérifier le result (pour generation, import, template-creation, cv_generation)
     else if (task.result && task.status === 'completed') {
       // task.result est déjà un objet (parsé par l'API)
       const result = typeof task.result === 'string' ? JSON.parse(task.result) : task.result;
-      // cv_generation_v2 utilise 'filename', les autres utilisent 'file' ou 'files'
+      // cv_generation utilise 'filename', les autres utilisent 'file' ou 'files'
       cvFileName = result.filename || result.file || (result.files && result.files.length > 0 ? result.files[0] : null);
     }
   } catch (err) {
@@ -345,8 +345,8 @@ function TaskItem({ task, onCancel, onTaskClick }) {
     }
   };
 
-  // Layout spécial pour cv_generation_v2 : PipelineProgressIndicator prend toute la largeur
-  if (task.type === 'cv_generation_v2') {
+  // Layout spécial pour cv_generation : PipelineProgressIndicator prend toute la largeur
+  if (task.type === 'cv_generation') {
     return (
       <div
         className={`p-3 border border-white/20 rounded-lg bg-white/5 ${isClickable ? 'cursor-pointer hover:bg-white/10 transition-all duration-200' : ''}`}
