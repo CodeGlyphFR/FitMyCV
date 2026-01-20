@@ -18,7 +18,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/session";
 import { ensureUserCvDir, listUserCvFiles, readUserCvFileWithMeta } from "@/lib/cv/storage";
 import { getCvVersionContent } from "@/lib/cv/versioning";
-import { getSectionOrder, getSectionTitles } from "@/lib/openai/cvConstants";
+import { getSectionOrder, getSectionTitles } from "@/lib/cv/constants";
 
 export const metadata = {
   title: "Mes CVs - FitMyCV.io",

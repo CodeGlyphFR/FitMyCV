@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import Section from "./Section";
-import { ym } from "@/lib/utils";
+import { ym } from "@/lib/utils/textFormatting";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
