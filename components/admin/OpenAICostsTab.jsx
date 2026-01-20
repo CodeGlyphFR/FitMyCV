@@ -123,9 +123,9 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
   const groupedChartData = useMemo(() => {
     if (!data?.byFeature) return [];
 
-    // Regrouper les features cv_pipeline_v2_* en une seule "Génération de CV"
-    const pipelineFeatures = data.byFeature.filter(f => f.feature.startsWith('cv_pipeline_v2_'));
-    const otherFeatures = data.byFeature.filter(f => !f.feature.startsWith('cv_pipeline_v2_'));
+    // Regrouper les features cv_adaptation_* en une seule "Génération de CV"
+    const pipelineFeatures = data.byFeature.filter(f => f.feature.startsWith('cv_adaptation_'));
+    const otherFeatures = data.byFeature.filter(f => !f.feature.startsWith('cv_adaptation_'));
 
     const chartData = [];
 
@@ -183,8 +183,8 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
   const groupedFeatureData = useMemo(() => {
     if (!data?.byFeature) return [];
 
-    // Filtrer les features cv_pipeline_v2_* (on les remplace par cvGenerationTotals)
-    const otherFeatures = data.byFeature.filter(f => !f.feature.startsWith('cv_pipeline_v2_'));
+    // Filtrer les features cv_adaptation_* (on les remplace par cvGenerationTotals)
+    const otherFeatures = data.byFeature.filter(f => !f.feature.startsWith('cv_adaptation_'));
 
     const result = [];
 
@@ -221,13 +221,13 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
     return result.sort((a, b) => (b.cost || 0) - (a.cost || 0));
   }, [data?.byFeature, cvGenerationTotals]);
 
-  // Calculer le cout total corrige (exclut cv_pipeline_v2_* de OpenAIUsage, utilise cvGenerationTotals)
+  // Calculer le cout total corrige (exclut cv_adaptation_* de OpenAIUsage, utilise cvGenerationTotals)
   const correctedTotalCost = useMemo(() => {
     if (!data?.byFeature) return 0;
 
     // Cout des features non-pipeline depuis OpenAIUsage
     const otherFeaturesCost = data.byFeature
-      .filter(f => !f.feature.startsWith('cv_pipeline_v2_'))
+      .filter(f => !f.feature.startsWith('cv_adaptation_'))
       .reduce((sum, f) => sum + (f.cost || 0), 0);
 
     // Ajouter le cout CV depuis cvGenerationTotals (source de verite)
@@ -241,7 +241,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
     if (!data?.byFeature) return 0;
 
     const otherFeaturesCalls = data.byFeature
-      .filter(f => !f.feature.startsWith('cv_pipeline_v2_'))
+      .filter(f => !f.feature.startsWith('cv_adaptation_'))
       .reduce((sum, f) => sum + (f.calls || 0), 0);
 
     const cvCalls = cvGenerationTotals?.totalCalls || 0;
