@@ -1,5 +1,5 @@
 /**
- * POST /api/background-tasks/generate-cv-v2
+ * POST /api/background-tasks/generate-cv
  *
  * Version 2 de la génération de CV utilisant le nouveau pipeline.
  * Accepte des URLs d'offres d'emploi ET des fichiers PDF.
@@ -61,7 +61,7 @@ async function saveUploadedFiles(files) {
     return { directory: null, saved: [], errors: [] };
   }
 
-  const uploadDir = await fs.mkdtemp(path.join(os.tmpdir(), 'cv-gen-v2-uploads-'));
+  const uploadDir = await fs.mkdtemp(path.join(os.tmpdir(), 'cv-gen-uploads-'));
   const saved = [];
   const errors = [];
 
@@ -72,7 +72,7 @@ async function saveUploadedFiles(files) {
     });
 
     if (!validation.valid) {
-      console.warn(`[generate-cv-v2] Validation échouée pour ${file.name}: ${validation.error}`);
+      console.warn(`[generate-cv] Validation échouée pour ${file.name}: ${validation.error}`);
       errors.push({ file: file.name, error: validation.error });
       continue;
     }
@@ -113,7 +113,7 @@ export async function POST(request) {
     // Vérification reCAPTCHA
     if (recaptchaToken) {
       const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
-        callerName: 'generate-cv-v2',
+        callerName: 'generate-cv',
         scoreThreshold: 0.5,
       });
 
@@ -147,7 +147,7 @@ export async function POST(request) {
     const { saved: savedFiles, errors: uploadErrors } = await saveUploadedFiles(files);
 
     if (uploadErrors.length > 0) {
-      console.warn(`[generate-cv-v2] ${uploadErrors.length} fichier(s) rejeté(s):`, uploadErrors);
+      console.warn(`[generate-cv] ${uploadErrors.length} fichier(s) rejeté(s):`, uploadErrors);
     }
 
     // Vérifier qu'il y a au moins une source (URL ou fichier)
@@ -237,7 +237,7 @@ export async function POST(request) {
         data: {
           id: task.id,
           userId,
-          type: 'cv_generation_v2',
+          type: 'cv_generation',
           title,
           status: 'queued',
           createdAt: BigInt(Date.now() + taskIndex),
@@ -258,7 +258,7 @@ export async function POST(request) {
       enqueueJob(() => startSingleOfferGeneration(task.id, offer.id));
 
       createdTasks.push({ taskId: task.id, offerId: offer.id, url });
-      console.log(`[generate-cv-v2] Task ${task.id} created for URL: ${url}`);
+      console.log(`[generate-cv] Task ${task.id} created for URL: ${url}`);
       taskIndex++;
     }
 
@@ -299,7 +299,7 @@ export async function POST(request) {
         data: {
           id: task.id,
           userId,
-          type: 'cv_generation_v2',
+          type: 'cv_generation',
           title,
           status: 'queued',
           createdAt: BigInt(Date.now() + taskIndex),
@@ -321,11 +321,11 @@ export async function POST(request) {
       enqueueJob(() => startSingleOfferGeneration(task.id, offer.id));
 
       createdTasks.push({ taskId: task.id, offerId: offer.id, pdfName: pdfFile.name });
-      console.log(`[generate-cv-v2] Task ${task.id} created for PDF: ${pdfFile.name}`);
+      console.log(`[generate-cv] Task ${task.id} created for PDF: ${pdfFile.name}`);
       taskIndex++;
     }
 
-    console.log(`[generate-cv-v2] ${createdTasks.length} task(s) created for user ${userId}`);
+    console.log(`[generate-cv] ${createdTasks.length} task(s) created for user ${userId}`);
 
     // 6. Retourner le succès immédiatement
     return NextResponse.json({
@@ -336,7 +336,7 @@ export async function POST(request) {
     }, { status: 202 });
 
   } catch (error) {
-    console.error('[generate-cv-v2] Error:', error);
+    console.error('[generate-cv] Error:', error);
     return apiError('errors.api.common.serverError', { status: 500 });
   }
 }

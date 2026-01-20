@@ -252,7 +252,7 @@ await writeUserCvFile(userId, filename, cvData);
 
 ```javascript
 import { enqueueJob } from '@/lib/backgroundTasks/jobQueue';
-import { startSingleOfferGeneration } from '@/lib/cv-pipeline-v2';
+import { startSingleOfferGeneration } from '@/lib/cv-generation-v2';
 
 // Créer la tâche en DB (CvGenerationTask + CvGenerationOffer + BackgroundTask)
 const task = await prisma.cvGenerationTask.create({

@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma';
 export const dynamic = 'force-dynamic';
 
 /**
- * Feature names for CV improvement v2 pipeline
+ * Feature names for CV improvement pipeline
  */
 const CV_IMPROVEMENT_FEATURES = [
   'optimize_cv', // Legacy single call

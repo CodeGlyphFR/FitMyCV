@@ -25,6 +25,8 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
   const [balanceLoading, setBalanceLoading] = useState(true);
   const [lastGenerationCost, setLastGenerationCost] = useState(null); // Cout reel de la derniere generation CV
   const [cvGenerationTotals, setCvGenerationTotals] = useState(null); // Totaux des couts de generation CV sur la periode
+  const [lastImprovementCost, setLastImprovementCost] = useState(null); // Cout reel de la derniere amelioration CV
+  const [cvImprovementTotals, setCvImprovementTotals] = useState(null); // Totaux des couts d'amelioration CV sur la periode
   const pricingScrollRef = useRef(null);
   const alertsScrollRef = useRef(null);
 
@@ -56,6 +58,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
     fetchBalance(); // Fetch OpenAI account balance
     fetchAlerts(); // Fetch alerts on mount
     fetchLastGenerationCost(); // Fetch real cost of last CV generation
+    fetchLastImprovementCost(); // Fetch real cost of last CV improvement
   }, [period, userId, refreshKey]);
 
   useEffect(() => {
@@ -123,36 +126,70 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
   const groupedChartData = useMemo(() => {
     if (!data?.byFeature) return [];
 
-    // Regrouper les features cv_adaptation_* en une seule "Génération de CV"
-    const pipelineFeatures = data.byFeature.filter(f => f.feature.startsWith('cv_adaptation_'));
-    const otherFeatures = data.byFeature.filter(f => !f.feature.startsWith('cv_adaptation_'));
+    // Regrouper les features cv_adaptation_* et cv_improvement_*
+    // Note: on inclut aussi 'cv_improvement' et 'optimize_cv' dans le groupe improvement
+    const adaptationFeatures = data.byFeature.filter(f => f.feature.startsWith('cv_adaptation_'));
+    const improvementFeatures = data.byFeature.filter(f =>
+      f.feature.startsWith('cv_improvement_') ||
+      f.feature === 'cv_improvement' ||
+      f.feature === 'optimize_cv'
+    );
+    const otherFeatures = data.byFeature.filter(f =>
+      !f.feature.startsWith('cv_adaptation_') &&
+      !f.feature.startsWith('cv_improvement_') &&
+      f.feature !== 'cv_improvement' &&
+      f.feature !== 'optimize_cv'
+    );
 
     const chartData = [];
 
     // Ajouter "Génération de CV" si des features du pipeline existent
     // Utiliser lastGenerationCost (API cv-generation-costs) pour les vraies donnees de la derniere generation
-    if (pipelineFeatures.length > 0) {
-      // Utiliser les donnees reelles de la derniere generation si disponibles
-      // Sinon, fallback sur les donnees agregees (moins precises)
+    if (adaptationFeatures.length > 0) {
       const useRealData = lastGenerationCost !== null;
 
       chartData.push({
         name: 'Génération de CV',
-        lastCost: useRealData ? lastGenerationCost.cost : pipelineFeatures.reduce((sum, f) => sum + (f.lastCost || 0), 0),
+        lastCost: useRealData ? lastGenerationCost.cost : adaptationFeatures.reduce((sum, f) => sum + (f.lastCost || 0), 0),
         lastModel: 'Multiple',
-        lastPromptTokens: useRealData ? lastGenerationCost.promptTokens : pipelineFeatures.reduce((sum, f) => sum + (f.lastPromptTokens || 0), 0),
-        lastCachedTokens: useRealData ? lastGenerationCost.cachedTokens : pipelineFeatures.reduce((sum, f) => sum + (f.lastCachedTokens || 0), 0),
-        lastCompletionTokens: useRealData ? lastGenerationCost.completionTokens : pipelineFeatures.reduce((sum, f) => sum + (f.lastCompletionTokens || 0), 0),
-        lastTokens: useRealData ? lastGenerationCost.totalTokens : pipelineFeatures.reduce((sum, f) => sum + (f.lastTokens || 0), 0),
-        lastCallDate: useRealData ? lastGenerationCost.createdAt : pipelineFeatures.reduce((latest, f) => {
+        lastPromptTokens: useRealData ? lastGenerationCost.promptTokens : adaptationFeatures.reduce((sum, f) => sum + (f.lastPromptTokens || 0), 0),
+        lastCachedTokens: useRealData ? lastGenerationCost.cachedTokens : adaptationFeatures.reduce((sum, f) => sum + (f.lastCachedTokens || 0), 0),
+        lastCompletionTokens: useRealData ? lastGenerationCost.completionTokens : adaptationFeatures.reduce((sum, f) => sum + (f.lastCompletionTokens || 0), 0),
+        lastTokens: useRealData ? lastGenerationCost.totalTokens : adaptationFeatures.reduce((sum, f) => sum + (f.lastTokens || 0), 0),
+        lastCallDate: useRealData ? lastGenerationCost.createdAt : adaptationFeatures.reduce((latest, f) => {
           if (!f.lastCallDate) return latest;
           if (!latest) return f.lastCallDate;
           return new Date(f.lastCallDate) > new Date(latest) ? f.lastCallDate : latest;
         }, null),
-        lastDuration: useRealData ? lastGenerationCost.durationMs : pipelineFeatures.reduce((sum, f) => sum + (f.lastDuration || 0), 0),
+        lastDuration: useRealData ? lastGenerationCost.durationMs : adaptationFeatures.reduce((sum, f) => sum + (f.lastDuration || 0), 0),
         fill: '#10B981', // Vert emeraude
         isGrouped: true,
-        subtaskCount: useRealData ? lastGenerationCost.subtaskCount : pipelineFeatures.length,
+        subtaskCount: useRealData ? lastGenerationCost.subtaskCount : adaptationFeatures.length,
+      });
+    }
+
+    // Ajouter "Amélioration de CV" si des features d'improvement existent
+    // Utiliser lastImprovementCost (API cv-improvement-costs) pour les vraies donnees de la derniere amelioration
+    if (improvementFeatures.length > 0) {
+      const useRealData = lastImprovementCost !== null;
+
+      chartData.push({
+        name: 'Amélioration de CV',
+        lastCost: useRealData ? lastImprovementCost.cost : improvementFeatures.reduce((sum, f) => sum + (f.lastCost || 0), 0),
+        lastModel: 'Multiple',
+        lastPromptTokens: useRealData ? lastImprovementCost.promptTokens : improvementFeatures.reduce((sum, f) => sum + (f.lastPromptTokens || 0), 0),
+        lastCachedTokens: useRealData ? lastImprovementCost.cachedTokens : improvementFeatures.reduce((sum, f) => sum + (f.lastCachedTokens || 0), 0),
+        lastCompletionTokens: useRealData ? lastImprovementCost.completionTokens : improvementFeatures.reduce((sum, f) => sum + (f.lastCompletionTokens || 0), 0),
+        lastTokens: useRealData ? lastImprovementCost.totalTokens : improvementFeatures.reduce((sum, f) => sum + (f.lastTokens || 0), 0),
+        lastCallDate: useRealData ? lastImprovementCost.createdAt : improvementFeatures.reduce((latest, f) => {
+          if (!f.lastCallDate) return latest;
+          if (!latest) return f.lastCallDate;
+          return new Date(f.lastCallDate) > new Date(latest) ? f.lastCallDate : latest;
+        }, null),
+        lastDuration: useRealData ? lastImprovementCost.durationMs : improvementFeatures.reduce((sum, f) => sum + (f.lastDuration || 0), 0),
+        fill: '#06B6D4', // Cyan
+        isGrouped: true,
+        subtaskCount: useRealData ? lastImprovementCost.subtaskCount : improvementFeatures.length,
       });
     }
 
@@ -176,15 +213,21 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
 
     // Trier par coût décroissant
     return chartData.sort((a, b) => (b.lastCost || 0) - (a.lastCost || 0));
-  }, [data?.byFeature, lastGenerationCost]);
+  }, [data?.byFeature, lastGenerationCost, lastImprovementCost]);
 
   // Données groupées pour le tableau "Répartition par feature" et le pie chart
-  // Utilise cvGenerationTotals (API cv-generation-costs) comme source de verite pour les couts CV
+  // Utilise cvGenerationTotals et cvImprovementTotals comme sources de verite
   const groupedFeatureData = useMemo(() => {
     if (!data?.byFeature) return [];
 
-    // Filtrer les features cv_adaptation_* (on les remplace par cvGenerationTotals)
-    const otherFeatures = data.byFeature.filter(f => !f.feature.startsWith('cv_adaptation_'));
+    // Filtrer les features cv_adaptation_* et cv_improvement_* (on les remplace par les totaux)
+    // Note: on exclut aussi 'cv_improvement' et 'optimize_cv' car ils sont inclus dans le groupe improvement
+    const otherFeatures = data.byFeature.filter(f =>
+      !f.feature.startsWith('cv_adaptation_') &&
+      !f.feature.startsWith('cv_improvement_') &&
+      f.feature !== 'cv_improvement' &&
+      f.feature !== 'optimize_cv'
+    );
 
     const result = [];
 
@@ -198,6 +241,19 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
         tokens: cvGenerationTotals.totalTokens,
         cost: cvGenerationTotals.totalCost,
         color: '#10B981', // Vert emeraude
+        isGrouped: true,
+      });
+    }
+
+    // Ajouter "Amélioration de CV" si on a des donnees de l'API cv-improvement-costs
+    if (cvImprovementTotals && cvImprovementTotals.totalCost > 0) {
+      result.push({
+        feature: 'cv_improvement_grouped',
+        name: 'Amélioration de CV',
+        calls: cvImprovementTotals.sessionCount, // Nombre de sessions, pas de subtasks
+        tokens: cvImprovementTotals.totalTokens,
+        cost: cvImprovementTotals.totalCost,
+        color: '#06B6D4', // Cyan
         isGrouped: true,
       });
     }
@@ -219,35 +275,49 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
 
     // Trier par coût décroissant
     return result.sort((a, b) => (b.cost || 0) - (a.cost || 0));
-  }, [data?.byFeature, cvGenerationTotals]);
+  }, [data?.byFeature, cvGenerationTotals, cvImprovementTotals]);
 
-  // Calculer le cout total corrige (exclut cv_adaptation_* de OpenAIUsage, utilise cvGenerationTotals)
+  // Calculer le cout total corrige (exclut cv_adaptation_* et cv_improvement_* de OpenAIUsage)
   const correctedTotalCost = useMemo(() => {
     if (!data?.byFeature) return 0;
 
     // Cout des features non-pipeline depuis OpenAIUsage
+    // Note: on exclut aussi 'cv_improvement' et 'optimize_cv' car ils sont inclus dans le groupe improvement
     const otherFeaturesCost = data.byFeature
-      .filter(f => !f.feature.startsWith('cv_adaptation_'))
+      .filter(f =>
+        !f.feature.startsWith('cv_adaptation_') &&
+        !f.feature.startsWith('cv_improvement_') &&
+        f.feature !== 'cv_improvement' &&
+        f.feature !== 'optimize_cv'
+      )
       .reduce((sum, f) => sum + (f.cost || 0), 0);
 
-    // Ajouter le cout CV depuis cvGenerationTotals (source de verite)
-    const cvCost = cvGenerationTotals?.totalCost || 0;
+    // Ajouter les couts depuis les APIs (sources de verite)
+    const cvGenerationCost = cvGenerationTotals?.totalCost || 0;
+    const cvImprovementCost = cvImprovementTotals?.totalCost || 0;
 
-    return otherFeaturesCost + cvCost;
-  }, [data?.byFeature, cvGenerationTotals]);
+    return otherFeaturesCost + cvGenerationCost + cvImprovementCost;
+  }, [data?.byFeature, cvGenerationTotals, cvImprovementTotals]);
 
   // Calculer le nombre total d'appels corrige
   const correctedTotalCalls = useMemo(() => {
     if (!data?.byFeature) return 0;
 
+    // Note: on exclut aussi 'cv_improvement' et 'optimize_cv' car ils sont inclus dans le groupe improvement
     const otherFeaturesCalls = data.byFeature
-      .filter(f => !f.feature.startsWith('cv_adaptation_'))
+      .filter(f =>
+        !f.feature.startsWith('cv_adaptation_') &&
+        !f.feature.startsWith('cv_improvement_') &&
+        f.feature !== 'cv_improvement' &&
+        f.feature !== 'optimize_cv'
+      )
       .reduce((sum, f) => sum + (f.calls || 0), 0);
 
-    const cvCalls = cvGenerationTotals?.totalCalls || 0;
+    const cvGenerationCalls = cvGenerationTotals?.totalCalls || 0;
+    const cvImprovementCalls = cvImprovementTotals?.totalCalls || 0;
 
-    return otherFeaturesCalls + cvCalls;
-  }, [data?.byFeature, cvGenerationTotals]);
+    return otherFeaturesCalls + cvGenerationCalls + cvImprovementCalls;
+  }, [data?.byFeature, cvGenerationTotals, cvImprovementTotals]);
 
   // Stabiliser la top feature pour éviter les scintillements lors des refreshes
   // Utilise groupedFeatureData pour prendre en compte le regroupement "Génération de CV"
@@ -403,6 +473,53 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
       console.error('Error fetching last generation cost:', err);
       setLastGenerationCost(null);
       setCvGenerationTotals(null);
+    }
+  };
+
+  const fetchLastImprovementCost = async () => {
+    try {
+      // Recuperer toutes les ameliorations de la periode pour avoir les totaux corrects
+      const url = new URL('/api/analytics/cv-improvement-costs', window.location.origin);
+      url.searchParams.set('period', period);
+      url.searchParams.set('limit', '100'); // Suffisant pour couvrir la periode
+
+      const response = await fetch(url.toString());
+      if (!response.ok) throw new Error('Failed to fetch last improvement cost');
+
+      const result = await response.json();
+
+      // Stocker les totaux de la periode (pour la repartition par feature)
+      if (result.totals) {
+        setCvImprovementTotals({
+          totalCost: result.totals.totalCost,
+          totalCalls: result.totals.totalCalls,
+          totalTokens: result.totals.totalPromptTokens + result.totals.totalCompletionTokens,
+          sessionCount: result.totals.sessionCount,
+        });
+      } else {
+        setCvImprovementTotals(null);
+      }
+
+      // Si on a au moins une session, stocker les donnees de la derniere (pour le graphique des derniers couts)
+      if (result.sessions && result.sessions.length > 0) {
+        const lastSession = result.sessions[0];
+        setLastImprovementCost({
+          cost: lastSession.totals.estimatedCost,
+          promptTokens: lastSession.totals.promptTokens,
+          cachedTokens: lastSession.totals.cachedTokens,
+          completionTokens: lastSession.totals.completionTokens,
+          totalTokens: lastSession.totals.totalTokens,
+          durationMs: lastSession.totals.durationMs,
+          createdAt: lastSession.startedAt,
+          subtaskCount: lastSession.totals.callCount,
+        });
+      } else {
+        setLastImprovementCost(null);
+      }
+    } catch (err) {
+      console.error('Error fetching last improvement cost:', err);
+      setLastImprovementCost(null);
+      setCvImprovementTotals(null);
     }
   };
 
@@ -683,7 +800,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
       {/* Last Cost Comparison Chart */}
       <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Comparaison des derniers coûts par feature</h3>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={Math.max(300, groupedChartData.length * 40)}>
           <BarChart
             data={groupedChartData}
             layout="vertical"
@@ -702,6 +819,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
               width={150}
               stroke="rgba(255,255,255,0.6)"
               tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 12 }}
+              interval={0}
             />
             <Tooltip
               content={({ active, payload }) => {
