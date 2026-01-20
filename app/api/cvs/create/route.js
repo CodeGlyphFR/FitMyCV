@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/session";
-import { ensureUserCvDir, listUserCvFiles, writeUserCvFile } from "@/lib/cv/storage";
+import { ensureUserCvDir, listUserCvFiles, writeUserCvFile } from "@/lib/cv-core/storage";
 import { trackCvCreation } from "@/lib/telemetry/server";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";

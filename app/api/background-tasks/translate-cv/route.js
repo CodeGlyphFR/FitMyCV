@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
-import { scheduleTranslateCvJob } from "@/lib/backgroundTasks/translateCvJob";
+import { scheduleTranslateCvJob } from "@/lib/translation/job";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
 import { CommonErrors, AuthErrors, BackgroundErrors } from "@/lib/api/apiErrors";

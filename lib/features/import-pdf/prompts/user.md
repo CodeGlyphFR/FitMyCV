@@ -1,0 +1,1 @@
+Return ONLY the extracted CV content following the schema above.

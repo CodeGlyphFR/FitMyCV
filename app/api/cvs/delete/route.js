@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
-import { listUserCvFiles, deleteUserCvFile, cvFileExists } from '@/lib/cv/storage';
+import { listUserCvFiles, deleteUserCvFile, cvFileExists } from '@/lib/cv-core/storage';
 import { trackEvent, EventTypes } from '@/lib/telemetry/server';
 import { CommonErrors, CvErrors } from '@/lib/api/apiErrors';
 

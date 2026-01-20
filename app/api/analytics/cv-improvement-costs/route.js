@@ -9,10 +9,14 @@ export const dynamic = 'force-dynamic';
  */
 const CV_IMPROVEMENT_FEATURES = [
   'optimize_cv', // Legacy single call
-  'cv_improvement_v2_experience',
-  'cv_improvement_v2_project',
-  'cv_improvement_v2_summary',
-  'cv_improvement_v2_classify_skills',
+  'classify_skills', // Stage 1 - Classification des compétences
+  'cv_improvement_v2_classify_skills', // Alias classification
+  'cv_improvement_v2_preprocess', // Stage 2 - Préparation
+  'cv_improvement_v2_experience', // Stage 3 - Expériences
+  'cv_improvement_v2_project', // Stage 3 - Projets
+  'cv_improvement_v2_extras', // Stage 3 - Extras
+  'cv_improvement_v2_languages', // Stage 3 - Langues
+  'cv_improvement_v2_summary', // Stage 4 - Résumé
 ];
 
 /**
@@ -152,9 +156,13 @@ export async function GET(request) {
 
       // Sort features in pipeline order
       const featureOrder = [
+        'classify_skills',
         'cv_improvement_v2_classify_skills',
+        'cv_improvement_v2_preprocess',
         'cv_improvement_v2_experience',
         'cv_improvement_v2_project',
+        'cv_improvement_v2_extras',
+        'cv_improvement_v2_languages',
         'cv_improvement_v2_summary',
         'optimize_cv',
       ];

@@ -72,9 +72,13 @@ export function CvImprovementCostsSection({ period, refreshKey }) {
   const getFeatureLabel = (feature) => {
     const labels = {
       'optimize_cv': 'Legacy (v1)',
+      'classify_skills': 'Classification',
       'cv_improvement_v2_classify_skills': 'Classification',
+      'cv_improvement_v2_preprocess': 'Préparation',
       'cv_improvement_v2_experience': 'Expériences',
       'cv_improvement_v2_project': 'Projets',
+      'cv_improvement_v2_extras': 'Extras',
+      'cv_improvement_v2_languages': 'Langues',
       'cv_improvement_v2_summary': 'Résumé',
     };
     return labels[feature] || feature;

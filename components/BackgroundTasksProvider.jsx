@@ -4,7 +4,7 @@ import React, { createContext, useContext, useMemo, useState, useCallback, useRe
 import { useSession } from "next-auth/react";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
 import { useTaskSyncAPI } from "@/hooks/useTaskSyncAPI";
-import { emitTaskAddedEvent } from "@/lib/backgroundTasks/taskTypes";
+import { emitTaskAddedEvent } from "@/lib/background-jobs/taskTypes";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const BackgroundTasksContext = createContext(null);

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
-import { readUserCvFile } from "@/lib/cv/storage";
-import { calculateMatchScoreWithAnalysis } from "@/lib/openai/calculateMatchScoreWithAnalysis";
+import { readUserCvFile } from "@/lib/cv-core/storage";
+import { calculateMatchScoreWithAnalysis } from "@/lib/scoring/service";
 
 export async function POST(request) {
   const session = await auth();

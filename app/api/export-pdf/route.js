@@ -3,7 +3,7 @@ import puppeteer from "puppeteer";
 import { promises as fs } from "fs";
 import path from "path";
 import { auth } from "@/lib/auth/session";
-import { readUserCvFileWithMeta } from "@/lib/cv/storage";
+import { readUserCvFileWithMeta } from "@/lib/cv-core/storage";
 import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
 
 // French translations (split by category)

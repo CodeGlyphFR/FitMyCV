@@ -5,8 +5,8 @@ import os from "os";
 
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
-import { ensureUserCvDir } from "@/lib/cv/storage";
-import { scheduleCreateTemplateCvJob } from "@/lib/backgroundTasks/createTemplateCvJob";
+import { ensureUserCvDir } from "@/lib/cv-core/storage";
+import { scheduleCreateTemplateCvJob } from "@/lib/features/template-generation/job";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
 import { CommonErrors, AuthErrors, BackgroundErrors } from "@/lib/api/apiErrors";

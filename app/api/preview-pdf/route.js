@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/session";
-import { readUserCvFileWithMeta } from "@/lib/cv/storage";
+import { readUserCvFileWithMeta } from "@/lib/cv-core/storage";
 import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
 
 // French translations (split by category)

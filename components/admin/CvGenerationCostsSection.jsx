@@ -78,6 +78,7 @@ export function CvGenerationCostsSection({ period, refreshKey }) {
       'batch_skills': 'Compétences',
       'batch_summary': 'Résumé',
       'recompose': 'Recomposition',
+      'recompose_languages': 'Langues',
     };
     return labels[type] || type;
   };

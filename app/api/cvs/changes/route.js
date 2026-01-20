@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
-import { getReviewState, processReviewAction, processBatchReviewAction } from '@/lib/cv/changeTracking';
+import { getReviewState, processReviewAction, processBatchReviewAction } from '@/lib/cv-core/changeTracking';
 import { CommonErrors } from '@/lib/api/apiErrors';
 
 export const runtime = 'nodejs';

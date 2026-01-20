@@ -13,7 +13,7 @@ import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
 import ChangeHighlight from "./ChangeHighlight";
 import { parseApiError } from "@/lib/utils/errorHandler";
-import { SUPPORTED_LANGUAGES, LANGUAGE_FLAGS, LANGUAGE_LABELS, DEFAULT_LANGUAGE } from "@/lib/cv/languageConstants";
+import { SUPPORTED_LANGUAGES, LANGUAGE_FLAGS, LANGUAGE_LABELS, DEFAULT_LANGUAGE } from "@/lib/cv-core/language/languageConstants";
 import { toTitleCase } from "@/lib/utils/textFormatting";
 import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
 import { useHighlight } from "./HighlightProvider";

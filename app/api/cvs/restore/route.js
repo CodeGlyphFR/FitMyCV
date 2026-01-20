@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
-import { restoreCvVersion } from '@/lib/cv/versioning';
+import { restoreCvVersion } from '@/lib/cv-core/versioning';
 import { trackEvent, EventTypes } from '@/lib/telemetry/server';
 import { CommonErrors } from '@/lib/api/apiErrors';
 

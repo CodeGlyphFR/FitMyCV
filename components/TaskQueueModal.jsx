@@ -7,7 +7,7 @@ import PipelineTaskProgress from "./ui/PipelineTaskProgress";
 import GenericTaskProgressBar from "./ui/GenericTaskProgressBar";
 import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
 import { usePipelineProgressContext } from "@/components/PipelineProgressProvider";
-import { sortTasksForDisplay } from "@/lib/backgroundTasks/sortTasks";
+import { sortTasksForDisplay } from "@/lib/background-jobs/sortTasks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { emitOnboardingEvent, ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
 

@@ -8,7 +8,7 @@ import { getStepById } from '@/lib/onboarding/onboardingSteps';
 import { ONBOARDING_TIMINGS, STEP_TO_MODAL_KEY, ONBOARDING_API } from '@/lib/onboarding/onboardingConfig';
 import { isOnboardingStateLoaded } from '@/lib/onboarding/onboardingState';
 import { onboardingLogger } from '@/lib/utils/onboardingLogger';
-import { isAiGenerationTask, isMatchScoreTask, isImprovementTask } from '@/lib/backgroundTasks/taskTypes';
+import { isAiGenerationTask, isMatchScoreTask, isImprovementTask } from '@/lib/background-jobs/taskTypes';
 import { extractCvFilename } from '@/lib/onboarding/cvFilenameUtils';
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from '@/lib/onboarding/onboardingEvents';
 import OnboardingModal from './OnboardingModal';

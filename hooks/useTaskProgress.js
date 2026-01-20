@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { getDefaultDuration } from '@/lib/backgroundTasks/taskFeatureMapping';
+import { getDefaultDuration } from '@/lib/background-jobs/taskFeatureMapping';
 
 /**
  * Phases de progression avec durées et cibles
