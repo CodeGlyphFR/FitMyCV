@@ -64,12 +64,13 @@ await writeUserCvFile(userId, filename, modifiedData);
 ### Background Jobs
 ```javascript
 import { enqueueJob } from '@/lib/backgroundTasks/jobQueue';
+import { startSingleOfferGeneration } from '@/lib/cv-generation';
 
 // Max 3 concurrent, tracked in BackgroundTask model
-const task = await prisma.backgroundTask.create({
-  data: { id: crypto.randomUUID(), type: 'generate_cv', status: 'queued', ... }
+const task = await prisma.cvGenerationTask.create({
+  data: { userId, sourceCvFileId, mode: 'adapt', status: 'pending', totalOffers: 1 }
 });
-enqueueJob(() => generateCvJob(task.id, userId, payload));
+enqueueJob(() => startSingleOfferGeneration(task.id, offer.id));
 ```
 
 ### Feature Limits & Credits
@@ -103,7 +104,8 @@ await incrementFeatureCounter(userId, 'gpt_cv_generation');
 |---------|----------|
 | Auth | `lib/auth/options.js`, `lib/auth/session.js` |
 | CV | `lib/cv/storage.js`, `lib/cv/validation.js` |
-| OpenAI | `lib/openai/generateCv.js`, `lib/openai/improveCv.js` |
+| OpenAI | `lib/openai/extraction/`, `lib/openai/improveCv.js` |
+| CV Pipeline | `lib/cv-generation/orchestrator.js` |
 | Jobs | `lib/backgroundTasks/jobQueue.js` |
 | Subscription | `lib/subscription/featureUsage.js`, `lib/subscription/credits.js` |
 | Errors | `lib/api/apiErrors.js` |

@@ -5,11 +5,8 @@ import {
   BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { FEATURE_CONFIG } from '@/lib/analytics/featureConfig';
+import { FEATURE_CONFIG, getFeatureConfig } from '@/lib/analytics/featureConfig';
 import { KPICard } from './KPICard';
-
-// Extract colors for pie chart from shared config
-const PIE_COLORS = Object.values(FEATURE_CONFIG).map(f => f.colors.solid);
 
 export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
   const [features, setFeatures] = useState([]);
@@ -60,15 +57,18 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
 
   // Prepare chart data
   const barChartData = features
-    .map(f => ({
-      name: FEATURE_CONFIG[f.featureName]?.name || 'Feature non configurée',
-      fullName: f.featureName,
-      usage: f.totalUsage,
-      users: f.userCount,
-      avgDuration: f.avgDuration,
-      icon: FEATURE_CONFIG[f.featureName]?.icon || '📊',
-      fill: FEATURE_CONFIG[f.featureName]?.colors.from || '#6B7280'
-    }))
+    .map(f => {
+      const config = getFeatureConfig(f.featureName);
+      return {
+        name: config.name,
+        fullName: f.featureName,
+        usage: f.totalUsage,
+        users: f.userCount,
+        avgDuration: f.avgDuration,
+        icon: config.icon,
+        fill: config.colors.solid
+      };
+    })
     .sort((a, b) => b.usage - a.usage);
 
   // Custom tooltip for bar chart
@@ -122,10 +122,14 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
 
   const pieChartData = features
     .filter(f => f.totalUsage > 0)
-    .map(f => ({
-      name: FEATURE_CONFIG[f.featureName]?.name || 'Feature non configurée',
-      value: f.totalUsage
-    }))
+    .map(f => {
+      const config = getFeatureConfig(f.featureName);
+      return {
+        name: config.name,
+        value: f.totalUsage,
+        color: config.colors.solid
+      };
+    })
     .sort((a, b) => b.value - a.value);
 
   return (
@@ -147,9 +151,9 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
           description="Nombre maximum d'utilisateurs uniques ayant utilisé au moins une feature"
         />
         <KPICard
-          icon={mostPopular ? FEATURE_CONFIG[mostPopular.featureName]?.icon || '⭐' : '⭐'}
+          icon={mostPopular ? getFeatureConfig(mostPopular.featureName).icon : '⭐'}
           label="Plus populaire"
-          value={mostPopular ? FEATURE_CONFIG[mostPopular.featureName]?.name || mostPopular.featureName : '-'}
+          value={mostPopular ? getFeatureConfig(mostPopular.featureName).name : '-'}
           subtitle={mostPopular ? `${mostPopular.totalUsage} fois` : 'N/A'}
           description="Feature la plus utilisée sur la période, avec son nombre total d'utilisations"
         />
@@ -167,7 +171,7 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
         {/* Bar Chart - Usage Comparison */}
         <div className="bg-white/10 backdrop-blur-xl rounded-lg shadow-lg p-6 border border-white/20">
           <h3 className="text-lg font-semibold text-white mb-4">📈 Comparaison des features</h3>
-          <ResponsiveContainer width="100%" height={350}>
+          <ResponsiveContainer width="100%" height={Math.max(300, barChartData.length * 40)}>
             <BarChart data={barChartData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis
@@ -178,13 +182,17 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
               <YAxis
                 type="category"
                 dataKey="name"
-                width={120}
+                width={150}
                 stroke="rgba(255,255,255,0.6)"
                 tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 12 }}
+                interval={0}
               />
               <Tooltip content={<CustomBarTooltip />} />
-              <Legend />
-              <Bar dataKey="usage" fill="#3B82F6" name="Utilisations" radius={[0, 4, 4, 0]} isAnimationActive={isInitialLoad} />
+              <Bar dataKey="usage" name="Utilisations" radius={[0, 4, 4, 0]} isAnimationActive={isInitialLoad}>
+                {barChartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -199,14 +207,14 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                 outerRadius={100}
                 fill="#8884d8"
                 dataKey="value"
                 isAnimationActive={isInitialLoad}
               >
                 {pieChartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
               <Tooltip
@@ -221,6 +229,11 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
                 }}
                 formatter={(value, name) => [value, name]}
               />
+              <Legend
+                verticalAlign="bottom"
+                height={36}
+                wrapperStyle={{ color: 'white' }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -233,12 +246,7 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
           {features
             .sort((a, b) => b.totalUsage - a.totalUsage)
             .map((feature) => {
-              const config = FEATURE_CONFIG[feature.featureName] || {
-                icon: '📊',
-                name: 'Feature non configurée',
-                colors: { from: '#6B7280', to: '#4B5563', light: '#D1D5DB', solid: '#6B7280' }
-              };
-
+              const config = getFeatureConfig(feature.featureName);
               const usagePercent = totalUsage > 0 ? (feature.totalUsage / totalUsage) * 100 : 0;
               const popularityStars = usagePercent > 50 ? '⭐⭐⭐' : usagePercent > 25 ? '⭐⭐' : usagePercent > 10 ? '⭐' : '';
 
@@ -353,11 +361,7 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
                 {features
                   .sort((a, b) => b.totalUsage - a.totalUsage)
                   .map((feature) => {
-                    const config = FEATURE_CONFIG[feature.featureName] || {
-                      icon: '📊',
-                      name: 'Feature non configurée',
-                      colors: { from: '#6B7280', to: '#4B5563' }
-                    };
+                    const config = getFeatureConfig(feature.featureName);
                     return (
                       <tr key={feature.featureName} className="hover:bg-white/5 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">

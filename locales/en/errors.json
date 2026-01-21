@@ -124,8 +124,10 @@
         "gptGenerationFailed": "GPT could not generate CV template",
         "promptNotFound": "Prompt file not found"
       },
-      "generateV2": {
-        "noOffersProvided": "No job offers provided",
+      "generate": {
+        "noLinksProvided": "No job offers provided",
+        "invalidLinksFormat": "Invalid links format",
+        "invalidUrlFormat": "Invalid URL format",
         "maxOffersExceeded": "Maximum offers exceeded ({max} max, {provided} provided)",
         "invalidOfferIds": "One or more offer IDs are invalid",
         "invalidMode": "Invalid generation mode (expected: adapt or rebuild)",

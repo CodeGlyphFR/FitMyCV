@@ -4,7 +4,7 @@ import React, { createContext, useContext, useMemo, useState, useCallback, useRe
 import { useSession } from "next-auth/react";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
 import { useTaskSyncAPI } from "@/hooks/useTaskSyncAPI";
-import { emitTaskAddedEvent } from "@/lib/backgroundTasks/taskTypes";
+import { emitTaskAddedEvent } from "@/lib/background-jobs/taskTypes";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const BackgroundTasksContext = createContext(null);
@@ -86,7 +86,7 @@ export default function BackgroundTasksProvider({ children }) {
       }, 500);
     };
 
-    // Rafraîchissement immédiat quand une tâche cv_generation_v2 est terminée (pas de debounce)
+    // Rafraîchissement immédiat quand une tâche cv_generation est terminée (pas de debounce)
     const handleTaskCompleted = () => {
       // Annuler le debounce en cours s'il y en a un
       if (debounceTimerRef.current) {
@@ -100,10 +100,10 @@ export default function BackgroundTasksProvider({ children }) {
     };
 
     window.addEventListener('realtime:task:updated', handleRealtimeTaskUpdate);
-    window.addEventListener('cv_generation_v2:task_completed', handleTaskCompleted);
+    window.addEventListener('cv_generation:task_completed', handleTaskCompleted);
     return () => {
       window.removeEventListener('realtime:task:updated', handleRealtimeTaskUpdate);
-      window.removeEventListener('cv_generation_v2:task_completed', handleTaskCompleted);
+      window.removeEventListener('cv_generation:task_completed', handleTaskCompleted);
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }

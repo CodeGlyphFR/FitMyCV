@@ -41,7 +41,7 @@
 | `app/layout.jsx` | Layout racine avec providers |
 | `app/api/*` | 127 API Routes |
 | `lib/prisma.js` | Client DB singleton |
-| `middleware.js` | Auth, i18n, redirects |
+| `proxy.js` | Auth, rate limiting, security headers |
 
 ### Commandes Essentielles
 

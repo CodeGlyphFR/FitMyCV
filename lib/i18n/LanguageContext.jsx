@@ -12,6 +12,7 @@ import frSubscription from "@/locales/fr/subscription.json";
 import frTasks from "@/locales/fr/tasks.json";
 import frOnboarding from "@/locales/fr/onboarding.json";
 import frAccount from "@/locales/fr/account.json";
+import frPages from "@/locales/fr/pages.json";
 
 // English translations (split by category)
 import enUi from "@/locales/en/ui.json";
@@ -23,6 +24,7 @@ import enSubscription from "@/locales/en/subscription.json";
 import enTasks from "@/locales/en/tasks.json";
 import enOnboarding from "@/locales/en/onboarding.json";
 import enAccount from "@/locales/en/account.json";
+import enPages from "@/locales/en/pages.json";
 
 // Spanish translations (split by category)
 import esUi from "@/locales/es/ui.json";
@@ -34,6 +36,7 @@ import esSubscription from "@/locales/es/subscription.json";
 import esTasks from "@/locales/es/tasks.json";
 import esOnboarding from "@/locales/es/onboarding.json";
 import esAccount from "@/locales/es/account.json";
+import esPages from "@/locales/es/pages.json";
 
 // German translations (split by category)
 import deUi from "@/locales/de/ui.json";
@@ -45,12 +48,13 @@ import deSubscription from "@/locales/de/subscription.json";
 import deTasks from "@/locales/de/tasks.json";
 import deOnboarding from "@/locales/de/onboarding.json";
 import deAccount from "@/locales/de/account.json";
+import dePages from "@/locales/de/pages.json";
 
 const translations = {
-  fr: { ...frUi, ...frErrors, ...frAuth, ...frCv, ...frEnums, ...frSubscription, ...frTasks, ...frOnboarding, ...frAccount },
-  en: { ...enUi, ...enErrors, ...enAuth, ...enCv, ...enEnums, ...enSubscription, ...enTasks, ...enOnboarding, ...enAccount },
-  es: { ...esUi, ...esErrors, ...esAuth, ...esCv, ...esEnums, ...esSubscription, ...esTasks, ...esOnboarding, ...esAccount },
-  de: { ...deUi, ...deErrors, ...deAuth, ...deCv, ...deEnums, ...deSubscription, ...deTasks, ...deOnboarding, ...deAccount },
+  fr: { ...frUi, ...frErrors, ...frAuth, ...frCv, ...frEnums, ...frSubscription, ...frTasks, ...frOnboarding, ...frAccount, ...frPages },
+  en: { ...enUi, ...enErrors, ...enAuth, ...enCv, ...enEnums, ...enSubscription, ...enTasks, ...enOnboarding, ...enAccount, ...enPages },
+  es: { ...esUi, ...esErrors, ...esAuth, ...esCv, ...esEnums, ...esSubscription, ...esTasks, ...esOnboarding, ...esAccount, ...esPages },
+  de: { ...deUi, ...deErrors, ...deAuth, ...deCv, ...deEnums, ...deSubscription, ...deTasks, ...deOnboarding, ...deAccount, ...dePages },
 };
 
 const LanguageContext = createContext();

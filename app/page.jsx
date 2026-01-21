@@ -16,9 +16,9 @@ import { sanitizeInMemory } from "@/lib/sanitize";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/session";
-import { ensureUserCvDir, listUserCvFiles, readUserCvFileWithMeta } from "@/lib/cv/storage";
-import { getCvVersionContent } from "@/lib/cv/versioning";
-import { getSectionOrder, getSectionTitles } from "@/lib/openai/cvConstants";
+import { ensureUserCvDir, listUserCvFiles, readUserCvFileWithMeta } from "@/lib/cv-core/storage";
+import { getCvVersionContent } from "@/lib/cv-core/versioning";
+import { getSectionOrder, getSectionTitles } from "@/lib/cv-core/constants";
 
 export const metadata = {
   title: "Mes CVs - FitMyCV.io",

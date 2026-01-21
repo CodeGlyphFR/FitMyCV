@@ -2,7 +2,7 @@ import React from "react";
 import { CREATE_TEMPLATE_OPTION } from "../utils/constants";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { parseApiError } from "@/lib/utils/errorHandler";
-import { TASK_TYPES } from "@/lib/backgroundTasks/taskTypes";
+import { TASK_TYPES } from "@/lib/background-jobs/taskTypes";
 import { ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
 
 /**
@@ -211,7 +211,7 @@ export function useGeneratorModal({
       taskType = TASK_TYPES.GENERATION;
       taskLabel = `Adaptation du CV '${baseCvName}'`;
       notificationMessage = t("cvGenerator.notifications.scheduled", { baseCvName });
-      endpoint = "/api/background-tasks/generate-cv-v2";
+      endpoint = "/api/background-tasks/generate-cv";
     }
 
     try {

@@ -4,11 +4,17 @@ import Section from "./Section";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
-import FormRow from "./ui/FormRow";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import VersionSelector from "./VersionSelector";
 import ChangeHighlight, { ReviewProgressBar } from "./ChangeHighlight";
+import { FileText } from "lucide-react";
+import {
+  ModalSection,
+  FormField,
+  Textarea,
+  ModalFooter,
+} from "./ui/ModalForm";
 
 export default function Summary(props){
   const { t } = useLanguage();
@@ -94,29 +100,25 @@ export default function Summary(props){
       )}
 
       <Modal open={open} onClose={()=>setOpen(false)} title={t("cvSections.editSummary")}>
-        <div className="space-y-2">
-          <FormRow label={t("cvSections.summary")}>
-            <textarea
-              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden leading-relaxed"
-              rows={8}
-              value={text}
-              onChange={e=>setText(e.target.value)}
-            />
-          </FormRow>
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={()=>setOpen(false)}
-              className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors"
-            >
-              {t("common.cancel")}
-            </button>
-            <button
-              onClick={save}
-              className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors"
-            >
-              {t("common.save")}
-            </button>
-          </div>
+        <div className="space-y-3">
+          <ModalSection title={t("cvSections.summary")} icon={FileText}>
+            <FormField label={t("cvSections.placeholders.summaryDescription")}>
+              <Textarea
+                rows={8}
+                value={text}
+                onChange={e => setText(e.target.value)}
+                placeholder={t("cvSections.placeholders.summaryDescription")}
+                className="leading-relaxed"
+              />
+            </FormField>
+          </ModalSection>
+
+          <ModalFooter
+            onCancel={() => setOpen(false)}
+            onSave={save}
+            saveLabel={t("common.save")}
+            cancelLabel={t("common.cancel")}
+          />
         </div>
       </Modal>
     </Section>

@@ -7,6 +7,15 @@ import Modal from "./ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import { capitalizeSkillName, toTitleCase } from "@/lib/utils/textFormatting";
+import { Info } from "lucide-react";
+import {
+  ModalSection,
+  FormField,
+  Input,
+  Textarea,
+  ModalFooter,
+  ModalFooterDelete,
+} from "./ui/ModalForm";
 
 export default function Extras(props){
   const { t } = useLanguage();
@@ -46,6 +55,10 @@ export default function Extras(props){
     await mutate({ op:"remove", path:"extras", index: delIndex });
     setDelIndex(null);
   }
+
+  // Nom de l'extra à supprimer pour le modal de confirmation
+  const extraToDelete = delIndex !== null ? extras[delIndex] : null;
+  const extraNameToDelete = extraToDelete?.name || "";
 
   // Masquer entièrement si vide et pas en édition (inchangé)
   if (extras.length===0 && !editing) return null;
@@ -105,35 +118,82 @@ export default function Extras(props){
         </div>
       )}
 
+      {/* Modal Édition */}
       <Modal open={editIndex!==null} onClose={()=>setEditIndex(null)} title={t("cvSections.editExtras")}>
-        <div className="grid gap-2">
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.extraTitle")} value={f.name} onChange={e=>setF({...f,name:e.target.value})} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.extraSummary")} value={f.summary} onChange={e=>setF({...f,summary:e.target.value})} />
-          <div className="flex justify-end gap-2">
-            <button onClick={()=>setEditIndex(null)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
-            <button onClick={save} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.save")}</button>
-          </div>
+        <div className="space-y-3">
+          <ModalSection title={t("cvSections.extras")} icon={Info}>
+            <FormField label={t("cvSections.placeholders.extraTitle")}>
+              <Input
+                placeholder={t("cvSections.placeholders.extraTitle")}
+                value={f.name}
+                onChange={e => setF({...f, name: e.target.value})}
+              />
+            </FormField>
+            <FormField label={t("cvSections.placeholders.extraSummary")}>
+              <Textarea
+                placeholder={t("cvSections.placeholders.extraSummary")}
+                value={f.summary}
+                onChange={e => setF({...f, summary: e.target.value})}
+                rows={3}
+              />
+            </FormField>
+          </ModalSection>
+
+          <ModalFooter
+            onCancel={() => setEditIndex(null)}
+            onSave={save}
+            saveLabel={t("common.save")}
+            cancelLabel={t("common.cancel")}
+          />
         </div>
       </Modal>
 
+      {/* Modal Ajout */}
       <Modal open={addOpen} onClose={()=>setAddOpen(false)} title={t("cvSections.addExtra")}>
-        <div className="grid gap-2">
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.extraTitle")} value={nf.name} onChange={e=>setNf({...nf,name:e.target.value})} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.extraSummary")} value={nf.summary} onChange={e=>setNf({...nf,summary:e.target.value})} />
-          <div className="flex justify-end gap-2">
-            <button onClick={()=>setAddOpen(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
-            <button onClick={add} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.add")}</button>
-          </div>
+        <div className="space-y-3">
+          <ModalSection title={t("cvSections.extras")} icon={Info}>
+            <FormField label={t("cvSections.placeholders.extraTitle")}>
+              <Input
+                placeholder={t("cvSections.placeholders.extraTitle")}
+                value={nf.name}
+                onChange={e => setNf({...nf, name: e.target.value})}
+              />
+            </FormField>
+            <FormField label={t("cvSections.placeholders.extraSummary")}>
+              <Textarea
+                placeholder={t("cvSections.placeholders.extraSummary")}
+                value={nf.summary}
+                onChange={e => setNf({...nf, summary: e.target.value})}
+                rows={3}
+              />
+            </FormField>
+          </ModalSection>
+
+          <ModalFooter
+            onCancel={() => setAddOpen(false)}
+            onSave={add}
+            saveLabel={t("common.add")}
+            cancelLabel={t("common.cancel")}
+          />
         </div>
       </Modal>
 
+      {/* Modal Suppression */}
       <Modal open={delIndex!==null} onClose={()=>setDelIndex(null)} title={t("common.confirmation")}>
         <div className="space-y-3">
-          <p className="text-sm text-white drop-shadow">{t("cvSections.deleteExtra")}</p>
-          <div className="flex justify-end gap-2">
-            <button onClick={()=>setDelIndex(null)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
-            <button onClick={confirmDelete} className="px-6 py-2.5 rounded-lg bg-red-500/30 hover:bg-red-500/40 border border-red-500/50 text-white text-sm font-semibold transition-colors">{t("common.delete")}</button>
-          </div>
+          <p className="text-sm text-white/80">
+            {t("cvSections.deleteExtra")}
+            {extraNameToDelete && (
+              <span className="font-semibold text-white"> "{extraNameToDelete}"</span>
+            )}
+            {" ?"}
+          </p>
+          <ModalFooterDelete
+            onCancel={() => setDelIndex(null)}
+            onDelete={confirmDelete}
+            deleteLabel={t("common.delete")}
+            cancelLabel={t("common.cancel")}
+          />
         </div>
       </Modal>
     </Section>

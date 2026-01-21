@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 import { clearAiModelCache } from '@/lib/settings/aiModels';
-import { invalidatePdfConfigCache } from '@/lib/openai/pdfToImages';
+import { invalidatePdfConfigCache } from '@/lib/openai-core/pdfToImages';
 import dbEmitter from '@/lib/events/dbEmitter';
 
 /**

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { auth } from "@/lib/auth/session";
-import { listUserCvFiles, readUserCvFile } from "@/lib/cv/storage";
+import { listUserCvFiles, readUserCvFile } from "@/lib/cv-core/storage";
 import { sanitizeInMemory } from "@/lib/sanitize";
 import prisma from "@/lib/prisma";
 import { CommonErrors } from "@/lib/api/apiErrors";

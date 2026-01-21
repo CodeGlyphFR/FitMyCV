@@ -252,24 +252,41 @@ await writeUserCvFile(userId, filename, cvData);
 
 ```javascript
 import { enqueueJob } from '@/lib/backgroundTasks/jobQueue';
-import { generateCvJob } from '@/lib/backgroundTasks/generateCvJob';
+import { startSingleOfferGeneration } from '@/lib/cv-generation';
 
-// Créer la tâche en DB
-const task = await prisma.backgroundTask.create({
+// Créer la tâche en DB (CvGenerationTask + CvGenerationOffer + BackgroundTask)
+const task = await prisma.cvGenerationTask.create({
   data: {
-    id: crypto.randomUUID(),
+    userId,
+    sourceCvFileId: cvFile.id,
+    mode: 'adapt',
+    status: 'pending',
+    totalOffers: 1,
+  }
+});
+
+const offer = await prisma.cvGenerationOffer.create({
+  data: {
+    taskId: task.id,
+    sourceUrl: url,
+    status: 'pending',
+  }
+});
+
+await prisma.backgroundTask.create({
+  data: {
+    id: task.id,
+    userId,
+    type: 'cv_generation',
     title: 'Generating CV...',
-    type: 'generate_cv',
     status: 'queued',
     createdAt: BigInt(Date.now()),
     deviceId,
-    userId,
-    payload: JSON.stringify(payload)
   }
 });
 
 // Enqueue le job
-enqueueJob(() => generateCvJob(task.id, userId, payload));
+enqueueJob(() => startSingleOfferGeneration(task.id, offer.id));
 
 return Response.json({ taskId: task.id });
 ```

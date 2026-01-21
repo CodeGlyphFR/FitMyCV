@@ -1,12 +1,10 @@
 'use client';
 
 import { useLanguage } from '@/lib/i18n/LanguageContext';
-import PrivacyContentFR from '@/lib/legal/privacy/fr';
-import PrivacyContentEN from '@/lib/legal/privacy/en';
+import LegalContent from '@/components/pages/LegalContent';
 
 export default function PrivacyPage() {
-  const { t, language } = useLanguage();
-  const PrivacyContent = language === 'en' ? PrivacyContentEN : PrivacyContentFR;
+  const { t } = useLanguage();
 
   return (
     <div className="min-h-screen">
@@ -15,7 +13,7 @@ export default function PrivacyPage() {
           href="/"
           className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-white mb-3 transition-colors drop-shadow"
         >
-          <span>←</span>
+          <span>&larr;</span>
           <span>{t('legal.back')}</span>
         </a>
 
@@ -23,7 +21,7 @@ export default function PrivacyPage() {
           {t('legal.privacy.title')}
         </h1>
 
-        <PrivacyContent />
+        <LegalContent type="privacy" />
       </div>
     </div>
   );

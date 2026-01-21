@@ -52,32 +52,32 @@ export async function GET(request) {
         }
       };
 
-      // Handlers pour CV Generation v2
+      // Handlers pour CV Generation
       const handleCvGenerationProgress = ({ userId: eventUserId, data }) => {
         if (eventUserId === userId) {
-          sendEvent('cv_generation_v2:offer_progress', { ...data, timestamp: Date.now() });
+          sendEvent('cv_generation:offer_progress', { ...data, timestamp: Date.now() });
         }
       };
 
       const handleCvGenerationOfferCompleted = ({ userId: eventUserId, data }) => {
         if (eventUserId === userId) {
-          sendEvent('cv_generation_v2:offer_completed', { ...data, timestamp: Date.now() });
+          sendEvent('cv_generation:offer_completed', { ...data, timestamp: Date.now() });
         }
       };
 
       const handleCvGenerationOfferFailed = ({ userId: eventUserId, data }) => {
         if (eventUserId === userId) {
-          sendEvent('cv_generation_v2:offer_failed', { ...data, timestamp: Date.now() });
+          sendEvent('cv_generation:offer_failed', { ...data, timestamp: Date.now() });
         }
       };
 
       const handleCvGenerationCompleted = ({ userId: eventUserId, data }) => {
         if (eventUserId === userId) {
-          sendEvent('cv_generation_v2:completed', { ...data, timestamp: Date.now() });
+          sendEvent('cv_generation:completed', { ...data, timestamp: Date.now() });
         }
       };
 
-      // Handlers pour CV Improvement v2
+      // Handlers pour CV Improvement
       const handleCvImprovementProgress = ({ userId: eventUserId, data }) => {
         if (eventUserId === userId) {
           sendEvent('cv_improvement:progress', { ...data, timestamp: Date.now() });
@@ -136,10 +136,10 @@ export async function GET(request) {
       dbEmitter.on('task:updated', handleTaskUpdate);
       dbEmitter.on('cv:updated', handleCvUpdate);
       dbEmitter.on('db:change', handleDbChange);
-      dbEmitter.on('cv_generation_v2:offer_progress', handleCvGenerationProgress);
-      dbEmitter.on('cv_generation_v2:offer_completed', handleCvGenerationOfferCompleted);
-      dbEmitter.on('cv_generation_v2:offer_failed', handleCvGenerationOfferFailed);
-      dbEmitter.on('cv_generation_v2:completed', handleCvGenerationCompleted);
+      dbEmitter.on('cv_generation:offer_progress', handleCvGenerationProgress);
+      dbEmitter.on('cv_generation:offer_completed', handleCvGenerationOfferCompleted);
+      dbEmitter.on('cv_generation:offer_failed', handleCvGenerationOfferFailed);
+      dbEmitter.on('cv_generation:completed', handleCvGenerationCompleted);
       dbEmitter.on('cv_improvement:progress', handleCvImprovementProgress);
       dbEmitter.on('cv_improvement:completed', handleCvImprovementCompleted);
       dbEmitter.on('cv_improvement:failed', handleCvImprovementFailed);
@@ -157,10 +157,10 @@ export async function GET(request) {
         dbEmitter.off('task:updated', handleTaskUpdate);
         dbEmitter.off('cv:updated', handleCvUpdate);
         dbEmitter.off('db:change', handleDbChange);
-        dbEmitter.off('cv_generation_v2:offer_progress', handleCvGenerationProgress);
-        dbEmitter.off('cv_generation_v2:offer_completed', handleCvGenerationOfferCompleted);
-        dbEmitter.off('cv_generation_v2:offer_failed', handleCvGenerationOfferFailed);
-        dbEmitter.off('cv_generation_v2:completed', handleCvGenerationCompleted);
+        dbEmitter.off('cv_generation:offer_progress', handleCvGenerationProgress);
+        dbEmitter.off('cv_generation:offer_completed', handleCvGenerationOfferCompleted);
+        dbEmitter.off('cv_generation:offer_failed', handleCvGenerationOfferFailed);
+        dbEmitter.off('cv_generation:completed', handleCvGenerationCompleted);
         dbEmitter.off('cv_improvement:progress', handleCvImprovementProgress);
         dbEmitter.off('cv_improvement:completed', handleCvImprovementCompleted);
         dbEmitter.off('cv_improvement:failed', handleCvImprovementFailed);

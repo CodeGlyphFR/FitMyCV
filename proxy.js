@@ -166,6 +166,9 @@ export async function proxy(request) {
     // Politique de referrer stricte
     'Referrer-Policy': 'strict-origin-when-cross-origin',
 
+    // Isolation cross-origin (protection contre les attaques Spectre/side-channel)
+    'Cross-Origin-Opener-Policy': 'same-origin',
+
     // Permissions Policy (anciennement Feature-Policy)
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
 

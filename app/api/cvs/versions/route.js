@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
-import { getCvVersions, getCvVersionContent, getCvVersionsWithDetails, restoreCvVersionDestructive } from '@/lib/cv/versioning';
+import { getCvVersions, getCvVersionContent, getCvVersionsWithDetails, restoreCvVersionDestructive } from '@/lib/cv-core/versioning';
 import { CommonErrors, CvErrors } from '@/lib/api/apiErrors';
 
 export const runtime = 'nodejs';

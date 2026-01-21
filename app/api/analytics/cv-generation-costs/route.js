@@ -178,6 +178,7 @@ export async function GET(request) {
         'batch_skills',
         'batch_summary',
         'recompose',
+        'recompose_languages',
       ];
       subtaskSummary.sort((a, b) => {
         const aIndex = typeOrder.indexOf(a.type);

@@ -409,12 +409,7 @@ const AI_MODEL_SETTINGS = [
     category: 'ai_models',
     description: 'Modèle utilisé pour la génération de CV',
   },
-  {
-    settingName: 'model_cv_planning',
-    value: '',
-    category: 'ai_models',
-    description: 'Model for CV planning phase (empty = use default CV model)',
-  },
+  // NOTE: model_cv_planning a été supprimé (obsolète)
   {
     settingName: 'model_match_score',
     value: 'gpt-4.1-mini-2025-04-14',
@@ -463,79 +458,85 @@ const AI_MODEL_SETTINGS = [
     category: 'ai_models',
     description: 'Modèle pour détection de langue de CV (léger, 50 chars max)',
   },
-  // Pipeline CV v2 - Models par phase
+  // Pipeline Adaptation CV - Models par phase
   {
     settingName: 'model_cv_classify',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline v2: Modèle pour la phase classification (KEEP/REMOVE/MOVE)',
+    description: 'Pipeline Adaptation: Modèle pour la phase classification (KEEP/REMOVE/MOVE)',
   },
   {
     settingName: 'model_cv_batch_experience',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline v2: Modèle pour adaptation des expériences',
+    description: 'Pipeline Adaptation: Modèle pour adaptation des expériences',
   },
   {
     settingName: 'model_cv_batch_projects',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline v2: Modèle pour adaptation des projets',
+    description: 'Pipeline Adaptation: Modèle pour adaptation des projets',
   },
   {
     settingName: 'model_cv_batch_extras',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline v2: Modèle pour adaptation des extras',
+    description: 'Pipeline Adaptation: Modèle pour adaptation des extras',
   },
   {
     settingName: 'model_cv_batch_skills',
     value: 'gpt-4o-mini',
     category: 'ai_models',
-    description: 'Pipeline v2: Modèle pour déduction des compétences',
+    description: 'Pipeline Adaptation: Modèle pour déduction des compétences',
   },
   {
     settingName: 'model_cv_batch_summary',
     value: 'gpt-4o-mini',
     category: 'ai_models',
-    description: 'Pipeline v2: Modèle pour génération du summary',
+    description: 'Pipeline Adaptation: Modèle pour génération du summary',
   },
-  // Pipeline Amélioration CV v2 - Models par stage
+  // Pipeline Amélioration CV - Models par stage
   {
     settingName: 'model_improve_preprocess',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline Amélioration v2: Modèle pour classifier les suggestions',
+    description: 'Pipeline Amélioration: Modèle pour classifier les suggestions',
   },
   {
     settingName: 'model_improve_experience',
     value: 'gpt-4.1-2025-04-14',
     category: 'ai_models',
-    description: 'Pipeline Amélioration v2: Modèle pour améliorer une expérience',
+    description: 'Pipeline Amélioration: Modèle pour améliorer une expérience',
   },
   {
     settingName: 'model_improve_project',
     value: 'gpt-4.1-2025-04-14',
     category: 'ai_models',
-    description: 'Pipeline Amélioration v2: Modèle pour améliorer ou créer un projet',
+    description: 'Pipeline Amélioration: Modèle pour améliorer ou créer un projet',
   },
   {
     settingName: 'model_improve_summary',
     value: 'gpt-4.1-mini-2025-04-14',
     category: 'ai_models',
-    description: 'Pipeline Amélioration v2: Modèle pour mettre à jour le summary',
+    description: 'Pipeline Amélioration: Modèle pour mettre à jour le summary',
   },
   {
     settingName: 'model_improve_classify_skills',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline Amélioration v2: Modèle pour classifier les skills ajoutées',
+    description: 'Pipeline Amélioration: Modèle pour classifier les skills ajoutées',
   },
   {
     settingName: 'model_improve_languages',
     value: 'gpt-4.1-mini-2025-04-14',
     category: 'ai_models',
-    description: 'Modèle pour optimisation des langues (Pipeline V2)',
+    description: 'Pipeline Amélioration: Modèle pour améliorer les langues',
+  },
+  {
+    settingName: 'model_improve_extras',
+    value: 'gpt-4.1-mini-2025-04-14',
+    category: 'ai_models',
+    description: 'Pipeline Amélioration: Modèle pour améliorer les extras (certifications, hobbies)',
   },
 ];
 

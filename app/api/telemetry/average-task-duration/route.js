@@ -5,7 +5,7 @@ import {
   DEFAULT_DURATIONS,
   MIN_CALLS_FOR_AVERAGE,
   getDefaultDuration,
-} from '@/lib/backgroundTasks/taskFeatureMapping';
+} from '@/lib/background-jobs/taskFeatureMapping';
 
 /**
  * GET /api/telemetry/average-task-duration

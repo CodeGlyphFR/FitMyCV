@@ -246,6 +246,8 @@
   },
   "header": {
     "modalTitle": "Modifier l'entête",
+    "identity": "Identité",
+    "contact": "Contact",
     "fullName": "Nom complet",
     "currentTitle": "Titre actuel",
     "email": "Email",
@@ -253,6 +255,7 @@
     "city": "Ville",
     "region": "Région",
     "countryCode": "Pays (code)",
+    "location": "Localisation",
     "links": "Liens",
     "noLinks": "Aucun lien pour le moment.",
     "labelPlaceholder": "Label (ex: GitHub)",
@@ -272,7 +275,11 @@
     "confirmation": "Confirmation",
     "locale": "fr-FR",
     "yes": "Oui",
-    "no": "Non"
+    "no": "Non",
+    "noResults": "Aucun résultat",
+    "clear": "Aucun",
+    "today": "Aujourd'hui",
+    "ongoing": "En cours"
   },
   "editMode": {
     "on": "✏️ Édition ON",

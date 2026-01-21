@@ -1,12 +1,10 @@
 'use client';
 
 import { useLanguage } from '@/lib/i18n/LanguageContext';
-import TermsContentFR from '@/lib/legal/terms/fr';
-import TermsContentEN from '@/lib/legal/terms/en';
+import LegalContent from '@/components/pages/LegalContent';
 
 export default function TermsPage() {
-  const { t, language } = useLanguage();
-  const TermsContent = language === 'en' ? TermsContentEN : TermsContentFR;
+  const { t } = useLanguage();
 
   return (
     <div className="min-h-screen">
@@ -15,7 +13,7 @@ export default function TermsPage() {
           href="/"
           className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-white mb-3 transition-colors drop-shadow"
         >
-          <span>←</span>
+          <span>&larr;</span>
           <span>{t('legal.back')}</span>
         </a>
 
@@ -23,7 +21,7 @@ export default function TermsPage() {
           {t('legal.terms.title')}
         </h1>
 
-        <TermsContent />
+        <LegalContent type="terms" />
       </div>
     </div>
   );

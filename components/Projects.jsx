@@ -1,37 +1,48 @@
 "use client";
 import React from "react";
 import Section from "./Section";
-import { ym } from "@/lib/utils";
+import { ym } from "@/lib/utils/textFormatting";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
+import {
+  ModalSection,
+  FormField,
+  Input,
+  Textarea,
+  Grid,
+  Divider,
+  ModalFooter,
+  ModalFooterDelete,
+  FolderKanban,
+  Calendar,
+  FileText,
+  Link2,
+  Code,
+} from "./ui/ModalForm";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import SectionReviewActions from "./SectionReviewActions";
 import ProjectReviewActions, { useProjectHasChanges } from "./ProjectReviewActions";
+import MonthPicker from "./ui/MonthPicker";
 
 // Normalise une date vers le format YYYY-MM pour comparaison et sauvegarde
-// Gère : YYYY-MM, YYYY, MM/YYYY, YYYY/MM
 function normalizeDate(s){
   const m = (s || "").trim();
   if (!m) return "";
   if (m.toLowerCase() === "present") return "present";
 
-  // Format YYYY-MM ou YYYY
   if (/^\d{4}(-\d{2})?$/.test(m)) {
     return m.length === 4 ? `${m}-01` : m;
   }
 
-  // Format avec slash : MM/YYYY ou YYYY/MM
   if (m.includes("/")) {
     const parts = m.split("/");
     if (parts.length === 2) {
       const [p1, p2] = parts;
-      // Si p1 a 4 chiffres -> YYYY/MM
       if (/^\d{4}$/.test(p1) && /^\d{1,2}$/.test(p2)) {
         return `${p1}-${p2.padStart(2, "0")}`;
       }
-      // Si p2 a 4 chiffres -> MM/YYYY
       if (/^\d{4}$/.test(p2) && /^\d{1,2}$/.test(p1)) {
         return `${p2}-${p1.padStart(2, "0")}`;
       }
@@ -41,26 +52,46 @@ function normalizeDate(s){
   return m;
 }
 
+// Assure que l'URL est absolue (ajoute https:// si manquant)
+function ensureAbsoluteUrl(u) {
+  const url = (u || "").trim();
+  if (!url) return "";
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 /**
  * Composant carte projet individuelle avec highlight review
  */
 function ProjectCard({ project, index, isEditing, onEdit, onDelete, cvT }) {
   const { hasChanges, isAdded } = useProjectHasChanges(project.name);
-  // Utiliser l'index original pour les mutations (edit/delete)
   const originalIndex = project._originalIndex ?? index;
 
-  // Classes conditionnelles pour le highlight
   const cardClasses = [
     "flex flex-col h-full rounded-xl p-3 relative z-0 overflow-visible",
     isAdded
-      ? "border-2 border-emerald-500/50 bg-emerald-500/10" // Nouveau projet = vert
-      : "border border-white/15", // Normal
+      ? "border-2 border-emerald-500/50 bg-emerald-500/10"
+      : "border border-white/15",
   ].join(" ");
 
   return (
     <div className={cardClasses}>
       <div className={"flex items-start gap-2" + (isEditing ? " pr-20" : "")}>
-        <div className="font-semibold flex-1 min-w-0 break-words">{project.name || ""}</div>
+        <div className="font-semibold flex-1 min-w-0 break-words">
+          {project.name || ""}
+          {project.url && (
+            <a
+              href={project.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 ml-2 font-normal"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+              {project.url_label || project.url}
+            </a>
+          )}
+        </div>
         <div className="text-sm opacity-80 whitespace-nowrap ml-auto mt-1">
           {(project.start_date || project.end_date)
             ? [ym(project.start_date) || "", project.end_date === "present" ? cvT("cvSections.present") : (ym(project.end_date) || "")].filter(Boolean).join(" → ")
@@ -68,7 +99,6 @@ function ProjectCard({ project, index, isEditing, onEdit, onDelete, cvT }) {
         </div>
       </div>
 
-      {/* Boutons review pour nouveau projet OU boutons edit en mode édition */}
       {hasChanges && !isEditing && (
         <div className="no-print absolute top-2 right-2 z-20">
           <ProjectReviewActions projectIndex={originalIndex} projectName={project.name} />
@@ -100,10 +130,7 @@ export default function Projects(props){
   const { t } = useLanguage();
   const rawProjects = Array.isArray(props.projects) ? props.projects : [];
 
-  // Tri par date décroissante (plus récent en premier)
-  // 1. Projets en cours en premier, triés par date de début (plus récent en premier)
-  // 2. Projets terminés ensuite, triés par date de fin (plus récent en premier)
-  // On garde _originalIndex pour que les mutations utilisent le bon index
+  // Tri par date décroissante
   const projects = React.useMemo(() => {
     return rawProjects
       .map((p, idx) => ({ ...p, _originalIndex: idx }))
@@ -111,18 +138,15 @@ export default function Projects(props){
         const aIsCurrent = !a.end_date || a.end_date === "present";
         const bIsCurrent = !b.end_date || b.end_date === "present";
 
-        // Les projets en cours en premier
         if (aIsCurrent && !bIsCurrent) return -1;
         if (!aIsCurrent && bIsCurrent) return 1;
 
-        // Si les deux sont en cours, trier par start_date (plus récent en premier)
         if (aIsCurrent && bIsCurrent) {
           const startA = normalizeDate(a.start_date);
           const startB = normalizeDate(b.start_date);
           return startB.localeCompare(startA);
         }
 
-        // Sinon, trier par end_date (plus récent en premier)
         const endA = normalizeDate(a.end_date) || normalizeDate(a.start_date);
         const endB = normalizeDate(b.end_date) || normalizeDate(b.start_date);
         return endB.localeCompare(endA);
@@ -134,70 +158,73 @@ export default function Projects(props){
   const cvT = getTranslatorForCvLanguage(cvLanguage);
   const title = getCvSectionTitleInCvLanguage('projects', sectionTitles.projects, cvLanguage);
   const { editing } = useAdmin();
-  const isEditing = !!editing; // force bool
+  const isEditing = !!editing;
   const { mutate } = useMutate();
 
+  // ---- UI State ----
   const [editIndex, setEditIndex] = React.useState(null);
-  const [delIndex, setDelIndex]   = React.useState(null);
-  const [addOpen, setAddOpen]     = React.useState(false);
+  const [delIndex, setDelIndex] = React.useState(null);
+  const [addOpen, setAddOpen] = React.useState(false);
 
-  const [f,  setF]  = React.useState({ name:"", role:"", start:"", end:"", inProgress: false, summary:"", tech_stack:"" });
-  const [nf, setNf] = React.useState({ name:"", role:"", start:"", end:"", inProgress: false, summary:"", tech_stack:"" });
+  // ---- Forms ----
+  const emptyForm = { name:"", role:"", start:"", end:"", summary:"", tech_stack:"", url:"", url_label:"" };
+  const [f, setF] = React.useState(emptyForm);
+  const [nf, setNf] = React.useState(emptyForm);
 
   const isEmpty = projects.length === 0;
-  const shouldRender = isEditing || !isEmpty; // rend la section si on édite OU si non vide
+  const shouldRender = isEditing || !isEmpty;
   if (!shouldRender) return null;
 
+  // ---- Actions ----
   function openEdit(i){
     const p = projects[i] || {};
-    const isCurrentProject = !p.end_date || p.end_date === "present";
     setF({
       name: p.name || "",
       role: p.role || "",
       start: p.start_date || "",
-      end: isCurrentProject ? "" : (p.end_date || ""),
-      inProgress: isCurrentProject,
+      end: p.end_date || "",
       summary: p.summary || "",
-      tech_stack: Array.isArray(p.tech_stack) ? p.tech_stack.join(", ") : (p.tech_stack || "")
+      tech_stack: Array.isArray(p.tech_stack) ? p.tech_stack.join(", ") : (p.tech_stack || ""),
+      url: p.url || "",
+      url_label: p.url_label || ""
     });
-    // Utiliser l'index original pour la mutation
     setEditIndex(p._originalIndex);
   }
 
-  async function save(){
+  async function saveEdit(){
     const p = {};
     if (f.name) p.name = f.name;
     if (f.role) p.role = f.role;
     if (f.start) p.start_date = normalizeDate(f.start);
-    if (f.inProgress) {
-      p.end_date = "present";
-    } else if (f.end) {
-      p.end_date = normalizeDate(f.end);
-    }
+    // Si vide ou "present", c'est un projet en cours
+    if (!f.end || f.end.toLowerCase() === "present") p.end_date = "present";
+    else p.end_date = normalizeDate(f.end);
     if (f.summary) p.summary = f.summary;
     const tech_stack = (f.tech_stack || "").split(",").map(t => t.trim()).filter(Boolean);
     if (tech_stack.length) p.tech_stack = tech_stack;
+    if (f.url) p.url = ensureAbsoluteUrl(f.url);
+    if (f.url_label) p.url_label = f.url_label;
 
     await mutate({ op:"set", path:`projects[${editIndex}]`, value:p });
     setEditIndex(null);
   }
 
-  async function add(){
+  async function saveAdd(){
     const p = {};
     if (nf.name) p.name = nf.name;
     if (nf.role) p.role = nf.role;
     if (nf.start) p.start_date = normalizeDate(nf.start);
-    if (nf.inProgress) {
-      p.end_date = "present";
-    } else if (nf.end) {
-      p.end_date = normalizeDate(nf.end);
-    }
+    // Si vide ou "present", c'est un projet en cours
+    if (!nf.end || nf.end.toLowerCase() === "present") p.end_date = "present";
+    else p.end_date = normalizeDate(nf.end);
     if (nf.summary) p.summary = nf.summary;
     const tech_stack = (nf.tech_stack || "").split(",").map(t => t.trim()).filter(Boolean);
     if (tech_stack.length) p.tech_stack = tech_stack;
+    if (nf.url) p.url = ensureAbsoluteUrl(nf.url);
+    if (nf.url_label) p.url_label = nf.url_label;
 
     await mutate({ op:"push", path:"projects", value:p });
-    setNf({ name:"", role:"", start:"", end:"", inProgress: false, summary:"", tech_stack:"" });
+    setNf(emptyForm);
     setAddOpen(false);
   }
 
@@ -227,7 +254,6 @@ export default function Projects(props){
       }
     >
       {isEmpty ? (
-        // visible en édition quand vide
         isEditing ? (
           <div className="rounded-2xl border border-white/15 p-3 text-sm opacity-60">
             {t("cvSections.noProjects")}
@@ -250,61 +276,206 @@ export default function Projects(props){
       )}
 
       {/* Edit Modal */}
-      <Modal open={editIndex !== null} onClose={() => setEditIndex(null)} title={t("cvSections.editProjects")}>
-        <div className="grid gap-2 md:grid-cols-2">
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.projectName")} value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.role")} value={f.role} onChange={e => setF({ ...f, role: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.startDate")} value={f.start} onChange={e => setF({ ...f, start: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.endDate")} value={f.end} onChange={e => setF({ ...f, end: e.target.value })} disabled={f.inProgress} />
-          <div className="md:col-span-2 flex items-center gap-2">
-            <input type="checkbox" id="edit-inProgress" checked={f.inProgress} onChange={e => setF({ ...f, inProgress: e.target.checked, end: e.target.checked ? "" : f.end })} />
-            <label htmlFor="edit-inProgress" className="text-sm text-white drop-shadow">{t("cvSections.projectInProgress")}</label>
-          </div>
-          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.placeholders.description")} value={f.summary} onChange={e => setF({ ...f, summary: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.technologies")} value={f.tech_stack || ""} onChange={e => setF({ ...f, tech_stack: e.target.value })} />
-          <div className="md:col-span-2 flex justify-end gap-2">
-            <button type="button" onClick={() => setEditIndex(null)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
-            <button type="button" onClick={save} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.save")}</button>
-          </div>
+      <Modal open={editIndex !== null} onClose={() => setEditIndex(null)} title={t("cvSections.editProjects")} size="medium">
+        <div className="space-y-3">
+          <ModalSection title={t("cvSections.projects")} icon={FolderKanban}>
+            <Grid cols={2}>
+              <FormField label={t("cvSections.placeholders.projectName")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.projectName")}
+                  value={f.name || ""}
+                  onChange={e => setF({ ...f, name: e.target.value })}
+                />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.role")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.role")}
+                  value={f.role || ""}
+                  onChange={e => setF({ ...f, role: e.target.value })}
+                />
+              </FormField>
+            </Grid>
+          </ModalSection>
+
+          <ModalSection title={t("cvSections.period")} icon={Calendar}>
+            <div className="flex flex-wrap items-end gap-2">
+              <FormField label={t("cvSections.placeholders.experienceStartShort")} className="flex-1 min-w-[140px]">
+                <MonthPicker
+                  placeholder={t("cvSections.placeholders.dateFormat")}
+                  value={f.start || ""}
+                  onChange={v => setF({ ...f, start: v })}
+                  todayLabel={t("common.today")}
+                />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.experienceEndShort")} className="flex-1 min-w-[140px]">
+                <MonthPicker
+                  placeholder={t("cvSections.placeholders.dateFormat")}
+                  value={f.end || ""}
+                  onChange={v => setF({ ...f, end: v })}
+                  todayLabel={t("common.ongoing")}
+                  presentLabel={t("common.ongoing")}
+                  presentMode
+                />
+              </FormField>
+            </div>
+          </ModalSection>
+
+          <Divider />
+
+          <ModalSection title={t("cvSections.placeholders.description")} icon={FileText}>
+            <FormField label={t("cvSections.placeholders.description")}>
+              <Textarea
+                placeholder={t("cvSections.placeholders.descriptionHint")}
+                rows={2}
+                value={f.summary || ""}
+                onChange={e => setF({ ...f, summary: e.target.value })}
+              />
+            </FormField>
+            <FormField label={t("cvSections.technologies")}>
+              <Input
+                placeholder={t("cvSections.placeholders.skillsUsedHint")}
+                value={f.tech_stack || ""}
+                onChange={e => setF({ ...f, tech_stack: e.target.value })}
+              />
+            </FormField>
+          </ModalSection>
+
+          <ModalSection title={t("cvSections.placeholders.projectUrl")} icon={Link2}>
+            <Grid cols={2}>
+              <FormField label={t("cvSections.placeholders.projectUrlLabel")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.projectUrlLabel")}
+                  value={f.url_label || ""}
+                  onChange={e => setF({ ...f, url_label: e.target.value })}
+                />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.projectUrl")}>
+                <Input
+                  placeholder="https://github.com/..."
+                  value={f.url || ""}
+                  onChange={e => setF({ ...f, url: e.target.value })}
+                />
+              </FormField>
+            </Grid>
+          </ModalSection>
+
+          <ModalFooter
+            onCancel={() => setEditIndex(null)}
+            onSave={saveEdit}
+            cancelLabel={t("common.cancel")}
+            saveLabel={t("common.save")}
+          />
         </div>
       </Modal>
 
       {/* Add Modal */}
-      <Modal open={!!addOpen} onClose={() => setAddOpen(false)} title={t("cvSections.addProject")}>
-        <div className="grid gap-2 md:grid-cols-2">
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.projectName")} value={nf.name} onChange={e => setNf({ ...nf, name: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.role")} value={nf.role} onChange={e => setNf({ ...nf, role: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.startDate")} value={nf.start} onChange={e => setNf({ ...nf, start: e.target.value })} />
-          <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden" placeholder={t("cvSections.placeholders.endDate")} value={nf.end} onChange={e => setNf({ ...nf, end: e.target.value })} disabled={nf.inProgress} />
-          <div className="md:col-span-2 flex items-center gap-2">
-            <input type="checkbox" id="add-inProgress" checked={nf.inProgress} onChange={e => setNf({ ...nf, inProgress: e.target.checked, end: e.target.checked ? "" : nf.end })} />
-            <label htmlFor="add-inProgress" className="text-sm text-white drop-shadow">{t("cvSections.projectInProgress")}</label>
-          </div>
-          <textarea className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2" placeholder={t("cvSections.placeholders.description")} value={nf.summary} onChange={e => setNf({ ...nf, summary: e.target.value })} />
+      <Modal open={!!addOpen} onClose={() => setAddOpen(false)} title={t("cvSections.addProject")} size="medium">
+        <div className="space-y-3">
+          <ModalSection title={t("cvSections.projects")} icon={FolderKanban}>
+            <Grid cols={2}>
+              <FormField label={t("cvSections.placeholders.projectName")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.projectName")}
+                  value={nf.name || ""}
+                  onChange={e => setNf({ ...nf, name: e.target.value })}
+                />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.role")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.role")}
+                  value={nf.role || ""}
+                  onChange={e => setNf({ ...nf, role: e.target.value })}
+                />
+              </FormField>
+            </Grid>
+          </ModalSection>
 
-          {/* ✅ Champ tech_stack ajouté */}
-          <input
-            className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden md:col-span-2"
-            placeholder={t("cvSections.technologies")}
-            value={nf.tech_stack || ""}
-            onChange={e => setNf({ ...nf, tech_stack: e.target.value })}
+          <ModalSection title={t("cvSections.period")} icon={Calendar}>
+            <div className="flex flex-wrap items-end gap-2">
+              <FormField label={t("cvSections.placeholders.experienceStartShort")} className="flex-1 min-w-[140px]">
+                <MonthPicker
+                  placeholder={t("cvSections.placeholders.dateFormat")}
+                  value={nf.start || ""}
+                  onChange={v => setNf({ ...nf, start: v })}
+                  todayLabel={t("common.today")}
+                />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.experienceEndShort")} className="flex-1 min-w-[140px]">
+                <MonthPicker
+                  placeholder={t("cvSections.placeholders.dateFormat")}
+                  value={nf.end || ""}
+                  onChange={v => setNf({ ...nf, end: v })}
+                  todayLabel={t("common.ongoing")}
+                  presentLabel={t("common.ongoing")}
+                  presentMode
+                />
+              </FormField>
+            </div>
+          </ModalSection>
+
+          <Divider />
+
+          <ModalSection title={t("cvSections.placeholders.description")} icon={FileText}>
+            <FormField label={t("cvSections.placeholders.description")}>
+              <Textarea
+                placeholder={t("cvSections.placeholders.descriptionHint")}
+                rows={2}
+                value={nf.summary || ""}
+                onChange={e => setNf({ ...nf, summary: e.target.value })}
+              />
+            </FormField>
+            <FormField label={t("cvSections.technologies")}>
+              <Input
+                placeholder={t("cvSections.placeholders.skillsUsedHint")}
+                value={nf.tech_stack || ""}
+                onChange={e => setNf({ ...nf, tech_stack: e.target.value })}
+              />
+            </FormField>
+          </ModalSection>
+
+          <ModalSection title={t("cvSections.placeholders.projectUrl")} icon={Link2}>
+            <Grid cols={2}>
+              <FormField label={t("cvSections.placeholders.projectUrlLabel")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.projectUrlLabel")}
+                  value={nf.url_label || ""}
+                  onChange={e => setNf({ ...nf, url_label: e.target.value })}
+                />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.projectUrl")}>
+                <Input
+                  placeholder="https://github.com/..."
+                  value={nf.url || ""}
+                  onChange={e => setNf({ ...nf, url: e.target.value })}
+                />
+              </FormField>
+            </Grid>
+          </ModalSection>
+
+          <ModalFooter
+            onCancel={() => setAddOpen(false)}
+            onSave={saveAdd}
+            cancelLabel={t("common.cancel")}
+            saveLabel={t("common.add")}
           />
-
-          <div className="md:col-span-2 flex justify-end gap-2">
-            <button type="button" onClick={() => setAddOpen(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
-            <button type="button" onClick={add} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors">{t("common.add")}</button>
-          </div>
         </div>
       </Modal>
 
       {/* Delete Modal */}
       <Modal open={delIndex !== null} onClose={() => setDelIndex(null)} title={t("common.confirmation")}>
         <div className="space-y-3">
-          <p className="text-sm text-white drop-shadow">{t("cvSections.deleteProject")}</p>
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setDelIndex(null)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors">{t("common.cancel")}</button>
-            <button type="button" onClick={confirmDelete} className="px-6 py-2.5 rounded-lg bg-red-500/30 hover:bg-red-500/40 border border-red-500/50 text-white text-sm font-semibold transition-colors">{t("common.delete")}</button>
-          </div>
+          <p className="text-sm text-white/80">
+            {t("cvSections.deleteProject")}
+            {delIndex !== null && rawProjects[delIndex]?.name && (
+              <span className="font-medium text-white"> "{rawProjects[delIndex].name}"</span>
+            )}
+          </p>
+          <ModalFooterDelete
+            onCancel={() => setDelIndex(null)}
+            onDelete={confirmDelete}
+            cancelLabel={t("common.cancel")}
+            deleteLabel={t("common.delete")}
+          />
         </div>
       </Modal>
     </Section>

@@ -124,8 +124,10 @@
         "gptGenerationFailed": "GPT no pudo generar la plantilla de CV",
         "promptNotFound": "Archivo de prompt no encontrado"
       },
-      "generateV2": {
-        "noOffersProvided": "No se proporcionaron ofertas de empleo",
+      "generate": {
+        "noLinksProvided": "No se proporcionaron ofertas de empleo",
+        "invalidLinksFormat": "Formato de enlaces inválido",
+        "invalidUrlFormat": "Formato de URL inválido",
         "maxOffersExceeded": "Número máximo de ofertas excedido ({max} máx, {provided} proporcionado(s))",
         "invalidOfferIds": "Uno o más IDs de ofertas son inválidos",
         "invalidMode": "Modo de generación inválido (esperado: adapt o rebuild)",

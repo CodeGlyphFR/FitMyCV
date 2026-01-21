@@ -1,48 +1,36 @@
 "use client";
 import React from "react";
-import Image from "next/image";
 import SourceInfo from "./SourceInfo";
 import MatchScore from "./MatchScore";
 import CVImprovementPanel from "./CVImprovementPanel";
 import { useAdmin } from "./admin/AdminProvider";
 import useMutate from "./admin/useMutate";
 import Modal from "./ui/Modal";
-import FormRow from "./ui/FormRow";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
-import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
-import { useNotifications } from "@/components/notifications/NotificationProvider";
 import ChangeHighlight from "./ChangeHighlight";
-import { parseApiError } from "@/lib/utils/errorHandler";
-import { SUPPORTED_LANGUAGES, LANGUAGE_FLAGS, LANGUAGE_LABELS, DEFAULT_LANGUAGE } from "@/lib/cv/languageConstants";
 import { toTitleCase } from "@/lib/utils/textFormatting";
 import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
 import { useHighlight } from "./HighlightProvider";
-import { useCreditCost } from "@/hooks/useCreditCost";
-import CreditCostTooltip from "@/components/ui/CreditCostTooltip";
+import CountrySelect from "./CountrySelect";
+import { User, Mail, MapPin, Link2, Plus, Trash2 } from "lucide-react";
+import {
+  ModalSection,
+  FormField,
+  Input,
+  Grid,
+  ModalFooter,
+} from "./ui/ModalForm";
+import { useMatchScore, useSourceInfo, useTranslation, TranslationDropdown } from "./header";
 
 export default function Header(props){
   const header = props.header || {};
   const links = (header.contact && header.contact.links) || [];
   const { editing } = useAdmin();
   const { mutate } = useMutate();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const { settings } = useSettings();
-  const { showCosts, getCost } = useCreditCost();
-  const translateCost = getCost("translate_cv");
   const [open, setOpen] = React.useState(false);
-  const [isTranslateDropdownOpen, setIsTranslateDropdownOpen] = React.useState(false);
-  const [sourceInfo, setSourceInfo] = React.useState({ sourceType: null, sourceValue: null, jobOfferInfo: null, sourceCvInfo: null });
-  const translateDropdownRef = React.useRef(null);
-  const [matchScore, setMatchScore] = React.useState(null);
-  const [scoreBefore, setScoreBefore] = React.useState(null);
-  const [matchScoreStatus, setMatchScoreStatus] = React.useState("idle");
-  const [optimiseStatus, setOptimiseStatus] = React.useState("idle");
-  const [isLoadingMatchScore, setIsLoadingMatchScore] = React.useState(false);
-  const [currentCvFile, setCurrentCvFile] = React.useState(null);
-  const [hasJobOffer, setHasJobOffer] = React.useState(false);
-  const [hasScoreBreakdown, setHasScoreBreakdown] = React.useState(false);
-  const [isTransitioning, setIsTransitioning] = React.useState(false);
 
   // Récupérer la version courante depuis le contexte
   const { currentVersion } = useHighlight();
@@ -50,16 +38,53 @@ export default function Header(props){
   // Calculer isHistoricalVersion directement depuis currentVersion (plus fiable que l'API)
   const isHistoricalVersion = currentVersion !== 'latest';
 
-  // Ref pour tracker la version en cours de fetch (éviter race conditions)
-  const fetchVersionRef = React.useRef(currentVersion);
-  const abortControllerRef = React.useRef(null);
+  // Hook pour le score de matching
+  const {
+    matchScore,
+    scoreBefore,
+    matchScoreStatus,
+    optimiseStatus,
+    isLoadingMatchScore,
+    currentCvFile,
+    setCurrentCvFile,
+    hasJobOffer,
+    setHasJobOffer,
+    hasScoreBreakdown,
+    setHasScoreBreakdown,
+    setMatchScore,
+    setScoreBefore,
+    setMatchScoreStatus,
+    setOptimiseStatus,
+    setIsLoadingMatchScore,
+    fetchMatchScore,
+    handleRefreshMatchScore,
+  } = useMatchScore({ currentVersion });
+
+  // Hook pour les infos de source
+  const { sourceInfo, isTransitioning, fetchSourceInfo } = useSourceInfo({
+    fetchMatchScore,
+    setCurrentCvFile,
+    setIsLoadingMatchScore,
+    setMatchScore,
+    setScoreBefore,
+    setMatchScoreStatus,
+    setOptimiseStatus,
+    setHasJobOffer,
+    setHasScoreBreakdown,
+  });
+
+  // Hook pour la traduction
+  const {
+    isTranslateDropdownOpen,
+    setIsTranslateDropdownOpen,
+    translateDropdownRef,
+    executeTranslation,
+  } = useTranslation();
 
   // Calculer si le bouton Optimiser est disponible (visible ET actif)
   const isOptimizeButtonReady = React.useMemo(() => {
     return hasScoreBreakdown && matchScoreStatus !== 'inprogress';
   }, [hasScoreBreakdown, matchScoreStatus]);
-  const { localDeviceId, addOptimisticTask, removeOptimisticTask, refreshTasks } = useBackgroundTasks();
-  const { addNotification } = useNotifications();
 
   const [f, setF] = React.useState({
     full_name: header.full_name || "",
@@ -97,151 +122,10 @@ export default function Header(props){
     );
   });
 
-  const fetchMatchScore = React.useCallback(async () => {
-    // Annuler la requête précédente si elle existe
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    // Créer un nouveau AbortController pour cette requête
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
-
-    // Capturer la version au moment de l'appel
-    const versionAtFetchStart = currentVersion;
-    fetchVersionRef.current = versionAtFetchStart;
-
-    setIsLoadingMatchScore(true);
-    try {
-      // Récupérer le fichier CV actuel depuis le cookie
-      const cookies = document.cookie.split(';');
-      const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
-      if (!cvFileCookie) {
-        setIsLoadingMatchScore(false);
-        return;
-      }
-
-      const currentFile = decodeURIComponent(cvFileCookie.split('=')[1]);
-      setCurrentCvFile(currentFile);
-
-      // Cache-busting pour iOS - ajouter un timestamp
-      const cacheBuster = Date.now();
-      // Ajouter le paramètre version si on consulte une version historique
-      const versionParam = versionAtFetchStart !== 'latest' ? `&version=${versionAtFetchStart}` : '';
-      const response = await fetch(`/api/cv/match-score?file=${encodeURIComponent(currentFile)}${versionParam}&_=${cacheBuster}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        },
-        signal: abortController.signal
-      });
-
-      if (!response.ok) {
-        // 404 = CV sans offre d'emploi (normal pour CV importés), ne pas logger d'erreur
-        if (response.status === 404) {
-        } else {
-        }
-        setIsLoadingMatchScore(false);
-        return;
-      }
-
-      const data = await response.json();
-
-      // Vérifier que le CV ET la version n'ont pas changé entre temps
-      const updatedCookies = document.cookie.split(';');
-      const updatedCvFileCookie = updatedCookies.find(c => c.trim().startsWith('cvFile='));
-      const updatedFile = updatedCvFileCookie ? decodeURIComponent(updatedCvFileCookie.split('=')[1]) : null;
-
-      // Ignorer la réponse si la version a changé pendant le fetch
-      if (fetchVersionRef.current !== versionAtFetchStart) {
-        return;
-      }
-
-      if (updatedFile === currentFile) {
-        // Utiliser le status de la base en priorité
-        // Workaround iOS : si pas de status en base et qu'on a un score, mettre 'idle'
-        const finalStatus = data.status || (data.score !== null ? 'idle' : 'idle');
-        const finalOptimiseStatus = data.optimiseStatus || 'idle';
-
-        setMatchScore(data.score);
-        setScoreBefore(data.scoreBefore || null);
-        setMatchScoreStatus(finalStatus);
-        setOptimiseStatus(finalOptimiseStatus);
-        setHasJobOffer(data.hasJobOffer || false);
-        setHasScoreBreakdown(data.hasScoreBreakdown || false);
-
-        // Force un re-render en utilisant un timeout (workaround iOS)
-        setTimeout(() => {
-          setIsLoadingMatchScore(false);
-        }, 0);
-      } else {
-        setIsLoadingMatchScore(false);
-      }
-    } catch (error) {
-      // Ignorer les erreurs d'abort (changement de version rapide)
-      if (error.name === 'AbortError') {
-        return;
-      }
-      setIsLoadingMatchScore(false);
-    }
-  }, [currentVersion]);
-
-  const fetchSourceInfo = React.useCallback(() => {
-    // Récupérer le CV actuel depuis le cookie pour détecter les changements
-    const cookies = document.cookie.split(';');
-    const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
-    const newCvFile = cvFileCookie ? decodeURIComponent(cvFileCookie.split('=')[1]) : null;
-
-    // Activer l'état de transition pour éviter le flash visuel
-    setIsTransitioning(true);
-
-    // Mettre à jour seulement le CV actuel et le loading, garder les autres états temporairement
-    setCurrentCvFile(newCvFile);
-    setIsLoadingMatchScore(true);
-
-    fetch("/api/cv/source", { cache: "no-store" })
-      .then(res => {
-        if (!res.ok) {
-          return { sourceType: null, sourceValue: null, hasJobOffer: false };
-        }
-        return res.json();
-      })
-      .then(data => {
-        // Mettre à jour les infos de source
-        setSourceInfo({
-          sourceType: data.sourceType,
-          sourceValue: data.sourceValue,
-          jobOfferInfo: data.jobOfferInfo,
-          sourceCvInfo: data.sourceCvInfo,
-        });
-
-        // Ne récupérer le score que si le CV a une offre d'emploi associée
-        if (data.hasJobOffer) {
-          fetchMatchScore();
-        } else {
-          // Réinitialiser les états du score seulement si pas d'offre
-          setMatchScore(null);
-          setScoreBefore(null);
-          setMatchScoreStatus('idle');
-          setOptimiseStatus('idle');
-          setHasJobOffer(false);
-          setHasScoreBreakdown(false);
-          setIsLoadingMatchScore(false);
-        }
-
-        // Fin de la transition après un court délai pour la fluidité
-        setTimeout(() => setIsTransitioning(false), 100);
-      })
-      .catch(err => {
-        setIsLoadingMatchScore(false);
-        setIsTransitioning(false);
-      });
-  }, [fetchMatchScore]);
-
+  // Fetch au montage
   React.useEffect(() => {
     fetchSourceInfo();
-  }, [fetchSourceInfo]); // Fetch au montage
+  }, [fetchSourceInfo]);
 
   // Refetch le score quand on change de version
   React.useEffect(() => {
@@ -289,90 +173,6 @@ export default function Header(props){
     };
   }, [fetchMatchScore, fetchSourceInfo]);
 
-  // Fermer le dropdown de traduction quand on clique à l'extérieur
-  React.useEffect(() => {
-    function handleClickOutside(event) {
-      if (translateDropdownRef.current && !translateDropdownRef.current.contains(event.target)) {
-        setIsTranslateDropdownOpen(false);
-      }
-    }
-
-    function handleEscape(event) {
-      if (event.key === "Escape") {
-        setIsTranslateDropdownOpen(false);
-      }
-    }
-
-    if (isTranslateDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("keydown", handleEscape);
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-        document.removeEventListener("keydown", handleEscape);
-      };
-    }
-  }, [isTranslateDropdownOpen]);
-
-  // Pas de SSE - l'utilisateur rafraîchira manuellement pour voir le résultat
-
-  const handleRefreshMatchScore = React.useCallback(async () => {
-    // Mise à jour optimiste : passer immédiatement le status en loading
-    setMatchScoreStatus('inprogress');
-    setIsLoadingMatchScore(true);
-
-    try {
-      // Récupérer le fichier CV actuel depuis le cookie
-      const cookies = document.cookie.split(';');
-      const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
-      if (!cvFileCookie) {
-        throw new Error("No CV file selected");
-      }
-
-      const currentFile = decodeURIComponent(cvFileCookie.split('=')[1]);
-
-      // Envoyer la requête pour lancer le calcul
-      const response = await fetch("/api/background-tasks/calculate-match-score", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cvFile: currentFile,
-          isAutomatic: false,
-          deviceId: localDeviceId,
-        }),
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        const apiError = parseApiError(response, data);
-        const errorObj = new Error(apiError.message);
-        if (apiError.actionRequired && apiError.redirectUrl) {
-          errorObj.actionRequired = true;
-          errorObj.redirectUrl = apiError.redirectUrl;
-        }
-        throw errorObj;
-      }
-    } catch (error) {
-
-      // En cas d'erreur, réinitialiser le status
-      setMatchScoreStatus('idle');
-      setIsLoadingMatchScore(false);
-
-      const notification = {
-        type: "error",
-        message: error.message,
-        duration: 10000,
-      };
-
-      // Add redirect info if actionRequired
-      if (error?.actionRequired && error?.redirectUrl) {
-        notification.redirectUrl = error.redirectUrl;
-        notification.linkText = 'Voir les options';
-      }
-
-      addNotification(notification);
-    }
-  }, [t, addNotification, localDeviceId]);
 
   // Si le CV est vide (pas de header), ne pas afficher le composant
   const isEmpty = !header.full_name && !header.current_title && !header.contact?.email;
@@ -411,94 +211,6 @@ export default function Header(props){
     setOpen(false);
   }
 
-  async function executeTranslation(targetLanguage) {
-    // Fermer le dropdown
-    setIsTranslateDropdownOpen(false);
-    // Récupérer le fichier CV actuel depuis le cookie ou localStorage
-    let currentFile = null;
-    try {
-      const cookies = document.cookie.split(';');
-      const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
-      if (cvFileCookie) {
-        currentFile = decodeURIComponent(cvFileCookie.split('=')[1]);
-      }
-    } catch (err) {
-    }
-
-    if (!currentFile) {
-      addNotification({
-        type: "error",
-        message: t("translate.errors.noCvSelected"),
-        duration: 3000,
-      });
-      return;
-    }
-
-    const targetLangName = {
-      fr: 'français',
-      en: 'anglais',
-      es: 'español',
-      de: 'deutsch'
-    }[targetLanguage] || targetLanguage;
-
-    // Envoyer la requête en arrière-plan
-    try {
-      const response = await fetch("/api/background-tasks/translate-cv", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sourceFile: currentFile,
-          targetLanguage,
-          deviceId: localDeviceId,
-        }),
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data?.success) {
-        const apiError = parseApiError(response, data);
-        const errorObj = { message: apiError.message };
-        if (apiError.actionRequired && apiError.redirectUrl) {
-          errorObj.actionRequired = true;
-          errorObj.redirectUrl = apiError.redirectUrl;
-        }
-        throw errorObj;
-      }
-
-      // ✅ Succès confirmé par l'API -> créer la tâche optimiste et notifier
-      const optimisticTaskId = addOptimisticTask({
-        type: 'translate-cv',
-        label: `Traduction en ${targetLangName}`,
-        metadata: { sourceFile: currentFile, targetLanguage },
-        shouldUpdateCvList: true,
-      });
-
-      addNotification({
-        type: "info",
-        message: t("translate.notifications.scheduled", { targetLangName }),
-        duration: 2500,
-      });
-
-      // Rafraîchir et supprimer la tâche optimiste
-      await refreshTasks();
-      removeOptimisticTask(optimisticTaskId);
-    } catch (error) {
-      // Échec : notifier l'erreur
-      const notification = {
-        type: "error",
-        message: error?.message || t("translate.notifications.error"),
-        duration: 10000,
-      };
-
-      // Add redirect info if actionRequired
-      if (error?.actionRequired && error?.redirectUrl) {
-        notification.redirectUrl = error.redirectUrl;
-        notification.linkText = 'Voir les options';
-      }
-
-      addNotification(notification);
-    }
-  }
-
   return (
     <header className="page mb-6 flex items-start justify-between gap-4 bg-white/15 backdrop-blur-xl p-4 rounded-2xl shadow-2xl relative overflow-visible min-h-[120px]">
       <div className="pr-24">
@@ -511,11 +223,13 @@ export default function Header(props){
         <div className="mt-2 text-sm text-white/90 drop-shadow">
           <div>{header.contact?.email || ""}</div>
           <div>{formatPhoneNumber(header.contact?.phone, header.contact?.location?.country_code)}</div>
-          {header.contact?.location ? (
+          {header.contact?.location && (header.contact.location.city || header.contact.location.region || header.contact.location.country_code) ? (
             <div>
-              {header.contact.location.city || ""}{header.contact.location.region? ", ":""}
-              {header.contact.location.region || ""}
-              {header.contact.location.country_code? " (" : ""}{header.contact.location.country_code || ""}{header.contact.location.country_code?")":""}
+              {[
+                header.contact.location.city,
+                header.contact.location.region,
+                header.contact.location.country_code ? (t(`countries.${header.contact.location.country_code}`) || header.contact.location.country_code) : null
+              ].filter(Boolean).join(", ")}
             </div>
           ) : null}
           {Array.isArray(links) && links.length>0 ? (
@@ -593,171 +307,147 @@ export default function Header(props){
       {/* Bouton de traduction en bas à droite */}
       {(!editing && settings.feature_translate) ? (
         <div className="no-print absolute bottom-3 right-3 flex items-center gap-2">
-          {/* Bouton de traduction avec dropdown */}
-          <div
-            ref={translateDropdownRef}
-            className="relative"
-          >
-            {/* Options de langue - apparaissent à gauche du bouton quand ouvert */}
-            <div
-              className={`
-                absolute right-full top-0 mr-2
-                flex flex-row gap-2
-                transition-all duration-300 ease-out origin-right
-                ${isTranslateDropdownOpen ? 'opacity-100 scale-100 translate-x-0' : 'opacity-0 scale-75 translate-x-2 pointer-events-none'}
-              `}
-            >
-              {Object.values(SUPPORTED_LANGUAGES).map(code => ({
-                code,
-                flag: LANGUAGE_FLAGS[code],
-                label: LANGUAGE_LABELS[code]
-              })).filter(lang => lang.code !== (props.cvLanguage || DEFAULT_LANGUAGE)).map((lang, index) => (
-                <CreditCostTooltip
-                  key={lang.code}
-                  cost={translateCost}
-                  show={showCosts}
-                  position="bottom"
-                >
-                  <button
-                    onClick={() => executeTranslation(lang.code)}
-                    className={`
-                      w-8 h-8 rounded-full
-                      bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl
-                      flex items-center justify-center
-                      overflow-hidden
-                      hover:shadow-sm-xl hover:bg-white/30
-                      transition-all duration-200
-                      cursor-pointer
-                      p-0.5
-                    `}
-                    style={{
-                      transitionDelay: isTranslateDropdownOpen ? `${index * 50}ms` : '0ms'
-                    }}
-                    title={`Traduire en ${lang.label}`}
-                    aria-label={`Traduire en ${lang.label}`}
-                    type="button"
-                  >
-                    <Image
-                      src={lang.flag}
-                      alt={lang.label}
-                      width={24}
-                      height={24}
-                      className="object-cover"
-                    />
-                  </button>
-                </CreditCostTooltip>
-              ))}
-            </div>
-
-            {/* Bouton principal de traduction */}
-            <button
-              onClick={() => setIsTranslateDropdownOpen(!isTranslateDropdownOpen)}
-              className={`
-                w-8 h-8 rounded-full
-                bg-white/20 backdrop-blur-xl border-2 border-white/30 shadow-2xl
-                flex items-center justify-center
-                hover:shadow-sm-xl hover:bg-white/30
-                transition-all duration-300
-                cursor-pointer
-                ${isTranslateDropdownOpen ? 'shadow-xl' : ''}
-              `}
-              title={t("translate.buttonTitle")}
-              aria-label="Traduire le CV"
-              aria-expanded={isTranslateDropdownOpen}
-              type="button"
-            >
-              <img
-                src={LANGUAGE_FLAGS[props.cvLanguage] || LANGUAGE_FLAGS[DEFAULT_LANGUAGE]}
-                alt={LANGUAGE_LABELS[props.cvLanguage] || LANGUAGE_LABELS[DEFAULT_LANGUAGE]}
-                className="h-6 w-6"
-              />
-            </button>
-          </div>
+          <TranslationDropdown
+            isOpen={isTranslateDropdownOpen}
+            setIsOpen={setIsTranslateDropdownOpen}
+            dropdownRef={translateDropdownRef}
+            executeTranslation={executeTranslation}
+            cvLanguage={props.cvLanguage}
+          />
         </div>
       ) : null}
 
       <Modal open={open} onClose={()=>setOpen(false)} title={t("header.modalTitle")}>
-        <div className="grid gap-3 md:grid-cols-2">
-          <FormRow label={t("header.fullName")}>
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.full_name} onChange={e=>setF({...f,full_name:e.target.value})} />
-          </FormRow>
-          <FormRow label={t("header.currentTitle")}>
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.current_title} onChange={e=>setF({...f,current_title:e.target.value})} />
-          </FormRow>
-          <FormRow label={t("header.email")}>
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.email} onChange={e=>setF({...f,email:e.target.value})} />
-          </FormRow>
-          <FormRow label={t("header.phone")}>
-            <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.phone} onChange={e=>setF({...f,phone:e.target.value})} />
-          </FormRow>
+        <div className="space-y-3">
+          {/* Identité */}
+          <ModalSection title={t("header.identity")} icon={User}>
+            <Grid cols={2}>
+              <FormField label={t("header.fullName")}>
+                <Input
+                  value={f.full_name}
+                  onChange={e => setF({...f, full_name: e.target.value})}
+                  placeholder={t("header.fullName")}
+                />
+              </FormField>
+              <FormField label={t("header.currentTitle")}>
+                <Input
+                  value={f.current_title}
+                  onChange={e => setF({...f, current_title: e.target.value})}
+                  placeholder={t("header.currentTitle")}
+                />
+              </FormField>
+            </Grid>
+          </ModalSection>
 
-          <div className="md:col-span-2 grid grid-cols-3 gap-3">
-            <FormRow label={t("header.city")}>
-              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.city} onChange={e=>setF({...f,city:e.target.value})} />
-            </FormRow>
-            <FormRow label={t("header.region")}>
-              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.region} onChange={e=>setF({...f,region:e.target.value})} />
-            </FormRow>
-            <FormRow label={t("header.countryCode")}>
-              <input className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 w-full hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden transition-all duration-200" value={f.country_code} onChange={e=>setF({...f,country_code:e.target.value})} />
-            </FormRow>
-          </div>
+          {/* Contact */}
+          <ModalSection title={t("header.contact")} icon={Mail}>
+            <Grid cols={2}>
+              <FormField label={t("header.email")}>
+                <Input
+                  value={f.email}
+                  onChange={e => setF({...f, email: e.target.value})}
+                  placeholder={t("header.email")}
+                />
+              </FormField>
+              <FormField label={t("header.phone")}>
+                <Input
+                  value={f.phone}
+                  onChange={e => setF({...f, phone: e.target.value})}
+                  placeholder={t("header.phone")}
+                />
+              </FormField>
+            </Grid>
+          </ModalSection>
+
+          {/* Localisation */}
+          <ModalSection title={t("header.location")} icon={MapPin}>
+            <Grid cols={3}>
+              <FormField label={t("cvSections.placeholders.city")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.city")}
+                  value={f.city}
+                  onChange={e => setF({...f, city: e.target.value})}
+                />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.region")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.region")}
+                  value={f.region}
+                  onChange={e => setF({...f, region: e.target.value})}
+                />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.selectCountry")}>
+                <CountrySelect
+                  className="w-full rounded-md border border-white/20 bg-white/5 px-2.5 py-1.5 text-sm text-white transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30 focus:outline-none"
+                  placeholder={t("cvSections.placeholders.selectCountry")}
+                  value={f.country_code}
+                  onChange={v => setF({...f, country_code: v})}
+                />
+              </FormField>
+            </Grid>
+          </ModalSection>
 
           {/* Liens */}
-          <div className="md:col-span-2">
-            <div className="text-xs font-medium mb-2 uppercase tracking-wide text-white drop-shadow">{t("header.links")}</div>
+          <ModalSection title={t("header.links")} icon={Link2}>
             <div className="space-y-2">
               {linksLocal.length === 0 && (
-                <div className="rounded-sm border border-white/40 bg-white/20 px-2 py-1 text-xs text-white/60">
+                <div className="rounded-md border border-white/20 bg-white/5 px-2.5 py-1.5 text-xs text-white/50">
                   {t("header.noLinks")}
                 </div>
               )}
               {linksLocal.map((row, idx) => (
                 <div key={idx} className="flex gap-2 items-center">
                   <input
-                    className="w-32 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:outline-hidden transition-all duration-200"
+                    className="w-28 shrink-0 rounded-md border border-white/20 bg-white/5 px-2.5 py-1.5 text-sm text-white placeholder:text-white/40 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30 focus:outline-none"
                     placeholder={t("header.labelPlaceholder")}
                     value={row.label}
-                    onChange={e=>{
-                      const arr=[...linksLocal]; arr[idx]={...arr[idx], label:e.target.value}; setLinksLocal(arr);
+                    onChange={e => {
+                      const arr = [...linksLocal];
+                      arr[idx] = {...arr[idx], label: e.target.value};
+                      setLinksLocal(arr);
                     }}
                   />
                   <input
-                    className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-sm text-white placeholder:text-white/50 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:outline-hidden transition-all duration-200"
+                    className="flex-1 min-w-0 rounded-md border border-white/20 bg-white/5 px-2.5 py-1.5 text-sm text-white placeholder:text-white/40 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30 focus:outline-none"
                     placeholder={t("header.urlPlaceholder")}
                     value={row.url}
-                    onChange={e=>{
-                      const arr=[...linksLocal]; arr[idx]={...arr[idx], url:e.target.value}; setLinksLocal(arr);
+                    onChange={e => {
+                      const arr = [...linksLocal];
+                      arr[idx] = {...arr[idx], url: e.target.value};
+                      setLinksLocal(arr);
                     }}
                   />
                   <button
                     type="button"
-                    onClick={()=>{
-                      const arr=[...linksLocal]; arr.splice(idx,1); setLinksLocal(arr);
+                    onClick={() => {
+                      const arr = [...linksLocal];
+                      arr.splice(idx, 1);
+                      setLinksLocal(arr);
                     }}
-                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg border border-red-500/50 bg-red-500/30 text-white hover:bg-red-500/40 transition-all duration-200"
+                    className="flex items-center justify-center rounded-md border border-red-500/50 bg-red-500/20 p-1.5 text-red-400 hover:bg-red-500/30 transition-colors shrink-0"
                     title={t("common.delete")}
                   >
-                    <img src="/icons/delete.png" alt="Delete" className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               ))}
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={()=>setLinksLocal([...(linksLocal||[]), {label:"", url:""}])}
-                  className="px-2 py-1 text-xs font-medium text-white bg-emerald-500/30 border border-emerald-500/50 rounded-lg hover:bg-emerald-500/40 transition-all duration-200 inline-flex items-center gap-1"
-                >
-                  <img src="/icons/add.png" alt="" className="h-3 w-3 " /> {t("header.addLink")}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setLinksLocal([...(linksLocal || []), {label: "", url: ""}])}
+                className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                <Plus className="w-3 h-3" />
+                {t("header.addLink")}
+              </button>
             </div>
-          </div>
+          </ModalSection>
 
-          <div className="md:col-span-2 flex justify-end gap-2">
-            <button onClick={()=>setOpen(false)} className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors" type="button">{t("common.cancel")}</button>
-            <button onClick={save} className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors" type="button">{t("common.save")}</button>
-          </div>
+          <ModalFooter
+            onCancel={() => setOpen(false)}
+            onSave={save}
+            saveLabel={t("common.save")}
+            cancelLabel={t("common.cancel")}
+          />
         </div>
       </Modal>
     </header>
