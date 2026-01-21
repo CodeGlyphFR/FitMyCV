@@ -1,10 +1,10 @@
--- CreateView
--- Vue qui calcule les coûts API min/moyen/max par plan d'abonnement
--- Basée sur les coûts mensuels des utilisateurs (OpenAIUsage)
+-- FixView: Recreate view with proper DROP + CREATE syntax
+-- This migration ensures the view is properly recreated
 
-CREATE OR REPLACE VIEW v_cout_api_par_plan AS
+DROP VIEW IF EXISTS v_cout_api_par_plan;
+
+CREATE VIEW v_cout_api_par_plan AS
 WITH user_monthly_costs AS (
-  -- Calcul du coût mensuel total par utilisateur (mois en cours)
   SELECT
     s."userId",
     sp.name as plan,
