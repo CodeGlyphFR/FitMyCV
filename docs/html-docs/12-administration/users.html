@@ -7,235 +7,27 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <a href="index.html" class="sidebar-logo">FitMyCV<span class="accent">.io</span></a>
-        <div class="sidebar-version">Documentation Technique v1.0.9.5</div>
-      </div>
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
 
-      <nav class="sidebar-nav">
-        <!-- Introduction -->
-        <div class="nav-section">
-          <div class="nav-section-title">Introduction</div>
-          <ul class="nav-list">
-            <li class="nav-item"><a href="index.html">Accueil</a></li>
-          </ul>
-        </div>
-
-        <!-- Architecture -->
-        <div class="nav-section">
-          <div class="nav-section-title">Architecture</div>
-          <ul class="nav-list">
-            <li class="nav-item has-children">
-              <a href="#">Architecture</a>
-              <ul class="nav-children nav-list">
-                <li class="nav-item"><a href="01-architecture/overview.html">Vue d'ensemble</a></li>
-                <li class="nav-item"><a href="01-architecture/tech-stack.html">Stack technologique</a></li>
-                <li class="nav-item"><a href="01-architecture/database.html">Base de données</a></li>
-                <li class="nav-item"><a href="01-architecture/patterns.html">Patterns</a></li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Fonctionnalités Core -->
-        <div class="nav-section">
-          <div class="nav-section-title">Fonctionnalités Core</div>
-          <ul class="nav-list">
-            <li class="nav-item has-children">
-              <a href="#">Authentification</a>
-              <ul class="nav-children nav-list">
-                <li class="nav-item"><a href="02-authentification/overview.html">Vue d'ensemble</a></li>
-                <li class="nav-item"><a href="02-authentification/oauth-flow.html">OAuth Flow</a></li>
-                <li class="nav-item"><a href="02-authentification/credentials-flow.html">Credentials</a></li>
-                <li class="nav-item"><a href="02-authentification/email-verification.html">Vérification Email</a></li>
-              </ul>
-            </li>
-            <li class="nav-item has-children">
-              <a href="#">Gestion des CV</a>
-              <ul class="nav-children nav-list">
-                <li class="nav-item"><a href="03-gestion-cv/overview.html">Vue d'ensemble</a></li>
-                <li class="nav-item"><a href="03-gestion-cv/crud.html">CRUD</a></li>
-                <li class="nav-item"><a href="03-gestion-cv/versioning.html">Versioning</a></li>
-                <li class="nav-item"><a href="03-gestion-cv/import-pdf.html">Import PDF</a></li>
-                <li class="nav-item"><a href="03-gestion-cv/structure-cv.html">Structure JSON</a></li>
-              </ul>
-            </li>
-            <li class="nav-item has-children">
-              <a href="#">Offres d'emploi</a>
-              <ul class="nav-children nav-list">
-                <li class="nav-item"><a href="04-offres-emploi/overview.html">Vue d'ensemble</a></li>
-                <li class="nav-item"><a href="04-offres-emploi/extraction-url.html">Extraction URL</a></li>
-                <li class="nav-item"><a href="04-offres-emploi/extraction-pdf.html">Extraction PDF</a></li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Pipelines IA -->
-        <div class="nav-section">
-          <div class="nav-section-title">Pipelines IA</div>
-          <ul class="nav-list">
-            <li class="nav-item has-children">
-              <a href="#">Génération CV</a>
-              <ul class="nav-children nav-list">
-                <li class="nav-item"><a href="05-pipeline-generation/overview.html">Vue d'ensemble</a></li>
-                <li class="nav-item"><a href="05-pipeline-generation/orchestrator.html">Orchestrateur</a></li>
-                <li class="nav-item"><a href="05-pipeline-generation/phase-classification.html">Classification</a></li>
-                <li class="nav-item"><a href="05-pipeline-generation/phase-batches.html">Batches</a></li>
-                <li class="nav-item"><a href="05-pipeline-generation/phase-recompose.html">Recomposition</a></li>
-                <li class="nav-item"><a href="05-pipeline-generation/prompts.html">Prompts IA</a></li>
-                <li class="nav-item"><a href="05-pipeline-generation/schemas-io.html">Schemas I/O</a></li>
-              </ul>
-            </li>
-            <li class="nav-item has-children">
-              <a href="#">Optimisation CV</a>
-              <ul class="nav-children nav-list">
-                <li class="nav-item"><a href="06-pipeline-optimisation/overview.html">Vue d'ensemble</a></li>
-                <li class="nav-item"><a href="06-pipeline-optimisation/scoring.html">Scoring</a></li>
-                <li class="nav-item"><a href="06-pipeline-optimisation/suggestions.html">Suggestions</a></li>
-                <li class="nav-item"><a href="06-pipeline-optimisation/application.html">Application</a></li>
-                <li class="nav-item"><a href="06-pipeline-optimisation/review-system.html">Review</a></li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Billing -->
-        <div class="nav-section">
-          <div class="nav-section-title">Billing</div>
-          <ul class="nav-list">
-            <li class="nav-item has-children">
-              <a href="#">Abonnements</a>
-              <ul class="nav-children nav-list">
-                <li class="nav-item"><a href="07-abonnements/overview.html">Vue d'ensemble</a></li>
-                <li class="nav-item"><a href="07-abonnements/business-models.html">Modèles économiques</a></li>
-                <li class="nav-item"><a href="07-abonnements/plans-stripe.html">Plans Stripe</a></li>
-                <li class="nav-item"><a href="07-abonnements/checkout-flow.html">Checkout</a></li>
-                <li class="nav-item"><a href="07-abonnements/webhooks.html">Webhooks</a></li>
-              </ul>
-            </li>
-            <li class="nav-item has-children">
-              <a href="#">Crédits</a>
-              <ul class="nav-children nav-list">
-                <li class="nav-item"><a href="08-credits/overview.html">Vue d'ensemble</a></li>
-                <li class="nav-item"><a href="08-credits/welcome-credits.html">Crédits bienvenue</a></li>
-                <li class="nav-item"><a href="08-credits/debit-refund.html">Débit / Remboursement</a></li>
-                <li class="nav-item"><a href="08-credits/feature-limits.html">Limites Features</a></li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Système -->
-        <div class="nav-section">
-          <div class="nav-section-title">Système</div>
-          <ul class="nav-list">
-            <li class="nav-item has-children">
-              <a href="#">Background Jobs</a>
-              <ul class="nav-children nav-list">
-                <li class="nav-item"><a href="09-background-jobs/overview.html">Vue d'ensemble</a></li>
-                <li class="nav-item"><a href="09-background-jobs/task-types.html">Types de tâches</a></li>
-                <li class="nav-item"><a href="09-background-jobs/concurrency.html">Concurrence</a></li>
-              </ul>
-            </li>
-            <li class="nav-item has-children">
-              <a href="#">Export</a>
-              <ul class="nav-children nav-list">
-                <li class="nav-item"><a href="10-export/overview.html">Vue d'ensemble</a></li>
-                <li class="nav-item"><a href="10-export/pdf.html">Export PDF</a></li>
-                <li class="nav-item"><a href="10-export/docx.html">Export DOCX</a></li>
-              </ul>
-            </li>
-            <li class="nav-item"><a href="11-traduction/overview.html">Traduction</a></li>
-          </ul>
-        </div>
-
-        <!-- Administration -->
-        <div class="nav-section">
-          <div class="nav-section-title">Administration</div>
-          <ul class="nav-list">
-            <li class="nav-item has-children">
-              <a href="#">Dashboard Admin</a>
-              <ul class="nav-children nav-list">
-                <li class="nav-item"><a href="12-administration/overview.html">Vue d'ensemble</a></li>
-                <li class="nav-item"><a href="12-administration/users.html">Utilisateurs</a></li>
-                <li class="nav-item"><a href="12-administration/subscription-mode.html">Mode Abonnement</a></li>
-                <li class="nav-item"><a href="12-administration/plans-management.html">Gestion Plans</a></li>
-                <li class="nav-item"><a href="12-administration/credit-packs.html">Packs Crédits</a></li>
-                <li class="nav-item"><a href="12-administration/openai-monitoring.html">Monitoring OpenAI</a></li>
-                <li class="nav-item"><a href="12-administration/email-templates.html">Templates Email</a></li>
-                <li class="nav-item"><a href="12-administration/settings.html">Paramètres</a></li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Autres -->
-        <div class="nav-section">
-          <div class="nav-section-title">Autres</div>
-          <ul class="nav-list">
-            <li class="nav-item"><a href="13-onboarding/overview.html">Onboarding</a></li>
-            <li class="nav-item has-children">
-              <a href="#">Email</a>
-              <ul class="nav-children nav-list">
-                <li class="nav-item"><a href="14-email/overview.html">Vue d'ensemble</a></li>
-                <li class="nav-item"><a href="14-email/templates.html">Templates</a></li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Référence -->
-        <div class="nav-section">
-          <div class="nav-section-title">Référence</div>
-          <ul class="nav-list">
-            <li class="nav-item has-children">
-              <a href="#">API Reference</a>
-              <ul class="nav-children nav-list">
-                <li class="nav-item"><a href="15-api-reference/index.html">Vue d'ensemble</a></li>
-                <li class="nav-item"><a href="15-api-reference/public.html">Publics</a></li>
-                <li class="nav-item"><a href="15-api-reference/authenticated.html">Authentifiés</a></li>
-                <li class="nav-item"><a href="15-api-reference/admin.html">Admin</a></li>
-              </ul>
-            </li>
-            <li class="nav-item"><a href="16-composants/index.html">Composants React</a></li>
-          </ul>
-        </div>
-      </nav>
-    </aside>
-
+    <!-- Main Content -->
     <main class="main">
-      <header class="header">
-        <button class="mobile-menu-button" title="Menu">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        <div class="search-container">
-          <input type="text" class="search-input" placeholder="Rechercher dans la documentation...">
-        </div>
-        <button class="theme-toggle" onclick="toggleTheme()" title="Changer le thème">
-          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-          </svg>
-        </button>
-      </header>
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
 
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
           <span>/</span>
-          <a href="overview.html">Administration</a>
+          <a href="./overview.html">Administration</a>
           <span>/</span>
           <span>Utilisateurs</span>
         </div>
@@ -282,7 +74,6 @@
             </tr>
           </tbody>
         </table>
-
       </div>
     </main>
   </div>
@@ -297,6 +88,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-  <script src="../assets/js/main.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>
 </html>

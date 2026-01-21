@@ -83,12 +83,14 @@ export async function GET(request, { params }) {
           // Calculer le chemin absolu depuis la racine des docs
           let absoluteUrl;
           if (url.startsWith('./')) {
+            // ./fichier.html - dossier courant
             absoluteUrl = path.join(currentDir, url.substring(2));
           } else if (url.startsWith('../')) {
+            // ../fichier.html - remonter d'un niveau
             absoluteUrl = path.normalize(path.join(currentDir, url));
           } else {
-            // Chemin relatif simple - résoudre depuis la racine (pas le dossier courant)
-            // car les fichiers HTML ont des liens relatifs à la racine
+            // Chemin sans ../ ou ./ : toujours depuis la racine des docs
+            // Ex: index.html, 01-architecture/overview.html
             absoluteUrl = url;
           }
 

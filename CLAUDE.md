@@ -150,13 +150,6 @@ Consultez `docs/` pour la documentation technique complète :
 
 Une documentation HTML complète est disponible dans `docs/html-docs/`. Elle sert de vitrine technique pour démontrer les compétences en ingénierie IA.
 
-### Accès
-```bash
-# Servir localement
-cd docs/html-docs && python -m http.server 8080
-# Puis ouvrir http://localhost:8080
-```
-
 ### Structure
 ```
 docs/html-docs/

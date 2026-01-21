@@ -8,6 +8,9 @@
 // ========================================
 
 const searchIndex = [
+  // Accueil
+  { title: "Accueil", path: "index.html", section: "Documentation", keywords: "accueil home documentation fitmycv" },
+
   // Architecture
   { title: "Vue d'ensemble", path: "01-architecture/overview.html", section: "Architecture", keywords: "architecture vue ensemble stack next.js react prisma" },
   { title: "Stack technologique", path: "01-architecture/tech-stack.html", section: "Architecture", keywords: "stack next.js react tailwind prisma openai stripe" },
@@ -92,13 +95,13 @@ const searchIndex = [
   { title: "Templates", path: "14-email/templates.html", section: "Email", keywords: "templates email triggers" },
 
   // API
-  { title: "Référence API", path: "15-api-reference/index.html", section: "API", keywords: "api endpoints routes" },
+  { title: "Référence API", path: "15-api-reference/overview.html", section: "API", keywords: "api endpoints routes" },
   { title: "Endpoints Publics", path: "15-api-reference/public.html", section: "API", keywords: "api public endpoints" },
   { title: "Endpoints Authentifiés", path: "15-api-reference/authenticated.html", section: "API", keywords: "api authentifié endpoints" },
   { title: "Endpoints Admin", path: "15-api-reference/admin.html", section: "API", keywords: "api admin endpoints" },
 
   // Composants
-  { title: "Composants React", path: "16-composants/index.html", section: "Composants", keywords: "composants react ui components" }
+  { title: "Composants React", path: "16-composants/overview.html", section: "Composants", keywords: "composants react ui components" }
 ];
 
 // ========================================
@@ -186,12 +189,14 @@ function initNavigation() {
   });
 
   // Navigation AJAX pour les liens de la sidebar
+  // Utiliser data-href (chemin original depuis la racine) s'il existe
   document.querySelectorAll('.sidebar-nav a').forEach(link => {
-    const href = link.getAttribute('href');
-    if (href && href !== '#' && href.endsWith('.html')) {
+    const originalHref = link.getAttribute('data-href') || link.getAttribute('href');
+    if (originalHref && originalHref !== '#' && originalHref.endsWith('.html')) {
       link.addEventListener('click', (e) => {
         e.preventDefault();
-        navigateToPage(href, link);
+        // Passer le chemin original depuis la racine, pas le href modifié
+        navigateToPage(originalHref, originalHref);
       });
     }
   });
@@ -201,7 +206,7 @@ function initNavigation() {
   if (logo) {
     logo.addEventListener('click', (e) => {
       e.preventDefault();
-      navigateToPage('index.html', null);
+      navigateToPage('index.html', 'index.html');
     });
   }
 
@@ -214,6 +219,29 @@ function initNavigation() {
 
   // Marquer l'élément actif initial
   updateActiveLink();
+
+  // Initialiser les liens du contenu (breadcrumb, liens internes)
+  initContentLinks();
+}
+
+// Intercepter les liens internes dans le contenu (breadcrumb uniquement)
+// Les autres liens du contenu fonctionnent comme des liens HTML normaux
+function initContentLinks() {
+  // Seulement le breadcrumb - les liens du contenu restent des liens HTML standards
+  const breadcrumbLinks = document.querySelectorAll('.breadcrumb a');
+
+  breadcrumbLinks.forEach(link => {
+    if (link.dataset.ajaxBound) return;
+    link.dataset.ajaxBound = 'true';
+
+    const href = link.getAttribute('href');
+    if (!href || href.startsWith('http') || href.startsWith('#')) return;
+
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigateToPage(href, null);
+    });
+  });
 }
 
 function getBaseUrl() {
@@ -233,13 +261,21 @@ function getBaseUrl() {
 function navigateToPage(href, clickedLink) {
   let targetUrl;
 
-  // Si le href est déjà un chemin absolu (commence par /)
+  console.log('[navigateToPage] href:', href, '| current URL:', window.location.href);
+
   if (href.startsWith('/')) {
+    // Chemin absolu depuis la racine du site
     targetUrl = window.location.origin + href;
+    console.log('[navigateToPage] → Chemin absolu, targetUrl:', targetUrl);
+  } else if (href.startsWith('../') || href.startsWith('./')) {
+    // Chemin relatif explicite : résoudre par rapport à l'URL courante
+    targetUrl = new URL(href, window.location.href).href;
+    console.log('[navigateToPage] → Chemin relatif explicite, targetUrl:', targetUrl);
   } else {
-    // Construire l'URL absolue par rapport à la racine du site
+    // Chemin depuis la racine docs (ex: index.html, 01-architecture/overview.html)
     const baseUrl = getBaseUrl();
     targetUrl = baseUrl + href;
+    console.log('[navigateToPage] → Chemin depuis racine, baseUrl:', baseUrl, '| targetUrl:', targetUrl);
   }
 
   // Fermer la sidebar en mode mobile
@@ -271,6 +307,11 @@ async function loadPageContent(url, pushState = true, clickedLink = null) {
     const newTitle = doc.querySelector('title');
 
     if (newContent) {
+      // Scroll à 0 AVANT de modifier le contenu pour éviter les décalages
+      const main = document.querySelector('.main');
+      main.scrollTop = 0;
+      window.scrollTo(0, 0);
+
       // Remplacer le contenu
       const currentContent = document.querySelector('.content');
       currentContent.innerHTML = newContent.innerHTML;
@@ -291,12 +332,11 @@ async function loadPageContent(url, pushState = true, clickedLink = null) {
       // Réinitialiser les éléments dynamiques du contenu
       reinitContentElements();
 
-      // Scroll en haut du contenu
-      document.querySelector('.main').scrollTop = 0;
-      window.scrollTo(0, 0);
-
-      // Désactiver temporairement l'infinite scroll pour éviter le chargement immédiat
-      pauseInfiniteScroll(1000);
+      // Re-scroll à 0 après le rendu pour être sûr
+      requestAnimationFrame(() => {
+        main.scrollTop = 0;
+        window.scrollTo(0, 0);
+      });
     } else {
       throw new Error('Content not found in page');
     }
@@ -329,12 +369,20 @@ function updateActiveLink(clickedLinkOrHref = null) {
 
   // Si on a un href cible, chercher le lien exact dans la sidebar
   if (targetHref) {
+    // Normaliser le href cible (retirer les ../ et ./)
+    const normalizedTarget = targetHref.replace(/^(\.\.\/)+/, '').replace(/^\.\//, '');
+
     const allLinks = document.querySelectorAll('.sidebar-nav a');
     for (const link of allLinks) {
       const linkHref = link.getAttribute('href');
-      if (linkHref === targetHref) {
+      if (!linkHref || linkHref === '#') continue;
+
+      // Normaliser le href du lien sidebar
+      const normalizedLink = linkHref.replace(/^(\.\.\/)+/, '').replace(/^\.\//, '');
+
+      if (normalizedLink === normalizedTarget) {
         activeLink = link;
-        break; // Arrêter dès qu'on trouve le premier match exact
+        break;
       }
     }
   }
@@ -366,10 +414,19 @@ function updateActiveLink(clickedLinkOrHref = null) {
       const href = link.getAttribute('href');
       if (!href || href === '#') continue;
 
-      const linkPath = href.replace(/^(\.\.\/)+/, '').replace(/^\.\//, '');
+      // Normaliser le href du lien (gérer les chemins relatifs ET absolus)
+      let linkPath = href;
+      if (href.startsWith('/api/admin/docs/')) {
+        linkPath = href.substring('/api/admin/docs/'.length);
+      } else if (href.includes('html-docs/')) {
+        linkPath = href.substring(href.indexOf('html-docs/') + 'html-docs/'.length);
+      } else {
+        linkPath = href.replace(/^(\.\.\/)+/, '').replace(/^\.\//, '');
+      }
+
       if (linkPath === currentRelativePath) {
         activeLink = link;
-        break; // Arrêter dès qu'on trouve le premier match
+        break;
       }
     }
   }
@@ -432,6 +489,164 @@ function reinitContentElements() {
 
   // Réinitialiser Mermaid avec la méthode complète
   reinitMermaid();
+
+  // Réinitialiser les liens internes (breadcrumb, liens vers autres pages)
+  initContentLinks();
+
+  // Injecter la navigation précédent/suivant
+  injectPageNavigation();
+}
+
+// ========================================
+// NAVIGATION PAGE (Précédent/Suivant)
+// ========================================
+
+function getCurrentPageIndex() {
+  const currentPath = window.location.pathname;
+  let normalizedPath = currentPath;
+
+  // Normaliser le chemin selon l'environnement
+  if (currentPath.includes('/api/admin/docs/')) {
+    normalizedPath = currentPath.split('/api/admin/docs/')[1];
+  } else if (currentPath.includes('/html-docs/')) {
+    normalizedPath = currentPath.split('/html-docs/')[1];
+  }
+
+  // Supprimer le slash initial si présent
+  normalizedPath = normalizedPath.replace(/^\//, '');
+
+  return searchIndex.findIndex(item => normalizedPath === item.path || normalizedPath.endsWith('/' + item.path));
+}
+
+function createPageNavigation() {
+  const currentIndex = getCurrentPageIndex();
+  if (currentIndex === -1) return null;
+
+  const prev = currentIndex > 0 ? searchIndex[currentIndex - 1] : null;
+  const next = currentIndex < searchIndex.length - 1 ? searchIndex[currentIndex + 1] : null;
+
+  return { prev, next };
+}
+
+function getRelativeNavPath(targetPath) {
+  // Calcule le chemin relatif correct depuis la page courante vers la cible
+  const currentPath = window.location.pathname;
+
+  // Extraire le dossier courant (le dossier contenant le fichier HTML actuel)
+  // Ex: /05-pipeline-generation/overview.html -> "05-pipeline-generation"
+  // Ex: /html-docs/05-pipeline-generation/overview.html -> "05-pipeline-generation"
+  // Ex: /index.html -> ""
+  // Ex: /html-docs/index.html -> ""
+  let currentDir = '';
+
+  // Nettoyer le path pour obtenir juste la partie relative à la doc
+  let cleanPath = currentPath;
+  if (cleanPath.includes('/api/admin/docs/')) {
+    cleanPath = cleanPath.split('/api/admin/docs/')[1] || '';
+  } else if (cleanPath.includes('/html-docs/')) {
+    cleanPath = cleanPath.split('/html-docs/')[1] || '';
+  }
+  // Enlever le slash initial si présent
+  cleanPath = cleanPath.replace(/^\//, '');
+
+  // Maintenant cleanPath est genre "05-pipeline-generation/overview.html" ou "index.html"
+  if (cleanPath.includes('/')) {
+    currentDir = cleanPath.substring(0, cleanPath.lastIndexOf('/'));
+  }
+
+  // Extraire le dossier cible
+  // Ex: "05-pipeline-generation/orchestrator.html" -> "05-pipeline-generation"
+  // Ex: "index.html" -> ""
+  const targetDir = targetPath.includes('/')
+    ? targetPath.substring(0, targetPath.lastIndexOf('/'))
+    : '';
+
+  // Extraire juste le nom du fichier cible
+  const targetFile = targetPath.includes('/')
+    ? targetPath.substring(targetPath.lastIndexOf('/') + 1)
+    : targetPath;
+
+  // Debug
+  console.log('[PageNav] currentPath:', currentPath, '| currentDir:', currentDir, '| targetPath:', targetPath, '| targetDir:', targetDir);
+
+  // Calculer le chemin relatif
+  if (currentDir === '' && targetDir === '') {
+    // Racine -> Racine (ex: index.html -> autre.html)
+    return './' + targetFile;
+  } else if (currentDir === '' && targetDir !== '') {
+    // Racine -> Sous-dossier (ex: index.html -> 01-architecture/overview.html)
+    return targetPath;
+  } else if (currentDir !== '' && targetDir === '') {
+    // Sous-dossier -> Racine (ex: 01-architecture/overview.html -> index.html)
+    return '../' + targetPath;
+  } else if (currentDir === targetDir) {
+    // Même sous-dossier (ex: overview.html -> orchestrator.html dans 05-pipeline-generation/)
+    // Utiliser ./ explicite pour que navigateToPage() le traite comme relatif
+    return './' + targetFile;
+  } else {
+    // Sous-dossiers différents (ex: 05-pipeline-generation/x.html -> 06-pipeline-optimisation/y.html)
+    return '../' + targetPath;
+  }
+}
+
+function renderPageNavigation(nav) {
+  if (!nav) return '';
+  const { prev, next } = nav;
+
+  let html = '<nav class="page-nav">';
+
+  if (prev) {
+    const prevHref = getRelativeNavPath(prev.path);
+    html += `
+      <a href="${prevHref}" class="page-nav-link page-nav-prev">
+        <span class="page-nav-direction">← Précédent</span>
+        <span class="page-nav-title">${prev.title}</span>
+        <span class="page-nav-section">${prev.section}</span>
+      </a>`;
+  } else {
+    html += '<div class="page-nav-spacer"></div>';
+  }
+
+  if (next) {
+    const nextHref = getRelativeNavPath(next.path);
+    html += `
+      <a href="${nextHref}" class="page-nav-link page-nav-next">
+        <span class="page-nav-direction">Suivant →</span>
+        <span class="page-nav-title">${next.title}</span>
+        <span class="page-nav-section">${next.section}</span>
+      </a>`;
+  } else {
+    html += '<div class="page-nav-spacer"></div>';
+  }
+
+  html += '</nav>';
+  return html;
+}
+
+function injectPageNavigation() {
+  const content = document.querySelector('.content');
+  if (!content) return;
+
+  // Supprimer navigation existante
+  const existingNav = content.querySelector('.page-nav');
+  if (existingNav) existingNav.remove();
+
+  const nav = createPageNavigation();
+  const navHtml = renderPageNavigation(nav);
+
+  if (navHtml) {
+    content.insertAdjacentHTML('beforeend', navHtml);
+
+    // Lier à la navigation AJAX
+    content.querySelectorAll('.page-nav-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        // Utiliser href (chemin relatif correct) pour la navigation
+        // navigateToPage() sait résoudre les chemins relatifs avec ../
+        navigateToPage(link.getAttribute('href'), link.getAttribute('href'));
+      });
+    });
+  }
 }
 
 // ========================================
@@ -721,9 +936,17 @@ function getMermaidTheme() {
 
 function initMermaid() {
   if (typeof mermaid !== 'undefined') {
+    // IMPORTANT: Stocker le code original AVANT tout rendu
+    // Sinon, après le rendu, el.textContent ne contient plus le code Mermaid
+    document.querySelectorAll('.mermaid').forEach(el => {
+      if (!el.getAttribute('data-original') && el.textContent.trim()) {
+        el.setAttribute('data-original', el.textContent);
+      }
+    });
+
     const themeConfig = getMermaidTheme();
     mermaid.initialize({
-      startOnLoad: true,
+      startOnLoad: false, // Ne pas rendre automatiquement
       ...themeConfig,
       flowchart: {
         useMaxWidth: true,
@@ -731,6 +954,9 @@ function initMermaid() {
         curve: 'basis'
       }
     });
+
+    // Rendre manuellement les diagrammes
+    mermaid.run();
   }
 }
 
@@ -761,143 +987,34 @@ function reinitMermaid() {
 }
 
 // ========================================
-// INFINITE SCROLL (Chargement page suivante)
-// ========================================
-
-// Flag global pour désactiver temporairement l'infinite scroll après navigation
-let infiniteScrollPaused = false;
-
-function pauseInfiniteScroll(duration = 1000) {
-  infiniteScrollPaused = true;
-  setTimeout(() => {
-    infiniteScrollPaused = false;
-  }, duration);
-}
-
-function initInfiniteScroll() {
-  let isLoading = false;
-
-  // Fonction de détection du scroll
-  function checkScroll() {
-    if (isLoading || infiniteScrollPaused) return;
-
-    const main = document.querySelector('.main');
-    let scrollTop, scrollHeight, clientHeight;
-
-    // En mode mobile, le scroll est sur .main, sinon sur window
-    if (window.innerWidth <= 768 && main) {
-      scrollTop = main.scrollTop;
-      scrollHeight = main.scrollHeight;
-      clientHeight = main.clientHeight;
-    } else {
-      scrollTop = window.scrollY || document.documentElement.scrollTop;
-      scrollHeight = document.documentElement.scrollHeight;
-      clientHeight = window.innerHeight;
-    }
-
-    // Détecter si on est proche du bas (150px avant la fin)
-    if (scrollTop + clientHeight >= scrollHeight - 150) {
-      const nextPage = getNextPage();
-      if (nextPage) {
-        isLoading = true;
-        loadNextPage(nextPage).then(() => {
-          isLoading = false;
-        });
-      }
-    }
-  }
-
-  // Écouter le scroll sur window et .main
-  window.addEventListener('scroll', checkScroll);
-  const main = document.querySelector('.main');
-  if (main) {
-    main.addEventListener('scroll', checkScroll);
-  }
-}
-
-function getNextPage() {
-  // Récupérer tous les liens de navigation (pages HTML uniquement)
-  const allLinks = Array.from(document.querySelectorAll('.sidebar-nav a'))
-    .filter(link => {
-      const href = link.getAttribute('href');
-      return href && href !== '#' && href.endsWith('.html');
-    });
-
-  // Trouver le lien actif
-  const activeLink = document.querySelector('.sidebar-nav a.active');
-  if (!activeLink) return null;
-
-  // Trouver l'index du lien actif
-  const currentIndex = allLinks.indexOf(activeLink);
-  if (currentIndex === -1 || currentIndex >= allLinks.length - 1) return null;
-
-  // Retourner le lien suivant
-  return allLinks[currentIndex + 1];
-}
-
-function loadNextPage(nextLink) {
-  const href = nextLink.getAttribute('href');
-  let targetUrl;
-
-  // Si le href est déjà un chemin absolu (commence par /)
-  if (href.startsWith('/')) {
-    targetUrl = window.location.origin + href;
-  } else {
-    const baseUrl = getBaseUrl();
-    targetUrl = baseUrl + href;
-  }
-
-  return fetch(targetUrl)
-    .then(response => response.text())
-    .then(html => {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const newContent = doc.querySelector('.content');
-
-      if (newContent) {
-        // Ajouter un séparateur
-        const separator = document.createElement('div');
-        separator.className = 'page-separator';
-        separator.innerHTML = `<hr><h2 class="next-page-title">${doc.querySelector('h1')?.textContent || 'Page suivante'}</h2>`;
-
-        const currentContent = document.querySelector('.content');
-        currentContent.appendChild(separator);
-
-        // Ajouter le nouveau contenu (sans le h1 qui est déjà dans le séparateur)
-        const contentToAppend = newContent.cloneNode(true);
-        const h1 = contentToAppend.querySelector('h1');
-        if (h1) h1.remove();
-
-        while (contentToAppend.firstChild) {
-          currentContent.appendChild(contentToAppend.firstChild);
-        }
-
-        // Mettre à jour l'URL et le lien actif
-        history.pushState({ href: targetUrl }, '', targetUrl);
-        updateActiveLink(nextLink);
-
-        // Réinitialiser les éléments dynamiques
-        reinitContentElements();
-      }
-    })
-    .catch(error => {
-      console.error('Erreur chargement page suivante:', error);
-    });
-}
-
-// ========================================
 // INITIALISATION
 // ========================================
 
 // Initialiser le thème immédiatement pour éviter le flash
 initTheme();
 
-document.addEventListener('DOMContentLoaded', () => {
+// Fonction d'initialisation principale
+function initAll() {
   initSearch();
   initNavigation();
   initTableOfContents();
   initMobileMenu();
   initCodeCopy();
   initMermaid();
-  initInfiniteScroll();
+  injectPageNavigation();
+}
+
+// Support pour les deux modes :
+// 1. Avec layout.js (nouvelles pages) : attendre layoutReady
+// 2. Sans layout.js (anciennes pages) : DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+  // Si la sidebar existe déjà (ancien format), initialiser directement
+  if (document.querySelector('.sidebar-nav')) {
+    initAll();
+  }
+});
+
+// Écouter l'événement layoutReady (nouveau format avec templates)
+document.addEventListener('layoutReady', () => {
+  initAll();
 });

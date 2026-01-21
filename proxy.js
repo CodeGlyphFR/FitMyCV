@@ -175,10 +175,10 @@ export async function proxy(request) {
     // Content Security Policy
     'Content-Security-Policy': [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://editor.unlayer.com", // Next.js + reCAPTCHA + Unlayer
-      "style-src 'self' 'unsafe-inline'", // Tailwind nécessite unsafe-inline
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://editor.unlayer.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com", // Next.js + reCAPTCHA + Unlayer + Mermaid/Prism (docs)
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com", // Tailwind + Google Fonts + Prism (docs)
       "img-src 'self' data: https:",
-      "font-src 'self' data:",
+      "font-src 'self' data: https://fonts.gstatic.com",
       `connect-src ${connectSrcSources.join(' ')} https://editor.unlayer.com https://api.unlayer.com`,
       "frame-src 'self' https://www.google.com https://editor.unlayer.com", // reCAPTCHA + Unlayer frames + Admin docs
       "frame-ancestors 'self'",
