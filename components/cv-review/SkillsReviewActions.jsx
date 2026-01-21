@@ -1,15 +1,16 @@
 "use client";
 import React from "react";
-import { useHighlight } from "./HighlightProvider";
+import { useHighlight } from "@/components/providers/HighlightProvider";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 /**
- * Boutons "Tout accepter" / "Tout refuser" pour une section entière
- * Affiche uniquement si il y a des changements pending pour cette section
+ * Liens "Tout accepter" / "Tout refuser" pour une catégorie de compétences
+ * Affiche uniquement si il y a des changements pending pour ce field
+ * Utilise les fonctions batch pour éviter les multiples refreshs
  *
- * @param {string} section - La section à filtrer (skills, experience, etc.)
+ * @param {string} field - Le champ de compétences (hard_skills, tools, methodologies, soft_skills)
  */
-export default function SectionReviewActions({ section }) {
+export default function SkillsReviewActions({ field }) {
   const { t } = useLanguage();
   const {
     pendingChanges,
@@ -19,13 +20,16 @@ export default function SectionReviewActions({ section }) {
     isBatchProcessing,
   } = useHighlight();
 
-  // Filtrer les changements pending pour cette section
-  const sectionChanges = pendingChanges.filter(
-    (c) => c.section === section && c.status === "pending"
+  // Filtrer les changements pending pour cette catégorie de skills
+  const skillChanges = pendingChanges.filter(
+    (c) =>
+      c.section === "skills" &&
+      c.field === field &&
+      c.status === "pending"
   );
 
   // Ne rien afficher si pas de changements ou pas sur la dernière version
-  if (!isLatestVersion || sectionChanges.length === 0) {
+  if (!isLatestVersion || skillChanges.length === 0) {
     return null;
   }
 
@@ -34,7 +38,7 @@ export default function SectionReviewActions({ section }) {
     e.stopPropagation();
     if (isBatchProcessing) return;
 
-    const changeIds = sectionChanges.map((c) => c.id);
+    const changeIds = skillChanges.map((c) => c.id);
     await acceptAllChanges(changeIds);
   };
 
@@ -43,7 +47,7 @@ export default function SectionReviewActions({ section }) {
     e.stopPropagation();
     if (isBatchProcessing) return;
 
-    const changeIds = sectionChanges.map((c) => c.id);
+    const changeIds = skillChanges.map((c) => c.id);
     await rejectAllChanges(changeIds);
   };
 
@@ -56,10 +60,11 @@ export default function SectionReviewActions({ section }) {
   );
 
   return (
-    <div className="flex items-center gap-2 text-xs no-print">
+    <div className="flex items-center gap-2 text-xs no-print mt-2">
       {isBatchProcessing ? (
         <span className="inline-flex items-center gap-2 text-white/70">
           <LoadingSpinner />
+          {t("review.processing") || "Traitement en cours..."}
         </span>
       ) : (
         <>
@@ -71,7 +76,7 @@ export default function SectionReviewActions({ section }) {
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            {t("review.acceptAll") || "Tout accepter"}
+            {t("review.acceptAll")}
           </button>
           <span className="text-white/30">•</span>
           <button
@@ -82,7 +87,7 @@ export default function SectionReviewActions({ section }) {
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-            {t("review.rejectAll") || "Tout refuser"}
+            {t("review.rejectAll")}
           </button>
         </>
       )}

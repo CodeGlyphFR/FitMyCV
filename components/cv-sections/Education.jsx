@@ -1,10 +1,10 @@
 "use client";
 import React from "react";
-import Section from "./Section";
+import Section from "@/components/layout/Section";
 import { ym } from "@/lib/utils/textFormatting";
-import { useAdmin } from "./admin/AdminProvider";
-import useMutate from "./admin/useMutate";
-import Modal from "./ui/Modal";
+import { useAdmin } from "@/components/admin/AdminProvider";
+import useMutate from "@/components/admin/useMutate";
+import Modal from "@/components/ui/Modal";
 import {
   ModalSection,
   FormField,
@@ -15,11 +15,11 @@ import {
   GraduationCap,
   Calendar,
   MapPin,
-} from "./ui/ModalForm";
+} from "@/components/ui/ModalForm";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
-import CountrySelect from "./CountrySelect";
-import MonthPicker from "./ui/MonthPicker";
+import CountrySelect from "@/components/ui/CountrySelect";
+import MonthPicker from "@/components/ui/MonthPicker";
 
 export default function Education(props){
   const { t } = useLanguage();

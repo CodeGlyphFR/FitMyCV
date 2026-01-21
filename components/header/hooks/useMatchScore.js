@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
-import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
+import { useBackgroundTasks } from "@/components/providers/BackgroundTasksProvider";
 import { parseApiError } from "@/lib/utils/errorHandler";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 

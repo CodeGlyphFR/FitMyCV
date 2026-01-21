@@ -3,10 +3,10 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import PipelineTaskProgress from "./ui/PipelineTaskProgress";
-import GenericTaskProgressBar from "./ui/GenericTaskProgressBar";
-import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
-import { usePipelineProgressContext } from "@/components/PipelineProgressProvider";
+import PipelineTaskProgress from "@/components/ui/PipelineTaskProgress";
+import GenericTaskProgressBar from "@/components/ui/GenericTaskProgressBar";
+import { useBackgroundTasks } from "@/components/providers/BackgroundTasksProvider";
+import { usePipelineProgressContext } from "@/components/providers/PipelineProgressProvider";
 import { sortTasksForDisplay } from "@/lib/background-jobs/sortTasks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from "@/lib/onboarding/onboardingEvents";

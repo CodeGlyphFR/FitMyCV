@@ -1,5 +1,5 @@
 "use client";
-import { useHighlight } from "./HighlightProvider";
+import { useHighlight } from "@/components/providers/HighlightProvider";
 
 /**
  * Hook pour vérifier si une langue a des changements pending (pour le highlighting)

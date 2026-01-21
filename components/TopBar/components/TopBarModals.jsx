@@ -7,7 +7,7 @@ import DeleteCvModal from "../modals/DeleteCvModal";
 import BulkDeleteCvModal from "../modals/BulkDeleteCvModal";
 import NewCvModal from "../modals/NewCvModal";
 import ExportPdfModal from "../modals/ExportPdfModal";
-import TaskQueueModal from "@/components/TaskQueueModal";
+import TaskQueueModal from "@/components/task-queue/TaskQueueModal";
 import Modal from "@/components/ui/Modal";
 
 /**

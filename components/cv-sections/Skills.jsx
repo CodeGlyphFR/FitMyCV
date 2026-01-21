@@ -1,16 +1,16 @@
 "use client";
 import React from "react";
-import Section from "./Section";
-import { useAdmin } from "./admin/AdminProvider";
-import useMutate from "./admin/useMutate";
-import Modal from "./ui/Modal";
+import Section from "@/components/layout/Section";
+import { useAdmin } from "@/components/admin/AdminProvider";
+import useMutate from "@/components/admin/useMutate";
+import Modal from "@/components/ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getSkillLevelLabel } from "@/lib/i18n/cvLabels";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import { capitalizeSkillName } from "@/lib/utils/textFormatting";
-import SkillItemHighlight, { RemovedSkillsDisplay, RemovedSkillsDisplayBlock, useRemovedItems } from "./SkillItemHighlight";
-import SectionReviewActions from "./SectionReviewActions";
-import SkillsReviewActions from "./SkillsReviewActions";
+import SkillItemHighlight, { RemovedSkillsDisplay, RemovedSkillsDisplayBlock, useRemovedItems } from "@/components/cv-review/SkillItemHighlight";
+import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
+import SkillsReviewActions from "@/components/cv-review/SkillsReviewActions";
 import { normalizeToNumber, VALID_SKILL_LEVELS, SKILL_LEVEL_KEYS } from "@/lib/constants/skillLevels";
 import { Code, Wrench, Workflow, Heart, Plus, Trash2 } from "lucide-react";
 import {
@@ -20,7 +20,7 @@ import {
   Select,
   Grid,
   ModalFooter,
-} from "./ui/ModalForm";
+} from "@/components/ui/ModalForm";
 
 function Row({children}){ return <div className="flex gap-2">{children}</div>; }
 

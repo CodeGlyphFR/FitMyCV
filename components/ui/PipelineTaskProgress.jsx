@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
-import { usePipelineProgressContext } from '@/components/PipelineProgressProvider';
+import { usePipelineProgressContext } from '@/components/providers/PipelineProgressProvider';
 import { PIPELINE_STEPS, calculateOfferProgress } from '@/hooks/usePipelineProgress';
 
 /**

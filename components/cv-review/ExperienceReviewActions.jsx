@@ -1,16 +1,14 @@
 "use client";
 import React from "react";
-import { useHighlight } from "./HighlightProvider";
+import { useHighlight } from "@/components/providers/HighlightProvider";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 /**
- * Liens "Tout accepter" / "Tout refuser" pour une catégorie de compétences
- * Affiche uniquement si il y a des changements pending pour ce field
+ * Liens "Tout accepter" / "Tout refuser" pour une expérience
+ * Affiche uniquement si il y a des changements pending pour cette expérience
  * Utilise les fonctions batch pour éviter les multiples refreshs
- *
- * @param {string} field - Le champ de compétences (hard_skills, tools, methodologies, soft_skills)
  */
-export default function SkillsReviewActions({ field }) {
+export default function ExperienceReviewActions({ expIndex }) {
   const { t } = useLanguage();
   const {
     pendingChanges,
@@ -20,16 +18,16 @@ export default function SkillsReviewActions({ field }) {
     isBatchProcessing,
   } = useHighlight();
 
-  // Filtrer les changements pending pour cette catégorie de skills
-  const skillChanges = pendingChanges.filter(
+  // Filtrer les changements pending pour cette expérience
+  const expChanges = pendingChanges.filter(
     (c) =>
-      c.section === "skills" &&
-      c.field === field &&
+      c.section === "experience" &&
+      c.expIndex === expIndex &&
       c.status === "pending"
   );
 
   // Ne rien afficher si pas de changements ou pas sur la dernière version
-  if (!isLatestVersion || skillChanges.length === 0) {
+  if (!isLatestVersion || expChanges.length === 0) {
     return null;
   }
 
@@ -38,8 +36,9 @@ export default function SkillsReviewActions({ field }) {
     e.stopPropagation();
     if (isBatchProcessing) return;
 
-    const changeIds = skillChanges.map((c) => c.id);
-    await acceptAllChanges(changeIds);
+    // Utiliser la fonction batch avec tous les IDs et l'index de l'expérience
+    const changeIds = expChanges.map((c) => c.id);
+    await acceptAllChanges(changeIds, { expIndex });
   };
 
   const handleRejectAll = async (e) => {
@@ -47,8 +46,9 @@ export default function SkillsReviewActions({ field }) {
     e.stopPropagation();
     if (isBatchProcessing) return;
 
-    const changeIds = skillChanges.map((c) => c.id);
-    await rejectAllChanges(changeIds);
+    // Utiliser la fonction batch avec tous les IDs et l'index de l'expérience
+    const changeIds = expChanges.map((c) => c.id);
+    await rejectAllChanges(changeIds, { expIndex });
   };
 
   // Spinner de chargement
@@ -60,7 +60,7 @@ export default function SkillsReviewActions({ field }) {
   );
 
   return (
-    <div className="flex items-center gap-2 text-xs no-print mt-2">
+    <div className="flex items-center gap-3 text-xs no-print">
       {isBatchProcessing ? (
         <span className="inline-flex items-center gap-2 text-white/70">
           <LoadingSpinner />

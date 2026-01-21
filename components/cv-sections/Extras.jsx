@@ -1,9 +1,9 @@
 "use client";
 import React from "react";
-import Section from "./Section";
-import { useAdmin } from "./admin/AdminProvider";
-import useMutate from "./admin/useMutate";
-import Modal from "./ui/Modal";
+import Section from "@/components/layout/Section";
+import { useAdmin } from "@/components/admin/AdminProvider";
+import useMutate from "@/components/admin/useMutate";
+import Modal from "@/components/ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import { capitalizeSkillName, toTitleCase } from "@/lib/utils/textFormatting";
@@ -15,7 +15,7 @@ import {
   Textarea,
   ModalFooter,
   ModalFooterDelete,
-} from "./ui/ModalForm";
+} from "@/components/ui/ModalForm";
 
 export default function Extras(props){
   const { t } = useLanguage();
