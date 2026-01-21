@@ -1,0 +1,370 @@
+{
+  "about": {
+    "story": {
+      "title": "Our story",
+      "paragraphs": [
+        "FitMyCV was born from a frustration many know too well: spending hours adapting your resume for each job application. Rephrasing, reorganizing, hoping this time it will pass the recruiter filters...",
+        "We thought there had to be a better way. What if AI could help us create resumes truly tailored to each job offer?"
+      ]
+    },
+    "mission": {
+      "title": "Our mission",
+      "paragraphs": [
+        "To save you time and give you the best chances of landing that interview. No generic resume sent en masse, but a tailored CV for each opportunity.",
+        "Because every job offer is unique, your resume should be too."
+      ]
+    },
+    "features": {
+      "title": "What FitMyCV can do for you",
+      "items": [
+        {
+          "icon": "sparkles",
+          "title": "Smart generation",
+          "description": "AI analyzes the job offer and adapts your resume to highlight the skills being sought."
+        },
+        {
+          "icon": "target",
+          "title": "Match score",
+          "description": "Instantly know if your profile matches the job with a detailed compatibility score."
+        },
+        {
+          "icon": "globe",
+          "title": "Multi-language",
+          "description": "Translate your resume in one click. French, English, Spanish, German... your choice."
+        },
+        {
+          "icon": "bolt",
+          "title": "ATS optimized",
+          "description": "Pass through automated recruiter filters with properly formatted content."
+        },
+        {
+          "icon": "chart",
+          "title": "Multiple analysis levels",
+          "description": "From quick to in-depth, choose the analysis level that suits your needs.",
+          "fullWidth": true
+        }
+      ]
+    },
+    "howItWorks": {
+      "title": "How does it work?",
+      "steps": [
+        {
+          "step": 1,
+          "title": "Import your resume",
+          "description": "Upload your existing resume as PDF or create a new one directly on the platform."
+        },
+        {
+          "step": 2,
+          "title": "Paste the job offer",
+          "description": "Copy-paste the text of the job that interests you. AI will analyze it in detail."
+        },
+        {
+          "step": 3,
+          "title": "Generate your optimized resume",
+          "description": "In seconds, get a resume tailored to the job, ready to download and send."
+        }
+      ]
+    },
+    "contact": {
+      "title": "Any questions?",
+      "description": "Our team is here to help. Don't hesitate to reach out!",
+      "email": "contact@fitmycv.io",
+      "linksPrefix": "Also check our",
+      "linksTerms": "terms of service",
+      "linksAnd": "and",
+      "linksPrivacy": "privacy policy"
+    }
+  },
+  "terms": {
+    "_untranslated": false,
+    "sections": [
+      {
+        "id": "acceptance",
+        "title": "1. Acceptance of Terms",
+        "content": [
+          { "type": "paragraph", "text": "By using FitMyCV.io and making a credit purchase or subscribing to a plan, you unconditionally accept these Terms of Service." },
+          { "type": "paragraph", "text": "If you do not accept these terms, please do not use our paid services." }
+        ]
+      },
+      {
+        "id": "services",
+        "title": "2. Service Description",
+        "content": [
+          { "type": "paragraph", "text": "FitMyCV.io offers two types of paid services:" },
+          { "type": "subtitle", "text": "2.1. Credits (one-time payments)" },
+          { "type": "paragraph", "text": "Credits allow you to use premium features on a pay-per-use basis. One credit = one use of a premium feature. Credits do not expire and remain valid as long as your account is active." },
+          { "type": "subtitle", "text": "2.2. Subscriptions (recurring payments)" },
+          { "type": "paragraph", "text": "Subscriptions provide access to a defined number of monthly uses depending on the chosen plan (Free, Pro, Premium). Usage limits are reset at each billing period." }
+        ]
+      },
+      {
+        "id": "pricing",
+        "title": "3. Pricing and Payments",
+        "content": [
+          { "type": "paragraph", "text": "All prices are displayed in euros (including VAT) and include all applicable taxes." },
+          { "type": "paragraph", "text": "Payments are secured by Stripe and accept credit cards, Apple Pay, Google Pay, and other payment methods depending on your location." },
+          { "type": "paragraph", "text": "Subscriptions are automatically renewed at the end of each period (monthly or annual) unless cancelled by you." }
+        ]
+      },
+      {
+        "id": "withdrawal",
+        "title": "4. Right of Withdrawal (14 days)",
+        "content": [
+          { "type": "paragraph", "text": "In accordance with French consumer protection legislation, you have a 14-day withdrawal period from your purchase or subscription, provided you have not used the service." },
+          { "type": "paragraph", "text": "If you have used credits or generated CVs during this period, the right of withdrawal is void and no refund will be issued." },
+          { "type": "highlight", "variant": "warning", "title": "Important:", "text": "To exercise your right of withdrawal, contact us at the email address below before any use of the service." }
+        ]
+      },
+      {
+        "id": "refund",
+        "title": "5. Refund Policy",
+        "content": [
+          { "type": "paragraph", "text": "No refunds are issued once the service has been used (CV generation, credit usage, etc.)." },
+          { "type": "paragraph", "text": "In case of technical issues preventing service use, contact our support. We will review your case individually." },
+          { "type": "highlight", "variant": "danger", "title": "No refunds:", "text": "All purchases are final after service use. By making a purchase, you acknowledge having read and accepted this clause." }
+        ]
+      },
+      {
+        "id": "chargebacks",
+        "title": "6. Chargebacks and Banking Disputes",
+        "content": [
+          { "type": "paragraph", "text": "In case of a chargeback (payment dispute with your bank) after using the service:" },
+          { "type": "list", "items": [
+            "For credits: The disputed credit amount will be deducted from your balance, which may become negative. You will need to top up your account to continue using the service.",
+            "For subscriptions: Your subscription will be immediately cancelled and you will be downgraded to the Free plan."
+          ]},
+          { "type": "highlight", "variant": "warning", "title": "Warning:", "text": "Abusive chargebacks may result in permanent account suspension." }
+        ]
+      },
+      {
+        "id": "subscription-changes",
+        "title": "7. Subscription Modification and Cancellation",
+        "content": [
+          { "type": "subtitle", "text": "7.1. Subscription Upgrade" },
+          { "type": "paragraph", "text": "You can upgrade your subscription at any time (e.g., Free → Pro, Monthly → Annual). The amount will be calculated pro-rata based on the remaining time on your current period. The new billing cycle starts immediately." },
+          { "type": "subtitle", "text": "7.2. Subscription Downgrade" },
+          { "type": "paragraph", "text": "You can downgrade your subscription (e.g., Premium → Pro). The change will take effect at the next billing date without pro-rata refund for the current period." },
+          { "type": "paragraph", "text": "Restriction: Downgrading from an annual to a monthly subscription is not permitted. You must cancel your annual subscription and subscribe to a new monthly plan after expiration." },
+          { "type": "subtitle", "text": "7.3. Subscription Cancellation" },
+          { "type": "paragraph", "text": "You can cancel your subscription at any time from your account. The cancellation takes effect at the end of the current billing period. You retain access to premium features until that date." }
+        ]
+      },
+      {
+        "id": "intellectual-property",
+        "title": "8. Intellectual Property",
+        "content": [
+          { "type": "paragraph", "text": "The CVs you create via FitMyCV.io belong to you. You retain all rights to the content you provide." },
+          { "type": "paragraph", "text": "The interface, source code, algorithms, and all elements of FitMyCV.io are the exclusive property of the publisher and are protected by copyright." }
+        ]
+      },
+      {
+        "id": "liability",
+        "title": "9. Limitation of Liability",
+        "content": [
+          { "type": "paragraph", "text": "FitMyCV.io strives to provide a quality service but does not guarantee:" },
+          { "type": "list", "items": [
+            "The absence of interruptions or technical errors",
+            "Compatibility of generated CVs with all ATS (Applicant Tracking Systems)",
+            "Obtaining an interview or employment following use of the service"
+          ]},
+          { "type": "paragraph", "text": "Our liability is limited to the amount you have paid for the service in the last 12 months." }
+        ]
+      },
+      {
+        "id": "modifications",
+        "title": "10. Modification of Terms",
+        "content": [
+          { "type": "paragraph", "text": "We reserve the right to modify these Terms at any time. Modifications will be posted on this page with the update date. Continued use of the service after modification constitutes acceptance of the new terms." }
+        ]
+      },
+      {
+        "id": "jurisdiction",
+        "title": "11. Applicable Law and Jurisdiction",
+        "content": [
+          { "type": "paragraph", "text": "These Terms are governed by French law." },
+          { "type": "paragraph", "text": "In case of dispute, and after an attempt at amicable resolution, the courts of Paris shall have exclusive jurisdiction." }
+        ]
+      },
+      {
+        "id": "legal-info",
+        "title": "12. Legal Information",
+        "content": [
+          { "type": "paragraph", "text": "Publisher of FitMyCV.io service:" },
+          { "type": "highlight", "variant": "info", "text": "Name: [To be completed]\nStatus: Micro-enterprise\nSIRET: [To be completed]\nAddress: [To be completed]\nEmail: [To be completed]" },
+          { "type": "highlight", "variant": "success", "text": "For any questions regarding these Terms, contact us at the email address above." }
+        ]
+      }
+    ]
+  },
+  "privacy": {
+    "_untranslated": false,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "1. Introduction",
+        "content": [
+          { "type": "paragraph", "text": "This privacy policy describes how FitMyCV.io collects, uses, stores, and protects your personal data in accordance with the General Data Protection Regulation (GDPR) and applicable French legislation." },
+          { "type": "paragraph", "text": "We are committed to protecting your privacy and processing your personal data in a transparent, secure, and compliant manner." }
+        ]
+      },
+      {
+        "id": "controller",
+        "title": "2. Data Controller",
+        "content": [
+          { "type": "infobox", "text": "Data Controller: FitMyCV.io\nContact: [To be completed with your email address]" }
+        ]
+      },
+      {
+        "id": "data-collected",
+        "title": "3. Data Collected",
+        "content": [
+          { "type": "paragraph", "text": "We collect the following data:" },
+          { "type": "subtitle", "text": "3.1. Identification Data" },
+          { "type": "list", "items": ["Full name", "Email address", "Password (encrypted)", "Profile picture (if provided via OAuth)"] },
+          { "type": "subtitle", "text": "3.2. CV Data" },
+          { "type": "list", "items": ["Professional information (experience, education, skills)", "Contact details (phone, address, professional links)", "Uploaded documents (PDF CVs, job offers)"] },
+          { "type": "subtitle", "text": "3.3. Connection Data" },
+          { "type": "list", "items": ["IP address", "Browser type", "Pages visited and time spent", "Session data"] },
+          { "type": "subtitle", "text": "3.4. Cookies" },
+          { "type": "paragraph", "text": "See our cookie management page for more details.", "link": "/cookies" }
+        ]
+      },
+      {
+        "id": "purposes",
+        "title": "4. Processing Purposes",
+        "content": [
+          { "type": "paragraph", "text": "Your data is used for the following purposes:" },
+          { "type": "list", "items": [
+            "User account management: creation, authentication, profile management",
+            "Service provision: creation, storage, and generation of personalized CVs",
+            "Service improvement: usage analysis, bug fixes, new feature development",
+            "Communication: service notifications, user support, feedback responses",
+            "Security: fraud prevention, abuse detection, data protection"
+          ]}
+        ]
+      },
+      {
+        "id": "legal-basis",
+        "title": "5. Legal Basis for Processing",
+        "content": [
+          { "type": "list", "items": [
+            "Contract execution: provision of CV creation service",
+            "Consent: analytics cookies (audience measurement)",
+            "Legitimate interest: service improvement, security, internal telemetry",
+            "Legal obligation: data retention for tax obligations"
+          ]}
+        ]
+      },
+      {
+        "id": "telemetry",
+        "title": "5bis. Internal Telemetry (Legitimate Interest)",
+        "content": [
+          { "type": "paragraph", "text": "As part of our legitimate interest in providing a reliable and secure service, we collect certain technical data without prior consent:" },
+          { "type": "list", "items": [
+            "Error logs: to identify and fix malfunctions",
+            "Performance metrics: AI call response times, success rates",
+            "System events: CV creation, imports, generations (without personal content)",
+            "API usage: to detect abuse and ensure service availability"
+          ]},
+          { "type": "paragraph", "text": "This data is:" },
+          { "type": "list", "items": [
+            "Stored exclusively in our database (not transmitted to third parties)",
+            "Used only to improve the service and detect issues",
+            "Retained for a maximum of 12 months",
+            "Not shared with third parties for commercial purposes"
+          ]},
+          { "type": "highlight", "variant": "success", "title": "Your right to object:", "text": "In accordance with Article 21 of the GDPR, you can object to this collection by contacting us. Please note that this may affect our ability to diagnose issues with your account and ensure service security." }
+        ]
+      },
+      {
+        "id": "retention",
+        "title": "6. Retention Period",
+        "content": [
+          { "type": "list", "items": [
+            "Active account: as long as the account exists",
+            "Deleted account: 30 days after deletion (cooling-off period)",
+            "Consent cookies: 6 months",
+            "Session cookies: 30 days",
+            "Connection logs: 12 months maximum"
+          ]}
+        ]
+      },
+      {
+        "id": "sharing",
+        "title": "7. Data Sharing",
+        "content": [
+          { "type": "paragraph", "text": "Your personal data is never sold. It may only be shared with:" },
+          { "type": "list", "items": [
+            "Service providers: hosting (cloud infrastructure), authentication (NextAuth, OAuth providers), AI (OpenAI for CV generation)",
+            "Legal authorities: if required by law or to protect our rights"
+          ]},
+          { "type": "highlight", "variant": "info", "title": "Important:", "text": "Your CV data is sent to OpenAI (GPT model) for generation and adaptation. OpenAI states that it does not use API data to train its models." }
+        ]
+      },
+      {
+        "id": "security",
+        "title": "8. Data Security",
+        "content": [
+          { "type": "paragraph", "text": "We implement the following security measures:" },
+          { "type": "list", "items": [
+            "Encryption: AES-256-GCM for all stored CVs",
+            "HTTPS: secure communication (SSL/TLS)",
+            "Password hashing: bcrypt with salt",
+            "CSRF protection: anti-forgery tokens",
+            "Secure cookies: HttpOnly, Secure, SameSite",
+            "Secure authentication: JWT, session tokens",
+            "Anti-spam protection: Google reCAPTCHA v3 to prevent abuse"
+          ]},
+          { "type": "highlight", "variant": "info", "title": "reCAPTCHA Protection:", "text": "This site is protected by reCAPTCHA and Google's Privacy Policy and Terms of Service apply." }
+        ]
+      },
+      {
+        "id": "rights",
+        "title": "9. Your Rights (GDPR)",
+        "content": [
+          { "type": "paragraph", "text": "Under the GDPR, you have the following rights:" },
+          { "type": "list", "items": [
+            "Right of access: view your personal data",
+            "Right to rectification: correct inaccurate data",
+            "Right to erasure: delete your data (\"right to be forgotten\")",
+            "Right to restriction: restrict processing of your data",
+            "Right to data portability: receive your data in a structured format",
+            "Right to object: object to processing on legitimate grounds",
+            "Right to withdraw consent: at any time"
+          ]},
+          { "type": "highlight", "variant": "success", "text": "To exercise your rights, contact us at: [email to be completed]" }
+        ]
+      },
+      {
+        "id": "international",
+        "title": "10. International Transfers",
+        "content": [
+          { "type": "paragraph", "text": "Your data may be transferred and stored outside the European Union (particularly via OpenAI based in the United States). These transfers are governed by appropriate safeguards (standard contractual clauses, certifications)." }
+        ]
+      },
+      {
+        "id": "modifications",
+        "title": "11. Policy Modifications",
+        "content": [
+          { "type": "paragraph", "text": "We reserve the right to modify this privacy policy at any time. Modifications will be posted on this page with the update date. We encourage you to review this page regularly." }
+        ]
+      },
+      {
+        "id": "complaints",
+        "title": "12. Complaints",
+        "content": [
+          { "type": "paragraph", "text": "If you believe your rights are not being respected, you can file a complaint with the CNIL (French Data Protection Authority):" },
+          { "type": "infobox", "text": "CNIL\n3 Place de Fontenoy - TSA 80715\n75334 PARIS CEDEX 07\nPhone: 01 53 73 22 22\nWebsite: www.cnil.fr" }
+        ]
+      },
+      {
+        "id": "contact",
+        "title": "13. Contact",
+        "content": [
+          { "type": "paragraph", "text": "For any questions regarding this privacy policy or your personal data, contact us at:" },
+          { "type": "highlight", "variant": "info", "text": "Email: [To be completed]\nAddress: [To be completed]" }
+        ]
+      }
+    ]
+  }
+}

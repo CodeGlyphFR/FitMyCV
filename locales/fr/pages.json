@@ -1,0 +1,370 @@
+{
+  "about": {
+    "story": {
+      "title": "Notre histoire",
+      "paragraphs": [
+        "FitMyCV est né d'une frustration que beaucoup connaissent : passer des heures à adapter son CV pour chaque candidature. Reformuler, réorganiser, espérer que cette fois-ci, ça passera les filtres des recruteurs...",
+        "On s'est dit qu'il devait y avoir une meilleure façon de faire. Et si l'IA pouvait nous aider à créer des CV vraiment adaptés à chaque offre ?"
+      ]
+    },
+    "mission": {
+      "title": "Notre mission",
+      "paragraphs": [
+        "Vous faire gagner du temps et vous donner les meilleures chances de décrocher l'entretien. Pas de CV générique envoyé à la chaîne, mais un CV taillé sur mesure pour chaque opportunité.",
+        "Parce que chaque offre d'emploi est unique, votre CV devrait l'être aussi."
+      ]
+    },
+    "features": {
+      "title": "Ce que FitMyCV peut faire pour vous",
+      "items": [
+        {
+          "icon": "sparkles",
+          "title": "Génération intelligente",
+          "description": "L'IA analyse l'offre d'emploi et adapte votre CV pour mettre en avant les compétences recherchées."
+        },
+        {
+          "icon": "target",
+          "title": "Score de compatibilité",
+          "description": "Sachez instantanément si votre profil correspond à l'offre avec un score détaillé."
+        },
+        {
+          "icon": "globe",
+          "title": "Multi-langues",
+          "description": "Traduisez votre CV en un clic. Français, anglais, espagnol, allemand... à vous de choisir."
+        },
+        {
+          "icon": "bolt",
+          "title": "Optimisé ATS",
+          "description": "Passez les filtres automatiques des recruteurs grâce à un formatage adapté."
+        },
+        {
+          "icon": "chart",
+          "title": "Plusieurs niveaux d'analyse",
+          "description": "Du rapide à l'approfondi, choisissez le niveau d'analyse qui vous convient selon vos besoins.",
+          "fullWidth": true
+        }
+      ]
+    },
+    "howItWorks": {
+      "title": "Comment ça marche ?",
+      "steps": [
+        {
+          "step": 1,
+          "title": "Importez votre CV",
+          "description": "Uploadez votre CV existant en PDF ou créez-en un nouveau directement sur la plateforme."
+        },
+        {
+          "step": 2,
+          "title": "Collez l'offre d'emploi",
+          "description": "Copiez-collez le texte de l'offre qui vous intéresse. L'IA va l'analyser en détail."
+        },
+        {
+          "step": 3,
+          "title": "Générez votre CV optimisé",
+          "description": "En quelques secondes, obtenez un CV adapté à l'offre, prêt à être téléchargé et envoyé."
+        }
+      ]
+    },
+    "contact": {
+      "title": "Une question ?",
+      "description": "Notre équipe est là pour vous aider. N'hésitez pas à nous contacter !",
+      "email": "contact@fitmycv.io",
+      "linksPrefix": "Consultez aussi nos",
+      "linksTerms": "conditions d'utilisation",
+      "linksAnd": "et notre",
+      "linksPrivacy": "politique de confidentialité"
+    }
+  },
+  "terms": {
+    "_untranslated": false,
+    "sections": [
+      {
+        "id": "acceptance",
+        "title": "1. Acceptation des CGV",
+        "content": [
+          { "type": "paragraph", "text": "En utilisant FitMyCV.io et en effectuant un achat de crédits ou en souscrivant à un abonnement, vous acceptez sans réserve les présentes Conditions Générales de Vente (CGV)." },
+          { "type": "paragraph", "text": "Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser nos services payants." }
+        ]
+      },
+      {
+        "id": "services",
+        "title": "2. Description des services",
+        "content": [
+          { "type": "paragraph", "text": "FitMyCV.io propose deux types de services payants :" },
+          { "type": "subtitle", "text": "2.1. Crédits (paiements ponctuels)" },
+          { "type": "paragraph", "text": "Les crédits permettent d'utiliser les fonctionnalités premium de manière ponctuelle. Un crédit = une utilisation d'une fonctionnalité premium. Les crédits n'ont pas de date d'expiration et restent valables tant que votre compte est actif." },
+          { "type": "subtitle", "text": "2.2. Abonnements (paiements récurrents)" },
+          { "type": "paragraph", "text": "Les abonnements donnent accès à un nombre défini d'utilisations mensuelles selon le plan choisi (Gratuit, Pro, Premium). Les limites d'utilisation sont réinitialisées à chaque période de facturation." }
+        ]
+      },
+      {
+        "id": "pricing",
+        "title": "3. Tarifs et paiements",
+        "content": [
+          { "type": "paragraph", "text": "Tous les prix sont affichés en euros (TTC) et incluent toutes les taxes applicables en vigueur." },
+          { "type": "paragraph", "text": "Les paiements sont sécurisés par Stripe et acceptent les cartes bancaires, Apple Pay, Google Pay et d'autres moyens de paiement selon votre localisation." },
+          { "type": "paragraph", "text": "Les abonnements sont renouvelés automatiquement à la fin de chaque période (mensuelle ou annuelle) sauf annulation de votre part." }
+        ]
+      },
+      {
+        "id": "withdrawal",
+        "title": "4. Droit de rétractation (14 jours)",
+        "content": [
+          { "type": "paragraph", "text": "Conformément à la législation française sur la protection des consommateurs, vous disposez d'un délai de rétractation de 14 jours à compter de votre achat ou souscription, à condition de ne pas avoir utilisé le service." },
+          { "type": "paragraph", "text": "Si vous avez utilisé des crédits ou généré des CV durant cette période, le droit de rétractation est caduc et aucun remboursement ne sera effectué." },
+          { "type": "highlight", "variant": "warning", "title": "Important :", "text": "Pour exercer votre droit de rétractation, contactez-nous à l'adresse email ci-dessous avant toute utilisation du service." }
+        ]
+      },
+      {
+        "id": "refund",
+        "title": "5. Politique de remboursement",
+        "content": [
+          { "type": "paragraph", "text": "Aucun remboursement n'est effectué une fois le service utilisé (génération de CV, utilisation de crédits, etc.)." },
+          { "type": "paragraph", "text": "En cas de problème technique empêchant l'utilisation du service, contactez notre support. Nous étudierons votre cas au cas par cas." },
+          { "type": "highlight", "variant": "danger", "title": "Aucun remboursement :", "text": "Tout achat est définitif après utilisation du service. En effectuant un achat, vous reconnaissez avoir pris connaissance de cette clause et l'accepter." }
+        ]
+      },
+      {
+        "id": "chargebacks",
+        "title": "6. Chargebacks et litiges bancaires",
+        "content": [
+          { "type": "paragraph", "text": "En cas de chargeback (contestation de paiement auprès de votre banque) après utilisation du service :" },
+          { "type": "list", "items": [
+            "Pour les crédits : Le montant des crédits contestés sera retiré de votre balance, qui peut devenir négative. Vous devrez recharger votre compte pour continuer à utiliser le service.",
+            "Pour les abonnements : Votre abonnement sera immédiatement annulé et vous serez rétrogradé vers le plan Gratuit."
+          ]},
+          { "type": "highlight", "variant": "warning", "title": "Attention :", "text": "Les chargebacks abusifs peuvent entraîner la suspension définitive de votre compte." }
+        ]
+      },
+      {
+        "id": "subscription-changes",
+        "title": "7. Modification et annulation d'abonnement",
+        "content": [
+          { "type": "subtitle", "text": "7.1. Upgrade d'abonnement" },
+          { "type": "paragraph", "text": "Vous pouvez upgrader votre abonnement à tout moment (Ex: Gratuit → Pro, Mensuel → Annuel). Le montant sera calculé au prorata du temps restant sur votre période actuelle. Le nouveau cycle de facturation commence immédiatement." },
+          { "type": "subtitle", "text": "7.2. Downgrade d'abonnement" },
+          { "type": "paragraph", "text": "Vous pouvez downgrader votre abonnement (Ex: Premium → Pro). Le changement prendra effet à la prochaine date de facturation sans remboursement du prorata pour la période en cours." },
+          { "type": "paragraph", "text": "Restriction : Le downgrade d'un abonnement annuel vers un abonnement mensuel n'est pas autorisé. Vous devez annuler votre abonnement annuel puis souscrire un nouvel abonnement mensuel après expiration." },
+          { "type": "subtitle", "text": "7.3. Annulation d'abonnement" },
+          { "type": "paragraph", "text": "Vous pouvez annuler votre abonnement à tout moment depuis votre compte. L'annulation prend effet à la fin de la période de facturation en cours. Vous conservez l'accès aux fonctionnalités premium jusqu'à cette date." }
+        ]
+      },
+      {
+        "id": "intellectual-property",
+        "title": "8. Propriété intellectuelle",
+        "content": [
+          { "type": "paragraph", "text": "Les CV que vous créez via FitMyCV.io vous appartiennent. Vous conservez tous les droits sur le contenu que vous fournissez." },
+          { "type": "paragraph", "text": "L'interface, le code source, les algorithmes et tous les éléments de FitMyCV.io sont la propriété exclusive de l'éditeur et sont protégés par le droit d'auteur." }
+        ]
+      },
+      {
+        "id": "liability",
+        "title": "9. Limitation de responsabilité",
+        "content": [
+          { "type": "paragraph", "text": "FitMyCV.io s'efforce de fournir un service de qualité mais ne garantit pas :" },
+          { "type": "list", "items": [
+            "L'absence d'interruptions ou d'erreurs techniques",
+            "La compatibilité des CV générés avec tous les systèmes ATS (Applicant Tracking Systems)",
+            "L'obtention d'un entretien ou d'un emploi suite à l'utilisation du service"
+          ]},
+          { "type": "paragraph", "text": "Notre responsabilité est limitée au montant que vous avez payé pour le service au cours des 12 derniers mois." }
+        ]
+      },
+      {
+        "id": "modifications",
+        "title": "10. Modification des CGV",
+        "content": [
+          { "type": "paragraph", "text": "Nous nous réservons le droit de modifier ces CGV à tout moment. Les modifications seront publiées sur cette page avec la date de mise à jour. La poursuite de l'utilisation du service après modification vaut acceptation des nouvelles conditions." }
+        ]
+      },
+      {
+        "id": "jurisdiction",
+        "title": "11. Droit applicable et juridiction",
+        "content": [
+          { "type": "paragraph", "text": "Les présentes CGV sont régies par le droit français." },
+          { "type": "paragraph", "text": "En cas de litige, et après tentative de résolution amiable, les tribunaux de Paris seront seuls compétents." }
+        ]
+      },
+      {
+        "id": "legal-info",
+        "title": "12. Informations légales",
+        "content": [
+          { "type": "paragraph", "text": "Éditeur du service FitMyCV.io :" },
+          { "type": "highlight", "variant": "info", "text": "Nom : [À compléter]\nStatut : Micro-entreprise\nSIRET : [À compléter]\nAdresse : [À compléter]\nEmail : [À compléter]" },
+          { "type": "highlight", "variant": "success", "text": "Pour toute question concernant ces CGV, contactez-nous à l'adresse email ci-dessus." }
+        ]
+      }
+    ]
+  },
+  "privacy": {
+    "_untranslated": false,
+    "sections": [
+      {
+        "id": "introduction",
+        "title": "1. Introduction",
+        "content": [
+          { "type": "paragraph", "text": "La présente politique de confidentialité décrit comment FitMyCV.io collecte, utilise, stocke et protège vos données personnelles conformément au Règlement Général sur la Protection des Données (RGPD) et à la législation française en vigueur." },
+          { "type": "paragraph", "text": "Nous nous engageons à protéger votre vie privée et à traiter vos données personnelles de manière transparente, sécurisée et conforme aux réglementations applicables." }
+        ]
+      },
+      {
+        "id": "controller",
+        "title": "2. Responsable du traitement",
+        "content": [
+          { "type": "infobox", "text": "Responsable du traitement : FitMyCV.io\nContact : [À compléter avec votre adresse email]" }
+        ]
+      },
+      {
+        "id": "data-collected",
+        "title": "3. Données collectées",
+        "content": [
+          { "type": "paragraph", "text": "Nous collectons les données suivantes :" },
+          { "type": "subtitle", "text": "3.1. Données d'identification" },
+          { "type": "list", "items": ["Nom complet", "Adresse email", "Mot de passe (chiffré)", "Photo de profil (si fournie via OAuth)"] },
+          { "type": "subtitle", "text": "3.2. Données de CV" },
+          { "type": "list", "items": ["Informations professionnelles (expériences, formations, compétences)", "Coordonnées de contact (téléphone, adresse, liens professionnels)", "Documents uploadés (CV PDF, offres d'emploi)"] },
+          { "type": "subtitle", "text": "3.3. Données de connexion" },
+          { "type": "list", "items": ["Adresse IP", "Type de navigateur", "Pages visitées et temps passé", "Données de session"] },
+          { "type": "subtitle", "text": "3.4. Cookies" },
+          { "type": "paragraph", "text": "Consultez notre page de gestion des cookies pour plus de détails.", "link": "/cookies" }
+        ]
+      },
+      {
+        "id": "purposes",
+        "title": "4. Finalités du traitement",
+        "content": [
+          { "type": "paragraph", "text": "Vos données sont utilisées pour les finalités suivantes :" },
+          { "type": "list", "items": [
+            "Gestion du compte utilisateur : création, authentification, gestion de votre profil",
+            "Fourniture du service : création, stockage et génération de CV personnalisés",
+            "Amélioration du service : analyse d'utilisation, correction de bugs, développement de nouvelles fonctionnalités",
+            "Communication : notifications de service, support utilisateur, réponse aux retours",
+            "Sécurité : prévention de la fraude, détection d'abus, protection des données"
+          ]}
+        ]
+      },
+      {
+        "id": "legal-basis",
+        "title": "5. Base légale du traitement",
+        "content": [
+          { "type": "list", "items": [
+            "Exécution du contrat : fourniture du service de création de CV",
+            "Consentement : cookies analytiques (mesure d'audience)",
+            "Intérêt légitime : amélioration du service, sécurité, télémétrie interne",
+            "Obligation légale : conservation des données pour obligations fiscales"
+          ]}
+        ]
+      },
+      {
+        "id": "telemetry",
+        "title": "5bis. Télémétrie interne (Intérêt légitime)",
+        "content": [
+          { "type": "paragraph", "text": "Dans le cadre de notre intérêt légitime à fournir un service fiable et sécurisé, nous collectons certaines données techniques sans consentement préalable :" },
+          { "type": "list", "items": [
+            "Logs d'erreurs : pour identifier et corriger les dysfonctionnements",
+            "Métriques de performance : temps de réponse des appels IA, taux de succès",
+            "Événements système : création de CV, imports, générations (sans contenu personnel)",
+            "Usage des appels API : pour détecter les abus et garantir la disponibilité du service"
+          ]},
+          { "type": "paragraph", "text": "Ces données sont :" },
+          { "type": "list", "items": [
+            "Stockées exclusivement dans notre base de données (pas de transmission à des tiers)",
+            "Utilisées uniquement pour améliorer le service et détecter les problèmes",
+            "Conservées 12 mois maximum",
+            "Non partagées avec des tiers à des fins commerciales"
+          ]},
+          { "type": "highlight", "variant": "success", "title": "Votre droit d'opposition :", "text": "Conformément à l'article 21 du RGPD, vous pouvez vous opposer à cette collecte en nous contactant. Notez que cela pourrait affecter notre capacité à diagnostiquer les problèmes sur votre compte et à garantir la sécurité du service." }
+        ]
+      },
+      {
+        "id": "retention",
+        "title": "6. Durée de conservation",
+        "content": [
+          { "type": "list", "items": [
+            "Compte actif : tant que le compte existe",
+            "Compte supprimé : 30 jours après suppression (délai de rétractation)",
+            "Cookies de consentement : 6 mois",
+            "Cookies de session : 30 jours",
+            "Logs de connexion : 12 mois maximum"
+          ]}
+        ]
+      },
+      {
+        "id": "sharing",
+        "title": "7. Partage des données",
+        "content": [
+          { "type": "paragraph", "text": "Vos données personnelles ne sont jamais vendues. Elles peuvent être partagées uniquement avec :" },
+          { "type": "list", "items": [
+            "Fournisseurs de services : hébergement (infrastructure cloud), authentification (NextAuth, OAuth providers), IA (OpenAI pour génération de CV)",
+            "Autorités légales : si requis par la loi ou pour protéger nos droits"
+          ]},
+          { "type": "highlight", "variant": "info", "title": "Important :", "text": "Les données de vos CV sont envoyées à OpenAI (modèle GPT) pour génération et adaptation. OpenAI affirme ne pas utiliser les données des API pour entraîner ses modèles." }
+        ]
+      },
+      {
+        "id": "security",
+        "title": "8. Sécurité des données",
+        "content": [
+          { "type": "paragraph", "text": "Nous mettons en œuvre les mesures de sécurité suivantes :" },
+          { "type": "list", "items": [
+            "Chiffrement : AES-256-GCM pour tous les CV stockés",
+            "HTTPS : communication sécurisée (SSL/TLS)",
+            "Hashage des mots de passe : bcrypt avec salt",
+            "Protection CSRF : tokens anti-falsification",
+            "Cookies sécurisés : HttpOnly, Secure, SameSite",
+            "Authentification sécurisée : JWT, session tokens",
+            "Protection anti-spam : Google reCAPTCHA v3 pour prévenir les abus"
+          ]},
+          { "type": "highlight", "variant": "info", "title": "Protection reCAPTCHA :", "text": "Ce site est protégé par reCAPTCHA et la Politique de confidentialité et les Conditions d'utilisation de Google s'appliquent." }
+        ]
+      },
+      {
+        "id": "rights",
+        "title": "9. Vos droits (RGPD)",
+        "content": [
+          { "type": "paragraph", "text": "Conformément au RGPD, vous disposez des droits suivants :" },
+          { "type": "list", "items": [
+            "Droit d'accès : consulter vos données personnelles",
+            "Droit de rectification : corriger vos données inexactes",
+            "Droit à l'effacement : supprimer vos données (\"droit à l'oubli\")",
+            "Droit à la limitation : restreindre le traitement de vos données",
+            "Droit à la portabilité : récupérer vos données dans un format structuré",
+            "Droit d'opposition : vous opposer au traitement pour motif légitime",
+            "Droit de retirer votre consentement : à tout moment"
+          ]},
+          { "type": "highlight", "variant": "success", "text": "Pour exercer vos droits, contactez-nous à : [email à compléter]" }
+        ]
+      },
+      {
+        "id": "international",
+        "title": "10. Transferts internationaux",
+        "content": [
+          { "type": "paragraph", "text": "Vos données peuvent être transférées et stockées en dehors de l'Union Européenne (notamment via OpenAI basé aux États-Unis). Ces transferts sont encadrés par des garanties appropriées (clauses contractuelles types, certifications)." }
+        ]
+      },
+      {
+        "id": "modifications",
+        "title": "11. Modifications de la politique",
+        "content": [
+          { "type": "paragraph", "text": "Nous nous réservons le droit de modifier cette politique de confidentialité à tout moment. Les modifications seront publiées sur cette page avec la date de mise à jour. Nous vous encourageons à consulter régulièrement cette page." }
+        ]
+      },
+      {
+        "id": "complaints",
+        "title": "12. Réclamations",
+        "content": [
+          { "type": "paragraph", "text": "Si vous estimez que vos droits ne sont pas respectés, vous pouvez déposer une réclamation auprès de la CNIL (Commission Nationale de l'Informatique et des Libertés) :" },
+          { "type": "infobox", "text": "CNIL\n3 Place de Fontenoy - TSA 80715\n75334 PARIS CEDEX 07\nTéléphone : 01 53 73 22 22\nSite web : www.cnil.fr" }
+        ]
+      },
+      {
+        "id": "contact",
+        "title": "13. Contact",
+        "content": [
+          { "type": "paragraph", "text": "Pour toute question concernant cette politique de confidentialité ou vos données personnelles, contactez-nous à :" },
+          { "type": "highlight", "variant": "info", "text": "Email : [À compléter]\nAdresse : [À compléter]" }
+        ]
+      }
+    ]
+  }
+}

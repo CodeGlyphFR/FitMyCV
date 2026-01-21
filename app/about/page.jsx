@@ -1,21 +1,10 @@
 'use client';
 
 import { useLanguage } from '@/lib/i18n/LanguageContext';
-import AboutContentFR from '@/lib/about/fr';
-import AboutContentEN from '@/lib/about/en';
-import AboutContentES from '@/lib/about/es';
-import AboutContentDE from '@/lib/about/de';
-
-const contentByLanguage = {
-  fr: AboutContentFR,
-  en: AboutContentEN,
-  es: AboutContentES,
-  de: AboutContentDE,
-};
+import AboutContent from '@/components/pages/AboutContent';
 
 export default function AboutPage() {
-  const { t, language } = useLanguage();
-  const AboutContent = contentByLanguage[language] || AboutContentFR;
+  const { t } = useLanguage();
 
   return (
     <div className="min-h-screen">
