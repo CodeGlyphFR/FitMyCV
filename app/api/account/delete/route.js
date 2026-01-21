@@ -3,9 +3,6 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/session";
-import { getUserCvPath } from "@/lib/utils/paths";
-import fs from "fs/promises";
-import path from "path";
 import logger from "@/lib/security/secureLogger";
 import stripe from "@/lib/stripe";
 import { CommonErrors, AccountErrors } from "@/lib/api/apiErrors";
@@ -113,18 +110,6 @@ export async function DELETE(request){
   } catch (error) {
     logger.context('DELETE account', 'error', "❌ Erreur lors de la suppression:", error);
     return AccountErrors.deleteFailed();
-  }
-
-  // Supprimer le dossier utilisateur
-  const userDir = getUserCvPath(user.id);
-  try {
-    await fs.rm(userDir, { recursive: true, force: true });
-    const parentDir = path.dirname(userDir);
-    await fs.rm(parentDir, { recursive: true, force: true });
-    logger.context('DELETE account', 'info', '✅ Dossier utilisateur supprimé');
-  } catch (error) {
-    logger.context('DELETE account', 'warn', "⚠️ Suppression du dossier utilisateur impossible:", error);
-    // Ne pas retourner d'erreur si le dossier n'existe pas ou ne peut pas être supprimé
   }
 
   // Supprimer tous les cookies de l'utilisateur
