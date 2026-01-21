@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traduction CV | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+        <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="index.html" class="sidebar-logo">FitMyCV<span class="accent">.io</span></a>
+        <div class="sidebar-version">Documentation Technique v1.0.9.5</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Introduction -->
+        <div class="nav-section">
+          <div class="nav-section-title">Introduction</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="index.html">Accueil</a></li>
+          </ul>
+        </div>
+
+        <!-- Architecture -->
+        <div class="nav-section">
+          <div class="nav-section-title">Architecture</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Architecture</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="01-architecture/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="01-architecture/tech-stack.html">Stack technologique</a></li>
+                <li class="nav-item"><a href="01-architecture/database.html">Base de données</a></li>
+                <li class="nav-item"><a href="01-architecture/patterns.html">Patterns</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Fonctionnalités Core -->
+        <div class="nav-section">
+          <div class="nav-section-title">Fonctionnalités Core</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Authentification</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="02-authentification/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="02-authentification/oauth-flow.html">OAuth Flow</a></li>
+                <li class="nav-item"><a href="02-authentification/credentials-flow.html">Credentials</a></li>
+                <li class="nav-item"><a href="02-authentification/email-verification.html">Vérification Email</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Gestion des CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="03-gestion-cv/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/crud.html">CRUD</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/versioning.html">Versioning</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/import-pdf.html">Import PDF</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/structure-cv.html">Structure JSON</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Offres d'emploi</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="04-offres-emploi/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-url.html">Extraction URL</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-pdf.html">Extraction PDF</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Pipelines IA -->
+        <div class="nav-section">
+          <div class="nav-section-title">Pipelines IA</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Génération CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="05-pipeline-generation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/orchestrator.html">Orchestrateur</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-classification.html">Classification</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-batches.html">Batches</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-recompose.html">Recomposition</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/prompts.html">Prompts IA</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/schemas-io.html">Schemas I/O</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Optimisation CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="06-pipeline-optimisation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/scoring.html">Scoring</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/suggestions.html">Suggestions</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/application.html">Application</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/review-system.html">Review</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Billing -->
+        <div class="nav-section">
+          <div class="nav-section-title">Billing</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Abonnements</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="07-abonnements/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="07-abonnements/business-models.html">Modèles économiques</a></li>
+                <li class="nav-item"><a href="07-abonnements/plans-stripe.html">Plans Stripe</a></li>
+                <li class="nav-item"><a href="07-abonnements/checkout-flow.html">Checkout</a></li>
+                <li class="nav-item"><a href="07-abonnements/webhooks.html">Webhooks</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Crédits</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="08-credits/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="08-credits/welcome-credits.html">Crédits bienvenue</a></li>
+                <li class="nav-item"><a href="08-credits/debit-refund.html">Débit / Remboursement</a></li>
+                <li class="nav-item"><a href="08-credits/feature-limits.html">Limites Features</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Système -->
+        <div class="nav-section">
+          <div class="nav-section-title">Système</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Background Jobs</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="09-background-jobs/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="09-background-jobs/task-types.html">Types de tâches</a></li>
+                <li class="nav-item"><a href="09-background-jobs/concurrency.html">Concurrence</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Export</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="10-export/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="10-export/pdf.html">Export PDF</a></li>
+                <li class="nav-item"><a href="10-export/docx.html">Export DOCX</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="11-traduction/overview.html">Traduction</a></li>
+          </ul>
+        </div>
+
+        <!-- Administration -->
+        <div class="nav-section">
+          <div class="nav-section-title">Administration</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Dashboard Admin</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="12-administration/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="12-administration/users.html">Utilisateurs</a></li>
+                <li class="nav-item"><a href="12-administration/subscription-mode.html">Mode Abonnement</a></li>
+                <li class="nav-item"><a href="12-administration/plans-management.html">Gestion Plans</a></li>
+                <li class="nav-item"><a href="12-administration/credit-packs.html">Packs Crédits</a></li>
+                <li class="nav-item"><a href="12-administration/openai-monitoring.html">Monitoring OpenAI</a></li>
+                <li class="nav-item"><a href="12-administration/email-templates.html">Templates Email</a></li>
+                <li class="nav-item"><a href="12-administration/settings.html">Paramètres</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Autres -->
+        <div class="nav-section">
+          <div class="nav-section-title">Autres</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="13-onboarding/overview.html">Onboarding</a></li>
+            <li class="nav-item has-children">
+              <a href="#">Email</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="14-email/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="14-email/templates.html">Templates</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Référence -->
+        <div class="nav-section">
+          <div class="nav-section-title">Référence</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">API Reference</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="15-api-reference/index.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="15-api-reference/public.html">Publics</a></li>
+                <li class="nav-item"><a href="15-api-reference/authenticated.html">Authentifiés</a></li>
+                <li class="nav-item"><a href="15-api-reference/admin.html">Admin</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="16-composants/index.html">Composants React</a></li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+            <header class="header">
+        <button class="mobile-menu-button" title="Menu">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div class="search-container">
+          <input type="text" class="search-input" placeholder="Rechercher dans la documentation...">
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Changer le thème">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Traduction</span>
+        </div>
+
+        <h1>Traduction CV</h1>
+        <p class="lead">
+          La fonctionnalité de traduction permet de convertir un CV d'une langue à une autre tout en préservant le formatage, le ton professionnel et les conventions locales.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Coût</div>
+          <p>Le nombre de crédits par traduction est configurable dans <strong>Administration → Settings</strong>.</p>
+        </div>
+
+        <h2>Langues Supportées</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Langue</th>
+              <th>Conventions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>fr</code></td>
+              <td>Français</td>
+              <td>France, Belgique, Suisse, Canada</td>
+            </tr>
+            <tr>
+              <td><code>en</code></td>
+              <td>Anglais</td>
+              <td>UK, US, Australie</td>
+            </tr>
+            <tr>
+              <td><code>de</code></td>
+              <td>Allemand</td>
+              <td>Allemagne, Autriche, Suisse</td>
+            </tr>
+            <tr>
+              <td><code>es</code></td>
+              <td>Espagnol</td>
+              <td>Espagne, Amérique latine</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Pipeline de Traduction</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux de traduction</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input["ENTRÉE"]
+        CV["CV Source"]
+        Lang["Langue cible"]
+    end
+
+    subgraph Process["TRAITEMENT"]
+        Detect["Détection langue source"]
+        Translate["OpenAI API<br/>Traduction"]
+        Adapt["Adaptation conventions"]
+    end
+
+    subgraph Output["SORTIE"]
+        NewCV["CV Traduit"]
+        Version["Nouvelle version"]
+    end
+
+    CV --> Detect
+    Lang --> Translate
+    Detect --> Translate
+    Translate --> Adapt
+    Adapt --> NewCV
+    NewCV --> Version
+          </div>
+        </div>
+
+        <h2>Data Flow</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge ai">IA</span>
+            <span class="data-flow-title">OpenAI API - Traduction (modèle configurable)</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Input</h5>
+            <pre><code>{
+  "cv": { /* CV JSON complet */ },
+  "sourceLanguage": "fr",
+  "targetLanguage": "en",
+  "targetRegion": "UK"
+}</code></pre>
+
+            <h5>Prompt Structure</h5>
+            <pre><code># Mission
+Traduire ce CV du {sourceLanguage} vers {targetLanguage}.
+
+# Règles
+1. Préserver TOUTES les informations factuelles
+2. Adapter au ton professionnel de la région cible
+3. Conserver les noms propres (entreprises, écoles)
+4. Traduire les titres de poste avec équivalents locaux
+5. Adapter les formats de date selon la convention locale
+
+# Conventions {targetLanguage}-{targetRegion}
+- Dates: {dateFormat}
+- Téléphone: {phoneFormat}
+- Monnaie: {currencyFormat}</code></pre>
+
+            <h5>Output</h5>
+            <pre><code>{
+  "translatedCv": {
+    "header": {
+      "firstName": "Jean",
+      "lastName": "Dupont",
+      // ...
+    },
+    "sections": {
+      "summary": {
+        "content": "Full Stack Developer with 5 years..."
+      },
+      "experiences": [
+        {
+          "title": "Senior Developer", // Traduit
+          "company": "TechCorp", // Conservé
+          "responsibilities": [
+            "Developed REST APIs with Node.js",
+            // ...
+          ]
+        }
+      ]
+    },
+    "metadata": {
+      "language": "en",
+      "translatedFrom": "fr",
+      "translatedAt": "2024-01-15T10:30:00Z"
+    }
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Adaptations par Région</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>France (fr-FR)</h4>
+            <ul>
+              <li>Date: JJ/MM/AAAA</li>
+              <li>Photo: Acceptée</li>
+              <li>Âge/Date naissance: Optionnel</li>
+              <li>Ton: Formel</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>UK (en-GB)</h4>
+            <ul>
+              <li>Date: DD/MM/YYYY</li>
+              <li>Photo: Rare</li>
+              <li>Âge: Non recommandé</li>
+              <li>Ton: Professionnel concis</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>US (en-US)</h4>
+            <ul>
+              <li>Date: MM/DD/YYYY</li>
+              <li>Photo: Déconseillée</li>
+              <li>Âge: Interdit</li>
+              <li>Ton: Accomplissements</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Allemagne (de-DE)</h4>
+            <ul>
+              <li>Date: TT.MM.JJJJ</li>
+              <li>Photo: Attendue</li>
+              <li>Âge: Standard</li>
+              <li>Ton: Très formel</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>Éléments Non Traduits</h2>
+
+        <ul>
+          <li><strong>Noms propres</strong> : Jean Dupont, TechCorp, MIT</li>
+          <li><strong>Technologies</strong> : JavaScript, React, PostgreSQL</li>
+          <li><strong>Certifications</strong> : AWS Certified, PMP, TOEIC 950</li>
+          <li><strong>URLs</strong> : LinkedIn, portfolio, GitHub</li>
+        </ul>
+
+        <h2>API Endpoint</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge input">POST</span>
+            <span class="data-flow-title">/api/cv/[id]/translate</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Request</h5>
+            <pre><code>{
+  "targetLanguage": "en",
+  "targetRegion": "UK",  // Optionnel
+  "createNewFile": true  // Créer un nouveau CV ou écraser
+}</code></pre>
+
+            <h5>Response</h5>
+            <pre><code>{
+  "success": true,
+  "data": {
+    "cvFileId": 123,
+    "filename": "cv-dev-fullstack-en.json",
+    "language": "en",
+    "creditsUsed": 1
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Implémentation</h2>
+
+        <pre><code>// lib/features/translation/translateCv.js
+import { callOpenAI } from '@/lib/openai-core/client';
+import { loadPrompt } from '@/lib/openai-core/promptLoader';
+
+export async function translateCv(cvData, targetLanguage, options = {}) {
+  const { targetRegion = null } = options;
+
+  // Détecter la langue source
+  const sourceLanguage = cvData.metadata?.language || detectLanguage(cvData);
+
+  // Si même langue, retourner tel quel
+  if (sourceLanguage === targetLanguage) {
+    return cvData;
+  }
+
+  // Charger le prompt
+  const prompt = await loadPrompt('translation/translate-cv');
+
+  // Récupérer les conventions de la région cible
+  const conventions = getRegionConventions(targetLanguage, targetRegion);
+
+  // Appeler l'IA
+  const result = await callOpenAI({
+    featureName: 'translate_cv',
+    messages: [
+      {
+        role: 'system',
+        content: prompt
+          .replace('{sourceLanguage}', sourceLanguage)
+          .replace('{targetLanguage}', targetLanguage)
+          .replace('{conventions}', JSON.stringify(conventions))
+      },
+      {
+        role: 'user',
+        content: JSON.stringify(cvData)
+      }
+    ],
+    responseFormat: {
+      type: 'json_schema',
+      json_schema: {
+        name: 'translated_cv',
+        schema: translationOutputSchema,
+        strict: true
+      }
+    }
+  });
+
+  return result.translatedCv;
+}</code></pre>
+
+        <h2>Fichiers Clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/features/translation/translateCv.js</code></td>
+              <td>Logique de traduction</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/translation/conventions.js</code></td>
+              <td>Conventions par région</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/translation/prompts/</code></td>
+              <td>Prompts de traduction</td>
+            </tr>
+            <tr>
+              <td><code>app/api/cv/[id]/translate/route.js</code></td>
+              <td>Endpoint API</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

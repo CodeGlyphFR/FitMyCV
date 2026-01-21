@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Abonnements | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+        <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="index.html" class="sidebar-logo">FitMyCV<span class="accent">.io</span></a>
+        <div class="sidebar-version">Documentation Technique v1.0.9.5</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Introduction -->
+        <div class="nav-section">
+          <div class="nav-section-title">Introduction</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="index.html">Accueil</a></li>
+          </ul>
+        </div>
+
+        <!-- Architecture -->
+        <div class="nav-section">
+          <div class="nav-section-title">Architecture</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Architecture</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="01-architecture/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="01-architecture/tech-stack.html">Stack technologique</a></li>
+                <li class="nav-item"><a href="01-architecture/database.html">Base de données</a></li>
+                <li class="nav-item"><a href="01-architecture/patterns.html">Patterns</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Fonctionnalités Core -->
+        <div class="nav-section">
+          <div class="nav-section-title">Fonctionnalités Core</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Authentification</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="02-authentification/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="02-authentification/oauth-flow.html">OAuth Flow</a></li>
+                <li class="nav-item"><a href="02-authentification/credentials-flow.html">Credentials</a></li>
+                <li class="nav-item"><a href="02-authentification/email-verification.html">Vérification Email</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Gestion des CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="03-gestion-cv/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/crud.html">CRUD</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/versioning.html">Versioning</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/import-pdf.html">Import PDF</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/structure-cv.html">Structure JSON</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Offres d'emploi</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="04-offres-emploi/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-url.html">Extraction URL</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-pdf.html">Extraction PDF</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Pipelines IA -->
+        <div class="nav-section">
+          <div class="nav-section-title">Pipelines IA</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Génération CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="05-pipeline-generation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/orchestrator.html">Orchestrateur</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-classification.html">Classification</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-batches.html">Batches</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-recompose.html">Recomposition</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/prompts.html">Prompts IA</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/schemas-io.html">Schemas I/O</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Optimisation CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="06-pipeline-optimisation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/scoring.html">Scoring</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/suggestions.html">Suggestions</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/application.html">Application</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/review-system.html">Review</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Billing -->
+        <div class="nav-section">
+          <div class="nav-section-title">Billing</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Abonnements</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="07-abonnements/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="07-abonnements/business-models.html">Modèles économiques</a></li>
+                <li class="nav-item"><a href="07-abonnements/plans-stripe.html">Plans Stripe</a></li>
+                <li class="nav-item"><a href="07-abonnements/checkout-flow.html">Checkout</a></li>
+                <li class="nav-item"><a href="07-abonnements/webhooks.html">Webhooks</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Crédits</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="08-credits/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="08-credits/welcome-credits.html">Crédits bienvenue</a></li>
+                <li class="nav-item"><a href="08-credits/debit-refund.html">Débit / Remboursement</a></li>
+                <li class="nav-item"><a href="08-credits/feature-limits.html">Limites Features</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Système -->
+        <div class="nav-section">
+          <div class="nav-section-title">Système</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Background Jobs</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="09-background-jobs/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="09-background-jobs/task-types.html">Types de tâches</a></li>
+                <li class="nav-item"><a href="09-background-jobs/concurrency.html">Concurrence</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Export</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="10-export/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="10-export/pdf.html">Export PDF</a></li>
+                <li class="nav-item"><a href="10-export/docx.html">Export DOCX</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="11-traduction/overview.html">Traduction</a></li>
+          </ul>
+        </div>
+
+        <!-- Administration -->
+        <div class="nav-section">
+          <div class="nav-section-title">Administration</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Dashboard Admin</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="12-administration/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="12-administration/users.html">Utilisateurs</a></li>
+                <li class="nav-item"><a href="12-administration/subscription-mode.html">Mode Abonnement</a></li>
+                <li class="nav-item"><a href="12-administration/plans-management.html">Gestion Plans</a></li>
+                <li class="nav-item"><a href="12-administration/credit-packs.html">Packs Crédits</a></li>
+                <li class="nav-item"><a href="12-administration/openai-monitoring.html">Monitoring OpenAI</a></li>
+                <li class="nav-item"><a href="12-administration/email-templates.html">Templates Email</a></li>
+                <li class="nav-item"><a href="12-administration/settings.html">Paramètres</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Autres -->
+        <div class="nav-section">
+          <div class="nav-section-title">Autres</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="13-onboarding/overview.html">Onboarding</a></li>
+            <li class="nav-item has-children">
+              <a href="#">Email</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="14-email/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="14-email/templates.html">Templates</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Référence -->
+        <div class="nav-section">
+          <div class="nav-section-title">Référence</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">API Reference</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="15-api-reference/index.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="15-api-reference/public.html">Publics</a></li>
+                <li class="nav-item"><a href="15-api-reference/authenticated.html">Authentifiés</a></li>
+                <li class="nav-item"><a href="15-api-reference/admin.html">Admin</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="16-composants/index.html">Composants React</a></li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+            <header class="header">
+        <button class="mobile-menu-button" title="Menu">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div class="search-container">
+          <input type="text" class="search-input" placeholder="Rechercher dans la documentation...">
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Changer le thème">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Abonnements</span>
+        </div>
+
+        <h1>Système d'Abonnements</h1>
+        <p class="lead">
+          FitMyCV.io utilise Stripe pour gérer les abonnements et paiements. Le système supporte deux modèles économiques configurables : abonnement avec crédits ou crédits uniquement.
+        </p>
+
+        <h2>Architecture</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Intégration Stripe</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph App["APPLICATION"]
+        Plans["Plans en DB"]
+        Sub["Subscription model"]
+        Balance["CreditBalance"]
+    end
+
+    subgraph Stripe["STRIPE"]
+        Products["Products"]
+        Prices["Prices"]
+        Customers["Customers"]
+        Subscriptions["Subscriptions"]
+        Checkout["Checkout Sessions"]
+    end
+
+    subgraph Sync["SYNCHRONISATION"]
+        Webhooks["Webhooks"]
+        Events["Events"]
+    end
+
+    App <--> Stripe
+    Stripe --> Webhooks
+    Webhooks --> App
+
+    Plans --> Products
+    Sub --> Subscriptions
+    Checkout --> Balance
+          </div>
+        </div>
+
+        <h2>Plans d'Abonnement</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Plan</th>
+              <th>Prix</th>
+              <th>Limites mensuelles</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Free</strong></td>
+              <td>0€/mois</td>
+              <td>3 générations CV, 1 export, 5 match scores</td>
+            </tr>
+            <tr>
+              <td><strong>Pro</strong></td>
+              <td>9.99€/mois</td>
+              <td>20 générations CV, 10 exports, 50 match scores</td>
+            </tr>
+            <tr>
+              <td><strong>Premium</strong></td>
+              <td>19.99€/mois</td>
+              <td>Illimité sur la plupart des features</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Modèles de Données</h2>
+
+        <h3>Subscription</h3>
+
+        <pre><code>model Subscription {
+  id                    Int       @id @default(autoincrement())
+  userId                String    @unique
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?   @unique
+  stripePriceId         String?
+  status                String    // active, canceled, past_due, etc.
+  currentPeriodStart    DateTime?
+  currentPeriodEnd      DateTime?
+  cancelAtPeriodEnd     Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user                  User      @relation(fields: [userId], references: [id])
+  plan                  SubscriptionPlan? @relation(fields: [stripePriceId], references: [stripePriceId])
+}</code></pre>
+
+        <h3>SubscriptionPlan</h3>
+
+        <pre><code>model SubscriptionPlan {
+  id              Int       @id @default(autoincrement())
+  name            String    // Free, Pro, Premium
+  displayName     String
+  description     String?
+  priceMonthly    Decimal
+  priceYearly     Decimal?
+  stripePriceId   String?   @unique
+  stripeProductId String?
+  isActive        Boolean   @default(true)
+  isDefault       Boolean   @default(false)
+  sortOrder       Int       @default(0)
+  createdAt       DateTime  @default(now())
+
+  subscriptions   Subscription[]
+  featureLimits   FeatureLimit[]
+}</code></pre>
+
+        <h3>FeatureLimit</h3>
+
+        <pre><code>model FeatureLimit {
+  id          Int       @id @default(autoincrement())
+  planId      Int
+  featureName String    // gpt_cv_generation, export_cv, etc.
+  usageLimit  Int       // -1 = illimité
+  isEnabled   Boolean   @default(true)
+
+  plan        SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@unique([planId, featureName])
+}</code></pre>
+
+        <h2>Vérification des Limites</h2>
+
+        <pre><code>// lib/subscription/featureUsage.js
+
+export async function canUseFeature(userId, featureName) {
+  // 1. Vérifier balance négative (chargeback)
+  const balance = await getCreditBalance(userId);
+  if (balance < 0) {
+    return { canUse: false, reason: 'balance_negative' };
+  }
+
+  // 2. Mode crédits uniquement ?
+  const subscriptionMode = await getSetting('subscription_mode_enabled');
+  if (subscriptionMode !== 'true') {
+    return checkCreditsOnly(userId, featureName);
+  }
+
+  // 3. Récupérer le plan de l'utilisateur
+  const subscription = await prisma.subscription.findUnique({
+    where: { userId },
+    include: { plan: { include: { featureLimits: true } } }
+  });
+
+  const plan = subscription?.plan || await getDefaultPlan();
+  const limit = plan.featureLimits.find(l => l.featureName === featureName);
+
+  // 4. Feature désactivée ?
+  if (!limit?.isEnabled) {
+    return checkCreditsAvailable(userId, featureName);
+  }
+
+  // 5. Illimité ?
+  if (limit.usageLimit === -1) {
+    return { canUse: true, useCredit: false };
+  }
+
+  // 6. Vérifier compteur mensuel
+  const counter = await getFeatureCounter(userId, featureName);
+  if (counter.count < limit.usageLimit) {
+    return { canUse: true, useCredit: false };
+  }
+
+  // 7. Limite atteinte → crédits ?
+  return checkCreditsAvailable(userId, featureName);
+}</code></pre>
+
+        <h2>Flux Checkout</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Processus de souscription</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant App as Application
+    participant Stripe as Stripe
+    participant WH as Webhook
+
+    U->>App: Clic "Souscrire Pro"
+    App->>Stripe: Créer Checkout Session
+    Stripe-->>App: Session URL
+    App-->>U: Redirection Stripe
+
+    U->>Stripe: Paiement
+    Stripe->>WH: checkout.session.completed
+    WH->>App: Mise à jour Subscription
+
+    Stripe->>WH: invoice.payment_succeeded
+    WH->>App: Confirmation paiement
+
+    App-->>U: Redirection succès
+          </div>
+        </div>
+
+        <h2>Webhooks Stripe</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Event</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>checkout.session.completed</code></td>
+              <td>Créer/Mettre à jour Subscription</td>
+            </tr>
+            <tr>
+              <td><code>customer.subscription.updated</code></td>
+              <td>Sync status, période, plan</td>
+            </tr>
+            <tr>
+              <td><code>customer.subscription.deleted</code></td>
+              <td>Marquer comme canceled</td>
+            </tr>
+            <tr>
+              <td><code>invoice.payment_succeeded</code></td>
+              <td>Confirmer paiement, reset compteurs</td>
+            </tr>
+            <tr>
+              <td><code>invoice.payment_failed</code></td>
+              <td>Marquer past_due, notifier user</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>API Endpoints</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Méthode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/subscription</code></td>
+              <td>GET</td>
+              <td>Récupérer l'abonnement actuel</td>
+            </tr>
+            <tr>
+              <td><code>/api/subscription/checkout</code></td>
+              <td>POST</td>
+              <td>Créer session Checkout</td>
+            </tr>
+            <tr>
+              <td><code>/api/subscription/portal</code></td>
+              <td>POST</td>
+              <td>Accéder au Customer Portal</td>
+            </tr>
+            <tr>
+              <td><code>/api/subscription/cancel</code></td>
+              <td>POST</td>
+              <td>Annuler à la fin de période</td>
+            </tr>
+            <tr>
+              <td><code>/api/webhooks/stripe</code></td>
+              <td>POST</td>
+              <td>Recevoir webhooks Stripe</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Fichiers Clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/subscription/subscriptions.js</code></td>
+              <td>Gestion abonnements Stripe</td>
+            </tr>
+            <tr>
+              <td><code>lib/subscription/featureUsage.js</code></td>
+              <td>Vérification limites & crédits</td>
+            </tr>
+            <tr>
+              <td><code>lib/stripe/client.js</code></td>
+              <td>Client Stripe configuré</td>
+            </tr>
+            <tr>
+              <td><code>app/api/webhooks/stripe/route.js</code></td>
+              <td>Handler webhooks</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Prochaines Sections</h2>
+
+        <ul>
+          <li><a href="business-models.html">Modèles économiques</a> - Abonnement vs Crédits</li>
+          <li><a href="plans-stripe.html">Plans Stripe</a> - Configuration détaillée</li>
+          <li><a href="checkout-flow.html">Checkout</a> - Flux de paiement</li>
+          <li><a href="webhooks.html">Webhooks</a> - Synchronisation events</li>
+        </ul>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

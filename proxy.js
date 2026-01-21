@@ -155,7 +155,7 @@ export async function proxy(request) {
   // Headers de sécurité pour toutes les réponses
   const securityHeaders = {
     // Protection contre le clickjacking
-    'X-Frame-Options': 'DENY',
+    'X-Frame-Options': 'SAMEORIGIN',
 
     // Empêche le navigateur de détecter le MIME type
     'X-Content-Type-Options': 'nosniff',
@@ -180,8 +180,8 @@ export async function proxy(request) {
       "img-src 'self' data: https:",
       "font-src 'self' data:",
       `connect-src ${connectSrcSources.join(' ')} https://editor.unlayer.com https://api.unlayer.com`,
-      "frame-src https://www.google.com https://editor.unlayer.com", // reCAPTCHA + Unlayer frames
-      "frame-ancestors 'none'",
+      "frame-src 'self' https://www.google.com https://editor.unlayer.com", // reCAPTCHA + Unlayer frames + Admin docs
+      "frame-ancestors 'self'",
       "base-uri 'self'",
       "form-action 'self'",
     ].join('; '),

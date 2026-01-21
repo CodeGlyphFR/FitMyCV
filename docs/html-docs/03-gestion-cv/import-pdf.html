@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Import PDF | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+        <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="index.html" class="sidebar-logo">FitMyCV<span class="accent">.io</span></a>
+        <div class="sidebar-version">Documentation Technique v1.0.9.5</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Introduction -->
+        <div class="nav-section">
+          <div class="nav-section-title">Introduction</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="index.html">Accueil</a></li>
+          </ul>
+        </div>
+
+        <!-- Architecture -->
+        <div class="nav-section">
+          <div class="nav-section-title">Architecture</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Architecture</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="01-architecture/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="01-architecture/tech-stack.html">Stack technologique</a></li>
+                <li class="nav-item"><a href="01-architecture/database.html">Base de données</a></li>
+                <li class="nav-item"><a href="01-architecture/patterns.html">Patterns</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Fonctionnalités Core -->
+        <div class="nav-section">
+          <div class="nav-section-title">Fonctionnalités Core</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Authentification</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="02-authentification/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="02-authentification/oauth-flow.html">OAuth Flow</a></li>
+                <li class="nav-item"><a href="02-authentification/credentials-flow.html">Credentials</a></li>
+                <li class="nav-item"><a href="02-authentification/email-verification.html">Vérification Email</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Gestion des CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="03-gestion-cv/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/crud.html">CRUD</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/versioning.html">Versioning</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/import-pdf.html">Import PDF</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/structure-cv.html">Structure JSON</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Offres d'emploi</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="04-offres-emploi/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-url.html">Extraction URL</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-pdf.html">Extraction PDF</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Pipelines IA -->
+        <div class="nav-section">
+          <div class="nav-section-title">Pipelines IA</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Génération CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="05-pipeline-generation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/orchestrator.html">Orchestrateur</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-classification.html">Classification</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-batches.html">Batches</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-recompose.html">Recomposition</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/prompts.html">Prompts IA</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/schemas-io.html">Schemas I/O</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Optimisation CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="06-pipeline-optimisation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/scoring.html">Scoring</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/suggestions.html">Suggestions</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/application.html">Application</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/review-system.html">Review</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Billing -->
+        <div class="nav-section">
+          <div class="nav-section-title">Billing</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Abonnements</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="07-abonnements/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="07-abonnements/business-models.html">Modèles économiques</a></li>
+                <li class="nav-item"><a href="07-abonnements/plans-stripe.html">Plans Stripe</a></li>
+                <li class="nav-item"><a href="07-abonnements/checkout-flow.html">Checkout</a></li>
+                <li class="nav-item"><a href="07-abonnements/webhooks.html">Webhooks</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Crédits</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="08-credits/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="08-credits/welcome-credits.html">Crédits bienvenue</a></li>
+                <li class="nav-item"><a href="08-credits/debit-refund.html">Débit / Remboursement</a></li>
+                <li class="nav-item"><a href="08-credits/feature-limits.html">Limites Features</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Système -->
+        <div class="nav-section">
+          <div class="nav-section-title">Système</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Background Jobs</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="09-background-jobs/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="09-background-jobs/task-types.html">Types de tâches</a></li>
+                <li class="nav-item"><a href="09-background-jobs/concurrency.html">Concurrence</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Export</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="10-export/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="10-export/pdf.html">Export PDF</a></li>
+                <li class="nav-item"><a href="10-export/docx.html">Export DOCX</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="11-traduction/overview.html">Traduction</a></li>
+          </ul>
+        </div>
+
+        <!-- Administration -->
+        <div class="nav-section">
+          <div class="nav-section-title">Administration</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Dashboard Admin</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="12-administration/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="12-administration/users.html">Utilisateurs</a></li>
+                <li class="nav-item"><a href="12-administration/subscription-mode.html">Mode Abonnement</a></li>
+                <li class="nav-item"><a href="12-administration/plans-management.html">Gestion Plans</a></li>
+                <li class="nav-item"><a href="12-administration/credit-packs.html">Packs Crédits</a></li>
+                <li class="nav-item"><a href="12-administration/openai-monitoring.html">Monitoring OpenAI</a></li>
+                <li class="nav-item"><a href="12-administration/email-templates.html">Templates Email</a></li>
+                <li class="nav-item"><a href="12-administration/settings.html">Paramètres</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Autres -->
+        <div class="nav-section">
+          <div class="nav-section-title">Autres</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="13-onboarding/overview.html">Onboarding</a></li>
+            <li class="nav-item has-children">
+              <a href="#">Email</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="14-email/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="14-email/templates.html">Templates</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Référence -->
+        <div class="nav-section">
+          <div class="nav-section-title">Référence</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">API Reference</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="15-api-reference/index.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="15-api-reference/public.html">Publics</a></li>
+                <li class="nav-item"><a href="15-api-reference/authenticated.html">Authentifiés</a></li>
+                <li class="nav-item"><a href="15-api-reference/admin.html">Admin</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="16-composants/index.html">Composants React</a></li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+            <header class="header">
+        <button class="mobile-menu-button" title="Menu">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div class="search-container">
+          <input type="text" class="search-input" placeholder="Rechercher dans la documentation...">
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Changer le thème">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="overview.html">Gestion CV</a>
+          <span>/</span>
+          <span>Import PDF</span>
+        </div>
+
+        <h1>Import PDF</h1>
+        <p class="lead">
+          Le système d'import PDF utilise l'API Vision de GPT-4o pour extraire et structurer les informations d'un CV au format PDF vers le format JSON standardisé.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Coût</div>
+          <p><strong>5 crédits</strong> par import. Le crédit est débité au lancement et remboursé en cas d'échec.</p>
+        </div>
+
+        <h2>Pipeline d'Import</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux d'import PDF</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input["ENTRÉE"]
+        PDF["PDF uploadé"]
+    end
+
+    subgraph Process["TRAITEMENT"]
+        Upload["Upload & Validation"]
+        Convert["Conversion images<br/>(pdf-lib + sharp)"]
+        Vision["GPT-4o Vision<br/>Extraction"]
+        Parse["Parsing JSON"]
+        Validate["Validation structure"]
+    end
+
+    subgraph Output["SORTIE"]
+        CvFile["CvFile créé"]
+        Error["Erreur + Remboursement"]
+    end
+
+    PDF --> Upload
+    Upload --> Convert
+    Convert --> Vision
+    Vision --> Parse
+    Parse --> Validate
+    Validate -->|Valide| CvFile
+    Validate -->|Invalide| Error
+          </div>
+        </div>
+
+        <h2>Data Flow Détaillé</h2>
+
+        <h3>Étape 1 : Upload et Validation</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge input">INPUT</span>
+            <span class="data-flow-title">Fichier PDF</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Validation</h5>
+            <ul>
+              <li>Type MIME : <code>application/pdf</code></li>
+              <li>Taille max : <strong>10 MB</strong></li>
+              <li>Pages max : <strong>5 pages</strong></li>
+            </ul>
+            <h5>Source</h5>
+            <p>Upload formulaire multipart/form-data vers <code>/api/cv/import-pdf</code></p>
+          </div>
+        </div>
+
+        <h3>Étape 2 : Conversion en Images</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge process">PROCESS</span>
+            <span class="data-flow-title">PDF → Images</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Traitement</h5>
+            <pre><code>// lib/features/pdf-import/converter.js
+import { PDFDocument } from 'pdf-lib';
+import sharp from 'sharp';
+
+export async function convertPdfToImages(pdfBuffer) {
+  const pdfDoc = await PDFDocument.load(pdfBuffer);
+  const pages = pdfDoc.getPages();
+  const images = [];
+
+  for (let i = 0; i < pages.length; i++) {
+    // Render page to PNG
+    const pageImage = await renderPage(pages[i]);
+    // Resize pour optimiser tokens
+    const resized = await sharp(pageImage)
+      .resize(1200, null, { fit: 'inside' })
+      .png()
+      .toBuffer();
+    images.push(resized.toString('base64'));
+  }
+
+  return images;
+}</code></pre>
+            <h5>Output</h5>
+            <p>Array de strings base64 (1 par page)</p>
+          </div>
+        </div>
+
+        <h3>Étape 3 : Extraction IA (GPT-4o Vision)</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge ai">IA</span>
+            <span class="data-flow-title">GPT-4o Vision - Extraction</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Input (Messages)</h5>
+            <pre><code>[
+  {
+    "role": "system",
+    "content": "Tu es un expert en extraction de CV..."
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "Extrais les informations de ce CV..."
+      },
+      {
+        "type": "image_url",
+        "image_url": {
+          "url": "data:image/png;base64,{page1}",
+          "detail": "high"
+        }
+      },
+      // ... autres pages
+    ]
+  }
+]</code></pre>
+
+            <h5>Prompt Structure</h5>
+            <pre><code>// lib/features/pdf-import/prompts/extract-cv.md
+
+# Mission
+Extraire TOUTES les informations du CV en image.
+
+# Règles
+1. Extraire uniquement ce qui est visible
+2. Ne JAMAIS inventer d'information
+3. Conserver la langue originale du CV
+4. Structurer selon le schema JSON fourni
+
+# Sections à extraire
+- Informations personnelles (header)
+- Résumé professionnel
+- Expériences professionnelles
+- Compétences (techniques, soft, langues)
+- Formation
+- Projets
+- Certifications
+- Autres (bénévolat, hobbies...)</code></pre>
+
+            <h5>JSON Schema (response_format)</h5>
+            <pre><code>{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "cv_extraction_output",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "type": "object",
+          "properties": {
+            "firstName": { "type": "string" },
+            "lastName": { "type": "string" },
+            "email": { "type": "string" },
+            "phone": { "type": "string" },
+            "location": { "type": "string" },
+            "linkedIn": { "type": "string" },
+            "portfolio": { "type": "string" }
+          },
+          "required": ["firstName", "lastName"]
+        },
+        "sections": {
+          "type": "object",
+          "properties": {
+            "experiences": { "type": "array" },
+            "skills": { "type": "object" },
+            "education": { "type": "array" },
+            // ...
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "detectedLanguage": { "type": "string" },
+            "confidence": { "type": "number" }
+          }
+        }
+      },
+      "required": ["header", "sections"]
+    },
+    "strict": true
+  }
+}</code></pre>
+
+            <h5>Output</h5>
+            <pre><code>{
+  "header": {
+    "firstName": "Jean",
+    "lastName": "Dupont",
+    "email": "jean.dupont@email.com",
+    "phone": "+33 6 12 34 56 78",
+    "location": "Paris, France"
+  },
+  "sections": {
+    "experiences": [
+      {
+        "title": "Développeur Full Stack",
+        "company": "TechCorp",
+        "startDate": "2021-03",
+        "endDate": null,
+        "current": true,
+        "responsibilities": [
+          "Développement d'applications React",
+          "APIs Node.js"
+        ]
+      }
+    ],
+    "skills": {
+      "technical": ["JavaScript", "React", "Node.js"],
+      "soft": ["Travail d'équipe"],
+      "languages": [
+        { "language": "Français", "level": "Natif" }
+      ]
+    }
+  },
+  "metadata": {
+    "detectedLanguage": "fr",
+    "confidence": 0.95
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <h3>Étape 4 : Sauvegarde</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">CvFile créé</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Stockage</h5>
+            <pre><code>const cvFile = await prisma.cvFile.create({
+  data: {
+    userId,
+    filename: `import-${Date.now()}.json`,
+    content: extractedCv, // JSON structuré
+    isDefault: false,
+    metadata: {
+      origin: 'pdf_import',
+      originalFilename: uploadedFile.name,
+      importedAt: new Date().toISOString()
+    }
+  }
+});
+
+// Créer version initiale
+await prisma.cvVersion.create({
+  data: {
+    cvFileId: cvFile.id,
+    versionNumber: 1,
+    content: extractedCv,
+    origin: 'pdf_import',
+    description: 'Import depuis PDF'
+  }
+});</code></pre>
+          </div>
+        </div>
+
+        <h2>Gestion des Erreurs</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Erreur</th>
+              <th>Cause</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>INVALID_FILE_TYPE</code></td>
+              <td>Fichier non-PDF</td>
+              <td>Rejet immédiat, pas de débit</td>
+            </tr>
+            <tr>
+              <td><code>FILE_TOO_LARGE</code></td>
+              <td>PDF > 10MB</td>
+              <td>Rejet immédiat, pas de débit</td>
+            </tr>
+            <tr>
+              <td><code>TOO_MANY_PAGES</code></td>
+              <td>PDF > 5 pages</td>
+              <td>Rejet immédiat, pas de débit</td>
+            </tr>
+            <tr>
+              <td><code>EXTRACTION_FAILED</code></td>
+              <td>Échec GPT-4o</td>
+              <td>Remboursement crédits</td>
+            </tr>
+            <tr>
+              <td><code>VALIDATION_FAILED</code></td>
+              <td>JSON invalide</td>
+              <td>Remboursement crédits</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Monitoring</h2>
+
+        <p>Chaque import est tracké dans <code>OpenAIUsageLog</code> :</p>
+
+        <pre><code>{
+  userId: "user_123",
+  featureName: "pdf_import",
+  model: "gpt-4o",
+  promptTokens: 8500,      // Images = beaucoup de tokens
+  completionTokens: 1200,
+  totalTokens: 9700,
+  estimatedCost: 0.145,    // ~ $0.15 par import
+  duration: 8500           // 8.5 secondes
+}</code></pre>
+
+        <h2>Fichiers Clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/features/pdf-import/index.js</code></td>
+              <td>Orchestrateur import</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/pdf-import/converter.js</code></td>
+              <td>Conversion PDF → images</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/pdf-import/extractor.js</code></td>
+              <td>Appel GPT-4o Vision</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/pdf-import/prompts/</code></td>
+              <td>Prompts d'extraction</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/pdf-import/schemas/</code></td>
+              <td>JSON Schemas output</td>
+            </tr>
+            <tr>
+              <td><code>app/api/cv/import-pdf/route.js</code></td>
+              <td>API endpoint</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

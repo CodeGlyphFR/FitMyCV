@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Composants React | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+        <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="../index.html" class="sidebar-logo">FitMyCV<span class="accent">.io</span></a>
+        <div class="sidebar-version">Documentation Technique v1.0.9.5</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Introduction -->
+        <div class="nav-section">
+          <div class="nav-section-title">Introduction</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="../index.html">Accueil</a></li>
+          </ul>
+        </div>
+
+        <!-- Architecture -->
+        <div class="nav-section">
+          <div class="nav-section-title">Architecture</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Architecture</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../01-architecture/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../01-architecture/tech-stack.html">Stack technologique</a></li>
+                <li class="nav-item"><a href="../01-architecture/database.html">Base de données</a></li>
+                <li class="nav-item"><a href="../01-architecture/patterns.html">Patterns</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Fonctionnalités Core -->
+        <div class="nav-section">
+          <div class="nav-section-title">Fonctionnalités Core</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Authentification</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../02-authentification/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../02-authentification/oauth-flow.html">OAuth Flow</a></li>
+                <li class="nav-item"><a href="../02-authentification/credentials-flow.html">Credentials</a></li>
+                <li class="nav-item"><a href="../02-authentification/email-verification.html">Vérification Email</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Gestion des CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../03-gestion-cv/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../03-gestion-cv/crud.html">CRUD</a></li>
+                <li class="nav-item"><a href="../03-gestion-cv/versioning.html">Versioning</a></li>
+                <li class="nav-item"><a href="../03-gestion-cv/import-pdf.html">Import PDF</a></li>
+                <li class="nav-item"><a href="../03-gestion-cv/structure-cv.html">Structure JSON</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Offres d'emploi</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../04-offres-emploi/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../04-offres-emploi/extraction-url.html">Extraction URL</a></li>
+                <li class="nav-item"><a href="../04-offres-emploi/extraction-pdf.html">Extraction PDF</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Pipelines IA -->
+        <div class="nav-section">
+          <div class="nav-section-title">Pipelines IA</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Génération CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../05-pipeline-generation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../05-pipeline-generation/orchestrator.html">Orchestrateur</a></li>
+                <li class="nav-item"><a href="../05-pipeline-generation/phase-classification.html">Classification</a></li>
+                <li class="nav-item"><a href="../05-pipeline-generation/phase-batches.html">Batches</a></li>
+                <li class="nav-item"><a href="../05-pipeline-generation/phase-recompose.html">Recomposition</a></li>
+                <li class="nav-item"><a href="../05-pipeline-generation/prompts.html">Prompts IA</a></li>
+                <li class="nav-item"><a href="../05-pipeline-generation/schemas-io.html">Schemas I/O</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Optimisation CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../06-pipeline-optimisation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../06-pipeline-optimisation/scoring.html">Scoring</a></li>
+                <li class="nav-item"><a href="../06-pipeline-optimisation/suggestions.html">Suggestions</a></li>
+                <li class="nav-item"><a href="../06-pipeline-optimisation/application.html">Application</a></li>
+                <li class="nav-item"><a href="../06-pipeline-optimisation/review-system.html">Review</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Billing -->
+        <div class="nav-section">
+          <div class="nav-section-title">Billing</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Abonnements</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../07-abonnements/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../07-abonnements/business-models.html">Modèles économiques</a></li>
+                <li class="nav-item"><a href="../07-abonnements/plans-stripe.html">Plans Stripe</a></li>
+                <li class="nav-item"><a href="../07-abonnements/checkout-flow.html">Checkout</a></li>
+                <li class="nav-item"><a href="../07-abonnements/webhooks.html">Webhooks</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Crédits</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../08-credits/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../08-credits/welcome-credits.html">Crédits bienvenue</a></li>
+                <li class="nav-item"><a href="../08-credits/debit-refund.html">Débit / Remboursement</a></li>
+                <li class="nav-item"><a href="../08-credits/feature-limits.html">Limites Features</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Système -->
+        <div class="nav-section">
+          <div class="nav-section-title">Système</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Background Jobs</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../09-background-jobs/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../09-background-jobs/task-types.html">Types de tâches</a></li>
+                <li class="nav-item"><a href="../09-background-jobs/concurrency.html">Concurrence</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Export</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../10-export/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../10-export/pdf.html">Export PDF</a></li>
+                <li class="nav-item"><a href="../10-export/docx.html">Export DOCX</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="../11-traduction/overview.html">Traduction</a></li>
+          </ul>
+        </div>
+
+        <!-- Administration -->
+        <div class="nav-section">
+          <div class="nav-section-title">Administration</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Dashboard Admin</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../12-administration/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../12-administration/users.html">Utilisateurs</a></li>
+                <li class="nav-item"><a href="../12-administration/subscription-mode.html">Mode Abonnement</a></li>
+                <li class="nav-item"><a href="../12-administration/plans-management.html">Gestion Plans</a></li>
+                <li class="nav-item"><a href="../12-administration/credit-packs.html">Packs Crédits</a></li>
+                <li class="nav-item"><a href="../12-administration/openai-monitoring.html">Monitoring OpenAI</a></li>
+                <li class="nav-item"><a href="../12-administration/email-templates.html">Templates Email</a></li>
+                <li class="nav-item"><a href="../12-administration/settings.html">Paramètres</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Autres -->
+        <div class="nav-section">
+          <div class="nav-section-title">Autres</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="../13-onboarding/overview.html">Onboarding</a></li>
+            <li class="nav-item has-children">
+              <a href="#">Email</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../14-email/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../14-email/templates.html">Templates</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Référence -->
+        <div class="nav-section">
+          <div class="nav-section-title">Référence</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">API Reference</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../15-api-reference/index.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../15-api-reference/public.html">Publics</a></li>
+                <li class="nav-item"><a href="../15-api-reference/authenticated.html">Authentifiés</a></li>
+                <li class="nav-item"><a href="../15-api-reference/admin.html">Admin</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="../16-composants/index.html">Composants React</a></li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+            <header class="header">
+        <div class="search-container">
+          <input type="text" class="search-input" placeholder="Rechercher...">
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Changer le theme">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Composants</span>
+        </div>
+
+        <h1>Composants React</h1>
+        <p class="lead">
+          FitMyCV.io comprend <strong>138 composants React</strong> organisés par domaine fonctionnel. L'application utilise React 19 avec Server Components et Client Components.
+        </p>
+
+        <h2>Organisation</h2>
+
+        <pre><code>components/
+├── cv/                    # Éditeur et gestion CV (42 composants)
+│   ├── editor/           # Sections éditables
+│   ├── preview/          # Prévisualisation
+│   └── templates/        # Templates visuels
+├── admin/                 # Dashboard admin (28 composants)
+│   ├── tabs/             # Onglets principaux
+│   ├── charts/           # Graphiques
+│   └── email/            # Gestion emails
+├── auth/                  # Authentification (8 composants)
+├── dashboard/             # Dashboard utilisateur (12 composants)
+├── onboarding/            # Flux onboarding (6 composants)
+├── subscription/          # Gestion abonnement (10 composants)
+├── job-offers/            # Offres d'emploi (8 composants)
+├── ui/                    # Composants UI réutilisables (24 composants)
+└── layout/                # Layout et navigation</code></pre>
+
+        <h2>Composants Principaux</h2>
+
+        <h3>CV Editor</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Architecture de l'éditeur CV</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Editor["CV EDITOR"]
+        CvEditor["CvEditor.jsx<br/>(Container)"]
+        Sidebar["EditorSidebar"]
+        Preview["CvPreview"]
+    end
+
+    subgraph Sections["SECTIONS"]
+        Header["HeaderSection"]
+        Summary["SummarySection"]
+        Experiences["ExperiencesSection"]
+        Skills["SkillsSection"]
+        Education["EducationSection"]
+        Projects["ProjectsSection"]
+    end
+
+    subgraph State["STATE"]
+        Context["CvContext"]
+        Reducer["cvReducer"]
+    end
+
+    CvEditor --> Sidebar
+    CvEditor --> Preview
+    Sidebar --> Sections
+    Sections --> Context
+    Context --> Reducer
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>CvEditor</code></td>
+              <td>Client</td>
+              <td>Container principal avec state management</td>
+            </tr>
+            <tr>
+              <td><code>EditorSidebar</code></td>
+              <td>Client</td>
+              <td>Navigation entre sections</td>
+            </tr>
+            <tr>
+              <td><code>CvPreview</code></td>
+              <td>Client</td>
+              <td>Prévisualisation temps réel</td>
+            </tr>
+            <tr>
+              <td><code>HeaderSection</code></td>
+              <td>Client</td>
+              <td>Édition infos personnelles</td>
+            </tr>
+            <tr>
+              <td><code>ExperienceItem</code></td>
+              <td>Client</td>
+              <td>Édition d'une expérience</td>
+            </tr>
+            <tr>
+              <td><code>SkillsEditor</code></td>
+              <td>Client</td>
+              <td>Gestion des compétences</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Dashboard Admin</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>AdminDashboard</code></td>
+              <td>Container avec tabs</td>
+            </tr>
+            <tr>
+              <td><code>OverviewTab</code></td>
+              <td>KPIs et métriques globales</td>
+            </tr>
+            <tr>
+              <td><code>UsersTab</code></td>
+              <td>Gestion utilisateurs</td>
+            </tr>
+            <tr>
+              <td><code>OpenAICostsTab</code></td>
+              <td>Monitoring coûts IA</td>
+            </tr>
+            <tr>
+              <td><code>SettingsTab</code></td>
+              <td>Configuration système</td>
+            </tr>
+            <tr>
+              <td><code>KPICard</code></td>
+              <td>Carte métrique avec trend</td>
+            </tr>
+            <tr>
+              <td><code>MRRHistoryChart</code></td>
+              <td>Graphique revenus</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>UI Components</h3>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Forms</h4>
+            <ul>
+              <li><code>Input</code></li>
+              <li><code>Textarea</code></li>
+              <li><code>Select</code></li>
+              <li><code>Checkbox</code></li>
+              <li><code>DatePicker</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Feedback</h4>
+            <ul>
+              <li><code>Button</code></li>
+              <li><code>Modal</code></li>
+              <li><code>Toast</code></li>
+              <li><code>Spinner</code></li>
+              <li><code>ProgressBar</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Display</h4>
+            <ul>
+              <li><code>Card</code></li>
+              <li><code>Badge</code></li>
+              <li><code>Avatar</code></li>
+              <li><code>Tooltip</code></li>
+              <li><code>Tabs</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Navigation</h4>
+            <ul>
+              <li><code>Sidebar</code></li>
+              <li><code>Breadcrumb</code></li>
+              <li><code>Dropdown</code></li>
+              <li><code>Pagination</code></li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>Patterns</h2>
+
+        <h3>Server vs Client Components</h3>
+
+        <pre><code>// Server Component (par défaut)
+// app/dashboard/page.jsx
+export default async function DashboardPage() {
+  const session = await auth();
+  const cvFiles = await prisma.cvFile.findMany({
+    where: { userId: session.user.id }
+  });
+
+  return (
+    <div>
+      <h1>Mes CV</h1>
+      <CvList cvFiles={cvFiles} /> {/* Client Component */}
+    </div>
+  );
+}
+
+// Client Component
+// components/cv/CvList.jsx
+'use client';
+
+import { useState } from 'react';
+
+export function CvList({ cvFiles }) {
+  const [selected, setSelected] = useState(null);
+
+  return (
+    <ul>
+      {cvFiles.map(cv => (
+        <li key={cv.id} onClick={() => setSelected(cv.id)}>
+          {cv.filename}
+        </li>
+      ))}
+    </ul>
+  );
+}</code></pre>
+
+        <h3>Context Pattern</h3>
+
+        <pre><code>// components/cv/CvContext.jsx
+'use client';
+
+import { createContext, useContext, useReducer } from 'react';
+
+const CvContext = createContext(null);
+
+export function CvProvider({ children, initialCv }) {
+  const [state, dispatch] = useReducer(cvReducer, {
+    cv: initialCv,
+    isDirty: false,
+    isSaving: false
+  });
+
+  return (
+    <CvContext.Provider value={{ state, dispatch }}>
+      {children}
+    </CvContext.Provider>
+  );
+}
+
+export function useCv() {
+  const context = useContext(CvContext);
+  if (!context) {
+    throw new Error('useCv must be used within CvProvider');
+  }
+  return context;
+}
+
+function cvReducer(state, action) {
+  switch (action.type) {
+    case 'UPDATE_HEADER':
+      return {
+        ...state,
+        cv: { ...state.cv, header: action.payload },
+        isDirty: true
+      };
+    case 'ADD_EXPERIENCE':
+      return {
+        ...state,
+        cv: {
+          ...state.cv,
+          sections: {
+            ...state.cv.sections,
+            experiences: [...state.cv.sections.experiences, action.payload]
+          }
+        },
+        isDirty: true
+      };
+    // ...
+    default:
+      return state;
+  }
+}</code></pre>
+
+        <h3>Hook Pattern</h3>
+
+        <pre><code>// hooks/useAutoSave.js
+'use client';
+
+import { useEffect, useRef } from 'react';
+import { useCv } from '@/components/cv/CvContext';
+
+export function useAutoSave(cvId, delay = 2000) {
+  const { state, dispatch } = useCv();
+  const timeoutRef = useRef(null);
+
+  useEffect(() => {
+    if (!state.isDirty) return;
+
+    // Debounce
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(async () => {
+      dispatch({ type: 'SET_SAVING', payload: true });
+
+      try {
+        await fetch(`/api/cv/${cvId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state.cv)
+        });
+
+        dispatch({ type: 'SAVED' });
+      } catch (error) {
+        console.error('Auto-save failed:', error);
+      } finally {
+        dispatch({ type: 'SET_SAVING', payload: false });
+      }
+    }, delay);
+
+    return () => clearTimeout(timeoutRef.current);
+  }, [state.cv, state.isDirty, cvId, delay, dispatch]);
+}</code></pre>
+
+        <h2>Hooks Personnalisés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Hook</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>useCv()</code></td>
+              <td>Accès au context CV</td>
+            </tr>
+            <tr>
+              <td><code>useAutoSave()</code></td>
+              <td>Sauvegarde automatique avec debounce</td>
+            </tr>
+            <tr>
+              <td><code>useTaskProgress()</code></td>
+              <td>Suivi progression SSE</td>
+            </tr>
+            <tr>
+              <td><code>useSubscription()</code></td>
+              <td>État abonnement courant</td>
+            </tr>
+            <tr>
+              <td><code>useCredits()</code></td>
+              <td>Solde et transactions</td>
+            </tr>
+            <tr>
+              <td><code>useOpenAICostsData()</code></td>
+              <td>Données coûts admin</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Conventions</h2>
+
+        <ul>
+          <li><strong>Fichiers</strong> : PascalCase pour composants (<code>CvEditor.jsx</code>)</li>
+          <li><strong>Exports</strong> : Named exports pour composants réutilisables</li>
+          <li><strong>'use client'</strong> : Uniquement quand nécessaire (state, effects, events)</li>
+          <li><strong>Props</strong> : Destructuring avec valeurs par défaut</li>
+          <li><strong>Styles</strong> : Tailwind CSS classes, pas de CSS modules</li>
+        </ul>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

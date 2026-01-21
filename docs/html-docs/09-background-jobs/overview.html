@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Background Jobs | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+        <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="index.html" class="sidebar-logo">FitMyCV<span class="accent">.io</span></a>
+        <div class="sidebar-version">Documentation Technique v1.0.9.5</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Introduction -->
+        <div class="nav-section">
+          <div class="nav-section-title">Introduction</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="index.html">Accueil</a></li>
+          </ul>
+        </div>
+
+        <!-- Architecture -->
+        <div class="nav-section">
+          <div class="nav-section-title">Architecture</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Architecture</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="01-architecture/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="01-architecture/tech-stack.html">Stack technologique</a></li>
+                <li class="nav-item"><a href="01-architecture/database.html">Base de données</a></li>
+                <li class="nav-item"><a href="01-architecture/patterns.html">Patterns</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Fonctionnalités Core -->
+        <div class="nav-section">
+          <div class="nav-section-title">Fonctionnalités Core</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Authentification</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="02-authentification/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="02-authentification/oauth-flow.html">OAuth Flow</a></li>
+                <li class="nav-item"><a href="02-authentification/credentials-flow.html">Credentials</a></li>
+                <li class="nav-item"><a href="02-authentification/email-verification.html">Vérification Email</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Gestion des CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="03-gestion-cv/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/crud.html">CRUD</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/versioning.html">Versioning</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/import-pdf.html">Import PDF</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/structure-cv.html">Structure JSON</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Offres d'emploi</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="04-offres-emploi/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-url.html">Extraction URL</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-pdf.html">Extraction PDF</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Pipelines IA -->
+        <div class="nav-section">
+          <div class="nav-section-title">Pipelines IA</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Génération CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="05-pipeline-generation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/orchestrator.html">Orchestrateur</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-classification.html">Classification</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-batches.html">Batches</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-recompose.html">Recomposition</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/prompts.html">Prompts IA</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/schemas-io.html">Schemas I/O</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Optimisation CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="06-pipeline-optimisation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/scoring.html">Scoring</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/suggestions.html">Suggestions</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/application.html">Application</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/review-system.html">Review</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Billing -->
+        <div class="nav-section">
+          <div class="nav-section-title">Billing</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Abonnements</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="07-abonnements/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="07-abonnements/business-models.html">Modèles économiques</a></li>
+                <li class="nav-item"><a href="07-abonnements/plans-stripe.html">Plans Stripe</a></li>
+                <li class="nav-item"><a href="07-abonnements/checkout-flow.html">Checkout</a></li>
+                <li class="nav-item"><a href="07-abonnements/webhooks.html">Webhooks</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Crédits</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="08-credits/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="08-credits/welcome-credits.html">Crédits bienvenue</a></li>
+                <li class="nav-item"><a href="08-credits/debit-refund.html">Débit / Remboursement</a></li>
+                <li class="nav-item"><a href="08-credits/feature-limits.html">Limites Features</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Système -->
+        <div class="nav-section">
+          <div class="nav-section-title">Système</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Background Jobs</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="09-background-jobs/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="09-background-jobs/task-types.html">Types de tâches</a></li>
+                <li class="nav-item"><a href="09-background-jobs/concurrency.html">Concurrence</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Export</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="10-export/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="10-export/pdf.html">Export PDF</a></li>
+                <li class="nav-item"><a href="10-export/docx.html">Export DOCX</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="11-traduction/overview.html">Traduction</a></li>
+          </ul>
+        </div>
+
+        <!-- Administration -->
+        <div class="nav-section">
+          <div class="nav-section-title">Administration</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Dashboard Admin</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="12-administration/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="12-administration/users.html">Utilisateurs</a></li>
+                <li class="nav-item"><a href="12-administration/subscription-mode.html">Mode Abonnement</a></li>
+                <li class="nav-item"><a href="12-administration/plans-management.html">Gestion Plans</a></li>
+                <li class="nav-item"><a href="12-administration/credit-packs.html">Packs Crédits</a></li>
+                <li class="nav-item"><a href="12-administration/openai-monitoring.html">Monitoring OpenAI</a></li>
+                <li class="nav-item"><a href="12-administration/email-templates.html">Templates Email</a></li>
+                <li class="nav-item"><a href="12-administration/settings.html">Paramètres</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Autres -->
+        <div class="nav-section">
+          <div class="nav-section-title">Autres</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="13-onboarding/overview.html">Onboarding</a></li>
+            <li class="nav-item has-children">
+              <a href="#">Email</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="14-email/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="14-email/templates.html">Templates</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Référence -->
+        <div class="nav-section">
+          <div class="nav-section-title">Référence</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">API Reference</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="15-api-reference/index.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="15-api-reference/public.html">Publics</a></li>
+                <li class="nav-item"><a href="15-api-reference/authenticated.html">Authentifiés</a></li>
+                <li class="nav-item"><a href="15-api-reference/admin.html">Admin</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="16-composants/index.html">Composants React</a></li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+            <header class="header">
+        <button class="mobile-menu-button" title="Menu">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div class="search-container">
+          <input type="text" class="search-input" placeholder="Rechercher dans la documentation...">
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Changer le thème">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Background Jobs</span>
+        </div>
+
+        <h1>Background Jobs</h1>
+        <p class="lead">
+          Le système de background jobs permet d'exécuter des tâches longues de manière asynchrone avec suivi de progression et gestion des erreurs.
+        </p>
+
+        <h2>Architecture</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux de traitement des jobs</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph API["API LAYER"]
+        Request["Request utilisateur"]
+        Validate["Validation & Auth"]
+        Create["Créer tâche en DB"]
+    end
+
+    subgraph Queue["JOB QUEUE"]
+        Enqueue["enqueueJob()"]
+        Concurrency["Contrôle concurrence<br/>(max 3)"]
+        Exécute["Exécution job"]
+    end
+
+    subgraph Progress["PROGRESSION"]
+        DB[(BackgroundTask)]
+        SSE["SSE Events"]
+        Client["Client browser"]
+    end
+
+    subgraph Handler["ERROR HANDLING"]
+        Retry["Retry logic"]
+        Backoff["Exponential backoff"]
+        Refund["Refund crédits"]
+    end
+
+    Request --> Validate --> Create
+    Create --> Enqueue
+    Enqueue --> Concurrency
+    Concurrency --> Exécute
+
+    Exécute --> DB
+    DB --> SSE
+    SSE --> Client
+
+    Exécute -->|Échec| Handler
+    Handler --> Retry
+    Retry -->|Max retries| Refund
+          </div>
+        </div>
+
+        <h2>Types de Tâches</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Durée moyenne</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>cv_generation</code></td>
+              <td>Pipeline génération CV</td>
+              <td>30-60 secondes</td>
+            </tr>
+            <tr>
+              <td><code>cv_optimization</code></td>
+              <td>Pipeline optimisation CV</td>
+              <td>20-40 secondes</td>
+            </tr>
+            <tr>
+              <td><code>pdf_import</code></td>
+              <td>Import et extraction PDF</td>
+              <td>10-20 secondes</td>
+            </tr>
+            <tr>
+              <td><code>pdf_export</code></td>
+              <td>Export CV vers PDF</td>
+              <td>5-10 secondes</td>
+            </tr>
+            <tr>
+              <td><code>translation</code></td>
+              <td>Traduction CV</td>
+              <td>15-30 secondes</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Modèle de Données</h2>
+
+        <pre><code>// prisma/schema.prisma
+
+model BackgroundTask {
+  id          Int       @id @default(autoincrement())
+  userId      String
+  type        String    // cv_generation, pdf_import, etc.
+  status      String    @default("pending") // pending, running, completed, failed
+  payload     Json?     // Données d'entrée
+  result      Json?     // Résultat ou erreur
+  progress    Int       @default(0) // 0-100
+  message     String?   // Message de progression
+  retryCount  Int       @default(0)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@index([userId, status])
+  @@index([type, status])
+}</code></pre>
+
+        <h2>Job Queue</h2>
+
+        <h3>Enqueue un Job</h3>
+
+        <pre><code>// lib/background-jobs/jobQueue.js
+
+const MAX_CONCURRENT = 3;
+let currentJobs = 0;
+const queue = [];
+
+export function enqueueJob(jobFn) {
+  return new Promise((resolve, reject) => {
+    queue.push({ jobFn, resolve, reject });
+    processQueue();
+  });
+}
+
+async function processQueue() {
+  if (currentJobs >= MAX_CONCURRENT || queue.length === 0) {
+    return;
+  }
+
+  currentJobs++;
+  const { jobFn, resolve, reject } = queue.shift();
+
+  try {
+    const result = await jobFn();
+    resolve(result);
+  } catch (error) {
+    reject(error);
+  } finally {
+    currentJobs--;
+    processQueue(); // Traiter le suivant
+  }
+}</code></pre>
+
+        <h3>Utilisation</h3>
+
+        <pre><code>// app/api/cv/generate/route.js
+import { enqueueJob } from '@/lib/background-jobs/jobQueue';
+import { startSingleOfferGeneration } from '@/lib/cv-generation';
+
+export async function POST(request) {
+  const session = await auth();
+  const { sourceCvId, jobOfferUrl } = await request.json();
+
+  // 1. Créer la tâche en DB
+  const task = await prisma.cvGenerationTask.create({
+    data: {
+      userId: session.user.id,
+      sourceCvFileId: sourceCvId,
+      mode: 'adapt',
+      status: 'pending',
+      totalOffers: 1
+    }
+  });
+
+  // 2. Enqueue le job (non-bloquant)
+  enqueueJob(async () => {
+    await startSingleOfferGeneration(task.id, jobOfferUrl);
+  });
+
+  // 3. Retourner immédiatement
+  return Response.json({
+    taskId: task.id,
+    status: 'pending',
+    message: 'Generation started'
+  });
+}</code></pre>
+
+        <h2>Progression SSE</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux Server-Sent Events</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant C as Client
+    participant API as API /progress
+    participant Job as Background Job
+    participant DB as Database
+
+    C->>API: GET /api/task/[id]/progress
+    API-->>C: SSE Connection opened
+
+    loop Pendant l'exécution
+        Job->>DB: Update progress
+        DB-->>API: Change detected
+        API-->>C: event: progress
+    end
+
+    Job->>DB: status = completed
+    DB-->>API: Final status
+    API-->>C: event: complete
+    API-->>C: Connection closed
+          </div>
+        </div>
+
+        <h3>Endpoint SSE</h3>
+
+        <pre><code>// app/api/task/[id]/progress/route.js
+
+export async function GET(request, { params }) {
+  const taskId = params.id;
+
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      // Fonction pour envoyer un event
+      const sendEvent = (data) => {
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
+        );
+      };
+
+      // Poll la DB pour les mises à jour
+      const checkProgress = async () => {
+        const task = await prisma.backgroundTask.findUnique({
+          where: { id: parseInt(taskId) }
+        });
+
+        if (!task) {
+          sendEvent({ type: 'error', message: 'Task not found' });
+          controller.close();
+          return;
+        }
+
+        sendEvent({
+          type: task.status === 'completed' ? 'complete' : 'progress',
+          progress: task.progress,
+          message: task.message,
+          status: task.status,
+          result: task.result
+        });
+
+        if (task.status === 'completed' || task.status === 'failed') {
+          controller.close();
+        } else {
+          setTimeout(checkProgress, 1000); // Poll toutes les secondes
+        }
+      };
+
+      checkProgress();
+    }
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    }
+  });
+}</code></pre>
+
+        <h3>Client React</h3>
+
+        <pre><code>// hooks/useTaskProgress.js
+import { useState, useEffect } from 'react';
+
+export function useTaskProgress(taskId) {
+  const [progress, setProgress] = useState(0);
+  const [message, setMessage] = useState('');
+  const [status, setStatus] = useState('pending');
+  const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    if (!taskId) return;
+
+    const eventSource = new EventSource(`/api/task/${taskId}/progress`);
+
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setProgress(data.progress);
+      setMessage(data.message);
+      setStatus(data.status);
+
+      if (data.type === 'complete' || data.type === 'error') {
+        setResult(data.result);
+        eventSource.close();
+      }
+    };
+
+    eventSource.onerror = () => {
+      eventSource.close();
+      setStatus('error');
+    };
+
+    return () => eventSource.close();
+  }, [taskId]);
+
+  return { progress, message, status, result };
+}</code></pre>
+
+        <h2>Retry & Error Handling</h2>
+
+        <pre><code>// lib/background-jobs/retryHandler.js
+
+const MAX_RETRIES = 3;
+const BASE_DELAY = 1000; // 1 seconde
+
+export async function withRetry(taskId, jobFn) {
+  let lastError;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      // Mettre à jour le retry count
+      await prisma.backgroundTask.update({
+        where: { id: taskId },
+        data: { retryCount: attempt }
+      });
+
+      return await jobFn();
+
+    } catch (error) {
+      lastError = error;
+
+      if (attempt < MAX_RETRIES) {
+        // Exponential backoff: 1s, 2s, 4s
+        const delay = BASE_DELAY * Math.pow(2, attempt);
+
+        await prisma.backgroundTask.update({
+          where: { id: taskId },
+          data: {
+            message: `Retry ${attempt + 1}/${MAX_RETRIES} in ${delay/1000}s...`
+          }
+        });
+
+        await sleep(delay);
+      }
+    }
+  }
+
+  // Échec définitif
+  await prisma.backgroundTask.update({
+    where: { id: taskId },
+    data: {
+      status: 'failed',
+      result: { error: lastError.message },
+      completedAt: new Date()
+    }
+  });
+
+  throw lastError;
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}</code></pre>
+
+        <h2>Monitoring</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Métrique</th>
+              <th>Description</th>
+              <th>Alerte si</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Jobs en attente</td>
+              <td>Tâches status=pending</td>
+              <td>> 10 depuis > 5 min</td>
+            </tr>
+            <tr>
+              <td>Jobs échoués</td>
+              <td>Tâches status=failed (24h)</td>
+              <td>> 5% du total</td>
+            </tr>
+            <tr>
+              <td>Durée moyenne</td>
+              <td>Temps d'exécution par type</td>
+              <td>> 2x la normale</td>
+            </tr>
+            <tr>
+              <td>Retries</td>
+              <td>Jobs avec retryCount > 0</td>
+              <td>> 20% des jobs</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Fichiers Clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/background-jobs/jobQueue.js</code></td>
+              <td>Queue avec contrôle concurrence</td>
+            </tr>
+            <tr>
+              <td><code>lib/background-jobs/retryHandler.js</code></td>
+              <td>Retry avec exponential backoff</td>
+            </tr>
+            <tr>
+              <td><code>lib/sse/sseHelpers.js</code></td>
+              <td>Helpers Server-Sent Events</td>
+            </tr>
+            <tr>
+              <td><code>app/api/task/[id]/progress/route.js</code></td>
+              <td>Endpoint SSE progression</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

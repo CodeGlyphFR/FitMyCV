@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schemas I/O - Pipeline Génération | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+        <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="index.html" class="sidebar-logo">FitMyCV<span class="accent">.io</span></a>
+        <div class="sidebar-version">Documentation Technique v1.0.9.5</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Introduction -->
+        <div class="nav-section">
+          <div class="nav-section-title">Introduction</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="index.html">Accueil</a></li>
+          </ul>
+        </div>
+
+        <!-- Architecture -->
+        <div class="nav-section">
+          <div class="nav-section-title">Architecture</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Architecture</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="01-architecture/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="01-architecture/tech-stack.html">Stack technologique</a></li>
+                <li class="nav-item"><a href="01-architecture/database.html">Base de données</a></li>
+                <li class="nav-item"><a href="01-architecture/patterns.html">Patterns</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Fonctionnalités Core -->
+        <div class="nav-section">
+          <div class="nav-section-title">Fonctionnalités Core</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Authentification</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="02-authentification/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="02-authentification/oauth-flow.html">OAuth Flow</a></li>
+                <li class="nav-item"><a href="02-authentification/credentials-flow.html">Credentials</a></li>
+                <li class="nav-item"><a href="02-authentification/email-verification.html">Vérification Email</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Gestion des CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="03-gestion-cv/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/crud.html">CRUD</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/versioning.html">Versioning</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/import-pdf.html">Import PDF</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/structure-cv.html">Structure JSON</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Offres d'emploi</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="04-offres-emploi/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-url.html">Extraction URL</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-pdf.html">Extraction PDF</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Pipelines IA -->
+        <div class="nav-section">
+          <div class="nav-section-title">Pipelines IA</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Génération CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="05-pipeline-generation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/orchestrator.html">Orchestrateur</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-classification.html">Classification</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-batches.html">Batches</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-recompose.html">Recomposition</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/prompts.html">Prompts IA</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/schemas-io.html">Schemas I/O</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Optimisation CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="06-pipeline-optimisation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/scoring.html">Scoring</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/suggestions.html">Suggestions</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/application.html">Application</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/review-system.html">Review</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Billing -->
+        <div class="nav-section">
+          <div class="nav-section-title">Billing</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Abonnements</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="07-abonnements/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="07-abonnements/business-models.html">Modèles économiques</a></li>
+                <li class="nav-item"><a href="07-abonnements/plans-stripe.html">Plans Stripe</a></li>
+                <li class="nav-item"><a href="07-abonnements/checkout-flow.html">Checkout</a></li>
+                <li class="nav-item"><a href="07-abonnements/webhooks.html">Webhooks</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Crédits</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="08-credits/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="08-credits/welcome-credits.html">Crédits bienvenue</a></li>
+                <li class="nav-item"><a href="08-credits/debit-refund.html">Débit / Remboursement</a></li>
+                <li class="nav-item"><a href="08-credits/feature-limits.html">Limites Features</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Système -->
+        <div class="nav-section">
+          <div class="nav-section-title">Système</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Background Jobs</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="09-background-jobs/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="09-background-jobs/task-types.html">Types de tâches</a></li>
+                <li class="nav-item"><a href="09-background-jobs/concurrency.html">Concurrence</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Export</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="10-export/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="10-export/pdf.html">Export PDF</a></li>
+                <li class="nav-item"><a href="10-export/docx.html">Export DOCX</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="11-traduction/overview.html">Traduction</a></li>
+          </ul>
+        </div>
+
+        <!-- Administration -->
+        <div class="nav-section">
+          <div class="nav-section-title">Administration</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Dashboard Admin</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="12-administration/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="12-administration/users.html">Utilisateurs</a></li>
+                <li class="nav-item"><a href="12-administration/subscription-mode.html">Mode Abonnement</a></li>
+                <li class="nav-item"><a href="12-administration/plans-management.html">Gestion Plans</a></li>
+                <li class="nav-item"><a href="12-administration/credit-packs.html">Packs Crédits</a></li>
+                <li class="nav-item"><a href="12-administration/openai-monitoring.html">Monitoring OpenAI</a></li>
+                <li class="nav-item"><a href="12-administration/email-templates.html">Templates Email</a></li>
+                <li class="nav-item"><a href="12-administration/settings.html">Paramètres</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Autres -->
+        <div class="nav-section">
+          <div class="nav-section-title">Autres</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="13-onboarding/overview.html">Onboarding</a></li>
+            <li class="nav-item has-children">
+              <a href="#">Email</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="14-email/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="14-email/templates.html">Templates</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Référence -->
+        <div class="nav-section">
+          <div class="nav-section-title">Référence</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">API Reference</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="15-api-reference/index.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="15-api-reference/public.html">Publics</a></li>
+                <li class="nav-item"><a href="15-api-reference/authenticated.html">Authentifiés</a></li>
+                <li class="nav-item"><a href="15-api-reference/admin.html">Admin</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="16-composants/index.html">Composants React</a></li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+            <header class="header">
+        <button class="mobile-menu-button" title="Menu">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div class="search-container">
+          <input type="text" class="search-input" placeholder="Rechercher dans la documentation...">
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Changer le thème">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="overview.html">Pipeline Génération</a>
+          <span>/</span>
+          <span>Schemas I/O</span>
+        </div>
+
+        <h1>Schemas I/O</h1>
+        <p class="lead">
+          Le pipeline utilise des JSON Schemas stricts pour garantir la structure des réponses OpenAI via <strong>Structured Outputs</strong>. Chaque phase a son schema d'entrée et de sortie.
+        </p>
+
+        <h2>Organisation des Fichiers</h2>
+
+        <pre><code>lib/features/cv-adaptation/schemas/
+├── classification-output.json    # Output phase classification
+├── experience-output.json        # Output batch experience
+├── project-output.json           # Output batch project
+├── skills-output.json            # Output batch skills
+├── summary-output.json           # Output batch summary
+├── extras-output.json            # Output batch extras
+└── cv-final.json                 # Schema CV final</code></pre>
+
+        <h2>Structured Outputs OpenAI</h2>
+
+        <p>Les schemas sont utilisés avec le paramètre <code>response_format</code> de l'API OpenAI :</p>
+
+        <pre><code>const response = await openai.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [...],
+  response_format: {
+    type: 'json_schema',
+    json_schema: {
+      name: 'classification_output',
+      schema: classificationSchema,
+      strict: true  // Validation stricte
+    }
+  }
+});</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Mode strict</div>
+          <p>Avec <code>strict: true</code>, OpenAI garantit que la réponse respecte exactement le schema. Aucun champ supplémentaire, aucune valeur hors énumération.</p>
+        </div>
+
+        <h2>Schema : Classification Output</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">classification-output.json</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "experiences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID de l'expérience source"
+          },
+          "decision": {
+            "type": "string",
+            "enum": ["KEEP", "REMOVE", "MOVE_TO_PROJECTS"]
+          },
+          "reason": {
+            "type": "string",
+            "description": "Justification de la décision"
+          },
+          "relevanceScore": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": ["id", "decision", "reason", "relevanceScore"]
+      }
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "decision": {
+            "type": "string",
+            "enum": ["KEEP", "REMOVE"]
+          },
+          "reason": { "type": "string" },
+          "relevanceScore": { "type": "number" }
+        },
+        "required": ["id", "decision", "reason", "relevanceScore"]
+      }
+    }
+  },
+  "required": ["experiences", "projects"]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Schema : Experience Output</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">experience-output.json</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "adaptedExperience": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "company": { "type": "string" },
+        "location": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": ["string", "null"] },
+        "current": { "type": "boolean" },
+        "responsibilities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "maxItems": 6
+        }
+      },
+      "required": ["id", "title", "company", "startDate", "responsibilities"]
+    },
+    "modifications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": { "type": "string" },
+          "action": {
+            "type": "string",
+            "enum": ["kept", "modified", "reordered", "removed"]
+          },
+          "before": { "type": "string" },
+          "after": { "type": "string" },
+          "reason": { "type": "string" }
+        },
+        "required": ["field", "action", "reason"]
+      }
+    },
+    "keywordsUsed": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Mots-clés de l'offre intégrés"
+    }
+  },
+  "required": ["adaptedExperience", "modifications", "keywordsUsed"]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Schema : Skills Output</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">skills-output.json</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "technical": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "category": {
+            "type": "string",
+            "enum": ["language", "framework", "database", "tool", "platform", "other"]
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["required", "nice-to-have", "transferable"]
+          },
+          "source": {
+            "type": "string",
+            "enum": ["cv", "job_offer", "both"]
+          }
+        },
+        "required": ["name", "category", "priority", "source"]
+      }
+    },
+    "soft": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "language": { "type": "string" },
+          "level": { "type": "string" }
+        },
+        "required": ["language", "level"]
+      }
+    },
+    "methodologies": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "certifications": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": ["technical", "soft", "languages", "methodologies"]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Schema : Summary Output</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">summary-output.json</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "summary": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string",
+          "minLength": 100,
+          "maxLength": 500,
+          "description": "Résumé professionnel (3-5 phrases)"
+        }
+      },
+      "required": ["content"]
+    },
+    "keywordsIntegrated": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Mots-clés de l'offre intégrés dans le résumé"
+    },
+    "structure": {
+      "type": "object",
+      "properties": {
+        "hook": { "type": "string" },
+        "expertise": { "type": "string" },
+        "achievement": { "type": "string" },
+        "value": { "type": "string" }
+      }
+    }
+  },
+  "required": ["summary", "keywordsIntegrated"]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Schema : CV Final</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">cv-final.json (après recomposition)</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "header": {
+      "type": "object",
+      "properties": {
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "location": { "type": "string" },
+        "linkedIn": { "type": "string" },
+        "portfolio": { "type": "string" }
+      },
+      "required": ["firstName", "lastName", "email"]
+    },
+    "sections": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "object",
+          "properties": {
+            "content": { "type": "string" }
+          }
+        },
+        "experiences": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/experience" }
+        },
+        "projects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/project" }
+        },
+        "skills": { "$ref": "#/$defs/skills" },
+        "education": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/education" }
+        },
+        "certifications": { "type": "array" },
+        "extras": { "type": "array" }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "language": { "type": "string" },
+        "generatedAt": { "type": "string" },
+        "sourceJobOfferId": { "type": "integer" },
+        "matchScore": { "type": "integer" }
+      }
+    }
+  },
+  "required": ["header", "sections"],
+  "$defs": {
+    "experience": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "company": { "type": "string" },
+        "location": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": ["string", "null"] },
+        "current": { "type": "boolean" },
+        "responsibilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["title", "company", "startDate", "responsibilities"]
+    },
+    "project": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "technologies": { "type": "array", "items": { "type": "string" } },
+        "url": { "type": "string" }
+      },
+      "required": ["name", "description"]
+    },
+    "skills": {
+      "type": "object",
+      "properties": {
+        "technical": { "type": "array", "items": { "type": "string" } },
+        "soft": { "type": "array", "items": { "type": "string" } },
+        "languages": { "type": "array" },
+        "methodologies": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "education": {
+      "type": "object",
+      "properties": {
+        "degree": { "type": "string" },
+        "institution": { "type": "string" },
+        "year": { "type": "string" }
+      }
+    }
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Chargement des Schemas</h2>
+
+        <pre><code>// lib/openai-core/schemaLoader.js
+import fs from 'fs/promises';
+import path from 'path';
+
+const SCHEMAS_CACHE = new Map();
+
+export async function loadSchema(schemaPath) {
+  // Check cache
+  if (SCHEMAS_CACHE.has(schemaPath)) {
+    return SCHEMAS_CACHE.get(schemaPath);
+  }
+
+  // Determine base path based on feature
+  const fullPath = path.join(
+    process.cwd(),
+    'lib/features',
+    schemaPath.replace('/', '/schemas/') + '.json'
+  );
+
+  const content = await fs.readFile(fullPath, 'utf-8');
+  const schema = JSON.parse(content);
+
+  // Cache for reuse
+  SCHEMAS_CACHE.set(schemaPath, schema);
+
+  return schema;
+}
+
+// Usage
+const schema = await loadSchema('cv-adaptation/experience-output');
+
+const response = await callOpenAI({
+  messages: [...],
+  responseFormat: {
+    type: 'json_schema',
+    json_schema: {
+      name: 'experience_output',
+      schema: schema,
+      strict: true
+    }
+  }
+});</code></pre>
+
+        <h2>Validation Post-Réponse</h2>
+
+        <pre><code>// lib/openai-core/validation.js
+import Ajv from 'ajv';
+
+const ajv = new Ajv({ allErrors: true });
+
+export function validateResponse(data, schema) {
+  const validate = ajv.compile(schema);
+  const valid = validate(data);
+
+  if (!valid) {
+    return {
+      valid: false,
+      errors: validate.errors
+    };
+  }
+
+  return { valid: true, data };
+}
+
+// Usage dans le pipeline
+const response = await callOpenAI({ ... });
+const parsed = JSON.parse(response.choices[0].message.content);
+
+const validation = validateResponse(parsed, experienceOutputSchema);
+if (!validation.valid) {
+  console.error('Schema validation failed:', validation.errors);
+  throw new Error('Invalid AI response structure');
+}</code></pre>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

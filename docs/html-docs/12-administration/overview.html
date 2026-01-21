@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administration | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+        <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="index.html" class="sidebar-logo">FitMyCV<span class="accent">.io</span></a>
+        <div class="sidebar-version">Documentation Technique v1.0.9.5</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Introduction -->
+        <div class="nav-section">
+          <div class="nav-section-title">Introduction</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="index.html">Accueil</a></li>
+          </ul>
+        </div>
+
+        <!-- Architecture -->
+        <div class="nav-section">
+          <div class="nav-section-title">Architecture</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Architecture</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="01-architecture/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="01-architecture/tech-stack.html">Stack technologique</a></li>
+                <li class="nav-item"><a href="01-architecture/database.html">Base de données</a></li>
+                <li class="nav-item"><a href="01-architecture/patterns.html">Patterns</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Fonctionnalités Core -->
+        <div class="nav-section">
+          <div class="nav-section-title">Fonctionnalités Core</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Authentification</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="02-authentification/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="02-authentification/oauth-flow.html">OAuth Flow</a></li>
+                <li class="nav-item"><a href="02-authentification/credentials-flow.html">Credentials</a></li>
+                <li class="nav-item"><a href="02-authentification/email-verification.html">Vérification Email</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Gestion des CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="03-gestion-cv/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/crud.html">CRUD</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/versioning.html">Versioning</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/import-pdf.html">Import PDF</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/structure-cv.html">Structure JSON</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Offres d'emploi</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="04-offres-emploi/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-url.html">Extraction URL</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-pdf.html">Extraction PDF</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Pipelines IA -->
+        <div class="nav-section">
+          <div class="nav-section-title">Pipelines IA</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Génération CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="05-pipeline-generation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/orchestrator.html">Orchestrateur</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-classification.html">Classification</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-batches.html">Batches</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-recompose.html">Recomposition</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/prompts.html">Prompts IA</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/schemas-io.html">Schemas I/O</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Optimisation CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="06-pipeline-optimisation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/scoring.html">Scoring</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/suggestions.html">Suggestions</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/application.html">Application</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/review-system.html">Review</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Billing -->
+        <div class="nav-section">
+          <div class="nav-section-title">Billing</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Abonnements</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="07-abonnements/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="07-abonnements/business-models.html">Modèles économiques</a></li>
+                <li class="nav-item"><a href="07-abonnements/plans-stripe.html">Plans Stripe</a></li>
+                <li class="nav-item"><a href="07-abonnements/checkout-flow.html">Checkout</a></li>
+                <li class="nav-item"><a href="07-abonnements/webhooks.html">Webhooks</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Crédits</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="08-credits/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="08-credits/welcome-credits.html">Crédits bienvenue</a></li>
+                <li class="nav-item"><a href="08-credits/debit-refund.html">Débit / Remboursement</a></li>
+                <li class="nav-item"><a href="08-credits/feature-limits.html">Limites Features</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Système -->
+        <div class="nav-section">
+          <div class="nav-section-title">Système</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Background Jobs</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="09-background-jobs/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="09-background-jobs/task-types.html">Types de tâches</a></li>
+                <li class="nav-item"><a href="09-background-jobs/concurrency.html">Concurrence</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Export</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="10-export/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="10-export/pdf.html">Export PDF</a></li>
+                <li class="nav-item"><a href="10-export/docx.html">Export DOCX</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="11-traduction/overview.html">Traduction</a></li>
+          </ul>
+        </div>
+
+        <!-- Administration -->
+        <div class="nav-section">
+          <div class="nav-section-title">Administration</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Dashboard Admin</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="12-administration/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="12-administration/users.html">Utilisateurs</a></li>
+                <li class="nav-item"><a href="12-administration/subscription-mode.html">Mode Abonnement</a></li>
+                <li class="nav-item"><a href="12-administration/plans-management.html">Gestion Plans</a></li>
+                <li class="nav-item"><a href="12-administration/credit-packs.html">Packs Crédits</a></li>
+                <li class="nav-item"><a href="12-administration/openai-monitoring.html">Monitoring OpenAI</a></li>
+                <li class="nav-item"><a href="12-administration/email-templates.html">Templates Email</a></li>
+                <li class="nav-item"><a href="12-administration/settings.html">Paramètres</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Autres -->
+        <div class="nav-section">
+          <div class="nav-section-title">Autres</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="13-onboarding/overview.html">Onboarding</a></li>
+            <li class="nav-item has-children">
+              <a href="#">Email</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="14-email/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="14-email/templates.html">Templates</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Référence -->
+        <div class="nav-section">
+          <div class="nav-section-title">Référence</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">API Reference</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="15-api-reference/index.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="15-api-reference/public.html">Publics</a></li>
+                <li class="nav-item"><a href="15-api-reference/authenticated.html">Authentifiés</a></li>
+                <li class="nav-item"><a href="15-api-reference/admin.html">Admin</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="16-composants/index.html">Composants React</a></li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+            <header class="header">
+        <button class="mobile-menu-button" title="Menu">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div class="search-container">
+          <input type="text" class="search-input" placeholder="Rechercher dans la documentation...">
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Changer le thème">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Administration</span>
+        </div>
+
+        <h1>Administration</h1>
+        <p class="lead">
+          Le dashboard d'administration permet de gérer tous les aspects de l'application : utilisateurs, abonnements, crédits, monitoring OpenAI, templates email et paramètres système.
+        </p>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Accès restreint</div>
+          <p>L'accès au dashboard admin nécessite le rôle <code>ADMIN</code> sur le compte utilisateur. Vérifié via <code>session.user.role === 'ADMIN'</code>.</p>
+        </div>
+
+        <h2>Architecture du Dashboard</h2>
+
+        <h3>Modules disponibles</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Module</th>
+              <th>Description</th>
+              <th>API Endpoint</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Overview</strong></td>
+              <td>KPIs globaux (MRR, utilisateurs, CVs générés)</td>
+              <td><code>/api/analytics/*</code></td>
+            </tr>
+            <tr>
+              <td><strong>Utilisateurs</strong></td>
+              <td>Gestion des comptes utilisateurs</td>
+              <td><code>/api/admin/users</code></td>
+            </tr>
+            <tr>
+              <td><strong>Plans</strong></td>
+              <td>Abonnements Stripe</td>
+              <td><code>/api/admin/subscription-plans</code></td>
+            </tr>
+            <tr>
+              <td><strong>Crédits</strong></td>
+              <td>Packs et transactions</td>
+              <td><code>/api/admin/credit-packs</code></td>
+            </tr>
+            <tr>
+              <td><strong>OpenAI</strong></td>
+              <td>Monitoring coûts et alertes</td>
+              <td><code>/api/admin/openai-*</code></td>
+            </tr>
+            <tr>
+              <td><strong>Email</strong></td>
+              <td>Templates et logs</td>
+              <td><code>/api/admin/email-*</code></td>
+            </tr>
+            <tr>
+              <td><strong>Settings</strong></td>
+              <td>Configuration système (modèles IA, coûts crédits)</td>
+              <td><code>/api/admin/settings</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Architecture</h3>
+        <div class="diagram">
+          <div class="diagram-title">Flux de données admin</div>
+          <div class="mermaid">
+flowchart TB
+    Admin["Dashboard Admin"]
+
+    subgraph Modules["MODULES"]
+        Overview["Overview"]
+        Users["Utilisateurs"]
+        Plans["Plans"]
+        Credits["Crédits"]
+        OpenAIMod["OpenAI"]
+        EmailMod["Email"]
+        Settings["Settings"]
+    end
+
+    subgraph Data["SOURCES DE DONNÉES"]
+        DB[(PostgreSQL)]
+        StripeAPI["Stripe API"]
+        OpenAIAPI["OpenAI API"]
+    end
+
+    Admin --> Modules
+
+    Overview --> DB
+    Users --> DB
+    Plans --> DB
+    Plans --> StripeAPI
+    Credits --> DB
+    OpenAIMod --> DB
+    OpenAIMod --> OpenAIAPI
+    EmailMod --> DB
+    Settings --> DB
+          </div>
+        </div>
+
+        <h2>Modules Disponibles</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Overview (KPIs)</h4>
+            <ul>
+              <li>MRR / ARR / ARPU</li>
+              <li>Nombre utilisateurs (total, nouveaux)</li>
+              <li>CVs générés / optimisés</li>
+              <li>Taux de conversion onboarding</li>
+            </ul>
+            <p><strong>Endpoint :</strong> <code>GET /api/analytics/summary</code></p>
+          </div>
+
+          <div class="card">
+            <h4>Gestion Utilisateurs</h4>
+            <ul>
+              <li>Liste avec pagination et filtres</li>
+              <li>Détails utilisateur (abonnement, crédits, CVs)</li>
+              <li>Modification rôle (USER/ADMIN)</li>
+              <li>Suppression compte</li>
+            </ul>
+            <p><strong>Endpoint :</strong> <code>/api/admin/users/*</code></p>
+          </div>
+
+          <div class="card">
+            <h4>Plans d'Abonnement</h4>
+            <ul>
+              <li>Création/modification plans</li>
+              <li>Configuration limites par feature</li>
+              <li>Synchronisation Stripe</li>
+              <li>Switch mode abonnement/crédits</li>
+            </ul>
+            <p><strong>Endpoint :</strong> <code>/api/admin/subscription-plans/*</code></p>
+          </div>
+
+          <div class="card">
+            <h4>Packs de Crédits</h4>
+            <ul>
+              <li>Création/modification packs</li>
+              <li>Configuration prix/quantités</li>
+              <li>Activation/désactivation</li>
+              <li>Historique transactions</li>
+            </ul>
+            <p><strong>Endpoint :</strong> <code>/api/admin/credit-packs/*</code></p>
+          </div>
+
+          <div class="card">
+            <h4>Monitoring OpenAI</h4>
+            <ul>
+              <li>Solde compte OpenAI</li>
+              <li>Coûts par feature/jour/utilisateur</li>
+              <li>Configuration alertes seuils</li>
+              <li>Historique appels et tokens</li>
+            </ul>
+            <p><strong>Endpoint :</strong> <code>/api/admin/openai-*</code></p>
+          </div>
+
+          <div class="card">
+            <h4>Templates Email</h4>
+            <ul>
+              <li>Éditeur de templates</li>
+              <li>Gestion triggers</li>
+              <li>Logs d'envoi</li>
+              <li>Test d'envoi</li>
+            </ul>
+            <p><strong>Endpoint :</strong> <code>/api/admin/email-*</code></p>
+          </div>
+        </div>
+
+        <h2>KPIs et Métriques</h2>
+
+        <h3>Métriques Financières</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Métrique</th>
+              <th>Description</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>MRR</strong></td>
+              <td>Monthly Recurring Revenue</td>
+              <td>Somme des abonnements actifs</td>
+            </tr>
+            <tr>
+              <td><strong>ARR</strong></td>
+              <td>Annual Recurring Revenue</td>
+              <td>MRR × 12</td>
+            </tr>
+            <tr>
+              <td><strong>ARPU</strong></td>
+              <td>Average Revenue Per User</td>
+              <td>MRR / utilisateurs payants</td>
+            </tr>
+            <tr>
+              <td><strong>Churn Rate</strong></td>
+              <td>Taux de désabonnement</td>
+              <td>Annulations / total abonnés</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Métriques Usage</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Métrique</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>CVs générés</strong></td>
+              <td>Nombre de CV créés via pipeline génération</td>
+            </tr>
+            <tr>
+              <td><strong>CVs optimisés</strong></td>
+              <td>Nombre de CV améliorés via pipeline optimisation</td>
+            </tr>
+            <tr>
+              <td><strong>PDFs importés</strong></td>
+              <td>Nombre d'imports PDF réussis</td>
+            </tr>
+            <tr>
+              <td><strong>Exports</strong></td>
+              <td>Nombre d'exports PDF/DOCX</td>
+            </tr>
+            <tr>
+              <td><strong>Coûts OpenAI</strong></td>
+              <td>Coûts par feature, utilisateur, période</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Monitoring OpenAI</h2>
+
+        <p>Le système de monitoring permet de suivre les coûts OpenAI en temps réel et de configurer des alertes.</p>
+
+        <h3>Types d'Alertes</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Exemple</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>user_daily</code></td>
+              <td>Coût par utilisateur par jour</td>
+              <td>Alerte si > 5$ / jour</td>
+            </tr>
+            <tr>
+              <td><code>user_monthly</code></td>
+              <td>Coût par utilisateur par mois</td>
+              <td>Alerte si > 50$ / mois</td>
+            </tr>
+            <tr>
+              <td><code>global_daily</code></td>
+              <td>Coût total par jour</td>
+              <td>Alerte si > 100$ / jour</td>
+            </tr>
+            <tr>
+              <td><code>global_monthly</code></td>
+              <td>Coût total par mois</td>
+              <td>Alerte si > 2000$ / mois</td>
+            </tr>
+            <tr>
+              <td><code>feature_daily</code></td>
+              <td>Coût par feature par jour</td>
+              <td>Alerte si cv_generation > 50$ / jour</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Tracking des Tokens</h3>
+
+        <pre><code>// Chaque appel OpenAI est tracké
+{
+  userId: "user_id",
+  featureName: "cv_generation",
+  model: "gpt-4o",
+  promptTokens: 1500,
+  cachedTokens: 800,        // Tokens du cache (90% moins cher)
+  completionTokens: 500,
+  totalTokens: 2000,
+  estimatedCost: 0.025,     // En USD
+  duration: 2500            // En ms
+}</code></pre>
+
+        <h2>Gestion des Settings</h2>
+
+        <p>Les paramètres système sont stockés dans la table <code>Setting</code> et peuvent être modifiés en temps réel.</p>
+
+        <h3>Catégories de Settings</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Catégorie</th>
+              <th>Exemples</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>app</code></td>
+              <td>maintenance_mode, registration_enabled</td>
+            </tr>
+            <tr>
+              <td><code>subscription</code></td>
+              <td>subscription_mode_enabled, default_plan_id</td>
+            </tr>
+            <tr>
+              <td><code>credits</code></td>
+              <td>welcome_credits, credits_gpt_cv_generation</td>
+            </tr>
+            <tr>
+              <td><code>openai</code></td>
+              <td>model_cv_generation, model_match_score</td>
+            </tr>
+            <tr>
+              <td><code>cv</code></td>
+              <td>cv_max_versions, cv_encryption_enabled</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Composants React Admin</h2>
+
+        <pre><code>components/admin/
+├── AdminProvider.jsx           # Context mode édition
+├── tabs/
+│   ├── OverviewTab.jsx         # KPIs
+│   ├── UsersTab.jsx            # Gestion users
+│   ├── SubscriptionPlansTab.jsx
+│   ├── FeaturesTab.jsx
+│   ├── FeedbackTab.jsx
+│   ├── SettingsTab.jsx
+│   ├── OpenAICostsTab.jsx
+│   ├── RevenueTab.jsx
+│   ├── OnboardingTab.jsx
+│   └── ErrorsTab.jsx
+├── charts/
+│   ├── KPICard.jsx
+│   ├── MRRHistoryChart.jsx
+│   ├── PlanDistributionChart.jsx
+│   └── OnboardingDropoffChart.jsx
+├── email/
+│   ├── EmailDashboard.jsx
+│   ├── EmailTemplatesSection.jsx
+│   └── EmailHistorySection.jsx
+└── hooks/
+    ├── useAlertManagement.js
+    └── useOpenAICostsData.js</code></pre>
+
+        <h2>Endpoints Admin (38)</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Groupe</th>
+              <th>Endpoints</th>
+              <th>Nombre</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Utilisateurs</td>
+              <td><code>/api/admin/users/*</code></td>
+              <td>5</td>
+            </tr>
+            <tr>
+              <td>Plans</td>
+              <td><code>/api/admin/subscription-plans/*</code></td>
+              <td>6</td>
+            </tr>
+            <tr>
+              <td>Crédits</td>
+              <td><code>/api/admin/credit-packs/*</code></td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td>Email</td>
+              <td><code>/api/admin/email-*</code></td>
+              <td>8</td>
+            </tr>
+            <tr>
+              <td>OpenAI</td>
+              <td><code>/api/admin/openai-*</code></td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td>Settings</td>
+              <td><code>/api/admin/settings/*</code></td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td>Analytics</td>
+              <td><code>/api/analytics/*</code></td>
+              <td>9</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Prochaines Sections</h2>
+
+        <ul>
+          <li><a href="users.html">Gestion Utilisateurs</a> - CRUD utilisateurs</li>
+          <li><a href="subscription-mode.html">Mode Abonnement</a> - Switch entre modèles</li>
+          <li><a href="plans-management.html">Gestion Plans</a> - Configuration plans</li>
+          <li><a href="credit-packs.html">Packs Crédits</a> - Configuration crédits</li>
+          <li><a href="openai-monitoring.html">Monitoring OpenAI</a> - Coûts et alertes</li>
+          <li><a href="email-templates.html">Templates Email</a> - Gestion emails</li>
+          <li><a href="settings.html">Paramètres</a> - Configuration système</li>
+        </ul>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

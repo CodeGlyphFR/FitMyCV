@@ -145,3 +145,56 @@ Consultez `docs/` pour la documentation technique complète :
 - `docs/data-models.md` - 34 modèles Prisma
 - `docs/components.md` - 138 composants
 - `docs/development.md` - Guide développement
+
+## Documentation HTML (Portfolio)
+
+Une documentation HTML complète est disponible dans `docs/html-docs/`. Elle sert de vitrine technique pour démontrer les compétences en ingénierie IA.
+
+### Accès
+```bash
+# Servir localement
+cd docs/html-docs && python -m http.server 8080
+# Puis ouvrir http://localhost:8080
+```
+
+### Structure
+```
+docs/html-docs/
+├── index.html                    # Page d'accueil
+├── assets/
+│   ├── css/style.css            # Styles Tailwind-inspired
+│   └── js/main.js               # Search, navigation, Mermaid
+├── 01-architecture/             # Architecture technique
+├── 02-authentification/         # NextAuth.js
+├── 03-gestion-cv/               # CRUD CV, Import PDF
+├── 04-offres-emploi/            # Extraction, Match Score
+├── 05-pipeline-generation/      # Pipeline IA (7 pages détaillées)
+├── 06-pipeline-optimisation/    # Pipeline optimisation
+├── 07-abonnements/              # Stripe, Plans, Webhooks
+├── 08-credits/                  # Système de crédits
+├── 09-background-jobs/          # Queue, SSE, Retry
+├── 10-export/                   # PDF, DOCX
+├── 11-traduction/               # Traduction CV
+├── 12-administration/           # Dashboard admin
+├── 13-onboarding/               # Flux utilisateur
+├── 14-email/                    # Resend, Templates
+├── 15-api-reference/            # 113 endpoints
+└── 16-composants/               # 138 composants React
+```
+
+### Maintenance
+Lors de modifications du code, mettre à jour la documentation HTML correspondante :
+
+| Changement | Fichiers à mettre à jour |
+|------------|-------------------------|
+| Nouveau endpoint API | `15-api-reference/index.html` |
+| Modification pipeline IA | `05-pipeline-generation/*.html` ou `06-pipeline-optimisation/*.html` |
+| Nouveau composant | `16-composants/index.html` |
+| Modification modèle DB | `01-architecture/database.html` |
+| Changement plans/crédits | `07-abonnements/*.html`, `08-credits/*.html` |
+
+### Convention des pages
+- Diagrammes Mermaid pour les flux
+- Blocs `data-flow` pour documenter Input/Output des phases IA
+- Tables pour les endpoints et configurations
+- Code blocks avec exemples réels du codebase

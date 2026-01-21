@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Reference | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+        <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="../index.html" class="sidebar-logo">FitMyCV<span class="accent">.io</span></a>
+        <div class="sidebar-version">Documentation Technique v1.0.9.5</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Introduction -->
+        <div class="nav-section">
+          <div class="nav-section-title">Introduction</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="../index.html">Accueil</a></li>
+          </ul>
+        </div>
+
+        <!-- Architecture -->
+        <div class="nav-section">
+          <div class="nav-section-title">Architecture</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Architecture</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../01-architecture/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../01-architecture/tech-stack.html">Stack technologique</a></li>
+                <li class="nav-item"><a href="../01-architecture/database.html">Base de données</a></li>
+                <li class="nav-item"><a href="../01-architecture/patterns.html">Patterns</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Fonctionnalités Core -->
+        <div class="nav-section">
+          <div class="nav-section-title">Fonctionnalités Core</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Authentification</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../02-authentification/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../02-authentification/oauth-flow.html">OAuth Flow</a></li>
+                <li class="nav-item"><a href="../02-authentification/credentials-flow.html">Credentials</a></li>
+                <li class="nav-item"><a href="../02-authentification/email-verification.html">Vérification Email</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Gestion des CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../03-gestion-cv/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../03-gestion-cv/crud.html">CRUD</a></li>
+                <li class="nav-item"><a href="../03-gestion-cv/versioning.html">Versioning</a></li>
+                <li class="nav-item"><a href="../03-gestion-cv/import-pdf.html">Import PDF</a></li>
+                <li class="nav-item"><a href="../03-gestion-cv/structure-cv.html">Structure JSON</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Offres d'emploi</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../04-offres-emploi/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../04-offres-emploi/extraction-url.html">Extraction URL</a></li>
+                <li class="nav-item"><a href="../04-offres-emploi/extraction-pdf.html">Extraction PDF</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Pipelines IA -->
+        <div class="nav-section">
+          <div class="nav-section-title">Pipelines IA</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Génération CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../05-pipeline-generation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../05-pipeline-generation/orchestrator.html">Orchestrateur</a></li>
+                <li class="nav-item"><a href="../05-pipeline-generation/phase-classification.html">Classification</a></li>
+                <li class="nav-item"><a href="../05-pipeline-generation/phase-batches.html">Batches</a></li>
+                <li class="nav-item"><a href="../05-pipeline-generation/phase-recompose.html">Recomposition</a></li>
+                <li class="nav-item"><a href="../05-pipeline-generation/prompts.html">Prompts IA</a></li>
+                <li class="nav-item"><a href="../05-pipeline-generation/schemas-io.html">Schemas I/O</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Optimisation CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../06-pipeline-optimisation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../06-pipeline-optimisation/scoring.html">Scoring</a></li>
+                <li class="nav-item"><a href="../06-pipeline-optimisation/suggestions.html">Suggestions</a></li>
+                <li class="nav-item"><a href="../06-pipeline-optimisation/application.html">Application</a></li>
+                <li class="nav-item"><a href="../06-pipeline-optimisation/review-system.html">Review</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Billing -->
+        <div class="nav-section">
+          <div class="nav-section-title">Billing</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Abonnements</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../07-abonnements/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../07-abonnements/business-models.html">Modèles économiques</a></li>
+                <li class="nav-item"><a href="../07-abonnements/plans-stripe.html">Plans Stripe</a></li>
+                <li class="nav-item"><a href="../07-abonnements/checkout-flow.html">Checkout</a></li>
+                <li class="nav-item"><a href="../07-abonnements/webhooks.html">Webhooks</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Crédits</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../08-credits/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../08-credits/welcome-credits.html">Crédits bienvenue</a></li>
+                <li class="nav-item"><a href="../08-credits/debit-refund.html">Débit / Remboursement</a></li>
+                <li class="nav-item"><a href="../08-credits/feature-limits.html">Limites Features</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Système -->
+        <div class="nav-section">
+          <div class="nav-section-title">Système</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Background Jobs</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../09-background-jobs/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../09-background-jobs/task-types.html">Types de tâches</a></li>
+                <li class="nav-item"><a href="../09-background-jobs/concurrency.html">Concurrence</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Export</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../10-export/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../10-export/pdf.html">Export PDF</a></li>
+                <li class="nav-item"><a href="../10-export/docx.html">Export DOCX</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="../11-traduction/overview.html">Traduction</a></li>
+          </ul>
+        </div>
+
+        <!-- Administration -->
+        <div class="nav-section">
+          <div class="nav-section-title">Administration</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Dashboard Admin</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../12-administration/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../12-administration/users.html">Utilisateurs</a></li>
+                <li class="nav-item"><a href="../12-administration/subscription-mode.html">Mode Abonnement</a></li>
+                <li class="nav-item"><a href="../12-administration/plans-management.html">Gestion Plans</a></li>
+                <li class="nav-item"><a href="../12-administration/credit-packs.html">Packs Crédits</a></li>
+                <li class="nav-item"><a href="../12-administration/openai-monitoring.html">Monitoring OpenAI</a></li>
+                <li class="nav-item"><a href="../12-administration/email-templates.html">Templates Email</a></li>
+                <li class="nav-item"><a href="../12-administration/settings.html">Paramètres</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Autres -->
+        <div class="nav-section">
+          <div class="nav-section-title">Autres</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="../13-onboarding/overview.html">Onboarding</a></li>
+            <li class="nav-item has-children">
+              <a href="#">Email</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../14-email/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../14-email/templates.html">Templates</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Référence -->
+        <div class="nav-section">
+          <div class="nav-section-title">Référence</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">API Reference</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="../15-api-reference/index.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="../15-api-reference/public.html">Publics</a></li>
+                <li class="nav-item"><a href="../15-api-reference/authenticated.html">Authentifiés</a></li>
+                <li class="nav-item"><a href="../15-api-reference/admin.html">Admin</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="../16-composants/index.html">Composants React</a></li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+            <header class="header">
+        <div class="search-container">
+          <input type="text" class="search-input" placeholder="Rechercher...">
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Changer le theme">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>API Reference</span>
+        </div>
+
+        <h1>API Reference</h1>
+        <p class="lead">
+          FitMyCV.io expose <strong>113 endpoints API</strong> organisés en domaines fonctionnels. Toutes les API utilisent REST avec JSON.
+        </p>
+
+        <h2>Base URL</h2>
+
+        <pre><code>https://app.fitmycv.io/api</code></pre>
+
+        <h2>Authentification</h2>
+
+        <p>La plupart des endpoints nécessitent une session authentifiée via NextAuth.js :</p>
+
+        <pre><code>// Cookie de session automatique
+// Ou header Authorization pour API externe
+Authorization: Bearer {session_token}</code></pre>
+
+        <h2>Format des Réponses</h2>
+
+        <h3>Succès</h3>
+
+        <pre><code>{
+  "data": { ... },
+  "meta": {
+    "timestamp": "2024-01-15T10:30:00Z"
+  }
+}</code></pre>
+
+        <h3>Erreur</h3>
+
+        <pre><code>{
+  "error": "Description de l'erreur",
+  "code": "ERROR_CODE",
+  "details": { ... },  // Optionnel
+  "timestamp": "2024-01-15T10:30:00Z"
+}</code></pre>
+
+        <h2>Codes d'Erreur HTTP</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Signification</th>
+              <th>Exemple</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>200</code></td>
+              <td>Succès</td>
+              <td>GET, PUT réussi</td>
+            </tr>
+            <tr>
+              <td><code>201</code></td>
+              <td>Créé</td>
+              <td>POST réussi</td>
+            </tr>
+            <tr>
+              <td><code>400</code></td>
+              <td>Bad Request</td>
+              <td>Validation échouée</td>
+            </tr>
+            <tr>
+              <td><code>401</code></td>
+              <td>Non authentifié</td>
+              <td>Session manquante/expirée</td>
+            </tr>
+            <tr>
+              <td><code>403</code></td>
+              <td>Accès refusé</td>
+              <td>Pas les droits requis</td>
+            </tr>
+            <tr>
+              <td><code>404</code></td>
+              <td>Non trouvé</td>
+              <td>Ressource inexistante</td>
+            </tr>
+            <tr>
+              <td><code>429</code></td>
+              <td>Limite atteinte</td>
+              <td>Feature limit / rate limit</td>
+            </tr>
+            <tr>
+              <td><code>500</code></td>
+              <td>Erreur serveur</td>
+              <td>Erreur interne</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Endpoints par Domaine</h2>
+
+        <h3>Authentication (5 endpoints)</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Méthode</th>
+              <th>Endpoint</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-success">GET</span></td>
+              <td><code>/api/auth/session</code></td>
+              <td>Récupérer la session courante</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/auth/signin</code></td>
+              <td>Connexion (credentials/OAuth)</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/auth/signout</code></td>
+              <td>Déconnexion</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/auth/register</code></td>
+              <td>Inscription credentials</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/auth/reset-password</code></td>
+              <td>Réinitialiser mot de passe</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>CV Management (15 endpoints)</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Méthode</th>
+              <th>Endpoint</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-success">GET</span></td>
+              <td><code>/api/cv</code></td>
+              <td>Lister tous les CV</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/cv</code></td>
+              <td>Créer un CV</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">GET</span></td>
+              <td><code>/api/cv/[id]</code></td>
+              <td>Récupérer un CV</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">PUT</span></td>
+              <td><code>/api/cv/[id]</code></td>
+              <td>Modifier un CV</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-error">DELETE</span></td>
+              <td><code>/api/cv/[id]</code></td>
+              <td>Supprimer un CV</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/cv/[id]/duplicate</code></td>
+              <td>Dupliquer un CV</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">GET</span></td>
+              <td><code>/api/cv/[id]/versions</code></td>
+              <td>Lister les versions</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/cv/[id]/versions/[vid]/restore</code></td>
+              <td>Restaurer une version</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">GET</span></td>
+              <td><code>/api/cv/[id]/export/pdf</code></td>
+              <td>Exporter en PDF</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">GET</span></td>
+              <td><code>/api/cv/[id]/export/docx</code></td>
+              <td>Exporter en DOCX</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/cv/[id]/translate</code></td>
+              <td>Traduire un CV</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/cv/import-pdf</code></td>
+              <td>Importer depuis PDF</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/cv/generate</code></td>
+              <td>Générer CV adapté</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/cv/optimize</code></td>
+              <td>Optimiser CV existant</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/cv/match-score</code></td>
+              <td>Calculer match score</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Job Offers (6 endpoints)</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Méthode</th>
+              <th>Endpoint</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-success">GET</span></td>
+              <td><code>/api/job-offers</code></td>
+              <td>Lister les offres</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/job-offers</code></td>
+              <td>Créer/extraire une offre</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">GET</span></td>
+              <td><code>/api/job-offers/[id]</code></td>
+              <td>Récupérer une offre</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-error">DELETE</span></td>
+              <td><code>/api/job-offers/[id]</code></td>
+              <td>Supprimer une offre</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Subscription & Credits (10 endpoints)</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Méthode</th>
+              <th>Endpoint</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-success">GET</span></td>
+              <td><code>/api/subscription</code></td>
+              <td>Récupérer l'abonnement</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/subscription/checkout</code></td>
+              <td>Créer session Stripe</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/subscription/portal</code></td>
+              <td>Accéder Customer Portal</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/subscription/cancel</code></td>
+              <td>Annuler abonnement</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">GET</span></td>
+              <td><code>/api/credits/balance</code></td>
+              <td>Récupérer solde</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">GET</span></td>
+              <td><code>/api/credits/transactions</code></td>
+              <td>Historique transactions</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">POST</span></td>
+              <td><code>/api/credits/purchase</code></td>
+              <td>Acheter crédits</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Admin (38 endpoints)</h3>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Accès restreint</div>
+          <p>Tous les endpoints <code>/api/admin/*</code> nécessitent le rôle <code>ADMIN</code>.</p>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Groupe</th>
+              <th>Endpoints</th>
+              <th>Nombre</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Utilisateurs</td>
+              <td><code>/api/admin/users/*</code></td>
+              <td>5</td>
+            </tr>
+            <tr>
+              <td>Plans</td>
+              <td><code>/api/admin/subscription-plans/*</code></td>
+              <td>6</td>
+            </tr>
+            <tr>
+              <td>Crédits</td>
+              <td><code>/api/admin/credit-packs/*</code></td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td>Email</td>
+              <td><code>/api/admin/email-*</code></td>
+              <td>8</td>
+            </tr>
+            <tr>
+              <td>OpenAI</td>
+              <td><code>/api/admin/openai-*</code></td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td>Settings</td>
+              <td><code>/api/admin/settings/*</code></td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td>Analytics</td>
+              <td><code>/api/analytics/*</code></td>
+              <td>9</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Pagination</h2>
+
+        <p>Les endpoints de liste supportent la pagination :</p>
+
+        <pre><code>GET /api/cv?page=1&limit=20
+
+// Response
+{
+  "data": [...],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 45,
+    "totalPages": 3
+  }
+}</code></pre>
+
+        <h2>Rate Limiting</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Limite</th>
+              <th>Fenêtre</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Auth</td>
+              <td>10 requêtes</td>
+              <td>1 minute</td>
+            </tr>
+            <tr>
+              <td>API standard</td>
+              <td>100 requêtes</td>
+              <td>1 minute</td>
+            </tr>
+            <tr>
+              <td>Génération IA</td>
+              <td>5 requêtes</td>
+              <td>1 minute</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Webhooks</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Source</th>
+              <th>Events</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/webhooks/stripe</code></td>
+              <td>Stripe</td>
+              <td>checkout.*, subscription.*, invoice.*</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

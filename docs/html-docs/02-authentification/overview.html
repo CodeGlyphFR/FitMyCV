@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authentification | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+        <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="index.html" class="sidebar-logo">FitMyCV<span class="accent">.io</span></a>
+        <div class="sidebar-version">Documentation Technique v1.0.9.5</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Introduction -->
+        <div class="nav-section">
+          <div class="nav-section-title">Introduction</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="index.html">Accueil</a></li>
+          </ul>
+        </div>
+
+        <!-- Architecture -->
+        <div class="nav-section">
+          <div class="nav-section-title">Architecture</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Architecture</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="01-architecture/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="01-architecture/tech-stack.html">Stack technologique</a></li>
+                <li class="nav-item"><a href="01-architecture/database.html">Base de données</a></li>
+                <li class="nav-item"><a href="01-architecture/patterns.html">Patterns</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Fonctionnalités Core -->
+        <div class="nav-section">
+          <div class="nav-section-title">Fonctionnalités Core</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Authentification</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="02-authentification/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="02-authentification/oauth-flow.html">OAuth Flow</a></li>
+                <li class="nav-item"><a href="02-authentification/credentials-flow.html">Credentials</a></li>
+                <li class="nav-item"><a href="02-authentification/email-verification.html">Vérification Email</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Gestion des CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="03-gestion-cv/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/crud.html">CRUD</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/versioning.html">Versioning</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/import-pdf.html">Import PDF</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/structure-cv.html">Structure JSON</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Offres d'emploi</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="04-offres-emploi/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-url.html">Extraction URL</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-pdf.html">Extraction PDF</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Pipelines IA -->
+        <div class="nav-section">
+          <div class="nav-section-title">Pipelines IA</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Génération CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="05-pipeline-generation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/orchestrator.html">Orchestrateur</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-classification.html">Classification</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-batches.html">Batches</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-recompose.html">Recomposition</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/prompts.html">Prompts IA</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/schemas-io.html">Schemas I/O</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Optimisation CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="06-pipeline-optimisation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/scoring.html">Scoring</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/suggestions.html">Suggestions</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/application.html">Application</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/review-system.html">Review</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Billing -->
+        <div class="nav-section">
+          <div class="nav-section-title">Billing</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Abonnements</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="07-abonnements/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="07-abonnements/business-models.html">Modèles économiques</a></li>
+                <li class="nav-item"><a href="07-abonnements/plans-stripe.html">Plans Stripe</a></li>
+                <li class="nav-item"><a href="07-abonnements/checkout-flow.html">Checkout</a></li>
+                <li class="nav-item"><a href="07-abonnements/webhooks.html">Webhooks</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Crédits</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="08-credits/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="08-credits/welcome-credits.html">Crédits bienvenue</a></li>
+                <li class="nav-item"><a href="08-credits/debit-refund.html">Débit / Remboursement</a></li>
+                <li class="nav-item"><a href="08-credits/feature-limits.html">Limites Features</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Système -->
+        <div class="nav-section">
+          <div class="nav-section-title">Système</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Background Jobs</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="09-background-jobs/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="09-background-jobs/task-types.html">Types de tâches</a></li>
+                <li class="nav-item"><a href="09-background-jobs/concurrency.html">Concurrence</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Export</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="10-export/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="10-export/pdf.html">Export PDF</a></li>
+                <li class="nav-item"><a href="10-export/docx.html">Export DOCX</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="11-traduction/overview.html">Traduction</a></li>
+          </ul>
+        </div>
+
+        <!-- Administration -->
+        <div class="nav-section">
+          <div class="nav-section-title">Administration</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Dashboard Admin</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="12-administration/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="12-administration/users.html">Utilisateurs</a></li>
+                <li class="nav-item"><a href="12-administration/subscription-mode.html">Mode Abonnement</a></li>
+                <li class="nav-item"><a href="12-administration/plans-management.html">Gestion Plans</a></li>
+                <li class="nav-item"><a href="12-administration/credit-packs.html">Packs Crédits</a></li>
+                <li class="nav-item"><a href="12-administration/openai-monitoring.html">Monitoring OpenAI</a></li>
+                <li class="nav-item"><a href="12-administration/email-templates.html">Templates Email</a></li>
+                <li class="nav-item"><a href="12-administration/settings.html">Paramètres</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Autres -->
+        <div class="nav-section">
+          <div class="nav-section-title">Autres</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="13-onboarding/overview.html">Onboarding</a></li>
+            <li class="nav-item has-children">
+              <a href="#">Email</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="14-email/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="14-email/templates.html">Templates</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Référence -->
+        <div class="nav-section">
+          <div class="nav-section-title">Référence</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">API Reference</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="15-api-reference/index.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="15-api-reference/public.html">Publics</a></li>
+                <li class="nav-item"><a href="15-api-reference/authenticated.html">Authentifiés</a></li>
+                <li class="nav-item"><a href="15-api-reference/admin.html">Admin</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="16-composants/index.html">Composants React</a></li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+            <header class="header">
+        <button class="mobile-menu-button" title="Menu">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div class="search-container">
+          <input type="text" class="search-input" placeholder="Rechercher dans la documentation...">
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Changer le thème">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Authentification</span>
+        </div>
+
+        <h1>Authentification</h1>
+        <p class="lead">
+          FitMyCV.io utilise NextAuth.js v5 pour gérer l'authentification avec support multi-providers : credentials (email/password), Google OAuth et LinkedIn OAuth.
+        </p>
+
+        <h2>Architecture d'Authentification</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux d'authentification</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Client["CLIENT"]
+        Login["Page Login"]
+        Register["Page Register"]
+        App["Application"]
+    end
+
+    subgraph NextAuth["NEXTAUTH.JS"]
+        Providers["Providers"]
+        Callbacks["Callbacks"]
+        Session["Session Management"]
+    end
+
+    subgraph Providers_Detail["PROVIDERS"]
+        Creds["Credentials<br/>(Email/Password)"]
+        Google["Google OAuth"]
+        LinkedIn["LinkedIn OAuth"]
+    end
+
+    subgraph Storage["STOCKAGE"]
+        DB[(PostgreSQL)]
+        JWT["JWT Token"]
+    end
+
+    Login --> NextAuth
+    Register --> NextAuth
+    NextAuth --> Providers_Detail
+
+    Creds --> DB
+    Google --> DB
+    LinkedIn --> DB
+
+    Callbacks --> JWT
+    Session --> App
+          </div>
+        </div>
+
+        <h2>Configuration NextAuth</h2>
+
+        <pre><code>// lib/auth/options.js
+import NextAuth from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
+import LinkedInProvider from 'next-auth/providers/linkedin';
+import { PrismaAdapter } from '@auth/prisma-adapter';
+import prisma from '@/lib/prisma';
+import bcrypt from 'bcrypt';
+
+export const authOptions = {
+  adapter: PrismaAdapter(prisma),
+
+  providers: [
+    // Provider Credentials
+    CredentialsProvider({
+      name: 'credentials',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' }
+      },
+      async authorize(credentials) {
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email }
+        });
+
+        if (!user || !user.hashedPassword) {
+          throw new Error('Invalid credentials');
+        }
+
+        const isValid = await bcrypt.compare(
+          credentials.password,
+          user.hashedPassword
+        );
+
+        if (!isValid) {
+          throw new Error('Invalid credentials');
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role
+        };
+      }
+    }),
+
+    // Google OAuth
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET
+    }),
+
+    // LinkedIn OAuth
+    LinkedInProvider({
+      clientId: process.env.LINKEDIN_CLIENT_ID,
+      clientSecret: process.env.LINKEDIN_CLIENT_SECRET
+    })
+  ],
+
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+      }
+      return token;
+    },
+
+    async session({ session, token }) {
+      if (token) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+      }
+      return session;
+    }
+  },
+
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60 // 30 jours
+  },
+
+  pages: {
+    signIn: '/login',
+    signOut: '/logout',
+    error: '/auth/error'
+  }
+};</code></pre>
+
+        <h2>Providers Disponibles</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Credentials</h4>
+            <ul>
+              <li>Email + mot de passe</li>
+              <li>Hachage bcrypt (10 rounds)</li>
+              <li>Validation côté serveur</li>
+              <li>Reset password par email</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Google OAuth</h4>
+            <ul>
+              <li>OAuth 2.0</li>
+              <li>Récupération profil automatique</li>
+              <li>Liaison compte existant</li>
+              <li>Scope: email, profile</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>LinkedIn OAuth</h4>
+            <ul>
+              <li>OAuth 2.0</li>
+              <li>Import données professionnelles</li>
+              <li>Scope: r_liteprofile, r_emailaddress</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>Récupération de Session</h2>
+
+        <h3>Côté Serveur (API Routes)</h3>
+
+        <pre><code>// Dans une API Route
+import { auth } from '@/lib/auth/session';
+
+export async function GET(request) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return Response.json({ error: 'Non authentifié' }, { status: 401 });
+  }
+
+  // session.user contient :
+  // - id: string
+  // - email: string
+  // - name: string | null
+  // - role: 'USER' | 'ADMIN'
+
+  return Response.json({ user: session.user });
+}</code></pre>
+
+        <h3>Côté Client (Composants)</h3>
+
+        <pre><code>// Dans un composant React
+'use client';
+
+import { useSession, signIn, signOut } from 'next-auth/react';
+
+export function AuthButton() {
+  const { data: session, status } = useSession();
+
+  if (status === 'loading') {
+    return <div>Chargement...</div>;
+  }
+
+  if (session) {
+    return (
+      <div>
+        <p>Connecté en tant que {session.user.email}</p>
+        <button onClick={() => signOut()}>Déconnexion</button>
+      </div>
+    );
+  }
+
+  return <button onClick={() => signIn()}>Connexion</button>;
+}</code></pre>
+
+        <h2>Rôles Utilisateurs</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Rôle</th>
+              <th>Description</th>
+              <th>Accès</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>USER</code></td>
+              <td>Utilisateur standard</td>
+              <td>Dashboard, CV, Génération, Profil</td>
+            </tr>
+            <tr>
+              <td><code>ADMIN</code></td>
+              <td>Administrateur</td>
+              <td>Tout + Dashboard Admin</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Vérification Rôle Admin</h3>
+
+        <pre><code>// Middleware de vérification admin
+import { auth } from '@/lib/auth/session';
+import { apiError, CommonErrors } from '@/lib/api/apiErrors';
+
+export async function requireAdmin() {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return apiError(CommonErrors.notAuthenticated());
+  }
+
+  if (session.user.role !== 'ADMIN') {
+    return apiError(CommonErrors.notAuthorized());
+  }
+
+  return session;
+}</code></pre>
+
+        <h2>Flux d'Inscription</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Processus d'inscription</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant F as Frontend
+    participant A as API /register
+    participant DB as PostgreSQL
+    participant E as Email Service
+
+    U->>F: Remplit formulaire
+    F->>A: POST /api/auth/register
+    A->>A: Valide données (Zod)
+    A->>DB: Vérifie email unique
+    A->>A: Hash password (bcrypt)
+    A->>DB: Créer User
+    A->>DB: Créer CreditBalance (welcome credits)
+    A->>E: Envoyer email bienvenue
+    A->>F: 201 Created
+    F->>U: Redirection login
+          </div>
+        </div>
+
+        <h2>Sécurité</h2>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Mesures de sécurité</div>
+          <ul>
+            <li>Mots de passe hachés avec bcrypt (10 rounds)</li>
+            <li>JWT signés avec secret NEXTAUTH_SECRET</li>
+            <li>CSRF protection automatique</li>
+            <li>Session expiration après 30 jours</li>
+            <li>Rate limiting sur endpoints auth</li>
+          </ul>
+        </div>
+
+        <h2>Fichiers Clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/auth/options.js</code></td>
+              <td>Configuration NextAuth</td>
+            </tr>
+            <tr>
+              <td><code>lib/auth/session.js</code></td>
+              <td>Helper récupération session</td>
+            </tr>
+            <tr>
+              <td><code>app/api/auth/[...nextauth]/route.js</code></td>
+              <td>Handler NextAuth</td>
+            </tr>
+            <tr>
+              <td><code>app/api/auth/register/route.js</code></td>
+              <td>Inscription credentials</td>
+            </tr>
+            <tr>
+              <td><code>components/auth/LoginForm.jsx</code></td>
+              <td>Formulaire connexion</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scoring - Pipeline Optimisation | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+        <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="index.html" class="sidebar-logo">FitMyCV<span class="accent">.io</span></a>
+        <div class="sidebar-version">Documentation Technique v1.0.9.5</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Introduction -->
+        <div class="nav-section">
+          <div class="nav-section-title">Introduction</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="index.html">Accueil</a></li>
+          </ul>
+        </div>
+
+        <!-- Architecture -->
+        <div class="nav-section">
+          <div class="nav-section-title">Architecture</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Architecture</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="01-architecture/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="01-architecture/tech-stack.html">Stack technologique</a></li>
+                <li class="nav-item"><a href="01-architecture/database.html">Base de données</a></li>
+                <li class="nav-item"><a href="01-architecture/patterns.html">Patterns</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Fonctionnalités Core -->
+        <div class="nav-section">
+          <div class="nav-section-title">Fonctionnalités Core</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Authentification</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="02-authentification/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="02-authentification/oauth-flow.html">OAuth Flow</a></li>
+                <li class="nav-item"><a href="02-authentification/credentials-flow.html">Credentials</a></li>
+                <li class="nav-item"><a href="02-authentification/email-verification.html">Vérification Email</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Gestion des CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="03-gestion-cv/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/crud.html">CRUD</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/versioning.html">Versioning</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/import-pdf.html">Import PDF</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/structure-cv.html">Structure JSON</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Offres d'emploi</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="04-offres-emploi/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-url.html">Extraction URL</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-pdf.html">Extraction PDF</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Pipelines IA -->
+        <div class="nav-section">
+          <div class="nav-section-title">Pipelines IA</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Génération CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="05-pipeline-generation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/orchestrator.html">Orchestrateur</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-classification.html">Classification</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-batches.html">Batches</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-recompose.html">Recomposition</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/prompts.html">Prompts IA</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/schemas-io.html">Schemas I/O</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Optimisation CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="06-pipeline-optimisation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/scoring.html">Scoring</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/suggestions.html">Suggestions</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/application.html">Application</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/review-system.html">Review</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Billing -->
+        <div class="nav-section">
+          <div class="nav-section-title">Billing</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Abonnements</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="07-abonnements/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="07-abonnements/business-models.html">Modèles économiques</a></li>
+                <li class="nav-item"><a href="07-abonnements/plans-stripe.html">Plans Stripe</a></li>
+                <li class="nav-item"><a href="07-abonnements/checkout-flow.html">Checkout</a></li>
+                <li class="nav-item"><a href="07-abonnements/webhooks.html">Webhooks</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Crédits</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="08-credits/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="08-credits/welcome-credits.html">Crédits bienvenue</a></li>
+                <li class="nav-item"><a href="08-credits/debit-refund.html">Débit / Remboursement</a></li>
+                <li class="nav-item"><a href="08-credits/feature-limits.html">Limites Features</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Système -->
+        <div class="nav-section">
+          <div class="nav-section-title">Système</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Background Jobs</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="09-background-jobs/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="09-background-jobs/task-types.html">Types de tâches</a></li>
+                <li class="nav-item"><a href="09-background-jobs/concurrency.html">Concurrence</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Export</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="10-export/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="10-export/pdf.html">Export PDF</a></li>
+                <li class="nav-item"><a href="10-export/docx.html">Export DOCX</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="11-traduction/overview.html">Traduction</a></li>
+          </ul>
+        </div>
+
+        <!-- Administration -->
+        <div class="nav-section">
+          <div class="nav-section-title">Administration</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Dashboard Admin</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="12-administration/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="12-administration/users.html">Utilisateurs</a></li>
+                <li class="nav-item"><a href="12-administration/subscription-mode.html">Mode Abonnement</a></li>
+                <li class="nav-item"><a href="12-administration/plans-management.html">Gestion Plans</a></li>
+                <li class="nav-item"><a href="12-administration/credit-packs.html">Packs Crédits</a></li>
+                <li class="nav-item"><a href="12-administration/openai-monitoring.html">Monitoring OpenAI</a></li>
+                <li class="nav-item"><a href="12-administration/email-templates.html">Templates Email</a></li>
+                <li class="nav-item"><a href="12-administration/settings.html">Paramètres</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Autres -->
+        <div class="nav-section">
+          <div class="nav-section-title">Autres</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="13-onboarding/overview.html">Onboarding</a></li>
+            <li class="nav-item has-children">
+              <a href="#">Email</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="14-email/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="14-email/templates.html">Templates</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Référence -->
+        <div class="nav-section">
+          <div class="nav-section-title">Référence</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">API Reference</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="15-api-reference/index.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="15-api-reference/public.html">Publics</a></li>
+                <li class="nav-item"><a href="15-api-reference/authenticated.html">Authentifiés</a></li>
+                <li class="nav-item"><a href="15-api-reference/admin.html">Admin</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="16-composants/index.html">Composants React</a></li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+            <header class="header">
+        <button class="mobile-menu-button" title="Menu">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div class="search-container">
+          <input type="text" class="search-input" placeholder="Rechercher dans la documentation...">
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Changer le thème">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="overview.html">Pipeline Optimisation</a>
+          <span>/</span>
+          <span>Scoring</span>
+        </div>
+
+        <h1>Système de Scoring</h1>
+        <p class="lead">
+          Le système de scoring évalue chaque section du CV et génère un score global basé sur des critères pondérés. Utilisé à la fois pour le matching et l'optimisation.
+        </p>
+
+        <h2>Critères d'Évaluation</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Critère</th>
+              <th>Poids</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Technical Skills Match</strong></td>
+              <td>30%</td>
+              <td>Correspondance compétences techniques</td>
+            </tr>
+            <tr>
+              <td><strong>Experience Relevance</strong></td>
+              <td>25%</td>
+              <td>Pertinence des expériences</td>
+            </tr>
+            <tr>
+              <td><strong>Keywords Coverage</strong></td>
+              <td>20%</td>
+              <td>Couverture des mots-clés de l'offre</td>
+            </tr>
+            <tr>
+              <td><strong>Soft Skills Alignment</strong></td>
+              <td>10%</td>
+              <td>Alignement soft skills</td>
+            </tr>
+            <tr>
+              <td><strong>Education Fit</strong></td>
+              <td>10%</td>
+              <td>Adéquation formation</td>
+            </tr>
+            <tr>
+              <td><strong>ATS Optimization</strong></td>
+              <td>5%</td>
+              <td>Optimisation pour systèmes ATS</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Calcul du Score</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge ai">IA</span>
+            <span class="data-flow-title">GPT-4o-mini - Scoring</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Formule</h5>
+            <pre><code>Score = Σ (critère_i × poids_i)
+
+Exemple:
+- Technical Skills: 85 × 0.30 = 25.5
+- Experience: 80 × 0.25 = 20.0
+- Keywords: 70 × 0.20 = 14.0
+- Soft Skills: 75 × 0.10 = 7.5
+- Education: 90 × 0.10 = 9.0
+- ATS: 80 × 0.05 = 4.0
+
+Score Total = 80/100</code></pre>
+
+            <h5>Output Structure</h5>
+            <pre><code>{
+  "globalScore": 80,
+  "breakdown": {
+    "technicalSkills": {
+      "score": 85,
+      "matched": ["React", "Node.js", "PostgreSQL"],
+      "missing": ["TypeScript"],
+      "partial": ["Docker"]
+    },
+    "experienceRelevance": {
+      "score": 80,
+      "relevantYears": 5,
+      "requiredYears": 5,
+      "matchedResponsibilities": 8,
+      "totalResponsibilities": 12
+    },
+    "keywordsCoverage": {
+      "score": 70,
+      "found": 14,
+      "total": 20,
+      "missingKeywords": ["CI/CD", "Agile", "TDD"]
+    },
+    "softSkills": {
+      "score": 75,
+      "matched": ["Leadership", "Communication"],
+      "suggested": ["Problem-solving"]
+    },
+    "education": {
+      "score": 90,
+      "meetsRequirements": true
+    },
+    "atsOptimization": {
+      "score": 80,
+      "issues": ["Some bullet points too long"]
+    }
+  },
+  "recommendations": [
+    "Add TypeScript to technical skills",
+    "Mention CI/CD experience from Project X",
+    "Shorten bullet points for ATS compatibility"
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Niveaux de Score</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4 style="color: var(--color-success);">Excellent (85-100)</h4>
+            <p>Très bonne correspondance. Peu d'améliorations nécessaires.</p>
+          </div>
+          <div class="card">
+            <h4 style="color: var(--color-primary);">Bon (70-84)</h4>
+            <p>Bonne base. Quelques optimisations recommandées.</p>
+          </div>
+          <div class="card">
+            <h4 style="color: var(--color-warning);">Moyen (50-69)</h4>
+            <p>Améliorations significatives possibles.</p>
+          </div>
+          <div class="card">
+            <h4 style="color: var(--color-error);">Faible (&lt;50)</h4>
+            <p>Écart important. Révision majeure conseillée.</p>
+          </div>
+        </div>
+
+        <h2>Scoring par Section</h2>
+
+        <h3>Technical Skills Scoring</h3>
+
+        <pre><code>function scoreTechnicalSkills(cvSkills, jobRequirements) {
+  const required = jobRequirements.skills.technical;
+  const niceToHave = jobRequirements.skills.niceToHave || [];
+
+  let matchedRequired = 0;
+  let matchedNice = 0;
+
+  required.forEach(skill => {
+    if (cvSkills.includes(skill) || hasEquivalent(cvSkills, skill)) {
+      matchedRequired++;
+    }
+  });
+
+  niceToHave.forEach(skill => {
+    if (cvSkills.includes(skill)) {
+      matchedNice++;
+    }
+  });
+
+  // Required = 80% du score, Nice-to-have = 20%
+  const requiredScore = (matchedRequired / required.length) * 80;
+  const niceScore = niceToHave.length > 0
+    ? (matchedNice / niceToHave.length) * 20
+    : 20;
+
+  return Math.round(requiredScore + niceScore);
+}</code></pre>
+
+        <h3>Experience Relevance Scoring</h3>
+
+        <pre><code>function scoreExperienceRelevance(experiences, jobOffer) {
+  let totalScore = 0;
+  let maxScore = 0;
+
+  experiences.forEach(exp => {
+    maxScore += 100;
+
+    // Pertinence du titre
+    const titleMatch = compareTitles(exp.title, jobOffer.title);
+    totalScore += titleMatch * 30;
+
+    // Pertinence des responsabilités
+    const respMatch = compareResponsibilities(
+      exp.responsibilities,
+      jobOffer.responsibilities
+    );
+    totalScore += respMatch * 50;
+
+    // Pertinence du secteur
+    const sectorMatch = compareSectors(exp.company, jobOffer.company);
+    totalScore += sectorMatch * 20;
+  });
+
+  return Math.round((totalScore / maxScore) * 100);
+}</code></pre>
+
+        <h2>Intégration Pipeline</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Utilisation du scoring dans le pipeline</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input["ENTRÉE"]
+        CV["CV actuel"]
+        Job["Job Offer"]
+    end
+
+    subgraph Scoring["SCORING"]
+        Initial["Score initial"]
+        Analysis["Analyse détaillée"]
+    end
+
+    subgraph Optimization["OPTIMISATION"]
+        Suggestions["Génération suggestions"]
+        Apply["Application améliorations"]
+        Rescore["Re-scoring"]
+    end
+
+    subgraph Output["SORTIE"]
+        NewCV["CV optimisé"]
+        Delta["Score delta"]
+    end
+
+    CV & Job --> Initial
+    Initial --> Analysis
+    Analysis --> Suggestions
+    Suggestions --> Apply
+    Apply --> Rescore
+    Rescore --> NewCV
+    Initial & Rescore --> Delta
+          </div>
+        </div>
+
+        <h2>API Endpoint</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge input">POST</span>
+            <span class="data-flow-title">/api/cv/match-score</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Request</h5>
+            <pre><code>{
+  "cvId": 123,
+  "jobOfferId": 456
+  // OU
+  "jobOfferUrl": "https://..."
+}</code></pre>
+
+            <h5>Response</h5>
+            <pre><code>{
+  "score": 80,
+  "breakdown": { ... },
+  "recommendations": [ ... ],
+  "creditsUsed": 1
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Fichiers Clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/features/cv-improvement/scoring.js</code></td>
+              <td>Logique de scoring</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/cv-improvement/prompts/score-cv.md</code></td>
+              <td>Prompt IA scoring</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/job-offers/matchScore.js</code></td>
+              <td>Calcul match score</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

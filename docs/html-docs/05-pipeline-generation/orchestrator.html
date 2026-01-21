@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orchestrateur - Pipeline Génération | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+        <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="index.html" class="sidebar-logo">FitMyCV<span class="accent">.io</span></a>
+        <div class="sidebar-version">Documentation Technique v1.0.9.5</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Introduction -->
+        <div class="nav-section">
+          <div class="nav-section-title">Introduction</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="index.html">Accueil</a></li>
+          </ul>
+        </div>
+
+        <!-- Architecture -->
+        <div class="nav-section">
+          <div class="nav-section-title">Architecture</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Architecture</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="01-architecture/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="01-architecture/tech-stack.html">Stack technologique</a></li>
+                <li class="nav-item"><a href="01-architecture/database.html">Base de données</a></li>
+                <li class="nav-item"><a href="01-architecture/patterns.html">Patterns</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Fonctionnalités Core -->
+        <div class="nav-section">
+          <div class="nav-section-title">Fonctionnalités Core</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Authentification</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="02-authentification/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="02-authentification/oauth-flow.html">OAuth Flow</a></li>
+                <li class="nav-item"><a href="02-authentification/credentials-flow.html">Credentials</a></li>
+                <li class="nav-item"><a href="02-authentification/email-verification.html">Vérification Email</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Gestion des CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="03-gestion-cv/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/crud.html">CRUD</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/versioning.html">Versioning</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/import-pdf.html">Import PDF</a></li>
+                <li class="nav-item"><a href="03-gestion-cv/structure-cv.html">Structure JSON</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Offres d'emploi</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="04-offres-emploi/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-url.html">Extraction URL</a></li>
+                <li class="nav-item"><a href="04-offres-emploi/extraction-pdf.html">Extraction PDF</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Pipelines IA -->
+        <div class="nav-section">
+          <div class="nav-section-title">Pipelines IA</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Génération CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="05-pipeline-generation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/orchestrator.html">Orchestrateur</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-classification.html">Classification</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-batches.html">Batches</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/phase-recompose.html">Recomposition</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/prompts.html">Prompts IA</a></li>
+                <li class="nav-item"><a href="05-pipeline-generation/schemas-io.html">Schemas I/O</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Optimisation CV</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="06-pipeline-optimisation/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/scoring.html">Scoring</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/suggestions.html">Suggestions</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/application.html">Application</a></li>
+                <li class="nav-item"><a href="06-pipeline-optimisation/review-system.html">Review</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Billing -->
+        <div class="nav-section">
+          <div class="nav-section-title">Billing</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Abonnements</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="07-abonnements/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="07-abonnements/business-models.html">Modèles économiques</a></li>
+                <li class="nav-item"><a href="07-abonnements/plans-stripe.html">Plans Stripe</a></li>
+                <li class="nav-item"><a href="07-abonnements/checkout-flow.html">Checkout</a></li>
+                <li class="nav-item"><a href="07-abonnements/webhooks.html">Webhooks</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Crédits</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="08-credits/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="08-credits/welcome-credits.html">Crédits bienvenue</a></li>
+                <li class="nav-item"><a href="08-credits/debit-refund.html">Débit / Remboursement</a></li>
+                <li class="nav-item"><a href="08-credits/feature-limits.html">Limites Features</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Système -->
+        <div class="nav-section">
+          <div class="nav-section-title">Système</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Background Jobs</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="09-background-jobs/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="09-background-jobs/task-types.html">Types de tâches</a></li>
+                <li class="nav-item"><a href="09-background-jobs/concurrency.html">Concurrence</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-children">
+              <a href="#">Export</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="10-export/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="10-export/pdf.html">Export PDF</a></li>
+                <li class="nav-item"><a href="10-export/docx.html">Export DOCX</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="11-traduction/overview.html">Traduction</a></li>
+          </ul>
+        </div>
+
+        <!-- Administration -->
+        <div class="nav-section">
+          <div class="nav-section-title">Administration</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">Dashboard Admin</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="12-administration/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="12-administration/users.html">Utilisateurs</a></li>
+                <li class="nav-item"><a href="12-administration/subscription-mode.html">Mode Abonnement</a></li>
+                <li class="nav-item"><a href="12-administration/plans-management.html">Gestion Plans</a></li>
+                <li class="nav-item"><a href="12-administration/credit-packs.html">Packs Crédits</a></li>
+                <li class="nav-item"><a href="12-administration/openai-monitoring.html">Monitoring OpenAI</a></li>
+                <li class="nav-item"><a href="12-administration/email-templates.html">Templates Email</a></li>
+                <li class="nav-item"><a href="12-administration/settings.html">Paramètres</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Autres -->
+        <div class="nav-section">
+          <div class="nav-section-title">Autres</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="13-onboarding/overview.html">Onboarding</a></li>
+            <li class="nav-item has-children">
+              <a href="#">Email</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="14-email/overview.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="14-email/templates.html">Templates</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Référence -->
+        <div class="nav-section">
+          <div class="nav-section-title">Référence</div>
+          <ul class="nav-list">
+            <li class="nav-item has-children">
+              <a href="#">API Reference</a>
+              <ul class="nav-children nav-list">
+                <li class="nav-item"><a href="15-api-reference/index.html">Vue d'ensemble</a></li>
+                <li class="nav-item"><a href="15-api-reference/public.html">Publics</a></li>
+                <li class="nav-item"><a href="15-api-reference/authenticated.html">Authentifiés</a></li>
+                <li class="nav-item"><a href="15-api-reference/admin.html">Admin</a></li>
+              </ul>
+            </li>
+            <li class="nav-item"><a href="16-composants/index.html">Composants React</a></li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+            <header class="header">
+        <button class="mobile-menu-button" title="Menu">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div class="search-container">
+          <input type="text" class="search-input" placeholder="Rechercher dans la documentation...">
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Changer le thème">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="overview.html">Pipeline Génération</a>
+          <span>/</span>
+          <span>Orchestrateur</span>
+        </div>
+
+        <h1>Orchestrateur</h1>
+        <p class="lead">
+          L'orchestrateur coordonne l'exécution des différentes phases du pipeline de génération CV, gère les crédits, les erreurs et la progression.
+        </p>
+
+        <h2>Architecture</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Modules de l'orchestrateur</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Orchestrator["ORCHESTRATOR"]
+        TaskRunner["taskRunner.js<br/>Lifecycle management"]
+        OfferProcessor["offerProcessor.js<br/>Coordination phases"]
+        CreditManager["creditManager.js<br/>Débit/Refund"]
+        ProgressEmitter["progressEmitter.js<br/>SSE events"]
+        RetryHandler["retryHandler.js<br/>Error recovery"]
+    end
+
+    subgraph Phases["PHASES"]
+        P0["Extract"]
+        P05["Classify"]
+        P1["Batches"]
+        P2["Recompose"]
+    end
+
+    subgraph State["STATE"]
+        Task[(CvGenerationTask)]
+        Offer[(CvGenerationOffer)]
+        Subtask[(CvGenerationSubtask)]
+    end
+
+    TaskRunner --> OfferProcessor
+    OfferProcessor --> Phases
+    TaskRunner --> CreditManager
+    TaskRunner --> ProgressEmitter
+    OfferProcessor --> RetryHandler
+
+    Phases --> Subtask
+    TaskRunner --> Task
+    OfferProcessor --> Offer
+          </div>
+        </div>
+
+        <h2>Modules</h2>
+
+        <h3>taskRunner.js</h3>
+
+        <p>Point d'entrée principal, gère le cycle de vie complet d'une tâche de génération.</p>
+
+        <pre><code>// lib/features/cv-adaptation/orchestrator/taskRunner.js
+
+export async function startSingleOfferGeneration(taskId, offerInput) {
+  const task = await prisma.cvGenerationTask.findUnique({
+    where: { id: taskId },
+    include: { sourceCvFile: true }
+  });
+
+  try {
+    // 1. Marquer la tâche comme running
+    await updateTaskStatus(taskId, 'running');
+    emitProgress(taskId, { phase: 'starting', progress: 0 });
+
+    // 2. Débiter le crédit
+    await debitCredit(task.userId, CREDIT_COST, 'gpt_cv_generation');
+
+    // 3. Traiter l'offre
+    const result = await processOffer(task, offerInput);
+
+    // 4. Sauvegarder le CV généré
+    const cvFile = await saveCvFile(task.userId, result.cv, result.jobOffer);
+
+    // 5. Marquer comme completed
+    await updateTaskStatus(taskId, 'completed', { cvFileId: cvFile.id });
+    emitProgress(taskId, { phase: 'complete', progress: 100 });
+
+    return cvFile;
+
+  } catch (error) {
+    // 6. Gérer l'échec
+    await handleTaskFailure(taskId, task.userId, error);
+    throw error;
+  }
+}
+
+async function handleTaskFailure(taskId, userId, error) {
+  // Rembourser le crédit
+  await refundCredit(userId, CREDIT_COST, 'gpt_cv_generation', 'Task failed');
+
+  // Mettre à jour le statut
+  await updateTaskStatus(taskId, 'failed', {
+    error: error.message
+  });
+
+  emitProgress(taskId, {
+    phase: 'error',
+    progress: 0,
+    error: error.message
+  });
+}</code></pre>
+
+        <h3>offerProcessor.js</h3>
+
+        <p>Coordonne l'exécution séquentielle et parallèle des phases.</p>
+
+        <pre><code>// lib/features/cv-adaptation/orchestrator/offerProcessor.js
+
+export async function processOffer(task, offerInput) {
+  const sourceCv = task.sourceCvFile.content;
+
+  // Phase 0: Extraction de l'offre
+  emitProgress(task.id, { phase: 'extraction', progress: 10 });
+  const jobOffer = await extractJobOffer(offerInput);
+
+  // Phase 0.5: Classification
+  emitProgress(task.id, { phase: 'classification', progress: 20 });
+  const classification = await classifyItems(sourceCv, jobOffer);
+
+  // Construire le Cache A (pour phases parallèles)
+  const cacheA = buildCacheA(jobOffer);
+
+  // Phase 1: Batches en parallèle
+  emitProgress(task.id, { phase: 'adaptation', progress: 30 });
+  const [
+    adaptedExperiences,
+    adaptedProjects,
+    adaptedExtras
+  ] = await Promise.all([
+    batchExperiences(sourceCv, classification, cacheA),
+    batchProjects(sourceCv, classification, cacheA),
+    batchExtras(sourceCv, cacheA)
+  ]);
+
+  // Construire le Cache B (avec résultats)
+  const cacheB = buildCacheB(cacheA, adaptedExperiences, adaptedProjects);
+
+  // Phase 1 suite: Skills et Summary (dépendent de B)
+  emitProgress(task.id, { phase: 'skills', progress: 60 });
+  const [adaptedSkills, summary] = await Promise.all([
+    batchSkills(sourceCv, jobOffer, cacheB),
+    batchSummary(sourceCv, jobOffer, cacheB)
+  ]);
+
+  // Phase 2: Recomposition
+  emitProgress(task.id, { phase: 'recomposition', progress: 80 });
+  const finalCv = await recompose({
+    header: sourceCv.header,
+    experiences: adaptedExperiences,
+    projects: adaptedProjects,
+    skills: adaptedSkills,
+    summary,
+    extras: adaptedExtras,
+    education: sourceCv.sections.education
+  });
+
+  emitProgress(task.id, { phase: 'finalizing', progress: 95 });
+
+  return { cv: finalCv, jobOffer };
+}</code></pre>
+
+        <h3>creditManager.js</h3>
+
+        <pre><code>// lib/features/cv-adaptation/orchestrator/creditManager.js
+
+import { debitCredit as debit, refundCredit as refund } from '@/lib/subscription/credits';
+
+const CREDIT_COST = 2; // Configurable via Setting
+
+export async function debitGenerationCredit(userId) {
+  return debit(userId, CREDIT_COST, 'gpt_cv_generation');
+}
+
+export async function refundGenerationCredit(userId, reason) {
+  return refund(userId, CREDIT_COST, 'gpt_cv_generation', reason);
+}</code></pre>
+
+        <h3>progressEmitter.js</h3>
+
+        <pre><code>// lib/features/cv-adaptation/orchestrator/progressEmitter.js
+
+const listeners = new Map();
+
+export function emitProgress(taskId, data) {
+  const taskListeners = listeners.get(taskId) || [];
+  taskListeners.forEach(callback => callback(data));
+
+  // Aussi mettre à jour en DB pour persistance
+  prisma.cvGenerationTask.update({
+    where: { id: taskId },
+    data: {
+      progress: data.progress,
+      currentPhase: data.phase
+    }
+  }).catch(console.error);
+}
+
+export function onProgress(taskId, callback) {
+  if (!listeners.has(taskId)) {
+    listeners.set(taskId, []);
+  }
+  listeners.get(taskId).push(callback);
+
+  // Retourner fonction de cleanup
+  return () => {
+    const taskListeners = listeners.get(taskId);
+    const index = taskListeners.indexOf(callback);
+    if (index > -1) taskListeners.splice(index, 1);
+  };
+}</code></pre>
+
+        <h3>retryHandler.js</h3>
+
+        <pre><code>// lib/features/cv-adaptation/orchestrator/retryHandler.js
+
+const MAX_RETRIES = 3;
+const BASE_DELAY = 1000;
+
+export async function withRetry(fn, options = {}) {
+  const { maxRetries = MAX_RETRIES, onRetry } = options;
+  let lastError;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+
+      // Erreurs non-retryables
+      if (isNonRetryable(error)) {
+        throw error;
+      }
+
+      if (attempt < maxRetries) {
+        const delay = BASE_DELAY * Math.pow(2, attempt);
+        onRetry?.(attempt + 1, delay, error);
+        await sleep(delay);
+      }
+    }
+  }
+
+  throw lastError;
+}
+
+function isNonRetryable(error) {
+  // Erreurs de validation, auth, etc.
+  return error.code === 'VALIDATION_ERROR'
+    || error.code === 'AUTH_ERROR'
+    || error.status === 400
+    || error.status === 401;
+}</code></pre>
+
+        <h2>Cycle de Vie</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">États d'une tâche de génération</div>
+          <div class="mermaid">
+stateDiagram-v2
+    [*] --> pending: Création tâche
+    pending --> running: Job démarré
+    running --> extraction: Phase 0
+    extraction --> classification: Phase 0.5
+    classification --> adaptation: Phase 1 (parallèle)
+    adaptation --> recomposition: Phase 2
+    recomposition --> completed: Succès
+    running --> failed: Erreur
+    extraction --> failed: Erreur extraction
+    classification --> failed: Erreur classification
+    adaptation --> failed: Erreur batch
+    completed --> [*]
+    failed --> [*]
+          </div>
+        </div>
+
+        <h2>Traçabilité</h2>
+
+        <p>Chaque appel IA est enregistré dans <code>CvGenerationSubtask</code> :</p>
+
+        <pre><code>await prisma.cvGenerationSubtask.create({
+  data: {
+    offerId: offer.id,
+    type: 'batch_experience',
+    phase: 1,
+    input: JSON.stringify(inputData),
+    output: JSON.stringify(result),
+    promptTokens: usage.prompt_tokens,
+    completionTokens: usage.completion_tokens,
+    cachedTokens: usage.cached_tokens,
+    totalTokens: usage.total_tokens,
+    estimatedCost: calculateCost(usage),
+    duration: endTime - startTime,
+    model: 'gpt-4o'
+  }
+});</code></pre>
+
+        <h2>Fichiers</h2>
+
+        <pre><code>lib/features/cv-adaptation/orchestrator/
+├── index.js              # Exports publics
+├── taskRunner.js         # Lifecycle management
+├── offerProcessor.js     # Coordination phases
+├── creditManager.js      # Gestion crédits
+├── progressEmitter.js    # SSE events
+└── retryHandler.js       # Error recovery</code></pre>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>
