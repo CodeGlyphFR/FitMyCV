@@ -1,6 +1,6 @@
 # Modèles de Données - FitMyCV.io
 
-> 33 modèles Prisma | PostgreSQL | Généré le 2026-01-07
+> 29 modèles Prisma | PostgreSQL | Mis à jour le 2026-01-21
 
 ---
 
@@ -17,10 +17,10 @@
 │        └─ BackgroundTask                                        │
 ├─────────────────────────────────────────────────────────────────┤
 │                       SYSTEM DOMAIN                              │
-│  Setting, FeatureMapping, OpenAIPricing, OpenAIAlert            │
+│  Setting, OpenAIPricing, OpenAIAlert                            │
 │  EmailTrigger ── EmailTemplate ── EmailLog                      │
 │  SubscriptionPlan ── SubscriptionPlanFeatureLimit               │
-│  CreditPack, PromoCode, Referral                                │
+│  CreditPack                                                     │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -41,13 +41,11 @@ Utilisateur principal de l'application.
 | `image` | String? | URL avatar |
 | `role` | String | "USER" \| "ADMIN" |
 | `stripeCustomerId` | String? | ID client Stripe |
-| `referralCode` | String? | Code parrainage unique |
-| `referredBy` | String? | Code du parrain |
 | `onboardingState` | Json? | État onboarding complet |
 | `createdAt` | DateTime | Date création |
 | `updatedAt` | DateTime | Dernière modification |
 
-**Relations** : accounts, cvs, subscription, creditBalance, backgroundTasks, featureUsage, referrals...
+**Relations** : accounts, cvs, subscription, creditBalance, backgroundTasks, featureUsage...
 
 ### Account
 Comptes OAuth liés (Google, GitHub, Apple).
@@ -63,15 +61,6 @@ Comptes OAuth liés (Google, GitHub, Apple).
 | `expires_at` | Int? | Expiration (timestamp) |
 
 **Contrainte** : `@@unique([provider, providerAccountId])`
-
-### VerificationToken
-Tokens de vérification email (NextAuth).
-
-| Champ | Type | Description |
-|-------|------|-------------|
-| `identifier` | String | Email |
-| `token` | String | Token unique |
-| `expires` | DateTime | Expiration |
 
 ---
 
@@ -395,17 +384,6 @@ Paramètres globaux application.
 | `category` | String | Catégorie |
 | `description` | String? | Description |
 
-### FeatureMapping
-Mapping features → settings/pricing.
-
-| Champ | Type | Description |
-|-------|------|-------------|
-| `featureKey` | String | Clé feature |
-| `displayName` | String | Nom affiché |
-| `settingNames` | Json | Settings associés |
-| `openAICallNames` | Json | Appels OpenAI |
-| `planFeatureNames` | Json | Features plan |
-
 ### Feedback
 Retours utilisateurs.
 
@@ -426,34 +404,6 @@ Historique consentements RGPD.
 | `action` | String | Action ("accept" \| "reject" \| "update") |
 | `preferences` | String | Préférences JSON |
 | `ip` | String? | Adresse IP |
-
-### Referral
-Parrainages.
-
-| Champ | Type | Description |
-|-------|------|-------------|
-| `referrerId` | String | → User.id (parrain) |
-| `referredUserId` | String | → User.id (filleul) |
-| `referralCode` | String | Code utilisé |
-| `status` | String | "pending" \| "completed" |
-| `referrerReward` | Int | Crédits parrain |
-| `referredReward` | Int | Crédits filleul |
-
-### PromoCode
-Codes promotionnels.
-
-| Champ | Type | Description |
-|-------|------|-------------|
-| `code` | String | Code unique |
-| `type` | String | Type promo |
-| `discountType` | String? | "percentage" \| "fixed" |
-| `discountValue` | Float? | Valeur réduction |
-| `creditBonus` | Int? | Crédits bonus |
-| `maxUses` | Int? | Utilisations max |
-| `currentUses` | Int | Utilisations actuelles |
-| `validFrom` | DateTime | Début validité |
-| `validUntil` | DateTime? | Fin validité |
-| `isActive` | Boolean | Code actif |
 
 ### StripeWebhookLog
 Logs webhooks Stripe.
@@ -487,9 +437,7 @@ User (1) ─────────────── (N) Account
   │
   ├── (1) ─────────────── (N) FeatureUsage
   │
-  ├── (1) ─────────────── (N) TelemetryEvent
-  │
-  └── (1) ─────────────── (N) Referral (as referrer & referred)
+  └── (1) ─────────────── (N) TelemetryEvent
 
 SubscriptionPlan (1) ── (N) SubscriptionPlanFeatureLimit
 

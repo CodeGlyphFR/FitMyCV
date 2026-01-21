@@ -786,89 +786,6 @@ const CV_DISPLAY_SETTINGS = [
   },
 ];
 
-// ============================================================================
-// 14. FEATURE MAPPINGS (Complet avec features non-IA)
-// ============================================================================
-const FEATURE_MAPPINGS = [
-  {
-    featureKey: 'match_score',
-    displayName: 'Score de matching',
-    settingNames: ['model_match_score'],
-    openAICallNames: ['match_score'],
-    planFeatureNames: ['match_score'],
-  },
-  {
-    featureKey: 'optimize_cv',
-    displayName: 'Optimisation CV',
-    settingNames: ['model_optimize_cv'],
-    openAICallNames: ['optimize_cv'],
-    planFeatureNames: ['optimize_cv'],
-  },
-  {
-    featureKey: 'generate_from_job_title',
-    displayName: 'Génération depuis titre',
-    settingNames: ['model_generate_from_job_title'],
-    openAICallNames: ['generate_from_job_title'],
-    planFeatureNames: ['generate_from_job_title'],
-  },
-  {
-    featureKey: 'translate_cv',
-    displayName: 'Traduction CV',
-    settingNames: ['model_translate_cv'],
-    openAICallNames: ['translate_cv'],
-    planFeatureNames: ['translate_cv'],
-  },
-  {
-    featureKey: 'gpt_cv_generation',
-    displayName: 'Génération CV',
-    settingNames: ['model_cv_generation', 'model_extract_job_offer'],
-    openAICallNames: ['generate_cv_url', 'generate_cv_pdf', 'extract_job_offer_url', 'extract_job_offer_pdf', 'create_template_cv_url', 'create_template_cv_pdf'],
-    planFeatureNames: ['gpt_cv_generation'],
-  },
-  {
-    featureKey: 'import_pdf',
-    displayName: 'Import PDF',
-    settingNames: ['model_import_pdf', 'model_first_import_pdf'],
-    openAICallNames: ['import_pdf', 'first_import_pdf'],
-    planFeatureNames: ['import_pdf'],
-  },
-  {
-    featureKey: 'extract_job_offer',
-    displayName: 'Extraction offre emploi',
-    settingNames: ['model_extract_job_offer'],
-    openAICallNames: ['extract_job_offer_url', 'extract_job_offer_pdf'],
-    planFeatureNames: ['gpt_cv_generation'],
-  },
-  {
-    featureKey: 'detect_language',
-    displayName: 'Détection langue',
-    settingNames: ['model_detect_language'],
-    openAICallNames: ['detect_cv_language'],
-    planFeatureNames: ['match_score', 'gpt_cv_generation', 'import_pdf'],
-  },
-  // Features non-IA (sans modèle OpenAI)
-  {
-    featureKey: 'create_cv_manual',
-    displayName: 'Création manuelle CV',
-    settingNames: [],
-    openAICallNames: [],
-    planFeatureNames: ['create_cv_manual'],
-  },
-  {
-    featureKey: 'edit_cv',
-    displayName: 'Édition CV',
-    settingNames: [],
-    openAICallNames: [],
-    planFeatureNames: ['edit_cv'],
-  },
-  {
-    featureKey: 'export_cv',
-    displayName: 'Export PDF',
-    settingNames: [],
-    openAICallNames: [],
-    planFeatureNames: ['export_cv'],
-  },
-];
 
 // ============================================================================
 // HEADER DISPLAY
@@ -1093,37 +1010,6 @@ async function main() {
   }
   console.log(formatLine('⚙️ ', 'Settings', allSettings.length, allSettings.length));
   results.push({ created: settingsCreated, updated: settingsUpdated });
-
-  // ===== 9. Feature Mappings (upsert) =====
-  let mappingsCreated = 0;
-  let mappingsUpdated = 0;
-  for (const mapping of FEATURE_MAPPINGS) {
-    try {
-      const result = await prisma.featureMapping.upsert({
-        where: { featureKey: mapping.featureKey },
-        update: {
-          displayName: mapping.displayName,
-          settingNames: mapping.settingNames,
-          openAICallNames: mapping.openAICallNames,
-          planFeatureNames: mapping.planFeatureNames,
-        },
-        create: {
-          featureKey: mapping.featureKey,
-          displayName: mapping.displayName,
-          settingNames: mapping.settingNames,
-          openAICallNames: mapping.openAICallNames,
-          planFeatureNames: mapping.planFeatureNames,
-        },
-      });
-      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
-        mappingsCreated++;
-      } else {
-        mappingsUpdated++;
-      }
-    } catch (error) { /* ignore */ }
-  }
-  console.log(formatLine('🔗', 'Feature Mappings', FEATURE_MAPPINGS.length, FEATURE_MAPPINGS.length));
-  results.push({ created: mappingsCreated, updated: mappingsUpdated });
 
   // ===== Summary =====
   totalCreated = results.reduce((sum, r) => sum + (r.created || 0), 0);
