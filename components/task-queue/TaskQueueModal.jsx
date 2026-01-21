@@ -2,11 +2,11 @@
 
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Modal from "./ui/Modal";
-import PipelineTaskProgress from "./ui/PipelineTaskProgress";
-import GenericTaskProgressBar from "./ui/GenericTaskProgressBar";
-import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
-import { usePipelineProgressContext } from "@/components/PipelineProgressProvider";
+import Modal from "@/components/ui/Modal";
+import PipelineTaskProgress from "@/components/ui/PipelineTaskProgress";
+import GenericTaskProgressBar from "@/components/ui/GenericTaskProgressBar";
+import { useBackgroundTasks } from "@/components/providers/BackgroundTasksProvider";
+import { usePipelineProgressContext } from "@/components/providers/PipelineProgressProvider";
 import { sortTasksForDisplay } from "@/lib/background-jobs/sortTasks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { emitOnboardingEvent, ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";

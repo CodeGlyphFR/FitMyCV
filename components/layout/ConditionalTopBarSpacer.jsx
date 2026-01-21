@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useAdmin } from "@/components/admin/AdminProvider";
-import TopBarSpacer from "@/components/TopBarSpacer";
+import TopBarSpacer from "@/components/layout/TopBarSpacer";
 
 /**
  * Affiche le TopBarSpacer uniquement sur les pages où la TopBar est visible.

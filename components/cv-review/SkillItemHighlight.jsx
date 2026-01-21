@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef } from "react";
-import { useHighlight } from "./HighlightProvider";
+import { useHighlight } from "@/components/providers/HighlightProvider";
 import ChangeReviewPopover from "./ChangeReviewPopover";
 
 /**

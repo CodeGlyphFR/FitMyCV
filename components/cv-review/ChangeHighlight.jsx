@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef } from "react";
-import { useHighlight } from "./HighlightProvider";
+import { useHighlight } from "@/components/providers/HighlightProvider";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import ChangeReviewPopover from "./ChangeReviewPopover";
 import InlineDiff from "./InlineDiff";

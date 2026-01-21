@@ -5,7 +5,7 @@ import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { showLoadingOverlay } from '@/lib/loading/loadingEvents';
 import { useNotifications } from '@/components/notifications/NotificationProvider';
 import { useRecaptcha } from '@/hooks/useRecaptcha';
-import { useBackgroundTasks } from '@/components/BackgroundTasksProvider';
+import { useBackgroundTasks } from '@/components/providers/BackgroundTasksProvider';
 import { parseApiError } from '@/lib/utils/errorHandler';
 
 /**

@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useHighlight } from "./HighlightProvider";
+import { useHighlight } from "@/components/providers/HighlightProvider";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 /**

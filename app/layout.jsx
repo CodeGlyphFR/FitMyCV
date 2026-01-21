@@ -8,16 +8,16 @@ const oswald = Oswald({
   variable: "--font-oswald",
   display: "swap",
 });
-import ConditionalTopBar from "@/components/ConditionalTopBar";
-import ConditionalTopBarSpacer from "@/components/ConditionalTopBarSpacer";
-import ConditionalFooter from "@/components/ConditionalFooter";
-import ConditionalMainWrapper from "@/components/ConditionalMainWrapper";
+import ConditionalTopBar from "@/components/layout/ConditionalTopBar";
+import ConditionalTopBarSpacer from "@/components/layout/ConditionalTopBarSpacer";
+import ConditionalFooter from "@/components/layout/ConditionalFooter";
+import ConditionalMainWrapper from "@/components/layout/ConditionalMainWrapper";
 import CookieBanner from "@/components/cookies/CookieBanner";
 import FeedbackButton from "@/components/feedback/FeedbackButton";
-import RootProviders from "@/components/RootProviders";
-import LoadingOverlay from "@/components/LoadingOverlay";
-import GlobalBackground from "@/components/GlobalBackground";
-import IconPreloader from "@/components/IconPreloader";
+import RootProviders from "@/components/providers/RootProviders";
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
+import GlobalBackground from "@/components/layout/GlobalBackground";
+import IconPreloader from "@/components/ui/IconPreloader";
 import { auth } from "@/lib/auth/session";
 import { SITE_TITLE } from "@/lib/site";
 import prisma from "@/lib/prisma";

@@ -3,7 +3,7 @@ import React from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAdmin } from "@/components/admin/AdminProvider";
-import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
+import { useBackgroundTasks } from "@/components/providers/BackgroundTasksProvider";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
@@ -11,8 +11,8 @@ import { useLinkHistory } from "@/hooks/useLinkHistory";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useOutsideClick } from "@/hooks/useOutsideClick";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
-import TaskQueueDropdown from "@/components/TaskQueueDropdown";
-import { usePipelineProgressContext } from "@/components/PipelineProgressProvider";
+import TaskQueueDropdown from "@/components/task-queue/TaskQueueDropdown";
+import { usePipelineProgressContext } from "@/components/providers/PipelineProgressProvider";
 import { calculateOfferProgress } from "@/hooks/usePipelineProgress";
 
 // Custom hooks

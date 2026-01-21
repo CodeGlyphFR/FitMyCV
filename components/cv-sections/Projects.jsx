@@ -1,10 +1,10 @@
 "use client";
 import React from "react";
-import Section from "./Section";
+import Section from "@/components/layout/Section";
 import { ym } from "@/lib/utils/textFormatting";
-import { useAdmin } from "./admin/AdminProvider";
-import useMutate from "./admin/useMutate";
-import Modal from "./ui/Modal";
+import { useAdmin } from "@/components/admin/AdminProvider";
+import useMutate from "@/components/admin/useMutate";
+import Modal from "@/components/ui/Modal";
 import {
   ModalSection,
   FormField,
@@ -19,12 +19,12 @@ import {
   FileText,
   Link2,
   Code,
-} from "./ui/ModalForm";
+} from "@/components/ui/ModalForm";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
-import SectionReviewActions from "./SectionReviewActions";
-import ProjectReviewActions, { useProjectHasChanges } from "./ProjectReviewActions";
-import MonthPicker from "./ui/MonthPicker";
+import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
+import ProjectReviewActions, { useProjectHasChanges } from "@/components/cv-review/ProjectReviewActions";
+import MonthPicker from "@/components/ui/MonthPicker";
 
 // Normalise une date vers le format YYYY-MM pour comparaison et sauvegarde
 function normalizeDate(s){

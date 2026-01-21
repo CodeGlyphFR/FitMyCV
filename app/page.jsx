@@ -1,16 +1,16 @@
 import React, { Suspense } from "react";
-import Header from "@/components/Header";
-import Summary from "@/components/Summary";
-import Skills from "@/components/Skills";
-import Experience from "@/components/Experience";
-import Education from "@/components/Education";
-import Languages from "@/components/Languages";
-import Extras from "@/components/Extras";
-import Projects from "@/components/Projects";
-import EmptyState from "@/components/EmptyState";
-import ScrollToTopOnMount from "@/components/ScrollToTopOnMount";
-import { HighlightProvider } from "@/components/HighlightProvider";
-import OrphanedChangesDisplay from "@/components/OrphanedChangesDisplay";
+import Header from "@/components/cv-sections/Header";
+import Summary from "@/components/cv-sections/Summary";
+import Skills from "@/components/cv-sections/Skills";
+import Experience from "@/components/cv-sections/Experience";
+import Education from "@/components/cv-sections/Education";
+import Languages from "@/components/cv-sections/Languages";
+import Extras from "@/components/cv-sections/Extras";
+import Projects from "@/components/cv-sections/Projects";
+import EmptyState from "@/components/empty-state/EmptyState";
+import ScrollToTopOnMount from "@/components/layout/ScrollToTopOnMount";
+import { HighlightProvider } from "@/components/providers/HighlightProvider";
+import OrphanedChangesDisplay from "@/components/cv-review/OrphanedChangesDisplay";
 
 import { sanitizeInMemory } from "@/lib/sanitize";
 import { cookies, headers } from "next/headers";
