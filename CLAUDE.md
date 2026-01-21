@@ -5,9 +5,9 @@ Instructions pour Claude Code sur le repository FitMyCV.io.
 ## Vue d'Ensemble
 
 **FitMyCV.io** - Application SaaS de génération de CV optimisés par IA.
-- Next.js 14 (App Router) + React 18 + Tailwind CSS
-- PostgreSQL via Prisma 6 (33 modèles)
-- OpenAI GPT-4o + Stripe + NextAuth.js
+- Next.js 16 (App Router) + React 19 + Tailwind CSS 4
+- PostgreSQL via Prisma 6 (34 modèles)
+- OpenAI API (modèles configurables en DB) + Stripe + NextAuth.js
 
 ## Commandes Essentielles
 
@@ -16,16 +16,25 @@ npm run dev                    # Dev (port 3001)
 npm run build                  # Build production
 npx prisma migrate deploy      # Migrations
 npx prisma generate            # Régénérer client
-npx prisma studio              # GUI DB
 ```
+
+## Base de Données
+
+Pour interroger la base PostgreSQL, utiliser `psql` avec les identifiants du fichier `.env` :
+
+```bash
+psql "$DATABASE_URL"
+```
+
+La variable `DATABASE_URL` dans `.env` indique l'environnement (dev/prod) et contient les identifiants de connexion.
 
 ## Structure Projet
 
 ```
-app/api/           # 127 API Routes (auth, cv, admin, subscription...)
-components/        # ~150 composants React
-lib/               # 25 modules métier (auth, cv, openai, subscription...)
-prisma/            # 33 modèles de données
+app/api/           # 113 API Routes (auth, cv, admin, subscription...)
+components/        # 138 composants React
+lib/               # 31 modules métier (auth, cv-core, openai-core, subscription...)
+prisma/            # 34 modèles de données
 locales/           # i18n (fr, en, de, es)
 ```
 
@@ -53,8 +62,8 @@ export async function GET(request) {
 
 ### CV Operations
 ```javascript
-import { readUserCvFile, writeUserCvFile } from '@/lib/cv/storage';
-import { validateCv } from '@/lib/cv/validation';
+import { readUserCvFile, writeUserCvFile } from '@/lib/cv-core/storage';
+import { validateCv } from '@/lib/cv-core/validation';
 
 const cvData = await readUserCvFile(userId, filename);
 const { valid, errors } = validateCv(cvData);
@@ -63,7 +72,7 @@ await writeUserCvFile(userId, filename, modifiedData);
 
 ### Background Jobs
 ```javascript
-import { enqueueJob } from '@/lib/backgroundTasks/jobQueue';
+import { enqueueJob } from '@/lib/background-jobs/jobQueue';
 import { startSingleOfferGeneration } from '@/lib/cv-generation';
 
 // Max 3 concurrent, tracked in BackgroundTask model
@@ -103,17 +112,17 @@ await incrementFeatureCounter(userId, 'gpt_cv_generation');
 | Domaine | Fichiers |
 |---------|----------|
 | Auth | `lib/auth/options.js`, `lib/auth/session.js` |
-| CV | `lib/cv/storage.js`, `lib/cv/validation.js` |
-| OpenAI | `lib/openai/extraction/`, `lib/openai/improveCv.js` |
+| CV | `lib/cv-core/storage.js`, `lib/cv-core/validation.js` |
+| OpenAI | `lib/openai-core/client.js`, `lib/openai-core/schemaLoader.js` |
 | CV Pipeline | `lib/cv-generation/orchestrator.js` |
-| Jobs | `lib/backgroundTasks/jobQueue.js` |
+| Jobs | `lib/background-jobs/jobQueue.js` |
 | Subscription | `lib/subscription/featureUsage.js`, `lib/subscription/credits.js` |
 | Errors | `lib/api/apiErrors.js` |
 
 ## Git Workflow
 
 - **Branches** : `main` ← `release` ← `dev`
-- **Préfixes** : `feature/`, `improvement/`, `bug/`, `hotfix/`
+- **Préfixes** : `feature/`, `improvement/`, `refactor/`, `bug/`, `hotfix/`
 - **Commits** : `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`
 
 ## Incrémentation de Version
@@ -132,7 +141,7 @@ Lors de l'incrémentation de la version du projet, mettre à jour **tous** les f
 Consultez `docs/` pour la documentation technique complète :
 - `docs/index.md` - Index maître (point d'entrée)
 - `docs/architecture.md` - Architecture technique
-- `docs/api-reference.md` - 127 endpoints
-- `docs/data-models.md` - 33 modèles Prisma
-- `docs/components.md` - ~150 composants
+- `docs/api-reference.md` - 113 endpoints
+- `docs/data-models.md` - 34 modèles Prisma
+- `docs/components.md` - 138 composants
 - `docs/development.md` - Guide développement
