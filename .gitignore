@@ -61,3 +61,8 @@ deploy.sh
 
 # Email preview
 .email-preview/
+
+# Dossiers de configuration/outils locaux
+_*/
+.*/
+!.github/
