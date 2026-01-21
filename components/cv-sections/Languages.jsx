@@ -1,17 +1,17 @@
 "use client";
 import React, { useState, useRef } from "react";
-import Section from "./Section";
-import { useAdmin } from "./admin/AdminProvider";
-import useMutate from "./admin/useMutate";
-import Modal from "./ui/Modal";
+import Section from "@/components/layout/Section";
+import { useAdmin } from "@/components/admin/AdminProvider";
+import useMutate from "@/components/admin/useMutate";
+import Modal from "@/components/ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getLanguageLevelLabel } from "@/lib/i18n/cvLabels";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import { capitalizeSkillName, toTitleCase } from "@/lib/utils/textFormatting";
-import SectionReviewActions from "./SectionReviewActions";
-import { useLanguageHasChanges } from "./LanguageReviewActions";
-import ChangeReviewPopover from "./ChangeReviewPopover";
-import { useHighlight } from "./HighlightProvider";
+import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
+import { useLanguageHasChanges } from "@/components/cv-review/LanguageReviewActions";
+import ChangeReviewPopover from "@/components/cv-review/ChangeReviewPopover";
+import { useHighlight } from "@/components/providers/HighlightProvider";
 import { Languages as LanguagesIcon } from "lucide-react";
 import {
   ModalSection,
@@ -20,7 +20,7 @@ import {
   Grid,
   ModalFooter,
   ModalFooterDelete,
-} from "./ui/ModalForm";
+} from "@/components/ui/ModalForm";
 
 /**
  * Composant pour une langue individuelle avec highlight review

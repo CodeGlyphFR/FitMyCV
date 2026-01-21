@@ -9,7 +9,7 @@ import PdfImportModal from "@/components/TopBar/modals/PdfImportModal";
 import NewCvModal from "@/components/TopBar/modals/NewCvModal";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
-import { useBackgroundTasks } from "@/components/BackgroundTasksProvider";
+import { useBackgroundTasks } from "@/components/providers/BackgroundTasksProvider";
 import { parseApiError } from "@/lib/utils/errorHandler";
 
 export default function EmptyState() {

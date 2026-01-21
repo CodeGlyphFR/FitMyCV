@@ -1,10 +1,10 @@
 "use client";
 import React from "react";
-import Section from "./Section";
+import Section from "@/components/layout/Section";
 import { ym } from "@/lib/utils/textFormatting";
-import { useAdmin } from "./admin/AdminProvider";
-import useMutate from "./admin/useMutate";
-import Modal from "./ui/Modal";
+import { useAdmin } from "@/components/admin/AdminProvider";
+import useMutate from "@/components/admin/useMutate";
+import Modal from "@/components/ui/Modal";
 import {
   ModalSection,
   FormField,
@@ -18,18 +18,18 @@ import {
   Calendar,
   MapPin,
   FileText,
-} from "./ui/ModalForm";
+} from "@/components/ui/ModalForm";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import { capitalizeSkillName } from "@/lib/utils/textFormatting";
 // BulletHighlight n'est plus utilisé - responsibilities/deliverables sont maintenant en field-level
-import SkillItemHighlight, { RemovedSkillsDisplay } from "./SkillItemHighlight";
-import SectionReviewActions from "./SectionReviewActions";
-import ExperienceReviewActions from "./ExperienceReviewActions";
-import ChangeHighlight from "./ChangeHighlight";
-import { useHighlight } from "./HighlightProvider";
-import CountrySelect from "./CountrySelect";
-import MonthPicker from "./ui/MonthPicker";
+import SkillItemHighlight, { RemovedSkillsDisplay } from "@/components/cv-review/SkillItemHighlight";
+import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
+import ExperienceReviewActions from "@/components/cv-review/ExperienceReviewActions";
+import ChangeHighlight from "@/components/cv-review/ChangeHighlight";
+import { useHighlight } from "@/components/providers/HighlightProvider";
+import CountrySelect from "@/components/ui/CountrySelect";
+import MonthPicker from "@/components/ui/MonthPicker";
 
 
 export default function Experience(props){

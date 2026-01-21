@@ -1,18 +1,18 @@
 "use client";
 import React from "react";
-import SourceInfo from "./SourceInfo";
-import MatchScore from "./MatchScore";
-import CVImprovementPanel from "./CVImprovementPanel";
-import { useAdmin } from "./admin/AdminProvider";
-import useMutate from "./admin/useMutate";
-import Modal from "./ui/Modal";
+import SourceInfo from "@/components/cv-improvement/SourceInfo";
+import MatchScore from "@/components/cv-improvement/MatchScore";
+import CVImprovementPanel from "@/components/cv-improvement/CVImprovementPanel";
+import { useAdmin } from "@/components/admin/AdminProvider";
+import useMutate from "@/components/admin/useMutate";
+import Modal from "@/components/ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
-import ChangeHighlight from "./ChangeHighlight";
+import ChangeHighlight from "@/components/cv-review/ChangeHighlight";
 import { toTitleCase } from "@/lib/utils/textFormatting";
 import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
-import { useHighlight } from "./HighlightProvider";
-import CountrySelect from "./CountrySelect";
+import { useHighlight } from "@/components/providers/HighlightProvider";
+import CountrySelect from "@/components/ui/CountrySelect";
 import { User, Mail, MapPin, Link2, Plus, Trash2 } from "lucide-react";
 import {
   ModalSection,
@@ -20,8 +20,8 @@ import {
   Input,
   Grid,
   ModalFooter,
-} from "./ui/ModalForm";
-import { useMatchScore, useSourceInfo, useTranslation, TranslationDropdown } from "./header";
+} from "@/components/ui/ModalForm";
+import { useMatchScore, useSourceInfo, useTranslation, TranslationDropdown } from "@/components/header";
 
 export default function Header(props){
   const header = props.header || {};

@@ -1,6 +1,6 @@
 "use client";
 import Link from 'next/link';
-import packageInfo from '../package.json';
+import packageInfo from '../../package.json';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export default function Footer() {
