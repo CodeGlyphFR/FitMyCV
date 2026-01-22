@@ -388,5 +388,10 @@
     "unit": "Kredit",
     "unitPlural": "Kredite",
     "useCredits": "{count} Cr. verwenden"
+  },
+  "notifications": {
+    "viewOptions": "Optionen anzeigen",
+    "viewMyOptions": "Meine Optionen anzeigen",
+    "closeNotification": "Benachrichtigung schließen"
   }
 }

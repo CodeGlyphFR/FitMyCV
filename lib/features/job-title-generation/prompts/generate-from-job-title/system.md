@@ -62,3 +62,12 @@ Pour chaque **hard_skill** et **tool**, tu DOIS specifier un niveau de proficien
 - Ton trop enthousiaste ou commercial
 
 **Regle d'or : Ecrire comme un humain - naturel, factuel, sans exageration.**
+
+## PROJETS AVEC URLS
+
+Pour chaque projet genere, inclure :
+- **url** : URL fictive mais realiste (GitHub, portfolio, demo)
+- **url_label** : Label du lien (ex: "GitHub", "Demo live", "Portfolio")
+
+Utiliser le nom du candidat fictif pour generer des URLs coherentes.
+Exemple : Pour "Marie Martin", generer "https://github.com/marie-martin/mon-projet"

@@ -54,6 +54,10 @@
         "invalidVersion": "Numéro de version invalide",
         "versionNotFound": "Version introuvable"
       },
+      "editMode": {
+        "cannotActivate": "Vous ne pouvez pas activer le mode édition",
+        "verificationError": "Erreur lors de la vérification"
+      },
       "background": {
         "noSourceProvided": "Ajoutez au moins un lien ou un fichier",
         "invalidLinksFormat": "Format de liens invalide",

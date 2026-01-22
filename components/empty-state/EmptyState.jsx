@@ -126,7 +126,7 @@ export default function EmptyState() {
           type: "error",
           message: e.message,
           redirectUrl: e.redirectUrl,
-          linkText: 'Voir les options',
+          linkText: t('notifications.viewOptions'),
           duration: 10000,
         });
       } else {
@@ -192,7 +192,7 @@ export default function EmptyState() {
       // Add redirect info if actionRequired
       if (error?.actionRequired && error?.redirectUrl) {
         notification.redirectUrl = error.redirectUrl;
-        notification.linkText = 'Voir les options';
+        notification.linkText = t('notifications.viewOptions');
       }
 
       addNotification(notification);

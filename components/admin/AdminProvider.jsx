@@ -117,14 +117,14 @@ export default function AdminProvider(props){
           // Bloquer + afficher notification d'erreur avec bouton d'action
           const notification = {
             type: 'error',
-            message: data.reason || 'Vous ne pouvez pas activer le mode édition',
+            message: data.reason || t('errors.api.editMode.cannotActivate'),
             duration: 10000 // Plus long car il y a une action à faire
           };
 
           // Ajouter le bouton d'action si nécessaire
           if (data.redirectUrl) {
             notification.redirectUrl = data.redirectUrl;
-            notification.linkText = 'Voir mes options';
+            notification.linkText = t('notifications.viewMyOptions');
           }
 
           addNotification(notification);
@@ -140,7 +140,7 @@ export default function AdminProvider(props){
         console.error('[AdminProvider] Erreur vérification can-edit:', error);
         addNotification({
           type: 'error',
-          message: 'Erreur lors de la vérification',
+          message: t('errors.api.editMode.verificationError'),
           duration: 4000
         });
         return Promise.reject(error); // Échec explicite pour .catch()

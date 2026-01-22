@@ -278,20 +278,20 @@ export default function CVImprovementPanel({ cvFile }) {
             type: 'error',
             message: apiError.message,
             redirectUrl: apiError.redirectUrl,
-            linkText: 'Voir les options',
+            linkText: t('notifications.viewOptions'),
             duration: 10000,
           });
           return;
         }
 
-        throw new Error(apiError.message || "Erreur lors de l'amélioration");
+        throw new Error(apiError.message || t('errors.api.cv.improveError'));
       }
 
       setIsOpen(false);
     } catch (err) {
       addNotification({
         type: 'error',
-        message: err.message || "Erreur lors de l'amélioration",
+        message: err.message || t('errors.api.cv.improveError'),
         duration: 5000,
       });
     }
