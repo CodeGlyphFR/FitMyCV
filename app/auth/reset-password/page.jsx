@@ -5,11 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PasswordStrengthIndicator from "@/components/auth/PasswordStrengthIndicator";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  const { t } = useLanguage();
 
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
@@ -22,7 +24,7 @@ export default function ResetPasswordPage() {
   React.useEffect(() => {
     async function verifyToken() {
       if (!token) {
-        setError("Token manquant ou invalide");
+        setError(t("auth.resetPasswordPage.errors.tokenMissing"));
         setVerifyingToken(false);
         return;
       }
@@ -32,11 +34,11 @@ export default function ResetPasswordPage() {
         const data = await res.json();
 
         if (!data.valid) {
-          setError(data.error || "Ce lien de réinitialisation n'est plus valide. Il a peut-être déjà été utilisé ou a expiré.");
+          setError(data.error || t("auth.resetPasswordPage.errors.linkInvalid"));
         }
       } catch (err) {
         console.error('Erreur lors de la vérification du token:', err);
-        setError("Impossible de vérifier le lien de réinitialisation");
+        setError(t("auth.resetPasswordPage.errors.verificationFailed"));
       } finally {
         setVerifyingToken(false);
       }
@@ -50,22 +52,22 @@ export default function ResetPasswordPage() {
     setError("");
 
     if (!token) {
-      setError("Token manquant");
+      setError(t("auth.resetPasswordPage.errors.tokenMissing"));
       return;
     }
 
     if (!password || !confirmPassword) {
-      setError("Veuillez remplir tous les champs");
+      setError(t("auth.resetPasswordPage.errors.fieldsRequired"));
       return;
     }
 
     if (password.length < 8) {
-      setError("Le mot de passe doit contenir au moins 8 caractères");
+      setError(t("auth.errors.passwordLength"));
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Les mots de passe ne correspondent pas");
+      setError(t("auth.errors.passwordMismatch"));
       return;
     }
 
@@ -81,7 +83,7 @@ export default function ResetPasswordPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Une erreur est survenue");
+        setError(data.error || t("auth.resetPasswordPage.errors.generic"));
         setLoading(false);
         return;
       }
@@ -94,7 +96,7 @@ export default function ResetPasswordPage() {
       }, 3000);
     } catch (err) {
       console.error(err);
-      setError("Une erreur est survenue");
+      setError(t("auth.resetPasswordPage.errors.generic"));
       setLoading(false);
     }
   }
@@ -112,19 +114,19 @@ export default function ResetPasswordPage() {
                   </svg>
                 </div>
                 <h1 className="text-2xl font-semibold text-white drop-shadow-lg mb-3">
-                  Mot de passe réinitialisé
+                  {t("auth.resetPasswordPage.successTitle")}
                 </h1>
                 <p className="text-slate-100 drop-shadow mb-6">
-                  Votre mot de passe a été modifié avec succès.
+                  {t("auth.resetPasswordPage.successMessage")}
                 </p>
                 <p className="text-sm text-slate-200 drop-shadow mb-6">
-                  Vous allez être redirigé vers la page de connexion...
+                  {t("auth.resetPasswordPage.redirecting")}
                 </p>
                 <Link
                   href="/auth"
                   className="inline-block rounded-sm border border-emerald-500 bg-emerald-500 px-6 py-2 text-sm font-medium text-white hover:bg-emerald-600 transition"
                 >
-                  Se connecter maintenant
+                  {t("auth.resetPasswordPage.loginNow")}
                 </Link>
               </div>
             </div>
@@ -149,7 +151,7 @@ export default function ResetPasswordPage() {
                   </svg>
                 </div>
                 <h1 className="text-xl font-semibold text-white drop-shadow-lg">
-                  Vérification du lien...
+                  {t("auth.resetPasswordPage.verifying")}
                 </h1>
               </div>
             </div>
@@ -173,14 +175,14 @@ export default function ResetPasswordPage() {
                   </svg>
                 </div>
                 <h1 className="text-2xl font-semibold text-white drop-shadow-lg mb-3">
-                  Lien invalide
+                  {t("auth.resetPasswordPage.invalidLinkTitle")}
                 </h1>
                 <p className="text-slate-100 drop-shadow mb-6">
                   {error}
                 </p>
                 <div className="text-center text-sm text-slate-100 drop-shadow">
                   <Link href="/auth" className="font-medium text-emerald-300 hover:text-emerald-200 hover:underline">
-                    Retour à la connexion
+                    {t("auth.resetPasswordPage.backToLogin")}
                   </Link>
                 </div>
               </div>
@@ -198,17 +200,17 @@ export default function ResetPasswordPage() {
           <div className="rounded-3xl border-2 border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl p-8 space-y-6">
             <div className="space-y-2 text-center">
               <h1 className="text-2xl font-semibold text-white drop-shadow-lg">
-                Nouveau mot de passe
+                {t("auth.resetPasswordPage.title")}
               </h1>
               <p className="text-sm text-slate-100 drop-shadow">
-                Choisissez un nouveau mot de passe sécurisé
+                {t("auth.resetPasswordPage.description")}
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="password" className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">
-                  Nouveau mot de passe
+                  {t("auth.resetPasswordPage.newPasswordLabel")}
                 </label>
                 <PasswordInput
                   id="password"
@@ -217,7 +219,7 @@ export default function ResetPasswordPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
                   className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="••••••••"
+                  placeholder={t("auth.placeholders.password")}
                   autoComplete="new-password"
                 />
                 <PasswordStrengthIndicator password={password} />
@@ -225,7 +227,7 @@ export default function ResetPasswordPage() {
 
               <div className="space-y-2">
                 <label htmlFor="confirmPassword" className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">
-                  Confirmer le mot de passe
+                  {t("auth.resetPasswordPage.confirmPasswordLabel")}
                 </label>
                 <PasswordInput
                   id="confirmPassword"
@@ -234,7 +236,7 @@ export default function ResetPasswordPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={loading}
                   className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="••••••••"
+                  placeholder={t("auth.placeholders.password")}
                   autoComplete="new-password"
                 />
               </div>
@@ -244,13 +246,13 @@ export default function ResetPasswordPage() {
                 disabled={loading}
                 className="w-full rounded-sm border border-emerald-500 bg-emerald-500 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60 transition"
               >
-                {loading ? "Réinitialisation..." : "Réinitialiser le mot de passe"}
+                {loading ? t("auth.resetPasswordPage.submitting") : t("auth.resetPasswordPage.submitButton")}
               </button>
             </form>
 
             <div className="text-center text-sm text-slate-100 drop-shadow">
               <Link href="/auth" className="font-medium text-emerald-300 hover:text-emerald-200 hover:underline">
-                Retour à la connexion
+                {t("auth.resetPasswordPage.backToLogin")}
               </Link>
             </div>
           </div>

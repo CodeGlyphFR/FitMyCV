@@ -315,7 +315,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                 value={currentPassword}
                 onChange={event => setCurrentPassword(event.target.value)}
                 className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
-                placeholder="••••••••"
+                placeholder={t("auth.placeholders.password")}
                 autoComplete="current-password"
               />
               <p className="text-xs text-white/60 drop-shadow">{t('account.security.currentPasswordHint')}</p>
@@ -328,7 +328,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                 value={newPassword}
                 onChange={event => setNewPassword(event.target.value)}
                 className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
-                placeholder="••••••••"
+                placeholder={t("auth.placeholders.password")}
                 autoComplete="new-password"
               />
               {/* Indicateur de force du mot de passe (adapté pour fond blanc) */}
@@ -385,7 +385,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                 value={confirmPassword}
                 onChange={event => setConfirmPassword(event.target.value)}
                 className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
-                placeholder="••••••••"
+                placeholder={t("auth.placeholders.password")}
                 autoComplete="new-password"
               />
             </div>
@@ -475,7 +475,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                   value={deletePassword}
                   onChange={event => setDeletePassword(event.target.value)}
                   className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-red-400 focus:ring-2 focus:ring-red-400/50 focus:outline-hidden"
-                  placeholder="••••••••"
+                  placeholder={t("auth.placeholders.password")}
                   autoComplete="current-password"
                 />
               </>

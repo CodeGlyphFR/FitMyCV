@@ -351,7 +351,7 @@ export default function Projects(props){
               </FormField>
               <FormField label={t("cvSections.placeholders.projectUrl")}>
                 <Input
-                  placeholder="https://github.com/..."
+                  placeholder={t("cvSections.placeholders.projectUrlExample")}
                   value={f.url || ""}
                   onChange={e => setF({ ...f, url: e.target.value })}
                 />
@@ -444,7 +444,7 @@ export default function Projects(props){
               </FormField>
               <FormField label={t("cvSections.placeholders.projectUrl")}>
                 <Input
-                  placeholder="https://github.com/..."
+                  placeholder={t("cvSections.placeholders.projectUrlExample")}
                   value={nf.url || ""}
                   onChange={e => setNf({ ...nf, url: e.target.value })}
                 />

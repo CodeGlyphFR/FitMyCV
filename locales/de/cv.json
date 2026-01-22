@@ -145,6 +145,9 @@
       "hint": "Verschieben Sie Abschnitte, um die Anzeigereihenfolge anzupassen",
       "reset": "Zurücksetzen",
       "close": "Schließen"
+    },
+    "placeholders": {
+      "filename": "Mein_Lebenslauf"
     }
   },
   "newCvModal": {
@@ -157,6 +160,11 @@
     "creating": "Erstellen...",
     "cancel": "Abbrechen",
     "hint": "Sie können alle Abschnitte später im Bearbeitungsmodus vervollständigen.",
+    "placeholders": {
+      "fullName": "Z.B.: Max Mustermann",
+      "currentTitle": "Z.B.: Full-Stack-Entwickler",
+      "email": "email@beispiel.de"
+    },
     "errors": {
       "fillRequired": "Bitte geben Sie den vollständigen Namen und die aktuelle Position ein.",
       "generic": "Fehler"
@@ -262,6 +270,7 @@
       "countryCode": "Land (Code)",
       "selectCountry": "Land",
       "projectUrl": "Projekt-URL (GitHub, Portfolio...)",
+      "projectUrlExample": "https://github.com/...",
       "projectUrlLabel": "Linktitel (z.B. Auf GitHub ansehen)",
       "summaryDescription": "Beschreiben Sie Ihr berufliches Profil..."
     }
