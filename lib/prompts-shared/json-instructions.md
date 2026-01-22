@@ -204,6 +204,20 @@ Projets personnels **UNIQUEMENT** si pertinent pour le poste :
 - **url** : lien du projet (optionnel) - GitHub, portfolio, démo live
 - **url_label** : titre/label du lien (optionnel) - ex: "Voir sur GitHub", "Demo live"
 
+### Règle de génération url/url_label (TEMPLATES UNIQUEMENT)
+
+Lors de la **création d'un CV modèle/template**, générer des URLs fictives mais réalistes pour les projets :
+
+| Type de projet | URL exemple | url_label |
+|----------------|-------------|-----------|
+| Repo GitHub | https://github.com/prenom-nom/nom-projet | GitHub |
+| Repo GitLab | https://gitlab.com/prenom-nom/nom-projet | GitLab |
+| Portfolio | https://prenom-nom.dev | Portfolio |
+| Demo live | https://nom-projet.vercel.app | Demo live |
+| LinkedIn | https://linkedin.com/in/prenom-nom | LinkedIn |
+
+**Important** : L'URL doit être cohérente avec le nom du candidat fictif généré dans `header.full_name`.
+
 ## 8. EXTRAS
 
 Informations complémentaires **UNIQUEMENT** si pertinent (certifications, hobbies, distinctions) :

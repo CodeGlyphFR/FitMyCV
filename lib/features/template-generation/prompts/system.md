@@ -24,3 +24,12 @@ Ce CV doit etre **coherent** avec l'offre d'emploi et servir de **modele** que l
 - Evite les CV **generiques**, fournis du contenu **specifique et detaille**
 - Remplis le champ **'generated_at'** avec la date actuelle au format **YYYY-MM-DD**
 - **Ne modifie pas** les champs 'order_hint' et 'section_titles'
+
+## PROJETS AVEC URLS
+
+Pour chaque projet genere, inclure :
+- **url** : URL fictive mais realiste (GitHub, portfolio, demo)
+- **url_label** : Label du lien (ex: "GitHub", "Demo live", "Portfolio")
+
+Utiliser le nom du candidat fictif pour generer des URLs coherentes.
+Exemple : Pour "Jean Dupont", generer "https://github.com/jean-dupont/mon-projet"
