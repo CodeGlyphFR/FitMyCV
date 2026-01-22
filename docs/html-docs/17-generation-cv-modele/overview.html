@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>G&eacute;n&eacute;ration CV Mod&egrave;le | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>G&eacute;n&eacute;ration CV Mod&egrave;le</span>
+        </div>
+
+        <h1>G&eacute;n&eacute;ration CV Mod&egrave;le</h1>
+        <p class="lead">
+          FitMyCV.io propose deux m&eacute;thodes pour g&eacute;n&eacute;rer des <strong>CV mod&egrave;les</strong> (CV fictifs professionnels) : &agrave; partir d'une offre d'emploi ou d'un simple titre de poste.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Qu'est-ce qu'un CV Mod&egrave;le ?</div>
+          <p>Un <strong>CV mod&egrave;le</strong> est un CV fictif g&eacute;n&eacute;r&eacute; par l'IA, repr&eacute;sentant un candidat id&eacute;al pour un poste donn&eacute;. Il sert de base &agrave; l'utilisateur pour cr&eacute;er son propre CV en s'inspirant de la structure, des comp&eacute;tences et du parcours propos&eacute;s.</p>
+        </div>
+
+        <h2>Vue d'ensemble</h2>
+
+        <p>Ces fonctionnalit&eacute;s sont <strong>distinctes</strong> du pipeline de g&eacute;n&eacute;ration principal (section 05) qui <strong>adapte</strong> un CV existant &agrave; une offre d'emploi. Ici, l'IA <strong>cr&eacute;e</strong> un CV de z&eacute;ro.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Les deux m&eacute;thodes de g&eacute;n&eacute;ration</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Method1["M&Eacute;THODE 1 : Depuis Offre"]
+        direction LR
+        Offer["Offre d'emploi<br/>(URL ou PDF)"] --> Extract["Extraction<br/>structur&eacute;e"] --> Gen1["G&eacute;n&eacute;ration GPT"] --> CV1["CV Mod&egrave;le"]
+    end
+
+    subgraph Method2["M&Eacute;THODE 2 : Depuis Titre"]
+        direction LR
+        Title["Titre de poste<br/>(texte libre)"] --> Gen2["G&eacute;n&eacute;ration GPT"] --> CV2["CV Mod&egrave;le"]
+    end
+
+    Method1 ~~~ Method2
+          </div>
+        </div>
+
+        <h2>Comparaison des M&eacute;thodes</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Crit&egrave;re</th>
+              <th>Depuis Offre</th>
+              <th>Depuis Titre</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Input</strong></td>
+              <td>URL ou PDF d'offre d'emploi</td>
+              <td>Titre de poste (ex: "Chef de projet IT")</td>
+            </tr>
+            <tr>
+              <td><strong>Pr&eacute;cision</strong></td>
+              <td>Tr&egrave;s pr&eacute;cis (bas&eacute; sur l'offre r&eacute;elle)</td>
+              <td>G&eacute;n&eacute;rique (bas&eacute; sur le march&eacute;)</td>
+            </tr>
+            <tr>
+              <td><strong>Feature</strong></td>
+              <td><code>gpt_cv_generation</code></td>
+              <td><code>generate_from_job_title</code></td>
+            </tr>
+            <tr>
+              <td><strong>Endpoint</strong></td>
+              <td><code>POST /api/background-tasks/create-template-cv</code></td>
+              <td><code>POST /api/background-tasks/generate-cv-from-job-title</code></td>
+            </tr>
+            <tr>
+              <td><strong>Pipeline</strong></td>
+              <td>Extraction offre + G&eacute;n&eacute;ration CV</td>
+              <td>G&eacute;n&eacute;ration CV directe</td>
+            </tr>
+            <tr>
+              <td><strong>Temps moyen</strong></td>
+              <td>10-20 secondes</td>
+              <td>5-10 secondes</td>
+            </tr>
+            <tr>
+              <td><strong>Cas d'usage</strong></td>
+              <td>Candidature cibl&eacute;e</td>
+              <td>Exploration de carri&egrave;re</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Architecture Commune</h2>
+
+        <p>Les deux m&eacute;thodes partagent la m&ecirc;me architecture de base :</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Architecture g&eacute;n&eacute;rale</div>
+          <div class="mermaid">
+flowchart LR
+    subgraph Frontend
+        Modal["Modal G&eacute;n&eacute;rateur CV"]
+    end
+
+    subgraph API["API Layer"]
+        Route["API Route"]
+        Feature["Feature Check"]
+        Job["Background Job"]
+    end
+
+    subgraph Service
+        Service1["service.js"]
+        Prompts["Prompts IA"]
+        OpenAI["OpenAI API"]
+    end
+
+    subgraph Storage
+        Task["BackgroundTask"]
+        CvFile["CvFile"]
+    end
+
+    Modal --> Route
+    Route --> Feature
+    Feature --> Job
+    Job --> Service1
+    Service1 --> Prompts
+    Prompts --> OpenAI
+    OpenAI --> Service1
+    Service1 --> CvFile
+    Job --> Task
+          </div>
+        </div>
+
+        <h2>Flux Commun</h2>
+
+        <ol>
+          <li><strong>Authentification</strong> - V&eacute;rification session utilisateur</li>
+          <li><strong>Feature Check</strong> - V&eacute;rification limites/cr&eacute;dits via <code>incrementFeatureCounter</code></li>
+          <li><strong>Cr&eacute;ation BackgroundTask</strong> - Enregistrement de la t&acirc;che en DB</li>
+          <li><strong>Ex&eacute;cution Job</strong> - Traitement asynchrone dans la queue</li>
+          <li><strong>G&eacute;n&eacute;ration GPT</strong> - Appel OpenAI avec prompts sp&eacute;cifiques</li>
+          <li><strong>Sauvegarde CvFile</strong> - Stockage du CV g&eacute;n&eacute;r&eacute; en DB</li>
+          <li><strong>Notification SSE</strong> - Mise &agrave; jour temps r&eacute;el du frontend</li>
+        </ol>
+
+        <h2>Composant Frontend</h2>
+
+        <p>Les deux fonctionnalit&eacute;s sont accessibles depuis le m&ecirc;me composant :</p>
+
+        <pre><code class="language-jsx">// components/TopBar/modals/CvGeneratorModal.jsx
+
+// Deux modes de génération :
+// 1. "offer" - depuis URL/PDF d'offre
+// 2. "jobTitle" - depuis titre de poste
+
+const [mode, setMode] = useState('offer');
+const [links, setLinks] = useState([]);
+const [files, setFiles] = useState([]);
+const [jobTitle, setJobTitle] = useState('');
+const [language, setLanguage] = useState('français');</code></pre>
+
+        <h2>Pages de D&eacute;tail</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4><a href="./template-from-offer.html">Depuis Offre d'Emploi</a></h4>
+            <p>G&eacute;n&eacute;ration de CV mod&egrave;le &agrave; partir d'une URL ou d'un PDF d'offre d'emploi. Pipeline complet avec extraction de l'offre.</p>
+          </div>
+          <div class="card">
+            <h4><a href="./template-from-job-title.html">Depuis Titre de Poste</a></h4>
+            <p>G&eacute;n&eacute;ration de CV mod&egrave;le &agrave; partir d'un simple titre de poste. Pipeline simplifi&eacute; et plus rapide.</p>
+          </div>
+        </div>
+
+        <h2>Fichiers Cl&eacute;s (Communs)</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>R&ocirc;le</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>components/TopBar/modals/CvGeneratorModal.jsx</code></td>
+              <td>Interface utilisateur (les deux modes)</td>
+            </tr>
+            <tr>
+              <td><code>lib/subscription/featureUsage.js</code></td>
+              <td>V&eacute;rification limites et cr&eacute;dits</td>
+            </tr>
+            <tr>
+              <td><code>lib/background-jobs/jobQueue.js</code></td>
+              <td>Queue des t&acirc;ches asynchrones</td>
+            </tr>
+            <tr>
+              <td><code>data/template.json</code></td>
+              <td>Sch&eacute;ma de r&eacute;f&eacute;rence du CV</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>
