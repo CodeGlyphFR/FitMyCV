@@ -31,7 +31,7 @@ La variable `DATABASE_URL` dans `.env` indique l'environnement (dev/prod) et con
 ## Structure Projet
 
 ```
-app/api/           # 113 API Routes (auth, cv, admin, subscription...)
+app/api/           # 114 API Routes (auth, cv, admin, subscription...)
 components/        # 138 composants React
 lib/               # 31 modules métier (auth, cv-core, openai-core, subscription...)
 prisma/            # 34 modèles de données
@@ -135,16 +135,40 @@ Lors de l'incrémentation de la version du projet, mettre à jour **tous** les f
 | `package-lock.json` | `"version": "x.x.x.x"` (2 occurrences) |
 | `README.md` | `**Version:** x.x.x.x` |
 | `docs/index.md` | `| **Version** | x.x.x.x |` |
+| `docs/html-docs/index.html` | `<div class="callout-title">Version x.x.x.x</div>` |
+| `docs/html-docs/templates/sidebar.html` | `Documentation Technique vx.x.x.x` |
 
 ## Documentation
 
 Consultez `docs/` pour la documentation technique complète :
 - `docs/index.md` - Index maître (point d'entrée)
 - `docs/architecture.md` - Architecture technique
-- `docs/api-reference.md` - 113 endpoints
+- `docs/api-reference.md` - 114 endpoints
 - `docs/data-models.md` - 34 modèles Prisma
 - `docs/components.md` - 138 composants
 - `docs/development.md` - Guide développement
+
+## Synchronisation Documentation
+
+**Important** : Le projet maintient deux documentations parallèles qui doivent rester synchronisées :
+
+| Source | Emplacement | Format |
+|--------|-------------|--------|
+| Documentation Markdown | `docs/*.md` | Markdown |
+| Documentation HTML | `docs/html-docs/` | HTML |
+
+Lors de toute modification de documentation, mettre à jour **les deux sources** :
+
+| Type de changement | Fichiers Markdown | Fichiers HTML |
+|--------------------|-------------------|---------------|
+| Nouveau endpoint API | `docs/api-reference.md` | `docs/html-docs/15-api-reference/*.html` |
+| Modification architecture | `docs/architecture.md` | `docs/html-docs/01-architecture/*.html` |
+| Nouveau composant | `docs/components.md` | `docs/html-docs/16-composants/index.html` |
+| Modification modèle DB | `docs/data-models.md` | `docs/html-docs/01-architecture/database.html` |
+| Pipeline IA | `docs/architecture.md` | `docs/html-docs/05-pipeline-generation/*.html` ou `06-pipeline-optimisation/*.html` |
+| Abonnements/Crédits | Sections concernées | `docs/html-docs/07-abonnements/*.html`, `08-credits/*.html` |
+| Guide développement | `docs/development.md` | N/A (pas d'équivalent HTML) |
+| Arborescence projet | `docs/source-tree.md` | N/A (pas d'équivalent HTML) |
 
 ## Documentation HTML (Portfolio)
 
@@ -171,7 +195,7 @@ docs/html-docs/
 ├── 12-administration/           # Dashboard admin
 ├── 13-onboarding/               # Flux utilisateur
 ├── 14-email/                    # Resend, Templates
-├── 15-api-reference/            # 113 endpoints
+├── 15-api-reference/            # 114 endpoints
 └── 16-composants/               # 138 composants React
 ```
 
