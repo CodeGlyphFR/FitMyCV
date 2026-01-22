@@ -51,6 +51,11 @@ const searchIndex = [
   { title: "Application Modifications", path: "06-pipeline-optimisation/application.html", section: "Pipeline Optimisation", keywords: "modifications application stages" },
   { title: "Système Review", path: "06-pipeline-optimisation/review-system.html", section: "Pipeline Optimisation", keywords: "review accept reject pending changes" },
 
+  // CV Modèle
+  { title: "Génération CV Modèle", path: "17-generation-cv-modele/overview.html", section: "CV Modèle", keywords: "cv modèle template génération fictif" },
+  { title: "Depuis Offre d'Emploi", path: "17-generation-cv-modele/template-from-offer.html", section: "CV Modèle", keywords: "cv modèle offre emploi url pdf extraction" },
+  { title: "Depuis Titre de Poste", path: "17-generation-cv-modele/template-from-job-title.html", section: "CV Modèle", keywords: "cv modèle titre poste job title génération" },
+
   // Abonnements
   { title: "Système Abonnements", path: "07-abonnements/overview.html", section: "Abonnements", keywords: "abonnement subscription stripe billing" },
   { title: "Modèles Économiques", path: "07-abonnements/business-models.html", section: "Abonnements", keywords: "modèle économique abonnement crédits" },
