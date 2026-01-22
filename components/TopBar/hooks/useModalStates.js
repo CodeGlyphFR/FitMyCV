@@ -270,7 +270,8 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     try {
       const formData = new FormData();
       formData.append("jobTitle", jobTitle);
-      formData.append("language", language === 'en' ? 'anglais' : 'français');
+      const languageNames = { fr: 'français', en: 'anglais', es: 'espagnol', de: 'allemand' };
+      formData.append("language", languageNames[language] || 'français');
       if (localDeviceId) {
         formData.append("deviceId", localDeviceId);
       }
