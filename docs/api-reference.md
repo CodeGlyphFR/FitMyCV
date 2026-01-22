@@ -1104,12 +1104,15 @@ Créer une session checkout pour abonnement.
 // Request
 {
   "planId": 2,
-  "billingPeriod": "monthly"
+  "billingPeriod": "monthly",
+  "locale": "fr"  // Optionnel: fr, en, es, de (défaut: en)
 }
 
 // Response 200
 { "checkoutUrl": "https://checkout.stripe.com/xxx" }
 ```
+
+**Paramètre `locale`** : Localise le message d'acceptation des CGV affiché dans Stripe Checkout. Utilise les traductions existantes du projet.
 
 ---
 
@@ -1170,11 +1173,16 @@ Créer une session d'achat de crédits.
 
 ```json
 // Request
-{ "packId": 2 }
+{
+  "packId": 2,
+  "locale": "fr"  // Optionnel: fr, en, es, de (défaut: en)
+}
 
 // Response 200
 { "checkoutUrl": "https://checkout.stripe.com/xxx" }
 ```
+
+**Paramètre `locale`** : Localise le message d'acceptation des CGV affiché dans Stripe Checkout. Utilise les traductions existantes du projet.
 
 ---
 

@@ -171,6 +171,117 @@
 
         <h4>Feature</h4>
         <p><code>generate_from_job_title</code> - 1 cr&eacute;dit par g&eacute;n&eacute;ration</p>
+
+        <h2>Abonnements &amp; Cr&eacute;dits</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>M&eacute;thode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/checkout/subscription</code></td>
+              <td>POST</td>
+              <td>Cr&eacute;er session Checkout abonnement</td>
+            </tr>
+            <tr>
+              <td><code>/api/checkout/credits</code></td>
+              <td>POST</td>
+              <td>Cr&eacute;er session Checkout cr&eacute;dits</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>POST /api/checkout/subscription</h3>
+
+        <p>Cr&eacute;e une session Stripe Checkout pour souscrire &agrave; un plan.</p>
+
+        <h4>Request</h4>
+        <pre><code class="language-json">{
+  "planId": 2,
+  "billingPeriod": "monthly",
+  "locale": "fr"
+}</code></pre>
+
+        <h4>Param&egrave;tres</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Param&egrave;tre</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>planId</code></td>
+              <td>number</td>
+              <td>ID du plan (requis)</td>
+            </tr>
+            <tr>
+              <td><code>billingPeriod</code></td>
+              <td>string</td>
+              <td><code>monthly</code> ou <code>yearly</code></td>
+            </tr>
+            <tr>
+              <td><code>locale</code></td>
+              <td>string</td>
+              <td>Langue pour CGV : <code>fr</code>, <code>en</code>, <code>es</code>, <code>de</code> (d&eacute;faut: <code>en</code>)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Response (200)</h4>
+        <pre><code class="language-json">{
+  "checkoutUrl": "https://checkout.stripe.com/xxx"
+}</code></pre>
+
+        <h3>POST /api/checkout/credits</h3>
+
+        <p>Cr&eacute;e une session Stripe Checkout pour acheter un pack de cr&eacute;dits.</p>
+
+        <h4>Request</h4>
+        <pre><code class="language-json">{
+  "packId": 2,
+  "locale": "fr"
+}</code></pre>
+
+        <h4>Param&egrave;tres</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Param&egrave;tre</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>packId</code></td>
+              <td>number</td>
+              <td>ID du pack de cr&eacute;dits (requis)</td>
+            </tr>
+            <tr>
+              <td><code>locale</code></td>
+              <td>string</td>
+              <td>Langue pour CGV : <code>fr</code>, <code>en</code>, <code>es</code>, <code>de</code> (d&eacute;faut: <code>en</code>)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Response (200)</h4>
+        <pre><code class="language-json">{
+  "checkoutUrl": "https://checkout.stripe.com/xxx"
+}</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Localisation CGV</div>
+          <p>Le param&egrave;tre <code>locale</code> permet d'afficher le message d'acceptation des CGV dans la langue de l'utilisateur lors du checkout Stripe. Le module <code>lib/stripe/checkoutLocale.js</code> g&egrave;re cette localisation.</p>
+        </div>
       </div>
     </main>
   </div>
