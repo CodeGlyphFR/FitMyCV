@@ -311,7 +311,7 @@ export default function Experience(props){
                   {[
                     e.location.city,
                     e.location.region,
-                    e.location.country_code ? (t(`countries.${e.location.country_code}`) || e.location.country_code) : null
+                    e.location.country_code ? (cvT(`countries.${e.location.country_code}`) || e.location.country_code) : null
                   ].filter(Boolean).join(", ")}
               </div>
               )}
