@@ -1,6 +1,6 @@
 # Référence API - FitMyCV.io
 
-> 113 endpoints REST documentés
+> 114 endpoints REST documentés
 
 ---
 
@@ -8,10 +8,10 @@
 
 | Métrique | Valeur |
 |----------|--------|
-| **Total endpoints** | 113 |
+| **Total endpoints** | 114 |
 | **Endpoints publics** | 11 |
 | **Endpoints authentifiés** | 64 |
-| **Endpoints admin** | 38 |
+| **Endpoints admin** | 39 |
 
 ### Méthodes HTTP
 
@@ -29,7 +29,7 @@
 
 1. [Endpoints Publics](#1-endpoints-publics-11) (11)
 2. [Endpoints Authentifiés](#2-endpoints-authentifiés-64) (64)
-3. [Endpoints Admin](#3-endpoints-admin-38) (38)
+3. [Endpoints Admin](#3-endpoints-admin-39) (39)
 
 ---
 
@@ -1355,7 +1355,7 @@ data: {"balance": 14}
 
 ---
 
-# 3. Endpoints Admin (38)
+# 3. Endpoints Admin (39)
 
 > Rôle `ADMIN` requis.
 
@@ -1864,6 +1864,23 @@ Synchroniser les produits avec Stripe.
 
 ### POST `/api/admin/telemetry/cleanup`
 Nettoyer les anciennes données de télémétrie.
+
+---
+
+### GET `/api/admin/docs/[[...path]]`
+Servir la documentation HTML technique.
+
+**Paramètre** : `path` - Chemin du fichier dans `docs/html-docs/`
+
+**Content-Types supportés** : HTML, CSS, JS, PNG, JPG, GIF, SVG, WOFF, WOFF2, TTF, EOT
+
+**Sécurité** : Protection contre path traversal (chemins limités à `docs/html-docs/`)
+
+```http
+GET /api/admin/docs/index.html
+GET /api/admin/docs/assets/css/style.css
+GET /api/admin/docs/01-architecture/overview.html
+```
 
 ---
 

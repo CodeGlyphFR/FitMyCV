@@ -19,6 +19,7 @@ FitMyCV-DEV/
 ├── data/                   # Données statiques (pays, etc.)
 ├── test/                   # Tests
 └── docs/                   # Documentation (ce dossier)
+    └── html-docs/          # Documentation HTML (portfolio technique)
 ```
 
 ---
@@ -384,6 +385,36 @@ test/                       # Tests
 _bmad/                      # BMAD workflows
 _bmad-output/               # Outputs BMAD
 ```
+
+---
+
+### `/docs/html-docs` - Documentation HTML (Portfolio)
+
+```
+docs/html-docs/
+├── index.html              # Page d'accueil
+├── assets/
+│   ├── css/style.css       # Styles
+│   └── js/main.js          # Navigation, recherche, Mermaid
+├── 01-architecture/        # Architecture technique (4 pages)
+├── 02-authentification/    # NextAuth.js (4 pages)
+├── 03-gestion-cv/          # CRUD CV, Import PDF (5 pages)
+├── 04-offres-emploi/       # Extraction, Match Score (3 pages)
+├── 05-pipeline-generation/ # Pipeline IA (7 pages)
+├── 06-pipeline-optimisation/ # Optimisation (5 pages)
+├── 07-abonnements/         # Stripe, Plans (5 pages)
+├── 08-credits/             # Système crédits (4 pages)
+├── 09-background-jobs/     # Queue, SSE (3 pages)
+├── 10-export/              # PDF, DOCX (3 pages)
+├── 11-traduction/          # Traduction CV (1 page)
+├── 12-administration/      # Dashboard admin (8 pages)
+├── 13-onboarding/          # Flux utilisateur (1 page)
+├── 14-email/               # Resend, Templates (2 pages)
+├── 15-api-reference/       # 114 endpoints (4 pages)
+└── 16-composants/          # Composants React (1 page)
+```
+
+**Accès** : Réservé aux administrateurs via `/api/admin/docs/`
 
 ---
 

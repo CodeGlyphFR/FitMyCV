@@ -30,7 +30,7 @@
 
 | Document | Description |
 |----------|-------------|
-| [api-reference.md](./api-reference.md) | 113 endpoints API (publics, authentifiés, admin) |
+| [api-reference.md](./api-reference.md) | 114 endpoints API (publics, authentifiés, admin) |
 | [data-models.md](./data-models.md) | 34 modèles Prisma organisés par domaine |
 | [components.md](./components.md) | 138 composants React en 20 domaines |
 
@@ -40,13 +40,21 @@
 |----------|-------------|
 | [development.md](./development.md) | Installation, commandes, workflow Git, patterns |
 
+### Documentation HTML (Portfolio)
+
+| Ressource | Description |
+|-----------|-------------|
+| [Documentation HTML](/api/admin/docs/index.html) | Documentation technique complète en HTML (accès admin uniquement) |
+
+> **Note** : La documentation HTML est accessible uniquement aux administrateurs via l'API `/api/admin/docs/`.
+
 ---
 
 ## Statistiques Codebase
 
 | Métrique | Valeur |
 |----------|--------|
-| API Routes | 113 endpoints |
+| API Routes | 114 endpoints |
 | Composants React | 138 fichiers |
 | Modules métier (lib/) | 31 modules |
 | Modèles Prisma | 34 modèles |

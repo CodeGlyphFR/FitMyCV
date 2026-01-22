@@ -537,6 +537,7 @@ stripe trigger payment_intent.succeeded
 - `docs/api-reference.md` - Référence API
 - `docs/data-models.md` - Modèles de données
 - `docs/components.md` - Composants React
+- `docs/html-docs/` - Documentation HTML complète (accès admin via `/api/admin/docs/`)
 
 ### Documentation Externe
 

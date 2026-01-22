@@ -100,6 +100,38 @@
             </tr>
           </tbody>
         </table>
+
+        <h2>Documentation</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Méthode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/admin/docs/[[...path]]</code></td>
+              <td>GET</td>
+              <td>Servir la documentation HTML technique</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Sécurité</div>
+          <p>Protection contre path traversal - les chemins sont limités au dossier <code>docs/html-docs/</code>.</p>
+        </div>
+
+        <h3>Content-Types supportés</h3>
+        <p>HTML, CSS, JS, PNG, JPG, GIF, SVG, WOFF, WOFF2, TTF, EOT</p>
+
+        <h3>Exemples</h3>
+        <pre><code class="language-http">GET /api/admin/docs/index.html
+GET /api/admin/docs/assets/css/style.css
+GET /api/admin/docs/01-architecture/overview.html</code></pre>
       </div>
     </main>
   </div>
