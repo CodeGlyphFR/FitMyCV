@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offres d'Emploi | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Offres d'Emploi</span>
+        </div>
+
+        <h1>Offres d'Emploi</h1>
+        <p class="lead">
+          Le système de gestion des offres d'emploi permet d'extraire automatiquement les informations structurées depuis une URL ou un texte brut, puis de calculer un score de compatibilité avec un CV.
+        </p>
+
+        <h2>Architecture</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux de traitement des offres</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input["ENTRÉE"]
+        URL["URL offre"]
+        Text["Texte brut"]
+    end
+
+    subgraph Fetch["RÉCUPÉRATION"]
+        Scraper["Web Scraper<br/>(Puppeteer)"]
+        Cache["Cache URL<br/>(JobOfferRaw)"]
+    end
+
+    subgraph Extract["EXTRACTION IA"]
+        GPT["GPT-4o-mini"]
+        Schema["JSON Schema"]
+    end
+
+    subgraph Storage["STOCKAGE"]
+        JobOffer["JobOffer<br/>(content JSON)"]
+    end
+
+    subgraph Usage["UTILISATION"]
+        Generation["Pipeline Génération"]
+        Optimization["Pipeline Optimisation"]
+        MatchScore["Calcul Match Score"]
+    end
+
+    URL --> Scraper
+    Text --> Extract
+    Scraper --> Cache
+    Cache --> Extract
+    Extract --> GPT
+    GPT --> Schema
+    Schema --> JobOffer
+    JobOffer --> Usage
+          </div>
+        </div>
+
+        <h2>Structure d'une Offre</h2>
+
+        <pre><code>{
+  "title": "Développeur Full Stack Senior",
+  "company": "TechCorp",
+  "location": "Paris, France",
+  "type": "CDI",
+  "remote": "Hybride",
+  "experience": "5+ ans",
+
+  "description": "Nous recherchons un développeur...",
+
+  "requirements": {
+    "required": [
+      "5 ans d'expérience en développement web",
+      "Maîtrise de React et Node.js",
+      "Expérience avec PostgreSQL"
+    ],
+    "niceToHave": [
+      "Connaissance de TypeScript",
+      "Expérience avec Docker/Kubernetes"
+    ]
+  },
+
+  "skills": {
+    "technical": ["React", "Node.js", "PostgreSQL", "TypeScript"],
+    "soft": ["Leadership", "Communication", "Autonomie"],
+    "methodologies": ["Agile", "Scrum", "CI/CD"]
+  },
+
+  "responsibilities": [
+    "Développer des fonctionnalités front et back",
+    "Participer aux code reviews",
+    "Mentorer les développeurs juniors"
+  ],
+
+  "benefits": [
+    "Télétravail 2j/semaine",
+    "Tickets restaurant",
+    "Mutuelle"
+  ],
+
+  "salary": {
+    "min": 55000,
+    "max": 70000,
+    "currency": "EUR",
+    "period": "annual"
+  },
+
+  "metadata": {
+    "sourceUrl": "https://jobs.techcorp.com/123",
+    "extractedAt": "2024-01-15T10:30:00Z",
+    "language": "fr"
+  }
+}</code></pre>
+
+        <h2>Modèles de Données</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Modèle</th>
+              <th>Description</th>
+              <th>Champs clés</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>JobOffer</code></td>
+              <td>Offre structurée</td>
+              <td>id, userId, url, content (JSON), extractedAt</td>
+            </tr>
+            <tr>
+              <td><code>JobOfferRaw</code></td>
+              <td>Contenu brut (cache)</td>
+              <td>url, html, text, fetchedAt</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Extraction depuis URL</h2>
+
+        <h3>Étape 1 : Récupération du contenu</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge input">INPUT</span>
+            <span class="data-flow-title">URL de l'offre</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Vérification cache</h5>
+            <pre><code>// Vérifier si déjà en cache (< 24h)
+const cached = await prisma.jobOfferRaw.findFirst({
+  where: {
+    url,
+    fetchedAt: {
+      gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
+    }
+  }
+});
+
+if (cached) {
+  return cached.text; // Utiliser le cache
+}</code></pre>
+
+            <h5>Scraping (si pas en cache)</h5>
+            <pre><code>// lib/features/job-offers/scraper.js
+import puppeteer from 'puppeteer';
+
+export async function scrapeJobOffer(url) {
+  const browser = await puppeteer.launch({ headless: true });
+  const page = await browser.newPage();
+
+  await page.goto(url, { waitUntil: 'networkidle0' });
+
+  // Extraire le contenu textuel
+  const text = await page.evaluate(() => {
+    // Supprimer scripts, styles, nav
+    const elementsToRemove = document.querySelectorAll(
+      'script, style, nav, header, footer'
+    );
+    elementsToRemove.forEach(el => el.remove());
+
+    return document.body.innerText;
+  });
+
+  await browser.close();
+
+  // Sauvegarder en cache
+  await prisma.jobOfferRaw.create({
+    data: { url, text, fetchedAt: new Date() }
+  });
+
+  return text;
+}</code></pre>
+          </div>
+        </div>
+
+        <h3>Étape 2 : Extraction IA</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge ai">IA</span>
+            <span class="data-flow-title">GPT-4o-mini - Extraction</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Prompt</h5>
+            <pre><code># Mission
+Extraire les informations structurées de cette offre d'emploi.
+
+# Règles
+1. Extraire UNIQUEMENT ce qui est explicitement mentionné
+2. Ne JAMAIS inventer de compétences ou exigences
+3. Différencier les compétences requises vs souhaitées
+4. Conserver la langue originale de l'offre
+
+# Output
+Retourner un JSON structuré selon le schema fourni.</code></pre>
+
+            <h5>JSON Schema</h5>
+            <pre><code>{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "job_offer_extraction",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "company": { "type": "string" },
+        "location": { "type": "string" },
+        "requirements": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "array", "items": { "type": "string" } },
+            "niceToHave": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "skills": {
+          "type": "object",
+          "properties": {
+            "technical": { "type": "array", "items": { "type": "string" } },
+            "soft": { "type": "array", "items": { "type": "string" } },
+            "methodologies": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "responsibilities": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["title", "skills"]
+    },
+    "strict": true
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Match Score</h2>
+
+        <p>Le calcul du match score évalue la compatibilité entre un CV et une offre d'emploi.</p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Coût</div>
+          <p><strong>1 crédit</strong> par calcul de match score.</p>
+        </div>
+
+        <h3>Algorithme</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge ai">IA</span>
+            <span class="data-flow-title">GPT-4o-mini - Match Score</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Input</h5>
+            <pre><code>{
+  "cv": { /* CV complet */ },
+  "jobOffer": { /* Offre extraite */ }
+}</code></pre>
+
+            <h5>Output</h5>
+            <pre><code>{
+  "score": 78,
+  "breakdown": {
+    "technicalSkills": 85,
+    "experience": 75,
+    "softSkills": 70,
+    "education": 80
+  },
+  "matches": [
+    "5 ans d'expérience en développement web",
+    "Maîtrise de React confirmée",
+    "Expérience Node.js"
+  ],
+  "gaps": [
+    "TypeScript non mentionné",
+    "Pas d'expérience Kubernetes"
+  ],
+  "recommendations": [
+    "Mettre en avant les projets React",
+    "Ajouter les certifications si disponibles"
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>API Endpoints</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Méthode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/job-offers</code></td>
+              <td>GET</td>
+              <td>Lister les offres de l'utilisateur</td>
+            </tr>
+            <tr>
+              <td><code>/api/job-offers</code></td>
+              <td>POST</td>
+              <td>Créer/extraire une offre</td>
+            </tr>
+            <tr>
+              <td><code>/api/job-offers/[id]</code></td>
+              <td>GET</td>
+              <td>Récupérer une offre</td>
+            </tr>
+            <tr>
+              <td><code>/api/job-offers/[id]</code></td>
+              <td>DELETE</td>
+              <td>Supprimer une offre</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/match-score</code></td>
+              <td>POST</td>
+              <td>Calculer le match score</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Cache et Performance</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Cache URL (JobOfferRaw)</h4>
+            <ul>
+              <li>Évite de re-scraper la même URL</li>
+              <li>TTL : 24 heures</li>
+              <li>Unique par (url, userId)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Cache Extraction (JobOffer)</h4>
+            <ul>
+              <li>Offre déjà extraite réutilisable</li>
+              <li>Liée à plusieurs CvFile</li>
+              <li>Pas de ré-extraction si existante</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>Fichiers Clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/features/job-offers/index.js</code></td>
+              <td>Exports publics</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/job-offers/scraper.js</code></td>
+              <td>Web scraping Puppeteer</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/job-offers/extractor.js</code></td>
+              <td>Extraction IA</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/job-offers/matchScore.js</code></td>
+              <td>Calcul compatibilité</td>
+            </tr>
+            <tr>
+              <td><code>app/api/job-offers/route.js</code></td>
+              <td>API endpoint</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patterns & Conventions | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Architecture</a>
+          <span>/</span>
+          <span>Patterns</span>
+        </div>
+
+        <h1>Patterns & Conventions</h1>
+        <p class="lead">
+          Patterns de code et conventions utilisés dans FitMyCV.io pour garantir cohérence et maintenabilité.
+        </p>
+
+        <h2>Pattern API Route</h2>
+
+        <p>Toutes les API Routes suivent une structure standardisée :</p>
+
+        <pre><code>// app/api/example/route.js
+import { auth } from '@/lib/auth/session';
+import prisma from '@/lib/prisma';
+import { apiError, CommonErrors } from '@/lib/api/apiErrors';
+
+export async function GET(request) {
+  try {
+    // 1. Authentification
+    const session = await auth();
+    if (!session?.user?.id) {
+      return apiError(CommonErrors.notAuthenticated());
+    }
+
+    // 2. Extraction paramètres
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    // 3. Validation (optionnel)
+    if (!id) {
+      return apiError(CommonErrors.missingParameter('id'));
+    }
+
+    // 4. Logique métier
+    const data = await prisma.example.findUnique({
+      where: { id, userId: session.user.id }
+    });
+
+    if (!data) {
+      return apiError(CommonErrors.notFound('Example'));
+    }
+
+    // 5. Réponse
+    return Response.json({ data });
+
+  } catch (error) {
+    console.error('[API] Example error:', error);
+    return apiError(CommonErrors.serverError());
+  }
+}
+
+export async function POST(request) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return apiError(CommonErrors.notAuthenticated());
+    }
+
+    // Parse body
+    const body = await request.json();
+
+    // Validation avec Zod (optionnel)
+    const validated = schema.parse(body);
+
+    // Création
+    const created = await prisma.example.create({
+      data: { ...validated, userId: session.user.id }
+    });
+
+    return Response.json({ data: created }, { status: 201 });
+
+  } catch (error) {
+    if (error.name === 'ZodError') {
+      return apiError(CommonErrors.validation(error.errors));
+    }
+    return apiError(CommonErrors.serverError());
+  }
+}</code></pre>
+
+        <h2>Pattern Gestion d'Erreurs</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Hiérarchie des erreurs API</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Errors["TYPES D'ERREURS"]
+        Auth["401 - Non authentifié"]
+        Forbidden["403 - Accès refusé"]
+        NotFound["404 - Non trouvé"]
+        Validation["400 - Validation"]
+        Limit["429 - Limite atteinte"]
+        Server["500 - Erreur serveur"]
+    end
+
+    subgraph Handler["GESTIONNAIRE"]
+        ApiError["apiError()"]
+        CommonErrors["CommonErrors.*"]
+    end
+
+    CommonErrors --> ApiError
+    ApiError --> Auth & Forbidden & NotFound & Validation & Limit & Server
+          </div>
+        </div>
+
+        <pre><code>// lib/api/apiErrors.js
+
+export function apiError({ error, status = 400, code = null, details = null }) {
+  return Response.json(
+    {
+      error,
+      code,
+      details,
+      timestamp: new Date().toISOString()
+    },
+    { status }
+  );
+}
+
+export const CommonErrors = {
+  notAuthenticated: () => ({
+    error: 'Authentication required',
+    status: 401,
+    code: 'AUTH_REQUIRED'
+  }),
+
+  notAuthorized: () => ({
+    error: 'Access denied',
+    status: 403,
+    code: 'ACCESS_DENIED'
+  }),
+
+  notFound: (resource) => ({
+    error: `${resource} not found`,
+    status: 404,
+    code: 'NOT_FOUND'
+  }),
+
+  limitReached: (feature) => ({
+    error: `Usage limit reached for ${feature}`,
+    status: 429,
+    code: 'LIMIT_REACHED'
+  }),
+
+  validation: (errors) => ({
+    error: 'Validation failed',
+    status: 400,
+    code: 'VALIDATION_ERROR',
+    details: errors
+  }),
+
+  serverError: () => ({
+    error: 'Internal server error',
+    status: 500,
+    code: 'SERVER_ERROR'
+  })
+};</code></pre>
+
+        <h2>Pattern Feature Usage</h2>
+
+        <p>Vérification des limites et débit de crédits avant chaque action payante :</p>
+
+        <pre><code>// Pattern complet de vérification feature
+import { canUseFeature, incrementFeatureCounter } from '@/lib/subscription/featureUsage';
+import { debitCredit, refundCredit } from '@/lib/subscription/credits';
+
+export async function POST(request) {
+  const session = await auth();
+  const userId = session.user.id;
+  const featureName = 'gpt_cv_generation';
+
+  // 1. Vérifier si l'utilisateur peut utiliser la feature
+  const {
+    allowed,
+    needsCredit,
+    reason,
+    creditCost
+  } = await canUseFeature(userId, featureName);
+
+  if (!allowed) {
+    return apiError({
+      error: reason === 'limit_reached'
+        ? 'Limite mensuelle atteinte'
+        : 'Crédits insuffisants',
+      status: 429,
+      code: 'FEATURE_UNAVAILABLE'
+    });
+  }
+
+  // 2. Débiter le crédit si nécessaire (AVANT l'action)
+  let creditTransactionId = null;
+  if (needsCredit) {
+    const transaction = await debitCredit(userId, creditCost, featureName);
+    creditTransactionId = transaction.id;
+  }
+
+  try {
+    // 3. Exécuter l'action
+    const result = await performAction();
+
+    // 4. Incrémenter le compteur (mode abonnement)
+    if (!needsCredit) {
+      await incrementFeatureCounter(userId, featureName);
+    }
+
+    return Response.json({ data: result });
+
+  } catch (error) {
+    // 5. Rembourser en cas d'échec
+    if (creditTransactionId) {
+      await refundCredit(userId, creditCost, featureName, 'Action failed');
+    }
+    throw error;
+  }
+}</code></pre>
+
+        <h2>Pattern CV Operations</h2>
+
+        <pre><code>// Lecture/Écriture CV avec validation
+import { readUserCvFile, writeUserCvFile, listUserCvFiles } from '@/lib/cv-core/storage';
+import { validateCv } from '@/lib/cv-core/validation';
+
+// Lire un CV
+const cvData = await readUserCvFile(userId, filename);
+// cvData = { header, sections, metadata }
+
+// Valider un CV
+const { valid, errors } = validateCv(cvData);
+if (!valid) {
+  return apiError(CommonErrors.validation(errors));
+}
+
+// Modifier et sauvegarder
+cvData.sections.experiences[0].title = 'Nouveau titre';
+await writeUserCvFile(userId, filename, cvData);
+
+// Lister tous les CV
+const cvFiles = await listUserCvFiles(userId);
+// [{ filename, createdAt, matchScore, ... }]</code></pre>
+
+        <h2>Pattern Background Jobs</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Cycle de vie d'une tâche asynchrone</div>
+          <div class="mermaid">
+stateDiagram-v2
+    [*] --> pending: Création tâche
+    pending --> running: Job démarré
+    running --> completed: Succès
+    running --> failed: Échec
+    failed --> running: Retry (max 3)
+    completed --> [*]
+    failed --> [*]: Max retries
+          </div>
+        </div>
+
+        <pre><code>// Création et enqueue d'une tâche
+import { enqueueJob } from '@/lib/background-jobs/jobQueue';
+import { startSingleOfferGeneration } from '@/lib/cv-generation';
+
+// 1. Créer la tâche en base (tracking)
+const task = await prisma.cvGenerationTask.create({
+  data: {
+    userId,
+    sourceCvFileId,
+    mode: 'adapt',
+    status: 'pending',
+    totalOffers: 1
+  }
+});
+
+// 2. Enqueue le job (max 3 concurrent)
+enqueueJob(() => startSingleOfferGeneration(task.id, offer.id));
+
+// Le job met à jour le status en base :
+// pending -> running -> completed/failed</code></pre>
+
+        <h2>Pattern OpenAI Structured Output</h2>
+
+        <pre><code>// Appel OpenAI avec JSON Schema
+import { callOpenAI } from '@/lib/openai-core/client';
+import { loadSchema } from '@/lib/openai-core/schemaLoader';
+
+const schema = await loadSchema('cv-adaptation/batch-experience-output');
+const prompt = await loadPrompt('cv-adaptation/batch-experience');
+
+const result = await callOpenAI({
+  userId,
+  featureName: 'cv_generation',
+  messages: [
+    { role: 'system', content: prompt },
+    { role: 'user', content: JSON.stringify(inputData) }
+  ],
+  responseFormat: {
+    type: 'json_schema',
+    json_schema: {
+      name: 'batch_experience_output',
+      schema: schema,
+      strict: true
+    }
+  },
+  // Cache context pour réutilisation
+  cacheContext: buildCacheA(jobOffer)
+});
+
+// result = JSON validé selon le schema</code></pre>
+
+        <h2>Pattern SSE Progress</h2>
+
+        <pre><code>// Envoi de progression en temps réel
+import { createSSEResponse, sendSSE } from '@/lib/sse/sseHelpers';
+
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const taskId = searchParams.get('taskId');
+
+  // Créer la réponse SSE
+  const { stream, controller } = createSSEResponse();
+
+  // Écouter les événements de progression
+  const unsubscribe = onProgress(taskId, (event) => {
+    sendSSE(controller, {
+      type: event.type,
+      phase: event.phase,
+      progress: event.progress,
+      message: event.message
+    });
+
+    if (event.type === 'complete' || event.type === 'error') {
+      controller.close();
+      unsubscribe();
+    }
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    }
+  });
+}</code></pre>
+
+        <h2>Conventions de Nommage</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Convention</th>
+              <th>Exemple</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Fichiers composants</td>
+              <td>PascalCase</td>
+              <td><code>CvEditor.jsx</code></td>
+            </tr>
+            <tr>
+              <td>Fichiers lib</td>
+              <td>camelCase</td>
+              <td><code>featureUsage.js</code></td>
+            </tr>
+            <tr>
+              <td>API Routes</td>
+              <td>kebab-case</td>
+              <td><code>/api/cv/match-score</code></td>
+            </tr>
+            <tr>
+              <td>Modèles Prisma</td>
+              <td>PascalCase</td>
+              <td><code>CvFile</code>, <code>JobOffer</code></td>
+            </tr>
+            <tr>
+              <td>Variables</td>
+              <td>camelCase</td>
+              <td><code>const userId</code></td>
+            </tr>
+            <tr>
+              <td>Constantes</td>
+              <td>SCREAMING_SNAKE</td>
+              <td><code>MAX_RETRIES</code></td>
+            </tr>
+            <tr>
+              <td>Feature names</td>
+              <td>snake_case</td>
+              <td><code>gpt_cv_generation</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Git Workflow</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Branches</h4>
+            <ul>
+              <li><code>main</code> - Production</li>
+              <li><code>release</code> - Staging</li>
+              <li><code>dev</code> - Développement</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Préfixes branches</h4>
+            <ul>
+              <li><code>feature/</code> - Nouvelles fonctionnalités</li>
+              <li><code>improvement/</code> - Améliorations</li>
+              <li><code>bug/</code> - Corrections</li>
+              <li><code>hotfix/</code> - Urgences prod</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Commits</h4>
+            <ul>
+              <li><code>feat:</code> - Nouvelle feature</li>
+              <li><code>fix:</code> - Correction bug</li>
+              <li><code>refactor:</code> - Refactoring</li>
+              <li><code>docs:</code> - Documentation</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

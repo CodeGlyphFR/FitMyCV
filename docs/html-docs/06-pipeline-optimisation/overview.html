@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pipeline Optimisation CV | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Pipeline Optimisation</a>
+          <span>/</span>
+          <span>Vue d'ensemble</span>
+        </div>
+
+        <h1>Pipeline d'Optimisation CV</h1>
+        <p class="lead">
+          Le pipeline d'optimisation (cv-improvement) améliore un CV existant de manière ciblée, basée sur les suggestions de l'IA et les choix de l'utilisateur. Contrairement au pipeline de génération qui transforme complètement le CV, ce pipeline effectue des modifications précises et traçables.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Coût</div>
+          <p>2 crédits par optimisation. Le scoring initial coûte 1 crédit supplémentaire.</p>
+        </div>
+
+        <h2>Workflow Global</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Pipeline complet d'optimisation</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input["ENTRÉE UTILISATEUR"]
+        CV["CV existant"]
+        Offer["Offre d'emploi (optionnelle)"]
+        Trigger["Déclencher optimisation"]
+    end
+
+    subgraph Scoring["ÉTAPE 1 - SCORING"]
+        CalcScore["Calcul Match Score"]
+        Score["Score 0-100"]
+        Suggestions["Suggestions IA (max 3-4)"]
+        Missing["Skills manquants"]
+    end
+
+    subgraph Selection["SÉLECTION UTILISATEUR"]
+        ChooseSugg["Choisir suggestions"]
+        AddContext["Ajouter contexte"]
+        ChooseSkills["Choisir skills à ajouter"]
+    end
+
+    subgraph Pipeline["ÉTAPE 2 - PIPELINE 4 STAGES"]
+        S1["Stage 1: Classify Skills"]
+        S2["Stage 2: Preprocess Suggestions"]
+        S3["Stage 3: Improve Sections<br/>(parallèle)"]
+        S4["Stage 4: Update Summary"]
+    end
+
+    subgraph Review["ÉTAPE 3 - REVIEW"]
+        Changes["Changements proposés"]
+        Accept["Accepter"]
+        Reject["Rejeter"]
+    end
+
+    subgraph Output["SORTIE"]
+        FinalCV["CV optimisé"]
+        Version["Nouvelle version"]
+    end
+
+    Input --> Scoring
+    CV --> CalcScore
+    Offer --> CalcScore
+    CalcScore --> Score
+    CalcScore --> Suggestions
+    CalcScore --> Missing
+
+    Suggestions --> Selection
+    Missing --> Selection
+    Selection --> Pipeline
+
+    ChooseSugg --> S2
+    AddContext --> S2
+    ChooseSkills --> S1
+
+    S1 --> S3
+    S2 --> S3
+    S3 --> S4
+    S4 --> Review
+
+    Changes --> Accept
+    Changes --> Reject
+    Accept --> FinalCV
+    FinalCV --> Version
+          </div>
+        </div>
+
+        <h2>Les 4 Stages du Pipeline</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Stage</th>
+              <th>Nom</th>
+              <th>Fichier</th>
+              <th>Exécution</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-primary">1</span></td>
+              <td>Classify Skills</td>
+              <td><code>stage1-classify-skills.js</code></td>
+              <td rowspan="2">Parallèle</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">2</span></td>
+              <td>Preprocess Suggestions</td>
+              <td><code>stage2-preprocess.js</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">3</span></td>
+              <td>Improve Sections</td>
+              <td><code>stage3-improve/*.js</code></td>
+              <td>Parallèle (max 5)</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">4</span></td>
+              <td>Update Summary</td>
+              <td><code>stage4-summary/improveSummary.js</code></td>
+              <td>Séquentiel</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Étape 1 : Scoring</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/scoring/service.js</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">SCORING - Calcul du Match Score</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Données d'entrée</div>
+            <p><strong>Provenance :</strong> <code>CvFile.content</code> + <code>JobOffer.content</code></p>
+            <pre><code>{
+  "cvContent": "{ header: {...}, experience: [...], skills: {...} }",
+  "jobOffer": {
+    "title": "Senior Developer",
+    "skills": { "required": [...], "nice_to_have": [...] },
+    "responsibilities": [...]
+  }
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Résumé du prompt</div>
+            <blockquote>
+              "Expert recruteur avec 15 ans d'expérience. Analyser la correspondance entre le CV et l'offre d'emploi.
+              Retourner un score global (0-100), des scores par catégorie, max 3-4 suggestions d'amélioration
+              avec priorité et impact estimé, les compétences manquantes et correspondantes."
+            </blockquote>
+            <p><strong>Formule de pondération :</strong></p>
+            <pre><code>score_final = (technical_skills × 0.35) +
+              (experience × 0.30) +
+              (education × 0.20) +
+              (soft_skills_languages × 0.15)</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Format de sortie</div>
+            <pre><code>{
+  "match_score": 75,
+  "score_breakdown": {
+    "technical_skills": 80,
+    "experience": 73,
+    "education": 75,
+    "soft_skills_languages": 67
+  },
+  "suggestions": [
+    {
+      "title": "Ajouter certification AWS",
+      "suggestion": "Vous maîtrisez Docker et Kubernetes...",
+      "priority": "high",
+      "impact": "+5 points"
+    }
+  ],
+  "missing_skills": ["Kubernetes", "CI/CD", "Terraform"],
+  "matching_skills": ["Python", "React", "PostgreSQL"]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Étape 2 : Pipeline d'Amélioration</h2>
+
+        <h3>Stage 1 & 2 (Parallèles)</h3>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Stage 1: Classify Skills</h4>
+            <p>Classifier les compétences à ajouter dans les bonnes catégories :</p>
+            <ul>
+              <li><code>hard_skills</code> - Savoir-faire métier</li>
+              <li><code>soft_skills</code> - Qualités personnelles</li>
+              <li><code>tools</code> - Logiciels, langages</li>
+              <li><code>methodologies</code> - Méthodes de travail</li>
+            </ul>
+            <p><strong>Modèle :</strong> <code>gpt-4o-mini</code> (rapide)</p>
+          </div>
+          <div class="card">
+            <h4>Stage 2: Preprocess Suggestions</h4>
+            <p>Analyser les suggestions sélectionnées avec Chain-of-Thought :</p>
+            <ul>
+              <li>Identifier les contextes distincts</li>
+              <li>Extraire chiffres et compétences</li>
+              <li>Déterminer les sections cibles</li>
+              <li>Une suggestion peut créer plusieurs actions</li>
+            </ul>
+            <p><strong>Modèle :</strong> <code>gpt-4o</code></p>
+          </div>
+        </div>
+
+        <h3>Stage 3: Improve Sections (Parallèle)</h3>
+
+        <p>Max 5 appels OpenAI concurrents via <code>pLimit(5)</code>.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Sous-stage</th>
+              <th>Fichier</th>
+              <th>Cible</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>3a</td>
+              <td><code>improveExperience.js</code></td>
+              <td>Expériences (responsibilities, deliverables)</td>
+            </tr>
+            <tr>
+              <td>3b</td>
+              <td><code>improveProject.js</code></td>
+              <td>Projets (existants ou nouveaux)</td>
+            </tr>
+            <tr>
+              <td>3c</td>
+              <td><code>improveLanguages.js</code></td>
+              <td>Langues (niveaux, certifications)</td>
+            </tr>
+            <tr>
+              <td>3d</td>
+              <td><code>improveExtras.js</code></td>
+              <td>Extras (certifications, bénévolat)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="data-flow">
+          <div class="data-flow-header">STAGE 3a - Improve Experience</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Données d'entrée</div>
+            <pre><code>{
+  "experience": {
+    "title": "Senior Developer",
+    "responsibilities": ["Développer des applications web"],
+    "deliverables": []
+  },
+  "suggestion": {
+    "suggestion": "Mentionner vos réalisations en recrutement",
+    "actionDescription": "Ajouter recrutement 6 personnes",
+    "extractedInfo": {
+      "numbers": ["6 personnes"],
+      "skills": ["recrutement", "formation"]
+    }
+  }
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Format de sortie</div>
+            <pre><code>{
+  "reasoning": {
+    "analysis": "Suggestion demande ajout recrutement...",
+    "responsibility_decision": "Ajouter responsabilité pertinente",
+    "deliverable_decision": "Ajouter résultat quantifié"
+  },
+  "modifications": {
+    "responsibilities": {
+      "add": ["Recruter et former des développeurs"],
+      "remove": []
+    },
+    "deliverables": {
+      "add": ["6 pers. recrutées"],
+      "remove": []
+    },
+    "skills_used": {
+      "add": ["Recrutement"],
+      "remove": []
+    }
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <h3>Stage 4: Update Summary</h3>
+
+        <p>Met à jour le résumé professionnel pour refléter les améliorations apportées.</p>
+        <p><strong>Skip :</strong> Si aucune amélioration experience/project → pas d'appel OpenAI.</p>
+
+        <h2>Étape 3 : Review Utilisateur</h2>
+
+        <p>Après le pipeline, les modifications sont stockées dans <code>CvFile.pendingChanges</code> pour review.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Système de review</div>
+          <div class="mermaid">
+flowchart LR
+    subgraph Changes["CHANGEMENTS PROPOSÉS"]
+        C1["Modification 1<br/>status: pending"]
+        C2["Modification 2<br/>status: pending"]
+        C3["Modification 3<br/>status: pending"]
+    end
+
+    subgraph Review["REVIEW"]
+        Accept["Accepter"]
+        Reject["Rejeter"]
+    end
+
+    subgraph Final["RÉSULTAT"]
+        Applied["Appliqué au CV"]
+        Discarded["Ignoré"]
+    end
+
+    C1 --> Accept
+    C2 --> Accept
+    C3 --> Reject
+
+    Accept --> Applied
+    Reject --> Discarded
+          </div>
+        </div>
+
+        <h3>Structure d'un changement</h3>
+
+        <pre><code>{
+  "id": "uuid",
+  "section": "experience",
+  "field": "responsibilities",
+  "itemName": "Senior Developer @ TechCorp",
+  "changeType": "added",
+  "beforeValue": null,
+  "afterValue": "Recruter et former des développeurs",
+  "change": "Ajout de responsabilité recrutement",
+  "reason": "Alignement avec suggestion utilisateur",
+  "status": "pending",  // pending | accepted | rejected
+  "reviewedAt": null
+}</code></pre>
+
+        <h2>Différences avec Pipeline Génération</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Pipeline Génération</th>
+              <th>Pipeline Optimisation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Objectif</strong></td>
+              <td>Transformation complète</td>
+              <td>Amélioration ciblée</td>
+            </tr>
+            <tr>
+              <td><strong>Offre d'emploi</strong></td>
+              <td>Obligatoire</td>
+              <td>Optionnelle</td>
+            </tr>
+            <tr>
+              <td><strong>Classification</strong></td>
+              <td>IA classe automatiquement</td>
+              <td>Utilisateur choisit</td>
+            </tr>
+            <tr>
+              <td><strong>Review</strong></td>
+              <td>Optionnel (post-génération)</td>
+              <td>Intégré au workflow</td>
+            </tr>
+            <tr>
+              <td><strong>Coût</strong></td>
+              <td>1 crédit</td>
+              <td>2 crédits (+ 1 scoring)</td>
+            </tr>
+            <tr>
+              <td><strong>Cache</strong></td>
+              <td>Cache A/B structuré</td>
+              <td>Pas de cache spécifique</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Fichiers et Structure</h2>
+
+        <pre><code>lib/features/cv-improvement/
+├── orchestrator.js              # Coordination des 4 stages
+├── job.js                       # Job runner
+├── stages/
+│   ├── stage1-classify-skills.js
+│   ├── stage2-preprocess.js
+│   ├── stage3-improve/
+│   │   ├── improveExperience.js
+│   │   ├── improveProject.js
+│   │   ├── improveLanguages.js
+│   │   └── improveExtras.js
+│   └── stage4-summary/
+│       └── improveSummary.js
+└── prompts/
+    ├── experience-system.md, experience-user.md
+    ├── project-system.md, project-user.md
+    ├── languages-system.md, languages-user.md
+    ├── preprocess-system.md, preprocess-user.md
+    └── summary-system.md, summary-user.md
+
+lib/scoring/
+├── service.js                   # Calcul match score
+└── prompts/
+    ├── system.md
+    └── user.md
+
+lib/cv-core/review/
+├── state.js                     # Gestion pendingChanges
+└── actions.js                   # Accept/Reject</code></pre>
+
+        <h2>Prochaines Sections</h2>
+
+        <ul>
+          <li><a href="scoring.html">Scoring</a> - Détail du calcul de score</li>
+          <li><a href="suggestions.html">Suggestions</a> - Génération et sélection</li>
+          <li><a href="application.html">Application</a> - Les 4 stages en détail</li>
+          <li><a href="review-system.html">Review</a> - Système de validation</li>
+        </ul>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

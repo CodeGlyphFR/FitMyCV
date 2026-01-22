@@ -1,539 +1,668 @@
-# Inventaire Composants - FitMyCV.io
+# Composants React - FitMyCV.io
 
-> ~150 composants React | Généré le 2026-01-07
-
----
-
-## Vue d'Ensemble
-
-```
-components/
-├── Root Level (28)     # Providers, CV sections, utilities
-├── TopBar/ (7)         # Navigation principale + modals
-├── ui/ (15)            # Composants réutilisables
-├── admin/ (40+)        # Dashboard admin
-├── subscription/ (10)  # Gestion abonnements
-├── onboarding/ (8)     # Parcours utilisateur
-├── account/ (4)        # Paramètres compte
-├── auth/ (3)           # Authentification
-├── cookies/ (4)        # Consentement RGPD
-├── feedback/ (3)       # Retours utilisateurs
-├── notifications/ (2)  # Système notifications
-└── analytics/ (1)      # Tracking conditionnel
-```
+> Documentation des 138 fichiers organisés en 20 domaines (150+ composants)
 
 ---
 
-## Providers (Contextes Globaux)
+## Vue d'ensemble
 
-| Composant | Fichier | Purpose |
-|-----------|---------|---------|
-| `RootProviders` | `RootProviders.jsx` | Agrège tous les contextes |
-| `NotificationProvider` | `notifications/` | Notifications toast |
-| `BackgroundTasksProvider` | root | Queue de tâches async |
-| `HighlightProvider` | root | Tracking modifications CV |
-| `OnboardingProvider` | `onboarding/` | État parcours onboarding |
-| `AdminProvider` | `admin/` | Contexte dashboard admin |
-| `RecaptchaProvider` | root | Protection reCAPTCHA |
-| `RealtimeRefreshProvider` | root | Sync temps réel (SSE) |
-
-**Pattern d'utilisation** :
-```jsx
-// app/layout.jsx
-<RootProviders>
-  {children}
-</RootProviders>
-```
-
----
-
-## Layout Components
-
-| Composant | Purpose |
-|-----------|---------|
-| `ConditionalTopBar` | Affiche TopBar selon contexte (auth vs app) |
-| `ConditionalFooter` | Footer conditionnel |
-| `ConditionalMainWrapper` | Wrapper contenu principal |
-| `TopBarSpacer` | Espace compensant hauteur TopBar |
-| `GlobalBackground` | Fond animé global |
-| `ScrollToTopOnMount` | Scroll auto vers top |
-| `LoadingOverlay` | Écran chargement bloquant |
+| Catégorie | Fichiers | Description |
+|-----------|----------|-------------|
+| TopBar | 38 | Navigation principale, modales, hooks |
+| Admin | 33 | Dashboard administration |
+| UI System | 18 | Design system réutilisable |
+| CV Improvement | 10 | Panel optimisation IA |
+| CV Review | 10 | Surlignage modifications IA |
+| Onboarding | 10 | Parcours guidé interactif |
+| Subscription | 9 | Abonnements et crédits |
+| Layout | 9 | Structure page |
+| CV Sections | 8 | Sections éditables du CV |
+| Providers | 6 | Contextes globaux |
+| Cookies | 4 | Consentement RGPD |
+| Account | 4 | Gestion compte utilisateur |
+| Auth | 3 | Authentification |
+| Feedback | 3 | Retours utilisateurs |
+| Task Queue | 2 | Gestion tâches background |
+| Notifications | 2 | Toast notifications |
+| Header | 2 | Composants header CV |
+| Pages | 2 | Contenu pages statiques |
+| Empty States | 1 | États vides standardisés |
 
 ---
 
-## TopBar (`components/TopBar/`)
+## 1. TopBar (38 fichiers)
 
-Barre de navigation principale avec gestion CVs.
+Barre de navigation principale avec gestion CV, tâches, filtres et actions.
 
-| Composant | Type | Purpose |
-|-----------|------|---------|
-| `TopBar` | Layout | Navigation principale, liste CVs, filtres |
-| `FilterDropdown` | Dropdown | Filtrage CVs (date, source, type) |
-| `CvGeneratorModal` | Modal | Génération CV depuis offre emploi |
-| `NewCvModal` | Modal | Création CV vierge |
-| `ExportPdfModal` | Modal | Export PDF avec sélection sections |
-| `PdfImportModal` | Modal | Import CV depuis PDF |
-| `DeleteCvModal` | Modal | Confirmation suppression CV |
+### Composant Principal
 
-**Hooks associés** (`TopBar/hooks/`) :
-- `useCvList` - Liste et sélection CVs
-- `useCvActions` - Actions CRUD
-- `useTaskQueue` - File de tâches
-- `useExportPdf` - Export PDF
-- etc.
+**TopBar.jsx** (688 lignes)
+- Intègre ~10 hooks personnalisés
+- État complexe : sélecteur CV, filtres, task queue, modales
+- Gestion événements temps réel et synchronisation
 
----
+### Sous-composants (`components/`)
 
-## Sections CV (Root Level)
+| Composant | Rôle |
+|-----------|------|
+| `CvDropdownPortal` | Dropdown sélection CV avec React Portal |
+| `FilterDropdown` | Filtres par type, langue, date |
+| `ItemLabel` | Affichage intelligent du nom CV |
+| `TopBarActions` | Boutons d'action (export, générer) |
+| `TopBarModals` | Conteneur des modales |
+| `UserMenuPortal` | Menu utilisateur (compte, logout) |
+| `TopBarStyles` | Styles CSS-in-JS |
 
-Composants représentant les sections du document CV.
+### Hooks personnalisés (`hooks/`)
 
-| Composant | Section CV | Editable |
-|-----------|------------|----------|
-| `Header` | En-tête (nom, titre, contact) | Oui |
-| `Summary` | Résumé professionnel | Oui |
-| `Experience` | Expériences professionnelles | Oui |
-| `Education` | Formation académique | Oui |
-| `Skills` | Compétences techniques | Oui |
-| `Languages` | Langues parlées | Oui |
-| `Projects` | Projets personnels/pro | Oui |
-| `Extras` | Sections supplémentaires | Oui |
+| Hook | Rôle |
+|------|------|
+| `useTopBarState` | État principal (items, current, scroll) |
+| `useCvOperations` | Opérations CV (create, delete, select) |
+| `useGeneratorModal` | Gestion modal génération |
+| `useModalStates` | État des 5+ modales |
+| `useExportModal` | Export PDF avec templates |
+| `useSubscriptionData` | Données plan/crédits |
+| `useFilterState` | Filtres multi-critères |
+| `useScrollBehavior` | Détection scroll |
+| `useWrapDetection` | Responsivité dynamique |
 
-**Composants de review** :
-| Composant | Purpose |
-|-----------|---------|
-| `ChangeHighlight` | Surbrillance contenu modifié par IA |
-| `ChangeReviewPopover` | Popover révision changements |
-| `BulletHighlight` | Highlight bullets modifiées |
-| `SkillItemHighlight` | Highlight skills modifiés |
-| `ExperienceReviewActions` | Actions review expériences |
-| `SkillsReviewActions` | Actions review skills |
-| `SectionReviewActions` | Actions review sections |
-| `InlineDiff` | Affichage différences (compact/side-by-side) |
+### Modales (`modals/`)
 
-**Autres composants CV** :
-| Composant | Purpose |
-|-----------|---------|
-| `Section` | Conteneur section générique |
-| `EmptyState` | État vide avec message |
-| `SourceInfo` | Origine CV (manuel/import/IA) |
-| `VersionSelector` | Sélecteur version CV |
-| `MatchScore` | Score correspondance offre/CV |
-| `CVImprovementPanel` | Panneau amélioration IA |
-| `ChangesPanel` | Panneau visualisation changements |
-| `OrphanedChangesDisplay` | Changements non associés |
+| Modale | Rôle |
+|--------|------|
+| `CvGeneratorModal` | Génération CV par titre/offre/fichier |
+| `NewCvModal` | Création nouveau CV |
+| `DeleteCvModal` | Suppression unitaire |
+| `BulkDeleteCvModal` | Suppression multiple |
+| `PdfImportModal` | Import PDF avec extraction IA |
+| `ExportPdfModal` | Export PDF avec sélection sections |
+
+### Patterns
+
+- **Composition hooks** : 10+ hooks = ~400 LOC extraites
+- **React Portals** : dropdowns au-delà du DOM parent
+- **Events globaux** : `cv:list:changed`, `realtime:cv:list:changed`
+- **Memoization** : `useMemo` sur filteredItems, availableOptions
 
 ---
 
-## UI Components (`components/ui/`)
+## 2. CV Sections (8 fichiers)
 
-Composants réutilisables (design system).
+Composants d'édition des sections du CV.
 
-| Composant | Type | Props clés |
-|-----------|------|------------|
-| `Modal` | Container | `isOpen`, `onClose`, `title`, `icon` |
-| `Tooltip` | Display | `content`, `position`, `delay` |
-| `TipBox` | Display | `type`, `children` |
-| `PasswordInput` | Input | `value`, `onChange`, `showToggle` |
-| `FormRow` | Layout | `label`, `error`, `children` |
-| `DonutProgress` | Chart | `value`, `max`, `color` |
-| `CreditCostDisplay` | Display | `cost`, `balance` |
-| `CreditCostTooltip` | Tooltip | `feature`, `cost` |
+| Composant | Lignes | Rôle |
+|-----------|--------|------|
+| `Header.jsx` | 456 | En-tête CV + MatchScore + CVImprovementPanel |
+| `Experience.jsx` | 80+ | Expériences avec tri intelligent par date |
+| `Education.jsx` | - | Formation, diplômes |
+| `Skills.jsx` | - | Compétences avec niveaux |
+| `Projects.jsx` | - | Projets personnels |
+| `Languages.jsx` | - | Langues parlées |
+| `Summary.jsx` | - | Résumé professionnel |
+| `Extras.jsx` | - | Certifications, publications |
 
-**Loaders** :
-| Composant | Purpose |
-|-----------|---------|
-| `SkeletonLoader` | Chargement squelette générique |
-| `SkeletonPlanCard` | Skeleton carte plan |
-| `SkeletonFeatureCounters` | Skeleton compteurs |
-| `SkeletonCurrentPlanCard` | Skeleton plan actuel |
+### Patterns
 
-**Icons** :
-| Composant | Purpose |
-|-----------|---------|
-| `GptLogo` | Logo OpenAI/GPT |
-| `DefaultCvIcon` | Icône CV par défaut |
-| `ImportIcon` | Icône import |
-| `TranslateIcon` | Icône traduction |
-| `QueueIcon` | Icône file d'attente |
-| `IconPreloader` | Préchargement icônes |
+- **Section wrapper** : `Section.jsx` pour structure commune
+- **useMutate** : mutations CV locales
+- **ChangeHighlight** : intégration review IA
+- **Modal.jsx** : édition inline
 
 ---
 
-## Admin Dashboard (`components/admin/`)
+## 3. CV Improvement (10 fichiers)
+
+Panel d'optimisation IA côté client.
+
+### Composant Principal
+
+**CVImprovementPanel.jsx** (494 lignes)
+- Récupère metadata via `/api/cv/metadata`
+- Modal portail avec animation
+- Affiche score, suggestions, skills manquants
+- Applique améliorations via `/api/cv/improve`
+
+### Sous-composants
+
+| Composant | Rôle |
+|-----------|------|
+| `ScoreVisualization` | Visualisation score + breakdown |
+| `SuggestionsSection` | Suggestions IA avec contexte |
+| `MissingSkillsSection` | Skills à ajouter + niveaux |
+| `MatchingSkillsSection` | Skills détectés dans offre |
+| `SourceInfo` | Icône source (offre/CV) |
+| `MatchScore` | Bouton score avec refresh |
+| `OptimizationFooter` | Boutons actions |
+| `VersionSelector` | Sélection versions |
+
+### Hooks
+
+| Hook | Rôle |
+|------|------|
+| `useAnimatedScore` | Animation score ouverture |
+| `useModalAccessibility` | Focus trap, ESC |
+
+### Patterns
+
+- **React Portal** : `createPortal` pour modal
+- **CSS keyframes** : animations score
+- **Set/Map** : sélections suggestions/skills
+
+---
+
+## 4. CV Review (10 fichiers)
+
+Surlignage et review des changements IA.
+
+| Composant | Rôle |
+|-----------|------|
+| `ChangeHighlight` | Wrapper surligné contenu modifié |
+| `ChangeReviewPopover` | Popover avant/après |
+| `InlineDiff` | Diff inline (strikethrough/highlight) |
+| `SkillItemHighlight` | Surbrillance items skill |
+| `ExperienceReviewActions` | Actions batch expérience |
+| `ProjectReviewActions` | Actions batch projet |
+| `SectionReviewActions` | Actions batch section |
+| `SkillsReviewActions` | Actions batch skills |
+| `LanguageReviewActions` | Actions batch langues |
+| `OrphanedChangesDisplay` | Changements orphelins |
+
+### Patterns
+
+- **useHighlight context** : pendingChanges
+- **Diff pathfinding** : `section.field` vs `section[idx].field`
+- **Batch actions** : accept/reject multiples
+- **Status tracking** : pending/accepted/rejected
+
+---
+
+## 5. Admin Dashboard (33 fichiers)
 
 Dashboard d'administration complet.
 
-### Tabs (Pages)
+### Provider
 
-| Tab | Purpose | KPIs/Features |
-|-----|---------|---------------|
-| `OverviewTab` | Vue d'ensemble | Users, CVs, Revenue |
-| `UsersTab` | Gestion utilisateurs | Liste, stats, actions |
-| `SubscriptionPlansTab` | Plans abonnement | Config, stats |
-| `SettingsTab` | Paramètres globaux | AI models, credits, PDF |
-| `FeaturesTab` | Usage features | Tracking, analytics |
-| `FeedbackTab` | Feedbacks | Tableau, status |
-| `ErrorsTab` | Erreurs prod | Logs, détails |
-| `ExportsTab` | Exports PDF | Historique |
-| `RevenueTab` | Revenue/MRR | Dashboard financier |
-| `OpenAICostsTab` | Coûts OpenAI | Par feature, alertes |
-| `OnboardingTab` | Analytics onboarding | Status, dropoff |
-| `EmailTemplatesTab` | Templates email | Éditeur, triggers |
+**AdminProvider.jsx** (100+ lignes)
+- Context editing mode
+- Détection localStorage currentFile
+- Tracking existence CV
 
-### Charts
+### Tabs Principaux
 
-| Composant | Type | Data |
-|-----------|------|------|
-| `MRRHistoryChart` | Line | MRR over time |
-| `PlanDistributionChart` | Pie | Users par plan |
-| `OnboardingStatusChart` | Bar | Status completion |
-| `OnboardingDropoffChart` | Funnel | Dropoff par étape |
-| `OnboardingTimeline` | Timeline | Progression |
+| Tab | Rôle |
+|-----|------|
+| `OverviewTab` | KPIs (MRR, users, CVs) |
+| `RevenueTab` | Analytics revenus (graphiques) |
+| `OnboardingTab` | Tracking onboarding (dropoff, timeline) |
+| `UsersTab` | Gestion utilisateurs (filter, search) |
+| `FeaturesTab` | Feature flags |
+| `FeedbackTab` | Retours utilisateurs |
+| `SettingsTab` | Configurations système |
+| `OpenAICostsTab` | Monitoring coûts OpenAI |
+| `SubscriptionPlansTab` | Gestion plans Stripe |
+| `ErrorsTab` | Error tracking |
 
-### Forms & Tables
+### Composants Analytics
 
-| Composant | Purpose |
-|-----------|---------|
-| `OnboardingUsersTable` | Liste users + progression |
-| `EmailLogsTable` | Logs emails envoyés |
-| `EmailStatsKPIs` | KPIs statistiques emails |
+| Composant | Rôle |
+|-----------|------|
+| `KPICard` | Carte KPI avec tendance |
+| `MRRHistoryChart` | Chart MRR (recharts) |
+| `OnboardingDropoffChart` | Analytics dropoff |
+| `OnboardingStatusChart` | Distribution status |
+| `OnboardingUsersTable` | Users + onboarding state |
+| `PlanDistributionChart` | Distribution plans |
+| `CreditTransactionsTable` | Transactions crédits |
+| `UserFilter` | Filtres utilisateurs |
 
-### Modals & Editors
+### Email Management
 
-| Composant | Purpose |
-|-----------|---------|
-| `ConfirmDialog` | Confirmation générique |
-| `EditAlertModal` | Édition alertes système |
-| `EmailPreviewModal` | Preview rendu email |
-| `MailyEditor` | Éditeur email WYSIWYG |
-| `ImagePickerModal` | Picker images emails |
+| Composant | Rôle |
+|-----------|------|
+| `EmailDashboard` | Interface principale |
+| `EmailConfigSection` | Config SMTP/Resend |
+| `EmailTemplatesSection` | Templates éditeur |
+| `EmailHistorySection` | Historique envois |
+| `EmailNav` | Navigation tabs |
 
-### Controls
+### Hooks Admin
 
-| Composant | Purpose |
-|-----------|---------|
-| `TabsBar` | Navigation entre tabs |
-| `KPICard` | Carte KPI |
-| `ToggleSwitch` | Switch on/off |
-| `CustomSelect` | Select dropdown |
-| `DateRangePicker` | Sélecteur dates |
-| `Toast` | Message toast |
+| Hook | Rôle |
+|------|------|
+| `useAlertManagement` | Gestion alertes système |
+| `useOpenAICostsData` | Fetch coûts OpenAI |
+| `usePricingManagement` | Gestion pricing |
+| `useScrollChaining` | Scroll behavior |
 
 ---
 
-## Subscription (`components/subscription/`)
+## 6. Subscription/Credits (9 fichiers)
 
-Gestion abonnements et crédits.
+Gestion abonnements Stripe et crédits.
 
-| Composant | Type | Purpose |
-|-----------|------|---------|
-| `SubscriptionsPage` | Page | Page principale |
-| `CurrentPlanCard` | Card | Plan actuel + actions |
-| `PlanComparisonCards` | Card | Comparaison plans |
-| `CreditPacksCards` | Card | Packs crédits à acheter |
-| `CreditBalanceCard` | Card | Solde crédits |
-| `CreditBalanceBanner` | Banner | Alerte solde bas |
-| `NegativeBalanceBanner` | Banner | Alerte solde négatif |
-| `FeatureCountersCard` | Card | Compteurs usage features |
-| `CreditTransactionsTable` | Table | Historique transactions |
-| `InvoicesTable` | Table | Historique factures |
+### Composant Principal
+
+**SubscriptionsPage.jsx** (100+ lignes)
+- Tabs : subscription, credits, invoices, features
+- Fetch `/api/subscription/current` et `/api/credits/balance`
+- Gestion messages succès/erreur Stripe
+
+### Composants
+
+| Composant | Rôle |
+|-----------|------|
+| `CurrentPlanCard` | Plan actuel + downgrade/upgrade |
+| `PlanComparisonCards` | Comparaison plans |
+| `CreditBalanceCard` | Solde + progression |
+| `CreditPacksCards` | Packs achat crédit |
+| `FeatureCountersCard` | Compteurs mensuels |
+| `CreditTransactionsTable` | Historique transactions |
+| `InvoicesTable` | Factures Stripe |
+| `CreditBalanceBanner` | Alerte crédits faibles |
+
+### Plan Comparison
+
+| Composant | Rôle |
+|-----------|------|
+| `PlanCard` | Carte plan |
+| `UpgradeModal` | Confirmation upgrade |
+| `DowngradeToFreeModal` | Downgrade → free |
+| `DowngradePaidModal` | Downgrade entre payants |
+| `usePlanComparison` | Hook logique |
 
 ---
 
-## Onboarding (`components/onboarding/`)
+## 7. Onboarding (10 fichiers)
 
-Parcours d'intégration utilisateur.
+Système d'onboarding interactif guidé.
 
-| Composant | Type | Purpose |
-|-----------|------|---------|
-| `OnboardingProvider` | Provider | Contexte + state machine |
-| `OnboardingOrchestrator` | Orchestrator | Flow complet |
-| `OnboardingModal` | Modal | Étape générique |
-| `OnboardingCompletionModal` | Modal | Fin + confetti |
-| `WelcomeModal` | Modal | Accueil initial |
-| `OnboardingTooltip` | Tooltip | Tooltip contextuel |
-| `OnboardingHighlight` | Highlight | Focus élément |
-| `ChecklistPanel` | Panel | Checklist progression |
+### Provider
+
+**OnboardingProvider.jsx** (100+ lignes)
+- Context OnboardingContext
+- Suivi progression (currentStep, completedSteps)
+- Auto-start logic
+- State persistence localStorage
+
+### Composants
+
+| Composant | Rôle |
+|-----------|------|
+| `OnboardingOrchestrator` | Orchestrateur principal |
+| `OnboardingModal` | Modal carousel Framer Motion |
+| `OnboardingTooltip` | Tooltips positionnés |
+| `OnboardingHighlight` | Highlight élément cible |
+| `ChecklistPanel` | Checklist progression |
+| `OnboardingCompletionModal` | Modal complétude |
+| `WelcomeModal` | Premier accueil |
+| `StepRenderer` | Renderer dynamique étapes |
+| `ConfettiCelebration` | Animation confetti |
+
+### Hooks Onboarding (9 hooks)
+
+| Hook | Rôle |
+|------|------|
+| `useOnboardingFetch` | Fetch state initial |
+| `useStepNavigation` | Navigation steps |
+| `useOnboardingAutoStart` | Démarrage auto |
+| `useOnboardingStateUpdater` | Update state |
+| `useConditionChecker` | Check conditions step |
+| `useButtonInterception` | Intercept buttons |
+| `useDebouncedPersist` | Persist debounced |
+| `useStableEventListener` | Event listeners stables |
+
+### Patterns
+
+- **Multi-step flow** avec conditions
+- **Framer Motion** animations
+- **Event-driven** : ONBOARDING_EVENTS
+- **State machine-like**
 
 ---
 
-## Auth (`components/auth/`)
+## 8. Providers (6 fichiers)
 
-Authentification utilisateur.
+Contextes globaux et synchronisation temps réel.
 
-| Composant | Purpose |
-|-----------|---------|
-| `AuthScreen` | Page login/register avec OAuth + credentials |
+### RootProviders.jsx
+
+Stack de 10 providers imbriqués :
+
+```jsx
+<SessionProvider>           // NextAuth
+  <SettingsProvider>        // Config app
+    <LanguageProvider>      // i18n
+      <NotificationProvider>  // Toasts
+        <AdminProvider>       // Mode édition
+          <OnboardingProvider>  // Parcours
+            <RealtimeRefreshProvider>  // WebSocket
+              <BackgroundTasksProvider>  // Tasks
+                <PipelineProgressProvider>  // Génération
+                  <RecaptchaProvider>  // reCAPTCHA
+                    {children}
+                  </RecaptchaProvider>
+                </PipelineProgressProvider>
+              </BackgroundTasksProvider>
+            </RealtimeRefreshProvider>
+          </OnboardingProvider>
+        </AdminProvider>
+      </NotificationProvider>
+    </LanguageProvider>
+  </SettingsProvider>
+</SessionProvider>
+```
+
+### HighlightProvider.jsx (150+ lignes)
+
+- Review system pour changements IA
+- Version management
+- pendingChanges state
+- acceptChange/rejectChange methods
+- Progress tracking (total/reviewed/pending)
+
+### Autres Providers
+
+| Provider | Rôle |
+|----------|------|
+| `BackgroundTasksProvider` | Task queue management |
+| `RealtimeRefreshProvider` | WebSocket/SSE sync |
+| `PipelineProgressProvider` | Progress génération CV |
+| `RecaptchaProvider` | reCAPTCHA v3 integration |
+
+---
+
+## 9. UI Design System (18 fichiers)
+
+Composants réutilisables du design system.
+
+### Composants Génériques
+
+| Composant | Rôle |
+|-----------|------|
+| `Modal` | Modal wrapper générique |
+| `ModalForm` | Composants form (Section, Field, Input, Grid) |
+| `Tooltip` | Hover tooltips |
+| `LoadingOverlay` | Overlay chargement |
+| `SkeletonLoader` | Skeleton components |
+| `TipBox` | Box conseil/astuce |
+| `EmptyState` | État vide standardisé |
+
+### Composants Formulaires
+
+| Composant | Rôle |
+|-----------|------|
+| `CountrySelect` | Sélecteur pays |
+| `LanguageSwitcher` | Switch langue app |
+| `PasswordInput` | Input password show/hide |
+| `MonthPicker` | Sélecteur mois |
+
+### Composants Métier
+
+| Composant | Rôle |
+|-----------|------|
+| `CreditCostDisplay` | Affichage coût crédit |
+| `CreditCostTooltip` | Tooltip coût détail |
+| `CreditCounter` | Compteur crédits TopBar |
+| `GenericTaskProgressBar` | Barre progrès tâche |
+| `PipelineTaskProgress` | Progrès génération |
+
+### Composants Visuels
+
+| Composant | Rôle |
+|-----------|------|
+| `DefaultCvIcon` | Icône CV défaut |
+| `GptLogo` | Logo GPT |
+| `IconPreloader` | Préchargement icônes |
+
+### Patterns
+
+- **Tailwind CSS** composable
+- **Lucide React** icons
+- **Accessible** (ARIA labels)
+- **Responsive** design
+
+---
+
+## 10. Layout (9 fichiers)
+
+Composants structure de page.
+
+| Composant | Rôle |
+|-----------|------|
+| `Section` | Container section avec titre |
+| `ConditionalTopBar` | TopBar si authentifié |
+| `ConditionalFooter` | Footer conditionnel |
+| `ConditionalMainWrapper` | Main wrapper conditionnel |
+| `TopBarSpacer` | Spacer pour TopBar fixed |
+| `ConditionalTopBarSpacer` | Spacer conditionnel |
+| `Footer` | Footer avec liens |
+| `GlobalBackground` | Background global |
+| `ScrollToTopOnMount` | Auto scroll top |
+
+### Patterns
+
+- **Conditional rendering** route-based
+- **Fixed/relative** positioning
+- **Grid/flex** layouts
+
+---
+
+## 11. Autres Domaines
+
+### Authentication (3 fichiers)
+
+| Composant | Rôle |
+|-----------|------|
+| `AuthScreen` | Écran login/register |
+| `EmailVerificationError` | Erreur vérification |
 | `PasswordStrengthIndicator` | Indicateur force mot de passe |
-| `EmailVerificationError` | Message erreur vérification |
 
----
+### Account (4 fichiers)
 
-## Account (`components/account/`)
+| Composant | Rôle |
+|-----------|------|
+| `AccountPageHeader` | Header compte |
+| `AccountSettings` | Settings utilisateur |
+| `LinkedAccountsSection` | Comptes OAuth liés |
+| `AccountPageLoading` | Skeleton loading |
 
-Paramètres du compte utilisateur.
+### Cookies Consent (4 fichiers)
 
-| Composant | Purpose |
-|-----------|---------|
-| `AccountSettings` | Page paramètres (profil, password, notifs) |
-| `AccountPageHeader` | En-tête page |
-| `AccountPageLoading` | Loader page |
-| `LinkedAccountsSection` | Gestion comptes OAuth liés |
-
----
-
-## Cookies (`components/cookies/`)
-
-Gestion consentement RGPD.
-
-| Composant | Purpose |
-|-----------|---------|
-| `CookieBanner` | Banner consentement cookies |
-| `CookieSettings` | Panneau paramètres détaillés |
-| `CookieRegistry` | Registry cookies utilisés |
+| Composant | Rôle |
+|-----------|------|
+| `CookieBanner` | Banner consentement |
+| `CookieSettings` | Settings cookies |
+| `CookieRegistry` | Registry cookies |
 | `ConsentHistory` | Historique consentements |
 
+### Feedback (3 fichiers)
+
+| Composant | Rôle |
+|-----------|------|
+| `FeedbackButton` | Bouton feedback floating |
+| `FeedbackModal` | Modal feedback |
+| `StarRating` | Composant étoiles |
+
+### Task Queue (2 fichiers)
+
+| Composant | Rôle |
+|-----------|------|
+| `TaskQueueDropdown` | Dropdown tâches TopBar |
+| `TaskQueueModal` | Modal détail tâches |
+
+### Notifications (2 fichiers)
+
+| Composant | Rôle |
+|-----------|------|
+| `NotificationProvider` | Context notifications |
+| `NotificationContainer` | Conteneur affichage |
+
+### Header CV (2 fichiers)
+
+| Composant | Rôle |
+|-----------|------|
+| `index.js` | Export hooks (useMatchScore, useSourceInfo, useTranslation) |
+| `TranslationDropdown` | Dropdown traduction CV |
+
+### Pages Content (2 fichiers)
+
+| Composant | Rôle |
+|-----------|------|
+| `AboutContent` | Page À propos |
+| `LegalContent` | Page Mentions légales |
+
 ---
 
-## Feedback (`components/feedback/`)
+## Patterns Critiques
 
-Retours utilisateurs.
+### 1. Custom Hooks Composition
 
-| Composant | Purpose |
-|-----------|---------|
-| `FeedbackButton` | Bouton flottant feedback |
-| `FeedbackModal` | Modal formulaire |
-| `StarRating` | Notation 5 étoiles |
+Extraction de la logique dans des hooks réutilisables.
 
----
-
-## Notifications (`components/notifications/`)
-
-Système de notifications toast.
-
-| Composant | Purpose |
-|-----------|---------|
-| `NotificationProvider` | Contexte + hook `useNotifications` |
-| `NotificationContainer` | Conteneur affichage toasts |
-
-**Usage** :
-```jsx
-const { addNotification } = useNotifications();
-addNotification({ type: 'success', message: 'CV saved!' });
+```javascript
+// TopBar utilise 10+ hooks
+const { items, currentCvFile, handleSelect } = useTopBarState();
+const { createCv, deleteCv, duplicateCv } = useCvOperations();
+const { modalState, openModal, closeModal } = useModalStates();
 ```
 
----
+### 2. Context API Nesting
 
-## Analytics (`components/analytics/`)
+10 providers empilés pour état global.
 
-| Composant | Purpose |
-|-----------|---------|
-| `ConditionalAnalytics` | Charge analytics conditionnellement |
-
----
-
-## Patterns de Design
-
-### 1. Composition de Modals
-
-```jsx
-<Modal isOpen={isOpen} onClose={onClose} title="Export PDF">
-  <Modal.Body>
-    {/* Content */}
-  </Modal.Body>
-  <Modal.Footer>
-    <Button onClick={onClose}>Cancel</Button>
-    <Button primary onClick={onExport}>Export</Button>
-  </Modal.Footer>
-</Modal>
+```javascript
+// RootProviders.jsx
+<SessionProvider>
+  <SettingsProvider>
+    <LanguageProvider>
+      {/* ... 7 autres providers */}
+    </LanguageProvider>
+  </SettingsProvider>
+</SessionProvider>
 ```
 
-### 2. Provider Pattern
+### 3. React Portals
 
-```jsx
-// Création
-const MyContext = createContext();
-export const MyProvider = ({ children }) => {
-  const [state, setState] = useState();
-  return (
-    <MyContext.Provider value={{ state, setState }}>
+Dropdowns et modales rendus au niveau body.
+
+```javascript
+import { createPortal } from 'react-dom';
+
+const CvDropdownPortal = ({ children }) =>
+  createPortal(children, document.body);
+```
+
+### 4. Event-Driven Architecture
+
+Communication via window events.
+
+```javascript
+// Émettre
+window.dispatchEvent(new CustomEvent('cv:list:changed'));
+
+// Écouter
+useEffect(() => {
+  const handler = () => refetchCvs();
+  window.addEventListener('cv:list:changed', handler);
+  return () => window.removeEventListener('cv:list:changed', handler);
+}, []);
+```
+
+### 5. useMutate Pattern
+
+Mutations CV avec mise à jour optimiste.
+
+```javascript
+const { mutate } = useMutate();
+
+const handleUpdate = (field, value) => {
+  mutate(draft => {
+    draft.experience[index][field] = value;
+  });
+};
+```
+
+### 6. Framer Motion Animations
+
+Animations fluides pour modales et transitions.
+
+```javascript
+import { motion, AnimatePresence } from 'framer-motion';
+
+<AnimatePresence>
+  {isOpen && (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+    >
       {children}
-    </MyContext.Provider>
-  );
-};
-
-// Usage
-const { state } = useContext(MyContext);
+    </motion.div>
+  )}
+</AnimatePresence>
 ```
 
-### 3. Conditional Rendering
+### 7. Real-time Sync
 
-```jsx
-// Layout conditionnel selon route
-const ConditionalTopBar = () => {
-  const pathname = usePathname();
-  if (pathname.startsWith('/auth')) return null;
-  return <TopBar />;
-};
-```
+Synchronisation temps réel via SSE/WebSocket.
 
-### 4. Skeleton Loading
-
-```jsx
-{isLoading ? (
-  <SkeletonLoader />
-) : (
-  <ActualContent data={data} />
-)}
+```javascript
+// RealtimeRefreshProvider
+useEffect(() => {
+  const eventSource = new EventSource('/api/realtime');
+  eventSource.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === 'cv:updated') {
+      refetchCv(data.cvId);
+    }
+  };
+  return () => eventSource.close();
+}, []);
 ```
 
 ---
 
-## Conventions de Nommage
+## Dépendances entre Domaines
 
-| Type | Convention | Exemple |
-|------|------------|---------|
-| Composant | PascalCase | `CvGeneratorModal` |
-| Hook | camelCase, préfixe `use` | `useCvList` |
-| Contexte | PascalCase + Provider | `OnboardingProvider` |
-| Fichier | PascalCase.jsx | `CvGeneratorModal.jsx` |
-| Dossier | camelCase ou PascalCase | `TopBar/`, `onboarding/` |
+```
+TopBar
+  ├── AdminProvider (context)
+  ├── LanguageProvider (context)
+  ├── BackgroundTasksProvider (context)
+  ├── PipelineProgressProvider (context)
+  └── NotificationProvider (context)
+
+Header (cv-sections)
+  ├── CVImprovementPanel (cv-improvement)
+  ├── MatchScore (cv-improvement)
+  ├── ChangeHighlight (cv-review)
+  └── HighlightProvider (context)
+
+SubscriptionsPage
+  ├── CurrentPlanCard
+  ├── PlanComparisonCards
+  ├── CreditBalanceCard
+  └── InvoicesTable
+
+OnboardingOrchestrator
+  ├── OnboardingModal
+  ├── OnboardingTooltip
+  ├── ChecklistPanel
+  └── WelcomeModal
+```
 
 ---
 
-## Arborescence Détaillée
+## Fichiers Clés par Domaine
 
-```
-components/
-├── RootProviders.jsx
-├── ConditionalTopBar.jsx
-├── ConditionalFooter.jsx
-├── ConditionalMainWrapper.jsx
-├── TopBarSpacer.jsx
-├── GlobalBackground.jsx
-├── ScrollToTopOnMount.jsx
-├── LoadingOverlay.jsx
-├── LanguageSwitcher.jsx
-├── Footer.jsx
-├── RecaptchaProvider.jsx
-├── RealtimeRefreshProvider.jsx
-├── BackgroundTasksProvider.jsx
-├── HighlightProvider.jsx
-├── IconPreloader.jsx
-├── Header.jsx
-├── Summary.jsx
-├── Experience.jsx
-├── Education.jsx
-├── Skills.jsx
-├── Languages.jsx
-├── Projects.jsx
-├── Extras.jsx
-├── Section.jsx
-├── EmptyState.jsx
-├── SourceInfo.jsx
-├── VersionSelector.jsx
-├── MatchScore.jsx
-├── CVImprovementPanel.jsx
-├── ChangesPanel.jsx
-├── ChangeHighlight.jsx
-├── ChangeReviewPopover.jsx
-├── BulletHighlight.jsx
-├── SkillItemHighlight.jsx
-├── OrphanedChangesDisplay.jsx
-├── InlineDiff.jsx
-├── TaskQueueDropdown.jsx
-├── TaskQueueModal.jsx
-│
-├── TopBar/
-│   ├── TopBar.jsx
-│   ├── FilterDropdown.jsx
-│   ├── CvGeneratorModal.jsx
-│   ├── NewCvModal.jsx
-│   ├── ExportPdfModal.jsx
-│   ├── PdfImportModal.jsx
-│   ├── DeleteCvModal.jsx
-│   └── hooks/
-│
-├── ui/
-│   ├── Modal.jsx
-│   ├── SkeletonLoader.jsx
-│   ├── Tooltip.jsx
-│   ├── TipBox.jsx
-│   ├── PasswordInput.jsx
-│   ├── FormRow.jsx
-│   ├── DonutProgress.jsx
-│   ├── CreditCostDisplay.jsx
-│   ├── CreditCostTooltip.jsx
-│   ├── GptLogo.jsx
-│   ├── DefaultCvIcon.jsx
-│   ├── ImportIcon.jsx
-│   ├── TranslateIcon.jsx
-│   └── QueueIcon.jsx
-│
-├── admin/
-│   ├── AdminProvider.jsx
-│   ├── TabsBar.jsx
-│   ├── KPICard.jsx
-│   ├── OverviewTab.jsx
-│   ├── UsersTab.jsx
-│   ├── SubscriptionPlansTab.jsx
-│   ├── SettingsTab.jsx
-│   ├── FeaturesTab.jsx
-│   ├── FeedbackTab.jsx
-│   ├── ErrorsTab.jsx
-│   ├── RevenueTab.jsx
-│   ├── OpenAICostsTab.jsx
-│   ├── OnboardingTab.jsx
-│   ├── EmailTemplatesTab.jsx
-│   └── ...
-│
-├── subscription/
-│   ├── SubscriptionsPage.jsx
-│   ├── CurrentPlanCard.jsx
-│   ├── PlanComparisonCards.jsx
-│   ├── CreditPacksCards.jsx
-│   ├── CreditBalanceCard.jsx
-│   ├── FeatureCountersCard.jsx
-│   ├── CreditTransactionsTable.jsx
-│   └── InvoicesTable.jsx
-│
-├── onboarding/
-│   ├── OnboardingProvider.jsx
-│   ├── OnboardingOrchestrator.jsx
-│   ├── OnboardingModal.jsx
-│   ├── WelcomeModal.jsx
-│   ├── OnboardingCompletionModal.jsx
-│   ├── OnboardingTooltip.jsx
-│   ├── OnboardingHighlight.jsx
-│   └── ChecklistPanel.jsx
-│
-├── account/
-│   ├── AccountSettings.jsx
-│   ├── AccountPageHeader.jsx
-│   ├── AccountPageLoading.jsx
-│   └── LinkedAccountsSection.jsx
-│
-├── auth/
-│   ├── AuthScreen.jsx
-│   ├── PasswordStrengthIndicator.jsx
-│   └── EmailVerificationError.jsx
-│
-├── cookies/
-│   ├── CookieBanner.jsx
-│   ├── CookieSettings.jsx
-│   ├── CookieRegistry.jsx
-│   └── ConsentHistory.jsx
-│
-├── feedback/
-│   ├── FeedbackButton.jsx
-│   ├── FeedbackModal.jsx
-│   └── StarRating.jsx
-│
-├── notifications/
-│   ├── NotificationProvider.jsx
-│   └── NotificationContainer.jsx
-│
-└── analytics/
-    └── ConditionalAnalytics.jsx
-```
+| Domaine | Fichier Principal | Lignes |
+|---------|-------------------|--------|
+| Navigation | `TopBar/TopBar.jsx` | 688 |
+| CV Sections | `cv-sections/Header.jsx` | 456 |
+| Optimisation IA | `cv-improvement/CVImprovementPanel.jsx` | 494 |
+| Review IA | `cv-review/ChangeHighlight.jsx` | 150+ |
+| Admin | `admin/AdminProvider.jsx` | 100+ |
+| Abonnements | `subscription/SubscriptionsPage.jsx` | 100+ |
+| Onboarding | `onboarding/OnboardingProvider.jsx` | 100+ |
+| Providers | `providers/RootProviders.jsx` | 50+ |

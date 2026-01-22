@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scoring - Pipeline Optimisation | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Pipeline Optimisation</a>
+          <span>/</span>
+          <span>Scoring</span>
+        </div>
+
+        <h1>Système de Scoring</h1>
+        <p class="lead">
+          Le système de scoring évalue chaque section du CV et génère un score global basé sur des critères pondérés. Utilisé à la fois pour le matching et l'optimisation.
+        </p>
+
+        <h2>Critères d'Évaluation</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Critère</th>
+              <th>Poids</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Technical Skills Match</strong></td>
+              <td>30%</td>
+              <td>Correspondance compétences techniques</td>
+            </tr>
+            <tr>
+              <td><strong>Experience Relevance</strong></td>
+              <td>25%</td>
+              <td>Pertinence des expériences</td>
+            </tr>
+            <tr>
+              <td><strong>Keywords Coverage</strong></td>
+              <td>20%</td>
+              <td>Couverture des mots-clés de l'offre</td>
+            </tr>
+            <tr>
+              <td><strong>Soft Skills Alignment</strong></td>
+              <td>10%</td>
+              <td>Alignement soft skills</td>
+            </tr>
+            <tr>
+              <td><strong>Education Fit</strong></td>
+              <td>10%</td>
+              <td>Adéquation formation</td>
+            </tr>
+            <tr>
+              <td><strong>ATS Optimization</strong></td>
+              <td>5%</td>
+              <td>Optimisation pour systèmes ATS</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Calcul du Score</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge ai">IA</span>
+            <span class="data-flow-title">GPT-4o-mini - Scoring</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Formule</h5>
+            <pre><code>Score = Σ (critère_i × poids_i)
+
+Exemple:
+- Technical Skills: 85 × 0.30 = 25.5
+- Experience: 80 × 0.25 = 20.0
+- Keywords: 70 × 0.20 = 14.0
+- Soft Skills: 75 × 0.10 = 7.5
+- Education: 90 × 0.10 = 9.0
+- ATS: 80 × 0.05 = 4.0
+
+Score Total = 80/100</code></pre>
+
+            <h5>Output Structure</h5>
+            <pre><code>{
+  "globalScore": 80,
+  "breakdown": {
+    "technicalSkills": {
+      "score": 85,
+      "matched": ["React", "Node.js", "PostgreSQL"],
+      "missing": ["TypeScript"],
+      "partial": ["Docker"]
+    },
+    "experienceRelevance": {
+      "score": 80,
+      "relevantYears": 5,
+      "requiredYears": 5,
+      "matchedResponsibilities": 8,
+      "totalResponsibilities": 12
+    },
+    "keywordsCoverage": {
+      "score": 70,
+      "found": 14,
+      "total": 20,
+      "missingKeywords": ["CI/CD", "Agile", "TDD"]
+    },
+    "softSkills": {
+      "score": 75,
+      "matched": ["Leadership", "Communication"],
+      "suggested": ["Problem-solving"]
+    },
+    "education": {
+      "score": 90,
+      "meetsRequirements": true
+    },
+    "atsOptimization": {
+      "score": 80,
+      "issues": ["Some bullet points too long"]
+    }
+  },
+  "recommendations": [
+    "Add TypeScript to technical skills",
+    "Mention CI/CD experience from Project X",
+    "Shorten bullet points for ATS compatibility"
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Niveaux de Score</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4 style="color: var(--color-success);">Excellent (85-100)</h4>
+            <p>Très bonne correspondance. Peu d'améliorations nécessaires.</p>
+          </div>
+          <div class="card">
+            <h4 style="color: var(--color-primary);">Bon (70-84)</h4>
+            <p>Bonne base. Quelques optimisations recommandées.</p>
+          </div>
+          <div class="card">
+            <h4 style="color: var(--color-warning);">Moyen (50-69)</h4>
+            <p>Améliorations significatives possibles.</p>
+          </div>
+          <div class="card">
+            <h4 style="color: var(--color-error);">Faible (&lt;50)</h4>
+            <p>Écart important. Révision majeure conseillée.</p>
+          </div>
+        </div>
+
+        <h2>Scoring par Section</h2>
+
+        <h3>Technical Skills Scoring</h3>
+
+        <pre><code>function scoreTechnicalSkills(cvSkills, jobRequirements) {
+  const required = jobRequirements.skills.technical;
+  const niceToHave = jobRequirements.skills.niceToHave || [];
+
+  let matchedRequired = 0;
+  let matchedNice = 0;
+
+  required.forEach(skill => {
+    if (cvSkills.includes(skill) || hasEquivalent(cvSkills, skill)) {
+      matchedRequired++;
+    }
+  });
+
+  niceToHave.forEach(skill => {
+    if (cvSkills.includes(skill)) {
+      matchedNice++;
+    }
+  });
+
+  // Required = 80% du score, Nice-to-have = 20%
+  const requiredScore = (matchedRequired / required.length) * 80;
+  const niceScore = niceToHave.length > 0
+    ? (matchedNice / niceToHave.length) * 20
+    : 20;
+
+  return Math.round(requiredScore + niceScore);
+}</code></pre>
+
+        <h3>Experience Relevance Scoring</h3>
+
+        <pre><code>function scoreExperienceRelevance(experiences, jobOffer) {
+  let totalScore = 0;
+  let maxScore = 0;
+
+  experiences.forEach(exp => {
+    maxScore += 100;
+
+    // Pertinence du titre
+    const titleMatch = compareTitles(exp.title, jobOffer.title);
+    totalScore += titleMatch * 30;
+
+    // Pertinence des responsabilités
+    const respMatch = compareResponsibilities(
+      exp.responsibilities,
+      jobOffer.responsibilities
+    );
+    totalScore += respMatch * 50;
+
+    // Pertinence du secteur
+    const sectorMatch = compareSectors(exp.company, jobOffer.company);
+    totalScore += sectorMatch * 20;
+  });
+
+  return Math.round((totalScore / maxScore) * 100);
+}</code></pre>
+
+        <h2>Intégration Pipeline</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Utilisation du scoring dans le pipeline</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input["ENTRÉE"]
+        CV["CV actuel"]
+        Job["Job Offer"]
+    end
+
+    subgraph Scoring["SCORING"]
+        Initial["Score initial"]
+        Analysis["Analyse détaillée"]
+    end
+
+    subgraph Optimization["OPTIMISATION"]
+        Suggestions["Génération suggestions"]
+        Apply["Application améliorations"]
+        Rescore["Re-scoring"]
+    end
+
+    subgraph Output["SORTIE"]
+        NewCV["CV optimisé"]
+        Delta["Score delta"]
+    end
+
+    CV & Job --> Initial
+    Initial --> Analysis
+    Analysis --> Suggestions
+    Suggestions --> Apply
+    Apply --> Rescore
+    Rescore --> NewCV
+    Initial & Rescore --> Delta
+          </div>
+        </div>
+
+        <h2>API Endpoint</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge input">POST</span>
+            <span class="data-flow-title">/api/cv/match-score</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Request</h5>
+            <pre><code>{
+  "cvId": 123,
+  "jobOfferId": 456
+  // OU
+  "jobOfferUrl": "https://..."
+}</code></pre>
+
+            <h5>Response</h5>
+            <pre><code>{
+  "score": 80,
+  "breakdown": { ... },
+  "recommendations": [ ... ],
+  "creditsUsed": 1
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Fichiers Clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/features/cv-improvement/scoring.js</code></td>
+              <td>Logique de scoring</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/cv-improvement/prompts/score-cv.md</code></td>
+              <td>Prompt IA scoring</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/job-offers/matchScore.js</code></td>
+              <td>Calcul match score</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extraction PDF | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Offres d'Emploi</a>
+          <span>/</span>
+          <span>Extraction PDF</span>
+        </div>
+
+        <h1>Extraction PDF</h1>
+        <p class="lead">
+          Extraction des informations d'une offre d'emploi a partir d'un fichier PDF télécharge.
+        </p>
+
+        <h2>Flux d'Extraction</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Pipeline d'extraction PDF</div>
+          <div class="mermaid">
+flowchart TB
+    Upload[Upload PDF] --> Valid[Validation]
+    Valid --> Convert[Conversion Image]
+    Convert --> Vision[GPT-4o Vision]
+    Vision --> Struct[Donnees Structurees]
+    Struct --> DB[(JobOffer)]
+          </div>
+        </div>
+
+        <h2>Implementation</h2>
+
+        <pre><code>// lib/job-offers/extractFromPdf.js
+import { convertPdfToImages } from './pdfConverter';
+import { callOpenAI } from '@/lib/openai-core/client';
+
+export async function extractJobOfferFromPdf(pdfBuffer) {
+  // 1. Convertir PDF en images
+  const images = await convertPdfToImages(pdfBuffer);
+
+  // 2. Extraire via GPT-4o Vision
+  const result = await callOpenAI({
+    model: 'gpt-4o',
+    featureName: 'job_extraction_pdf',
+    messages: [
+      {
+        role: 'system',
+        content: JOB_EXTRACTION_PDF_PROMPT
+      },
+      {
+        role: 'user',
+        content: images.map(img => ({
+          type: 'image_url',
+          image_url: { url: \`data:image/png;base64,\${img}\` }
+        }))
+      }
+    ],
+    responseFormat: {
+      type: 'json_schema',
+      json_schema: jobOfferSchema
+    }
+  });
+
+  return result;
+}</code></pre>
+
+        <h2>Conversion PDF vers Images</h2>
+
+        <pre><code>// lib/job-offers/pdfConverter.js
+import { pdf } from 'pdf-to-img';
+
+export async function convertPdfToImages(pdfBuffer) {
+  const images = [];
+
+  const document = await pdf(pdfBuffer, { scale: 2.0 });
+
+  for await (const page of document) {
+    images.push(page.toString('base64'));
+  }
+
+  return images;
+}</code></pre>
+
+        <h2>Validation du Fichier</h2>
+
+        <pre><code>// lib/job-offers/validation.js
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_TYPES = ['application/pdf'];
+
+export function validateJobOfferPdf(file) {
+  const errors = [];
+
+  if (file.size > MAX_FILE_SIZE) {
+    errors.push('Fichier trop volumineux (max 10 MB)');
+  }
+
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    errors.push('Type de fichier non supporte');
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}</code></pre>
+
+        <h2>API Endpoint</h2>
+
+        <pre><code>// POST /api/job-offers/extract-pdf
+// Content-Type: multipart/form-data
+
+// Request: FormData avec fichier PDF
+
+// Response
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "title": "Developpeur Full Stack",
+    "company": "TechCorp",
+    "location": "Paris",
+    "requirements": {...},
+    // ... autres données extraites
+  }
+}</code></pre>
+
+        <h2>Limites</h2>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Contraintes</div>
+          <ul>
+            <li><strong>Taille max</strong> : 10 MB par fichier</li>
+            <li><strong>Pages max</strong> : 5 pages analysees</li>
+            <li><strong>Formats</strong> : PDF uniquement</li>
+            <li><strong>Cout</strong> : Utilise GPT-4o Vision (plus couteux)</li>
+          </ul>
+        </div>
+
+        <h2>Gestion des Erreurs</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Erreur</th>
+              <th>Code</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Fichier trop grand</td>
+              <td>413</td>
+              <td>File too large</td>
+            </tr>
+            <tr>
+              <td>Format invalide</td>
+              <td>415</td>
+              <td>Unsupported media type</td>
+            </tr>
+            <tr>
+              <td>PDF corrompu</td>
+              <td>422</td>
+              <td>Invalid PDF file</td>
+            </tr>
+            <tr>
+              <td>Extraction echouee</td>
+              <td>500</td>
+              <td>Extraction failed</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

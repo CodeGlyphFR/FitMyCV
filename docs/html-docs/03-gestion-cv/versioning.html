@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Versioning CV | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Gestion CV</a>
+          <span>/</span>
+          <span>Versioning</span>
+        </div>
+
+        <h1>Versioning CV</h1>
+        <p class="lead">
+          Système de gestion des versions permettant de conserver l'historique des modifications et de restaurer des versions anterieures.
+        </p>
+
+        <h2>Modèle CvVersion</h2>
+
+        <pre><code>// prisma/schema.prisma
+
+model CvVersion {
+  id            Int      @id @default(autoincrement())
+  cvFileId      Int
+  versionNumber Int
+  content       Json     // Snapshot complet du CV
+  origin        String   // creation, manual_edit, ai_generation, import
+  description   String?  // Description optionnelle
+  createdAt     DateTime @default(now())
+
+  cvFile        CvFile   @relation(fields: [cvFileId], references: [id])
+
+  @@unique([cvFileId, versionNumber])
+}</code></pre>
+
+        <h2>Origines des Versions</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Origin</th>
+              <th>Description</th>
+              <th>Declencheur</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>creation</code></td>
+              <td>Version initiale</td>
+              <td>Creation du CV</td>
+            </tr>
+            <tr>
+              <td><code>manual_edit</code></td>
+              <td>Modification manuelle</td>
+              <td>Sauvegarde editeur</td>
+            </tr>
+            <tr>
+              <td><code>ai_generation</code></td>
+              <td>Generation IA</td>
+              <td>Pipeline generation</td>
+            </tr>
+            <tr>
+              <td><code>ai_optimization</code></td>
+              <td>Optimisation IA</td>
+              <td>Pipeline optimisation</td>
+            </tr>
+            <tr>
+              <td><code>import</code></td>
+              <td>Import PDF</td>
+              <td>Extraction PDF</td>
+            </tr>
+            <tr>
+              <td><code>restore</code></td>
+              <td>Restauration</td>
+              <td>Rollback version</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Creation de Version</h2>
+
+        <pre><code>// lib/cv-core/versioning.js
+
+export async function createVersion(cvFileId, content, origin, description = null) {
+  // Recuperer le dernier numero de version
+  const lastVersion = await prisma.cvVersion.findFirst({
+    where: { cvFileId },
+    orderBy: { versionNumber: 'desc' }
+  });
+
+  const newVersionNumber = (lastVersion?.versionNumber || 0) + 1;
+
+  return prisma.cvVersion.create({
+    data: {
+      cvFileId,
+      versionNumber: newVersionNumber,
+      content,
+      origin,
+      description
+    }
+  });
+}</code></pre>
+
+        <h2>Restauration</h2>
+
+        <pre><code>// lib/cv-core/versioning.js
+
+export async function restoreVersion(cvFileId, versionNumber, userId) {
+  // Verifier la propriete
+  const cvFile = await prisma.cvFile.findFirst({
+    where: { id: cvFileId, userId }
+  });
+
+  if (!cvFile) throw new Error('CV not found');
+
+  // Recuperer la version a restaurer
+  const versionToRestore = await prisma.cvVersion.findUnique({
+    where: {
+      cvFileId_versionNumber: { cvFileId, versionNumber }
+    }
+  });
+
+  if (!versionToRestore) throw new Error('Version not found');
+
+  // Sauvegarder l'etat actuel avant restauration
+  await createVersion(
+    cvFileId,
+    cvFile.content,
+    'restore',
+    \`Avant restauration vers v\${versionNumber}\`
+  );
+
+  // Mettre a jour le CV avec le contenu de la version
+  return prisma.cvFile.update({
+    where: { id: cvFileId },
+    data: { content: versionToRestore.content }
+  });
+}</code></pre>
+
+        <h2>API Endpoints</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Méthode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/cv/[id]/versions</code></td>
+              <td>GET</td>
+              <td>Lister les versions</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/[id]/versions/[num]</code></td>
+              <td>GET</td>
+              <td>Detail d'une version</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/[id]/versions/[num]/restore</code></td>
+              <td>POST</td>
+              <td>Restaurer une version</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Limite de Versions</h2>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Retention</div>
+          <p>Par defaut, les 20 dernieres versions sont conservees. Les versions plus anciennes sont automatiquement supprimees lors de la creation d'une nouvelle version.</p>
+        </div>
+
+        <pre><code>// Nettoyage automatique
+const MAX_VERSIONS = 20;
+
+async function cleanupOldVersions(cvFileId) {
+  const versions = await prisma.cvVersion.findMany({
+    where: { cvFileId },
+    orderBy: { versionNumber: 'desc' },
+    skip: MAX_VERSIONS
+  });
+
+  if (versions.length > 0) {
+    await prisma.cvVersion.deleteMany({
+      where: {
+        id: { in: versions.map(v => v.id) }
+      }
+    });
+  }
+}</code></pre>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

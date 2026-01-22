@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation Technique - FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <h1>Documentation Technique FitMyCV<span class="accent">.io</span></h1>
+        <p class="lead">
+          Guide complet de l'architecture, des fonctionnalités et des pipelines IA de l'application SaaS de génération de CV optimisés.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Version 1.0.9.5</div>
+          <p>Cette documentation reflète la codebase actuelle de FitMyCV.io. Elle est destinée à servir de référence technique complète pour le développement et la maintenance.</p>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Accès réservé</div>
+          <p>Cette documentation est accessible uniquement aux administrateurs via l'API <code>/api/admin/docs/</code>.</p>
+        </div>
+
+        <h2>Vue d'ensemble du Projet</h2>
+
+        <p><strong>FitMyCV.io</strong> est une application SaaS permettant aux utilisateurs de créer, optimiser et exporter des CV personnalisés grâce à l'intelligence artificielle. L'application analyse les offres d'emploi et adapte automatiquement les CV pour maximiser les chances de sélection.</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Stack Technique</h4>
+            <p>Next.js 16, React 19, Tailwind CSS 4, PostgreSQL, Prisma 6, OpenAI API, Stripe</p>
+          </div>
+          <div class="card">
+            <h4>Statistiques</h4>
+            <p>114 API Routes, 138 Composants React, 34 Modèles Prisma, 4 Langues supportées</p>
+          </div>
+          <div class="card">
+            <h4>Pipelines IA</h4>
+            <p>Génération CV adapté, Optimisation CV, Scoring matching, Extraction offres</p>
+          </div>
+          <div class="card">
+            <h4>Modèles Économiques</h4>
+            <p>Abonnement + Crédits ou Crédits uniquement, configurable en admin</p>
+          </div>
+        </div>
+
+        <h2>Architecture Globale</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Architecture en couches</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Frontend["Frontend (React 19)"]
+        UI[Composants UI]
+        Providers[Context Providers]
+        Hooks[Custom Hooks]
+    end
+
+    subgraph API["API Layer (Next.js)"]
+        Routes[113 API Routes]
+        Auth[NextAuth.js]
+        Middleware[Middlewares]
+    end
+
+    subgraph Business["Business Logic"]
+        CVCore[CV Core]
+        OpenAI[OpenAI Core]
+        Subscription[Subscription]
+        Jobs[Background Jobs]
+    end
+
+    subgraph Data["Data Layer"]
+        Prisma[Prisma ORM]
+        DB[(PostgreSQL)]
+    end
+
+    subgraph External["Services Externes"]
+        OpenAIAPI[OpenAI API]
+        StripeAPI[Stripe API]
+        Email[SMTP/Resend]
+    end
+
+    Frontend --> API
+    API --> Business
+    Business --> Data
+    Business --> External
+    Data --> DB
+          </div>
+        </div>
+
+        <h2>Fonctionnalités Principales</h2>
+
+        <h3>Gestion des CV</h3>
+        <ul>
+          <li><strong>Création manuelle</strong> - Éditeur structuré par sections</li>
+          <li><strong>Import PDF</strong> - Extraction IA via GPT-4o Vision</li>
+          <li><strong>Versioning</strong> - Historique et restauration des versions</li>
+          <li><strong>Export</strong> - PDF (Puppeteer) et DOCX</li>
+        </ul>
+
+        <h3>Intelligence Artificielle</h3>
+        <ul>
+          <li><strong>Pipeline Génération</strong> - Adaptation complète du CV selon l'offre d'emploi</li>
+          <li><strong>Pipeline Optimisation</strong> - Amélioration ciblée avec suggestions</li>
+          <li><strong>Scoring</strong> - Calcul du match score CV/Offre (0-100)</li>
+          <li><strong>Extraction</strong> - Parsing intelligent des offres d'emploi</li>
+        </ul>
+
+        <h3>Système de Billing</h3>
+        <ul>
+          <li><strong>Mode Abonnement</strong> - Plans Free/Pro/Premium avec limites mensuelles</li>
+          <li><strong>Mode Crédits</strong> - Paiement à l'usage uniquement</li>
+          <li><strong>Intégration Stripe</strong> - Paiements, webhooks, facturation</li>
+        </ul>
+
+        <h2>Structure de la Documentation</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Section</th>
+              <th>Contenu</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Architecture</strong></td>
+              <td>Stack technique, patterns, modèles de données</td>
+            </tr>
+            <tr>
+              <td><strong>Authentification</strong></td>
+              <td>OAuth, credentials, vérification email</td>
+            </tr>
+            <tr>
+              <td><strong>Gestion CV</strong></td>
+              <td>CRUD, versioning, import PDF, structure JSON</td>
+            </tr>
+            <tr>
+              <td><strong>Pipeline Génération</strong></td>
+              <td>Phases, batches, prompts, schemas I/O</td>
+            </tr>
+            <tr>
+              <td><strong>Pipeline Optimisation</strong></td>
+              <td>Scoring, suggestions, application, review</td>
+            </tr>
+            <tr>
+              <td><strong>Abonnements & Crédits</strong></td>
+              <td>Modèles économiques, Stripe, limites</td>
+            </tr>
+            <tr>
+              <td><strong>Administration</strong></td>
+              <td>Dashboard, monitoring, configuration</td>
+            </tr>
+            <tr>
+              <td><strong>API Reference</strong></td>
+              <td>114 endpoints documentés</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Démarrage Rapide</h2>
+
+        <p>Pour explorer la documentation :</p>
+
+        <ol>
+          <li>Utilisez la <strong>barre de recherche</strong> pour trouver rapidement un sujet</li>
+          <li>Naviguez via le <strong>menu latéral</strong> organisé par domaine</li>
+          <li>Consultez les <strong>diagrammes Mermaid</strong> pour visualiser les workflows</li>
+          <li>Référez-vous aux <strong>boxes I/O</strong> pour les détails des pipelines IA</li>
+        </ol>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Maintenance</div>
+          <p>Cette documentation doit être mise à jour lors de chaque modification significative de la codebase. Voir les instructions dans <code>CLAUDE.md</code>.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="./assets/js/layout.js?v=1.0.4"></script>
+  <script src="./assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

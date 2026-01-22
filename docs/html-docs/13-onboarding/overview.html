@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Onboarding | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Onboarding</span>
+        </div>
+
+        <h1>Onboarding</h1>
+        <p class="lead">
+          Le flux d'onboarding guide les nouveaux utilisateurs à travers la création de leur premier CV, avec tracking des étapes pour analyser les points de friction.
+        </p>
+
+        <h2>Flux Utilisateur</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Étapes d'onboarding</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Registration["INSCRIPTION"]
+        Register["Création compte"]
+        Welcome["Email bienvenue"]
+        Credits["Crédits offerts"]
+    end
+
+    subgraph Onboarding["ONBOARDING"]
+        Step1["Étape 1<br/>Création du CV"]
+        Step1a["Import PDF"]
+        Step1b["Création manuelle"]
+        Step2["Étape 2<br/>Mode édition"]
+        Step3["Étape 3<br/>Première génération"]
+    end
+
+    subgraph Conversion["CONVERSION"]
+        Dashboard["Dashboard"]
+        Upgrade["Upgrade plan"]
+    end
+
+    Register --> Welcome --> Credits
+    Credits --> Step1
+    Step1 --> Step1a & Step1b
+    Step1a & Step1b --> Step2
+    Step2 --> Step3
+    Step3 --> Dashboard
+    Dashboard --> Upgrade
+          </div>
+        </div>
+
+        <h2>Modèle de Données</h2>
+
+        <pre><code>model OnboardingProgress {
+  id          Int       @id @default(autoincrement())
+  userId      String    @unique
+  step        Int       @default(1)
+  completed   Boolean   @default(false)
+  method      String?   // pdf_import, manual
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  metadata    Json?     // Données additionnelles
+
+  user        User      @relation(fields: [userId], references: [id])
+}</code></pre>
+
+        <h2>Étapes Détaillées</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Étape</th>
+              <th>Description</th>
+              <th>Action tracking</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1</strong></td>
+              <td>Création du premier CV (Import PDF ou création manuelle)</td>
+              <td><code>onboarding_cv_created</code></td>
+            </tr>
+            <tr>
+              <td><strong>2</strong></td>
+              <td>Découverte du mode édition</td>
+              <td><code>onboarding_edit_mode_discovered</code></td>
+            </tr>
+            <tr>
+              <td><strong>3</strong></td>
+              <td>Première génération/optimisation</td>
+              <td><code>onboarding_first_generation</code></td>
+            </tr>
+            <tr>
+              <td><strong>4</strong></td>
+              <td>Onboarding terminé</td>
+              <td><code>onboarding_completed</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Méthodes de Création CV</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Import PDF</h4>
+            <ul>
+              <li>Upload fichier existant</li>
+              <li>Extraction IA automatique</li>
+              <li>Coût configurable dans Settings</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Création Manuelle</h4>
+            <ul>
+              <li>Formulaire étape par étape</li>
+              <li>Guidage contextuel</li>
+              <li>Gratuit (pas de crédit requis)</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>Tracking Analytics</h2>
+
+        <pre><code>// lib/analytics/onboarding.js
+
+export async function trackOnboardingStep(userId, step, metadata = {}) {
+  await prisma.onboardingProgress.upsert({
+    where: { userId },
+    update: {
+      step,
+      metadata: {
+        ...existingMetadata,
+        [`step${step}At`]: new Date().toISOString(),
+        ...metadata
+      }
+    },
+    create: {
+      userId,
+      step,
+      metadata
+    }
+  });
+
+  // Envoyer à analytics
+  await trackEvent('onboarding_step', {
+    userId,
+    step,
+    ...metadata
+  });
+}
+
+export async function completeOnboarding(userId) {
+  await prisma.onboardingProgress.update({
+    where: { userId },
+    data: {
+      completed: true,
+      completedAt: new Date()
+    }
+  });
+
+  await trackEvent('onboarding_completed', { userId });
+}</code></pre>
+
+        <h2>Métriques Clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Métrique</th>
+              <th>Description</th>
+              <th>Objectif</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Completion Rate</strong></td>
+              <td>% d'utilisateurs qui terminent</td>
+              <td>> 60%</td>
+            </tr>
+            <tr>
+              <td><strong>Drop-off par étape</strong></td>
+              <td>Où les utilisateurs abandonnent</td>
+              <td>< 15% par étape</td>
+            </tr>
+            <tr>
+              <td><strong>Time to First CV</strong></td>
+              <td>Temps jusqu'au premier CV créé</td>
+              <td>< 10 minutes</td>
+            </tr>
+            <tr>
+              <td><strong>Method Distribution</strong></td>
+              <td>Répartition des méthodes choisies</td>
+              <td>-</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Dashboard Admin</h2>
+
+        <p>Le dashboard admin affiche les métriques d'onboarding via <code>OnboardingTab.jsx</code> :</p>
+
+        <ul>
+          <li>Graphique funnel de conversion</li>
+          <li>Taux de complétion par période</li>
+          <li>Distribution des méthodes de création</li>
+          <li>Points de drop-off identifiés</li>
+        </ul>
+
+        <h2>Composants</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>OnboardingWizard</code></td>
+              <td>Container principal du flux</td>
+            </tr>
+            <tr>
+              <td><code>MethodSelector</code></td>
+              <td>Choix méthode création CV</td>
+            </tr>
+            <tr>
+              <td><code>OnboardingProgress</code></td>
+              <td>Barre de progression</td>
+            </tr>
+            <tr>
+              <td><code>OnboardingStep</code></td>
+              <td>Wrapper d'étape avec tracking</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Fichiers Clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>app/[locale]/(protected)/onboarding/page.jsx</code></td>
+              <td>Page onboarding</td>
+            </tr>
+            <tr>
+              <td><code>components/onboarding/</code></td>
+              <td>Composants onboarding</td>
+            </tr>
+            <tr>
+              <td><code>lib/analytics/onboarding.js</code></td>
+              <td>Tracking et métriques</td>
+            </tr>
+            <tr>
+              <td><code>app/api/onboarding/</code></td>
+              <td>Endpoints API</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

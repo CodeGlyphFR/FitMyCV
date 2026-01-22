@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Export CV | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Export</span>
+        </div>
+
+        <h1>Export CV</h1>
+        <p class="lead">
+          Le système d'export permet de générer des fichiers PDF et DOCX à partir des CV JSON stockés. L'export utilise des templates HTML/CSS rendus via Puppeteer.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Coût</div>
+          <p><strong>1 crédit</strong> par export (PDF ou DOCX).</p>
+        </div>
+
+        <h2>Architecture</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux d'export</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input["ENTRÉE"]
+        CV["CV JSON"]
+        Template["Template HTML"]
+    end
+
+    subgraph Render["RENDU"]
+        Inject["Injection données"]
+        HTML["HTML complet"]
+        CSS["Styles CSS"]
+    end
+
+    subgraph Export["EXPORT"]
+        Puppeteer["Puppeteer<br/>(Headless Chrome)"]
+        PDF["PDF"]
+        DOCX["DOCX<br/>(via HTML)"]
+    end
+
+    CV --> Inject
+    Template --> Inject
+    Inject --> HTML
+    HTML --> CSS
+    CSS --> Puppeteer
+    Puppeteer --> PDF
+    Puppeteer --> DOCX
+          </div>
+        </div>
+
+        <h2>Formats Supportés</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>PDF</h4>
+            <ul>
+              <li>Rendu haute qualité</li>
+              <li>Polices embarquées</li>
+              <li>Format A4</li>
+              <li>Multi-pages automatique</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>DOCX</h4>
+            <ul>
+              <li>Éditable dans Word</li>
+              <li>Conversion depuis HTML</li>
+              <li>Styles préservés</li>
+              <li>Compatible ATS</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>Templates Disponibles</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Template</th>
+              <th>Description</th>
+              <th>Colonnes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>modern</code></td>
+              <td>Design moderne avec sidebar</td>
+              <td>2 colonnes</td>
+            </tr>
+            <tr>
+              <td><code>classic</code></td>
+              <td>Style traditionnel</td>
+              <td>1 colonne</td>
+            </tr>
+            <tr>
+              <td><code>minimal</code></td>
+              <td>Épuré, focus contenu</td>
+              <td>1 colonne</td>
+            </tr>
+            <tr>
+              <td><code>creative</code></td>
+              <td>Design créatif coloré</td>
+              <td>2 colonnes</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Export PDF</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge process">PROCESS</span>
+            <span class="data-flow-title">Génération PDF via Puppeteer</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Pipeline</h5>
+            <pre><code>// lib/features/export/pdfExporter.js
+import puppeteer from 'puppeteer';
+
+export async function exportToPdf(cvData, templateId) {
+  // 1. Charger le template
+  const template = await loadTemplate(templateId);
+
+  // 2. Injecter les données
+  const html = renderTemplate(template, cvData);
+
+  // 3. Lancer Puppeteer
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
+
+  const page = await browser.newPage();
+
+  // 4. Charger le HTML
+  await page.setContent(html, { waitUntil: 'networkidle0' });
+
+  // 5. Générer le PDF
+  const pdfBuffer = await page.pdf({
+    format: 'A4',
+    printBackground: true,
+    margin: {
+      top: '20mm',
+      bottom: '20mm',
+      left: '15mm',
+      right: '15mm'
+    }
+  });
+
+  await browser.close();
+
+  return pdfBuffer;
+}</code></pre>
+
+            <h5>Options PDF</h5>
+            <table>
+              <tr>
+                <td><code>format</code></td>
+                <td>A4 (210mm x 297mm)</td>
+              </tr>
+              <tr>
+                <td><code>printBackground</code></td>
+                <td>true (couleurs de fond)</td>
+              </tr>
+              <tr>
+                <td><code>margins</code></td>
+                <td>20mm haut/bas, 15mm gauche/droite</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <h2>Export DOCX</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge process">PROCESS</span>
+            <span class="data-flow-title">Génération DOCX</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Pipeline</h5>
+            <pre><code>// lib/features/export/docxExporter.js
+import { Document, Packer, Paragraph, TextRun } from 'docx';
+
+export async function exportToDocx(cvData) {
+  const doc = new Document({
+    sections: [{
+      properties: {},
+      children: [
+        // Header
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `${cvData.header.firstName} ${cvData.header.lastName}`,
+              bold: true,
+              size: 32
+            })
+          ]
+        }),
+
+        // Contact info
+        new Paragraph({
+          children: [
+            new TextRun({ text: cvData.header.email }),
+            new TextRun({ text: ' | ' }),
+            new TextRun({ text: cvData.header.phone || '' })
+          ]
+        }),
+
+        // Summary
+        new Paragraph({
+          heading: 'Heading2',
+          children: [new TextRun({ text: 'Résumé Professionnel', bold: true })]
+        }),
+        new Paragraph({
+          children: [new TextRun({ text: cvData.sections.summary?.content || '' })]
+        }),
+
+        // Experiences
+        ...renderExperiences(cvData.sections.experiences),
+
+        // Skills
+        ...renderSkills(cvData.sections.skills),
+
+        // Education
+        ...renderEducation(cvData.sections.education)
+      ]
+    }]
+  });
+
+  return await Packer.toBuffer(doc);
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>API Endpoints</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Méthode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/cv/[id]/export/pdf</code></td>
+              <td>GET</td>
+              <td>Exporter en PDF</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/[id]/export/docx</code></td>
+              <td>GET</td>
+              <td>Exporter en DOCX</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Exemple d'utilisation</h3>
+
+        <pre><code>// Client-side
+const downloadPdf = async (cvId) => {
+  const response = await fetch(`/api/cv/${cvId}/export/pdf?template=modern`);
+
+  if (!response.ok) {
+    throw new Error('Export failed');
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+
+  // Déclencher le téléchargement
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `cv-${cvId}.pdf`;
+  a.click();
+
+  URL.revokeObjectURL(url);
+};</code></pre>
+
+        <h2>Optimisations ATS</h2>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Compatibilité ATS</div>
+          <p>Les exports sont optimisés pour les systèmes de suivi des candidatures (ATS).</p>
+        </div>
+
+        <ul>
+          <li><strong>Structure sémantique</strong> : Balises HTML5 appropriées (h1, h2, section)</li>
+          <li><strong>Texte sélectionnable</strong> : Pas d'images pour le texte</li>
+          <li><strong>Polices standards</strong> : Arial, Helvetica, sans-serif</li>
+          <li><strong>Pas de tableaux complexes</strong> : Layout CSS Grid/Flexbox</li>
+          <li><strong>Ordre logique</strong> : Contenu dans l'ordre de lecture</li>
+        </ul>
+
+        <h2>Fichiers Clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/features/export/pdfExporter.js</code></td>
+              <td>Export PDF via Puppeteer</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/export/docxExporter.js</code></td>
+              <td>Export DOCX via docx.js</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/export/templates/</code></td>
+              <td>Templates HTML/CSS</td>
+            </tr>
+            <tr>
+              <td><code>app/api/cv/[id]/export/</code></td>
+              <td>Endpoints API</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

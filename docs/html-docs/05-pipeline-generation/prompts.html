@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompts IA - Pipeline Génération | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Pipeline Génération</a>
+          <span>/</span>
+          <span>Prompts IA</span>
+        </div>
+
+        <h1>Prompts IA</h1>
+        <p class="lead">
+          Le pipeline de génération utilise 21 fichiers de prompts organisés par phase. Chaque prompt suit une structure standardisée et respecte la hiérarchie de priorités VÉRITÉ > LANGUE > ATS > STYLE.
+        </p>
+
+        <h2>Organisation des Fichiers</h2>
+
+        <pre><code>lib/features/cv-adaptation/prompts/
+├── classification/
+│   └── classify-items.md           # Classification KEEP/REMOVE/MOVE
+├── experiences/
+│   ├── adapt-experience.md         # Adapter une expérience
+│   └── convert-to-project.md       # Convertir exp → projet
+├── projects/
+│   └── adapt-project.md            # Adapter un projet
+├── skills/
+│   ├── extract-keywords.md         # Mission 1: Extraction mots-clés
+│   ├── categorize-skills.md        # Mission 2: Catégorisation
+│   ├── prioritize-skills.md        # Mission 3: Priorisation
+│   ├── format-technical.md         # Mission 4: Format technique
+│   ├── format-soft.md              # Mission 5: Format soft skills
+│   ├── format-languages.md         # Mission 6: Format langues
+│   └── format-methodologies.md     # Mission 7: Format méthodologies
+├── summary/
+│   ├── generate-summary.md         # Générer résumé professionnel
+│   └── adapt-summary.md            # Adapter résumé existant
+├── extras/
+│   └── adapt-extras.md             # Adapter section extras
+└── recompose/
+    └── assemble-cv.md              # Assemblage final</code></pre>
+
+        <h2>Structure Standard d'un Prompt</h2>
+
+        <p>Chaque prompt suit un template standardisé :</p>
+
+        <pre><code># [Nom de la Mission]
+
+## Contexte
+[Description du contexte et de l'objectif]
+
+## Priorités (STRICTES)
+1. **VÉRITÉ** (P1) : Jamais d'information inventée
+2. **LANGUE** (P2) : Contenu dans la langue cible
+3. **ATS** (P3) : Mots-clés exacts de l'offre
+4. **STYLE** (P4) : Ton professionnel adapté
+
+## Input
+[Description des données en entrée]
+
+## Output
+[Description du format de sortie attendu]
+
+## Règles
+- [Règle 1]
+- [Règle 2]
+- ...
+
+## Exemples
+### Exemple 1 - [Description]
+**Input:**
+```json
+{ ... }
+```
+**Output:**
+```json
+{ ... }
+```
+
+## Anti-Patterns
+❌ Ne JAMAIS faire : [exemple interdit]
+✅ Faire à la place : [exemple correct]</code></pre>
+
+        <h2>Hiérarchie des Priorités</h2>
+
+        <div class="callout callout-error">
+          <div class="callout-title">P1 - VÉRITÉ (Non négociable)</div>
+          <p>Chaque mot du CV généré DOIT pouvoir être tracé vers le CV source. Aucune information inventée, aucune compétence ajoutée, aucune durée modifiée.</p>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">P2 - LANGUE</div>
+          <p>Tout le contenu doit être dans la langue cible du CV (détectée automatiquement). Les noms propres, entreprises et certifications restent inchangés.</p>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">P3 - ATS (Applicant Tracking System)</div>
+          <p>Intégrer les mots-clés EXACTS de l'offre d'emploi pour maximiser le score ATS. Utiliser la terminologie de l'offre quand elle correspond à une compétence existante.</p>
+        </div>
+
+        <div class="callout callout-success">
+          <div class="callout-title">P4 - STYLE</div>
+          <p>Ton professionnel, phrases d'action, format adapté au secteur. Reformulations autorisées tant que le sens est préservé.</p>
+        </div>
+
+        <h2>Prompts par Phase</h2>
+
+        <h3>Phase Classification</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge">classify-items.md</span>
+            <span class="data-flow-title">Classification des items</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Mission</h5>
+            <p>Analyser chaque expérience et projet du CV source pour décider de son traitement.</p>
+
+            <h5>Décisions possibles</h5>
+            <table>
+              <tr>
+                <td><code>KEEP</code></td>
+                <td>Garder et adapter l'item</td>
+              </tr>
+              <tr>
+                <td><code>REMOVE</code></td>
+                <td>Supprimer (non pertinent)</td>
+              </tr>
+              <tr>
+                <td><code>MOVE_TO_PROJECTS</code></td>
+                <td>Convertir expérience → projet</td>
+              </tr>
+            </table>
+
+            <h5>Critères de décision</h5>
+            <ul>
+              <li>Pertinence par rapport au poste cible</li>
+              <li>Ancienneté (> 10 ans = candidat REMOVE)</li>
+              <li>Durée (< 3 mois = candidat MOVE_TO_PROJECTS)</li>
+              <li>Transferabilité des compétences</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Phase Batches - Experiences</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge">adapt-experience.md</span>
+            <span class="data-flow-title">Adaptation d'expérience</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Mission</h5>
+            <p>Reformuler une expérience professionnelle pour maximiser sa pertinence vis-à-vis de l'offre cible.</p>
+
+            <h5>Règles clés</h5>
+            <ul>
+              <li>Le titre de poste peut être reformulé si une variante existe dans l'offre</li>
+              <li>Les responsabilités sont réordonnées par pertinence</li>
+              <li>Les verbes d'action sont adaptés au secteur</li>
+              <li>Les métriques et chiffres sont CONSERVÉS tels quels</li>
+            </ul>
+
+            <h5>Exemple de reformulation</h5>
+            <pre><code>// AVANT
+"Développer des applications web"
+
+// APRÈS (si l'offre mentionne "APIs REST")
+"Concevoir et développer des APIs REST et applications web"
+
+// INTERDIT (invention)
+"Développer des applications web et mobiles" // mobile non mentionné</code></pre>
+          </div>
+        </div>
+
+        <h3>Phase Batches - Skills (7 missions)</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Pipeline des 7 missions Skills</div>
+          <div class="mermaid">
+flowchart LR
+    M1["M1: Extract<br/>Keywords"] --> M2["M2: Categorize"]
+    M2 --> M3["M3: Prioritize"]
+    M3 --> M4["M4: Format<br/>Technical"]
+    M3 --> M5["M5: Format<br/>Soft"]
+    M3 --> M6["M6: Format<br/>Languages"]
+    M3 --> M7["M7: Format<br/>Methodologies"]
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Mission</th>
+              <th>Fichier</th>
+              <th>Objectif</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>M1</td>
+              <td><code>extract-keywords.md</code></td>
+              <td>Extraire tous les mots-clés de l'offre d'emploi</td>
+            </tr>
+            <tr>
+              <td>M2</td>
+              <td><code>categorize-skills.md</code></td>
+              <td>Catégoriser : technique, soft, langue, méthodologie</td>
+            </tr>
+            <tr>
+              <td>M3</td>
+              <td><code>prioritize-skills.md</code></td>
+              <td>Prioriser selon importance dans l'offre</td>
+            </tr>
+            <tr>
+              <td>M4</td>
+              <td><code>format-technical.md</code></td>
+              <td>Formater les compétences techniques</td>
+            </tr>
+            <tr>
+              <td>M5</td>
+              <td><code>format-soft.md</code></td>
+              <td>Formater les soft skills</td>
+            </tr>
+            <tr>
+              <td>M6</td>
+              <td><code>format-languages.md</code></td>
+              <td>Formater les langues</td>
+            </tr>
+            <tr>
+              <td>M7</td>
+              <td><code>format-methodologies.md</code></td>
+              <td>Formater les méthodologies</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Phase Batches - Summary</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge">generate-summary.md</span>
+            <span class="data-flow-title">Génération du résumé</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Mission</h5>
+            <p>Générer un résumé professionnel percutant basé sur les expériences adaptées et l'offre cible.</p>
+
+            <h5>Structure du résumé</h5>
+            <ol>
+              <li><strong>Accroche</strong> : Titre + années d'expérience</li>
+              <li><strong>Expertise</strong> : Domaines clés alignés avec l'offre</li>
+              <li><strong>Réalisations</strong> : 1-2 accomplissements majeurs</li>
+              <li><strong>Valeur</strong> : Ce que le candidat apporte</li>
+            </ol>
+
+            <h5>Contraintes</h5>
+            <ul>
+              <li>3-5 phrases maximum</li>
+              <li>Intégrer 3-5 mots-clés de l'offre</li>
+              <li>Première personne implicite (pas de "Je")</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>Système de Cache (CAG)</h2>
+
+        <p>Les prompts utilisent un système de cache pour optimiser les coûts :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Cache A (Job Offer)</h4>
+            <p>Injecté dans : Experiences, Projects, Extras</p>
+            <pre><code>## Offre d'emploi (CACHE A)
+- Titre: {title}
+- Skills requis: {required}
+- Skills souhaitables: {niceToHave}
+- Soft skills: {soft}
+- Méthodologies: {methodologies}
+- Responsabilités: {top5}</code></pre>
+          </div>
+          <div class="card">
+            <h4>Cache B (Enrichi)</h4>
+            <p>Injecté dans : Skills, Summary</p>
+            <pre><code>## Contexte (CACHE B)
+{Cache A}
+
+## Expériences adaptées
+{summaryExperiences}
+
+## Projets adaptés
+{summaryProjects}</code></pre>
+          </div>
+        </div>
+
+        <h2>Anti-Hallucination</h2>
+
+        <div class="callout callout-error">
+          <div class="callout-title">Règle fondamentale</div>
+          <p><strong>"Chaque mot doit pointer vers la source"</strong></p>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Exemple INTERDIT</th>
+              <th>Raison</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Ajout compétence</td>
+              <td>"Python" → "Python/IA"</td>
+              <td>IA non mentionné dans la source</td>
+            </tr>
+            <tr>
+              <td>Modification durée</td>
+              <td>"2 ans" → "3 ans"</td>
+              <td>Falsification</td>
+            </tr>
+            <tr>
+              <td>Ajout métrique</td>
+              <td>"Amélioration" → "Amélioration de 30%"</td>
+              <td>Chiffre inventé</td>
+            </tr>
+            <tr>
+              <td>Invention responsabilité</td>
+              <td>Ajouter "Management d'équipe"</td>
+              <td>Non présent dans la source</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Traçabilité des Modifications</h2>
+
+        <p>Chaque prompt demande de documenter les modifications :</p>
+
+        <pre><code>{
+  "modifications": [
+    {
+      "field": "title",
+      "action": "reformulated",
+      "before": "Développeur Web",
+      "after": "Développeur Full Stack",
+      "reason": "Alignement avec titre de l'offre"
+    },
+    {
+      "field": "responsibilities[0]",
+      "action": "reworded",
+      "before": "Création d'applications",
+      "after": "Développement d'APIs REST",
+      "reason": "Mise en avant skill requis"
+    }
+  ]
+}</code></pre>
+
+        <h2>Chargement des Prompts</h2>
+
+        <pre><code>// lib/features/cv-adaptation/utils/promptLoader.js
+import fs from 'fs/promises';
+import path from 'path';
+
+const PROMPTS_DIR = path.join(process.cwd(), 'lib/features/cv-adaptation/prompts');
+
+export async function loadPrompt(promptPath) {
+  const fullPath = path.join(PROMPTS_DIR, `${promptPath}.md`);
+  const content = await fs.readFile(fullPath, 'utf-8');
+  return content;
+}
+
+// Utilisation
+const prompt = await loadPrompt('experiences/adapt-experience');
+const messages = [
+  { role: 'system', content: prompt },
+  { role: 'user', content: JSON.stringify(inputData) }
+];</code></pre>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schemas I/O - Pipeline Génération | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Pipeline Génération</a>
+          <span>/</span>
+          <span>Schemas I/O</span>
+        </div>
+
+        <h1>Schemas I/O</h1>
+        <p class="lead">
+          Le pipeline utilise des JSON Schemas stricts pour garantir la structure des réponses OpenAI via <strong>Structured Outputs</strong>. Chaque phase a son schema d'entrée et de sortie.
+        </p>
+
+        <h2>Organisation des Fichiers</h2>
+
+        <pre><code>lib/features/cv-adaptation/schemas/
+├── classification-output.json    # Output phase classification
+├── experience-output.json        # Output batch experience
+├── project-output.json           # Output batch project
+├── skills-output.json            # Output batch skills
+├── summary-output.json           # Output batch summary
+├── extras-output.json            # Output batch extras
+└── cv-final.json                 # Schema CV final</code></pre>
+
+        <h2>Structured Outputs OpenAI</h2>
+
+        <p>Les schemas sont utilisés avec le paramètre <code>response_format</code> de l'API OpenAI :</p>
+
+        <pre><code>const response = await openai.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [...],
+  response_format: {
+    type: 'json_schema',
+    json_schema: {
+      name: 'classification_output',
+      schema: classificationSchema,
+      strict: true  // Validation stricte
+    }
+  }
+});</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Mode strict</div>
+          <p>Avec <code>strict: true</code>, OpenAI garantit que la réponse respecte exactement le schema. Aucun champ supplémentaire, aucune valeur hors énumération.</p>
+        </div>
+
+        <h2>Schema : Classification Output</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">classification-output.json</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "experiences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID de l'expérience source"
+          },
+          "decision": {
+            "type": "string",
+            "enum": ["KEEP", "REMOVE", "MOVE_TO_PROJECTS"]
+          },
+          "reason": {
+            "type": "string",
+            "description": "Justification de la décision"
+          },
+          "relevanceScore": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": ["id", "decision", "reason", "relevanceScore"]
+      }
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "decision": {
+            "type": "string",
+            "enum": ["KEEP", "REMOVE"]
+          },
+          "reason": { "type": "string" },
+          "relevanceScore": { "type": "number" }
+        },
+        "required": ["id", "decision", "reason", "relevanceScore"]
+      }
+    }
+  },
+  "required": ["experiences", "projects"]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Schema : Experience Output</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">experience-output.json</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "adaptedExperience": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "company": { "type": "string" },
+        "location": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": ["string", "null"] },
+        "current": { "type": "boolean" },
+        "responsibilities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "maxItems": 6
+        }
+      },
+      "required": ["id", "title", "company", "startDate", "responsibilities"]
+    },
+    "modifications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": { "type": "string" },
+          "action": {
+            "type": "string",
+            "enum": ["kept", "modified", "reordered", "removed"]
+          },
+          "before": { "type": "string" },
+          "after": { "type": "string" },
+          "reason": { "type": "string" }
+        },
+        "required": ["field", "action", "reason"]
+      }
+    },
+    "keywordsUsed": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Mots-clés de l'offre intégrés"
+    }
+  },
+  "required": ["adaptedExperience", "modifications", "keywordsUsed"]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Schema : Skills Output</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">skills-output.json</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "technical": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "category": {
+            "type": "string",
+            "enum": ["language", "framework", "database", "tool", "platform", "other"]
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["required", "nice-to-have", "transferable"]
+          },
+          "source": {
+            "type": "string",
+            "enum": ["cv", "job_offer", "both"]
+          }
+        },
+        "required": ["name", "category", "priority", "source"]
+      }
+    },
+    "soft": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "language": { "type": "string" },
+          "level": { "type": "string" }
+        },
+        "required": ["language", "level"]
+      }
+    },
+    "methodologies": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "certifications": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": ["technical", "soft", "languages", "methodologies"]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Schema : Summary Output</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">summary-output.json</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "summary": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string",
+          "minLength": 100,
+          "maxLength": 500,
+          "description": "Résumé professionnel (3-5 phrases)"
+        }
+      },
+      "required": ["content"]
+    },
+    "keywordsIntegrated": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Mots-clés de l'offre intégrés dans le résumé"
+    },
+    "structure": {
+      "type": "object",
+      "properties": {
+        "hook": { "type": "string" },
+        "expertise": { "type": "string" },
+        "achievement": { "type": "string" },
+        "value": { "type": "string" }
+      }
+    }
+  },
+  "required": ["summary", "keywordsIntegrated"]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Schema : CV Final</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">cv-final.json (après recomposition)</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "header": {
+      "type": "object",
+      "properties": {
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "location": { "type": "string" },
+        "linkedIn": { "type": "string" },
+        "portfolio": { "type": "string" }
+      },
+      "required": ["firstName", "lastName", "email"]
+    },
+    "sections": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "object",
+          "properties": {
+            "content": { "type": "string" }
+          }
+        },
+        "experiences": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/experience" }
+        },
+        "projects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/project" }
+        },
+        "skills": { "$ref": "#/$defs/skills" },
+        "education": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/education" }
+        },
+        "certifications": { "type": "array" },
+        "extras": { "type": "array" }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "language": { "type": "string" },
+        "generatedAt": { "type": "string" },
+        "sourceJobOfferId": { "type": "integer" },
+        "matchScore": { "type": "integer" }
+      }
+    }
+  },
+  "required": ["header", "sections"],
+  "$defs": {
+    "experience": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "company": { "type": "string" },
+        "location": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": ["string", "null"] },
+        "current": { "type": "boolean" },
+        "responsibilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["title", "company", "startDate", "responsibilities"]
+    },
+    "project": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "technologies": { "type": "array", "items": { "type": "string" } },
+        "url": { "type": "string" }
+      },
+      "required": ["name", "description"]
+    },
+    "skills": {
+      "type": "object",
+      "properties": {
+        "technical": { "type": "array", "items": { "type": "string" } },
+        "soft": { "type": "array", "items": { "type": "string" } },
+        "languages": { "type": "array" },
+        "methodologies": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "education": {
+      "type": "object",
+      "properties": {
+        "degree": { "type": "string" },
+        "institution": { "type": "string" },
+        "year": { "type": "string" }
+      }
+    }
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Chargement des Schemas</h2>
+
+        <pre><code>// lib/openai-core/schemaLoader.js
+import fs from 'fs/promises';
+import path from 'path';
+
+const SCHEMAS_CACHE = new Map();
+
+export async function loadSchema(schemaPath) {
+  // Check cache
+  if (SCHEMAS_CACHE.has(schemaPath)) {
+    return SCHEMAS_CACHE.get(schemaPath);
+  }
+
+  // Determine base path based on feature
+  const fullPath = path.join(
+    process.cwd(),
+    'lib/features',
+    schemaPath.replace('/', '/schemas/') + '.json'
+  );
+
+  const content = await fs.readFile(fullPath, 'utf-8');
+  const schema = JSON.parse(content);
+
+  // Cache for reuse
+  SCHEMAS_CACHE.set(schemaPath, schema);
+
+  return schema;
+}
+
+// Usage
+const schema = await loadSchema('cv-adaptation/experience-output');
+
+const response = await callOpenAI({
+  messages: [...],
+  responseFormat: {
+    type: 'json_schema',
+    json_schema: {
+      name: 'experience_output',
+      schema: schema,
+      strict: true
+    }
+  }
+});</code></pre>
+
+        <h2>Validation Post-Réponse</h2>
+
+        <pre><code>// lib/openai-core/validation.js
+import Ajv from 'ajv';
+
+const ajv = new Ajv({ allErrors: true });
+
+export function validateResponse(data, schema) {
+  const validate = ajv.compile(schema);
+  const valid = validate(data);
+
+  if (!valid) {
+    return {
+      valid: false,
+      errors: validate.errors
+    };
+  }
+
+  return { valid: true, data };
+}
+
+// Usage dans le pipeline
+const response = await callOpenAI({ ... });
+const parsed = JSON.parse(response.choices[0].message.content);
+
+const validation = validateResponse(parsed, experienceOutputSchema);
+if (!validation.valid) {
+  console.error('Schema validation failed:', validation.errors);
+  throw new Error('Invalid AI response structure');
+}</code></pre>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>
