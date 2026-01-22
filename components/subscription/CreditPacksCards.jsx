@@ -5,7 +5,7 @@ import { Zap, Loader2, Sparkles } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function CreditPacksCards({ onPurchaseSuccess }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [packs, setPacks] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [processingPackId, setProcessingPackId] = React.useState(null);
@@ -35,7 +35,7 @@ export default function CreditPacksCards({ onPurchaseSuccess }) {
       const res = await fetch('/api/checkout/credits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packId }),
+        body: JSON.stringify({ packId, locale: language }),
       });
 
       if (!res.ok) {

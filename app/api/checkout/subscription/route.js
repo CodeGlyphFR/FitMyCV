@@ -8,6 +8,7 @@ import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 import stripe from '@/lib/stripe';
 import { CommonErrors, SubscriptionErrors } from '@/lib/api/apiErrors';
+import { getTermsMessage } from '@/lib/stripe/checkoutLocale';
 
 export async function POST(request) {
   try {
@@ -19,7 +20,7 @@ export async function POST(request) {
 
     const userId = session.user.id;
     const body = await request.json();
-    const { planId, billingPeriod = 'monthly' } = body;
+    const { planId, billingPeriod = 'monthly', locale = 'fr' } = body;
 
     // Validation
     if (!planId || typeof planId !== 'number') {
@@ -244,7 +245,7 @@ export async function POST(request) {
       },
       custom_text: {
         terms_of_service_acceptance: {
-          message: `J'accepte les [Conditions Générales de Vente](${process.env.NEXT_PUBLIC_SITE_URL}/terms).`,
+          message: getTermsMessage(locale),
         },
       },
       line_items: [

@@ -151,7 +151,7 @@ export function usePlanComparison({ currentPlan, subscription, scheduledDowngrad
       const res = await fetch('/api/checkout/subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId, billingPeriod }),
+        body: JSON.stringify({ planId, billingPeriod, locale: language }),
       });
 
       if (!res.ok) {
@@ -210,7 +210,8 @@ export function usePlanComparison({ currentPlan, subscription, scheduledDowngrad
         body: JSON.stringify({
           planId: downgradePlanId,
           billingPeriod: downgradeBillingPeriod,
-          isDowngrade: true
+          isDowngrade: true,
+          locale: language
         }),
       });
 
@@ -249,7 +250,7 @@ export function usePlanComparison({ currentPlan, subscription, scheduledDowngrad
       const res = await fetch('/api/checkout/subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId: upgradePlanId, billingPeriod: upgradeBillingPeriod }),
+        body: JSON.stringify({ planId: upgradePlanId, billingPeriod: upgradeBillingPeriod, locale: language }),
       });
 
       if (!res.ok) {
