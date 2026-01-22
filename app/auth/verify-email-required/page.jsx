@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { useRecaptcha } from "@/hooks/useRecaptcha";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function VerifyEmailRequiredPage() {
   const { data: session, update: updateSession } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { executeRecaptcha } = useRecaptcha();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -47,12 +49,12 @@ export default function VerifyEmailRequiredPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage('Email envoyé ! Vérifiez votre boîte de réception.');
+        setMessage(t('auth.verifyEmailRequiredPage.successMessage'));
       } else {
-        setError(data.error || 'Erreur lors de l\'envoi de l\'email');
+        setError(data.error || t('auth.verifyEmailRequiredPage.errors.sendError'));
       }
     } catch (err) {
-      setError('Erreur de connexion');
+      setError(t('auth.verifyEmailRequiredPage.errors.connectionError'));
     }
 
     setLoading(false);
@@ -85,13 +87,13 @@ export default function VerifyEmailRequiredPage() {
           </div>
 
           <h1 className="text-2xl font-semibold text-white drop-shadow-lg">
-            {isNewUser ? 'Bienvenue !' : 'Vérifiez votre email'}
+            {isNewUser ? t('auth.verifyEmailRequiredPage.titleNewUser') : t('auth.verifyEmailRequiredPage.titleExisting')}
           </h1>
 
           <p className="text-sm text-slate-100 drop-shadow">
             {isNewUser
-              ? 'Votre compte a été créé avec succès ! Pour accéder à la plateforme, vérifiez votre adresse email.'
-              : 'Pour accéder à votre compte, vous devez d\'abord vérifier votre adresse email.'
+              ? t('auth.verifyEmailRequiredPage.descriptionNewUser')
+              : t('auth.verifyEmailRequiredPage.descriptionExisting')
             }
           </p>
         </div>
@@ -99,14 +101,14 @@ export default function VerifyEmailRequiredPage() {
         {session?.user?.email && (
           <div className="bg-emerald-500/20 border border-emerald-400/50 rounded-lg p-4 backdrop-blur-sm">
             <p className="text-sm text-white drop-shadow">
-              <strong>Email :</strong> {session.user.email}
+              <strong>{t('auth.verifyEmailRequiredPage.emailLabel')}</strong> {session.user.email}
             </p>
           </div>
         )}
 
         <div className="space-y-4">
           <p className="text-sm text-slate-100 drop-shadow">
-            Un email de vérification a été envoyé à votre adresse. Cliquez sur le lien dans l'email pour activer votre compte.
+            {t('auth.verifyEmailRequiredPage.instructions')}
           </p>
 
           {message && (
@@ -126,20 +128,20 @@ export default function VerifyEmailRequiredPage() {
             disabled={loading}
             className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-emerald-500 shadow-md"
           >
-            {loading ? 'Envoi en cours...' : 'Renvoyer l\'email'}
+            {loading ? t('auth.verifyEmailRequiredPage.resendingButton') : t('auth.verifyEmailRequiredPage.resendButton')}
           </button>
 
           <button
             onClick={handleLogout}
             className="w-full bg-white/20 hover:bg-white/30 text-white font-medium py-3 px-4 rounded-lg transition-colors border border-white/30 backdrop-blur-sm"
           >
-            Se déconnecter
+            {t('auth.verifyEmailRequiredPage.logoutButton')}
           </button>
         </div>
 
         <div className="pt-4 border-t border-white/30">
           <p className="text-xs text-slate-200 text-center drop-shadow">
-            Si vous ne recevez pas l'email, vérifiez votre dossier spam ou cliquez sur "Renvoyer l'email".
+            {t('auth.verifyEmailRequiredPage.helpText')}
           </p>
         </div>
         </div>

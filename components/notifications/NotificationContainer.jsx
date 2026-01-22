@@ -3,8 +3,9 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useNotifications } from "./NotificationProvider";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-function NotificationItem({ notification, onRemove }) {
+function NotificationItem({ notification, onRemove, t }) {
   const { id, type, message, isRemoving, redirectUrl, linkText } = notification;
   const router = useRouter();
 
@@ -68,7 +69,7 @@ function NotificationItem({ notification, onRemove }) {
               onClick={handleActionClick}
               className={`mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold ${styles.actionButton} border-2 transition-all duration-200 inline-flex items-center gap-1 shadow-xs hover:shadow-sm-md`}
             >
-              {linkText || "Voir les options"}
+              {linkText || t('notifications.viewOptions')}
               <span className="text-base">→</span>
             </button>
           )}
@@ -79,7 +80,7 @@ function NotificationItem({ notification, onRemove }) {
             onRemove(id);
           }}
           className={`ml-2 ${styles.button} text-lg leading-none px-1.5 rounded-sm transition-all duration-200`}
-          aria-label="Fermer la notification"
+          aria-label={t('notifications.closeNotification')}
         >
           ×
         </button>
@@ -90,6 +91,7 @@ function NotificationItem({ notification, onRemove }) {
 
 export default function NotificationContainer() {
   const { notifications, removeNotification } = useNotifications();
+  const { t } = useLanguage();
 
   if (notifications.length === 0) {
     return null;
@@ -105,6 +107,7 @@ export default function NotificationContainer() {
           key={notification.id}
           notification={notification}
           onRemove={removeNotification}
+          t={t}
         />
       ))}
     </div>
