@@ -215,3 +215,13 @@ Lors de modifications du code, mettre à jour la documentation HTML correspondan
 - Blocs `data-flow` pour documenter Input/Output des phases IA
 - Tables pour les endpoints et configurations
 - Code blocks avec exemples réels du codebase
+
+### Guide de contribution
+Pour ajouter ou modifier des pages dans la documentation HTML, consulter le guide détaillé : `docs/html-docs/CONTRIBUTING.md`
+
+Ce guide couvre :
+- Checklist complète pour ajouter une nouvelle section
+- Template de page HTML standard
+- Composants UI disponibles (callout, diagrammes, data-flow, tables)
+- Mise à jour du `searchIndex` pour la navigation Précédent/Suivant
+- Conventions de nommage et entités HTML

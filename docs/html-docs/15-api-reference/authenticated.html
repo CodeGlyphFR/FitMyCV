@@ -100,6 +100,77 @@
             </tr>
           </tbody>
         </table>
+
+        <h2>G&eacute;n&eacute;ration CV Mod&egrave;le</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>M&eacute;thode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/background-tasks/create-template-cv</code></td>
+              <td>POST</td>
+              <td>Cr&eacute;er CV mod&egrave;le depuis offre (URL/PDF)</td>
+            </tr>
+            <tr>
+              <td><code>/api/background-tasks/generate-cv-from-job-title</code></td>
+              <td>POST</td>
+              <td>G&eacute;n&eacute;rer CV mod&egrave;le depuis titre de poste</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>POST /api/background-tasks/create-template-cv</h3>
+
+        <p>G&eacute;n&egrave;re un ou plusieurs CV mod&egrave;les (fictifs professionnels) &agrave; partir d'offres d'emploi.</p>
+
+        <h4>Request (FormData)</h4>
+        <pre><code class="language-javascript">{
+  links: JSON.stringify(["https://example.com/offre"]), // Array d'URLs
+  files: [File],                                         // PDFs d'offres
+  model: "gpt-4o",                                       // Optionnel
+  deviceId: "device_xxx",                                // Requis
+  recaptchaToken: "..."                                  // Optionnel
+}</code></pre>
+
+        <h4>Response (202 Accepted)</h4>
+        <pre><code class="language-json">{
+  "success": true,
+  "queued": true,
+  "taskIds": ["task_template_link_xxx"],
+  "tasksCount": 1
+}</code></pre>
+
+        <h4>Feature</h4>
+        <p><code>gpt_cv_generation</code> - 1 cr&eacute;dit par g&eacute;n&eacute;ration</p>
+
+        <h3>POST /api/background-tasks/generate-cv-from-job-title</h3>
+
+        <p>G&eacute;n&egrave;re un CV mod&egrave;le &agrave; partir d'un titre de poste.</p>
+
+        <h4>Request (FormData)</h4>
+        <pre><code class="language-javascript">{
+  jobTitle: "Chef de projet IT",  // Requis
+  language: "fran&ccedil;ais",          // D&eacute;faut: fran&ccedil;ais
+  model: "gpt-4o",                // Optionnel
+  deviceId: "device_xxx",         // Requis
+  recaptchaToken: "..."           // Optionnel
+}</code></pre>
+
+        <h4>Response (202 Accepted)</h4>
+        <pre><code class="language-json">{
+  "success": true,
+  "queued": true,
+  "taskId": "task_job_title_xxx"
+}</code></pre>
+
+        <h4>Feature</h4>
+        <p><code>generate_from_job_title</code> - 1 cr&eacute;dit par g&eacute;n&eacute;ration</p>
       </div>
     </main>
   </div>

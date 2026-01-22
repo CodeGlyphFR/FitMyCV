@@ -51,6 +51,11 @@ const searchIndex = [
   { title: "Application Modifications", path: "06-pipeline-optimisation/application.html", section: "Pipeline Optimisation", keywords: "modifications application stages" },
   { title: "Système Review", path: "06-pipeline-optimisation/review-system.html", section: "Pipeline Optimisation", keywords: "review accept reject pending changes" },
 
+  // CV Modèle
+  { title: "Génération CV Modèle", path: "17-generation-cv-modele/overview.html", section: "CV Modèle", keywords: "cv modèle template génération fictif" },
+  { title: "Depuis Offre d'Emploi", path: "17-generation-cv-modele/template-from-offer.html", section: "CV Modèle", keywords: "cv modèle offre emploi url pdf extraction" },
+  { title: "Depuis Titre de Poste", path: "17-generation-cv-modele/template-from-job-title.html", section: "CV Modèle", keywords: "cv modèle titre poste job title génération" },
+
   // Abonnements
   { title: "Système Abonnements", path: "07-abonnements/overview.html", section: "Abonnements", keywords: "abonnement subscription stripe billing" },
   { title: "Modèles Économiques", path: "07-abonnements/business-models.html", section: "Abonnements", keywords: "modèle économique abonnement crédits" },
@@ -224,10 +229,9 @@ function initNavigation() {
   initContentLinks();
 }
 
-// Intercepter les liens internes dans le contenu (breadcrumb uniquement)
-// Les autres liens du contenu fonctionnent comme des liens HTML normaux
+// Intercepter les liens internes dans le contenu (breadcrumb + Prochaines Sections)
 function initContentLinks() {
-  // Seulement le breadcrumb - les liens du contenu restent des liens HTML standards
+  // Breadcrumb
   const breadcrumbLinks = document.querySelectorAll('.breadcrumb a');
 
   breadcrumbLinks.forEach(link => {
@@ -240,6 +244,27 @@ function initContentLinks() {
     link.addEventListener('click', (e) => {
       e.preventDefault();
       navigateToPage(href, null);
+    });
+  });
+
+  // Liens "Prochaines Sections" (h2 + ul avec liens .html)
+  // Chercher les liens .html qui suivent un h2 contenant "Prochaines"
+  const content = document.querySelector('.content');
+  if (!content) return;
+
+  const allLinks = content.querySelectorAll('a[href$=".html"]');
+  allLinks.forEach(link => {
+    if (link.dataset.ajaxBound) return;
+    // Ignorer les liens du breadcrumb (déjà traités)
+    if (link.closest('.breadcrumb')) return;
+
+    const href = link.getAttribute('href');
+    if (!href || href.startsWith('http')) return;
+
+    link.dataset.ajaxBound = 'true';
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigateToPage(href, href);
     });
   });
 }
