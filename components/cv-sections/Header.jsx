@@ -299,10 +299,10 @@ export default function Header(props){
         <button
           data-onboarding="edit-button"
           onClick={()=>setOpen(true)}
-          className="no-print absolute bottom-3 right-3 rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-xs hover:bg-white/30 hover:shadow-sm-xl transition-all duration-200"
+          className="no-print absolute bottom-3 right-3 flex items-center justify-center p-1 rounded text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200"
           type="button"
         >
-          <img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " />
+          <img src="/icons/edit.png" alt="Edit" className="h-3 w-3 opacity-70 hover:opacity-100" />
         </button>
       ) : null}
 

@@ -8,7 +8,8 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import VersionSelector from "@/components/cv-improvement/VersionSelector";
 import ChangeHighlight, { ReviewProgressBar } from "@/components/cv-review/ChangeHighlight";
-import { FileText } from "lucide-react";
+import { FileText, Pencil, Trash2 } from "lucide-react";
+import ContextMenu from "@/components/ui/ContextMenu";
 import {
   ModalSection,
   FormField,
@@ -51,22 +52,12 @@ export default function Summary(props){
           <span>{title}</span>
           <div className="flex items-center gap-2">
             {editing && (
-              <div className="flex gap-2">
-                <button
-                  onClick={()=>setOpen(true)}
-                  className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-colors duration-200"
-                >
-                  <img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " />
-                </button>
-                {!isEmpty && (
-                  <button
-                    onClick={clear}
-                    className="no-print text-xs rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-red-500/40 transition-colors duration-200"
-                  >
-                    <img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " />
-                  </button>
-                )}
-              </div>
+              <ContextMenu
+                items={[
+                  { icon: Pencil, label: t("common.edit"), onClick: () => setOpen(true) },
+                  ...(isEmpty ? [] : [{ icon: Trash2, label: t("common.delete"), onClick: clear, danger: true }])
+                ]}
+              />
             )}
             {/* Barre de progression review */}
             <div className="no-print">
