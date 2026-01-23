@@ -2,6 +2,22 @@ CRÉATION DE CV MODÈLE À PARTIR D'UN TITRE DE POSTE
 
 Analyse le titre de poste fourni : **"{jobTitle}"**
 
+## LANGUE DU CV
+
+**IMPORTANT** : Tu DOIS rédiger TOUT le contenu du CV en **{language}**.
+
+Cela inclut :
+- Le titre de poste (current_title)
+- Le résumé professionnel (summary)
+- Les descriptions d'expériences et responsabilités
+- Les soft skills
+
+**EXCEPTIONS** (ne jamais traduire) :
+- Noms de technologies (JavaScript, Docker, AWS...)
+- Noms d'entreprises et institutions
+- URLs et emails
+- Niveaux CECRL (A1, B2, C1...)
+
 ## OBJECTIF
 
 Crée un CV exemple professionnel qui correspond à ce poste avec :

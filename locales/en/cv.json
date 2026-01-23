@@ -145,6 +145,9 @@
       "hint": "Move sections to customize the display order",
       "reset": "Reset",
       "close": "Close"
+    },
+    "placeholders": {
+      "filename": "My_CV"
     }
   },
   "newCvModal": {
@@ -157,6 +160,11 @@
     "creating": "Creating...",
     "cancel": "Cancel",
     "hint": "You can complete all sections later via edit mode.",
+    "placeholders": {
+      "fullName": "E.g.: John Smith",
+      "currentTitle": "E.g.: Full-Stack Developer",
+      "email": "email@example.com"
+    },
     "errors": {
       "fillRequired": "Please provide the full name and current title.",
       "generic": "Error"
@@ -262,6 +270,7 @@
       "countryCode": "Country (code)",
       "selectCountry": "Country",
       "projectUrl": "Project URL (GitHub, portfolio...)",
+      "projectUrlExample": "https://github.com/...",
       "projectUrlLabel": "Link title (e.g., View on GitHub)",
       "summaryDescription": "Describe your professional profile..."
     }

@@ -142,7 +142,8 @@ lib/
 │   └── prompts-shared/ # Prompts réutilisables
 │
 ├── BILLING
-│   └── subscription/   # Plans, crédits, limites
+│   ├── subscription/   # Plans, crédits, limites
+│   └── stripe/         # Intégration Stripe (client, locale)
 │
 ├── ASYNC PROCESSING
 │   └── background-jobs/# Queue tâches (max 3 concurrent)
@@ -159,7 +160,7 @@ lib/
 └── SUPPORT
     ├── settings/       # Settings dynamiques
     ├── i18n/           # Labels localisés
-    ├── utils/          # Helpers génériques
+    ├── utils/          # Helpers génériques (normalizeJobUrl, etc.)
     └── api/            # Factory erreurs
 ```
 
@@ -582,3 +583,44 @@ RECAPTCHA_SECRET_KEY="..."
 2. Ajouter le mapping feature dans `taskFeatureMapping.js`
 3. Créer l'endpoint API
 4. Implémenter le job runner
+
+---
+
+## Utilitaires Notables
+
+### `lib/utils/normalizeJobUrl.js`
+
+Nettoie les URLs d'offres d'emploi en supprimant les paramètres de tracking qui interfèrent avec le cache et le fetching.
+
+```javascript
+import { normalizeJobUrl } from '@/lib/utils/normalizeJobUrl';
+
+// Exemple
+normalizeJobUrl('https://indeed.com/job?id=123&from=searchOnHP&vjk=abc')
+// → 'https://indeed.com/job?id=123'
+```
+
+**Paramètres supprimés :**
+
+| Plateforme | Paramètres |
+|------------|------------|
+| Indeed | `from`, `advn`, `vjk` |
+| LinkedIn | `trk`, `trackingId`, `refId` |
+
+### `lib/stripe/checkoutLocale.js`
+
+Génère les messages d'acceptation des CGV localisés pour Stripe Checkout.
+
+```javascript
+import { getTermsMessage } from '@/lib/stripe/checkoutLocale';
+
+getTermsMessage('fr')
+// → "J'accepte les [Conditions Générales de Vente](https://app.fitmycv.io/terms)."
+
+getTermsMessage('en')
+// → "I accept the [Terms of Service](https://app.fitmycv.io/terms)."
+```
+
+**Langues supportées :** `fr`, `en`, `es`, `de`
+
+Réutilise les traductions existantes de `locales/{lang}/subscription.json` pour garantir la cohérence.

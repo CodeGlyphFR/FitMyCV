@@ -145,6 +145,9 @@
       "hint": "Mueve las secciones para personalizar el orden de visualización",
       "reset": "Restablecer",
       "close": "Cerrar"
+    },
+    "placeholders": {
+      "filename": "Mi_CV"
     }
   },
   "newCvModal": {
@@ -157,6 +160,11 @@
     "creating": "Creando...",
     "cancel": "Cancelar",
     "hint": "Puedes completar todas las secciones después en modo edición.",
+    "placeholders": {
+      "fullName": "Ej: Juan García",
+      "currentTitle": "Ej: Desarrollador Full-Stack",
+      "email": "correo@ejemplo.com"
+    },
     "errors": {
       "fillRequired": "Por favor proporciona el nombre completo y el título actual.",
       "generic": "Error"
@@ -262,6 +270,7 @@
       "countryCode": "País (código)",
       "selectCountry": "País",
       "projectUrl": "URL del proyecto (GitHub, portfolio...)",
+      "projectUrlExample": "https://github.com/...",
       "projectUrlLabel": "Título del enlace (ej: Ver en GitHub)",
       "summaryDescription": "Describe tu perfil profesional..."
     }

@@ -90,7 +90,10 @@
   "export": {
     "noCvSelected": "Kein Lebenslauf für den Export ausgewählt.",
     "errors": {
-      "exportFailed": "Fehler beim PDF-Export. Bitte erneut versuchen."
+      "exportFailed": "Fehler beim PDF-Export. Bitte erneut versuchen.",
+      "missingFilename": "Dateiname fehlt",
+      "noSectionSelected": "Bitte wählen Sie mindestens einen Abschnitt",
+      "accessRestricted": "Zugriff auf diese Funktion eingeschränkt"
     }
   },
   "footer": {
@@ -388,5 +391,10 @@
     "unit": "Kredit",
     "unitPlural": "Kredite",
     "useCredits": "{count} Cr. verwenden"
+  },
+  "notifications": {
+    "viewOptions": "Optionen anzeigen",
+    "viewMyOptions": "Meine Optionen anzeigen",
+    "closeNotification": "Benachrichtigung schließen"
   }
 }

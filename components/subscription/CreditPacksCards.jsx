@@ -5,7 +5,7 @@ import { Zap, Loader2, Sparkles } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function CreditPacksCards({ onPurchaseSuccess }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [packs, setPacks] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [processingPackId, setProcessingPackId] = React.useState(null);
@@ -35,12 +35,12 @@ export default function CreditPacksCards({ onPurchaseSuccess }) {
       const res = await fetch('/api/checkout/credits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packId }),
+        body: JSON.stringify({ packId, locale: language }),
       });
 
       if (!res.ok) {
         const error = await res.json();
-        alert(error.error || 'Erreur lors de la création de la session de paiement');
+        alert(error.error || t('subscription.packs.errors.checkoutError'));
         setProcessingPackId(null);
         return;
       }
@@ -51,7 +51,7 @@ export default function CreditPacksCards({ onPurchaseSuccess }) {
       window.location.href = url;
     } catch (error) {
       console.error('Error purchasing credits:', error);
-      alert('Erreur lors de l\'achat');
+      alert(t('subscription.packs.errors.purchaseError'));
       setProcessingPackId(null);
     }
   };

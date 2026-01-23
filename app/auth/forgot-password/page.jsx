@@ -4,10 +4,12 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const { executeRecaptcha } = useRecaptcha();
+  const { t } = useLanguage();
   const [email, setEmail] = React.useState("");
   const [error, setError] = React.useState("");
   const [success, setSuccess] = React.useState(false);
@@ -18,7 +20,7 @@ export default function ForgotPasswordPage() {
     setError("");
 
     if (!email) {
-      setError("Veuillez entrer votre adresse email");
+      setError(t("auth.forgotPasswordPage.errors.emailRequired"));
       return;
     }
 
@@ -40,12 +42,12 @@ export default function ForgotPasswordPage() {
       if (!res.ok) {
         // Si l'utilisateur est OAuth uniquement
         if (data.error === 'oauth_only') {
-          setError(data.message || "Cet email est associé à un compte OAuth");
+          setError(data.message || t("auth.forgotPasswordPage.errors.oauthOnly"));
           setLoading(false);
           return;
         }
 
-        setError(data.error || "Une erreur est survenue");
+        setError(data.error || t("auth.forgotPasswordPage.errors.generic"));
         setLoading(false);
         return;
       }
@@ -53,7 +55,7 @@ export default function ForgotPasswordPage() {
       setSuccess(true);
     } catch (err) {
       console.error(err);
-      setError("Une erreur est survenue");
+      setError(t("auth.forgotPasswordPage.errors.generic"));
     } finally {
       setLoading(false);
     }
@@ -72,19 +74,19 @@ export default function ForgotPasswordPage() {
                   </svg>
                 </div>
                 <h1 className="text-2xl font-semibold text-white drop-shadow-lg mb-3">
-                  Email envoyé
+                  {t("auth.forgotPasswordPage.successTitle")}
                 </h1>
                 <p className="text-slate-100 drop-shadow mb-6">
-                  Si un compte existe avec cet email, vous recevrez un lien de réinitialisation dans quelques instants.
+                  {t("auth.forgotPasswordPage.successMessage")}
                 </p>
                 <p className="text-sm text-slate-200 drop-shadow mb-6">
-                  Vérifiez votre boîte de réception et vos spams.
+                  {t("auth.forgotPasswordPage.checkInbox")}
                 </p>
                 <Link
                   href="/auth"
                   className="inline-block rounded-sm border border-emerald-500 bg-emerald-500 px-6 py-2 text-sm font-medium text-white hover:bg-emerald-600 transition"
                 >
-                  Retour à la connexion
+                  {t("auth.forgotPasswordPage.backToLogin")}
                 </Link>
               </div>
             </div>
@@ -101,17 +103,17 @@ export default function ForgotPasswordPage() {
           <div className="rounded-3xl border-2 border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl p-8 space-y-6">
             <div className="space-y-2 text-center">
               <h1 className="text-2xl font-semibold text-white drop-shadow-lg">
-                Mot de passe oublié
+                {t("auth.forgotPasswordPage.title")}
               </h1>
               <p className="text-sm text-slate-100 drop-shadow">
-                Entrez votre adresse email pour recevoir un lien de réinitialisation
+                {t("auth.forgotPasswordPage.description")}
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="email" className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">
-                  Email
+                  {t("auth.email")}
                 </label>
                 <input
                   id="email"
@@ -120,7 +122,7 @@ export default function ForgotPasswordPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-all duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
-                  placeholder="email@example.com"
+                  placeholder={t("auth.placeholders.email")}
                   autoComplete="email"
                 />
               </div>
@@ -136,13 +138,13 @@ export default function ForgotPasswordPage() {
                 disabled={loading}
                 className="w-full rounded-sm border border-emerald-500 bg-emerald-500 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60 transition"
               >
-                {loading ? "Envoi en cours..." : "Envoyer le lien"}
+                {loading ? t("auth.forgotPasswordPage.submitting") : t("auth.forgotPasswordPage.submitButton")}
               </button>
             </form>
 
             <div className="text-center text-sm text-slate-100 drop-shadow">
               <Link href="/auth" className="font-medium text-emerald-300 hover:text-emerald-200 hover:underline">
-                Retour à la connexion
+                {t("auth.forgotPasswordPage.backToLogin")}
               </Link>
             </div>
           </div>

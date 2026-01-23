@@ -2,6 +2,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function Modal({
@@ -178,12 +179,15 @@ export default function Modal({
           pointerEvents: 'none'
         }}
       >
-        <div
+        <motion.div
           ref={modalRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-title"
           tabIndex={-1}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
           className={`relative z-10 w-full ${maxWidthClass} rounded-xl border border-white/20 bg-[rgb(2,6,23)] shadow-2xl overflow-hidden outline-hidden`}
           onClick={(e) => e.stopPropagation()}
           onTouchEnd={(e) => e.stopPropagation()}
@@ -192,8 +196,7 @@ export default function Modal({
             maxHeight: '100%',
             display: 'flex',
             flexDirection: 'column',
-            touchAction: 'auto',
-            willChange: open ? 'transform, opacity' : 'auto'
+            touchAction: 'auto'
           }}
         >
           {/* Header */}
@@ -237,7 +240,7 @@ export default function Modal({
           >
             {children}
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>,
     document.body

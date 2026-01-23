@@ -50,7 +50,7 @@ export default function NewCvModal({
             className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            placeholder="Ex: Jean Dupont"
+            placeholder={t("newCvModal.placeholders.fullName")}
             required
           />
         </div>
@@ -62,7 +62,7 @@ export default function NewCvModal({
             className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
             value={currentTitle}
             onChange={(e) => setCurrentTitle(e.target.value)}
-            placeholder="Ex: Développeur Full-Stack"
+            placeholder={t("newCvModal.placeholders.currentTitle")}
             required
           />
         </div>
@@ -72,7 +72,7 @@ export default function NewCvModal({
             className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="email@exemple.com"
+            placeholder={t("newCvModal.placeholders.email")}
           />
         </div>
         {error ? (

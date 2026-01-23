@@ -85,7 +85,7 @@ export async function POST(request) {
 
     const taskData = {
       title: `Traduction en cours...`,
-      successMessage: `CV traduit en ${languageNames[targetLanguage]} avec succès`,
+      successMessage: JSON.stringify({ key: 'taskQueue.messages.translateCompleted', params: { lang: languageNames[targetLanguage] } }),
       type: 'translate-cv',
       status: 'queued',
       shouldUpdateCvList: true,

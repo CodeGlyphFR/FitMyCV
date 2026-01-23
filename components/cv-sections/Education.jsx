@@ -17,7 +17,7 @@ import {
   MapPin,
 } from "@/components/ui/ModalForm";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import CountrySelect from "@/components/ui/CountrySelect";
 import MonthPicker from "@/components/ui/MonthPicker";
 
@@ -79,6 +79,7 @@ export default function Education(props){
 
   const sectionTitles = props.sectionTitles || {};
   const cvLanguage = props.cvLanguage || 'fr';
+  const cvT = getTranslatorForCvLanguage(cvLanguage);
   const title = getCvSectionTitleInCvLanguage('education', sectionTitles.education, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
@@ -207,7 +208,7 @@ export default function Education(props){
                   {[
                     e.location.city,
                     e.location.region,
-                    e.location.country_code ? (t(`countries.${e.location.country_code}`) || e.location.country_code) : null
+                    e.location.country_code ? (cvT(`countries.${e.location.country_code}`) || e.location.country_code) : null
                   ].filter(Boolean).join(", ")}
                 </div>
               )}

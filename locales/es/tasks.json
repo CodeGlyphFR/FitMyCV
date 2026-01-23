@@ -41,7 +41,7 @@
       "task": "Tarea",
       "importInProgress": "Importación en progreso ...",
       "importQueued": "Importación en cola ...",
-      "importCompleted": "Importación completada",
+      "importCompleted": "'{filename}' importado con éxito",
       "importCancelled": "Importación cancelada",
       "importFailed": "Importación fallida",
       "creationInProgress": "Creación en progreso",
@@ -69,7 +69,13 @@
       "cvReadyForOffer": "CV listo para la oferta {index}",
       "cvGenerated": "{count} CV(s) generado(s)",
       "offerFailed": "Fallido para la oferta {index} - {credits} crédito reembolsado",
-      "generatingOffer": "Generando ({current}/{total})"
+      "generatingOffer": "Generando ({current}/{total})",
+      "moreOffers": "otra(s) oferta(s)",
+      "translateCompleted": "CV traducido a {lang} con éxito",
+      "jobTitleCreationCompleted": "CV para \"{title}\" creado con éxito",
+      "improvementCompleted": "CV mejorado con {count} modificación(es)",
+      "improvementReplacedCompleted": "CV reemplazado con {count} mejora(s)",
+      "matchScoreDetailedCompleted": "Puntuación calculada: {score}/100 con {suggestions} sugerencia(s)"
     },
     "errors": {
       "noJobOfferDetected": "No se detectó ninguna oferta de empleo: {source}",

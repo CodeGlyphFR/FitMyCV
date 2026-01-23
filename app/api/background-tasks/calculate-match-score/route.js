@@ -105,7 +105,7 @@ export async function POST(request) {
 
     const taskData = {
       title: `Calcul du score de match en cours...`,
-      successMessage: `Score de match calculé avec succès`,
+      successMessage: 'taskQueue.messages.matchScoreCompleted',
       type: 'calculate-match-score',
       status: 'queued',
       shouldUpdateCvList: false, // Pas besoin de rafraîchir la liste des CVs

@@ -90,7 +90,10 @@
   "export": {
     "noCvSelected": "Ningún CV seleccionado para exportar.",
     "errors": {
-      "exportFailed": "Error al exportar PDF. Por favor intenta de nuevo."
+      "exportFailed": "Error al exportar PDF. Por favor intenta de nuevo.",
+      "missingFilename": "Falta el nombre del archivo",
+      "noSectionSelected": "Seleccione al menos una sección",
+      "accessRestricted": "Acceso a esta función limitado"
     }
   },
   "footer": {
@@ -388,5 +391,10 @@
     "unit": "crédito",
     "unitPlural": "créditos",
     "useCredits": "Usar {count} Cr."
+  },
+  "notifications": {
+    "viewOptions": "Ver opciones",
+    "viewMyOptions": "Ver mis opciones",
+    "closeNotification": "Cerrar notificación"
   }
 }

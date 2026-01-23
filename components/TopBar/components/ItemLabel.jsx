@@ -194,11 +194,11 @@ const ItemLabel = React.memo(function ItemLabel({
 
   return (
     <span className={rootClass}>
-      <span className="flex-shrink-0 text-sm opacity-60 whitespace-nowrap">
+      <span className="hidden sm:inline flex-shrink-0 text-sm opacity-60 whitespace-nowrap">
         {prefix}
       </span>
       {withHyphen ? (
-        <span className="flex-shrink-0 opacity-30 text-sm" aria-hidden="true">
+        <span className="hidden sm:inline flex-shrink-0 opacity-30 text-sm" aria-hidden="true">
           –
         </span>
       ) : null}

@@ -299,13 +299,64 @@ sequenceDiagram
           </tbody>
         </table>
 
-        <h2>Fichiers Clés</h2>
+        <h2>Localisation Checkout Stripe</h2>
+
+        <p>Le message d'acceptation des CGV affich&eacute; dans Stripe Checkout est localis&eacute; selon la langue de l'utilisateur.</p>
+
+        <h3>Fonction getTermsMessage()</h3>
+
+        <pre><code>// lib/stripe/checkoutLocale.js
+
+import { getTermsMessage } from '@/lib/stripe/checkoutLocale';
+
+// G&eacute;n&egrave;re le message d'acceptation CGV localis&eacute;
+getTermsMessage('fr')
+// &rarr; "J'accepte les [Conditions G&eacute;n&eacute;rales de Vente](https://app.fitmycv.io/terms)."
+
+getTermsMessage('en')
+// &rarr; "I accept the [Terms of Service](https://app.fitmycv.io/terms)."</code></pre>
+
+        <h3>Messages par Langue</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Locale</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>fr</code></td>
+              <td>J'accepte les <a href="#">Conditions G&eacute;n&eacute;rales de Vente</a>.</td>
+            </tr>
+            <tr>
+              <td><code>en</code></td>
+              <td>I accept the <a href="#">Terms of Service</a>.</td>
+            </tr>
+            <tr>
+              <td><code>es</code></td>
+              <td>Acepto los <a href="#">T&eacute;rminos de Servicio</a>.</td>
+            </tr>
+            <tr>
+              <td><code>de</code></td>
+              <td>Ich akzeptiere die <a href="#">Nutzungsbedingungen</a>.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-success">
+          <div class="callout-title">R&eacute;utilisation des traductions</div>
+          <p>Les messages sont extraits des fichiers <code>locales/{lang}/subscription.json</code> existants, garantissant la coh&eacute;rence avec le reste de l'application.</p>
+        </div>
+
+        <h2>Fichiers Cl&eacute;s</h2>
 
         <table>
           <thead>
             <tr>
               <th>Fichier</th>
-              <th>Rôle</th>
+              <th>R&ocirc;le</th>
             </tr>
           </thead>
           <tbody>
@@ -315,11 +366,15 @@ sequenceDiagram
             </tr>
             <tr>
               <td><code>lib/subscription/featureUsage.js</code></td>
-              <td>Vérification limites & crédits</td>
+              <td>V&eacute;rification limites &amp; cr&eacute;dits</td>
             </tr>
             <tr>
               <td><code>lib/stripe/client.js</code></td>
-              <td>Client Stripe configuré</td>
+              <td>Client Stripe configur&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>lib/stripe/checkoutLocale.js</code></td>
+              <td>Localisation messages CGV</td>
             </tr>
             <tr>
               <td><code>app/api/webhooks/stripe/route.js</code></td>

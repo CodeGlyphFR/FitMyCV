@@ -341,7 +341,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
               value={email}
               onChange={event => setEmail(event.target.value)}
               className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
-              placeholder="email@example.com"
+              placeholder={t("auth.placeholders.email")}
               autoComplete={isRegister ? "email" : "username"}
             />
           </div>
@@ -354,7 +354,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
               value={password}
               onChange={event => setPassword(event.target.value)}
               className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
-              placeholder="••••••••"
+              placeholder={t("auth.placeholders.password")}
               autoComplete={isRegister ? "new-password" : "current-password"}
             />
             {isRegister && <PasswordStrengthIndicator password={password} />}
@@ -369,7 +369,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
                 value={confirmPassword}
                 onChange={event => setConfirmPassword(event.target.value)}
                 className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
-                placeholder="••••••••"
+                placeholder={t("auth.placeholders.password")}
                 autoComplete="new-password"
               />
             </div>

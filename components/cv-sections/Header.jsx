@@ -7,6 +7,7 @@ import { useAdmin } from "@/components/admin/AdminProvider";
 import useMutate from "@/components/admin/useMutate";
 import Modal from "@/components/ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import ChangeHighlight from "@/components/cv-review/ChangeHighlight";
 import { toTitleCase } from "@/lib/utils/textFormatting";
@@ -30,6 +31,7 @@ export default function Header(props){
   const { mutate } = useMutate();
   const { t } = useLanguage();
   const { settings } = useSettings();
+  const cvT = getTranslatorForCvLanguage(props.cvLanguage || 'fr');
   const [open, setOpen] = React.useState(false);
 
   // Récupérer la version courante depuis le contexte
@@ -228,7 +230,7 @@ export default function Header(props){
               {[
                 header.contact.location.city,
                 header.contact.location.region,
-                header.contact.location.country_code ? (t(`countries.${header.contact.location.country_code}`) || header.contact.location.country_code) : null
+                header.contact.location.country_code ? (cvT(`countries.${header.contact.location.country_code}`) || header.contact.location.country_code) : null
               ].filter(Boolean).join(", ")}
             </div>
           ) : null}

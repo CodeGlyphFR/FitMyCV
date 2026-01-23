@@ -113,7 +113,15 @@
 
         <div class="callout callout-warning">
           <div class="callout-title">P2 - LANGUE</div>
-          <p>Tout le contenu doit être dans la langue cible du CV (détectée automatiquement). Les noms propres, entreprises et certifications restent inchangés.</p>
+          <p>Tout le contenu doit &ecirc;tre dans la langue cible du CV. <strong>4 langues support&eacute;es</strong> : Fran&ccedil;ais (FR), Anglais (EN), Espagnol (ES), Allemand (DE).</p>
+          <p><strong>Exceptions</strong> (restent inchang&eacute;s) :</p>
+          <ul>
+            <li>Noms propres et entreprises</li>
+            <li>Technologies et frameworks (React, Docker, AWS...)</li>
+            <li>Certifications (AWS Certified, ITIL...)</li>
+            <li>URLs et liens</li>
+            <li>Niveaux CECRL pour les langues (A1-C2)</li>
+          </ul>
         </div>
 
         <div class="callout callout-info">
@@ -286,9 +294,74 @@ flowchart LR
           </div>
         </div>
 
-        <h2>Système de Cache (CAG)</h2>
+        <h2>G&eacute;n&eacute;ration URLs pour Projets (Templates)</h2>
 
-        <p>Les prompts utilisent un système de cache pour optimiser les coûts :</p>
+        <p>Lors de la g&eacute;n&eacute;ration de CV templates (candidats fictifs), les projets peuvent inclure des URLs coh&eacute;rentes avec le profil g&eacute;n&eacute;r&eacute;.</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge">projects</span>
+            <span class="data-flow-title">Champs url et url_label</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>R&egrave;gles de g&eacute;n&eacute;ration</h5>
+            <ul>
+              <li>L'URL doit &ecirc;tre coh&eacute;rente avec le <code>header.full_name</code> du candidat fictif</li>
+              <li>Le <code>url_label</code> d&eacute;crit le type de lien (ex: "GitHub", "Portfolio", "Demo")</li>
+              <li>Les URLs doivent &ecirc;tre plausibles mais fictives (domaines existants, usernames g&eacute;n&eacute;r&eacute;s)</li>
+            </ul>
+
+            <h5>Exemples de sortie</h5>
+            <pre><code>{
+  "projects": [
+    {
+      "name": "E-commerce Platform",
+      "url": "https://github.com/marie-dupont/ecommerce-platform",
+      "url_label": "GitHub"
+    },
+    {
+      "name": "Portfolio Personnel",
+      "url": "https://marie-dupont.dev",
+      "url_label": "Portfolio"
+    },
+    {
+      "name": "Application Mobile Fitness",
+      "url": "https://play.google.com/store/apps/details?id=com.fitness.app",
+      "url_label": "Google Play"
+    }
+  ]
+}</code></pre>
+
+            <h5>Types de liens g&eacute;n&eacute;r&eacute;s</h5>
+            <table>
+              <tr>
+                <td><code>GitHub</code></td>
+                <td>Pour projets open source ou repos priv&eacute;s</td>
+              </tr>
+              <tr>
+                <td><code>Portfolio</code></td>
+                <td>Site personnel du candidat</td>
+              </tr>
+              <tr>
+                <td><code>Demo</code></td>
+                <td>Lien vers une d&eacute;mo live</td>
+              </tr>
+              <tr>
+                <td><code>Google Play</code> / <code>App Store</code></td>
+                <td>Pour applications mobiles</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">CV Templates uniquement</div>
+          <p>Cette fonctionnalit&eacute; s'applique aux CV templates (candidats fictifs g&eacute;n&eacute;r&eacute;s pour d&eacute;monstration). Pour les CV r&eacute;els, les URLs proviennent du CV source et ne sont jamais invent&eacute;es.</p>
+        </div>
+
+        <h2>Syst&egrave;me de Cache (CAG)</h2>
+
+        <p>Les prompts utilisent un syst&egrave;me de cache pour optimiser les co&ucirc;ts :</p>
 
         <div class="card-grid">
           <div class="card">
