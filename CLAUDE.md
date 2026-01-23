@@ -124,6 +124,7 @@ await incrementFeatureCounter(userId, 'gpt_cv_generation');
 - **Branches** : `main` ← `release` ← `dev`
 - **Préfixes** : `feature/`, `improvement/`, `refactor/`, `bug/`, `hotfix/`
 - **Commits** : `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`
+- **Merges** : Toujours utiliser `--no-ff` pour préserver l'historique des branches
 
 ## Incrémentation de Version
 
