@@ -277,6 +277,10 @@ export default function Experience(props){
               )}
               {/* Contenu flouté pendant le traitement */}
               <div className={isProcessing ? 'blur-md pointer-events-none' : ''}>
+              {/* Review actions en haut à droite */}
+              <div className="flex justify-end mb-1">
+                <ExperienceReviewActions expIndex={e._originalIndex ?? i} />
+              </div>
               <div className="flex flex-wrap items-baseline gap-2">
                 <div className="font-semibold flex-1 min-w-0">
                   <ChangeHighlight section="experience" field="title" expIndex={e._originalIndex ?? i} className="font-semibold">
@@ -287,7 +291,6 @@ export default function Experience(props){
                 <div className="ml-3 text-sm opacity-80 whitespace-nowrap">
                   {ym(e.start_date)} — {(!e.end_date || e.end_date === "present") ? cvT("cvSections.present") : ym(e.end_date)}
                 </div>
-                <ExperienceReviewActions expIndex={e._originalIndex ?? i} />
                 {editing && (
                   <ContextMenu
                     items={[
