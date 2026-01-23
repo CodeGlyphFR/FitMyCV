@@ -309,34 +309,44 @@ const cvFile = await prisma.cvFile.create({
 
         <h2>Langues Support&eacute;es</h2>
 
-        <p>Le CV peut &ecirc;tre g&eacute;n&eacute;r&eacute; dans diff&eacute;rentes langues :</p>
+        <p>Le CV peut &ecirc;tre g&eacute;n&eacute;r&eacute; dans les <strong>4 langues</strong> de l'application :</p>
 
         <table>
           <thead>
             <tr>
               <th>Valeur</th>
               <th>Langue du CV</th>
+              <th>Code ISO</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><code>fran&ccedil;ais</code></td>
               <td>Fran&ccedil;ais (d&eacute;faut)</td>
+              <td>fr</td>
             </tr>
             <tr>
               <td><code>anglais</code></td>
               <td>Anglais</td>
+              <td>en</td>
             </tr>
             <tr>
               <td><code>allemand</code></td>
               <td>Allemand</td>
+              <td>de</td>
             </tr>
             <tr>
               <td><code>espagnol</code></td>
               <td>Espagnol</td>
+              <td>es</td>
             </tr>
           </tbody>
         </table>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Mapping automatique</div>
+          <p>La langue de l'interface utilisateur est automatiquement mapp&eacute;e vers la valeur attendue par l'API. Le mapping se fait via <code>LOCALE_TO_LANGUAGE</code> dans <code>CvGeneratorModal.jsx</code>.</p>
+        </div>
 
         <h2>Gestion des Erreurs</h2>
 

@@ -72,6 +72,62 @@ export async function POST(request) {
 
   return Response.json({ url: checkoutSession.url });
 }</code></pre>
+
+        <h2>Localisation Stripe Checkout</h2>
+
+        <p>Les messages d'acceptation des CGV sont localis&eacute;s selon la langue de l'utilisateur via <code>lib/stripe/checkoutLocale.js</code>.</p>
+
+        <h3>Langues support&eacute;es</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>fr</code></td>
+              <td>J'accepte les Conditions G&eacute;n&eacute;rales de Vente</td>
+            </tr>
+            <tr>
+              <td><code>en</code></td>
+              <td>I accept the Terms of Service</td>
+            </tr>
+            <tr>
+              <td><code>es</code></td>
+              <td>Acepto los T&eacute;rminos de Servicio</td>
+            </tr>
+            <tr>
+              <td><code>de</code></td>
+              <td>Ich akzeptiere die Allgemeinen Gesch&auml;ftsbedingungen</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Utilisation</h3>
+
+        <pre><code>// lib/stripe/checkoutLocale.js
+import { getTermsMessage } from '@/lib/stripe/checkoutLocale';
+
+// Dans la cr&eacute;ation de session Stripe
+const checkoutSession = await stripe.checkout.sessions.create({
+  // ...autres options
+  consent_collection: {
+    terms_of_service: 'required'
+  },
+  custom_text: {
+    terms_of_service_acceptance: {
+      message: getTermsMessage(locale) // "fr", "en", "es", "de"
+    }
+  }
+});</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Traductions synchronis&eacute;es</div>
+          <p>Les messages utilisent les traductions de <code>locales/{lang}/subscription.json</code> pour garantir la coh&eacute;rence avec le reste de l'application.</p>
+        </div>
       </div>
     </main>
   </div>

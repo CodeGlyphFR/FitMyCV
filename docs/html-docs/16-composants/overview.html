@@ -218,6 +218,78 @@ flowchart TB
           </div>
         </div>
 
+        <h3>ContextMenu (D&eacute;taill&eacute;)</h3>
+
+        <p>Menu contextuel r&eacute;utilisable avec ic&ocirc;ne kebab (&loz;), utilis&eacute; pour remplacer les boutons edit/delete par un menu unifi&eacute;.</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge">Props</span>
+            <span class="data-flow-title">Configuration du composant</span>
+          </div>
+          <div class="data-flow-content">
+            <table>
+              <thead>
+                <tr>
+                  <th>Prop</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>items</code></td>
+                  <td>Array</td>
+                  <td>Liste des actions du menu</td>
+                </tr>
+                <tr>
+                  <td><code>className</code></td>
+                  <td>string</td>
+                  <td>Classes CSS additionnelles</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h5>Structure d'un item</h5>
+            <pre><code>{
+  icon: LucideIcon,     // Ic&ocirc;ne optionnelle
+  label: string,        // Texte de l'action
+  onClick: () => void,  // Callback au clic
+  danger: boolean       // Style rouge pour suppressions
+}</code></pre>
+
+            <h5>Exemple d'utilisation</h5>
+            <pre><code class="language-jsx">import ContextMenu from '@/components/ui/ContextMenu';
+import { Pencil, Trash2 } from 'lucide-react';
+
+&lt;ContextMenu
+  items={[
+    {
+      icon: Pencil,
+      label: t('common.edit'),
+      onClick: () => setEditMode(true)
+    },
+    {
+      icon: Trash2,
+      label: t('common.delete'),
+      onClick: handleDelete,
+      danger: true
+    }
+  ]}
+/&gt;</code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Fonctionnalit&eacute;s</div>
+          <ul>
+            <li><strong>Positionnement dynamique</strong> : Calcul automatique pour &eacute;viter les d&eacute;bordements</li>
+            <li><strong>React Portal</strong> : Rendu via <code>createPortal</code> (z-index 10002)</li>
+            <li><strong>Fermeture automatique</strong> : Click outside, Escape, scroll</li>
+            <li><strong>Accessibilit&eacute;</strong> : Attributs ARIA (<code>role="menu"</code>, <code>aria-expanded</code>)</li>
+          </ul>
+        </div>
+
         <h2>Patterns</h2>
 
         <h3>Server vs Client Components</h3>

@@ -146,8 +146,45 @@ Panel d'optimisation IA côté client.
 ### Patterns
 
 - **React Portal** : `createPortal` pour modal
+- **Framer Motion** : Animation fade-in/slide-up à l'ouverture
 - **CSS keyframes** : animations score
 - **Set/Map** : sélections suggestions/skills
+
+#### Modal - Configuration Animation
+
+Le composant `Modal` utilise Framer Motion pour des animations fluides :
+
+```jsx
+<motion.div
+  initial={{ opacity: 0, y: 8 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.2, ease: "easeOut" }}
+>
+  {/* Contenu modal */}
+</motion.div>
+```
+
+**Paramètres d'animation :**
+
+| Propriété | Valeur | Description |
+|-----------|--------|-------------|
+| `initial.opacity` | 0 | Invisible au départ |
+| `initial.y` | 8 | Décalé de 8px vers le bas |
+| `animate.opacity` | 1 | Pleinement visible |
+| `animate.y` | 0 | Position finale |
+| `duration` | 0.2s | Durée de transition |
+| `ease` | "easeOut" | Courbe d'accélération |
+
+**Gestion mobile (safe-area) :**
+
+```css
+top: env(safe-area-inset-top);
+left: env(safe-area-inset-left);
+right: env(safe-area-inset-right);
+bottom: env(safe-area-inset-bottom);
+```
+
+Le modal évite automatiquement les encoches et barres système sur mobile (iPhone notch, etc.).
 
 ---
 
@@ -161,7 +198,7 @@ Surlignage et review des changements IA.
 | `ChangeReviewPopover` | Popover avant/après |
 | `InlineDiff` | Diff inline (strikethrough/highlight) |
 | `SkillItemHighlight` | Surbrillance items skill |
-| `ExperienceReviewActions` | Actions batch expérience |
+| `ExperienceReviewActions` | Actions batch expérience (positionné en haut à droite) |
 | `ProjectReviewActions` | Actions batch projet |
 | `SectionReviewActions` | Actions batch section |
 | `SkillsReviewActions` | Actions batch skills |
@@ -174,6 +211,23 @@ Surlignage et review des changements IA.
 - **Diff pathfinding** : `section.field` vs `section[idx].field`
 - **Batch actions** : accept/reject multiples
 - **Status tracking** : pending/accepted/rejected
+
+#### ExperienceReviewActions - Positionnement
+
+Les boutons "Tout accepter" / "Tout refuser" sont positionnés **en haut à droite** de chaque carte d'expérience pour une meilleure hiérarchie visuelle :
+
+```jsx
+// Dans Experience.jsx - header de la carte
+<div className="flex items-center justify-between">
+  <h3>{experience.title}</h3>
+  <ExperienceReviewActions expIndex={index} />
+</div>
+```
+
+Ce positionnement permet :
+- Une action rapide sans interférer avec le contenu
+- Une cohérence avec le pattern ContextMenu (kebab en haut à droite)
+- Une meilleure visibilité des actions de review
 
 ---
 
@@ -380,7 +434,7 @@ Composants réutilisables du design system.
 
 | Composant | Rôle |
 |-----------|------|
-| `Modal` | Modal wrapper générique |
+| `Modal` | Modal wrapper générique avec animations Framer Motion |
 | `ModalForm` | Composants form (Section, Field, Input, Grid) |
 | `Tooltip` | Hover tooltips |
 | `LoadingOverlay` | Overlay chargement |
@@ -388,6 +442,64 @@ Composants réutilisables du design system.
 | `TipBox` | Box conseil/astuce |
 | `EmptyState` | État vide standardisé |
 | `ContextMenu` | Menu contextuel kebab (⋮) avec actions edit/delete |
+
+#### ContextMenu (Détaillé)
+
+Menu contextuel réutilisable avec icône kebab (⋮), utilisé pour remplacer les boutons edit/delete par un menu unifié.
+
+**Props :**
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `items` | `Array` | Liste des actions du menu |
+| `className` | `string` | Classes CSS additionnelles |
+
+**Structure d'un item :**
+
+```javascript
+{
+  icon: LucideIcon,     // Icône optionnelle (Lucide React)
+  label: string,        // Texte de l'action
+  onClick: () => void,  // Callback au clic
+  danger: boolean       // Style rouge pour actions destructives
+}
+```
+
+**Exemple d'utilisation :**
+
+```jsx
+import ContextMenu from '@/components/ui/ContextMenu';
+import { Pencil, Trash2 } from 'lucide-react';
+
+<ContextMenu
+  items={[
+    {
+      icon: Pencil,
+      label: t('common.edit'),
+      onClick: () => setEditMode(true)
+    },
+    {
+      icon: Trash2,
+      label: t('common.delete'),
+      onClick: handleDelete,
+      danger: true
+    }
+  ]}
+/>
+```
+
+**Fonctionnalités :**
+
+- **Positionnement dynamique** : Calcul automatique pour éviter les débordements écran
+- **React Portal** : Rendu via `createPortal` au niveau `document.body` (z-index 10002)
+- **Fermeture automatique** : Click outside, touche Escape, scroll de la page
+- **Accessibilité** : Attributs ARIA (`role="menu"`, `aria-expanded`, `aria-haspopup`)
+- **Animations** : `animate-in`, `fade-in`, `slide-in-from-top/bottom`
+
+**Utilisation dans le projet :**
+
+- Sections CV (Experience, Education, Projects, Skills, Languages, Extras)
+- Remplace les anciens boutons edit/delete inline
 
 ### Composants Formulaires
 
