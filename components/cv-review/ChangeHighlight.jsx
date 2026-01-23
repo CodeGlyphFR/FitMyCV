@@ -6,6 +6,62 @@ import ChangeReviewPopover from "./ChangeReviewPopover";
 import InlineDiff from "./InlineDiff";
 
 /**
+ * Retourne les classes Tailwind selon le type de changement
+ */
+function getChangeTypeColors(changeType) {
+  const colorSchemes = {
+    // AJOUTS - Vert (emerald)
+    added: {
+      text: 'text-emerald-300',
+      bg: 'bg-emerald-500/10',
+      hover: 'hover:bg-emerald-500/20',
+    },
+    experience_added: {
+      text: 'text-emerald-300',
+      bg: 'bg-emerald-500/10',
+      hover: 'hover:bg-emerald-500/20',
+    },
+    move_to_projects: {
+      text: 'text-emerald-300',
+      bg: 'bg-emerald-500/10',
+      hover: 'hover:bg-emerald-500/20',
+    },
+
+    // MODIFICATIONS - Jaune (amber) - DÉFAUT
+    modified: {
+      text: 'text-amber-300',
+      bg: 'bg-amber-500/10',
+      hover: 'hover:bg-amber-500/20',
+    },
+    level_adjusted: {
+      text: 'text-amber-300',
+      bg: 'bg-amber-500/10',
+      hover: 'hover:bg-amber-500/20',
+    },
+    reordered: {
+      text: 'text-amber-300',
+      bg: 'bg-amber-500/10',
+      hover: 'hover:bg-amber-500/20',
+    },
+
+    // SUPPRESSIONS - Rouge
+    removed: {
+      text: 'text-red-300',
+      bg: 'bg-red-500/10',
+      hover: 'hover:bg-red-500/20',
+    },
+    experience_removed: {
+      text: 'text-red-300',
+      bg: 'bg-red-500/10',
+      hover: 'hover:bg-red-500/20',
+    },
+  };
+
+  // Par défaut: amber (modification) car c'est le cas le plus courant
+  return colorSchemes[changeType] || colorSchemes.modified;
+}
+
+/**
  * Wrapper pour surligner le contenu modifié par l'IA
  * Affiche une surbrillance et permet de reviewer le changement
  *
@@ -91,15 +147,16 @@ export default function ChangeHighlight({
                       typeof change.beforeDisplay === 'string' &&
                       typeof change.afterDisplay === 'string';
 
-  // Pour les champs texte simples, afficher seulement le nouveau texte en vert
+  // Pour les champs texte simples, afficher le nouveau texte avec couleur selon le type
   // L'ancien texte sera visible dans le popover
   if (hasTextDiff) {
+    const colors = getChangeTypeColors(change.changeType);
     return (
       <>
         <span
           ref={highlightRef}
           onClick={handleClick}
-          className={`relative cursor-pointer text-emerald-300 bg-emerald-500/10 rounded transition-all duration-200 hover:bg-emerald-500/20 ${className}`}
+          className={`relative cursor-pointer ${colors.text} ${colors.bg} rounded transition-all duration-200 ${colors.hover} ${className}`}
         >
           {change.afterDisplay}
         </span>
@@ -124,12 +181,13 @@ export default function ChangeHighlight({
   const hasBeforeText = change.beforeValue !== undefined ||
                         (change.beforeDisplay && typeof change.beforeDisplay === 'string' && change.beforeDisplay.length > 0);
 
+  const colors = getChangeTypeColors(change.changeType);
   return (
     <>
       <div
         ref={highlightRef}
         onClick={handleClick}
-        className={`relative cursor-pointer text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 rounded px-1 py-0.5 transition-all duration-200 ${className}`}
+        className={`relative cursor-pointer ${colors.text} ${colors.bg} ${colors.hover} rounded px-1 py-0.5 transition-all duration-200 ${className}`}
       >
         {children}
       </div>

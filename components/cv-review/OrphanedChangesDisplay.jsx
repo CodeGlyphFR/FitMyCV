@@ -5,40 +5,34 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 /**
  * Affiche les changements orphelins (non visibles dans l'UI principale)
- * Cela inclut les changements pour des sections sans ChangeHighlight :
- * - education, languages, projects, header
- * - items supprimés dans des sections cachées
+ *
+ * NOTE: Depuis la mise à jour du système de review, les suppressions sont
+ * maintenant affichées directement dans chaque section (Projects, Languages,
+ * Education, Extras). Ce composant n'affiche plus que les changements qui
+ * ne sont pas gérés ailleurs :
+ * - Expériences déplacées vers projets (move_to_projects)
+ * - Autres changements orphelins potentiels
  */
 export default function OrphanedChangesDisplay() {
   const { t } = useLanguage();
   const { pendingChanges, isLatestVersion, acceptChange, rejectChange } = useHighlight();
 
-  // Filtrer pour n'afficher que les suppressions importantes et les move_to_projects
-  // Les compétences (skills) sont gérées visuellement dans leur section
+  // Filtrer pour n'afficher que les changements vraiment orphelins
+  // Les suppressions sont maintenant affichées dans leurs sections respectives
   const orphanedChanges = pendingChanges.filter((c) => {
     if (c.status !== "pending") return false;
 
-    // Expériences supprimées
-    if (c.section === "experience" && c.changeType === "experience_removed") return true;
-
-    // Expériences déplacées vers projets
+    // Expériences déplacées vers projets - toujours afficher ici car c'est un cas spécial
+    // qui concerne 2 sections à la fois (experience et projects)
     if (c.section === "experience" && c.changeType === "move_to_projects") return true;
 
-    // Suppressions d'extras (certifications, publications, etc.)
-    if (c.section === "extras" && c.changeType === "removed") return true;
-
-    // Suppressions de langues
-    if (c.section === "languages" && c.changeType === "removed") return true;
-
-    // Suppressions de formations
-    if (c.section === "education" && c.changeType === "removed") return true;
-
-    // Suppressions de projets
-    if (c.section === "projects" && c.changeType === "removed") return true;
-
-    // Ajouts de projets (nouveaux projets créés)
-    // Affiché ici ET visuellement dans la section Projects
-    if (c.section === "projects" && c.changeType === "added") return true;
+    // NOTE: Les suppressions ci-dessous sont maintenant affichées dans leurs sections respectives
+    // et ne sont plus affichées ici pour éviter les doublons:
+    // - experience_removed → affiché dans Experience.jsx (via ExperienceReviewActions)
+    // - extras removed → affiché dans Extras.jsx (via ReviewableItemCard)
+    // - languages removed → affiché dans Languages.jsx (via ReviewableItemCard)
+    // - education removed → affiché dans Education.jsx (via ReviewableItemCard)
+    // - projects removed/added → affiché dans Projects.jsx (via ReviewableItemCard)
 
     // Tout le reste n'est pas affiché dans ce bloc
     return false;

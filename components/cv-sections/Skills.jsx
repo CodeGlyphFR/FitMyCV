@@ -267,12 +267,12 @@ export default function Skills(props){
                           </div>
                         );
                       })}
-                      {/* Afficher les skills supprimés */}
-                      <RemovedSkillsDisplay section="skills" field="hard_skills" />
                     </div>
                   ) : (
                     editing && <div className="text-sm opacity-60">{t("cvSections.noSkills")}</div>
                   )}
+                  {/* Afficher les skills supprimés - en dehors de la grille pour être en bas */}
+                  <RemovedSkillsDisplay section="skills" field="hard_skills" />
                 </div>
               )}
               {/* Hard skills orphelins (tous supprimés) */}

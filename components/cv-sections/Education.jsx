@@ -18,6 +18,9 @@ import {
 } from "@/components/ui/ModalForm";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import ReviewableItemCard from "@/components/cv-review/ReviewableItemCard";
+import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
+import { useItemChanges } from "@/components/cv-review/useItemChanges";
 import CountrySelect from "@/components/ui/CountrySelect";
 import MonthPicker from "@/components/ui/MonthPicker";
 import ContextMenu from "@/components/ui/ContextMenu";
@@ -85,6 +88,10 @@ export default function Education(props){
   const title = getCvSectionTitleInCvLanguage('education', sectionTitles.education, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
+
+  // Récupérer les formations supprimées pour les afficher
+  const { removedItems: removedEducation } = useItemChanges("education");
+  const hasRemovedEducation = removedEducation.length > 0;
 
   // ---- UI State ----
   const [editIndex, setEditIndex] = React.useState(null);
@@ -159,70 +166,96 @@ export default function Education(props){
     setDelIndex(null);
   }
 
-  if (education.length===0 && !editing) return null;
+  if (education.length===0 && !editing && !hasRemovedEducation) return null;
 
   return (
     <Section
       title={
         <div className="flex items-center justify-between gap-2">
           <span>{title}</span>
-          {editing && (
-            <button
-              onClick={() => setAddOpen(true)}
-              className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-colors duration-200"
-            >
-              {t("common.add")}
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            <SectionReviewActions section="education" />
+            {editing && (
+              <button
+                onClick={() => setAddOpen(true)}
+                className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-colors duration-200"
+              >
+                {t("common.add")}
+              </button>
+            )}
+          </div>
         </div>
       }
     >
-      {(!education || education.length === 0) ? (
+      {(!education || education.length === 0) && !hasRemovedEducation ? (
         <div className="rounded-xl border border-white/15 p-3 text-sm opacity-60">
           {t("cvSections.noEducation")}
         </div>
       ) : (
-        <div className={education.length > 1 ? "grid md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
-          {education.map((e, i) => (
-            <div key={i} className="rounded-xl border border-white/15 p-3 relative z-0 overflow-visible">
-              <div className="flex items-start gap-2">
-                <div className="font-semibold flex-1 min-w-0 break-words">
-                  {e.institution || ""}
-                </div>
-                <div className="text-sm opacity-80 whitespace-nowrap ml-auto mt-1">
-                  {e.start_date && e.start_date !== e.end_date ? (
-                    <span>{ym(e.start_date)} — {ym(e.end_date)}</span>
-                  ) : (
-                    <span>{ym(e.end_date)}</span>
+        <div className="space-y-3">
+          {/* Formations existantes */}
+          {education.length > 0 && (
+            <div className={education.length > 1 ? "grid md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
+              {education.map((e, i) => (
+                <div key={i} className="rounded-xl border border-white/15 p-3 relative z-0 overflow-visible">
+                  <div className="flex items-start gap-2">
+                    <div className="font-semibold flex-1 min-w-0 break-words">
+                      {e.institution || ""}
+                    </div>
+                    <div className="text-sm opacity-80 whitespace-nowrap ml-auto mt-1">
+                      {e.start_date && e.start_date !== e.end_date ? (
+                        <span>{ym(e.start_date)} — {ym(e.end_date)}</span>
+                      ) : (
+                        <span>{ym(e.end_date)}</span>
+                      )}
+                    </div>
+                    {editing && (
+                      <ContextMenu
+                        items={[
+                          { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(i) },
+                          { icon: Trash2, label: t("common.delete"), onClick: () => setDelIndex(e._originalIndex ?? i), danger: true }
+                        ]}
+                      />
+                    )}
+                  </div>
+
+                  {e.location && (e.location.city || e.location.region || e.location.country_code) && (
+                    <div className="text-xs opacity-70 mt-0.5">
+                      {[
+                        e.location.city,
+                        e.location.region,
+                        e.location.country_code ? (cvT(`countries.${e.location.country_code}`) || e.location.country_code) : null
+                      ].filter(Boolean).join(", ")}
+                    </div>
                   )}
-                </div>
-                {editing && (
-                  <ContextMenu
-                    items={[
-                      { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(i) },
-                      { icon: Trash2, label: t("common.delete"), onClick: () => setDelIndex(e._originalIndex ?? i), danger: true }
-                    ]}
-                  />
-                )}
-              </div>
 
-              {e.location && (e.location.city || e.location.region || e.location.country_code) && (
-                <div className="text-xs opacity-70 mt-0.5">
-                  {[
-                    e.location.city,
-                    e.location.region,
-                    e.location.country_code ? (cvT(`countries.${e.location.country_code}`) || e.location.country_code) : null
-                  ].filter(Boolean).join(", ")}
+                  <div className="text-sm opacity-80">
+                    {e.degree || ""}
+                    {e.degree && e.field_of_study ? " • " : ""}
+                    {e.field_of_study || ""}
+                  </div>
                 </div>
-              )}
-
-              <div className="text-sm opacity-80">
-                {e.degree || ""}
-                {e.degree && e.field_of_study ? " • " : ""}
-                {e.field_of_study || ""}
-              </div>
+              ))}
             </div>
-          ))}
+          )}
+
+          {/* Formations supprimées par l'IA (cartes rouges) */}
+          {removedEducation.length > 0 && (
+            <div className={removedEducation.length > 1 ? "grid md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
+              {removedEducation.map((change) => (
+                <ReviewableItemCard
+                  key={change.id}
+                  change={change}
+                  className="no-print"
+                >
+                  <div className="font-semibold">{change.itemName || change.change || t("cvSections.education")}</div>
+                  {change.reason && (
+                    <div className="text-sm opacity-80 mt-1">{change.reason}</div>
+                  )}
+                </ReviewableItemCard>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -11,6 +11,8 @@ import { capitalizeSkillName, toTitleCase } from "@/lib/utils/textFormatting";
 import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
 import { useLanguageHasChanges } from "@/components/cv-review/LanguageReviewActions";
 import ChangeReviewPopover from "@/components/cv-review/ChangeReviewPopover";
+import ReviewableItemCard from "@/components/cv-review/ReviewableItemCard";
+import { useItemChanges } from "@/components/cv-review/useItemChanges";
 import { useHighlight } from "@/components/providers/HighlightProvider";
 import { Languages as LanguagesIcon } from "lucide-react";
 import {
@@ -107,6 +109,9 @@ export default function Languages(props){
   const { editing } = useAdmin();
   const { mutate } = useMutate();
 
+  // Récupérer les langues supprimées pour les afficher
+  const { removedItems: removedLanguages } = useItemChanges("languages");
+
   const [editIndex, setEditIndex] = React.useState(null);
   const [delIndex, setDelIndex] = React.useState(null);
   const [addOpen, setAddOpen] = React.useState(false);
@@ -142,8 +147,9 @@ export default function Languages(props){
   const languageToDelete = delIndex !== null ? languages[delIndex] : null;
   const languageNameToDelete = languageToDelete?.name || "";
 
-  // Masquer entièrement la section si aucune langue et pas en édition
-  if (languages.length===0 && !editing) return null;
+  // Masquer entièrement la section si aucune langue, pas en édition et pas de langues supprimées
+  const hasRemovedLanguages = removedLanguages.length > 0;
+  if (languages.length===0 && !editing && !hasRemovedLanguages) return null;
 
   return (
     <Section title={
@@ -155,7 +161,7 @@ export default function Languages(props){
         </div>
       </div>
     }>
-      {languages.length === 0 ? (
+      {languages.length === 0 && !hasRemovedLanguages ? (
         // Édition vide : message bordé
         editing ? (
           <div className="rounded-2xl border border-white/15 p-3 text-sm opacity-60">
@@ -164,6 +170,7 @@ export default function Languages(props){
         ) : null
       ) : (
         <div className="flex flex-wrap gap-2">
+          {/* Langues existantes */}
           {languages.map((l, i) => (
             <LanguageItem
               key={i}
@@ -175,6 +182,21 @@ export default function Languages(props){
               cvT={cvT}
               t={t}
             />
+          ))}
+
+          {/* Langues supprimées par l'IA (badges rouges) */}
+          {removedLanguages.map((change) => (
+            <ReviewableItemCard
+              key={change.id}
+              change={change}
+              variant="badge"
+              className="no-print"
+            >
+              <span className="font-semibold">{toTitleCase(change.itemName) || change.change}</span>
+              {change.beforeValue?.level && (
+                <span className="text-sm opacity-80"> : {getLanguageLevelLabel(change.beforeValue.level, cvT) || change.beforeValue.level}</span>
+              )}
+            </ReviewableItemCard>
           ))}
         </div>
       )}

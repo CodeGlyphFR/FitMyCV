@@ -27,6 +27,8 @@ import SkillItemHighlight, { RemovedSkillsDisplay } from "@/components/cv-review
 import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
 import ExperienceReviewActions from "@/components/cv-review/ExperienceReviewActions";
 import ChangeHighlight from "@/components/cv-review/ChangeHighlight";
+import ReviewableItemCard from "@/components/cv-review/ReviewableItemCard";
+import { useItemChanges } from "@/components/cv-review/useItemChanges";
 import { useHighlight } from "@/components/providers/HighlightProvider";
 import CountrySelect from "@/components/ui/CountrySelect";
 import MonthPicker from "@/components/ui/MonthPicker";
@@ -105,6 +107,14 @@ export default function Experience(props){
   const { mutate } = useMutate();
   const { batchProcessingExpIndex } = useHighlight();
 
+  // Récupérer les expériences supprimées pour les afficher
+  const { removedItems: allRemovedItems } = useItemChanges("experience");
+  // Filtrer uniquement les expériences supprimées (pas les skills, responsibilities, etc.)
+  const removedExperiences = allRemovedItems.filter(
+    (item) => item.changeType === "experience_removed"
+  );
+  const hasRemovedExperiences = removedExperiences.length > 0;
+
   // ---- UI State ----
   const [editIndex, setEditIndex] = React.useState(null);
   const [delIndex, setDelIndex] = React.useState(null);
@@ -148,7 +158,8 @@ export default function Experience(props){
   }, []);
 
   const isEmpty = experience.length === 0;
-  if (!editing && isEmpty) return null; // Masquer entièrement hors édition s'il n'y a aucune expérience
+  // Masquer entièrement hors édition s'il n'y a aucune expérience et pas d'expériences supprimées
+  if (!editing && isEmpty && !hasRemovedExperiences) return null;
 
   // ---- Actions ----
   const openEdit = (i) => {
@@ -384,12 +395,30 @@ export default function Experience(props){
           );
           })
         ) : (
-          editing && (
+          editing && !hasRemovedExperiences && (
             <div className="rounded-2xl border border-white/15 p-3 text-sm opacity-60">
               {t("cvSections.noExperience")}
             </div>
           )
         )}
+
+        {/* Expériences supprimées (cartes rouges compactes) */}
+        {removedExperiences.map((change) => (
+          <ReviewableItemCard
+            key={change.id}
+            change={change}
+            showInlineActions={true}
+            className="no-print"
+          >
+            <div className="font-semibold">{change.beforeValue?.title || change.itemName}</div>
+            {change.beforeValue?.company && (
+              <div className="text-sm opacity-80">{change.beforeValue.company}</div>
+            )}
+            {change.reason && (
+              <div className="text-sm opacity-70 mt-1 italic">{change.reason}</div>
+            )}
+          </ReviewableItemCard>
+        ))}
       </div>
 
       {/* Edit Modal */}
