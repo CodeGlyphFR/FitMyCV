@@ -21,11 +21,13 @@ import {
   ModalFooter,
   ModalFooterDelete,
 } from "@/components/ui/ModalForm";
+import ContextMenu from "@/components/ui/ContextMenu";
+import { Pencil, Trash2 } from "lucide-react";
 
 /**
  * Composant pour une langue individuelle avec highlight review
  */
-function LanguageItem({ language, index, isEditing, onEdit, onDelete, cvT }) {
+function LanguageItem({ language, index, isEditing, onEdit, onDelete, cvT, t }) {
   const { hasChanges, change } = useLanguageHasChanges(language.name);
   const { acceptChange, rejectChange } = useHighlight();
   const [showPopover, setShowPopover] = useState(false);
@@ -33,7 +35,7 @@ function LanguageItem({ language, index, isEditing, onEdit, onDelete, cvT }) {
 
   // Classes conditionnelles pour le highlight (même pattern que Projects)
   const itemClasses = [
-    "relative inline-flex items-center rounded-full px-3 py-1 text-sm",
+    "relative inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm",
     hasChanges
       ? "border-2 border-emerald-500/50 bg-emerald-500/10 cursor-pointer" // Modifié = vert + clickable
       : "border border-white/15", // Normal
@@ -65,16 +67,18 @@ function LanguageItem({ language, index, isEditing, onEdit, onDelete, cvT }) {
   return (
     <>
       <div ref={itemRef} className={itemClasses} onClick={handleClick}>
-        <div className={isEditing ? "pr-12" : ""}>
+        <div>
           <span className="font-semibold">{toTitleCase(language.name) || ""}</span>
           <span className="text-sm opacity-80"> : {displayLevel}</span>
         </div>
 
         {isEditing && (
-          <div className="no-print absolute top-1/2 -translate-y-1/2 right-1 flex">
-            <button onClick={(e) => { e.stopPropagation(); onEdit(index); }} className="text-sm hover:scale-110 transition-transform -mr-[0.8rem]"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3" /></button>
-            <button onClick={(e) => { e.stopPropagation(); onDelete(index); }} className="text-sm hover:scale-110 transition-transform"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3" /></button>
-          </div>
+          <ContextMenu
+            items={[
+              { icon: Pencil, label: t("common.edit"), onClick: () => onEdit(index) },
+              { icon: Trash2, label: t("common.delete"), onClick: () => onDelete(index), danger: true }
+            ]}
+          />
         )}
       </div>
 
@@ -169,6 +173,7 @@ export default function Languages(props){
               onEdit={openEdit}
               onDelete={setDelIndex}
               cvT={cvT}
+              t={t}
             />
           ))}
         </div>

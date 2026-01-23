@@ -25,6 +25,8 @@ import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib
 import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
 import ProjectReviewActions, { useProjectHasChanges } from "@/components/cv-review/ProjectReviewActions";
 import MonthPicker from "@/components/ui/MonthPicker";
+import ContextMenu from "@/components/ui/ContextMenu";
+import { Pencil, Trash2 } from "lucide-react";
 
 // Normalise une date vers le format YYYY-MM pour comparaison et sauvegarde
 function normalizeDate(s){
@@ -62,7 +64,7 @@ function ensureAbsoluteUrl(u) {
 /**
  * Composant carte projet individuelle avec highlight review
  */
-function ProjectCard({ project, index, isEditing, onEdit, onDelete, cvT }) {
+function ProjectCard({ project, index, isEditing, onEdit, onDelete, cvT, t }) {
   const { hasChanges, isAdded } = useProjectHasChanges(project.name);
   const originalIndex = project._originalIndex ?? index;
 
@@ -75,7 +77,7 @@ function ProjectCard({ project, index, isEditing, onEdit, onDelete, cvT }) {
 
   return (
     <div className={cardClasses}>
-      <div className={"flex items-start gap-2" + (isEditing ? " pr-20" : "")}>
+      <div className="flex items-start gap-2">
         <div className="font-semibold flex-1 min-w-0 break-words">
           {project.name || ""}
           {project.url && (
@@ -97,20 +99,18 @@ function ProjectCard({ project, index, isEditing, onEdit, onDelete, cvT }) {
             ? [ym(project.start_date) || "", project.end_date === "present" ? cvT("cvSections.present") : (ym(project.end_date) || "")].filter(Boolean).join(" → ")
             : ""}
         </div>
-      </div>
-
-      {hasChanges && !isEditing && (
-        <div className="no-print absolute top-2 right-2 z-20">
+        {hasChanges && !isEditing && (
           <ProjectReviewActions projectIndex={originalIndex} projectName={project.name} />
-        </div>
-      )}
-
-      {isEditing && (
-        <div className="no-print absolute top-2 right-2 z-20 flex gap-2">
-          <button type="button" onClick={() => onEdit(index)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-colors duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3" /></button>
-          <button type="button" onClick={() => onDelete(originalIndex)} className="text-[11px] rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-red-500/40 transition-colors duration-200"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3" /></button>
-        </div>
-      )}
+        )}
+        {isEditing && (
+          <ContextMenu
+            items={[
+              { icon: Pencil, label: t("common.edit"), onClick: () => onEdit(index) },
+              { icon: Trash2, label: t("common.delete"), onClick: () => onDelete(originalIndex), danger: true }
+            ]}
+          />
+        )}
+      </div>
 
       <div className="text-sm opacity-80">{project.role || ""}</div>
       {project.summary ? <div className="text-sm text-justify mt-1">{project.summary}</div> : null}
@@ -270,6 +270,7 @@ export default function Projects(props){
               onEdit={openEdit}
               onDelete={setDelIndex}
               cvT={cvT}
+              t={t}
             />
           ))}
         </div>

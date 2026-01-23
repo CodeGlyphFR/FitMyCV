@@ -20,6 +20,8 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import CountrySelect from "@/components/ui/CountrySelect";
 import MonthPicker from "@/components/ui/MonthPicker";
+import ContextMenu from "@/components/ui/ContextMenu";
+import { Pencil, Trash2 } from "lucide-react";
 
 export default function Education(props){
   const { t } = useLanguage();
@@ -183,7 +185,7 @@ export default function Education(props){
         <div className={education.length > 1 ? "grid md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
           {education.map((e, i) => (
             <div key={i} className="rounded-xl border border-white/15 p-3 relative z-0 overflow-visible">
-              <div className={"flex items-start gap-2" + (editing ? " pr-20" : "")}>
+              <div className="flex items-start gap-2">
                 <div className="font-semibold flex-1 min-w-0 break-words">
                   {e.institution || ""}
                 </div>
@@ -194,14 +196,15 @@ export default function Education(props){
                     <span>{ym(e.end_date)}</span>
                   )}
                 </div>
+                {editing && (
+                  <ContextMenu
+                    items={[
+                      { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(i) },
+                      { icon: Trash2, label: t("common.delete"), onClick: () => setDelIndex(e._originalIndex ?? i), danger: true }
+                    ]}
+                  />
+                )}
               </div>
-
-              {editing && (
-                <div className="no-print absolute top-2 right-2 z-20 flex gap-2">
-                  <button onClick={() => openEdit(i)} className="text-[11px] rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-white/30 transition-colors duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
-                  <button onClick={() => setDelIndex(e._originalIndex ?? i)} className="text-[11px] rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-0.5 text-white hover:bg-red-500/40 transition-colors duration-200"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
-                </div>
-              )}
 
               {e.location && (e.location.city || e.location.region || e.location.country_code) && (
                 <div className="text-xs opacity-70 mt-0.5">

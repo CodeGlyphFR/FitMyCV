@@ -16,6 +16,8 @@ import {
   ModalFooter,
   ModalFooterDelete,
 } from "@/components/ui/ModalForm";
+import ContextMenu from "@/components/ui/ContextMenu";
+import { Pencil, Trash2 } from "lucide-react";
 
 export default function Extras(props){
   const { t } = useLanguage();
@@ -78,16 +80,18 @@ export default function Extras(props){
             {extras.filter(e => (e.summary || "").length <= 40).map((e,i)=>{
               const originalIndex = extras.indexOf(e);
               return (
-                <div key={originalIndex} className="relative inline-block rounded-full border border-white/15 px-3 py-1 text-sm overflow-visible">
-                  <div className={editing ? "pr-12" : ""}>
+                <div key={originalIndex} className="relative inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-1 text-sm overflow-visible">
+                  <div>
                     <span className="font-semibold">{toTitleCase(e.name) || ""}</span>
                     <span className="text-sm opacity-80"> : {e.summary || ""}</span>
                   </div>
                   {editing && (
-                    <div className="no-print absolute top-1/2 -translate-y-1/2 right-0 flex">
-                      <button onClick={()=>openEdit(originalIndex)} className="text-sm hover:scale-110 transition-transform -mr-[0.8rem]"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
-                      <button onClick={()=>setDelIndex(originalIndex)} className="text-sm hover:scale-110 transition-transform"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
-                    </div>
+                    <ContextMenu
+                      items={[
+                        { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(originalIndex) },
+                        { icon: Trash2, label: t("common.delete"), onClick: () => setDelIndex(originalIndex), danger: true }
+                      ]}
+                    />
                   )}
                 </div>
               );
@@ -100,16 +104,20 @@ export default function Extras(props){
                 const originalIndex = extras.indexOf(e);
                 return (
                   <div key={originalIndex} className="rounded-xl border border-white/15 p-3 relative z-0 overflow-visible">
-                    <div className={editing ? "pr-12" : ""}>
-                      <div className="font-semibold">{toTitleCase(e.name) || ""}</div>
-                      <div className="text-sm opacity-80">{e.summary || ""}</div>
-                    </div>
-                    {editing && (
-                      <div className="no-print absolute top-2 right-0 z-20 flex">
-                        <button onClick={()=>openEdit(originalIndex)} className="text-sm hover:scale-110 transition-transform -mr-[0.8rem]"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " /></button>
-                        <button onClick={()=>setDelIndex(originalIndex)} className="text-sm hover:scale-110 transition-transform"><img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " /></button>
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1">
+                        <div className="font-semibold">{toTitleCase(e.name) || ""}</div>
+                        <div className="text-sm opacity-80">{e.summary || ""}</div>
                       </div>
-                    )}
+                      {editing && (
+                        <ContextMenu
+                          items={[
+                            { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(originalIndex) },
+                            { icon: Trash2, label: t("common.delete"), onClick: () => setDelIndex(originalIndex), danger: true }
+                          ]}
+                        />
+                      )}
+                    </div>
                   </div>
                 );
               })}

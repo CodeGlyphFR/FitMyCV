@@ -30,6 +30,8 @@ import ChangeHighlight from "@/components/cv-review/ChangeHighlight";
 import { useHighlight } from "@/components/providers/HighlightProvider";
 import CountrySelect from "@/components/ui/CountrySelect";
 import MonthPicker from "@/components/ui/MonthPicker";
+import ContextMenu from "@/components/ui/ContextMenu";
+import { Pencil, Trash2 } from "lucide-react";
 
 
 export default function Experience(props){
@@ -287,22 +289,12 @@ export default function Experience(props){
                 </div>
                 <ExperienceReviewActions expIndex={e._originalIndex ?? i} />
                 {editing && (
-                  <div className="no-print flex gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => openEdit(i)}
-                      className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white hover:bg-white/30 transition-colors duration-200"
-                    >
-                      <img src="/icons/edit.png" alt="Edit" className="h-3 w-3 " />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDelIndex(e._originalIndex ?? i)}
-                      className="rounded-lg border border-red-400/50 bg-red-500/30 backdrop-blur-sm px-2 py-1 text-xs text-white hover:bg-red-500/40 transition-colors duration-200"
-                    >
-                      <img src="/icons/delete.png" alt="Delete" className="h-3 w-3 " />
-                    </button>
-                  </div>
+                  <ContextMenu
+                    items={[
+                      { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(i) },
+                      { icon: Trash2, label: t("common.delete"), onClick: () => setDelIndex(e._originalIndex ?? i), danger: true }
+                    ]}
+                  />
                 )}
               </div>
 
