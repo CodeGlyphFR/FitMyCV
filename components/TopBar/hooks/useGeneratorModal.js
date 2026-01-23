@@ -330,7 +330,7 @@ export function useGeneratorModal({
       // Add redirect info if actionRequired
       if (error?.actionRequired && error?.redirectUrl) {
         notification.redirectUrl = error.redirectUrl;
-        notification.linkText = 'Voir les options';
+        notification.linkText = t('notifications.viewOptions');
       }
 
       addNotification(notification);

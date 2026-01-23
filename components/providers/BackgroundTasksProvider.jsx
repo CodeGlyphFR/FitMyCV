@@ -9,6 +9,33 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const BackgroundTasksContext = createContext(null);
 
+/**
+ * Parse successMessage qui peut être:
+ * - Une clé de traduction simple: "taskQueue.messages.pipelineCompleted"
+ * - Un JSON avec clé + params: {"key": "taskQueue.messages.cvGenerated", "params": {"count": 3}}
+ * - Un message texte brut (legacy)
+ */
+function parseSuccessMessage(successMessage, t) {
+  if (!successMessage) return null;
+
+  // Si c'est une clé de traduction simple (commence par "taskQueue." ou "errors.")
+  if (typeof successMessage === 'string' && (successMessage.startsWith('taskQueue.') || successMessage.startsWith('errors.'))) {
+    return t(successMessage);
+  }
+
+  // Si c'est un JSON avec clé + params
+  try {
+    const parsed = JSON.parse(successMessage);
+    if (parsed.key) {
+      return t(parsed.key, parsed.params || {});
+    }
+  } catch {
+    // Ce n'est pas du JSON, retourner le message tel quel (legacy)
+  }
+
+  return successMessage;
+}
+
 export function useBackgroundTasks() {
   const context = useContext(BackgroundTasksContext);
   if (!context) {
@@ -287,7 +314,7 @@ export default function BackgroundTasksProvider({ children }) {
                 if (cvCount > 1) {
                   addNotification({
                     type: 'success',
-                    message: task.successMessage || t('errors.api.background.taskCompleted'),
+                    message: parseSuccessMessage(task.successMessage, t) || t('errors.api.background.taskCompleted'),
                     duration: 3000,
                   });
                 }
@@ -296,7 +323,7 @@ export default function BackgroundTasksProvider({ children }) {
               // En cas d'erreur, notifier quand même pour ne pas perdre l'info
               addNotification({
                 type: 'success',
-                message: task.successMessage || t('errors.api.background.taskCompleted'),
+                message: parseSuccessMessage(task.successMessage, t) || t('errors.api.background.taskCompleted'),
                 duration: 3000,
               });
             }
@@ -306,7 +333,7 @@ export default function BackgroundTasksProvider({ children }) {
           // Pour les autres types de tâches, notifier normalement
           addNotification({
             type: 'success',
-            message: task.successMessage || t('errors.api.background.taskCompleted'),
+            message: parseSuccessMessage(task.successMessage, t) || t('errors.api.background.taskCompleted'),
             duration: 3000,
           });
         }

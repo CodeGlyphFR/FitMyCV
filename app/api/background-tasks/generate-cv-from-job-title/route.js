@@ -61,7 +61,7 @@ export async function POST(request) {
     }
 
     const title = `Génération de CV pour "${trimmedJobTitle}"`;
-    const successMessage = `CV pour "${trimmedJobTitle}" créé avec succès`;
+    const successMessage = JSON.stringify({ key: 'taskQueue.messages.jobTitleCreationCompleted', params: { title: trimmedJobTitle } });
 
     const taskPayload = {
       jobTitle: trimmedJobTitle,

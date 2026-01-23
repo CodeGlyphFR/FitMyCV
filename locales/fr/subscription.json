@@ -217,7 +217,13 @@
       "buyButton": "Acheter",
       "redirecting": "Redirection...",
       "securePayment": "Paiement sécurisé via Stripe • Crédits permanents",
-      "loading": "Chargement..."
+      "loading": "Chargement...",
+      "errors": {
+        "checkoutError": "Erreur lors de la création de la session de paiement",
+        "purchaseError": "Erreur lors de l'achat",
+        "cannotSwitchToMonthly": "Impossible de revenir au paiement mensuel. Veuillez annuler votre abonnement si nécessaire.",
+        "cancelDowngradeError": "Erreur lors de l'annulation du downgrade"
+      }
     },
     "transactions": {
       "title": "Historique des transactions",

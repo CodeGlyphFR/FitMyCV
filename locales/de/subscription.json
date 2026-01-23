@@ -217,7 +217,13 @@
       "buyButton": "Kaufen",
       "redirecting": "Weiterleitung...",
       "securePayment": "Sichere Zahlung über Stripe • Dauerhafte Credits",
-      "loading": "Laden..."
+      "loading": "Laden...",
+      "errors": {
+        "checkoutError": "Fehler beim Erstellen der Checkout-Sitzung",
+        "purchaseError": "Fehler beim Kauf",
+        "cannotSwitchToMonthly": "Wechsel zu monatlicher Zahlung nicht möglich. Bitte kündigen Sie Ihr Abonnement bei Bedarf.",
+        "cancelDowngradeError": "Fehler beim Abbrechen des Downgrades"
+      }
     },
     "transactions": {
       "title": "Transaktionsverlauf",

@@ -285,7 +285,7 @@ export function usePlanComparison({ currentPlan, subscription, scheduledDowngrad
 
       if (!res.ok) {
         const error = await res.json();
-        alert(error.error || 'Erreur lors de l\'annulation du downgrade');
+        alert(error.error || t('subscription.packs.errors.cancelDowngradeError'));
         setCancelingDowngrade(false);
         return;
       }
@@ -295,10 +295,10 @@ export function usePlanComparison({ currentPlan, subscription, scheduledDowngrad
       }
     } catch (error) {
       console.error('Error canceling downgrade:', error);
-      alert('Erreur lors de l\'annulation du downgrade');
+      alert(t('subscription.packs.errors.cancelDowngradeError'));
       setCancelingDowngrade(false);
     }
-  }, [onUpgradeSuccess]);
+  }, [onUpgradeSuccess, t]);
 
   return {
     // Data

@@ -40,7 +40,7 @@ export default function CreditPacksCards({ onPurchaseSuccess }) {
 
       if (!res.ok) {
         const error = await res.json();
-        alert(error.error || 'Erreur lors de la création de la session de paiement');
+        alert(error.error || t('subscription.packs.errors.checkoutError'));
         setProcessingPackId(null);
         return;
       }
@@ -51,7 +51,7 @@ export default function CreditPacksCards({ onPurchaseSuccess }) {
       window.location.href = url;
     } catch (error) {
       console.error('Error purchasing credits:', error);
-      alert('Erreur lors de l\'achat');
+      alert(t('subscription.packs.errors.purchaseError'));
       setProcessingPackId(null);
     }
   };

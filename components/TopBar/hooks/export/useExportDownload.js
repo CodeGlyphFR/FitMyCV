@@ -25,29 +25,30 @@ function downloadBlob(blob, filename) {
  * @param {Response} response - Réponse de l'API
  * @param {string} formatName - Nom du format (PDF/Word)
  * @param {Function} addNotification - Fonction de notification
+ * @param {Function} t - Fonction de traduction
  */
-async function handleExportError(response, formatName, addNotification) {
+async function handleExportError(response, formatName, addNotification, t) {
   let errorData = {};
   try {
     errorData = await response.json();
     console.log(`[useExportDownload] Error data:`, errorData);
   } catch (parseError) {
     console.error(`[useExportDownload] Erreur parsing JSON:`, parseError);
-    errorData = { error: `Erreur lors de l'export ${formatName}` };
+    errorData = { error: t('export.errors.exportFailed') };
   }
 
   if (errorData.actionRequired && errorData.redirectUrl) {
     addNotification({
       type: 'error',
-      message: errorData.error || 'Accès à cette fonctionnalité limité',
+      message: errorData.error || t('export.errors.accessRestricted'),
       redirectUrl: errorData.redirectUrl,
-      linkText: 'Voir les options',
+      linkText: t('notifications.viewOptions'),
       duration: 10000,
     });
   } else {
     addNotification({
       type: 'error',
-      message: errorData.error || `Erreur lors de l'export ${formatName}`,
+      message: errorData.error || t('export.errors.exportFailed'),
       duration: 4000,
     });
   }
@@ -67,7 +68,8 @@ export function useExportDownload({
   pageBreakElements,
   closeModal,
   addNotification,
-  saveSelections
+  saveSelections,
+  t
 }) {
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingWord, setIsExportingWord] = useState(false);
@@ -75,13 +77,13 @@ export function useExportDownload({
   // Exporter le PDF
   const exportPdf = useCallback(async () => {
     if (!currentItem || !filename.trim()) {
-      alert('Nom de fichier manquant');
+      alert(t('export.errors.missingFilename'));
       return;
     }
 
     const hasSelection = Object.values(selections.sections).some(s => s.enabled);
     if (!hasSelection) {
-      alert('Veuillez sélectionner au moins une section');
+      alert(t('export.errors.noSectionSelected'));
       return;
     }
 
@@ -109,7 +111,7 @@ export function useExportDownload({
         console.log('[useExportDownload] Erreur API, status:', response.status);
         setIsExporting(false);
         closeModal();
-        await handleExportError(response, 'PDF', addNotification);
+        await handleExportError(response, 'PDF', addNotification, t);
         return;
       }
 
@@ -143,18 +145,18 @@ export function useExportDownload({
     } finally {
       setIsExporting(false);
     }
-  }, [currentItem, filename, selections, cvData, sectionsOrder, pageBreakElements, closeModal, addNotification, saveSelections]);
+  }, [currentItem, filename, selections, cvData, sectionsOrder, pageBreakElements, closeModal, addNotification, saveSelections, t]);
 
   // Exporter en Word
   const exportWord = useCallback(async () => {
     if (!currentItem || !filename.trim()) {
-      alert('Nom de fichier manquant');
+      alert(t('export.errors.missingFilename'));
       return;
     }
 
     const hasSelection = Object.values(selections.sections).some(s => s.enabled);
     if (!hasSelection) {
-      alert('Veuillez sélectionner au moins une section');
+      alert(t('export.errors.noSectionSelected'));
       return;
     }
 
@@ -181,7 +183,7 @@ export function useExportDownload({
         console.log('[useExportDownload] Erreur API Word, status:', response.status);
         setIsExportingWord(false);
         closeModal();
-        await handleExportError(response, 'Word', addNotification);
+        await handleExportError(response, 'Word', addNotification, t);
         return;
       }
 
@@ -210,7 +212,7 @@ export function useExportDownload({
     } finally {
       setIsExportingWord(false);
     }
-  }, [currentItem, filename, selections, cvData, sectionsOrder, closeModal, addNotification, saveSelections]);
+  }, [currentItem, filename, selections, cvData, sectionsOrder, closeModal, addNotification, saveSelections, t]);
 
   return {
     isExporting,

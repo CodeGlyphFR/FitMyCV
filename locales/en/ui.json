@@ -90,7 +90,10 @@
   "export": {
     "noCvSelected": "No CV selected for export.",
     "errors": {
-      "exportFailed": "Error exporting PDF. Please try again."
+      "exportFailed": "Error exporting PDF. Please try again.",
+      "missingFilename": "Missing filename",
+      "noSectionSelected": "Please select at least one section",
+      "accessRestricted": "Access to this feature is restricted"
     }
   },
   "footer": {

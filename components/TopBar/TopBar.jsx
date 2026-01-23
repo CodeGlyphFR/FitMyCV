@@ -121,6 +121,7 @@ export default function TopBar() {
     currentItem: state.currentItem,
     language,
     addNotification,
+    t,
   });
 
   // Subscription data hook

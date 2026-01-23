@@ -125,7 +125,7 @@ export async function POST(request) {
 
     const taskData = {
       title: saved.name,
-      successMessage: `'${saved.name}' importé avec succès`,
+      successMessage: JSON.stringify({ key: 'taskQueue.messages.importCompleted', params: { filename: saved.name } }),
       type: 'import',
       status: 'queued',
       shouldUpdateCvList: true,

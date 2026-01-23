@@ -28,7 +28,7 @@ import { useExportPreview } from './export/useExportPreview';
  * @param {Function} addNotification - Fonction pour afficher les notifications
  * @returns {Object} État et fonctions pour le modal d'export
  */
-export function useExportModal({ currentItem, language, addNotification }) {
+export function useExportModal({ currentItem, language, addNotification, t }) {
   const [isOpen, setIsOpen] = useState(false);
   const [filename, setFilename] = useState('');
   const [cvData, setCvData] = useState(null);
@@ -123,7 +123,8 @@ export function useExportModal({ currentItem, language, addNotification }) {
     pageBreakElements,
     closeModal,
     addNotification,
-    saveSelections
+    saveSelections,
+    t
   });
 
   // Calculer les compteurs

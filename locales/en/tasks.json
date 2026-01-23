@@ -41,7 +41,7 @@
       "task": "Task",
       "importInProgress": "Import in progress ...",
       "importQueued": "Import queued ...",
-      "importCompleted": "Import completed",
+      "importCompleted": "'{filename}' imported successfully",
       "importCancelled": "Import cancelled",
       "importFailed": "Import failed",
       "creationInProgress": "Creation in progress",
@@ -70,7 +70,12 @@
       "cvGenerated": "{count} CV(s) generated",
       "offerFailed": "Failed for offer {index} - {credits} credit refunded",
       "generatingOffer": "Generating ({current}/{total})",
-      "moreOffers": "more offer(s)"
+      "moreOffers": "more offer(s)",
+      "translateCompleted": "CV translated to {lang} successfully",
+      "jobTitleCreationCompleted": "CV for \"{title}\" created successfully",
+      "improvementCompleted": "CV improved with {count} change(s)",
+      "improvementReplacedCompleted": "CV replaced with {count} improvement(s)",
+      "matchScoreDetailedCompleted": "Match score calculated: {score}/100 with {suggestions} suggestion(s)"
     },
     "errors": {
       "noJobOfferDetected": "No job offer detected: {source}",

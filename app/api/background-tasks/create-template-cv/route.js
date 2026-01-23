@@ -129,7 +129,7 @@ export async function POST(request) {
 
       // Titre initial = juste le domaine (sera mis à jour avec le titre de l'offre après extraction)
       const title = linkDisplay;
-      const successMessage = "CV modèle créé avec succès (lien)";
+      const successMessage = 'taskQueue.messages.templateCreationCompleted';
 
       const taskPayload = {
         links: [link],
@@ -193,7 +193,7 @@ export async function POST(request) {
       }
       // Titre initial = juste le nom du fichier (sera mis à jour avec le titre de l'offre après extraction)
       const title = upload.name;
-      const successMessage = `CV modèle créé avec succès (${upload.name})`;
+      const successMessage = 'taskQueue.messages.templateCreationCompleted';
 
       const taskPayload = {
         links: [],

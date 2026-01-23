@@ -96,7 +96,7 @@ export function useNewCv() {
           type: 'error',
           message: e.message,
           redirectUrl: e.redirectUrl,
-          linkText: 'Voir les options',
+          linkText: t('notifications.viewOptions'),
           duration: 10000,
         });
       } else {

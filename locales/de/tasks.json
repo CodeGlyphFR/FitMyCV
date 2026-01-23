@@ -41,7 +41,7 @@
       "task": "Aufgabe",
       "importInProgress": "Import läuft ...",
       "importQueued": "Import wartet ...",
-      "importCompleted": "Import abgeschlossen",
+      "importCompleted": "'{filename}' erfolgreich importiert",
       "importCancelled": "Import abgebrochen",
       "importFailed": "Import fehlgeschlagen",
       "creationInProgress": "Erstellung läuft",
@@ -69,7 +69,13 @@
       "cvReadyForOffer": "Lebenslauf bereit für Angebot {index}",
       "cvGenerated": "{count} Lebenslauf(e) erstellt",
       "offerFailed": "Fehlgeschlagen für Angebot {index} - {credits} Kredit erstattet",
-      "generatingOffer": "Erstellung ({current}/{total})"
+      "generatingOffer": "Erstellung ({current}/{total})",
+      "moreOffers": "weitere(s) Angebot(e)",
+      "translateCompleted": "Lebenslauf erfolgreich ins {lang} übersetzt",
+      "jobTitleCreationCompleted": "Lebenslauf für \"{title}\" erfolgreich erstellt",
+      "improvementCompleted": "Lebenslauf mit {count} Änderung(en) verbessert",
+      "improvementReplacedCompleted": "Lebenslauf mit {count} Verbesserung(en) ersetzt",
+      "matchScoreDetailedCompleted": "Match-Score berechnet: {score}/100 mit {suggestions} Vorschlag/Vorschlägen"
     },
     "errors": {
       "noJobOfferDetected": "Keine Stellenanzeige erkannt: {source}",
