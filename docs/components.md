@@ -387,6 +387,7 @@ Composants réutilisables du design system.
 | `SkeletonLoader` | Skeleton components |
 | `TipBox` | Box conseil/astuce |
 | `EmptyState` | État vide standardisé |
+| `ContextMenu` | Menu contextuel kebab (⋮) avec actions edit/delete |
 
 ### Composants Formulaires
 
