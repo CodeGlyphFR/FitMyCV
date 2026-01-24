@@ -126,11 +126,21 @@ export default function BackgroundTasksProvider({ children }) {
       });
     };
 
+    // Rafraîchissement immédiat quand une tâche vient d'être créée
+    // (déclenché par useGeneratorModal après succès API, avant que le composant soit démonté)
+    const handleRefreshNeeded = () => {
+      refreshTasksRef.current().catch(err => {
+        console.error('[BackgroundTasksProvider] Erreur refresh après création:', err);
+      });
+    };
+
     window.addEventListener('realtime:task:updated', handleRealtimeTaskUpdate);
     window.addEventListener('cv_generation:task_completed', handleTaskCompleted);
+    window.addEventListener('tasks:refresh-needed', handleRefreshNeeded);
     return () => {
       window.removeEventListener('realtime:task:updated', handleRealtimeTaskUpdate);
       window.removeEventListener('cv_generation:task_completed', handleTaskCompleted);
+      window.removeEventListener('tasks:refresh-needed', handleRefreshNeeded);
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }

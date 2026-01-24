@@ -273,7 +273,14 @@ export function useGeneratorModal({
         throw errorObj;
       }
 
-      // Vérifier avant les state updates (tâches optimistes, notifications)
+      // ✅ Émettre un événement global AVANT le check isMountedRef
+      // Ceci garantit le refresh du TaskQueue même si le composant Generator est démonté
+      // (race condition avec l'onboarding qui peut démonter le composant)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('tasks:refresh-needed'));
+      }
+
+      // Vérifier avant les state updates locaux (tâches optimistes, notifications)
       if (!isMountedRef.current) return;
 
       // ✅ Succès confirmé par l'API -> créer la tâche optimiste et notifier
