@@ -74,7 +74,6 @@ const STEP_FALLBACKS = {
  */
 function OfferProgressLine({ offer, t, createdAt }) {
   const progress = calculateOfferProgress(offer);
-  const currentStep = offer.currentStep;
   const status = offer.status;
   const isFinished = status === 'completed' || status === 'failed' || status === 'cancelled';
 
@@ -82,12 +81,23 @@ function OfferProgressLine({ offer, t, createdAt }) {
   const offerIndex = typeof offer.offerIndex === 'number' ? offer.offerIndex + 1 : 1;
   const offerTitle = offer.jobTitle || (offer.sourceUrl ? truncateUrl(offer.sourceUrl) : `Offre ${offerIndex}`);
 
+  // Déterminer le step courant à afficher
+  // Priorité : premier step "running" dans l'ordre du pipeline
+  // Cela permet d'afficher le step le plus avancé quand plusieurs steps tournent en parallèle
+  const runningSteps = offer.runningSteps || {};
+  const displayStep = PIPELINE_STEPS.find(step => runningSteps[step]) || offer.currentStep;
+
+  // Récupérer currentItem/totalItems pour le step affiché (depuis runningSteps si disponible)
+  const stepData = runningSteps[displayStep] || {};
+  const currentItem = stepData.currentItem ?? offer.currentItem;
+  const totalItems = stepData.totalItems ?? offer.totalItems;
+
   // Label de l'étape en cours
   let stepLabel = '';
-  if (currentStep) {
-    const label = t(STEP_LABELS[currentStep]) || STEP_FALLBACKS[currentStep];
-    if (offer.currentItem !== null && offer.totalItems !== null) {
-      stepLabel = `${label} ${offer.currentItem + 1}/${offer.totalItems}`;
+  if (displayStep) {
+    const label = t(STEP_LABELS[displayStep]) || STEP_FALLBACKS[displayStep];
+    if (currentItem !== null && totalItems !== null) {
+      stepLabel = `${label} ${currentItem + 1}/${totalItems}`;
     } else {
       stepLabel = label;
     }
