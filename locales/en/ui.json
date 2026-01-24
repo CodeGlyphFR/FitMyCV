@@ -23,6 +23,7 @@
     "loadingInProgress": "Loading in progress ...",
     "taskQueue": "Task queue",
     "delete": "Delete",
+    "deleteTooltip": "Delete (Ctrl+click for bulk delete)",
     "cvInProgress": "CV in progress",
     "jobTitlePlaceholder": "Enter a job title (e.g., Full-Stack Developer)",
     "jobTitlePlaceholderMobile": "e.g., Full-Stack Developer",

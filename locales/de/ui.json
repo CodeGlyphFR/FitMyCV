@@ -23,6 +23,7 @@
     "loadingInProgress": "Laden läuft ...",
     "taskQueue": "Aufgabenwarteschlange",
     "delete": "Löschen",
+    "deleteTooltip": "Löschen (Strg+Klick für Mehrfachlöschung)",
     "cvInProgress": "Lebenslauf wird bearbeitet",
     "jobTitlePlaceholder": "Geben Sie eine Stellenbezeichnung ein (z.B. Full-Stack-Entwickler)",
     "jobTitlePlaceholderMobile": "z.B. Full-Stack-Entwickler",

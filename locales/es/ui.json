@@ -23,6 +23,7 @@
     "loadingInProgress": "Cargando ...",
     "taskQueue": "Cola de tareas",
     "delete": "Eliminar",
+    "deleteTooltip": "Eliminar (Ctrl+clic para eliminación múltiple)",
     "cvInProgress": "CV en edición",
     "jobTitlePlaceholder": "Introduce un título de puesto (ej: Desarrollador Full-Stack)",
     "jobTitlePlaceholderMobile": "ej: Desarrollador Full-Stack",
