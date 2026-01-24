@@ -162,8 +162,19 @@ export default function ChangeReviewPopover({
           </p>
         )}
 
-        {/* Ancien contenu - format différent selon le type de champ (sauf langues déjà traitées) */}
-        {showBeforeText && change.beforeValue && change.section !== "languages" && (
+        {/* Pour les skills modifiés (traductions): afficher avant → après de façon compacte */}
+        {showBeforeText && change.changeType === "modified" && change.beforeValue && change.afterValue &&
+         (change.field === "skills_used" || change.section === "skills") && (
+          <p className="text-xs text-amber-300/90 max-w-[250px]">
+            <span className="line-through opacity-70">{change.beforeDisplay || change.beforeValue}</span>
+            <span className="mx-1.5">→</span>
+            <span className="font-medium">{change.afterDisplay || change.afterValue}</span>
+          </p>
+        )}
+
+        {/* Ancien contenu - format différent selon le type de champ (sauf langues et skills modifiés déjà traités) */}
+        {showBeforeText && change.beforeValue && change.section !== "languages" &&
+         !(change.changeType === "modified" && (change.field === "skills_used" || change.section === "skills")) && (
           <div className="max-w-[320px]">
             <p className="text-xs font-medium text-white/60 mb-1">{t("review.previousText") || "Texte précédent"} :</p>
             {/* Pour responsibilities/deliverables: afficher en liste */}

@@ -50,7 +50,7 @@
       },
       "modifications": {
         "type": "array",
-        "description": "Liste des ajouts/suppressions uniquement (pas de reordering)",
+        "description": "Modifications detaillees par skill avec correspondance before/after (pattern identique a experience)",
         "items": {
           "type": "object",
           "properties": {
@@ -59,21 +59,29 @@
               "enum": ["hard_skills", "soft_skills", "tools", "methodologies"],
               "description": "Categorie du skill modifie"
             },
-            "skill": {
-              "type": "string",
-              "description": "Nom du skill concerne"
+            "before": {
+              "type": ["string", "null"],
+              "description": "Nom du skill source (null si ajout)"
+            },
+            "after": {
+              "type": ["string", "null"],
+              "description": "Nom du skill cible (null si suppression)"
             },
             "action": {
               "type": "string",
-              "enum": ["removed", "level_adjusted", "renamed", "split", "moved", "merged", "inferred"],
-              "description": "Type de modification"
+              "enum": ["kept", "modified", "removed", "added", "level_adjusted", "split", "moved", "merged", "inferred"],
+              "description": "kept=inchange, modified=traduit/reformule, removed=supprime, added=ajoute"
             },
             "reason": {
               "type": "string",
               "description": "Raison courte (max 15 mots)"
+            },
+            "translated": {
+              "type": ["string", "null"],
+              "description": "Traduction du skill source (OBLIGATOIRE si action=removed, pour rollback)"
             }
           },
-          "required": ["category", "skill", "action", "reason"],
+          "required": ["category", "before", "after", "action", "reason", "translated"],
           "additionalProperties": false
         }
       }

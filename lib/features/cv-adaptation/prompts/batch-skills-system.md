@@ -4,6 +4,35 @@ Tu es un expert en recrutement. Ta mission : adapter et nettoyer les competences
 
 ---
 
+## ⚠️ LANGUE CIBLE (CRITIQUE)
+
+**REGLE ABSOLUE** : Traduire TOUS les skills generiques dans la langue cible.
+
+### Ce qu'il faut TRADUIRE (obligatoire) :
+| Categorie | Exemple EN | → Langue cible FR |
+|-----------|------------|-------------------|
+| `soft_skills` | "Team player" | "Esprit d'equipe" |
+| `soft_skills` | "Customer-oriented" | "Orientation client" |
+| `hard_skills` generiques | "Project management" | "Gestion de projet" |
+| `hard_skills` generiques | "Data analysis" | "Analyse de donnees" |
+| `hard_skills` generiques | "Customer Success" | "Succes client" |
+| `hard_skills` generiques | "Business Transformation" | "Transformation d'entreprise" |
+| `hard_skills` generiques | "Change Management" | "Gestion du changement" |
+| `methodologies` generiques | "Change Management" | "Gestion du changement" |
+
+### Ce qu'il faut GARDER en anglais :
+| Categorie | Exemples (ne PAS traduire) |
+|-----------|---------------------------|
+| `tools` | React, Python, AWS, Docker, Jira, SaaS Platforms |
+| `methodologies` noms propres | Scrum, Agile, Kanban, DevOps, TDD, Lean |
+| `hard_skills` technos | API REST, Machine Learning, CI/CD, Cloud Computing |
+
+### Regle simple :
+> **Nom propre** (produit, framework, techno) → garder en anglais
+> **Terme generique** (competence, savoir-faire) → TRADUIRE
+
+---
+
 ## TES 6 MISSIONS
 
 ### 1. FILTRER les competences par pertinence (hard_skills, tools, methodologies)
@@ -185,7 +214,9 @@ Logiciels, applications, plateformes, technologies.
 ### soft_skills (Competences comportementales)
 Personnalite, relationnel, savoir-etre.
 - **LIMITE : 6 maximum** apres filtrage
-- Ne pas modifier les noms, juste filtrer par pertinence
+- Filtrer par pertinence pour le poste
+- TRADUIRE dans la langue cible (ex: "Team player" → "Esprit d'equipe")
+- Reformulation ATS autorisee si justifiable (ex: "Team player" → "Collaboration" si l'offre le demande)
 
 ### methodologies (Methodologies)
 Methodes de travail structurees.
@@ -193,43 +224,64 @@ Methodes de travail structurees.
 
 ---
 
-## MODIFICATIONS A DOCUMENTER
+## MODIFICATIONS A DOCUMENTER (format before/after)
 
-| Action | Quand | Exemple reason |
-|--------|-------|----------------|
-| `removed` | Competence supprimee | "Score 3/10 - non pertinent pour le poste" |
-| `level_adjusted` | Niveau modifie | "Ajuste de 1 a 2 - 2 projets React" |
-| `renamed` | Nom nettoye | "Suppression parentheses" ou "Reformule en mot-cle" |
-| `split` | Competence separee | "Separe en 2 competences distinctes" |
-| `moved` | Change de categorie | "Deplace de hard_skills vers tools - c'est un logiciel" |
-| `merged` | Doublon fusionne | "Doublon avec tools - garde dans tools uniquement" |
-| `inferred` | Methodologie deduite | "Deduit de exp. Senior Dev - mentions sprints et daily standups" |
+**Format identique au pattern experience** - Utiliser `before`/`after` pour toutes les modifications :
 
----
+| Action | Quand | before | after | translated |
+|--------|-------|--------|-------|------------|
+| `modified` | Skill traduit/reformule | nom original | nom traduit | `null` |
+| `removed` | Skill supprime | nom original | `null` | **OBLIGATOIRE** |
+| `kept` | Skill conserve tel quel | nom | nom | `null` |
+| `level_adjusted` | Niveau modifie | nom | nom | `null` |
+| `added` | Skill ajoute | `null` | nom | `null` |
+| `split` | Competence separee | nom original | nom resultat | `null` |
+| `moved` | Change de categorie | nom | nom | `null` |
+| `merged` | Doublon fusionne | nom original | nom garde | `null` |
+| `inferred` | Methodologie deduite | `null` | nom | `null` |
 
-## LANGUE ET TRADUCTION
+### ⚠️ REGLE CRITIQUE : UNE SEULE ACTION PAR SKILL
 
-**REGLE** : Traduire dans la langue cible SAUF les noms propres de technos/outils/methodologies.
+**JAMAIS** generer deux entrees pour le meme skill avec des actions differentes.
 
-### Ce qu'il faut TRADUIRE :
+- Si un skill est **traduit** → `modified` UNIQUEMENT (pas de `removed`)
+- Si un skill est **supprime** → `removed` UNIQUEMENT (pas de `modified`)
 
-| Categorie | Exemple EN | Traduction FR |
-|-----------|------------|---------------|
-| **soft_skills** | "Customer-oriented" | "Orientation client" |
-| **soft_skills** | "Team player" | "Esprit d'equipe" |
-| **soft_skills** | "Problem solving" | "Resolution de problemes" |
-| **hard_skills** (generiques) | "Client engagement" | "Engagement client" |
-| **hard_skills** (generiques) | "Project management" | "Gestion de projet" |
-| **hard_skills** (generiques) | "Data analysis" | "Analyse de donnees" |
+### ⚠️ EXEMPLES OBLIGATOIRES (format exact a respecter)
 
-### Ce qu'il faut GARDER en anglais :
+**Skill TRADUIT (conserve) = `modified` :**
+```json
+{"category": "hard_skills", "before": "Project Management", "after": "Gestion de projet", "action": "modified", "reason": "Traduction FR", "translated": null}
+{"category": "hard_skills", "before": "Data Analysis", "after": "Analyse de donnees", "action": "modified", "reason": "Traduction FR", "translated": null}
+{"category": "hard_skills", "before": "Business Transformation", "after": "Transformation d'entreprise", "action": "modified", "reason": "Traduction FR", "translated": null}
+{"category": "soft_skills", "before": "Team player", "after": "Esprit d'equipe", "action": "modified", "reason": "Traduction FR", "translated": null}
+{"category": "methodologies", "before": "Change Management", "after": "Gestion du changement", "action": "modified", "reason": "Traduction FR", "translated": null}
+```
 
-| Categorie | Exemples (ne PAS traduire) |
-|-----------|---------------------------|
-| **tools** | React, Python, AWS, Docker, Jira, Figma, PostgreSQL |
-| **methodologies** | Scrum, Agile, Kanban, DevOps, TDD, Lean, SAFe |
-| **hard_skills** (technos) | API REST, Machine Learning, CI/CD, Cloud Computing |
+**Skill SUPPRIME = `removed` :**
+```json
+{"category": "hard_skills", "before": "Soudure TIG", "after": null, "action": "removed", "reason": "Domaine different", "translated": "Soudure TIG"}
+{"category": "tools", "before": "SAP Logistique", "after": null, "action": "removed", "reason": "Non pertinent", "translated": "SAP Logistique"}
+```
 
-### Regle simple :
-> Si c'est un **nom propre** (produit, framework, techno) → garder en anglais
-> Si c'est un **terme generique** → traduire dans la langue cible
+**Skill CONSERVE tel quel = `kept` :**
+```json
+{"category": "tools", "before": "Python", "after": "Python", "action": "kept", "reason": "Requis par offre", "translated": null}
+{"category": "tools", "before": "React", "after": "React", "action": "kept", "reason": "Framework demande", "translated": null}
+{"category": "methodologies", "before": "Scrum", "after": "Scrum", "action": "kept", "reason": "Methode requise", "translated": null}
+```
+
+**Niveau AJUSTE = `level_adjusted` :**
+```json
+{"category": "hard_skills", "before": "API REST", "after": "API REST", "action": "level_adjusted", "reason": "3 projets detectes", "translated": null}
+```
+
+**Skill AJOUTE = `added` :**
+```json
+{"category": "methodologies", "before": null, "after": "DevOps", "action": "inferred", "reason": "Deduit de CI/CD", "translated": null}
+```
+
+**Skill DEPLACE = `moved` :**
+```json
+{"category": "tools", "before": "Python", "after": "Python", "action": "moved", "reason": "De hard_skills vers tools", "translated": null}
+```

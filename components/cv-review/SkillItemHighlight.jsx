@@ -94,6 +94,7 @@ export default function SkillItemHighlight({
           onReject={handleReject}
           onClose={() => setShowPopover(false)}
           anchorRef={highlightRef}
+          showBeforeText={isModified}
         />
       )}
     </>
