@@ -68,9 +68,37 @@
           "required": ["field", "action", "before", "after", "reason"],
           "additionalProperties": false
         }
+      },
+      "skills_modifications": {
+        "type": "array",
+        "description": "Modifications detaillees par skill avec correspondance before/after",
+        "items": {
+          "type": "object",
+          "properties": {
+            "before": {
+              "type": ["string", "null"],
+              "description": "Nom du skill source (null si ajout)"
+            },
+            "after": {
+              "type": ["string", "null"],
+              "description": "Nom du skill cible (null si suppression)"
+            },
+            "action": {
+              "type": "string",
+              "enum": ["kept", "modified", "removed", "added"],
+              "description": "Type de modification: kept=inchange, modified=reformule/traduit, removed=supprime, added=ajoute"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Justification du changement"
+            }
+          },
+          "required": ["before", "after", "action", "reason"],
+          "additionalProperties": false
+        }
       }
     },
-    "required": ["description", "responsibilities", "deliverables", "skills_used", "domain", "years_in_domain", "modifications"],
+    "required": ["description", "responsibilities", "deliverables", "skills_used", "domain", "years_in_domain", "modifications", "skills_modifications"],
     "additionalProperties": false
   }
 }

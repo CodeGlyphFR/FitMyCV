@@ -51,6 +51,7 @@ export default function SkillItemHighlight({
   const isAdded = change?.changeType === "added";
   const isRemoved = change?.changeType === "removed";
   const isLevelAdjusted = change?.changeType === "level_adjusted";
+  const isModified = change?.changeType === "modified";
 
   const handleClick = (e) => {
     e.stopPropagation();
@@ -77,7 +78,7 @@ export default function SkillItemHighlight({
             ? "text-emerald-300 bg-emerald-500/20 rounded"
             : isRemoved
             ? "text-red-400 bg-red-500/15 rounded px-1 italic"
-            : isLevelAdjusted
+            : isLevelAdjusted || isModified
             ? "text-amber-300 bg-amber-500/20 rounded"
             : ""
         } ${className}`}
@@ -148,7 +149,35 @@ export function RemovedSkillsDisplay({ section, field, expIndex }) {
 }
 
 /**
- * Composant bloc pour afficher les items supprimés avec un titre
+ * Composant pour afficher les skills supprimés comme des badges individuels
+ * Utilisé UNIQUEMENT pour les expériences (skills_used)
+ */
+export function RemovedSkillsBadges({ section, field, expIndex, badgeClassName }) {
+  const removedItems = useRemovedItems(section, field, expIndex);
+
+  if (removedItems.length === 0) return null;
+
+  return (
+    <>
+      {removedItems.map((change) => (
+        <SkillItemHighlight
+          key={`removed-${change.id}`}
+          section={section}
+          field={field}
+          itemName={change.itemName}
+          expIndex={expIndex}
+        >
+          <span className={badgeClassName}>
+            {change.itemName}
+          </span>
+        </SkillItemHighlight>
+      ))}
+    </>
+  );
+}
+
+/**
+ * Composant bloc pour afficher les items supprimés avec un titre (format liste)
  * Utilisé quand tous les items d'une catégorie ont été supprimés
  * Affiche le bloc uniquement s'il y a des items à afficher
  */
@@ -164,6 +193,29 @@ export function RemovedSkillsDisplayBlock({ field, title }) {
         <h3 className="font-semibold text-red-400/80">{title}</h3>
       </div>
       <RemovedSkillsDisplay section="skills" field={field} />
+    </div>
+  );
+}
+
+/**
+ * Composant bloc pour afficher les items supprimés avec un titre (format badges)
+ * Utilisé pour les soft skills quand tous ont été supprimés
+ */
+export function RemovedSkillsBadgesBlock({ field, title, badgeClassName }) {
+  const removedItems = useRemovedItems("skills", field, undefined);
+
+  // Ne rien afficher s'il n'y a pas d'items supprimés
+  if (removedItems.length === 0) return null;
+
+  return (
+    <div>
+      <div className="flex flex-wrap gap-1">
+        <RemovedSkillsBadges
+          section="skills"
+          field={field}
+          badgeClassName={badgeClassName}
+        />
+      </div>
     </div>
   );
 }

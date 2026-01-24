@@ -179,6 +179,33 @@ DECISION: [valeur finale]
 **Exemple d'equivalence OK** :
 Source mentionne "Claude" + Offre demande "LLMs" → OK d'utiliser "LLM" (Claude EST un LLM)
 
+### 6.4.1 skills_modifications (OBLIGATOIRE)
+
+Pour CHAQUE skill de l'experience source, documenter le changement dans `skills_modifications[]` :
+
+| Champ | Description |
+|-------|-------------|
+| `before` | Nom du skill source (null si ajout - rare) |
+| `after` | Nom du skill cible (null si suppression) |
+| `action` | `kept` / `modified` / `removed` / `added` |
+| `reason` | Justification courte |
+
+**Actions** :
+- `kept` : Skill conserve sans modification (before = after)
+- `modified` : Skill reformule ou traduit (before ≠ after)
+- `removed` : Skill supprime car non pertinent (after = null)
+- `added` : Skill ajoute (rare, before = null) - uniquement si equivalence prouvee
+
+**Exemples** :
+```json
+{ "before": "Project Management", "after": "Gestion de projet", "action": "modified", "reason": "Traduction FR" }
+{ "before": "Leadership", "after": null, "action": "removed", "reason": "Non pertinent pour poste technique" }
+{ "before": "Python", "after": "Python", "action": "kept", "reason": "Requis par l'offre" }
+{ "before": "Claude", "after": "LLM", "action": "modified", "reason": "Claude EST un LLM - equivalence" }
+```
+
+**IMPORTANT** : Le tableau `skills_modifications` doit lister TOUTES les skills source, meme celles conservees (`kept`).
+
 ### 6.5 domain (OBLIGATOIRE)
 
 Domaine metier : Developpement logiciel, Data Science, Gestion de projet, Consulting, Commercial, DevOps...

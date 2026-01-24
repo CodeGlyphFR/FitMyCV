@@ -8,7 +8,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getSkillLevelLabel } from "@/lib/i18n/cvLabels";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import { capitalizeSkillName } from "@/lib/utils/textFormatting";
-import SkillItemHighlight, { RemovedSkillsDisplay, RemovedSkillsDisplayBlock, useRemovedItems } from "@/components/cv-review/SkillItemHighlight";
+import SkillItemHighlight, { RemovedSkillsDisplay, RemovedSkillsDisplayBlock, RemovedSkillsBadges, RemovedSkillsBadgesBlock, useRemovedItems } from "@/components/cv-review/SkillItemHighlight";
 import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
 import SkillsReviewActions from "@/components/cv-review/SkillsReviewActions";
 import { normalizeToNumber, VALID_SKILL_LEVELS, SKILL_LEVEL_KEYS } from "@/lib/constants/skillLevels";
@@ -375,7 +375,11 @@ export default function Skills(props){
                         </SkillItemHighlight>
                       );
                     })}
-                    <RemovedSkillsDisplay section="skills" field="soft_skills" />
+                    <RemovedSkillsBadges
+                      section="skills"
+                      field="soft_skills"
+                      badgeClassName="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90"
+                    />
                     {editing && (
                       <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center p-1 rounded cursor-pointer text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200">
                         <img src="/icons/edit.png" alt="Edit" className="h-3 w-3 opacity-70 hover:opacity-100" />
@@ -392,7 +396,11 @@ export default function Skills(props){
                   <div className="text-sm opacity-60">{t("cvSections.noSoftSkills")}</div>
                 </div>
               ) : (
-                <RemovedSkillsDisplayBlock field="soft_skills" title={cvT("cvSections.softSkills")} />
+                <RemovedSkillsBadgesBlock
+                  field="soft_skills"
+                  title={cvT("cvSections.softSkills")}
+                  badgeClassName="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90"
+                />
               )}
             </>
           );

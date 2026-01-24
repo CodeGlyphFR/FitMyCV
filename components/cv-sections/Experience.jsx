@@ -23,7 +23,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import { capitalizeSkillName } from "@/lib/utils/textFormatting";
 // BulletHighlight n'est plus utilisé - responsibilities/deliverables sont maintenant en field-level
-import SkillItemHighlight, { RemovedSkillsDisplay } from "@/components/cv-review/SkillItemHighlight";
+import SkillItemHighlight, { RemovedSkillsBadges } from "@/components/cv-review/SkillItemHighlight";
 import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
 import ExperienceReviewActions from "@/components/cv-review/ExperienceReviewActions";
 import ChangeHighlight from "@/components/cv-review/ChangeHighlight";
@@ -384,8 +384,13 @@ export default function Experience(props){
                       <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">{capitalizeSkillName(m)}</span>
                     </SkillItemHighlight>
                   ))}
-                  {/* Toujours afficher les compétences supprimées (même si tableau vide) */}
-                  <RemovedSkillsDisplay section="experience" field="skills_used" expIndex={e._originalIndex ?? i} />
+                  {/* Afficher les compétences supprimées comme des badges */}
+                  <RemovedSkillsBadges
+                    section="experience"
+                    field="skills_used"
+                    expIndex={e._originalIndex ?? i}
+                    badgeClassName="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90"
+                  />
                 </div>
                 <ExperienceReviewActions expIndex={e._originalIndex ?? i} />
               </div>

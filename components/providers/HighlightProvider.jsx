@@ -222,6 +222,8 @@ export function HighlightProvider({ children, cv, filename, initialVersion = 'la
 
       if (response.ok) {
         const result = await response.json();
+
+        // Mettre à jour le state immédiatement
         setPendingChanges(result.updatedChanges || []);
         setReviewProgress(result.progress || {
           total: 0, reviewed: 0, pending: 0, percentComplete: 100
@@ -233,7 +235,7 @@ export function HighlightProvider({ children, cv, filename, initialVersion = 'la
           setPreviousContent(null);
         }
 
-        // Rafraîchir les données du Server Component (sauf si batch)
+        // Rafraîchir les données du Server Component
         if (!skipRefresh) {
           router.refresh();
         }
