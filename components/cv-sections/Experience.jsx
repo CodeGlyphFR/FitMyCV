@@ -288,10 +288,6 @@ export default function Experience(props){
               )}
               {/* Contenu flouté pendant le traitement */}
               <div className={isProcessing ? 'blur-md pointer-events-none' : ''}>
-              {/* Review actions en haut à droite */}
-              <div className="flex justify-end mb-1">
-                <ExperienceReviewActions expIndex={e._originalIndex ?? i} />
-              </div>
               <div className="flex flex-wrap items-baseline gap-2">
                 <div className="font-semibold flex-1 min-w-0">
                   <ChangeHighlight section="experience" field="title" expIndex={e._originalIndex ?? i} className="font-semibold">
@@ -374,21 +370,24 @@ export default function Experience(props){
                 </div>
               </div>
 
-              {/* Skills used */}
-              <div className="flex flex-wrap gap-1 mt-4">
-                {Array.isArray(e.skills_used) && e.skills_used.map((m, k) => (
-                  <SkillItemHighlight
-                    key={k}
-                    section="experience"
-                    field="skills_used"
-                    itemName={m}
-                    expIndex={e._originalIndex ?? i}
-                  >
-                    <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">{capitalizeSkillName(m)}</span>
-                  </SkillItemHighlight>
-                ))}
-                {/* Toujours afficher les compétences supprimées (même si tableau vide) */}
-                <RemovedSkillsDisplay section="experience" field="skills_used" expIndex={e._originalIndex ?? i} />
+              {/* Skills used + Review actions */}
+              <div className="flex items-start justify-between gap-2 mt-4">
+                <div className="flex flex-wrap gap-1 flex-1">
+                  {Array.isArray(e.skills_used) && e.skills_used.map((m, k) => (
+                    <SkillItemHighlight
+                      key={k}
+                      section="experience"
+                      field="skills_used"
+                      itemName={m}
+                      expIndex={e._originalIndex ?? i}
+                    >
+                      <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">{capitalizeSkillName(m)}</span>
+                    </SkillItemHighlight>
+                  ))}
+                  {/* Toujours afficher les compétences supprimées (même si tableau vide) */}
+                  <RemovedSkillsDisplay section="experience" field="skills_used" expIndex={e._originalIndex ?? i} />
+                </div>
+                <ExperienceReviewActions expIndex={e._originalIndex ?? i} />
               </div>
               </div>
             </div>
