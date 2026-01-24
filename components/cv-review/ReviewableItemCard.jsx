@@ -154,7 +154,7 @@ export default function ReviewableItemCard({
         `}
       >
         {/* Header avec label + boutons inline */}
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center justify-between gap-2">
           {/* Label en haut à gauche */}
           {showLabel && labelText && (
             <div className={`text-[10px] font-bold tracking-wider ${textColorClass}`}>
@@ -170,11 +170,11 @@ export default function ReviewableItemCard({
 
           {/* Boutons Accept/Reject inline (optionnel) */}
           {showInlineActions && (
-            <div className="flex items-center gap-2 -mt-0.5 -mr-0.5 flex-shrink-0">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={handleAccept}
                 disabled={isBatchProcessing}
-                className="p-1 rounded-md text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                className="p-1 rounded-md flex items-center justify-center text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
                 title="Accepter"
               >
                 <Check className="w-4 h-4" />
@@ -182,7 +182,7 @@ export default function ReviewableItemCard({
               <button
                 onClick={handleReject}
                 disabled={isBatchProcessing}
-                className="p-1 rounded-md text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                className="p-1 rounded-md flex items-center justify-center text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-colors disabled:opacity-50"
                 title="Rejeter (restaurer)"
               >
                 <X className="w-4 h-4" />
