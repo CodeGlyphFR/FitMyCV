@@ -31,9 +31,16 @@ export default function Extras(props){
   const { editing } = useAdmin();
   const { mutate } = useMutate();
 
-  // Récupérer les extras supprimés pour les afficher
-  const { removedItems: removedExtras } = useItemChanges("extras");
+  // Récupérer les extras ajoutés et supprimés pour les afficher
+  const { removedItems: removedExtras, addedItems: addedExtras } = useItemChanges("extras");
   const hasRemovedExtras = removedExtras.length > 0;
+
+  // Helper pour trouver si un extra a un changement "added" pending
+  const findAddedChange = (extra) => {
+    return addedExtras.find(c =>
+      c.itemName?.toLowerCase() === (extra.name || "").toLowerCase()
+    );
+  };
 
   const [editIndex, setEditIndex] = React.useState(null);
   const [delIndex, setDelIndex] = React.useState(null);
@@ -104,8 +111,10 @@ export default function Extras(props){
             <div className="flex flex-wrap gap-2">
               {extras.filter(e => (e.summary || "").length <= 40).map((e,i)=>{
                 const originalIndex = extras.indexOf(e);
-                return (
-                  <div key={originalIndex} className="relative inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-1 text-sm overflow-visible">
+                const addedChange = findAddedChange(e);
+
+                const badgeContent = (
+                  <>
                     <div>
                       <span className="font-semibold">{toTitleCase(e.name) || ""}</span>
                       <span className="text-sm opacity-80"> : {e.summary || ""}</span>
@@ -118,6 +127,25 @@ export default function Extras(props){
                         ]}
                       />
                     )}
+                  </>
+                );
+
+                // Si c'est un extra ajouté, wrapper dans ReviewableItemCard
+                if (addedChange) {
+                  return (
+                    <ReviewableItemCard
+                      key={originalIndex}
+                      change={addedChange}
+                      variant="badge"
+                    >
+                      {badgeContent}
+                    </ReviewableItemCard>
+                  );
+                }
+
+                return (
+                  <div key={originalIndex} className="relative inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-1 text-sm overflow-visible">
+                    {badgeContent}
                   </div>
                 );
               })}
@@ -143,22 +171,40 @@ export default function Extras(props){
             <div className={extras.filter(e => (e.summary || "").length > 40).length > 1 ? "grid md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
               {extras.filter(e => (e.summary || "").length > 40).map((e,i)=>{
                 const originalIndex = extras.indexOf(e);
+                const addedChange = findAddedChange(e);
+
+                const cardContent = (
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1">
+                      <div className="font-semibold">{toTitleCase(e.name) || ""}</div>
+                      <div className="text-sm opacity-80">{e.summary || ""}</div>
+                    </div>
+                    {editing && (
+                      <ContextMenu
+                        items={[
+                          { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(originalIndex) },
+                          { icon: Trash2, label: t("common.delete"), onClick: () => setDelIndex(originalIndex), danger: true }
+                        ]}
+                      />
+                    )}
+                  </div>
+                );
+
+                // Si c'est un extra ajouté, wrapper dans ReviewableItemCard
+                if (addedChange) {
+                  return (
+                    <ReviewableItemCard
+                      key={originalIndex}
+                      change={addedChange}
+                    >
+                      {cardContent}
+                    </ReviewableItemCard>
+                  );
+                }
+
                 return (
                   <div key={originalIndex} className="rounded-xl border border-white/15 p-3 relative z-0 overflow-visible">
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1">
-                        <div className="font-semibold">{toTitleCase(e.name) || ""}</div>
-                        <div className="text-sm opacity-80">{e.summary || ""}</div>
-                      </div>
-                      {editing && (
-                        <ContextMenu
-                          items={[
-                            { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(originalIndex) },
-                            { icon: Trash2, label: t("common.delete"), onClick: () => setDelIndex(originalIndex), danger: true }
-                          ]}
-                        />
-                      )}
-                    </div>
+                    {cardContent}
                   </div>
                 );
               })}
