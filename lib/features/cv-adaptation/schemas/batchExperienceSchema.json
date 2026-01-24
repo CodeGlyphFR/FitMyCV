@@ -91,9 +91,13 @@
             "reason": {
               "type": "string",
               "description": "Justification du changement"
+            },
+            "translated": {
+              "type": ["string", "null"],
+              "description": "Traduction du skill source dans la langue cible (OBLIGATOIRE si action=removed, permet le rollback dans la bonne langue)"
             }
           },
-          "required": ["before", "after", "action", "reason"],
+          "required": ["before", "after", "action", "reason", "translated"],
           "additionalProperties": false
         }
       }

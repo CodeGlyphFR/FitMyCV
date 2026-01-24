@@ -189,6 +189,14 @@ Pour CHAQUE skill de l'experience source, documenter le changement dans `skills_
 | `after` | Nom du skill cible (null si suppression) |
 | `action` | `kept` / `modified` / `removed` / `added` |
 | `reason` | Justification courte |
+| `translated` | Traduction du skill source dans la langue cible (OBLIGATOIRE si action=removed) |
+
+**Champ `translated` (OBLIGATOIRE pour action "removed")** :
+- Pour les skills supprimés, fournir la traduction du skill source dans la langue cible
+- Permet de restaurer le skill dans la bonne langue si l'utilisateur refuse la suppression
+- Appliquer les mêmes règles de traduction que pour les skills conservés (cf. section 6.4) :
+  - Compétences génériques → TRADUIRE dans la langue cible
+  - Noms de technos → GARDER en anglais (React, Python, AWS, Scrum)
 
 **Actions** :
 - `kept` : Skill conserve sans modification (before = after)
@@ -198,10 +206,11 @@ Pour CHAQUE skill de l'experience source, documenter le changement dans `skills_
 
 **Exemples** :
 ```json
-{ "before": "Project Management", "after": "Gestion de projet", "action": "modified", "reason": "Traduction FR" }
-{ "before": "Leadership", "after": null, "action": "removed", "reason": "Non pertinent pour poste technique" }
-{ "before": "Python", "after": "Python", "action": "kept", "reason": "Requis par l'offre" }
-{ "before": "Claude", "after": "LLM", "action": "modified", "reason": "Claude EST un LLM - equivalence" }
+{ "before": "Project Management", "after": "Gestion de projet", "action": "modified", "reason": "Traduction FR", "translated": null }
+{ "before": "Leadership", "after": null, "action": "removed", "reason": "Non pertinent pour poste technique", "translated": "Leadership" }
+{ "before": "Time Management", "after": null, "action": "removed", "reason": "Non pertinent pour ce poste", "translated": "Gestion du temps" }
+{ "before": "Python", "after": "Python", "action": "kept", "reason": "Requis par l'offre", "translated": null }
+{ "before": "Claude", "after": "LLM", "action": "modified", "reason": "Claude EST un LLM - equivalence", "translated": null }
 ```
 
 **IMPORTANT** : Le tableau `skills_modifications` doit lister TOUTES les skills source, meme celles conservees (`kept`).
