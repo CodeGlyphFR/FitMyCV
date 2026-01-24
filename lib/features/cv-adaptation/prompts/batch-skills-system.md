@@ -88,7 +88,16 @@ UNIQUEMENT si la competence appartient a un domaine RADICALEMENT DIFFERENT :
 **CATEGORIES NON CONCERNEES PAR LA SUPPRESSION :**
 - `soft_skills` : NE JAMAIS supprimer, juste filtrer par pertinence (max 6)
 
-**Documentation** : Pour chaque suppression, utiliser action `removed` avec reason expliquant le domaine radicalement different
+**⚠️ DOCUMENTATION OBLIGATOIRE DES SUPPRESSIONS :**
+
+CHAQUE skill supprime DOIT avoir une entree `removed` dans modifications :
+- Ne JAMAIS omettre silencieusement un skill de la liste finale
+- Si un skill du CV source n'est pas dans la liste finale → generer `action: removed`
+- Inclure `translated` avec la traduction dans la langue cible
+
+```json
+{"category": "hard_skills", "before": "Business Transformation", "after": null, "action": "removed", "reason": "Non pertinent", "translated": "Transformation d'entreprise"}
+```
 
 ### 2. AJUSTER les proficiency (NOMBRES 0-5)
 Evaluer le niveau reel selon les experiences et projets du candidat.
@@ -231,7 +240,7 @@ Methodes de travail structurees.
 | Action | Quand | before | after | translated |
 |--------|-------|--------|-------|------------|
 | `modified` | Skill traduit/reformule | nom original | nom traduit | `null` |
-| `removed` | Skill supprime | nom original | `null` | **OBLIGATOIRE** |
+| `removed` | Skill supprime | nom original | `null` | **TRADUCTION dans langue cible** (pour rollback) |
 | `kept` | Skill conserve tel quel | nom | nom | `null` |
 | `level_adjusted` | Niveau modifie | nom | nom | `null` |
 | `added` | Skill ajoute | `null` | nom | `null` |
@@ -247,6 +256,41 @@ Methodes de travail structurees.
 - Si un skill est **traduit** → `modified` UNIQUEMENT (pas de `removed`)
 - Si un skill est **supprime** → `removed` UNIQUEMENT (pas de `modified`)
 
+### ⚠️ REGLE CRITIQUE : COHERENCE LISTE / MODIFICATIONS
+
+La liste finale de chaque categorie doit etre **coherente** avec les modifications :
+
+| Action | Skill dans la liste finale ? |
+|--------|------------------------------|
+| `modified` | OUI - avec le nouveau nom (`after`) |
+| `kept` | OUI - avec le meme nom |
+| `removed` | **NON** - le skill ne doit PAS etre dans la liste |
+| `added` | OUI - avec le nouveau nom |
+
+**Exemple CORRECT :**
+```json
+"methodologies": ["Scrum", "Agile"],
+"modifications": [
+  {"before": "Change Management", "after": null, "action": "removed", ...}
+]
+```
+→ "Change Management" n'est PAS dans la liste car `action: removed`
+
+**Exemple INCORRECT :**
+```json
+"methodologies": ["Gestion du changement"],
+"modifications": [
+  {"before": "Change Management", "after": null, "action": "removed", "translated": "Gestion du changement"}
+]
+```
+→ ERREUR : "Gestion du changement" est dans la liste alors que le skill est `removed`
+
+### ⚠️ REGLE POUR `translated` (skills supprimes)
+
+Le champ `translated` doit contenir la **TRADUCTION** du skill dans la langue cible :
+- Skills generiques → TRADUIRE (ex: "Change Management" → "Gestion du changement")
+- Noms propres/technos → garder en anglais (ex: "React" → "React")
+
 ### ⚠️ EXEMPLES OBLIGATOIRES (format exact a respecter)
 
 **Skill TRADUIT (conserve) = `modified` :**
@@ -259,9 +303,18 @@ Methodes de travail structurees.
 ```
 
 **Skill SUPPRIME = `removed` :**
+- `translated` = **TRADUCTION** du skill dans la langue cible (FR si CV en FR)
+
 ```json
-{"category": "hard_skills", "before": "Soudure TIG", "after": null, "action": "removed", "reason": "Domaine different", "translated": "Soudure TIG"}
-{"category": "tools", "before": "SAP Logistique", "after": null, "action": "removed", "reason": "Non pertinent", "translated": "SAP Logistique"}
+{"category": "hard_skills", "before": "Strategic Analysis", "after": null, "action": "removed", "reason": "Non pertinent", "translated": "Analyse strategique"}
+{"category": "soft_skills", "before": "Multicultural Adaptability", "after": null, "action": "removed", "reason": "Hors scope", "translated": "Adaptabilite multiculturelle"}
+{"category": "methodologies", "before": "Change Management", "after": null, "action": "removed", "reason": "Non mentionne", "translated": "Gestion du changement"}
+```
+
+**Noms propres (outils/technos) - garder en anglais :**
+```json
+{"category": "tools", "before": "React", "after": null, "action": "removed", "reason": "Non pertinent", "translated": "React"}
+{"category": "methodologies", "before": "Scrum", "after": null, "action": "removed", "reason": "Non requis", "translated": "Scrum"}
 ```
 
 **Skill CONSERVE tel quel = `kept` :**
