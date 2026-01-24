@@ -1,6 +1,6 @@
 # Adaptation des Extras CV
 
-Tu es un expert en redaction de CV. Ta tache est d'adapter les extras (informations complementaires) du CV.
+Tu es un expert en redaction de CV. Ta tache est d'adapter les extras (informations complementaires) du CV à l'offre d'emploi.
 
 ---
 
@@ -8,7 +8,7 @@ Tu es un expert en redaction de CV. Ta tache est d'adapter les extras (informati
 
 Chaque extra DOIT avoir :
 - **name** : Titre (obligatoire, non vide)
-- **summary** : Description (obligatoire, non vide)
+- **summary** : Description en lien avec **name** (obligatoire, non vide)
 
 ---
 
@@ -18,13 +18,13 @@ Chaque extra DOIT avoir :
 
 **Indices qu'un extra contient plusieurs infos :**
 - Plusieurs phrases avec des sujets differents
-- Pattern "Sujet1 : valeur1. Sujet2 : valeur2."
+- Pattern "Sujet1 : description. Sujet2 : description2."
 - Name generique ("Informations personnelles", "Divers", "Autres")
 
 **Action : SPLITTER**
 Creer un extra distinct pour chaque information avec :
-- `name` = le sujet de l'information (choisir le bon nom selon le contenu)
-- `summary` = la valeur/description
+- `name` = le sujet de l'information (choisir le bon nom selon le `summary`)
+- `summary` = la description
 
 **Choisir le bon `name` selon le contenu :**
 
@@ -36,21 +36,6 @@ Creer un extra distinct pour chaque information avec :
 | Vehicule, voiture | "Véhicule" |
 | Teletravail, remote, hybride | "Télétravail" |
 | Loisirs, sport, musique, lecture | "Hobbies" |
-| Langues, anglais, allemand | "Langues" |
-
-**⚠️ ATTENTION** : Ne PAS confondre mobilite et hobbies !
-- "Ouvert aux deplacements" → name: "Mobilité" (PAS "Hobbies")
-- "Football, lecture" → name: "Hobbies"
-
-**Exemple :**
-
-| Avant (mal importe) | Apres (splitte) |
-|---------------------|-----------------|
-| name: "Infos personnelles" | Extra 1: name: "Disponibilité", summary: "Préavis 90 jours" |
-| summary: "Dispo: Préavis 90j. Permis: A, B. Mobilité: OK" | Extra 2: name: "Permis", summary: "A et B" |
-| | Extra 3: name: "Mobilité", summary: "Ouvert aux déplacements" |
-
----
 
 ## CLASSIFICATION DES EXTRAS
 
@@ -58,16 +43,15 @@ Creer un extra distinct pour chaque information avec :
 | Type | Regle |
 |------|-------|
 | Permis (A, B, C) | GARDER si offre mentionne deplacement/mobilite, sinon SUPPRIMER |
-| Vehicule | Idem |
 | Certifications | GARDER si pertinent pour l'offre |
 | Benevolat | GARDER si lien avec le domaine du poste |
 
 ### PREFERENCES (peuvent etre ajoutees)
 | Type | Regle |
 |------|-------|
-| Remote | Si offre mentionne teletravail/remote/hybride → AJOUTER |
-| Disponibilite | Si offre mentionne disponibilite/preavis → AJOUTER |
-| Mobilite | Si offre mentionne deplacements ET candidat a permis → AJOUTER |
+| Remote | Si offre mentionne teletravail/remote/hybride → AJOUTER si manquant |
+| Disponibilite | Si offre mentionne disponibilite/preavis → AJOUTER si manquant |
+| Mobilite | Si offre mentionne deplacements ET candidat a permis → AJOUTER si manquant |
 
 ### PERSONNELS (toujours garder)
 | Type | Regle |
