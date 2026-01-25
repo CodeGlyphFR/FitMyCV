@@ -40,13 +40,13 @@
         <h2>Organisation des Fichiers</h2>
 
         <pre><code>lib/features/cv-adaptation/schemas/
-├── classification-output.json    # Output phase classification
-├── experience-output.json        # Output batch experience
-├── project-output.json           # Output batch project
-├── skills-output.json            # Output batch skills
-├── summary-output.json           # Output batch summary
-├── extras-output.json            # Output batch extras
-└── cv-final.json                 # Schema CV final</code></pre>
+├── classificationSchema.json       # Output phase classification
+├── batchExperienceSchema.json      # Output batch experience
+├── batchProjectSchema.json         # Output batch project
+├── batchSkillsSchema.json          # Output batch skills
+├── batchSummarySchema.json         # Output batch summary
+├── batchExtrasSchema.json          # Output batch extras
+└── recomposeLanguagesSchema.json   # Output recompose langues</code></pre>
 
         <h2>Structured Outputs OpenAI</h2>
 
@@ -75,7 +75,7 @@
         <div class="data-flow">
           <div class="data-flow-header">
             <span class="data-flow-badge output">OUTPUT</span>
-            <span class="data-flow-title">classification-output.json</span>
+            <span class="data-flow-title">classificationSchema.json</span>
           </div>
           <div class="data-flow-content">
             <pre><code>{
@@ -135,7 +135,7 @@
         <div class="data-flow">
           <div class="data-flow-header">
             <span class="data-flow-badge output">OUTPUT</span>
-            <span class="data-flow-title">experience-output.json</span>
+            <span class="data-flow-title">batchExperienceSchema.json</span>
           </div>
           <div class="data-flow-content">
             <pre><code>{
@@ -189,67 +189,171 @@
           </div>
         </div>
 
-        <h2>Schema : Skills Output</h2>
+        <h2>Schema : Skills Output (Batch Skills)</h2>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Pattern before/after</div>
+          <p>Le sch&eacute;ma Skills utilise le m&ecirc;me pattern que les exp&eacute;riences avec <code>before</code>/<code>after</code> pour tracker les modifications et permettre le rollback.</p>
+        </div>
 
         <div class="data-flow">
           <div class="data-flow-header">
             <span class="data-flow-badge output">OUTPUT</span>
-            <span class="data-flow-title">skills-output.json</span>
+            <span class="data-flow-title">batchSkillsSchema.json</span>
           </div>
           <div class="data-flow-content">
             <pre><code>{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {
-    "technical": {
+    "hard_skills": {
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
           "name": { "type": "string" },
-          "category": {
-            "type": "string",
-            "enum": ["language", "framework", "database", "tool", "platform", "other"]
-          },
-          "priority": {
-            "type": "string",
-            "enum": ["required", "nice-to-have", "transferable"]
-          },
-          "source": {
-            "type": "string",
-            "enum": ["cv", "job_offer", "both"]
+          "proficiency": {
+            "type": "integer",
+            "enum": [0, 1, 2, 3, 4, 5],
+            "description": "0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert"
           }
         },
-        "required": ["name", "category", "priority", "source"]
+        "required": ["name", "proficiency"]
       }
     },
-    "soft": {
+    "soft_skills": {
       "type": "array",
       "items": { "type": "string" }
     },
-    "languages": {
+    "tools": {
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
-          "language": { "type": "string" },
-          "level": { "type": "string" }
+          "name": { "type": "string" },
+          "proficiency": {
+            "type": "integer",
+            "enum": [0, 1, 2, 3, 4, 5]
+          }
         },
-        "required": ["language", "level"]
+        "required": ["name", "proficiency"]
       }
     },
     "methodologies": {
       "type": "array",
       "items": { "type": "string" }
     },
-    "certifications": {
+    "modifications": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": ["hard_skills", "soft_skills", "tools", "methodologies"]
+          },
+          "before": { "type": ["string", "null"] },
+          "after": { "type": ["string", "null"] },
+          "action": {
+            "type": "string",
+            "enum": ["kept", "modified", "removed", "added", "level_adjusted", "split", "moved", "merged", "inferred"]
+          },
+          "reason": { "type": "string" },
+          "translated": {
+            "type": ["string", "null"],
+            "description": "OBLIGATOIRE si action=removed, pour rollback"
+          }
+        },
+        "required": ["category", "before", "after", "action", "reason", "translated"]
+      }
     }
   },
-  "required": ["technical", "soft", "languages", "methodologies"]
+  "required": ["hard_skills", "soft_skills", "tools", "methodologies", "modifications"]
 }</code></pre>
           </div>
+        </div>
+
+        <h3>Actions de modification</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>before</th>
+              <th>after</th>
+              <th>translated</th>
+              <th>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>kept</code></td>
+              <td>nom</td>
+              <td>nom</td>
+              <td>null</td>
+              <td>Skill conserv&eacute; tel quel</td>
+            </tr>
+            <tr>
+              <td><code>modified</code></td>
+              <td>original</td>
+              <td>traduit</td>
+              <td>null</td>
+              <td>Skill traduit/reformul&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>removed</code></td>
+              <td>original</td>
+              <td>null</td>
+              <td><strong>TRADUCTION</strong></td>
+              <td>Skill supprim&eacute; (rollback possible)</td>
+            </tr>
+            <tr>
+              <td><code>added</code></td>
+              <td>null</td>
+              <td>nom</td>
+              <td>null</td>
+              <td>Skill ajout&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>level_adjusted</code></td>
+              <td>nom</td>
+              <td>nom</td>
+              <td>null</td>
+              <td>Proficiency modifi&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>split</code></td>
+              <td>original</td>
+              <td>partie</td>
+              <td>null</td>
+              <td>Skill s&eacute;par&eacute; (React / Vue)</td>
+            </tr>
+            <tr>
+              <td><code>moved</code></td>
+              <td>nom</td>
+              <td>nom</td>
+              <td>null</td>
+              <td>Changement de cat&eacute;gorie</td>
+            </tr>
+            <tr>
+              <td><code>merged</code></td>
+              <td>original</td>
+              <td>gard&eacute;</td>
+              <td>null</td>
+              <td>Doublon fusionn&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>inferred</code></td>
+              <td>null</td>
+              <td>nom</td>
+              <td>null</td>
+              <td>M&eacute;thodologie d&eacute;duite</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Champ translated (rollback)</div>
+          <p>Le champ <code>translated</code> est <strong>obligatoire</strong> pour les skills supprim&eacute;s (<code>action: removed</code>). Il contient la traduction du skill dans la langue cible pour permettre un rollback coh&eacute;rent lors de la review.</p>
         </div>
 
         <h2>Schema : Summary Output</h2>
@@ -257,7 +361,7 @@
         <div class="data-flow">
           <div class="data-flow-header">
             <span class="data-flow-badge output">OUTPUT</span>
-            <span class="data-flow-title">summary-output.json</span>
+            <span class="data-flow-title">batchSummarySchema.json</span>
           </div>
           <div class="data-flow-content">
             <pre><code>{
@@ -440,14 +544,14 @@ export async function loadSchema(schemaPath) {
 }
 
 // Usage
-const schema = await loadSchema('cv-adaptation/experience-output');
+const schema = await loadSchema('cv-adaptation/batchExperience');
 
 const response = await callOpenAI({
   messages: [...],
   responseFormat: {
     type: 'json_schema',
     json_schema: {
-      name: 'experience_output',
+      name: 'batch_experience',
       schema: schema,
       strict: true
     }
@@ -479,7 +583,7 @@ export function validateResponse(data, schema) {
 const response = await callOpenAI({ ... });
 const parsed = JSON.parse(response.choices[0].message.content);
 
-const validation = validateResponse(parsed, experienceOutputSchema);
+const validation = validateResponse(parsed, batchExperienceSchema);
 if (!validation.valid) {
   console.error('Schema validation failed:', validation.errors);
   throw new Error('Invalid AI response structure');
