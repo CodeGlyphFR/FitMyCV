@@ -371,8 +371,8 @@ export default function Experience(props){
               </div>
 
               {/* Skills used + Review actions */}
-              <div className="flex items-start justify-between gap-2 mt-4">
-                <div className="flex flex-wrap gap-1 flex-1">
+              <div className="flex flex-col gap-2 mt-4 md:flex-row md:items-start md:justify-between">
+                <div className="flex flex-wrap gap-1">
                   {Array.isArray(e.skills_used) && e.skills_used.map((m, k) => (
                     <SkillItemHighlight
                       key={k}
@@ -392,7 +392,9 @@ export default function Experience(props){
                     badgeClassName="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90"
                   />
                 </div>
-                <ExperienceReviewActions expIndex={e._originalIndex ?? i} />
+                <div className="self-end md:self-auto">
+                  <ExperienceReviewActions expIndex={e._originalIndex ?? i} />
+                </div>
               </div>
               </div>
             </div>
