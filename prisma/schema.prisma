@@ -20,6 +20,7 @@ model User {
   stripeCustomerId         String?               @unique
   onboardingState          Json?                                  // État complet onboarding (UNIQUE source de vérité)
   privacyPolicyAcceptedAt  DateTime?                              // Date d'acceptation de la politique de confidentialité
+  lastLoginAt              DateTime?                              // Dernière connexion (pour détection comptes inactifs)
   createdAt                DateTime              @default(now())
   updatedAt                DateTime              @updatedAt
   accounts               Account[]

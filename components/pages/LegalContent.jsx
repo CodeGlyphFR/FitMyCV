@@ -43,14 +43,9 @@ function ContentBlock({ item }) {
     case 'highlight':
       return (
         <div className={`mt-3 p-3 ${HIGHLIGHT_VARIANTS[item.variant] || HIGHLIGHT_VARIANTS.info} backdrop-blur-sm rounded`}>
-          <p className="text-sm text-white drop-shadow">
+          <p className="text-sm text-white drop-shadow whitespace-pre-line">
             {item.title && <strong>{item.title} </strong>}
-            {item.text?.split('\n').map((line, i) => (
-              <span key={i}>
-                {line}
-                {i < item.text.split('\n').length - 1 && <br />}
-              </span>
-            ))}
+            {item.text}
           </p>
         </div>
       );
@@ -58,14 +53,37 @@ function ContentBlock({ item }) {
     case 'infobox':
       return (
         <div className="mt-3 p-3 bg-sky-500/20 backdrop-blur-sm rounded">
-          <p className="text-white drop-shadow space-y-1">
-            {item.text?.split('\n').map((line, i) => (
-              <span key={i}>
-                {line}
-                {i < item.text.split('\n').length - 1 && <br />}
-              </span>
-            ))}
+          <p className="text-white drop-shadow whitespace-pre-line">
+            {item.text}
           </p>
+        </div>
+      );
+
+    case 'table':
+      return (
+        <div className="overflow-x-auto mb-3">
+          <table className="w-full text-sm text-white/90 border-collapse">
+            <thead>
+              <tr className="bg-white/10">
+                {item.headers?.map((header, i) => (
+                  <th key={i} className="border border-white/20 px-3 py-2 text-left font-semibold">
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {item.rows?.map((row, i) => (
+                <tr key={i} className={i % 2 === 0 ? 'bg-white/5' : ''}>
+                  {row.map((cell, j) => (
+                    <td key={j} className="border border-white/20 px-3 py-2">
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       );
 

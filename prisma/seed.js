@@ -101,6 +101,15 @@ const EMAIL_TRIGGERS = [
     icon: '💳',
     isSystem: true,
   },
+  {
+    name: 'inactivity_warning',
+    label: 'Avertissement Inactivite',
+    description: "Envoye 30 jours avant la suppression d'un compte inactif (3 ans sans connexion)",
+    variables: JSON.stringify(['userName', 'loginUrl', 'lastActivityDate', 'deletionDate']),
+    category: 'account',
+    icon: '⚠️',
+    isSystem: true,
+  },
 ];
 
 // ============================================================================

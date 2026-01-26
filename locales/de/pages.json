@@ -191,7 +191,7 @@
         "title": "12. Rechtliche Informationen",
         "content": [
           { "type": "paragraph", "text": "Herausgeber des FitMyCV.io-Dienstes:" },
-          { "type": "highlight", "variant": "info", "text": "Name: [Zu vervollständigen]\nStatus: Kleinunternehmen\nSIRET: [Zu vervollständigen]\nAdresse: [Zu vervollständigen]\nE-Mail: [Zu vervollständigen]" },
+          { "type": "highlight", "variant": "info", "text": "Codeglyph\nSIRET: 995 375 862 00019\n200 rue de la Croix Nivert, 75015 Paris, Frankreich\nE-Mail: contact@codeglyph.fr" },
           { "type": "highlight", "variant": "success", "text": "Bei Fragen zu diesen AGB kontaktieren Sie uns unter der oben genannten E-Mail-Adresse." }
         ]
       }
@@ -201,169 +201,148 @@
     "_untranslated": false,
     "sections": [
       {
-        "id": "introduction",
-        "title": "1. Einleitung",
-        "content": [
-          { "type": "paragraph", "text": "Diese Datenschutzrichtlinie beschreibt, wie FitMyCV.io Ihre personenbezogenen Daten gemäß der Datenschutz-Grundverordnung (DSGVO) und den geltenden französischen Rechtsvorschriften erhebt, verwendet, speichert und schützt." },
-          { "type": "paragraph", "text": "Wir verpflichten uns, Ihre Privatsphäre zu schützen und Ihre personenbezogenen Daten transparent, sicher und gesetzeskonform zu verarbeiten." }
-        ]
-      },
-      {
         "id": "controller",
-        "title": "2. Verantwortlicher",
+        "title": "1. Verantwortlicher",
         "content": [
-          { "type": "infobox", "text": "Verantwortlicher: FitMyCV.io\nKontakt: [Mit Ihrer E-Mail-Adresse zu vervollständigen]" }
+          { "type": "paragraph", "text": "Codeglyph betreibt die Website FitMyCV.io und erhebt und verarbeitet in diesem Zusammenhang personenbezogene Daten über Sie." },
+          { "type": "infobox", "text": "Codeglyph\nSIRET: 995 375 862 00019\n200 rue de la Croix Nivert, 75015 Paris, Frankreich\nE-Mail: contact@codeglyph.fr" }
         ]
       },
       {
-        "id": "data-collected",
-        "title": "3. Erhobene Daten",
+        "id": "age",
+        "title": "2. Mindestalter",
         "content": [
-          { "type": "paragraph", "text": "Wir erheben folgende Daten:" },
-          { "type": "subtitle", "text": "3.1. Identifikationsdaten" },
-          { "type": "list", "items": ["Vollständiger Name", "E-Mail-Adresse", "Passwort (verschlüsselt)", "Profilbild (falls über OAuth bereitgestellt)"] },
-          { "type": "subtitle", "text": "3.2. CV-Daten" },
-          { "type": "list", "items": ["Berufliche Informationen (Erfahrung, Ausbildung, Fähigkeiten)", "Kontaktdaten (Telefon, Adresse, berufliche Links)", "Hochgeladene Dokumente (PDF-Lebensläufe, Stellenangebote)"] },
-          { "type": "subtitle", "text": "3.3. Verbindungsdaten" },
-          { "type": "list", "items": ["IP-Adresse", "Browsertyp", "Besuchte Seiten und Verweildauer", "Sitzungsdaten"] },
-          { "type": "subtitle", "text": "3.4. Cookies" },
-          { "type": "paragraph", "text": "Weitere Details finden Sie auf unserer Cookie-Verwaltungsseite.", "link": "/cookies" }
-        ]
-      },
-      {
-        "id": "purposes",
-        "title": "4. Verarbeitungszwecke",
-        "content": [
-          { "type": "paragraph", "text": "Ihre Daten werden für folgende Zwecke verwendet:" },
-          { "type": "list", "items": [
-            "Benutzerkontoverwaltung: Erstellung, Authentifizierung, Profilverwaltung",
-            "Dienstleistungserbringung: Erstellung, Speicherung und Generierung personalisierter Lebensläufe",
-            "Serviceverbesserung: Nutzungsanalyse, Fehlerbehebung, Entwicklung neuer Funktionen",
-            "Kommunikation: Dienstbenachrichtigungen, Benutzersupport, Feedback-Antworten",
-            "Sicherheit: Betrugsprävention, Missbrauchserkennung, Datenschutz"
-          ]}
-        ]
-      },
-      {
-        "id": "legal-basis",
-        "title": "5. Rechtsgrundlage der Verarbeitung",
-        "content": [
-          { "type": "list", "items": [
-            "Vertragserfüllung: Bereitstellung des CV-Erstellungsdienstes",
-            "Einwilligung: Analytische Cookies (Reichweitenmessung)",
-            "Berechtigtes Interesse: Serviceverbesserung, Sicherheit, interne Telemetrie",
-            "Gesetzliche Verpflichtung: Datenaufbewahrung für steuerliche Pflichten"
-          ]}
-        ]
-      },
-      {
-        "id": "telemetry",
-        "title": "5bis. Interne Telemetrie (Berechtigtes Interesse)",
-        "content": [
-          { "type": "paragraph", "text": "Im Rahmen unseres berechtigten Interesses, einen zuverlässigen und sicheren Dienst bereitzustellen, erheben wir bestimmte technische Daten ohne vorherige Einwilligung:" },
-          { "type": "list", "items": [
-            "Fehlerprotokolle: zur Identifizierung und Behebung von Fehlfunktionen",
-            "Leistungsmetriken: Antwortzeiten von KI-Aufrufen, Erfolgsraten",
-            "Systemereignisse: CV-Erstellung, Importe, Generierungen (ohne persönliche Inhalte)",
-            "API-Nutzung: zur Erkennung von Missbrauch und Gewährleistung der Dienstverfügbarkeit"
-          ]},
-          { "type": "paragraph", "text": "Diese Daten werden:" },
-          { "type": "list", "items": [
-            "Ausschließlich in unserer Datenbank gespeichert (keine Weitergabe an Dritte)",
-            "Nur zur Serviceverbesserung und Problemerkennung verwendet",
-            "Maximal 12 Monate aufbewahrt",
-            "Nicht zu kommerziellen Zwecken an Dritte weitergegeben"
-          ]},
-          { "type": "highlight", "variant": "success", "title": "Ihr Widerspruchsrecht:", "text": "Gemäß Artikel 21 der DSGVO können Sie dieser Erhebung widersprechen, indem Sie uns kontaktieren. Beachten Sie, dass dies unsere Fähigkeit beeinträchtigen kann, Probleme mit Ihrem Konto zu diagnostizieren und die Sicherheit des Dienstes zu gewährleisten." }
-        ]
-      },
-      {
-        "id": "retention",
-        "title": "6. Aufbewahrungsdauer",
-        "content": [
-          { "type": "list", "items": [
-            "Aktives Konto: solange das Konto besteht",
-            "Gelöschtes Konto: 30 Tage nach Löschung (Widerrufsfrist)",
-            "Einwilligungs-Cookies: 6 Monate",
-            "Sitzungs-Cookies: 30 Tage",
-            "Verbindungsprotokolle: maximal 12 Monate"
-          ]}
-        ]
-      },
-      {
-        "id": "sharing",
-        "title": "7. Datenweitergabe",
-        "content": [
-          { "type": "paragraph", "text": "Ihre personenbezogenen Daten werden niemals verkauft. Sie können nur weitergegeben werden an:" },
-          { "type": "list", "items": [
-            "Dienstleister: Hosting (Cloud-Infrastruktur), Authentifizierung (NextAuth, OAuth-Anbieter), KI (OpenAI für CV-Generierung)",
-            "Behörden: wenn gesetzlich vorgeschrieben oder zum Schutz unserer Rechte"
-          ]},
-          { "type": "highlight", "variant": "info", "title": "Wichtig:", "text": "Ihre CV-Daten werden zur Generierung und Anpassung an OpenAI (GPT-Modell) gesendet. OpenAI gibt an, API-Daten nicht zum Training seiner Modelle zu verwenden." }
-        ]
-      },
-      {
-        "id": "security",
-        "title": "8. Datensicherheit",
-        "content": [
-          { "type": "paragraph", "text": "Wir setzen folgende Sicherheitsmaßnahmen um:" },
-          { "type": "list", "items": [
-            "Verschlüsselung: AES-256-GCM für alle gespeicherten Lebensläufe",
-            "HTTPS: sichere Kommunikation (SSL/TLS)",
-            "Passwort-Hashing: bcrypt mit Salt",
-            "CSRF-Schutz: Anti-Fälschungs-Tokens",
-            "Sichere Cookies: HttpOnly, Secure, SameSite",
-            "Sichere Authentifizierung: JWT, Sitzungs-Tokens",
-            "Anti-Spam-Schutz: Google reCAPTCHA v3 zur Missbrauchsprävention"
-          ]},
-          { "type": "highlight", "variant": "info", "title": "reCAPTCHA-Schutz:", "text": "Diese Website wird durch reCAPTCHA geschützt und es gelten die Datenschutzrichtlinie und die Nutzungsbedingungen von Google." }
+          { "type": "paragraph", "text": "FitMyCV.io ist für Personen ab 16 Jahren bestimmt. Durch die Nutzung dieses Dienstes bestätigen Sie, dass Sie das erforderliche Alter erreicht haben." }
         ]
       },
       {
         "id": "rights",
-        "title": "9. Ihre Rechte (DSGVO)",
+        "title": "3. Ihre Rechte",
         "content": [
-          { "type": "paragraph", "text": "Gemäß der DSGVO haben Sie folgende Rechte:" },
+          { "type": "paragraph", "text": "Gemäß der Datenschutz-Grundverordnung (DSGVO) haben Sie folgende Rechte:" },
           { "type": "list", "items": [
-            "Auskunftsrecht: Ihre personenbezogenen Daten einsehen",
-            "Recht auf Berichtigung: unrichtige Daten korrigieren",
-            "Recht auf Löschung: Ihre Daten löschen (\"Recht auf Vergessenwerden\")",
-            "Recht auf Einschränkung: die Verarbeitung Ihrer Daten einschränken",
-            "Recht auf Datenübertragbarkeit: Ihre Daten in strukturiertem Format erhalten",
-            "Widerspruchsrecht: der Verarbeitung aus berechtigten Gründen widersprechen",
-            "Recht auf Widerruf der Einwilligung: jederzeit"
+            "Auskunft: Einsicht in die personenbezogenen Daten, die wir über Sie speichern",
+            "Berichtigung: Korrektur unrichtiger oder unvollständiger Daten",
+            "Löschung: Antrag auf Löschung Ihrer Daten (\"Recht auf Vergessenwerden\")",
+            "Einschränkung: Einschränkung der Verarbeitung Ihrer Daten",
+            "Datenübertragbarkeit: Erhalt Ihrer Daten in einem strukturierten Format",
+            "Widerspruch: Widerspruch gegen die Verarbeitung aus berechtigten Gründen"
           ]},
-          { "type": "highlight", "variant": "success", "text": "Zur Ausübung Ihrer Rechte kontaktieren Sie uns unter: [E-Mail zu vervollständigen]" }
+          { "type": "paragraph", "text": "Um diese Rechte auszuüben, kontaktieren Sie uns unter contact@codeglyph.fr. Wir antworten innerhalb von 30 Tagen." },
+          { "type": "paragraph", "text": "Im Streitfall können Sie eine Beschwerde bei der CNIL einreichen.", "link": "https://www.cnil.fr" }
+        ]
+      },
+      {
+        "id": "data-collected",
+        "title": "4. Erhobene Daten",
+        "content": [
+          { "type": "subtitle", "text": "4.1 Identifikationsdaten" },
+          { "type": "list", "items": ["Name, E-Mail-Adresse, Passwort (verschlüsselt)", "Profilbild (bei Anmeldung über Google, Apple oder GitHub)"] },
+          { "type": "subtitle", "text": "4.2 Lebenslauf-Daten" },
+          { "type": "list", "items": ["Berufliche Informationen: Erfahrung, Ausbildung, Fähigkeiten", "Kontaktdaten: Telefon, Adresse, berufliche Links", "Importierte Dokumente (PDF): nicht gespeichert, an OpenAI zur Extraktion gesendet und sofort gelöscht", "Versionshistorie Ihrer Lebensläufe"] },
+          { "type": "subtitle", "text": "4.3 Navigationsdaten" },
+          { "type": "list", "items": ["IP-Adresse, Browsertyp", "Besuchte Seiten, Sitzungsdaten"] },
+          { "type": "subtitle", "text": "4.4 Zahlungsdaten" },
+          { "type": "list", "items": ["Abonnement- und Transaktionshistorie", "Keine Bankdaten gespeichert (ausschließlich von Stripe verwaltet)"] },
+          { "type": "subtitle", "text": "4.5 Nutzungsdaten" },
+          { "type": "list", "items": ["Nutzungsereignisse (Lebenslauf-Erstellung, Importe, Generierungen)", "Leistungsmetriken der KI-Aufrufe", "Fehlerprotokolle zur Diagnose"] }
+        ]
+      },
+      {
+        "id": "purposes",
+        "title": "5. Zwecke und Rechtsgrundlagen",
+        "content": [
+          { "type": "table", "headers": ["Zweck", "Rechtsgrundlage"], "rows": [
+            ["Dienstleistung (Lebenslauf-Erstellung und -Generierung)", "Vertragserfüllung"],
+            ["Zahlungs- und Abonnementverwaltung", "Vertragserfüllung"],
+            ["Serviceverbesserung, Fehlerbehebung", "Berechtigtes Interesse"],
+            ["Sicherheit und Missbrauchsprävention", "Berechtigtes Interesse"],
+            ["Aufbewahrung von Rechnungsdaten", "Gesetzliche Verpflichtung"],
+            ["Analytische Cookies", "Einwilligung"]
+          ]}
+        ]
+      },
+      {
+        "id": "retention",
+        "title": "6. Aufbewahrungsfristen",
+        "content": [
+          { "type": "table", "headers": ["Datentyp", "Dauer"], "rows": [
+            ["Aktives Konto", "Solange das Konto besteht"],
+            ["Gelöschtes Konto", "Sofortige Löschung"],
+            ["Inaktives Konto", "3 Jahre nach letzter Anmeldung (30-Tage-Benachrichtigung vor Löschung)"],
+            ["Rechnungsdaten", "5 Jahre (gesetzliche Verpflichtung)"],
+            ["E-Mail-Protokolle", "12 Monate"],
+            ["Cookie-Einwilligungsprotokolle", "6 Monate"]
+          ]}
+        ]
+      },
+      {
+        "id": "hosting",
+        "title": "7. Hosting",
+        "content": [
+          { "type": "paragraph", "text": "Die Daten werden in Frankreich gehostet." }
+        ]
+      },
+      {
+        "id": "ai-providers",
+        "title": "8. KI-Drittanbieter",
+        "content": [
+          { "type": "paragraph", "text": "FitMyCV.io verwendet künstliche Intelligenz zur Erstellung und Optimierung Ihrer Lebensläufe. Ihre Lebenslauf-Daten (Erfahrung, Fähigkeiten, Ausbildung) werden übermittelt an:" },
+          { "type": "list", "items": ["OpenAI (Vereinigte Staaten)"] },
+          { "type": "paragraph", "text": "OpenAI gibt an, dass über seine API übermittelte Daten nicht zum Training seiner Modelle verwendet werden.", "link": "https://openai.com/privacy" },
+          { "type": "subtitle", "text": "Automatisierte Entscheidungen" },
+          { "type": "paragraph", "text": "KI wird verwendet, um Kompatibilitätswerte zwischen Lebenslauf und Stelle zu berechnen, Ihre Fähigkeiten zu klassifizieren und Verbesserungen vorzuschlagen. Diese Verarbeitungen sind Entscheidungshilfen: Sie behalten die volle Kontrolle über den endgültigen Inhalt Ihrer Lebensläufe." }
+        ]
+      },
+      {
+        "id": "payments",
+        "title": "9. Zahlungsabwicklung",
+        "content": [
+          { "type": "paragraph", "text": "Zahlungen werden von Stripe Payments Europe, Ltd. (Irland) abgewickelt. FitMyCV.io speichert niemals vollständige Kreditkartennummern." },
+          { "type": "paragraph", "text": "Stripe-Datenschutzrichtlinie", "link": "https://stripe.com/de/privacy" }
+        ]
+      },
+      {
+        "id": "emails",
+        "title": "10. E-Mail-Versand",
+        "content": [
+          { "type": "paragraph", "text": "Transaktions-E-Mails (Verifizierung, Passwort-Zurücksetzung, Bestätigungen) werden über Resend versendet." },
+          { "type": "paragraph", "text": "Resend-Datenschutzrichtlinie", "link": "https://resend.com/legal/privacy-policy" }
+        ]
+      },
+      {
+        "id": "cookies",
+        "title": "11. Cookies",
+        "content": [
+          { "type": "paragraph", "text": "FitMyCV.io verwendet Cookies für die Website-Funktionalität und, mit Ihrer Einwilligung, für die Reichweitenmessung. Weitere Details finden Sie in unserer Cookie-Richtlinie.", "link": "/cookies" }
+        ]
+      },
+      {
+        "id": "security",
+        "title": "12. Sicherheit",
+        "content": [
+          { "type": "paragraph", "text": "Wir setzen folgende Maßnahmen zum Schutz Ihrer Daten um:" },
+          { "type": "list", "items": [
+            "HTTPS-Kommunikation (SSL/TLS)",
+            "Verschlüsselte Passwörter (bcrypt)",
+            "CSRF-Schutz und sichere Cookies",
+            "Anti-Spam-Schutz über Google reCAPTCHA v3"
+          ]},
+          { "type": "paragraph", "text": "reCAPTCHA erhebt technische Daten (IP-Adresse, Cookies, Surfverhalten), um Menschen von Bots zu unterscheiden. Die Datenschutzrichtlinie und die Nutzungsbedingungen von Google gelten.", "link": "https://policies.google.com/privacy" }
         ]
       },
       {
         "id": "international",
-        "title": "10. Internationale Übermittlungen",
+        "title": "13. Internationale Übermittlungen",
         "content": [
-          { "type": "paragraph", "text": "Ihre Daten können außerhalb der Europäischen Union übertragen und gespeichert werden (insbesondere über OpenAI mit Sitz in den USA). Diese Übertragungen werden durch geeignete Garantien geregelt (Standardvertragsklauseln, Zertifizierungen)." }
+          { "type": "paragraph", "text": "Einige Daten können außerhalb der Europäischen Union übertragen werden (OpenAI, Resend in den Vereinigten Staaten). Diese Übertragungen werden durch von der Europäischen Kommission genehmigte Standardvertragsklauseln geregelt." }
         ]
       },
       {
         "id": "modifications",
-        "title": "11. Änderungen der Richtlinie",
+        "title": "14. Änderungen",
         "content": [
-          { "type": "paragraph", "text": "Wir behalten uns das Recht vor, diese Datenschutzrichtlinie jederzeit zu ändern. Änderungen werden auf dieser Seite mit dem Aktualisierungsdatum veröffentlicht. Wir empfehlen Ihnen, diese Seite regelmäßig zu überprüfen." }
-        ]
-      },
-      {
-        "id": "complaints",
-        "title": "12. Beschwerden",
-        "content": [
-          { "type": "paragraph", "text": "Wenn Sie der Meinung sind, dass Ihre Rechte nicht respektiert werden, können Sie eine Beschwerde bei der CNIL (französische Datenschutzbehörde) einreichen:" },
-          { "type": "infobox", "text": "CNIL\n3 Place de Fontenoy - TSA 80715\n75334 PARIS CEDEX 07\nTelefon: 01 53 73 22 22\nWebsite: www.cnil.fr" }
-        ]
-      },
-      {
-        "id": "contact",
-        "title": "13. Kontakt",
-        "content": [
-          { "type": "paragraph", "text": "Bei Fragen zu dieser Datenschutzrichtlinie oder Ihren personenbezogenen Daten kontaktieren Sie uns unter:" },
-          { "type": "highlight", "variant": "info", "text": "E-Mail: [Zu vervollständigen]\nAdresse: [Zu vervollständigen]" }
+          { "type": "paragraph", "text": "Diese Richtlinie kann jederzeit geändert werden. Änderungen werden auf dieser Seite mit dem Aktualisierungsdatum veröffentlicht. Bei wesentlichen Änderungen werden Sie per E-Mail benachrichtigt." }
         ]
       }
     ]

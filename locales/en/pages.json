@@ -191,7 +191,7 @@
         "title": "12. Legal Information",
         "content": [
           { "type": "paragraph", "text": "Publisher of FitMyCV.io service:" },
-          { "type": "highlight", "variant": "info", "text": "Name: [To be completed]\nStatus: Micro-enterprise\nSIRET: [To be completed]\nAddress: [To be completed]\nEmail: [To be completed]" },
+          { "type": "highlight", "variant": "info", "text": "Codeglyph\nSIRET: 995 375 862 00019\n200 rue de la Croix Nivert, 75015 Paris, France\nEmail: contact@codeglyph.fr" },
           { "type": "highlight", "variant": "success", "text": "For any questions regarding these Terms, contact us at the email address above." }
         ]
       }
@@ -201,169 +201,148 @@
     "_untranslated": false,
     "sections": [
       {
-        "id": "introduction",
-        "title": "1. Introduction",
-        "content": [
-          { "type": "paragraph", "text": "This privacy policy describes how FitMyCV.io collects, uses, stores, and protects your personal data in accordance with the General Data Protection Regulation (GDPR) and applicable French legislation." },
-          { "type": "paragraph", "text": "We are committed to protecting your privacy and processing your personal data in a transparent, secure, and compliant manner." }
-        ]
-      },
-      {
         "id": "controller",
-        "title": "2. Data Controller",
+        "title": "1. Data Controller",
         "content": [
-          { "type": "infobox", "text": "Data Controller: FitMyCV.io\nContact: [To be completed with your email address]" }
+          { "type": "paragraph", "text": "Codeglyph operates the FitMyCV.io website and, as such, collects and processes personal data about you." },
+          { "type": "infobox", "text": "Codeglyph\nSIRET: 995 375 862 00019\n200 rue de la Croix Nivert, 75015 Paris, France\nEmail: contact@codeglyph.fr" }
         ]
       },
       {
-        "id": "data-collected",
-        "title": "3. Data Collected",
+        "id": "age",
+        "title": "2. Minimum Age",
         "content": [
-          { "type": "paragraph", "text": "We collect the following data:" },
-          { "type": "subtitle", "text": "3.1. Identification Data" },
-          { "type": "list", "items": ["Full name", "Email address", "Password (encrypted)", "Profile picture (if provided via OAuth)"] },
-          { "type": "subtitle", "text": "3.2. CV Data" },
-          { "type": "list", "items": ["Professional information (experience, education, skills)", "Contact details (phone, address, professional links)", "Uploaded documents (PDF CVs, job offers)"] },
-          { "type": "subtitle", "text": "3.3. Connection Data" },
-          { "type": "list", "items": ["IP address", "Browser type", "Pages visited and time spent", "Session data"] },
-          { "type": "subtitle", "text": "3.4. Cookies" },
-          { "type": "paragraph", "text": "See our cookie management page for more details.", "link": "/cookies" }
-        ]
-      },
-      {
-        "id": "purposes",
-        "title": "4. Processing Purposes",
-        "content": [
-          { "type": "paragraph", "text": "Your data is used for the following purposes:" },
-          { "type": "list", "items": [
-            "User account management: creation, authentication, profile management",
-            "Service provision: creation, storage, and generation of personalized CVs",
-            "Service improvement: usage analysis, bug fixes, new feature development",
-            "Communication: service notifications, user support, feedback responses",
-            "Security: fraud prevention, abuse detection, data protection"
-          ]}
-        ]
-      },
-      {
-        "id": "legal-basis",
-        "title": "5. Legal Basis for Processing",
-        "content": [
-          { "type": "list", "items": [
-            "Contract execution: provision of CV creation service",
-            "Consent: analytics cookies (audience measurement)",
-            "Legitimate interest: service improvement, security, internal telemetry",
-            "Legal obligation: data retention for tax obligations"
-          ]}
-        ]
-      },
-      {
-        "id": "telemetry",
-        "title": "5bis. Internal Telemetry (Legitimate Interest)",
-        "content": [
-          { "type": "paragraph", "text": "As part of our legitimate interest in providing a reliable and secure service, we collect certain technical data without prior consent:" },
-          { "type": "list", "items": [
-            "Error logs: to identify and fix malfunctions",
-            "Performance metrics: AI call response times, success rates",
-            "System events: CV creation, imports, generations (without personal content)",
-            "API usage: to detect abuse and ensure service availability"
-          ]},
-          { "type": "paragraph", "text": "This data is:" },
-          { "type": "list", "items": [
-            "Stored exclusively in our database (not transmitted to third parties)",
-            "Used only to improve the service and detect issues",
-            "Retained for a maximum of 12 months",
-            "Not shared with third parties for commercial purposes"
-          ]},
-          { "type": "highlight", "variant": "success", "title": "Your right to object:", "text": "In accordance with Article 21 of the GDPR, you can object to this collection by contacting us. Please note that this may affect our ability to diagnose issues with your account and ensure service security." }
-        ]
-      },
-      {
-        "id": "retention",
-        "title": "6. Retention Period",
-        "content": [
-          { "type": "list", "items": [
-            "Active account: as long as the account exists",
-            "Deleted account: 30 days after deletion (cooling-off period)",
-            "Consent cookies: 6 months",
-            "Session cookies: 30 days",
-            "Connection logs: 12 months maximum"
-          ]}
-        ]
-      },
-      {
-        "id": "sharing",
-        "title": "7. Data Sharing",
-        "content": [
-          { "type": "paragraph", "text": "Your personal data is never sold. It may only be shared with:" },
-          { "type": "list", "items": [
-            "Service providers: hosting (cloud infrastructure), authentication (NextAuth, OAuth providers), AI (OpenAI for CV generation)",
-            "Legal authorities: if required by law or to protect our rights"
-          ]},
-          { "type": "highlight", "variant": "info", "title": "Important:", "text": "Your CV data is sent to OpenAI (GPT model) for generation and adaptation. OpenAI states that it does not use API data to train its models." }
-        ]
-      },
-      {
-        "id": "security",
-        "title": "8. Data Security",
-        "content": [
-          { "type": "paragraph", "text": "We implement the following security measures:" },
-          { "type": "list", "items": [
-            "Encryption: AES-256-GCM for all stored CVs",
-            "HTTPS: secure communication (SSL/TLS)",
-            "Password hashing: bcrypt with salt",
-            "CSRF protection: anti-forgery tokens",
-            "Secure cookies: HttpOnly, Secure, SameSite",
-            "Secure authentication: JWT, session tokens",
-            "Anti-spam protection: Google reCAPTCHA v3 to prevent abuse"
-          ]},
-          { "type": "highlight", "variant": "info", "title": "reCAPTCHA Protection:", "text": "This site is protected by reCAPTCHA and Google's Privacy Policy and Terms of Service apply." }
+          { "type": "paragraph", "text": "FitMyCV.io is intended for individuals aged 16 and over. By using this service, you confirm that you meet the age requirement." }
         ]
       },
       {
         "id": "rights",
-        "title": "9. Your Rights (GDPR)",
+        "title": "3. Your Rights",
         "content": [
-          { "type": "paragraph", "text": "Under the GDPR, you have the following rights:" },
+          { "type": "paragraph", "text": "Under the General Data Protection Regulation (GDPR), you have the following rights:" },
           { "type": "list", "items": [
-            "Right of access: view your personal data",
-            "Right to rectification: correct inaccurate data",
-            "Right to erasure: delete your data (\"right to be forgotten\")",
-            "Right to restriction: restrict processing of your data",
-            "Right to data portability: receive your data in a structured format",
-            "Right to object: object to processing on legitimate grounds",
-            "Right to withdraw consent: at any time"
+            "Access: view the personal data we hold about you",
+            "Rectification: correct inaccurate or incomplete data",
+            "Erasure: request deletion of your data (\"right to be forgotten\")",
+            "Restriction: restrict processing of your data",
+            "Portability: receive your data in a structured format",
+            "Objection: object to processing on legitimate grounds"
           ]},
-          { "type": "highlight", "variant": "success", "text": "To exercise your rights, contact us at: [email to be completed]" }
+          { "type": "paragraph", "text": "To exercise these rights, contact us at contact@codeglyph.fr. We will respond within 30 days." },
+          { "type": "paragraph", "text": "In case of dispute, you can file a complaint with the CNIL.", "link": "https://www.cnil.fr" }
+        ]
+      },
+      {
+        "id": "data-collected",
+        "title": "4. Data Collected",
+        "content": [
+          { "type": "subtitle", "text": "4.1 Identification Data" },
+          { "type": "list", "items": ["Name, email address, password (encrypted)", "Profile picture (if signed in via Google, Apple or GitHub)"] },
+          { "type": "subtitle", "text": "4.2 CV Data" },
+          { "type": "list", "items": ["Professional information: experience, education, skills", "Contact details: phone, address, professional links", "Imported documents (PDF): not stored, sent to OpenAI for extraction then deleted immediately", "CV version history"] },
+          { "type": "subtitle", "text": "4.3 Browsing Data" },
+          { "type": "list", "items": ["IP address, browser type", "Pages visited, session data"] },
+          { "type": "subtitle", "text": "4.4 Payment Data" },
+          { "type": "list", "items": ["Subscription and transaction history", "No banking data stored (managed exclusively by Stripe)"] },
+          { "type": "subtitle", "text": "4.5 Usage Data" },
+          { "type": "list", "items": ["Usage events (CV creation, imports, generations)", "AI call performance metrics", "Error logs for diagnostics"] }
+        ]
+      },
+      {
+        "id": "purposes",
+        "title": "5. Purposes and Legal Bases",
+        "content": [
+          { "type": "table", "headers": ["Purpose", "Legal Basis"], "rows": [
+            ["Service provision (CV creation and generation)", "Contract execution"],
+            ["Payment and subscription management", "Contract execution"],
+            ["Service improvement, bug fixes", "Legitimate interest"],
+            ["Security and abuse prevention", "Legitimate interest"],
+            ["Billing data retention", "Legal obligation"],
+            ["Analytics cookies", "Consent"]
+          ]}
+        ]
+      },
+      {
+        "id": "retention",
+        "title": "6. Retention Periods",
+        "content": [
+          { "type": "table", "headers": ["Data Type", "Duration"], "rows": [
+            ["Active account", "As long as the account exists"],
+            ["Deleted account", "Immediate deletion"],
+            ["Inactive account", "3 years after last login (30-day notice before deletion)"],
+            ["Billing data", "5 years (legal obligation)"],
+            ["Email logs", "12 months"],
+            ["Cookie consent logs", "6 months"]
+          ]}
+        ]
+      },
+      {
+        "id": "hosting",
+        "title": "7. Hosting",
+        "content": [
+          { "type": "paragraph", "text": "Data is hosted in France." }
+        ]
+      },
+      {
+        "id": "ai-providers",
+        "title": "8. Third-Party AI Providers",
+        "content": [
+          { "type": "paragraph", "text": "FitMyCV.io uses artificial intelligence to generate and optimize your CVs. Your CV data (experience, skills, education) is transmitted to:" },
+          { "type": "list", "items": ["OpenAI (United States)"] },
+          { "type": "paragraph", "text": "OpenAI states that it does not use data transmitted via its API to train its models.", "link": "https://openai.com/privacy" },
+          { "type": "subtitle", "text": "Automated Decisions" },
+          { "type": "paragraph", "text": "AI is used to calculate CV-job compatibility scores, classify your skills, and suggest improvements. These processes are decision aids: you retain full control over the final content of your CVs." }
+        ]
+      },
+      {
+        "id": "payments",
+        "title": "9. Payment Processing",
+        "content": [
+          { "type": "paragraph", "text": "Payments are processed by Stripe Payments Europe, Ltd. (Ireland). FitMyCV.io never stores complete credit card numbers." },
+          { "type": "paragraph", "text": "Stripe Privacy Policy", "link": "https://stripe.com/privacy" }
+        ]
+      },
+      {
+        "id": "emails",
+        "title": "10. Email Sending",
+        "content": [
+          { "type": "paragraph", "text": "Transactional emails (verification, password reset, confirmations) are sent via Resend." },
+          { "type": "paragraph", "text": "Resend Privacy Policy", "link": "https://resend.com/legal/privacy-policy" }
+        ]
+      },
+      {
+        "id": "cookies",
+        "title": "11. Cookies",
+        "content": [
+          { "type": "paragraph", "text": "FitMyCV.io uses cookies for site functionality and, with your consent, for audience measurement. See our cookie policy for more details.", "link": "/cookies" }
+        ]
+      },
+      {
+        "id": "security",
+        "title": "12. Security",
+        "content": [
+          { "type": "paragraph", "text": "We implement the following measures to protect your data:" },
+          { "type": "list", "items": [
+            "HTTPS communication (SSL/TLS)",
+            "Encrypted passwords (bcrypt)",
+            "CSRF protection and secure cookies",
+            "Anti-spam protection via Google reCAPTCHA v3"
+          ]},
+          { "type": "paragraph", "text": "reCAPTCHA collects technical data (IP address, cookies, browsing behavior) to distinguish humans from bots. Google's Privacy Policy and Terms of Service apply.", "link": "https://policies.google.com/privacy" }
         ]
       },
       {
         "id": "international",
-        "title": "10. International Transfers",
+        "title": "13. International Transfers",
         "content": [
-          { "type": "paragraph", "text": "Your data may be transferred and stored outside the European Union (particularly via OpenAI based in the United States). These transfers are governed by appropriate safeguards (standard contractual clauses, certifications)." }
+          { "type": "paragraph", "text": "Some data may be transferred outside the European Union (OpenAI, Resend in the United States). These transfers are governed by standard contractual clauses approved by the European Commission." }
         ]
       },
       {
         "id": "modifications",
-        "title": "11. Policy Modifications",
+        "title": "14. Modifications",
         "content": [
-          { "type": "paragraph", "text": "We reserve the right to modify this privacy policy at any time. Modifications will be posted on this page with the update date. We encourage you to review this page regularly." }
-        ]
-      },
-      {
-        "id": "complaints",
-        "title": "12. Complaints",
-        "content": [
-          { "type": "paragraph", "text": "If you believe your rights are not being respected, you can file a complaint with the CNIL (French Data Protection Authority):" },
-          { "type": "infobox", "text": "CNIL\n3 Place de Fontenoy - TSA 80715\n75334 PARIS CEDEX 07\nPhone: 01 53 73 22 22\nWebsite: www.cnil.fr" }
-        ]
-      },
-      {
-        "id": "contact",
-        "title": "13. Contact",
-        "content": [
-          { "type": "paragraph", "text": "For any questions regarding this privacy policy or your personal data, contact us at:" },
-          { "type": "highlight", "variant": "info", "text": "Email: [To be completed]\nAddress: [To be completed]" }
+          { "type": "paragraph", "text": "This policy may be modified at any time. Changes will be posted on this page with the update date. In case of substantial changes, you will be notified by email." }
         ]
       }
     ]
