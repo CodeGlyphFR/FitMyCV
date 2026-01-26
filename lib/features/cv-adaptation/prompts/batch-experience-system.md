@@ -171,10 +171,33 @@ DECISION: [valeur finale]
 **INTERDIT** :
 - Ajouter une skill parce qu'elle est dans l'offre
 - Deduire une skill non mentionnee
+- Traduire un skill qui est DEJA dans la langue cible
+- Traduire vers une autre langue que la langue cible
 
-**Langue** :
-- Competences generiques → TRADUIRE dans la langue cible
-- Noms de technos → GARDER en anglais (React, Python, AWS, Scrum)
+**Langue - REGLE CRITIQUE** :
+
+**TRADUIRE** = transformer DE la langue SOURCE vers la langue CIBLE.
+
+| Situation | Action |
+|-----------|--------|
+| Skill DEJA dans la langue cible | NE PAS TOUCHER (action: kept) |
+| Skill dans une autre langue | TRADUIRE vers la langue cible (action: modified) |
+| Skill = terme technique anglais | GARDER en anglais (meme si langue cible = francais) |
+
+**INTERDIT** :
+- Traduire un skill qui est DEJA dans la langue cible
+- Traduire un skill VERS une autre langue que la langue cible (ex: FR→EN quand cible=FR)
+
+**Ce qui doit TOUJOURS rester en anglais** (meme si la langue cible est le francais) :
+- Langages/frameworks : React, Python, AWS, Docker, Kubernetes, Git
+- Methodologies : Scrum, Agile, Kanban, DevOps, CI/CD
+- Termes techniques IA/ML etablis : utilises tels quels dans les publications scientifiques
+- Acronymes techniques : API, SDK, SaaS, PaaS, MVP
+
+**Ce qui doit etre TRADUIT** (competences generiques) :
+- Competences de gestion/management
+- Competences relationnelles
+- Termes metier non techniques
 
 **Exemple d'equivalence OK** :
 Source mentionne "Claude" + Offre demande "LLMs" → OK d'utiliser "LLM" (Claude EST un LLM)
@@ -192,11 +215,10 @@ Pour CHAQUE skill de l'experience source, documenter le changement dans `skills_
 | `translated` | Traduction du skill source dans la langue cible (OBLIGATOIRE si action=removed) |
 
 **Champ `translated` (OBLIGATOIRE pour action "removed")** :
-- Pour les skills supprimés, fournir la traduction du skill source dans la langue cible
-- Permet de restaurer le skill dans la bonne langue si l'utilisateur refuse la suppression
-- Appliquer les mêmes règles de traduction que pour les skills conservés (cf. section 6.4) :
-  - Compétences génériques → TRADUIRE dans la langue cible
-  - Noms de technos → GARDER en anglais (React, Python, AWS, Scrum)
+- Pour les skills supprimés, fournir le skill dans la langue cible pour permettre la restauration
+- Si le skill source est DEJA dans la langue cible → `translated` = meme valeur que `before`
+- Si le skill source est dans une autre langue → `translated` = traduction vers la langue cible
+- Termes techniques (technos, IA/ML, acronymes) → `translated` = meme valeur que `before` (garder en anglais)
 
 **Actions** :
 - `kept` : Skill conserve sans modification (before = after)
@@ -206,10 +228,9 @@ Pour CHAQUE skill de l'experience source, documenter le changement dans `skills_
 
 **Exemples** :
 ```json
-{ "before": "Project Management", "after": "Gestion de projet", "action": "modified", "reason": "Traduction FR", "translated": null }
-{ "before": "Leadership", "after": null, "action": "removed", "reason": "Non pertinent pour poste technique", "translated": "Leadership" }
-{ "before": "Time Management", "after": null, "action": "removed", "reason": "Non pertinent pour ce poste", "translated": "Gestion du temps" }
 { "before": "Python", "after": "Python", "action": "kept", "reason": "Requis par l'offre", "translated": null }
+{ "before": "Jira", "after": "Jira", "action": "kept", "reason": "Outil de gestion mentionne", "translated": null }
+{ "before": "Excel", "after": null, "action": "removed", "reason": "Non pertinent pour poste technique", "translated": "Excel" }
 { "before": "Claude", "after": "LLM", "action": "modified", "reason": "Claude EST un LLM - equivalence", "translated": null }
 ```
 
