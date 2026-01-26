@@ -229,7 +229,7 @@
             "Objection: object to processing on legitimate grounds"
           ]},
           { "type": "paragraph", "text": "To exercise these rights, contact us at contact@codeglyph.fr. We will respond within 30 days." },
-          { "type": "paragraph", "text": "In case of dispute, you can file a complaint with the CNIL.", "link": "https://www.cnil.fr" }
+          { "type": "paragraph", "text": "In case of dispute, you can file a complaint with the CNIL.", "link": "https://www.cnil.fr", "linkText": "CNIL" }
         ]
       },
       {
@@ -289,7 +289,7 @@
         "content": [
           { "type": "paragraph", "text": "FitMyCV.io uses artificial intelligence to generate and optimize your CVs. Your CV data (experience, skills, education) is transmitted to:" },
           { "type": "list", "items": ["OpenAI (United States)"] },
-          { "type": "paragraph", "text": "OpenAI states that it does not use data transmitted via its API to train its models.", "link": "https://openai.com/privacy" },
+          { "type": "paragraph", "text": "OpenAI states that it does not use data transmitted via its API to train its models.", "link": "https://openai.com/privacy", "linkText": "OpenAI" },
           { "type": "subtitle", "text": "Automated Decisions" },
           { "type": "paragraph", "text": "AI is used to calculate CV-job compatibility scores, classify your skills, and suggest improvements. These processes are decision aids: you retain full control over the final content of your CVs." }
         ]
@@ -299,7 +299,7 @@
         "title": "9. Payment Processing",
         "content": [
           { "type": "paragraph", "text": "Payments are processed by Stripe Payments Europe, Ltd. (Ireland). FitMyCV.io never stores complete credit card numbers." },
-          { "type": "paragraph", "text": "Stripe Privacy Policy", "link": "https://stripe.com/privacy" }
+          { "type": "paragraph", "text": "Stripe Privacy Policy", "link": "https://stripe.com/privacy", "linkText": "Stripe Privacy Policy" }
         ]
       },
       {
@@ -307,14 +307,14 @@
         "title": "10. Email Sending",
         "content": [
           { "type": "paragraph", "text": "Transactional emails (verification, password reset, confirmations) are sent via Resend." },
-          { "type": "paragraph", "text": "Resend Privacy Policy", "link": "https://resend.com/legal/privacy-policy" }
+          { "type": "paragraph", "text": "Resend Privacy Policy", "link": "https://resend.com/legal/privacy-policy", "linkText": "Resend Privacy Policy" }
         ]
       },
       {
         "id": "cookies",
         "title": "11. Cookies",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io uses cookies for site functionality and, with your consent, for audience measurement. See our cookie policy for more details.", "link": "/cookies" }
+          { "type": "paragraph", "text": "FitMyCV.io uses cookies for site functionality and, with your consent, for audience measurement. See our cookie policy for more details.", "link": "/cookies", "linkText": "cookie policy" }
         ]
       },
       {
@@ -328,7 +328,7 @@
             "CSRF protection and secure cookies",
             "Anti-spam protection via Google reCAPTCHA v3"
           ]},
-          { "type": "paragraph", "text": "reCAPTCHA collects technical data (IP address, cookies, browsing behavior) to distinguish humans from bots. Google's Privacy Policy and Terms of Service apply.", "link": "https://policies.google.com/privacy" }
+          { "type": "paragraph", "text": "reCAPTCHA collects technical data (IP address, cookies, browsing behavior) to distinguish humans from bots. Google's Privacy Policy and Terms of Service apply.", "link": "https://policies.google.com/privacy", "linkText": "Privacy Policy" }
         ]
       },
       {

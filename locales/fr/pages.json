@@ -229,7 +229,7 @@
             "Opposition : vous opposer au traitement pour des motifs légitimes"
           ]},
           { "type": "paragraph", "text": "Pour exercer ces droits, contactez-nous à contact@codeglyph.fr. Nous répondrons dans un délai de 30 jours." },
-          { "type": "paragraph", "text": "En cas de litige, vous pouvez déposer une réclamation auprès de la CNIL.", "link": "https://www.cnil.fr" }
+          { "type": "paragraph", "text": "En cas de litige, vous pouvez déposer une réclamation auprès de la CNIL.", "link": "https://www.cnil.fr", "linkText": "CNIL" }
         ]
       },
       {
@@ -289,7 +289,7 @@
         "content": [
           { "type": "paragraph", "text": "FitMyCV.io utilise l'intelligence artificielle pour générer et optimiser vos CV. Les données de vos CV (expériences, compétences, formations) sont transmises à :" },
           { "type": "list", "items": ["OpenAI (États-Unis)"] },
-          { "type": "paragraph", "text": "OpenAI affirme ne pas utiliser les données transmises via son API pour entraîner ses modèles.", "link": "https://openai.com/privacy" },
+          { "type": "paragraph", "text": "OpenAI affirme ne pas utiliser les données transmises via son API pour entraîner ses modèles.", "link": "https://openai.com/privacy", "linkText": "OpenAI" },
           { "type": "subtitle", "text": "Décisions automatisées" },
           { "type": "paragraph", "text": "L'IA est utilisée pour calculer des scores de compatibilité CV-offre, classifier vos compétences et suggérer des améliorations. Ces traitements sont des aides à la décision : vous conservez le contrôle total sur le contenu final de vos CV." }
         ]
@@ -299,7 +299,7 @@
         "title": "9. Traitement des paiements",
         "content": [
           { "type": "paragraph", "text": "Les paiements sont traités par Stripe Payments Europe, Ltd. (Irlande). FitMyCV.io ne stocke jamais les numéros de carte bancaire complets." },
-          { "type": "paragraph", "text": "Politique de confidentialité Stripe", "link": "https://stripe.com/fr/privacy" }
+          { "type": "paragraph", "text": "Politique de confidentialité Stripe", "link": "https://stripe.com/fr/privacy", "linkText": "Politique de confidentialité Stripe" }
         ]
       },
       {
@@ -307,14 +307,14 @@
         "title": "10. Envoi d'emails",
         "content": [
           { "type": "paragraph", "text": "Les emails transactionnels (vérification, réinitialisation de mot de passe, confirmations) sont envoyés via Resend." },
-          { "type": "paragraph", "text": "Politique de confidentialité Resend", "link": "https://resend.com/legal/privacy-policy" }
+          { "type": "paragraph", "text": "Politique de confidentialité Resend", "link": "https://resend.com/legal/privacy-policy", "linkText": "Politique de confidentialité Resend" }
         ]
       },
       {
         "id": "cookies",
         "title": "11. Cookies",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io utilise des cookies pour le fonctionnement du site et, avec votre consentement, pour la mesure d'audience. Consultez notre politique de cookies pour plus de détails.", "link": "/cookies" }
+          { "type": "paragraph", "text": "FitMyCV.io utilise des cookies pour le fonctionnement du site et, avec votre consentement, pour la mesure d'audience. Consultez notre politique de cookies pour plus de détails.", "link": "/cookies", "linkText": "politique de cookies" }
         ]
       },
       {
@@ -328,7 +328,7 @@
             "Protection CSRF et cookies sécurisés",
             "Protection anti-spam via Google reCAPTCHA v3"
           ]},
-          { "type": "paragraph", "text": "reCAPTCHA collecte des données techniques (adresse IP, cookies, comportement de navigation) pour distinguer les humains des robots. La Politique de confidentialité et les Conditions d'utilisation de Google s'appliquent.", "link": "https://policies.google.com/privacy" }
+          { "type": "paragraph", "text": "reCAPTCHA collecte des données techniques (adresse IP, cookies, comportement de navigation) pour distinguer les humains des robots. La Politique de confidentialité et les Conditions d'utilisation de Google s'appliquent.", "link": "https://policies.google.com/privacy", "linkText": "Politique de confidentialité" }
         ]
       },
       {

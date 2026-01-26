@@ -229,7 +229,7 @@
             "Oposición: oponerse al tratamiento por motivos legítimos"
           ]},
           { "type": "paragraph", "text": "Para ejercer estos derechos, contáctenos en contact@codeglyph.fr. Responderemos en un plazo de 30 días." },
-          { "type": "paragraph", "text": "En caso de litigio, puede presentar una reclamación ante la CNIL.", "link": "https://www.cnil.fr" }
+          { "type": "paragraph", "text": "En caso de litigio, puede presentar una reclamación ante la CNIL.", "link": "https://www.cnil.fr", "linkText": "CNIL" }
         ]
       },
       {
@@ -289,7 +289,7 @@
         "content": [
           { "type": "paragraph", "text": "FitMyCV.io utiliza inteligencia artificial para generar y optimizar sus CV. Los datos de su CV (experiencia, habilidades, formación) se transmiten a:" },
           { "type": "list", "items": ["OpenAI (Estados Unidos)"] },
-          { "type": "paragraph", "text": "OpenAI afirma que no utiliza los datos transmitidos a través de su API para entrenar sus modelos.", "link": "https://openai.com/privacy" },
+          { "type": "paragraph", "text": "OpenAI afirma que no utiliza los datos transmitidos a través de su API para entrenar sus modelos.", "link": "https://openai.com/privacy", "linkText": "OpenAI" },
           { "type": "subtitle", "text": "Decisiones automatizadas" },
           { "type": "paragraph", "text": "La IA se utiliza para calcular puntuaciones de compatibilidad CV-oferta, clasificar sus habilidades y sugerir mejoras. Estos procesos son ayudas para la toma de decisiones: usted mantiene el control total sobre el contenido final de sus CV." }
         ]
@@ -299,7 +299,7 @@
         "title": "9. Procesamiento de pagos",
         "content": [
           { "type": "paragraph", "text": "Los pagos son procesados por Stripe Payments Europe, Ltd. (Irlanda). FitMyCV.io nunca almacena números de tarjeta de crédito completos." },
-          { "type": "paragraph", "text": "Política de privacidad de Stripe", "link": "https://stripe.com/es/privacy" }
+          { "type": "paragraph", "text": "Política de privacidad de Stripe", "link": "https://stripe.com/es/privacy", "linkText": "Política de privacidad de Stripe" }
         ]
       },
       {
@@ -307,14 +307,14 @@
         "title": "10. Envío de emails",
         "content": [
           { "type": "paragraph", "text": "Los emails transaccionales (verificación, restablecimiento de contraseña, confirmaciones) se envían a través de Resend." },
-          { "type": "paragraph", "text": "Política de privacidad de Resend", "link": "https://resend.com/legal/privacy-policy" }
+          { "type": "paragraph", "text": "Política de privacidad de Resend", "link": "https://resend.com/legal/privacy-policy", "linkText": "Política de privacidad de Resend" }
         ]
       },
       {
         "id": "cookies",
         "title": "11. Cookies",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io utiliza cookies para la funcionalidad del sitio y, con su consentimiento, para la medición de audiencia. Consulte nuestra política de cookies para más detalles.", "link": "/cookies" }
+          { "type": "paragraph", "text": "FitMyCV.io utiliza cookies para la funcionalidad del sitio y, con su consentimiento, para la medición de audiencia. Consulte nuestra política de cookies para más detalles.", "link": "/cookies", "linkText": "política de cookies" }
         ]
       },
       {
@@ -328,7 +328,7 @@
             "Protección CSRF y cookies seguras",
             "Protección anti-spam vía Google reCAPTCHA v3"
           ]},
-          { "type": "paragraph", "text": "reCAPTCHA recopila datos técnicos (dirección IP, cookies, comportamiento de navegación) para distinguir humanos de bots. Se aplican la Política de privacidad y los Términos de servicio de Google.", "link": "https://policies.google.com/privacy" }
+          { "type": "paragraph", "text": "reCAPTCHA recopila datos técnicos (dirección IP, cookies, comportamiento de navegación) para distinguir humanos de bots. Se aplican la Política de privacidad y los Términos de servicio de Google.", "link": "https://policies.google.com/privacy", "linkText": "Política de privacidad" }
         ]
       },
       {

@@ -12,10 +12,23 @@ const HIGHLIGHT_VARIANTS = {
 function ContentBlock({ item }) {
   switch (item.type) {
     case 'paragraph':
+      if (item.link && item.linkText) {
+        // Lien partiel : seul linkText est cliquable
+        const parts = item.text.split(item.linkText);
+        return (
+          <p className="text-sm text-white/90 mb-2 drop-shadow">
+            {parts[0]}
+            <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-emerald-300 hover:text-emerald-200 underline transition-colors">
+              {item.linkText}
+            </a>
+            {parts[1]}
+          </p>
+        );
+      }
       return (
         <p className="text-sm text-white/90 mb-2 drop-shadow">
           {item.link ? (
-            <a href={item.link} className="text-emerald-300 hover:text-emerald-200 underline transition-colors">
+            <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-emerald-300 hover:text-emerald-200 underline transition-colors">
               {item.text}
             </a>
           ) : (

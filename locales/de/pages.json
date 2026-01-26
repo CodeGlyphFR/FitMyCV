@@ -229,7 +229,7 @@
             "Widerspruch: Widerspruch gegen die Verarbeitung aus berechtigten Gründen"
           ]},
           { "type": "paragraph", "text": "Um diese Rechte auszuüben, kontaktieren Sie uns unter contact@codeglyph.fr. Wir antworten innerhalb von 30 Tagen." },
-          { "type": "paragraph", "text": "Im Streitfall können Sie eine Beschwerde bei der CNIL einreichen.", "link": "https://www.cnil.fr" }
+          { "type": "paragraph", "text": "Im Streitfall können Sie eine Beschwerde bei der CNIL einreichen.", "link": "https://www.cnil.fr", "linkText": "CNIL" }
         ]
       },
       {
@@ -289,7 +289,7 @@
         "content": [
           { "type": "paragraph", "text": "FitMyCV.io verwendet künstliche Intelligenz zur Erstellung und Optimierung Ihrer Lebensläufe. Ihre Lebenslauf-Daten (Erfahrung, Fähigkeiten, Ausbildung) werden übermittelt an:" },
           { "type": "list", "items": ["OpenAI (Vereinigte Staaten)"] },
-          { "type": "paragraph", "text": "OpenAI gibt an, dass über seine API übermittelte Daten nicht zum Training seiner Modelle verwendet werden.", "link": "https://openai.com/privacy" },
+          { "type": "paragraph", "text": "OpenAI gibt an, dass über seine API übermittelte Daten nicht zum Training seiner Modelle verwendet werden.", "link": "https://openai.com/privacy", "linkText": "OpenAI" },
           { "type": "subtitle", "text": "Automatisierte Entscheidungen" },
           { "type": "paragraph", "text": "KI wird verwendet, um Kompatibilitätswerte zwischen Lebenslauf und Stelle zu berechnen, Ihre Fähigkeiten zu klassifizieren und Verbesserungen vorzuschlagen. Diese Verarbeitungen sind Entscheidungshilfen: Sie behalten die volle Kontrolle über den endgültigen Inhalt Ihrer Lebensläufe." }
         ]
@@ -299,7 +299,7 @@
         "title": "9. Zahlungsabwicklung",
         "content": [
           { "type": "paragraph", "text": "Zahlungen werden von Stripe Payments Europe, Ltd. (Irland) abgewickelt. FitMyCV.io speichert niemals vollständige Kreditkartennummern." },
-          { "type": "paragraph", "text": "Stripe-Datenschutzrichtlinie", "link": "https://stripe.com/de/privacy" }
+          { "type": "paragraph", "text": "Stripe-Datenschutzrichtlinie", "link": "https://stripe.com/de/privacy", "linkText": "Stripe-Datenschutzrichtlinie" }
         ]
       },
       {
@@ -307,14 +307,14 @@
         "title": "10. E-Mail-Versand",
         "content": [
           { "type": "paragraph", "text": "Transaktions-E-Mails (Verifizierung, Passwort-Zurücksetzung, Bestätigungen) werden über Resend versendet." },
-          { "type": "paragraph", "text": "Resend-Datenschutzrichtlinie", "link": "https://resend.com/legal/privacy-policy" }
+          { "type": "paragraph", "text": "Resend-Datenschutzrichtlinie", "link": "https://resend.com/legal/privacy-policy", "linkText": "Resend-Datenschutzrichtlinie" }
         ]
       },
       {
         "id": "cookies",
         "title": "11. Cookies",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io verwendet Cookies für die Website-Funktionalität und, mit Ihrer Einwilligung, für die Reichweitenmessung. Weitere Details finden Sie in unserer Cookie-Richtlinie.", "link": "/cookies" }
+          { "type": "paragraph", "text": "FitMyCV.io verwendet Cookies für die Website-Funktionalität und, mit Ihrer Einwilligung, für die Reichweitenmessung. Weitere Details finden Sie in unserer Cookie-Richtlinie.", "link": "/cookies", "linkText": "Cookie-Richtlinie" }
         ]
       },
       {
@@ -328,7 +328,7 @@
             "CSRF-Schutz und sichere Cookies",
             "Anti-Spam-Schutz über Google reCAPTCHA v3"
           ]},
-          { "type": "paragraph", "text": "reCAPTCHA erhebt technische Daten (IP-Adresse, Cookies, Surfverhalten), um Menschen von Bots zu unterscheiden. Die Datenschutzrichtlinie und die Nutzungsbedingungen von Google gelten.", "link": "https://policies.google.com/privacy" }
+          { "type": "paragraph", "text": "reCAPTCHA erhebt technische Daten (IP-Adresse, Cookies, Surfverhalten), um Menschen von Bots zu unterscheiden. Die Datenschutzrichtlinie und die Nutzungsbedingungen von Google gelten.", "link": "https://policies.google.com/privacy", "linkText": "Datenschutzrichtlinie" }
         ]
       },
       {
