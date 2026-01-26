@@ -37,7 +37,8 @@
         "providerAlreadyLinked": "Dieser Anbieter ist bereits mit Ihrem Konto verknüpft",
         "providerNotLinked": "Dieser Anbieter ist nicht mit Ihrem Konto verknüpft",
         "cannotUnlinkLastProvider": "Verknüpfung kann nicht aufgehoben werden: Sie müssen mindestens ein verknüpftes Konto haben",
-        "registrationDisabled": "Registrierungen sind vorübergehend ausgesetzt"
+        "registrationDisabled": "Registrierungen sind vorübergehend ausgesetzt",
+        "privacyPolicyRequired": "Sie müssen die Datenschutzrichtlinie akzeptieren, um ein Konto zu erstellen"
       },
       "cv": {
         "notFound": "Lebenslauf nicht gefunden",

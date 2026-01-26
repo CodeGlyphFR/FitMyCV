@@ -37,7 +37,8 @@
         "providerAlreadyLinked": "Este proveedor ya está vinculado a su cuenta",
         "providerNotLinked": "Este proveedor no está vinculado a su cuenta",
         "cannotUnlinkLastProvider": "No se puede desvincular: debe tener al menos una cuenta vinculada",
-        "registrationDisabled": "Los registros están temporalmente suspendidos"
+        "registrationDisabled": "Los registros están temporalmente suspendidos",
+        "privacyPolicyRequired": "Debes aceptar la política de privacidad para crear una cuenta"
       },
       "cv": {
         "notFound": "CV no encontrado",
