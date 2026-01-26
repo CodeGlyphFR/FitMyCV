@@ -33,6 +33,7 @@
     "createTemplateOption": "Neue Lebenslauf-Vorlage erstellen",
     "templateCreationLabel": "Lebenslauf-Vorlage erstellen",
     "links": "Links zu Stellenangeboten",
+    "languageHint": "Für beste Ergebnisse verwenden Sie ein Stellenangebot in derselben Sprache wie Ihr Referenz-Lebenslauf.",
     "loadRecentLink": "Einen kürzlichen Link laden",
     "recentLinks": "Kürzliche Links",
     "addLink": "Link hinzufügen",

@@ -33,6 +33,7 @@
     "createTemplateOption": "Créer un nouveau modèle de CV",
     "templateCreationLabel": "Création de CV modèle",
     "links": "Liens vers les offres d'emploi",
+    "languageHint": "Pour une meilleure efficacité, utilisez une offre d'emploi dans la même langue que votre CV de référence.",
     "loadRecentLink": "Charger un lien récent",
     "recentLinks": "Liens récents",
     "addLink": "Ajouter un lien",

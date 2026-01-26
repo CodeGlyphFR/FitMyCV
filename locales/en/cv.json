@@ -33,6 +33,7 @@
     "createTemplateOption": "Create a new CV template",
     "templateCreationLabel": "CV template creation",
     "links": "Links to job offers",
+    "languageHint": "For best results, use a job offer in the same language as your reference CV.",
     "loadRecentLink": "Load recent link",
     "recentLinks": "Recent links",
     "addLink": "Add link",

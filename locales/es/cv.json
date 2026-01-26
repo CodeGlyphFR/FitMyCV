@@ -33,6 +33,7 @@
     "createTemplateOption": "Crear una nueva plantilla de CV",
     "templateCreationLabel": "Creación de plantilla de CV",
     "links": "Enlaces a ofertas de empleo",
+    "languageHint": "Para mejores resultados, utiliza una oferta de empleo en el mismo idioma que tu CV de referencia.",
     "loadRecentLink": "Cargar enlace reciente",
     "recentLinks": "Enlaces recientes",
     "addLink": "Añadir enlace",

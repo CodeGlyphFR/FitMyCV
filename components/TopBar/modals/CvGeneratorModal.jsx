@@ -277,6 +277,10 @@ export default function CvGeneratorModal({
               <img src="/icons/add.png" alt="" className="h-3 w-3 " /> {t("cvGenerator.addLink")}
             </button>
           </div>
+          <p className="text-xs text-amber-300/80 flex items-start gap-1.5">
+            <span>⚠️</span>
+            <span>{t("cvGenerator.languageHint")}</span>
+          </p>
         </div>
 
         <div className="space-y-2">
