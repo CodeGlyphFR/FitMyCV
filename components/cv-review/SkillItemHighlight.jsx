@@ -18,6 +18,7 @@ export default function SkillItemHighlight({
   field,
   itemName,
   expIndex, // Optionnel: index de l'expérience pour les skills_used dans experience
+  allowRemovedType = false, // Si true, permet le highlight des skills "removed" (utilisé par RemovedSkillsDisplay)
   className = "",
 }) {
   const [showPopover, setShowPopover] = useState(false);
@@ -34,6 +35,9 @@ export default function SkillItemHighlight({
   const change = pendingChanges.find((c) => {
     if (c.section !== section || c.field !== field) return false;
     if (c.itemName?.toLowerCase() !== itemName?.toLowerCase()) return false;
+    // Ignorer les changements "removed" sauf si allowRemovedType est true
+    // Les skills supprimés sont gérés exclusivement par RemovedSkillsDisplay
+    if (c.changeType === "removed" && !allowRemovedType) return false;
     // Si expIndex est fourni, vérifier qu'il correspond
     if (expIndex !== undefined && c.expIndex !== undefined && c.expIndex !== expIndex) return false;
     return true;
@@ -118,6 +122,33 @@ export function useRemovedItems(section, field, expIndex) {
 }
 
 /**
+ * Hook pour filtrer les items qui ont un changement "removed" en attente
+ * Retourne les items qui ne sont PAS marqués comme supprimés
+ *
+ * @param {Array} items - Tableau d'items (skills, tools, etc.)
+ * @param {string} section - Section du CV (ex: "skills")
+ * @param {string} field - Champ dans la section (ex: "hard_skills")
+ * @param {function} getItemName - Fonction pour extraire le nom de l'item
+ * @returns {Array} Items filtrés (sans les items supprimés)
+ */
+export function useFilterRemovedItems(items, section, field, getItemName) {
+  const removedItems = useRemovedItems(section, field);
+
+  if (!items || items.length === 0) return items;
+  if (removedItems.length === 0) return items;
+
+  // Créer un Set des noms supprimés (lowercase pour comparaison insensible à la casse)
+  const removedNames = new Set(
+    removedItems.map(c => c.itemName?.toLowerCase())
+  );
+
+  return items.filter(item => {
+    const name = getItemName(item);
+    return !removedNames.has(name?.toLowerCase());
+  });
+}
+
+/**
  * Composant pour afficher les items supprimés de manière condensée
  * Affiche : "X éléments supprimés : Skill1, Skill2, Skill3"
  * Chaque skill est cliquable pour review individuel
@@ -137,6 +168,7 @@ export function RemovedSkillsDisplay({ section, field, expIndex }) {
             field={field}
             itemName={change.itemName}
             expIndex={expIndex}
+            allowRemovedType={true}
           >
             <span className="cursor-pointer hover:text-red-300 transition-colors">
               {change.itemName}
@@ -167,6 +199,7 @@ export function RemovedSkillsBadges({ section, field, expIndex, badgeClassName }
           field={field}
           itemName={change.itemName}
           expIndex={expIndex}
+          allowRemovedType={true}
         >
           <span className={badgeClassName}>
             {change.itemName}

@@ -115,8 +115,15 @@ export default function ChangeHighlight({
   });
 
   // Déterminer si on doit afficher la surbrillance
+  // Note: change?.status devrait toujours être "pending" car les autres status sont filtrés
+  // Si un changement est trouvé avec un autre status, c'est un bug
   const isPending = change?.status === "pending";
   const shouldHighlight = isLatestVersion && isPending;
+
+  // Debug: log si un changement non-pending est trouvé
+  if (change && change.status !== "pending") {
+    console.warn(`[ChangeHighlight] Found change with non-pending status: ${change.status} for ${changePath}`);
+  }
 
   // Si pas de surbrillance, afficher le contenu normalement
   if (!shouldHighlight) {

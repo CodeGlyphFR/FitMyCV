@@ -20,13 +20,32 @@ npx prisma generate            # Régénérer client
 
 ## Base de Données
 
-Pour interroger la base PostgreSQL, utiliser `psql` avec les identifiants du fichier `.env` :
+**⚠️ IMPORTANT : Utiliser UNIQUEMENT le skill `postgres-prisma` pour interroger la DB.**
 
 ```bash
-psql "$DATABASE_URL"
+bash ~/.claude/skills/postgres-prisma/scripts/query_db.sh "SELECT * FROM \"Table\" LIMIT 5"
 ```
 
-La variable `DATABASE_URL` dans `.env` indique l'environnement (dev/prod) et contient les identifiants de connexion.
+**INTERDIT :**
+- `psql "$DATABASE_URL"` directement
+- `source .env && psql ...`
+
+Le script lit automatiquement `.env` et gère les paramètres Prisma.
+
+### Interprétation des demandes
+
+Quand l'utilisateur mentionne :
+- "le dernier X généré" (CV, document, etc.)
+- "analyse X dans la base"
+- "regarde ce qui a été créé"
+- "vérifie les données de X"
+
+→ **Interroger la DB EN PREMIER** via le skill, avant d'analyser le code.
+
+### Workflow debug
+1. Lire `prisma/schema.prisma` pour comprendre la structure
+2. Requêter la DB avec le skill pour voir l'état réel des données
+3. Puis analyser le code si nécessaire pour trouver la cause
 
 ## Structure Projet
 

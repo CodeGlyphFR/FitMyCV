@@ -193,8 +193,10 @@ export function HighlightProvider({ children, cv, filename, initialVersion = 'la
           setPreviousContent(null);
         }
 
-        // Rafraîchir les données du Server Component (sauf si batch)
+        // Rafraîchir les données du Server Component APRÈS un micro-tick
+        // pour s'assurer que le state React est bien appliqué avant le refresh
         if (!skipRefresh) {
+          await Promise.resolve();
           router.refresh();
         }
 
@@ -235,8 +237,10 @@ export function HighlightProvider({ children, cv, filename, initialVersion = 'la
           setPreviousContent(null);
         }
 
-        // Rafraîchir les données du Server Component
+        // Rafraîchir les données du Server Component APRÈS un micro-tick
+        // pour s'assurer que le state React est bien appliqué avant le refresh
         if (!skipRefresh) {
+          await Promise.resolve();
           router.refresh();
         }
 

@@ -35,7 +35,7 @@ Creer un extra distinct pour chaque information avec :
 | Deplacements, mobilite, voyages pro | "Mobilité" |
 | Vehicule, voiture | "Véhicule" |
 | Teletravail, remote, hybride | "Télétravail" |
-| Loisirs, sport, musique, lecture | "Hobbies" |
+| Loisirs, sport, musique, lecture | "Loisirs" (FR) / "Hobbies" (EN) |
 
 ## CLASSIFICATION DES EXTRAS
 
@@ -60,12 +60,60 @@ Creer un extra distinct pour chaque information avec :
 
 ---
 
+## ⚠️ RÈGLE CRITIQUE : LANGUE
+
+**RÈGLE ABSOLUE** : La langue cible détermine TOUT.
+
+### Détermination de la langue cible
+La langue cible est fournie dans les variables du prompt (ex: `{targetLanguage}`).
+
+### Règle de traduction
+
+| Langue du contenu source | Langue cible | Action |
+|--------------------------|--------------|--------|
+| Français | Français | **NE PAS TRADUIRE** - conserver tel quel |
+| Anglais | Anglais | **NE PAS TRADUIRE** - conserver tel quel |
+| Français | Anglais | **TRADUIRE** vers l'anglais |
+| Anglais | Français | **TRADUIRE** vers le français |
+| Toute langue X | Langue X | **NE PAS TRADUIRE** |
+| Toute langue X | Langue Y ≠ X | **TRADUIRE** vers Y |
+
+### INTERDIT (violations de la règle)
+- Traduire un mot français en anglais si la langue cible est le français
+- Traduire un mot anglais en français si la langue cible est l'anglais
+- Changer la langue d'un extra sans que ce soit nécessaire pour atteindre la langue cible
+- Changer le nom d'un extra sans raison de pertinence (reformulation, clarté)
+
+### Rappel
+Cette règle s'applique à **TOUS** les noms d'extras et leurs descriptions, sans exception. Il n'y a pas de liste de mots spécifiques - c'est une règle universelle basée uniquement sur la comparaison entre la langue du contenu et la langue cible.
+
+---
+
 ## ACTIONS
 
 - **SUPPRIMER** : Permis/Vehicule si offre ne mentionne pas deplacement
 - **AJOUTER** : Remote/Disponibilite si offre les mentionne
 - **GARDER** : Hobbies, extras pertinents
-- **REFORMULER** : Traduire dans la langue cible, clarifier si necessaire
+- **REFORMULER** : Clarifier si necessaire (UNIQUEMENT reformulation, PAS de traduction si même langue)
+
+---
+
+## MAPPING EXTRAS (OBLIGATOIRE)
+
+Pour CHAQUE extra du CV source, indiquer ce qu'il devient dans `extras_modifications` :
+
+| action | before_name | after_name | Exemple |
+|--------|-------------|------------|---------|
+| kept | "Permis" | "Permis" | Conservé tel quel |
+| modified | "Loisirs" | "Loisirs" | Summary modifié |
+| modified | "Loisirs" | "Hobbies" | Nom renommé (SEULEMENT si changement de langue!) |
+| removed | "Véhicule" | null | Supprimé car non pertinent |
+| added | null | "Remote" | Ajouté car offre mentionne télétravail |
+
+**RÈGLES** :
+- Si le nom change mais que c'est le même extra (même contenu), utiliser `action: "modified"` avec `before_name` et `after_name` différents
+- CHAQUE extra source doit apparaître dans `extras_modifications`
+- CHAQUE extra de sortie doit avoir une entrée correspondante
 
 ---
 
@@ -82,4 +130,8 @@ Actions : `modified`, `added`, `removed`
 ---
 
 ## LANGUE DE SORTIE
-Tout le contenu DOIT etre dans la langue cible specifiee.
+- Comparer la langue du contenu avec la langue cible fournie dans `{targetLanguage}`
+- Si le contenu est DÉJÀ dans la langue cible → **NE PAS MODIFIER** (sauf reformulation pour clarté)
+- Si le contenu est dans une AUTRE langue → **TRADUIRE** vers la langue cible
+- Cette règle s'applique à TOUS les champs (name, summary) de TOUS les extras, sans exception
+- INTERDIT de traduire vers une langue différente de la langue cible

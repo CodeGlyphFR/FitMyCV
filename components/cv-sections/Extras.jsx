@@ -31,14 +31,21 @@ export default function Extras(props){
   const { editing } = useAdmin();
   const { mutate } = useMutate();
 
-  // Récupérer les extras ajoutés et supprimés pour les afficher
-  const { removedItems: removedExtras, addedItems: addedExtras } = useItemChanges("extras");
+  // Récupérer les extras ajoutés, supprimés et modifiés pour les afficher
+  const { removedItems: removedExtras, addedItems: addedExtras, modifiedItems: modifiedExtras } = useItemChanges("extras");
   const hasRemovedExtras = removedExtras.length > 0;
 
   // Helper pour trouver si un extra a un changement "added" pending
   const findAddedChange = (extra) => {
     return addedExtras.find(c =>
       c.itemName?.toLowerCase() === (extra.name || "").toLowerCase()
+    );
+  };
+
+  // Helper pour trouver si un extra a un changement "modified" pending
+  const findModifiedChange = (extra) => {
+    return modifiedExtras.find(c =>
+      c.afterValue?.name?.toLowerCase() === (extra.name || "").toLowerCase()
     );
   };
 
@@ -112,6 +119,7 @@ export default function Extras(props){
               {extras.filter(e => (e.summary || "").length <= 40).map((e,i)=>{
                 const originalIndex = extras.indexOf(e);
                 const addedChange = findAddedChange(e);
+                const modifiedChange = findModifiedChange(e);
 
                 const badgeContent = (
                   <>
@@ -130,12 +138,12 @@ export default function Extras(props){
                   </>
                 );
 
-                // Si c'est un extra ajouté, wrapper dans ReviewableItemCard
-                if (addedChange) {
+                // Si c'est un extra ajouté ou modifié, wrapper dans ReviewableItemCard
+                if (addedChange || modifiedChange) {
                   return (
                     <ReviewableItemCard
                       key={originalIndex}
-                      change={addedChange}
+                      change={addedChange || modifiedChange}
                       variant="badge"
                     >
                       {badgeContent}
@@ -172,6 +180,7 @@ export default function Extras(props){
               {extras.filter(e => (e.summary || "").length > 40).map((e,i)=>{
                 const originalIndex = extras.indexOf(e);
                 const addedChange = findAddedChange(e);
+                const modifiedChange = findModifiedChange(e);
 
                 const cardContent = (
                   <div className="flex items-start gap-2">
@@ -190,12 +199,12 @@ export default function Extras(props){
                   </div>
                 );
 
-                // Si c'est un extra ajouté, wrapper dans ReviewableItemCard
-                if (addedChange) {
+                // Si c'est un extra ajouté ou modifié, wrapper dans ReviewableItemCard
+                if (addedChange || modifiedChange) {
                   return (
                     <ReviewableItemCard
                       key={originalIndex}
-                      change={addedChange}
+                      change={addedChange || modifiedChange}
                     >
                       {cardContent}
                     </ReviewableItemCard>

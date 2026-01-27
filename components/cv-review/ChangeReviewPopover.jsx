@@ -172,6 +172,25 @@ export default function ChangeReviewPopover({
           </p>
         )}
 
+        {/* Pour les extras modifiés */}
+        {change.section === "extras" && change.changeType === "modified" && change.beforeValue && change.afterValue && (
+          <div className="text-xs text-amber-300/90 max-w-[250px] space-y-1">
+            {change.beforeValue?.name !== change.afterValue?.name && (
+              <p>
+                <span className="font-medium text-white/90">Titre : </span>
+                <span className="line-through opacity-70">{change.beforeValue?.name}</span>
+                <span className="mx-1.5">→</span>
+                <span className="font-medium">{change.afterValue?.name}</span>
+              </p>
+            )}
+            {change.beforeValue?.summary !== change.afterValue?.summary && (
+              <p>
+                <span className="font-medium text-white/90">Description modifiée</span>
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Ancien contenu - format différent selon le type de champ (sauf langues et skills modifiés déjà traités) */}
         {showBeforeText && change.beforeValue && change.section !== "languages" &&
          !(change.changeType === "modified" && (change.field === "skills_used" || change.section === "skills")) && (
