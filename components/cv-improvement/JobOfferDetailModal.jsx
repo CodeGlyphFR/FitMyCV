@@ -133,9 +133,25 @@ export default function JobOfferDetailModal({
   const benefits = content.benefits || [];
   // Tri alphabétique des compétences (insensible à la casse)
   const sortAlpha = (arr) => [...arr].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-  const requiredSkills = sortAlpha(content.skills?.required || []);
-  const niceToHaveSkills = sortAlpha(content.skills?.nice_to_have || []);
-  const softSkills = sortAlpha(content.skills?.soft_skills || []);
+
+  const skills = content.skills || {};
+
+  // Nouveau format avec 4 catégories
+  const hardSkillsRequired = sortAlpha(skills.hard_skills?.required || []);
+  const hardSkillsNice = sortAlpha(skills.hard_skills?.nice_to_have || []);
+  const toolsRequired = sortAlpha(skills.tools?.required || []);
+  const toolsNice = sortAlpha(skills.tools?.nice_to_have || []);
+  const methodologiesRequired = sortAlpha(skills.methodologies?.required || []);
+  const methodologiesNice = sortAlpha(skills.methodologies?.nice_to_have || []);
+  const softSkills = sortAlpha(skills.soft_skills || []);
+
+  // Vérifier s'il y a des compétences dans chaque catégorie
+  const hasHardSkills = hardSkillsRequired.length > 0 || hardSkillsNice.length > 0;
+  const hasTools = toolsRequired.length > 0 || toolsNice.length > 0;
+  const hasMethodologies = methodologiesRequired.length > 0 || methodologiesNice.length > 0;
+  const hasSoftSkills = softSkills.length > 0;
+  const hasAnySkills = hasHardSkills || hasTools || hasMethodologies || hasSoftSkills;
+
   const recruitmentProcess = content.recruitment_process || null;
 
   return createPortal(
@@ -256,7 +272,7 @@ export default function JobOfferDetailModal({
                 )}
 
                 {/* Grid: Avantages + Compétences/Exigences */}
-                {(benefits.length > 0 || requiredSkills.length > 0 || niceToHaveSkills.length > 0 || softSkills.length > 0 || experience || education || languages.length > 0) && (
+                {(benefits.length > 0 || hasAnySkills || experience || education || languages.length > 0) && (
                   <div className={`grid grid-cols-1 gap-4 ${benefits.length > 0 ? 'lg:grid-cols-2' : ''}`}>
                     {/* Avantages */}
                     {benefits.length > 0 && (
@@ -277,21 +293,22 @@ export default function JobOfferDetailModal({
                     )}
 
                     {/* Compétences + Exigences fusionnées */}
-                    {(requiredSkills.length > 0 || niceToHaveSkills.length > 0 || softSkills.length > 0 || experience || education || languages.length > 0) && (
+                    {(hasAnySkills || experience || education || languages.length > 0) && (
                       <div className="rounded-xl p-4 bg-white/5 border border-white/10">
-                        {/* Compétences */}
-                        {(requiredSkills.length > 0 || niceToHaveSkills.length > 0 || softSkills.length > 0) && (
+                        {/* Compétences par catégorie */}
+                        {hasAnySkills && (
                           <>
                             <h3 className="text-xs font-semibold uppercase tracking-wide text-white/50 mb-3 flex items-center gap-2">
                               <GraduationCap className="w-4 h-4" />
                               {t("jobOffer.skills")}
                             </h3>
                             <div className="space-y-3">
-                              {requiredSkills.length > 0 && (
+                              {/* Compétences techniques (hard_skills) */}
+                              {hasHardSkills && (
                                 <div>
-                                  <span className="text-xs text-white/50 block mb-1.5">{t("jobOffer.required")}</span>
+                                  <span className="text-xs text-white/50 block mb-1.5">{t("jobOffer.hardSkills")}</span>
                                   <div className="flex flex-wrap gap-1.5">
-                                    {requiredSkills.map((skill, idx) => (
+                                    {hardSkillsRequired.map((skill, idx) => (
                                       <span
                                         key={idx}
                                         className="px-2 py-0.5 text-xs rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300"
@@ -299,16 +316,9 @@ export default function JobOfferDetailModal({
                                         {capitalize(skill)}
                                       </span>
                                     ))}
-                                  </div>
-                                </div>
-                              )}
-                              {niceToHaveSkills.length > 0 && (
-                                <div>
-                                  <span className="text-xs text-white/50 block mb-1.5">{t("jobOffer.niceToHave")}</span>
-                                  <div className="flex flex-wrap gap-1.5">
-                                    {niceToHaveSkills.map((skill, idx) => (
+                                    {hardSkillsNice.map((skill, idx) => (
                                       <span
-                                        key={idx}
+                                        key={`nice-${idx}`}
                                         className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300"
                                       >
                                         {capitalize(skill)}
@@ -317,7 +327,59 @@ export default function JobOfferDetailModal({
                                   </div>
                                 </div>
                               )}
-                              {softSkills.length > 0 && (
+
+                              {/* Outils & Technologies */}
+                              {hasTools && (
+                                <div>
+                                  <span className="text-xs text-white/50 block mb-1.5">{t("jobOffer.tools")}</span>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {toolsRequired.map((skill, idx) => (
+                                      <span
+                                        key={idx}
+                                        className="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300"
+                                      >
+                                        {capitalize(skill)}
+                                      </span>
+                                    ))}
+                                    {toolsNice.map((skill, idx) => (
+                                      <span
+                                        key={`nice-${idx}`}
+                                        className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300"
+                                      >
+                                        {capitalize(skill)}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Méthodologies */}
+                              {hasMethodologies && (
+                                <div>
+                                  <span className="text-xs text-white/50 block mb-1.5">{t("jobOffer.methodologies")}</span>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {methodologiesRequired.map((skill, idx) => (
+                                      <span
+                                        key={idx}
+                                        className="px-2 py-0.5 text-xs rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300"
+                                      >
+                                        {capitalize(skill)}
+                                      </span>
+                                    ))}
+                                    {methodologiesNice.map((skill, idx) => (
+                                      <span
+                                        key={`nice-${idx}`}
+                                        className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300"
+                                      >
+                                        {capitalize(skill)}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Soft Skills */}
+                              {hasSoftSkills && (
                                 <div>
                                   <span className="text-xs text-white/50 block mb-1.5">{t("jobOffer.softSkills")}</span>
                                   <div className="flex flex-wrap gap-1.5">
@@ -337,7 +399,7 @@ export default function JobOfferDetailModal({
                         )}
 
                         {/* Séparateur si les deux sections existent */}
-                        {(requiredSkills.length > 0 || niceToHaveSkills.length > 0 || softSkills.length > 0) && (experience || education || languages.length > 0) && (
+                        {hasAnySkills && (experience || education || languages.length > 0) && (
                           <div className="border-t border-white/10 my-4" />
                         )}
 

@@ -82,25 +82,69 @@
       },
       "skills": {
         "type": "object",
-        "description": "Technical and behavioral skills",
+        "description": "Technical and behavioral skills categorized by type",
         "properties": {
-          "required": {
-            "type": "array",
-            "items": { "type": "string" },
-            "description": "Must-have technical skills and technologies (exact terms from offer)"
+          "hard_skills": {
+            "type": "object",
+            "description": "Technical competencies and domain expertise (skills developed with experience)",
+            "properties": {
+              "required": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Must-have technical competencies (e.g., Backend development, API Design, Machine Learning)"
+              },
+              "nice_to_have": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Appreciated technical competencies"
+              }
+            },
+            "required": ["required", "nice_to_have"],
+            "additionalProperties": false
           },
-          "nice_to_have": {
-            "type": "array",
-            "items": { "type": "string" },
-            "description": "Appreciated technical skills: certifications, contributions open source, publications, experience with specific tools"
+          "tools": {
+            "type": "object",
+            "description": "Software, frameworks, languages, platforms that can be installed or connected to",
+            "properties": {
+              "required": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Must-have tools/technologies (e.g., Python, Docker, PostgreSQL, AWS)"
+              },
+              "nice_to_have": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Appreciated tools/technologies"
+              }
+            },
+            "required": ["required", "nice_to_have"],
+            "additionalProperties": false
+          },
+          "methodologies": {
+            "type": "object",
+            "description": "Work methods, frameworks, and structured approaches",
+            "properties": {
+              "required": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Must-have methodologies (e.g., Agile, Scrum, TDD, CI/CD)"
+              },
+              "nice_to_have": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Appreciated methodologies"
+              }
+            },
+            "required": ["required", "nice_to_have"],
+            "additionalProperties": false
           },
           "soft_skills": {
             "type": "array",
             "items": { "type": "string" },
-            "description": "Behavioral/interpersonal skills: communication, teamwork, autonomy, curiosity, pedagogy, leadership, adaptability"
+            "description": "Behavioral/interpersonal skills (communication, teamwork, autonomy, curiosity, leadership, adaptability)"
           }
         },
-        "required": ["required", "nice_to_have", "soft_skills"],
+        "required": ["hard_skills", "tools", "methodologies", "soft_skills"],
         "additionalProperties": false
       },
       "education": {

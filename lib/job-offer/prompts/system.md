@@ -127,7 +127,11 @@ Extraire les chiffres exacts quand disponibles :
 
 ---
 
-## CLASSIFICATION DES COMPETENCES
+## CLASSIFICATION DES COMPETENCES PAR CATEGORIE
+
+### REGLE ABSOLUE : 4 categories distinctes
+
+Les competences techniques doivent etre reparties dans 3 categories distinctes + soft_skills :
 
 ### REGLE ABSOLUE : Langues parlees =/= Skills techniques
 
@@ -136,83 +140,102 @@ Les langues (anglais, francais, allemand, espagnol, etc.) vont TOUJOURS dans le 
 - "Bilingue francais-anglais" -> languages
 - Meme si l'offre dit "Competence en anglais" -> languages
 
-### skills.required (competences techniques obligatoires)
+### 1. hard_skills (Competences techniques metier)
 
-Technologies, langages de PROGRAMMATION, frameworks, outils.
-Indicateurs : "requis", "indispensable", "obligatoire", "maitrise de", "expertise en"
-Par defaut : les competences techniques dans "Profil recherche" sont required.
+**Definition** : Savoir-faire et competences qu'on developpe avec l'experience.
+**Test** : "C'est une competence qu'on developpe ?"
 
-### skills.nice_to_have (competences techniques appreciees)
+| Type | Exemples |
+|------|----------|
+| Developpement | Backend development, Frontend development, Architecture logicielle |
+| Data | Machine Learning, Data Analysis, Data Engineering, ETL |
+| Management | Gestion de projet, Product Management, Team Management |
+| Autres | API Design, System Design, Security, Performance Optimization |
 
-Indicateurs : "apprecie", "souhaite", "un plus", "serait un plus", "idealement"
-Inclut : certifications, contributions open source, publications
+**EXCLURE** :
+- Les outils/logiciels -> categorie `tools`
+- Les methodologies -> categorie `methodologies`
+- Les langues parlees -> section `languages`
 
-### skills.soft_skills (competences comportementales)
+### 2. tools (Outils et technologies)
 
-- Communication : "bon communicant", "pedagogie", "vulgarisation"
-- Collaboration : "esprit d'equipe", "travail collaboratif"
-- Leadership : "autonomie", "initiative", "force de proposition"
-- Traits : "curiosite", "rigueur", "adaptabilite", "creativite"
+**Definition** : Logiciels, librairies, frameworks, plateformes qu'on utilise.
+**Test** : "Peut-on l'installer, le telecharger, ou s'y connecter ?"
+
+| Type | Exemples |
+|------|----------|
+| Langages | Python, JavaScript, TypeScript, Java, Go, Rust, SQL |
+| Frameworks | React, Angular, Vue, Django, FastAPI, Spring, Next.js |
+| Bases de donnees | PostgreSQL, MongoDB, Redis, Elasticsearch, MySQL |
+| Cloud/Infra | AWS, Azure, GCP, Docker, Kubernetes, Terraform |
+| Outils | Git, Jira, Figma, Notion, VS Code, Postman |
+| IA/ML | TensorFlow, PyTorch, LangChain, OpenAI API, Hugging Face |
+
+### 3. methodologies (Methodes de travail)
+
+**Definition** : Principes, frameworks, methodes de travail structurees.
+**Test** : "C'est un framework ou une methode de travail ?"
+
+| Type | Exemples |
+|------|----------|
+| Agile | Scrum, Kanban, SAFe, Lean, Sprint |
+| Dev practices | TDD, BDD, CI/CD, DevOps, GitFlow |
+| Design | Design Thinking, UX Research, Design System |
+| Management | OKR, Lean Management, Six Sigma |
+
+**Note** : Les methodologies peuvent etre DEDUITES du contexte si non explicites :
+- "Environnement agile" -> Agile
+- "Deploiement continu" -> CI/CD
+- "Sprints de 2 semaines" -> Scrum
+- "Integration continue" -> CI/CD
+
+### 4. soft_skills (Competences comportementales)
+
+Structure inchangee - liste simple de soft skills.
+- Communication, Travail en equipe, Autonomie, Curiosite
+- Leadership, Adaptabilite, Rigueur, Creativite
 
 ---
 
-## EXTRACTION EXHAUSTIVE DES COMPETENCES
+### FORMAT DE SORTIE POUR skills
 
-### Principe fondamental
+```json
+{
+  "skills": {
+    "hard_skills": {
+      "required": ["Backend development", "API Design", "Machine Learning"],
+      "nice_to_have": ["System Design", "Security"]
+    },
+    "tools": {
+      "required": ["Python", "Docker", "PostgreSQL"],
+      "nice_to_have": ["Kubernetes", "AWS"]
+    },
+    "methodologies": {
+      "required": ["Agile"],
+      "nice_to_have": ["TDD", "CI/CD"]
+    },
+    "soft_skills": ["Communication", "Autonomie", "Esprit d'equipe"]
+  }
+}
+```
 
-Scanner TOUTE l'offre pour extraire les competences, pas seulement les listes a puces. Viser 5-15 competences required pour un poste typique.
+### REGLE DE CONCISION
 
-### Conversion phrases -> competences concises
+Chaque competence doit etre un **mot-cle concis** (max 3 mots), pas une phrase :
+- "Maitrise de la conception d'APIs REST" -> "API Design"
+- "Experience avec les outils d'IA generative" -> "IA generative"
+- "Capacite a travailler en equipe" -> "Travail en equipe"
+- "Connaissance approfondie de Python" -> "Python"
 
-Les competences sont souvent decrites en phrases. Tu DOIS les convertir en termes concis :
-
-| Formulation dans l'offre | Competence a extraire |
-|-------------------------|----------------------|
-| "Tu utilises des outils d'IA au quotidien" | "Outils d'intelligence artificielle" |
-| "Tu maintiens une base de connaissances" | "Gestion de base de connaissances" |
-| "Tu rediges des guides et tutoriels" | "Redaction de documentation technique" |
-| "Tu assures le support et l'installation" | "Support technique" |
-| "Tu sais vulgariser des sujets techniques" | "Vulgarisation technique" |
-| "Tu travailles dans un environnement agile" | "Methodologie Agile" |
-| "Tu analyses les donnees clients" | "Analyse de donnees" |
-| "Tu geres plusieurs projets en parallele" | "Gestion de projet" |
-
-### Categories de competences fonctionnelles a rechercher
-
-Ne te limite PAS aux outils nommes explicitement. Recherche aussi :
-
-**Documentation & Formation :**
-- Redaction de guides, tutoriels, articles
-- Maintien de base de connaissances
-- Creation de supports de formation
-
-**Support & Technique :**
-- Support client/technique
-- Installation/configuration d'equipements
-- Troubleshooting, resolution de problemes
-
-**Communication :**
-- Vulgarisation technique
-- Pedagogie, formation utilisateurs
-- Presentation, animation de reunions
-
-**Outils modernes :**
-- Intelligence artificielle generative (ChatGPT, Claude, etc.)
-- Automatisation de processus
-- Outils collaboratifs (Notion, Slack, etc.)
-
-### Marqueurs de nice_to_have elargis
+### Marqueurs de nice_to_have
 
 **Francais :**
 - "idealement", "de preference", "un plus", "serait un plus"
 - "apprecie", "souhaite", "si possible", "serait un atout"
-- "nous apprecierions", "il serait ideal", "un avantage"
 
 **Anglais :**
 - "ideally", "preferred", "bonus", "nice to have", "a plus"
-- "would be great", "desirable", "advantageous", "beneficial"
-
-**ATTENTION** : Si une competence est decrite avec un marqueur nice_to_have, elle va dans `skills.nice_to_have`, pas dans `skills.required`.
+- "would be great", "desirable", "advantageous"
 
 ---
 
@@ -241,22 +264,6 @@ Le champ `languages` contient maintenant un attribut `requirement` obligatoire :
 | "Anglais idealement" | { language: "Anglais", level: null, requirement: "nice_to_have" } |
 | "L'allemand serait un plus" | { language: "Allemand", level: null, requirement: "nice_to_have" } |
 | "Anglais (B2 minimum requis)" | { language: "Anglais", level: "intermediate", requirement: "required" } |
-
----
-
-## FORMAT DES SKILLS TECHNIQUES
-
-Extraire les termes exacts de l'offre :
-- Technologies : "React", "Node.js", "PostgreSQL", "Docker"
-- Langages : "JavaScript", "Python", "TypeScript"
-- Outils : "Git", "Jira", "Figma"
-- Methodologies : "Agile", "Scrum", "DevOps"
-- IA/ML : "LLM", "ChatGPT", "Claude", "TensorFlow"
-
-Ne PAS :
-- Abreger ("JS" au lieu de "JavaScript")
-- Reformuler ("base de donnees relationnelle" au lieu de "PostgreSQL")
-- Generaliser ("framework frontend" au lieu de "React")
 
 ---
 
