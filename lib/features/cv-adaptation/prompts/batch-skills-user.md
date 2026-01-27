@@ -22,7 +22,30 @@
 
 ---
 
-# Langue de sortie: {targetLanguage}
+# Competences de l'Offre (REFERENCE STRICTE pour le filtrage)
+
+## Skills Requis (required)
+{requiredSkillsList}
+
+## Skills Apprecies (nice_to_have)
+{niceToHaveSkillsList}
+
+## Soft Skills Demandes
+{softSkillsList}
+
+**⚠️ RAPPEL** : Utiliser ces listes pour le matching strict (Mission 1).
+- hard_skills/tools : SUPPRIMER si pas dans "Skills Requis" NI "Skills Apprecies"
+- soft_skills : SUPPRIMER si pas dans "Soft Skills Demandes"
+- Si une liste est "Non specifie" ou vide → appliquer la regle de sauvegarde
+
+---
+
+# Langues
+- **Langue du CV source** : {sourceLanguage}
+- **Langue de sortie** : {targetLanguage}
+- **Traduction requise** : {needsTranslation}
+
+**⚠️ Si "Traduction requise" = NON** : NE PAS traduire les skills. Garder les noms tels quels (action: `kept`).
 
 ## Tes 7 missions
 
