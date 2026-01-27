@@ -148,9 +148,34 @@
         "items": { "type": "string" },
         "description": "Benefits and perks offered"
       },
+      "recruitment_process": {
+        "type": ["object", "null"],
+        "description": "Recruitment process information if mentioned in the offer",
+        "properties": {
+          "steps": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Ordered list of recruitment steps (e.g., 'Phone screening', 'Technical interview', 'HR interview', 'Case study')"
+          },
+          "duration": {
+            "type": ["string", "null"],
+            "description": "Expected duration of the process if mentioned (e.g., '2-3 weeks', '1 month')"
+          },
+          "contact": {
+            "type": ["string", "null"],
+            "description": "Recruiter or hiring manager name/email if mentioned"
+          },
+          "deadline": {
+            "type": ["string", "null"],
+            "description": "Application deadline if mentioned (format: YYYY-MM-DD or text as stated)"
+          }
+        },
+        "required": ["steps", "duration", "contact", "deadline"],
+        "additionalProperties": false
+      },
       "language": {
         "type": ["string", "null"],
-        "description": "Language code of the job offer content: fr (French), en (English), es (Spanish), de (German), or null if unclear/multilingual"
+        "description": "FILL THIS LAST. Language code based on YOUR EXTRACTED CONTENT (responsibilities, benefits, skills). If these fields are in English → 'en'. If in French → 'fr'. Ignore URL path. Values: fr, en, es, de, or null."
       }
     },
     "required": [
@@ -165,6 +190,7 @@
       "languages",
       "responsibilities",
       "benefits",
+      "recruitment_process",
       "language"
     ],
     "additionalProperties": false

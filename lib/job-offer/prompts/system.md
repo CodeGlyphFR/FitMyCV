@@ -23,6 +23,7 @@ Identifier les sections de l'offre :
 - Profil recherche / Competences (mots-cles : "profil", "competences", "vous avez", "vous etes")
 - Informations pratiques (lieu, contrat, salaire, teletravail)
 - Avantages / Benefits (mots-cles : "avantages", "nous offrons", "benefits")
+- Processus de recrutement (mots-cles : "processus", "entretien", "etapes", "hiring process", "interview", "next steps", "recrutement")
 
 ### Phase 2 : ANALYSE
 Pour chaque information cle, te poser les questions :
@@ -76,12 +77,22 @@ Remplir le JSON avec les valeurs analysees, en respectant les regles ci-dessous.
 - "native" - Langue maternelle, bilingue
 - null - Si non specifie
 
-**language** (langue de redaction de l'offre) :
+**language** (langue de redaction de l'offre) - **A REMPLIR EN DERNIER** :
 - "fr" - Francais
 - "en" - Anglais
 - "es" - Espagnol
 - "de" - Allemand
 - null - Si multilingue ou ambigu
+
+**ORDRE OBLIGATOIRE** : Tu DOIS d'abord extraire TOUS les autres champs (responsibilities, benefits, skills, etc.), puis EN DERNIER determiner le champ `language` en analysant CE QUE TU VIENS D'EXTRAIRE.
+
+Analyse la langue des champs que tu as remplis :
+- Si `responsibilities` contient "Build relationships", "Ensure product adoption" → langue = "en"
+- Si `responsibilities` contient "Gerer les clients", "Assurer le suivi" → langue = "fr"
+- Si `benefits` contient "Flexible remote", "Paid time off" → langue = "en"
+- Si `benefits` contient "Teletravail", "Mutuelle" → langue = "fr"
+
+**IGNORE COMPLETEMENT** : l'URL, le nom de domaine, le chemin "/fr/" ou "/en/". Seul le contenu extrait compte.
 
 ---
 
@@ -158,6 +169,34 @@ Ne PAS :
 - Abreger ("JS" au lieu de "JavaScript")
 - Reformuler ("base de donnees relationnelle" au lieu de "PostgreSQL")
 - Generaliser ("framework frontend" au lieu de "React")
+
+---
+
+## PROCESSUS DE RECRUTEMENT
+
+Extraire les informations sur le processus de recrutement si mentionnees :
+
+### recruitment_process.steps (etapes du recrutement)
+Liste ordonnee des etapes. Exemples typiques :
+- "Phone screening" / "Entretien telephonique"
+- "Technical interview" / "Entretien technique"
+- "HR interview" / "Entretien RH"
+- "Case study" / "Etude de cas"
+- "Meet the team" / "Rencontre avec l'equipe"
+- "Final interview with CEO" / "Entretien final avec le CEO"
+
+Mots-cles a rechercher : "processus de recrutement", "etapes", "hiring process", "interview process", "next steps", "how we hire", "notre processus"
+
+### recruitment_process.duration
+Duree estimee si mentionnee : "2-3 semaines", "1 mois", "fast-track process"
+
+### recruitment_process.contact
+Nom ou email du recruteur/hiring manager si mentionne dans l'offre.
+
+### recruitment_process.deadline
+Date limite de candidature si specifiee. Extraire au format YYYY-MM-DD si possible, sinon texte brut.
+
+**Si aucune information sur le processus n'est mentionnee, retourner `null` pour tout l'objet recruitment_process.**
 
 ---
 
