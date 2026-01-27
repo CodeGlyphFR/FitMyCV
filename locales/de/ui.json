@@ -401,6 +401,7 @@
   "jobOffer": {
     "viewDetails": "Stellenangebot-Details anzeigen",
     "untitled": "Unbenanntes Angebot",
+    "company": "Unternehmen",
     "noData": "Keine Daten für dieses Angebot verfügbar",
     "requirements": "Anforderungen",
     "skills": "Kompetenzen",
@@ -427,6 +428,14 @@
       "hybrid": "Hybrid",
       "onsite": "Vor Ort",
       "partial": "Teilweise Remote"
+    },
+    "recruitmentProcess": {
+      "title": "Bewerbungsprozess",
+      "steps": "Schritte",
+      "step": "Schritt",
+      "contact": "Kontakt",
+      "deadline": "Bewerbungsfrist",
+      "duration": "Dauer"
     }
   }
 }

@@ -401,6 +401,7 @@
   "jobOffer": {
     "viewDetails": "View job offer details",
     "untitled": "Untitled offer",
+    "company": "Company",
     "noData": "No data available for this offer",
     "requirements": "Requirements",
     "skills": "Skills",
@@ -427,6 +428,14 @@
       "hybrid": "Hybrid",
       "onsite": "On-site",
       "partial": "Partial remote"
+    },
+    "recruitmentProcess": {
+      "title": "Recruitment process",
+      "steps": "Steps",
+      "step": "Step",
+      "contact": "Contact",
+      "deadline": "Deadline",
+      "duration": "Duration"
     }
   }
 }

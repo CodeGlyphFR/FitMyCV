@@ -16,7 +16,8 @@ import {
   Languages,
   Target,
   Gift,
-  ExternalLink
+  ExternalLink,
+  ListOrdered
 } from "lucide-react";
 
 // Map des drapeaux par code langue
@@ -127,6 +128,7 @@ export default function JobOfferDetailModal({
   const requiredSkills = content.skills?.required || [];
   const niceToHaveSkills = content.skills?.nice_to_have || [];
   const softSkills = content.skills?.soft_skills || [];
+  const recruitmentProcess = content.recruitment_process || null;
 
   return createPortal(
     <div
@@ -175,7 +177,9 @@ export default function JobOfferDetailModal({
                   )}
                 </div>
                 {content.company && (
-                  <p className="text-sm text-white/60 mt-0.5">{content.company}</p>
+                  <p className="text-sm text-white/60 mt-0.5">
+                    <span className="text-white/40">{t("jobOffer.company")} :</span> {content.company}
+                  </p>
                 )}
               </div>
             </div>
@@ -243,106 +247,136 @@ export default function JobOfferDetailModal({
                   </div>
                 )}
 
-                {/* Grid: Exigences + Compétences */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {/* Exigences */}
-                  {(experience || education || languages.length > 0) && (
-                    <div className="rounded-xl p-4 bg-white/5 border border-white/10">
-                      <h3 className="text-xs font-semibold uppercase tracking-wide text-white/50 mb-3 flex items-center gap-2">
-                        <Target className="w-4 h-4" />
-                        {t("jobOffer.requirements")}
-                      </h3>
-                      <div className="space-y-2 text-sm text-white/70">
-                        {experience && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-white/50">{t("jobOffer.experience")}:</span>
-                            <span className="text-white">{experience}</span>
-                          </div>
-                        )}
-                        {education && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-white/50">{t("jobOffer.education")}:</span>
-                            <span className="text-white">{education}</span>
-                          </div>
-                        )}
-                        {languages.length > 0 && (
-                          <div className="flex items-start gap-2">
-                            <span className="text-white/50">{t("jobOffer.languages")}:</span>
-                            <div className="flex flex-wrap gap-1.5">
-                              {languages.map((lang, idx) => (
-                                <span
-                                  key={idx}
-                                  className="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300"
-                                >
-                                  {lang.language}{lang.level ? ` (${lang.level})` : ""}
-                                </span>
-                              ))}
+                {/* Grid: Avantages + Compétences/Exigences */}
+                {(benefits.length > 0 || requiredSkills.length > 0 || niceToHaveSkills.length > 0 || softSkills.length > 0 || experience || education || languages.length > 0) && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Avantages */}
+                    {benefits.length > 0 && (
+                      <div className="rounded-xl p-4 bg-green-500/5 border border-green-500/20">
+                        <h3 className="text-xs font-semibold uppercase tracking-wide text-white/50 mb-3 flex items-center gap-2">
+                          <Gift className="w-4 h-4" />
+                          {t("jobOffer.benefits")}
+                        </h3>
+                        <ul className="space-y-2 text-sm text-white/70">
+                          {benefits.map((item, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-green-400 mt-0.5">✓</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Compétences + Exigences fusionnées */}
+                    {(requiredSkills.length > 0 || niceToHaveSkills.length > 0 || softSkills.length > 0 || experience || education || languages.length > 0) && (
+                      <div className="rounded-xl p-4 bg-white/5 border border-white/10">
+                        {/* Compétences */}
+                        {(requiredSkills.length > 0 || niceToHaveSkills.length > 0 || softSkills.length > 0) && (
+                          <>
+                            <h3 className="text-xs font-semibold uppercase tracking-wide text-white/50 mb-3 flex items-center gap-2">
+                              <GraduationCap className="w-4 h-4" />
+                              {t("jobOffer.skills")}
+                            </h3>
+                            <div className="space-y-3">
+                              {requiredSkills.length > 0 && (
+                                <div>
+                                  <span className="text-xs text-white/50 block mb-1.5">{t("jobOffer.required")}</span>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {requiredSkills.map((skill, idx) => (
+                                      <span
+                                        key={idx}
+                                        className="px-2 py-0.5 text-xs rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300"
+                                      >
+                                        {skill}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {niceToHaveSkills.length > 0 && (
+                                <div>
+                                  <span className="text-xs text-white/50 block mb-1.5">{t("jobOffer.niceToHave")}</span>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {niceToHaveSkills.map((skill, idx) => (
+                                      <span
+                                        key={idx}
+                                        className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300"
+                                      >
+                                        {skill}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {softSkills.length > 0 && (
+                                <div>
+                                  <span className="text-xs text-white/50 block mb-1.5">{t("jobOffer.softSkills")}</span>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {softSkills.map((skill, idx) => (
+                                      <span
+                                        key={idx}
+                                        className="px-2 py-0.5 text-xs rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300"
+                                      >
+                                        {skill}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          </div>
+                          </>
+                        )}
+
+                        {/* Séparateur si les deux sections existent */}
+                        {(requiredSkills.length > 0 || niceToHaveSkills.length > 0 || softSkills.length > 0) && (experience || education || languages.length > 0) && (
+                          <div className="border-t border-white/10 my-4" />
+                        )}
+
+                        {/* Exigences */}
+                        {(experience || education || languages.length > 0) && (
+                          <>
+                            <h3 className="text-xs font-semibold uppercase tracking-wide text-white/50 mb-3 flex items-center gap-2">
+                              <Target className="w-4 h-4" />
+                              {t("jobOffer.requirements")}
+                            </h3>
+                            <div className="space-y-2 text-sm text-white/70">
+                              {experience && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-white/50">{t("jobOffer.experience")}:</span>
+                                  <span className="text-white">{experience}</span>
+                                </div>
+                              )}
+                              {education && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-white/50">{t("jobOffer.education")}:</span>
+                                  <span className="text-white">{education}</span>
+                                </div>
+                              )}
+                              {languages.length > 0 && (
+                                <div className="flex items-start gap-2">
+                                  <span className="text-white/50">{t("jobOffer.languages")}:</span>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {languages.map((lang, idx) => (
+                                      <span
+                                        key={idx}
+                                        className="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300"
+                                      >
+                                        {lang.language}{lang.level ? ` (${lang.level})` : ""}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </>
                         )}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                )}
 
-                  {/* Compétences */}
-                  {(requiredSkills.length > 0 || niceToHaveSkills.length > 0 || softSkills.length > 0) && (
-                    <div className="rounded-xl p-4 bg-white/5 border border-white/10">
-                      <h3 className="text-xs font-semibold uppercase tracking-wide text-white/50 mb-3 flex items-center gap-2">
-                        <GraduationCap className="w-4 h-4" />
-                        {t("jobOffer.skills")}
-                      </h3>
-                      <div className="space-y-3">
-                        {requiredSkills.length > 0 && (
-                          <div>
-                            <span className="text-xs text-white/50 block mb-1.5">{t("jobOffer.required")}</span>
-                            <div className="flex flex-wrap gap-1.5">
-                              {requiredSkills.map((skill, idx) => (
-                                <span
-                                  key={idx}
-                                  className="px-2 py-0.5 text-xs rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300"
-                                >
-                                  {skill}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {niceToHaveSkills.length > 0 && (
-                          <div>
-                            <span className="text-xs text-white/50 block mb-1.5">{t("jobOffer.niceToHave")}</span>
-                            <div className="flex flex-wrap gap-1.5">
-                              {niceToHaveSkills.map((skill, idx) => (
-                                <span
-                                  key={idx}
-                                  className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300"
-                                >
-                                  {skill}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {softSkills.length > 0 && (
-                          <div>
-                            <span className="text-xs text-white/50 block mb-1.5">{t("jobOffer.softSkills")}</span>
-                            <div className="flex flex-wrap gap-1.5">
-                              {softSkills.map((skill, idx) => (
-                                <span
-                                  key={idx}
-                                  className="px-2 py-0.5 text-xs rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300"
-                                >
-                                  {skill}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Missions */}
+                {/* Missions (pleine largeur) */}
                 {responsibilities.length > 0 && (
                   <div className="rounded-xl p-4 bg-white/5 border border-white/10">
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-white/50 mb-3 flex items-center gap-2">
@@ -360,21 +394,79 @@ export default function JobOfferDetailModal({
                   </div>
                 )}
 
-                {/* Avantages */}
-                {benefits.length > 0 && (
-                  <div className="rounded-xl p-4 bg-green-500/5 border border-green-500/20">
-                    <h3 className="text-xs font-semibold uppercase tracking-wide text-white/50 mb-3 flex items-center gap-2">
-                      <Gift className="w-4 h-4" />
-                      {t("jobOffer.benefits")}
+                {/* Processus de recrutement - Workflow */}
+                {recruitmentProcess && (recruitmentProcess.steps?.length > 0 || recruitmentProcess.contact || recruitmentProcess.deadline || recruitmentProcess.duration) && (
+                  <div className="rounded-xl p-4 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-indigo-500/10 border border-indigo-500/20">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-white/50 mb-4 flex items-center gap-2">
+                      <ListOrdered className="w-4 h-4" />
+                      {t("jobOffer.recruitmentProcess.title")}
                     </h3>
-                    <ul className="space-y-2 text-sm text-white/70">
-                      {benefits.map((item, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <span className="text-green-400 mt-0.5">✓</span>
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
+
+                    {/* Métadonnées du processus en chips */}
+                    {(recruitmentProcess.contact || recruitmentProcess.deadline || recruitmentProcess.duration) && (
+                      <div className="flex flex-wrap gap-2 mb-5">
+                        {recruitmentProcess.duration && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs">
+                            <Clock className="w-3 h-3" />
+                            {recruitmentProcess.duration}
+                          </span>
+                        )}
+                        {recruitmentProcess.deadline && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs">
+                            <Target className="w-3 h-3" />
+                            {recruitmentProcess.deadline}
+                          </span>
+                        )}
+                        {recruitmentProcess.contact && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-xs">
+                            {recruitmentProcess.contact}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Timeline des étapes */}
+                    {recruitmentProcess.steps?.length > 0 && (
+                      <div className="relative">
+                        {/* Ligne de connexion verticale */}
+                        <div className="absolute left-3 top-3 bottom-3 w-0.5 bg-gradient-to-b from-indigo-500/50 via-purple-500/50 to-indigo-500/30 rounded-full" />
+
+                        <ol className="space-y-0">
+                          {recruitmentProcess.steps.map((step, idx) => {
+                            const isFirst = idx === 0;
+                            const isLast = idx === recruitmentProcess.steps.length - 1;
+                            const progress = recruitmentProcess.steps.length > 1
+                              ? idx / (recruitmentProcess.steps.length - 1)
+                              : 0;
+
+                            return (
+                              <li key={idx} className="relative flex items-start gap-4 pb-4 last:pb-0">
+                                {/* Cercle numéroté avec dégradé progressif */}
+                                <div
+                                  className="relative z-10 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold text-white shadow-lg"
+                                  style={{
+                                    background: `hsl(${240 + progress * 30}, 70%, ${55 - progress * 10}%)`,
+                                    boxShadow: `0 4px 12px hsla(${240 + progress * 30}, 70%, 50%, 0.3)`
+                                  }}
+                                >
+                                  {idx + 1}
+                                </div>
+
+                                {/* Contenu de l'étape */}
+                                <div
+                                  className="flex-1 pt-0.5 text-sm"
+                                  style={{
+                                    color: `hsla(0, 0%, 100%, ${1 - progress * 0.3})`
+                                  }}
+                                >
+                                  {step}
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ol>
+                      </div>
+                    )}
                   </div>
                 )}
 

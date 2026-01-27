@@ -401,6 +401,7 @@
   "jobOffer": {
     "viewDetails": "Ver detalles de la oferta",
     "untitled": "Oferta sin título",
+    "company": "Empresa",
     "noData": "No hay datos disponibles para esta oferta",
     "requirements": "Requisitos",
     "skills": "Habilidades",
@@ -427,6 +428,14 @@
       "hybrid": "Híbrido",
       "onsite": "Presencial",
       "partial": "Remoto parcial"
+    },
+    "recruitmentProcess": {
+      "title": "Proceso de selección",
+      "steps": "Etapas",
+      "step": "Etapa",
+      "contact": "Contacto",
+      "deadline": "Fecha límite",
+      "duration": "Duración"
     }
   }
 }
