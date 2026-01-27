@@ -132,9 +132,14 @@
             "level": {
               "type": ["string", "null"],
               "description": "Required level as stated in the offer (e.g., B2, Fluent, Native, Professionnel, Courant...) or null if not specified"
+            },
+            "requirement": {
+              "type": "string",
+              "enum": ["required", "nice_to_have"],
+              "description": "required = obligatoire (default), nice_to_have = appreciated/ideally"
             }
           },
-          "required": ["language", "level"],
+          "required": ["language", "level", "requirement"],
           "additionalProperties": false
         }
       },

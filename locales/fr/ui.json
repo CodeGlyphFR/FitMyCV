@@ -436,6 +436,8 @@
       "contact": "Contact",
       "deadline": "Date limite",
       "duration": "Durée"
-    }
+    },
+    "languageRequired": "Langue requise",
+    "languageNiceToHave": "Langue appréciée"
   }
 }

@@ -131,9 +131,11 @@ export default function JobOfferDetailModal({
   const languages = content.languages || [];
   const responsibilities = content.responsibilities || [];
   const benefits = content.benefits || [];
-  const requiredSkills = content.skills?.required || [];
-  const niceToHaveSkills = content.skills?.nice_to_have || [];
-  const softSkills = content.skills?.soft_skills || [];
+  // Tri alphabétique des compétences (insensible à la casse)
+  const sortAlpha = (arr) => [...arr].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  const requiredSkills = sortAlpha(content.skills?.required || []);
+  const niceToHaveSkills = sortAlpha(content.skills?.nice_to_have || []);
+  const softSkills = sortAlpha(content.skills?.soft_skills || []);
   const recruitmentProcess = content.recruitment_process || null;
 
   return createPortal(
@@ -363,14 +365,23 @@ export default function JobOfferDetailModal({
                                 <div className="flex items-start gap-2">
                                   <span className="text-white/50">{t("jobOffer.languages")}:</span>
                                   <div className="flex flex-wrap gap-1.5">
-                                    {languages.map((lang, idx) => (
-                                      <span
-                                        key={idx}
-                                        className="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300"
-                                      >
-                                        {capitalize(lang.language)}{lang.level ? ` (${capitalize(lang.level)})` : ""}
-                                      </span>
-                                    ))}
+                                    {languages.map((lang, idx) => {
+                                      const isNiceToHave = lang.requirement === 'nice_to_have';
+                                      return (
+                                        <span
+                                          key={idx}
+                                          className={`px-2 py-0.5 text-xs rounded-full ${
+                                            isNiceToHave
+                                              ? 'bg-blue-500/20 border border-blue-500/30 text-blue-300'
+                                              : 'bg-amber-500/20 border border-amber-500/30 text-amber-300'
+                                          }`}
+                                          title={isNiceToHave ? t("jobOffer.languageNiceToHave") : t("jobOffer.languageRequired")}
+                                        >
+                                          {capitalize(lang.language)}{lang.level ? ` (${capitalize(lang.level)})` : ""}
+                                          {isNiceToHave && ' ✦'}
+                                        </span>
+                                      );
+                                    })}
                                   </div>
                                 </div>
                               )}

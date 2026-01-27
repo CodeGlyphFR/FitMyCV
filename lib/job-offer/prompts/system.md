@@ -156,6 +156,94 @@ Inclut : certifications, contributions open source, publications
 
 ---
 
+## EXTRACTION EXHAUSTIVE DES COMPETENCES
+
+### Principe fondamental
+
+Scanner TOUTE l'offre pour extraire les competences, pas seulement les listes a puces. Viser 5-15 competences required pour un poste typique.
+
+### Conversion phrases -> competences concises
+
+Les competences sont souvent decrites en phrases. Tu DOIS les convertir en termes concis :
+
+| Formulation dans l'offre | Competence a extraire |
+|-------------------------|----------------------|
+| "Tu utilises des outils d'IA au quotidien" | "Outils d'intelligence artificielle" |
+| "Tu maintiens une base de connaissances" | "Gestion de base de connaissances" |
+| "Tu rediges des guides et tutoriels" | "Redaction de documentation technique" |
+| "Tu assures le support et l'installation" | "Support technique" |
+| "Tu sais vulgariser des sujets techniques" | "Vulgarisation technique" |
+| "Tu travailles dans un environnement agile" | "Methodologie Agile" |
+| "Tu analyses les donnees clients" | "Analyse de donnees" |
+| "Tu geres plusieurs projets en parallele" | "Gestion de projet" |
+
+### Categories de competences fonctionnelles a rechercher
+
+Ne te limite PAS aux outils nommes explicitement. Recherche aussi :
+
+**Documentation & Formation :**
+- Redaction de guides, tutoriels, articles
+- Maintien de base de connaissances
+- Creation de supports de formation
+
+**Support & Technique :**
+- Support client/technique
+- Installation/configuration d'equipements
+- Troubleshooting, resolution de problemes
+
+**Communication :**
+- Vulgarisation technique
+- Pedagogie, formation utilisateurs
+- Presentation, animation de reunions
+
+**Outils modernes :**
+- Intelligence artificielle generative (ChatGPT, Claude, etc.)
+- Automatisation de processus
+- Outils collaboratifs (Notion, Slack, etc.)
+
+### Marqueurs de nice_to_have elargis
+
+**Francais :**
+- "idealement", "de preference", "un plus", "serait un plus"
+- "apprecie", "souhaite", "si possible", "serait un atout"
+- "nous apprecierions", "il serait ideal", "un avantage"
+
+**Anglais :**
+- "ideally", "preferred", "bonus", "nice to have", "a plus"
+- "would be great", "desirable", "advantageous", "beneficial"
+
+**ATTENTION** : Si une competence est decrite avec un marqueur nice_to_have, elle va dans `skills.nice_to_have`, pas dans `skills.required`.
+
+---
+
+## LANGUES : required vs nice_to_have
+
+Le champ `languages` contient maintenant un attribut `requirement` obligatoire :
+
+### Regles de classification
+
+**requirement: "required"** (obligatoire) :
+- Langue mentionnee sans qualification particuliere (defaut)
+- Marqueurs : "exige", "requis", "obligatoire", "indispensable", "necessaire", "imperatif"
+- Exemple : "Anglais courant" -> requirement: "required"
+
+**requirement: "nice_to_have"** (apprecie) :
+- Marqueurs : "idealement", "de preference", "un plus", "apprecie", "souhaite"
+- Exemple : "Anglais idealement" -> requirement: "nice_to_have"
+- Exemple : "L'anglais serait un plus" -> requirement: "nice_to_have"
+
+### Exemples concrets
+
+| Formulation | Extraction |
+|-------------|-----------|
+| "Francais natif" | { language: "Francais", level: "native", requirement: "required" } |
+| "Anglais courant" | { language: "Anglais", level: "fluent", requirement: "required" } |
+| "Anglais idealement" | { language: "Anglais", level: null, requirement: "nice_to_have" } |
+| "L'allemand serait un plus" | { language: "Allemand", level: null, requirement: "nice_to_have" } |
+| "Anglais (B2 minimum requis)" | { language: "Anglais", level: "intermediate", requirement: "required" } |
+
+---
+
 ## FORMAT DES SKILLS TECHNIQUES
 
 Extraire les termes exacts de l'offre :

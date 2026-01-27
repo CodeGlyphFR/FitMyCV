@@ -436,6 +436,8 @@
       "contact": "Kontakt",
       "deadline": "Bewerbungsfrist",
       "duration": "Dauer"
-    }
+    },
+    "languageRequired": "Erforderliche Sprache",
+    "languageNiceToHave": "Wünschenswerte Sprache"
   }
 }
