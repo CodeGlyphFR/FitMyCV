@@ -199,10 +199,11 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
       f.feature === 'cv_improvement' ||
       f.feature === 'optimize_cv'
     );
-    // Groupe extraction d'offres (URL + PDF)
+    // Groupe extraction d'offres (URL + PDF + détection de langue)
     const extractionFeatures = data.byFeature.filter(f =>
       f.feature === 'extract_job_offer_url' ||
-      f.feature === 'extract_job_offer_pdf'
+      f.feature === 'extract_job_offer_pdf' ||
+      f.feature === 'detect_language'
     );
     const otherFeatures = data.byFeature.filter(f =>
       !f.feature.startsWith('cv_adaptation_') &&
@@ -210,7 +211,8 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
       f.feature !== 'cv_improvement' &&
       f.feature !== 'optimize_cv' &&
       f.feature !== 'extract_job_offer_url' &&
-      f.feature !== 'extract_job_offer_pdf'
+      f.feature !== 'extract_job_offer_pdf' &&
+      f.feature !== 'detect_language'
     );
 
     const chartData = [];
@@ -259,14 +261,17 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
       });
     }
 
-    // Groupe Extraction d'offres (extraction + détection de langue par extraction)
-    // Chaque extraction = 2 appels OpenAI (extraction + détection langue)
+    // Groupe Extraction d'offres (extraction + détection de langue)
+    // detect_language est maintenant tracké séparément, donc le nombre d'extractions
+    // = nombre d'appels extract_job_offer_* (pas divisé par 2)
     if (extractionFeatures.length > 0) {
-      const totalCalls = extractionFeatures.reduce((sum, f) => sum + (f.calls || 0), 0);
+      const extractionOnlyFeatures = extractionFeatures.filter(f =>
+        f.feature === 'extract_job_offer_url' || f.feature === 'extract_job_offer_pdf'
+      );
       const totalCost = extractionFeatures.reduce((sum, f) => sum + (f.cost || 0), 0);
       const totalTokens = extractionFeatures.reduce((sum, f) => sum + (f.tokens || 0), 0);
-      // Une extraction complète = 2 appels (extraction + détection langue)
-      const extractionCount = Math.ceil(totalCalls / 2);
+      // Le nombre d'extractions = nombre d'appels d'extraction (detect_language est compté séparément)
+      const extractionCount = extractionOnlyFeatures.reduce((sum, f) => sum + (f.calls || 0), 0);
       const avgCostPerExtraction = extractionCount > 0 ? totalCost / extractionCount : 0;
       const avgTokensPerExtraction = extractionCount > 0 ? totalTokens / extractionCount : 0;
 
@@ -319,10 +324,11 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
   const groupedFeatureData = useMemo(() => {
     if (!data?.byFeature) return [];
 
-    // Groupe extraction d'offres
+    // Groupe extraction d'offres (URL + PDF + détection de langue)
     const extractionFeatures = data.byFeature.filter(f =>
       f.feature === 'extract_job_offer_url' ||
-      f.feature === 'extract_job_offer_pdf'
+      f.feature === 'extract_job_offer_pdf' ||
+      f.feature === 'detect_language'
     );
 
     const otherFeatures = data.byFeature.filter(f =>
@@ -331,7 +337,8 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
       f.feature !== 'cv_improvement' &&
       f.feature !== 'optimize_cv' &&
       f.feature !== 'extract_job_offer_url' &&
-      f.feature !== 'extract_job_offer_pdf'
+      f.feature !== 'extract_job_offer_pdf' &&
+      f.feature !== 'detect_language'
     );
 
     const result = [];
@@ -360,13 +367,15 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
       });
     }
 
-    // Groupe Extraction d'offres
+    // Groupe Extraction d'offres (inclut detect_language)
     if (extractionFeatures.length > 0) {
-      const totalCalls = extractionFeatures.reduce((sum, f) => sum + (f.calls || 0), 0);
+      const extractionOnlyFeatures = extractionFeatures.filter(f =>
+        f.feature === 'extract_job_offer_url' || f.feature === 'extract_job_offer_pdf'
+      );
       const totalCost = extractionFeatures.reduce((sum, f) => sum + (f.cost || 0), 0);
       const totalTokens = extractionFeatures.reduce((sum, f) => sum + (f.tokens || 0), 0);
-      // Une extraction complète = 2 appels (extraction + détection langue)
-      const extractionCount = Math.ceil(totalCalls / 2);
+      // Le nombre d'extractions = nombre d'appels d'extraction (detect_language est compté séparément)
+      const extractionCount = extractionOnlyFeatures.reduce((sum, f) => sum + (f.calls || 0), 0);
 
       if (totalCost > 0) {
         result.push({
@@ -402,11 +411,12 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
   const correctedTotalCost = useMemo(() => {
     if (!data?.byFeature) return 0;
 
-    // Extraction features (groupées séparément)
+    // Extraction features (groupées séparément, inclut detect_language)
     const extractionCost = data.byFeature
       .filter(f =>
         f.feature === 'extract_job_offer_url' ||
-        f.feature === 'extract_job_offer_pdf'
+        f.feature === 'extract_job_offer_pdf' ||
+        f.feature === 'detect_language'
       )
       .reduce((sum, f) => sum + (f.cost || 0), 0);
 
@@ -417,7 +427,8 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
         f.feature !== 'cv_improvement' &&
         f.feature !== 'optimize_cv' &&
         f.feature !== 'extract_job_offer_url' &&
-        f.feature !== 'extract_job_offer_pdf'
+        f.feature !== 'extract_job_offer_pdf' &&
+        f.feature !== 'detect_language'
       )
       .reduce((sum, f) => sum + (f.cost || 0), 0);
 
@@ -431,15 +442,17 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
   const correctedTotalCalls = useMemo(() => {
     if (!data?.byFeature) return 0;
 
-    // Extraction features: compter les extractions (pas les appels individuels)
-    const extractionCalls = data.byFeature
+    // Extraction features: compter les extractions (inclut detect_language)
+    // detect_language est tracké séparément, donc on compte le nombre d'extractions
+    // comme le nombre d'appels extract_job_offer_* (1 extraction = 1 appel extraction + 1 appel detect_language)
+    const extractionOnlyCalls = data.byFeature
       .filter(f =>
         f.feature === 'extract_job_offer_url' ||
         f.feature === 'extract_job_offer_pdf'
       )
       .reduce((sum, f) => sum + (f.calls || 0), 0);
-    // Une extraction = 2 appels OpenAI
-    const extractionCount = Math.ceil(extractionCalls / 2);
+    // Le nombre d'extractions = nombre d'appels d'extraction (pas divisé par 2 car detect_language est maintenant séparé)
+    const extractionCount = extractionOnlyCalls;
 
     const otherFeaturesCalls = data.byFeature
       .filter(f =>
@@ -448,7 +461,8 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
         f.feature !== 'cv_improvement' &&
         f.feature !== 'optimize_cv' &&
         f.feature !== 'extract_job_offer_url' &&
-        f.feature !== 'extract_job_offer_pdf'
+        f.feature !== 'extract_job_offer_pdf' &&
+        f.feature !== 'detect_language'
       )
       .reduce((sum, f) => sum + (f.calls || 0), 0);
 
