@@ -14,7 +14,7 @@ import { toTitleCase } from "@/lib/utils/textFormatting";
 import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
 import { useHighlight } from "@/components/providers/HighlightProvider";
 import CountrySelect from "@/components/ui/CountrySelect";
-import { User, Mail, MapPin, Link2, Plus, Trash2 } from "lucide-react";
+import { User, Mail, MapPin, Link2, Plus, Trash2, FileText } from "lucide-react";
 import {
   ModalSection,
   FormField,
@@ -22,7 +22,8 @@ import {
   Grid,
   ModalFooter,
 } from "@/components/ui/ModalForm";
-import { useMatchScore, useSourceInfo, useTranslation, TranslationDropdown } from "@/components/header";
+import { useMatchScore, useSourceInfo, useTranslation, TranslationDropdown, useJobOfferDetails } from "@/components/header";
+import JobOfferDetailModal from "@/components/cv-improvement/JobOfferDetailModal";
 
 export default function Header(props){
   const header = props.header || {};
@@ -82,6 +83,28 @@ export default function Header(props){
     translateDropdownRef,
     executeTranslation,
   } = useTranslation();
+
+  // Hook pour les détails de l'offre d'emploi
+  const {
+    jobOfferDetails,
+    isLoading: isLoadingJobOffer,
+    fetchJobOfferDetails,
+    resetJobOfferDetails,
+  } = useJobOfferDetails();
+  const [isJobOfferModalOpen, setIsJobOfferModalOpen] = React.useState(false);
+
+  // Handler pour ouvrir le modal des détails de l'offre
+  const handleOpenJobOfferModal = async () => {
+    setIsJobOfferModalOpen(true);
+    if (!jobOfferDetails) {
+      await fetchJobOfferDetails();
+    }
+  };
+
+  // Réinitialiser les détails quand le modal se ferme
+  const handleCloseJobOfferModal = () => {
+    setIsJobOfferModalOpen(false);
+  };
 
   // Calculer si le bouton Optimiser est disponible (visible ET actif)
   const isOptimizeButtonReady = React.useMemo(() => {
@@ -216,7 +239,19 @@ export default function Header(props){
   return (
     <header className="page mb-6 flex items-start justify-between gap-4 bg-white/15 backdrop-blur-xl p-4 rounded-2xl shadow-2xl relative overflow-visible min-h-[120px]">
       <div className="pr-24">
-        <h1 className="text-2xl font-bold text-white drop-shadow-lg">{toTitleCase(header.full_name) || ""}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-white drop-shadow-lg">{toTitleCase(header.full_name) || ""}</h1>
+          {hasJobOffer && (
+            <button
+              onClick={handleOpenJobOfferModal}
+              className="no-print text-white/50 hover:text-emerald-400 transition-colors"
+              title={t("jobOffer.viewDetails")}
+              type="button"
+            >
+              <FileText className="w-5 h-5" />
+            </button>
+          )}
+        </div>
         <p className="text-sm text-white/80 drop-shadow">
           <ChangeHighlight section="header" field="current_title">
             {toTitleCase(header.current_title) || ""}
@@ -452,6 +487,14 @@ export default function Header(props){
           />
         </div>
       </Modal>
+
+      {/* Modal des détails de l'offre d'emploi */}
+      <JobOfferDetailModal
+        isOpen={isJobOfferModalOpen}
+        onClose={handleCloseJobOfferModal}
+        jobOffer={jobOfferDetails}
+        isLoading={isLoadingJobOffer}
+      />
     </header>
   );
 }

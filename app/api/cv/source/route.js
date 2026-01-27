@@ -7,13 +7,17 @@ import { CommonErrors, CvErrors } from "@/lib/api/apiErrors";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request) {
   const session = await auth();
   if (!session?.user?.id) {
     return CommonErrors.notAuthenticated();
   }
 
   try {
+    // Paramètre pour retourner les détails complets de l'offre
+    const { searchParams } = new URL(request.url);
+    const fullDetails = searchParams.get('full') === 'true';
+
     // Next.js 16: cookies() est maintenant async
     const cookieStore = await cookies();
     const cvCookie = (cookieStore.get("cvFile") || {}).value;
@@ -40,6 +44,7 @@ export async function GET() {
         jobOfferId: true, // Vérifier si un JobOffer est associé
         jobOffer: {
           select: {
+            id: true, // ID pour le mode full
             sourceType: true,
             sourceValue: true, // URL ou nom fichier PDF de l'offre
             content: true, // Contenu JSON pour récupérer le titre
@@ -108,9 +113,17 @@ export async function GET() {
       }
     }
 
-    // Infos de l'offre d'emploi (titre + URL)
+    // Infos de l'offre d'emploi (titre + URL ou détails complets)
     let jobOfferInfo = null;
-    if (cvFile.jobOffer) {
+    if (fullDetails && cvFile.jobOffer) {
+      // Retourner le contenu complet pour le modal de détails
+      jobOfferInfo = {
+        id: cvFile.jobOffer.id,
+        sourceType: cvFile.jobOffer.sourceType,
+        sourceValue: cvFile.jobOffer.sourceValue,
+        content: cvFile.jobOffer.content, // Tout le JSON de l'offre
+      };
+    } else if (cvFile.jobOffer) {
       const jobContent = cvFile.jobOffer.content;
       const jobTitle = jobContent?.title || null;
       const jobUrl = cvFile.jobOffer.sourceType === 'url' ? cvFile.jobOffer.sourceValue : null;

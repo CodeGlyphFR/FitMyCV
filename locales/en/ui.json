@@ -397,5 +397,36 @@
     "viewOptions": "View options",
     "viewMyOptions": "View my options",
     "closeNotification": "Close notification"
+  },
+  "jobOffer": {
+    "viewDetails": "View job offer details",
+    "untitled": "Untitled offer",
+    "noData": "No data available for this offer",
+    "requirements": "Requirements",
+    "skills": "Skills",
+    "responsibilities": "Responsibilities",
+    "benefits": "Benefits",
+    "experience": "Experience",
+    "education": "Education",
+    "languages": "Languages",
+    "required": "Required",
+    "niceToHave": "Nice to have",
+    "softSkills": "Soft skills",
+    "years": "years",
+    "from": "From",
+    "upTo": "Up to",
+    "viewOriginal": "View original offer",
+    "periods": {
+      "year": "year",
+      "month": "month",
+      "day": "day",
+      "hour": "hour"
+    },
+    "remote": {
+      "full": "Fully remote",
+      "hybrid": "Hybrid",
+      "onsite": "On-site",
+      "partial": "Partial remote"
+    }
   }
 }

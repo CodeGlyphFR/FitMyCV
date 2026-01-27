@@ -397,5 +397,36 @@
     "viewOptions": "Optionen anzeigen",
     "viewMyOptions": "Meine Optionen anzeigen",
     "closeNotification": "Benachrichtigung schließen"
+  },
+  "jobOffer": {
+    "viewDetails": "Stellenangebot-Details anzeigen",
+    "untitled": "Unbenanntes Angebot",
+    "noData": "Keine Daten für dieses Angebot verfügbar",
+    "requirements": "Anforderungen",
+    "skills": "Kompetenzen",
+    "responsibilities": "Aufgaben",
+    "benefits": "Vorteile",
+    "experience": "Erfahrung",
+    "education": "Ausbildung",
+    "languages": "Sprachen",
+    "required": "Erforderlich",
+    "niceToHave": "Wünschenswert",
+    "softSkills": "Soft Skills",
+    "years": "Jahre",
+    "from": "Ab",
+    "upTo": "Bis zu",
+    "viewOriginal": "Originalangebot anzeigen",
+    "periods": {
+      "year": "Jahr",
+      "month": "Monat",
+      "day": "Tag",
+      "hour": "Stunde"
+    },
+    "remote": {
+      "full": "100% Remote",
+      "hybrid": "Hybrid",
+      "onsite": "Vor Ort",
+      "partial": "Teilweise Remote"
+    }
   }
 }

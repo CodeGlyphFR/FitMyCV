@@ -397,5 +397,36 @@
     "viewOptions": "Voir les options",
     "viewMyOptions": "Voir mes options",
     "closeNotification": "Fermer la notification"
+  },
+  "jobOffer": {
+    "viewDetails": "Voir les détails de l'offre",
+    "untitled": "Offre sans titre",
+    "noData": "Aucune donnée disponible pour cette offre",
+    "requirements": "Exigences",
+    "skills": "Compétences",
+    "responsibilities": "Missions",
+    "benefits": "Avantages",
+    "experience": "Expérience",
+    "education": "Formation",
+    "languages": "Langues",
+    "required": "Requises",
+    "niceToHave": "Appréciées",
+    "softSkills": "Soft skills",
+    "years": "ans",
+    "from": "À partir de",
+    "upTo": "Jusqu'à",
+    "viewOriginal": "Voir l'offre originale",
+    "periods": {
+      "year": "an",
+      "month": "mois",
+      "day": "jour",
+      "hour": "heure"
+    },
+    "remote": {
+      "full": "100% télétravail",
+      "hybrid": "Hybride",
+      "onsite": "Sur site",
+      "partial": "Télétravail partiel"
+    }
   }
 }
