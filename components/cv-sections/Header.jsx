@@ -93,11 +93,18 @@ export default function Header(props){
   } = useJobOfferDetails();
   const [isJobOfferModalOpen, setIsJobOfferModalOpen] = React.useState(false);
 
+  // Ref pour tracker le dernier CV chargé (pour éviter le reset inutile sur focus)
+  const lastLoadedCvRef = React.useRef(null);
+
   // Handler pour ouvrir le modal des détails de l'offre
   const handleOpenJobOfferModal = async () => {
     setIsJobOfferModalOpen(true);
     if (!jobOfferDetails) {
-      await fetchJobOfferDetails();
+      const data = await fetchJobOfferDetails();
+      // Tracker le CV actuel après le premier chargement réussi
+      if (data && currentCvFile) {
+        lastLoadedCvRef.current = currentCvFile;
+      }
     }
   };
 
@@ -147,9 +154,15 @@ export default function Header(props){
     );
   });
 
-  // Fetch au montage
+  // Fetch au montage + initialisation du tracking CV
   React.useEffect(() => {
     fetchSourceInfo();
+    // Initialiser le tracking avec le CV actuel (depuis le cookie)
+    const cookies = document.cookie.split(';');
+    const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
+    if (cvFileCookie) {
+      lastLoadedCvRef.current = decodeURIComponent(cvFileCookie.split('=')[1]);
+    }
   }, [fetchSourceInfo]);
 
   // Refetch le score quand on change de version
@@ -175,8 +188,20 @@ export default function Header(props){
 
     // Écouter les changements de CV pour recharger les infos de source
     const handleCvSelected = (event) => {
+      const selectedFile = event?.detail?.file;
+      const cvActuallyChanged = selectedFile && selectedFile !== lastLoadedCvRef.current;
+
       fetchSourceInfo();
-      resetJobOfferDetails();  // Réinitialiser le cache de l'offre pour forcer un refetch
+
+      // Ne réinitialiser l'offre que si le CV a vraiment changé
+      // (évite le "no data" lors d'un simple focus de fenêtre)
+      if (cvActuallyChanged) {
+        lastLoadedCvRef.current = selectedFile;
+        resetJobOfferDetails();
+      } else if (isJobOfferModalOpen && !jobOfferDetails) {
+        // Si le modal est ouvert mais sans données, refetch
+        fetchJobOfferDetails();
+      }
     };
 
     // Écouter les mises à jour des tokens (depuis la search bar)
@@ -197,7 +222,7 @@ export default function Header(props){
       window.removeEventListener('cv:selected', handleCvSelected);
       window.removeEventListener('tokens:updated', handleTokensUpdated);
     };
-  }, [fetchMatchScore, fetchSourceInfo, resetJobOfferDetails]);
+  }, [fetchMatchScore, fetchSourceInfo, resetJobOfferDetails, isJobOfferModalOpen, jobOfferDetails, fetchJobOfferDetails]);
 
 
   // Si le CV est vide (pas de header), ne pas afficher le composant
