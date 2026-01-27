@@ -71,6 +71,7 @@ export function CvGenerationCostsSection({ period, refreshKey }) {
 
   const getSubtaskTypeLabel = (type) => {
     const labels = {
+      'extraction': 'Extraction offre',
       'classify': 'Classification',
       'batch_experience': 'Expériences',
       'batch_project': 'Projets',

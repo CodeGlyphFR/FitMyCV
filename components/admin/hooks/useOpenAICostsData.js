@@ -199,11 +199,18 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
       f.feature === 'cv_improvement' ||
       f.feature === 'optimize_cv'
     );
+    // Groupe extraction d'offres (URL + PDF)
+    const extractionFeatures = data.byFeature.filter(f =>
+      f.feature === 'extract_job_offer_url' ||
+      f.feature === 'extract_job_offer_pdf'
+    );
     const otherFeatures = data.byFeature.filter(f =>
       !f.feature.startsWith('cv_adaptation_') &&
       !f.feature.startsWith('cv_improvement_') &&
       f.feature !== 'cv_improvement' &&
-      f.feature !== 'optimize_cv'
+      f.feature !== 'optimize_cv' &&
+      f.feature !== 'extract_job_offer_url' &&
+      f.feature !== 'extract_job_offer_pdf'
     );
 
     const chartData = [];
@@ -252,6 +259,42 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
       });
     }
 
+    // Groupe Extraction d'offres (extraction + détection de langue par extraction)
+    // Chaque extraction = 2 appels OpenAI (extraction + détection langue)
+    if (extractionFeatures.length > 0) {
+      const totalCalls = extractionFeatures.reduce((sum, f) => sum + (f.calls || 0), 0);
+      const totalCost = extractionFeatures.reduce((sum, f) => sum + (f.cost || 0), 0);
+      const totalTokens = extractionFeatures.reduce((sum, f) => sum + (f.tokens || 0), 0);
+      // Une extraction complète = 2 appels (extraction + détection langue)
+      const extractionCount = Math.ceil(totalCalls / 2);
+      const avgCostPerExtraction = extractionCount > 0 ? totalCost / extractionCount : 0;
+      const avgTokensPerExtraction = extractionCount > 0 ? totalTokens / extractionCount : 0;
+
+      // Calculer les tokens moyens par extraction
+      const totalPromptTokens = extractionFeatures.reduce((sum, f) => sum + ((f.lastPromptTokens || 0) * (f.calls || 0)), 0);
+      const totalCachedTokens = extractionFeatures.reduce((sum, f) => sum + ((f.lastCachedTokens || 0) * (f.calls || 0)), 0);
+      const totalCompletionTokens = extractionFeatures.reduce((sum, f) => sum + ((f.lastCompletionTokens || 0) * (f.calls || 0)), 0);
+
+      chartData.push({
+        name: 'Extraction d\'offres',
+        lastCost: avgCostPerExtraction,
+        lastModel: 'Multiple',
+        lastPromptTokens: extractionCount > 0 ? Math.round(totalPromptTokens / extractionCount) : 0,
+        lastCachedTokens: extractionCount > 0 ? Math.round(totalCachedTokens / extractionCount) : 0,
+        lastCompletionTokens: extractionCount > 0 ? Math.round(totalCompletionTokens / extractionCount) : 0,
+        lastTokens: Math.round(avgTokensPerExtraction),
+        lastCallDate: extractionFeatures.reduce((latest, f) => {
+          if (!f.lastCallDate) return latest;
+          if (!latest) return f.lastCallDate;
+          return new Date(f.lastCallDate) > new Date(latest) ? f.lastCallDate : latest;
+        }, null),
+        lastDuration: extractionFeatures.reduce((sum, f) => sum + (f.lastDuration || 0), 0),
+        fill: '#14B8A6', // teal-500
+        isGrouped: true,
+        subtaskCount: extractionCount,
+      });
+    }
+
     otherFeatures.forEach((feature) => {
       const featureConfig = getFeatureConfig(feature.feature);
       chartData.push({
@@ -276,11 +319,19 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
   const groupedFeatureData = useMemo(() => {
     if (!data?.byFeature) return [];
 
+    // Groupe extraction d'offres
+    const extractionFeatures = data.byFeature.filter(f =>
+      f.feature === 'extract_job_offer_url' ||
+      f.feature === 'extract_job_offer_pdf'
+    );
+
     const otherFeatures = data.byFeature.filter(f =>
       !f.feature.startsWith('cv_adaptation_') &&
       !f.feature.startsWith('cv_improvement_') &&
       f.feature !== 'cv_improvement' &&
-      f.feature !== 'optimize_cv'
+      f.feature !== 'optimize_cv' &&
+      f.feature !== 'extract_job_offer_url' &&
+      f.feature !== 'extract_job_offer_pdf'
     );
 
     const result = [];
@@ -309,6 +360,27 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
       });
     }
 
+    // Groupe Extraction d'offres
+    if (extractionFeatures.length > 0) {
+      const totalCalls = extractionFeatures.reduce((sum, f) => sum + (f.calls || 0), 0);
+      const totalCost = extractionFeatures.reduce((sum, f) => sum + (f.cost || 0), 0);
+      const totalTokens = extractionFeatures.reduce((sum, f) => sum + (f.tokens || 0), 0);
+      // Une extraction complète = 2 appels (extraction + détection langue)
+      const extractionCount = Math.ceil(totalCalls / 2);
+
+      if (totalCost > 0) {
+        result.push({
+          feature: 'extraction_grouped',
+          name: 'Extraction d\'offres',
+          calls: extractionCount, // Nombre d'extractions, pas d'appels OpenAI
+          tokens: totalTokens,
+          cost: totalCost,
+          color: '#14B8A6', // teal-500
+          isGrouped: true,
+        });
+      }
+    }
+
     otherFeatures.forEach((feature) => {
       const featureConfig = getFeatureConfig(feature.feature);
       result.push({
@@ -330,38 +402,60 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
   const correctedTotalCost = useMemo(() => {
     if (!data?.byFeature) return 0;
 
+    // Extraction features (groupées séparément)
+    const extractionCost = data.byFeature
+      .filter(f =>
+        f.feature === 'extract_job_offer_url' ||
+        f.feature === 'extract_job_offer_pdf'
+      )
+      .reduce((sum, f) => sum + (f.cost || 0), 0);
+
     const otherFeaturesCost = data.byFeature
       .filter(f =>
         !f.feature.startsWith('cv_adaptation_') &&
         !f.feature.startsWith('cv_improvement_') &&
         f.feature !== 'cv_improvement' &&
-        f.feature !== 'optimize_cv'
+        f.feature !== 'optimize_cv' &&
+        f.feature !== 'extract_job_offer_url' &&
+        f.feature !== 'extract_job_offer_pdf'
       )
       .reduce((sum, f) => sum + (f.cost || 0), 0);
 
     const cvGenerationCost = cvGenerationTotals?.totalCost || 0;
     const cvImprovementCost = cvImprovementTotals?.totalCost || 0;
 
-    return otherFeaturesCost + cvGenerationCost + cvImprovementCost;
+    return otherFeaturesCost + cvGenerationCost + cvImprovementCost + extractionCost;
   }, [data?.byFeature, cvGenerationTotals, cvImprovementTotals]);
 
   // Computed: corrected total calls
   const correctedTotalCalls = useMemo(() => {
     if (!data?.byFeature) return 0;
 
+    // Extraction features: compter les extractions (pas les appels individuels)
+    const extractionCalls = data.byFeature
+      .filter(f =>
+        f.feature === 'extract_job_offer_url' ||
+        f.feature === 'extract_job_offer_pdf'
+      )
+      .reduce((sum, f) => sum + (f.calls || 0), 0);
+    // Une extraction = 2 appels OpenAI
+    const extractionCount = Math.ceil(extractionCalls / 2);
+
     const otherFeaturesCalls = data.byFeature
       .filter(f =>
         !f.feature.startsWith('cv_adaptation_') &&
         !f.feature.startsWith('cv_improvement_') &&
         f.feature !== 'cv_improvement' &&
-        f.feature !== 'optimize_cv'
+        f.feature !== 'optimize_cv' &&
+        f.feature !== 'extract_job_offer_url' &&
+        f.feature !== 'extract_job_offer_pdf'
       )
       .reduce((sum, f) => sum + (f.calls || 0), 0);
 
     const cvGenerationCalls = cvGenerationTotals?.totalCalls || 0;
     const cvImprovementCalls = cvImprovementTotals?.totalCalls || 0;
 
-    return otherFeaturesCalls + cvGenerationCalls + cvImprovementCalls;
+    return otherFeaturesCalls + cvGenerationCalls + cvImprovementCalls + extractionCount;
   }, [data?.byFeature, cvGenerationTotals, cvImprovementTotals]);
 
   // Stabilize top feature
