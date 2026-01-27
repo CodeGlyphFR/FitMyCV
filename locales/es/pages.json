@@ -83,46 +83,62 @@
         "id": "acceptance",
         "title": "1. Aceptación de los Términos",
         "content": [
-          { "type": "paragraph", "text": "Al utilizar FitMyCV.io y realizar una compra de créditos o suscribirse a un plan, acepta incondicionalmente estos Términos de Servicio." },
-          { "type": "paragraph", "text": "Si no acepta estos términos, por favor no utilice nuestros servicios de pago." }
+          { "type": "paragraph", "text": "Al utilizar FitMyCV.io y realizar una compra de créditos, aceptas incondicionalmente estos Términos de Servicio." },
+          { "type": "paragraph", "text": "Si no aceptas estos términos, por favor no utilices nuestros servicios de pago." },
+          { "type": "paragraph", "text": "El uso de FitMyCV.io está reservado a personas de 16 años o más." }
         ]
       },
       {
         "id": "services",
         "title": "2. Descripción del Servicio",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io ofrece dos tipos de servicios de pago:" },
-          { "type": "subtitle", "text": "2.1. Créditos (pagos únicos)" },
-          { "type": "paragraph", "text": "Los créditos permiten usar funciones premium de forma puntual. Un crédito = un uso de una función premium. Los créditos no caducan y permanecen válidos mientras tu cuenta esté activa." },
-          { "type": "subtitle", "text": "2.2. Suscripciones (pagos recurrentes)" },
-          { "type": "paragraph", "text": "Las suscripciones dan acceso a un número definido de usos mensuales según el plan elegido (Gratuito, Pro, Premium). Los límites de uso se restablecen en cada período de facturación." }
+          { "type": "paragraph", "text": "FitMyCV.io es una plataforma de creación y optimización de CVs utilizando inteligencia artificial." },
+          { "type": "subtitle", "text": "2.1. Servicios gratuitos" },
+          { "type": "list", "items": [
+            "Creación manual ilimitada de CVs",
+            "Edición ilimitada de CVs",
+            "Almacenamiento de CVs en tu espacio personal"
+          ]},
+          { "type": "subtitle", "text": "2.2. Servicios que consumen créditos" },
+          { "type": "list", "items": [
+            "Exportación PDF y DOCX",
+            "Generación y adaptación de CVs con IA",
+            "Importación y extracción de CVs desde PDF",
+            "Traducción automática de CVs",
+            "Optimización de CVs para ofertas de empleo",
+            "Puntuación de compatibilidad CV/oferta"
+          ]},
+          { "type": "subtitle", "text": "2.3. Sistema de créditos" },
+          { "type": "paragraph", "text": "Al crear tu cuenta, recibes un número predeterminado de créditos que te permiten probar las funcionalidades de la plataforma." },
+          { "type": "paragraph", "text": "Cada funcionalidad consume un número variable de créditos según una tarifa definida. El coste en créditos de cada funcionalidad se muestra antes de su uso." },
+          { "type": "paragraph", "text": "Los créditos no caducan y permanecen válidos mientras tu cuenta esté activa." },
+          { "type": "paragraph", "text": "Cuando tus créditos se agoten, puedes comprar más desde la página Gestión de créditos.", "link": "/account/subscriptions?tab=credits", "linkText": "Gestión de créditos" }
         ]
       },
       {
         "id": "pricing",
         "title": "3. Precios y Pagos",
         "content": [
-          { "type": "paragraph", "text": "Todos los precios se muestran en euros (IVA incluido) e incluyen todos los impuestos aplicables." },
+          { "type": "paragraph", "text": "Todos los precios se muestran en euros (EUR). El editor no está sujeto al IVA conforme al artículo 293 B del Código General de Impuestos francés." },
           { "type": "paragraph", "text": "Los pagos están asegurados por Stripe y aceptan tarjetas de crédito, Apple Pay, Google Pay y otros métodos de pago según tu ubicación." },
-          { "type": "paragraph", "text": "Las suscripciones se renuevan automáticamente al final de cada período (mensual o anual) a menos que las canceles." }
+          { "type": "paragraph", "text": "Los precios de los paquetes de créditos están disponibles en la página Gestión de créditos.", "link": "/account/subscriptions?tab=credits", "linkText": "Gestión de créditos" }
         ]
       },
       {
         "id": "withdrawal",
-        "title": "4. Derecho de Desistimiento (14 días)",
+        "title": "4. Derecho de Desistimiento",
         "content": [
-          { "type": "paragraph", "text": "De acuerdo con la legislación francesa de protección al consumidor, tienes un período de desistimiento de 14 días desde tu compra o suscripción, siempre que no hayas utilizado el servicio." },
-          { "type": "paragraph", "text": "Si has utilizado créditos o generado CVs durante este período, el derecho de desistimiento queda anulado y no se realizará ningún reembolso." },
-          { "type": "highlight", "variant": "warning", "title": "Importante:", "text": "Para ejercer tu derecho de desistimiento, contáctanos en la dirección de correo electrónico que aparece a continuación antes de cualquier uso del servicio." }
+          { "type": "paragraph", "text": "De conformidad con el artículo L.221-28 del Código de Consumo francés, el Usuario reconoce y acepta que la ejecución de los Servicios comienza inmediatamente después de la validación del pedido." },
+          { "type": "paragraph", "text": "En consecuencia, el Usuario renuncia expresamente a su derecho de desistimiento para cualquier compra de créditos." },
+          { "type": "highlight", "variant": "warning", "title": "Importante:", "text": "La validación del pedido, después de marcar la casilla de renuncia al desistimiento, constituye una renuncia expresa a este derecho." }
         ]
       },
       {
         "id": "refund",
         "title": "5. Política de Reembolso",
         "content": [
-          { "type": "paragraph", "text": "No se realizan reembolsos una vez que el servicio ha sido utilizado (generación de CV, uso de créditos, etc.)." },
-          { "type": "paragraph", "text": "En caso de problemas técnicos que impidan el uso del servicio, contacta con nuestro soporte. Revisaremos tu caso individualmente." },
-          { "type": "highlight", "variant": "danger", "title": "Sin reembolsos:", "text": "Todas las compras son definitivas después del uso del servicio. Al realizar una compra, reconoces haber leído y aceptado esta cláusula." }
+          { "type": "paragraph", "text": "Todas las compras de créditos son definitivas una vez que el servicio ha sido utilizado (generación de CV, exportación, traducción, etc.). Al realizar una compra, reconoces haber leído y aceptado esta cláusula." },
+          { "type": "paragraph", "text": "En caso de problemas técnicos que impidan el uso del servicio, contacta con nuestro soporte en support@fitmycv.io. Revisaremos tu situación individualmente.", "link": "mailto:support@fitmycv.io", "linkText": "support@fitmycv.io" }
         ]
       },
       {
@@ -131,23 +147,31 @@
         "content": [
           { "type": "paragraph", "text": "En caso de contracargo (disputa de pago con tu banco) después de usar el servicio:" },
           { "type": "list", "items": [
-            "Para créditos: El importe de los créditos disputados se deducirá de tu saldo, que puede volverse negativo. Deberás recargar tu cuenta para continuar usando el servicio.",
-            "Para suscripciones: Tu suscripción será cancelada inmediatamente y serás degradado al plan Gratuito."
+            "El importe de los créditos disputados se deducirá de tu saldo, que puede volverse negativo.",
+            "Deberás recargar tu cuenta para continuar usando los servicios que consumen créditos."
           ]},
           { "type": "highlight", "variant": "warning", "title": "Advertencia:", "text": "Los contracargos abusivos pueden resultar en la suspensión permanente de la cuenta." }
         ]
       },
       {
-        "id": "subscription-changes",
-        "title": "7. Modificación y Cancelación de Suscripción",
+        "id": "ai",
+        "title": "7. Inteligencia Artificial",
         "content": [
-          { "type": "subtitle", "text": "7.1. Mejora de Suscripción" },
-          { "type": "paragraph", "text": "Puedes mejorar tu suscripción en cualquier momento (ej., Gratuito → Pro, Mensual → Anual). El importe se calculará de forma prorrateada en función del tiempo restante de tu período actual. El nuevo ciclo de facturación comienza inmediatamente." },
-          { "type": "subtitle", "text": "7.2. Degradación de Suscripción" },
-          { "type": "paragraph", "text": "Puedes degradar tu suscripción (ej., Premium → Pro). El cambio tendrá efecto en la siguiente fecha de facturación sin reembolso prorrateado del período actual." },
-          { "type": "paragraph", "text": "Restricción: No está permitido degradar de una suscripción anual a una mensual. Debes cancelar tu suscripción anual y suscribirte a un nuevo plan mensual después de su vencimiento." },
-          { "type": "subtitle", "text": "7.3. Cancelación de Suscripción" },
-          { "type": "paragraph", "text": "Puedes cancelar tu suscripción en cualquier momento desde tu cuenta. La cancelación tiene efecto al final del período de facturación actual. Conservas el acceso a las funciones premium hasta esa fecha." }
+          { "type": "paragraph", "text": "FitMyCV.io actúa como \"desplegador\" de un sistema de inteligencia artificial en el sentido del Reglamento europeo 2024/1689 (Ley de IA)." },
+          { "type": "subtitle", "text": "7.1. Funcionalidades que utilizan IA" },
+          { "type": "list", "items": [
+            "Generación y adaptación de CVs",
+            "Optimización de CVs",
+            "Extracción de ofertas de empleo",
+            "Cálculo de puntuación de compatibilidad",
+            "Traducción de CVs",
+            "Importación y extracción de CVs desde PDF"
+          ]},
+          { "type": "subtitle", "text": "7.2. Naturaleza de los resultados" },
+          { "type": "paragraph", "text": "Los resultados generados por la IA son sugerencias y no constituyen recomendaciones vinculantes. El usuario conserva el control total sobre el contenido final de sus CVs." },
+          { "type": "subtitle", "text": "7.3. Proveedor de IA" },
+          { "type": "paragraph", "text": "Las funcionalidades de IA son proporcionadas por OpenAI (Estados Unidos). Los datos transmitidos a OpenAI no se utilizan para entrenar sus modelos de acuerdo con su política de API." },
+          { "type": "highlight", "variant": "info", "title": "Transparencia de IA:", "text": "El usuario es informado de que el contenido generado proviene de un sistema de inteligencia artificial. Este contenido debe ser verificado antes de su uso." }
         ]
       },
       {
@@ -162,25 +186,64 @@
         "id": "liability",
         "title": "9. Limitación de Responsabilidad",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io se esfuerza por proporcionar un servicio de calidad pero no garantiza:" },
+          { "type": "paragraph", "text": "Los servicios se proporcionan \"tal cual\", sin garantía de ningún tipo, expresa o implícita." },
+          { "type": "paragraph", "text": "FitMyCV.io no garantiza:" },
           { "type": "list", "items": [
-            "La ausencia de interrupciones o errores técnicos",
+            "Disponibilidad continua e ininterrumpida del servicio",
+            "La ausencia de errores técnicos o bugs",
             "La compatibilidad de los CVs generados con todos los sistemas ATS (Applicant Tracking Systems)",
-            "La obtención de una entrevista o empleo tras el uso del servicio"
+            "La obtención de una entrevista o empleo tras el uso del servicio",
+            "La exactitud o relevancia del contenido generado por IA"
           ]},
+          { "type": "paragraph", "text": "Se pueden realizar operaciones de mantenimiento sin previo aviso, causando interrupciones temporales del servicio." },
           { "type": "paragraph", "text": "Nuestra responsabilidad está limitada al importe que hayas pagado por el servicio en los últimos 12 meses." }
         ]
       },
       {
+        "id": "prohibited",
+        "title": "10. Comportamientos Prohibidos",
+        "content": [
+          { "type": "paragraph", "text": "Están estrictamente prohibidos:" },
+          { "type": "list", "items": [
+            "La reventa o redistribución de los servicios",
+            "Cualquier intento de intrusión en los sistemas",
+            "La suplantación de identidad",
+            "La extracción automatizada de datos (scraping)",
+            "El uso de bots o scripts automatizados",
+            "Cualquier uso contrario a la moral o al orden público",
+            "La creación de contenido ilegal, difamatorio o que infrinja derechos de terceros"
+          ]},
+          { "type": "highlight", "variant": "danger", "title": "Sanciones:", "text": "En caso de violación, FitMyCV.io se reserva el derecho de suspender o eliminar la cuenta sin previo aviso ni reembolso." }
+        ]
+      },
+      {
+        "id": "termination",
+        "title": "11. Terminación y Eliminación de Cuenta",
+        "content": [
+          { "type": "paragraph", "text": "Puedes eliminar tu cuenta en cualquier momento desde la configuración de tu espacio personal o contactándonos en support@fitmycv.io.", "link": "mailto:support@fitmycv.io", "linkText": "support@fitmycv.io" },
+          { "type": "paragraph", "text": "La eliminación de la cuenta resulta en la eliminación permanente de todos tus datos (CVs, ofertas de empleo, historial) de acuerdo con nuestra política de privacidad.", "link": "/privacy", "linkText": "política de privacidad" },
+          { "type": "highlight", "variant": "warning", "title": "Créditos no utilizados:", "text": "Los créditos restantes en tu cuenta se pierden tras la eliminación y no pueden ser reembolsados ni transferidos." }
+        ]
+      },
+      {
         "id": "modifications",
-        "title": "10. Modificación de los Términos",
+        "title": "12. Modificación de los Términos",
         "content": [
           { "type": "paragraph", "text": "Nos reservamos el derecho de modificar estos Términos en cualquier momento. Las modificaciones se publicarán en esta página con la fecha de actualización. El uso continuado del servicio después de la modificación constituye la aceptación de los nuevos términos." }
         ]
       },
       {
+        "id": "mediation",
+        "title": "13. Mediación del Consumidor",
+        "content": [
+          { "type": "paragraph", "text": "De conformidad con los artículos L.616-1 y R.616-1 del Código de Consumo francés, en caso de disputa, el Usuario puede recurrir gratuitamente a un mediador de consumo." },
+          { "type": "paragraph", "text": "El nombre y los datos de contacto del mediador competente se proporcionarán previa simple solicitud a contact@fitmycv.io.", "link": "mailto:contact@fitmycv.io", "linkText": "contact@fitmycv.io" },
+          { "type": "highlight", "variant": "info", "title": "Plataforma ODR:", "text": "También puedes utilizar la plataforma de Resolución de Litigios en Línea de la Comisión Europea: https://ec.europa.eu/consumers/odr" }
+        ]
+      },
+      {
         "id": "jurisdiction",
-        "title": "11. Ley Aplicable y Jurisdicción",
+        "title": "14. Ley Aplicable y Jurisdicción",
         "content": [
           { "type": "paragraph", "text": "Estos Términos se rigen por la ley francesa." },
           { "type": "paragraph", "text": "En caso de disputa, y después de un intento de resolución amistosa, los tribunales de París tendrán jurisdicción exclusiva." }
@@ -188,11 +251,15 @@
       },
       {
         "id": "legal-info",
-        "title": "12. Información Legal",
+        "title": "15. Información Legal",
         "content": [
           { "type": "paragraph", "text": "Editor del servicio FitMyCV.io:" },
-          { "type": "highlight", "variant": "info", "text": "Codeglyph\nSIRET: 995 375 862 00019\n200 rue de la Croix Nivert, 75015 París, Francia\nEmail: contact@codeglyph.fr" },
-          { "type": "highlight", "variant": "success", "text": "Para cualquier pregunta sobre estos Términos, contáctanos en la dirección de correo electrónico anterior." }
+          { "type": "highlight", "variant": "info", "text": "Codeglyph\nSIRET: 995 375 862 00019\n200 rue de la Croix Nivert, 75015 París, Francia\nEmail: contact@codeglyph.fr\n\nNo sujeto a IVA (Artículo 293 B del Código General de Impuestos francés)" },
+          { "type": "subtitle", "text": "Alojamiento" },
+          { "type": "paragraph", "text": "El servicio está autoalojado por el editor." },
+          { "type": "subtitle", "text": "Protección de Datos" },
+          { "type": "paragraph", "text": "Para obtener más información sobre cómo procesamos tus datos personales, consulta nuestra política de privacidad.", "link": "/privacy", "linkText": "política de privacidad" },
+          { "type": "paragraph", "text": "Para cualquier pregunta sobre estos Términos, contáctanos en contact@fitmycv.io.", "link": "mailto:contact@fitmycv.io", "linkText": "contact@fitmycv.io" }
         ]
       }
     ]
@@ -228,7 +295,7 @@
             "Portabilidad: recibir sus datos en un formato estructurado",
             "Oposición: oponerse al tratamiento por motivos legítimos"
           ]},
-          { "type": "paragraph", "text": "Para ejercer estos derechos, contáctenos en contact@codeglyph.fr. Responderemos en un plazo de 30 días." },
+          { "type": "paragraph", "text": "Para ejercer estos derechos, contáctenos en contact@codeglyph.fr. Responderemos en un plazo de 30 días.", "link": "mailto:contact@codeglyph.fr", "linkText": "contact@codeglyph.fr" },
           { "type": "paragraph", "text": "En caso de litigio, puede presentar una reclamación ante la CNIL.", "link": "https://www.cnil.fr", "linkText": "CNIL" }
         ]
       },

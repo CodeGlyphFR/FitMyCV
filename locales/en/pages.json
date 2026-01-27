@@ -83,46 +83,62 @@
         "id": "acceptance",
         "title": "1. Acceptance of Terms",
         "content": [
-          { "type": "paragraph", "text": "By using FitMyCV.io and making a credit purchase or subscribing to a plan, you unconditionally accept these Terms of Service." },
-          { "type": "paragraph", "text": "If you do not accept these terms, please do not use our paid services." }
+          { "type": "paragraph", "text": "By using FitMyCV.io and making a credit purchase, you unconditionally accept these Terms of Service." },
+          { "type": "paragraph", "text": "If you do not accept these terms, please do not use our paid services." },
+          { "type": "paragraph", "text": "Use of FitMyCV.io is restricted to individuals aged 16 and over." }
         ]
       },
       {
         "id": "services",
         "title": "2. Service Description",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io offers two types of paid services:" },
-          { "type": "subtitle", "text": "2.1. Credits (one-time payments)" },
-          { "type": "paragraph", "text": "Credits allow you to use premium features on a pay-per-use basis. One credit = one use of a premium feature. Credits do not expire and remain valid as long as your account is active." },
-          { "type": "subtitle", "text": "2.2. Subscriptions (recurring payments)" },
-          { "type": "paragraph", "text": "Subscriptions provide access to a defined number of monthly uses depending on the chosen plan (Free, Pro, Premium). Usage limits are reset at each billing period." }
+          { "type": "paragraph", "text": "FitMyCV.io is a CV creation and optimization platform using artificial intelligence." },
+          { "type": "subtitle", "text": "2.1. Free services" },
+          { "type": "list", "items": [
+            "Unlimited manual CV creation",
+            "Unlimited CV editing",
+            "CV storage in your personal space"
+          ]},
+          { "type": "subtitle", "text": "2.2. Services consuming credits" },
+          { "type": "list", "items": [
+            "PDF and DOCX export",
+            "AI-powered CV generation and adaptation",
+            "PDF CV import and extraction",
+            "Automatic CV translation",
+            "CV optimization for job offers",
+            "CV/job compatibility score"
+          ]},
+          { "type": "subtitle", "text": "2.3. Credit system" },
+          { "type": "paragraph", "text": "Upon account creation, you receive a default number of credits allowing you to test the platform's features." },
+          { "type": "paragraph", "text": "Each feature consumes a variable number of credits according to a defined scale. The credit cost of each feature is displayed before use." },
+          { "type": "paragraph", "text": "Credits do not expire and remain valid as long as your account is active." },
+          { "type": "paragraph", "text": "When your credits are depleted, you can purchase more from the Credit management page.", "link": "/account/subscriptions?tab=credits", "linkText": "Credit management" }
         ]
       },
       {
         "id": "pricing",
         "title": "3. Pricing and Payments",
         "content": [
-          { "type": "paragraph", "text": "All prices are displayed in euros (including VAT) and include all applicable taxes." },
+          { "type": "paragraph", "text": "All prices are displayed in euros (EUR). The publisher is not subject to VAT pursuant to Article 293 B of the French General Tax Code." },
           { "type": "paragraph", "text": "Payments are secured by Stripe and accept credit cards, Apple Pay, Google Pay, and other payment methods depending on your location." },
-          { "type": "paragraph", "text": "Subscriptions are automatically renewed at the end of each period (monthly or annual) unless cancelled by you." }
+          { "type": "paragraph", "text": "Credit pack prices are available on the Credit management page.", "link": "/account/subscriptions?tab=credits", "linkText": "Credit management" }
         ]
       },
       {
         "id": "withdrawal",
-        "title": "4. Right of Withdrawal (14 days)",
+        "title": "4. Right of Withdrawal",
         "content": [
-          { "type": "paragraph", "text": "In accordance with French consumer protection legislation, you have a 14-day withdrawal period from your purchase or subscription, provided you have not used the service." },
-          { "type": "paragraph", "text": "If you have used credits or generated CVs during this period, the right of withdrawal is void and no refund will be issued." },
-          { "type": "highlight", "variant": "warning", "title": "Important:", "text": "To exercise your right of withdrawal, contact us at the email address below before any use of the service." }
+          { "type": "paragraph", "text": "In accordance with Article L.221-28 of the French Consumer Code, the User acknowledges and accepts that the execution of Services begins immediately after order validation." },
+          { "type": "paragraph", "text": "Consequently, the User expressly waives their right of withdrawal for any credit purchase." },
+          { "type": "highlight", "variant": "warning", "title": "Important:", "text": "Order validation, after checking the withdrawal waiver box, constitutes express waiver of this right." }
         ]
       },
       {
         "id": "refund",
         "title": "5. Refund Policy",
         "content": [
-          { "type": "paragraph", "text": "No refunds are issued once the service has been used (CV generation, credit usage, etc.)." },
-          { "type": "paragraph", "text": "In case of technical issues preventing service use, contact our support. We will review your case individually." },
-          { "type": "highlight", "variant": "danger", "title": "No refunds:", "text": "All purchases are final after service use. By making a purchase, you acknowledge having read and accepted this clause." }
+          { "type": "paragraph", "text": "All credit purchases are final once the service has been used (CV generation, export, translation, etc.). By making a purchase, you acknowledge having read and accepted this clause." },
+          { "type": "paragraph", "text": "In case of technical issues preventing service use, contact our support at support@fitmycv.io. We will review your situation individually.", "link": "mailto:support@fitmycv.io", "linkText": "support@fitmycv.io" }
         ]
       },
       {
@@ -131,23 +147,31 @@
         "content": [
           { "type": "paragraph", "text": "In case of a chargeback (payment dispute with your bank) after using the service:" },
           { "type": "list", "items": [
-            "For credits: The disputed credit amount will be deducted from your balance, which may become negative. You will need to top up your account to continue using the service.",
-            "For subscriptions: Your subscription will be immediately cancelled and you will be downgraded to the Free plan."
+            "The disputed credit amount will be deducted from your balance, which may become negative.",
+            "You will need to top up your account to continue using credit-consuming services."
           ]},
           { "type": "highlight", "variant": "warning", "title": "Warning:", "text": "Abusive chargebacks may result in permanent account suspension." }
         ]
       },
       {
-        "id": "subscription-changes",
-        "title": "7. Subscription Modification and Cancellation",
+        "id": "ai",
+        "title": "7. Artificial Intelligence",
         "content": [
-          { "type": "subtitle", "text": "7.1. Subscription Upgrade" },
-          { "type": "paragraph", "text": "You can upgrade your subscription at any time (e.g., Free → Pro, Monthly → Annual). The amount will be calculated pro-rata based on the remaining time on your current period. The new billing cycle starts immediately." },
-          { "type": "subtitle", "text": "7.2. Subscription Downgrade" },
-          { "type": "paragraph", "text": "You can downgrade your subscription (e.g., Premium → Pro). The change will take effect at the next billing date without pro-rata refund for the current period." },
-          { "type": "paragraph", "text": "Restriction: Downgrading from an annual to a monthly subscription is not permitted. You must cancel your annual subscription and subscribe to a new monthly plan after expiration." },
-          { "type": "subtitle", "text": "7.3. Subscription Cancellation" },
-          { "type": "paragraph", "text": "You can cancel your subscription at any time from your account. The cancellation takes effect at the end of the current billing period. You retain access to premium features until that date." }
+          { "type": "paragraph", "text": "FitMyCV.io acts as a \"deployer\" of an artificial intelligence system within the meaning of European Regulation 2024/1689 (AI Act)." },
+          { "type": "subtitle", "text": "7.1. Features using AI" },
+          { "type": "list", "items": [
+            "CV generation and adaptation",
+            "CV optimization",
+            "Job offer extraction",
+            "Compatibility score calculation",
+            "CV translation",
+            "PDF CV import and extraction"
+          ]},
+          { "type": "subtitle", "text": "7.2. Nature of results" },
+          { "type": "paragraph", "text": "Results generated by AI are suggestions and do not constitute binding recommendations. The user retains full control over the final content of their CVs." },
+          { "type": "subtitle", "text": "7.3. AI Provider" },
+          { "type": "paragraph", "text": "AI features are provided by OpenAI (United States). Data transmitted to OpenAI is not used to train their models in accordance with their API policy." },
+          { "type": "highlight", "variant": "info", "title": "AI Transparency:", "text": "The user is informed that generated content comes from an artificial intelligence system. This content should be verified before use." }
         ]
       },
       {
@@ -162,25 +186,64 @@
         "id": "liability",
         "title": "9. Limitation of Liability",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io strives to provide a quality service but does not guarantee:" },
+          { "type": "paragraph", "text": "Services are provided \"as is\", without warranty of any kind, express or implied." },
+          { "type": "paragraph", "text": "FitMyCV.io does not guarantee:" },
           { "type": "list", "items": [
-            "The absence of interruptions or technical errors",
+            "Continuous and uninterrupted service availability",
+            "The absence of technical errors or bugs",
             "Compatibility of generated CVs with all ATS (Applicant Tracking Systems)",
-            "Obtaining an interview or employment following use of the service"
+            "Obtaining an interview or employment following use of the service",
+            "The accuracy or relevance of AI-generated content"
           ]},
+          { "type": "paragraph", "text": "Maintenance operations may be performed without notice, causing temporary service interruption." },
           { "type": "paragraph", "text": "Our liability is limited to the amount you have paid for the service in the last 12 months." }
         ]
       },
       {
+        "id": "prohibited",
+        "title": "10. Prohibited Behavior",
+        "content": [
+          { "type": "paragraph", "text": "The following are strictly prohibited:" },
+          { "type": "list", "items": [
+            "Resale or redistribution of services",
+            "Any attempt to intrude into systems",
+            "Identity theft",
+            "Automated data extraction (scraping)",
+            "Use of bots or automated scripts",
+            "Any use contrary to public morals or order",
+            "Creation of illegal, defamatory content or content infringing third-party rights"
+          ]},
+          { "type": "highlight", "variant": "danger", "title": "Sanctions:", "text": "In case of violation, FitMyCV.io reserves the right to suspend or delete the account without notice or refund." }
+        ]
+      },
+      {
+        "id": "termination",
+        "title": "11. Account Termination and Deletion",
+        "content": [
+          { "type": "paragraph", "text": "You can delete your account at any time from your personal space settings or by contacting us at support@fitmycv.io.", "link": "mailto:support@fitmycv.io", "linkText": "support@fitmycv.io" },
+          { "type": "paragraph", "text": "Account deletion results in the permanent deletion of all your data (CVs, job offers, history) in accordance with our privacy policy.", "link": "/privacy", "linkText": "privacy policy" },
+          { "type": "highlight", "variant": "warning", "title": "Unused credits:", "text": "Remaining credits on your account are lost upon deletion and cannot be refunded or transferred." }
+        ]
+      },
+      {
         "id": "modifications",
-        "title": "10. Modification of Terms",
+        "title": "12. Modification of Terms",
         "content": [
           { "type": "paragraph", "text": "We reserve the right to modify these Terms at any time. Modifications will be posted on this page with the update date. Continued use of the service after modification constitutes acceptance of the new terms." }
         ]
       },
       {
+        "id": "mediation",
+        "title": "13. Consumer Mediation",
+        "content": [
+          { "type": "paragraph", "text": "In accordance with Articles L.616-1 and R.616-1 of the French Consumer Code, in case of dispute, the User may freely resort to a consumer mediator." },
+          { "type": "paragraph", "text": "The name and contact details of the competent mediator will be provided upon simple request to contact@fitmycv.io.", "link": "mailto:contact@fitmycv.io", "linkText": "contact@fitmycv.io" },
+          { "type": "highlight", "variant": "info", "title": "ODR Platform:", "text": "You may also use the European Commission's Online Dispute Resolution platform: https://ec.europa.eu/consumers/odr" }
+        ]
+      },
+      {
         "id": "jurisdiction",
-        "title": "11. Applicable Law and Jurisdiction",
+        "title": "14. Applicable Law and Jurisdiction",
         "content": [
           { "type": "paragraph", "text": "These Terms are governed by French law." },
           { "type": "paragraph", "text": "In case of dispute, and after an attempt at amicable resolution, the courts of Paris shall have exclusive jurisdiction." }
@@ -188,11 +251,15 @@
       },
       {
         "id": "legal-info",
-        "title": "12. Legal Information",
+        "title": "15. Legal Information",
         "content": [
           { "type": "paragraph", "text": "Publisher of FitMyCV.io service:" },
-          { "type": "highlight", "variant": "info", "text": "Codeglyph\nSIRET: 995 375 862 00019\n200 rue de la Croix Nivert, 75015 Paris, France\nEmail: contact@codeglyph.fr" },
-          { "type": "highlight", "variant": "success", "text": "For any questions regarding these Terms, contact us at the email address above." }
+          { "type": "highlight", "variant": "info", "text": "Codeglyph - SIRET: 995 375 862 00019 - 200 rue de la Croix Nivert, 75015 Paris, France - Email: contact@codeglyph.fr - Not subject to VAT (Article 293 B of French General Tax Code)" },
+          { "type": "subtitle", "text": "Hosting" },
+          { "type": "paragraph", "text": "The service is self-hosted by the publisher." },
+          { "type": "subtitle", "text": "Data Protection" },
+          { "type": "paragraph", "text": "To learn more about how we process your personal data, please see our privacy policy.", "link": "/privacy", "linkText": "privacy policy" },
+          { "type": "paragraph", "text": "For any questions regarding these Terms, contact us at contact@fitmycv.io.", "link": "mailto:contact@fitmycv.io", "linkText": "contact@fitmycv.io" }
         ]
       }
     ]
@@ -228,7 +295,7 @@
             "Portability: receive your data in a structured format",
             "Objection: object to processing on legitimate grounds"
           ]},
-          { "type": "paragraph", "text": "To exercise these rights, contact us at contact@codeglyph.fr. We will respond within 30 days." },
+          { "type": "paragraph", "text": "To exercise these rights, contact us at contact@codeglyph.fr. We will respond within 30 days.", "link": "mailto:contact@codeglyph.fr", "linkText": "contact@codeglyph.fr" },
           { "type": "paragraph", "text": "In case of dispute, you can file a complaint with the CNIL.", "link": "https://www.cnil.fr", "linkText": "CNIL" }
         ]
       },

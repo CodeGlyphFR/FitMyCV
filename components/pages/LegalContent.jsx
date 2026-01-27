@@ -9,6 +9,56 @@ const HIGHLIGHT_VARIANTS = {
   success: 'bg-emerald-500/20',
 };
 
+// Transforme les emails et URLs en liens cliquables
+function linkify(text) {
+  const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/g;
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+  const parts = [];
+  let lastIndex = 0;
+  const combinedRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)|(https?:\/\/[^\s]+)/g;
+  let match;
+
+  while ((match = combinedRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ type: 'text', value: text.slice(lastIndex, match.index) });
+    }
+    if (match[1]) {
+      parts.push({ type: 'email', value: match[1] });
+    } else if (match[2]) {
+      parts.push({ type: 'url', value: match[2] });
+    }
+    lastIndex = combinedRegex.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push({ type: 'text', value: text.slice(lastIndex) });
+  }
+
+  return parts.length > 0 ? parts : [{ type: 'text', value: text }];
+}
+
+function RenderLinkifiedText({ text }) {
+  const parts = linkify(text);
+  return parts.map((part, i) => {
+    if (part.type === 'email') {
+      return (
+        <a key={i} href={`mailto:${part.value}`} className="text-emerald-300 hover:text-emerald-200 underline transition-colors">
+          {part.value}
+        </a>
+      );
+    }
+    if (part.type === 'url') {
+      return (
+        <a key={i} href={part.value} target="_blank" rel="noopener noreferrer" className="text-emerald-300 hover:text-emerald-200 underline transition-colors">
+          {part.value}
+        </a>
+      );
+    }
+    return <span key={i}>{part.value}</span>;
+  });
+}
+
 function ContentBlock({ item }) {
   switch (item.type) {
     case 'paragraph':
@@ -56,9 +106,14 @@ function ContentBlock({ item }) {
     case 'highlight':
       return (
         <div className={`mt-3 p-3 ${HIGHLIGHT_VARIANTS[item.variant] || HIGHLIGHT_VARIANTS.info} backdrop-blur-sm rounded`}>
-          <p className="text-sm text-white drop-shadow whitespace-pre-line">
+          <p className="text-sm text-white drop-shadow">
             {item.title && <strong>{item.title} </strong>}
-            {item.text}
+            {item.text.split('\n').map((line, i, arr) => (
+              <span key={i}>
+                <RenderLinkifiedText text={line} />
+                {i < arr.length - 1 && <br />}
+              </span>
+            ))}
           </p>
         </div>
       );
@@ -66,8 +121,13 @@ function ContentBlock({ item }) {
     case 'infobox':
       return (
         <div className="mt-3 p-3 bg-sky-500/20 backdrop-blur-sm rounded">
-          <p className="text-white drop-shadow whitespace-pre-line">
-            {item.text}
+          <p className="text-white drop-shadow">
+            {item.text.split('\n').map((line, i, arr) => (
+              <span key={i}>
+                <RenderLinkifiedText text={line} />
+                {i < arr.length - 1 && <br />}
+              </span>
+            ))}
           </p>
         </div>
       );

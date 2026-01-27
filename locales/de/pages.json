@@ -83,46 +83,62 @@
         "id": "acceptance",
         "title": "1. Annahme der AGB",
         "content": [
-          { "type": "paragraph", "text": "Durch die Nutzung von FitMyCV.io und den Kauf von Credits oder das Abschließen eines Abonnements akzeptieren Sie bedingungslos diese Allgemeinen Geschäftsbedingungen." },
-          { "type": "paragraph", "text": "Wenn Sie diese Bedingungen nicht akzeptieren, nutzen Sie bitte unsere kostenpflichtigen Dienste nicht." }
+          { "type": "paragraph", "text": "Durch die Nutzung von FitMyCV.io und den Kauf von Credits akzeptieren Sie bedingungslos diese Allgemeinen Geschäftsbedingungen." },
+          { "type": "paragraph", "text": "Wenn Sie diese Bedingungen nicht akzeptieren, nutzen Sie bitte unsere kostenpflichtigen Dienste nicht." },
+          { "type": "paragraph", "text": "Die Nutzung von FitMyCV.io ist Personen ab 16 Jahren vorbehalten." }
         ]
       },
       {
         "id": "services",
         "title": "2. Leistungsbeschreibung",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io bietet zwei Arten von kostenpflichtigen Diensten an:" },
-          { "type": "subtitle", "text": "2.1. Credits (Einmalzahlungen)" },
-          { "type": "paragraph", "text": "Credits ermöglichen die punktuelle Nutzung von Premium-Funktionen. Ein Credit = eine Nutzung einer Premium-Funktion. Credits haben kein Ablaufdatum und bleiben gültig, solange Ihr Konto aktiv ist." },
-          { "type": "subtitle", "text": "2.2. Abonnements (wiederkehrende Zahlungen)" },
-          { "type": "paragraph", "text": "Abonnements bieten Zugang zu einer festgelegten Anzahl monatlicher Nutzungen je nach gewähltem Plan (Kostenlos, Pro, Premium). Die Nutzungslimits werden bei jedem Abrechnungszeitraum zurückgesetzt." }
+          { "type": "paragraph", "text": "FitMyCV.io ist eine Plattform zur Erstellung und Optimierung von Lebensläufen mit künstlicher Intelligenz." },
+          { "type": "subtitle", "text": "2.1. Kostenlose Dienste" },
+          { "type": "list", "items": [
+            "Unbegrenzte manuelle Lebenslauf-Erstellung",
+            "Unbegrenzte Lebenslauf-Bearbeitung",
+            "Speicherung von Lebensläufen in Ihrem persönlichen Bereich"
+          ]},
+          { "type": "subtitle", "text": "2.2. Dienste mit Credit-Verbrauch" },
+          { "type": "list", "items": [
+            "PDF- und DOCX-Export",
+            "KI-gestützte Lebenslauf-Generierung und -Anpassung",
+            "PDF-Lebenslauf-Import und -Extraktion",
+            "Automatische Lebenslauf-Übersetzung",
+            "Lebenslauf-Optimierung für Stellenangebote",
+            "Lebenslauf/Stelle-Kompatibilitätsbewertung"
+          ]},
+          { "type": "subtitle", "text": "2.3. Credit-System" },
+          { "type": "paragraph", "text": "Bei der Kontoerstellung erhalten Sie eine Standardanzahl von Credits, mit denen Sie die Funktionen der Plattform testen können." },
+          { "type": "paragraph", "text": "Jede Funktion verbraucht eine variable Anzahl von Credits nach einem definierten Tarif. Die Credit-Kosten jeder Funktion werden vor der Nutzung angezeigt." },
+          { "type": "paragraph", "text": "Credits haben kein Ablaufdatum und bleiben gültig, solange Ihr Konto aktiv ist." },
+          { "type": "paragraph", "text": "Wenn Ihre Credits aufgebraucht sind, können Sie auf der Seite Credit-Verwaltung weitere kaufen.", "link": "/account/subscriptions?tab=credits", "linkText": "Credit-Verwaltung" }
         ]
       },
       {
         "id": "pricing",
         "title": "3. Preise und Zahlungen",
         "content": [
-          { "type": "paragraph", "text": "Alle Preise werden in Euro (inkl. MwSt.) angezeigt und beinhalten alle geltenden Steuern." },
+          { "type": "paragraph", "text": "Alle Preise werden in Euro (EUR) angezeigt. Der Herausgeber ist gemäß Artikel 293 B des französischen Steuergesetzbuches nicht umsatzsteuerpflichtig." },
           { "type": "paragraph", "text": "Zahlungen werden über Stripe gesichert und akzeptieren Kreditkarten, Apple Pay, Google Pay und andere Zahlungsmethoden je nach Ihrem Standort." },
-          { "type": "paragraph", "text": "Abonnements werden automatisch am Ende jedes Zeitraums (monatlich oder jährlich) verlängert, es sei denn, Sie kündigen." }
+          { "type": "paragraph", "text": "Die Preise für Credit-Pakete sind auf der Seite Credit-Verwaltung verfügbar.", "link": "/account/subscriptions?tab=credits", "linkText": "Credit-Verwaltung" }
         ]
       },
       {
         "id": "withdrawal",
-        "title": "4. Widerrufsrecht (14 Tage)",
+        "title": "4. Widerrufsrecht",
         "content": [
-          { "type": "paragraph", "text": "Gemäß dem französischen Verbraucherschutzgesetz haben Sie eine 14-tägige Widerrufsfrist ab Ihrem Kauf oder Abonnement, sofern Sie den Dienst nicht genutzt haben." },
-          { "type": "paragraph", "text": "Wenn Sie während dieses Zeitraums Credits verwendet oder Lebensläufe generiert haben, erlischt das Widerrufsrecht und es erfolgt keine Erstattung." },
-          { "type": "highlight", "variant": "warning", "title": "Wichtig:", "text": "Um Ihr Widerrufsrecht auszuüben, kontaktieren Sie uns unter der unten angegebenen E-Mail-Adresse vor jeder Nutzung des Dienstes." }
+          { "type": "paragraph", "text": "Gemäß Artikel L.221-28 des französischen Verbrauchergesetzbuches erkennt der Nutzer an und akzeptiert, dass die Ausführung der Dienste unmittelbar nach der Bestellbestätigung beginnt." },
+          { "type": "paragraph", "text": "Folglich verzichtet der Nutzer ausdrücklich auf sein Widerrufsrecht für jeden Credit-Kauf." },
+          { "type": "highlight", "variant": "warning", "title": "Wichtig:", "text": "Die Bestellbestätigung nach Ankreuzen des Widerrufsverzichts gilt als ausdrücklicher Verzicht auf dieses Recht." }
         ]
       },
       {
         "id": "refund",
         "title": "5. Erstattungsrichtlinie",
         "content": [
-          { "type": "paragraph", "text": "Keine Erstattungen werden gewährt, sobald der Dienst genutzt wurde (CV-Generierung, Credit-Nutzung usw.)." },
-          { "type": "paragraph", "text": "Bei technischen Problemen, die die Nutzung des Dienstes verhindern, kontaktieren Sie unseren Support. Wir werden Ihren Fall individuell prüfen." },
-          { "type": "highlight", "variant": "danger", "title": "Keine Erstattungen:", "text": "Alle Käufe sind nach Nutzung des Dienstes endgültig. Mit einem Kauf bestätigen Sie, diese Klausel gelesen und akzeptiert zu haben." }
+          { "type": "paragraph", "text": "Alle Credit-Käufe sind endgültig, sobald der Dienst genutzt wurde (Lebenslauf-Generierung, Export, Übersetzung usw.). Mit einem Kauf bestätigen Sie, diese Klausel gelesen und akzeptiert zu haben." },
+          { "type": "paragraph", "text": "Bei technischen Problemen, die die Nutzung des Dienstes verhindern, kontaktieren Sie unseren Support unter support@fitmycv.io. Wir werden Ihre Situation individuell prüfen.", "link": "mailto:support@fitmycv.io", "linkText": "support@fitmycv.io" }
         ]
       },
       {
@@ -131,23 +147,31 @@
         "content": [
           { "type": "paragraph", "text": "Im Falle einer Rückbuchung (Zahlungsstreit mit Ihrer Bank) nach Nutzung des Dienstes:" },
           { "type": "list", "items": [
-            "Für Credits: Der strittige Credit-Betrag wird von Ihrem Guthaben abgezogen, das negativ werden kann. Sie müssen Ihr Konto aufladen, um den Dienst weiter nutzen zu können.",
-            "Für Abonnements: Ihr Abonnement wird sofort gekündigt und Sie werden auf den kostenlosen Plan herabgestuft."
+            "Der strittige Credit-Betrag wird von Ihrem Guthaben abgezogen, das negativ werden kann.",
+            "Sie müssen Ihr Konto aufladen, um die Credit-verbrauchenden Dienste weiter nutzen zu können."
           ]},
           { "type": "highlight", "variant": "warning", "title": "Warnung:", "text": "Missbräuchliche Rückbuchungen können zur dauerhaften Kontosperrung führen." }
         ]
       },
       {
-        "id": "subscription-changes",
-        "title": "7. Abonnementänderung und -kündigung",
+        "id": "ai",
+        "title": "7. Künstliche Intelligenz",
         "content": [
-          { "type": "subtitle", "text": "7.1. Abonnement-Upgrade" },
-          { "type": "paragraph", "text": "Sie können Ihr Abonnement jederzeit upgraden (z.B. Kostenlos → Pro, Monatlich → Jährlich). Der Betrag wird anteilig auf Basis der verbleibenden Zeit Ihres aktuellen Zeitraums berechnet. Der neue Abrechnungszyklus beginnt sofort." },
-          { "type": "subtitle", "text": "7.2. Abonnement-Downgrade" },
-          { "type": "paragraph", "text": "Sie können Ihr Abonnement downgraden (z.B. Premium → Pro). Die Änderung wird zum nächsten Abrechnungsdatum ohne anteilige Erstattung für den aktuellen Zeitraum wirksam." },
-          { "type": "paragraph", "text": "Einschränkung: Ein Downgrade von einem Jahresabonnement auf ein Monatsabonnement ist nicht gestattet. Sie müssen Ihr Jahresabonnement kündigen und nach Ablauf ein neues Monatsabo abschließen." },
-          { "type": "subtitle", "text": "7.3. Abonnementkündigung" },
-          { "type": "paragraph", "text": "Sie können Ihr Abonnement jederzeit über Ihr Konto kündigen. Die Kündigung wird am Ende des aktuellen Abrechnungszeitraums wirksam. Sie behalten bis zu diesem Datum Zugang zu den Premium-Funktionen." }
+          { "type": "paragraph", "text": "FitMyCV.io handelt als «Bereitsteller» eines Systems künstlicher Intelligenz im Sinne der europäischen Verordnung 2024/1689 (KI-Gesetz)." },
+          { "type": "subtitle", "text": "7.1. Funktionen mit KI-Nutzung" },
+          { "type": "list", "items": [
+            "Lebenslauf-Generierung und -Anpassung",
+            "Lebenslauf-Optimierung",
+            "Stellenangebot-Extraktion",
+            "Kompatibilitätsbewertung",
+            "Lebenslauf-Übersetzung",
+            "PDF-Lebenslauf-Import und -Extraktion"
+          ]},
+          { "type": "subtitle", "text": "7.2. Art der Ergebnisse" },
+          { "type": "paragraph", "text": "Von der KI generierte Ergebnisse sind Vorschläge und stellen keine verbindlichen Empfehlungen dar. Der Nutzer behält die volle Kontrolle über den endgültigen Inhalt seiner Lebensläufe." },
+          { "type": "subtitle", "text": "7.3. KI-Anbieter" },
+          { "type": "paragraph", "text": "KI-Funktionen werden von OpenAI (USA) bereitgestellt. An OpenAI übermittelte Daten werden gemäß deren API-Richtlinie nicht zum Training ihrer Modelle verwendet." },
+          { "type": "highlight", "variant": "info", "title": "KI-Transparenz:", "text": "Der Nutzer wird darüber informiert, dass generierte Inhalte von einem System künstlicher Intelligenz stammen. Diese Inhalte sollten vor der Verwendung überprüft werden." }
         ]
       },
       {
@@ -162,25 +186,64 @@
         "id": "liability",
         "title": "9. Haftungsbeschränkung",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io bemüht sich um einen qualitativ hochwertigen Service, garantiert jedoch nicht:" },
+          { "type": "paragraph", "text": "Die Dienste werden «wie besehen» ohne jegliche ausdrückliche oder stillschweigende Garantie bereitgestellt." },
+          { "type": "paragraph", "text": "FitMyCV.io garantiert nicht:" },
           { "type": "list", "items": [
-            "Das Ausbleiben von Unterbrechungen oder technischen Fehlern",
+            "Kontinuierliche und ununterbrochene Dienstverfügbarkeit",
+            "Das Ausbleiben von technischen Fehlern oder Bugs",
             "Die Kompatibilität generierter Lebensläufe mit allen ATS-Systemen (Applicant Tracking Systems)",
-            "Das Erhalten eines Vorstellungsgesprächs oder einer Anstellung nach Nutzung des Dienstes"
+            "Das Erhalten eines Vorstellungsgesprächs oder einer Anstellung nach Nutzung des Dienstes",
+            "Die Genauigkeit oder Relevanz von KI-generierten Inhalten"
           ]},
+          { "type": "paragraph", "text": "Wartungsarbeiten können ohne Vorankündigung durchgeführt werden und zu vorübergehenden Dienstunterbrechungen führen." },
           { "type": "paragraph", "text": "Unsere Haftung ist auf den Betrag beschränkt, den Sie in den letzten 12 Monaten für den Dienst bezahlt haben." }
         ]
       },
       {
+        "id": "prohibited",
+        "title": "10. Verbotenes Verhalten",
+        "content": [
+          { "type": "paragraph", "text": "Folgendes ist streng verboten:" },
+          { "type": "list", "items": [
+            "Weiterverkauf oder Weiterverbreitung der Dienste",
+            "Jeder Versuch, in Systeme einzudringen",
+            "Identitätsdiebstahl",
+            "Automatisierte Datenextraktion (Scraping)",
+            "Verwendung von Bots oder automatisierten Skripten",
+            "Jede Nutzung, die gegen die guten Sitten oder die öffentliche Ordnung verstößt",
+            "Erstellung illegaler, verleumderischer Inhalte oder Inhalte, die Rechte Dritter verletzen"
+          ]},
+          { "type": "highlight", "variant": "danger", "title": "Sanktionen:", "text": "Bei Verstößen behält sich FitMyCV.io das Recht vor, das Konto ohne Vorankündigung oder Erstattung zu sperren oder zu löschen." }
+        ]
+      },
+      {
+        "id": "termination",
+        "title": "11. Kontokündigung und -löschung",
+        "content": [
+          { "type": "paragraph", "text": "Sie können Ihr Konto jederzeit über die Einstellungen in Ihrem persönlichen Bereich oder durch Kontaktaufnahme unter support@fitmycv.io löschen.", "link": "mailto:support@fitmycv.io", "linkText": "support@fitmycv.io" },
+          { "type": "paragraph", "text": "Die Kontolöschung führt zur endgültigen Löschung aller Ihrer Daten (Lebensläufe, Stellenangebote, Verlauf) gemäß unserer Datenschutzrichtlinie.", "link": "/privacy", "linkText": "Datenschutzrichtlinie" },
+          { "type": "highlight", "variant": "warning", "title": "Ungenutzte Credits:", "text": "Verbleibende Credits auf Ihrem Konto gehen bei der Löschung verloren und können weder erstattet noch übertragen werden." }
+        ]
+      },
+      {
         "id": "modifications",
-        "title": "10. Änderung der AGB",
+        "title": "12. Änderung der AGB",
         "content": [
           { "type": "paragraph", "text": "Wir behalten uns das Recht vor, diese AGB jederzeit zu ändern. Änderungen werden auf dieser Seite mit dem Aktualisierungsdatum veröffentlicht. Die fortgesetzte Nutzung des Dienstes nach einer Änderung gilt als Annahme der neuen Bedingungen." }
         ]
       },
       {
+        "id": "mediation",
+        "title": "13. Verbraucherschlichtung",
+        "content": [
+          { "type": "paragraph", "text": "Gemäß den Artikeln L.616-1 und R.616-1 des französischen Verbrauchergesetzbuches kann der Nutzer im Streitfall kostenlos einen Verbraucherschlichter hinzuziehen." },
+          { "type": "paragraph", "text": "Name und Kontaktdaten des zuständigen Schlichters werden auf einfache Anfrage an contact@fitmycv.io mitgeteilt.", "link": "mailto:contact@fitmycv.io", "linkText": "contact@fitmycv.io" },
+          { "type": "highlight", "variant": "info", "title": "ODR-Plattform:", "text": "Sie können auch die Online-Streitbeilegungsplattform der Europäischen Kommission nutzen: https://ec.europa.eu/consumers/odr" }
+        ]
+      },
+      {
         "id": "jurisdiction",
-        "title": "11. Anwendbares Recht und Gerichtsstand",
+        "title": "14. Anwendbares Recht und Gerichtsstand",
         "content": [
           { "type": "paragraph", "text": "Diese AGB unterliegen französischem Recht." },
           { "type": "paragraph", "text": "Im Streitfall und nach einem Versuch einer gütlichen Einigung sind ausschließlich die Gerichte von Paris zuständig." }
@@ -188,11 +251,15 @@
       },
       {
         "id": "legal-info",
-        "title": "12. Rechtliche Informationen",
+        "title": "15. Rechtliche Informationen",
         "content": [
           { "type": "paragraph", "text": "Herausgeber des FitMyCV.io-Dienstes:" },
-          { "type": "highlight", "variant": "info", "text": "Codeglyph\nSIRET: 995 375 862 00019\n200 rue de la Croix Nivert, 75015 Paris, Frankreich\nE-Mail: contact@codeglyph.fr" },
-          { "type": "highlight", "variant": "success", "text": "Bei Fragen zu diesen AGB kontaktieren Sie uns unter der oben genannten E-Mail-Adresse." }
+          { "type": "highlight", "variant": "info", "text": "Codeglyph\nSIRET: 995 375 862 00019\n200 rue de la Croix Nivert, 75015 Paris, Frankreich\nE-Mail: contact@codeglyph.fr\n\nNicht umsatzsteuerpflichtig (Artikel 293 B des französischen Steuergesetzbuches)" },
+          { "type": "subtitle", "text": "Hosting" },
+          { "type": "paragraph", "text": "Der Dienst wird vom Herausgeber selbst gehostet." },
+          { "type": "subtitle", "text": "Datenschutz" },
+          { "type": "paragraph", "text": "Weitere Informationen zur Verarbeitung Ihrer personenbezogenen Daten finden Sie in unserer Datenschutzrichtlinie.", "link": "/privacy", "linkText": "Datenschutzrichtlinie" },
+          { "type": "paragraph", "text": "Bei Fragen zu diesen AGB kontaktieren Sie uns unter contact@fitmycv.io.", "link": "mailto:contact@fitmycv.io", "linkText": "contact@fitmycv.io" }
         ]
       }
     ]
@@ -228,7 +295,7 @@
             "Datenübertragbarkeit: Erhalt Ihrer Daten in einem strukturierten Format",
             "Widerspruch: Widerspruch gegen die Verarbeitung aus berechtigten Gründen"
           ]},
-          { "type": "paragraph", "text": "Um diese Rechte auszuüben, kontaktieren Sie uns unter contact@codeglyph.fr. Wir antworten innerhalb von 30 Tagen." },
+          { "type": "paragraph", "text": "Um diese Rechte auszuüben, kontaktieren Sie uns unter contact@codeglyph.fr. Wir antworten innerhalb von 30 Tagen.", "link": "mailto:contact@codeglyph.fr", "linkText": "contact@codeglyph.fr" },
           { "type": "paragraph", "text": "Im Streitfall können Sie eine Beschwerde bei der CNIL einreichen.", "link": "https://www.cnil.fr", "linkText": "CNIL" }
         ]
       },
