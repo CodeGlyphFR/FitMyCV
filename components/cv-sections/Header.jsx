@@ -176,6 +176,7 @@ export default function Header(props){
     // Écouter les changements de CV pour recharger les infos de source
     const handleCvSelected = (event) => {
       fetchSourceInfo();
+      resetJobOfferDetails();  // Réinitialiser le cache de l'offre pour forcer un refetch
     };
 
     // Écouter les mises à jour des tokens (depuis la search bar)
@@ -196,7 +197,7 @@ export default function Header(props){
       window.removeEventListener('cv:selected', handleCvSelected);
       window.removeEventListener('tokens:updated', handleTokensUpdated);
     };
-  }, [fetchMatchScore, fetchSourceInfo]);
+  }, [fetchMatchScore, fetchSourceInfo, resetJobOfferDetails]);
 
 
   // Si le CV est vide (pas de header), ne pas afficher le composant

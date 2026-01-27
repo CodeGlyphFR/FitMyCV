@@ -71,6 +71,12 @@ export default function JobOfferDetailModal({
   const content = jobOffer?.content || {};
   const hasUrl = jobOffer?.sourceType === "url" && jobOffer?.sourceValue;
 
+  // Helper pour capitaliser la première lettre
+  const capitalize = (str) => {
+    if (!str || typeof str !== 'string') return str;
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
+
   // Helpers pour formater les données
   const formatSalary = () => {
     const salary = content.salary;
@@ -249,7 +255,7 @@ export default function JobOfferDetailModal({
 
                 {/* Grid: Avantages + Compétences/Exigences */}
                 {(benefits.length > 0 || requiredSkills.length > 0 || niceToHaveSkills.length > 0 || softSkills.length > 0 || experience || education || languages.length > 0) && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className={`grid grid-cols-1 gap-4 ${benefits.length > 0 ? 'lg:grid-cols-2' : ''}`}>
                     {/* Avantages */}
                     {benefits.length > 0 && (
                       <div className="rounded-xl p-4 bg-green-500/5 border border-green-500/20">
@@ -261,7 +267,7 @@ export default function JobOfferDetailModal({
                           {benefits.map((item, idx) => (
                             <li key={idx} className="flex items-start gap-2">
                               <span className="text-green-400 mt-0.5">✓</span>
-                              <span>{item}</span>
+                              <span>{capitalize(item)}{idx === benefits.length - 1 ? '.' : ','}</span>
                             </li>
                           ))}
                         </ul>
@@ -288,7 +294,7 @@ export default function JobOfferDetailModal({
                                         key={idx}
                                         className="px-2 py-0.5 text-xs rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300"
                                       >
-                                        {skill}
+                                        {capitalize(skill)}
                                       </span>
                                     ))}
                                   </div>
@@ -303,7 +309,7 @@ export default function JobOfferDetailModal({
                                         key={idx}
                                         className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300"
                                       >
-                                        {skill}
+                                        {capitalize(skill)}
                                       </span>
                                     ))}
                                   </div>
@@ -318,7 +324,7 @@ export default function JobOfferDetailModal({
                                         key={idx}
                                         className="px-2 py-0.5 text-xs rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300"
                                       >
-                                        {skill}
+                                        {capitalize(skill)}
                                       </span>
                                     ))}
                                   </div>
@@ -362,7 +368,7 @@ export default function JobOfferDetailModal({
                                         key={idx}
                                         className="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300"
                                       >
-                                        {lang.language}{lang.level ? ` (${lang.level})` : ""}
+                                        {capitalize(lang.language)}{lang.level ? ` (${capitalize(lang.level)})` : ""}
                                       </span>
                                     ))}
                                   </div>
@@ -386,8 +392,8 @@ export default function JobOfferDetailModal({
                     <ul className="space-y-2 text-sm text-white/70">
                       {responsibilities.map((item, idx) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="text-emerald-400 mt-1.5 text-xs">•</span>
-                          <span>{item}</span>
+                          <span className="text-emerald-400 mt-0.5 text-xs">•</span>
+                          <span>{capitalize(item)}{idx === responsibilities.length - 1 ? '.' : ','}</span>
                         </li>
                       ))}
                     </ul>
@@ -459,7 +465,7 @@ export default function JobOfferDetailModal({
                                     color: `hsla(0, 0%, 100%, ${1 - progress * 0.3})`
                                   }}
                                 >
-                                  {step}
+                                  {capitalize(step)}
                                 </div>
                               </li>
                             );
