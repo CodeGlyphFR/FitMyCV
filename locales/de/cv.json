@@ -26,7 +26,7 @@
   },
   "cvGenerator": {
     "title": "Lebenslauf mit AI generieren",
-    "description": "Geben Sie Stellenanzeigen zur Analyse ein (Links oder PDF/Word-Dateien), um angepasste Lebensläufe basierend auf dem ausgewählten Referenz-Lebenslauf zu generieren.",
+    "description": "Geben Sie Stellenanzeigen zur Analyse ein (Links oder PDF-Dateien), um angepasste Lebensläufe basierend auf dem ausgewählten Referenz-Lebenslauf zu generieren.",
     "referenceCV": "Referenz-Lebenslauf",
     "selectCV": "Wählen Sie einen Lebenslauf",
     "noManualCV": "Kein manueller Lebenslauf verfügbar. Erstellen Sie einen Lebenslauf, bevor Sie die KI-Generierung starten.",

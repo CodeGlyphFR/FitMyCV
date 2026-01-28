@@ -26,7 +26,7 @@
   },
   "cvGenerator": {
     "title": "Generate CV with AI",
-    "description": "Provide job offers to analyze (links or PDF/Word file) to generate tailored CVs from the selected reference CV.",
+    "description": "Provide job offers to analyze (links or PDF file) to generate tailored CVs from the selected reference CV.",
     "referenceCV": "Reference CV",
     "selectCV": "Select a CV",
     "noManualCV": "No manual CV available. Create a CV before launching AI generation.",
