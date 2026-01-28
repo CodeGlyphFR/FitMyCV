@@ -42,6 +42,7 @@ export async function GET(request) {
         sourceType: true,
         sourceValue: true,
         jobOfferId: true, // Vérifier si un JobOffer est associé
+        jobOfferSnapshot: true, // Snapshot pour fallback si offre supprimée
         jobOffer: {
           select: {
             id: true, // ID pour le mode full
@@ -114,16 +115,27 @@ export async function GET(request) {
     }
 
     // Infos de l'offre d'emploi (titre + URL ou détails complets)
+    // Priorité: jobOffer (live) > jobOfferSnapshot (si offre supprimée)
     let jobOfferInfo = null;
     if (fullDetails && cvFile.jobOffer) {
-      // Retourner le contenu complet pour le modal de détails
+      // Retourner le contenu complet pour le modal de détails (offre live)
       jobOfferInfo = {
         id: cvFile.jobOffer.id,
         sourceType: cvFile.jobOffer.sourceType,
         sourceValue: cvFile.jobOffer.sourceValue,
-        content: cvFile.jobOffer.content, // Tout le JSON de l'offre
+        content: cvFile.jobOffer.content,
+      };
+    } else if (fullDetails && cvFile.jobOfferSnapshot) {
+      // Fallback: utiliser le snapshot si l'offre a été supprimée
+      jobOfferInfo = {
+        id: null, // Pas d'ID car l'offre n'existe plus
+        sourceType: cvFile.jobOfferSnapshot.sourceType,
+        sourceValue: cvFile.jobOfferSnapshot.sourceValue,
+        content: cvFile.jobOfferSnapshot.content,
+        isSnapshot: true, // Flag pour indiquer que c'est un snapshot
       };
     } else if (cvFile.jobOffer) {
+      // Mode non-full: juste titre + URL (offre live)
       const jobContent = cvFile.jobOffer.content;
       const jobTitle = jobContent?.title || null;
       const jobUrl = cvFile.jobOffer.sourceType === 'url' ? cvFile.jobOffer.sourceValue : null;
@@ -132,8 +144,19 @@ export async function GET(request) {
         title: jobTitle,
         url: jobUrl,
       };
+    } else if (cvFile.jobOfferSnapshot) {
+      // Mode non-full: fallback sur snapshot
+      const snapshotContent = cvFile.jobOfferSnapshot.content;
+      const jobTitle = snapshotContent?.title || null;
+      const jobUrl = cvFile.jobOfferSnapshot.sourceType === 'url' ? cvFile.jobOfferSnapshot.sourceValue : null;
+
+      jobOfferInfo = {
+        title: jobTitle,
+        url: jobUrl,
+        isSnapshot: true,
+      };
     } else if (cvFile.sourceType === 'link' && cvFile.sourceValue) {
-      // Fallback si pas de JobOffer mais sourceType est link
+      // Dernier fallback si pas de JobOffer ni snapshot mais sourceType est link
       jobOfferInfo = {
         title: null,
         url: cvFile.sourceValue,
@@ -143,7 +166,7 @@ export async function GET(request) {
     return NextResponse.json({
       sourceType: cvFile.sourceType,
       sourceValue: cvFile.sourceValue,
-      hasJobOffer: !!cvFile.jobOfferId,
+      hasJobOffer: !!cvFile.jobOfferId || !!cvFile.jobOfferSnapshot,
       jobOfferInfo,
       sourceCvInfo,
     });

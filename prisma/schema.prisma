@@ -73,6 +73,7 @@ model CvFile {
   sourceType             String?
   sourceValue            String?
   jobOfferId             String?            // Relation vers JobOffer (extraction structurée)
+  jobOfferSnapshot       Json?              // Snapshot de l'offre au moment de la génération (autonomie si offre supprimée)
   createdBy              String?
   originalCreatedBy      String?
   isTranslated           Boolean            @default(false)

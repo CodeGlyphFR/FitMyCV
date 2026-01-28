@@ -38,6 +38,7 @@ export async function POST(request) {
       },
       select: {
         jobOffer: true, // Relation vers JobOffer
+        jobOfferSnapshot: true, // Snapshot pour fallback si offre supprimée
         scoreBreakdown: true,
         improvementSuggestions: true,
         sourceValue: true,
@@ -136,10 +137,12 @@ export async function POST(request) {
       }
     });
 
-    // Formater le contenu de l'offre pour l'amélioration
+    // Formater le contenu de l'offre pour l'amélioration (priorité: offre live > snapshot)
     const jobOfferContent = cvRecord.jobOffer?.content
       ? JSON.stringify(cvRecord.jobOffer.content)
-      : null;
+      : cvRecord.jobOfferSnapshot?.content
+        ? JSON.stringify(cvRecord.jobOfferSnapshot.content)
+        : null;
 
     // Lancer l'amélioration en arrière-plan via la job queue
     scheduleImproveCvJob({
