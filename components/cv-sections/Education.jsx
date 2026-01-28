@@ -23,7 +23,7 @@ import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
 import { useItemChanges } from "@/components/cv-review/useItemChanges";
 import { useEducationAllChanges } from "@/components/cv-review/EducationReviewActions";
 import ChangeReviewPopover from "@/components/cv-review/ChangeReviewPopover";
-import { useHighlight } from "@/components/providers/HighlightProvider";
+import { useReview } from "@/components/providers/ReviewProvider";
 import CountrySelect from "@/components/ui/CountrySelect";
 import MonthPicker from "@/components/ui/MonthPicker";
 import ContextMenu from "@/components/ui/ContextMenu";
@@ -34,7 +34,7 @@ import { Pencil, Trash2 } from "lucide-react";
  */
 function EducationItem({ education: e, index, isEditing, onEdit, onDelete, cvT, t }) {
   const { changes, hasChanges } = useEducationAllChanges(e.institution);
-  const { acceptChange, rejectChange } = useHighlight();
+  const { acceptChange, rejectChange } = useReview();
   const [showPopover, setShowPopover] = useState(false);
   const itemRef = useRef(null);
 

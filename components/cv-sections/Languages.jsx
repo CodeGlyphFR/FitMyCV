@@ -13,7 +13,7 @@ import { useLanguageHasChanges } from "@/components/cv-review/LanguageReviewActi
 import ChangeReviewPopover from "@/components/cv-review/ChangeReviewPopover";
 import ReviewableItemCard from "@/components/cv-review/ReviewableItemCard";
 import { useItemChanges } from "@/components/cv-review/useItemChanges";
-import { useHighlight } from "@/components/providers/HighlightProvider";
+import { useReview } from "@/components/providers/ReviewProvider";
 import { Languages as LanguagesIcon } from "lucide-react";
 import {
   ModalSection,
@@ -31,7 +31,7 @@ import { Pencil, Trash2 } from "lucide-react";
  */
 function LanguageItem({ language, index, isEditing, onEdit, onDelete, cvT, t }) {
   const { hasChanges, change } = useLanguageHasChanges(language.name);
-  const { acceptChange, rejectChange } = useHighlight();
+  const { acceptChange, rejectChange } = useReview();
   const [showPopover, setShowPopover] = useState(false);
   const itemRef = useRef(null);
 

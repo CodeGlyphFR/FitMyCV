@@ -12,7 +12,7 @@ import { useSettings } from "@/lib/settings/SettingsContext";
 import ChangeHighlight from "@/components/cv-review/ChangeHighlight";
 import { toTitleCase } from "@/lib/utils/textFormatting";
 import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
-import { useHighlight } from "@/components/providers/HighlightProvider";
+import { useReview } from "@/components/providers/ReviewProvider";
 import CountrySelect from "@/components/ui/CountrySelect";
 import { User, Mail, MapPin, Link2, Plus, Trash2, FileText } from "lucide-react";
 import {
@@ -36,7 +36,7 @@ export default function Header(props){
   const [open, setOpen] = React.useState(false);
 
   // Récupérer la version courante depuis le contexte
-  const { currentVersion } = useHighlight();
+  const { currentVersion } = useReview();
 
   // Calculer isHistoricalVersion directement depuis currentVersion (plus fiable que l'API)
   const isHistoricalVersion = currentVersion !== 'latest';

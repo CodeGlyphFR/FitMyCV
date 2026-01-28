@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useHighlight } from "@/components/providers/HighlightProvider";
+import { useReview } from "@/components/providers/ReviewProvider";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 
@@ -25,7 +25,7 @@ export default function VersionSelector() {
     reviewProgress,
     isLatestVersion,
     isRestoring,
-  } = useHighlight();
+  } = useReview();
 
   // Calculer la position du dropdown
   useEffect(() => {

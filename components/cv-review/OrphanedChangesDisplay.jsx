@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useHighlight } from "@/components/providers/HighlightProvider";
+import { useReview } from "@/components/providers/ReviewProvider";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 /**
@@ -15,7 +15,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
  */
 export default function OrphanedChangesDisplay() {
   const { t } = useLanguage();
-  const { pendingChanges, isLatestVersion, acceptChange, rejectChange } = useHighlight();
+  const { pendingChanges, isLatestVersion, acceptChange, rejectChange } = useReview();
 
   // Filtrer pour n'afficher que les changements vraiment orphelins
   // Les suppressions sont maintenant affichées dans leurs sections respectives

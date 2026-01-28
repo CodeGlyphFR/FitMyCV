@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef } from "react";
-import { useHighlight } from "@/components/providers/HighlightProvider";
+import { useReview } from "@/components/providers/ReviewProvider";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import ChangeReviewPopover from "./ChangeReviewPopover";
 import InlineDiff from "./InlineDiff";
@@ -89,7 +89,7 @@ export default function ChangeHighlight({
     isLatestVersion,
     acceptChange,
     rejectChange,
-  } = useHighlight();
+  } = useReview();
 
   // Trouver le changement correspondant
   // Si expIndex est fourni, on doit aussi matcher sur expIndex
@@ -218,7 +218,7 @@ export default function ChangeHighlight({
  * Hook utilitaire pour trouver un changement par section et field
  */
 export function useFindChange(section, field) {
-  const { pendingChanges, isLatestVersion } = useHighlight();
+  const { pendingChanges, isLatestVersion } = useReview();
 
   const change = pendingChanges.find(
     (c) => c.section === section && c.field === field
@@ -245,7 +245,7 @@ export function GlobalReviewActions() {
     acceptAllChanges,
     rejectAllChanges,
     isBatchProcessing,
-  } = useHighlight();
+  } = useReview();
 
   if (!isLatestVersion || !hasUnreviewedChanges) {
     return null;

@@ -207,7 +207,7 @@ Surlignage et review des changements IA.
 
 ### Patterns
 
-- **useHighlight context** : pendingChanges
+- **useReview context** : pendingChanges
 - **Diff pathfinding** : `section.field` vs `section[idx].field`
 - **Batch actions** : accept/reject multiples
 - **Status tracking** : pending/accepted/rejected
@@ -407,13 +407,15 @@ Stack de 10 providers imbriqués :
 </SessionProvider>
 ```
 
-### HighlightProvider.jsx (150+ lignes)
+### ReviewProvider.jsx (600+ lignes)
 
 - Review system pour changements IA
-- Version management
-- pendingChanges state
-- acceptChange/rejectChange methods
+- Version management (versions, currentVersion, selectVersion, restoreVersion)
+- pendingChanges state global
+- acceptChange/rejectChange methods (individuels et batch)
 - Progress tracking (total/reviewed/pending)
+- Synchronisation inter-sections via événements
+- Rétrocompatibilité avec `useHighlight()` (alias de `useReview()`)
 
 ### Autres Providers
 
@@ -750,7 +752,7 @@ Header (cv-sections)
   ├── CVImprovementPanel (cv-improvement)
   ├── MatchScore (cv-improvement)
   ├── ChangeHighlight (cv-review)
-  └── HighlightProvider (context)
+  └── ReviewProvider (context)
 
 SubscriptionsPage
   ├── CurrentPlanCard

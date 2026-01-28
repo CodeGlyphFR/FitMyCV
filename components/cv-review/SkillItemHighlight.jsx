@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef } from "react";
-import { useHighlight } from "@/components/providers/HighlightProvider";
+import { useReview } from "@/components/providers/ReviewProvider";
 import ChangeReviewPopover from "./ChangeReviewPopover";
 
 /**
@@ -29,7 +29,7 @@ export default function SkillItemHighlight({
     isLatestVersion,
     acceptChange,
     rejectChange,
-  } = useHighlight();
+  } = useReview();
 
   // Trouver le changement correspondant à CET item spécifique
   const change = pendingChanges.find((c) => {
@@ -109,7 +109,7 @@ export default function SkillItemHighlight({
  * Hook pour récupérer les items supprimés pour une section/field
  */
 export function useRemovedItems(section, field, expIndex) {
-  const { pendingChanges, isLatestVersion } = useHighlight();
+  const { pendingChanges, isLatestVersion } = useReview();
 
   if (!isLatestVersion) return [];
 

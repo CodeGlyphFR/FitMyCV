@@ -1,11 +1,11 @@
 "use client";
-import { useHighlight } from "@/components/providers/HighlightProvider";
+import { useReview } from "@/components/providers/ReviewProvider";
 
 /**
  * Hook pour vérifier si une formation a des changements pending (pour le highlighting)
  */
 export function useEducationHasChanges(institution) {
-  const { pendingChanges, isLatestVersion } = useHighlight();
+  const { pendingChanges, isLatestVersion } = useReview();
 
   if (!isLatestVersion || !institution) return { hasChanges: false, isModified: false, change: null };
 
@@ -22,6 +22,7 @@ export function useEducationHasChanges(institution) {
     hasChanges: !!educationChange,
     isModified: educationChange?.changeType === "modified",
     isRemoved: educationChange?.changeType === "removed",
+    isAdded: educationChange?.changeType === "added",
     change: educationChange,
   };
 }
@@ -30,7 +31,7 @@ export function useEducationHasChanges(institution) {
  * Hook pour récupérer tous les changements d'une formation (degree, field_of_study)
  */
 export function useEducationAllChanges(institution) {
-  const { pendingChanges, isLatestVersion } = useHighlight();
+  const { pendingChanges, isLatestVersion } = useReview();
 
   if (!isLatestVersion || !institution) return { changes: [], hasChanges: false };
 
@@ -48,3 +49,8 @@ export function useEducationAllChanges(institution) {
     hasChanges: educationChanges.length > 0,
   };
 }
+
+/**
+ * Re-export du hook du nouveau système pour faciliter la migration
+ */
+export { useEducationHasChanges as useEducationHasChangesV2 } from "@/lib/cv-core/review/hooks";

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef } from "react";
-import { useHighlight } from "@/components/providers/HighlightProvider";
+import { useReview } from "@/components/providers/ReviewProvider";
 import ChangeReviewPopover from "./ChangeReviewPopover";
 import { Check, X } from "lucide-react";
 
@@ -28,7 +28,7 @@ export default function ReviewableItemCard({
 }) {
   const [showPopover, setShowPopover] = useState(false);
   const cardRef = useRef(null);
-  const { acceptChange, rejectChange, isBatchProcessing } = useHighlight();
+  const { acceptChange, rejectChange, isBatchProcessing } = useReview();
 
   if (!change) {
     return <>{children}</>;

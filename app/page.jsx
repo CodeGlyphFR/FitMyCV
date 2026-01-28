@@ -9,7 +9,7 @@ import Extras from "@/components/cv-sections/Extras";
 import Projects from "@/components/cv-sections/Projects";
 import EmptyState from "@/components/empty-state/EmptyState";
 import ScrollToTopOnMount from "@/components/layout/ScrollToTopOnMount";
-import { HighlightProvider } from "@/components/providers/HighlightProvider";
+import { ReviewProvider } from "@/components/providers/ReviewProvider";
 import OrphanedChangesDisplay from "@/components/cv-review/OrphanedChangesDisplay";
 
 import { sanitizeInMemory } from "@/lib/sanitize";
@@ -132,7 +132,7 @@ export default async function Page(props){
   const order = base;
 
   return (
-    <HighlightProvider cv={cv} filename={filename} initialVersion={isViewingVersion ? viewingVersionNumber : 'latest'} contentVersion={contentVersion}>
+    <ReviewProvider cv={cv} filename={filename} initialVersion={isViewingVersion ? viewingVersionNumber : 'latest'} contentVersion={contentVersion}>
       <main className="max-w-4xl mx-auto p-4 pb-2 md:pt-8">
         <ScrollToTopOnMount />
 
@@ -145,6 +145,6 @@ export default async function Page(props){
         ))}
 
       </main>
-    </HighlightProvider>
+    </ReviewProvider>
   );
 }

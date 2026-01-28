@@ -1,11 +1,11 @@
 "use client";
-import { useHighlight } from "@/components/providers/HighlightProvider";
+import { useReview } from "@/components/providers/ReviewProvider";
 
 /**
  * Hook pour vérifier si une langue a des changements pending (pour le highlighting)
  */
 export function useLanguageHasChanges(languageName) {
-  const { pendingChanges, isLatestVersion } = useHighlight();
+  const { pendingChanges, isLatestVersion } = useReview();
 
   if (!isLatestVersion || !languageName) return { hasChanges: false, isAdded: false, isModified: false, change: null };
 
@@ -25,3 +25,9 @@ export function useLanguageHasChanges(languageName) {
     change: languageChange,
   };
 }
+
+/**
+ * Hook alternatif utilisant le nouveau système de review par section
+ * @deprecated Utilisez useLanguageHasChanges ou directement useLanguagesReview
+ */
+export { useLanguageHasChanges as useLanguageHasChangesV2 } from "@/lib/cv-core/review/hooks";

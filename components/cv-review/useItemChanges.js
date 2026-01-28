@@ -1,5 +1,5 @@
 "use client";
-import { useHighlight } from "@/components/providers/HighlightProvider";
+import { useReview } from "@/components/providers/ReviewProvider";
 
 /**
  * Hook pour récupérer les changements d'items pour une section donnée
@@ -12,7 +12,7 @@ import { useHighlight } from "@/components/providers/HighlightProvider";
  * const { addedItems, removedItems } = useItemChanges("languages");
  */
 export function useItemChanges(section) {
-  const { pendingChanges, isLatestVersion } = useHighlight();
+  const { pendingChanges, isLatestVersion } = useReview();
 
   if (!isLatestVersion) {
     return {
@@ -57,7 +57,7 @@ export function useItemChanges(section) {
  * @returns {Object} - { hasChanges, isAdded, isModified, isRemoved, change }
  */
 export function useItemHasChanges(section, itemIdentifier) {
-  const { pendingChanges, isLatestVersion } = useHighlight();
+  const { pendingChanges, isLatestVersion } = useReview();
 
   if (!isLatestVersion || !itemIdentifier) {
     return {
@@ -80,6 +80,49 @@ export function useItemHasChanges(section, itemIdentifier) {
     // Matcher par index si itemIdentifier est un nombre
     if (typeof itemIdentifier === "number" && c.itemIndex !== undefined) {
       return c.itemIndex === itemIdentifier;
+    }
+
+    return false;
+  });
+
+  const changeType = change?.changeType;
+
+  return {
+    hasChanges: !!change,
+    isAdded: changeType === "added" || changeType === "move_to_projects",
+    isModified: changeType === "modified" || changeType === "level_adjusted",
+    isRemoved: changeType === "removed" || changeType === "experience_removed",
+    change,
+  };
+}
+
+/**
+ * Version V2 qui utilise un hook de section passé en paramètre
+ * Au lieu d'utiliser le ReviewProvider global
+ *
+ * @param {Object} review - Hook de review de la section
+ * @param {string} itemIdentifier - Identifiant de l'item (nom)
+ * @returns {Object} - { hasChanges, isAdded, isModified, isRemoved, change }
+ */
+export function useItemHasChangesV2(review, itemIdentifier) {
+  const { changes = [] } = review || {};
+
+  if (!itemIdentifier || changes.length === 0) {
+    return {
+      hasChanges: false,
+      isAdded: false,
+      isModified: false,
+      isRemoved: false,
+      change: null
+    };
+  }
+
+  const change = changes.find((c) => {
+    if (c.status !== "pending") return false;
+
+    // Matcher par itemName
+    if (c.itemName && itemIdentifier) {
+      return c.itemName.toLowerCase() === itemIdentifier.toLowerCase();
     }
 
     return false;

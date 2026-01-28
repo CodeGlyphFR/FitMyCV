@@ -29,7 +29,7 @@ import ExperienceReviewActions from "@/components/cv-review/ExperienceReviewActi
 import ChangeHighlight from "@/components/cv-review/ChangeHighlight";
 import ReviewableItemCard from "@/components/cv-review/ReviewableItemCard";
 import { useItemChanges } from "@/components/cv-review/useItemChanges";
-import { useHighlight } from "@/components/providers/HighlightProvider";
+import { useReview } from "@/components/providers/ReviewProvider";
 import CountrySelect from "@/components/ui/CountrySelect";
 import MonthPicker from "@/components/ui/MonthPicker";
 import ContextMenu from "@/components/ui/ContextMenu";
@@ -105,7 +105,7 @@ export default function Experience(props){
   const title = getCvSectionTitleInCvLanguage('experience', sectionTitles.experience, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
-  const { batchProcessingExpIndex } = useHighlight();
+  const { batchProcessingExpIndex } = useReview();
 
   // Récupérer les expériences supprimées pour les afficher
   const { removedItems: allRemovedItems } = useItemChanges("experience");
