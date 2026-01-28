@@ -35,11 +35,11 @@ function LanguageItem({ language, index, isEditing, onEdit, onDelete, cvT, t }) 
   const [showPopover, setShowPopover] = useState(false);
   const itemRef = useRef(null);
 
-  // Classes conditionnelles pour le highlight (même pattern que Projects)
+  // Classes conditionnelles pour le highlight (ambre pour modifications)
   const itemClasses = [
     "relative inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm",
     hasChanges
-      ? "border-2 border-emerald-500/50 bg-emerald-500/10 cursor-pointer" // Modifié = vert + clickable
+      ? "border-2 border-amber-500/50 bg-amber-500/10 cursor-pointer" // Modifié = ambre + clickable
       : "border border-white/15", // Normal
   ].join(" ");
 
