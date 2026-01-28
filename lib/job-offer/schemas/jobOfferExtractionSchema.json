@@ -224,7 +224,7 @@
       },
       "language": {
         "type": ["string", "null"],
-        "description": "FILL THIS LAST. Language code based on YOUR EXTRACTED CONTENT (responsibilities, benefits, skills). If these fields are in English → 'en'. If in French → 'fr'. Ignore URL path. Values: fr, en, es, de, or null."
+        "description": "FILL THIS LAST. Language code based PRIMARILY on RESPONSIBILITIES (missions). If responsibilities are in English → 'en' (even if benefits are in French). If responsibilities are in French → 'fr'. Ignore URL path and benefits for language detection. Values: fr, en, es, de, or null."
       }
     },
     "required": [

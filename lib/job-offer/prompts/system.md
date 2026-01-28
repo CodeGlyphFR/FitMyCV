@@ -86,13 +86,17 @@ Remplir le JSON avec les valeurs analysees, en respectant les regles ci-dessous.
 
 **ORDRE OBLIGATOIRE** : Tu DOIS d'abord extraire TOUS les autres champs (responsibilities, benefits, skills, etc.), puis EN DERNIER determiner le champ `language` en analysant CE QUE TU VIENS D'EXTRAIRE.
 
-Analyse la langue des champs que tu as remplis :
-- Si `responsibilities` contient "Build relationships", "Ensure product adoption" → langue = "en"
-- Si `responsibilities` contient "Gerer les clients", "Assurer le suivi" → langue = "fr"
-- Si `benefits` contient "Flexible remote", "Paid time off" → langue = "en"
-- Si `benefits` contient "Teletravail", "Mutuelle" → langue = "fr"
+**PRIORITE ABSOLUE : La langue est determinee par les `responsibilities` (missions).**
+- Si les responsibilities sont en anglais → "en" (meme si benefits en francais)
+- Si les responsibilities sont en francais → "fr" (meme si benefits en anglais)
+- Les benefits NE SONT PAS pris en compte pour determiner la langue
 
-**IGNORE COMPLETEMENT** : l'URL, le nom de domaine, le chemin "/fr/" ou "/en/". Seul le contenu extrait compte.
+Exemples :
+- responsibilities: ["Build relationships", "Ensure product adoption"] → langue = "en"
+- responsibilities: ["Gerer les clients", "Assurer le suivi"] → langue = "fr"
+- responsibilities EN + benefits FR → langue = "en" (les responsibilities priment)
+
+**IGNORE COMPLETEMENT** : l'URL, le nom de domaine, le chemin "/fr/" ou "/en/". Seul le contenu des responsibilities compte.
 
 ---
 
