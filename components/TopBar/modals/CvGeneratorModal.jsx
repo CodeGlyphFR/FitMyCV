@@ -97,6 +97,7 @@ export default function CvGeneratorModal({
                         item={generatorBaseItem}
                         withHyphen={false}
                         tickerKey={tickerResetKey}
+                        showLanguageFlag={true}
                         t={t}
                       />
                     </span>
@@ -157,6 +158,7 @@ export default function CvGeneratorModal({
                           className="leading-tight"
                           withHyphen={false}
                           tickerKey={tickerResetKey}
+                          showLanguageFlag={true}
                           t={t}
                         />
                       </button>
