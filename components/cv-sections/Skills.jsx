@@ -270,7 +270,7 @@ export default function Skills(props){
                             const levelLabel = displaySkillLevel(s, cvT);
                             return (
                               <div key={i} className="text-sm">
-                                <SkillItemHighlight section="skills" field="hard_skills" itemName={skillName}>
+                                <SkillItemHighlight section="skills" field="hard_skills" itemName={skillName} infoPosition="inline">
                                   <span className="font-medium">
                                     {capitalizeSkillName(skillName)}
                                   </span>
@@ -317,7 +317,7 @@ export default function Skills(props){
                           const levelLabel = displaySkillLevel(tool, cvT);
                           return (
                             <li key={i} className="text-sm">
-                              <SkillItemHighlight section="skills" field="tools" itemName={toolName}>
+                              <SkillItemHighlight section="skills" field="tools" itemName={toolName} infoPosition="inline">
                                 <span className="font-medium">
                                   {capitalizeSkillName(toolName)}
                                 </span>
@@ -355,7 +355,7 @@ export default function Skills(props){
                         {filteredMethods.map((m, i) => {
                           const methodName = getSkillName(m);
                           return (
-                            <SkillItemHighlight key={i} section="skills" field="methodologies" itemName={methodName}>
+                            <SkillItemHighlight key={i} section="skills" field="methodologies" itemName={methodName} infoPosition="corner">
                               <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
                                 {capitalizeSkillName(methodName)}
                               </span>
@@ -382,7 +382,7 @@ export default function Skills(props){
                     {filteredSoft.map((m, i) => {
                       const softName = getSkillName(m);
                       return (
-                        <SkillItemHighlight key={i} section="skills" field="soft_skills" itemName={softName}>
+                        <SkillItemHighlight key={i} section="skills" field="soft_skills" itemName={softName} infoPosition="corner">
                           <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
                             {capitalizeSkillName(softName)}
                           </span>

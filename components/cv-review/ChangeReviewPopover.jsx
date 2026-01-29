@@ -90,7 +90,7 @@ export default function ChangeReviewPopover({
     };
   }, [mounted, calculatePosition, onClose]);
 
-  // Fermer si on clique en dehors
+  // Fermer si on clique/touche en dehors
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -104,7 +104,11 @@ export default function ChangeReviewPopover({
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, [onClose, anchorRef]);
 
   // Fermer avec Escape
@@ -152,6 +156,34 @@ export default function ChangeReviewPopover({
       style={{ top: position.top, left: position.left, zIndex: 99999 }}
     >
       <div className="px-3 pt-2.5 pb-2 space-y-2">
+        {/* Pour les skills consolidés (multi_renamed): afficher tous les skills regroupés */}
+        {change.changeType === "multi_renamed" && change.items && (
+          <div className="space-y-2 max-w-[280px]">
+            <p className="text-xs text-white/70">
+              {change.items.length} {t("review.skillsConsolidated") || "compétences consolidées en"}{" "}
+              <span className="text-amber-300 font-medium">"{change.afterValue?.name}"</span>
+            </p>
+
+            <div className="space-y-1.5">
+              {change.items.map((item, i) => (
+                <div key={i} className="text-xs border-l-2 border-amber-500/50 pl-2 py-0.5">
+                  <p>
+                    <span className="line-through opacity-70">{item.original_value}</span>
+                    <span className="mx-1">→</span>
+                    <span className="text-amber-300">{change.afterValue?.name}</span>
+                    {item.score && (
+                      <span className="text-white/50 ml-1">({item.score}%)</span>
+                    )}
+                  </p>
+                  {item.reason && (
+                    <p className="text-white/60 italic text-[11px] mt-0.5">{item.reason}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Pour les langues: afficher le changement de niveau de façon lisible */}
         {change.section === "languages" && change.beforeValue && change.afterValue && (
           <p className="text-xs text-amber-300/90 max-w-[250px]">

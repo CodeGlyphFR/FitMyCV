@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
+import prisma from '@/lib/prisma';
 import { getReviewState, getReviewStateForSection, processReviewAction, processBatchReviewAction } from '@/lib/cv-core/changeTracking';
 import { CommonErrors } from '@/lib/api/apiErrors';
 
@@ -62,12 +63,28 @@ export async function GET(request) {
       console.log(`[API /cvs/changes] GET ${filename}: reviewState=${reviewState ? `${reviewState.pendingChanges?.length || 0} changes` : 'null'}`);
     }
 
+    // Récupérer les raisons des skills "kept" depuis le contenu du CV
+    // (pour affichage du bouton info)
+    let keptSkillReasons = {};
+    try {
+      const cvFile = await prisma.cvFile.findUnique({
+        where: { userId_filename: { userId: session.user.id, filename } },
+        select: { content: true },
+      });
+      if (cvFile?.content?._keptSkillReasons) {
+        keptSkillReasons = cvFile.content._keptSkillReasons;
+      }
+    } catch (e) {
+      console.error('[API /cvs/changes] Error fetching keptSkillReasons:', e);
+    }
+
     if (!reviewState) {
       return NextResponse.json({
         filename,
         pendingChanges: [],
         pendingSourceVersion: null,
         progress: { total: 0, reviewed: 0, pending: 0, percentComplete: 100 },
+        keptSkillReasons,
       });
     }
 
@@ -75,6 +92,7 @@ export async function GET(request) {
       filename,
       section, // Inclure la section dans la réponse pour le client
       ...reviewState,
+      keptSkillReasons,
     });
   } catch (error) {
     console.error('[changes] GET Error:', error);

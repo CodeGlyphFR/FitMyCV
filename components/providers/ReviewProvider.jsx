@@ -65,6 +65,8 @@ export function ReviewProvider({
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [batchProcessingExpIndex, setBatchProcessingExpIndex] = useState(null);
   const [isRestoring, setIsRestoring] = useState(false);
+  // Raisons des skills "kept" (pour bouton info)
+  const [keptSkillReasons, setKeptSkillReasons] = useState({});
 
   // Charger les changements legacy depuis meta
   useEffect(() => {
@@ -96,6 +98,8 @@ export function ReviewProvider({
             percentComplete: 100,
           }
         );
+        // Stocker les raisons des skills "kept"
+        setKeptSkillReasons(data.keptSkillReasons || {});
       }
     } catch (error) {
       console.error("[ReviewProvider] Error fetching review state:", error);
@@ -515,6 +519,7 @@ export function ReviewProvider({
       isBatchProcessing,
       batchProcessingExpIndex,
       isRestoring,
+      keptSkillReasons,
 
       // Nouveau système - Actions
       acceptChange,
@@ -542,6 +547,7 @@ export function ReviewProvider({
       isBatchProcessing,
       batchProcessingExpIndex,
       isRestoring,
+      keptSkillReasons,
       acceptChange,
       rejectChange,
       acceptAllChanges,
@@ -589,6 +595,7 @@ export function useReview() {
       isBatchProcessing: false,
       batchProcessingExpIndex: null,
       isRestoring: false,
+      keptSkillReasons: {},
 
       // Actions (no-op)
       acceptChange: async () => ({ success: false }),

@@ -1,0 +1,44 @@
+{
+  "name": "skills_match_result",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "matches": {
+        "type": "array",
+        "description": "Tableau de correspondances CV ↔ Offre pour chaque skill",
+        "items": {
+          "type": "object",
+          "properties": {
+            "cv_skill": {
+              "type": "string",
+              "description": "Nom du skill dans le CV (recopie exacte du nom recu)"
+            },
+            "offer_skill": {
+              "type": ["string", "null"],
+              "description": "Nom du skill correspondant dans l'offre (null si aucun match >= 60%)"
+            },
+            "score": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Score de correspondance (0-100)"
+            },
+            "reason": {
+              "type": ["string", "null"],
+              "description": "Explication de la correspondance dans la langue de l'interface"
+            },
+            "adapted_name": {
+              "type": "string",
+              "description": "Nom du skill adapte/traduit dans la langue de l'offre"
+            }
+          },
+          "required": ["cv_skill", "offer_skill", "score", "reason", "adapted_name"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": ["matches"],
+    "additionalProperties": false
+  }
+}
