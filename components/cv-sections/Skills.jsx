@@ -264,12 +264,12 @@ export default function Skills(props){
                   {hasHard ? (
                     <>
                       {filteredHard.length > 0 && (
-                        <div className={`grid gap-3 ${filteredHard.length > 5 ? "md:grid-cols-2" : "grid-cols-1"}`}>
+                        <div className={`grid ${filteredHard.length > 5 ? "md:grid-cols-2" : "grid-cols-1"}`}>
                           {filteredHard.map((s, i) => {
                             const skillName = getSkillName(s);
                             const levelLabel = displaySkillLevel(s, cvT);
                             return (
-                              <div key={i} className="text-sm">
+                              <div key={i} className="flex items-center text-sm">
                                 <SkillItemHighlight section="skills" field="hard_skills" itemName={skillName} infoPosition="inline">
                                   <span className="font-medium">
                                     {capitalizeSkillName(skillName)}
