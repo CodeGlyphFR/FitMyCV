@@ -264,7 +264,7 @@ export default function Skills(props){
                   {hasHard ? (
                     <>
                       {filteredHard.length > 0 && (
-                        <div className={`grid ${filteredHard.length > 5 ? "md:grid-cols-2" : "grid-cols-1"}`}>
+                        <div className={`grid gap-1 ${filteredHard.length > 5 ? "md:grid-cols-2" : "grid-cols-1"}`}>
                           {filteredHard.map((s, i) => {
                             const skillName = getSkillName(s);
                             const levelLabel = displaySkillLevel(s, cvT);
