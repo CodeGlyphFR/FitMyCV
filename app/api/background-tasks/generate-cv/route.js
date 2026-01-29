@@ -108,6 +108,7 @@ export async function POST(request) {
     const rawBaseFile = formData.get('baseFile');
     const deviceId = formData.get('deviceId') || 'unknown-device';
     const recaptchaToken = formData.get('recaptchaToken');
+    const userInterfaceLanguage = formData.get('userInterfaceLanguage') || 'fr';
     const files = formData.getAll('files').filter(Boolean);
 
     // Vérification reCAPTCHA
@@ -250,6 +251,7 @@ export async function POST(request) {
             url,
             offerIndex: taskIndex,
             totalOffersInBatch: totalOffers,
+            userInterfaceLanguage,
           }),
         },
       });
@@ -313,6 +315,7 @@ export async function POST(request) {
             pdfName: pdfFile.name,
             offerIndex: taskIndex,
             totalOffersInBatch: totalOffers,
+            userInterfaceLanguage,
           }),
         },
       });

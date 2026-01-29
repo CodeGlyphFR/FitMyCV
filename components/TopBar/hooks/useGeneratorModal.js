@@ -1,6 +1,7 @@
 import React from "react";
 import { CREATE_TEMPLATE_OPTION } from "../utils/constants";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { parseApiError } from "@/lib/utils/errorHandler";
 import { TASK_TYPES } from "@/lib/background-jobs/taskTypes";
 import { ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
@@ -22,6 +23,7 @@ export function useGeneratorModal({
   addLinksToHistory,
 }) {
   const { executeRecaptcha } = useRecaptcha();
+  const { language: interfaceLanguage } = useLanguage();
   const [openGenerator, setOpenGenerator] = React.useState(false);
   const [linkInputs, setLinkInputs] = React.useState([""]);
   const [fileSelection, setFileSelection] = React.useState([]);
@@ -225,6 +227,7 @@ export function useGeneratorModal({
       const formData = new FormData();
       formData.append("links", JSON.stringify(cleanedLinks));
       formData.append("recaptchaToken", recaptchaToken);
+      formData.append("userInterfaceLanguage", interfaceLanguage || "fr");
 
       if (!isTemplateCreation) {
         const baseCvName = generatorBaseItem?.displayTitle || generatorBaseItem?.title || generatorBaseFile;

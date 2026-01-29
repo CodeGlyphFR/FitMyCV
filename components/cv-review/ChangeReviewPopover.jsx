@@ -229,6 +229,14 @@ export default function ChangeReviewPopover({
           </p>
         )}
 
+        {/* Affichage si skill séparé depuis un skill composé */}
+        {(change.separatedFrom || change.popoverContent?.separated_from) && (
+          <p className="text-xs text-amber-300/80 max-w-[250px]">
+            <span className="font-medium">{t("review.separatedFrom") || "Separé depuis"} : </span>
+            {change.separatedFrom || change.popoverContent?.separated_from}
+          </p>
+        )}
+
         {/* Actions - liens style alignés à droite */}
         <div className="flex items-center justify-end gap-3 text-xs">
           <button
