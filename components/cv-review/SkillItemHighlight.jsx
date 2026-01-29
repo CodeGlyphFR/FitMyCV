@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useReview } from "@/components/providers/ReviewProvider";
 import ChangeReviewPopover from "./ChangeReviewPopover";
+import SkillsReviewActions from "@/components/cv-review/SkillsReviewActions";
 import { Info } from "lucide-react";
 
 /**
@@ -386,6 +387,7 @@ export function RemovedSkillsDisplayBlock({ field, title }) {
     <div className="w-full rounded-2xl border border-red-500/20 bg-red-500/5 p-3">
       <div className="flex items-center justify-between mb-1">
         <h3 className="font-semibold text-red-400/80">{title}</h3>
+        <SkillsReviewActions field={field} />
       </div>
       <RemovedSkillsDisplay section="skills" field={field} />
     </div>
@@ -404,6 +406,9 @@ export function RemovedSkillsBadgesBlock({ field, title, badgeClassName }) {
 
   return (
     <div>
+      <div className="flex items-center justify-end mb-1">
+        <SkillsReviewActions field={field} />
+      </div>
       <div className="flex flex-wrap gap-1">
         <RemovedSkillsBadges
           section="skills"
