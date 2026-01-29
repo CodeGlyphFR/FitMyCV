@@ -324,7 +324,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
           label="Total tokens"
           value={formatNumber(data.total.totalTokens)}
           subtitle={`${formatNumber(correctedTotalCalls)} appels`}
-          description={`Nombre total de tokens consommés (input + output). Input: ${formatNumber(data.total.promptTokens)} (dont ${formatNumber(data.total.cachedTokens)} en cache), Output: ${formatNumber(data.total.completionTokens)}`}
+          description={`Nombre total de tokens consommés. Input (non-caché): ${formatNumber(data.total.promptTokens - data.total.cachedTokens)}, Cache: ${formatNumber(data.total.cachedTokens)}, Output: ${formatNumber(data.total.completionTokens)}`}
         />
         <KPICard
           icon="📊"
