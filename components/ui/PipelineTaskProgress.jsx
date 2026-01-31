@@ -95,7 +95,8 @@ function OfferProgressLine({ offer, t, createdAt }) {
   // Label de l'étape en cours
   let stepLabel = '';
   if (displayStep) {
-    const label = t(STEP_LABELS[displayStep]) || STEP_FALLBACKS[displayStep];
+    const translationKey = STEP_LABELS[displayStep];
+    const label = (translationKey && t(translationKey)) || STEP_FALLBACKS[displayStep] || displayStep;
     if (currentItem !== null && totalItems !== null) {
       stepLabel = `${label} ${currentItem + 1}/${totalItems}`;
     } else {
