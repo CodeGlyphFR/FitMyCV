@@ -82,7 +82,7 @@ export default function GenericTaskProgressBar({
     ? 'bg-gradient-to-r from-red-500 to-red-400'
     : status === 'completed'
       ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
-      : 'bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-400';
+      : 'bg-gradient-to-r from-emerald-500 via-emerald-400 to-green-400';
 
   // Classes pour le status
   const statusColorClasses = status === 'completed'
@@ -127,7 +127,7 @@ export default function GenericTaskProgressBar({
             {description}
           </span>
         </div>
-        <span className="text-xs font-medium text-blue-400 tabular-nums flex-shrink-0">
+        <span className="text-xs font-medium text-emerald-400 tabular-nums flex-shrink-0">
           {status === 'running' ? `${displayProgress}%` : '—'}
         </span>
       </div>

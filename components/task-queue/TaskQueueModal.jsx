@@ -103,7 +103,7 @@ function ImprovementProgressIndicator({ task }) {
     ? 'bg-gradient-to-r from-red-500 to-red-400'
     : task.status === 'completed'
       ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
-      : 'bg-gradient-to-r from-violet-500 via-purple-400 to-fuchsia-400';
+      : 'bg-gradient-to-r from-emerald-500 via-emerald-400 to-green-400';
 
   // Classes pour le status
   const statusColorClasses = task.status === 'completed'
@@ -154,7 +154,7 @@ function ImprovementProgressIndicator({ task }) {
             {t('taskQueue.taskTypes.improveCv') || 'Amélioration CV'}
           </span>
         </div>
-        <span className="text-xs font-medium text-purple-400 tabular-nums flex-shrink-0">
+        <span className="text-xs font-medium text-emerald-400 tabular-nums flex-shrink-0">
           {task.status === 'running' ? `${percentage}%` : '—'}
         </span>
       </div>
