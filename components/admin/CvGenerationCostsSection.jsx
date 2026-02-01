@@ -77,6 +77,8 @@ export function CvGenerationCostsSection({ period, refreshKey }) {
       'batch_project': 'Projets',
       'batch_extras': 'Extras',
       'batch_skills': 'Compétences',
+      'batch_education': 'Formations',
+      'batch_languages': 'Langues',
       'batch_summary': 'Résumé',
       'recompose': 'Recomposition',
       'recompose_languages': 'Langues',
