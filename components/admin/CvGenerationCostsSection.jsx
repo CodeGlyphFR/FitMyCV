@@ -206,7 +206,29 @@ export function CvGenerationCostsSection({ period, refreshKey }) {
 
             {/* Expanded details - Individual subtasks */}
             {expandedTaskId === gen.taskId && (() => {
-              const validSubtasks = gen.subtasks.filter(s => s.promptTokens > 0 || s.completionTokens > 0);
+              const validSubtasks = gen.subtasks
+                .filter(s => s.promptTokens > 0 || s.completionTokens > 0)
+                .sort((a, b) => {
+                  const typeOrder = [
+                    'extraction',
+                    'classify',
+                    'batch_experience',
+                    'batch_project',
+                    'batch_extras',
+                    'batch_skills',
+                    'batch_summary',
+                    'recompose',
+                    'recompose_languages',
+                  ];
+                  const aType = typeOrder.indexOf(a.type);
+                  const bType = typeOrder.indexOf(b.type);
+
+                  if (aType !== bType) {
+                    return (aType === -1 ? 999 : aType) - (bType === -1 ? 999 : bType);
+                  }
+                  // Même type → trier par itemIndex
+                  return (a.itemIndex ?? -1) - (b.itemIndex ?? -1);
+                });
               return (
               <div className="border-t border-white/10 p-4 bg-black/20">
                 <h4 className="text-white/80 text-sm font-medium mb-2">
