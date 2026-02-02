@@ -15,7 +15,6 @@ function NotificationItem({ notification, onRemove, t }) {
   const styles = {
     success: {
       bg: "bg-emerald-500/20 backdrop-blur-xl",
-      border: "border-2 border-emerald-400/50",
       text: "text-white drop-shadow",
       icon: "text-emerald-300",
       button: "text-emerald-200 hover:text-white hover:bg-emerald-500/30",
@@ -23,7 +22,6 @@ function NotificationItem({ notification, onRemove, t }) {
     },
     error: {
       bg: "bg-red-500/20 backdrop-blur-xl",
-      border: "border-2 border-red-400/50",
       text: "text-white drop-shadow",
       icon: "text-red-300",
       button: "text-red-200 hover:text-white hover:bg-red-500/30",
@@ -31,7 +29,6 @@ function NotificationItem({ notification, onRemove, t }) {
     },
     info: {
       bg: "bg-white/15 backdrop-blur-xl",
-      border: "border-2 border-white/40",
       text: "text-white drop-shadow",
       icon: "text-white/80",
       button: "text-white/70 hover:text-white hover:bg-white/30",
@@ -39,7 +36,6 @@ function NotificationItem({ notification, onRemove, t }) {
     }
   }[type] || {
     bg: "bg-white/15 backdrop-blur-xl",
-    border: "border-2 border-white/40",
     text: "text-white drop-shadow",
     icon: "text-white/80",
     button: "text-white/70 hover:text-white hover:bg-white/30",
@@ -58,7 +54,7 @@ function NotificationItem({ notification, onRemove, t }) {
 
   return (
     <div
-      className={`${styles.bg} ${styles.border} ${styles.text} p-4 rounded-xl shadow-2xl mb-2 min-w-80 max-w-96 ${animationClass} ${!redirectUrl ? 'cursor-pointer hover:scale-[1.02]' : ''} transition-all duration-200`}
+      className={`${styles.bg} ${styles.text} p-4 rounded-xl shadow-2xl mb-2 min-w-80 max-w-96 ${animationClass} ${!redirectUrl ? 'cursor-pointer hover:scale-[1.02]' : ''} transition-all duration-200`}
       onClick={!redirectUrl ? () => onRemove(id) : undefined}
     >
       <div className="flex justify-between items-start gap-3">
