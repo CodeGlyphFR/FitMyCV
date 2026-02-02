@@ -380,7 +380,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
       </div>
 
       {/* CV Generation Costs Section */}
-      <CvGenerationCostsSection period={period} refreshKey={refreshKey} />
+      <CvGenerationCostsSection period={period} refreshKey={refreshKey} pricings={pricings} />
 
       {/* CV Improvement Costs Section */}
       <CvImprovementCostsSection period={period} refreshKey={refreshKey} />
