@@ -22,6 +22,8 @@ import { ONBOARDING_API } from '@/lib/onboarding/onboardingConfig';
 import dbEmitter from '@/lib/events/dbEmitter';
 import { CommonErrors, OtherErrors } from '@/lib/api/apiErrors';
 
+export const dynamic = 'force-dynamic';
+
 // Constante : nombre d'étapes total
 const MAX_STEP = getTotalSteps();
 
