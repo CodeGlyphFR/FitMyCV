@@ -1,7 +1,17 @@
 "use client";
 import React from "react";
-import { useHighlight } from "@/components/providers/HighlightProvider";
+import { useReview } from "@/components/providers/ReviewProvider";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+
+/**
+ * Spinner de chargement réutilisable
+ */
+const LoadingSpinner = () => (
+  <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+  </svg>
+);
 
 /**
  * Liens "Tout accepter" / "Tout refuser" pour une catégorie de compétences
@@ -18,7 +28,7 @@ export default function SkillsReviewActions({ field }) {
     acceptAllChanges,
     rejectAllChanges,
     isBatchProcessing,
-  } = useHighlight();
+  } = useReview();
 
   // Filtrer les changements pending pour cette catégorie de skills
   const skillChanges = pendingChanges.filter(
@@ -51,14 +61,6 @@ export default function SkillsReviewActions({ field }) {
     await rejectAllChanges(changeIds);
   };
 
-  // Spinner de chargement
-  const LoadingSpinner = () => (
-    <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-    </svg>
-  );
-
   return (
     <div className="flex items-center gap-2 text-xs no-print mt-2">
       {isBatchProcessing ? (
@@ -82,6 +84,73 @@ export default function SkillsReviewActions({ field }) {
           <button
             onClick={handleRejectAll}
             disabled={isBatchProcessing}
+            className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 hover:underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            {t("review.rejectAll")}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Version utilisant les nouveaux hooks de section review
+ * À utiliser avec ReviewProvider et useSkillsReview
+ *
+ * @param {Object} props
+ * @param {Object} props.review - Hook de review de la catégorie de skills (useSkillsReview('hard_skills'))
+ */
+export function SkillsReviewActionsV2({ review }) {
+  const { t } = useLanguage();
+
+  const { changes, isProcessing, acceptAll, rejectAll } = review;
+
+  // Ne rien afficher si pas de changements
+  if (changes.length === 0) {
+    return null;
+  }
+
+  const handleAcceptAll = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isProcessing) return;
+    await acceptAll();
+  };
+
+  const handleRejectAll = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isProcessing) return;
+    await rejectAll();
+  };
+
+  return (
+    <div className="flex items-center gap-2 text-xs no-print mt-2">
+      {isProcessing ? (
+        <span className="inline-flex items-center gap-2 text-white/70">
+          <LoadingSpinner />
+          {t("review.processing") || "Traitement en cours..."}
+        </span>
+      ) : (
+        <>
+          <button
+            onClick={handleAcceptAll}
+            disabled={isProcessing}
+            className="inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 hover:underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            {t("review.acceptAll")}
+          </button>
+          <span className="text-white/30">•</span>
+          <button
+            onClick={handleRejectAll}
+            disabled={isProcessing}
             className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 hover:underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

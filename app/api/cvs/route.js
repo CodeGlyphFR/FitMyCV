@@ -74,7 +74,7 @@ export async function GET(){
   const userId = session.user.id;
   const files = await listUserCvFiles(userId);
 
-  // Récupérer tous les sourceType, createdBy, isTranslated, originalCreatedBy et createdAt depuis la DB en une seule requête
+  // Récupérer tous les sourceType, createdBy, isTranslated, originalCreatedBy, language et createdAt depuis la DB en une seule requête
   const cvFilesData = await prisma.cvFile.findMany({
     where: {
       userId,
@@ -87,6 +87,7 @@ export async function GET(){
       createdBy: true,
       originalCreatedBy: true,
       isTranslated: true,
+      language: true,
       createdAt: true,
     },
   });
@@ -98,6 +99,7 @@ export async function GET(){
     createdBy: cf.createdBy,
     originalCreatedBy: cf.originalCreatedBy,
     isTranslated: cf.isTranslated,
+    language: cf.language,
     dbCreatedAt: cf.createdAt,
   }]));
 
@@ -110,9 +112,6 @@ export async function GET(){
       const title = json?.header?.current_title ? String(json.header.current_title).trim() : "";
       const trimmedTitle = title || "";
 
-      // Récupérer la langue du CV
-      const cvLanguage = json?.language || null;
-
       // Récupérer les données de source depuis la DB
       const sourceData = sourceMap.get(file);
       const sourceType = sourceData?.sourceType || null;
@@ -121,6 +120,9 @@ export async function GET(){
       const originalCreatedBy = sourceData?.originalCreatedBy || null;
       const isTranslated = sourceData?.isTranslated || false;
       const dbCreatedAt = sourceData?.dbCreatedAt || null;
+
+      // Récupérer la langue du CV (priorité DB, fallback JSON)
+      const cvLanguage = sourceData?.language || json?.language || null;
 
       // Déterminer le type de CV basé sur createdBy
       // createdBy = 'generate-cv' => Généré par IA (icon GPT)
@@ -198,7 +200,7 @@ export async function GET(){
         isImported,
         isManual,
         isTranslated,
-        language: null, // Impossible de lire la langue en cas d'erreur
+        language: sourceData?.language || null, // Utiliser la langue de la DB si disponible
         createdAt: null,
         updatedAt: null,
         sortKey,

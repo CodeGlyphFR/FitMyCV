@@ -416,6 +416,84 @@ export default function Example({ cvId }) {
 
 ---
 
+## Pattern i18n pour Notifications de Tâches
+
+Les messages de succès/erreur des tâches de fond supportent trois formats via la fonction `parseSuccessMessage` dans `BackgroundTasksProvider` :
+
+### Formats supportés
+
+**1. Clé de traduction simple**
+
+```javascript
+// Dans la tâche
+successMessage: "taskQueue.messages.pipelineCompleted"
+
+// Résultat : t("taskQueue.messages.pipelineCompleted")
+```
+
+**2. JSON avec clé et paramètres**
+
+```javascript
+// Dans la tâche
+successMessage: JSON.stringify({
+  key: "taskQueue.messages.cvGenerated",
+  params: { count: 3, filename: "cv.json" }
+})
+
+// Résultat : t("taskQueue.messages.cvGenerated", { count: 3, filename: "cv.json" })
+```
+
+**3. Message texte brut (legacy)**
+
+```javascript
+// Dans la tâche
+successMessage: "CV généré avec succès"
+
+// Résultat : "CV généré avec succès" (affiché tel quel)
+```
+
+### Exemple d'implémentation
+
+```javascript
+// Dans le job de génération
+await prisma.backgroundTask.update({
+  where: { id: taskId },
+  data: {
+    status: 'completed',
+    successMessage: JSON.stringify({
+      key: 'taskQueue.messages.cvGenerated',
+      params: { count: generatedCount }
+    })
+  }
+});
+
+// Dans locales/fr/common.json
+{
+  "taskQueue": {
+    "messages": {
+      "cvGenerated": "{{count}} CV généré(s) avec succès"
+    }
+  }
+}
+```
+
+### Gestion des erreurs
+
+Les erreurs suivent le même pattern :
+
+```javascript
+// Erreur avec clé de traduction
+error: JSON.stringify({
+  translationKey: 'errors.api.openai.timeout',
+  source: 'LinkedIn'
+})
+
+// Clé directe
+error: 'errors.api.background.taskFailed'
+```
+
+---
+
 ## Tests
 
 ### Structure

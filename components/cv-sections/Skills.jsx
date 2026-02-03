@@ -8,7 +8,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getSkillLevelLabel } from "@/lib/i18n/cvLabels";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import { capitalizeSkillName } from "@/lib/utils/textFormatting";
-import SkillItemHighlight, { RemovedSkillsDisplay, RemovedSkillsDisplayBlock, useRemovedItems } from "@/components/cv-review/SkillItemHighlight";
+import SkillItemHighlight, { RemovedSkillsDisplay, RemovedSkillsDisplayBlock, RemovedSkillsBadges, RemovedSkillsBadgesBlock, useRemovedItems, useFilterRemovedItems } from "@/components/cv-review/SkillItemHighlight";
 import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
 import SkillsReviewActions from "@/components/cv-review/SkillsReviewActions";
 import { normalizeToNumber, VALID_SKILL_LEVELS, SKILL_LEVEL_KEYS } from "@/lib/constants/skillLevels";
@@ -120,6 +120,16 @@ export default function Skills(props){
   const soft = Array.isArray(skills.soft_skills)? skills.soft_skills:[];
   const tools = Array.isArray(skills.tools)? skills.tools:[];
   const methods = Array.isArray(skills.methodologies)? skills.methodologies:[];
+
+  // Helper pour extraire le nom d'un skill (objet ou string)
+  const getSkillName = (s) => s && (s.name || s.label || s.title || s.value || (typeof s === "string" ? s : ""));
+
+  // Filtrer les skills qui ont un changement "removed" en attente
+  // Ces skills ne doivent pas apparaître dans la liste principale (ils sont affichés dans RemovedSkillsDisplay)
+  const filteredHard = useFilterRemovedItems(hard, "skills", "hard_skills", getSkillName);
+  const filteredTools = useFilterRemovedItems(tools, "skills", "tools", getSkillName);
+  const filteredMethods = useFilterRemovedItems(methods, "skills", "methodologies", getSkillName);
+  const filteredSoft = useFilterRemovedItems(soft, "skills", "soft_skills", getSkillName);
 
   const skillsKeyRef = React.useRef("");
   const currentSkillsKey = JSON.stringify(skills);
@@ -252,27 +262,31 @@ export default function Skills(props){
                   </div>
 
                   {hasHard ? (
-                    <div className={`grid gap-3 ${hard.length > 5 ? "md:grid-cols-2" : "grid-cols-1"}`}>
-                      {hard.map((s, i) => {
-                        const skillName = s && (s.name || s.label || s.title || s.value || (typeof s === "string" ? s : ""));
-                        const levelLabel = displaySkillLevel(s, cvT);
-                        return (
-                          <div key={i} className="text-sm">
-                            <SkillItemHighlight section="skills" field="hard_skills" itemName={skillName}>
-                              <span className="font-medium">
-                                {capitalizeSkillName(skillName)}
-                              </span>
-                              {levelLabel ? <span className="opacity-70"> • {levelLabel}</span> : null}
-                            </SkillItemHighlight>
-                          </div>
-                        );
-                      })}
-                      {/* Afficher les skills supprimés */}
-                      <RemovedSkillsDisplay section="skills" field="hard_skills" />
-                    </div>
+                    <>
+                      {filteredHard.length > 0 && (
+                        <div className={`grid gap-1 ${filteredHard.length > 5 ? "md:grid-cols-2" : "grid-cols-1"}`}>
+                          {filteredHard.map((s, i) => {
+                            const skillName = getSkillName(s);
+                            const levelLabel = displaySkillLevel(s, cvT);
+                            return (
+                              <div key={i} className="flex items-center text-sm">
+                                <SkillItemHighlight section="skills" field="hard_skills" itemName={skillName} infoPosition="inline">
+                                  <span className="font-medium">
+                                    {capitalizeSkillName(skillName)}
+                                  </span>
+                                  {levelLabel ? <span className="opacity-70"> • {levelLabel}</span> : null}
+                                </SkillItemHighlight>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </>
                   ) : (
                     editing && <div className="text-sm opacity-60">{t("cvSections.noSkills")}</div>
                   )}
+                  {/* Afficher les skills supprimés - en dehors de la grille pour être en bas */}
+                  <RemovedSkillsDisplay section="skills" field="hard_skills" />
                 </div>
               )}
               {/* Hard skills orphelins (tous supprimés) */}
@@ -298,12 +312,12 @@ export default function Skills(props){
 
                     {hasTools ? (
                       <ul className="space-y-1">
-                        {tools.map((tool, i) => {
-                          const toolName = tool && (tool.name || tool.label || tool.title || tool.value || (typeof tool === "string" ? tool : ""));
+                        {filteredTools.map((tool, i) => {
+                          const toolName = getSkillName(tool);
                           const levelLabel = displaySkillLevel(tool, cvT);
                           return (
                             <li key={i} className="text-sm">
-                              <SkillItemHighlight section="skills" field="tools" itemName={toolName}>
+                              <SkillItemHighlight section="skills" field="tools" itemName={toolName} infoPosition="inline">
                                 <span className="font-medium">
                                   {capitalizeSkillName(toolName)}
                                 </span>
@@ -338,10 +352,10 @@ export default function Skills(props){
 
                     {hasMethods ? (
                       <div className="flex flex-wrap gap-1">
-                        {methods.map((m, i) => {
-                          const methodName = typeof m === "string" ? m : (m?.name || m?.label || m?.title || m?.value || "");
+                        {filteredMethods.map((m, i) => {
+                          const methodName = getSkillName(m);
                           return (
-                            <SkillItemHighlight key={i} section="skills" field="methodologies" itemName={methodName}>
+                            <SkillItemHighlight key={i} section="skills" field="methodologies" itemName={methodName} infoPosition="corner">
                               <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
                                 {capitalizeSkillName(methodName)}
                               </span>
@@ -365,17 +379,21 @@ export default function Skills(props){
               {hasSoft ? (
                 <div>
                   <div className="flex flex-wrap gap-1">
-                    {soft.map((m, i) => {
-                      const softName = typeof m === "string" ? m : (m?.name || m?.label || m?.title || m?.value || "");
+                    {filteredSoft.map((m, i) => {
+                      const softName = getSkillName(m);
                       return (
-                        <SkillItemHighlight key={i} section="skills" field="soft_skills" itemName={softName}>
+                        <SkillItemHighlight key={i} section="skills" field="soft_skills" itemName={softName} infoPosition="corner">
                           <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">
                             {capitalizeSkillName(softName)}
                           </span>
                         </SkillItemHighlight>
                       );
                     })}
-                    <RemovedSkillsDisplay section="skills" field="soft_skills" />
+                    <RemovedSkillsBadges
+                      section="skills"
+                      field="soft_skills"
+                      badgeClassName="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90"
+                    />
                     {editing && (
                       <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center p-1 rounded cursor-pointer text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200">
                         <img src="/icons/edit.png" alt="Edit" className="h-3 w-3 opacity-70 hover:opacity-100" />
@@ -392,7 +410,11 @@ export default function Skills(props){
                   <div className="text-sm opacity-60">{t("cvSections.noSoftSkills")}</div>
                 </div>
               ) : (
-                <RemovedSkillsDisplayBlock field="soft_skills" title={cvT("cvSections.softSkills")} />
+                <RemovedSkillsBadgesBlock
+                  field="soft_skills"
+                  title={cvT("cvSections.softSkills")}
+                  badgeClassName="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90"
+                />
               )}
             </>
           );

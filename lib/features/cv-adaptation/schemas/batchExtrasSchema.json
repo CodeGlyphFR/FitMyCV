@@ -54,9 +54,37 @@
           "required": ["field", "action", "before", "after", "reason"],
           "additionalProperties": false
         }
+      },
+      "extras_modifications": {
+        "type": "array",
+        "description": "Mapping explicite entre extras source et extras adaptes (OBLIGATOIRE pour chaque extra)",
+        "items": {
+          "type": "object",
+          "properties": {
+            "before_name": {
+              "type": ["string", "null"],
+              "description": "Nom de l'extra source (null si ajout)"
+            },
+            "after_name": {
+              "type": ["string", "null"],
+              "description": "Nom de l'extra adapte (null si suppression)"
+            },
+            "action": {
+              "type": "string",
+              "enum": ["kept", "modified", "removed", "added"],
+              "description": "kept=inchange, modified=renomme ou reformule, removed=supprime, added=ajoute"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Justification du changement"
+            }
+          },
+          "required": ["before_name", "after_name", "action", "reason"],
+          "additionalProperties": false
+        }
       }
     },
-    "required": ["extras", "modifications"],
+    "required": ["extras", "modifications", "extras_modifications"],
     "additionalProperties": false
   }
 }

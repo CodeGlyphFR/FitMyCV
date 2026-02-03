@@ -74,7 +74,6 @@ const STEP_FALLBACKS = {
  */
 function OfferProgressLine({ offer, t, createdAt }) {
   const progress = calculateOfferProgress(offer);
-  const currentStep = offer.currentStep;
   const status = offer.status;
   const isFinished = status === 'completed' || status === 'failed' || status === 'cancelled';
 
@@ -82,12 +81,24 @@ function OfferProgressLine({ offer, t, createdAt }) {
   const offerIndex = typeof offer.offerIndex === 'number' ? offer.offerIndex + 1 : 1;
   const offerTitle = offer.jobTitle || (offer.sourceUrl ? truncateUrl(offer.sourceUrl) : `Offre ${offerIndex}`);
 
+  // Déterminer le step courant à afficher
+  // Priorité : premier step "running" dans l'ordre du pipeline
+  // Cela permet d'afficher le step le plus avancé quand plusieurs steps tournent en parallèle
+  const runningSteps = offer.runningSteps || {};
+  const displayStep = PIPELINE_STEPS.find(step => runningSteps[step]) || offer.currentStep;
+
+  // Récupérer currentItem/totalItems pour le step affiché (depuis runningSteps si disponible)
+  const stepData = runningSteps[displayStep] || {};
+  const currentItem = stepData.currentItem ?? offer.currentItem;
+  const totalItems = stepData.totalItems ?? offer.totalItems;
+
   // Label de l'étape en cours
   let stepLabel = '';
-  if (currentStep) {
-    const label = t(STEP_LABELS[currentStep]) || STEP_FALLBACKS[currentStep];
-    if (offer.currentItem !== null && offer.totalItems !== null) {
-      stepLabel = `${label} ${offer.currentItem + 1}/${offer.totalItems}`;
+  if (displayStep) {
+    const translationKey = STEP_LABELS[displayStep];
+    const label = (translationKey && t(translationKey)) || STEP_FALLBACKS[displayStep] || displayStep;
+    if (currentItem !== null && totalItems !== null) {
+      stepLabel = `${label} ${currentItem + 1}/${totalItems}`;
     } else {
       stepLabel = label;
     }
@@ -112,7 +123,7 @@ function OfferProgressLine({ offer, t, createdAt }) {
     ? 'bg-gradient-to-r from-red-500 to-red-400'
     : status === 'completed'
       ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
-      : 'bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-400';
+      : 'bg-gradient-to-r from-emerald-500 via-emerald-400 to-green-400';
 
   // Classes pour le status (rouge pour failed et cancelled, comme les autres tâches)
   const statusColorClass = status === 'completed'
@@ -152,7 +163,7 @@ function OfferProgressLine({ offer, t, createdAt }) {
             {offerTitle}
           </span>
         </div>
-        <span className="text-xs font-medium text-blue-400 tabular-nums flex-shrink-0">
+        <span className="text-xs font-medium text-emerald-400 tabular-nums flex-shrink-0">
           {progress}%
         </span>
       </div>
@@ -289,7 +300,7 @@ export default function PipelineTaskProgress({
             <span className="text-xs text-white/40">—</span>
           </div>
           <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mt-1">
-            <div className="h-full w-[8%] rounded-full bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-400 animate-pulse" />
+            <div className="h-full w-[8%] rounded-full bg-gradient-to-r from-emerald-500 via-emerald-400 to-green-400 animate-pulse" />
           </div>
           <div className="text-[10px] text-white/40 mt-0.5">
             {t('taskQueue.messages.pipelineQueued') || 'Initialisation'}
@@ -375,7 +386,7 @@ export function PipelineTaskProgressCompact({
       case 'completed':
         return 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]';
       case 'running':
-        return 'bg-blue-400 animate-pulse shadow-[0_0_8px_rgba(96,165,250,0.7)]';
+        return 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.7)]';
       case 'failed':
         return 'bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.6)]';
       case 'pending':

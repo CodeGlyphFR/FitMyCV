@@ -23,11 +23,13 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import { capitalizeSkillName } from "@/lib/utils/textFormatting";
 // BulletHighlight n'est plus utilisé - responsibilities/deliverables sont maintenant en field-level
-import SkillItemHighlight, { RemovedSkillsDisplay } from "@/components/cv-review/SkillItemHighlight";
+import SkillItemHighlight, { RemovedSkillsBadges } from "@/components/cv-review/SkillItemHighlight";
 import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
 import ExperienceReviewActions from "@/components/cv-review/ExperienceReviewActions";
 import ChangeHighlight from "@/components/cv-review/ChangeHighlight";
-import { useHighlight } from "@/components/providers/HighlightProvider";
+import ReviewableItemCard from "@/components/cv-review/ReviewableItemCard";
+import { useItemChanges } from "@/components/cv-review/useItemChanges";
+import { useReview } from "@/components/providers/ReviewProvider";
 import CountrySelect from "@/components/ui/CountrySelect";
 import MonthPicker from "@/components/ui/MonthPicker";
 import ContextMenu from "@/components/ui/ContextMenu";
@@ -103,7 +105,15 @@ export default function Experience(props){
   const title = getCvSectionTitleInCvLanguage('experience', sectionTitles.experience, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
-  const { batchProcessingExpIndex } = useHighlight();
+  const { batchProcessingExpIndex } = useReview();
+
+  // Récupérer les expériences supprimées pour les afficher
+  const { removedItems: allRemovedItems } = useItemChanges("experience");
+  // Filtrer uniquement les expériences supprimées (pas les skills, responsibilities, etc.)
+  const removedExperiences = allRemovedItems.filter(
+    (item) => item.changeType === "experience_removed"
+  );
+  const hasRemovedExperiences = removedExperiences.length > 0;
 
   // ---- UI State ----
   const [editIndex, setEditIndex] = React.useState(null);
@@ -148,7 +158,8 @@ export default function Experience(props){
   }, []);
 
   const isEmpty = experience.length === 0;
-  if (!editing && isEmpty) return null; // Masquer entièrement hors édition s'il n'y a aucune expérience
+  // Masquer entièrement hors édition s'il n'y a aucune expérience et pas d'expériences supprimées
+  if (!editing && isEmpty && !hasRemovedExperiences) return null;
 
   // ---- Actions ----
   const openEdit = (i) => {
@@ -287,7 +298,6 @@ export default function Experience(props){
                 <div className="ml-3 text-sm opacity-80 whitespace-nowrap">
                   {ym(e.start_date)} — {(!e.end_date || e.end_date === "present") ? cvT("cvSections.present") : ym(e.end_date)}
                 </div>
-                <ExperienceReviewActions expIndex={e._originalIndex ?? i} />
                 {editing && (
                   <ContextMenu
                     items={[
@@ -360,33 +370,61 @@ export default function Experience(props){
                 </div>
               </div>
 
-              {/* Skills used */}
-              <div className="flex flex-wrap gap-1 mt-4">
-                {Array.isArray(e.skills_used) && e.skills_used.map((m, k) => (
-                  <SkillItemHighlight
-                    key={k}
+              {/* Skills used + Review actions */}
+              <div className="flex flex-col gap-2 mt-4 md:flex-row md:items-start md:justify-between">
+                <div className="flex flex-wrap gap-1">
+                  {Array.isArray(e.skills_used) && e.skills_used.map((m, k) => (
+                    <SkillItemHighlight
+                      key={k}
+                      section="experience"
+                      field="skills_used"
+                      itemName={m}
+                      expIndex={e._originalIndex ?? i}
+                    >
+                      <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">{capitalizeSkillName(m)}</span>
+                    </SkillItemHighlight>
+                  ))}
+                  {/* Afficher les compétences supprimées comme des badges */}
+                  <RemovedSkillsBadges
                     section="experience"
                     field="skills_used"
-                    itemName={m}
                     expIndex={e._originalIndex ?? i}
-                  >
-                    <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">{capitalizeSkillName(m)}</span>
-                  </SkillItemHighlight>
-                ))}
-                {/* Toujours afficher les compétences supprimées (même si tableau vide) */}
-                <RemovedSkillsDisplay section="experience" field="skills_used" expIndex={e._originalIndex ?? i} />
+                    badgeClassName="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90"
+                  />
+                </div>
+                <div className="self-end md:self-auto">
+                  <ExperienceReviewActions expIndex={e._originalIndex ?? i} />
+                </div>
               </div>
               </div>
             </div>
           );
           })
         ) : (
-          editing && (
+          editing && !hasRemovedExperiences && (
             <div className="rounded-2xl border border-white/15 p-3 text-sm opacity-60">
               {t("cvSections.noExperience")}
             </div>
           )
         )}
+
+        {/* Expériences supprimées (cartes rouges compactes) */}
+        {removedExperiences.map((change) => (
+          <ReviewableItemCard
+            key={change.id}
+            change={change}
+            showInlineActions={true}
+            className="no-print"
+          >
+            <div className="font-semibold">{change.beforeValue?.title || change.itemName}</div>
+            {change.beforeValue?.company && (
+              <div className="text-sm opacity-80">{change.beforeValue.company}</div>
+            )}
+            {change.reason && (
+              <div className="text-sm opacity-70 mt-1 italic">{change.reason}</div>
+            )}
+          </ReviewableItemCard>
+        ))}
       </div>
 
       {/* Edit Modal */}

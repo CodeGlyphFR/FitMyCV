@@ -24,6 +24,8 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
 import ProjectReviewActions, { useProjectHasChanges } from "@/components/cv-review/ProjectReviewActions";
+import ReviewableItemCard from "@/components/cv-review/ReviewableItemCard";
+import { useItemChanges } from "@/components/cv-review/useItemChanges";
 import MonthPicker from "@/components/ui/MonthPicker";
 import ContextMenu from "@/components/ui/ContextMenu";
 import { Pencil, Trash2 } from "lucide-react";
@@ -130,6 +132,9 @@ export default function Projects(props){
   const { t } = useLanguage();
   const rawProjects = Array.isArray(props.projects) ? props.projects : [];
 
+  // Récupérer les projets supprimés pour les afficher
+  const { removedItems: removedProjects } = useItemChanges("projects");
+
   // Tri par date décroissante
   const projects = React.useMemo(() => {
     return rawProjects
@@ -172,7 +177,8 @@ export default function Projects(props){
   const [nf, setNf] = React.useState(emptyForm);
 
   const isEmpty = projects.length === 0;
-  const shouldRender = isEditing || !isEmpty;
+  const hasRemovedProjects = removedProjects.length > 0;
+  const shouldRender = isEditing || !isEmpty || hasRemovedProjects;
   if (!shouldRender) return null;
 
   // ---- Actions ----
@@ -253,26 +259,50 @@ export default function Projects(props){
         </div>
       }
     >
-      {isEmpty ? (
+      {isEmpty && !hasRemovedProjects ? (
         isEditing ? (
           <div className="rounded-2xl border border-white/15 p-3 text-sm opacity-60">
             {t("cvSections.noProjects")}
           </div>
         ) : null
       ) : (
-        <div className={projects.length > 1 ? "grid md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
-          {projects.map((p, i) => (
-            <ProjectCard
-              key={i}
-              project={p}
-              index={i}
-              isEditing={isEditing}
-              onEdit={openEdit}
-              onDelete={setDelIndex}
-              cvT={cvT}
-              t={t}
-            />
-          ))}
+        <div className="space-y-3">
+          {/* Projets existants */}
+          {projects.length > 0 && (
+            <div className={projects.length > 1 ? "grid md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
+              {projects.map((p, i) => (
+                <ProjectCard
+                  key={i}
+                  project={p}
+                  index={i}
+                  isEditing={isEditing}
+                  onEdit={openEdit}
+                  onDelete={setDelIndex}
+                  cvT={cvT}
+                  t={t}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Projets supprimés par l'IA (cartes rouges) */}
+          {removedProjects.length > 0 && (
+            <div className={removedProjects.length > 1 ? "grid md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
+              {removedProjects.map((change) => (
+                <ReviewableItemCard
+                  key={change.id}
+                  change={change}
+                  showInlineActions={true}
+                  className="no-print"
+                >
+                  <div className="font-semibold">{change.itemName || change.change || t("cvSections.projects")}</div>
+                  {change.reason && (
+                    <div className="text-sm opacity-80 mt-1">{change.reason}</div>
+                  )}
+                </ReviewableItemCard>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

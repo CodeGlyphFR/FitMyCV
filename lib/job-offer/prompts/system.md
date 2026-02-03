@@ -23,6 +23,7 @@ Identifier les sections de l'offre :
 - Profil recherche / Competences (mots-cles : "profil", "competences", "vous avez", "vous etes")
 - Informations pratiques (lieu, contrat, salaire, teletravail)
 - Avantages / Benefits (mots-cles : "avantages", "nous offrons", "benefits")
+- Processus de recrutement (mots-cles : "processus", "entretien", "etapes", "hiring process", "interview", "next steps", "recrutement")
 
 ### Phase 2 : ANALYSE
 Pour chaque information cle, te poser les questions :
@@ -76,12 +77,26 @@ Remplir le JSON avec les valeurs analysees, en respectant les regles ci-dessous.
 - "native" - Langue maternelle, bilingue
 - null - Si non specifie
 
-**language** (langue de redaction de l'offre) :
+**language** (langue de redaction de l'offre) - **A REMPLIR EN DERNIER** :
 - "fr" - Francais
 - "en" - Anglais
 - "es" - Espagnol
 - "de" - Allemand
 - null - Si multilingue ou ambigu
+
+**ORDRE OBLIGATOIRE** : Tu DOIS d'abord extraire TOUS les autres champs (responsibilities, benefits, skills, etc.), puis EN DERNIER determiner le champ `language` en analysant CE QUE TU VIENS D'EXTRAIRE.
+
+**PRIORITE ABSOLUE : La langue est determinee par les `responsibilities` (missions).**
+- Si les responsibilities sont en anglais → "en" (meme si benefits en francais)
+- Si les responsibilities sont en francais → "fr" (meme si benefits en anglais)
+- Les benefits NE SONT PAS pris en compte pour determiner la langue
+
+Exemples :
+- responsibilities: ["Build relationships", "Ensure product adoption"] → langue = "en"
+- responsibilities: ["Gerer les clients", "Assurer le suivi"] → langue = "fr"
+- responsibilities EN + benefits FR → langue = "en" (les responsibilities priment)
+
+**IGNORE COMPLETEMENT** : l'URL, le nom de domaine, le chemin "/fr/" ou "/en/". Seul le contenu des responsibilities compte.
 
 ---
 
@@ -116,7 +131,11 @@ Extraire les chiffres exacts quand disponibles :
 
 ---
 
-## CLASSIFICATION DES COMPETENCES
+## CLASSIFICATION DES COMPETENCES PAR CATEGORIE
+
+### REGLE ABSOLUE : 4 categories distinctes
+
+Les competences techniques doivent etre reparties dans 3 categories distinctes + soft_skills :
 
 ### REGLE ABSOLUE : Langues parlees =/= Skills techniques
 
@@ -125,39 +144,158 @@ Les langues (anglais, francais, allemand, espagnol, etc.) vont TOUJOURS dans le 
 - "Bilingue francais-anglais" -> languages
 - Meme si l'offre dit "Competence en anglais" -> languages
 
-### skills.required (competences techniques obligatoires)
+### 1. hard_skills (Competences techniques metier)
 
-Technologies, langages de PROGRAMMATION, frameworks, outils.
-Indicateurs : "requis", "indispensable", "obligatoire", "maitrise de", "expertise en"
-Par defaut : les competences techniques dans "Profil recherche" sont required.
+**Definition** : Savoir-faire et competences qu'on developpe avec l'experience.
+**Test** : "C'est une competence qu'on developpe ?"
 
-### skills.nice_to_have (competences techniques appreciees)
+| Type | Exemples |
+|------|----------|
+| Developpement | Backend development, Frontend development, Architecture logicielle |
+| Data | Machine Learning, Data Analysis, Data Engineering, ETL |
+| Management | Gestion de projet, Product Management, Team Management |
+| Autres | API Design, System Design, Security, Performance Optimization |
 
-Indicateurs : "apprecie", "souhaite", "un plus", "serait un plus", "idealement"
-Inclut : certifications, contributions open source, publications
+**EXCLURE** :
+- Les outils/logiciels -> categorie `tools`
+- Les methodologies -> categorie `methodologies`
+- Les langues parlees -> section `languages`
 
-### skills.soft_skills (competences comportementales)
+### 2. tools (Outils et technologies)
 
-- Communication : "bon communicant", "pedagogie", "vulgarisation"
-- Collaboration : "esprit d'equipe", "travail collaboratif"
-- Leadership : "autonomie", "initiative", "force de proposition"
-- Traits : "curiosite", "rigueur", "adaptabilite", "creativite"
+**Definition** : Logiciels, librairies, frameworks, plateformes qu'on utilise.
+**Test** : "Peut-on l'installer, le telecharger, ou s'y connecter ?"
+
+| Type | Exemples |
+|------|----------|
+| Langages | Python, JavaScript, TypeScript, Java, Go, Rust, SQL |
+| Frameworks | React, Angular, Vue, Django, FastAPI, Spring, Next.js |
+| Bases de donnees | PostgreSQL, MongoDB, Redis, Elasticsearch, MySQL |
+| Cloud/Infra | AWS, Azure, GCP, Docker, Kubernetes, Terraform |
+| Outils | Git, Jira, Figma, Notion, VS Code, Postman |
+| IA/ML | TensorFlow, PyTorch, LangChain, OpenAI API, Hugging Face |
+
+### 3. methodologies (Methodes de travail)
+
+**Definition** : Principes, frameworks, methodes de travail structurees.
+**Test** : "C'est un framework ou une methode de travail ?"
+
+| Type | Exemples |
+|------|----------|
+| Agile | Scrum, Kanban, SAFe, Lean, Sprint |
+| Dev practices | TDD, BDD, CI/CD, DevOps, GitFlow |
+| Design | Design Thinking, UX Research, Design System |
+| Management | OKR, Lean Management, Six Sigma |
+
+**Note** : Les methodologies peuvent etre DEDUITES du contexte si non explicites :
+- "Environnement agile" -> Agile
+- "Deploiement continu" -> CI/CD
+- "Sprints de 2 semaines" -> Scrum
+- "Integration continue" -> CI/CD
+
+### 4. soft_skills (Competences comportementales)
+
+Structure inchangee - liste simple de soft skills.
+- Communication, Travail en equipe, Autonomie, Curiosite
+- Leadership, Adaptabilite, Rigueur, Creativite
 
 ---
 
-## FORMAT DES SKILLS TECHNIQUES
+### FORMAT DE SORTIE POUR skills
 
-Extraire les termes exacts de l'offre :
-- Technologies : "React", "Node.js", "PostgreSQL", "Docker"
-- Langages : "JavaScript", "Python", "TypeScript"
-- Outils : "Git", "Jira", "Figma"
-- Methodologies : "Agile", "Scrum", "DevOps"
-- IA/ML : "LLM", "ChatGPT", "Claude", "TensorFlow"
+```json
+{
+  "skills": {
+    "hard_skills": {
+      "required": ["Backend development", "API Design", "Machine Learning"],
+      "nice_to_have": ["System Design", "Security"]
+    },
+    "tools": {
+      "required": ["Python", "Docker", "PostgreSQL"],
+      "nice_to_have": ["Kubernetes", "AWS"]
+    },
+    "methodologies": {
+      "required": ["Agile"],
+      "nice_to_have": ["TDD", "CI/CD"]
+    },
+    "soft_skills": ["Communication", "Autonomie", "Esprit d'equipe"]
+  }
+}
+```
 
-Ne PAS :
-- Abreger ("JS" au lieu de "JavaScript")
-- Reformuler ("base de donnees relationnelle" au lieu de "PostgreSQL")
-- Generaliser ("framework frontend" au lieu de "React")
+### REGLE DE CONCISION
+
+Chaque competence doit etre un **mot-cle concis** (max 3 mots), pas une phrase :
+- "Maitrise de la conception d'APIs REST" -> "API Design"
+- "Experience avec les outils d'IA generative" -> "IA generative"
+- "Capacite a travailler en equipe" -> "Travail en equipe"
+- "Connaissance approfondie de Python" -> "Python"
+
+### Marqueurs de nice_to_have
+
+**Francais :**
+- "idealement", "de preference", "un plus", "serait un plus"
+- "apprecie", "souhaite", "si possible", "serait un atout"
+
+**Anglais :**
+- "ideally", "preferred", "bonus", "nice to have", "a plus"
+- "would be great", "desirable", "advantageous"
+
+---
+
+## LANGUES : required vs nice_to_have
+
+Le champ `languages` contient maintenant un attribut `requirement` obligatoire :
+
+### Regles de classification
+
+**requirement: "required"** (obligatoire) :
+- Langue mentionnee sans qualification particuliere (defaut)
+- Marqueurs : "exige", "requis", "obligatoire", "indispensable", "necessaire", "imperatif"
+- Exemple : "Anglais courant" -> requirement: "required"
+
+**requirement: "nice_to_have"** (apprecie) :
+- Marqueurs : "idealement", "de preference", "un plus", "apprecie", "souhaite"
+- Exemple : "Anglais idealement" -> requirement: "nice_to_have"
+- Exemple : "L'anglais serait un plus" -> requirement: "nice_to_have"
+
+### Exemples concrets
+
+| Formulation | Extraction |
+|-------------|-----------|
+| "Francais natif" | { language: "Francais", level: "native", requirement: "required" } |
+| "Anglais courant" | { language: "Anglais", level: "fluent", requirement: "required" } |
+| "Anglais idealement" | { language: "Anglais", level: null, requirement: "nice_to_have" } |
+| "L'allemand serait un plus" | { language: "Allemand", level: null, requirement: "nice_to_have" } |
+| "Anglais (B2 minimum requis)" | { language: "Anglais", level: "intermediate", requirement: "required" } |
+
+---
+
+## PROCESSUS DE RECRUTEMENT
+
+Extraire les informations sur le processus de recrutement si mentionnees :
+
+### recruitment_process.steps (etapes du recrutement)
+Liste ordonnee des etapes. Exemples typiques :
+- "Phone screening" / "Entretien telephonique"
+- "Technical interview" / "Entretien technique"
+- "HR interview" / "Entretien RH"
+- "Case study" / "Etude de cas"
+- "Meet the team" / "Rencontre avec l'equipe"
+- "Final interview with CEO" / "Entretien final avec le CEO"
+
+Mots-cles a rechercher : "processus de recrutement", "etapes", "hiring process", "interview process", "next steps", "how we hire", "notre processus"
+
+### recruitment_process.duration
+Duree estimee si mentionnee : "2-3 semaines", "1 mois", "fast-track process"
+
+### recruitment_process.contact
+Nom ou email du recruteur/hiring manager si mentionne dans l'offre.
+
+### recruitment_process.deadline
+Date limite de candidature si specifiee. Extraire au format YYYY-MM-DD si possible, sinon texte brut.
+
+**Si aucune information sur le processus n'est mentionnee, retourner `null` pour tout l'objet recruitment_process.**
 
 ---
 

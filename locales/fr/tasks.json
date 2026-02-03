@@ -79,6 +79,7 @@
     },
     "errors": {
       "noJobOfferDetected": "Aucune offre d'emploi détectée : {source}",
+      "jobOfferExpired": "Cette offre d'emploi n'est plus disponible ou a été supprimée.",
       "loginRequired": "Cette page nécessite une connexion. Téléchargez l'offre en PDF depuis le site et uploadez-la."
     }
   }

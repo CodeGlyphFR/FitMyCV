@@ -23,6 +23,7 @@
     "loadingInProgress": "Cargando ...",
     "taskQueue": "Cola de tareas",
     "delete": "Eliminar",
+    "deleteTooltip": "Eliminar (Ctrl+clic para eliminación múltiple)",
     "cvInProgress": "CV en edición",
     "jobTitlePlaceholder": "Introduce un título de puesto (ej: Desarrollador Full-Stack)",
     "jobTitlePlaceholderMobile": "ej: Desarrollador Full-Stack",
@@ -396,5 +397,50 @@
     "viewOptions": "Ver opciones",
     "viewMyOptions": "Ver mis opciones",
     "closeNotification": "Cerrar notificación"
+  },
+  "jobOffer": {
+    "viewDetails": "Ver detalles de la oferta",
+    "untitled": "Oferta sin título",
+    "company": "Empresa",
+    "noData": "No hay datos disponibles para esta oferta",
+    "requirements": "Requisitos",
+    "skills": "Habilidades",
+    "responsibilities": "Responsabilidades",
+    "benefits": "Beneficios",
+    "experience": "Experiencia",
+    "education": "Formación",
+    "languages": "Idiomas",
+    "required": "Requeridas",
+    "niceToHave": "Deseables",
+    "softSkills": "Soft skills",
+    "hardSkills": "Competencias técnicas",
+    "tools": "Herramientas y Tecnologías",
+    "methodologies": "Metodologías",
+    "years": "años",
+    "from": "Desde",
+    "upTo": "Hasta",
+    "viewOriginal": "Ver oferta original",
+    "periods": {
+      "year": "año",
+      "month": "mes",
+      "day": "día",
+      "hour": "hora"
+    },
+    "remote": {
+      "full": "100% remoto",
+      "hybrid": "Híbrido",
+      "onsite": "Presencial",
+      "partial": "Remoto parcial"
+    },
+    "recruitmentProcess": {
+      "title": "Proceso de selección",
+      "steps": "Etapas",
+      "step": "Etapa",
+      "contact": "Contacto",
+      "deadline": "Fecha límite",
+      "duration": "Duración"
+    },
+    "languageRequired": "Idioma requerido",
+    "languageNiceToHave": "Idioma deseable"
   }
 }

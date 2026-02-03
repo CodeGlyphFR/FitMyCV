@@ -23,6 +23,7 @@
     "loadingInProgress": "Chargement en cours ...",
     "taskQueue": "File d'attente des tâches",
     "delete": "Supprimer",
+    "deleteTooltip": "Supprimer (Ctrl+clic pour suppression multiple)",
     "cvInProgress": "CV en cours d'édition",
     "jobTitlePlaceholder": "Entrez un titre de poste (ex: Développeur Full-Stack)",
     "jobTitlePlaceholderMobile": "ex: Développeur Full-Stack",
@@ -396,5 +397,50 @@
     "viewOptions": "Voir les options",
     "viewMyOptions": "Voir mes options",
     "closeNotification": "Fermer la notification"
+  },
+  "jobOffer": {
+    "viewDetails": "Voir les détails de l'offre",
+    "untitled": "Offre sans titre",
+    "company": "Entreprise",
+    "noData": "Aucune donnée disponible pour cette offre",
+    "requirements": "Exigences",
+    "skills": "Compétences",
+    "responsibilities": "Missions",
+    "benefits": "Avantages",
+    "experience": "Expérience",
+    "education": "Formation",
+    "languages": "Langues",
+    "required": "Requises",
+    "niceToHave": "Appréciées",
+    "softSkills": "Soft skills",
+    "hardSkills": "Compétences techniques",
+    "tools": "Outils & Technologies",
+    "methodologies": "Méthodologies",
+    "years": "ans",
+    "from": "À partir de",
+    "upTo": "Jusqu'à",
+    "viewOriginal": "Voir l'offre originale",
+    "periods": {
+      "year": "an",
+      "month": "mois",
+      "day": "jour",
+      "hour": "heure"
+    },
+    "remote": {
+      "full": "100% télétravail",
+      "hybrid": "Hybride",
+      "onsite": "Sur site",
+      "partial": "Télétravail partiel"
+    },
+    "recruitmentProcess": {
+      "title": "Processus de recrutement",
+      "steps": "Étapes",
+      "step": "Étape",
+      "contact": "Contact",
+      "deadline": "Date limite",
+      "duration": "Durée"
+    },
+    "languageRequired": "Langue requise",
+    "languageNiceToHave": "Langue appréciée"
   }
 }

@@ -8,19 +8,21 @@ datasource db {
 }
 
 model User {
-  id                     String                @id @default(cuid())
-  name                   String?
-  email                  String?               @unique
-  emailVerified          DateTime?
-  passwordHash           String?
-  image                  String?
-  role                   String                @default("USER")
-  resetToken             String?
-  resetTokenExpiry       DateTime?
-  stripeCustomerId       String?               @unique
-  onboardingState        Json?                                  // État complet onboarding (UNIQUE source de vérité)
-  createdAt              DateTime              @default(now())
-  updatedAt              DateTime              @updatedAt
+  id                       String                @id @default(cuid())
+  name                     String?
+  email                    String?               @unique
+  emailVerified            DateTime?
+  passwordHash             String?
+  image                    String?
+  role                     String                @default("USER")
+  resetToken               String?
+  resetTokenExpiry         DateTime?
+  stripeCustomerId         String?               @unique
+  onboardingState          Json?                                  // État complet onboarding (UNIQUE source de vérité)
+  privacyPolicyAcceptedAt  DateTime?                              // Date d'acceptation de la politique de confidentialité
+  lastLoginAt              DateTime?                              // Dernière connexion (pour détection comptes inactifs)
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
   accounts               Account[]
   backgroundTasks        BackgroundTask[]
   consentLogs            ConsentLog[]
@@ -71,6 +73,7 @@ model CvFile {
   sourceType             String?
   sourceValue            String?
   jobOfferId             String?            // Relation vers JobOffer (extraction structurée)
+  jobOfferSnapshot       Json?              // Snapshot de l'offre au moment de la génération (autonomie si offre supprimée)
   createdBy              String?
   originalCreatedBy      String?
   isTranslated           Boolean            @default(false)

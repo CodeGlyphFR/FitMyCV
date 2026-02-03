@@ -12,9 +12,9 @@ import { useSettings } from "@/lib/settings/SettingsContext";
 import ChangeHighlight from "@/components/cv-review/ChangeHighlight";
 import { toTitleCase } from "@/lib/utils/textFormatting";
 import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
-import { useHighlight } from "@/components/providers/HighlightProvider";
+import { useReview } from "@/components/providers/ReviewProvider";
 import CountrySelect from "@/components/ui/CountrySelect";
-import { User, Mail, MapPin, Link2, Plus, Trash2 } from "lucide-react";
+import { User, Mail, MapPin, Link2, Plus, Trash2, FileText } from "lucide-react";
 import {
   ModalSection,
   FormField,
@@ -22,7 +22,8 @@ import {
   Grid,
   ModalFooter,
 } from "@/components/ui/ModalForm";
-import { useMatchScore, useSourceInfo, useTranslation, TranslationDropdown } from "@/components/header";
+import { useMatchScore, useSourceInfo, useTranslation, TranslationDropdown, useJobOfferDetails } from "@/components/header";
+import JobOfferDetailModal from "@/components/cv-improvement/JobOfferDetailModal";
 
 export default function Header(props){
   const header = props.header || {};
@@ -35,7 +36,7 @@ export default function Header(props){
   const [open, setOpen] = React.useState(false);
 
   // Récupérer la version courante depuis le contexte
-  const { currentVersion } = useHighlight();
+  const { currentVersion } = useReview();
 
   // Calculer isHistoricalVersion directement depuis currentVersion (plus fiable que l'API)
   const isHistoricalVersion = currentVersion !== 'latest';
@@ -83,6 +84,35 @@ export default function Header(props){
     executeTranslation,
   } = useTranslation();
 
+  // Hook pour les détails de l'offre d'emploi
+  const {
+    jobOfferDetails,
+    isLoading: isLoadingJobOffer,
+    fetchJobOfferDetails,
+    resetJobOfferDetails,
+  } = useJobOfferDetails();
+  const [isJobOfferModalOpen, setIsJobOfferModalOpen] = React.useState(false);
+
+  // Ref pour tracker le dernier CV chargé (pour éviter le reset inutile sur focus)
+  const lastLoadedCvRef = React.useRef(null);
+
+  // Handler pour ouvrir le modal des détails de l'offre
+  const handleOpenJobOfferModal = async () => {
+    setIsJobOfferModalOpen(true);
+    if (!jobOfferDetails) {
+      const data = await fetchJobOfferDetails();
+      // Tracker le CV actuel après le premier chargement réussi
+      if (data && currentCvFile) {
+        lastLoadedCvRef.current = currentCvFile;
+      }
+    }
+  };
+
+  // Réinitialiser les détails quand le modal se ferme
+  const handleCloseJobOfferModal = () => {
+    setIsJobOfferModalOpen(false);
+  };
+
   // Calculer si le bouton Optimiser est disponible (visible ET actif)
   const isOptimizeButtonReady = React.useMemo(() => {
     return hasScoreBreakdown && matchScoreStatus !== 'inprogress';
@@ -124,9 +154,15 @@ export default function Header(props){
     );
   });
 
-  // Fetch au montage
+  // Fetch au montage + initialisation du tracking CV
   React.useEffect(() => {
     fetchSourceInfo();
+    // Initialiser le tracking avec le CV actuel (depuis le cookie)
+    const cookies = document.cookie.split(';');
+    const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
+    if (cvFileCookie) {
+      lastLoadedCvRef.current = decodeURIComponent(cvFileCookie.split('=')[1]);
+    }
   }, [fetchSourceInfo]);
 
   // Refetch le score quand on change de version
@@ -152,7 +188,20 @@ export default function Header(props){
 
     // Écouter les changements de CV pour recharger les infos de source
     const handleCvSelected = (event) => {
+      const selectedFile = event?.detail?.file;
+      const cvActuallyChanged = selectedFile && selectedFile !== lastLoadedCvRef.current;
+
       fetchSourceInfo();
+
+      // Ne réinitialiser l'offre que si le CV a vraiment changé
+      // (évite le "no data" lors d'un simple focus de fenêtre)
+      if (cvActuallyChanged) {
+        lastLoadedCvRef.current = selectedFile;
+        resetJobOfferDetails();
+      } else if (isJobOfferModalOpen && !jobOfferDetails) {
+        // Si le modal est ouvert mais sans données, refetch
+        fetchJobOfferDetails();
+      }
     };
 
     // Écouter les mises à jour des tokens (depuis la search bar)
@@ -173,7 +222,7 @@ export default function Header(props){
       window.removeEventListener('cv:selected', handleCvSelected);
       window.removeEventListener('tokens:updated', handleTokensUpdated);
     };
-  }, [fetchMatchScore, fetchSourceInfo]);
+  }, [fetchMatchScore, fetchSourceInfo, resetJobOfferDetails, isJobOfferModalOpen, jobOfferDetails, fetchJobOfferDetails]);
 
 
   // Si le CV est vide (pas de header), ne pas afficher le composant
@@ -216,7 +265,19 @@ export default function Header(props){
   return (
     <header className="page mb-6 flex items-start justify-between gap-4 bg-white/15 backdrop-blur-xl p-4 rounded-2xl shadow-2xl relative overflow-visible min-h-[120px]">
       <div className="pr-24">
-        <h1 className="text-2xl font-bold text-white drop-shadow-lg">{toTitleCase(header.full_name) || ""}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-white drop-shadow-lg">{toTitleCase(header.full_name) || ""}</h1>
+          {hasJobOffer && (
+            <button
+              onClick={handleOpenJobOfferModal}
+              className="no-print text-white/50 hover:text-emerald-400 transition-colors"
+              title={t("jobOffer.viewDetails")}
+              type="button"
+            >
+              <FileText className="w-5 h-5" />
+            </button>
+          )}
+        </div>
         <p className="text-sm text-white/80 drop-shadow">
           <ChangeHighlight section="header" field="current_title">
             {toTitleCase(header.current_title) || ""}
@@ -452,6 +513,14 @@ export default function Header(props){
           />
         </div>
       </Modal>
+
+      {/* Modal des détails de l'offre d'emploi */}
+      <JobOfferDetailModal
+        isOpen={isJobOfferModalOpen}
+        onClose={handleCloseJobOfferModal}
+        jobOffer={jobOfferDetails}
+        isLoading={isLoadingJobOffer}
+      />
     </header>
   );
 }

@@ -65,25 +65,31 @@ export async function GET() {
       },
     });
 
-    // Créer une map URL normalisée -> titre
-    const urlToTitle = new Map();
+    // Créer une map URL normalisée -> {title, company, language}
+    const urlToData = new Map();
     for (const offer of jobOffers) {
       const content = offer.content;
-      // Le titre peut être dans job_title ou title selon le schéma
-      const title = content?.job_title || content?.title || null;
-      if (title) {
-        urlToTitle.set(offer.sourceValue, title);
+      const title = content?.title || null;
+      const company = content?.company || null;
+      const language = content?.language || null;
+      if (title || company || language) {
+        urlToData.set(offer.sourceValue, { title, company, language });
       }
     }
 
-    // Enrichir les liens avec id, titre et domaine
-    // On utilise l'URL normalisée pour chercher le titre
-    const enrichedLinks = links.map(link => ({
-      id: link.id,
-      url: link.url,
-      title: urlToTitle.get(normalizeJobUrl(link.url)) || null,
-      domain: extractDomainName(link.url),
-    }));
+    // Enrichir les liens avec id, titre, company, language et domaine
+    // On utilise l'URL normalisée pour chercher les données
+    const enrichedLinks = links.map(link => {
+      const data = urlToData.get(normalizeJobUrl(link.url)) || {};
+      return {
+        id: link.id,
+        url: link.url,
+        title: data.title || null,
+        company: data.company || null,
+        language: data.language || null,
+        domain: extractDomainName(link.url),
+      };
+    });
 
     return NextResponse.json({
       success: true,

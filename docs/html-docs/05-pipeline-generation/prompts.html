@@ -34,34 +34,33 @@
 
         <h1>Prompts IA</h1>
         <p class="lead">
-          Le pipeline de génération utilise 21 fichiers de prompts organisés par phase. Chaque prompt suit une structure standardisée et respecte la hiérarchie de priorités VÉRITÉ > LANGUE > ATS > STYLE.
+          Le pipeline de g&eacute;n&eacute;ration utilise 14 fichiers de prompts organis&eacute;s par phase (7 phases &times; 2 fichiers system/user). Chaque prompt suit une structure standardis&eacute;e et respecte la hi&eacute;rarchie de priorit&eacute;s V&Eacute;RIT&Eacute; &gt; LANGUE &gt; ATS &gt; STYLE.
         </p>
 
         <h2>Organisation des Fichiers</h2>
 
+        <p>Les prompts suivent un pattern <code>{phase}-{system|user}.md</code> pour s&eacute;parer les instructions syst&egrave;me des donn&eacute;es utilisateur.</p>
+
         <pre><code>lib/features/cv-adaptation/prompts/
-├── classification/
-│   └── classify-items.md           # Classification KEEP/REMOVE/MOVE
-├── experiences/
-│   ├── adapt-experience.md         # Adapter une expérience
-│   └── convert-to-project.md       # Convertir exp → projet
-├── projects/
-│   └── adapt-project.md            # Adapter un projet
-├── skills/
-│   ├── extract-keywords.md         # Mission 1: Extraction mots-clés
-│   ├── categorize-skills.md        # Mission 2: Catégorisation
-│   ├── prioritize-skills.md        # Mission 3: Priorisation
-│   ├── format-technical.md         # Mission 4: Format technique
-│   ├── format-soft.md              # Mission 5: Format soft skills
-│   ├── format-languages.md         # Mission 6: Format langues
-│   └── format-methodologies.md     # Mission 7: Format méthodologies
-├── summary/
-│   ├── generate-summary.md         # Générer résumé professionnel
-│   └── adapt-summary.md            # Adapter résumé existant
-├── extras/
-│   └── adapt-extras.md             # Adapter section extras
-└── recompose/
-    └── assemble-cv.md              # Assemblage final</code></pre>
+├── classify-system.md              # Phase 1 : Classification (system)
+├── classify-user.md                # Phase 1 : Classification (user)
+├── batch-experience-system.md      # Phase 2 : Adaptation exp&eacute;riences (system)
+├── batch-experience-user.md        # Phase 2 : Adaptation exp&eacute;riences (user)
+├── batch-project-system.md         # Phase 3 : Adaptation projets (system)
+├── batch-project-user.md           # Phase 3 : Adaptation projets (user)
+├── batch-skills-system.md          # Phase 4 : Skills - hard/soft/tools (system)
+├── batch-skills-user.md            # Phase 4 : Skills (user)
+├── batch-extras-system.md          # Phase 5 : Extras - hobbies, langues (system)
+├── batch-extras-user.md            # Phase 5 : Extras (user)
+├── batch-summary-system.md         # Phase 6 : R&eacute;sum&eacute; professionnel (system)
+├── batch-summary-user.md           # Phase 6 : R&eacute;sum&eacute; (user)
+├── recompose-languages-system.md   # Phase 7 : Langues - format CECRL (system)
+└── recompose-languages-user.md     # Phase 7 : Langues (user)</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Pattern system/user</div>
+          <p>Chaque phase utilise deux fichiers : <code>*-system.md</code> contient les instructions et r&egrave;gles de l'IA, <code>*-user.md</code> structure les donn&eacute;es d'entr&eacute;e (CV source, offre d'emploi).</p>
+        </div>
 
         <h2>Structure Standard d'un Prompt</h2>
 
@@ -140,7 +139,7 @@
 
         <div class="data-flow">
           <div class="data-flow-header">
-            <span class="data-flow-badge">classify-items.md</span>
+            <span class="data-flow-badge">classify-system.md</span>
             <span class="data-flow-title">Classification des items</span>
           </div>
           <div class="data-flow-content">
@@ -177,8 +176,8 @@
 
         <div class="data-flow">
           <div class="data-flow-header">
-            <span class="data-flow-badge">adapt-experience.md</span>
-            <span class="data-flow-title">Adaptation d'expérience</span>
+            <span class="data-flow-badge">batch-experience-system.md</span>
+            <span class="data-flow-title">Adaptation d'exp&eacute;rience</span>
           </div>
           <div class="data-flow-content">
             <h5>Mission</h5>
@@ -204,74 +203,64 @@
           </div>
         </div>
 
-        <h3>Phase Batches - Skills (7 missions)</h3>
+        <h3>Phase Batches - Skills</h3>
 
-        <div class="diagram">
-          <div class="diagram-title">Pipeline des 7 missions Skills</div>
-          <div class="mermaid">
-flowchart LR
-    M1["M1: Extract<br/>Keywords"] --> M2["M2: Categorize"]
-    M2 --> M3["M3: Prioritize"]
-    M3 --> M4["M4: Format<br/>Technical"]
-    M3 --> M5["M5: Format<br/>Soft"]
-    M3 --> M6["M6: Format<br/>Languages"]
-    M3 --> M7["M7: Format<br/>Methodologies"]
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge">batch-skills-system.md</span>
+            <span class="data-flow-title">Adaptation des comp&eacute;tences</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Mission</h5>
+            <p>Adapter les comp&eacute;tences du CV source pour les aligner avec l'offre d'emploi, en utilisant le pattern <code>before/after</code> pour tra&ccedil;abilit&eacute; et rollback.</p>
+
+            <h5>Cat&eacute;gories de sortie</h5>
+            <table>
+              <tr>
+                <td><code>hard_skills</code></td>
+                <td>Comp&eacute;tences techniques avec niveau (0-5)</td>
+              </tr>
+              <tr>
+                <td><code>soft_skills</code></td>
+                <td>Soft skills (liste de strings)</td>
+              </tr>
+              <tr>
+                <td><code>tools</code></td>
+                <td>Outils et technologies avec niveau (0-5)</td>
+              </tr>
+              <tr>
+                <td><code>methodologies</code></td>
+                <td>M&eacute;thodologies (Agile, Scrum...)</td>
+              </tr>
+            </table>
+
+            <h5>Actions de modification</h5>
+            <p>Chaque modification est trac&eacute;e avec <code>before</code>, <code>after</code>, <code>action</code>, <code>reason</code> et <code>translated</code> :</p>
+            <ul>
+              <li><code>kept</code> - Conserv&eacute; tel quel</li>
+              <li><code>modified</code> - Traduit/reformul&eacute;</li>
+              <li><code>removed</code> - Supprim&eacute; (n&eacute;cessite <code>translated</code> pour rollback)</li>
+              <li><code>added</code> - Ajout&eacute; depuis l'offre</li>
+              <li><code>level_adjusted</code> - Niveau modifi&eacute;</li>
+              <li><code>split</code> - S&eacute;par&eacute; (ex: "React/Vue" &rarr; 2 skills)</li>
+              <li><code>moved</code> - Chang&eacute; de cat&eacute;gorie</li>
+              <li><code>merged</code> - Doublon fusionn&eacute;</li>
+              <li><code>inferred</code> - D&eacute;duit des exp&eacute;riences</li>
+            </ul>
           </div>
         </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th>Mission</th>
-              <th>Fichier</th>
-              <th>Objectif</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>M1</td>
-              <td><code>extract-keywords.md</code></td>
-              <td>Extraire tous les mots-clés de l'offre d'emploi</td>
-            </tr>
-            <tr>
-              <td>M2</td>
-              <td><code>categorize-skills.md</code></td>
-              <td>Catégoriser : technique, soft, langue, méthodologie</td>
-            </tr>
-            <tr>
-              <td>M3</td>
-              <td><code>prioritize-skills.md</code></td>
-              <td>Prioriser selon importance dans l'offre</td>
-            </tr>
-            <tr>
-              <td>M4</td>
-              <td><code>format-technical.md</code></td>
-              <td>Formater les compétences techniques</td>
-            </tr>
-            <tr>
-              <td>M5</td>
-              <td><code>format-soft.md</code></td>
-              <td>Formater les soft skills</td>
-            </tr>
-            <tr>
-              <td>M6</td>
-              <td><code>format-languages.md</code></td>
-              <td>Formater les langues</td>
-            </tr>
-            <tr>
-              <td>M7</td>
-              <td><code>format-methodologies.md</code></td>
-              <td>Formater les méthodologies</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="callout callout-warning">
+          <div class="callout-title">Champ translated (rollback)</div>
+          <p>Pour les skills supprim&eacute;s (<code>action: removed</code>), le champ <code>translated</code> est <strong>obligatoire</strong>. Il contient la traduction du skill dans la langue cible pour permettre un rollback coh&eacute;rent lors de la review.</p>
+        </div>
 
         <h3>Phase Batches - Summary</h3>
 
         <div class="data-flow">
           <div class="data-flow-header">
-            <span class="data-flow-badge">generate-summary.md</span>
-            <span class="data-flow-title">Génération du résumé</span>
+            <span class="data-flow-badge">batch-summary-system.md</span>
+            <span class="data-flow-title">G&eacute;n&eacute;ration du r&eacute;sum&eacute;</span>
           </div>
           <div class="data-flow-content">
             <h5>Mission</h5>
@@ -466,10 +455,11 @@ export async function loadPrompt(promptPath) {
 }
 
 // Utilisation
-const prompt = await loadPrompt('experiences/adapt-experience');
+const systemPrompt = await loadPrompt('batch-experience-system');
+const userPrompt = await loadPrompt('batch-experience-user');
 const messages = [
-  { role: 'system', content: prompt },
-  { role: 'user', content: JSON.stringify(inputData) }
+  { role: 'system', content: systemPrompt },
+  { role: 'user', content: userPrompt.replace('{{DATA}}', JSON.stringify(inputData)) }
 ];</code></pre>
       </div>
     </main>

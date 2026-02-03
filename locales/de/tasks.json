@@ -79,6 +79,7 @@
     },
     "errors": {
       "noJobOfferDetected": "Keine Stellenanzeige erkannt: {source}",
+      "jobOfferExpired": "Diese Stellenanzeige ist nicht mehr verfügbar oder wurde entfernt.",
       "loginRequired": "Diese Seite erfordert eine Anmeldung. Laden Sie das Stellenangebot als PDF von der Website herunter und laden Sie es hoch."
     }
   }

@@ -624,3 +624,28 @@ getTermsMessage('en')
 **Langues supportées :** `fr`, `en`, `es`, `de`
 
 Réutilise les traductions existantes de `locales/{lang}/subscription.json` pour garantir la cohérence.
+
+### Génération URLs Projets (CV Templates)
+
+Lors de la génération de CV templates (candidats fictifs), les projets peuvent inclure des URLs cohérentes :
+
+```javascript
+// Structure attendue
+{
+  "projects": [
+    {
+      "name": "Projet Example",
+      "url": "https://github.com/candidat-fictif/projet",
+      "url_label": "GitHub"  // ou "Portfolio", "Demo", "Google Play"
+    }
+  ]
+}
+```
+
+**Règles de génération :**
+
+- L'URL doit être cohérente avec le `header.full_name` du candidat fictif
+- Le `url_label` décrit le type de lien
+- Les URLs sont plausibles mais fictives
+
+**Note :** Cette fonctionnalité s'applique uniquement aux CV templates. Pour les CV réels, les URLs proviennent du CV source et ne sont jamais inventées (respect de la règle P1 - VÉRITÉ).

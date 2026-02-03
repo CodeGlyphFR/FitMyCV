@@ -1,6 +1,6 @@
-# Competences Source a Adapter
+# Skills du CV Source
 
-## Hard Skills
+## Hard Skills (langue: {cvLanguage})
 ```json
 {hardSkillsJson}
 ```
@@ -22,36 +22,47 @@
 
 ---
 
-# Langue de sortie: {targetLanguage}
+# Skills de l'Offre d'Emploi (langue: {jobLanguage})
 
-## Tes 7 missions
+## Hard Skills
+- **Required**: {hardSkillsRequired}
+- **Nice to have**: {hardSkillsNiceToHave}
 
-1. **SUPPRIMER** les competences non mentionnees dans l'offre (match semantique)
-2. **AJUSTER** les proficiency en NOMBRES (0-5) selon l'experience du candidat
-3. **NETTOYER** les noms (parentheses, phrases → mots-cles, max 3 mots)
-4. **SPLITTER** les competences multiples (slash, virgule, "et")
-5. **REARRANGER** entre hard_skills / tools / methodologies
-6. **FUSIONNER** les doublons entre categories
-7. **DEDUIRE** les methodologies depuis les experiences (sprints → Scrum, CI/CD → DevOps...)
+## Tools
+- **Required**: {toolsRequired}
+- **Nice to have**: {toolsNiceToHave}
 
-## Niveaux (NOMBRES uniquement)
+## Methodologies
+- **Required**: {methodologiesRequired}
+- **Nice to have**: {methodologiesNiceToHave}
 
-| Valeur | Niveau |
-|--------|--------|
-| 0 | Awareness |
-| 1 | Beginner |
-| 2 | Intermediate |
-| 3 | Proficient |
-| 4 | Advanced |
-| 5 | Expert |
+## Soft Skills
+{softSkillsJob}
 
-## Regles
+---
 
-- **ZERO DOUBLON** : chaque competence dans UNE SEULE categorie (hard_skills OU tools OU methodologies)
-- Soft skills : **max 6**, juste filtrer par pertinence
-- Technos/outils : garder les noms en **anglais**
-- Documenter CHAQUE modification dans `modifications[]`
+# Langue pour les reasons: {interfaceLanguage}
 
-**Question cle pour les doublons** : "C'est quelque chose que je SAIS FAIRE ou que j'UTILISE ?"
+**CRITICAL INSTRUCTION**: ALL `reason` field values MUST be written in **{interfaceLanguage}** only.
+- Do NOT mix languages within reasons
+- Do NOT switch to French or any other language
+- Every single reason must be in {interfaceLanguage}
 
-Reponds en JSON valide.
+---
+
+# Instructions
+
+Suis le processus CoT en 10 étapes défini dans le system prompt.
+
+## Rappels Importants
+
+- **JAMAIS ajouter** de skills qui n'existent pas dans le CV source
+- **Maximum 6** soft_skills dans le résultat final
+- Les skills supprimés (`action: deleted`) DOIVENT être inclus dans le résultat
+- `reason` doit être clair et concis (1 phrase), ou `null` si action=kept et même langue
+- **TOUS les skills source doivent être retournés** - ne jamais en omettre, même si deleted
+- `skill_final` = skill de l'offre UNIQUEMENT si `action: renamed` (probabilité >= 80%)
+
+---
+
+Réponds en JSON valide selon le schéma défini.

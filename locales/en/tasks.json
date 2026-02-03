@@ -79,6 +79,7 @@
     },
     "errors": {
       "noJobOfferDetected": "No job offer detected: {source}",
+      "jobOfferExpired": "This job offer is no longer available or has been removed.",
       "loginRequired": "This page requires authentication. Download the job offer as PDF from the website and upload it."
     }
   }

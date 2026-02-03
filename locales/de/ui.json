@@ -23,6 +23,7 @@
     "loadingInProgress": "Laden läuft ...",
     "taskQueue": "Aufgabenwarteschlange",
     "delete": "Löschen",
+    "deleteTooltip": "Löschen (Strg+Klick für Mehrfachlöschung)",
     "cvInProgress": "Lebenslauf wird bearbeitet",
     "jobTitlePlaceholder": "Geben Sie eine Stellenbezeichnung ein (z.B. Full-Stack-Entwickler)",
     "jobTitlePlaceholderMobile": "z.B. Full-Stack-Entwickler",
@@ -396,5 +397,50 @@
     "viewOptions": "Optionen anzeigen",
     "viewMyOptions": "Meine Optionen anzeigen",
     "closeNotification": "Benachrichtigung schließen"
+  },
+  "jobOffer": {
+    "viewDetails": "Stellenangebot-Details anzeigen",
+    "untitled": "Unbenanntes Angebot",
+    "company": "Unternehmen",
+    "noData": "Keine Daten für dieses Angebot verfügbar",
+    "requirements": "Anforderungen",
+    "skills": "Kompetenzen",
+    "responsibilities": "Aufgaben",
+    "benefits": "Vorteile",
+    "experience": "Erfahrung",
+    "education": "Ausbildung",
+    "languages": "Sprachen",
+    "required": "Erforderlich",
+    "niceToHave": "Wünschenswert",
+    "softSkills": "Soft Skills",
+    "hardSkills": "Technische Fähigkeiten",
+    "tools": "Tools & Technologien",
+    "methodologies": "Methodologien",
+    "years": "Jahre",
+    "from": "Ab",
+    "upTo": "Bis zu",
+    "viewOriginal": "Originalangebot anzeigen",
+    "periods": {
+      "year": "Jahr",
+      "month": "Monat",
+      "day": "Tag",
+      "hour": "Stunde"
+    },
+    "remote": {
+      "full": "100% Remote",
+      "hybrid": "Hybrid",
+      "onsite": "Vor Ort",
+      "partial": "Teilweise Remote"
+    },
+    "recruitmentProcess": {
+      "title": "Bewerbungsprozess",
+      "steps": "Schritte",
+      "step": "Schritt",
+      "contact": "Kontakt",
+      "deadline": "Bewerbungsfrist",
+      "duration": "Dauer"
+    },
+    "languageRequired": "Erforderliche Sprache",
+    "languageNiceToHave": "Wünschenswerte Sprache"
   }
 }

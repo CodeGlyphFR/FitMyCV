@@ -7,6 +7,9 @@ import Modal from "@/components/ui/Modal";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage } from "@/lib/i18n/cvLanguageHelper";
 import { capitalizeSkillName, toTitleCase } from "@/lib/utils/textFormatting";
+import ReviewableItemCard from "@/components/cv-review/ReviewableItemCard";
+import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
+import { useItemChanges } from "@/components/cv-review/useItemChanges";
 import { Info } from "lucide-react";
 import {
   ModalSection,
@@ -27,6 +30,25 @@ export default function Extras(props){
   const title = getCvSectionTitleInCvLanguage('extras', sectionTitles.extras, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
+
+  // Récupérer les extras ajoutés, supprimés et modifiés pour les afficher
+  const { removedItems: removedExtras, addedItems: addedExtras, modifiedItems: modifiedExtras } = useItemChanges("extras");
+  const hasRemovedExtras = removedExtras.length > 0;
+
+  // Helper pour trouver si un extra a un changement "added" pending
+  const findAddedChange = (extra) => {
+    return addedExtras.find(c =>
+      c.itemName?.toLowerCase() === (extra.name || "").toLowerCase()
+    );
+  };
+
+  // Helper pour trouver si un extra a un changement "modified" pending
+  const findModifiedChange = (extra) => {
+    return modifiedExtras.find(c =>
+      c.afterValue?.name?.toLowerCase() === (extra.name || "").toLowerCase()
+    );
+  };
+
   const [editIndex, setEditIndex] = React.useState(null);
   const [delIndex, setDelIndex] = React.useState(null);
   const [addOpen, setAddOpen] = React.useState(false);
@@ -62,12 +84,27 @@ export default function Extras(props){
   const extraToDelete = delIndex !== null ? extras[delIndex] : null;
   const extraNameToDelete = extraToDelete?.name || "";
 
-  // Masquer entièrement si vide et pas en édition (inchangé)
-  if (extras.length===0 && !editing) return null;
+  // Masquer entièrement si vide et pas en édition et pas d'éléments supprimés
+  if (extras.length===0 && !editing && !hasRemovedExtras) return null;
 
   return (
-    <Section title={<div className="flex items-center justify-between gap-2"><span>{title}</span>{editing && (<button onClick={()=>setAddOpen(true)} className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-colors duration-200">{t("common.add")}</button>)}</div>}>
-      {extras.length === 0 ? (
+    <Section title={
+      <div className="flex items-center justify-between gap-2">
+        <span>{title}</span>
+        <div className="flex items-center gap-3">
+          <SectionReviewActions section="extras" />
+          {editing && (
+            <button
+              onClick={()=>setAddOpen(true)}
+              className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-colors duration-200"
+            >
+              {t("common.add")}
+            </button>
+          )}
+        </div>
+      </div>
+    }>
+      {extras.length === 0 && !hasRemovedExtras ? (
         editing ? (
           <div className="rounded-xl border border-white/15 p-3 text-sm opacity-60">
             {t("cvSections.noExtras")}
@@ -75,52 +112,129 @@ export default function Extras(props){
         ) : null
       ) : (
         <div className="space-y-3">
-          {/* Badges courts (≤40 caractères) */}
-          <div className="flex flex-wrap gap-2">
-            {extras.filter(e => (e.summary || "").length <= 40).map((e,i)=>{
-              const originalIndex = extras.indexOf(e);
-              return (
-                <div key={originalIndex} className="relative inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-1 text-sm overflow-visible">
-                  <div>
-                    <span className="font-semibold">{toTitleCase(e.name) || ""}</span>
-                    <span className="text-sm opacity-80"> : {e.summary || ""}</span>
+          {/* Badges courts (≤40 caractères) + Extras supprimés courts */}
+          {(extras.filter(e => (e.summary || "").length <= 40).length > 0 ||
+            removedExtras.filter(c => !c.beforeValue?.summary || (c.beforeValue.summary || "").length <= 40).length > 0) && (
+            <div className="flex flex-wrap gap-2">
+              {extras.filter(e => (e.summary || "").length <= 40).map((e,i)=>{
+                const originalIndex = extras.indexOf(e);
+                const addedChange = findAddedChange(e);
+                const modifiedChange = findModifiedChange(e);
+
+                const badgeContent = (
+                  <>
+                    <div>
+                      <span className="font-semibold">{toTitleCase(e.name) || ""}</span>
+                      <span className="text-sm opacity-80"> : {e.summary || ""}</span>
+                    </div>
+                    {editing && (
+                      <ContextMenu
+                        items={[
+                          { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(originalIndex) },
+                          { icon: Trash2, label: t("common.delete"), onClick: () => setDelIndex(originalIndex), danger: true }
+                        ]}
+                      />
+                    )}
+                  </>
+                );
+
+                // Si c'est un extra ajouté ou modifié, wrapper dans ReviewableItemCard
+                if (addedChange || modifiedChange) {
+                  return (
+                    <ReviewableItemCard
+                      key={originalIndex}
+                      change={addedChange || modifiedChange}
+                      variant="badge"
+                    >
+                      {badgeContent}
+                    </ReviewableItemCard>
+                  );
+                }
+
+                return (
+                  <div key={originalIndex} className="relative inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-1 text-sm overflow-visible">
+                    {badgeContent}
                   </div>
-                  {editing && (
-                    <ContextMenu
-                      items={[
-                        { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(originalIndex) },
-                        { icon: Trash2, label: t("common.delete"), onClick: () => setDelIndex(originalIndex), danger: true }
-                      ]}
-                    />
+                );
+              })}
+
+              {/* Extras supprimés (badges rouges) - pour ceux avec description courte */}
+              {removedExtras.filter(c => !c.beforeValue?.summary || (c.beforeValue.summary || "").length <= 40).map((change) => (
+                <ReviewableItemCard
+                  key={change.id}
+                  change={change}
+                  variant="badge"
+                  className="no-print"
+                >
+                  <span className="font-semibold">{toTitleCase(change.itemName) || change.change}</span>
+                  {change.beforeValue?.summary && (
+                    <span className="text-sm opacity-80"> : {change.beforeValue.summary}</span>
                   )}
-                </div>
-              );
-            })}
-          </div>
+                </ReviewableItemCard>
+              ))}
+            </div>
+          )}
           {/* Boites carrées pour descriptions longues (>40 caractères) */}
           {extras.filter(e => (e.summary || "").length > 40).length > 0 && (
             <div className={extras.filter(e => (e.summary || "").length > 40).length > 1 ? "grid md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
               {extras.filter(e => (e.summary || "").length > 40).map((e,i)=>{
                 const originalIndex = extras.indexOf(e);
+                const addedChange = findAddedChange(e);
+                const modifiedChange = findModifiedChange(e);
+
+                const cardContent = (
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1">
+                      <div className="font-semibold">{toTitleCase(e.name) || ""}</div>
+                      <div className="text-sm opacity-80">{e.summary || ""}</div>
+                    </div>
+                    {editing && (
+                      <ContextMenu
+                        items={[
+                          { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(originalIndex) },
+                          { icon: Trash2, label: t("common.delete"), onClick: () => setDelIndex(originalIndex), danger: true }
+                        ]}
+                      />
+                    )}
+                  </div>
+                );
+
+                // Si c'est un extra ajouté ou modifié, wrapper dans ReviewableItemCard
+                if (addedChange || modifiedChange) {
+                  return (
+                    <ReviewableItemCard
+                      key={originalIndex}
+                      change={addedChange || modifiedChange}
+                    >
+                      {cardContent}
+                    </ReviewableItemCard>
+                  );
+                }
+
                 return (
                   <div key={originalIndex} className="rounded-xl border border-white/15 p-3 relative z-0 overflow-visible">
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1">
-                        <div className="font-semibold">{toTitleCase(e.name) || ""}</div>
-                        <div className="text-sm opacity-80">{e.summary || ""}</div>
-                      </div>
-                      {editing && (
-                        <ContextMenu
-                          items={[
-                            { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(originalIndex) },
-                            { icon: Trash2, label: t("common.delete"), onClick: () => setDelIndex(originalIndex), danger: true }
-                          ]}
-                        />
-                      )}
-                    </div>
+                    {cardContent}
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Extras supprimés (cartes rouges) - pour ceux avec description longue */}
+          {removedExtras.filter(c => c.beforeValue?.summary && (c.beforeValue.summary || "").length > 40).length > 0 && (
+            <div className={removedExtras.filter(c => c.beforeValue?.summary && (c.beforeValue.summary || "").length > 40).length > 1 ? "grid md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
+              {removedExtras.filter(c => c.beforeValue?.summary && (c.beforeValue.summary || "").length > 40).map((change) => (
+                <ReviewableItemCard
+                  key={change.id}
+                  change={change}
+                  className="no-print"
+                >
+                  <div className="font-semibold">{toTitleCase(change.itemName) || change.change}</div>
+                  {change.beforeValue?.summary && (
+                    <div className="text-sm opacity-80">{change.beforeValue.summary}</div>
+                  )}
+                </ReviewableItemCard>
+              ))}
             </div>
           )}
         </div>

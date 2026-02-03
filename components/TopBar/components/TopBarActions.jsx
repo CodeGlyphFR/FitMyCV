@@ -104,7 +104,7 @@ export default function TopBarActions({
         }}
         className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center h-8 w-8 order-12 md:order-9 transition-all duration-200 select-none"
         style={{ WebkitTouchCallout: 'none' }}
-        title={t("topbar.delete")}
+        title={t("topbar.deleteTooltip")}
       >
         <img src="/icons/delete.png" alt="Delete" className="h-4 w-4 pointer-events-none select-none" draggable="false" />
       </button>

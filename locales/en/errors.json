@@ -37,7 +37,8 @@
         "providerAlreadyLinked": "This provider is already linked to your account",
         "providerNotLinked": "This provider is not linked to your account",
         "cannotUnlinkLastProvider": "Cannot unlink: you must have at least one linked account",
-        "registrationDisabled": "Registrations are temporarily suspended"
+        "registrationDisabled": "Registrations are temporarily suspended",
+        "privacyPolicyRequired": "You must accept the privacy policy to create an account"
       },
       "cv": {
         "notFound": "CV not found",

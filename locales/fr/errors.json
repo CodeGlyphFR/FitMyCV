@@ -37,7 +37,8 @@
         "providerAlreadyLinked": "Ce provider est déjà lié à votre compte",
         "providerNotLinked": "Ce provider n'est pas lié à votre compte",
         "cannotUnlinkLastProvider": "Impossible de délier : vous devez avoir au moins un compte lié",
-        "registrationDisabled": "Les inscriptions sont temporairement suspendues"
+        "registrationDisabled": "Les inscriptions sont temporairement suspendues",
+        "privacyPolicyRequired": "Vous devez accepter la politique de confidentialité pour créer un compte"
       },
       "cv": {
         "notFound": "CV introuvable",

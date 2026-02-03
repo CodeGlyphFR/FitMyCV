@@ -24,7 +24,8 @@ import { useModalStates } from "./hooks/useModalStates";
 import { useExportModal } from "./hooks/useExportModal";
 import { useSubscriptionData } from "./hooks/useSubscriptionData";
 import { useFilterState } from "./hooks/useFilterState";
-import { useWrapDetection } from "./hooks/useWrapDetection";
+import { useResponsiveMode } from "./hooks/useResponsiveMode";
+import { BREAKPOINTS } from "@/lib/constants/breakpoints";
 
 // Components
 import {
@@ -137,13 +138,12 @@ export default function TopBar() {
   const userMenuRef = React.useRef(null);
   const userMenuButtonRef = React.useRef(null);
   const filterButtonRef = React.useRef(null);
-  const flexContainerRef = React.useRef(null);
 
   // Filter state hook
   const filter = useFilterState();
 
-  // Détection dynamique du wrapping
-  const hasWrapped = useWrapDetection(flexContainerRef, isAuthenticated);
+  // Détection responsive basée sur matchMedia
+  const { isMobile } = useResponsiveMode();
 
   // Filtered items based on active filters
   const filteredItems = React.useMemo(() => {
@@ -250,9 +250,6 @@ export default function TopBar() {
 
   // État pour l'onboarding : CV récemment généré
   const [recentlyGeneratedCv, setRecentlyGeneratedCv] = React.useState(null);
-  const [isSmallScreen, setIsSmallScreen] = React.useState(
-    typeof window !== 'undefined' ? window.innerWidth < 640 : false
-  );
 
   // Scroll behavior hook
   useScrollBehavior({
@@ -334,14 +331,8 @@ export default function TopBar() {
   }, []);
 
   React.useEffect(() => {
-    const handleResize = () => setIsSmallScreen(window.innerWidth < 640);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  React.useEffect(() => {
-    state.setIsMobile(hasWrapped || isSmallScreen);
-  }, [hasWrapped, isSmallScreen]);
+    state.setIsMobile(isMobile);
+  }, [isMobile]);
 
   React.useEffect(() => {
     if (modals.listOpen && triggerRef.current) {
@@ -474,10 +465,7 @@ export default function TopBar() {
           pointerEvents: 'auto'
         }}
       >
-        <div
-          ref={flexContainerRef}
-          className="w-full p-3 flex flex-wrap md:flex-nowrap items-center gap-x-2 gap-y-2 sm:gap-3"
-        >
+        <div className="w-full p-3 flex flex-wrap md:flex-nowrap items-center gap-x-2 gap-y-2 sm:gap-3">
           {/* User Icon */}
           <div className="relative order-1 md:order-1">
             <button
@@ -534,7 +522,7 @@ export default function TopBar() {
               data-onboarding="task-manager"
               ref={taskQueueButtonRef}
               onClick={() => {
-                if (window.innerWidth <= 990) {
+                if (window.innerWidth < BREAKPOINTS.TASK_QUEUE_DROPDOWN) {
                   modals.setOpenTaskQueue(true);
                 } else {
                   modals.setOpenTaskDropdown(!modals.openTaskDropdown);

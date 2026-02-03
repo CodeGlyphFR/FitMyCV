@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState, useRef } from "react";
 import Section from "@/components/layout/Section";
 import { ym } from "@/lib/utils/textFormatting";
 import { useAdmin } from "@/components/admin/AdminProvider";
@@ -18,10 +18,112 @@ import {
 } from "@/components/ui/ModalForm";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
+import ReviewableItemCard from "@/components/cv-review/ReviewableItemCard";
+import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
+import { useItemChanges } from "@/components/cv-review/useItemChanges";
+import { useEducationAllChanges } from "@/components/cv-review/EducationReviewActions";
+import ChangeReviewPopover from "@/components/cv-review/ChangeReviewPopover";
+import { useReview } from "@/components/providers/ReviewProvider";
 import CountrySelect from "@/components/ui/CountrySelect";
 import MonthPicker from "@/components/ui/MonthPicker";
 import ContextMenu from "@/components/ui/ContextMenu";
 import { Pencil, Trash2 } from "lucide-react";
+
+/**
+ * Composant pour une formation individuelle avec highlight review
+ */
+function EducationItem({ education: e, index, isEditing, onEdit, onDelete, cvT, t }) {
+  const { changes, hasChanges } = useEducationAllChanges(e.institution);
+  const { acceptChange, rejectChange } = useReview();
+  const [showPopover, setShowPopover] = useState(false);
+  const itemRef = useRef(null);
+
+  // Classes conditionnelles pour le highlight (ambre pour modifications)
+  const itemClasses = [
+    "rounded-xl border p-3 relative z-0 overflow-visible",
+    hasChanges
+      ? "border-2 border-amber-500/50 bg-amber-500/10 cursor-pointer"
+      : "border border-white/15",
+  ].join(" ");
+
+  const handleClick = () => {
+    if (hasChanges && !isEditing) {
+      setShowPopover(true);
+    }
+  };
+
+  const handleAcceptAll = async () => {
+    for (const change of changes) {
+      await acceptChange(change.id);
+    }
+    setShowPopover(false);
+  };
+
+  const handleRejectAll = async () => {
+    for (const change of changes) {
+      await rejectChange(change.id);
+    }
+    setShowPopover(false);
+  };
+
+  // Utiliser le premier changement pour le popover (ils concernent tous la même formation)
+  const firstChange = changes[0];
+
+  return (
+    <>
+      <div ref={itemRef} className={itemClasses} onClick={handleClick}>
+        <div className="flex items-start gap-2">
+          <div className="font-semibold flex-1 min-w-0 break-words">
+            {e.institution || ""}
+          </div>
+          <div className="text-sm opacity-80 whitespace-nowrap ml-auto mt-1">
+            {e.start_date && e.start_date !== e.end_date ? (
+              <span>{ym(e.start_date)} — {ym(e.end_date)}</span>
+            ) : (
+              <span>{ym(e.end_date)}</span>
+            )}
+          </div>
+          {isEditing && (
+            <ContextMenu
+              items={[
+                { icon: Pencil, label: t("common.edit"), onClick: () => onEdit(index) },
+                { icon: Trash2, label: t("common.delete"), onClick: () => onDelete(e._originalIndex ?? index), danger: true }
+              ]}
+            />
+          )}
+        </div>
+
+        {e.location && (e.location.city || e.location.region || e.location.country_code) && (
+          <div className="text-xs opacity-70 mt-0.5">
+            {[
+              e.location.city,
+              e.location.region,
+              e.location.country_code ? (cvT(`countries.${e.location.country_code}`) || e.location.country_code) : null
+            ].filter(Boolean).join(", ")}
+          </div>
+        )}
+
+        <div className="text-sm opacity-80">
+          {e.degree || ""}
+          {e.degree && e.field_of_study ? " • " : ""}
+          {e.field_of_study || ""}
+        </div>
+      </div>
+
+      {/* Popover de review au clic */}
+      {showPopover && firstChange && (
+        <ChangeReviewPopover
+          change={firstChange}
+          onAccept={handleAcceptAll}
+          onReject={handleRejectAll}
+          onClose={() => setShowPopover(false)}
+          anchorRef={itemRef}
+          showBeforeText={true}
+        />
+      )}
+    </>
+  );
+}
 
 export default function Education(props){
   const { t } = useLanguage();
@@ -85,6 +187,10 @@ export default function Education(props){
   const title = getCvSectionTitleInCvLanguage('education', sectionTitles.education, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
+
+  // Récupérer les formations supprimées pour les afficher
+  const { removedItems: removedEducation } = useItemChanges("education");
+  const hasRemovedEducation = removedEducation.length > 0;
 
   // ---- UI State ----
   const [editIndex, setEditIndex] = React.useState(null);
@@ -159,70 +265,68 @@ export default function Education(props){
     setDelIndex(null);
   }
 
-  if (education.length===0 && !editing) return null;
+  if (education.length===0 && !editing && !hasRemovedEducation) return null;
 
   return (
     <Section
       title={
         <div className="flex items-center justify-between gap-2">
           <span>{title}</span>
-          {editing && (
-            <button
-              onClick={() => setAddOpen(true)}
-              className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-colors duration-200"
-            >
-              {t("common.add")}
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            <SectionReviewActions section="education" />
+            {editing && (
+              <button
+                onClick={() => setAddOpen(true)}
+                className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-colors duration-200"
+              >
+                {t("common.add")}
+              </button>
+            )}
+          </div>
         </div>
       }
     >
-      {(!education || education.length === 0) ? (
+      {(!education || education.length === 0) && !hasRemovedEducation ? (
         <div className="rounded-xl border border-white/15 p-3 text-sm opacity-60">
           {t("cvSections.noEducation")}
         </div>
       ) : (
-        <div className={education.length > 1 ? "grid md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
-          {education.map((e, i) => (
-            <div key={i} className="rounded-xl border border-white/15 p-3 relative z-0 overflow-visible">
-              <div className="flex items-start gap-2">
-                <div className="font-semibold flex-1 min-w-0 break-words">
-                  {e.institution || ""}
-                </div>
-                <div className="text-sm opacity-80 whitespace-nowrap ml-auto mt-1">
-                  {e.start_date && e.start_date !== e.end_date ? (
-                    <span>{ym(e.start_date)} — {ym(e.end_date)}</span>
-                  ) : (
-                    <span>{ym(e.end_date)}</span>
-                  )}
-                </div>
-                {editing && (
-                  <ContextMenu
-                    items={[
-                      { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(i) },
-                      { icon: Trash2, label: t("common.delete"), onClick: () => setDelIndex(e._originalIndex ?? i), danger: true }
-                    ]}
-                  />
-                )}
-              </div>
-
-              {e.location && (e.location.city || e.location.region || e.location.country_code) && (
-                <div className="text-xs opacity-70 mt-0.5">
-                  {[
-                    e.location.city,
-                    e.location.region,
-                    e.location.country_code ? (cvT(`countries.${e.location.country_code}`) || e.location.country_code) : null
-                  ].filter(Boolean).join(", ")}
-                </div>
-              )}
-
-              <div className="text-sm opacity-80">
-                {e.degree || ""}
-                {e.degree && e.field_of_study ? " • " : ""}
-                {e.field_of_study || ""}
-              </div>
+        <div className="space-y-3">
+          {/* Formations existantes */}
+          {education.length > 0 && (
+            <div className={education.length > 1 ? "grid md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
+              {education.map((e, i) => (
+                <EducationItem
+                  key={i}
+                  education={e}
+                  index={i}
+                  isEditing={editing}
+                  onEdit={openEdit}
+                  onDelete={setDelIndex}
+                  cvT={cvT}
+                  t={t}
+                />
+              ))}
             </div>
-          ))}
+          )}
+
+          {/* Formations supprimées par l'IA (cartes rouges) */}
+          {removedEducation.length > 0 && (
+            <div className={removedEducation.length > 1 ? "grid md:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
+              {removedEducation.map((change) => (
+                <ReviewableItemCard
+                  key={change.id}
+                  change={change}
+                  className="no-print"
+                >
+                  <div className="font-semibold">{change.itemName || change.change || t("cvSections.education")}</div>
+                  {change.reason && (
+                    <div className="text-sm opacity-80 mt-1">{change.reason}</div>
+                  )}
+                </ReviewableItemCard>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

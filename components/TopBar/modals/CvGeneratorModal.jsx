@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import Modal from "@/components/ui/Modal";
 import { getCvIcon } from "../utils/cvUtils";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
@@ -8,6 +9,7 @@ import ItemLabel from "../components/ItemLabel";
 import { CREATE_TEMPLATE_OPTION } from "../utils/constants";
 import { useCreditCost } from "@/hooks/useCreditCost";
 import CreditCostDisplay from "@/components/ui/CreditCostDisplay";
+import { LANGUAGE_FLAGS } from "@/lib/cv-core/language/languageConstants";
 
 /**
  * Modal de génération de CV à partir d'une offre d'emploi
@@ -60,7 +62,7 @@ export default function CvGeneratorModal({
       title={t("cvGenerator.title")}
     >
       <form onSubmit={onSubmit} className="space-y-4">
-        <div className="text-sm text-white/90 drop-shadow bg-emerald-500/10 border border-emerald-500/50 rounded-lg p-3">
+        <div className="text-sm text-white/90 drop-shadow bg-emerald-500/10 border border-emerald-500/50 rounded-lg p-3 text-justify">
           {t("cvGenerator.description")}
         </div>
 
@@ -95,6 +97,7 @@ export default function CvGeneratorModal({
                         item={generatorBaseItem}
                         withHyphen={false}
                         tickerKey={tickerResetKey}
+                        showLanguageFlag={true}
                         t={t}
                       />
                     </span>
@@ -155,6 +158,7 @@ export default function CvGeneratorModal({
                           className="leading-tight"
                           withHyphen={false}
                           tickerKey={tickerResetKey}
+                          showLanguageFlag={true}
                           t={t}
                         />
                       </button>
@@ -200,21 +204,28 @@ export default function CvGeneratorModal({
                     </div>
                     <ul className="py-1">
                       {linkHistory.map((linkItem, histIndex) => {
-                        // linkItem est maintenant un objet {url, title, domain}
+                        // linkItem est maintenant un objet {url, title, company, language, domain}
                         const url = typeof linkItem === 'string' ? linkItem : linkItem.url;
                         const title = typeof linkItem === 'object' ? linkItem.title : null;
+                        const company = typeof linkItem === 'object' ? linkItem.company : null;
+                        const language = typeof linkItem === 'object' ? linkItem.language : null;
                         const domain = typeof linkItem === 'object' ? linkItem.domain : null;
 
-                        // Formater l'affichage: "Titre (Domaine)" ou juste le lien si pas de titre
+                        // Formater l'affichage: "Titre (Compagnie)" ou "Titre (Domaine)" ou juste le lien
                         let displayText;
                         if (title) {
-                          // Tronquer le titre à 40 caractères
-                          const truncatedTitle = title.length > 40 ? title.slice(0, 37) + '...' : title;
-                          displayText = domain ? `${truncatedTitle} (${domain})` : truncatedTitle;
+                          // Tronquer le titre à 35 caractères
+                          const truncatedTitle = title.length > 35 ? title.slice(0, 32) + '...' : title;
+                          // Utiliser company en priorité, sinon domain en fallback
+                          const suffix = company || domain;
+                          displayText = suffix ? `${truncatedTitle} (${suffix})` : truncatedTitle;
                         } else {
                           // Fallback: juste le lien
                           displayText = url;
                         }
+
+                        // Drapeau basé sur la langue de l'offre
+                        const flagPath = language ? LANGUAGE_FLAGS[language] : null;
 
                         return (
                           <li key={histIndex} className="flex items-center">
@@ -227,10 +238,19 @@ export default function CvGeneratorModal({
                                   [index]: false
                                 }));
                               }}
-                              className="flex-1 px-3 py-2 text-left text-xs text-white hover:bg-white/25 truncate transition-colors duration-200"
+                              className="flex-1 flex items-center gap-2 px-3 py-2 text-left text-xs text-white hover:bg-white/25 truncate transition-colors duration-200"
                               title={url}
                             >
-                              {displayText}
+                              {flagPath && (
+                                <Image
+                                  src={flagPath}
+                                  alt={language}
+                                  width={16}
+                                  height={12}
+                                  className="shrink-0"
+                                />
+                              )}
+                              <span className="truncate">{displayText}</span>
                             </button>
                             <button
                               type="button"
@@ -277,6 +297,10 @@ export default function CvGeneratorModal({
               <img src="/icons/add.png" alt="" className="h-3 w-3 " /> {t("cvGenerator.addLink")}
             </button>
           </div>
+          <p className="text-xs text-amber-300/80 flex items-start gap-1.5">
+            <span>⚠️</span>
+            <span>{t("cvGenerator.languageHint")}</span>
+          </p>
         </div>
 
         <div className="space-y-2">

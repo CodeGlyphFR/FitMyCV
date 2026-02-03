@@ -653,7 +653,7 @@ Générer un CV template depuis un titre de poste.
 // Request
 {
   "jobTitle": "Senior Software Engineer",
-  "language": "fr"
+  "language": "français"
 }
 
 // Response 202
@@ -662,6 +662,15 @@ Générer un CV template depuis un titre de poste.
   "status": "pending"
 }
 ```
+
+**Langues supportées pour le CV généré :**
+
+| Valeur | Langue |
+|--------|--------|
+| `français` | Français (défaut) |
+| `anglais` | Anglais |
+| `allemand` | Allemand |
+| `espagnol` | Espagnol |
 
 ---
 

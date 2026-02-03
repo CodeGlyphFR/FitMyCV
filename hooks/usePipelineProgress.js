@@ -41,6 +41,7 @@ const IMPROVEMENT_STEP_WEIGHTS = {
 
 /**
  * Calcule le pourcentage de progression pour une offre
+ * Prend en compte les steps parallèles (runningSteps) pour un calcul précis
  * @param {Object} offerProgress - Progression de l'offre
  * @returns {number} - Pourcentage (0-100)
  */
@@ -49,7 +50,7 @@ function calculateOfferProgress(offerProgress) {
   if (offerProgress.status === 'completed') return 100;
   if (offerProgress.status === 'failed' || offerProgress.status === 'cancelled') return 0;
 
-  const { completedSteps = {}, currentStep } = offerProgress;
+  const { completedSteps = {}, runningSteps = {}, currentStep } = offerProgress;
   let totalWeight = 0;
   let completedWeight = 0;
 
@@ -60,9 +61,17 @@ function calculateOfferProgress(offerProgress) {
     }
   });
 
-  // Ajouter une progression partielle pour l'étape en cours
-  if (currentStep && !completedSteps[currentStep]) {
-    completedWeight += STEP_WEIGHTS[currentStep] * 0.5; // 50% de l'étape en cours
+  // Ajouter une progression partielle pour les étapes en cours (parallèles)
+  // Chaque step dans runningSteps compte pour 50% de son poids
+  Object.keys(runningSteps).forEach(step => {
+    if (!completedSteps[step] && STEP_WEIGHTS[step]) {
+      completedWeight += STEP_WEIGHTS[step] * 0.5;
+    }
+  });
+
+  // Fallback sur currentStep si runningSteps est vide (rétrocompatibilité)
+  if (Object.keys(runningSteps).length === 0 && currentStep && !completedSteps[currentStep]) {
+    completedWeight += STEP_WEIGHTS[currentStep] * 0.5;
   }
 
   return Math.round((completedWeight / totalWeight) * 100);
@@ -93,7 +102,18 @@ export function usePipelineProgress() {
   const updateOfferProgress = useCallback((taskId, offerId, offerIndex, update) => {
     setProgressMap(prev => {
       const task = prev[taskId] || { offers: {}, status: 'running' };
-      const offer = task.offers[offerId] || { offerIndex, completedSteps: {} };
+      const offer = task.offers[offerId] || { offerIndex, completedSteps: {}, runningSteps: {} };
+
+      // Gérer les runningSteps pour tracker les steps parallèles
+      // On utilise stepStatus (status du step) et non status (status de l'offre)
+      let newRunningSteps = { ...offer.runningSteps };
+      const stepStatus = update.stepStatus || update.status; // Fallback pour rétrocompatibilité
+      if (update.currentStep && stepStatus === 'running') {
+        newRunningSteps[update.currentStep] = {
+          currentItem: update.currentItem ?? null,
+          totalItems: update.totalItems ?? null,
+        };
+      }
 
       return {
         ...prev,
@@ -104,6 +124,7 @@ export function usePipelineProgress() {
             [offerId]: {
               ...offer,
               ...update,
+              runningSteps: newRunningSteps,
             },
           },
           lastUpdate: Date.now(),
@@ -116,8 +137,14 @@ export function usePipelineProgress() {
   const markStepCompleted = useCallback((taskId, offerId, step) => {
     setProgressMap(prev => {
       const task = prev[taskId] || { offers: {} };
-      const offer = task.offers[offerId] || { completedSteps: {} };
+      const offer = task.offers[offerId] || { completedSteps: {}, runningSteps: {} };
+
+      // Ajouter aux completedSteps
       const completedSteps = { ...offer.completedSteps, [step]: true };
+
+      // Retirer des runningSteps (le step n'est plus en cours)
+      const runningSteps = { ...offer.runningSteps };
+      delete runningSteps[step];
 
       return {
         ...prev,
@@ -128,6 +155,7 @@ export function usePipelineProgress() {
             [offerId]: {
               ...offer,
               completedSteps,
+              runningSteps,
             },
           },
           lastUpdate: Date.now(),
@@ -208,6 +236,8 @@ export function usePipelineProgress() {
             markStepCompleted(taskId, offerId, step);
           }
 
+          // Note: Le status dans l'événement SSE est le status du STEP (running/completed),
+          // pas le status de l'OFFRE. L'offre reste "running" tant qu'elle n'est pas complètement terminée.
           updateOfferProgress(taskId, offerId, offerIndex, {
             offerIndex,
             sourceUrl: sourceUrl || null,
@@ -216,7 +246,8 @@ export function usePipelineProgress() {
             currentStep: step,
             currentItem: currentItem ?? null,
             totalItems: totalItems ?? null,
-            status: 'running',
+            stepStatus: status || 'running', // Status du step (pour runningSteps)
+            status: 'running', // L'offre reste "running" - seul offer_completed change ce status
           });
 
           updateTaskProgress(taskId, {
@@ -259,6 +290,7 @@ export function usePipelineProgress() {
                   [offerId]: {
                     ...offer,
                     completedSteps,
+                    runningSteps: {}, // Nettoyer les steps en cours
                     currentStep: null,
                     status: 'completed',
                   },

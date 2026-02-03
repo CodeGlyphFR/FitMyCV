@@ -17,7 +17,7 @@ export async function POST(request){
   const body = await request.json().catch(() => null);
   if (!body) return CommonErrors.invalidPayload();
 
-  const { firstName, lastName, name, email, password, recaptchaToken } = body;
+  const { firstName, lastName, name, email, password, recaptchaToken, privacyPolicyAccepted } = body;
 
   // Vérification reCAPTCHA (optionnelle pour compatibilité, mais recommandée)
   if (recaptchaToken) {
@@ -38,6 +38,11 @@ export async function POST(request){
   if (regSetting?.value === '0') {
     logger.context('auth', 'warn', `Tentative d'inscription bloquée (registration_disabled) pour ${email}`);
     return AuthErrors.registrationDisabled();
+  }
+
+  // Vérifier l'acceptation de la politique de confidentialité
+  if (!privacyPolicyAccepted) {
+    return AuthErrors.privacyPolicyRequired();
   }
 
   // Support both formats: new (firstName/lastName) and legacy (name)
@@ -101,6 +106,7 @@ export async function POST(request){
       passwordHash,
       emailVerified: null, // Email non vérifié à l'inscription
       onboardingState: DEFAULT_ONBOARDING_STATE, // Initialiser l'état d'onboarding complet
+      privacyPolicyAcceptedAt: new Date(), // Date d'acceptation de la politique de confidentialité
     },
   });
 
