@@ -66,3 +66,6 @@ deploy.sh
 _*/
 .*/
 !.github/
+
+# Git worktrees managed by worktree-manager
+.worktrees/
