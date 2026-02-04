@@ -36,8 +36,23 @@ export function useOnboardingFetch(isAuthenticated, userId, stateRef) {
       setOnboardingState(data.onboardingState || DEFAULT_ONBOARDING_STATE);
 
       // Si on est sur une étape > 0 et pas complété, c'est qu'on est en cours
-      if (data.currentStep > 0 && !data.hasCompleted && !data.isSkipped) {
+      const isActiveNow = data.currentStep > 0 && !data.hasCompleted && !data.isSkipped;
+      if (isActiveNow) {
         setIsActive(true);
+      }
+
+      // CRITICAL: Synchroniser stateRef IMMÉDIATEMENT pour éviter race condition
+      // avec les effects de useOnboardingAutoStart qui s'exécutent AVANT
+      // l'effet de sync du Provider
+      if (stateRef) {
+        stateRef.current = {
+          ...stateRef.current,
+          currentStep: data.currentStep,
+          hasCompleted: data.hasCompleted,
+          hasSkipped: data.isSkipped,
+          isActive: isActiveNow,
+          isLoading: false,
+        };
       }
 
       setIsLoading(false);
@@ -45,7 +60,7 @@ export function useOnboardingFetch(isAuthenticated, userId, stateRef) {
       onboardingLogger.error('[OnboardingProvider] Error fetching state:', error);
       setIsLoading(false);
     }
-  }, []);
+  }, [stateRef]);
 
   /**
    * Charger l'état au montage
