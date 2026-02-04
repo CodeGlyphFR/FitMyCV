@@ -5,104 +5,59 @@
     "type": "object",
     "properties": {
       "description": {
-        "type": "string",
-        "description": "Description courte adaptee"
+        "type": ["object", "null"],
+        "description": "Description modifiee avec raison (null si non modifiee)",
+        "properties": {
+          "value": { "type": "string", "description": "Nouvelle description" },
+          "reason": { "type": "string", "description": "Raison de la modification" }
+        },
+        "required": ["value", "reason"],
+        "additionalProperties": false
       },
       "responsibilities": {
-        "type": "array",
-        "description": "Responsabilites reformulees et reordonnees par pertinence",
-        "items": {
-          "type": "string"
-        }
+        "type": ["object", "null"],
+        "description": "Responsabilites modifiees avec raison (null si non modifiees)",
+        "properties": {
+          "value": { "type": "array", "items": { "type": "string" }, "description": "Nouvelles responsabilites" },
+          "reason": { "type": "string", "description": "Raison de la modification" }
+        },
+        "required": ["value", "reason"],
+        "additionalProperties": false
       },
       "deliverables": {
-        "type": "array",
-        "description": "Resultats et accomplissements mis en valeur",
-        "items": {
-          "type": "string"
-        }
+        "type": ["object", "null"],
+        "description": "Deliverables modifies avec raison (null si non modifies)",
+        "properties": {
+          "value": { "type": "array", "items": { "type": "string" }, "description": "Nouveaux deliverables" },
+          "reason": { "type": "string", "description": "Raison de la modification" }
+        },
+        "required": ["value", "reason"],
+        "additionalProperties": false
       },
-      "skills_used": {
+      "skill_changes": {
         "type": "array",
-        "description": "Competences filtrees pour ne garder que les pertinentes",
+        "description": "UNIQUEMENT les skills modifies ou supprimes (pas les conserves)",
         "items": {
-          "type": "string"
+          "type": "object",
+          "properties": {
+            "before": { "type": "string", "description": "Nom du skill original" },
+            "after": { "type": ["string", "null"], "description": "Nouveau nom (null si supprime)" },
+            "reason": { "type": "string", "description": "Raison du changement" }
+          },
+          "required": ["before", "after", "reason"],
+          "additionalProperties": false
         }
       },
       "domain": {
         "type": "string",
-        "description": "Domaine métier de l'expérience, déterminé en analysant le titre du poste, l'entreprise et les responsabilités (ex: Développement logiciel, Gestion de projet, Data Science, Commercial, Marketing, Finance, etc.)"
+        "description": "Domaine metier (ex: Developpement logiciel, Gestion de projet)"
       },
       "years_in_domain": {
         "type": "number",
-        "description": "Durée de cette expérience en années (calculée depuis start_date jusqu'à end_date ou aujourd'hui si en cours)"
-      },
-      "modifications": {
-        "type": "array",
-        "description": "Liste detaillee des modifications effectuees avec avant/apres/raison",
-        "items": {
-          "type": "object",
-          "properties": {
-            "field": {
-              "type": "string",
-              "description": "Nom du champ modifie (description, responsibilities, deliverables, skills_used)"
-            },
-            "action": {
-              "type": "string",
-              "enum": ["modified", "added", "removed", "reordered"],
-              "description": "Type de modification"
-            },
-            "before": {
-              "type": "string",
-              "description": "Valeur originale avant modification (null si ajout)"
-            },
-            "after": {
-              "type": "string",
-              "description": "Valeur apres modification (null si suppression)"
-            },
-            "reason": {
-              "type": "string",
-              "description": "Raison IA expliquant pourquoi cette modification a ete faite"
-            }
-          },
-          "required": ["field", "action", "before", "after", "reason"],
-          "additionalProperties": false
-        }
-      },
-      "skills_modifications": {
-        "type": "array",
-        "description": "Modifications detaillees par skill avec correspondance before/after",
-        "items": {
-          "type": "object",
-          "properties": {
-            "before": {
-              "type": ["string", "null"],
-              "description": "Nom du skill source (null si ajout)"
-            },
-            "after": {
-              "type": ["string", "null"],
-              "description": "Nom du skill cible (null si suppression)"
-            },
-            "action": {
-              "type": "string",
-              "enum": ["kept", "modified", "removed", "added"],
-              "description": "Type de modification: kept=inchange, modified=reformule/traduit, removed=supprime, added=ajoute"
-            },
-            "reason": {
-              "type": "string",
-              "description": "Justification du changement"
-            },
-            "translated": {
-              "type": ["string", "null"],
-              "description": "Traduction du skill source dans la langue cible (OBLIGATOIRE si action=removed, permet le rollback dans la bonne langue)"
-            }
-          },
-          "required": ["before", "after", "action", "reason", "translated"],
-          "additionalProperties": false
-        }
+        "description": "Duree en annees (utiliser _calculated_years)"
       }
     },
-    "required": ["description", "responsibilities", "deliverables", "skills_used", "domain", "years_in_domain", "modifications", "skills_modifications"],
+    "required": ["description", "responsibilities", "deliverables", "skill_changes", "domain", "years_in_domain"],
     "additionalProperties": false
   }
 }
