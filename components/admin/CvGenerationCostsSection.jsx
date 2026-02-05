@@ -252,6 +252,19 @@ export function CvGenerationCostsSection({ period, refreshKey, pricings = [] }) 
                   // Même type → trier par itemIndex
                   return (a.itemIndex ?? -1) - (b.itemIndex ?? -1);
                 });
+              // Calculer le coût total par type (pour les types batch)
+              const costByType = validSubtasks.reduce((acc, subtask) => {
+                if (!acc[subtask.type]) {
+                  acc[subtask.type] = { cost: 0, firstIndex: subtask.itemIndex ?? -1 };
+                }
+                acc[subtask.type].cost += subtask.estimatedCost;
+                // Garder le plus petit index comme premier
+                if ((subtask.itemIndex ?? -1) < acc[subtask.type].firstIndex || acc[subtask.type].firstIndex === -1) {
+                  acc[subtask.type].firstIndex = subtask.itemIndex ?? -1;
+                }
+                return acc;
+              }, {});
+
               return (
               <div className="border-t border-white/10 p-4 bg-black/20">
                 <h4 className="text-white/80 text-sm font-medium mb-2">
@@ -268,6 +281,7 @@ export function CvGenerationCostsSection({ period, refreshKey, pricings = [] }) 
                         <th className="pb-1 text-right">Cache</th>
                         <th className="pb-1 text-right">Output</th>
                         <th className="pb-1 text-right">Coût</th>
+                        <th className="pb-1 text-right">%</th>
                         <th className="pb-1 text-right">Durée</th>
                         <th className="pb-1">Statut</th>
                       </tr>
@@ -294,6 +308,28 @@ export function CvGenerationCostsSection({ period, refreshKey, pricings = [] }) 
                             <td className="py-1 text-right text-indigo-400/70">{formatNumber(subtask.cachedTokens)}</td>
                             <td className="py-1 text-right text-purple-400/70">{formatNumber(subtask.completionTokens)}</td>
                             <td className="py-1 text-right text-green-400/70">{formatCurrency(subtask.estimatedCost)}</td>
+                            <td className="py-1 text-right text-white/60">
+                              {(() => {
+                                const isBatchType = subtask.type.startsWith('batch_');
+                                if (isBatchType) {
+                                  // Pour les batch types, afficher uniquement sur le premier item
+                                  if ((subtask.itemIndex ?? -1) === costByType[subtask.type].firstIndex) {
+                                    const groupCost = costByType[subtask.type].cost;
+                                    const pct = gen.totals.estimatedCost > 0
+                                      ? ((groupCost / gen.totals.estimatedCost) * 100).toFixed(1)
+                                      : 0;
+                                    return `${pct}%`;
+                                  }
+                                  return '-';
+                                } else {
+                                  // Pour les types non-batch, pourcentage individuel
+                                  const pct = gen.totals.estimatedCost > 0
+                                    ? ((subtask.estimatedCost / gen.totals.estimatedCost) * 100).toFixed(1)
+                                    : 0;
+                                  return `${pct}%`;
+                                }
+                              })()}
+                            </td>
                             <td className="py-1 text-right text-white/50">{formatDuration(subtask.durationMs)}</td>
                             <td className="py-1">{getStatusBadge(subtask.status)}</td>
                           </tr>
@@ -316,6 +352,7 @@ export function CvGenerationCostsSection({ period, refreshKey, pricings = [] }) 
                         <td className="py-1 text-right text-green-400 font-semibold">
                           {formatCurrency(gen.totals.estimatedCost)}
                         </td>
+                        <td className="py-1 text-right text-white/60">100%</td>
                         <td className="py-1 text-right">
                           {formatDuration(gen.totals.durationMs)}
                         </td>
