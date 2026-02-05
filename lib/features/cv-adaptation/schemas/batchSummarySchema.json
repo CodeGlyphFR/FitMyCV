@@ -6,42 +6,14 @@
     "properties": {
       "description": {
         "type": "string",
-        "description": "Le résumé du profil professionnel (2-4 lignes, 50-75 mots)"
+        "description": "Résumé professionnel généré (2-4 phrases, 50-75 mots, langue cible)"
       },
-      "modifications": {
-        "type": "array",
-        "description": "Liste des modifications effectuées avec avant/après/raison",
-        "items": {
-          "type": "object",
-          "properties": {
-            "field": {
-              "type": "string",
-              "description": "Nom du champ modifié (description)"
-            },
-            "action": {
-              "type": "string",
-              "enum": ["generated", "modified"],
-              "description": "Type de modification"
-            },
-            "before": {
-              "type": "string",
-              "description": "Valeur originale (vide si génération)"
-            },
-            "after": {
-              "type": "string",
-              "description": "Nouvelle valeur"
-            },
-            "reason": {
-              "type": "string",
-              "description": "Raison de la modification"
-            }
-          },
-          "required": ["field", "action", "before", "after", "reason"],
-          "additionalProperties": false
-        }
+      "reason": {
+        "type": "string",
+        "description": "Raison de la génération/modification du résumé (langue interface)"
       }
     },
-    "required": ["description", "modifications"],
+    "required": ["description", "reason"],
     "additionalProperties": false
   }
 }

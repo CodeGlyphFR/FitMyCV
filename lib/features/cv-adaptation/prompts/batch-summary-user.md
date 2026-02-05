@@ -1,32 +1,47 @@
-# Donnees du candidat
-
-## Experience par domaine (total agrege)
-
-{experiencesByDomain}
+# Données du candidat
 
 ## Titres actuels
 
 {currentTitles}
 
-## Annees d'experience totales
+## Années d'expérience totales
 
 {totalYears} ans
 
-## Realisations chiffrees (pour la partie Accomplissement)
+## Expérience par domaine (total agrégé)
 
-{deliverables}
+{experiencesByDomain}
 
-## Skills
+## Top réalisations chiffrées (pour phrase ACCOMPLISSEMENT)
 
-```json
-{skillsJson}
-```
+{topDeliverables}
+
+## Skills pertinents pour l'offre
+
+{topSkills}
 
 ---
 
-# Langue de sortie: {targetLanguage}
+# Offre d'emploi cible
 
-Genere :
-1. `description` : resume du profil (Identite + Accomplissement + Valeur)
+## Titre du poste visé
 
-Reponds en JSON valide.
+{jobTitle}
+
+## Mots-clés requis (pour optimisation ATS)
+
+{jobKeywords}
+
+---
+
+# Instructions
+
+**Langue du résumé (description):** {targetLanguage}
+
+**Langue de la raison (reason):** {interfaceLanguage}
+
+Génère le résumé professionnel en suivant la structure DOMAINE + ACCOMPLISSEMENT + VALEUR.
+
+RAPPEL: NE PAS commencer par un titre de poste. Commencer par les années d'expérience.
+
+Réponds en JSON valide avec `description` et `reason`.
