@@ -86,10 +86,21 @@ Si un champ EST modifié (valeur différente) → retourner `{ "value": ..., "re
 
 **Ne PAS inclure** les skills conservées sans modification.
 
-### Champs obligatoires
+---
 
-- `domain` : Domaine métier (Commercial, Finance, Marketing, RH, etc.)
-- `years_in_domain` : Utiliser `_calculated_years` fourni
+## 5. DOMAINE ET ANNÉES
+
+### domain
+
+Détermine le domaine métier en analysant UNIQUEMENT :
+1. **Description** : Quel est le contexte global ?
+2. **Responsabilités** : Quelles actions concrètes ?
+
+⛔ Ignore l'offre d'emploi ET le titre du poste pour déterminer le domaine.
+
+### years_in_domain
+
+COPIER EXACTEMENT la valeur de `_calculated_years` fournie.
 
 ---
 
