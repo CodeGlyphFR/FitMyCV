@@ -298,6 +298,8 @@ export default function Experience(props){
                 <div className="ml-3 text-sm opacity-80 whitespace-nowrap">
                   {ym(e.start_date)} — {(!e.end_date || e.end_date === "present") ? cvT("cvSections.present") : ym(e.end_date)}
                 </div>
+                {/* Boutons review (accept/reject) en haut à droite */}
+                <ExperienceReviewActions expIndex={e._originalIndex ?? i} />
                 {editing && (
                   <ContextMenu
                     items={[
@@ -370,31 +372,26 @@ export default function Experience(props){
                 </div>
               </div>
 
-              {/* Skills used + Review actions */}
-              <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 items-start justify-between">
-                <div className="flex flex-wrap gap-1">
-                  {Array.isArray(e.skills_used) && e.skills_used.map((m, k) => (
-                    <SkillItemHighlight
-                      key={k}
-                      section="experience"
-                      field="skills_used"
-                      itemName={m}
-                      expIndex={e._originalIndex ?? i}
-                    >
-                      <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">{capitalizeSkillName(m)}</span>
-                    </SkillItemHighlight>
-                  ))}
-                  {/* Afficher les compétences supprimées comme des badges */}
-                  <RemovedSkillsBadges
+              {/* Skills used */}
+              <div className="flex flex-wrap gap-1 mt-4">
+                {Array.isArray(e.skills_used) && e.skills_used.map((m, k) => (
+                  <SkillItemHighlight
+                    key={k}
                     section="experience"
                     field="skills_used"
+                    itemName={m}
                     expIndex={e._originalIndex ?? i}
-                    badgeClassName="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90"
-                  />
-                </div>
-                <div className="shrink-0 ml-auto">
-                  <ExperienceReviewActions expIndex={e._originalIndex ?? i} />
-                </div>
+                  >
+                    <span className="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90">{capitalizeSkillName(m)}</span>
+                  </SkillItemHighlight>
+                ))}
+                {/* Afficher les compétences supprimées comme des badges */}
+                <RemovedSkillsBadges
+                  section="experience"
+                  field="skills_used"
+                  expIndex={e._originalIndex ?? i}
+                  badgeClassName="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90"
+                />
               </div>
               </div>
             </div>
