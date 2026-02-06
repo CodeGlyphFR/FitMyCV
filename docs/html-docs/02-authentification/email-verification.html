@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verification Email | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Authentification</a>
+          <span>/</span>
+          <span>Verification Email</span>
+        </div>
+
+        <h1>Verification Email</h1>
+        <p class="lead">
+          Le système de verification email permet de confirmer l'adresse email des utilisateurs inscrits par credentials.
+        </p>
+
+        <h2>Flux de Verification</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Processus de verification</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant A as API
+    participant DB as PostgreSQL
+    participant E as Email Service
+
+    Note over U,E: Inscription
+    U->>A: POST /register
+    A->>DB: Creer User (emailVerified: null)
+    A->>DB: Creer VerificationToken
+    A->>E: Envoyer email verification
+    E->>U: Email avec lien
+
+    Note over U,E: Verification
+    U->>A: GET /verify?token=xxx
+    A->>DB: Verifier token valide
+    A->>DB: UPDATE User.emailVerified
+    A->>DB: DELETE VerificationToken
+    A->>U: Redirection login
+          </div>
+        </div>
+
+        <h2>Modèle VerificationToken</h2>
+
+        <pre><code>// prisma/schema.prisma
+
+model VerificationToken {
+  identifier String   // Email de l'utilisateur
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}</code></pre>
+
+        <h2>Generation du Token</h2>
+
+        <pre><code>// lib/auth/verification.js
+import crypto from 'crypto';
+import prisma from '@/lib/prisma';
+
+export async function createVerificationToken(email) {
+  // Generer token unique
+  const token = crypto.randomBytes(32).toString('hex');
+
+  // Expiration dans 24h
+  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  // Sauvegarder en base
+  await prisma.verificationToken.create({
+    data: {
+      identifier: email,
+      token,
+      expires
+    }
+  });
+
+  return token;
+}
+
+export async function verifyToken(token) {
+  const record = await prisma.verificationToken.findUnique({
+    where: { token }
+  });
+
+  if (!record || record.expires < new Date()) {
+    return null;
+  }
+
+  // Marquer l'email comme vérifie
+  await prisma.user.update({
+    where: { email: record.identifier },
+    data: { emailVerified: new Date() }
+  });
+
+  // Supprimer le token utilise
+  await prisma.verificationToken.delete({
+    where: { token }
+  });
+
+  return record.identifier;
+}</code></pre>
+
+        <h2>Email de Verification</h2>
+
+        <pre><code>// lib/email/templates/verification.js
+
+export function getVerificationEmailTemplate(name, verifyUrl) {
+  return {
+    subject: 'Verifiez votre email - FitMyCV.io',
+    html: \`
+      <h1>Bienvenue sur FitMyCV.io, \${name} !</h1>
+      <p>Cliquez sur le lien ci-dessous pour verifier votre email :</p>
+      <a href="\${verifyUrl}">Verifier mon email</a>
+      <p>Ce lien expire dans 24 heures.</p>
+    \`
+  };
+}</code></pre>
+
+        <h2>API Endpoints</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Méthode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/auth/verify</code></td>
+              <td>GET</td>
+              <td>Vérifie le token et active le compte</td>
+            </tr>
+            <tr>
+              <td><code>/api/auth/resend-verification</code></td>
+              <td>POST</td>
+              <td>Renvoie l'email de verification</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Securite</h2>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Mesures de securite</div>
+          <ul>
+            <li>Token cryptographiquement securise (32 bytes)</li>
+            <li>Expiration automatique apres 24h</li>
+            <li>Token a usage unique (supprimé apres verification)</li>
+            <li>Rate limiting sur resend (1 par minute)</li>
+          </ul>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

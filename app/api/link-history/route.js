@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
+import { normalizeJobUrl } from '@/lib/utils/normalizeJobUrl';
 
 const MAX_LINKS = 20;
 
@@ -50,12 +51,13 @@ export async function GET() {
     });
 
     // Récupérer les offres d'emploi correspondantes pour avoir les titres
-    const urls = links.map(link => link.url);
+    // On normalise les URLs car JobOffer stocke les URLs normalisées
+    const normalizedUrls = links.map(link => normalizeJobUrl(link.url));
     const jobOffers = await prisma.jobOffer.findMany({
       where: {
         userId: session.user.id,
         sourceType: 'url',
-        sourceValue: { in: urls },
+        sourceValue: { in: normalizedUrls },
       },
       select: {
         sourceValue: true,
@@ -63,24 +65,31 @@ export async function GET() {
       },
     });
 
-    // Créer une map URL -> titre
-    const urlToTitle = new Map();
+    // Créer une map URL normalisée -> {title, company, language}
+    const urlToData = new Map();
     for (const offer of jobOffers) {
       const content = offer.content;
-      // Le titre peut être dans job_title ou title selon le schéma
-      const title = content?.job_title || content?.title || null;
-      if (title) {
-        urlToTitle.set(offer.sourceValue, title);
+      const title = content?.title || null;
+      const company = content?.company || null;
+      const language = content?.language || null;
+      if (title || company || language) {
+        urlToData.set(offer.sourceValue, { title, company, language });
       }
     }
 
-    // Enrichir les liens avec id, titre et domaine
-    const enrichedLinks = links.map(link => ({
-      id: link.id,
-      url: link.url,
-      title: urlToTitle.get(link.url) || null,
-      domain: extractDomainName(link.url),
-    }));
+    // Enrichir les liens avec id, titre, company, language et domaine
+    // On utilise l'URL normalisée pour chercher les données
+    const enrichedLinks = links.map(link => {
+      const data = urlToData.get(normalizeJobUrl(link.url)) || {};
+      return {
+        id: link.id,
+        url: link.url,
+        title: data.title || null,
+        company: data.company || null,
+        language: data.language || null,
+        domain: extractDomainName(link.url),
+      };
+    });
 
     return NextResponse.json({
       success: true,
@@ -115,14 +124,17 @@ export async function POST(request) {
     const userId = session.user.id;
 
     // Add links to history (using upsert to avoid duplicates)
+    // Normalize URLs for consistency with JobOffer storage
     for (const url of links) {
       if (typeof url !== 'string' || !url.trim()) continue;
+
+      const normalizedUrl = normalizeJobUrl(url.trim());
 
       await prisma.linkHistory.upsert({
         where: {
           userId_url: {
             userId,
-            url: url.trim(),
+            url: normalizedUrl,
           },
         },
         update: {
@@ -130,7 +142,7 @@ export async function POST(request) {
         },
         create: {
           userId,
-          url: url.trim(),
+          url: normalizedUrl,
         },
       });
     }
@@ -194,11 +206,13 @@ export async function DELETE(request) {
     }
 
     // Supprimer l'offre d'emploi associée (si elle existe)
+    // Utiliser l'URL normalisée car JobOffer stocke les URLs normalisées
+    const normalizedUrl = normalizeJobUrl(linkRecord.url);
     await prisma.jobOffer.deleteMany({
       where: {
         userId,
         sourceType: 'url',
-        sourceValue: linkRecord.url,
+        sourceValue: normalizedUrl,
       },
     });
 

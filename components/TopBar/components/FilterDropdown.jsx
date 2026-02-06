@@ -2,6 +2,7 @@
 
 import React from "react";
 import { createPortal } from "react-dom";
+import { BREAKPOINTS } from "@/lib/constants/breakpoints";
 
 // Types de CV disponibles
 const CV_TYPES = [
@@ -163,7 +164,7 @@ export default function FilterDropdown({
   const [isMobile, setIsMobile] = React.useState(false);
 
   React.useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    const checkMobile = () => setIsMobile(window.innerWidth < BREAKPOINTS.TOPBAR_DESKTOP);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);

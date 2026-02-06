@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Credits Bienvenue | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Credits</a>
+          <span>/</span>
+          <span>Credits Bienvenue</span>
+        </div>
+
+
+        <h1>Credits Bienvenue</h1>
+        <p class="lead">
+          Attribution automatique de credits gratuits aux nouveaux utilisateurs.
+        </p>
+
+        <h2>Configuration</h2>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Credits offerts</div>
+          <p><strong>5 credits</strong> sont automatiquement attribues a chaque nouvel utilisateur lors de son inscription.</p>
+        </div>
+
+        <h2>Implementation</h2>
+
+        <pre><code>// lib/subscription/welcomeCredits.js
+const WELCOME_CREDITS = 5;
+
+export async function grantWelcomeCredits(userId) {
+  // Verifier si deja attribues
+  const existing = await prisma.creditBalance.findUnique({
+    where: { userId }
+  });
+
+  if (existing) return null;
+
+  // Creer le solde avec les credits de bienvenue
+  const balance = await prisma.creditBalance.create({
+    data: {
+      userId,
+      balance: WELCOME_CREDITS
+    }
+  });
+
+  // Logger la transaction
+  await prisma.creditTransaction.create({
+    data: {
+      userId,
+      amount: WELCOME_CREDITS,
+      type: 'credit',
+      reason: 'welcome_bonus',
+      description: 'Credits de bienvenue'
+    }
+  });
+
+  return balance;
+}</code></pre>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

@@ -4,7 +4,7 @@
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
-    const { cleanupOrphanedTasks } = await import('@/lib/backgroundTasks/cleanupOrphanedTasks');
+    const { cleanupOrphanedTasks } = await import('@/lib/background-jobs/cleanupOrphanedTasks');
     await cleanupOrphanedTasks();
   }
 }

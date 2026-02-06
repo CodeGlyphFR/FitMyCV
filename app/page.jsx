@@ -1,24 +1,24 @@
 import React, { Suspense } from "react";
-import Header from "@/components/Header";
-import Summary from "@/components/Summary";
-import Skills from "@/components/Skills";
-import Experience from "@/components/Experience";
-import Education from "@/components/Education";
-import Languages from "@/components/Languages";
-import Extras from "@/components/Extras";
-import Projects from "@/components/Projects";
-import EmptyState from "@/components/EmptyState";
-import ScrollToTopOnMount from "@/components/ScrollToTopOnMount";
-import { HighlightProvider } from "@/components/HighlightProvider";
-import OrphanedChangesDisplay from "@/components/OrphanedChangesDisplay";
+import Header from "@/components/cv-sections/Header";
+import Summary from "@/components/cv-sections/Summary";
+import Skills from "@/components/cv-sections/Skills";
+import Experience from "@/components/cv-sections/Experience";
+import Education from "@/components/cv-sections/Education";
+import Languages from "@/components/cv-sections/Languages";
+import Extras from "@/components/cv-sections/Extras";
+import Projects from "@/components/cv-sections/Projects";
+import EmptyState from "@/components/empty-state/EmptyState";
+import ScrollToTopOnMount from "@/components/layout/ScrollToTopOnMount";
+import { ReviewProvider } from "@/components/providers/ReviewProvider";
+import OrphanedChangesDisplay from "@/components/cv-review/OrphanedChangesDisplay";
 
 import { sanitizeInMemory } from "@/lib/sanitize";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/session";
-import { ensureUserCvDir, listUserCvFiles, readUserCvFileWithMeta } from "@/lib/cv/storage";
-import { getCvVersionContent } from "@/lib/cv/versioning";
-import { getSectionOrder, getSectionTitles } from "@/lib/openai/cvConstants";
+import { ensureUserCvDir, listUserCvFiles, readUserCvFileWithMeta } from "@/lib/cv-core/storage";
+import { getCvVersionContent } from "@/lib/cv-core/versioning";
+import { getSectionOrder, getSectionTitles } from "@/lib/cv-core/constants";
 
 export const metadata = {
   title: "Mes CVs - FitMyCV.io",
@@ -132,7 +132,7 @@ export default async function Page(props){
   const order = base;
 
   return (
-    <HighlightProvider cv={cv} filename={filename} initialVersion={isViewingVersion ? viewingVersionNumber : 'latest'} contentVersion={contentVersion}>
+    <ReviewProvider cv={cv} filename={filename} initialVersion={isViewingVersion ? viewingVersionNumber : 'latest'} contentVersion={contentVersion}>
       <main className="max-w-4xl mx-auto p-4 pb-2 md:pt-8">
         <ScrollToTopOnMount />
 
@@ -145,6 +145,6 @@ export default async function Page(props){
         ))}
 
       </main>
-    </HighlightProvider>
+    </ReviewProvider>
   );
 }

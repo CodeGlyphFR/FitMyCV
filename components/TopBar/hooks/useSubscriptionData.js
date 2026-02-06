@@ -40,8 +40,28 @@ export function useSubscriptionData() {
 
       if (!isMounted) return;
 
-      if (!subResponse.ok || !creditsResponse.ok) {
-        throw new Error('Erreur lors de la récupération des données');
+      // Si non authentifié (401), retourner les valeurs par défaut sans erreur
+      if (subResponse.status === 401 || creditsResponse.status === 401) {
+        if (isMounted) {
+          setData({
+            planName: null,
+            planIcon: null,
+            creditBalance: 0,
+            creditRatio: 1,
+            creditsOnlyMode: false,
+            loading: false,
+            error: null,
+          });
+        }
+        return;
+      }
+
+      // Pour les autres erreurs, on lève une exception avec plus de détails
+      if (!subResponse.ok) {
+        throw new Error(`Erreur subscription: ${subResponse.status}`);
+      }
+      if (!creditsResponse.ok) {
+        throw new Error(`Erreur credits: ${creditsResponse.status}`);
       }
 
       const subData = await subResponse.json();

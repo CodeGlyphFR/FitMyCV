@@ -217,7 +217,13 @@
       "buyButton": "Buy",
       "redirecting": "Redirecting...",
       "securePayment": "Secure payment via Stripe • Permanent credits",
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "errors": {
+        "checkoutError": "Error creating checkout session",
+        "purchaseError": "Error during purchase",
+        "cannotSwitchToMonthly": "Cannot switch back to monthly payment. Please cancel your subscription if needed.",
+        "cancelDowngradeError": "Error canceling downgrade"
+      }
     },
     "transactions": {
       "title": "Transaction history",

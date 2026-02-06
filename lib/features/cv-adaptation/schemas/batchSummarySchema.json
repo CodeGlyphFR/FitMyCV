@@ -1,0 +1,19 @@
+{
+  "name": "cv_summary",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "description": {
+        "type": "string",
+        "description": "Résumé professionnel généré (2-4 phrases, 50-75 mots, langue cible)"
+      },
+      "reason": {
+        "type": "string",
+        "description": "Raison de la génération/modification du résumé (langue interface)"
+      }
+    },
+    "required": ["description", "reason"],
+    "additionalProperties": false
+  }
+}

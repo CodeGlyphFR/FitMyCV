@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traduction CV | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Traduction</span>
+        </div>
+
+        <h1>Traduction CV</h1>
+        <p class="lead">
+          La fonctionnalité de traduction permet de convertir un CV d'une langue à une autre tout en préservant le formatage, le ton professionnel et les conventions locales.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Coût</div>
+          <p>Le nombre de crédits par traduction est configurable dans <strong>Administration → Settings</strong>.</p>
+        </div>
+
+        <h2>Langues Supportées</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Langue</th>
+              <th>Conventions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>fr</code></td>
+              <td>Français</td>
+              <td>France, Belgique, Suisse, Canada</td>
+            </tr>
+            <tr>
+              <td><code>en</code></td>
+              <td>Anglais</td>
+              <td>UK, US, Australie</td>
+            </tr>
+            <tr>
+              <td><code>de</code></td>
+              <td>Allemand</td>
+              <td>Allemagne, Autriche, Suisse</td>
+            </tr>
+            <tr>
+              <td><code>es</code></td>
+              <td>Espagnol</td>
+              <td>Espagne, Amérique latine</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Pipeline de Traduction</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux de traduction</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input["ENTRÉE"]
+        CV["CV Source"]
+        Lang["Langue cible"]
+    end
+
+    subgraph Process["TRAITEMENT"]
+        Detect["Détection langue source"]
+        Translate["OpenAI API<br/>Traduction"]
+        Adapt["Adaptation conventions"]
+    end
+
+    subgraph Output["SORTIE"]
+        NewCV["CV Traduit"]
+        Version["Nouvelle version"]
+    end
+
+    CV --> Detect
+    Lang --> Translate
+    Detect --> Translate
+    Translate --> Adapt
+    Adapt --> NewCV
+    NewCV --> Version
+          </div>
+        </div>
+
+        <h2>Data Flow</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge ai">IA</span>
+            <span class="data-flow-title">OpenAI API - Traduction (modèle configurable)</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Input</h5>
+            <pre><code>{
+  "cv": { /* CV JSON complet */ },
+  "sourceLanguage": "fr",
+  "targetLanguage": "en",
+  "targetRegion": "UK"
+}</code></pre>
+
+            <h5>Prompt Structure</h5>
+            <pre><code># Mission
+Traduire ce CV du {sourceLanguage} vers {targetLanguage}.
+
+# Règles
+1. Préserver TOUTES les informations factuelles
+2. Adapter au ton professionnel de la région cible
+3. Conserver les noms propres (entreprises, écoles)
+4. Traduire les titres de poste avec équivalents locaux
+5. Adapter les formats de date selon la convention locale
+
+# Conventions {targetLanguage}-{targetRegion}
+- Dates: {dateFormat}
+- Téléphone: {phoneFormat}
+- Monnaie: {currencyFormat}</code></pre>
+
+            <h5>Output</h5>
+            <pre><code>{
+  "translatedCv": {
+    "header": {
+      "firstName": "Jean",
+      "lastName": "Dupont",
+      // ...
+    },
+    "sections": {
+      "summary": {
+        "content": "Full Stack Developer with 5 years..."
+      },
+      "experiences": [
+        {
+          "title": "Senior Developer", // Traduit
+          "company": "TechCorp", // Conservé
+          "responsibilities": [
+            "Developed REST APIs with Node.js",
+            // ...
+          ]
+        }
+      ]
+    },
+    "metadata": {
+      "language": "en",
+      "translatedFrom": "fr",
+      "translatedAt": "2024-01-15T10:30:00Z"
+    }
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Adaptations par Région</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>France (fr-FR)</h4>
+            <ul>
+              <li>Date: JJ/MM/AAAA</li>
+              <li>Photo: Acceptée</li>
+              <li>Âge/Date naissance: Optionnel</li>
+              <li>Ton: Formel</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>UK (en-GB)</h4>
+            <ul>
+              <li>Date: DD/MM/YYYY</li>
+              <li>Photo: Rare</li>
+              <li>Âge: Non recommandé</li>
+              <li>Ton: Professionnel concis</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>US (en-US)</h4>
+            <ul>
+              <li>Date: MM/DD/YYYY</li>
+              <li>Photo: Déconseillée</li>
+              <li>Âge: Interdit</li>
+              <li>Ton: Accomplissements</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Allemagne (de-DE)</h4>
+            <ul>
+              <li>Date: TT.MM.JJJJ</li>
+              <li>Photo: Attendue</li>
+              <li>Âge: Standard</li>
+              <li>Ton: Très formel</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>Éléments Non Traduits</h2>
+
+        <ul>
+          <li><strong>Noms propres</strong> : Jean Dupont, TechCorp, MIT</li>
+          <li><strong>Technologies</strong> : JavaScript, React, PostgreSQL</li>
+          <li><strong>Certifications</strong> : AWS Certified, PMP, TOEIC 950</li>
+          <li><strong>URLs</strong> : LinkedIn, portfolio, GitHub</li>
+        </ul>
+
+        <h2>API Endpoint</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge input">POST</span>
+            <span class="data-flow-title">/api/cv/[id]/translate</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Request</h5>
+            <pre><code>{
+  "targetLanguage": "en",
+  "targetRegion": "UK",  // Optionnel
+  "createNewFile": true  // Créer un nouveau CV ou écraser
+}</code></pre>
+
+            <h5>Response</h5>
+            <pre><code>{
+  "success": true,
+  "data": {
+    "cvFileId": 123,
+    "filename": "cv-dev-fullstack-en.json",
+    "language": "en",
+    "creditsUsed": 1
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Implémentation</h2>
+
+        <pre><code>// lib/features/translation/translateCv.js
+import { callOpenAI } from '@/lib/openai-core/client';
+import { loadPrompt } from '@/lib/openai-core/promptLoader';
+
+export async function translateCv(cvData, targetLanguage, options = {}) {
+  const { targetRegion = null } = options;
+
+  // Détecter la langue source
+  const sourceLanguage = cvData.metadata?.language || detectLanguage(cvData);
+
+  // Si même langue, retourner tel quel
+  if (sourceLanguage === targetLanguage) {
+    return cvData;
+  }
+
+  // Charger le prompt
+  const prompt = await loadPrompt('translation/translate-cv');
+
+  // Récupérer les conventions de la région cible
+  const conventions = getRegionConventions(targetLanguage, targetRegion);
+
+  // Appeler l'IA
+  const result = await callOpenAI({
+    featureName: 'translate_cv',
+    messages: [
+      {
+        role: 'system',
+        content: prompt
+          .replace('{sourceLanguage}', sourceLanguage)
+          .replace('{targetLanguage}', targetLanguage)
+          .replace('{conventions}', JSON.stringify(conventions))
+      },
+      {
+        role: 'user',
+        content: JSON.stringify(cvData)
+      }
+    ],
+    responseFormat: {
+      type: 'json_schema',
+      json_schema: {
+        name: 'translated_cv',
+        schema: translationOutputSchema,
+        strict: true
+      }
+    }
+  });
+
+  return result.translatedCv;
+}</code></pre>
+
+        <h2>Fichiers Clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/features/translation/translateCv.js</code></td>
+              <td>Logique de traduction</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/translation/conventions.js</code></td>
+              <td>Conventions par région</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/translation/prompts/</code></td>
+              <td>Prompts de traduction</td>
+            </tr>
+            <tr>
+              <td><code>app/api/cv/[id]/translate/route.js</code></td>
+              <td>Endpoint API</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

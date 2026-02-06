@@ -41,7 +41,7 @@
       "task": "Tâche",
       "importInProgress": "Import en cours ...",
       "importQueued": "Import en attente ...",
-      "importCompleted": "Import terminé",
+      "importCompleted": "'{filename}' importé avec succès",
       "importCancelled": "Import annulé",
       "importFailed": "Import échoué",
       "creationInProgress": "Création en cours",
@@ -70,10 +70,16 @@
       "cvGenerated": "{count} CV généré(s)",
       "offerFailed": "Échec pour l'offre {index} - {credits} crédit remboursé",
       "generatingOffer": "Génération ({current}/{total})",
-      "moreOffers": "autre(s) offre(s)"
+      "moreOffers": "autre(s) offre(s)",
+      "translateCompleted": "CV traduit en {lang} avec succès",
+      "jobTitleCreationCompleted": "CV pour \"{title}\" créé avec succès",
+      "improvementCompleted": "CV amélioré avec {count} modification(s)",
+      "improvementReplacedCompleted": "CV remplacé avec {count} amélioration(s)",
+      "matchScoreDetailedCompleted": "Score de match calculé: {score}/100 avec {suggestions} suggestion(s)"
     },
     "errors": {
       "noJobOfferDetected": "Aucune offre d'emploi détectée : {source}",
+      "jobOfferExpired": "Cette offre d'emploi n'est plus disponible ou a été supprimée.",
       "loginRequired": "Cette page nécessite une connexion. Téléchargez l'offre en PDF depuis le site et uploadez-la."
     }
   }

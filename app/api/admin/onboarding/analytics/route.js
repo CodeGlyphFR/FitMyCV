@@ -167,7 +167,7 @@ export async function GET(request) {
       // Compter les étapes atteintes/complétées
       if (state.currentStep !== undefined) {
         // Toutes les étapes jusqu'à currentStep ont été atteintes
-        for (let i = 0; i <= state.currentStep && i <= 8; i++) {
+        for (let i = 0; i <= state.currentStep && i <= 9; i++) {
           stepReached[i] = (stepReached[i] || 0) + 1;
         }
       }
@@ -175,7 +175,7 @@ export async function GET(request) {
       // Étapes complétées
       if (Array.isArray(state.completedSteps)) {
         state.completedSteps.forEach(stepNum => {
-          if (stepNum >= 0 && stepNum <= 8) {
+          if (stepNum >= 0 && stepNum <= 9) {
             stepCompleted[stepNum] = (stepCompleted[stepNum] || 0) + 1;
           }
         });
@@ -249,7 +249,7 @@ export async function GET(request) {
 
     // Ajouter "Completed" comme dernière entrée du funnel
     funnel.push({
-      step: 9,
+      step: 10,
       name: 'Complété',
       icon: '🎉',
       reached: stats.completed,

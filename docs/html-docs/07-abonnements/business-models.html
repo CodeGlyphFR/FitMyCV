@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modèles Économiques | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Abonnements</a>
+          <span>/</span>
+          <span>Modèles économiques</span>
+        </div>
+
+        <h1>Modèles Économiques</h1>
+        <p class="lead">
+          FitMyCV.io implémente <strong>deux modèles économiques</strong> distincts, configurables via l'interface d'administration. Le choix du modèle affecte la façon dont les utilisateurs accèdent aux fonctionnalités.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Paramètre de configuration</div>
+          <p>Le mode actif est contrôlé par le setting <code>subscription_mode_enabled</code> dans la table <code>Setting</code>. Valeur : <code>"true"</code> ou <code>"false"</code>.</p>
+        </div>
+
+        <h2>Modèle 1 : Abonnement + Extension Crédits</h2>
+
+        <p><strong>Setting :</strong> <code>subscription_mode_enabled = true</code> (par défaut)</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux du modèle Abonnement</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Plans["PLANS D'ABONNEMENT"]
+        Free["Free<br/>0€/mois"]
+        Pro["Pro<br/>9.99€/mois"]
+        Premium["Premium<br/>19.99€/mois"]
+    end
+
+    subgraph Limits["LIMITES MENSUELLES"]
+        L1["3 générations CV"]
+        L2["20 générations CV"]
+        L3["Illimité"]
+    end
+
+    subgraph Usage["UTILISATION"]
+        Counter["Compteur mensuel"]
+        Check{"Limite atteinte ?"}
+    end
+
+    subgraph Credits["EXTENSION CRÉDITS"]
+        Buy["Achat pack crédits"]
+        Balance["Solde crédits"]
+    end
+
+    subgraph Action["ACTION"]
+        Exécute["Exécuter fonctionnalité"]
+        Block["Bloquer + Proposer upgrade/crédits"]
+    end
+
+    Free --> L1
+    Pro --> L2
+    Premium --> L3
+
+    L1 & L2 & L3 --> Counter
+    Counter --> Check
+
+    Check -->|"Non"| Exécute
+    Check -->|"Oui"| Balance
+    Balance -->|"Crédits disponibles"| Exécute
+    Balance -->|"Pas de crédits"| Block
+    Block --> Buy
+    Buy --> Balance
+          </div>
+        </div>
+
+        <h3>Caractéristiques</h3>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Plans disponibles</h4>
+            <ul>
+              <li><strong>Free</strong> : Limites strictes, fonctionnalités de base</li>
+              <li><strong>Pro</strong> : Limites étendues, toutes les features</li>
+              <li><strong>Premium</strong> : Illimité sur la plupart des features</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Compteurs mensuels</h4>
+            <ul>
+              <li>Reset automatique à chaque période</li>
+              <li>Basé sur date anniversaire Stripe</li>
+              <li>Stocké dans <code>FeatureUsageCounter</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Extension par crédits</h4>
+            <ul>
+              <li>Si limite atteinte → utiliser crédits</li>
+              <li>Achat de packs (5, 10, 25 crédits)</li>
+              <li>Les crédits n'expirent pas</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Logique de vérification</h3>
+
+        <pre><code>// lib/subscription/featureUsage.js - canUseFeature()
+
+async function canUseFeature(userId, featureName) {
+  // 1. Vérifier si balance négative (chargeback)
+  if (balance < 0) return { canUse: false, reason: 'balance_negative' };
+
+  // 2. Récupérer le plan de l'utilisateur
+  const plan = await getUserPlan(userId);
+  const limit = await getFeatureLimit(plan.id, featureName);
+
+  // 3. Feature désactivée pour ce plan ?
+  if (!limit.isEnabled) {
+    // Peut utiliser crédits si disponibles
+    return checkCreditsAvailable(userId, featureName);
+  }
+
+  // 4. Limite illimitée (-1) ?
+  if (limit.usageLimit === -1) {
+    return { canUse: true, useCredit: false };
+  }
+
+  // 5. Vérifier compteur mensuel
+  const counter = await getFeatureCounter(userId, featureName);
+  if (counter.count < limit.usageLimit) {
+    return { canUse: true, useCredit: false };
+  }
+
+  // 6. Limite atteinte → vérifier crédits
+  return checkCreditsAvailable(userId, featureName);
+}</code></pre>
+
+        <h2>Modèle 2 : Crédits Uniquement</h2>
+
+        <p><strong>Setting :</strong> <code>subscription_mode_enabled = false</code></p>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux du modèle Crédits uniquement</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Register["INSCRIPTION"]
+        NewUser["Nouvel utilisateur"]
+        Welcome["Crédits de bienvenue<br/>(configurables)"]
+    end
+
+    subgraph Usage["UTILISATION"]
+        Balance["Solde crédits"]
+        Check{"Crédits suffisants ?"}
+        Cost["Coût feature<br/>(ex: 2 crédits)"]
+    end
+
+    subgraph Purchase["ACHAT"]
+        Packs["Packs de crédits"]
+        Pack1["5 crédits - 4.99€"]
+        Pack2["10 crédits - 8.99€"]
+        Pack3["25 crédits - 19.99€"]
+    end
+
+    subgraph Action["ACTION"]
+        Exécute["Exécuter + Débiter"]
+        Block["Bloquer + Proposer achat"]
+    end
+
+    NewUser --> Welcome
+    Welcome --> Balance
+
+    Balance --> Check
+    Cost --> Check
+
+    Check -->|"Oui"| Exécute
+    Check -->|"Non"| Block
+
+    Block --> Packs
+    Packs --> Pack1 & Pack2 & Pack3
+    Pack1 & Pack2 & Pack3 --> Balance
+          </div>
+        </div>
+
+        <h3>Caractéristiques</h3>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Pas d'abonnement Stripe</h4>
+            <ul>
+              <li>Aucune facturation récurrente</li>
+              <li>Pas de gestion de plans</li>
+              <li>Modèle "pay-as-you-go"</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Crédits de bienvenue</h4>
+            <ul>
+              <li>Attribués à l'inscription</li>
+              <li>Montant configurable en admin</li>
+              <li>Permettent de tester le service</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Packs de crédits</h4>
+            <ul>
+              <li>Achat ponctuel via Stripe Checkout</li>
+              <li>Crédités immédiatement</li>
+              <li>Prix et quantités configurables</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Logique de vérification (mode crédits)</h3>
+
+        <pre><code>// lib/subscription/featureUsage.js - canUseFeature() (mode crédits)
+
+async function canUseFeature(userId, featureName) {
+  // Mode crédits uniquement
+  const cost = await getCreditCostForFeature(featureName);
+
+  // Feature gratuite ?
+  if (cost === 0) {
+    return { canUse: true, useCredit: false };
+  }
+
+  // Vérifier le solde
+  const balance = await getCreditBalance(userId);
+
+  if (balance >= cost) {
+    return {
+      canUse: true,
+      useCredit: true,
+      creditCost: cost
+    };
+  }
+
+  return {
+    canUse: false,
+    reason: 'insufficient_credits',
+    creditCost: cost,
+    balance: balance
+  };
+}</code></pre>
+
+        <h2>Comparaison des Modèles</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Modèle Abonnement</th>
+              <th>Modèle Crédits</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Facturation</strong></td>
+              <td>Récurrente (mensuelle/annuelle)</td>
+              <td>Ponctuelle (à l'achat)</td>
+            </tr>
+            <tr>
+              <td><strong>Revenus prévisibles</strong></td>
+              <td>Oui (MRR/ARR)</td>
+              <td>Non</td>
+            </tr>
+            <tr>
+              <td><strong>Limites</strong></td>
+              <td>Mensuelles par plan</td>
+              <td>Basées sur solde crédits</td>
+            </tr>
+            <tr>
+              <td><strong>Onboarding</strong></td>
+              <td>Plan Free avec limites</td>
+              <td>Crédits de bienvenue</td>
+            </tr>
+            <tr>
+              <td><strong>Upgrade path</strong></td>
+              <td>Free → Pro → Premium</td>
+              <td>Achat de plus de crédits</td>
+            </tr>
+            <tr>
+              <td><strong>Stripe Products</strong></td>
+              <td>Subscriptions + Prices</td>
+              <td>One-time payments</td>
+            </tr>
+            <tr>
+              <td><strong>Webhooks utilisés</strong></td>
+              <td>subscription.*, invoice.*</td>
+              <td>checkout.session.completed</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Configuration en Administration</h2>
+
+        <p>Le switch entre les deux modèles se fait via le dashboard admin :</p>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Attention</div>
+          <p>Changer de modèle en production affecte immédiatement tous les utilisateurs. Les abonnements existants restent actifs mais les limites ne sont plus appliquées en mode crédits.</p>
+        </div>
+
+        <h3>Settings associés</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>Description</th>
+              <th>Valeur par défaut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>subscription_mode_enabled</code></td>
+              <td>Active le mode abonnement</td>
+              <td><code>"true"</code></td>
+            </tr>
+            <tr>
+              <td><code>welcome_credits</code></td>
+              <td>Crédits offerts à l'inscription</td>
+              <td><code>"5"</code></td>
+            </tr>
+            <tr>
+              <td><code>default_plan_id</code></td>
+              <td>Plan par défaut (mode abo)</td>
+              <td><code>"1"</code> (Free)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Coûts par Feature</h2>
+
+        <p>Chaque fonctionnalité a un coût en crédits, utilisé dans les deux modèles :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Coût (crédits)</th>
+              <th>Setting</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Création CV manuelle</td>
+              <td>1</td>
+              <td><code>credits_create_cv_manual</code></td>
+            </tr>
+            <tr>
+              <td>Export CV (PDF/DOCX)</td>
+              <td>1</td>
+              <td><code>credits_export_cv</code></td>
+            </tr>
+            <tr>
+              <td>Calcul match score</td>
+              <td>1</td>
+              <td><code>credits_match_score</code></td>
+            </tr>
+            <tr>
+              <td>Traduction CV</td>
+              <td>1</td>
+              <td><code>credits_translate_cv</code></td>
+            </tr>
+            <tr>
+              <td>Génération CV (offre)</td>
+              <td>2</td>
+              <td><code>credits_gpt_cv_generation</code></td>
+            </tr>
+            <tr>
+              <td>Optimisation CV</td>
+              <td>2</td>
+              <td><code>credits_optimize_cv</code></td>
+            </tr>
+            <tr>
+              <td>Génération depuis titre</td>
+              <td>3</td>
+              <td><code>credits_generate_cv_from_job_title</code></td>
+            </tr>
+            <tr>
+              <td>Import PDF</td>
+              <td>5</td>
+              <td><code>credits_import_pdf</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Fichiers Clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/subscription/featureUsage.js</code></td>
+              <td>Logique <code>canUseFeature()</code></td>
+            </tr>
+            <tr>
+              <td><code>lib/subscription/credits.js</code></td>
+              <td>Débit, crédit, remboursement</td>
+            </tr>
+            <tr>
+              <td><code>lib/subscription/creditCost.js</code></td>
+              <td>Coûts par feature</td>
+            </tr>
+            <tr>
+              <td><code>lib/subscription/subscriptions.js</code></td>
+              <td>Gestion abonnements Stripe</td>
+            </tr>
+            <tr>
+              <td><code>lib/settings/index.js</code></td>
+              <td>Lecture settings depuis DB</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

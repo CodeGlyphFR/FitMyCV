@@ -5,14 +5,18 @@ import prisma from '@/lib/prisma';
 export const dynamic = 'force-dynamic';
 
 /**
- * Feature names for CV improvement v2 pipeline
+ * Feature names for CV improvement pipeline
  */
 const CV_IMPROVEMENT_FEATURES = [
   'optimize_cv', // Legacy single call
-  'cv_improvement_v2_experience',
-  'cv_improvement_v2_project',
-  'cv_improvement_v2_summary',
-  'cv_improvement_v2_classify_skills',
+  'cv_improvement_classify', // Stage 1 - Classification des compétences
+  'cv_improvement_classify', // Alias classification
+  'cv_improvement_preprocess', // Stage 2 - Préparation
+  'cv_improvement_experience', // Stage 3 - Expériences
+  'cv_improvement_project', // Stage 3 - Projets
+  'cv_improvement_extras', // Stage 3 - Extras
+  'cv_improvement_languages', // Stage 3 - Langues
+  'cv_improvement_summary', // Stage 4 - Résumé
 ];
 
 /**
@@ -152,10 +156,14 @@ export async function GET(request) {
 
       // Sort features in pipeline order
       const featureOrder = [
-        'cv_improvement_v2_classify_skills',
-        'cv_improvement_v2_experience',
-        'cv_improvement_v2_project',
-        'cv_improvement_v2_summary',
+        'cv_improvement_classify',
+        'cv_improvement_classify',
+        'cv_improvement_preprocess',
+        'cv_improvement_experience',
+        'cv_improvement_project',
+        'cv_improvement_extras',
+        'cv_improvement_languages',
+        'cv_improvement_summary',
         'optimize_cv',
       ];
       featureSummary.sort((a, b) => {
@@ -171,7 +179,7 @@ export async function GET(request) {
 
       // Detect pipeline version
       const hasV2Features = sessionCalls.some(c =>
-        c.featureName.startsWith('cv_improvement_v2_')
+        c.featureName.startsWith('cv_improvement_')
       );
       const pipelineVersion = hasV2Features ? 2 : 1;
 

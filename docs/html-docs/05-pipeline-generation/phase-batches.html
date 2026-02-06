@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase Batches - Pipeline Génération | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Pipeline Génération</a>
+          <span>/</span>
+          <span>Phase Batches</span>
+        </div>
+
+        <h1>Phase 1 : Batches</h1>
+        <p class="lead">
+          La phase de batches adapte individuellement chaque section du CV. Les batches s'exécutent en parallèle (max 5 appels OpenAI concurrents) pour optimiser la performance.
+        </p>
+
+        <!-- ==================== BATCH EXPERIENCE ==================== -->
+        <h2 id="batch-experience">1a. Batch Experience</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-experiences.js</code></p>
+        <p><strong>Rôle :</strong> Adapter individuellement chaque expérience marquée KEEP lors de la classification.</p>
+        <p><strong>Cache utilisé :</strong> <span class="badge badge-primary">Cache A</span> (Job Offer uniquement)</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH EXPERIENCE - Flux de données</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Données d'entrée</div>
+            <p><strong>Provenance :</strong> <code>CvFile.content.experience[index]</code> (Prisma) + <code>JobOffer.content</code></p>
+            <pre><code>{
+  "experience": {
+    "title": "Senior Developer",
+    "company": "TechCorp",
+    "location": "Paris",
+    "type": "CDI",
+    "start_date": "2020-01",
+    "end_date": "present",
+    "description": "Contexte de la mission",
+    "responsibilities": [
+      "Développer des applications web",
+      "Gérer une équipe de 3 personnes"
+    ],
+    "deliverables": [
+      "Application livrée en production"
+    ],
+    "skills_used": ["React", "Node.js"]
+  },
+  "jobOffer": {
+    "title": "Lead Developer React",
+    "skills": {
+      "required": ["React", "TypeScript", "API REST"],
+      "nice_to_have": ["AWS", "Docker"]
+    },
+    "responsibilities": ["Concevoir des APIs", "Mentorer l'équipe"]
+  }
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Structure du Prompt</div>
+            <p><strong>Fichiers :</strong> <code>prompts/batch-experience-system.md</code> + <code>prompts/batch-experience-user.md</code></p>
+            <p><strong>Organisation :</strong></p>
+            <ul>
+              <li><strong>[SYSTEM - Cache Prefix]</strong> : Job Offer context (cacheable)</li>
+              <li><strong>[SYSTEM - Instructions]</strong> : Règles d'adaptation (STAR framework)</li>
+              <li><strong>[USER]</strong> : Expérience source + variables</li>
+            </ul>
+            <p><strong>Résumé du prompt :</strong></p>
+            <blockquote>
+              "Adapter l'expérience professionnelle pour maximiser l'alignement avec l'offre d'emploi.
+              Reformuler les responsabilités avec des verbes d'action (infinitif), extraire les chiffres vers deliverables,
+              aligner les skills_used avec ceux demandés par l'offre.
+              INTERDICTION d'inventer des informations non présentes dans la source."
+            </blockquote>
+          </div>
+
+          <div class="data-flow-section data-flow-cache">
+            <div class="data-flow-label">Gestion du Cache (CAG)</div>
+            <p><strong>Partie cachée :</strong> Le préfixe système contenant le Job Offer context</p>
+            <p><strong>Durée :</strong> 5 minutes (ephemeral) ou 24h (GPT-5)</p>
+            <p><strong>Bénéfice :</strong> Les tokens cache coûtent 90% moins cher</p>
+            <pre><code>// Construction du cache
+const cacheA = generateCacheA(jobOffer);
+// Appliqué via cache_control: { type: 'ephemeral' }</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Format de sortie (JSON Schema)</div>
+            <p><strong>Schéma :</strong> <code>schemas/batchExperienceSchema.json</code></p>
+            <pre><code>{
+  "description": "Contexte et défi (1-2 phrases, sans chiffres)",
+  "responsibilities": [
+    "Concevoir et développer des APIs REST",
+    "Mentorer une équipe de développeurs",
+    "Mettre en place les bonnes pratiques CI/CD"
+  ],
+  "deliverables": [
+    "-30% latence API",
+    "3 devs formés",
+    "Pipeline CI/CD"
+  ],
+  "skills_used": ["React", "TypeScript", "API REST"],
+  "domain": "Développement logiciel",
+  "years_in_domain": 4.5,
+  "modifications": [
+    {
+      "field": "responsibilities",
+      "action": "modified",
+      "before": "Développer des applications web",
+      "after": "Concevoir et développer des APIs REST",
+      "reason": "Alignement avec requirement 'API REST' de l'offre"
+    },
+    {
+      "field": "deliverables",
+      "action": "added",
+      "before": null,
+      "after": "-30% latence API",
+      "reason": "Chiffre extrait de responsibilities, placé dans deliverables"
+    }
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Règles critiques</div>
+          <ul>
+            <li><strong>Champs immuables :</strong> title, company, location, type, start_date, end_date (jamais modifiés)</li>
+            <li><strong>Flux des chiffres :</strong> Extraire de responsibilities → Placer dans deliverables</li>
+            <li><strong>Max items :</strong> 5 responsibilities, 4 deliverables, 6 skills_used</li>
+            <li><strong>Format responsibilities :</strong> Verbe infinitif, 5-10 mots, ZÉRO chiffre</li>
+            <li><strong>Format deliverables :</strong> 3-5 mots MAX, chiffre OBLIGATOIRE</li>
+          </ul>
+        </div>
+
+        <!-- ==================== BATCH SKILLS ==================== -->
+        <h2 id="batch-skills">1d. Batch Skills</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-skills.js</code></p>
+        <p><strong>Rôle :</strong> Adapter et réorganiser les compétences selon 7 missions distinctes.</p>
+        <p><strong>Cache utilisé :</strong> <span class="badge badge-success">Cache B</span> (Job Offer + Expériences + Projets adaptés)</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH SKILLS - Flux de données</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Données d'entrée</div>
+            <p><strong>Provenance :</strong> <code>CvFile.content.skills</code> + résultats des batches précédents</p>
+            <pre><code>{
+  "skills": {
+    "hard_skills": [
+      { "name": "Gestion de projets complexes", "proficiency": 3 }
+    ],
+    "soft_skills": ["Communication", "Leadership"],
+    "tools": [
+      { "name": "React (framework)", "proficiency": 4 }
+    ],
+    "methodologies": ["Agile"]
+  },
+  "adaptedExperiences": [...],  // Résumé compact
+  "adaptedProjects": [...],      // Résumé compact
+  "jobOffer": {
+    "skills": {
+      "required": ["React", "Node.js", "CI/CD"],
+      "methodologies": ["Agile", "Scrum"]
+    }
+  }
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Les 7 Missions du Batch Skills</div>
+            <table>
+              <thead>
+                <tr><th>#</th><th>Mission</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>FILTRER</td>
+                  <td>Supprimer SEULEMENT si domaine complètement différent (ex: Soudure pour UX Designer)</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>AJUSTER</td>
+                  <td>Ajuster proficiency (0-5) selon les expériences adaptées</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>NETTOYER</td>
+                  <td>"React (framework)" → "React", max 3 mots par compétence</td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>SPLITTER</td>
+                  <td>"React / Vue" → ["React", "Vue"]. Exception: "CI/CD", "UX/UI"</td>
+                </tr>
+                <tr>
+                  <td>5</td>
+                  <td>RÉARRANGER</td>
+                  <td>Déplacer entre catégories (hard_skills, tools, methodologies, soft_skills)</td>
+                </tr>
+                <tr>
+                  <td>6</td>
+                  <td>FUSIONNER</td>
+                  <td>Dédupliquer (chaque skill dans 1 seule catégorie)</td>
+                </tr>
+                <tr>
+                  <td>7</td>
+                  <td>DÉDUIRE</td>
+                  <td>Déduire méthodologies depuis expériences ("sprint" → Scrum)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Format de sortie</div>
+            <pre><code>{
+  "hard_skills": [
+    { "name": "Gestion de projet", "proficiency": 3 }
+  ],
+  "soft_skills": ["Communication", "Leadership"],
+  "tools": [
+    { "name": "React", "proficiency": 4 },
+    { "name": "Node.js", "proficiency": 3 }
+  ],
+  "methodologies": ["Agile", "Scrum", "CI/CD"],
+  "modifications": [
+    {
+      "category": "hard_skills",
+      "skill": "Gestion de projets complexes",
+      "action": "renamed",
+      "reason": "Nettoyage: suppression 'complexes' (max 3 mots)"
+    },
+    {
+      "category": "tools",
+      "skill": "React (framework)",
+      "action": "renamed",
+      "reason": "Nettoyage: suppression parenthèses"
+    },
+    {
+      "category": "methodologies",
+      "skill": "Scrum",
+      "action": "inferred",
+      "reason": "Déduit depuis mention 'sprint' dans expérience #0"
+    }
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Règles de traduction</div>
+          <ul>
+            <li><strong>Soft skills génériques</strong> → TRADUIRE dans langue cible ("Customer-oriented" → "Orientation client")</li>
+            <li><strong>Noms de technologies</strong> → GARDER en anglais (React, Python, AWS, Scrum)</li>
+          </ul>
+        </div>
+
+        <!-- ==================== BATCH SUMMARY ==================== -->
+        <h2 id="batch-summary">1e. Batch Summary</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-summary.js</code></p>
+        <p><strong>Rôle :</strong> Générer ou adapter le résumé professionnel (2-4 lignes, 50-75 mots).</p>
+        <p><strong>Cache utilisé :</strong> <span class="badge badge-success">Cache B</span></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH SUMMARY - Flux de données</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Données d'entrée</div>
+            <p><strong>Provenance :</strong> Résultats des batches précédents (expériences, projets, skills adaptés)</p>
+            <pre><code>{
+  "currentSummary": "Développeur full-stack avec 5 ans d'expérience...",
+  "targetLanguage": "French",
+  "experiencesByDomain": {
+    "Développement logiciel": 4.5,
+    "Data Engineering": 1.5
+  },
+  "currentTitles": ["Senior Developer", "Tech Lead"],
+  "totalYears": 6,
+  "topDeliverables": ["-30% latence", "6 devs formés"],
+  "topSkills": ["React", "Node.js", "TypeScript"]
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Résumé du prompt</div>
+            <blockquote>
+              "Générer un résumé professionnel de 2-4 lignes (50-75 mots) qui met en avant :
+              les années d'expérience par domaine, les compétences clés alignées avec l'offre,
+              les réalisations quantifiées principales. Le résumé doit donner envie de lire le CV
+              et positionner le candidat comme un match parfait pour le poste."
+            </blockquote>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Format de sortie</div>
+            <pre><code>{
+  "description": "Développeur full-stack avec 6 ans d'expérience,
+    dont 4.5 ans en développement logiciel. Expert React et Node.js,
+    j'ai réduit la latence API de 30% et formé 6 développeurs.
+    Passionné par les bonnes pratiques et l'optimisation des performances.",
+  "modifications": [
+    {
+      "field": "description",
+      "action": "modified",
+      "before": "Développeur full-stack avec 5 ans d'expérience...",
+      "after": "Développeur full-stack avec 6 ans d'expérience...",
+      "reason": "Mise à jour années + ajout réalisations quantifiées"
+    }
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== BATCH PROJECTS ==================== -->
+        <h2 id="batch-projects">1b. Batch Projects</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-projects.js</code></p>
+        <p><strong>Rôle :</strong> Adapter les projets existants + Créer des projets depuis les expériences MOVE_TO_PROJECTS.</p>
+        <p><strong>Cache utilisé :</strong> <span class="badge badge-primary">Cache A</span></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH PROJECTS - Flux de données</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Données d'entrée</div>
+            <pre><code>{
+  "project": {
+    "name": "E-commerce Platform",
+    "role": "Lead Developer",
+    "start_date": "2022-01",
+    "end_date": "2022-06",
+    "summary": "Développement d'une plateforme e-commerce",
+    "tech_stack": ["React", "Node.js", "PostgreSQL"],
+    "url": "https://github.com/..."
+  },
+  // OU pour conversion expérience → projet
+  "experienceToConvert": {
+    "title": "Projet interne R&D",
+    "company": "TechCorp",
+    "description": "Développement d'un outil interne",
+    "skills_used": ["Python", "Machine Learning"]
+  }
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Format de sortie</div>
+            <pre><code>{
+  "name": "E-commerce Platform",
+  "role": "Lead Developer",
+  "start_date": "2022-01",
+  "end_date": "2022-06",
+  "summary": "Plateforme e-commerce React/Node.js avec 10k utilisateurs",
+  "tech_stack": ["React", "Node.js", "PostgreSQL", "API REST"],
+  "url": "https://github.com/...",
+  "modifications": [
+    {
+      "field": "summary",
+      "action": "modified",
+      "before": "Développement d'une plateforme e-commerce",
+      "after": "Plateforme e-commerce React/Node.js avec 10k utilisateurs",
+      "reason": "Ajout technologies et métrique"
+    },
+    {
+      "field": "tech_stack",
+      "action": "added",
+      "before": null,
+      "after": "API REST",
+      "reason": "Alignement avec requirement de l'offre"
+    }
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== BATCH EXTRAS ==================== -->
+        <h2 id="batch-extras">1c. Batch Extras</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-extras.js</code></p>
+        <p><strong>Rôle :</strong> Adapter la section extras (Permis, Bénévolat, Hobbies, Certifications).</p>
+        <p><strong>Cache utilisé :</strong> <span class="badge badge-primary">Cache A</span></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH EXTRAS - Flux de données</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Données d'entrée</div>
+            <pre><code>{
+  "extras": [
+    { "name": "Permis B", "summary": "Véhiculé" },
+    { "name": "Bénévolat", "summary": "Formateur code pour jeunes défavorisés" }
+  ]
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Format de sortie</div>
+            <pre><code>{
+  "extras": [
+    { "name": "Permis B", "summary": "Véhiculé, disponible pour déplacements" },
+    { "name": "Mentorat", "summary": "Formateur code pour jeunes défavorisés depuis 2020" }
+  ],
+  "modifications": [
+    {
+      "field": "Bénévolat",
+      "action": "renamed",
+      "before": "Bénévolat",
+      "after": "Mentorat",
+      "reason": "Reformulation pour valoriser compétence mentoring"
+    }
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Parallélisation et Rate Limiting</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Exécution parallèle des batches</div>
+          <div class="mermaid">
+gantt
+    title Exécution Phase 1 - Batches
+    dateFormat YYYY-MM-DD
+
+    section Cache A - Parallèle
+    Batch Experience 0   :a1, 2024-01-01, 2d
+    Batch Experience 1   :a2, 2024-01-01, 2d
+    Batch Experience 2   :a3, 2024-01-01, 3d
+    Batch Projects       :a4, 2024-01-02, 2d
+    Batch Extras         :a5, 2024-01-03, 1d
+
+    section Cache B - Séquentiel
+    Batch Skills         :b1, after a3, 2d
+    Batch Summary        :b2, after a3, 1d
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Contrôle de concurrence</div>
+          <p>Max <strong>5 appels OpenAI concurrents</strong> via <code>pLimit(5)</code>. Les batches utilisant Cache A s'exécutent en parallèle, puis Cache B attend leurs résultats.</p>
+        </div>
+
+        <h2>Traçabilité en Base de Données</h2>
+
+        <p>Chaque batch crée un enregistrement <code>CvGenerationSubtask</code> :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Valeur</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>type</td><td><code>batch_experience</code>, <code>batch_project</code>, <code>batch_skills</code>, etc.</td></tr>
+            <tr><td>itemIndex</td><td>Index de l'item (0, 1, 2... pour expériences)</td></tr>
+            <tr><td>status</td><td><code>pending</code> → <code>running</code> → <code>completed</code> / <code>failed</code></td></tr>
+            <tr><td>input</td><td>JSON des données d'entrée (debug)</td></tr>
+            <tr><td>output</td><td>JSON du résultat</td></tr>
+            <tr><td>modifications</td><td>Array des modifications avec before/after/reason</td></tr>
+            <tr><td>modelUsed</td><td>Modèle OpenAI utilisé</td></tr>
+            <tr><td>promptTokens</td><td>Tokens prompt</td></tr>
+            <tr><td>cachedTokens</td><td>Tokens du cache</td></tr>
+            <tr><td>completionTokens</td><td>Tokens completion</td></tr>
+            <tr><td>estimatedCost</td><td>Coût estimé USD</td></tr>
+            <tr><td>durationMs</td><td>Durée d'exécution</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

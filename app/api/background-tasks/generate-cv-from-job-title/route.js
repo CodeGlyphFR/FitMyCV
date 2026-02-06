@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
-import { ensureUserCvDir } from "@/lib/cv/storage";
-import { scheduleGenerateCvFromJobTitleJob } from "@/lib/backgroundTasks/generateCvFromJobTitleJob";
+import { ensureUserCvDir } from "@/lib/cv-core/storage";
+import { scheduleGenerateCvFromJobTitleJob } from "@/lib/features/job-title-generation/job";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
 import { CommonErrors, AuthErrors, BackgroundErrors } from "@/lib/api/apiErrors";
@@ -61,7 +61,7 @@ export async function POST(request) {
     }
 
     const title = `Génération de CV pour "${trimmedJobTitle}"`;
-    const successMessage = `CV pour "${trimmedJobTitle}" créé avec succès`;
+    const successMessage = JSON.stringify({ key: 'taskQueue.messages.jobTitleCreationCompleted', params: { title: trimmedJobTitle } });
 
     const taskPayload = {
       jobTitle: trimmedJobTitle,

@@ -1,16 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 /**
  * Section affichant les coûts de génération de CV groupés par tâche
  * avec détails au survol (input/cached/output tokens par subtask)
  */
-export function CvGenerationCostsSection({ period, refreshKey }) {
+export function CvGenerationCostsSection({ period, refreshKey, pricings = [] }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedTaskId, setExpandedTaskId] = useState(null);
+  const [tooltip, setTooltip] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -69,15 +71,40 @@ export function CvGenerationCostsSection({ period, refreshKey }) {
     }).format(date);
   };
 
+  const formatPricePerMToken = (price) => {
+    if (price === null || price === undefined) return 'N/A';
+    return `$${price.toFixed(2)}/M`;
+  };
+
+  const handleModelHover = (e, modelName) => {
+    const pricing = pricings.find(p => p.modelName === modelName);
+    if (!pricing) return;
+    const rect = e.target.getBoundingClientRect();
+    setTooltip({
+      modelName,
+      pricing,
+      x: rect.right + 8,
+      y: rect.top + rect.height / 2,
+    });
+  };
+
+  const handleModelLeave = () => {
+    setTooltip(null);
+  };
+
   const getSubtaskTypeLabel = (type) => {
     const labels = {
+      'extraction': 'Extraction offre',
       'classify': 'Classification',
       'batch_experience': 'Expériences',
       'batch_project': 'Projets',
       'batch_extras': 'Extras',
       'batch_skills': 'Compétences',
+      'batch_education': 'Formations',
+      'batch_languages': 'Langues',
       'batch_summary': 'Résumé',
       'recompose': 'Recomposition',
+      'recompose_languages': 'Langues',
     };
     return labels[type] || type;
   };
@@ -202,7 +229,42 @@ export function CvGenerationCostsSection({ period, refreshKey }) {
 
             {/* Expanded details - Individual subtasks */}
             {expandedTaskId === gen.taskId && (() => {
-              const validSubtasks = gen.subtasks.filter(s => s.promptTokens > 0 || s.completionTokens > 0);
+              const validSubtasks = gen.subtasks
+                .filter(s => s.promptTokens > 0 || s.completionTokens > 0)
+                .sort((a, b) => {
+                  const typeOrder = [
+                    'extraction',
+                    'classify',
+                    'batch_experience',
+                    'batch_project',
+                    'batch_extras',
+                    'batch_skills',
+                    'batch_summary',
+                    'recompose',
+                    'recompose_languages',
+                  ];
+                  const aType = typeOrder.indexOf(a.type);
+                  const bType = typeOrder.indexOf(b.type);
+
+                  if (aType !== bType) {
+                    return (aType === -1 ? 999 : aType) - (bType === -1 ? 999 : bType);
+                  }
+                  // Même type → trier par itemIndex
+                  return (a.itemIndex ?? -1) - (b.itemIndex ?? -1);
+                });
+              // Calculer le coût total par type (pour les types batch)
+              const costByType = validSubtasks.reduce((acc, subtask) => {
+                if (!acc[subtask.type]) {
+                  acc[subtask.type] = { cost: 0, firstIndex: subtask.itemIndex ?? -1 };
+                }
+                acc[subtask.type].cost += subtask.estimatedCost;
+                // Garder le plus petit index comme premier
+                if ((subtask.itemIndex ?? -1) < acc[subtask.type].firstIndex || acc[subtask.type].firstIndex === -1) {
+                  acc[subtask.type].firstIndex = subtask.itemIndex ?? -1;
+                }
+                return acc;
+              }, {});
+
               return (
               <div className="border-t border-white/10 p-4 bg-black/20">
                 <h4 className="text-white/80 text-sm font-medium mb-2">
@@ -219,6 +281,7 @@ export function CvGenerationCostsSection({ period, refreshKey }) {
                         <th className="pb-1 text-right">Cache</th>
                         <th className="pb-1 text-right">Output</th>
                         <th className="pb-1 text-right">Coût</th>
+                        <th className="pb-1 text-right">%</th>
                         <th className="pb-1 text-right">Durée</th>
                         <th className="pb-1">Statut</th>
                       </tr>
@@ -230,11 +293,43 @@ export function CvGenerationCostsSection({ period, refreshKey }) {
                           <tr key={subtask.id} className="border-b border-white/5 text-white/70">
                             <td className="py-1">{getSubtaskTypeLabel(subtask.type)}</td>
                             <td className="py-1 text-white/40">{subtask.itemIndex ?? '-'}</td>
-                            <td className="py-1 text-white/50 text-[10px]">{subtask.modelUsed || '-'}</td>
+                            <td className="py-1 text-white/50 text-[10px]">
+                              {subtask.modelUsed ? (
+                                <span
+                                  className="cursor-help"
+                                  onMouseEnter={(e) => handleModelHover(e, subtask.modelUsed)}
+                                  onMouseLeave={handleModelLeave}
+                                >
+                                  {subtask.modelUsed}
+                                </span>
+                              ) : '-'}
+                            </td>
                             <td className="py-1 text-right text-cyan-400/70">{formatNumber(inputTokens)}</td>
                             <td className="py-1 text-right text-indigo-400/70">{formatNumber(subtask.cachedTokens)}</td>
                             <td className="py-1 text-right text-purple-400/70">{formatNumber(subtask.completionTokens)}</td>
                             <td className="py-1 text-right text-green-400/70">{formatCurrency(subtask.estimatedCost)}</td>
+                            <td className="py-1 text-right text-white/60">
+                              {(() => {
+                                const isBatchType = subtask.type.startsWith('batch_');
+                                if (isBatchType) {
+                                  // Pour les batch types, afficher uniquement sur le premier item
+                                  if ((subtask.itemIndex ?? -1) === costByType[subtask.type].firstIndex) {
+                                    const groupCost = costByType[subtask.type].cost;
+                                    const pct = gen.totals.estimatedCost > 0
+                                      ? ((groupCost / gen.totals.estimatedCost) * 100).toFixed(1)
+                                      : 0;
+                                    return `${pct}%`;
+                                  }
+                                  return '-';
+                                } else {
+                                  // Pour les types non-batch, pourcentage individuel
+                                  const pct = gen.totals.estimatedCost > 0
+                                    ? ((subtask.estimatedCost / gen.totals.estimatedCost) * 100).toFixed(1)
+                                    : 0;
+                                  return `${pct}%`;
+                                }
+                              })()}
+                            </td>
                             <td className="py-1 text-right text-white/50">{formatDuration(subtask.durationMs)}</td>
                             <td className="py-1">{getStatusBadge(subtask.status)}</td>
                           </tr>
@@ -257,6 +352,7 @@ export function CvGenerationCostsSection({ period, refreshKey }) {
                         <td className="py-1 text-right text-green-400 font-semibold">
                           {formatCurrency(gen.totals.estimatedCost)}
                         </td>
+                        <td className="py-1 text-right text-white/60">100%</td>
                         <td className="py-1 text-right">
                           {formatDuration(gen.totals.durationMs)}
                         </td>
@@ -271,6 +367,24 @@ export function CvGenerationCostsSection({ period, refreshKey }) {
           </div>
         ))}
       </div>
+
+      {/* Tooltip Portal */}
+      {tooltip && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed z-[9999] whitespace-nowrap bg-black/95 border border-white/20 rounded px-2 py-1.5 text-[10px] shadow-lg pointer-events-none"
+          style={{
+            left: tooltip.x,
+            top: tooltip.y,
+            transform: 'translateY(-50%)',
+          }}
+        >
+          <span className="block text-white font-medium mb-1">{tooltip.modelName}</span>
+          <span className="block text-cyan-400">Input: {formatPricePerMToken(tooltip.pricing.inputPricePerMToken)}</span>
+          <span className="block text-indigo-400">Cache: {formatPricePerMToken(tooltip.pricing.cachePricePerMToken)}</span>
+          <span className="block text-purple-400">Output: {formatPricePerMToken(tooltip.pricing.outputPricePerMToken)}</span>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

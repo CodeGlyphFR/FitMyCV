@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
-import { deleteUserCvFile, cvFileExists } from '@/lib/cv/storage';
+import { deleteUserCvFile, cvFileExists } from '@/lib/cv-core/storage';
 import { trackEvent, EventTypes } from '@/lib/telemetry/server';
 import { CommonErrors, CvErrors, apiError } from '@/lib/api/apiErrors';
 

@@ -1,0 +1,417 @@
+{
+  "about": {
+    "title": "About FitMyCV",
+    "story": {
+      "title": "Our story",
+      "paragraphs": [
+        "FitMyCV was born from a frustration many know too well: spending hours adapting your resume for each job application. Rephrasing, reorganizing, hoping this time it will pass the recruiter filters...",
+        "We thought there had to be a better way. What if AI could help us create resumes truly tailored to each job offer?"
+      ]
+    },
+    "mission": {
+      "title": "Our mission",
+      "paragraphs": [
+        "To save you time and give you the best chances of landing that interview. No generic resume sent en masse, but a tailored CV for each opportunity.",
+        "Because every job offer is unique, your resume should be too."
+      ]
+    },
+    "features": {
+      "title": "What FitMyCV can do for you",
+      "items": [
+        {
+          "icon": "sparkles",
+          "title": "Smart generation",
+          "description": "AI analyzes the job offer and adapts your resume to highlight the skills being sought."
+        },
+        {
+          "icon": "target",
+          "title": "Match score",
+          "description": "Instantly know if your profile matches the job with a detailed compatibility score."
+        },
+        {
+          "icon": "globe",
+          "title": "Multi-language",
+          "description": "Translate your resume in one click. French, English, Spanish, German... your choice."
+        },
+        {
+          "icon": "bolt",
+          "title": "ATS optimized",
+          "description": "Pass through automated recruiter filters with properly formatted content."
+        },
+        {
+          "icon": "chart",
+          "title": "Multiple analysis levels",
+          "description": "From quick to in-depth, choose the analysis level that suits your needs.",
+          "fullWidth": true
+        }
+      ]
+    },
+    "howItWorks": {
+      "title": "How does it work?",
+      "steps": [
+        {
+          "step": 1,
+          "title": "Import your resume",
+          "description": "Upload your existing resume as PDF or create a new one directly on the platform."
+        },
+        {
+          "step": 2,
+          "title": "Paste the job offer",
+          "description": "Copy-paste the text of the job that interests you. AI will analyze it in detail."
+        },
+        {
+          "step": 3,
+          "title": "Generate your optimized resume",
+          "description": "In seconds, get a resume tailored to the job, ready to download and send."
+        }
+      ]
+    },
+    "contact": {
+      "title": "Any questions?",
+      "description": "Our team is here to help. Don't hesitate to reach out!",
+      "email": "contact@fitmycv.io",
+      "linksPrefix": "Also check our",
+      "linksTerms": "terms of service",
+      "linksAnd": "and",
+      "linksPrivacy": "privacy policy"
+    }
+  },
+  "terms": {
+    "_untranslated": false,
+    "sections": [
+      {
+        "id": "acceptance",
+        "title": "1. Acceptance of Terms",
+        "content": [
+          { "type": "paragraph", "text": "By using FitMyCV.io and making a credit purchase, you unconditionally accept these Terms of Service." },
+          { "type": "paragraph", "text": "If you do not accept these terms, please do not use our paid services." },
+          { "type": "paragraph", "text": "Use of FitMyCV.io is restricted to individuals aged 16 and over." }
+        ]
+      },
+      {
+        "id": "services",
+        "title": "2. Service Description",
+        "content": [
+          { "type": "paragraph", "text": "FitMyCV.io is a CV creation and optimization platform using artificial intelligence." },
+          { "type": "subtitle", "text": "2.1. Free services" },
+          { "type": "list", "items": [
+            "Unlimited manual CV creation",
+            "Unlimited CV editing",
+            "CV storage in your personal space"
+          ]},
+          { "type": "subtitle", "text": "2.2. Services consuming credits" },
+          { "type": "list", "items": [
+            "PDF and DOCX export",
+            "AI-powered CV generation and adaptation",
+            "PDF CV import and extraction",
+            "Automatic CV translation",
+            "CV optimization for job offers",
+            "CV/job compatibility score"
+          ]},
+          { "type": "subtitle", "text": "2.3. Credit system" },
+          { "type": "paragraph", "text": "Upon account creation, you receive a default number of credits allowing you to test the platform's features." },
+          { "type": "paragraph", "text": "Each feature consumes a variable number of credits according to a defined scale. The credit cost of each feature is displayed before use." },
+          { "type": "paragraph", "text": "Credits do not expire and remain valid as long as your account is active." },
+          { "type": "paragraph", "text": "When your credits are depleted, you can purchase more from the Credit management page.", "link": "/account/subscriptions?tab=credits", "linkText": "Credit management" }
+        ]
+      },
+      {
+        "id": "pricing",
+        "title": "3. Pricing and Payments",
+        "content": [
+          { "type": "paragraph", "text": "All prices are displayed in euros (EUR). The publisher is not subject to VAT pursuant to Article 293 B of the French General Tax Code." },
+          { "type": "paragraph", "text": "Payments are secured by Stripe and accept credit cards, Apple Pay, Google Pay, and other payment methods depending on your location." },
+          { "type": "paragraph", "text": "Credit pack prices are available on the Credit management page.", "link": "/account/subscriptions?tab=credits", "linkText": "Credit management" }
+        ]
+      },
+      {
+        "id": "withdrawal",
+        "title": "4. Right of Withdrawal",
+        "content": [
+          { "type": "paragraph", "text": "In accordance with Article L.221-28 of the French Consumer Code, the User acknowledges and accepts that the execution of Services begins immediately after order validation." },
+          { "type": "paragraph", "text": "Consequently, the User expressly waives their right of withdrawal for any credit purchase." },
+          { "type": "highlight", "variant": "warning", "title": "Important:", "text": "Order validation, after checking the withdrawal waiver box, constitutes express waiver of this right." }
+        ]
+      },
+      {
+        "id": "refund",
+        "title": "5. Refund Policy",
+        "content": [
+          { "type": "paragraph", "text": "All credit purchases are final once the service has been used (CV generation, export, translation, etc.). By making a purchase, you acknowledge having read and accepted this clause." },
+          { "type": "paragraph", "text": "In case of technical issues preventing service use, contact our support at support@fitmycv.io. We will review your situation individually.", "link": "mailto:support@fitmycv.io", "linkText": "support@fitmycv.io" }
+        ]
+      },
+      {
+        "id": "chargebacks",
+        "title": "6. Chargebacks and Banking Disputes",
+        "content": [
+          { "type": "paragraph", "text": "In case of a chargeback (payment dispute with your bank) after using the service:" },
+          { "type": "list", "items": [
+            "The disputed credit amount will be deducted from your balance, which may become negative.",
+            "You will need to top up your account to continue using credit-consuming services."
+          ]},
+          { "type": "highlight", "variant": "warning", "title": "Warning:", "text": "Abusive chargebacks may result in permanent account suspension." }
+        ]
+      },
+      {
+        "id": "ai",
+        "title": "7. Artificial Intelligence",
+        "content": [
+          { "type": "paragraph", "text": "FitMyCV.io acts as a \"deployer\" of an artificial intelligence system within the meaning of European Regulation 2024/1689 (AI Act)." },
+          { "type": "subtitle", "text": "7.1. Features using AI" },
+          { "type": "list", "items": [
+            "CV generation and adaptation",
+            "CV optimization",
+            "Job offer extraction",
+            "Compatibility score calculation",
+            "CV translation",
+            "PDF CV import and extraction"
+          ]},
+          { "type": "subtitle", "text": "7.2. Nature of results" },
+          { "type": "paragraph", "text": "Results generated by AI are suggestions and do not constitute binding recommendations. The user retains full control over the final content of their CVs." },
+          { "type": "subtitle", "text": "7.3. AI Provider" },
+          { "type": "paragraph", "text": "AI features are provided by OpenAI (United States). Data transmitted to OpenAI is not used to train their models in accordance with their API policy." },
+          { "type": "highlight", "variant": "info", "title": "AI Transparency:", "text": "The user is informed that generated content comes from an artificial intelligence system. This content should be verified before use." }
+        ]
+      },
+      {
+        "id": "intellectual-property",
+        "title": "8. Intellectual Property",
+        "content": [
+          { "type": "paragraph", "text": "The CVs you create via FitMyCV.io belong to you. You retain all rights to the content you provide." },
+          { "type": "paragraph", "text": "The interface, source code, algorithms, and all elements of FitMyCV.io are the exclusive property of the publisher and are protected by copyright." }
+        ]
+      },
+      {
+        "id": "liability",
+        "title": "9. Limitation of Liability",
+        "content": [
+          { "type": "paragraph", "text": "Services are provided \"as is\", without warranty of any kind, express or implied." },
+          { "type": "paragraph", "text": "FitMyCV.io does not guarantee:" },
+          { "type": "list", "items": [
+            "Continuous and uninterrupted service availability",
+            "The absence of technical errors or bugs",
+            "Compatibility of generated CVs with all ATS (Applicant Tracking Systems)",
+            "Obtaining an interview or employment following use of the service",
+            "The accuracy or relevance of AI-generated content"
+          ]},
+          { "type": "paragraph", "text": "Maintenance operations may be performed without notice, causing temporary service interruption." },
+          { "type": "paragraph", "text": "Our liability is limited to the amount you have paid for the service in the last 12 months." }
+        ]
+      },
+      {
+        "id": "prohibited",
+        "title": "10. Prohibited Behavior",
+        "content": [
+          { "type": "paragraph", "text": "The following are strictly prohibited:" },
+          { "type": "list", "items": [
+            "Resale or redistribution of services",
+            "Any attempt to intrude into systems",
+            "Identity theft",
+            "Automated data extraction (scraping)",
+            "Use of bots or automated scripts",
+            "Any use contrary to public morals or order",
+            "Creation of illegal, defamatory content or content infringing third-party rights"
+          ]},
+          { "type": "highlight", "variant": "danger", "title": "Sanctions:", "text": "In case of violation, FitMyCV.io reserves the right to suspend or delete the account without notice or refund." }
+        ]
+      },
+      {
+        "id": "termination",
+        "title": "11. Account Termination and Deletion",
+        "content": [
+          { "type": "paragraph", "text": "You can delete your account at any time from your personal space settings or by contacting us at support@fitmycv.io.", "link": "mailto:support@fitmycv.io", "linkText": "support@fitmycv.io" },
+          { "type": "paragraph", "text": "Account deletion results in the permanent deletion of all your data (CVs, job offers, history) in accordance with our privacy policy.", "link": "/privacy", "linkText": "privacy policy" },
+          { "type": "highlight", "variant": "warning", "title": "Unused credits:", "text": "Remaining credits on your account are lost upon deletion and cannot be refunded or transferred." }
+        ]
+      },
+      {
+        "id": "modifications",
+        "title": "12. Modification of Terms",
+        "content": [
+          { "type": "paragraph", "text": "We reserve the right to modify these Terms at any time. Modifications will be posted on this page with the update date. Continued use of the service after modification constitutes acceptance of the new terms." }
+        ]
+      },
+      {
+        "id": "mediation",
+        "title": "13. Consumer Mediation",
+        "content": [
+          { "type": "paragraph", "text": "In accordance with Articles L.616-1 and R.616-1 of the French Consumer Code, in case of dispute, the User may freely resort to a consumer mediator." },
+          { "type": "paragraph", "text": "The name and contact details of the competent mediator will be provided upon simple request to contact@fitmycv.io.", "link": "mailto:contact@fitmycv.io", "linkText": "contact@fitmycv.io" },
+          { "type": "highlight", "variant": "info", "title": "ODR Platform:", "text": "You may also use the European Commission's Online Dispute Resolution platform: https://ec.europa.eu/consumers/odr" }
+        ]
+      },
+      {
+        "id": "jurisdiction",
+        "title": "14. Applicable Law and Jurisdiction",
+        "content": [
+          { "type": "paragraph", "text": "These Terms are governed by French law." },
+          { "type": "paragraph", "text": "In case of dispute, and after an attempt at amicable resolution, the courts of Paris shall have exclusive jurisdiction." }
+        ]
+      },
+      {
+        "id": "legal-info",
+        "title": "15. Legal Information",
+        "content": [
+          { "type": "paragraph", "text": "Publisher of FitMyCV.io service:" },
+          { "type": "highlight", "variant": "info", "text": "Codeglyph - SIRET: 995 375 862 00019 - 200 rue de la Croix Nivert, 75015 Paris, France - Email: contact@codeglyph.fr - Not subject to VAT (Article 293 B of French General Tax Code)" },
+          { "type": "subtitle", "text": "Hosting" },
+          { "type": "paragraph", "text": "The service is self-hosted by the publisher." },
+          { "type": "subtitle", "text": "Data Protection" },
+          { "type": "paragraph", "text": "To learn more about how we process your personal data, please see our privacy policy.", "link": "/privacy", "linkText": "privacy policy" },
+          { "type": "paragraph", "text": "For any questions regarding these Terms, contact us at contact@fitmycv.io.", "link": "mailto:contact@fitmycv.io", "linkText": "contact@fitmycv.io" }
+        ]
+      }
+    ]
+  },
+  "privacy": {
+    "_untranslated": false,
+    "sections": [
+      {
+        "id": "controller",
+        "title": "1. Data Controller",
+        "content": [
+          { "type": "paragraph", "text": "Codeglyph operates the FitMyCV.io website and, as such, collects and processes personal data about you." },
+          { "type": "infobox", "text": "Codeglyph\nSIRET: 995 375 862 00019\n200 rue de la Croix Nivert, 75015 Paris, France\nEmail: contact@codeglyph.fr" }
+        ]
+      },
+      {
+        "id": "age",
+        "title": "2. Minimum Age",
+        "content": [
+          { "type": "paragraph", "text": "FitMyCV.io is intended for individuals aged 16 and over. By using this service, you confirm that you meet the age requirement." }
+        ]
+      },
+      {
+        "id": "rights",
+        "title": "3. Your Rights",
+        "content": [
+          { "type": "paragraph", "text": "Under the General Data Protection Regulation (GDPR), you have the following rights:" },
+          { "type": "list", "items": [
+            "Access: view the personal data we hold about you",
+            "Rectification: correct inaccurate or incomplete data",
+            "Erasure: request deletion of your data (\"right to be forgotten\")",
+            "Restriction: restrict processing of your data",
+            "Portability: receive your data in a structured format",
+            "Objection: object to processing on legitimate grounds"
+          ]},
+          { "type": "paragraph", "text": "To exercise these rights, contact us at contact@codeglyph.fr. We will respond within 30 days.", "link": "mailto:contact@codeglyph.fr", "linkText": "contact@codeglyph.fr" },
+          { "type": "paragraph", "text": "In case of dispute, you can file a complaint with the CNIL.", "link": "https://www.cnil.fr", "linkText": "CNIL" }
+        ]
+      },
+      {
+        "id": "data-collected",
+        "title": "4. Data Collected",
+        "content": [
+          { "type": "subtitle", "text": "4.1 Identification Data" },
+          { "type": "list", "items": ["Name, email address, password (encrypted)", "Profile picture (if signed in via Google, Apple or GitHub)"] },
+          { "type": "subtitle", "text": "4.2 CV Data" },
+          { "type": "list", "items": ["Professional information: experience, education, skills", "Contact details: phone, address, professional links", "Imported documents (PDF): not stored, sent to OpenAI for extraction then deleted immediately", "CV version history"] },
+          { "type": "subtitle", "text": "4.3 Browsing Data" },
+          { "type": "list", "items": ["IP address, browser type", "Pages visited, session data"] },
+          { "type": "subtitle", "text": "4.4 Payment Data" },
+          { "type": "list", "items": ["Subscription and transaction history", "No banking data stored (managed exclusively by Stripe)"] },
+          { "type": "subtitle", "text": "4.5 Usage Data" },
+          { "type": "list", "items": ["Usage events (CV creation, imports, generations)", "AI call performance metrics", "Error logs for diagnostics"] }
+        ]
+      },
+      {
+        "id": "purposes",
+        "title": "5. Purposes and Legal Bases",
+        "content": [
+          { "type": "table", "headers": ["Purpose", "Legal Basis"], "rows": [
+            ["Service provision (CV creation and generation)", "Contract execution"],
+            ["Payment and subscription management", "Contract execution"],
+            ["Service improvement, bug fixes", "Legitimate interest"],
+            ["Security and abuse prevention", "Legitimate interest"],
+            ["Billing data retention", "Legal obligation"],
+            ["Analytics cookies", "Consent"]
+          ]}
+        ]
+      },
+      {
+        "id": "retention",
+        "title": "6. Retention Periods",
+        "content": [
+          { "type": "table", "headers": ["Data Type", "Duration"], "rows": [
+            ["Active account", "As long as the account exists"],
+            ["Deleted account", "Immediate deletion"],
+            ["Inactive account", "3 years after last login (30-day notice before deletion)"],
+            ["Billing data", "5 years (legal obligation)"],
+            ["Email logs", "12 months"],
+            ["Cookie consent logs", "6 months"]
+          ]}
+        ]
+      },
+      {
+        "id": "hosting",
+        "title": "7. Hosting",
+        "content": [
+          { "type": "paragraph", "text": "Data is hosted in France." }
+        ]
+      },
+      {
+        "id": "ai-providers",
+        "title": "8. Third-Party AI Providers",
+        "content": [
+          { "type": "paragraph", "text": "FitMyCV.io uses artificial intelligence to generate and optimize your CVs. Your CV data (experience, skills, education) is transmitted to:" },
+          { "type": "list", "items": ["OpenAI (United States)"] },
+          { "type": "paragraph", "text": "OpenAI states that it does not use data transmitted via its API to train its models.", "link": "https://openai.com/privacy", "linkText": "OpenAI" },
+          { "type": "subtitle", "text": "Automated Decisions" },
+          { "type": "paragraph", "text": "AI is used to calculate CV-job compatibility scores, classify your skills, and suggest improvements. These processes are decision aids: you retain full control over the final content of your CVs." }
+        ]
+      },
+      {
+        "id": "payments",
+        "title": "9. Payment Processing",
+        "content": [
+          { "type": "paragraph", "text": "Payments are processed by Stripe Payments Europe, Ltd. (Ireland). FitMyCV.io never stores complete credit card numbers." },
+          { "type": "paragraph", "text": "Stripe Privacy Policy", "link": "https://stripe.com/privacy", "linkText": "Stripe Privacy Policy" }
+        ]
+      },
+      {
+        "id": "emails",
+        "title": "10. Email Sending",
+        "content": [
+          { "type": "paragraph", "text": "Transactional emails (verification, password reset, confirmations) are sent via Resend." },
+          { "type": "paragraph", "text": "Resend Privacy Policy", "link": "https://resend.com/legal/privacy-policy", "linkText": "Resend Privacy Policy" }
+        ]
+      },
+      {
+        "id": "cookies",
+        "title": "11. Cookies",
+        "content": [
+          { "type": "paragraph", "text": "FitMyCV.io uses cookies for site functionality and, with your consent, for audience measurement. See our cookie policy for more details.", "link": "/cookies", "linkText": "cookie policy" }
+        ]
+      },
+      {
+        "id": "security",
+        "title": "12. Security",
+        "content": [
+          { "type": "paragraph", "text": "We implement the following measures to protect your data:" },
+          { "type": "list", "items": [
+            "HTTPS communication (SSL/TLS)",
+            "Encrypted passwords (bcrypt)",
+            "CSRF protection and secure cookies",
+            "Anti-spam protection via Google reCAPTCHA v3"
+          ]},
+          { "type": "paragraph", "text": "reCAPTCHA collects technical data (IP address, cookies, browsing behavior) to distinguish humans from bots. Google's Privacy Policy and Terms of Service apply.", "link": "https://policies.google.com/privacy", "linkText": "Privacy Policy" }
+        ]
+      },
+      {
+        "id": "international",
+        "title": "13. International Transfers",
+        "content": [
+          { "type": "paragraph", "text": "Some data may be transferred outside the European Union (OpenAI, Resend in the United States). These transfers are governed by standard contractual clauses approved by the European Commission." }
+        ]
+      },
+      {
+        "id": "modifications",
+        "title": "14. Modifications",
+        "content": [
+          { "type": "paragraph", "text": "This policy may be modified at any time. Changes will be posted on this page with the update date. In case of substantial changes, you will be notified by email." }
+        ]
+      }
+    ]
+  }
+}

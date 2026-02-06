@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/session";
-import { ensureUserCvDir, listUserCvFiles, writeUserCvFile } from "@/lib/cv/storage";
+import { ensureUserCvDir, listUserCvFiles, writeUserCvFile } from "@/lib/cv-core/storage";
 import { trackCvCreation } from "@/lib/telemetry/server";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
@@ -45,7 +45,7 @@ export async function POST(req){
     // CV JSON contient uniquement le contenu (8 sections), métadonnées en DB (CvFile.*)
     var cv={
       header:{ full_name, current_title, contact:{ email, links:[], location:{} } },
-      summary:{ description:"", domains:[] },
+      summary:{ description:"" },
       skills:{ hard_skills:[], tools:[], methodologies:[], soft_skills:[] },
       experience:[],
       education:[],
@@ -62,7 +62,7 @@ export async function POST(req){
       file = baseName+".json";
     }
     try{
-      if (!cv.summary) cv.summary = { description:"", domains:[] };
+      if (!cv.summary) cv.summary = { description:"" };
       if (!cv.skills) cv.skills = { hard_skills:[], tools:[], methodologies:[], soft_skills:[] };
       if (!Array.isArray(cv.skills.hard_skills)) cv.skills.hard_skills = [];
       if (!Array.isArray(cv.skills.tools)) cv.skills.tools = [];

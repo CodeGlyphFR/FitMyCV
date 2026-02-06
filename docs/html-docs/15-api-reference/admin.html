@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Endpoints Admin | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">API Reference</a>
+          <span>/</span>
+          <span>Admin</span>
+        </div>
+
+
+        <h1>Endpoints Admin</h1>
+        <p class="lead">
+          Endpoints reserves aux administrateurs.
+        </p>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Acces restreint</div>
+          <p>Ces endpoints necessitent le role <code>admin</code> sur le compte utilisateur.</p>
+        </div>
+
+        <h2>Utilisateurs</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Méthode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/admin/users</code></td>
+              <td>GET</td>
+              <td>Liste des utilisateurs</td>
+            </tr>
+            <tr>
+              <td><code>/api/admin/users/[id]</code></td>
+              <td>GET/PUT/DELETE</td>
+              <td>Gestion utilisateur</td>
+            </tr>
+            <tr>
+              <td><code>/api/admin/users/[id]/credits</code></td>
+              <td>POST</td>
+              <td>Modifier credits</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Configuration</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Méthode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/admin/plans</code></td>
+              <td>GET/POST/PUT</td>
+              <td>Gestion plans</td>
+            </tr>
+            <tr>
+              <td><code>/api/admin/settings</code></td>
+              <td>GET/PUT</td>
+              <td>Parametres système</td>
+            </tr>
+            <tr>
+              <td><code>/api/admin/stats</code></td>
+              <td>GET</td>
+              <td>Statistiques globales</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Documentation</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Méthode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/admin/docs/[[...path]]</code></td>
+              <td>GET</td>
+              <td>Servir la documentation HTML technique</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Sécurité</div>
+          <p>Protection contre path traversal - les chemins sont limités au dossier <code>docs/html-docs/</code>.</p>
+        </div>
+
+        <h3>Content-Types supportés</h3>
+        <p>HTML, CSS, JS, PNG, JPG, GIF, SVG, WOFF, WOFF2, TTF, EOT</p>
+
+        <h3>Exemples</h3>
+        <pre><code class="language-http">GET /api/admin/docs/index.html
+GET /api/admin/docs/assets/css/style.css
+GET /api/admin/docs/01-architecture/overview.html</code></pre>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

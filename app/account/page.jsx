@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth/session";
 import AccountSettings from "@/components/account/AccountSettings";
 import AccountPageHeader from "@/components/account/AccountPageHeader";
 import AccountPageLoading from "@/components/account/AccountPageLoading";
-import Footer from "@/components/Footer";
+import Footer from "@/components/layout/Footer";
 import prisma from "@/lib/prisma";
 import { Suspense } from "react";
 

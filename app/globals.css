@@ -2,6 +2,15 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
+/* ===========================================
+   GPU OPTIMIZATION - Désactive will-change excessif
+   =========================================== */
+
+/* Désactiver will-change qui force les layers GPU */
+* {
+  will-change: auto !important;
+}
+
 /* Optimisations LCP - Chargement critique */
 @layer base {
   /* Font display swap pour éviter FOIT (Flash of Invisible Text) */

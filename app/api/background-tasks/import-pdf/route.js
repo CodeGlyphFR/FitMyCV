@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
-import { scheduleImportPdfJob } from "@/lib/backgroundTasks/importPdfJob";
+import { scheduleImportPdfJob } from "@/lib/features/import-pdf/job";
 import { promises as fs } from "fs";
 import path from "path";
 import os from "os";
@@ -125,7 +125,7 @@ export async function POST(request) {
 
     const taskData = {
       title: saved.name,
-      successMessage: `'${saved.name}' importé avec succès`,
+      successMessage: JSON.stringify({ key: 'taskQueue.messages.importCompleted', params: { filename: saved.name } }),
       type: 'import',
       status: 'queued',
       shouldUpdateCvList: true,

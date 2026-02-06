@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debit et Remboursement | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Credits</a>
+          <span>/</span>
+          <span>Debit / Remboursement</span>
+        </div>
+
+
+        <h1>Debit et Remboursement</h1>
+        <p class="lead">
+          Gestion du debit et remboursement des credits lors des operations.
+        </p>
+
+        <h2>Operations et Couts</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Operation</th>
+              <th>Cout</th>
+              <th>Remboursable</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Generation CV</td>
+              <td>1 credit</td>
+              <td>Oui (si echec)</td>
+            </tr>
+            <tr>
+              <td>Import PDF</td>
+              <td>5 credits</td>
+              <td>Oui (si echec)</td>
+            </tr>
+            <tr>
+              <td>Traduction</td>
+              <td>2 credits</td>
+              <td>Oui (si echec)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Implementation</h2>
+
+        <pre><code>// lib/subscription/credits.js
+export async function debitCredit(userId, amount, reason) {
+  return prisma.$transaction(async (tx) => {
+    const balance = await tx.creditBalance.findUnique({
+      where: { userId }
+    });
+
+    if (balance.balance < amount) {
+      throw new Error('Insufficient credits');
+    }
+
+    await tx.creditBalance.update({
+      where: { userId },
+      data: { balance: { decrement: amount } }
+    });
+
+    return tx.creditTransaction.create({
+      data: { userId, amount: -amount, type: 'debit', reason }
+    });
+  });
+}
+
+export async function refundCredit(userId, amount, reason) {
+  return prisma.$transaction(async (tx) => {
+    await tx.creditBalance.update({
+      where: { userId },
+      data: { balance: { increment: amount } }
+    });
+
+    return tx.creditTransaction.create({
+      data: { userId, amount, type: 'refund', reason }
+    });
+  });
+}</code></pre>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

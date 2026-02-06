@@ -1,8 +1,9 @@
 import React from "react";
 import { CREATE_TEMPLATE_OPTION } from "../utils/constants";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { parseApiError } from "@/lib/utils/errorHandler";
-import { TASK_TYPES } from "@/lib/backgroundTasks/taskTypes";
+import { TASK_TYPES } from "@/lib/background-jobs/taskTypes";
 import { ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
 
 /**
@@ -22,6 +23,7 @@ export function useGeneratorModal({
   addLinksToHistory,
 }) {
   const { executeRecaptcha } = useRecaptcha();
+  const { language: interfaceLanguage } = useLanguage();
   const [openGenerator, setOpenGenerator] = React.useState(false);
   const [linkInputs, setLinkInputs] = React.useState([""]);
   const [fileSelection, setFileSelection] = React.useState([]);
@@ -211,7 +213,7 @@ export function useGeneratorModal({
       taskType = TASK_TYPES.GENERATION;
       taskLabel = `Adaptation du CV '${baseCvName}'`;
       notificationMessage = t("cvGenerator.notifications.scheduled", { baseCvName });
-      endpoint = "/api/background-tasks/generate-cv-v2";
+      endpoint = "/api/background-tasks/generate-cv";
     }
 
     try {
@@ -225,6 +227,7 @@ export function useGeneratorModal({
       const formData = new FormData();
       formData.append("links", JSON.stringify(cleanedLinks));
       formData.append("recaptchaToken", recaptchaToken);
+      formData.append("userInterfaceLanguage", interfaceLanguage || "fr");
 
       if (!isTemplateCreation) {
         const baseCvName = generatorBaseItem?.displayTitle || generatorBaseItem?.title || generatorBaseFile;
@@ -273,7 +276,14 @@ export function useGeneratorModal({
         throw errorObj;
       }
 
-      // Vérifier avant les state updates (tâches optimistes, notifications)
+      // ✅ Émettre un événement global AVANT le check isMountedRef
+      // Ceci garantit le refresh du TaskQueue même si le composant Generator est démonté
+      // (race condition avec l'onboarding qui peut démonter le composant)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('tasks:refresh-needed'));
+      }
+
+      // Vérifier avant les state updates locaux (tâches optimistes, notifications)
       if (!isMountedRef.current) return;
 
       // ✅ Succès confirmé par l'API -> créer la tâche optimiste et notifier
@@ -330,7 +340,7 @@ export function useGeneratorModal({
       // Add redirect info if actionRequired
       if (error?.actionRequired && error?.redirectUrl) {
         notification.redirectUrl = error.redirectUrl;
-        notification.linkText = 'Voir les options';
+        notification.linkText = t('notifications.viewOptions');
       }
 
       addNotification(notification);

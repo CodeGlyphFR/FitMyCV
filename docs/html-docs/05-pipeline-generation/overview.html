@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pipeline Génération CV - Vue d'ensemble | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Pipeline Génération</a>
+          <span>/</span>
+          <span>Vue d'ensemble</span>
+        </div>
+
+        <h1>Pipeline de Génération CV</h1>
+        <p class="lead">
+          Le pipeline de génération CV (cv-adaptation) transforme automatiquement un CV source pour l'adapter à une offre d'emploi spécifique. Il utilise une architecture par phases avec parallélisation et cache intelligent.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Coût</div>
+          <p>Le nombre de crédits par génération est configurable dans <strong>Administration → Settings</strong>. Le crédit est débité au lancement et remboursé en cas d'échec.</p>
+        </div>
+
+        <h2>Workflow Global</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Pipeline complet de génération CV</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input["ENTRÉE UTILISATEUR"]
+        CV["CV Source (JSON)"]
+        URL["URL Offre d'emploi"]
+    end
+
+    subgraph Extract["ÉTAPE 0 - EXTRACTION"]
+        ExtractJob["Extraction URL/PDF"]
+        JobOffer["JobOffer JSON"]
+    end
+
+    subgraph Classification["ÉTAPE 0.5 - CLASSIFICATION"]
+        Classify["Classification IA"]
+        Decision{"KEEP / REMOVE / MOVE"}
+    end
+
+    subgraph Batches["ÉTAPE 1 - BATCHES (Parallèle)"]
+        BatchExp["1a: Experiences"]
+        BatchProj["1b: Projects"]
+        BatchExtras["1c: Extras"]
+        BatchSkills["1d: Skills"]
+        BatchSummary["1e: Summary"]
+    end
+
+    subgraph Recompose["ÉTAPE 2 - RECOMPOSITION"]
+        Assembly["Assemblage Final"]
+        FinalCV["CV Généré"]
+    end
+
+    subgraph Storage["STOCKAGE"]
+        DB[(PostgreSQL)]
+        Version["CvVersion"]
+    end
+
+    Input --> Extract
+    URL --> ExtractJob --> JobOffer
+    CV --> Classification
+    JobOffer --> Classification
+    Classify --> Decision
+
+    Decision -->|KEEP| BatchExp
+    Decision -->|MOVE_TO_PROJECTS| BatchProj
+    Decision --> BatchExtras
+    Decision --> BatchSkills
+    Decision --> BatchSummary
+
+    BatchExp --> Assembly
+    BatchProj --> Assembly
+    BatchExtras --> Assembly
+    BatchSkills --> Assembly
+    BatchSummary --> Assembly
+
+    Assembly --> FinalCV
+    FinalCV --> DB
+    FinalCV --> Version
+          </div>
+        </div>
+
+        <h2>Les 6 Phases du Pipeline</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Phase</th>
+              <th>Nom</th>
+              <th>Fichier</th>
+              <th>Exécution</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-primary">0</span></td>
+              <td>Extraction</td>
+              <td><code>phases/extract.js</code></td>
+              <td>Séquentiel</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">0.5</span></td>
+              <td>Classification</td>
+              <td><code>phases/classify.js</code></td>
+              <td>Séquentiel</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1a-e</span></td>
+              <td>Batches</td>
+              <td><code>phases/batch-*.js</code></td>
+              <td>Parallèle</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">2</span></td>
+              <td>Recomposition</td>
+              <td><code>phases/recompose.js</code></td>
+              <td>Séquentiel</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Étape 0 : Extraction</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/extract.js</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">EXTRACTION - Récupération de l'offre d'emploi</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Données d'entrée</div>
+            <p><strong>Sources possibles :</strong></p>
+            <ul>
+              <li><strong>URL :</strong> Page web d'annonce d'emploi</li>
+              <li><strong>PDF :</strong> Document uploadé par l'utilisateur</li>
+              <li><strong>Cache :</strong> JobOffer déjà extraite (réutilisation)</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Résumé du prompt</div>
+            <blockquote>
+              "Expert en extraction d'offres d'emploi. Analyser le contenu de la page/document et extraire les informations structurées : titre, entreprise, compétences requises et souhaitées, responsabilités, avantages."
+            </blockquote>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Format de sortie (JobOffer)</div>
+            <pre><code>{
+  "title": "Senior Full-Stack Developer",
+  "company": "TechCorp",
+  "location": "Paris, France",
+  "contract_type": "CDI",
+  "skills": {
+    "required": ["React", "Node.js", "TypeScript", "PostgreSQL"],
+    "nice_to_have": ["GraphQL", "Docker", "AWS"]
+  },
+  "soft_skills": ["Leadership", "Communication", "Problem-solving"],
+  "methodologies": ["Agile", "Scrum", "CI/CD"],
+  "responsibilities": [
+    "Développer des features full-stack",
+    "Mentorer les développeurs juniors",
+    "Participer aux code reviews"
+  ],
+  "benefits": ["Remote friendly", "RTT", "Mutuelle"]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Étape 0.5 : Classification</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/classify.js</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">CLASSIFICATION - Tri des expériences et projets</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Données d'entrée</div>
+            <p><strong>Provenance :</strong> <code>CvFile.content</code> + <code>JobOffer</code></p>
+            <pre><code>{
+  "cvExperiences": [
+    { "title": "Lead Developer", "company": "StartupX", ... },
+    { "title": "Serveur Restaurant", "company": "ChezPaul", ... }
+  ],
+  "cvProjects": [
+    { "name": "E-commerce Platform", ... }
+  ],
+  "jobOffer": { "title": "Senior Full-Stack Developer", ... }
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Résumé du prompt</div>
+            <blockquote>
+              "Expert en recrutement. Classifier chaque expérience et projet du CV selon leur pertinence pour l'offre d'emploi. Décisions possibles : KEEP (pertinent), REMOVE (non pertinent), MOVE_TO_PROJECTS (expérience à convertir en projet)."
+            </blockquote>
+            <p><strong>Critères de décision :</strong></p>
+            <ul>
+              <li><strong>KEEP :</strong> Expérience/projet aligné avec le poste</li>
+              <li><strong>REMOVE :</strong> Sans rapport (ex: job étudiant non tech pour poste dev)</li>
+              <li><strong>MOVE_TO_PROJECTS :</strong> Mission courte ou freelance pertinente</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Format de sortie</div>
+            <pre><code>{
+  "experiences": [
+    {
+      "index": 0,
+      "title": "Lead Developer @ StartupX",
+      "decision": "KEEP",
+      "reason": "Expérience full-stack pertinente avec leadership"
+    },
+    {
+      "index": 1,
+      "title": "Serveur @ ChezPaul",
+      "decision": "REMOVE",
+      "reason": "Non pertinent pour poste technique"
+    }
+  ],
+  "projects": [
+    {
+      "index": 0,
+      "name": "E-commerce Platform",
+      "decision": "KEEP",
+      "reason": "Stack technique aligné"
+    }
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Étape 1 : Batches (Parallèle)</h2>
+
+        <p>Tous les batches s'exécutent en parallèle grâce au système de cache CAG.</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>1a: Batch Experiences</h4>
+            <p>Adapter chaque expérience classée KEEP :</p>
+            <ul>
+              <li>Reformuler responsibilities</li>
+              <li>Mettre en avant les deliverables</li>
+              <li>Ajouter mots-clés de l'offre</li>
+              <li>Respecter la langue cible</li>
+            </ul>
+            <p><strong>Modèle :</strong> <code>gpt-4o</code></p>
+          </div>
+          <div class="card">
+            <h4>1b: Batch Projects</h4>
+            <p>Adapter projets existants + convertir MOVE_TO_PROJECTS :</p>
+            <ul>
+              <li>Convertir expériences en projets</li>
+              <li>Mettre en avant les technologies</li>
+              <li>Ajouter résultats quantifiés</li>
+            </ul>
+            <p><strong>Modèle :</strong> <code>gpt-4o</code></p>
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>1c: Batch Extras</h4>
+            <p>Adapter les sections complémentaires :</p>
+            <ul>
+              <li>Certifications</li>
+              <li>Bénévolat</li>
+              <li>Publications</li>
+              <li>Centres d'intérêt pertinents</li>
+            </ul>
+            <p><strong>Modèle :</strong> <code>gpt-4o-mini</code></p>
+          </div>
+          <div class="card">
+            <h4>1d: Batch Skills</h4>
+            <p>7 missions d'adaptation des compétences :</p>
+            <ul>
+              <li>hard_skills, soft_skills</li>
+              <li>tools, methodologies</li>
+              <li>certifications, interests</li>
+              <li>languages</li>
+            </ul>
+            <p><strong>Modèle :</strong> <code>gpt-4o-mini</code></p>
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card" style="max-width: 50%;">
+            <h4>1e: Batch Summary</h4>
+            <p>Générer ou adapter le résumé professionnel :</p>
+            <ul>
+              <li>Synthétiser le parcours</li>
+              <li>Mettre en avant l'adéquation avec le poste</li>
+              <li>Intégrer les mots-clés stratégiques</li>
+              <li>3-4 phrases percutantes</li>
+            </ul>
+            <p><strong>Modèle :</strong> <code>gpt-4o</code></p>
+          </div>
+        </div>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH EXPERIENCES - Exemple d'adaptation</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Données d'entrée</div>
+            <pre><code>{
+  "experience": {
+    "title": "Lead Developer",
+    "company": "StartupX",
+    "responsibilities": ["Développer des applications"],
+    "deliverables": [],
+    "skills_used": ["JavaScript"]
+  },
+  "jobOffer": {
+    "skills": { "required": ["React", "Node.js", "TypeScript"] }
+  },
+  "cacheA": { /* contexte offre */ }
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Format de sortie</div>
+            <pre><code>{
+  "adapted_experience": {
+    "title": "Lead Developer",
+    "company": "StartupX",
+    "responsibilities": [
+      "Concevoir et développer des applications web React/Node.js",
+      "Définir l'architecture technique et les bonnes pratiques"
+    ],
+    "deliverables": [
+      "Application SaaS servant 10K+ utilisateurs",
+      "Réduction de 40% du temps de chargement"
+    ],
+    "skills_used": ["React", "Node.js", "TypeScript", "PostgreSQL"]
+  },
+  "modifications": [
+    {
+      "field": "responsibilities",
+      "action": "modified",
+      "before": "Développer des applications",
+      "after": "Concevoir et développer des applications web React/Node.js",
+      "reason": "Alignement avec stack technique de l'offre"
+    }
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Étape 2 : Recomposition</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/recompose.js</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">RECOMPOSITION - Assemblage du CV final</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Données d'entrée</div>
+            <p><strong>Provenance :</strong> Résultats de tous les batches</p>
+            <pre><code>{
+  "classification": { /* décisions KEEP/REMOVE/MOVE */ },
+  "adaptedExperiences": [ /* expériences adaptées */ ],
+  "adaptedProjects": [ /* projets adaptés */ ],
+  "adaptedExtras": { /* sections extras */ },
+  "adaptedSkills": { /* toutes les compétences */ },
+  "adaptedSummary": "Résumé professionnel...",
+  "originalCv": { /* CV source pour header, education, languages */ }
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Processus</div>
+            <blockquote>
+              Cette phase est purement algorithmique (pas d'appel IA). Elle assemble les résultats des batches en respectant l'ordre et la structure du CV.
+            </blockquote>
+            <p><strong>Étapes d'assemblage :</strong></p>
+            <ol>
+              <li>Copier header et education du CV source</li>
+              <li>Insérer le summary adapté</li>
+              <li>Filtrer experiences (exclure REMOVE, réordonner)</li>
+              <li>Fusionner projects (existants + convertis)</li>
+              <li>Assembler skills par catégorie</li>
+              <li>Copier languages du CV source</li>
+              <li>Intégrer extras adaptés</li>
+            </ol>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">CV Final</div>
+            <pre><code>{
+  "header": { /* inchangé */ },
+  "summary": "Développeur Full-Stack avec 8 ans d'expérience...",
+  "experience": [ /* expériences adaptées, ordonnées */ ],
+  "projects": [ /* projets fusionnés */ ],
+  "skills": {
+    "hard_skills": [...],
+    "soft_skills": [...],
+    "tools": [...],
+    "methodologies": [...]
+  },
+  "education": { /* inchangé */ },
+  "languages": { /* inchangé */ },
+  "extras": { /* adaptés */ }
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Système de Cache (CAG)</h2>
+
+        <p>Le pipeline utilise un système de cache à deux niveaux pour optimiser les coûts OpenAI et garantir la cohérence :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Cache A</h4>
+            <p>Utilisé par : Experiences, Projects, Extras</p>
+            <ul>
+              <li>Job offer title</li>
+              <li>Required skills</li>
+              <li>Nice-to-have skills</li>
+              <li>Soft skills</li>
+              <li>Methodologies</li>
+              <li>Responsibilities (top 5)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Cache B</h4>
+            <p>Utilisé par : Skills, Summary</p>
+            <ul>
+              <li>Tout le Cache A</li>
+              <li>+ Expériences adaptées (résumé)</li>
+              <li>+ Projets adaptés (résumé)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Optimisation des coûts</div>
+          <p>Les tokens du cache (cache_read_input_tokens) coûtent <strong>90% moins cher</strong> que les tokens standards. Le cache est maintenu pendant 5 minutes (dev) ou 24h (GPT-5).</p>
+        </div>
+
+        <h2>Hiérarchie des Priorités</h2>
+
+        <p>Tous les prompts respectent cette hiérarchie stricte :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Priorité</th>
+              <th>Nom</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-error">P1</span></td>
+              <td>VÉRITÉ</td>
+              <td>Jamais d'information inventée - traçabilité obligatoire</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">P2</span></td>
+              <td>LANGUE</td>
+              <td>Contenu dans la langue cible du CV (FR, EN, ES, DE support&eacute;s)</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">P3</span></td>
+              <td>ATS</td>
+              <td>Mots-clés exacts de l'offre d'emploi</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">P4</span></td>
+              <td>STYLE</td>
+              <td>Ton professionnel et format adapté</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Anti-Hallucination</div>
+          <p>Règle fondamentale : "Chaque mot doit pointer vers la source". Les modifications sont des reformulations, jamais des inventions. Exemple interdit : "Développeur Python" → "Développeur Python/IA" (IA n'existe pas dans la source).</p>
+        </div>
+
+        <h2>Traçabilité et Modifications</h2>
+
+        <p>Chaque batch retourne un tableau <code>modifications</code> documentant chaque changement :</p>
+
+        <pre><code>{
+  "modifications": [
+    {
+      "field": "responsibilities",
+      "action": "modified",
+      "before": "Développer des applications",
+      "after": "Concevoir et développer des APIs REST",
+      "reason": "Alignement avec requirement 'API REST' de l'offre"
+    }
+  ]
+}</code></pre>
+
+        <h2>Modèles de Données</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Table</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>CvGenerationTask</code></td>
+              <td>Tâche master (userId, status, totalOffers, creditsRefunded)</td>
+            </tr>
+            <tr>
+              <td><code>CvGenerationOffer</code></td>
+              <td>Offre à traiter (taskId, jobOfferId, status, classificationResult)</td>
+            </tr>
+            <tr>
+              <td><code>CvGenerationSubtask</code></td>
+              <td>Traçabilité IA (type, input, output, tokens, cost)</td>
+            </tr>
+            <tr>
+              <td><code>JobOffer</code></td>
+              <td>Cache offre extraite (content JSON)</td>
+            </tr>
+            <tr>
+              <td><code>CvFile</code></td>
+              <td>CV généré (content JSON, matchScore)</td>
+            </tr>
+            <tr>
+              <td><code>CvVersion</code></td>
+              <td>Historique (origin: gpt_cv_generation)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Fichiers et Structure</h2>
+
+        <pre><code>lib/features/cv-adaptation/
+├── orchestrator/
+│   ├── index.js                 # Exports publics
+│   ├── taskRunner.js            # Lifecycle: start*Generation
+│   ├── offerProcessor.js        # Coordinateur phases
+│   ├── creditManager.js         # Gestion crédits
+│   ├── progressEmitter.js       # SSE events
+│   └── retryHandler.js          # Retry + backoff
+├── phases/
+│   ├── extract.js               # Phase 0
+│   ├── classify.js              # Phase 0.5
+│   ├── batch-experiences.js     # Phase 1a
+│   ├── batch-projects.js        # Phase 1b
+│   ├── batch-extras.js          # Phase 1c
+│   ├── batch-skills.js          # Phase 1d
+│   ├── batch-summary.js         # Phase 1e
+│   └── recompose.js             # Phase 2
+├── prompts/                     # 21 fichiers .md
+├── schemas/                     # 7 fichiers JSON
+└── utils/
+    ├── cacheContext.js          # Cache A/B
+    ├── language.js              # Détection langue
+    └── sanitize.js              # Sanitization</code></pre>
+
+        <h2>Différences avec Pipeline Optimisation</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Pipeline Génération</th>
+              <th>Pipeline Optimisation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Objectif</strong></td>
+              <td>Transformation complète</td>
+              <td>Amélioration ciblée</td>
+            </tr>
+            <tr>
+              <td><strong>Offre d'emploi</strong></td>
+              <td>Obligatoire</td>
+              <td>Optionnelle</td>
+            </tr>
+            <tr>
+              <td><strong>Classification</strong></td>
+              <td>IA classe automatiquement</td>
+              <td>Utilisateur choisit</td>
+            </tr>
+            <tr>
+              <td><strong>Review</strong></td>
+              <td>Optionnel (post-génération)</td>
+              <td>Intégré au workflow</td>
+            </tr>
+            <tr>
+              <td><strong>Coût</strong></td>
+              <td>1 crédit (configurable)</td>
+              <td>2 crédits (+ 1 scoring)</td>
+            </tr>
+            <tr>
+              <td><strong>Cache</strong></td>
+              <td>Cache A/B structuré</td>
+              <td>Pas de cache spécifique</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Prochaines Sections</h2>
+
+        <ul>
+          <li><a href="./orchestrator.html">Orchestrateur</a> - Lifecycle et coordination</li>
+          <li><a href="./phase-classification.html">Phase Classification</a> - Détail avec I/O</li>
+          <li><a href="./phase-batches.html">Phase Batches</a> - Tous les batches détaillés</li>
+          <li><a href="./phase-recompose.html">Phase Recomposition</a> - Assemblage final</li>
+          <li><a href="./prompts.html">Prompts IA</a> - Structure et organisation</li>
+          <li><a href="./schemas-io.html">Schemas I/O</a> - JSON Schemas détaillés</li>
+        </ul>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

@@ -101,6 +101,15 @@ const EMAIL_TRIGGERS = [
     icon: '💳',
     isSystem: true,
   },
+  {
+    name: 'inactivity_warning',
+    label: 'Avertissement Inactivite',
+    description: "Envoye 30 jours avant la suppression d'un compte inactif (3 ans sans connexion)",
+    variables: JSON.stringify(['userName', 'loginUrl', 'lastActivityDate', 'deletionDate']),
+    category: 'account',
+    icon: '⚠️',
+    isSystem: true,
+  },
 ];
 
 // ============================================================================
@@ -410,12 +419,6 @@ const AI_MODEL_SETTINGS = [
     description: 'Modèle utilisé pour la génération de CV',
   },
   {
-    settingName: 'model_cv_planning',
-    value: '',
-    category: 'ai_models',
-    description: 'Model for CV planning phase (empty = use default CV model)',
-  },
-  {
     settingName: 'model_match_score',
     value: 'gpt-4.1-mini-2025-04-14',
     category: 'ai_models',
@@ -429,7 +432,7 @@ const AI_MODEL_SETTINGS = [
   },
   {
     settingName: 'model_extract_job_offer',
-    value: 'gpt-4o-mini',
+    value: 'o4-mini',
     category: 'ai_models',
     description: "Modèle pour extraction d'offres d'emploi",
   },
@@ -463,7 +466,7 @@ const AI_MODEL_SETTINGS = [
     category: 'ai_models',
     description: 'Modèle pour détection de langue de CV (léger, 50 chars max)',
   },
-  // Pipeline CV v2 - Models par phase
+  // Pipeline Adaptation CV - Models par phase
   {
     settingName: 'model_cv_classify',
     value: 'gpt-4o',
@@ -472,7 +475,7 @@ const AI_MODEL_SETTINGS = [
   },
   {
     settingName: 'model_cv_batch_experience',
-    value: 'gpt-4o',
+    value: 'o4-mini',
     category: 'ai_models',
     description: 'Pipeline v2: Modèle pour adaptation des expériences',
   },
@@ -489,18 +492,30 @@ const AI_MODEL_SETTINGS = [
     description: 'Pipeline v2: Modèle pour adaptation des extras',
   },
   {
-    settingName: 'model_cv_batch_skills',
+    settingName: 'model_cv_batch_education',
+    value: 'gpt-4.1-mini-2025-04-14',
+    category: 'ai_models',
+    description: 'Pipeline Adaptation: Modèle pour traduction des formations',
+  },
+  {
+    settingName: 'model_cv_batch_languages',
     value: 'gpt-4o-mini',
+    category: 'ai_models',
+    description: 'Pipeline Adaptation: Modèle pour adaptation des langues',
+  },
+  {
+    settingName: 'model_cv_batch_skills',
+    value: 'o4-mini',
     category: 'ai_models',
     description: 'Pipeline v2: Modèle pour déduction des compétences',
   },
   {
     settingName: 'model_cv_batch_summary',
-    value: 'gpt-4o-mini',
+    value: 'o4-mini',
     category: 'ai_models',
     description: 'Pipeline v2: Modèle pour génération du summary',
   },
-  // Pipeline Amélioration CV v2 - Models par stage
+  // Pipeline Amélioration CV - Models par stage
   {
     settingName: 'model_improve_preprocess',
     value: 'gpt-4o',
@@ -536,6 +551,12 @@ const AI_MODEL_SETTINGS = [
     value: 'gpt-4.1-mini-2025-04-14',
     category: 'ai_models',
     description: 'Modèle pour optimisation des langues (Pipeline V2)',
+  },
+  {
+    settingName: 'model_improve_extras',
+    value: 'gpt-4.1-mini-2025-04-14',
+    category: 'ai_models',
+    description: 'Pipeline Amélioration: Modèle pour améliorer les extras (certifications, hobbies)',
   },
 ];
 
@@ -785,89 +806,6 @@ const CV_DISPLAY_SETTINGS = [
   },
 ];
 
-// ============================================================================
-// 14. FEATURE MAPPINGS (Complet avec features non-IA)
-// ============================================================================
-const FEATURE_MAPPINGS = [
-  {
-    featureKey: 'match_score',
-    displayName: 'Score de matching',
-    settingNames: ['model_match_score'],
-    openAICallNames: ['match_score'],
-    planFeatureNames: ['match_score'],
-  },
-  {
-    featureKey: 'optimize_cv',
-    displayName: 'Optimisation CV',
-    settingNames: ['model_optimize_cv'],
-    openAICallNames: ['optimize_cv'],
-    planFeatureNames: ['optimize_cv'],
-  },
-  {
-    featureKey: 'generate_from_job_title',
-    displayName: 'Génération depuis titre',
-    settingNames: ['model_generate_from_job_title'],
-    openAICallNames: ['generate_from_job_title'],
-    planFeatureNames: ['generate_from_job_title'],
-  },
-  {
-    featureKey: 'translate_cv',
-    displayName: 'Traduction CV',
-    settingNames: ['model_translate_cv'],
-    openAICallNames: ['translate_cv'],
-    planFeatureNames: ['translate_cv'],
-  },
-  {
-    featureKey: 'gpt_cv_generation',
-    displayName: 'Génération CV',
-    settingNames: ['model_cv_generation', 'model_extract_job_offer'],
-    openAICallNames: ['generate_cv_url', 'generate_cv_pdf', 'extract_job_offer_url', 'extract_job_offer_pdf', 'create_template_cv_url', 'create_template_cv_pdf'],
-    planFeatureNames: ['gpt_cv_generation'],
-  },
-  {
-    featureKey: 'import_pdf',
-    displayName: 'Import PDF',
-    settingNames: ['model_import_pdf', 'model_first_import_pdf'],
-    openAICallNames: ['import_pdf', 'first_import_pdf'],
-    planFeatureNames: ['import_pdf'],
-  },
-  {
-    featureKey: 'extract_job_offer',
-    displayName: 'Extraction offre emploi',
-    settingNames: ['model_extract_job_offer'],
-    openAICallNames: ['extract_job_offer_url', 'extract_job_offer_pdf'],
-    planFeatureNames: ['gpt_cv_generation'],
-  },
-  {
-    featureKey: 'detect_language',
-    displayName: 'Détection langue',
-    settingNames: ['model_detect_language'],
-    openAICallNames: ['detect_cv_language'],
-    planFeatureNames: ['match_score', 'gpt_cv_generation', 'import_pdf'],
-  },
-  // Features non-IA (sans modèle OpenAI)
-  {
-    featureKey: 'create_cv_manual',
-    displayName: 'Création manuelle CV',
-    settingNames: [],
-    openAICallNames: [],
-    planFeatureNames: ['create_cv_manual'],
-  },
-  {
-    featureKey: 'edit_cv',
-    displayName: 'Édition CV',
-    settingNames: [],
-    openAICallNames: [],
-    planFeatureNames: ['edit_cv'],
-  },
-  {
-    featureKey: 'export_cv',
-    displayName: 'Export PDF',
-    settingNames: [],
-    openAICallNames: [],
-    planFeatureNames: ['export_cv'],
-  },
-];
 
 // ============================================================================
 // HEADER DISPLAY
@@ -892,28 +830,36 @@ async function main() {
 
   const results = [];
   let totalCreated = 0;
-  let totalSkipped = 0;
 
-  // ===== 1. Email Triggers (purge + seed) =====
-  // Purge existing templates first (FK dependency), then triggers
-  await prisma.emailTemplate.deleteMany({});
-  await prisma.emailTrigger.deleteMany({});
-
+  // ===== 1. Email Triggers (upsert) =====
   let triggersCreated = 0;
+  let triggersUpdated = 0;
   const triggerMap = {}; // Store trigger IDs for template association
   for (const trigger of EMAIL_TRIGGERS) {
     try {
-      const result = await prisma.emailTrigger.create({ data: trigger });
+      const result = await prisma.emailTrigger.upsert({
+        where: { name: trigger.name },
+        create: trigger,
+        update: {
+          label: trigger.label,
+          description: trigger.description,
+          variables: trigger.variables,
+          category: trigger.category,
+          icon: trigger.icon,
+          isSystem: trigger.isSystem,
+        },
+      });
       triggerMap[trigger.name] = result.id;
       triggersCreated++;
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('🎯', 'Email Triggers', triggersCreated, EMAIL_TRIGGERS.length));
-  results.push({ created: triggersCreated });
+  results.push({ created: triggersCreated, updated: triggersUpdated });
 
-  // ===== 2. Email Templates (chargés depuis fichiers JSON, tous actifs) =====
+  // ===== 2. Email Templates (delete all + recreate from JSON files) =====
   const emailTemplates = loadEmailTemplates();
   let templatesCreated = 0;
+  await prisma.emailTemplate.deleteMany({});
   for (const template of emailTemplates) {
     try {
       const triggerId = template.triggerName ? triggerMap[template.triggerName] : null;
@@ -924,8 +870,8 @@ async function main() {
           variables: template.variables,
           htmlContent: template.htmlContent,
           designJson: template.designJson,
-          isActive: true, // Force tous les templates actifs
-          isDefault: template.isDefault,
+          isActive: template.isActive ?? true,
+          isDefault: template.isDefault ?? false,
           triggerId: triggerId,
         },
       });
@@ -935,10 +881,9 @@ async function main() {
   console.log(formatLine('📧', 'Email Templates', templatesCreated, emailTemplates.length));
   results.push({ created: templatesCreated });
 
-  // ===== 3. Credit Packs (purge + seed, Stripe sync après) =====
-  await prisma.creditPack.deleteMany({});
-
+  // ===== 3. Credit Packs (delete all + recreate, Stripe sync après) =====
   let packsCreated = 0;
+  await prisma.creditPack.deleteMany({});
   for (const pack of CREDIT_PACKS) {
     try {
       await prisma.creditPack.create({ data: pack });
@@ -948,71 +893,62 @@ async function main() {
   console.log(formatLine('💰', 'Credit Packs', packsCreated, CREDIT_PACKS.length));
   results.push({ created: packsCreated });
 
-  // ===== 4. Subscription Plans (upsert - préserve IDs Stripe, recrée featureLimits) =====
+  // ===== 4. Subscription Plans (upsert plan + upsert feature limits) =====
   let plansCreated = 0;
-  let plansUpdated = 0;
   for (const planData of SUBSCRIPTION_PLANS) {
     try {
-      const existing = await prisma.subscriptionPlan.findUnique({ where: { name: planData.name } });
-
-      if (existing) {
-        // Update plan (préserve les IDs Stripe)
-        await prisma.subscriptionPlan.update({
-          where: { id: existing.id },
-          data: {
-            description: planData.description,
-            isFree: planData.isFree,
-            tier: planData.tier,
-            isPopular: planData.isPopular,
-            priceMonthly: planData.priceMonthly,
-            priceYearly: planData.priceYearly,
-            yearlyDiscountPercent: planData.yearlyDiscountPercent,
-            priceCurrency: planData.priceCurrency,
-            // Note: stripeProductId, stripePriceIdMonthly, stripePriceIdYearly sont préservés
+      const plan = await prisma.subscriptionPlan.upsert({
+        where: { name: planData.name },
+        create: {
+          name: planData.name,
+          description: planData.description,
+          isFree: planData.isFree,
+          tier: planData.tier,
+          isPopular: planData.isPopular,
+          priceMonthly: planData.priceMonthly,
+          priceYearly: planData.priceYearly,
+          yearlyDiscountPercent: planData.yearlyDiscountPercent,
+          priceCurrency: planData.priceCurrency,
+          featureLimits: {
+            create: Object.entries(planData.features).map(([featureName, config]) => ({
+              featureName,
+              isEnabled: config.enabled,
+              usageLimit: config.limit,
+            })),
           },
-        });
-
-        // Recréer les feature limits (delete + create)
-        await prisma.subscriptionPlanFeatureLimit.deleteMany({
-          where: { planId: existing.id },
-        });
-        await prisma.subscriptionPlanFeatureLimit.createMany({
-          data: Object.entries(planData.features).map(([featureName, config]) => ({
-            planId: existing.id,
+        },
+        update: {
+          description: planData.description,
+          isFree: planData.isFree,
+          tier: planData.tier,
+          isPopular: planData.isPopular,
+          priceMonthly: planData.priceMonthly,
+          priceYearly: planData.priceYearly,
+          yearlyDiscountPercent: planData.yearlyDiscountPercent,
+          priceCurrency: planData.priceCurrency,
+        },
+      });
+      // Upsert each feature limit for this plan
+      for (const [featureName, config] of Object.entries(planData.features)) {
+        await prisma.subscriptionPlanFeatureLimit.upsert({
+          where: { planId_featureName: { planId: plan.id, featureName } },
+          create: {
+            planId: plan.id,
             featureName,
             isEnabled: config.enabled,
             usageLimit: config.limit,
-          })),
-        });
-        plansUpdated++;
-      } else {
-        // Create new plan
-        await prisma.subscriptionPlan.create({
-          data: {
-            name: planData.name,
-            description: planData.description,
-            isFree: planData.isFree,
-            tier: planData.tier,
-            isPopular: planData.isPopular,
-            priceMonthly: planData.priceMonthly,
-            priceYearly: planData.priceYearly,
-            yearlyDiscountPercent: planData.yearlyDiscountPercent,
-            priceCurrency: planData.priceCurrency,
-            featureLimits: {
-              create: Object.entries(planData.features).map(([featureName, config]) => ({
-                featureName,
-                isEnabled: config.enabled,
-                usageLimit: config.limit,
-              })),
-            },
+          },
+          update: {
+            isEnabled: config.enabled,
+            usageLimit: config.limit,
           },
         });
-        plansCreated++;
       }
+      plansCreated++;
     } catch (error) { /* ignore */ }
   }
-  console.log(formatLine('💳', 'Subscription Plans', SUBSCRIPTION_PLANS.length, SUBSCRIPTION_PLANS.length));
-  results.push({ created: plansCreated, updated: plansUpdated });
+  console.log(formatLine('💳', 'Subscription Plans', plansCreated, SUBSCRIPTION_PLANS.length));
+  results.push({ created: plansCreated });
 
   // ===== 5. Stripe Sync =====
   let stripeSynced = false;
@@ -1021,13 +957,21 @@ async function main() {
   }
   console.log(formatStripeLine(stripeSynced));
 
-  // ===== 6. OpenAI Pricing (purge + seed) =====
-  await prisma.openAIPricing.deleteMany({});
-
+  // ===== 6. OpenAI Pricing (upsert) =====
   let pricingCreated = 0;
   for (const pricing of OPENAI_PRICING) {
     try {
-      await prisma.openAIPricing.create({ data: pricing });
+      await prisma.openAIPricing.upsert({
+        where: { modelName: pricing.modelName },
+        create: pricing,
+        update: {
+          inputPricePerMToken: pricing.inputPricePerMToken,
+          outputPricePerMToken: pricing.outputPricePerMToken,
+          cachePricePerMToken: pricing.cachePricePerMToken,
+          description: pricing.description,
+          isActive: pricing.isActive,
+        },
+      });
       pricingCreated++;
     } catch (error) { /* ignore */ }
   }
@@ -1036,7 +980,6 @@ async function main() {
 
   // ===== 7. OpenAI Alerts (upsert) =====
   let alertsCreated = 0;
-  let alertsUpdated = 0;
   for (const alert of OPENAI_ALERTS) {
     try {
       const existing = await prisma.openAIAlert.findFirst({ where: { type: alert.type } });
@@ -1050,17 +993,16 @@ async function main() {
             description: alert.description,
           },
         });
-        alertsUpdated++;
       } else {
         await prisma.openAIAlert.create({ data: alert });
-        alertsCreated++;
       }
+      alertsCreated++;
     } catch (error) { /* ignore */ }
   }
-  console.log(formatLine('🔔', 'OpenAI Alerts', OPENAI_ALERTS.length, OPENAI_ALERTS.length));
-  results.push({ created: alertsCreated, updated: alertsUpdated });
+  console.log(formatLine('🔔', 'OpenAI Alerts', alertsCreated, OPENAI_ALERTS.length));
+  results.push({ created: alertsCreated });
 
-  // ===== 8. Settings (upsert) =====
+  // ===== 8. Settings (upsert - écrase les valeurs existantes) =====
   const allSettings = [
     ...AI_MODEL_SETTINGS,
     ...CREDIT_SETTINGS,
@@ -1071,66 +1013,28 @@ async function main() {
     ...CV_DISPLAY_SETTINGS,
   ];
   let settingsCreated = 0;
-  let settingsUpdated = 0;
   for (const setting of allSettings) {
     try {
-      const result = await prisma.setting.upsert({
+      await prisma.setting.upsert({
         where: { settingName: setting.settingName },
+        create: setting,
         update: {
           value: setting.value,
           category: setting.category,
           description: setting.description,
         },
-        create: setting,
       });
-      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
-        settingsCreated++;
-      } else {
-        settingsUpdated++;
-      }
+      settingsCreated++;
     } catch (error) { /* ignore */ }
   }
-  console.log(formatLine('⚙️ ', 'Settings', allSettings.length, allSettings.length));
-  results.push({ created: settingsCreated, updated: settingsUpdated });
-
-  // ===== 9. Feature Mappings (upsert) =====
-  let mappingsCreated = 0;
-  let mappingsUpdated = 0;
-  for (const mapping of FEATURE_MAPPINGS) {
-    try {
-      const result = await prisma.featureMapping.upsert({
-        where: { featureKey: mapping.featureKey },
-        update: {
-          displayName: mapping.displayName,
-          settingNames: mapping.settingNames,
-          openAICallNames: mapping.openAICallNames,
-          planFeatureNames: mapping.planFeatureNames,
-        },
-        create: {
-          featureKey: mapping.featureKey,
-          displayName: mapping.displayName,
-          settingNames: mapping.settingNames,
-          openAICallNames: mapping.openAICallNames,
-          planFeatureNames: mapping.planFeatureNames,
-        },
-      });
-      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
-        mappingsCreated++;
-      } else {
-        mappingsUpdated++;
-      }
-    } catch (error) { /* ignore */ }
-  }
-  console.log(formatLine('🔗', 'Feature Mappings', FEATURE_MAPPINGS.length, FEATURE_MAPPINGS.length));
-  results.push({ created: mappingsCreated, updated: mappingsUpdated });
+  console.log(formatLine('⚙️ ', 'Settings', settingsCreated, allSettings.length));
+  results.push({ created: settingsCreated });
 
   // ===== Summary =====
   totalCreated = results.reduce((sum, r) => sum + (r.created || 0), 0);
-  totalSkipped = results.reduce((sum, r) => sum + (r.skipped || 0), 0);
-  const totalUpdated = results.reduce((sum, r) => sum + (r.updated || 0), 0);
 
   console.log('\n────────────────────────────────────────────────────');
-  console.log(`✨ Seeding complete! ${COLORS.green}${totalCreated} created${COLORS.reset}, ${COLORS.cyan}${totalUpdated} updated${COLORS.reset}, ${COLORS.dim}${totalSkipped} skipped${COLORS.reset}\n`);
+  console.log(`✨ Seeding complete! ${COLORS.green}${totalCreated} upserted/created${COLORS.reset}\n`);
 }
 
 main()

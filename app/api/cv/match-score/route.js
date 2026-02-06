@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
-import { readUserCvFile } from "@/lib/cv/storage";
-import { calculateMatchScoreWithAnalysis } from "@/lib/openai/calculateMatchScoreWithAnalysis";
+import { readUserCvFile } from "@/lib/cv-core/storage";
+import { calculateMatchScoreWithAnalysis } from "@/lib/scoring/service";
 
 export async function POST(request) {
   const session = await auth();
@@ -29,6 +29,7 @@ export async function POST(request) {
       },
       select: {
         jobOffer: true, // Relation vers JobOffer
+        jobOfferSnapshot: true, // Snapshot pour fallback si offre supprimée
         sourceValue: true,
       },
     });
@@ -37,9 +38,9 @@ export async function POST(request) {
       return NextResponse.json({ error: "CV not found" }, { status: 404 });
     }
 
-    // Vérifier que le CV a une offre d'emploi associée
-    if (!cvRecord.jobOffer) {
-      console.log("[match-score] CV non éligible - pas de jobOffer");
+    // Vérifier que le CV a une offre d'emploi associée (live ou snapshot)
+    if (!cvRecord.jobOffer && !cvRecord.jobOfferSnapshot) {
+      console.log("[match-score] CV non éligible - pas de jobOffer ni jobOfferSnapshot");
       return NextResponse.json({ error: "CV does not have a job offer analysis" }, { status: 400 });
     }
 
@@ -154,6 +155,7 @@ export async function GET(request) {
         where: { userId_filename: { userId, filename: cvFile } },
         select: {
           jobOfferId: true,
+          jobOfferSnapshot: true, // Snapshot pour fallback si offre supprimée
           sourceValue: true,
           versions: {
             where: { version: versionNumber },
@@ -202,7 +204,7 @@ export async function GET(request) {
         missingSkills,
         matchingSkills,
         optimiseStatus: 'idle',
-        hasJobOffer: !!cvFileRecord.jobOfferId,
+        hasJobOffer: !!cvFileRecord.jobOfferId || !!cvFileRecord.jobOfferSnapshot,
         hasScoreBreakdown: !!versionRecord.scoreBreakdown,
         sourceValue: cvFileRecord.sourceValue,
         isHistoricalVersion: true, // Flag pour le frontend (mode lecture seule)
@@ -228,6 +230,7 @@ export async function GET(request) {
         matchingSkills: true,
         optimiseStatus: true,
         jobOfferId: true, // Vérifier si un JobOffer est associé
+        jobOfferSnapshot: true, // Snapshot pour fallback si offre supprimée
         sourceValue: true,
       },
     });
@@ -261,7 +264,7 @@ export async function GET(request) {
       missingSkills,
       matchingSkills,
       optimiseStatus: cvRecord.optimiseStatus || 'idle',
-      hasJobOffer: !!cvRecord.jobOfferId, // Boolean pour savoir si on peut calculer le score
+      hasJobOffer: !!cvRecord.jobOfferId || !!cvRecord.jobOfferSnapshot, // Boolean pour savoir si on peut calculer le score
       hasScoreBreakdown: !!cvRecord.scoreBreakdown, // Boolean pour savoir si on peut optimiser
       sourceValue: cvRecord.sourceValue,
       isHistoricalVersion: false, // Version courante

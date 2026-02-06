@@ -298,6 +298,7 @@ export default function OnboardingTooltip({
             <button
               onClick={handleClose}
               className="flex-shrink-0 p-1 -mt-1 -mr-1 text-white/70 hover:text-white hover:bg-white/10 rounded-sm transition-colors"
+              data-onboarding-tooltip-close
               aria-label={t('onboarding.common.aria.closeTooltip')}
             >
               <svg

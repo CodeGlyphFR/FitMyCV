@@ -23,6 +23,7 @@
     "loadingInProgress": "Loading in progress ...",
     "taskQueue": "Task queue",
     "delete": "Delete",
+    "deleteTooltip": "Delete (Ctrl+click for bulk delete)",
     "cvInProgress": "CV in progress",
     "jobTitlePlaceholder": "Enter a job title (e.g., Full-Stack Developer)",
     "jobTitlePlaceholderMobile": "e.g., Full-Stack Developer",
@@ -90,7 +91,10 @@
   "export": {
     "noCvSelected": "No CV selected for export.",
     "errors": {
-      "exportFailed": "Error exporting PDF. Please try again."
+      "exportFailed": "Error exporting PDF. Please try again.",
+      "missingFilename": "Missing filename",
+      "noSectionSelected": "Please select at least one section",
+      "accessRestricted": "Access to this feature is restricted"
     }
   },
   "footer": {
@@ -246,6 +250,8 @@
   },
   "header": {
     "modalTitle": "Edit header",
+    "identity": "Identity",
+    "contact": "Contact",
     "fullName": "Full name",
     "currentTitle": "Current title",
     "email": "Email",
@@ -253,6 +259,7 @@
     "city": "City",
     "region": "Region",
     "countryCode": "Country (code)",
+    "location": "Location",
     "links": "Links",
     "noLinks": "No links yet.",
     "labelPlaceholder": "Label (e.g., GitHub)",
@@ -264,6 +271,7 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
+    "deleteAll": "Delete all",
     "add": "Add",
     "loading": "Loading...",
     "error": "Error",
@@ -272,7 +280,11 @@
     "confirmation": "Confirmation",
     "locale": "en-US",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "noResults": "No results",
+    "clear": "None",
+    "today": "Today",
+    "ongoing": "Ongoing"
   },
   "editMode": {
     "on": "✏️ Edit ON",
@@ -381,5 +393,55 @@
     "unit": "credit",
     "unitPlural": "credits",
     "useCredits": "Use {count} Cr."
+  },
+  "notifications": {
+    "viewOptions": "View options",
+    "viewMyOptions": "View my options",
+    "closeNotification": "Close notification"
+  },
+  "jobOffer": {
+    "viewDetails": "View job offer details",
+    "untitled": "Untitled offer",
+    "company": "Company",
+    "noData": "No data available for this offer",
+    "requirements": "Requirements",
+    "skills": "Skills",
+    "responsibilities": "Responsibilities",
+    "benefits": "Benefits",
+    "experience": "Experience",
+    "education": "Education",
+    "languages": "Languages",
+    "required": "Required",
+    "niceToHave": "Nice to have",
+    "softSkills": "Soft skills",
+    "hardSkills": "Technical Skills",
+    "tools": "Tools & Technologies",
+    "methodologies": "Methodologies",
+    "years": "years",
+    "from": "From",
+    "upTo": "Up to",
+    "viewOriginal": "View original offer",
+    "periods": {
+      "year": "year",
+      "month": "month",
+      "day": "day",
+      "hour": "hour"
+    },
+    "remote": {
+      "full": "Fully remote",
+      "hybrid": "Hybrid",
+      "onsite": "On-site",
+      "partial": "Partial remote"
+    },
+    "recruitmentProcess": {
+      "title": "Recruitment process",
+      "steps": "Steps",
+      "step": "Step",
+      "contact": "Contact",
+      "deadline": "Deadline",
+      "duration": "Duration"
+    },
+    "languageRequired": "Required language",
+    "languageNiceToHave": "Nice to have language"
   }
 }

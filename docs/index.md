@@ -1,227 +1,154 @@
-# Documentation Projet - FitMyCV.io
+# Documentation FitMyCV.io
 
-> Index maître généré le 2026-01-07 | Scan exhaustif BMAD v1.2.0
-> **Point d'entrée principal pour le développement assisté par IA**
+> Index maître de la documentation technique
 
 ---
 
 ## Informations Projet
 
-| Attribut | Valeur |
-|----------|--------|
+| Propriété | Valeur |
+|-----------|--------|
 | **Nom** | FitMyCV.io |
-| **Version** | 1.0.9.4 |
-| **Type** | Application Web SaaS (Monolithe) |
-| **Framework** | Next.js 14 (App Router) |
-| **Langage** | JavaScript (React 18) |
+| **Version** | 1.0.9.5 |
+| **Type** | Application SaaS |
+| **Framework** | Next.js 16.1.1 (App Router) |
 | **Base de données** | PostgreSQL via Prisma 6 |
+| **Langage** | JavaScript/JSX |
 
 ---
 
-## Référence Rapide
+## Documents
 
-### Stack Technologique
-
-| Couche | Technologies |
-|--------|--------------|
-| **Frontend** | React 18, Tailwind CSS, Framer Motion |
-| **Backend** | Next.js API Routes (127 endpoints) |
-| **Database** | PostgreSQL (33 modèles Prisma) |
-| **Auth** | NextAuth.js JWT + OAuth (Google, GitHub, Apple) |
-| **AI** | OpenAI GPT-4o (Structured Outputs) |
-| **Payments** | Stripe (abonnements + crédits) |
-| **Email** | SMTP OVH + Resend (fallback) |
-| **PDF** | Puppeteer + pdf2json |
-
-### Points d'Entrée
-
-| Fichier | Purpose |
-|---------|---------|
-| `app/page.jsx` | Page principale (CV Editor) |
-| `app/layout.jsx` | Layout racine avec providers |
-| `app/api/*` | 127 API Routes |
-| `lib/prisma.js` | Client DB singleton |
-| `middleware.js` | Auth, i18n, redirects |
-
-### Commandes Essentielles
-
-```bash
-npm run dev              # Dev server (port 3001)
-npm run build            # Build production
-npm start                # Prod server (port 3000)
-npx prisma migrate deploy  # Appliquer migrations
-npx prisma studio        # DB GUI
-npx prisma generate      # Régénérer client
-```
-
----
-
-## Documentation Générée
-
-### Architecture & Vue d'Ensemble
+### Architecture & Structure
 
 | Document | Description |
 |----------|-------------|
-| [Architecture Technique](./architecture.md) | Patterns, flux de données, sécurité, scalabilité |
-| [Référence API](./api-reference.md) | 127 endpoints documentés par domaine |
-| [Modèles de Données](./data-models.md) | 33 modèles Prisma, relations, schéma |
-| [Inventaire Composants](./components.md) | ~150 composants React catégorisés |
-| [Guide de Développement](./development.md) | Setup, patterns, conventions, debugging |
+| [architecture.md](./architecture.md) | Architecture technique, patterns, flux de données |
+| [source-tree.md](./source-tree.md) | Arborescence complète du projet avec annotations |
+
+### Référence Technique
+
+| Document | Description |
+|----------|-------------|
+| [api-reference.md](./api-reference.md) | 114 endpoints API (publics, authentifiés, admin) |
+| [data-models.md](./data-models.md) | 34 modèles Prisma organisés par domaine |
+| [components.md](./components.md) | 138 composants React en 20 domaines |
+
+### Guide Développement
+
+| Document | Description |
+|----------|-------------|
+| [development.md](./development.md) | Installation, commandes, workflow Git, patterns |
+
+### Documentation HTML (Portfolio)
+
+| Ressource | Description |
+|-----------|-------------|
+| [Documentation HTML](/api/admin/docs/index.html) | Documentation technique complète en HTML (accès admin uniquement) |
+
+> **Note** : La documentation HTML est accessible uniquement aux administrateurs via l'API `/api/admin/docs/`.
 
 ---
 
-## Statistiques du Code
+## Statistiques Codebase
 
-| Catégorie | Quantité |
-|-----------|----------|
-| Routes API | 127 |
-| Composants React | ~150 |
-| Modèles Prisma | 33 |
-| Modules lib/ | 25 |
-| Migrations DB | 14+ |
-| Langues i18n | 4 (FR, EN, DE, ES) |
+| Métrique | Valeur |
+|----------|--------|
+| API Routes | 114 endpoints |
+| Composants React | 138 fichiers |
+| Modules métier (lib/) | 31 modules |
+| Modèles Prisma | 34 modèles |
+| Langues supportées | 4 (fr, en, de, es) |
 
 ---
 
-## Structure Clé
+## Stack Technologique
 
-```
-FitMyCV-DEV/
-├── app/                    # Next.js App Router
-│   ├── api/               # 127 API Routes
-│   │   ├── auth/         # Authentification (13 routes)
-│   │   ├── cv/           # Opérations CV (8 routes)
-│   │   ├── cvs/          # CRUD CVs (9 routes)
-│   │   ├── admin/        # Administration (28 routes)
-│   │   ├── subscription/ # Abonnements (10 routes)
-│   │   └── ...
-│   ├── auth/             # Pages auth
-│   ├── admin/            # Dashboard admin
-│   └── account/          # Paramètres compte
-│
-├── components/            # ~150 Composants React
-│   ├── TopBar/           # Navigation (7 composants)
-│   ├── ui/               # Design system (15 composants)
-│   ├── admin/            # Dashboard (40+ composants)
-│   ├── subscription/     # Abonnements (10 composants)
-│   └── onboarding/       # Onboarding (8 composants)
-│
-├── lib/                   # Logique métier
-│   ├── auth/             # NextAuth config
-│   ├── cv/               # Gestion CVs (stockage DB)
-│   ├── openai/           # Intégration IA
-│   ├── subscription/     # Plans & crédits
-│   ├── email/            # Service email
-│   └── backgroundTasks/  # Queue de jobs (max 3)
-│
-├── prisma/               # Schema (33 modèles)
-│   ├── schema.prisma
-│   └── migrations/
-│
-└── locales/              # 4 langues × 9 fichiers
-    ├── fr/
-    ├── en/
-    ├── de/
-    └── es/
-```
+### Frontend
+
+| Technologie | Version | Usage |
+|-------------|---------|-------|
+| React | 19.2.3 | UI Components |
+| Next.js | 16.1.1 | Framework full-stack |
+| Tailwind CSS | 4.1.18 | Styling |
+| Framer Motion | 12.25.0 | Animations |
+| Lucide React | 0.562.0 | Icônes |
+| Recharts | 3.6.0 | Graphiques admin |
+
+### Backend
+
+| Technologie | Version | Usage |
+|-------------|---------|-------|
+| Prisma | 6.19.1 | ORM PostgreSQL |
+| NextAuth.js | 4.24.13 | Authentification |
+| OpenAI SDK | 6.16.0 | Intégration IA |
+| Stripe | 20.1.2 | Paiements |
+| Nodemailer | 7.0.12 | Emails SMTP |
+| Resend | 6.7.0 | Emails (fallback) |
+| Puppeteer | 24.34.0 | Export PDF, scraping |
 
 ---
 
 ## Domaines Fonctionnels
 
-### 1. Gestion des CVs
+### Gestion CV
 
-**Fichiers clés** : `lib/cv/`, `app/api/cv*/`, `components/` (sections CV)
+- Création, édition, suppression CV
+- Import PDF avec extraction IA
+- Versioning et restauration
+- Export PDF/DOCX personnalisable
 
-- Stockage JSON en PostgreSQL (`CvFile.content`)
-- Versioning avec historique (rollback)
-- Validation JSON-Schema
-- Détection automatique de langue
+### Optimisation IA
 
-### 2. Génération IA
+- Extraction offres emploi (URL/PDF)
+- Score de matching CV/offre
+- Génération CV adaptés
+- Suggestions d'amélioration
 
-**Fichiers clés** : `lib/openai/`, `lib/backgroundTasks/`
+### Abonnements
 
-- Génération CV depuis offre emploi (URL/PDF)
-- Amélioration CV existant
-- Traduction multi-langue
-- Import PDF intelligent
+- Plans Free/Basic/Pro
+- Système de crédits
+- Intégration Stripe complète
+- Limites et compteurs par feature
 
-### 3. Abonnements & Crédits
+### Administration
 
-**Fichiers clés** : `lib/subscription/`, `app/api/subscription/`
-
-- Plans : Free, Starter, Pro, Enterprise
-- Compteurs mensuels par feature
-- Système de crédits (achat/usage)
-- Intégration Stripe
-
-### 4. Administration
-
-**Fichiers clés** : `app/admin/`, `components/admin/`, `app/api/admin/`
-
-- Dashboard avec KPIs
+- Dashboard KPIs
 - Gestion utilisateurs
 - Configuration plans/crédits
-- Templates email
 - Monitoring OpenAI
-
-### 5. Authentification
-
-**Fichiers clés** : `lib/auth/`, `app/api/auth/`
-
-- JWT avec refresh automatique
-- OAuth : Google, GitHub, Apple
-- Vérification email
-- Reset password
+- Gestion templates email
 
 ---
 
-## Utilisation avec IA
+## Fichiers Clés
 
-Cette documentation est optimisée pour le développement assisté par IA :
-
-| Objectif | Document à consulter |
-|----------|---------------------|
-| Comprendre le projet | [Architecture](./architecture.md) |
-| Modifier l'API | [Référence API](./api-reference.md) |
-| Ajouter un composant | [Inventaire Composants](./components.md) |
-| Modifier la DB | [Modèles de Données](./data-models.md) |
-| Setup/Debug | [Guide Développement](./development.md) |
-
-### Fichier Claude Code
-
-Voir également `CLAUDE.md` à la racine pour les instructions spécifiques à Claude Code.
+| Domaine | Fichier |
+|---------|---------|
+| Config Next.js | `next.config.js` |
+| Config Tailwind | `tailwind.config.js` |
+| Schéma DB | `prisma/schema.prisma` |
+| Auth NextAuth | `lib/auth/options.js` |
+| Gestion CV | `lib/cv-core/storage.js` |
+| Client OpenAI | `lib/openai-core/client.js` |
+| Abonnements | `lib/subscription/featureUsage.js` |
+| Erreurs API | `lib/api/apiErrors.js` |
+| Instructions IA | `CLAUDE.md` |
 
 ---
 
-## Informations de Génération
+## Liens Rapides
 
-| Attribut | Valeur |
-|----------|--------|
-| **Mode** | initial_scan |
-| **Niveau de scan** | exhaustive |
-| **Date** | 2026-01-07 |
-| **Workflow** | BMAD document-project v1.2.0 |
-| **Fichier d'état** | [project-scan-report.json](./project-scan-report.json) |
+- **Développement** : `npm run dev` (port 3001)
+- **Build** : `npm run build`
+- **Migrations** : `npx prisma migrate deploy`
+- **Base de données** : Utiliser `psql` avec les identifiants du fichier `.env` (variable `DATABASE_URL`)
 
 ---
 
-## Ancienne Documentation
+## Mise à Jour Documentation
 
-Les fichiers de documentation précédents ont été archivés dans `.archive/` :
-- 37 fichiers déplacés (obsolètes ou redondants)
-- Consultables si besoin de référence historique
+Dernière mise à jour : Janvier 2026
 
----
-
-## Prochaines Étapes
-
-1. **Développement** : Utiliser cette doc comme référence
-2. **PRD Brownfield** : Pointer vers cet index pour le contexte
-3. **Mise à jour** : Relancer le scan après changements majeurs
-
-```bash
-# Pour mettre à jour la documentation
-/bmad:bmm:workflows:document-project
-```
+Pour mettre à jour la documentation, éditer les fichiers Markdown dans `docs/`.

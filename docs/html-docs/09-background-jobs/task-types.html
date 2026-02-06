@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Types de Taches | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Background Jobs</a>
+          <span>/</span>
+          <span>Types de Taches</span>
+        </div>
+
+
+        <h1>Types de Taches</h1>
+        <p class="lead">
+          Liste des differents types de taches asynchrones gerees par le système.
+        </p>
+
+        <h2>Types Disponibles</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Duree moyenne</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>cv_generation</code></td>
+              <td>Generation de CV optimise</td>
+              <td>30-60s</td>
+            </tr>
+            <tr>
+              <td><code>pdf_import</code></td>
+              <td>Import et extraction PDF</td>
+              <td>15-30s</td>
+            </tr>
+            <tr>
+              <td><code>cv_translation</code></td>
+              <td>Traduction de CV</td>
+              <td>20-40s</td>
+            </tr>
+            <tr>
+              <td><code>batch_generation</code></td>
+              <td>Generation multiple</td>
+              <td>Variable</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Modèle BackgroundTask</h2>
+
+        <pre><code>model BackgroundTask {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String
+  status      String   // pending, running, completed, failed
+  progress    Int      @default(0)
+  result      Json?
+  error       String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+}</code></pre>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

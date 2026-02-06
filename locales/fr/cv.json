@@ -26,13 +26,14 @@
   },
   "cvGenerator": {
     "title": "Générer un CV avec l'IA",
-    "description": "Renseignez des offres d'emploi à analyser (liens ou fichier PDF/Word) pour générer des CV adaptés à partir du CV de référence sélectionné.",
+    "description": "Renseignez des offres d'emploi à analyser (liens ou fichier PDF) pour générer des CV adaptés à partir du CV de référence sélectionné.",
     "referenceCV": "CV de référence",
     "selectCV": "Sélectionnez un CV",
     "noManualCV": "Aucun CV manuel disponible. Créez un CV avant de lancer une génération avec l'IA.",
     "createTemplateOption": "Créer un nouveau modèle de CV",
     "templateCreationLabel": "Création de CV modèle",
     "links": "Liens vers les offres d'emploi",
+    "languageHint": "Pour une meilleure efficacité, utilisez une offre d'emploi dans la même langue que votre CV de référence.",
     "loadRecentLink": "Charger un lien récent",
     "recentLinks": "Liens récents",
     "addLink": "Ajouter un lien",
@@ -145,6 +146,9 @@
       "hint": "Déplacez les sections pour personnaliser l'ordre d'affichage",
       "reset": "Réinitialiser",
       "close": "Fermer"
+    },
+    "placeholders": {
+      "filename": "Mon_CV"
     }
   },
   "newCvModal": {
@@ -157,6 +161,11 @@
     "creating": "Création...",
     "cancel": "Annuler",
     "hint": "Tu pourras compléter toutes les sections ensuite via le mode édition.",
+    "placeholders": {
+      "fullName": "Ex : Jean Dupont",
+      "currentTitle": "Ex : Développeur Full-Stack",
+      "email": "email@exemple.com"
+    },
     "errors": {
       "fillRequired": "Merci de renseigner le nom complet et le titre actuel.",
       "generic": "Erreur"
@@ -202,8 +211,15 @@
     "inProgress": "Poste en cours",
     "projectInProgress": "Projet en cours",
     "responsibilities": "Responsabilités",
+    "responsibilitiesPerLine": "Responsabilités (1/ligne)",
     "deliverables": "Résultats",
+    "deliverablesPerLine": "Résultats (1/ligne)",
     "skillsUsed": "Compétences utilisées",
+    "skillsUsedComma": "Compétences (virgules)",
+    "position": "Poste",
+    "period": "Période",
+    "location": "Localisation",
+    "content": "Contenu",
     "technologies": "Technologies",
     "hardSkills": "Techniques",
     "tools": "Outils",
@@ -227,6 +243,10 @@
       "projectName": "Nom du projet",
       "role": "Rôle",
       "description": "Description",
+      "descriptionHint": "Décrivez brièvement votre rôle...",
+      "responsibilitiesHint": "Une par ligne...",
+      "deliverablesHint": "Un par ligne...",
+      "skillsUsedHint": "React, TypeScript, Agile...",
       "skillName": "Nom",
       "skillLabel": "Libellé",
       "chooseLevel": "Choisir un niveau…",
@@ -235,14 +255,25 @@
       "extraTitle": "Titre",
       "extraSummary": "Résumé",
       "experienceTitleShort": "Intitulé",
+      "experienceTitleHint": "Ex: Chef de projet",
       "experienceCompanyShort": "Entreprise",
+      "experienceCompanyHint": "Ex: Acme Corp",
       "experienceDepartment": "Département/Client",
-      "experienceStartShort": "Début (YYYY ou YYYY-MM)",
-      "experienceEndShort": "Fin (YYYY, YYYY-MM)",
+      "experienceDepartmentHint": "Ex: Direction Marketing",
+      "experienceStartShort": "Début",
+      "experienceEndShort": "Fin",
       "experienceEndShortWithPresent": "Fin (YYYY, YYYY-MM ou present)",
+      "dateFormat": "YYYY-MM",
       "city": "Ville",
+      "cityHint": "Paris",
       "region": "Région",
-      "countryCode": "Pays (code)"
+      "regionHint": "Île-de-France",
+      "countryCode": "Pays (code)",
+      "selectCountry": "Pays",
+      "projectUrl": "URL du projet (GitHub, portfolio...)",
+      "projectUrlExample": "https://github.com/...",
+      "projectUrlLabel": "Titre du lien (ex: Voir sur GitHub)",
+      "summaryDescription": "Décrivez votre profil professionnel..."
     }
   },
   "sourceInfo": {
@@ -364,6 +395,7 @@
     "title": "Revoir la modification",
     "before": "Avant",
     "after": "Après",
+    "levelChange": "Niveau",
     "empty": "(vide)",
     "accept": "Accepter",
     "reject": "Rejeter",
@@ -384,6 +416,7 @@
     "validating": "Validation en cours...",
     "pendingWarning": "{count} modification(s) non reviewée(s). Elles seront acceptées par défaut.",
     "validationSuccess": "CV sauvegardé avec succès",
-    "validationError": "Erreur lors de la sauvegarde"
+    "validationError": "Erreur lors de la sauvegarde",
+    "skillsConsolidated": "compétences consolidées en"
   }
 }

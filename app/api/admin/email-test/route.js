@@ -1,155 +1,107 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth/session';
-import prisma from '@/lib/prisma';
-import { sendEmail, isSmtpConfigured, isResendConfigured } from '@/lib/email/transports';
-import { render } from '@maily-to/render';
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-
-// Test data for variable substitution
-const TEST_DATA = {
-  userName: 'Jean Dupont (Test)',
-  verificationUrl: `${SITE_URL}/auth/verify-email?token=test-token-123`,
-  resetUrl: `${SITE_URL}/auth/reset-password?token=test-token-456`,
-  newEmail: 'nouveau.email@test.com',
-  loginUrl: `${SITE_URL}/auth/signin`,
-  creditsAmount: '50',
-  totalPrice: '9,99 €',
-  invoiceUrl: 'https://invoice.stripe.com/i/example-test-invoice',
-};
-
 /**
- * Substitute variables in HTML content
- */
-function substituteVariables(html, variables) {
-  let result = html;
-  for (const [key, value] of Object.entries(variables)) {
-    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
-  }
-  return result;
-}
-
-/**
+ * API Route: Email Test
+ *
+ * Permet aux admins d'envoyer des emails de test pour vérifier la configuration.
+ *
  * POST /api/admin/email-test
- * Send a test email
+ * Body: { to, subject?, html? }
  */
+
+import { auth } from '@/lib/auth/session';
+import { sendEmail, isSmtpConfigured, isResendConfigured } from '@/lib/email/transports';
+import prisma from '@/lib/prisma';
+
 export async function POST(request) {
+  // 1. Vérifier auth admin
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    return Response.json({ error: 'Admin access required' }, { status: 403 });
+  }
+
+  // 2. Parser body
+  let body;
   try {
-    const session = await auth();
+    body = await request.json();
+  } catch {
+    return Response.json({ error: 'Body JSON invalide' }, { status: 400 });
+  }
 
-    if (session?.user?.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'Unauthorized - Admin access required' },
-        { status: 403 }
-      );
-    }
+  const { to, testEmail, subject, html, templateId } = body;
+  const recipientEmail = to || testEmail;
 
-    const body = await request.json();
-    const { templateId, testEmail } = body;
+  // 3. Validation
+  if (!recipientEmail || typeof recipientEmail !== 'string' || !recipientEmail.includes('@')) {
+    return Response.json({ error: 'Email invalide' }, { status: 400 });
+  }
 
-    if (!templateId || !testEmail) {
-      return NextResponse.json(
-        { error: 'templateId and testEmail are required' },
-        { status: 400 }
-      );
-    }
+  // 4. Vérifier config email
+  if (!isSmtpConfigured() && !isResendConfigured()) {
+    return Response.json({ error: 'Aucun provider email configuré' }, { status: 500 });
+  }
 
-    // Get template with trigger
+  // 5. Récupérer le template si templateId fourni
+  let emailSubject = subject;
+  let emailHtml = html;
+
+  if (templateId) {
     const template = await prisma.emailTemplate.findUnique({
       where: { id: templateId },
-      include: { trigger: true },
     });
-
     if (!template) {
-      return NextResponse.json(
-        { error: 'Template not found' },
-        { status: 404 }
-      );
+      return Response.json({ error: 'Template non trouvé' }, { status: 404 });
     }
-
-    // Render HTML from designJson (Maily.to) if available, otherwise use htmlContent
-    let html;
-    if (template.designJson && template.designJson !== '{}' && template.designJson !== '{"type":"doc","content":[]}') {
-      try {
-        const designJson = typeof template.designJson === 'string'
-          ? JSON.parse(template.designJson)
-          : template.designJson;
-
-        // Extract backgroundColor from designJson (default to white)
-        const backgroundColor = designJson.backgroundColor || '#ffffff';
-
-        // Remove backgroundColor from json before rendering (not a TipTap property)
-        const { backgroundColor: _, ...contentJson } = designJson;
-
-        // Render the content with Maily
-        html = await render(contentJson);
-
-        // Simple background color replacement - don't overcomplicate
-        html = html.replace(/background-color:\s*#ffffff/gi, `background-color:${backgroundColor}`);
-        html = html.replace(/background-color:\s*white/gi, `background-color:${backgroundColor}`);
-      } catch (renderError) {
-        console.warn('[Email Test API] Failed to render Maily template, falling back to htmlContent:', renderError);
-        html = template.htmlContent;
-      }
-    } else {
-      html = template.htmlContent;
-    }
-
-    // Substitute test variables
-    html = substituteVariables(html, TEST_DATA);
-    const subject = `[TEST] ${substituteVariables(template.subject, TEST_DATA)}`;
-
-    // Check if at least one provider is configured
-    if (!isSmtpConfigured() && !isResendConfigured()) {
-      return NextResponse.json(
-        { error: 'Aucun provider email configuré (SMTP ou Resend)' },
-        { status: 500 }
-      );
-    }
-
-    // Send via transport layer (handles SMTP/Resend selection and fallback)
-    const result = await sendEmail({ to: testEmail, subject, html });
-
-    // Log the test email
-    await prisma.emailLog.create({
-      data: {
-        templateId,
-        templateName: template.name,
-        recipientEmail: testEmail,
-        subject,
-        status: result.success ? 'sent' : 'failed',
-        error: result.error || null,
-        provider: result.provider || 'unknown',
-        providerId: result.messageId || null,
-        isTestEmail: true,
-      },
-    });
-
-    if (!result.success) {
-      console.error('[Email Test API] Send error:', {
-        error: result.error,
-        provider: result.provider,
-        usedFallback: result.usedFallback,
-      });
-      return NextResponse.json(
-        { error: result.error || 'Failed to send test email' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: `Test email sent to ${testEmail}`,
-      provider: result.provider,
-      providerId: result.messageId,
-      usedFallback: result.usedFallback || false,
-    });
-
-  } catch (error) {
-    console.error('[Email Test API] Error sending test email:', error);
-    return NextResponse.json(
-      { error: 'Failed to send test email' },
-      { status: 500 }
-    );
+    emailSubject = template.subject;
+    emailHtml = template.htmlContent;
   }
+
+  // Fallback si pas de template ni de contenu fourni
+  emailSubject = emailSubject || 'Test email - FitMyCV';
+  emailHtml = emailHtml || defaultTestHtml();
+
+  const result = await sendEmail({
+    to: recipientEmail,
+    subject: emailSubject,
+    html: emailHtml,
+  });
+
+  // 6. Logger dans EmailLog
+  await prisma.emailLog.create({
+    data: {
+      templateId: templateId || null,
+      templateName: templateId ? 'template_test' : 'test_email',
+      recipientEmail,
+      recipientUserId: session.user.id,
+      subject: emailSubject,
+      status: result.success ? 'sent' : 'failed',
+      error: result.error || null,
+      provider: result.provider || 'unknown',
+      providerId: result.messageId || null,
+      isTestEmail: true,
+    },
+  });
+
+  // 7. Retourner résultat
+  if (!result.success) {
+    return Response.json({ error: result.error }, { status: 500 });
+  }
+
+  return Response.json({
+    success: true,
+    messageId: result.messageId,
+    provider: result.provider,
+  });
+}
+
+function defaultTestHtml() {
+  return `
+    <div style="font-family: Arial, sans-serif; padding: 20px;">
+      <h1 style="color: #10b981;">Test Email FitMyCV</h1>
+      <p>Cet email a été envoyé depuis le panneau d'administration.</p>
+      <p>Date: ${new Date().toLocaleString('fr-FR')}</p>
+      <hr>
+      <p style="color: #666; font-size: 12px;">
+        Provider: SMTP OVH (primary) / Resend (fallback)
+      </p>
+    </div>
+  `;
 }

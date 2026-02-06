@@ -8,21 +8,21 @@ datasource db {
 }
 
 model User {
-  id                     String                @id @default(cuid())
-  name                   String?
-  email                  String?               @unique
-  emailVerified          DateTime?
-  passwordHash           String?
-  image                  String?
-  role                   String                @default("USER")
-  resetToken             String?
-  resetTokenExpiry       DateTime?
-  stripeCustomerId       String?               @unique
-  referralCode           String?               @unique
-  referredBy             String?
-  onboardingState        Json?                                  // État complet onboarding (UNIQUE source de vérité)
-  createdAt              DateTime              @default(now())
-  updatedAt              DateTime              @updatedAt
+  id                       String                @id @default(cuid())
+  name                     String?
+  email                    String?               @unique
+  emailVerified            DateTime?
+  passwordHash             String?
+  image                    String?
+  role                     String                @default("USER")
+  resetToken               String?
+  resetTokenExpiry         DateTime?
+  stripeCustomerId         String?               @unique
+  onboardingState          Json?                                  // État complet onboarding (UNIQUE source de vérité)
+  privacyPolicyAcceptedAt  DateTime?                              // Date d'acceptation de la politique de confidentialité
+  lastLoginAt              DateTime?                              // Dernière connexion (pour détection comptes inactifs)
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
   accounts               Account[]
   backgroundTasks        BackgroundTask[]
   consentLogs            ConsentLog[]
@@ -37,8 +37,6 @@ model User {
   linkHistory            LinkHistory[]
   openaiCalls            OpenAICall[]
   openaiUsage            OpenAIUsage[]
-  referredUsers          Referral?             @relation("Referred")
-  referrals              Referral[]            @relation("Referrer")
   subscription           Subscription?
   telemetryEvents        TelemetryEvent[]
   exportTemplates        ExportTemplate[]
@@ -65,13 +63,6 @@ model Account {
   @@unique([provider, providerAccountId])
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
 
 model CvFile {
   id                     String             @id @default(cuid())
@@ -82,6 +73,7 @@ model CvFile {
   sourceType             String?
   sourceValue            String?
   jobOfferId             String?            // Relation vers JobOffer (extraction structurée)
+  jobOfferSnapshot       Json?              // Snapshot de l'offre au moment de la génération (autonomie si offre supprimée)
   createdBy              String?
   originalCreatedBy      String?
   isTranslated           Boolean            @default(false)
@@ -247,18 +239,6 @@ model Setting {
   @@index([settingName])
 }
 
-model FeatureMapping {
-  id               String   @id @default(cuid())
-  featureKey       String   @unique
-  displayName      String
-  settingNames     Json     // Array of Setting.settingName values
-  openAICallNames  Json     // Array of OpenAICall.featureName values
-  planFeatureNames Json     // Array of SubscriptionPlanFeatureLimit.featureName values
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  @@index([featureKey])
-}
 
 model EmailVerificationToken {
   id        String   @id @default(cuid())
@@ -570,49 +550,7 @@ model StripeWebhookLog {
   @@index([createdAt])
 }
 
-model Referral {
-  id               String    @id @default(cuid())
-  referrerId       String
-  referredUserId   String    @unique
-  referralCode     String
-  status           String
-  referrerReward   Int       @default(0)
-  referredReward   Int       @default(0)
-  rewardsGrantedAt DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  referredUser     User      @relation("Referred", fields: [referredUserId], references: [id], onDelete: Cascade)
-  referrer         User      @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
 
-  @@index([referrerId])
-  @@index([referredUserId])
-  @@index([referralCode])
-  @@index([status])
-}
-
-model PromoCode {
-  id             String    @id @default(cuid())
-  code           String    @unique
-  name           String
-  type           String
-  discountType   String?
-  discountValue  Float?
-  creditBonus    Int?
-  applicableTo   String
-  maxUses        Int?
-  currentUses    Int       @default(0)
-  validFrom      DateTime
-  validUntil     DateTime?
-  isActive       Boolean   @default(true)
-  stripeCouponId String?   @unique
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  @@index([code])
-  @@index([isActive])
-  @@index([validFrom])
-  @@index([validUntil])
-}
 
 model EmailTrigger {
   id          String          @id @default(cuid())

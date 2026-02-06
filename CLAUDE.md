@@ -5,9 +5,9 @@ Instructions pour Claude Code sur le repository FitMyCV.io.
 ## Vue d'Ensemble
 
 **FitMyCV.io** - Application SaaS de génération de CV optimisés par IA.
-- Next.js 14 (App Router) + React 18 + Tailwind CSS
-- PostgreSQL via Prisma 6 (33 modèles)
-- OpenAI GPT-4o + Stripe + NextAuth.js
+- Next.js 16 (App Router) + React 19 + Tailwind CSS 4
+- PostgreSQL via Prisma 6 (34 modèles)
+- OpenAI API (modèles configurables en DB) + Stripe + NextAuth.js
 
 ## Commandes Essentielles
 
@@ -16,16 +16,44 @@ npm run dev                    # Dev (port 3001)
 npm run build                  # Build production
 npx prisma migrate deploy      # Migrations
 npx prisma generate            # Régénérer client
-npx prisma studio              # GUI DB
 ```
+
+## Base de Données
+
+**⚠️ IMPORTANT : Utiliser UNIQUEMENT le skill `postgres-prisma` pour interroger la DB.**
+
+```bash
+bash ~/.claude/skills/postgres-prisma/scripts/query_db.sh "SELECT * FROM \"Table\" LIMIT 5"
+```
+
+**INTERDIT :**
+- `psql "$DATABASE_URL"` directement
+- `source .env && psql ...`
+
+Le script lit automatiquement `.env` et gère les paramètres Prisma.
+
+### Interprétation des demandes
+
+Quand l'utilisateur mentionne :
+- "le dernier X généré" (CV, document, etc.)
+- "analyse X dans la base"
+- "regarde ce qui a été créé"
+- "vérifie les données de X"
+
+→ **Interroger la DB EN PREMIER** via le skill, avant d'analyser le code.
+
+### Workflow debug
+1. Lire `prisma/schema.prisma` pour comprendre la structure
+2. Requêter la DB avec le skill pour voir l'état réel des données
+3. Puis analyser le code si nécessaire pour trouver la cause
 
 ## Structure Projet
 
 ```
-app/api/           # 127 API Routes (auth, cv, admin, subscription...)
-components/        # ~150 composants React
-lib/               # 25 modules métier (auth, cv, openai, subscription...)
-prisma/            # 33 modèles de données
+app/api/           # 114 API Routes (auth, cv, admin, subscription...)
+components/        # 138 composants React
+lib/               # 31 modules métier (auth, cv-core, openai-core, subscription...)
+prisma/            # 34 modèles de données
 locales/           # i18n (fr, en, de, es)
 ```
 
@@ -53,8 +81,8 @@ export async function GET(request) {
 
 ### CV Operations
 ```javascript
-import { readUserCvFile, writeUserCvFile } from '@/lib/cv/storage';
-import { validateCv } from '@/lib/cv/validation';
+import { readUserCvFile, writeUserCvFile } from '@/lib/cv-core/storage';
+import { validateCv } from '@/lib/cv-core/validation';
 
 const cvData = await readUserCvFile(userId, filename);
 const { valid, errors } = validateCv(cvData);
@@ -63,13 +91,14 @@ await writeUserCvFile(userId, filename, modifiedData);
 
 ### Background Jobs
 ```javascript
-import { enqueueJob } from '@/lib/backgroundTasks/jobQueue';
+import { enqueueJob } from '@/lib/background-jobs/jobQueue';
+import { startSingleOfferGeneration } from '@/lib/cv-generation';
 
 // Max 3 concurrent, tracked in BackgroundTask model
-const task = await prisma.backgroundTask.create({
-  data: { id: crypto.randomUUID(), type: 'generate_cv', status: 'queued', ... }
+const task = await prisma.cvGenerationTask.create({
+  data: { userId, sourceCvFileId, mode: 'adapt', status: 'pending', totalOffers: 1 }
 });
-enqueueJob(() => generateCvJob(task.id, userId, payload));
+enqueueJob(() => startSingleOfferGeneration(task.id, offer.id));
 ```
 
 ### Feature Limits & Credits
@@ -102,24 +131,117 @@ await incrementFeatureCounter(userId, 'gpt_cv_generation');
 | Domaine | Fichiers |
 |---------|----------|
 | Auth | `lib/auth/options.js`, `lib/auth/session.js` |
-| CV | `lib/cv/storage.js`, `lib/cv/validation.js` |
-| OpenAI | `lib/openai/generateCv.js`, `lib/openai/improveCv.js` |
-| Jobs | `lib/backgroundTasks/jobQueue.js` |
+| CV | `lib/cv-core/storage.js`, `lib/cv-core/validation.js` |
+| OpenAI | `lib/openai-core/client.js`, `lib/openai-core/schemaLoader.js` |
+| CV Pipeline | `lib/cv-generation/orchestrator.js` |
+| Jobs | `lib/background-jobs/jobQueue.js` |
 | Subscription | `lib/subscription/featureUsage.js`, `lib/subscription/credits.js` |
 | Errors | `lib/api/apiErrors.js` |
 
 ## Git Workflow
 
 - **Branches** : `main` ← `release` ← `dev`
-- **Préfixes** : `feature/`, `improvement/`, `bug/`, `hotfix/`
+- **Préfixes** : `feature/`, `improvement/`, `refactor/`, `bug/`, `hotfix/`
 - **Commits** : `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`
+- **Merges** : Toujours utiliser `--no-ff` pour préserver l'historique des branches
+
+## Incrémentation de Version
+
+Lors de l'incrémentation de la version du projet, mettre à jour **tous** les fichiers suivants :
+
+| Fichier | Champ à modifier |
+|---------|------------------|
+| `package.json` | `"version": "x.x.x.x"` |
+| `package-lock.json` | `"version": "x.x.x.x"` (2 occurrences) |
+| `README.md` | `**Version:** x.x.x.x` |
+| `docs/index.md` | `| **Version** | x.x.x.x |` |
+| `docs/html-docs/index.html` | `<div class="callout-title">Version x.x.x.x</div>` |
+| `docs/html-docs/templates/sidebar.html` | `Documentation Technique vx.x.x.x` |
 
 ## Documentation
 
 Consultez `docs/` pour la documentation technique complète :
 - `docs/index.md` - Index maître (point d'entrée)
 - `docs/architecture.md` - Architecture technique
-- `docs/api-reference.md` - 127 endpoints
-- `docs/data-models.md` - 33 modèles Prisma
-- `docs/components.md` - ~150 composants
+- `docs/api-reference.md` - 114 endpoints
+- `docs/data-models.md` - 34 modèles Prisma
+- `docs/components.md` - 138 composants
 - `docs/development.md` - Guide développement
+
+## Synchronisation Documentation
+
+**Important** : Le projet maintient deux documentations parallèles qui doivent rester synchronisées :
+
+| Source | Emplacement | Format |
+|--------|-------------|--------|
+| Documentation Markdown | `docs/*.md` | Markdown |
+| Documentation HTML | `docs/html-docs/` | HTML |
+
+Lors de toute modification de documentation, mettre à jour **les deux sources** :
+
+| Type de changement | Fichiers Markdown | Fichiers HTML |
+|--------------------|-------------------|---------------|
+| Nouveau endpoint API | `docs/api-reference.md` | `docs/html-docs/15-api-reference/*.html` |
+| Modification architecture | `docs/architecture.md` | `docs/html-docs/01-architecture/*.html` |
+| Nouveau composant | `docs/components.md` | `docs/html-docs/16-composants/index.html` |
+| Modification modèle DB | `docs/data-models.md` | `docs/html-docs/01-architecture/database.html` |
+| Pipeline IA | `docs/architecture.md` | `docs/html-docs/05-pipeline-generation/*.html` ou `06-pipeline-optimisation/*.html` |
+| Abonnements/Crédits | Sections concernées | `docs/html-docs/07-abonnements/*.html`, `08-credits/*.html` |
+| Guide développement | `docs/development.md` | N/A (pas d'équivalent HTML) |
+| Arborescence projet | `docs/source-tree.md` | N/A (pas d'équivalent HTML) |
+
+## Documentation HTML (Portfolio)
+
+Une documentation HTML complète est disponible dans `docs/html-docs/`. Elle sert de vitrine technique pour démontrer les compétences en ingénierie IA.
+
+### Structure
+```
+docs/html-docs/
+├── index.html                    # Page d'accueil
+├── assets/
+│   ├── css/style.css            # Styles Tailwind-inspired
+│   └── js/main.js               # Search, navigation, Mermaid
+├── 01-architecture/             # Architecture technique
+├── 02-authentification/         # NextAuth.js
+├── 03-gestion-cv/               # CRUD CV, Import PDF
+├── 04-offres-emploi/            # Extraction, Match Score
+├── 05-pipeline-generation/      # Pipeline IA (7 pages détaillées)
+├── 06-pipeline-optimisation/    # Pipeline optimisation
+├── 07-abonnements/              # Stripe, Plans, Webhooks
+├── 08-credits/                  # Système de crédits
+├── 09-background-jobs/          # Queue, SSE, Retry
+├── 10-export/                   # PDF, DOCX
+├── 11-traduction/               # Traduction CV
+├── 12-administration/           # Dashboard admin
+├── 13-onboarding/               # Flux utilisateur
+├── 14-email/                    # Resend, Templates
+├── 15-api-reference/            # 114 endpoints
+└── 16-composants/               # 138 composants React
+```
+
+### Maintenance
+Lors de modifications du code, mettre à jour la documentation HTML correspondante :
+
+| Changement | Fichiers à mettre à jour |
+|------------|-------------------------|
+| Nouveau endpoint API | `15-api-reference/index.html` |
+| Modification pipeline IA | `05-pipeline-generation/*.html` ou `06-pipeline-optimisation/*.html` |
+| Nouveau composant | `16-composants/index.html` |
+| Modification modèle DB | `01-architecture/database.html` |
+| Changement plans/crédits | `07-abonnements/*.html`, `08-credits/*.html` |
+
+### Convention des pages
+- Diagrammes Mermaid pour les flux
+- Blocs `data-flow` pour documenter Input/Output des phases IA
+- Tables pour les endpoints et configurations
+- Code blocks avec exemples réels du codebase
+
+### Guide de contribution
+Pour ajouter ou modifier des pages dans la documentation HTML, consulter le guide détaillé : `docs/html-docs/CONTRIBUTING.md`
+
+Ce guide couvre :
+- Checklist complète pour ajouter une nouvelle section
+- Template de page HTML standard
+- Composants UI disponibles (callout, diagrammes, data-flow, tables)
+- Mise à jour du `searchIndex` pour la navigation Précédent/Suivant
+- Conventions de nommage et entités HTML
