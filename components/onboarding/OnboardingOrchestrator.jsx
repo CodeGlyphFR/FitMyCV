@@ -107,26 +107,53 @@ export default function OnboardingOrchestrator() {
   useEffect(() => { if (currentStep !== 6) step6ModalShownRef.current = false; }, [currentStep]);
   useEffect(() => { if (currentStep !== 8) step8ModalShownRef.current = false; }, [currentStep]);
 
-  // ========== STEP 1: CLICK ANYWHERE → OPEN MODAL ==========
+  // ========== STEP 1 PHASE A: DISMISS TOOLTIP ON ANY CLICK ==========
   useEffect(() => {
-    if (currentStep !== 1) return;
+    if (currentStep !== 1 || tooltipClosed || step1ModalShownRef.current) return;
 
-    const handleStep1Click = (e) => {
-      if (step1ModalShownRef.current) return;
+    const handleClick = (e) => {
       e.preventDefault();
       e.stopPropagation();
-      step1ModalShownRef.current = true;
       setTooltipClosed(true);
+    };
+
+    document.addEventListener('click', handleClick, { capture: true });
+    return () => document.removeEventListener('click', handleClick, { capture: true });
+  }, [currentStep, tooltipClosed]);
+
+  // ========== STEP 1 PHASE B: WATCH KEBAB INTERACTION → OPEN MODAL ==========
+  useEffect(() => {
+    if (currentStep !== 1 || !tooltipClosed || step1ModalShownRef.current) return;
+
+    let menuWasSeen = false;
+    let timeoutId = null;
+
+    const showOnboardingModal = () => {
+      step1ModalShownRef.current = true;
       setModalOpen(true);
       setCurrentScreen(0);
     };
 
-    document.addEventListener('click', handleStep1Click, { capture: true });
+    const checkState = () => {
+      const menus = document.querySelectorAll('[role="menu"]');
+      const dialogs = document.querySelectorAll('[role="dialog"]');
+
+      if (menus.length > 0) menuWasSeen = true;
+
+      if (menuWasSeen && menus.length === 0 && dialogs.length === 0) {
+        observer.disconnect();
+        timeoutId = setTimeout(showOnboardingModal, 300);
+      }
+    };
+
+    const observer = new MutationObserver(checkState);
+    observer.observe(document.body, { childList: true });
 
     return () => {
-      document.removeEventListener('click', handleStep1Click, { capture: true });
+      observer.disconnect();
+      if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [currentStep]);
+  }, [currentStep, tooltipClosed]);
 
   // Step 1 validation is now handled in handleModalComplete (editing is always active)
 

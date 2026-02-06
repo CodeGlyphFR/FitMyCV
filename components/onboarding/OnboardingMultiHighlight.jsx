@@ -102,18 +102,6 @@ export default function OnboardingMultiHighlight({
     <div className="fixed inset-0 z-[10001] pointer-events-none" role="presentation" aria-hidden="true">
       {rects.map((rect, i) => (
         <Fragment key={i}>
-          {/* Zone de clic transparente - au-dessus du backdrop blur */}
-          <div
-            className="absolute pointer-events-auto cursor-pointer z-[10002]"
-            data-onboarding-click-zone
-            style={{
-              top: rect.top - 4,
-              left: rect.left - 4,
-              width: rect.width + 8,
-              height: rect.height + 8,
-              borderRadius,
-            }}
-          />
           {/* Ring pulsant vert */}
           <div
             className="absolute pointer-events-none animate-pulse-ring-onboarding"
