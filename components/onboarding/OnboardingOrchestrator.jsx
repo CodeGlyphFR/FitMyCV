@@ -107,23 +107,29 @@ export default function OnboardingOrchestrator() {
   useEffect(() => { if (currentStep !== 6) step6ModalShownRef.current = false; }, [currentStep]);
   useEffect(() => { if (currentStep !== 8) step8ModalShownRef.current = false; }, [currentStep]);
 
-  // ========== STEP 1 PHASE A: CLICK ANYWHERE → DISMISS TOOLTIP + OPEN MODAL ==========
+  // ========== STEP 1 PHASE A: TOOLTIP VISIBLE → BLOCK CLICKS (EXCEPT X) / RESTORED → SHOW MODAL ==========
   useEffect(() => {
     if (currentStep !== 1 || step1ModalShownRef.current) return;
 
-    const handleClick = (e) => {
-      if (step1ModalShownRef.current) return;
-      e.preventDefault();
-      e.stopPropagation();
+    // Tooltip already closed (restoration) — show modal directly
+    if (tooltipClosed) {
       step1ModalShownRef.current = true;
-      setTooltipClosed(true);
       setModalOpen(true);
       setCurrentScreen(0);
+      return;
+    }
+
+    // Tooltip visible — block all clicks except the close button
+    const handleClick = (e) => {
+      if (step1ModalShownRef.current) return;
+      if (e.target.closest('[data-onboarding-tooltip-close]')) return;
+      e.preventDefault();
+      e.stopPropagation();
     };
 
     document.addEventListener('click', handleClick, { capture: true });
     return () => document.removeEventListener('click', handleClick, { capture: true });
-  }, [currentStep]);
+  }, [currentStep, tooltipClosed]);
 
   // ========== STEP 1 PHASE B: AFTER MODAL CLOSED → WATCH KEBAB INTERACTION → COMPLETE STEP ==========
   useEffect(() => {
@@ -439,6 +445,14 @@ export default function OnboardingOrchestrator() {
     const previousState = tooltipClosed;
     try {
       setTooltipClosed(true);
+
+      // Step 1: closing the tooltip opens the onboarding modal
+      if (currentStep === 1 && !step1ModalShownRef.current) {
+        step1ModalShownRef.current = true;
+        setModalOpen(true);
+        setCurrentScreen(0);
+      }
+
       await markTooltipClosed(currentStep);
     } catch (error) {
       setTooltipClosed(previousState);
