@@ -107,32 +107,30 @@ export default function OnboardingOrchestrator() {
   useEffect(() => { if (currentStep !== 6) step6ModalShownRef.current = false; }, [currentStep]);
   useEffect(() => { if (currentStep !== 8) step8ModalShownRef.current = false; }, [currentStep]);
 
-  // ========== STEP 1 PHASE A: DISMISS TOOLTIP ON ANY CLICK ==========
+  // ========== STEP 1 PHASE A: CLICK ANYWHERE → DISMISS TOOLTIP + OPEN MODAL ==========
   useEffect(() => {
-    if (currentStep !== 1 || tooltipClosed || step1ModalShownRef.current) return;
+    if (currentStep !== 1 || step1ModalShownRef.current) return;
 
     const handleClick = (e) => {
+      if (step1ModalShownRef.current) return;
       e.preventDefault();
       e.stopPropagation();
+      step1ModalShownRef.current = true;
       setTooltipClosed(true);
+      setModalOpen(true);
+      setCurrentScreen(0);
     };
 
     document.addEventListener('click', handleClick, { capture: true });
     return () => document.removeEventListener('click', handleClick, { capture: true });
-  }, [currentStep, tooltipClosed]);
+  }, [currentStep]);
 
-  // ========== STEP 1 PHASE B: WATCH KEBAB INTERACTION → OPEN MODAL ==========
+  // ========== STEP 1 PHASE B: AFTER MODAL CLOSED → WATCH KEBAB INTERACTION → COMPLETE STEP ==========
   useEffect(() => {
-    if (currentStep !== 1 || !tooltipClosed || step1ModalShownRef.current) return;
+    if (currentStep !== 1 || modalOpen || !step1ModalShownRef.current) return;
 
     let menuWasSeen = false;
     let timeoutId = null;
-
-    const showOnboardingModal = () => {
-      step1ModalShownRef.current = true;
-      setModalOpen(true);
-      setCurrentScreen(0);
-    };
 
     const checkState = () => {
       const menus = document.querySelectorAll('[role="menu"]');
@@ -142,7 +140,7 @@ export default function OnboardingOrchestrator() {
 
       if (menuWasSeen && menus.length === 0 && dialogs.length === 0) {
         observer.disconnect();
-        timeoutId = setTimeout(showOnboardingModal, 300);
+        timeoutId = setTimeout(() => markStepComplete(1), 300);
       }
     };
 
@@ -153,7 +151,7 @@ export default function OnboardingOrchestrator() {
       observer.disconnect();
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [currentStep, tooltipClosed]);
+  }, [currentStep, modalOpen, markStepComplete]);
 
   // Step 1 validation is now handled in handleModalComplete (editing is always active)
 
@@ -401,10 +399,7 @@ export default function OnboardingOrchestrator() {
     setTooltipClosed(true);
 
     // Actions spécifiques par étape (même si fermé par X)
-    if (currentStep === 1) {
-      // Editing est toujours actif, valider directement le step
-      markStepComplete(1);
-    }
+    // Step 1: ne pas compléter ici — l'utilisateur doit d'abord interagir avec un kebab
     if (currentStep === 2) {
       setTimeout(() => emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_GENERATOR), MODAL_ANIMATION_DELAY);
     }
@@ -425,10 +420,8 @@ export default function OnboardingOrchestrator() {
       try { await markModalCompleted(modalKey); } catch (e) { return; }
     }
 
-    if (currentStep === 1) {
-      // Editing est toujours actif, valider directement le step
-      markStepComplete(1);
-    } else if (currentStep === 2) {
+    // Step 1: ne pas compléter ici — l'utilisateur doit d'abord interagir avec un kebab
+    if (currentStep === 2) {
       setTimeout(() => emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_GENERATOR), MODAL_CLOSE_ANIMATION_DURATION);
     } else if (currentStep === 6) {
       setTimeout(() => emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_OPTIMIZER), MODAL_CLOSE_ANIMATION_DURATION);
