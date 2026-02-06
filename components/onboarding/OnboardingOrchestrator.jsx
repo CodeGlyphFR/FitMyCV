@@ -11,7 +11,7 @@ import { isAiGenerationTask, isMatchScoreTask, isImprovementTask } from '@/lib/b
 import { extractCvFilename } from '@/lib/onboarding/cvFilenameUtils';
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from '@/lib/onboarding/onboardingEvents';
 import { useDebouncedPersist, useStableEventListener } from './hooks';
-import { triggerCompletionConfetti } from './ConfettiCelebration';
+import { triggerCompletionConfetti, triggerStepCelebration } from './ConfettiCelebration';
 import StepRenderer, { TooltipOnlyStep } from './StepRenderer';
 import OnboardingModal from './OnboardingModal';
 import OnboardingCompletionModal from './OnboardingCompletionModal';
@@ -32,7 +32,7 @@ const EMOJI_TO_ICON = {
   '📥': Download,
 };
 
-const { MODAL_CLOSE_ANIMATION_DURATION, BUTTON_POLLING_INTERVAL, BUTTON_POLLING_TIMEOUT, STEP_VALIDATION_DELAY, MODAL_ANIMATION_DELAY } = ONBOARDING_TIMINGS;
+const { MODAL_CLOSE_ANIMATION_DURATION, BUTTON_POLLING_INTERVAL, BUTTON_POLLING_TIMEOUT, STEP_VALIDATION_DELAY, MODAL_ANIMATION_DELAY, STEP_CELEBRATION_DURATION } = ONBOARDING_TIMINGS;
 
 export default function OnboardingOrchestrator() {
   const {
@@ -63,6 +63,12 @@ export default function OnboardingOrchestrator() {
 
   // Debounced persistence
   const { queueUpdate } = useDebouncedPersist(updateOnboardingState);
+
+  // Celebration wrapper — déclenche confetti + son, puis complète l'étape après un délai
+  const celebrateAndComplete = useCallback((step) => {
+    triggerStepCelebration();
+    setTimeout(() => markStepComplete(step), STEP_CELEBRATION_DURATION);
+  }, [markStepComplete]);
 
   // ========== RESTORATION DES ÉTATS ==========
   useEffect(() => {
@@ -146,7 +152,7 @@ export default function OnboardingOrchestrator() {
 
       if (menuWasSeen && menus.length === 0 && dialogs.length === 0) {
         observer.disconnect();
-        timeoutId = setTimeout(() => markStepComplete(1), 300);
+        timeoutId = setTimeout(() => celebrateAndComplete(1), 300);
       }
     };
 
@@ -157,7 +163,7 @@ export default function OnboardingOrchestrator() {
       observer.disconnect();
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [currentStep, modalOpen, markStepComplete]);
+  }, [currentStep, modalOpen, celebrateAndComplete]);
 
   // Step 1 validation is now handled in handleModalComplete (editing is always active)
 
@@ -184,7 +190,7 @@ export default function OnboardingOrchestrator() {
       if (isCleanedUp) return;
       const task = event.detail?.task;
       if (isAiGenerationTask(task)) {
-        setTimeout(() => { if (!isCleanedUp) markStepComplete(2); }, STEP_VALIDATION_DELAY);
+        setTimeout(() => { if (!isCleanedUp) celebrateAndComplete(2); }, STEP_VALIDATION_DELAY);
       }
     };
 
@@ -207,7 +213,7 @@ export default function OnboardingOrchestrator() {
       if (aiGenerateButton) aiGenerateButton.removeEventListener('click', handleAiGenerateButtonClick, { capture: true });
       window.removeEventListener('task:added', handleTaskAdded);
     };
-  }, [currentStep, markStepComplete]);
+  }, [currentStep, celebrateAndComplete]);
 
   // ========== TASK COMPLETED HANDLER (steps 3, 5) ==========
   const handleTaskCompleted = useCallback((event) => {
@@ -225,24 +231,24 @@ export default function OnboardingOrchestrator() {
 
     if (isMatchScoreTask(task) && currentStep === 5) {
       setTimeout(() => {
-        markStepComplete(5);
+        celebrateAndComplete(5);
         emitOnboardingEvent(ONBOARDING_EVENTS.MATCH_SCORE_CALCULATED);
       }, STEP_VALIDATION_DELAY);
     }
-  }, [isActive, currentStep, markStepComplete]);
+  }, [isActive, currentStep, celebrateAndComplete]);
 
   useStableEventListener('task:completed', handleTaskCompleted);
 
   // ========== STEP 3: TASK MANAGER OPENED ==========
   const handleTaskManagerOpened = useCallback(() => {
     if (currentStep !== 3) return;
-    markStepComplete(3);
+    celebrateAndComplete(3);
     if (taskCompleted && completedTaskResult?.cvFilename) {
       setCvGenerated(true);
       setGeneratedCvFilename(completedTaskResult.cvFilename);
       emitOnboardingEvent(ONBOARDING_EVENTS.CV_GENERATED, { cvFilename: completedTaskResult.cvFilename });
     }
-  }, [currentStep, taskCompleted, completedTaskResult, markStepComplete]);
+  }, [currentStep, taskCompleted, completedTaskResult, celebrateAndComplete]);
 
   useStableEventListener(ONBOARDING_EVENTS.TASK_MANAGER_OPENED, handleTaskManagerOpened);
 
@@ -257,8 +263,8 @@ export default function OnboardingOrchestrator() {
   // ========== STEP 4: CV OPENED ==========
   const handleGeneratedCvOpened = useCallback((event) => {
     if (currentStep !== 4) return;
-    markStepComplete(4);
-  }, [currentStep, markStepComplete]);
+    celebrateAndComplete(4);
+  }, [currentStep, celebrateAndComplete]);
 
   useStableEventListener(ONBOARDING_EVENTS.GENERATED_CV_OPENED, handleGeneratedCvOpened);
 
@@ -270,7 +276,7 @@ export default function OnboardingOrchestrator() {
       const matchScoreElement = document.querySelector('[data-onboarding="match-score"]');
       if (matchScoreElement?.textContent?.includes('%')) {
         setTimeout(() => {
-          markStepComplete(5);
+          celebrateAndComplete(5);
           emitOnboardingEvent(ONBOARDING_EVENTS.MATCH_SCORE_CALCULATED);
         }, STEP_VALIDATION_DELAY);
         clearInterval(interval);
@@ -279,7 +285,7 @@ export default function OnboardingOrchestrator() {
       }
     }, 500);
     return () => clearInterval(interval);
-  }, [currentStep, markStepComplete]);
+  }, [currentStep, celebrateAndComplete]);
 
   // ========== STEP 6: OPTIMIZE BUTTON INTERCEPTION ==========
   useEffect(() => {
@@ -302,7 +308,7 @@ export default function OnboardingOrchestrator() {
       if (isCleanedUp) return;
       const task = event.detail?.task;
       if (isImprovementTask(task)) {
-        setTimeout(() => { if (!isCleanedUp) markStepComplete(6); }, STEP_VALIDATION_DELAY);
+        setTimeout(() => { if (!isCleanedUp) celebrateAndComplete(6); }, STEP_VALIDATION_DELAY);
       }
     };
 
@@ -314,13 +320,13 @@ export default function OnboardingOrchestrator() {
       document.removeEventListener('click', handleOptimizeButtonClick, { capture: true });
       window.removeEventListener('task:completed', handleTaskCompleted);
     };
-  }, [currentStep, markStepComplete]);
+  }, [currentStep, celebrateAndComplete]);
 
   // ========== STEP 7: HISTORY CLOSED ==========
   const handleHistoryClosed = useCallback(() => {
     if (currentStep !== 7) return;
-    markStepComplete(7);
-  }, [currentStep, markStepComplete]);
+    celebrateAndComplete(7);
+  }, [currentStep, celebrateAndComplete]);
 
   useStableEventListener(ONBOARDING_EVENTS.HISTORY_CLOSED, handleHistoryClosed);
 
