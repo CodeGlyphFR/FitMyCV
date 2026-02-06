@@ -416,6 +416,7 @@
     "validating": "Validating...",
     "pendingWarning": "{count} change(s) not reviewed. They will be accepted by default.",
     "validationSuccess": "CV saved successfully",
-    "validationError": "Error saving CV"
+    "validationError": "Error saving CV",
+    "skillsConsolidated": "skills consolidated into"
   }
 }

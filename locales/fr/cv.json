@@ -416,6 +416,7 @@
     "validating": "Validation en cours...",
     "pendingWarning": "{count} modification(s) non reviewée(s). Elles seront acceptées par défaut.",
     "validationSuccess": "CV sauvegardé avec succès",
-    "validationError": "Erreur lors de la sauvegarde"
+    "validationError": "Erreur lors de la sauvegarde",
+    "skillsConsolidated": "compétences consolidées en"
   }
 }

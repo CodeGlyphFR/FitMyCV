@@ -416,6 +416,7 @@
     "validating": "Wird bestätigt...",
     "pendingWarning": "{count} nicht überprüfte Änderung(en). Sie werden standardmäßig akzeptiert.",
     "validationSuccess": "Lebenslauf erfolgreich gespeichert",
-    "validationError": "Fehler beim Speichern"
+    "validationError": "Fehler beim Speichern",
+    "skillsConsolidated": "Kompetenzen zusammengefasst zu"
   }
 }

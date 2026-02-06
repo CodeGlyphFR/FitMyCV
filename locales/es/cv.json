@@ -416,6 +416,7 @@
     "validating": "Validando...",
     "pendingWarning": "{count} cambio(s) sin revisar. Se aceptarán por defecto.",
     "validationSuccess": "CV guardado correctamente",
-    "validationError": "Error al guardar el CV"
+    "validationError": "Error al guardar el CV",
+    "skillsConsolidated": "competencias consolidadas en"
   }
 }
