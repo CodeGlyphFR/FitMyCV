@@ -50,7 +50,7 @@ export default function OnboardingProvider({ children }) {
   });
 
   // UI state
-  const [checklistExpanded, setChecklistExpanded] = useState(true);
+  const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   // Timestamps pour tracking

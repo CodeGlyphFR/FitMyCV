@@ -17,6 +17,7 @@ import OnboardingModal from './OnboardingModal';
 import OnboardingCompletionModal from './OnboardingCompletionModal';
 import OnboardingTooltip from './OnboardingTooltip';
 import OnboardingHighlight from './OnboardingHighlight';
+import OnboardingMultiHighlight from './OnboardingMultiHighlight';
 import { Pencil, Sparkles, ClipboardList, FileText, Target, Rocket, History, Download } from 'lucide-react';
 
 // Mapping emoji → composant Lucide
@@ -106,16 +107,13 @@ export default function OnboardingOrchestrator() {
   useEffect(() => { if (currentStep !== 6) step6ModalShownRef.current = false; }, [currentStep]);
   useEffect(() => { if (currentStep !== 8) step8ModalShownRef.current = false; }, [currentStep]);
 
-  // ========== STEP 1: EDIT EXPERIENCE BUTTON INTERCEPTION ==========
+  // ========== STEP 1: EDIT KEBAB BUTTON INTERCEPTION (ALL KEBABS) ==========
   useEffect(() => {
     if (currentStep !== 1) return;
 
-    let editExperienceButton = null;
-    let attempts = 0;
-    const maxAttempts = Math.ceil(BUTTON_POLLING_TIMEOUT / BUTTON_POLLING_INTERVAL);
-
-    const handleEditExperienceButtonClick = (e) => {
-      if (step1ModalShownRef.current) return;
+    const handleKebabClick = (e) => {
+      const kebab = e.target.closest('[data-onboarding-edit-kebab]') || e.target.closest('[data-onboarding-click-zone]');
+      if (!kebab || step1ModalShownRef.current) return;
       e.preventDefault();
       e.stopPropagation();
       step1ModalShownRef.current = true;
@@ -124,19 +122,10 @@ export default function OnboardingOrchestrator() {
       setCurrentScreen(0);
     };
 
-    const interval = setInterval(() => {
-      editExperienceButton = document.querySelector('[data-onboarding="edit-experience"]');
-      if (editExperienceButton) {
-        editExperienceButton.addEventListener('click', handleEditExperienceButtonClick, { capture: true });
-        clearInterval(interval);
-      } else if (++attempts >= maxAttempts) {
-        clearInterval(interval);
-      }
-    }, BUTTON_POLLING_INTERVAL);
+    document.addEventListener('click', handleKebabClick, { capture: true });
 
     return () => {
-      clearInterval(interval);
-      if (editExperienceButton) editExperienceButton.removeEventListener('click', handleEditExperienceButtonClick, { capture: true });
+      document.removeEventListener('click', handleKebabClick, { capture: true });
     };
   }, [currentStep]);
 
@@ -450,7 +439,16 @@ export default function OnboardingOrchestrator() {
           show={!modalOpen && currentStep === step.id}
           blurEnabled={!tooltipClosed}
           targetSelector={step.targetSelector}
+          additionalCutoutSelector={currentStep === 1 ? '[data-onboarding-edit-kebab]' : undefined}
         />
+        {currentStep === 1 && (
+          <OnboardingMultiHighlight
+            selector="[data-onboarding-edit-kebab]"
+            excludeSelector='[data-onboarding="edit-experience"]'
+            show={!modalOpen}
+            borderRadius={12}
+          />
+        )}
         <OnboardingTooltip
           show={!modalOpen && !tooltipClosed}
           targetSelector={step.targetSelector}
