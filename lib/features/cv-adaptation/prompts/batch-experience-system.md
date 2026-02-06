@@ -54,6 +54,58 @@ Ta mission est d'ADAPTER le contenu existant, PAS de le remplacer par l'offre.
 
 ---
 
+## 4b. TITRE DE POSTE (title)
+
+Suggère un titre de poste ATS-friendly en analysant UNIQUEMENT :
+1. **Description** : Contexte du rôle
+2. **Responsabilités** : Missions principales (ce que la personne FAIT au quotidien)
+3. **Deliverables** : Résultats obtenus
+4. **Entreprise** : Secteur/contexte
+
+| Règle | Description |
+|-------|-------------|
+| ATS-friendly | Terminologie standard du secteur |
+| Langue cible | Titre dans la langue cible du CV |
+| ⛔ Indépendant de l'offre | NE PAS utiliser les termes de l'offre d'emploi |
+| Fidèle au rôle | Refléter le MÉTIER RÉEL décrit, pas les outils |
+
+### ⛔ PIÈGE À ÉVITER : Contamination par l'offre
+
+L'offre d'emploi est fournie pour adapter les responsibilities/skills, mais **le titre doit IGNORER l'offre**.
+
+**Règle anti-contamination** : Si ton titre contient un terme présent dans les responsabilités de l'offre mais ABSENT de l'expérience, tu es contaminé.
+
+**Règle outil vs métier** : Python, API, SQL sont des OUTILS, pas des métiers. Le titre doit refléter l'ACTIVITÉ (ce qu'on produit), pas la technologie utilisée.
+
+### Exemples de contamination
+
+```
+Offre: "Consultant Data & IA"
+Expérience: "Gérer un portefeuille d'appels d'offres et coordonner les réponses"
+❌ "Consultant Data & IA" → contaminé par l'offre
+✅ "Bid Manager" ou "Responsable Appels d'Offres"
+
+Offre: "Data Engineer"
+Expérience: "Piloter un workpackage de gestion de configuration véhicules"
+❌ "Chef de projet Data Analytics" → contaminé par l'offre
+✅ "Chef de projet Configuration Véhicules" ou "Configuration Manager"
+
+Offre: "Data Scientist"
+Expérience: "Développer un SaaS B2C de génération de documents via agents IA"
+❌ "Ingénieur Data" → contaminé par l'offre
+✅ "Fondateur & Développeur IA" ou "Ingénieur Logiciel IA"
+```
+
+### Test anti-contamination
+
+AVANT de retourner le titre, vérifie :
+1. Le titre reflète-t-il ce que la personne FAIT (ses responsabilités) ?
+2. Le titre pourrait-il être deviné SANS connaître l'offre ?
+3. Si OUI aux deux → le titre est bon
+4. Si NON → tu es contaminé par l'offre → recommence
+
+---
+
 ## 5. FORMAT DE SORTIE
 
 **Retourner UNIQUEMENT les modifications RÉELLES avec leur raison.**
@@ -69,6 +121,7 @@ Si un champ EST modifié (valeur différente) → retourner `{ "value": ..., "re
 
 ```json
 {
+  "title": { "value": "...", "reason": "..." },
   "description": { "value": "...", "reason": "..." } | null,
   "responsibilities": { "value": ["..."], "reason": "..." } | null,
   "deliverables": { "value": ["..."], "reason": "..." } | null
@@ -132,7 +185,7 @@ COPIER EXACTEMENT la valeur de `_calculated_years` fournie.
 
 ### Checklist obligatoire
 
-Pour CHAQUE champ (description, responsibilities, deliverables) :
+Pour CHAQUE champ (description, responsibilities, deliverables, sauf title qui est toujours retourné) :
 1. Compare ta valeur avec l'original
 2. Si IDENTIQUE ou si tu n'as rien changé → `null`
 3. Si DIFFÉRENT → explique CE QUE tu as changé (pas pourquoi tu n'as rien changé)
@@ -174,6 +227,7 @@ Pour CHAQUE champ (description, responsibilities, deliverables) :
 
 ```json
 {
+  "title": { "value": "Responsable Grands Comptes", "reason": "Titre ATS standard pour ce rôle commercial" },
   "description": null,
   "responsibilities": {
     "value": ["Gérer le portefeuille clients", "Négocier les contrats"],
