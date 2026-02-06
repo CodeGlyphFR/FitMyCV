@@ -146,12 +146,48 @@
         "tooltip": "✅ ¡Tu nuevo CV está listo! Haz clic aquí para abrirlo"
       },
       "step5": {
+        "title": "Review IA",
+        "description": "Revisar y validar las modificaciones de la IA",
+        "tooltip": "🔍 Revisa las modificaciones realizadas por la IA en tu CV",
+        "modal": {
+          "screen1": {
+            "title": "Revisión de modificaciones IA",
+            "description": "La IA ha optimizado tu CV para corresponder a la oferta. Cada modificación está resaltada con un código de colores para que mantengas el control total.",
+            "blocks": {
+              "modified": {
+                "title": "Modificación",
+                "description": "Un elemento existente fue reformulado o ajustado por la IA"
+              },
+              "added": {
+                "title": "Adición",
+                "description": "Se añadió un nuevo elemento para fortalecer tu perfil"
+              },
+              "removed": {
+                "title": "Eliminación",
+                "description": "Se eliminó un elemento por no ser relevante para la oferta"
+              }
+            },
+            "tip": "Mantienes el control: cada sugerencia puede ser aceptada o rechazada individualmente."
+          },
+          "screen2": {
+            "title": "Acepta o rechaza",
+            "description": "Haz clic en cualquier elemento resaltado para ver el detalle de la modificación. Acepta o rechaza cada sugerencia de la IA.",
+            "checklist": [
+              "Haz clic en un elemento resaltado para ver la modificación",
+              "Acepta o rechaza cada sugerencia individualmente",
+              "Usa \"Aceptar todo\" o \"Rechazar todo\" para ir más rápido"
+            ],
+            "tip": "El paso se completa automáticamente cuando todas las modificaciones están procesadas."
+          }
+        }
+      },
+      "step6": {
         "title": "Puntuación de coincidencia",
         "description": "Calcula la compatibilidad con una oferta de empleo",
         "tooltip": "🎯 Calcula la compatibilidad de tu CV con una oferta de empleo",
         "fallbackMessage": "Este paso requiere una oferta de empleo asociada. ¿Quieres saltarlo?"
       },
-      "step6": {
+      "step7": {
         "title": "Optimización con IA",
         "description": "Optimiza el CV con sugerencias de IA",
         "tooltip": "🚀 Optimiza tu CV para aumentar tu puntuación",
@@ -194,12 +230,12 @@
           }
         }
       },
-      "step7": {
+      "step8": {
         "title": "Historial",
         "description": "Ver historial de modificaciones de IA",
         "tooltip": "📝 Descubre todas las modificaciones realizadas por la IA"
       },
-      "step8": {
+      "step9": {
         "title": "Exportación PDF",
         "description": "Exporta tu CV optimizado a formato PDF",
         "tooltip": "📄 Exporta tu CV optimizado a formato PDF",

@@ -146,12 +146,48 @@
         "tooltip": "✅ Your new CV is ready! Click here to open it"
       },
       "step5": {
+        "title": "AI Review",
+        "description": "Review and validate AI modifications",
+        "tooltip": "🔍 Review the modifications made by AI to your CV",
+        "modal": {
+          "screen1": {
+            "title": "Review AI modifications",
+            "description": "AI has optimized your CV to match the job offer. Each modification is highlighted with a color code so you keep full control.",
+            "blocks": {
+              "modified": {
+                "title": "Modification",
+                "description": "An existing element was rephrased or adjusted by AI"
+              },
+              "added": {
+                "title": "Addition",
+                "description": "A new element was added to strengthen your profile"
+              },
+              "removed": {
+                "title": "Removal",
+                "description": "An element was removed as it's not relevant for the offer"
+              }
+            },
+            "tip": "You keep control: each suggestion can be accepted or rejected individually."
+          },
+          "screen2": {
+            "title": "Accept or reject",
+            "description": "Click on any highlighted element to see the modification details. Accept or reject each AI suggestion.",
+            "checklist": [
+              "Click on a highlighted element to see the modification",
+              "Accept or reject each suggestion individually",
+              "Use \"Accept all\" or \"Reject all\" to go faster"
+            ],
+            "tip": "The step completes automatically when all modifications are processed."
+          }
+        }
+      },
+      "step6": {
         "title": "Match Score",
         "description": "Calculate compatibility with a job offer",
         "tooltip": "🎯 Calculate your CV's compatibility with a job offer",
         "fallbackMessage": "This step requires an associated job offer. Would you like to skip it?"
       },
-      "step6": {
+      "step7": {
         "title": "AI Optimization",
         "description": "Optimize CV with AI suggestions",
         "tooltip": "🚀 Optimize your CV to increase your score",
@@ -194,12 +230,12 @@
           }
         }
       },
-      "step7": {
+      "step8": {
         "title": "History",
         "description": "View AI modification history",
         "tooltip": "📝 Discover all modifications made by AI"
       },
-      "step8": {
+      "step9": {
         "title": "PDF Export",
         "description": "Export your optimized CV to PDF format",
         "tooltip": "📄 Export your optimized CV to PDF format",

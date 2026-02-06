@@ -18,7 +18,7 @@ import OnboardingCompletionModal from './OnboardingCompletionModal';
 import OnboardingTooltip from './OnboardingTooltip';
 import OnboardingHighlight from './OnboardingHighlight';
 import OnboardingMultiHighlight from './OnboardingMultiHighlight';
-import { Pencil, Sparkles, ClipboardList, FileText, Target, Rocket, History, Download } from 'lucide-react';
+import { Pencil, Sparkles, ClipboardList, FileText, Search, Target, Rocket, History, Download } from 'lucide-react';
 
 // Mapping emoji → composant Lucide
 const EMOJI_TO_ICON = {
@@ -26,6 +26,7 @@ const EMOJI_TO_ICON = {
   '✨': Sparkles,
   '📋': ClipboardList,
   '📄': FileText,
+  '🔍': Search,
   '🎯': Target,
   '🚀': Rocket,
   '📝': History,
@@ -59,8 +60,9 @@ export default function OnboardingOrchestrator() {
   const step1ModalShownRef = useRef(false);
   const step2ModalShownRef = useRef(false);
   const step3CelebratedRef = useRef(false);
-  const step6ModalShownRef = useRef(false);
-  const step8ModalShownRef = useRef(false);
+  const step5ModalShownRef = useRef(false);
+  const step7ModalShownRef = useRef(false);
+  const step9ModalShownRef = useRef(false);
 
   // Debounced persistence
   const { queueUpdate } = useDebouncedPersist(updateOnboardingState);
@@ -81,8 +83,9 @@ export default function OnboardingOrchestrator() {
     if (onboardingState.modals) {
       step1ModalShownRef.current = onboardingState.modals.step1?.completed || false;
       step2ModalShownRef.current = onboardingState.modals.step2?.completed || false;
-      step6ModalShownRef.current = onboardingState.modals.step6?.completed || false;
-      step8ModalShownRef.current = onboardingState.modals.step8?.completed || false;
+      step5ModalShownRef.current = onboardingState.modals.step5?.completed || false;
+      step7ModalShownRef.current = onboardingState.modals.step7?.completed || false;
+      step9ModalShownRef.current = onboardingState.modals.step9?.completed || false;
     }
   }, [onboardingState]);
 
@@ -112,8 +115,9 @@ export default function OnboardingOrchestrator() {
   useEffect(() => { if (currentStep !== 1) step1ModalShownRef.current = false; }, [currentStep]);
   useEffect(() => { if (currentStep !== 2) step2ModalShownRef.current = false; }, [currentStep]);
   useEffect(() => { if (currentStep !== 3) step3CelebratedRef.current = false; }, [currentStep]);
-  useEffect(() => { if (currentStep !== 6) step6ModalShownRef.current = false; }, [currentStep]);
-  useEffect(() => { if (currentStep !== 8) step8ModalShownRef.current = false; }, [currentStep]);
+  useEffect(() => { if (currentStep !== 5) step5ModalShownRef.current = false; }, [currentStep]);
+  useEffect(() => { if (currentStep !== 7) step7ModalShownRef.current = false; }, [currentStep]);
+  useEffect(() => { if (currentStep !== 9) step9ModalShownRef.current = false; }, [currentStep]);
 
   // ========== STEP 1 PHASE A: TOOLTIP VISIBLE → BLOCK CLICKS (EXCEPT X) / RESTORED → SHOW MODAL ==========
   useEffect(() => {
@@ -217,7 +221,7 @@ export default function OnboardingOrchestrator() {
     };
   }, [currentStep, celebrateAndComplete]);
 
-  // ========== TASK COMPLETED HANDLER (steps 3, 5) ==========
+  // ========== TASK COMPLETED HANDLER (steps 3, 6) ==========
   const handleTaskCompleted = useCallback((event) => {
     if (!isActive) return;
     const task = event.detail?.task;
@@ -240,9 +244,9 @@ export default function OnboardingOrchestrator() {
       }
     }
 
-    if (isMatchScoreTask(task) && currentStep === 5) {
+    if (isMatchScoreTask(task) && currentStep === 6) {
       setTimeout(() => {
-        celebrateAndComplete(5);
+        celebrateAndComplete(6);
         emitOnboardingEvent(ONBOARDING_EVENTS.MATCH_SCORE_CALCULATED);
       }, STEP_VALIDATION_DELAY);
     }
@@ -283,15 +287,60 @@ export default function OnboardingOrchestrator() {
 
   useStableEventListener(ONBOARDING_EVENTS.GENERATED_CV_OPENED, handleGeneratedCvOpened);
 
-  // ========== STEP 5: AUTO-VALIDATION ==========
+  // ========== STEP 5: AI REVIEW ==========
+  // Phase 1: Modal s'ouvre automatiquement (2 pages)
+  // Phase 2: Après fermeture modal → scroll vers premier élément review + highlight
+  // Completion: Event 'onboarding:all-reviews-completed' (émis par ReviewProvider)
   useEffect(() => {
     if (currentStep !== 5) return;
+
+    // Si modal déjà montré (restoration), ne pas le réouvrir
+    if (step5ModalShownRef.current) return;
+
+    // Vérifier s'il y a des éléments pending à reviewer
+    const pendingElements = document.querySelectorAll('[data-review-change-pending]');
+    if (pendingElements.length === 0) {
+      // Pas de pending changes → skip automatique après un délai
+      const timeoutId = setTimeout(() => celebrateAndComplete(5), 1000);
+      return () => clearTimeout(timeoutId);
+    }
+
+    // Ouvrir le modal
+    step5ModalShownRef.current = true;
+    setModalOpen(true);
+    setCurrentScreen(0);
+  }, [currentStep, celebrateAndComplete]);
+
+  // Step 5 Phase 2: Après fermeture du modal → scroll vers premier élément review
+  useEffect(() => {
+    if (currentStep !== 5 || modalOpen || !step5ModalShownRef.current) return;
+
+    // Chercher d'abord un élément ambre (modified), sinon le premier pending
+    const amberElement = document.querySelector('[data-review-change-pending][data-review-change-type="modified"]');
+    const firstPending = amberElement || document.querySelector('[data-review-change-pending]');
+
+    if (firstPending) {
+      firstPending.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [currentStep, modalOpen]);
+
+  // Step 5: Écouter l'événement all-reviews-completed
+  const handleAllReviewsCompleted = useCallback(() => {
+    if (currentStep !== 5) return;
+    celebrateAndComplete(5);
+  }, [currentStep, celebrateAndComplete]);
+
+  useStableEventListener(ONBOARDING_EVENTS.ALL_REVIEWS_COMPLETED, handleAllReviewsCompleted);
+
+  // ========== STEP 6: AUTO-VALIDATION (match score) ==========
+  useEffect(() => {
+    if (currentStep !== 6) return;
     let attempts = 0;
     const interval = setInterval(() => {
       const matchScoreElement = document.querySelector('[data-onboarding="match-score"]');
       if (matchScoreElement?.textContent?.includes('%')) {
         setTimeout(() => {
-          celebrateAndComplete(5);
+          celebrateAndComplete(6);
           emitOnboardingEvent(ONBOARDING_EVENTS.MATCH_SCORE_CALCULATED);
         }, STEP_VALIDATION_DELAY);
         clearInterval(interval);
@@ -302,18 +351,18 @@ export default function OnboardingOrchestrator() {
     return () => clearInterval(interval);
   }, [currentStep, celebrateAndComplete]);
 
-  // ========== STEP 6: OPTIMIZE BUTTON INTERCEPTION ==========
+  // ========== STEP 7: OPTIMIZE BUTTON INTERCEPTION ==========
   useEffect(() => {
-    if (currentStep !== 6) return;
+    if (currentStep !== 7) return;
     let isCleanedUp = false;
 
     const handleOptimizeButtonClick = (e) => {
       if (isCleanedUp) return;
       const optimizeButton = e.target.closest('[data-onboarding="optimize"]');
-      if (!optimizeButton || step6ModalShownRef.current) return;
+      if (!optimizeButton || step7ModalShownRef.current) return;
       e.preventDefault();
       e.stopPropagation();
-      step6ModalShownRef.current = true;
+      step7ModalShownRef.current = true;
       setTooltipClosed(true);
       setModalOpen(true);
       setCurrentScreen(0);
@@ -323,7 +372,7 @@ export default function OnboardingOrchestrator() {
       if (isCleanedUp) return;
       const task = event.detail?.task;
       if (isImprovementTask(task)) {
-        setTimeout(() => { if (!isCleanedUp) celebrateAndComplete(6); }, STEP_VALIDATION_DELAY);
+        setTimeout(() => { if (!isCleanedUp) celebrateAndComplete(7); }, STEP_VALIDATION_DELAY);
       }
     };
 
@@ -337,24 +386,24 @@ export default function OnboardingOrchestrator() {
     };
   }, [currentStep, celebrateAndComplete]);
 
-  // ========== STEP 7: HISTORY CLOSED ==========
+  // ========== STEP 8: HISTORY CLOSED ==========
   const handleHistoryClosed = useCallback(() => {
-    if (currentStep !== 7) return;
-    celebrateAndComplete(7);
+    if (currentStep !== 8) return;
+    celebrateAndComplete(8);
   }, [currentStep, celebrateAndComplete]);
 
   useStableEventListener(ONBOARDING_EVENTS.HISTORY_CLOSED, handleHistoryClosed);
 
-  // ========== STEP 8: EXPORT BUTTON INTERCEPTION ==========
+  // ========== STEP 9: EXPORT BUTTON INTERCEPTION ==========
   useEffect(() => {
-    if (currentStep !== 8) return;
+    if (currentStep !== 9) return;
 
     const handleExportButtonClick = (e) => {
       const exportButton = e.target.closest('[data-onboarding="export"]');
-      if (!exportButton || step8ModalShownRef.current) return;
+      if (!exportButton || step9ModalShownRef.current) return;
       e.preventDefault();
       e.stopPropagation();
-      step8ModalShownRef.current = true;
+      step9ModalShownRef.current = true;
       setTooltipClosed(true);
       setModalOpen(true);
       setCurrentScreen(0);
@@ -364,19 +413,19 @@ export default function OnboardingOrchestrator() {
     return () => document.removeEventListener('click', handleExportButtonClick, { capture: true });
   }, [currentStep]);
 
-  // ========== STEP 8: EXPORT CLICKED ==========
+  // ========== STEP 9: EXPORT CLICKED ==========
   const handleExportClicked = useCallback(() => {
-    if (currentStep !== 8) return;
+    if (currentStep !== 9) return;
     triggerCompletionConfetti();
     setShowCompletionModal(true);
-    markStepComplete(8);
+    markStepComplete(9);
   }, [currentStep, markStepComplete]);
 
   useStableEventListener(ONBOARDING_EVENTS.EXPORT_CLICKED, handleExportClicked);
 
-  // ========== STEP 9: COMPLETION MODAL ==========
+  // ========== STEP 10: COMPLETION MODAL ==========
   useEffect(() => {
-    if (currentStep === 9 && !showCompletionModal && !hasCompleted && !isCompletingOnboarding) {
+    if (currentStep === 10 && !showCompletionModal && !hasCompleted && !isCompletingOnboarding) {
       setShowCompletionModal(true);
     }
   }, [currentStep, showCompletionModal, hasCompleted, isCompletingOnboarding]);
@@ -430,10 +479,10 @@ export default function OnboardingOrchestrator() {
     if (currentStep === 2) {
       setTimeout(() => emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_GENERATOR), MODAL_ANIMATION_DELAY);
     }
-    if (currentStep === 6) {
+    if (currentStep === 7) {
       setTimeout(() => emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_OPTIMIZER), MODAL_ANIMATION_DELAY);
     }
-    if (currentStep === 8) {
+    if (currentStep === 9) {
       setTimeout(() => emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_EXPORT), MODAL_ANIMATION_DELAY);
     }
   };
@@ -450,9 +499,9 @@ export default function OnboardingOrchestrator() {
     // Step 1: ne pas compléter ici — l'utilisateur doit d'abord interagir avec un kebab
     if (currentStep === 2) {
       setTimeout(() => emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_GENERATOR), MODAL_CLOSE_ANIMATION_DURATION);
-    } else if (currentStep === 6) {
+    } else if (currentStep === 7) {
       setTimeout(() => emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_OPTIMIZER), MODAL_CLOSE_ANIMATION_DURATION);
-    } else if (currentStep === 8) {
+    } else if (currentStep === 9) {
       setTimeout(() => emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_EXPORT), MODAL_CLOSE_ANIMATION_DURATION);
     }
   };
@@ -483,11 +532,11 @@ export default function OnboardingOrchestrator() {
   // ========== RENDER ==========
   const IconComponent = EMOJI_TO_ICON[step.emoji] || Pencil;
 
-  // Étapes avec modal (1, 2, 6, 8)
-  if ([1, 2, 6, 8].includes(currentStep)) {
-    const showForStep8 = currentStep !== 8 || !showCompletionModal;
+  // Étapes avec modal (1, 2, 5, 7, 9)
+  if ([1, 2, 5, 7, 9].includes(currentStep)) {
+    const showForStep9 = currentStep !== 9 || !showCompletionModal;
 
-    return showForStep8 ? (
+    return showForStep9 ? (
       <>
         <OnboardingHighlight
           show={!modalOpen && currentStep === step.id}
@@ -526,7 +575,7 @@ export default function OnboardingOrchestrator() {
           showSkipButton={true}
           size="large"
         />
-        {currentStep === 8 && (
+        {currentStep === 9 && (
           <OnboardingCompletionModal open={showCompletionModal} onComplete={handleCompletionModalClose} />
         )}
       </>
@@ -535,8 +584,8 @@ export default function OnboardingOrchestrator() {
     );
   }
 
-  // Étapes tooltip-only (3, 4, 5, 7)
-  if ([3, 5, 7].includes(currentStep)) {
+  // Étapes tooltip-only (3, 6, 8)
+  if ([3, 6, 8].includes(currentStep)) {
     return (
       <TooltipOnlyStep
         step={step}

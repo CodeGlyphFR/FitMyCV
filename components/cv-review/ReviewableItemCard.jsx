@@ -95,6 +95,8 @@ export default function ReviewableItemCard({
         <div
           ref={cardRef}
           onClick={handleClick}
+          data-review-change-pending="true"
+          data-review-change-type={changeType}
           className={`
             relative inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm
             border-2 transition-all duration-200
@@ -146,6 +148,8 @@ export default function ReviewableItemCard({
       <div
         ref={cardRef}
         onClick={handleClick}
+        data-review-change-pending="true"
+        data-review-change-type={changeType}
         className={`
           relative rounded-xl p-3 border-2 transition-all duration-200
           ${!showInlineActions ? 'cursor-pointer hover:brightness-110' : ''}
