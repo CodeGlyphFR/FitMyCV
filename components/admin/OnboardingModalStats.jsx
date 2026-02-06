@@ -2,7 +2,7 @@
 
 /**
  * Composant affichant les statistiques de complétion des modales d'onboarding
- * Grille 2x4 avec mini-cards pour chaque modale
+ * Liste verticale avec une ligne par modale
  */
 export function OnboardingModalStats({ data }) {
   if (!data || Object.keys(data).length === 0) {
@@ -31,7 +31,7 @@ export function OnboardingModalStats({ data }) {
     <div className="bg-white/10 backdrop-blur-xl rounded-lg border border-white/20 p-6">
       <h3 className="text-lg font-semibold text-white mb-4">Taux de complétion des modales</h3>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="space-y-2">
         {modalOrder.map(key => {
           const modal = data[key];
           if (!modal) return null;
@@ -41,31 +41,31 @@ export function OnboardingModalStats({ data }) {
           return (
             <div
               key={key}
-              className="bg-white/5 rounded-lg border border-white/10 p-4 hover:bg-white/10 transition"
+              className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-white/5 transition"
             >
-              {/* Header */}
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xl">{modalIcons[key]}</span>
-                <span className="text-white/90 font-medium text-sm">{modal.name}</span>
-              </div>
+              {/* Icône */}
+              <span className="text-base flex-shrink-0">{modalIcons[key]}</span>
 
-              {/* Taux */}
-              <div className="flex items-end justify-between mb-2">
-                <span className={`text-2xl font-bold ${rateColor}`}>
-                  {modal.rate}%
-                </span>
-                <span className="text-white/40 text-xs">
-                  {modal.completed}/{modal.total}
-                </span>
-              </div>
+              {/* Nom */}
+              <span className="text-white/90 text-sm w-36 flex-shrink-0 truncate">{modal.name}</span>
 
               {/* Barre de progression */}
-              <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+              <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${getBarColorClass(modal.rate)}`}
                   style={{ width: `${modal.rate}%` }}
                 />
               </div>
+
+              {/* Taux */}
+              <span className={`text-sm font-semibold w-12 text-right flex-shrink-0 ${rateColor}`}>
+                {modal.rate}%
+              </span>
+
+              {/* Compteur */}
+              <span className="text-white/40 text-xs w-10 text-right flex-shrink-0">
+                {modal.completed}/{modal.total}
+              </span>
             </div>
           );
         })}
