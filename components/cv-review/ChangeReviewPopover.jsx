@@ -166,10 +166,10 @@ export default function ChangeReviewPopover({
 
             <div className="space-y-1.5">
               {change.items.map((item, i) => (
-                <div key={i} className="text-xs border-l-2 border-amber-500/50 pl-2 py-0.5">
+                <div key={i} className="text-xs text-white/90 border-l-2 border-amber-500/50 pl-2 py-0.5">
                   <p>
                     <span className="line-through opacity-70">{item.original_value}</span>
-                    <span className="mx-1">→</span>
+                    <span className="mx-1 text-white/50">→</span>
                     <span className="text-amber-300">{change.afterValue?.name}</span>
                     {item.score && (
                       <span className="text-white/50 ml-1">({item.score}%)</span>
@@ -253,8 +253,8 @@ export default function ChangeReviewPopover({
           </p>
         )}
 
-        {/* Raison (si disponible) */}
-        {change.reason && (
+        {/* Raison (si disponible, sauf multi_renamed qui affiche déjà les raisons par item) */}
+        {change.reason && !(change.changeType === "multi_renamed" && change.items) && (
           <p className="text-xs text-white/70 max-w-[250px]">
             <span className="font-medium text-white/90">{t("review.reason") || "Raison"} : </span>
             {change.reason}
