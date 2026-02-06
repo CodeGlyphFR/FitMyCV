@@ -12,7 +12,9 @@ import SkillItemHighlight, { RemovedSkillsDisplay, RemovedSkillsDisplayBlock, Re
 import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
 import SkillsReviewActions from "@/components/cv-review/SkillsReviewActions";
 import { normalizeToNumber, VALID_SKILL_LEVELS, SKILL_LEVEL_KEYS } from "@/lib/constants/skillLevels";
-import { Code, Wrench, Workflow, Heart, Plus, Trash2 } from "lucide-react";
+import { Code, Wrench, Workflow, Heart, Plus, Trash2, Pencil } from "lucide-react";
+import ContextMenu from "@/components/ui/ContextMenu";
+import { useReview } from "@/components/providers/ReviewProvider";
 import {
   ModalSection,
   FormField,
@@ -158,6 +160,16 @@ export default function Skills(props){
 
   const { editing } = useAdmin();
   const { mutate } = useMutate();
+  const { pendingChanges, isLatestVersion } = useReview();
+  const fieldHasChanges = (field) => isLatestVersion && pendingChanges.some(c => c.section === "skills" && c.field === field && c.status === "pending");
+  const canEditHard = editing && !fieldHasChanges("hard_skills");
+  const canEditTools = editing && !fieldHasChanges("tools");
+  const canEditMeth = editing && !fieldHasChanges("methodologies");
+  const canEditSoft = editing && !fieldHasChanges("soft_skills");
+
+  // Vérifier s'il y a des items supprimés à reviewer (hooks au top level)
+  const removedTools = useRemovedItems("skills", "tools");
+  const removedMethods = useRemovedItems("skills", "methodologies");
 
   const hasHard = hard?.length > 0;
   const hasTools = tools?.length > 0;
@@ -235,10 +247,6 @@ export default function Skills(props){
           const showHard = hasHard || editing; // en édition, on montre le bloc même vide
           const hideHardBecauseOthersFull = !hasHard && hasTools && hasMethods && !editing;
 
-          // Vérifier s'il y a des items supprimés à reviewer
-          const removedTools = useRemovedItems("skills", "tools");
-          const removedMethods = useRemovedItems("skills", "methodologies");
-
           // Déterminer si on doit afficher chaque colonne
           const showToolsColumn = hasTools || editing || removedTools.length > 0;
           const showMethodsColumn = hasMethods || editing || removedMethods.length > 0;
@@ -255,8 +263,13 @@ export default function Skills(props){
                     <h3 className="font-semibold">{cvT("cvSections.hardSkills")}</h3>
                     <div className="flex items-center gap-2">
                       <SkillsReviewActions field="hard_skills" />
-                      {editing && (
-                        <button onClick={() => setOpenHard(true)} className="flex items-center justify-center p-1 rounded text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 opacity-70 hover:opacity-100" /></button>
+                      {canEditHard && (
+                        <ContextMenu
+                          items={[
+                            { icon: Pencil, label: t("common.edit"), onClick: () => setOpenHard(true) },
+                            ...(hasHard ? [{ icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.hard_skills", value: [] }), danger: true }] : [])
+                          ]}
+                        />
                       )}
                     </div>
                   </div>
@@ -304,8 +317,13 @@ export default function Skills(props){
                       <h3 className="font-semibold">{cvT("cvSections.tools")}</h3>
                       <div className="flex items-center gap-2">
                         <SkillsReviewActions field="tools" />
-                        {editing && (
-                          <button onClick={() => setOpenTools(true)} className="flex items-center justify-center p-1 rounded text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 opacity-70 hover:opacity-100" /></button>
+                        {canEditTools && (
+                          <ContextMenu
+                            items={[
+                              { icon: Pencil, label: t("common.edit"), onClick: () => setOpenTools(true) },
+                              ...(hasTools ? [{ icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.tools", value: [] }), danger: true }] : [])
+                            ]}
+                          />
                         )}
                       </div>
                     </div>
@@ -344,8 +362,13 @@ export default function Skills(props){
                       <h3 className="font-semibold">{cvT("cvSections.methodologies")}</h3>
                       <div className="flex items-center gap-2">
                         <SkillsReviewActions field="methodologies" />
-                        {editing && (
-                          <button onClick={() => setOpenMeth(true)} className="flex items-center justify-center p-1 rounded text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 opacity-70 hover:opacity-100" /></button>
+                        {canEditMeth && (
+                          <ContextMenu
+                            items={[
+                              { icon: Pencil, label: t("common.edit"), onClick: () => setOpenMeth(true) },
+                              ...(hasMethods ? [{ icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.methodologies", value: [] }), danger: true }] : [])
+                            ]}
+                          />
                         )}
                       </div>
                     </div>
@@ -378,7 +401,7 @@ export default function Skills(props){
               {/* Soft skills - affiche soit le bloc normal, soit les orphelins */}
               {hasSoft ? (
                 <div>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1 items-end">
                     {filteredSoft.map((m, i) => {
                       const softName = getSkillName(m);
                       return (
@@ -394,10 +417,15 @@ export default function Skills(props){
                       field="soft_skills"
                       badgeClassName="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90"
                     />
-                    {editing && (
-                      <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center p-1 rounded cursor-pointer text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200">
-                        <img src="/icons/edit.png" alt="Edit" className="h-3 w-3 opacity-70 hover:opacity-100" />
-                      </span>
+                    {canEditSoft && (
+                      <ContextMenu
+                        compact
+                        className="h-[22.5px] w-[22.5px] rounded-sm"
+                        items={[
+                          { icon: Pencil, label: t("common.edit"), onClick: () => setOpenSoft(true) },
+                          ...(hasSoft ? [{ icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.soft_skills", value: [] }), danger: true }] : [])
+                        ]}
+                      />
                     )}
                   </div>
                 </div>
@@ -405,7 +433,13 @@ export default function Skills(props){
                 <div className="rounded-2xl border border-white/15 p-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold mb-2">{cvT("cvSections.softSkills")}</h3>
-                    <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center p-1 rounded cursor-pointer text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 opacity-70 hover:opacity-100" /></span>
+                    {canEditSoft && (
+                      <ContextMenu
+                        items={[
+                          { icon: Pencil, label: t("common.edit"), onClick: () => setOpenSoft(true) },
+                        ]}
+                      />
+                    )}
                   </div>
                   <div className="text-sm opacity-60">{t("cvSections.noSoftSkills")}</div>
                 </div>

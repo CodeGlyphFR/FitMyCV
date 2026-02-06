@@ -27,7 +27,7 @@ import { useReview } from "@/components/providers/ReviewProvider";
 import CountrySelect from "@/components/ui/CountrySelect";
 import MonthPicker from "@/components/ui/MonthPicker";
 import ContextMenu from "@/components/ui/ContextMenu";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Plus } from "lucide-react";
 
 /**
  * Composant pour une formation individuelle avec highlight review
@@ -187,6 +187,11 @@ export default function Education(props){
   const title = getCvSectionTitleInCvLanguage('education', sectionTitles.education, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
+  const { pendingChanges, isLatestVersion } = useReview();
+  const sectionHasChanges = isLatestVersion && pendingChanges.some(c => c.section === "education" && c.status === "pending");
+  const canAdd = editing && !sectionHasChanges;
+  const itemHasChanges = (name) => isLatestVersion && pendingChanges.some(c => c.section === "education" && c.status === "pending" && c.itemName?.toLowerCase() === (name || "").toLowerCase());
+  const canEditItem = (name) => editing && !itemHasChanges(name);
 
   // Récupérer les formations supprimées pour les afficher
   const { removedItems: removedEducation } = useItemChanges("education");
@@ -274,12 +279,13 @@ export default function Education(props){
           <span>{title}</span>
           <div className="flex items-center gap-3">
             <SectionReviewActions section="education" />
-            {editing && (
+            {canAdd && (
               <button
+                type="button"
                 onClick={() => setAddOpen(true)}
-                className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-colors duration-200"
+                className="no-print flex items-center justify-center p-1 rounded text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200"
               >
-                {t("common.add")}
+                <Plus className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
@@ -300,7 +306,7 @@ export default function Education(props){
                   key={i}
                   education={e}
                   index={i}
-                  isEditing={editing}
+                  isEditing={canEditItem(e.institution)}
                   onEdit={openEdit}
                   onDelete={setDelIndex}
                   cvT={cvT}

@@ -24,7 +24,7 @@ import {
   ModalFooterDelete,
 } from "@/components/ui/ModalForm";
 import ContextMenu from "@/components/ui/ContextMenu";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Plus } from "lucide-react";
 
 /**
  * Composant pour une langue individuelle avec highlight review
@@ -76,6 +76,7 @@ function LanguageItem({ language, index, isEditing, onEdit, onDelete, cvT, t }) 
 
         {isEditing && (
           <ContextMenu
+            compact
             items={[
               { icon: Pencil, label: t("common.edit"), onClick: () => onEdit(index) },
               { icon: Trash2, label: t("common.delete"), onClick: () => onDelete(index), danger: true }
@@ -108,6 +109,11 @@ export default function Languages(props){
   const title = getCvSectionTitleInCvLanguage('languages', sectionTitles.languages, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
+  const { pendingChanges, isLatestVersion } = useReview();
+  const sectionHasChanges = isLatestVersion && pendingChanges.some(c => c.section === "languages" && c.status === "pending");
+  const canAdd = editing && !sectionHasChanges;
+  const itemHasChanges = (name) => isLatestVersion && pendingChanges.some(c => c.section === "languages" && c.status === "pending" && c.itemName?.toLowerCase() === (name || "").toLowerCase());
+  const canEditItem = (name) => editing && !itemHasChanges(name);
 
   // Récupérer les langues supprimées pour les afficher
   const { removedItems: removedLanguages } = useItemChanges("languages");
@@ -157,7 +163,11 @@ export default function Languages(props){
         <span>{title}</span>
         <div className="flex items-center gap-2">
           <SectionReviewActions section="languages" />
-          {editing && (<button onClick={()=>setAddOpen(true)} className="no-print text-xs rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-colors duration-200">{t("common.add")}</button>)}
+          {canAdd && (
+            <button type="button" onClick={()=>setAddOpen(true)} className="no-print flex items-center justify-center p-1 rounded text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200">
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       </div>
     }>
@@ -176,7 +186,7 @@ export default function Languages(props){
               key={i}
               language={l}
               index={i}
-              isEditing={editing}
+              isEditing={canEditItem(l.name)}
               onEdit={openEdit}
               onDelete={setDelIndex}
               cvT={cvT}

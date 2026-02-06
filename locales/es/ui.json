@@ -271,6 +271,7 @@
     "save": "Guardar",
     "cancel": "Cancelar",
     "delete": "Eliminar",
+    "deleteAll": "Eliminar todo",
     "add": "Añadir",
     "loading": "Cargando...",
     "error": "Error",

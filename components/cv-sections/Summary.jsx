@@ -10,6 +10,7 @@ import VersionSelector from "@/components/cv-improvement/VersionSelector";
 import ChangeHighlight, { ReviewProgressBar } from "@/components/cv-review/ChangeHighlight";
 import { FileText, Pencil, Trash2 } from "lucide-react";
 import ContextMenu from "@/components/ui/ContextMenu";
+import { useReview } from "@/components/providers/ReviewProvider";
 import {
   ModalSection,
   FormField,
@@ -24,6 +25,9 @@ export default function Summary(props){
   const title = getCvSectionTitleInCvLanguage('summary', props.sectionTitles?.summary, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
+  const { pendingChanges, isLatestVersion } = useReview();
+  const sectionHasChanges = isLatestVersion && pendingChanges.some(c => c.section === "summary" && c.status === "pending");
+  const canEdit = editing && !sectionHasChanges;
 
   const [open, setOpen] = React.useState(false);
   const [text, setText] = React.useState(summary.description || "");
@@ -51,14 +55,6 @@ export default function Summary(props){
         <div className="flex items-center justify-between gap-2 w-full">
           <span>{title}</span>
           <div className="flex items-center gap-2">
-            {editing && (
-              <ContextMenu
-                items={[
-                  { icon: Pencil, label: t("common.edit"), onClick: () => setOpen(true) },
-                  ...(isEmpty ? [] : [{ icon: Trash2, label: t("common.delete"), onClick: clear, danger: true }])
-                ]}
-              />
-            )}
             {/* Barre de progression review */}
             <div className="no-print">
               <ReviewProgressBar />
@@ -67,6 +63,14 @@ export default function Summary(props){
             <div className="no-print">
               <VersionSelector />
             </div>
+            {canEdit && (
+              <ContextMenu
+                items={[
+                  { icon: Pencil, label: t("common.edit"), onClick: () => setOpen(true) },
+                  ...(isEmpty ? [] : [{ icon: Trash2, label: t("common.delete"), onClick: clear, danger: true }])
+                ]}
+              />
+            )}
           </div>
         </div>
       }

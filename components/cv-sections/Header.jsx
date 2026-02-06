@@ -14,7 +14,8 @@ import { toTitleCase } from "@/lib/utils/textFormatting";
 import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
 import { useReview } from "@/components/providers/ReviewProvider";
 import CountrySelect from "@/components/ui/CountrySelect";
-import { User, Mail, MapPin, Link2, Plus, Trash2, FileText } from "lucide-react";
+import { User, Mail, MapPin, Link2, Plus, Trash2, FileText, Pencil } from "lucide-react";
+import ContextMenu from "@/components/ui/ContextMenu";
 import {
   ModalSection,
   FormField,
@@ -37,6 +38,7 @@ export default function Header(props){
 
   // Récupérer la version courante depuis le contexte
   const { currentVersion } = useReview();
+  const canEdit = editing;
 
   // Calculer isHistoricalVersion directement depuis currentVersion (plus fiable que l'API)
   const isHistoricalVersion = currentVersion !== 'latest';
@@ -355,21 +357,9 @@ export default function Header(props){
         </div>
       </div>
 
-      {/* Bouton d'édition du header en mode édition */}
-      {(editing && settings.feature_edit_mode) ? (
-        <button
-          data-onboarding="edit-button"
-          onClick={()=>setOpen(true)}
-          className="no-print absolute bottom-3 right-3 flex items-center justify-center p-1 rounded text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200"
-          type="button"
-        >
-          <img src="/icons/edit.png" alt="Edit" className="h-3 w-3 opacity-70 hover:opacity-100" />
-        </button>
-      ) : null}
-
-      {/* Bouton de traduction en bas à droite */}
-      {(!editing && settings.feature_translate) ? (
-        <div className="no-print absolute bottom-3 right-3 flex items-center gap-2">
+      {/* Bouton traduction + kebab édition en bas à droite */}
+      <div className="no-print absolute bottom-3 right-3 flex items-center gap-2">
+        {settings.feature_translate && (
           <TranslationDropdown
             isOpen={isTranslateDropdownOpen}
             setIsOpen={setIsTranslateDropdownOpen}
@@ -377,8 +367,15 @@ export default function Header(props){
             executeTranslation={executeTranslation}
             cvLanguage={props.cvLanguage}
           />
-        </div>
-      ) : null}
+        )}
+        {canEdit && (
+          <ContextMenu
+            items={[
+              { icon: Pencil, label: t("common.edit"), onClick: () => setOpen(true) },
+            ]}
+          />
+        )}
+      </div>
 
       <Modal open={open} onClose={()=>setOpen(false)} title={t("header.modalTitle")}>
         <div className="space-y-3">
