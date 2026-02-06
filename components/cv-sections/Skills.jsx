@@ -160,6 +160,10 @@ export default function Skills(props){
   const { editing } = useAdmin();
   const { mutate } = useMutate();
 
+  // Vérifier s'il y a des items supprimés à reviewer (hooks au top level)
+  const removedTools = useRemovedItems("skills", "tools");
+  const removedMethods = useRemovedItems("skills", "methodologies");
+
   const hasHard = hard?.length > 0;
   const hasTools = tools?.length > 0;
   const hasMethods = methods?.length > 0;
@@ -235,10 +239,6 @@ export default function Skills(props){
         {(() => {
           const showHard = hasHard || editing; // en édition, on montre le bloc même vide
           const hideHardBecauseOthersFull = !hasHard && hasTools && hasMethods && !editing;
-
-          // Vérifier s'il y a des items supprimés à reviewer
-          const removedTools = useRemovedItems("skills", "tools");
-          const removedMethods = useRemovedItems("skills", "methodologies");
 
           // Déterminer si on doit afficher chaque colonne
           const showToolsColumn = hasTools || editing || removedTools.length > 0;
