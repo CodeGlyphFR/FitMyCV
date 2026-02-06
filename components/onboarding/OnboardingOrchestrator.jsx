@@ -11,7 +11,7 @@ import { isAiGenerationTask, isMatchScoreTask, isImprovementTask } from '@/lib/b
 import { extractCvFilename } from '@/lib/onboarding/cvFilenameUtils';
 import { ONBOARDING_EVENTS, emitOnboardingEvent } from '@/lib/onboarding/onboardingEvents';
 import { useDebouncedPersist, useStableEventListener } from './hooks';
-import { triggerCompletionConfetti, triggerStepCelebration } from './ConfettiCelebration';
+import { triggerCompletionConfetti, triggerStepCelebration, triggerFinalCelebration } from './ConfettiCelebration';
 import StepRenderer, { TooltipOnlyStep } from './StepRenderer';
 import OnboardingModal from './OnboardingModal';
 import OnboardingCompletionModal from './OnboardingCompletionModal';
@@ -476,11 +476,12 @@ export default function OnboardingOrchestrator() {
   }, [currentStep]);
 
   // ========== STEP 9: EXPORT CLICKED ==========
-  const handleExportClicked = useCallback(() => {
+  const handleExportClicked = useCallback(async () => {
     if (currentStep !== 9) return;
-    triggerCompletionConfetti();
-    setShowCompletionModal(true);
     markStepComplete(9);
+    // Célébration finale avec applaudissements, puis modal de complétion
+    await triggerFinalCelebration(2500);
+    setShowCompletionModal(true);
   }, [currentStep, markStepComplete]);
 
   useStableEventListener(ONBOARDING_EVENTS.EXPORT_CLICKED, handleExportClicked);
