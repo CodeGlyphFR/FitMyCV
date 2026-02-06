@@ -58,6 +58,7 @@ export default function OnboardingOrchestrator() {
   // Refs
   const step1ModalShownRef = useRef(false);
   const step2ModalShownRef = useRef(false);
+  const step3CelebratedRef = useRef(false);
   const step6ModalShownRef = useRef(false);
   const step8ModalShownRef = useRef(false);
 
@@ -110,6 +111,7 @@ export default function OnboardingOrchestrator() {
   // Reset modal refs when leaving step
   useEffect(() => { if (currentStep !== 1) step1ModalShownRef.current = false; }, [currentStep]);
   useEffect(() => { if (currentStep !== 2) step2ModalShownRef.current = false; }, [currentStep]);
+  useEffect(() => { if (currentStep !== 3) step3CelebratedRef.current = false; }, [currentStep]);
   useEffect(() => { if (currentStep !== 6) step6ModalShownRef.current = false; }, [currentStep]);
   useEffect(() => { if (currentStep !== 8) step8ModalShownRef.current = false; }, [currentStep]);
 
@@ -226,6 +228,15 @@ export default function OnboardingOrchestrator() {
       if (cvFilename) {
         setTaskCompleted(true);
         setCompletedTaskResult({ cvFilename });
+
+        // Si on est à l'étape 3, célébrer et compléter immédiatement
+        if (currentStep === 3 && !step3CelebratedRef.current) {
+          step3CelebratedRef.current = true;
+          setCvGenerated(true);
+          setGeneratedCvFilename(cvFilename);
+          emitOnboardingEvent(ONBOARDING_EVENTS.CV_GENERATED, { cvFilename });
+          celebrateAndComplete(3);
+        }
       }
     }
 
@@ -242,12 +253,16 @@ export default function OnboardingOrchestrator() {
   // ========== STEP 3: TASK MANAGER OPENED ==========
   const handleTaskManagerOpened = useCallback(() => {
     if (currentStep !== 3) return;
-    celebrateAndComplete(3);
-    if (taskCompleted && completedTaskResult?.cvFilename) {
+
+    // Ne compléter step 3 QUE si la tâche AI est déjà terminée (cas: tâche finie avant d'arriver au step 3)
+    if (taskCompleted && completedTaskResult?.cvFilename && !step3CelebratedRef.current) {
+      step3CelebratedRef.current = true;
       setCvGenerated(true);
       setGeneratedCvFilename(completedTaskResult.cvFilename);
       emitOnboardingEvent(ONBOARDING_EVENTS.CV_GENERATED, { cvFilename: completedTaskResult.cvFilename });
+      celebrateAndComplete(3);
     }
+    // Sinon, on ne fait rien — on attend que handleTaskCompleted détecte la fin
   }, [currentStep, taskCompleted, completedTaskResult, celebrateAndComplete]);
 
   useStableEventListener(ONBOARDING_EVENTS.TASK_MANAGER_OPENED, handleTaskManagerOpened);

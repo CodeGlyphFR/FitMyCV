@@ -506,6 +506,9 @@ export default function TaskQueueModal({ open, onClose }) {
       return;
     }
 
+    // Émettre l'événement onboarding pour valider l'étape 4
+    emitOnboardingEvent(ONBOARDING_EVENTS.GENERATED_CV_OPENED, { cvFilename: cvFile });
+
     // Définir le cookie pour le CV sélectionné
     document.cookie = "cvFile=" + encodeURIComponent(cvFile) + "; path=/; max-age=31536000";
     console.log('[TaskQueueModal] Cookie défini:', cvFile);
