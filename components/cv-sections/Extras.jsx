@@ -20,6 +20,7 @@ import {
   ModalFooterDelete,
 } from "@/components/ui/ModalForm";
 import ContextMenu from "@/components/ui/ContextMenu";
+import { useReview } from "@/components/providers/ReviewProvider";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
 export default function Extras(props){
@@ -30,6 +31,11 @@ export default function Extras(props){
   const title = getCvSectionTitleInCvLanguage('extras', sectionTitles.extras, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
+  const { pendingChanges, isLatestVersion } = useReview();
+  const sectionHasChanges = isLatestVersion && pendingChanges.some(c => c.section === "extras" && c.status === "pending");
+  const canAdd = editing && !sectionHasChanges;
+  const itemHasChanges = (name) => isLatestVersion && pendingChanges.some(c => c.section === "extras" && c.status === "pending" && c.itemName?.toLowerCase() === (name || "").toLowerCase());
+  const canEditItem = (name) => editing && !itemHasChanges(name);
 
   // Récupérer les extras ajoutés, supprimés et modifiés pour les afficher
   const { removedItems: removedExtras, addedItems: addedExtras, modifiedItems: modifiedExtras } = useItemChanges("extras");
@@ -93,7 +99,7 @@ export default function Extras(props){
         <span>{title}</span>
         <div className="flex items-center gap-3">
           <SectionReviewActions section="extras" />
-          {editing && (
+          {canAdd && (
             <button
               type="button"
               onClick={()=>setAddOpen(true)}
@@ -128,7 +134,7 @@ export default function Extras(props){
                       <span className="font-semibold">{toTitleCase(e.name) || ""}</span>
                       <span className="text-sm opacity-80"> : {e.summary || ""}</span>
                     </div>
-                    {editing && (
+                    {canEditItem(e.name) && (
                       <ContextMenu
                         compact
                         items={[
@@ -190,7 +196,7 @@ export default function Extras(props){
                       <div className="font-semibold">{toTitleCase(e.name) || ""}</div>
                       <div className="text-sm opacity-80">{e.summary || ""}</div>
                     </div>
-                    {editing && (
+                    {canEditItem(e.name) && (
                       <ContextMenu
                         items={[
                           { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(originalIndex) },

@@ -14,6 +14,7 @@ import SkillsReviewActions from "@/components/cv-review/SkillsReviewActions";
 import { normalizeToNumber, VALID_SKILL_LEVELS, SKILL_LEVEL_KEYS } from "@/lib/constants/skillLevels";
 import { Code, Wrench, Workflow, Heart, Plus, Trash2, Pencil } from "lucide-react";
 import ContextMenu from "@/components/ui/ContextMenu";
+import { useReview } from "@/components/providers/ReviewProvider";
 import {
   ModalSection,
   FormField,
@@ -159,6 +160,12 @@ export default function Skills(props){
 
   const { editing } = useAdmin();
   const { mutate } = useMutate();
+  const { pendingChanges, isLatestVersion } = useReview();
+  const fieldHasChanges = (field) => isLatestVersion && pendingChanges.some(c => c.section === "skills" && c.field === field && c.status === "pending");
+  const canEditHard = editing && !fieldHasChanges("hard_skills");
+  const canEditTools = editing && !fieldHasChanges("tools");
+  const canEditMeth = editing && !fieldHasChanges("methodologies");
+  const canEditSoft = editing && !fieldHasChanges("soft_skills");
 
   // Vérifier s'il y a des items supprimés à reviewer (hooks au top level)
   const removedTools = useRemovedItems("skills", "tools");
@@ -256,7 +263,7 @@ export default function Skills(props){
                     <h3 className="font-semibold">{cvT("cvSections.hardSkills")}</h3>
                     <div className="flex items-center gap-2">
                       <SkillsReviewActions field="hard_skills" />
-                      {editing && (
+                      {canEditHard && (
                         <ContextMenu
                           items={[
                             { icon: Pencil, label: t("common.edit"), onClick: () => setOpenHard(true) },
@@ -310,7 +317,7 @@ export default function Skills(props){
                       <h3 className="font-semibold">{cvT("cvSections.tools")}</h3>
                       <div className="flex items-center gap-2">
                         <SkillsReviewActions field="tools" />
-                        {editing && (
+                        {canEditTools && (
                           <ContextMenu
                             items={[
                               { icon: Pencil, label: t("common.edit"), onClick: () => setOpenTools(true) },
@@ -355,7 +362,7 @@ export default function Skills(props){
                       <h3 className="font-semibold">{cvT("cvSections.methodologies")}</h3>
                       <div className="flex items-center gap-2">
                         <SkillsReviewActions field="methodologies" />
-                        {editing && (
+                        {canEditMeth && (
                           <ContextMenu
                             items={[
                               { icon: Pencil, label: t("common.edit"), onClick: () => setOpenMeth(true) },
@@ -410,7 +417,7 @@ export default function Skills(props){
                       field="soft_skills"
                       badgeClassName="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90"
                     />
-                    {editing && (
+                    {canEditSoft && (
                       <ContextMenu
                         items={[
                           { icon: Pencil, label: t("common.edit"), onClick: () => setOpenSoft(true) },
@@ -424,11 +431,13 @@ export default function Skills(props){
                 <div className="rounded-2xl border border-white/15 p-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold mb-2">{cvT("cvSections.softSkills")}</h3>
-                    <ContextMenu
-                      items={[
-                        { icon: Pencil, label: t("common.edit"), onClick: () => setOpenSoft(true) },
-                      ]}
-                    />
+                    {canEditSoft && (
+                      <ContextMenu
+                        items={[
+                          { icon: Pencil, label: t("common.edit"), onClick: () => setOpenSoft(true) },
+                        ]}
+                      />
+                    )}
                   </div>
                   <div className="text-sm opacity-60">{t("cvSections.noSoftSkills")}</div>
                 </div>

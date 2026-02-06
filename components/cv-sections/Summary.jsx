@@ -10,6 +10,7 @@ import VersionSelector from "@/components/cv-improvement/VersionSelector";
 import ChangeHighlight, { ReviewProgressBar } from "@/components/cv-review/ChangeHighlight";
 import { FileText, Pencil, Trash2 } from "lucide-react";
 import ContextMenu from "@/components/ui/ContextMenu";
+import { useReview } from "@/components/providers/ReviewProvider";
 import {
   ModalSection,
   FormField,
@@ -24,6 +25,9 @@ export default function Summary(props){
   const title = getCvSectionTitleInCvLanguage('summary', props.sectionTitles?.summary, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
+  const { pendingChanges, isLatestVersion } = useReview();
+  const sectionHasChanges = isLatestVersion && pendingChanges.some(c => c.section === "summary" && c.status === "pending");
+  const canEdit = editing && !sectionHasChanges;
 
   const [open, setOpen] = React.useState(false);
   const [text, setText] = React.useState(summary.description || "");
@@ -59,7 +63,7 @@ export default function Summary(props){
             <div className="no-print">
               <VersionSelector />
             </div>
-            {editing && (
+            {canEdit && (
               <ContextMenu
                 items={[
                   { icon: Pencil, label: t("common.edit"), onClick: () => setOpen(true) },

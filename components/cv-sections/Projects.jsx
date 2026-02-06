@@ -28,6 +28,7 @@ import ReviewableItemCard from "@/components/cv-review/ReviewableItemCard";
 import { useItemChanges } from "@/components/cv-review/useItemChanges";
 import MonthPicker from "@/components/ui/MonthPicker";
 import ContextMenu from "@/components/ui/ContextMenu";
+import { useReview } from "@/components/providers/ReviewProvider";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
 // Normalise une date vers le format YYYY-MM pour comparaison et sauvegarde
@@ -163,8 +164,13 @@ export default function Projects(props){
   const cvT = getTranslatorForCvLanguage(cvLanguage);
   const title = getCvSectionTitleInCvLanguage('projects', sectionTitles.projects, cvLanguage);
   const { editing } = useAdmin();
-  const isEditing = !!editing;
   const { mutate } = useMutate();
+  const { pendingChanges, isLatestVersion } = useReview();
+  const isEditing = !!editing;
+  const sectionHasChanges = isLatestVersion && pendingChanges.some(c => c.section === "projects" && c.status === "pending");
+  const canAdd = isEditing && !sectionHasChanges;
+  const projectHasChanges = (name) => isLatestVersion && pendingChanges.some(c => c.section === "projects" && c.status === "pending" && c.itemName?.toLowerCase() === (name || "").toLowerCase());
+  const canEditProject = (name) => isEditing && !projectHasChanges(name);
 
   // ---- UI State ----
   const [editIndex, setEditIndex] = React.useState(null);
@@ -246,7 +252,7 @@ export default function Projects(props){
           <span>{title}</span>
           <div className="flex items-center gap-3">
             <SectionReviewActions section="projects" />
-            {isEditing && (
+            {canAdd && (
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
@@ -275,7 +281,7 @@ export default function Projects(props){
                   key={i}
                   project={p}
                   index={i}
-                  isEditing={isEditing}
+                  isEditing={canEditProject(p.name)}
                   onEdit={openEdit}
                   onDelete={setDelIndex}
                   cvT={cvT}

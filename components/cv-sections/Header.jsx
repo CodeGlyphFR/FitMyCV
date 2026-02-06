@@ -38,6 +38,7 @@ export default function Header(props){
 
   // Récupérer la version courante depuis le contexte
   const { currentVersion } = useReview();
+  const canEdit = editing;
 
   // Calculer isHistoricalVersion directement depuis currentVersion (plus fiable que l'API)
   const isHistoricalVersion = currentVersion !== 'latest';
@@ -367,7 +368,7 @@ export default function Header(props){
             cvLanguage={props.cvLanguage}
           />
         )}
-        {editing && (
+        {canEdit && (
           <ContextMenu
             items={[
               { icon: Pencil, label: t("common.edit"), onClick: () => setOpen(true) },

@@ -187,6 +187,11 @@ export default function Education(props){
   const title = getCvSectionTitleInCvLanguage('education', sectionTitles.education, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
+  const { pendingChanges, isLatestVersion } = useReview();
+  const sectionHasChanges = isLatestVersion && pendingChanges.some(c => c.section === "education" && c.status === "pending");
+  const canAdd = editing && !sectionHasChanges;
+  const itemHasChanges = (name) => isLatestVersion && pendingChanges.some(c => c.section === "education" && c.status === "pending" && c.itemName?.toLowerCase() === (name || "").toLowerCase());
+  const canEditItem = (name) => editing && !itemHasChanges(name);
 
   // Récupérer les formations supprimées pour les afficher
   const { removedItems: removedEducation } = useItemChanges("education");
@@ -274,7 +279,7 @@ export default function Education(props){
           <span>{title}</span>
           <div className="flex items-center gap-3">
             <SectionReviewActions section="education" />
-            {editing && (
+            {canAdd && (
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
@@ -301,7 +306,7 @@ export default function Education(props){
                   key={i}
                   education={e}
                   index={i}
-                  isEditing={editing}
+                  isEditing={canEditItem(e.institution)}
                   onEdit={openEdit}
                   onDelete={setDelIndex}
                   cvT={cvT}

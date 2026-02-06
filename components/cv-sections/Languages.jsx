@@ -109,6 +109,11 @@ export default function Languages(props){
   const title = getCvSectionTitleInCvLanguage('languages', sectionTitles.languages, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
+  const { pendingChanges, isLatestVersion } = useReview();
+  const sectionHasChanges = isLatestVersion && pendingChanges.some(c => c.section === "languages" && c.status === "pending");
+  const canAdd = editing && !sectionHasChanges;
+  const itemHasChanges = (name) => isLatestVersion && pendingChanges.some(c => c.section === "languages" && c.status === "pending" && c.itemName?.toLowerCase() === (name || "").toLowerCase());
+  const canEditItem = (name) => editing && !itemHasChanges(name);
 
   // Récupérer les langues supprimées pour les afficher
   const { removedItems: removedLanguages } = useItemChanges("languages");
@@ -158,7 +163,7 @@ export default function Languages(props){
         <span>{title}</span>
         <div className="flex items-center gap-2">
           <SectionReviewActions section="languages" />
-          {editing && (
+          {canAdd && (
             <button type="button" onClick={()=>setAddOpen(true)} className="no-print flex items-center justify-center p-1 rounded text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200">
               <Plus className="h-3.5 w-3.5" />
             </button>
@@ -181,7 +186,7 @@ export default function Languages(props){
               key={i}
               language={l}
               index={i}
-              isEditing={editing}
+              isEditing={canEditItem(l.name)}
               onEdit={openEdit}
               onDelete={setDelIndex}
               cvT={cvT}

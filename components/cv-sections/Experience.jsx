@@ -105,7 +105,11 @@ export default function Experience(props){
   const title = getCvSectionTitleInCvLanguage('experience', sectionTitles.experience, cvLanguage);
   const { editing } = useAdmin();
   const { mutate } = useMutate();
-  const { batchProcessingExpIndex } = useReview();
+  const { batchProcessingExpIndex, pendingChanges, isLatestVersion } = useReview();
+  const sectionHasChanges = isLatestVersion && pendingChanges.some(c => c.section === "experience" && c.status === "pending");
+  const canAdd = editing && !sectionHasChanges;
+  const expHasChanges = (expIdx) => isLatestVersion && pendingChanges.some(c => c.section === "experience" && c.expIndex === expIdx && c.status === "pending");
+  const canEditExp = (expIdx) => editing && !expHasChanges(expIdx);
 
   // Récupérer les expériences supprimées pour les afficher
   const { removedItems: allRemovedItems } = useItemChanges("experience");
@@ -255,7 +259,7 @@ export default function Experience(props){
           <span>{title}</span>
           <div className="flex items-center gap-3">
             <SectionReviewActions section="experience" />
-            {editing && (
+            {canAdd && (
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
@@ -300,7 +304,7 @@ export default function Experience(props){
                 </div>
                 {/* Boutons review (accept/reject) en haut à droite */}
                 <ExperienceReviewActions expIndex={e._originalIndex ?? i} />
-                {editing && (
+                {canEditExp(e._originalIndex ?? i) && (
                   <ContextMenu
                     items={[
                       { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(i) },
