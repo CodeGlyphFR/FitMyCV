@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Architecture - Vue d'ensemble | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Architecture</a>
+          <span>/</span>
+          <span>Vue d'ensemble</span>
+        </div>
+
+        <h1>Architecture - Vue d'ensemble</h1>
+        <p class="lead">
+          FitMyCV.io est une application web full-stack monolithique construite avec Next.js 16 (App Router). Elle permet aux utilisateurs de créer, optimiser et exporter des CV personnalisés grâce à l'intelligence artificielle.
+        </p>
+
+        <h2>Caractéristiques Architecturales</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Choix technologique</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Type</strong></td>
+              <td>Monolith full-stack</td>
+            </tr>
+            <tr>
+              <td><strong>Framework</strong></td>
+              <td>Next.js 16.1.1 (App Router)</td>
+            </tr>
+            <tr>
+              <td><strong>Bundler</strong></td>
+              <td>Turbopack (défaut Next.js 16)</td>
+            </tr>
+            <tr>
+              <td><strong>Rendering</strong></td>
+              <td>Hybrid (SSR + Client Components)</td>
+            </tr>
+            <tr>
+              <td><strong>API</strong></td>
+              <td>API Routes (serverless-like)</td>
+            </tr>
+            <tr>
+              <td><strong>Base de données</strong></td>
+              <td>PostgreSQL via Prisma 6</td>
+            </tr>
+            <tr>
+              <td><strong>Authentification</strong></td>
+              <td>NextAuth.js 4 (OAuth + Credentials)</td>
+            </tr>
+            <tr>
+              <td><strong>Paiements</strong></td>
+              <td>Stripe (abonnements + crédits)</td>
+            </tr>
+            <tr>
+              <td><strong>IA</strong></td>
+              <td>OpenAI API (modèles configurables)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Architecture en Couches</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Vue globale de l'architecture</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Presentation["PRÉSENTATION"]
+        RC["React Components (138)"]
+        TW["Tailwind CSS"]
+        FM["Framer Motion"]
+    end
+
+    subgraph APILayer["API LAYER"]
+        AR["Next.js API Routes (113)"]
+        subgraph Categories["Catégories"]
+            Auth["Auth (9)"]
+            CV["CV (15)"]
+            Sub["Subscription (14)"]
+            Admin["Admin (38)"]
+        end
+    end
+
+    subgraph Business["BUSINESS LOGIC"]
+        subgraph Modules["lib/ modules (31)"]
+            CVC["cv-core"]
+            OAI["openai-core"]
+            SUB["subscription"]
+            BJ["background-jobs"]
+        end
+    end
+
+    subgraph Data["DATA ACCESS"]
+        PR["Prisma ORM"]
+        Models["34 modèles"]
+    end
+
+    subgraph Infra["INFRASTRUCTURE"]
+        PG[(PostgreSQL)]
+        OpenAI["OpenAI API"]
+        Stripe["Stripe API"]
+        Email["SMTP/Resend"]
+    end
+
+    Presentation --> APILayer
+    APILayer --> Business
+    Business --> Data
+    Data --> PG
+    Business --> OpenAI
+    Business --> Stripe
+    Business --> Email
+          </div>
+        </div>
+
+        <h2>Flux de Données Principal</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux request/response</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant C as Client React
+    participant A as API Routes
+    participant L as lib/ modules
+    participant P as Prisma
+    participant DB as PostgreSQL
+    participant E as Services Externes
+
+    C->>A: Request HTTP
+    A->>A: Auth (NextAuth)
+    A->>L: Business Logic
+    L->>P: Query
+    P->>DB: SQL
+    DB-->>P: Result
+    L->>E: OpenAI/Stripe
+    E-->>L: Response
+    L-->>A: Data
+    A-->>C: JSON Response
+          </div>
+        </div>
+
+        <h2>Organisation des Modules Métier</h2>
+
+        <p>Le dossier <code>lib/</code> contient 31 modules organisés par domaine fonctionnel :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Authentification</h4>
+            <ul>
+              <li><code>auth/</code> - NextAuth config + session</li>
+              <li><code>security/</code> - Validation, sanitization</li>
+              <li><code>recaptcha/</code> - Protection bot</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h4>CV Core</h4>
+            <ul>
+              <li><code>cv-core/</code> - Storage, validation, versioning</li>
+              <li><code>job-offer/</code> - Extraction offres</li>
+              <li><code>scoring/</code> - Match score CV/offre</li>
+              <li><code>translation/</code> - Traduction CV</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h4>Intelligence Artificielle</h4>
+            <ul>
+              <li><code>openai-core/</code> - Client API, helpers</li>
+              <li><code>features/cv-adaptation/</code> - Pipeline génération</li>
+              <li><code>features/cv-improvement/</code> - Pipeline optimisation</li>
+              <li><code>prompts-shared/</code> - Prompts réutilisables</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h4>Billing</h4>
+            <ul>
+              <li><code>subscription/</code> - Plans, crédits, limites</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h4>Async Processing</h4>
+            <ul>
+              <li><code>background-jobs/</code> - Queue tâches (max 3 concurrent)</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h4>Communication</h4>
+            <ul>
+              <li><code>email/</code> - SMTP + Resend</li>
+              <li><code>events/</code> - Event emitter temps réel</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>Dépendances entre Modules</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Graphe de dépendances</div>
+          <div class="mermaid">
+flowchart LR
+    auth --> subscription
+    auth --> email
+    auth --> telemetry
+
+    cv-core --> settings
+    cv-core --> utils
+
+    subscription --> settings
+    subscription --> events
+    subscription --> prisma
+
+    background-jobs --> subscription
+    background-jobs --> telemetry
+
+    openai-core --> settings
+          </div>
+        </div>
+
+        <h2>Points Clés de l'Architecture</h2>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Monolith Modulaire</div>
+          <p>Bien que monolithique, l'architecture est fortement modulaire avec une séparation claire des responsabilités. Chaque module dans <code>lib/</code> est autonome et expose une API publique via <code>index.js</code>.</p>
+        </div>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Pipelines IA Parallélisés</div>
+          <p>Les pipelines de génération et d'optimisation CV utilisent une architecture par phases avec parallélisation (max 5 appels OpenAI concurrents) et cache intelligent pour optimiser les coûts.</p>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Background Jobs In-Process</div>
+          <p>La queue de jobs est gérée en mémoire (pas de Redis/RabbitMQ). Cela simplifie le déploiement mais limite la scalabilité horizontale. Max 3 jobs globaux en parallèle.</p>
+        </div>
+
+        <h2>Fichiers Clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Domaine</th>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Config Next.js</td>
+              <td><code>next.config.js</code></td>
+              <td>Configuration framework</td>
+            </tr>
+            <tr>
+              <td>Schéma DB</td>
+              <td><code>prisma/schema.prisma</code></td>
+              <td>34 modèles Prisma</td>
+            </tr>
+            <tr>
+              <td>Auth</td>
+              <td><code>lib/auth/options.js</code></td>
+              <td>Configuration NextAuth</td>
+            </tr>
+            <tr>
+              <td>CV Storage</td>
+              <td><code>lib/cv-core/storage.js</code></td>
+              <td>Read/Write CV JSON</td>
+            </tr>
+            <tr>
+              <td>OpenAI</td>
+              <td><code>lib/openai-core/client.js</code></td>
+              <td>Client et helpers</td>
+            </tr>
+            <tr>
+              <td>Abonnements</td>
+              <td><code>lib/subscription/featureUsage.js</code></td>
+              <td>Limites et compteurs</td>
+            </tr>
+            <tr>
+              <td>Jobs</td>
+              <td><code>lib/background-jobs/jobQueue.js</code></td>
+              <td>Queue avec concurrence</td>
+            </tr>
+            <tr>
+              <td>Erreurs</td>
+              <td><code>lib/api/apiErrors.js</code></td>
+              <td>Factory erreurs i18n</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Prochaines Sections</h2>
+
+        <ul>
+          <li><a href="./tech-stack.html">Stack technologique</a> - Détail des technologies utilisées</li>
+          <li><a href="./database.html">Base de données</a> - 34 modèles Prisma</li>
+          <li><a href="./patterns.html">Patterns architecturaux</a> - Patterns récurrents</li>
+        </ul>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

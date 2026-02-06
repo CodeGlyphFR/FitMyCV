@@ -1,0 +1,108 @@
+{
+  "name": "adapted_skills",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "hard_skills": {
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/skill_with_proficiency"
+        }
+      },
+      "soft_skills": {
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/skill_simple"
+        }
+      },
+      "tools": {
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/skill_with_proficiency"
+        }
+      },
+      "methodologies": {
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/skill_simple"
+        }
+      }
+    },
+    "required": ["hard_skills", "soft_skills", "tools", "methodologies"],
+    "additionalProperties": false,
+    "$defs": {
+      "skill_with_proficiency": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["renamed", "kept", "deleted"]
+          },
+          "skill_final": {
+            "type": "string",
+            "description": "Nom final du skill dans la langue de l'offre"
+          },
+          "proficiency": {
+            "type": "integer",
+            "enum": [0, 1, 2, 3, 4, 5],
+            "description": "Niveau de maîtrise: 0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert"
+          },
+          "probability": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Score de correspondance avec l'offre (0-100%)"
+          },
+          "reason": {
+            "type": ["string", "null"],
+            "description": "Explication dans la langue de l'interface utilisateur"
+          },
+          "original_value": {
+            "type": "string",
+            "description": "Nom original du skill dans le CV source"
+          },
+          "original_position": {
+            "type": "integer",
+            "description": "Index de position dans la catégorie du CV source (0-indexed)"
+          }
+        },
+        "required": ["action", "skill_final", "proficiency", "probability", "reason", "original_value", "original_position"],
+        "additionalProperties": false
+      },
+      "skill_simple": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["renamed", "kept", "deleted"]
+          },
+          "skill_final": {
+            "type": "string",
+            "description": "Nom final du skill dans la langue de l'offre"
+          },
+          "probability": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Score de correspondance avec l'offre (0-100%)"
+          },
+          "reason": {
+            "type": ["string", "null"],
+            "description": "Explication dans la langue de l'interface utilisateur"
+          },
+          "original_value": {
+            "type": "string",
+            "description": "Nom original du skill dans le CV source"
+          },
+          "original_position": {
+            "type": "integer",
+            "description": "Index de position dans la catégorie du CV source (0-indexed)"
+          }
+        },
+        "required": ["action", "skill_final", "probability", "reason", "original_value", "original_position"],
+        "additionalProperties": false
+      }
+    }
+  }
+}

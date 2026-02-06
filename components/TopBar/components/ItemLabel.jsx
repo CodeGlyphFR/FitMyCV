@@ -1,4 +1,6 @@
 import React from "react";
+import Image from "next/image";
+import { LANGUAGE_FLAGS } from "@/lib/cv-core/language/languageConstants";
 
 const useIsomorphicLayoutEffect = typeof window !== "undefined"
   ? React.useLayoutEffect
@@ -12,6 +14,7 @@ const ItemLabel = React.memo(function ItemLabel({
   className = "",
   withHyphen = true,
   tickerKey = 0,
+  showLanguageFlag = false,
   t
 }) {
   if (!item) return null;
@@ -194,11 +197,11 @@ const ItemLabel = React.memo(function ItemLabel({
 
   return (
     <span className={rootClass}>
-      <span className="flex-shrink-0 text-sm opacity-60 whitespace-nowrap">
+      <span className="hidden sm:inline flex-shrink-0 text-sm opacity-60 whitespace-nowrap">
         {prefix}
       </span>
       {withHyphen ? (
-        <span className="flex-shrink-0 opacity-30 text-sm" aria-hidden="true">
+        <span className="hidden sm:inline flex-shrink-0 opacity-30 text-sm" aria-hidden="true">
           –
         </span>
       ) : null}
@@ -213,6 +216,15 @@ const ItemLabel = React.memo(function ItemLabel({
           ) : null}
         </span>
       </span>
+      {showLanguageFlag && item.language && LANGUAGE_FLAGS[item.language] && (
+        <Image
+          src={LANGUAGE_FLAGS[item.language]}
+          alt={item.language}
+          width={16}
+          height={12}
+          className="shrink-0 ml-1"
+        />
+      )}
     </span>
   );
 }, (prevProps, nextProps) => {
@@ -223,9 +235,11 @@ const ItemLabel = React.memo(function ItemLabel({
     prevProps.item?.displayTitle === nextProps.item?.displayTitle &&
     prevProps.item?.displayDate === nextProps.item?.displayDate &&
     prevProps.item?.createdBy === nextProps.item?.createdBy &&
+    prevProps.item?.language === nextProps.item?.language &&
     prevProps.tickerKey === nextProps.tickerKey &&
     prevProps.className === nextProps.className &&
-    prevProps.withHyphen === nextProps.withHyphen
+    prevProps.withHyphen === nextProps.withHyphen &&
+    prevProps.showLanguageFlag === nextProps.showLanguageFlag
   );
 });
 

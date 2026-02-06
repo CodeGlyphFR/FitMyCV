@@ -1,0 +1,74 @@
+{
+  "name": "adapted_languages",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "languages": {
+        "type": "array",
+        "description": "Liste des langues adaptées",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Nom de la langue traduit dans la langue cible"
+            },
+            "level": {
+              "type": "string",
+              "description": "Niveau de langue traduit/aligné"
+            }
+          },
+          "required": ["name", "level"],
+          "additionalProperties": false
+        }
+      },
+      "language_modifications": {
+        "type": "array",
+        "description": "Mapping explicite entre langues source et adaptées",
+        "items": {
+          "type": "object",
+          "properties": {
+            "language_index": {
+              "type": "integer",
+              "description": "Index de la langue dans le tableau source (0-based)"
+            },
+            "language_name": {
+              "type": "string",
+              "description": "Nom de la langue (dans la langue cible)"
+            },
+            "name_before": {
+              "type": "string",
+              "description": "Nom de la langue avant modification"
+            },
+            "name_after": {
+              "type": "string",
+              "description": "Nom de la langue après modification"
+            },
+            "level_before": {
+              "type": "string",
+              "description": "Niveau avant modification"
+            },
+            "level_after": {
+              "type": "string",
+              "description": "Niveau après modification"
+            },
+            "action": {
+              "type": "string",
+              "enum": ["kept", "modified"],
+              "description": "kept=inchangé, modified=traduit/aligné"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Justification du changement"
+            }
+          },
+          "required": ["language_index", "language_name", "name_before", "name_after", "level_before", "level_after", "action", "reason"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": ["languages", "language_modifications"],
+    "additionalProperties": false
+  }
+}

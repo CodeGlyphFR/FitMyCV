@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
-import { scheduleTranslateCvJob } from "@/lib/backgroundTasks/translateCvJob";
+import { scheduleTranslateCvJob } from "@/lib/translation/job";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
 import { CommonErrors, AuthErrors, BackgroundErrors } from "@/lib/api/apiErrors";
@@ -85,7 +85,7 @@ export async function POST(request) {
 
     const taskData = {
       title: `Traduction en cours...`,
-      successMessage: `CV traduit en ${languageNames[targetLanguage]} avec succès`,
+      successMessage: JSON.stringify({ key: 'taskQueue.messages.translateCompleted', params: { lang: languageNames[targetLanguage] } }),
       type: 'translate-cv',
       status: 'queued',
       shouldUpdateCvList: true,

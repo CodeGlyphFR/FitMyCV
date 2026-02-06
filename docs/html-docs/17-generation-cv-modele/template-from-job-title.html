@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CV Mod&egrave;le depuis Titre | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">G&eacute;n&eacute;ration CV Mod&egrave;le</a>
+          <span>/</span>
+          <span>Depuis Titre</span>
+        </div>
+
+        <h1>CV Mod&egrave;le depuis Titre de Poste</h1>
+        <p class="lead">
+          G&eacute;n&eacute;ration d'un CV mod&egrave;le (fictif professionnel) &agrave; partir d'un simple titre de poste. L'IA g&eacute;n&egrave;re un CV complet bas&eacute; sur les exigences typiques du march&eacute; pour ce m&eacute;tier.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Co&ucirc;t</div>
+          <p><strong>Feature</strong> : <code>generate_from_job_title</code> - Utilise les limites mensuelles ou d&eacute;bite 1 cr&eacute;dit. Le cr&eacute;dit est d&eacute;bit&eacute; au lancement et rembours&eacute; en cas d'&eacute;chec.</p>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Diff&eacute;rence avec "Depuis Offre"</div>
+          <p>Cette m&eacute;thode g&eacute;n&egrave;re un CV <strong>g&eacute;n&eacute;rique</strong> bas&eacute; sur le titre seul. Pour un CV plus pr&eacute;cis et adapt&eacute; aux exigences sp&eacute;cifiques d'un employeur, utilisez la <a href="./template-from-offer.html">g&eacute;n&eacute;ration depuis offre</a>.</p>
+        </div>
+
+        <h2>Pipeline de G&eacute;n&eacute;ration</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux de g&eacute;n&eacute;ration depuis titre</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input["ENTR&Eacute;E"]
+        Title["Titre de poste"]
+        Lang["Langue du CV"]
+    end
+
+    subgraph Generate["G&Eacute;N&Eacute;RATION"]
+        Schema["Chargement<br/>template.json"]
+        Prompt["Construction<br/>prompt"]
+        GPT["GPT G&eacute;n&eacute;ration CV"]
+        Validate["Validation JSON"]
+    end
+
+    subgraph Output["SORTIE"]
+        CvFile["CvFile cr&eacute;&eacute;"]
+        Task["BackgroundTask<br/>compl&eacute;t&eacute;e"]
+    end
+
+    Title --> Prompt
+    Lang --> Prompt
+    Schema --> Prompt
+    Prompt --> GPT
+    GPT --> Validate
+    Validate --> CvFile
+    Validate --> Task
+          </div>
+        </div>
+
+        <h2>Data Flow D&eacute;taill&eacute;</h2>
+
+        <h3>&Eacute;tape 1 : R&eacute;ception de la Requ&ecirc;te</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge input">INPUT</span>
+            <span class="data-flow-title">Requ&ecirc;te FormData</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Endpoint</h5>
+            <p><code>POST /api/background-tasks/generate-cv-from-job-title</code></p>
+
+            <h5>Param&egrave;tres</h5>
+            <pre><code class="language-javascript">// FormData
+{
+  jobTitle: "Chef de projet IT",      // Titre de poste (requis)
+  language: "fran&ccedil;ais",              // Langue du CV (d&eacute;faut: fran&ccedil;ais)
+  model: "gpt-4o",                    // Optionnel
+  deviceId: "device_xxx",             // Identification appareil
+  recaptchaToken: "..."               // Optionnel
+}</code></pre>
+
+            <h5>Validation</h5>
+            <ul>
+              <li><code>jobTitle</code> requis et non vide</li>
+              <li>V&eacute;rification reCAPTCHA si token fourni</li>
+              <li>Feature check via <code>incrementFeatureCounter</code></li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>&Eacute;tape 2 : Cr&eacute;ation de la T&acirc;che</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge process">PROCESS</span>
+            <span class="data-flow-title">BackgroundTask</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Enregistrement</h5>
+            <pre><code class="language-javascript">// app/api/background-tasks/generate-cv-from-job-title/route.js
+const taskId = `task_job_title_${timestamp}_${random}`;
+
+await prisma.backgroundTask.create({
+  data: {
+    id: taskId,
+    userId,
+    title: `G&eacute;n&eacute;ration de CV pour "${jobTitle}"`,
+    successMessage: `CV pour "${jobTitle}" cr&eacute;&eacute; avec succ&egrave;s`,
+    type: 'job-title-generation',
+    status: 'queued',
+    shouldUpdateCvList: true,
+    payload: JSON.stringify({
+      jobTitle: trimmedJobTitle,
+      language: language,
+      model: requestedModel
+    }),
+    creditUsed: usageResult.usedCredit,
+    creditTransactionId: usageResult.transactionId
+  }
+});</code></pre>
+
+            <h5>Lancement du Job</h5>
+            <pre><code class="language-javascript">scheduleGenerateCvFromJobTitleJob({
+  taskId,
+  user: { id: userId, name: session.user?.name },
+  payload: taskPayload,
+  deviceId
+});</code></pre>
+          </div>
+        </div>
+
+        <h3>&Eacute;tape 3 : G&eacute;n&eacute;ration IA</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge ai">IA</span>
+            <span class="data-flow-title">GPT - G&eacute;n&eacute;ration CV</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Mod&egrave;le utilis&eacute;</h5>
+            <p>R&eacute;cup&eacute;r&eacute; depuis les settings : <code>model_generate_from_job_title</code></p>
+            <pre><code class="language-javascript">const model = await getAiModelSetting('model_generate_from_job_title');</code></pre>
+
+            <h5>Prompts</h5>
+            <pre><code class="language-markdown"># lib/features/job-title-generation/prompts/generate-from-job-title/system.md
+
+Tu es un expert en cr&eacute;ation de CV professionnels.
+Ta mission est de g&eacute;n&eacute;rer un CV FICTIF mais REALISTE
+pour un candidat correspondant au titre de poste donn&eacute;.
+
+# R&Egrave;GLES
+1. G&eacute;n&egrave;re un candidat FICTIF complet (nom, contact, parcours)
+2. Le parcours doit &ecirc;tre COHERENT avec le titre de poste
+3. Inclus les comp&eacute;tences TYPIQUES pour ce m&eacute;tier
+4. Respecte STRICTEMENT le sch&eacute;ma JSON fourni
+5. G&eacute;n&egrave;re le CV dans la LANGUE demand&eacute;e</code></pre>
+
+            <pre><code class="language-markdown"># lib/features/job-title-generation/prompts/generate-from-job-title/user.md
+
+G&eacute;n&egrave;re un CV pour le titre de poste suivant :
+
+**Titre de poste** : {{jobTitle}}
+**Langue du CV** : {{language}}
+
+**Sch&eacute;ma JSON &agrave; respecter** :
+{{cvSchema}}</code></pre>
+
+            <h5>Appel OpenAI</h5>
+            <pre><code class="language-javascript">// lib/features/job-title-generation/service.js
+const response = await client.chat.completions.create({
+  model,
+  messages: [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt }
+  ],
+  response_format: { type: 'json_object' }
+}, fetchOptions);</code></pre>
+
+            <h5>Validation du R&eacute;sultat</h5>
+            <pre><code class="language-javascript">// Valider que c'est du JSON valide
+let parsedCV;
+try {
+  parsedCV = JSON.parse(rawContent);
+} catch (parseError) {
+  throw new Error(JSON.stringify({
+    translationKey: 'errors.api.openai.invalidJsonResponse'
+  }));
+}
+
+// V&eacute;rifier que le CV contient les champs essentiels
+if (!parsedCV.header?.full_name || !parsedCV.header?.current_title) {
+  throw new Error(JSON.stringify({
+    translationKey: 'errors.api.openai.incompleteCv'
+  }));
+}</code></pre>
+          </div>
+        </div>
+
+        <h3>&Eacute;tape 4 : Sauvegarde</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">CvFile cr&eacute;&eacute;</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Stockage</h5>
+            <pre><code class="language-javascript">// lib/features/job-title-generation/job.js
+const cvFile = await prisma.cvFile.create({
+  data: {
+    userId,
+    filename: `cv-${jobTitle.replace(/\s+/g, '-')}-${Date.now()}.json`,
+    content: cvContent,
+    language: language === 'fran&ccedil;ais' ? 'fr' : language.slice(0, 2),
+    metadata: {
+      origin: 'job_title_generation',
+      jobTitle: jobTitle,
+      generatedAt: new Date().toISOString()
+    }
+  }
+});</code></pre>
+
+            <h5>Exemple de CV g&eacute;n&eacute;r&eacute;</h5>
+            <pre><code class="language-json">{
+  "header": {
+    "full_name": "Thomas Martin",
+    "current_title": "Chef de Projet IT",
+    "contact": {
+      "email": "thomas.martin@email.com",
+      "phone": "+33 6 98 76 54 32",
+      "location": {
+        "city": "Lyon",
+        "region": "Auvergne-Rh&ocirc;ne-Alpes",
+        "country_code": "FR"
+      },
+      "links": [
+        {
+          "type": "linkedin",
+          "url": "https://linkedin.com/in/thomasmartin"
+        }
+      ]
+    }
+  },
+  "summary": {
+    "description": "Chef de Projet IT avec 6 ans d'exp&eacute;rience dans la conduite de projets de transformation digitale..."
+  },
+  "skills": {
+    "hard_skills": [
+      { "name": "Gestion de projet Agile", "proficiency": 5 },
+      { "name": "JIRA", "proficiency": 4 },
+      { "name": "MS Project", "proficiency": 4 }
+    ],
+    "soft_skills": ["Leadership", "Communication", "R&eacute;solution de probl&egrave;mes"],
+    "methodologies": ["Scrum", "Kanban", "PRINCE2"]
+  },
+  "experience": [
+    {
+      "title": "Chef de Projet IT Senior",
+      "company": "Digital Solutions SA",
+      "start_date": "2020-03",
+      "end_date": null,
+      "responsibilities": [
+        "Pilotage de 5 projets de transformation digitale",
+        "Management d'une &eacute;quipe de 8 d&eacute;veloppeurs",
+        "Budget g&eacute;r&eacute; : 2M EUR annuel"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "INSA Lyon",
+      "degree": "Master",
+      "field_of_study": "Informatique",
+      "start_date": "2013-09",
+      "end_date": "2018-06"
+    }
+  ],
+  "languages": [
+    { "name": "Fran&ccedil;ais", "level": "Natif" },
+    { "name": "Anglais", "level": "Courant (C1)" }
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <h2>Langues Support&eacute;es</h2>
+
+        <p>Le CV peut &ecirc;tre g&eacute;n&eacute;r&eacute; dans les <strong>4 langues</strong> de l'application :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Valeur</th>
+              <th>Langue du CV</th>
+              <th>Code ISO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>fran&ccedil;ais</code></td>
+              <td>Fran&ccedil;ais (d&eacute;faut)</td>
+              <td>fr</td>
+            </tr>
+            <tr>
+              <td><code>anglais</code></td>
+              <td>Anglais</td>
+              <td>en</td>
+            </tr>
+            <tr>
+              <td><code>allemand</code></td>
+              <td>Allemand</td>
+              <td>de</td>
+            </tr>
+            <tr>
+              <td><code>espagnol</code></td>
+              <td>Espagnol</td>
+              <td>es</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Mapping automatique</div>
+          <p>La langue de l'interface utilisateur est automatiquement mapp&eacute;e vers la valeur attendue par l'API. Le mapping se fait via <code>LOCALE_TO_LANGUAGE</code> dans <code>CvGeneratorModal.jsx</code>.</p>
+        </div>
+
+        <h2>Gestion des Erreurs</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Erreur</th>
+              <th>Cause</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>NO_JOB_TITLE_PROVIDED</code></td>
+              <td>Titre manquant ou vide</td>
+              <td>Rejet imm&eacute;diat, pas de d&eacute;bit</td>
+            </tr>
+            <tr>
+              <td><code>FEATURE_LIMIT_REACHED</code></td>
+              <td>Limite mensuelle atteinte</td>
+              <td>Rejet, proposition achat cr&eacute;dits</td>
+            </tr>
+            <tr>
+              <td><code>invalidJsonResponse</code></td>
+              <td>R&eacute;ponse GPT non-JSON</td>
+              <td>Remboursement cr&eacute;dits</td>
+            </tr>
+            <tr>
+              <td><code>incompleteCv</code></td>
+              <td>CV sans champs essentiels</td>
+              <td>Remboursement cr&eacute;dits</td>
+            </tr>
+            <tr>
+              <td><code>gptGenerationFailed</code></td>
+              <td>&Eacute;chec GPT</td>
+              <td>Remboursement cr&eacute;dits</td>
+            </tr>
+            <tr>
+              <td><code>Task cancelled</code></td>
+              <td>Annulation utilisateur</td>
+              <td>Remboursement cr&eacute;dits</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Monitoring</h2>
+
+        <p>Chaque g&eacute;n&eacute;ration est trac&eacute;e dans <code>OpenAIUsageLog</code> :</p>
+
+        <pre><code class="language-json">{
+  "userId": "user_123",
+  "featureName": "generate_from_job_title",
+  "model": "gpt-4o",
+  "promptTokens": 1800,
+  "completionTokens": 1500,
+  "cachedTokens": 0,
+  "duration": 5200
+}</code></pre>
+
+        <h2>Fichiers Cl&eacute;s</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>R&ocirc;le</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>app/api/background-tasks/generate-cv-from-job-title/route.js</code></td>
+              <td>Endpoint API</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/job-title-generation/service.js</code></td>
+              <td>Service de g&eacute;n&eacute;ration</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/job-title-generation/job.js</code></td>
+              <td>Background job</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/job-title-generation/prompts/generate-from-job-title/</code></td>
+              <td>Prompts de g&eacute;n&eacute;ration</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/job-title-generation/prompts/validate-job-title/</code></td>
+              <td>Prompts de validation (d&eacute;sactiv&eacute;)</td>
+            </tr>
+            <tr>
+              <td><code>lib/settings/aiModels.js</code></td>
+              <td>Configuration mod&egrave;le GPT</td>
+            </tr>
+            <tr>
+              <td><code>components/TopBar/modals/CvGeneratorModal.jsx</code></td>
+              <td>Interface utilisateur</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>R&eacute;ponse API</h2>
+
+        <h3>Succ&egrave;s (202 Accepted)</h3>
+        <pre><code class="language-json">{
+  "success": true,
+  "queued": true,
+  "taskId": "task_job_title_1234567890_abc123def"
+}</code></pre>
+
+        <h3>Erreur Limite (403 Forbidden)</h3>
+        <pre><code class="language-json">{
+  "error": "Limite mensuelle atteinte",
+  "actionRequired": "purchase_credits",
+  "redirectUrl": "/credits"
+}</code></pre>
+
+        <h3>Erreur Validation (400 Bad Request)</h3>
+        <pre><code class="language-json">{
+  "error": "NO_JOB_TITLE_PROVIDED",
+  "message": "Le titre de poste est requis"
+}</code></pre>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

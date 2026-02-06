@@ -328,7 +328,7 @@ export function OnboardingUsersTable({ refreshKey }) {
                     <div className="mb-2">
                       <div className="flex items-center justify-between text-xs text-white/60 mb-1">
                         <span>
-                          {getStepIcon(user.currentStep)} Étape {user.currentStep}/8 - {user.currentStepName}
+                          {getStepIcon(user.currentStep)} Étape {user.currentStep}/9 - {user.currentStepName}
                         </span>
                         <span>{user.modalsCompleted}/{user.totalModals} modales</span>
                       </div>

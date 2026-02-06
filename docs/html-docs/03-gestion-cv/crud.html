@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRUD CV | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Gestion CV</a>
+          <span>/</span>
+          <span>CRUD</span>
+        </div>
+
+        <h1>CRUD CV</h1>
+        <p class="lead">
+          Operations de creation, lecture, mise a jour et suppression des CV.
+        </p>
+
+        <h2>API Endpoints</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Operation</th>
+              <th>Endpoint</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Create</strong></td>
+              <td><code>POST /api/cv</code></td>
+              <td>Creer un nouveau CV</td>
+            </tr>
+            <tr>
+              <td><strong>Read (liste)</strong></td>
+              <td><code>GET /api/cv</code></td>
+              <td>Lister tous les CV de l'utilisateur</td>
+            </tr>
+            <tr>
+              <td><strong>Read (detail)</strong></td>
+              <td><code>GET /api/cv/[id]</code></td>
+              <td>Recuperer un CV spécifique</td>
+            </tr>
+            <tr>
+              <td><strong>Update</strong></td>
+              <td><code>PUT /api/cv/[id]</code></td>
+              <td>Mettre a jour le contenu</td>
+            </tr>
+            <tr>
+              <td><strong>Delete</strong></td>
+              <td><code>DELETE /api/cv/[id]</code></td>
+              <td>Supprimer un CV</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Creation d'un CV</h2>
+
+        <pre><code>// POST /api/cv
+import { auth } from '@/lib/auth/session';
+import prisma from '@/lib/prisma';
+import { createEmptyCv } from '@/lib/cv-core/templates';
+
+export async function POST(request) {
+  const session = await auth();
+  const { name, templateId } = await request.json();
+
+  // Creer le CV en base
+  const cvFile = await prisma.cvFile.create({
+    data: {
+      userId: session.user.id,
+      filename: generateFilename(name),
+      content: createEmptyCv(templateId),
+      isDefault: false
+    }
+  });
+
+  // Creer la version initiale
+  await prisma.cvVersion.create({
+    data: {
+      cvFileId: cvFile.id,
+      versionNumber: 1,
+      content: cvFile.content,
+      origin: 'creation'
+    }
+  });
+
+  return Response.json({ data: cvFile });
+}</code></pre>
+
+        <h2>Lecture des CV</h2>
+
+        <pre><code>// GET /api/cv
+export async function GET(request) {
+  const session = await auth();
+
+  const cvFiles = await prisma.cvFile.findMany({
+    where: { userId: session.user.id },
+    orderBy: { updatedAt: 'desc' },
+    select: {
+      id: true,
+      filename: true,
+      matchScore: true,
+      isDefault: true,
+      updatedAt: true,
+      jobOffer: {
+        select: { title: true, company: true }
+      }
+    }
+  });
+
+  return Response.json({ data: cvFiles });
+}</code></pre>
+
+        <h2>Mise a jour</h2>
+
+        <pre><code>// PUT /api/cv/[id]
+export async function PUT(request, { params }) {
+  const session = await auth();
+  const { content, createVersion } = await request.json();
+
+  // Verifier la propriete
+  const cvFile = await prisma.cvFile.findFirst({
+    where: { id: params.id, userId: session.user.id }
+  });
+
+  if (!cvFile) {
+    return apiError(CommonErrors.notFound('CV'));
+  }
+
+  // Creer une version si demande
+  if (createVersion) {
+    const lastVersion = await prisma.cvVersion.findFirst({
+      where: { cvFileId: cvFile.id },
+      orderBy: { versionNumber: 'desc' }
+    });
+
+    await prisma.cvVersion.create({
+      data: {
+        cvFileId: cvFile.id,
+        versionNumber: (lastVersion?.versionNumber || 0) + 1,
+        content: cvFile.content,
+        origin: 'manual_edit'
+      }
+    });
+  }
+
+  // Mettre a jour le CV
+  const updated = await prisma.cvFile.update({
+    where: { id: params.id },
+    data: { content }
+  });
+
+  return Response.json({ data: updated });
+}</code></pre>
+
+        <h2>Suppression</h2>
+
+        <pre><code>// DELETE /api/cv/[id]
+export async function DELETE(request, { params }) {
+  const session = await auth();
+
+  // Supprimer les versions associees
+  await prisma.cvVersion.deleteMany({
+    where: { cvFileId: params.id }
+  });
+
+  // Supprimer le CV
+  await prisma.cvFile.delete({
+    where: { id: params.id, userId: session.user.id }
+  });
+
+  return Response.json({ success: true });
+}</code></pre>
+
+        <h2>Helpers</h2>
+
+        <pre><code>// lib/cv-core/storage.js
+
+export async function readUserCvFile(userId, cvFileId) {
+  const cv = await prisma.cvFile.findFirst({
+    where: { id: cvFileId, userId }
+  });
+  return cv?.content;
+}
+
+export async function writeUserCvFile(userId, cvFileId, content) {
+  return prisma.cvFile.update({
+    where: { id: cvFileId, userId },
+    data: { content, updatedAt: new Date() }
+  });
+}</code></pre>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suggestions IA | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Pipeline Optimisation</a>
+          <span>/</span>
+          <span>Suggestions</span>
+        </div>
+
+
+        <h1>Suggestions IA</h1>
+        <p class="lead">
+          Système de generation de suggestions d'amelioration pour optimiser le CV en fonction de l'offre d'emploi.
+        </p>
+
+        <h2>Types de Suggestions</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Impact</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>add_keyword</code></td>
+              <td>Ajouter un mot-clé manquant</td>
+              <td>+2-5% score</td>
+            </tr>
+            <tr>
+              <td><code>rephrase</code></td>
+              <td>Reformuler pour mieux matcher</td>
+              <td>+1-3% score</td>
+            </tr>
+            <tr>
+              <td><code>add_metric</code></td>
+              <td>Ajouter des chiffres/metriques</td>
+              <td>+3-5% score</td>
+            </tr>
+            <tr>
+              <td><code>reorder</code></td>
+              <td>Reorganiser les elements</td>
+              <td>+1-2% score</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Implementation</h2>
+
+        <pre><code>// lib/cv-optimisation/suggestions.js
+export async function generateSuggestions(cv, jobOffer, currentScore) {
+  const suggestions = await callOpenAI({
+    featureName: 'suggestions',
+    messages: [
+      { role: 'system', content: SUGGESTIONS_PROMPT },
+      { role: 'user', content: JSON.stringify({ cv, jobOffer, currentScore }) }
+    ],
+    responseFormat: { type: 'json_schema', json_schema: suggestionsSchema }
+  });
+
+  return suggestions.map(s => ({
+    ...s,
+    id: generateId(),
+    status: 'pending'
+  }));
+}</code></pre>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

@@ -37,7 +37,8 @@
         "providerAlreadyLinked": "Dieser Anbieter ist bereits mit Ihrem Konto verknüpft",
         "providerNotLinked": "Dieser Anbieter ist nicht mit Ihrem Konto verknüpft",
         "cannotUnlinkLastProvider": "Verknüpfung kann nicht aufgehoben werden: Sie müssen mindestens ein verknüpftes Konto haben",
-        "registrationDisabled": "Registrierungen sind vorübergehend ausgesetzt"
+        "registrationDisabled": "Registrierungen sind vorübergehend ausgesetzt",
+        "privacyPolicyRequired": "Sie müssen die Datenschutzrichtlinie akzeptieren, um ein Konto zu erstellen"
       },
       "cv": {
         "notFound": "Lebenslauf nicht gefunden",
@@ -53,6 +54,10 @@
         "improveError": "Fehler bei der Verbesserung des Lebenslaufs",
         "invalidVersion": "Ungültige Versionsnummer",
         "versionNotFound": "Version nicht gefunden"
+      },
+      "editMode": {
+        "cannotActivate": "Sie können den Bearbeitungsmodus nicht aktivieren",
+        "verificationError": "Fehler bei der Überprüfung"
       },
       "background": {
         "noSourceProvided": "Fügen Sie mindestens einen Link oder eine Datei hinzu",
@@ -124,8 +129,10 @@
         "gptGenerationFailed": "GPT konnte die Lebenslauf-Vorlage nicht generieren",
         "promptNotFound": "Prompt-Datei nicht gefunden"
       },
-      "generateV2": {
-        "noOffersProvided": "Keine Stellenangebote angegeben",
+      "generate": {
+        "noLinksProvided": "Keine Stellenangebote angegeben",
+        "invalidLinksFormat": "Ungültiges Links-Format",
+        "invalidUrlFormat": "Ungültiges URL-Format",
         "maxOffersExceeded": "Maximale Anzahl an Angeboten überschritten ({max} max, {provided} angegeben)",
         "invalidOfferIds": "Eine oder mehrere Angebots-IDs sind ungültig",
         "invalidMode": "Ungültiger Generierungsmodus (erwartet: adapt oder rebuild)",

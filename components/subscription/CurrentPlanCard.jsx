@@ -141,7 +141,7 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
       }
     } else {
       // Ne devrait jamais arriver (annuel → mensuel est bloqué)
-      alert('Impossible de revenir au paiement mensuel. Veuillez annuler votre abonnement si nécessaire.');
+      alert(t('subscription.packs.errors.cannotSwitchToMonthly'));
     }
   };
 
@@ -160,6 +160,7 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
         body: JSON.stringify({
           planId: plan.id,
           billingPeriod: 'yearly',
+          locale: language,
         }),
       });
 

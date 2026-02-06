@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OAuth Flow | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Authentification</a>
+          <span>/</span>
+          <span>OAuth Flow</span>
+        </div>
+
+        <h1>OAuth Flow</h1>
+        <p class="lead">
+          FitMyCV.io supporte l'authentification OAuth 2.0 via Google et LinkedIn, permettant une connexion rapide et securisee.
+        </p>
+
+        <h2>Flux OAuth 2.0</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Sequence OAuth</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant F as FitMyCV
+    participant P as Provider (Google/LinkedIn)
+    participant DB as PostgreSQL
+
+    U->>F: Clic "Connexion avec Google"
+    F->>P: Redirection vers OAuth
+    P->>U: Page de consentement
+    U->>P: Autorise l'acces
+    P->>F: Code d'autorisation
+    F->>P: Echange code contre token
+    P->>F: Access token + profil
+    F->>DB: Creer/mettre a jour User
+    F->>DB: Creer Account (liaison)
+    F->>U: Session créée, redirection
+          </div>
+        </div>
+
+        <h2>Providers Configures</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Google OAuth</h4>
+            <ul>
+              <li><strong>Scopes</strong>: email, profile</li>
+              <li><strong>Donnees recuperees</strong>: email, nom, avatar</li>
+              <li><strong>Callback</strong>: /api/auth/callback/google</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>LinkedIn OAuth</h4>
+            <ul>
+              <li><strong>Scopes</strong>: r_liteprofile, r_emailaddress</li>
+              <li><strong>Donnees recuperees</strong>: email, nom, photo</li>
+              <li><strong>Callback</strong>: /api/auth/callback/linkedin</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>Configuration Provider</h2>
+
+        <pre><code>// lib/auth/options.js
+
+import GoogleProvider from 'next-auth/providers/google';
+import LinkedInProvider from 'next-auth/providers/linkedin';
+
+export const authOptions = {
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      authorization: {
+        params: {
+          prompt: 'consent',
+          access_type: 'offline',
+          response_type: 'code'
+        }
+      }
+    }),
+
+    LinkedInProvider({
+      clientId: process.env.LINKEDIN_CLIENT_ID,
+      clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
+      authorization: {
+        params: {
+          scope: 'r_liteprofile r_emailaddress'
+        }
+      }
+    })
+  ]
+};</code></pre>
+
+        <h2>Liaison de Comptes</h2>
+
+        <p>Quand un utilisateur se connecte via OAuth, NextAuth crée automatiquement :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Table</th>
+              <th>Donnees</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>User</code></td>
+              <td>id, email, name, image (si nouveau)</td>
+            </tr>
+            <tr>
+              <td><code>Account</code></td>
+              <td>provider, providerAccountId, access_token, refresh_token</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Gestion Multi-Providers</h2>
+
+        <p>Un utilisateur peut lier plusieurs providers a son compte :</p>
+
+        <pre><code>// Verifier les comptes lies
+const accounts = await prisma.account.findMany({
+  where: { userId: session.user.id }
+});
+
+// Exemple de resultat
+[
+  { provider: 'google', providerAccountId: '123...' },
+  { provider: 'linkedin', providerAccountId: '456...' },
+  { provider: 'credentials', providerAccountId: null }
+]</code></pre>
+
+        <h2>Variables d'Environnement</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>GOOGLE_CLIENT_ID</code></td>
+              <td>Client ID Google Cloud Console</td>
+            </tr>
+            <tr>
+              <td><code>GOOGLE_CLIENT_SECRET</code></td>
+              <td>Client Secret Google</td>
+            </tr>
+            <tr>
+              <td><code>LINKEDIN_CLIENT_ID</code></td>
+              <td>Client ID LinkedIn Developer</td>
+            </tr>
+            <tr>
+              <td><code>LINKEDIN_CLIENT_SECRET</code></td>
+              <td>Client Secret LinkedIn</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

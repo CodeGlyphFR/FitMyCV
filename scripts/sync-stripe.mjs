@@ -34,7 +34,7 @@ if (!quiet) {
 }
 
 // Import dynamique pour que dotenv soit chargé avant
-const { syncStripeProductsInternal } = await import('../lib/subscription/stripeSync.mjs');
+const { syncStripeProductsInternal } = await import('../lib/subscription/stripeSync.js');
 
 try {
   const result = await syncStripeProductsInternal({ quiet });

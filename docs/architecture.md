@@ -1,372 +1,651 @@
 # Architecture Technique - FitMyCV.io
 
-> Documentation générée le 2026-01-07 | Scan exhaustif BMAD v1.2.0
+> Application SaaS de génération de CV optimisés par IA
 
 ---
 
-## Vue d'Ensemble
+## Vue d'ensemble
 
-**FitMyCV.io** est une application SaaS de génération de CV optimisés par IA, construite en architecture monolithique moderne avec Next.js 14.
+**FitMyCV.io** est une application web full-stack monolithique construite avec Next.js 16 (App Router). Elle permet aux utilisateurs de créer, optimiser et exporter des CV personnalisés grâce à l'intelligence artificielle.
 
-### Stack Technologique
+### Caractéristiques architecturales
 
-| Couche | Technologie | Version |
-|--------|-------------|---------|
-| **Framework** | Next.js (App Router) | 14.2.35 |
-| **Frontend** | React | 18.2.0 |
-| **Styling** | Tailwind CSS | 3.4.4 |
-| **Animations** | Framer Motion | 12.23.24 |
-| **Database** | PostgreSQL | - |
-| **ORM** | Prisma | 6.16.2 |
-| **Auth** | NextAuth.js | 4.24.11 |
-| **AI** | OpenAI SDK | 6.0.0 |
-| **Payments** | Stripe | 19.1.0 |
-| **Email** | Nodemailer + Resend | 7.0.12 / 6.1.2 |
-| **PDF** | Puppeteer + pdf2json | 24.23.0 / 3.2.2 |
+| Aspect | Choix |
+|--------|-------|
+| **Type** | Monolith full-stack |
+| **Framework** | Next.js 16.1.1 (App Router) |
+| **Bundler** | Turbopack (défaut Next.js 16) |
+| **Rendering** | Hybrid (SSR + Client Components) |
+| **API** | API Routes (serverless-like) |
+| **Base de données** | PostgreSQL via Prisma 6 |
+| **Authentification** | NextAuth.js 4 (OAuth + Credentials) |
+| **Paiements** | Stripe (abonnements + crédits) |
+| **IA** | OpenAI API (modèles configurables) |
+
+---
+
+## Stack Technologique
+
+### Frontend
+
+| Technologie | Version | Usage |
+|-------------|---------|-------|
+| React | 19.2.3 | UI Components |
+| Next.js | 16.1.1 | Framework (App Router) |
+| Tailwind CSS | 4.1.18 | Styling |
+| Framer Motion | 12.25.0 | Animations |
+| Lucide React | 0.562.0 | Icônes |
+| Recharts | 3.6.0 | Graphiques (admin) |
+| @dnd-kit | 6.3.1+ | Drag & Drop |
+
+### Backend
+
+| Technologie | Version | Usage |
+|-------------|---------|-------|
+| Next.js API Routes | 16.1.1 | REST API |
+| Prisma | 6.19.1 | ORM |
+| PostgreSQL | - | Base de données |
+| NextAuth.js | 4.24.13 | Authentification |
+
+### Services externes
+
+| Service | Usage |
+|---------|-------|
+| OpenAI API | Génération CV, scoring, extraction offres |
+| Stripe | Abonnements, packs crédits, facturation |
+| SMTP OVH | Email principal |
+| Resend | Email fallback |
+| Google reCAPTCHA v3 | Protection bot |
+
+### Outils
+
+| Outil | Usage |
+|-------|-------|
+| Puppeteer | Export PDF, scraping |
+| pdf-parse | Extraction texte PDF |
+| docx | Export DOCX |
+| AJV | Validation JSON Schema |
+| Luxon | Manipulation dates |
 
 ---
 
 ## Architecture Applicative
 
+### Couches
+
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        CLIENT (Browser)                          │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │   React     │  │  Tailwind   │  │   Framer Motion         │  │
-│  │   18.2.0    │  │   CSS       │  │   (animations)          │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    PRÉSENTATION                              │
+│  React Components (231) + Tailwind CSS + Framer Motion      │
+└─────────────────────────────────────────────────────────────┘
                               │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     NEXT.JS 14 (App Router)                      │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │                    127 API Routes                        │    │
-│  │  /api/auth/*  /api/cv/*  /api/admin/*  /api/subscription│    │
-│  └─────────────────────────────────────────────────────────┘    │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │                    Middleware Layer                      │    │
-│  │  • Auth (NextAuth JWT)  • i18n  • Rate Limiting         │    │
-│  └─────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    API LAYER                                 │
+│  Next.js API Routes (113 endpoints)                         │
+│  - Auth (9) - CV (15) - Subscription (14) - Admin (38)     │
+└─────────────────────────────────────────────────────────────┘
                               │
-        ┌─────────────────────┼─────────────────────┐
-        ▼                     ▼                     ▼
-┌───────────────┐    ┌───────────────┐    ┌───────────────┐
-│   PostgreSQL  │    │    OpenAI     │    │    Stripe     │
-│   (Prisma 6)  │    │   GPT-4o      │    │  Payments     │
-│   33 models   │    │   API         │    │  Webhooks     │
-└───────────────┘    └───────────────┘    └───────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    BUSINESS LOGIC                            │
+│  lib/ modules (31 modules, 165 fichiers)                    │
+│  - cv-core - subscription - openai-core - background-jobs   │
+└─────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                    DATA ACCESS                               │
+│  Prisma ORM (33 modèles)                                    │
+└─────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                    INFRASTRUCTURE                            │
+│  PostgreSQL + OpenAI + Stripe + Email (SMTP/Resend)         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Flux de données principal
+
+```
+┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
+│  Client  │────▶│   API    │────▶│   lib/   │────▶│  Prisma  │
+│  React   │◀────│  Routes  │◀────│ modules  │◀────│    DB    │
+└──────────┘     └──────────┘     └──────────┘     └──────────┘
+                      │
+                      ▼
+              ┌──────────────┐
+              │   Services   │
+              │   externes   │
+              │ OpenAI/Stripe│
+              └──────────────┘
+```
+
+---
+
+## Modules Métier
+
+### Organisation des domaines
+
+```
+lib/
+├── AUTHENTIFICATION
+│   ├── auth/           # NextAuth config + session
+│   ├── security/       # Validation, sanitization
+│   └── recaptcha/      # Vérification bot
+│
+├── CV CORE
+│   ├── cv-core/        # Storage, validation, versioning
+│   ├── job-offer/      # Extraction offres emploi
+│   ├── scoring/        # Match score CV/offre
+│   └── translation/    # Traduction CV
+│
+├── INTELLIGENCE ARTIFICIELLE
+│   ├── openai-core/    # Client API, helpers
+│   └── prompts-shared/ # Prompts réutilisables
+│
+├── BILLING
+│   ├── subscription/   # Plans, crédits, limites
+│   └── stripe/         # Intégration Stripe (client, locale)
+│
+├── ASYNC PROCESSING
+│   └── background-jobs/# Queue tâches (max 3 concurrent)
+│
+├── COMMUNICATION
+│   ├── email/          # SMTP + Resend
+│   └── events/         # Event emitter temps réel
+│
+├── ANALYTICS
+│   ├── telemetry/      # Tracking événements
+│   ├── analytics/      # Dashboards
+│   └── admin/          # Config admin
+│
+└── SUPPORT
+    ├── settings/       # Settings dynamiques
+    ├── i18n/           # Labels localisés
+    ├── utils/          # Helpers génériques (normalizeJobUrl, etc.)
+    └── api/            # Factory erreurs
+```
+
+### Dépendances entre modules
+
+```
+auth ──────────────▶ subscription (plan par défaut)
+                  ├─▶ email (emails bienvenue)
+                  └─▶ telemetry (tracking login)
+
+cv-core ───────────▶ settings (max versions)
+                  └─▶ utils (sanitization)
+
+subscription ──────▶ settings (mode subscription)
+                  ├─▶ events (refresh UI)
+                  └─▶ prisma
+
+background-jobs ───▶ subscription (feature limits)
+                  └─▶ telemetry (tracking)
+
+openai-core ───────▶ settings (model selection)
 ```
 
 ---
 
 ## Patterns Architecturaux
 
-### 1. App Router (Next.js 14)
+### 1. Feature Authorization Pattern
 
-Structure basée sur le système de fichiers :
+Contrôle d'accès aux fonctionnalités basé sur le plan d'abonnement et les crédits.
 
-```
-app/
-├── page.jsx              # Page principale (CV Editor)
-├── layout.jsx            # Layout racine avec providers
-├── api/                  # 127 API Routes
-│   ├── auth/            # Authentification
-│   ├── cv/              # Opérations CV
-│   ├── cvs/             # CRUD CVs
-│   ├── admin/           # Administration
-│   └── subscription/    # Abonnements
-├── auth/                # Pages auth (signin, register)
-├── admin/               # Dashboard admin
-└── account/             # Paramètres compte
-```
+```javascript
+// lib/subscription/featureUsage.js
+const check = await canUseFeature(userId, 'generate_cv');
 
-### 2. Layered Architecture
+if (!check.canUse) {
+  return apiError(CommonErrors.limitReached());
+}
 
-```
-┌────────────────────────────────────────┐
-│           Presentation Layer           │
-│  components/ (150 React components)    │
-├────────────────────────────────────────┤
-│            API Layer                   │
-│  app/api/* (127 routes)               │
-├────────────────────────────────────────┤
-│           Business Logic               │
-│  lib/* (25 modules)                   │
-├────────────────────────────────────────┤
-│            Data Layer                  │
-│  prisma/schema.prisma (33 models)     │
-└────────────────────────────────────────┘
+if (check.useCredit) {
+  await debitCredit(userId, check.creditCost, 'generate_cv');
+}
+
+// Exécuter la fonctionnalité...
+
+await incrementFeatureCounter(userId, 'generate_cv');
 ```
 
-### 3. Provider Pattern (React Context)
+### 2. Background Job Queue Pattern
 
-```jsx
-// components/RootProviders.jsx
+Queue de tâches asynchrones avec limite de concurrence.
+
+```javascript
+// lib/background-jobs/jobQueue.js
+// Max 3 jobs globaux en parallèle
+// Max 3 cv_generation par utilisateur
+// Autres types: 1 seul à la fois par utilisateur
+
+const canStart = canStartTaskType(userId, 'cv_generation');
+if (!canStart.allowed) return;
+
+registerTaskTypeStart(userId, 'cv_generation');
+try {
+  enqueueJob(async () => {
+    // Tâche longue durée
+  });
+} finally {
+  registerTaskTypeEnd(userId, 'cv_generation');
+}
+```
+
+### 3. CV Versioning Pattern
+
+Historique des versions avant modifications IA.
+
+```javascript
+// lib/cv-core/versioning.js
+// AVANT modification IA
+const version = await createCvVersion(userId, filename, 'Optimization');
+
+// Modifier le CV
+await writeUserCvFile(userId, filename, optimizedContent);
+
+// Restauration possible
+await restoreCvVersion(userId, filename, targetVersion);
+```
+
+### 4. Error Factory Pattern
+
+Gestion centralisée des erreurs API avec i18n.
+
+```javascript
+// lib/api/apiErrors.js
+export function apiError(translationKey, options = {}) {
+  return NextResponse.json(
+    { error: translationKey, ...options.params },
+    { status: options.status || 400 }
+  );
+}
+
+export const CommonErrors = {
+  notAuthenticated: () => apiError('errors.api.notAuthenticated', { status: 401 }),
+  limitReached: (feature) => apiError('errors.api.limitReached', { feature, status: 403 }),
+  // ...
+};
+```
+
+### 5. Provider Composition Pattern
+
+Imbrication des contextes React.
+
+```javascript
+// components/providers/RootProviders.jsx
 <SessionProvider>
-  <NotificationProvider>
-    <BackgroundTasksProvider>
-      <SettingsProvider>
-        <OnboardingProvider>
-          <HighlightProvider>
-            {children}
-          </HighlightProvider>
-        </OnboardingProvider>
-      </SettingsProvider>
-    </BackgroundTasksProvider>
-  </NotificationProvider>
+  <RecaptchaProvider>
+    <SettingsProvider>
+      <CreditCostsProvider>
+        <LanguageProvider>
+          <NotificationProvider>
+            <AdminProvider>
+              <OnboardingProvider>
+                {/* App content */}
+              </OnboardingProvider>
+            </AdminProvider>
+          </NotificationProvider>
+        </LanguageProvider>
+      </CreditCostsProvider>
+    </SettingsProvider>
+  </RecaptchaProvider>
 </SessionProvider>
 ```
 
----
+### 6. Event-Driven UI Updates
 
-## Modules Core (lib/)
-
-### Authentication (`lib/auth/`)
-
-| Fichier | Purpose |
-|---------|---------|
-| `options.js` | Configuration NextAuth (JWT, OAuth providers) |
-| `session.js` | Wrapper getServerSession |
-| `autoSignIn.js` | Auto-signin post vérification email |
-
-**Stratégie** : JWT avec refresh 24h, max 7 jours
-**Providers** : Credentials, Google, GitHub, Apple
-
-### CV Management (`lib/cv/`)
-
-| Fichier | Purpose |
-|---------|---------|
-| `storage.js` | CRUD CVs en PostgreSQL (migration depuis FS) |
-| `validation.js` | Validation JSON-Schema |
-| `versioning.js` | Historique versions (rollback) |
-| `changeTracking.js` | Tracking modifications IA |
-| `detectLanguage.js` | Détection automatique langue |
-
-**Pattern** : CVs stockés en JSON dans `CvFile.content`
-
-### OpenAI Integration (`lib/openai/`)
-
-| Fichier | Purpose |
-|---------|---------|
-| `client.js` | Client OpenAI avec cache déduplication |
-| `generateCv.js` | Génération CV depuis offre emploi |
-| `improveCv.js` | Amélioration CV existant |
-| `translateCv.js` | Traduction multi-langue |
-| `importPdf.js` | Extraction CV depuis PDF |
-| `promptLoader.js` | Chargement prompts dynamiques |
-
-**Models** : GPT-4o (configurable via admin)
-**Features** : Structured Outputs, Cache 5min, Telemetry
-
-### Subscription System (`lib/subscription/`)
-
-| Fichier | Purpose |
-|---------|---------|
-| `subscriptions.js` | Gestion plans Stripe |
-| `credits.js` | Balance et transactions crédits |
-| `featureUsage.js` | Compteurs mensuels par feature |
-| `cvLimits.js` | Limites CV par plan |
-
-**Pattern** : Compteurs reset mensuel (date anniversaire)
-
-### Background Tasks (`lib/backgroundTasks/`)
+Mise à jour temps réel via événements custom.
 
 ```javascript
-// Pattern: Queue FIFO avec max 3 concurrent
-enqueueJob(() => generateCvJob(taskId, userId, payload));
-```
+// Émission (serveur ou client)
+window.dispatchEvent(new CustomEvent('cv:updated', { detail: { filename } }));
+window.dispatchEvent(new CustomEvent('credits:updated'));
 
-| Job | Durée typique |
-|-----|---------------|
-| `generateCvJob` | 30-60s |
-| `importPdfJob` | 10-30s |
-| `translateCvJob` | 20-40s |
-| `improveCvJob` | 20-40s |
+// Écoute (composants)
+useEffect(() => {
+  const handler = (e) => refreshData();
+  window.addEventListener('cv:updated', handler);
+  return () => window.removeEventListener('cv:updated', handler);
+}, []);
+```
 
 ---
 
-## Flux de Données
+## Authentification
 
-### 1. Génération CV (Flow Principal)
+### Providers supportés
 
-```
-User Input (Job URL/PDF)
-        │
-        ▼
-┌───────────────────┐
-│  Background Task  │
-│  (enqueueJob)     │
-└─────────┬─────────┘
-          │
-          ▼
-┌───────────────────┐     ┌───────────────┐
-│  Puppeteer/PDF    │────▶│  Content      │
-│  Extraction       │     │  Extraction   │
-└───────────────────┘     └───────┬───────┘
-                                  │
-                                  ▼
-                    ┌───────────────────────┐
-                    │  OpenAI GPT-4o        │
-                    │  Structured Output    │
-                    └───────────┬───────────┘
-                                │
-                                ▼
-                    ┌───────────────────────┐
-                    │  CV Validation        │
-                    │  (JSON Schema)        │
-                    └───────────┬───────────┘
-                                │
-                                ▼
-                    ┌───────────────────────┐
-                    │  PostgreSQL           │
-                    │  CvFile.content       │
-                    └───────────────────────┘
-```
+| Provider | Type | Particularités |
+|----------|------|----------------|
+| Google | OAuth 2.0 | Login social |
+| GitHub | OAuth 2.0 | Login social |
+| Apple | OAuth 2.0 | Login social (Sign in with Apple) |
+| Credentials | Email/Password | Vérification email requise |
 
-### 2. Authentification
+### Flux d'authentification
 
 ```
-User Login
-    │
-    ├──▶ Credentials ──▶ bcrypt verify ──▶ JWT
-    │
-    └──▶ OAuth (Google/GitHub/Apple) ──▶ JWT
-                                            │
-                                            ▼
-                                    Session (7 days max)
-```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Signup    │────▶│  Verify     │────▶│   Login     │
+│  (email)    │     │   Email     │     │  (auto)     │
+└─────────────┘     └─────────────┘     └─────────────┘
 
-### 3. Paiement (Stripe)
-
-```
-Checkout Session
-       │
-       ▼
 ┌─────────────┐     ┌─────────────┐
-│   Stripe    │────▶│  Webhook    │
-│   Payment   │     │  Handler    │
-└─────────────┘     └──────┬──────┘
-                           │
-           ┌───────────────┼───────────────┐
-           ▼               ▼               ▼
-    Subscription      CreditBalance    EmailLog
-       Update           Update          Send
+│   OAuth     │────▶│   Login     │  (direct, email vérifié)
+│  Provider   │     │  (session)  │
+└─────────────┘     └─────────────┘
+```
+
+### Session JWT
+
+- **Durée** : 7 jours
+- **Stockage** : Cookie HttpOnly, Secure, SameSite=Lax
+- **Contenu** : userId, email, name, role, image
+
+---
+
+## Système de Billing
+
+### Modes de fonctionnement
+
+**Mode Abonnement** (par défaut) :
+- Plans : Gratuit, Pro, Premium
+- Limites mensuelles par feature
+- Compteurs réinitialisés chaque mois
+- Crédits supplémentaires achetables
+
+**Mode Crédits uniquement** :
+- Pas d'abonnement Stripe
+- Crédits de bienvenue configurables
+- Tout payé en crédits
+
+### Architecture Stripe
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Checkout  │────▶│   Stripe    │────▶│   Webhook   │
+│   Session   │     │   Payment   │     │   Handler   │
+└─────────────┘     └─────────────┘     └─────────────┘
+                                              │
+                                              ▼
+                                        ┌─────────────┐
+                                        │   Update    │
+                                        │   Database  │
+                                        └─────────────┘
+```
+
+### Modèles de données billing
+
+```
+User ──────▶ Subscription ──────▶ SubscriptionPlan
+  │                                      │
+  ├──────▶ CreditBalance                 ▼
+  │              │              SubscriptionPlanFeatureLimit
+  └──────▶ CreditTransaction
+                 │
+  └──────▶ FeatureUsageCounter
+```
+
+---
+
+## Traitement Asynchrone
+
+### Types de tâches
+
+| Type | Description | Concurrence |
+|------|-------------|-------------|
+| `cv_generation` | Génération CV depuis offre | Max 3/user |
+| `pdf_import` | Import CV depuis PDF | 1/user |
+| `translate_cv` | Traduction CV | 1/user |
+| `match_score` | Calcul score matching | 1/user |
+| `optimize_cv` | Optimisation IA | 1/user |
+
+### Cycle de vie d'une tâche
+
+```
+pending ──▶ running ──▶ completed
+                   └──▶ failed (avec retry possible)
+```
+
+### Gestion des erreurs et remboursements
+
+```javascript
+try {
+  await debitCredit(userId, cost, taskType);
+  await executeTask();
+  await incrementFeatureCounter(userId, taskType);
+} catch (error) {
+  await refundCredit(userId, transactionId, 'Task failed');
+  await refundFeatureUsage(taskId);
+  throw error;
+}
 ```
 
 ---
 
 ## Sécurité
 
-### Authentification & Autorisation
+### Mesures implémentées
 
-- **JWT Strategy** : Tokens signés, refresh automatique
-- **OAuth** : Google, GitHub, Apple avec PKCE
-- **Password** : bcryptjs (hash + salt)
-- **reCAPTCHA v3** : Protection formulaires
+| Mesure | Implémentation |
+|--------|----------------|
+| **Authentification** | NextAuth.js JWT, OAuth 2.0 |
+| **Autorisation** | Rôles (USER, ADMIN), feature limits |
+| **Protection CSRF** | Tokens NextAuth |
+| **Protection XSS** | Sanitization inputs, CSP headers |
+| **Protection Bot** | reCAPTCHA v3 (score 0.5) |
+| **Validation** | AJV JSON Schema, Zod |
+| **Chiffrement CV** | AES-256-GCM (au repos) |
+| **Rate Limiting** | Sur endpoints sensibles (email verification) |
+| **Webhooks** | Signature Stripe validation |
 
-### Validation & Sanitization
+### Points de contrôle reCAPTCHA
 
-```javascript
-// lib/security/
-validateUploadedFile()  // MIME type, size, virus scan
-sanitizeFilename()      // Path traversal prevention
-sanitizeHtml()          // XSS prevention
-checkPasswordStrength() // Policy enforcement
+- Inscription (register)
+- Connexion (login attempts)
+- Liaison OAuth
+- Création CV
+- Demande reset password
+
+---
+
+## Internationalisation
+
+### Langues supportées
+
+| Code | Langue |
+|------|--------|
+| `fr` | Français |
+| `en` | Anglais |
+| `de` | Allemand |
+| `es` | Espagnol |
+
+### Architecture i18n
+
+```
+locales/
+├── fr/common.json    # Traductions françaises
+├── en/common.json    # Traductions anglaises
+├── de/common.json    # Traductions allemandes
+└── es/common.json    # Traductions espagnoles
 ```
 
-### Protection Données
+### Détection de langue
 
-- **CV Encryption** : Données sensibles chiffrées
-- **RGPD** : Consent logging, export/delete data
-- **Secure Headers** : CSP, HSTS via Next.js
+1. Cookie `NEXT_LOCALE`
+2. Header `Accept-Language`
+3. Défaut : `fr`
+
+---
+
+## Monitoring & Télémétrie
+
+### Événements trackés
+
+| Catégorie | Événements |
+|-----------|------------|
+| **Auth** | login, registration, logout |
+| **CV** | creation, generation, optimization, export |
+| **Billing** | subscription_change, credit_purchase |
+| **Features** | feature_usage, limit_reached |
+| **Errors** | api_error, task_failed |
+
+### Métriques admin
+
+- MRR, ARR, ARPU
+- Coûts OpenAI par feature
+- Taux conversion onboarding
+- Usage par feature
+- Erreurs système
 
 ---
 
 ## Performance
 
-### Caching
+### Optimisations Next.js 16
 
-| Niveau | Stratégie |
-|--------|-----------|
-| **OpenAI** | Cache déduplication 5min (concurrent requests) |
-| **Settings** | In-memory cache (modèles IA) |
-| **Static** | Next.js ISR pour pages publiques |
+- **Turbopack** : Bundler par défaut (plus rapide que Webpack)
+- **React 19** : Concurrent features, Suspense
+- **Image Optimization** : AVIF, WebP, responsive
+- **Code Splitting** : Automatique par route
 
-### Optimisations
+### Optimisations client
 
-- **Code Splitting** : App Router automatic
-- **Image Optimization** : Next/Image + Sharp
-- **DB Queries** : Prisma query optimization, indexes
-- **Background Jobs** : Max 3 concurrent (memory management)
+- **Lazy loading** : Composants lourds (admin, modales)
+- **Memoization** : useMemo, useCallback sur calculs coûteux
+- **Virtual scrolling** : Listes longues (non implémenté actuellement)
+
+### Optimisations OpenAI
+
+- **Prompt Caching** : 24h retention (GPT-4o, GPT-5)
+- **Model selection** : Configurable via settings
+- **Structured Output** : JSON Schema pour réponses prévisibles
 
 ---
 
-## Monitoring & Observabilité
+## Déploiement
 
-### Telemetry (`lib/telemetry/`)
+### Environnements
 
-```javascript
-// Events trackés
-trackUserRegistration(), trackUserLogin()
-trackCvGeneration(), trackCvImport(), trackCvExport()
-trackMatchScore(), trackOpenAIUsage()
+| Environnement | URL | Base de données |
+|---------------|-----|-----------------|
+| Development | localhost:3001 | PostgreSQL local |
+| Production | app.fitmycv.io | PostgreSQL managed |
+
+### Variables d'environnement critiques
+
+```bash
+# Base de données
+DATABASE_URL="postgresql://..."
+
+# Auth
+NEXTAUTH_SECRET="..."
+NEXTAUTH_URL="https://app.fitmycv.io"
+
+# OpenAI
+OPENAI_API_KEY="sk-..."
+
+# Stripe
+STRIPE_SECRET_KEY="sk_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+
+# Email
+SMTP_HOST="ssl0.ovh.net"
+RESEND_API_KEY="re_..."
+
+# Sécurité
+CV_ENCRYPTION_KEY="..."
+RECAPTCHA_SECRET_KEY="..."
 ```
 
-### Admin Dashboard
+---
 
-- **KPIs** : Users, CVs, Revenue, OpenAI costs
-- **Logs** : Email logs, webhook logs, error tracking
-- **Alerts** : OpenAI budget alerts
+## Points d'extension
+
+### Ajouter une nouvelle feature
+
+1. Créer le module dans `lib/`
+2. Ajouter les API routes dans `app/api/`
+3. Créer les composants UI dans `components/`
+4. Ajouter les traductions dans `locales/`
+5. Configurer les limites dans `SubscriptionPlanFeatureLimit`
+
+### Ajouter un nouveau provider OAuth
+
+1. Configurer dans `lib/auth/options.js`
+2. Ajouter les credentials dans `.env`
+3. Mettre à jour `components/auth/AuthScreen.jsx`
+
+### Ajouter un nouveau type de tâche background
+
+1. Définir dans `lib/background-jobs/taskTypes.js`
+2. Ajouter le mapping feature dans `taskFeatureMapping.js`
+3. Créer l'endpoint API
+4. Implémenter le job runner
 
 ---
 
-## Intégrations Externes
+## Utilitaires Notables
 
-| Service | Usage | Configuration |
-|---------|-------|---------------|
-| **OpenAI** | CV generation, improvement, translation | `OPENAI_API_KEY` |
-| **Stripe** | Subscriptions, credits, invoices | `STRIPE_SECRET_KEY` |
-| **Resend** | Email transactionnel (fallback) | `RESEND_API_KEY` |
-| **SMTP OVH** | Email primaire | `SMTP_*` env vars |
-| **Google** | OAuth, reCAPTCHA | `GOOGLE_*` env vars |
-| **GitHub** | OAuth | `GITHUB_*` env vars |
-| **Apple** | OAuth | `APPLE_*` env vars |
+### `lib/utils/normalizeJobUrl.js`
 
----
+Nettoie les URLs d'offres d'emploi en supprimant les paramètres de tracking qui interfèrent avec le cache et le fetching.
 
-## Scalabilité
+```javascript
+import { normalizeJobUrl } from '@/lib/utils/normalizeJobUrl';
 
-### Horizontal Scaling
+// Exemple
+normalizeJobUrl('https://indeed.com/job?id=123&from=searchOnHP&vjk=abc')
+// → 'https://indeed.com/job?id=123'
+```
 
-L'architecture permet un scaling horizontal :
+**Paramètres supprimés :**
 
-1. **Stateless API** : JWT (pas de sessions serveur)
-2. **Database** : PostgreSQL avec connection pooling
-3. **Background Jobs** : Queue en mémoire (à migrer vers Redis pour multi-instance)
+| Plateforme | Paramètres |
+|------------|------------|
+| Indeed | `from`, `advn`, `vjk` |
+| LinkedIn | `trk`, `trackingId`, `refId` |
 
-### Limitations Actuelles
+### `lib/stripe/checkoutLocale.js`
 
-- Background jobs en mémoire (single instance)
-- Settings cache local (à synchroniser multi-instance)
+Génère les messages d'acceptation des CGV localisés pour Stripe Checkout.
 
-### Recommandations Evolution
+```javascript
+import { getTermsMessage } from '@/lib/stripe/checkoutLocale';
 
-1. Redis pour job queue et cache partagé
-2. CDN pour assets statiques
-3. Read replicas PostgreSQL si besoin
+getTermsMessage('fr')
+// → "J'accepte les [Conditions Générales de Vente](https://app.fitmycv.io/terms)."
 
----
+getTermsMessage('en')
+// → "I accept the [Terms of Service](https://app.fitmycv.io/terms)."
+```
 
-## Fichiers Clés
+**Langues supportées :** `fr`, `en`, `es`, `de`
 
-| Fichier | Purpose |
-|---------|---------|
-| `app/layout.jsx` | Layout racine, providers |
-| `app/page.jsx` | CV Editor principal |
-| `middleware.js` | Auth, i18n, redirects |
-| `lib/prisma.js` | Singleton Prisma client |
-| `prisma/schema.prisma` | 33 modèles de données |
-| `next.config.js` | Configuration Next.js |
-| `tailwind.config.js` | Design system |
+Réutilise les traductions existantes de `locales/{lang}/subscription.json` pour garantir la cohérence.
+
+### Génération URLs Projets (CV Templates)
+
+Lors de la génération de CV templates (candidats fictifs), les projets peuvent inclure des URLs cohérentes :
+
+```javascript
+// Structure attendue
+{
+  "projects": [
+    {
+      "name": "Projet Example",
+      "url": "https://github.com/candidat-fictif/projet",
+      "url_label": "GitHub"  // ou "Portfolio", "Demo", "Google Play"
+    }
+  ]
+}
+```
+
+**Règles de génération :**
+
+- L'URL doit être cohérente avec le `header.full_name` du candidat fictif
+- Le `url_label` décrit le type de lien
+- Les URLs sont plausibles mais fictives
+
+**Note :** Cette fonctionnalité s'applique uniquement aux CV templates. Pour les CV réels, les URLs proviennent du CV source et ne sont jamais inventées (respect de la règle P1 - VÉRITÉ).

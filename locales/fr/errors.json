@@ -37,7 +37,8 @@
         "providerAlreadyLinked": "Ce provider est déjà lié à votre compte",
         "providerNotLinked": "Ce provider n'est pas lié à votre compte",
         "cannotUnlinkLastProvider": "Impossible de délier : vous devez avoir au moins un compte lié",
-        "registrationDisabled": "Les inscriptions sont temporairement suspendues"
+        "registrationDisabled": "Les inscriptions sont temporairement suspendues",
+        "privacyPolicyRequired": "Vous devez accepter la politique de confidentialité pour créer un compte"
       },
       "cv": {
         "notFound": "CV introuvable",
@@ -53,6 +54,10 @@
         "improveError": "Erreur lors de l'amélioration du CV",
         "invalidVersion": "Numéro de version invalide",
         "versionNotFound": "Version introuvable"
+      },
+      "editMode": {
+        "cannotActivate": "Vous ne pouvez pas activer le mode édition",
+        "verificationError": "Erreur lors de la vérification"
       },
       "background": {
         "noSourceProvided": "Ajoutez au moins un lien ou un fichier",
@@ -124,8 +129,10 @@
         "gptGenerationFailed": "GPT n'a pas su générer le CV modèle",
         "promptNotFound": "Fichier prompt introuvable"
       },
-      "generateV2": {
-        "noOffersProvided": "Aucune offre d'emploi fournie",
+      "generate": {
+        "noLinksProvided": "Aucune offre d'emploi fournie",
+        "invalidLinksFormat": "Format de liens invalide",
+        "invalidUrlFormat": "Format d'URL invalide",
         "maxOffersExceeded": "Nombre maximum d'offres dépassé ({max} max, {provided} fourni(s))",
         "invalidOfferIds": "Un ou plusieurs IDs d'offres sont invalides",
         "invalidMode": "Mode de génération invalide (attendu: adapt ou rebuild)",

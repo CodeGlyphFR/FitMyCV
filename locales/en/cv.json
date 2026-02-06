@@ -26,13 +26,14 @@
   },
   "cvGenerator": {
     "title": "Generate CV with AI",
-    "description": "Provide job offers to analyze (links or PDF/Word file) to generate tailored CVs from the selected reference CV.",
+    "description": "Provide job offers to analyze (links or PDF file) to generate tailored CVs from the selected reference CV.",
     "referenceCV": "Reference CV",
     "selectCV": "Select a CV",
     "noManualCV": "No manual CV available. Create a CV before launching AI generation.",
     "createTemplateOption": "Create a new CV template",
     "templateCreationLabel": "CV template creation",
     "links": "Links to job offers",
+    "languageHint": "For best results, use a job offer in the same language as your reference CV.",
     "loadRecentLink": "Load recent link",
     "recentLinks": "Recent links",
     "addLink": "Add link",
@@ -145,6 +146,9 @@
       "hint": "Move sections to customize the display order",
       "reset": "Reset",
       "close": "Close"
+    },
+    "placeholders": {
+      "filename": "My_CV"
     }
   },
   "newCvModal": {
@@ -157,6 +161,11 @@
     "creating": "Creating...",
     "cancel": "Cancel",
     "hint": "You can complete all sections later via edit mode.",
+    "placeholders": {
+      "fullName": "E.g.: John Smith",
+      "currentTitle": "E.g.: Full-Stack Developer",
+      "email": "email@example.com"
+    },
     "errors": {
       "fillRequired": "Please provide the full name and current title.",
       "generic": "Error"
@@ -202,8 +211,15 @@
     "inProgress": "Current position",
     "projectInProgress": "Ongoing project",
     "responsibilities": "Responsibilities",
+    "responsibilitiesPerLine": "Responsibilities (1/line)",
     "deliverables": "Results",
+    "deliverablesPerLine": "Results (1/line)",
     "skillsUsed": "Skills used",
+    "skillsUsedComma": "Skills (commas)",
+    "position": "Position",
+    "period": "Period",
+    "location": "Location",
+    "content": "Content",
     "technologies": "Technologies",
     "hardSkills": "Technical",
     "tools": "Tools",
@@ -227,6 +243,10 @@
       "projectName": "Project name",
       "role": "Role",
       "description": "Description",
+      "descriptionHint": "Briefly describe your role...",
+      "responsibilitiesHint": "One per line...",
+      "deliverablesHint": "One per line...",
+      "skillsUsedHint": "React, TypeScript, Agile...",
       "skillName": "Name",
       "skillLabel": "Label",
       "chooseLevel": "Choose a level…",
@@ -235,14 +255,25 @@
       "extraTitle": "Title",
       "extraSummary": "Summary",
       "experienceTitleShort": "Title",
+      "experienceTitleHint": "E.g., Project Manager",
       "experienceCompanyShort": "Company",
+      "experienceCompanyHint": "E.g., Acme Corp",
       "experienceDepartment": "Department/Client",
-      "experienceStartShort": "Start (YYYY or YYYY-MM)",
-      "experienceEndShort": "End (YYYY, YYYY-MM)",
+      "experienceDepartmentHint": "E.g., Marketing Dept",
+      "experienceStartShort": "Start",
+      "experienceEndShort": "End",
       "experienceEndShortWithPresent": "End (YYYY, YYYY-MM or present)",
+      "dateFormat": "YYYY-MM",
       "city": "City",
+      "cityHint": "New York",
       "region": "Region",
-      "countryCode": "Country (code)"
+      "regionHint": "New York State",
+      "countryCode": "Country (code)",
+      "selectCountry": "Country",
+      "projectUrl": "Project URL (GitHub, portfolio...)",
+      "projectUrlExample": "https://github.com/...",
+      "projectUrlLabel": "Link title (e.g., View on GitHub)",
+      "summaryDescription": "Describe your professional profile..."
     }
   },
   "sourceInfo": {
@@ -364,6 +395,7 @@
     "title": "Review change",
     "before": "Before",
     "after": "After",
+    "levelChange": "Level",
     "empty": "(empty)",
     "accept": "Accept",
     "reject": "Reject",
@@ -384,6 +416,7 @@
     "validating": "Validating...",
     "pendingWarning": "{count} change(s) not reviewed. They will be accepted by default.",
     "validationSuccess": "CV saved successfully",
-    "validationError": "Error saving CV"
+    "validationError": "Error saving CV",
+    "skillsConsolidated": "skills consolidated into"
   }
 }

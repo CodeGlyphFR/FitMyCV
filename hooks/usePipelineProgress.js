@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 
 /**
- * Liste des étapes du pipeline CV Generation V2 dans l'ordre
+ * Liste des étapes du pipeline CV Generation dans l'ordre
  */
 const PIPELINE_STEPS = ['extraction', 'classify', 'experiences', 'projects', 'extras', 'skills', 'summary', 'recompose'];
 
@@ -23,7 +23,7 @@ const STEP_WEIGHTS = {
 };
 
 /**
- * Liste des étapes du pipeline CV Improvement V2 dans l'ordre
+ * Liste des étapes du pipeline CV Improvement dans l'ordre
  */
 const IMPROVEMENT_STEPS = ['preprocess', 'classify_skills', 'experiences', 'projects', 'summary', 'finalize'];
 
@@ -41,6 +41,7 @@ const IMPROVEMENT_STEP_WEIGHTS = {
 
 /**
  * Calcule le pourcentage de progression pour une offre
+ * Prend en compte les steps parallèles (runningSteps) pour un calcul précis
  * @param {Object} offerProgress - Progression de l'offre
  * @returns {number} - Pourcentage (0-100)
  */
@@ -49,7 +50,7 @@ function calculateOfferProgress(offerProgress) {
   if (offerProgress.status === 'completed') return 100;
   if (offerProgress.status === 'failed' || offerProgress.status === 'cancelled') return 0;
 
-  const { completedSteps = {}, currentStep } = offerProgress;
+  const { completedSteps = {}, runningSteps = {}, currentStep } = offerProgress;
   let totalWeight = 0;
   let completedWeight = 0;
 
@@ -60,24 +61,32 @@ function calculateOfferProgress(offerProgress) {
     }
   });
 
-  // Ajouter une progression partielle pour l'étape en cours
-  if (currentStep && !completedSteps[currentStep]) {
-    completedWeight += STEP_WEIGHTS[currentStep] * 0.5; // 50% de l'étape en cours
+  // Ajouter une progression partielle pour les étapes en cours (parallèles)
+  // Chaque step dans runningSteps compte pour 50% de son poids
+  Object.keys(runningSteps).forEach(step => {
+    if (!completedSteps[step] && STEP_WEIGHTS[step]) {
+      completedWeight += STEP_WEIGHTS[step] * 0.5;
+    }
+  });
+
+  // Fallback sur currentStep si runningSteps est vide (rétrocompatibilité)
+  if (Object.keys(runningSteps).length === 0 && currentStep && !completedSteps[currentStep]) {
+    completedWeight += STEP_WEIGHTS[currentStep] * 0.5;
   }
 
   return Math.round((completedWeight / totalWeight) * 100);
 }
 
 /**
- * Hook pour suivre la progression du pipeline CV v2 via SSE
+ * Hook pour suivre la progression du pipeline CV via SSE
  *
  * Structure de progression par offre pour une granularité fine.
  *
  * Écoute les événements SSE:
- * - cv_generation_v2:offer_progress - Progression par étape
- * - cv_generation_v2:offer_completed - Offre terminée
- * - cv_generation_v2:offer_failed - Offre échouée
- * - cv_generation_v2:completed - Tâche terminée
+ * - cv_generation:offer_progress - Progression par étape
+ * - cv_generation:offer_completed - Offre terminée
+ * - cv_generation:offer_failed - Offre échouée
+ * - cv_generation:completed - Tâche terminée
  *
  * @returns {Object} { getProgress, getOfferProgress, calculateProgress, allProgress }
  */
@@ -93,7 +102,18 @@ export function usePipelineProgress() {
   const updateOfferProgress = useCallback((taskId, offerId, offerIndex, update) => {
     setProgressMap(prev => {
       const task = prev[taskId] || { offers: {}, status: 'running' };
-      const offer = task.offers[offerId] || { offerIndex, completedSteps: {} };
+      const offer = task.offers[offerId] || { offerIndex, completedSteps: {}, runningSteps: {} };
+
+      // Gérer les runningSteps pour tracker les steps parallèles
+      // On utilise stepStatus (status du step) et non status (status de l'offre)
+      let newRunningSteps = { ...offer.runningSteps };
+      const stepStatus = update.stepStatus || update.status; // Fallback pour rétrocompatibilité
+      if (update.currentStep && stepStatus === 'running') {
+        newRunningSteps[update.currentStep] = {
+          currentItem: update.currentItem ?? null,
+          totalItems: update.totalItems ?? null,
+        };
+      }
 
       return {
         ...prev,
@@ -104,6 +124,7 @@ export function usePipelineProgress() {
             [offerId]: {
               ...offer,
               ...update,
+              runningSteps: newRunningSteps,
             },
           },
           lastUpdate: Date.now(),
@@ -116,8 +137,14 @@ export function usePipelineProgress() {
   const markStepCompleted = useCallback((taskId, offerId, step) => {
     setProgressMap(prev => {
       const task = prev[taskId] || { offers: {} };
-      const offer = task.offers[offerId] || { completedSteps: {} };
+      const offer = task.offers[offerId] || { completedSteps: {}, runningSteps: {} };
+
+      // Ajouter aux completedSteps
       const completedSteps = { ...offer.completedSteps, [step]: true };
+
+      // Retirer des runningSteps (le step n'est plus en cours)
+      const runningSteps = { ...offer.runningSteps };
+      delete runningSteps[step];
 
       return {
         ...prev,
@@ -128,6 +155,7 @@ export function usePipelineProgress() {
             [offerId]: {
               ...offer,
               completedSteps,
+              runningSteps,
             },
           },
           lastUpdate: Date.now(),
@@ -187,7 +215,7 @@ export function usePipelineProgress() {
       };
 
       // Événement de progression
-      eventSource.addEventListener('cv_generation_v2:offer_progress', (event) => {
+      eventSource.addEventListener('cv_generation:offer_progress', (event) => {
         try {
           const data = JSON.parse(event.data);
           const {
@@ -208,6 +236,8 @@ export function usePipelineProgress() {
             markStepCompleted(taskId, offerId, step);
           }
 
+          // Note: Le status dans l'événement SSE est le status du STEP (running/completed),
+          // pas le status de l'OFFRE. L'offre reste "running" tant qu'elle n'est pas complètement terminée.
           updateOfferProgress(taskId, offerId, offerIndex, {
             offerIndex,
             sourceUrl: sourceUrl || null,
@@ -216,7 +246,8 @@ export function usePipelineProgress() {
             currentStep: step,
             currentItem: currentItem ?? null,
             totalItems: totalItems ?? null,
-            status: 'running',
+            stepStatus: status || 'running', // Status du step (pour runningSteps)
+            status: 'running', // L'offre reste "running" - seul offer_completed change ce status
           });
 
           updateTaskProgress(taskId, {
@@ -229,7 +260,7 @@ export function usePipelineProgress() {
       });
 
       // Événement offre terminée
-      eventSource.addEventListener('cv_generation_v2:offer_completed', (event) => {
+      eventSource.addEventListener('cv_generation:offer_completed', (event) => {
         try {
           const data = JSON.parse(event.data);
           const { taskId, offerId, offerIndex, generatedCvFileId, generatedCvFileName } = data;
@@ -259,6 +290,7 @@ export function usePipelineProgress() {
                   [offerId]: {
                     ...offer,
                     completedSteps,
+                    runningSteps: {}, // Nettoyer les steps en cours
                     currentStep: null,
                     status: 'completed',
                   },
@@ -274,7 +306,7 @@ export function usePipelineProgress() {
       });
 
       // Événement offre échouée ou annulée
-      eventSource.addEventListener('cv_generation_v2:offer_failed', (event) => {
+      eventSource.addEventListener('cv_generation:offer_failed', (event) => {
         try {
           const data = JSON.parse(event.data);
           const { taskId, offerId, offerIndex, error, creditsRefunded } = data;
@@ -312,7 +344,7 @@ export function usePipelineProgress() {
       });
 
       // Événement tâche terminée
-      eventSource.addEventListener('cv_generation_v2:completed', (event) => {
+      eventSource.addEventListener('cv_generation:completed', (event) => {
         try {
           const data = JSON.parse(event.data);
           const { taskId, totalGenerated, totalFailed, creditsRefunded } = data;
@@ -325,7 +357,7 @@ export function usePipelineProgress() {
           });
 
           if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('cv_generation_v2:task_completed', { detail: { taskId } }));
+            window.dispatchEvent(new CustomEvent('cv_generation:task_completed', { detail: { taskId } }));
             window.dispatchEvent(new Event('cv:list:changed'));
           }
         } catch (err) {
@@ -333,7 +365,7 @@ export function usePipelineProgress() {
         }
       });
 
-      // Événements CV Improvement V2
+      // Événements CV Improvement
       eventSource.addEventListener('cv_improvement:progress', (event) => {
         try {
           const data = JSON.parse(event.data);
@@ -491,7 +523,7 @@ export function usePipelineProgress() {
 }
 
 /**
- * Hook pour écouter la progression d'une tâche spécifique du pipeline CV v2
+ * Hook pour écouter la progression d'une tâche spécifique du pipeline CV
  *
  * @param {string} taskId - ID de la tâche à suivre
  * @returns {Object|null} Progression de la tâche

@@ -111,6 +111,7 @@ export async function GET(request) {
 
       // Calculate real duration accounting for parallel execution
       // Pipeline structure:
+      // - Phase 0: extraction (sequential, avant classify)
       // - Phase 0.5: classify (sequential)
       // - Phase 1: batch_experience, batch_project, batch_extras (parallel)
       // - Phase 2: batch_skills, batch_summary (parallel)
@@ -121,6 +122,7 @@ export async function GET(request) {
         return Math.max(...subtasksOfType.map(s => s.durationMs || 0));
       };
 
+      const extractionDuration = getMaxDurationByType('extraction');
       const classifyDuration = getMaxDurationByType('classify');
       const phase1Duration = Math.max(
         getMaxDurationByType('batch_experience'),
@@ -133,7 +135,8 @@ export async function GET(request) {
       );
       const recomposeDuration = getMaxDurationByType('recompose');
 
-      const totalDurationMs = classifyDuration + phase1Duration + phase2Duration + recomposeDuration;
+      // Extraction est séquentielle avant classify
+      const totalDurationMs = extractionDuration + classifyDuration + phase1Duration + phase2Duration + recomposeDuration;
       const summedDurationMs = allSubtasks.reduce((sum, s) => sum + (s.durationMs || 0), 0);
 
       // Group subtasks by type for summary
@@ -171,6 +174,7 @@ export async function GET(request) {
 
       // Sort subtasks by type for consistent display
       const typeOrder = [
+        'extraction',
         'classify',
         'batch_experience',
         'batch_project',
@@ -178,6 +182,7 @@ export async function GET(request) {
         'batch_skills',
         'batch_summary',
         'recompose',
+        'recompose_languages',
       ];
       subtaskSummary.sort((a, b) => {
         const aIndex = typeOrder.indexOf(a.type);

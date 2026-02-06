@@ -5,7 +5,7 @@
   "properties": {
     "language": {
       "type": "string",
-      "enum": ["fr", "en"],
+      "enum": ["fr", "en", "es", "de"],
       "description": "Language of the CV content (detected from summary)"
     },
     "generated_at": { "type": "string" },
@@ -46,8 +46,7 @@
     "summary": {
       "type": "object",
       "properties": {
-        "description": { "type": "string" },
-        "domains": { "type": "array", "items": { "type": "string" } }
+        "description": { "type": "string" }
       }
     },
     "skills": {
@@ -59,7 +58,7 @@
             "type": "object",
             "properties": {
               "name": { "type": "string" },
-              "proficiency": { "type": "string" }
+              "proficiency": { "type": ["integer", "null"], "minimum": 0, "maximum": 5, "description": "0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert" }
             },
             "required": ["name"]
           }
@@ -71,7 +70,7 @@
             "type": "object",
             "properties": {
               "name": { "type": "string" },
-              "proficiency": { "type": "string" }
+              "proficiency": { "type": ["integer", "null"], "minimum": 0, "maximum": 5, "description": "0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert" }
             },
             "required": ["name"]
           }
@@ -114,7 +113,15 @@
           "degree": { "type": "string" },
           "field_of_study": { "type": "string" },
           "start_date": { "type": "string" },
-          "end_date": { "type": "string" }
+          "end_date": { "type": "string" },
+          "location": {
+            "type": "object",
+            "properties": {
+              "city": { "type": "string" },
+              "region": { "type": "string" },
+              "country_code": { "type": "string" }
+            }
+          }
         },
         "required": ["institution", "end_date"]
       }
@@ -151,7 +158,9 @@
           "start_date": { "type": "string" },
           "end_date": { "type": "string" },
           "summary": { "type": "string" },
-          "tech_stack": { "type": "array", "items": { "type": "string" } }
+          "tech_stack": { "type": "array", "items": { "type": "string" } },
+          "url": { "type": ["string", "null"] },
+          "url_label": { "type": ["string", "null"] }
         },
         "required": ["name"]
       }
@@ -170,5 +179,5 @@
       }
     }
   },
-  "required": ["generated_at", "header", "summary", "skills", "experience"]
+  "required": ["header", "summary", "skills", "experience"]
 }

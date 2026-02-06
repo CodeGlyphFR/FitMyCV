@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Système Email | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Email</span>
+        </div>
+
+        <h1>Système Email</h1>
+        <p class="lead">
+          FitMyCV.io utilise Resend pour l'envoi d'emails transactionnels. Les templates sont stockés en base de données et éditables via l'interface admin.
+        </p>
+
+        <h2>Architecture</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux d'envoi d'emails</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Triggers["DÉCLENCHEURS"]
+        Auth["Inscription"]
+        Sub["Abonnement"]
+        CV["CV généré"]
+        Alert["Alerte OpenAI"]
+    end
+
+    subgraph System["SYSTÈME"]
+        Queue["Email Queue"]
+        Template["Template Engine"]
+        Resend["Resend API"]
+    end
+
+    subgraph Storage["STOCKAGE"]
+        Templates[(EmailTemplate)]
+        Logs[(EmailLog)]
+    end
+
+    Triggers --> Queue
+    Queue --> Template
+    Template --> Templates
+    Template --> Resend
+    Resend --> Logs
+          </div>
+        </div>
+
+        <h2>Modèles de Données</h2>
+
+        <h3>EmailTemplate</h3>
+
+        <pre><code>model EmailTemplate {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique  // welcome, password_reset, etc.
+  subject     String
+  htmlContent String    @db.Text
+  textContent String?   @db.Text
+  trigger     String?   // Event qui déclenche l'envoi
+  isActive    Boolean   @default(true)
+  variables   Json?     // Variables disponibles
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  logs        EmailLog[]
+}</code></pre>
+
+        <h3>EmailLog</h3>
+
+        <pre><code>model EmailLog {
+  id          Int       @id @default(autoincrement())
+  templateId  Int
+  recipient   String
+  subject     String
+  status      String    // sent, failed, bounced
+  resendId    String?   // ID Resend pour tracking
+  error       String?
+  sentAt      DateTime  @default(now())
+
+  template    EmailTemplate @relation(fields: [templateId], references: [id])
+}</code></pre>
+
+        <h2>Templates Disponibles</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Template</th>
+              <th>Trigger</th>
+              <th>Variables</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>welcome</code></td>
+              <td>Inscription</td>
+              <td>userName, welcomeCredits</td>
+            </tr>
+            <tr>
+              <td><code>password_reset</code></td>
+              <td>Demande reset</td>
+              <td>userName, resetUrl</td>
+            </tr>
+            <tr>
+              <td><code>subscription_created</code></td>
+              <td>Nouvel abonnement</td>
+              <td>userName, planName, price</td>
+            </tr>
+            <tr>
+              <td><code>subscription_canceled</code></td>
+              <td>Annulation</td>
+              <td>userName, endDate</td>
+            </tr>
+            <tr>
+              <td><code>payment_failed</code></td>
+              <td>Échec paiement</td>
+              <td>userName, retryUrl</td>
+            </tr>
+            <tr>
+              <td><code>cv_generation_complete</code></td>
+              <td>CV généré</td>
+              <td>userName, cvName, dashboardUrl</td>
+            </tr>
+            <tr>
+              <td><code>credits_low</code></td>
+              <td>Crédits < seuil</td>
+              <td>userName, balance, buyUrl</td>
+            </tr>
+            <tr>
+              <td><code>openai_cost_alert</code></td>
+              <td>Alerte coûts</td>
+              <td>alertType, currentValue, threshold</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Envoi d'Email</h2>
+
+        <pre><code>// lib/email/sender.js
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export async function sendEmail(templateName, recipient, variables = {}) {
+  // 1. Charger le template
+  const template = await prisma.emailTemplate.findUnique({
+    where: { name: templateName }
+  });
+
+  if (!template || !template.isActive) {
+    throw new Error(`Template ${templateName} not found or inactive`);
+  }
+
+  // 2. Interpoler les variables
+  const subject = interpolate(template.subject, variables);
+  const html = interpolate(template.htmlContent, variables);
+  const text = template.textContent
+    ? interpolate(template.textContent, variables)
+    : null;
+
+  // 3. Envoyer via Resend
+  try {
+    const result = await resend.emails.send({
+      from: 'FitMyCV <noreply@fitmycv.io>',
+      to: recipient,
+      subject,
+      html,
+      text
+    });
+
+    // 4. Logger l'envoi
+    await prisma.emailLog.create({
+      data: {
+        templateId: template.id,
+        recipient,
+        subject,
+        status: 'sent',
+        resendId: result.id
+      }
+    });
+
+    return result;
+
+  } catch (error) {
+    // Logger l'échec
+    await prisma.emailLog.create({
+      data: {
+        templateId: template.id,
+        recipient,
+        subject,
+        status: 'failed',
+        error: error.message
+      }
+    });
+
+    throw error;
+  }
+}
+
+function interpolate(text, variables) {
+  return text.replace(/\{\{(\w+)\}\}/g, (_, key) => variables[key] || '');
+}</code></pre>
+
+        <h2>Triggers Automatiques</h2>
+
+        <pre><code>// lib/email/triggers.js
+
+export async function onUserCreated(user) {
+  const welcomeCredits = await getSetting('welcome_credits');
+
+  await sendEmail('welcome', user.email, {
+    userName: user.name || user.email,
+    welcomeCredits
+  });
+}
+
+export async function onSubscriptionCreated(userId, subscription) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const plan = await prisma.subscriptionPlan.findUnique({
+    where: { stripePriceId: subscription.stripePriceId }
+  });
+
+  await sendEmail('subscription_created', user.email, {
+    userName: user.name,
+    planName: plan.displayName,
+    price: `${plan.priceMonthly}€/mois`
+  });
+}
+
+export async function onCvGenerationComplete(userId, cvFile) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+
+  await sendEmail('cv_generation_complete', user.email, {
+    userName: user.name,
+    cvName: cvFile.filename,
+    dashboardUrl: `${process.env.NEXTAUTH_URL}/dashboard`
+  });
+}</code></pre>
+
+        <h2>Administration</h2>
+
+        <p>Les templates sont éditables via le dashboard admin :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Éditeur de Templates</h4>
+            <ul>
+              <li>Édition HTML avec prévisualisation</li>
+              <li>Variables disponibles listées</li>
+              <li>Activation/désactivation</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Historique d'Envoi</h4>
+            <ul>
+              <li>Logs avec statut</li>
+              <li>Filtres par template/statut</li>
+              <li>Détails d'erreur</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Test d'Envoi</h4>
+            <ul>
+              <li>Envoi de test à une adresse</li>
+              <li>Variables de test pré-remplies</li>
+              <li>Validation avant mise en prod</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>API Endpoints</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Méthode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/admin/email-templates</code></td>
+              <td>GET</td>
+              <td>Lister les templates</td>
+            </tr>
+            <tr>
+              <td><code>/api/admin/email-templates/[id]</code></td>
+              <td>PUT</td>
+              <td>Modifier un template</td>
+            </tr>
+            <tr>
+              <td><code>/api/admin/email-templates/test</code></td>
+              <td>POST</td>
+              <td>Envoyer un test</td>
+            </tr>
+            <tr>
+              <td><code>/api/admin/email-logs</code></td>
+              <td>GET</td>
+              <td>Historique d'envoi</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Fichiers Clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/email/sender.js</code></td>
+              <td>Fonction d'envoi principale</td>
+            </tr>
+            <tr>
+              <td><code>lib/email/triggers.js</code></td>
+              <td>Triggers automatiques</td>
+            </tr>
+            <tr>
+              <td><code>components/admin/email/</code></td>
+              <td>Composants admin email</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/email-*/</code></td>
+              <td>Endpoints API admin</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Prochaines Sections</h2>
+
+        <ul>
+          <li><a href="./templates.html">Templates Email</a> - Gestion et édition des templates</li>
+        </ul>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

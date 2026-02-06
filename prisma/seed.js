@@ -101,6 +101,15 @@ const EMAIL_TRIGGERS = [
     icon: '💳',
     isSystem: true,
   },
+  {
+    name: 'inactivity_warning',
+    label: 'Avertissement Inactivite',
+    description: "Envoye 30 jours avant la suppression d'un compte inactif (3 ans sans connexion)",
+    variables: JSON.stringify(['userName', 'loginUrl', 'lastActivityDate', 'deletionDate']),
+    category: 'account',
+    icon: '⚠️',
+    isSystem: true,
+  },
 ];
 
 // ============================================================================
@@ -409,12 +418,7 @@ const AI_MODEL_SETTINGS = [
     category: 'ai_models',
     description: 'Modèle utilisé pour la génération de CV',
   },
-  {
-    settingName: 'model_cv_planning',
-    value: '',
-    category: 'ai_models',
-    description: 'Model for CV planning phase (empty = use default CV model)',
-  },
+  // NOTE: model_cv_planning a été supprimé (obsolète)
   {
     settingName: 'model_match_score',
     value: 'gpt-4.1-mini-2025-04-14',
@@ -463,79 +467,97 @@ const AI_MODEL_SETTINGS = [
     category: 'ai_models',
     description: 'Modèle pour détection de langue de CV (léger, 50 chars max)',
   },
-  // Pipeline CV v2 - Models par phase
+  // Pipeline Adaptation CV - Models par phase
   {
     settingName: 'model_cv_classify',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline v2: Modèle pour la phase classification (KEEP/REMOVE/MOVE)',
+    description: 'Pipeline Adaptation: Modèle pour la phase classification (KEEP/REMOVE/MOVE)',
   },
   {
     settingName: 'model_cv_batch_experience',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline v2: Modèle pour adaptation des expériences',
+    description: 'Pipeline Adaptation: Modèle pour adaptation des expériences',
   },
   {
     settingName: 'model_cv_batch_projects',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline v2: Modèle pour adaptation des projets',
+    description: 'Pipeline Adaptation: Modèle pour adaptation des projets',
   },
   {
     settingName: 'model_cv_batch_extras',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline v2: Modèle pour adaptation des extras',
+    description: 'Pipeline Adaptation: Modèle pour adaptation des extras',
+  },
+  {
+    settingName: 'model_cv_batch_education',
+    value: 'gpt-4o-mini',
+    category: 'ai_models',
+    description: 'Pipeline Adaptation: Modèle pour traduction des formations',
+  },
+  {
+    settingName: 'model_cv_batch_languages',
+    value: 'gpt-4o-mini',
+    category: 'ai_models',
+    description: 'Pipeline Adaptation: Modèle pour adaptation des langues',
   },
   {
     settingName: 'model_cv_batch_skills',
     value: 'gpt-4o-mini',
     category: 'ai_models',
-    description: 'Pipeline v2: Modèle pour déduction des compétences',
+    description: 'Pipeline Adaptation: Modèle pour déduction des compétences',
   },
   {
     settingName: 'model_cv_batch_summary',
     value: 'gpt-4o-mini',
     category: 'ai_models',
-    description: 'Pipeline v2: Modèle pour génération du summary',
+    description: 'Pipeline Adaptation: Modèle pour génération du summary',
   },
-  // Pipeline Amélioration CV v2 - Models par stage
+  // Pipeline Amélioration CV - Models par stage
   {
     settingName: 'model_improve_preprocess',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline Amélioration v2: Modèle pour classifier les suggestions',
+    description: 'Pipeline Amélioration: Modèle pour classifier les suggestions',
   },
   {
     settingName: 'model_improve_experience',
     value: 'gpt-4.1-2025-04-14',
     category: 'ai_models',
-    description: 'Pipeline Amélioration v2: Modèle pour améliorer une expérience',
+    description: 'Pipeline Amélioration: Modèle pour améliorer une expérience',
   },
   {
     settingName: 'model_improve_project',
     value: 'gpt-4.1-2025-04-14',
     category: 'ai_models',
-    description: 'Pipeline Amélioration v2: Modèle pour améliorer ou créer un projet',
+    description: 'Pipeline Amélioration: Modèle pour améliorer ou créer un projet',
   },
   {
     settingName: 'model_improve_summary',
     value: 'gpt-4.1-mini-2025-04-14',
     category: 'ai_models',
-    description: 'Pipeline Amélioration v2: Modèle pour mettre à jour le summary',
+    description: 'Pipeline Amélioration: Modèle pour mettre à jour le summary',
   },
   {
     settingName: 'model_improve_classify_skills',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline Amélioration v2: Modèle pour classifier les skills ajoutées',
+    description: 'Pipeline Amélioration: Modèle pour classifier les skills ajoutées',
   },
   {
     settingName: 'model_improve_languages',
     value: 'gpt-4.1-mini-2025-04-14',
     category: 'ai_models',
-    description: 'Modèle pour optimisation des langues (Pipeline V2)',
+    description: 'Pipeline Amélioration: Modèle pour améliorer les langues',
+  },
+  {
+    settingName: 'model_improve_extras',
+    value: 'gpt-4.1-mini-2025-04-14',
+    category: 'ai_models',
+    description: 'Pipeline Amélioration: Modèle pour améliorer les extras (certifications, hobbies)',
   },
 ];
 
@@ -785,89 +807,6 @@ const CV_DISPLAY_SETTINGS = [
   },
 ];
 
-// ============================================================================
-// 14. FEATURE MAPPINGS (Complet avec features non-IA)
-// ============================================================================
-const FEATURE_MAPPINGS = [
-  {
-    featureKey: 'match_score',
-    displayName: 'Score de matching',
-    settingNames: ['model_match_score'],
-    openAICallNames: ['match_score'],
-    planFeatureNames: ['match_score'],
-  },
-  {
-    featureKey: 'optimize_cv',
-    displayName: 'Optimisation CV',
-    settingNames: ['model_optimize_cv'],
-    openAICallNames: ['optimize_cv'],
-    planFeatureNames: ['optimize_cv'],
-  },
-  {
-    featureKey: 'generate_from_job_title',
-    displayName: 'Génération depuis titre',
-    settingNames: ['model_generate_from_job_title'],
-    openAICallNames: ['generate_from_job_title'],
-    planFeatureNames: ['generate_from_job_title'],
-  },
-  {
-    featureKey: 'translate_cv',
-    displayName: 'Traduction CV',
-    settingNames: ['model_translate_cv'],
-    openAICallNames: ['translate_cv'],
-    planFeatureNames: ['translate_cv'],
-  },
-  {
-    featureKey: 'gpt_cv_generation',
-    displayName: 'Génération CV',
-    settingNames: ['model_cv_generation', 'model_extract_job_offer'],
-    openAICallNames: ['generate_cv_url', 'generate_cv_pdf', 'extract_job_offer_url', 'extract_job_offer_pdf', 'create_template_cv_url', 'create_template_cv_pdf'],
-    planFeatureNames: ['gpt_cv_generation'],
-  },
-  {
-    featureKey: 'import_pdf',
-    displayName: 'Import PDF',
-    settingNames: ['model_import_pdf', 'model_first_import_pdf'],
-    openAICallNames: ['import_pdf', 'first_import_pdf'],
-    planFeatureNames: ['import_pdf'],
-  },
-  {
-    featureKey: 'extract_job_offer',
-    displayName: 'Extraction offre emploi',
-    settingNames: ['model_extract_job_offer'],
-    openAICallNames: ['extract_job_offer_url', 'extract_job_offer_pdf'],
-    planFeatureNames: ['gpt_cv_generation'],
-  },
-  {
-    featureKey: 'detect_language',
-    displayName: 'Détection langue',
-    settingNames: ['model_detect_language'],
-    openAICallNames: ['detect_cv_language'],
-    planFeatureNames: ['match_score', 'gpt_cv_generation', 'import_pdf'],
-  },
-  // Features non-IA (sans modèle OpenAI)
-  {
-    featureKey: 'create_cv_manual',
-    displayName: 'Création manuelle CV',
-    settingNames: [],
-    openAICallNames: [],
-    planFeatureNames: ['create_cv_manual'],
-  },
-  {
-    featureKey: 'edit_cv',
-    displayName: 'Édition CV',
-    settingNames: [],
-    openAICallNames: [],
-    planFeatureNames: ['edit_cv'],
-  },
-  {
-    featureKey: 'export_cv',
-    displayName: 'Export PDF',
-    settingNames: [],
-    openAICallNames: [],
-    planFeatureNames: ['export_cv'],
-  },
-];
 
 // ============================================================================
 // HEADER DISPLAY
@@ -894,99 +833,82 @@ async function main() {
   let totalCreated = 0;
   let totalSkipped = 0;
 
-  // ===== 1. Email Triggers (purge + seed) =====
-  // Purge existing templates first (FK dependency), then triggers
-  await prisma.emailTemplate.deleteMany({});
-  await prisma.emailTrigger.deleteMany({});
-
+  // ===== 1. Email Triggers (insertIfNotExists) =====
   let triggersCreated = 0;
+  let triggersSkipped = 0;
   const triggerMap = {}; // Store trigger IDs for template association
   for (const trigger of EMAIL_TRIGGERS) {
     try {
-      const result = await prisma.emailTrigger.create({ data: trigger });
-      triggerMap[trigger.name] = result.id;
-      triggersCreated++;
+      const existing = await prisma.emailTrigger.findUnique({ where: { name: trigger.name } });
+      if (!existing) {
+        const result = await prisma.emailTrigger.create({ data: trigger });
+        triggerMap[trigger.name] = result.id;
+        triggersCreated++;
+      } else {
+        triggerMap[trigger.name] = existing.id;
+        triggersSkipped++;
+      }
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('🎯', 'Email Triggers', triggersCreated, EMAIL_TRIGGERS.length));
-  results.push({ created: triggersCreated });
+  results.push({ created: triggersCreated, skipped: triggersSkipped });
 
-  // ===== 2. Email Templates (chargés depuis fichiers JSON, tous actifs) =====
+  // ===== 2. Email Templates (insertIfNotExists - chargés depuis fichiers JSON) =====
   const emailTemplates = loadEmailTemplates();
   let templatesCreated = 0;
+  let templatesSkipped = 0;
   for (const template of emailTemplates) {
     try {
-      const triggerId = template.triggerName ? triggerMap[template.triggerName] : null;
-      await prisma.emailTemplate.create({
-        data: {
-          name: template.name,
-          subject: template.subject,
-          variables: template.variables,
-          htmlContent: template.htmlContent,
-          designJson: template.designJson,
-          isActive: true, // Force tous les templates actifs
-          isDefault: template.isDefault,
-          triggerId: triggerId,
-        },
-      });
-      templatesCreated++;
+      const existing = await prisma.emailTemplate.findFirst({ where: { name: template.name } });
+      if (!existing) {
+        const triggerId = template.triggerName ? triggerMap[template.triggerName] : null;
+        await prisma.emailTemplate.create({
+          data: {
+            name: template.name,
+            subject: template.subject,
+            variables: template.variables,
+            htmlContent: template.htmlContent,
+            designJson: template.designJson,
+            isActive: true,
+            isDefault: template.isDefault,
+            triggerId: triggerId,
+          },
+        });
+        templatesCreated++;
+      } else {
+        templatesSkipped++;
+      }
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('📧', 'Email Templates', templatesCreated, emailTemplates.length));
-  results.push({ created: templatesCreated });
+  results.push({ created: templatesCreated, skipped: templatesSkipped });
 
-  // ===== 3. Credit Packs (purge + seed, Stripe sync après) =====
-  await prisma.creditPack.deleteMany({});
-
+  // ===== 3. Credit Packs (insertIfNotExists, Stripe sync après) =====
   let packsCreated = 0;
+  let packsSkipped = 0;
   for (const pack of CREDIT_PACKS) {
     try {
-      await prisma.creditPack.create({ data: pack });
-      packsCreated++;
+      const existing = await prisma.creditPack.findFirst({ where: { name: pack.name } });
+      if (!existing) {
+        await prisma.creditPack.create({ data: pack });
+        packsCreated++;
+      } else {
+        packsSkipped++;
+      }
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('💰', 'Credit Packs', packsCreated, CREDIT_PACKS.length));
-  results.push({ created: packsCreated });
+  results.push({ created: packsCreated, skipped: packsSkipped });
 
-  // ===== 4. Subscription Plans (upsert - préserve IDs Stripe, recrée featureLimits) =====
+  // ===== 4. Subscription Plans (insertIfNotExists - ne jamais écraser les plans existants) =====
   let plansCreated = 0;
-  let plansUpdated = 0;
+  let plansSkipped = 0;
   for (const planData of SUBSCRIPTION_PLANS) {
     try {
       const existing = await prisma.subscriptionPlan.findUnique({ where: { name: planData.name } });
 
-      if (existing) {
-        // Update plan (préserve les IDs Stripe)
-        await prisma.subscriptionPlan.update({
-          where: { id: existing.id },
-          data: {
-            description: planData.description,
-            isFree: planData.isFree,
-            tier: planData.tier,
-            isPopular: planData.isPopular,
-            priceMonthly: planData.priceMonthly,
-            priceYearly: planData.priceYearly,
-            yearlyDiscountPercent: planData.yearlyDiscountPercent,
-            priceCurrency: planData.priceCurrency,
-            // Note: stripeProductId, stripePriceIdMonthly, stripePriceIdYearly sont préservés
-          },
-        });
-
-        // Recréer les feature limits (delete + create)
-        await prisma.subscriptionPlanFeatureLimit.deleteMany({
-          where: { planId: existing.id },
-        });
-        await prisma.subscriptionPlanFeatureLimit.createMany({
-          data: Object.entries(planData.features).map(([featureName, config]) => ({
-            planId: existing.id,
-            featureName,
-            isEnabled: config.enabled,
-            usageLimit: config.limit,
-          })),
-        });
-        plansUpdated++;
-      } else {
-        // Create new plan
+      if (!existing) {
+        // Create new plan only if it doesn't exist
         await prisma.subscriptionPlan.create({
           data: {
             name: planData.name,
@@ -1008,11 +930,13 @@ async function main() {
           },
         });
         plansCreated++;
+      } else {
+        plansSkipped++;
       }
     } catch (error) { /* ignore */ }
   }
-  console.log(formatLine('💳', 'Subscription Plans', SUBSCRIPTION_PLANS.length, SUBSCRIPTION_PLANS.length));
-  results.push({ created: plansCreated, updated: plansUpdated });
+  console.log(formatLine('💳', 'Subscription Plans', plansCreated, SUBSCRIPTION_PLANS.length));
+  results.push({ created: plansCreated, skipped: plansSkipped });
 
   // ===== 5. Stripe Sync =====
   let stripeSynced = false;
@@ -1021,46 +945,41 @@ async function main() {
   }
   console.log(formatStripeLine(stripeSynced));
 
-  // ===== 6. OpenAI Pricing (purge + seed) =====
-  await prisma.openAIPricing.deleteMany({});
-
+  // ===== 6. OpenAI Pricing (insertIfNotExists) =====
   let pricingCreated = 0;
+  let pricingSkipped = 0;
   for (const pricing of OPENAI_PRICING) {
     try {
-      await prisma.openAIPricing.create({ data: pricing });
-      pricingCreated++;
-    } catch (error) { /* ignore */ }
-  }
-  console.log(formatLine('🤖', 'OpenAI Pricing', pricingCreated, OPENAI_PRICING.length));
-  results.push({ created: pricingCreated });
-
-  // ===== 7. OpenAI Alerts (upsert) =====
-  let alertsCreated = 0;
-  let alertsUpdated = 0;
-  for (const alert of OPENAI_ALERTS) {
-    try {
-      const existing = await prisma.openAIAlert.findFirst({ where: { type: alert.type } });
-      if (existing) {
-        await prisma.openAIAlert.update({
-          where: { id: existing.id },
-          data: {
-            threshold: alert.threshold,
-            enabled: alert.enabled,
-            name: alert.name,
-            description: alert.description,
-          },
-        });
-        alertsUpdated++;
+      const existing = await prisma.openAIPricing.findUnique({ where: { modelName: pricing.modelName } });
+      if (!existing) {
+        await prisma.openAIPricing.create({ data: pricing });
+        pricingCreated++;
       } else {
-        await prisma.openAIAlert.create({ data: alert });
-        alertsCreated++;
+        pricingSkipped++;
       }
     } catch (error) { /* ignore */ }
   }
-  console.log(formatLine('🔔', 'OpenAI Alerts', OPENAI_ALERTS.length, OPENAI_ALERTS.length));
-  results.push({ created: alertsCreated, updated: alertsUpdated });
+  console.log(formatLine('🤖', 'OpenAI Pricing', pricingCreated, OPENAI_PRICING.length));
+  results.push({ created: pricingCreated, skipped: pricingSkipped });
 
-  // ===== 8. Settings (upsert) =====
+  // ===== 7. OpenAI Alerts (insertIfNotExists) =====
+  let alertsCreated = 0;
+  let alertsSkipped = 0;
+  for (const alert of OPENAI_ALERTS) {
+    try {
+      const existing = await prisma.openAIAlert.findFirst({ where: { type: alert.type } });
+      if (!existing) {
+        await prisma.openAIAlert.create({ data: alert });
+        alertsCreated++;
+      } else {
+        alertsSkipped++;
+      }
+    } catch (error) { /* ignore */ }
+  }
+  console.log(formatLine('🔔', 'OpenAI Alerts', alertsCreated, OPENAI_ALERTS.length));
+  results.push({ created: alertsCreated, skipped: alertsSkipped });
+
+  // ===== 8. Settings (insertIfNotExists - ne jamais écraser les valeurs existantes) =====
   const allSettings = [
     ...AI_MODEL_SETTINGS,
     ...CREDIT_SETTINGS,
@@ -1071,58 +990,22 @@ async function main() {
     ...CV_DISPLAY_SETTINGS,
   ];
   let settingsCreated = 0;
-  let settingsUpdated = 0;
+  let settingsSkipped = 0;
   for (const setting of allSettings) {
     try {
-      const result = await prisma.setting.upsert({
+      const existing = await prisma.setting.findUnique({
         where: { settingName: setting.settingName },
-        update: {
-          value: setting.value,
-          category: setting.category,
-          description: setting.description,
-        },
-        create: setting,
       });
-      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
+      if (!existing) {
+        await prisma.setting.create({ data: setting });
         settingsCreated++;
       } else {
-        settingsUpdated++;
+        settingsSkipped++;
       }
     } catch (error) { /* ignore */ }
   }
-  console.log(formatLine('⚙️ ', 'Settings', allSettings.length, allSettings.length));
-  results.push({ created: settingsCreated, updated: settingsUpdated });
-
-  // ===== 9. Feature Mappings (upsert) =====
-  let mappingsCreated = 0;
-  let mappingsUpdated = 0;
-  for (const mapping of FEATURE_MAPPINGS) {
-    try {
-      const result = await prisma.featureMapping.upsert({
-        where: { featureKey: mapping.featureKey },
-        update: {
-          displayName: mapping.displayName,
-          settingNames: mapping.settingNames,
-          openAICallNames: mapping.openAICallNames,
-          planFeatureNames: mapping.planFeatureNames,
-        },
-        create: {
-          featureKey: mapping.featureKey,
-          displayName: mapping.displayName,
-          settingNames: mapping.settingNames,
-          openAICallNames: mapping.openAICallNames,
-          planFeatureNames: mapping.planFeatureNames,
-        },
-      });
-      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
-        mappingsCreated++;
-      } else {
-        mappingsUpdated++;
-      }
-    } catch (error) { /* ignore */ }
-  }
-  console.log(formatLine('🔗', 'Feature Mappings', FEATURE_MAPPINGS.length, FEATURE_MAPPINGS.length));
-  results.push({ created: mappingsCreated, updated: mappingsUpdated });
+  console.log(formatLine('⚙️ ', 'Settings', settingsCreated, allSettings.length));
+  results.push({ created: settingsCreated, skipped: settingsSkipped });
 
   // ===== Summary =====
   totalCreated = results.reduce((sum, r) => sum + (r.created || 0), 0);

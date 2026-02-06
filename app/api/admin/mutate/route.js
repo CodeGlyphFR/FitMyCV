@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { auth } from "@/lib/auth/session";
-import { listUserCvFiles, readUserCvFile, writeUserCvFile } from "@/lib/cv/storage";
+import { listUserCvFiles, readUserCvFile, writeUserCvFile } from "@/lib/cv-core/storage";
 import { sanitizeInMemory } from "@/lib/sanitize";
-import { validateCv } from "@/lib/cv/validation";
+import { validateCv } from "@/lib/cv-core/validation";
 import prisma from "@/lib/prisma";
 import { trackCvEdit } from "@/lib/telemetry/server";
 
@@ -62,7 +62,7 @@ export async function POST(req){
       if (newDescription.trim().length > 0) {
         try {
           // Détection synchrone pour que le frontend voie la mise à jour immédiatement
-          const { detectAndPersistCvLanguage } = await import('@/lib/cv/languageUtils');
+          const { detectAndPersistCvLanguage } = await import('@/lib/cv-core/language/languageUtils');
           await detectAndPersistCvLanguage({
             userId,
             filename: selected,

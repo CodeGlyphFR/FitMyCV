@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concurrence | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Background Jobs</a>
+          <span>/</span>
+          <span>Concurrence</span>
+        </div>
+
+
+        <h1>Gestion de la Concurrence</h1>
+        <p class="lead">
+          Mecanismes de limitation et gestion des taches paralleles.
+        </p>
+
+        <h2>Limites de Concurrence</h2>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Limite globale</div>
+          <p>Maximum <strong>3 taches simultanees</strong> par utilisateur pour eviter la surcharge.</p>
+        </div>
+
+        <h2>Implementation</h2>
+
+        <pre><code>// lib/background-jobs/jobQueue.js
+const MAX_CONCURRENT_JOBS = 3;
+
+export async function enqueueJob(userId, jobFn) {
+  // Verifier les jobs en cours
+  const runningJobs = await prisma.backgroundTask.count({
+    where: {
+      userId,
+      status: { in: ['pending', 'running'] }
+    }
+  });
+
+  if (runningJobs >= MAX_CONCURRENT_JOBS) {
+    throw new Error('Too many concurrent jobs');
+  }
+
+  // Creer et executer le job
+  const task = await prisma.backgroundTask.create({
+    data: { userId, status: 'pending' }
+  });
+
+  // Execution asynchrone
+  setImmediate(async () => {
+    try {
+      await prisma.backgroundTask.update({
+        where: { id: task.id },
+        data: { status: 'running', startedAt: new Date() }
+      });
+
+      const result = await jobFn();
+
+      await prisma.backgroundTask.update({
+        where: { id: task.id },
+        data: { status: 'completed', result, completedAt: new Date() }
+      });
+    } catch (error) {
+      await prisma.backgroundTask.update({
+        where: { id: task.id },
+        data: { status: 'failed', error: error.message }
+      });
+    }
+  });
+
+  return task;
+}</code></pre>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

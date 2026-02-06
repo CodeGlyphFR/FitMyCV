@@ -1,37 +1,116 @@
-# Scripts de maintenance
+# Scripts de Maintenance
 
-Ce dossier contient les scripts utilitaires pour FitMyCV.
+Guide pour l'utilisation des scripts en environnement de production.
 
 ---
 
-## Synchronisation Stripe
+## Prérequis
 
-La synchronisation des produits et prix Stripe est **automatique** :
+Tous les scripts utilisent les variables d'environnement du fichier `.env` :
+- `DATABASE_URL` - Connexion PostgreSQL (indique l'environnement dev/prod)
+- `STRIPE_SECRET_KEY` - Clé Stripe (test ou live selon l'environnement)
 
-- **Chaque modification** dans l'interface Admin (plans d'abonnement, packs de crédits) déclenche automatiquement une synchronisation avec Stripe
-- **Sync manuelle** disponible via `POST /api/admin/sync-stripe` si nécessaire
+**Vérifier l'environnement avant exécution** : La variable `DATABASE_URL` dans `.env` détermine si vous êtes en dev ou prod.
 
-### Script CLI
+---
+
+## Scripts Disponibles
+
+### Synchronisation Stripe
 
 ```bash
 node scripts/sync-stripe.mjs
 ```
 
-Ce script :
-- Charge les variables d'environnement depuis `.env`
-- Crée les produits et prix dans Stripe (mode test ou live selon la clé)
-- Met à jour la base de données avec les IDs Stripe (`stripePriceId`, `stripeProductId`)
-- Affiche un rapport détaillé des opérations effectuées
+Synchronise les produits et prix Stripe avec la base de données :
+- Crée les produits/prix manquants dans Stripe
+- Met à jour les IDs Stripe en DB (`stripePriceId`, `stripeProductId`)
 
-**Prérequis** :
-- `STRIPE_SECRET_KEY` configuré dans `.env`
-- `DATABASE_URL` configuré dans `.env`
-
-**Fonction interne** : `lib/subscription/stripeSync.mjs` → `syncStripeProductsInternal()`
+**Note** : La synchronisation est aussi déclenchée automatiquement depuis l'interface Admin.
 
 ---
 
-## Voir aussi
+### Migrations de Données
 
-- [COMMANDS_REFERENCE.md](../docs/COMMANDS_REFERENCE.md) - Toutes les commandes
-- [STRIPE_SETUP.md](../docs/STRIPE_SETUP.md) - Configuration Stripe
+#### Migration CV vers Database
+
+```bash
+node scripts/migrate-cv-to-database.mjs
+```
+
+Migre les CV du filesystem vers la base de données (champ `content` JSON).
+
+#### Migration Feature Names
+
+```bash
+node scripts/migrate-feature-names.js
+```
+
+Met à jour les noms de features dans les compteurs et transactions.
+
+#### Migration Skill Proficiency
+
+```bash
+node scripts/migrate-skill-proficiency.mjs
+```
+
+Migre le format des niveaux de compétences dans les CV.
+
+---
+
+### Nettoyage de Données
+
+#### Nettoyage Métadonnées CV
+
+```bash
+node scripts/clean-cv-metadata.js
+```
+
+Nettoie les métadonnées obsolètes des CV.
+
+#### Suppression Domaines CV
+
+```bash
+node scripts/remove-domains-from-cvs.js
+```
+
+Supprime les domaines de compétences des CV (restructuration).
+
+---
+
+### Email
+
+#### Export Templates Email
+
+```bash
+node scripts/export-email-templates.js
+```
+
+Exporte les templates email de la base de données.
+
+#### Preview Emails
+
+```bash
+node scripts/preview-emails.js
+```
+
+Prévisualise les templates email en local.
+
+---
+
+### Debug (Développement)
+
+Scripts de debug pour la génération CV :
+- `check-batch.mjs`, `check-batch2.mjs`, `check-batch3.mjs`
+- `debug-new-generation.mjs`
+- `debug-projects.mjs`
+- `debug-skills-format.mjs`
+
+---
+
+## Bonnes Pratiques Production
+
+1. **Toujours vérifier `.env`** avant d'exécuter un script
+2. **Backup base de données** avant les migrations de données
+3. **Tester en dev** avant d'exécuter en production
+4. **Logger l'exécution** des scripts de migration pour traçabilité

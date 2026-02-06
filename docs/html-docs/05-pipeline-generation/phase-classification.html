@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase Classification | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Pipeline Generation</a>
+          <span>/</span>
+          <span>Classification</span>
+        </div>
+
+
+        <h1>Phase Classification</h1>
+        <p class="lead">
+          Premiere phase du pipeline de generation qui analyse et classifie chaque element du CV source selon sa pertinence pour l'offre d'emploi ciblee.
+        </p>
+
+        <h2>Objectif</h2>
+        <p>La phase de classification determine pour chaque experience, competence et projet du CV source s'il doit etre :</p>
+        <ul>
+          <li><strong>keep</strong> : Conserver tel quel (tres pertinent)</li>
+          <li><strong>adapt</strong> : Adapter le contenu (partiellement pertinent)</li>
+          <li><strong>remove</strong> : Supprimer (non pertinent)</li>
+          <li><strong>move_to_projects</strong> : Deplacer vers la section projets</li>
+        </ul>
+
+        <h2>Implementation</h2>
+
+        <pre><code>// lib/cv-generation/phases/classification.js
+import { callOpenAI } from '@/lib/openai-core/client';
+
+export async function classifyExperiences(cvData, jobOffer) {
+  const result = await callOpenAI({
+    featureName: 'classification',
+    messages: [
+      { role: 'system', content: CLASSIFICATION_PROMPT },
+      { role: 'user', content: JSON.stringify({ cv: cvData, job: jobOffer }) }
+    ],
+    responseFormat: {
+      type: 'json_schema',
+      json_schema: classificationSchema
+    }
+  });
+
+  return result;
+}</code></pre>
+
+        <h2>Schema de Sortie</h2>
+
+        <pre><code>{
+  "experiences": [
+    {
+      "id": "exp-1",
+      "decision": "keep",
+      "reason": "Experience directement liee au poste"
+    },
+    {
+      "id": "exp-2",
+      "decision": "adapt",
+      "reason": "Competences transferables a mettre en avant"
+    }
+  ],
+  "skills": [...],
+  "projects": [...]
+}</code></pre>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

@@ -86,7 +86,8 @@ export function useCvOperations({
           return;
         }
         // 429 = rate limited - ignorer silencieusement, un reload debounced suivra
-        if (res.status === 429) {
+        // 502 = server not ready - ignorer silencieusement
+        if (res.status === 429 || res.status === 502) {
           return;
         }
         // Autres erreurs HTTP

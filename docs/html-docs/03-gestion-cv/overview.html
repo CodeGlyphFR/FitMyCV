@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion CV | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Gestion CV</span>
+        </div>
+
+        <h1>Gestion CV</h1>
+        <p class="lead">
+          Le système de gestion CV permet de créer, modifier, stocker et versionner les CV au format JSON. Le contenu est stocké en base de données dans la table <code>CvFile</code>.
+        </p>
+
+        <h2>Architecture du Système CV</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux de gestion des CV</div>
+          <div class="mermaid">
+flowchart TD
+    Manual["Création manuelle"]
+    Import["Import PDF"]
+    Generate["Génération IA"]
+
+    Validate["Validation Zod"]
+    Storage[("CvFile")]
+    Version[("CvVersion")]
+
+    Edit["Édition"]
+    Optimize["Optimisation IA"]
+    Translate["Traduction"]
+    Export["Export"]
+
+    PDF["PDF"]
+    DOCX["DOCX"]
+
+    Manual --> Validate
+    Import --> Validate
+    Generate --> Validate
+    Validate --> Storage
+    Storage --> Version
+    Storage --> Edit
+    Storage --> Optimize
+    Storage --> Translate
+    Storage --> Export
+    Export --> PDF
+    Export --> DOCX
+          </div>
+        </div>
+
+        <h2>Structure d'un CV</h2>
+
+        <p>Chaque CV est stocké au format JSON avec une structure standardisée :</p>
+
+        <pre><code>{
+  "header": {
+    "firstName": "Jean",
+    "lastName": "Dupont",
+    "email": "jean.dupont@email.com",
+    "phone": "+33 6 12 34 56 78",
+    "location": "Paris, France",
+    "linkedIn": "https://linkedin.com/in/jeandupont",
+    "portfolio": "https://jeandupont.dev"
+  },
+  "sections": {
+    "summary": {
+      "content": "Développeur Full Stack avec 5 ans d'expérience..."
+    },
+    "experiences": [
+      {
+        "id": "exp-1",
+        "title": "Développeur Senior",
+        "company": "TechCorp",
+        "location": "Paris",
+        "startDate": "2021-01",
+        "endDate": null,
+        "current": true,
+        "responsibilities": [
+          "Développement d'APIs REST avec Node.js",
+          "Architecture microservices"
+        ]
+      }
+    ],
+    "skills": {
+      "technical": ["JavaScript", "TypeScript", "React", "Node.js"],
+      "soft": ["Leadership", "Communication"],
+      "languages": [
+        { "language": "Français", "level": "Natif" },
+        { "language": "Anglais", "level": "Courant" }
+      ]
+    },
+    "education": [...],
+    "projects": [...],
+    "certifications": [...],
+    "extras": [...]
+  },
+  "metadata": {
+    "language": "fr",
+    "templateId": "modern",
+    "createdAt": "2024-01-15T10:30:00Z",
+    "updatedAt": "2024-01-20T14:22:00Z"
+  }
+}</code></pre>
+
+        <h2>Modèles de Données</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Modèle</th>
+              <th>Description</th>
+              <th>Champs principaux</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>CvFile</code></td>
+              <td>CV principal</td>
+              <td>id, userId, filename, content (JSON), matchScore, isDefault, jobOfferId</td>
+            </tr>
+            <tr>
+              <td><code>CvVersion</code></td>
+              <td>Historique des versions</td>
+              <td>cvFileId, versionNumber, content, origin, description</td>
+            </tr>
+            <tr>
+              <td><code>CvTemplate</code></td>
+              <td>Templates disponibles</td>
+              <td>name, description, structure, previewUrl</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Opérations CRUD</h2>
+
+        <h3>Créer un CV</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge input">POST</span>
+            <span class="data-flow-title">/api/cv</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Input</h5>
+            <pre><code>{
+  "filename": "cv-dev-fullstack.json",
+  "content": { /* Structure CV */ },
+  "isDefault": false
+}</code></pre>
+            <h5>Output</h5>
+            <pre><code>{
+  "data": {
+    "id": 42,
+    "filename": "cv-dev-fullstack.json",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <h3>Lire un CV</h3>
+
+        <pre><code>// lib/cv-core/storage.js
+import prisma from '@/lib/prisma';
+
+export async function readUserCvFile(userId, filename) {
+  const cvFile = await prisma.cvFile.findFirst({
+    where: {
+      userId,
+      filename
+    }
+  });
+
+  if (!cvFile) {
+    throw new Error('CV not found');
+  }
+
+  return cvFile.content; // JSON parsé automatiquement
+}
+
+export async function listUserCvFiles(userId) {
+  return prisma.cvFile.findMany({
+    where: { userId },
+    select: {
+      id: true,
+      filename: true,
+      matchScore: true,
+      isDefault: true,
+      createdAt: true,
+      updatedAt: true,
+      jobOffer: {
+        select: {
+          id: true,
+          title: true
+        }
+      }
+    },
+    orderBy: { updatedAt: 'desc' }
+  });
+}</code></pre>
+
+        <h3>Modifier un CV</h3>
+
+        <pre><code>// Mise à jour avec création de version
+export async function writeUserCvFile(userId, filename, content, options = {}) {
+  const { createVersion = true, origin = 'manual_edit', description = '' } = options;
+
+  const existingCv = await prisma.cvFile.findFirst({
+    where: { userId, filename }
+  });
+
+  if (!existingCv) {
+    throw new Error('CV not found');
+  }
+
+  // Transaction : update CV + créer version
+  return prisma.$transaction(async (tx) => {
+    // Créer version si demandé
+    if (createVersion) {
+      const lastVersion = await tx.cvVersion.findFirst({
+        where: { cvFileId: existingCv.id },
+        orderBy: { versionNumber: 'desc' }
+      });
+
+      await tx.cvVersion.create({
+        data: {
+          cvFileId: existingCv.id,
+          versionNumber: (lastVersion?.versionNumber || 0) + 1,
+          content: existingCv.content, // Sauvegarder l'ancien contenu
+          origin,
+          description
+        }
+      });
+    }
+
+    // Mettre à jour le CV
+    return tx.cvFile.update({
+      where: { id: existingCv.id },
+      data: { content }
+    });
+  });
+}</code></pre>
+
+        <h2>Validation</h2>
+
+        <pre><code>// lib/cv-core/validation.js
+import { z } from 'zod';
+
+const HeaderSchema = z.object({
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  email: z.string().email(),
+  phone: z.string().optional(),
+  location: z.string().optional(),
+  linkedIn: z.string().url().optional(),
+  portfolio: z.string().url().optional()
+});
+
+const ExperienceSchema = z.object({
+  id: z.string(),
+  title: z.string().min(1),
+  company: z.string().min(1),
+  location: z.string().optional(),
+  startDate: z.string(),
+  endDate: z.string().nullable(),
+  current: z.boolean().default(false),
+  responsibilities: z.array(z.string())
+});
+
+const CvSchema = z.object({
+  header: HeaderSchema,
+  sections: z.object({
+    summary: z.object({ content: z.string() }).optional(),
+    experiences: z.array(ExperienceSchema).default([]),
+    skills: z.object({
+      technical: z.array(z.string()).default([]),
+      soft: z.array(z.string()).default([]),
+      languages: z.array(z.object({
+        language: z.string(),
+        level: z.string()
+      })).default([])
+    }).optional(),
+    education: z.array(z.any()).default([]),
+    projects: z.array(z.any()).default([]),
+    certifications: z.array(z.any()).default([]),
+    extras: z.array(z.any()).default([])
+  }),
+  metadata: z.object({
+    language: z.string().default('fr'),
+    templateId: z.string().optional(),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional()
+  }).optional()
+});
+
+export function validateCv(data) {
+  try {
+    const validated = CvSchema.parse(data);
+    return { valid: true, data: validated, errors: null };
+  } catch (error) {
+    return { valid: false, data: null, errors: error.errors };
+  }
+}</code></pre>
+
+        <h2>API Endpoints CV</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Méthode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/cv</code></td>
+              <td>GET</td>
+              <td>Lister tous les CV de l'utilisateur</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv</code></td>
+              <td>POST</td>
+              <td>Créer un nouveau CV</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/[id]</code></td>
+              <td>GET</td>
+              <td>Récupérer un CV par ID</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/[id]</code></td>
+              <td>PUT</td>
+              <td>Modifier un CV</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/[id]</code></td>
+              <td>DELETE</td>
+              <td>Supprimer un CV</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/[id]/duplicate</code></td>
+              <td>POST</td>
+              <td>Dupliquer un CV</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/[id]/versions</code></td>
+              <td>GET</td>
+              <td>Lister les versions</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/[id]/versions/[versionId]/restore</code></td>
+              <td>POST</td>
+              <td>Restaurer une version</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Prochaines Sections</h2>
+
+        <ul>
+          <li><a href="./structure-cv.html">Structure JSON</a> - Détail de chaque section</li>
+          <li><a href="./crud.html">CRUD CV</a> - Opérations de gestion</li>
+          <li><a href="./versioning.html">Versioning</a> - Historique et rollback</li>
+          <li><a href="./import-pdf.html">Import PDF</a> - Pipeline d'import IA</li>
+        </ul>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

@@ -6,6 +6,8 @@ import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { SITE_TITLE } from "@/lib/site";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import packageInfo from '@/package.json';
+import Link from 'next/link';
 import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
@@ -33,6 +35,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
   const [loading, setLoading] = React.useState(false);
   const [successMessage, setSuccessMessage] = React.useState("");
   const [oauthErrorMessage, setOauthErrorMessage] = React.useState("");
+  const [privacyPolicyAccepted, setPrivacyPolicyAccepted] = React.useState(false);
 
   const isRegister = mode === "register";
 
@@ -121,16 +124,23 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           setLoading(false);
           return;
         }
+        if (!privacyPolicyAccepted){
+          setError(t("auth.privacyPolicy.required"));
+          setLoading(false);
+          return;
+        }
 
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ firstName, lastName, email, password, recaptchaToken }),
+          body: JSON.stringify({ firstName, lastName, email, password, recaptchaToken, privacyPolicyAccepted }),
         });
 
         if (!res.ok){
           const payload = await res.json().catch(() => ({}));
-          setError(payload?.error || payload?.details?.join(", ") || t("auth.errors.createFailed"));
+          // Traduire la clé d'erreur API si elle existe
+          const translatedError = payload?.error ? t(payload.error) : null;
+          setError(translatedError || payload?.details?.join(", ") || t("auth.errors.createFailed"));
           setLoading(false);
           return;
         }
@@ -339,7 +349,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
               value={email}
               onChange={event => setEmail(event.target.value)}
               className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
-              placeholder="email@example.com"
+              placeholder={t("auth.placeholders.email")}
               autoComplete={isRegister ? "email" : "username"}
             />
           </div>
@@ -352,7 +362,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
               value={password}
               onChange={event => setPassword(event.target.value)}
               className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
-              placeholder="••••••••"
+              placeholder={t("auth.placeholders.password")}
               autoComplete={isRegister ? "new-password" : "current-password"}
             />
             {isRegister && <PasswordStrengthIndicator password={password} />}
@@ -367,10 +377,29 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
                 value={confirmPassword}
                 onChange={event => setConfirmPassword(event.target.value)}
                 className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 shadow-xs transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
-                placeholder="••••••••"
+                placeholder={t("auth.placeholders.password")}
                 autoComplete="new-password"
               />
             </div>
+          ) : null}
+
+          {isRegister ? (
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                id="privacyPolicy"
+                name="privacyPolicy"
+                type="checkbox"
+                checked={privacyPolicyAccepted}
+                onChange={event => setPrivacyPolicyAccepted(event.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded-xs border-2 border-white/30 bg-white/5 appearance-none cursor-pointer transition-all checked:bg-gradient-to-br checked:from-emerald-500/40 checked:to-emerald-600/40 checked:border-emerald-400/60 focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-0 relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-white checked:after:text-xs checked:after:font-bold"
+              />
+              <span className="text-sm text-white/80 group-hover:text-white transition-colors drop-shadow">
+                {t("auth.privacyPolicy.label")}{" "}
+                <Link href="/privacy" className="text-emerald-300 underline hover:text-emerald-200 transition-colors">
+                  {t("auth.privacyPolicy.linkText")}
+                </Link>
+              </span>
+            </label>
           ) : null}
 
           {successMessage ? (
@@ -427,6 +456,34 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           </a>.
         </div>
           </div>
+
+          {/* Footer avec version et liens légaux */}
+          <footer className="text-center text-xs pt-4 pb-2">
+            <div className="text-white/70 space-y-2">
+              <div>{t('footer.copyright')} (v{packageInfo.version})</div>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-0 sm:gap-1 leading-none -space-y-3 sm:space-y-0">
+                <div className="flex items-baseline justify-center gap-1 leading-none">
+                  <Link href="/about" className="hover:text-white transition-colors">
+                    {t('footer.about')}
+                  </Link>
+                  <span className="text-white/40">•</span>
+                  <Link href="/cookies" className="hover:text-white transition-colors">
+                    {t('footer.cookies')}
+                  </Link>
+                  <span className="text-white/40 hidden sm:inline">•</span>
+                </div>
+                <div className="flex items-baseline justify-center gap-1 leading-none">
+                  <Link href="/terms" className="hover:text-white transition-colors">
+                    {t('footer.terms')}
+                  </Link>
+                  <span className="text-white/40">•</span>
+                  <Link href="/privacy" className="hover:text-white transition-colors">
+                    {t('footer.privacy')}
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </footer>
         </div>
       </div>
     </>

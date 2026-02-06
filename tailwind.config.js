@@ -8,6 +8,7 @@ module.exports = {
       screens: {
         'sm': '1025px',
         'md': '1025px',
+        'lg': '1025px',
         'topbar': '1025px',
       },
       backdropBlur: {

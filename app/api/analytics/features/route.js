@@ -52,6 +52,7 @@ export async function GET(request) {
     }
 
     // Event type to feature name mapping
+    // Les noms de features doivent correspondre à ceux de featureConfig.js
     const EVENT_TO_FEATURE = {
       'CV_GENERATED_URL': 'generate_cv_url',
       'CV_GENERATED_PDF': 'generate_cv_pdf',
@@ -64,7 +65,7 @@ export async function GET(request) {
       'CV_EXPORTED': 'export_cv',
       'CV_TRANSLATED': 'translate_cv',
       'MATCH_SCORE_CALCULATED': 'match_score',
-      'CV_OPTIMIZED': 'optimize_cv',
+      'CV_OPTIMIZED': 'cv_improvement', // Amélioration de CV (renommé pour cohérence)
       'CV_EDITED': 'edit_cv',
     };
 
@@ -137,38 +138,35 @@ export async function GET(request) {
       lastUsedAt: stats.lastUsedAt,
     }));
 
-    // Add CV generation stats from BackgroundTask (cv_generation_v2)
-    // Note: createdAt/updatedAt are BigInt (Unix timestamp in ms) in BackgroundTask
-    const taskWhereClause = {
-      type: 'cv_generation_v2',
+    // Add CV generation stats from CvGenerationTask (source de vérité)
+    const cvGenWhereClause = {
       status: 'completed',
-      ...(startDate ? { createdAt: { gte: BigInt(startDate.getTime()) } } : {}),
+      ...(startDate ? { createdAt: { gte: startDate } } : {}),
       ...(userId ? { userId } : {}),
     };
 
-    const cvGenerationTasks = await prisma.backgroundTask.findMany({
-      where: taskWhereClause,
+    const cvGenerationTasks = await prisma.cvGenerationTask.findMany({
+      where: cvGenWhereClause,
       select: {
         userId: true,
         createdAt: true,
-        updatedAt: true,
+        completedAt: true,
       },
     });
 
     if (cvGenerationTasks.length > 0) {
       const userIds = new Set();
       let totalDuration = 0;
-      let lastUsedAt = Number(cvGenerationTasks[0].createdAt);
+      let lastUsedAt = cvGenerationTasks[0].createdAt;
 
       cvGenerationTasks.forEach(task => {
         if (task.userId) userIds.add(task.userId);
-        // Calculate duration from createdAt to updatedAt (both are BigInt timestamps)
-        if (task.createdAt && task.updatedAt) {
-          totalDuration += Number(task.updatedAt) - Number(task.createdAt);
+        // Calculate duration from createdAt to completedAt
+        if (task.createdAt && task.completedAt) {
+          totalDuration += task.completedAt.getTime() - task.createdAt.getTime();
         }
-        const taskCreatedAt = Number(task.createdAt);
-        if (taskCreatedAt > lastUsedAt) {
-          lastUsedAt = taskCreatedAt;
+        if (task.createdAt > lastUsedAt) {
+          lastUsedAt = task.createdAt;
         }
       });
 
@@ -178,7 +176,7 @@ export async function GET(request) {
         totalDuration,
         avgDuration: cvGenerationTasks.length > 0 ? Math.round(totalDuration / cvGenerationTasks.length) : 0,
         userCount: userIds.size,
-        lastUsedAt: new Date(lastUsedAt),
+        lastUsedAt,
       });
     }
 

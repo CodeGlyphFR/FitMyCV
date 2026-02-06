@@ -1,0 +1,73 @@
+{
+  "name": "adapted_experience",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "description": {
+        "type": ["object", "null"],
+        "description": "Description modifiee avec raison (null si non modifiee)",
+        "properties": {
+          "value": { "type": "string", "description": "Nouvelle description" },
+          "reason": { "type": "string", "description": "Raison de la modification" }
+        },
+        "required": ["value", "reason"],
+        "additionalProperties": false
+      },
+      "responsibilities": {
+        "type": ["object", "null"],
+        "description": "Responsabilites modifiees avec raison (null si non modifiees)",
+        "properties": {
+          "value": { "type": "array", "items": { "type": "string" }, "description": "Nouvelles responsabilites" },
+          "reason": { "type": "string", "description": "Raison de la modification" }
+        },
+        "required": ["value", "reason"],
+        "additionalProperties": false
+      },
+      "deliverables": {
+        "type": ["object", "null"],
+        "description": "Deliverables modifies avec raison (null si non modifies)",
+        "properties": {
+          "value": { "type": "array", "items": { "type": "string" }, "description": "Nouveaux deliverables" },
+          "reason": { "type": "string", "description": "Raison de la modification" }
+        },
+        "required": ["value", "reason"],
+        "additionalProperties": false
+      },
+      "skill_changes": {
+        "type": "array",
+        "description": "UNIQUEMENT les skills modifies ou supprimes (pas les conserves)",
+        "items": {
+          "type": "object",
+          "properties": {
+            "before": { "type": "string", "description": "Nom du skill original" },
+            "after": { "type": ["string", "null"], "description": "Nouveau nom (null si supprime)" },
+            "reason": { "type": "string", "description": "Raison du changement" }
+          },
+          "required": ["before", "after", "reason"],
+          "additionalProperties": false
+        }
+      },
+      "title": {
+        "type": "object",
+        "description": "Titre de poste ATS-friendly suggere a partir du contenu",
+        "properties": {
+          "value": { "type": "string", "description": "Titre de poste suggere" },
+          "reason": { "type": "string", "description": "Raison de la suggestion" }
+        },
+        "required": ["value", "reason"],
+        "additionalProperties": false
+      },
+      "domain": {
+        "type": "string",
+        "description": "Domaine metier (ex: Developpement logiciel, Gestion de projet)"
+      },
+      "years_in_domain": {
+        "type": "number",
+        "description": "Duree en annees (utiliser _calculated_years)"
+      }
+    },
+    "required": ["title", "description", "responsibilities", "deliverables", "skill_changes", "domain", "years_in_domain"],
+    "additionalProperties": false
+  }
+}

@@ -26,13 +26,14 @@
   },
   "cvGenerator": {
     "title": "Generar CV con AI",
-    "description": "Proporciona ofertas de empleo (enlaces o archivos PDF/Word) para generar CVs adaptados a partir del CV de referencia seleccionado.",
+    "description": "Proporciona ofertas de empleo (enlaces o archivos PDF) para generar CVs adaptados a partir del CV de referencia seleccionado.",
     "referenceCV": "CV de referencia",
     "selectCV": "Seleccionar un CV",
     "noManualCV": "No hay CV manual disponible. Crea un CV antes de lanzar la generación con IA.",
     "createTemplateOption": "Crear una nueva plantilla de CV",
     "templateCreationLabel": "Creación de plantilla de CV",
     "links": "Enlaces a ofertas de empleo",
+    "languageHint": "Para mejores resultados, utiliza una oferta de empleo en el mismo idioma que tu CV de referencia.",
     "loadRecentLink": "Cargar enlace reciente",
     "recentLinks": "Enlaces recientes",
     "addLink": "Añadir enlace",
@@ -145,6 +146,9 @@
       "hint": "Mueve las secciones para personalizar el orden de visualización",
       "reset": "Restablecer",
       "close": "Cerrar"
+    },
+    "placeholders": {
+      "filename": "Mi_CV"
     }
   },
   "newCvModal": {
@@ -157,6 +161,11 @@
     "creating": "Creando...",
     "cancel": "Cancelar",
     "hint": "Puedes completar todas las secciones después en modo edición.",
+    "placeholders": {
+      "fullName": "Ej: Juan García",
+      "currentTitle": "Ej: Desarrollador Full-Stack",
+      "email": "correo@ejemplo.com"
+    },
     "errors": {
       "fillRequired": "Por favor proporciona el nombre completo y el título actual.",
       "generic": "Error"
@@ -204,6 +213,13 @@
     "responsibilities": "Responsabilidades",
     "deliverables": "Resultados",
     "skillsUsed": "Habilidades utilizadas",
+    "responsibilitiesPerLine": "Responsabilidades (1/línea)",
+    "deliverablesPerLine": "Resultados (1/línea)",
+    "skillsUsedComma": "Competencias (comas)",
+    "position": "Puesto",
+    "period": "Período",
+    "location": "Ubicación",
+    "content": "Contenido",
     "technologies": "Tecnologías",
     "hardSkills": "Técnicas",
     "tools": "Herramientas",
@@ -227,6 +243,10 @@
       "projectName": "Nombre del proyecto",
       "role": "Rol",
       "description": "Descripción",
+      "descriptionHint": "Describe brevemente tu rol...",
+      "responsibilitiesHint": "Una por línea...",
+      "deliverablesHint": "Uno por línea...",
+      "skillsUsedHint": "React, TypeScript, Agile...",
       "skillName": "Nombre",
       "skillLabel": "Etiqueta",
       "chooseLevel": "Elige un nivel…",
@@ -237,12 +257,23 @@
       "experienceTitleShort": "Título",
       "experienceCompanyShort": "Empresa",
       "experienceDepartment": "Departamento/Cliente",
-      "experienceStartShort": "Inicio (AAAA o AAAA-MM)",
-      "experienceEndShort": "Fin (AAAA, AAAA-MM)",
+      "experienceTitleHint": "Ej: Jefe de proyecto",
+      "experienceCompanyHint": "Ej: Acme Corp",
+      "experienceDepartmentHint": "Ej: Departamento de Marketing",
+      "experienceStartShort": "Inicio",
+      "experienceEndShort": "Fin",
+      "dateFormat": "AAAA-MM",
       "experienceEndShortWithPresent": "Fin (AAAA, AAAA-MM o presente)",
       "city": "Ciudad",
+      "cityHint": "Madrid",
       "region": "Región",
-      "countryCode": "País (código)"
+      "regionHint": "Comunidad de Madrid",
+      "countryCode": "País (código)",
+      "selectCountry": "País",
+      "projectUrl": "URL del proyecto (GitHub, portfolio...)",
+      "projectUrlExample": "https://github.com/...",
+      "projectUrlLabel": "Título del enlace (ej: Ver en GitHub)",
+      "summaryDescription": "Describe tu perfil profesional..."
     }
   },
   "sourceInfo": {
@@ -364,6 +395,7 @@
     "title": "Revisar cambio",
     "before": "Antes",
     "after": "Después",
+    "levelChange": "Nivel",
     "empty": "(vacío)",
     "accept": "Aceptar",
     "reject": "Rechazar",
@@ -384,6 +416,7 @@
     "validating": "Validando...",
     "pendingWarning": "{count} cambio(s) sin revisar. Se aceptarán por defecto.",
     "validationSuccess": "CV guardado correctamente",
-    "validationError": "Error al guardar el CV"
+    "validationError": "Error al guardar el CV",
+    "skillsConsolidated": "competencias consolidadas en"
   }
 }

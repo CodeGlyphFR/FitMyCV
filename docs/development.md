@@ -1,6 +1,6 @@
 # Guide de Développement - FitMyCV.io
 
-> Généré le 2026-01-07
+> Instructions pour le développement, configuration et déploiement
 
 ---
 
@@ -8,10 +8,18 @@
 
 | Outil | Version | Notes |
 |-------|---------|-------|
-| Node.js | 18+ | LTS recommandé |
-| npm | 9+ | Inclus avec Node |
-| PostgreSQL | 14+ | Production |
-| Git | 2.x | Contrôle version |
+| Node.js | 20+ | LTS recommandé |
+| PostgreSQL | 14+ | Base de données principale |
+| npm | 10+ | Gestionnaire de paquets |
+| Git | 2.40+ | Contrôle de version |
+
+### Optionnels
+
+| Outil | Usage |
+|-------|-------|
+| Puppeteer | Export PDF, scraping |
+| GraphicsMagick | Conversion PDF → images |
+| Stripe CLI | Tests webhooks locaux |
 
 ---
 
@@ -20,8 +28,8 @@
 ### 1. Cloner le repository
 
 ```bash
-git clone <repository-url>
-cd FitMyCV-DEV
+git clone git@github.com:your-org/FitMyCV.git
+cd FitMyCV
 ```
 
 ### 2. Installer les dépendances
@@ -30,150 +38,255 @@ cd FitMyCV-DEV
 npm install
 ```
 
-### 3. Configuration environnement
+Le script `postinstall` exécute automatiquement `prisma generate`.
+
+### 3. Configurer l'environnement
 
 ```bash
 cp .env.example .env
 ```
 
-**Variables requises** :
+Éditer `.env` avec vos valeurs (voir section Variables d'environnement).
 
-```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/fitmycv"
-
-# NextAuth
-NEXTAUTH_URL="http://localhost:3001"
-NEXTAUTH_SECRET="your-secret-key"
-
-# OpenAI
-OPENAI_API_KEY="sk-..."
-
-# Stripe
-STRIPE_SECRET_KEY="sk_test_..."
-STRIPE_WEBHOOK_SECRET="whsec_..."
-
-# Email (SMTP primaire)
-SMTP_HOST="ssl0.ovh.net"
-SMTP_PORT=587
-SMTP_USER="..."
-SMTP_PASS="..."
-
-# Email (Resend fallback)
-RESEND_API_KEY="re_..."
-
-# OAuth (optionnel)
-GOOGLE_CLIENT_ID="..."
-GOOGLE_CLIENT_SECRET="..."
-GITHUB_CLIENT_ID="..."
-GITHUB_CLIENT_SECRET="..."
-
-# reCAPTCHA
-RECAPTCHA_SITE_KEY="..."
-RECAPTCHA_SECRET_KEY="..."
-```
-
-### 4. Base de données
+### 4. Initialiser la base de données
 
 ```bash
-# Appliquer les migrations
+# Appliquer les migrations et seeder
+npm run db:setup
+
+# Ou séparément :
 npx prisma migrate deploy
-
-# Générer le client Prisma
-npx prisma generate
-
-# Seed initial (optionnel)
 npx prisma db seed
 ```
 
-### 5. Lancer le serveur
+### 5. Lancer le serveur de développement
 
 ```bash
 npm run dev
-# → http://localhost:3001
 ```
+
+Application disponible sur `http://localhost:3001`
 
 ---
 
-## Commandes Disponibles
+## Commandes NPM
 
 | Commande | Description |
 |----------|-------------|
-| `npm run dev` | Serveur dev (port 3001) |
+| `npm run dev` | Serveur dev (port 3001, Turbopack) |
 | `npm run build` | Build production |
-| `npm start` | Serveur production (port 3000) |
-| `npm run rebuild` | Rebuild complet prod |
+| `npm run start` | Serveur production (port 3000) |
+| `npm run db:setup` | Migrations + seed |
+| `npm run db:reset` | Reset complet DB |
+| `npm run db:seed` | Seed uniquement |
+| `npm run db:generate` | Régénérer Prisma Client |
 
-### Base de données
+---
+
+## Commandes Prisma
 
 | Commande | Description |
 |----------|-------------|
-| `npx prisma migrate dev --name <name>` | Créer migration |
-| `npx prisma migrate deploy` | Appliquer migrations |
+| `npx prisma migrate dev` | Créer migration (dev) |
+| `npx prisma migrate deploy` | Appliquer migrations (prod) |
+| `npx prisma migrate reset` | Reset DB + migrations |
+| `npx prisma db push` | Push schema sans migration |
+| `npx prisma db pull` | Pull schema depuis DB |
 | `npx prisma generate` | Régénérer client |
 | `npx prisma studio` | GUI base de données |
-| `npx prisma db seed` | Seed données |
-| `npm run db:reset` | Reset complet DB (dev only) |
+| `npx prisma format` | Formatter schema.prisma |
 
 ---
 
-## Structure du Projet
+## Variables d'Environnement
+
+### Obligatoires
+
+| Variable | Description | Exemple |
+|----------|-------------|---------|
+| `DATABASE_URL` | URL PostgreSQL | `postgresql://user:pass@localhost:5432/fitmycv` |
+| `OPENAI_API_KEY` | Clé API OpenAI | `sk-...` |
+| `NEXTAUTH_SECRET` | Secret NextAuth (32+ chars) | Générer avec `openssl rand -base64 32` |
+| `NEXTAUTH_URL` | URL application | `https://app.fitmycv.io` |
+
+### Email
+
+| Variable | Description | Défaut |
+|----------|-------------|--------|
+| `EMAIL_PROVIDER` | Provider email | `"auto"` |
+| `EMAIL_FROM` | Expéditeur | `"FitMyCV <noreply@fitmycv.io>"` |
+| `SMTP_HOST` | Serveur SMTP | `ssl0.ovh.net` |
+| `SMTP_PORT` | Port SMTP | `587` |
+| `SMTP_USER` | Utilisateur SMTP | - |
+| `SMTP_PASSWORD` | Mot de passe SMTP | - |
+| `RESEND_API_KEY` | Clé Resend (fallback) | - |
+
+### OAuth (optionnels)
+
+| Variable | Description |
+|----------|-------------|
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth Secret |
+| `GITHUB_ID` | GitHub OAuth Client ID |
+| `GITHUB_SECRET` | GitHub OAuth Secret |
+| `APPLE_CLIENT_ID` | Apple Sign In Client ID |
+| `APPLE_CLIENT_SECRET` | Apple Sign In Secret |
+
+### Stripe
+
+| Variable | Description |
+|----------|-------------|
+| `STRIPE_SECRET_KEY` | Clé secrète Stripe |
+| `STRIPE_WEBHOOK_SECRET` | Secret webhook Stripe |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Clé publique Stripe |
+
+### Sécurité
+
+| Variable | Description |
+|----------|-------------|
+| `CV_ENCRYPTION_KEY` | Clé chiffrement CV (base64, 32 octets) |
+| `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` | Clé site reCAPTCHA v3 |
+| `RECAPTCHA_SECRET_KEY` | Clé secrète reCAPTCHA |
+| `BYPASS_RECAPTCHA` | Désactiver reCAPTCHA (dev) |
+
+---
+
+## Structure des Dossiers
 
 ```
-FitMyCV-DEV/
-├── app/                    # Next.js App Router
-│   ├── page.jsx           # Page principale (CV Editor)
-│   ├── layout.jsx         # Layout racine
-│   ├── api/               # 127 API Routes
-│   │   ├── auth/         # Authentification
-│   │   ├── cv/           # Opérations CV
-│   │   ├── cvs/          # CRUD CVs
-│   │   ├── admin/        # Administration
-│   │   ├── subscription/ # Abonnements
-│   │   └── ...
-│   ├── auth/             # Pages auth
-│   ├── admin/            # Dashboard admin
-│   └── account/          # Paramètres compte
+FitMyCV/
+├── app/                    # Routes Next.js (App Router)
+│   ├── api/                # API Routes (113 endpoints)
+│   ├── auth/               # Pages authentification
+│   ├── account/            # Page compte utilisateur
+│   ├── admin/              # Dashboard admin
+│   ├── cookies/            # Paramètres cookies
+│   ├── privacy/            # Politique confidentialité
+│   ├── terms/              # Conditions utilisation
+│   └── about/              # Page à propos
 │
-├── components/            # ~150 Composants React
-│   ├── TopBar/           # Navigation + modals
-│   ├── ui/               # Composants réutilisables
-│   ├── admin/            # Dashboard admin
-│   ├── subscription/     # Abonnements
-│   ├── onboarding/       # Onboarding
-│   └── ...
+├── components/             # Composants React (138 fichiers)
+│   ├── layout/             # Structure page
+│   ├── ui/                 # Design System
+│   ├── TopBar/             # Barre navigation
+│   ├── cv-sections/        # Sections CV
+│   ├── cv-improvement/     # Panel optimisation IA
+│   ├── cv-review/          # Surlignage modifications
+│   ├── admin/              # Dashboard admin
+│   ├── subscription/       # Abonnements
+│   ├── onboarding/         # Système guidage
+│   ├── providers/          # Contextes globaux
+│   ├── auth/               # Authentification
+│   ├── account/            # Paramètres compte
+│   ├── notifications/      # Notifications
+│   ├── feedback/           # Feedback
+│   ├── cookies/            # Consentement
+│   ├── task-queue/         # Queue tâches
+│   ├── header/             # Header CV
+│   ├── pages/              # Contenu pages
+│   └── empty-state/        # État vide
 │
-├── lib/                   # Logique métier (25 modules)
-│   ├── auth/             # NextAuth config
-│   ├── cv/               # Gestion CVs
-│   ├── openai/           # Intégration IA
-│   ├── subscription/     # Plans & crédits
-│   ├── email/            # Service email
-│   ├── backgroundTasks/  # Queue de jobs
-│   └── ...
+├── lib/                    # Modules métier (31 modules)
+│   ├── auth/               # Authentification NextAuth
+│   ├── cv-core/            # Gestion CV
+│   ├── openai-core/        # Client OpenAI
+│   ├── subscription/       # Abonnements Stripe
+│   ├── background-jobs/    # Queue tâches async
+│   ├── email/              # Service email
+│   ├── job-offer/          # Extraction offres emploi
+│   ├── scoring/            # Match score CV/offre
+│   ├── pdf/                # Export PDF
+│   ├── export/             # Export données
+│   ├── telemetry/          # Tracking événements
+│   ├── analytics/          # Analytics admin
+│   ├── admin/              # Config admin
+│   ├── settings/           # Settings dynamiques
+│   ├── api/                # Erreurs API
+│   ├── security/           # Sécurité
+│   ├── i18n/               # Internationalisation
+│   ├── translation/        # Service traduction
+│   ├── onboarding/         # Parcours onboarding
+│   ├── cookies/            # Consentement RGPD
+│   ├── recaptcha/          # Vérification reCAPTCHA
+│   ├── events/             # Event emitter
+│   ├── utils/              # Utilitaires
+│   ├── constants/          # Constantes globales
+│   ├── animations/         # Variants Framer Motion
+│   ├── loading/            # Events loading
+│   ├── creditCosts/        # Mapping coûts
+│   └── prompts-shared/     # Prompts réutilisables
 │
-├── prisma/
-│   ├── schema.prisma     # 33 modèles
-│   └── migrations/       # Historique migrations
-│
-├── locales/              # Traductions
-│   ├── en/
-│   ├── fr/
-│   ├── de/
-│   └── es/
-│
-├── data/                 # Données statiques
-│   └── schema.json       # JSON Schema CV
-│
-├── public/               # Assets statiques
-└── docs/                 # Documentation
+├── prisma/                 # Base de données
+├── locales/                # Traductions i18n (fr, en, de, es)
+├── hooks/                  # React hooks globaux
+├── public/                 # Assets statiques
+├── scripts/                # Scripts maintenance
+├── data/                   # Données statiques
+└── docs/                   # Documentation
+```
+
+---
+
+## Workflow Git
+
+### Branches
+
+```
+main          # Production stable
+  └── release # Pré-production
+        └── dev    # Développement actif
+              ├── feature/xxx     # Nouvelles fonctionnalités
+              ├── improvement/xxx # Améliorations fonctionnalités existantes
+              ├── refactor/xxx    # Refactoring code
+              ├── bug/xxx         # Corrections bugs
+              └── hotfix/xxx      # Corrections urgentes
+```
+
+### Conventions de Commits
+
+Format : `<type>: <description>`
+
+| Type | Usage |
+|------|-------|
+| `feat` | Nouvelle fonctionnalité |
+| `fix` | Correction bug |
+| `refactor` | Refactoring sans changement fonctionnel |
+| `docs` | Documentation |
+| `chore` | Maintenance, dépendances |
+| `style` | Formatage, style code |
+| `perf` | Optimisation performance |
+| `test` | Ajout/modification tests |
+
+**Exemples :**
+
+```bash
+git commit -m "feat: add PDF export with custom templates"
+git commit -m "fix: resolve score calculation on empty skills"
+git commit -m "refactor: extract TopBar hooks into separate files"
+```
+
+### Workflow Feature
+
+```bash
+# 1. Créer branche depuis dev
+git checkout dev
+git pull origin dev
+git checkout -b feature/my-feature
+
+# 2. Développer et committer
+git add .
+git commit -m "feat: implement feature"
+
+# 3. Push et PR
+git push -u origin feature/my-feature
+# Créer PR vers dev sur GitHub
 ```
 
 ---
 
 ## Patterns de Code
 
-### API Route Pattern
+### API Route Standard
 
 ```javascript
 // app/api/example/route.js
@@ -182,381 +295,333 @@ import prisma from '@/lib/prisma';
 import { apiError, CommonErrors } from '@/lib/api/apiErrors';
 
 export async function GET(request) {
-  // 1. Authentification
-  const session = await auth();
-  if (!session?.user?.id) {
-    return apiError(CommonErrors.notAuthenticated());
-  }
-
-  // 2. Logique métier
   try {
+    // 1. Vérifier authentification
+    const session = await auth();
+    if (!session?.user?.id) {
+      return apiError(CommonErrors.notAuthenticated());
+    }
+
+    // 2. Récupérer données
     const data = await prisma.example.findMany({
       where: { userId: session.user.id }
     });
 
+    // 3. Retourner réponse
     return Response.json({ data });
+
   } catch (error) {
-    console.error('Error:', error);
+    console.error('GET /api/example error:', error);
     return apiError(CommonErrors.serverError());
   }
 }
-
-export async function POST(request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return apiError(CommonErrors.notAuthenticated());
-  }
-
-  const body = await request.json();
-
-  // Validation
-  if (!body.requiredField) {
-    return apiError(CommonErrors.invalidPayload('requiredField is required'));
-  }
-
-  // Création
-  const created = await prisma.example.create({
-    data: {
-      userId: session.user.id,
-      ...body
-    }
-  });
-
-  return Response.json({ data: created }, { status: 201 });
-}
 ```
 
-### CV Operations Pattern
+### Opérations CV
 
 ```javascript
-import { readUserCvFile, writeUserCvFile } from '@/lib/cv/storage';
-import { validateCv } from '@/lib/cv/validation';
+import { readUserCvFile, writeUserCvFile } from '@/lib/cv-core/storage';
+import { validateCv } from '@/lib/cv-core/validation';
 
 // Lecture
 const cvData = await readUserCvFile(userId, filename);
 
 // Validation
 const { valid, errors } = validateCv(cvData);
-if (!valid) {
-  throw new Error(`Invalid CV: ${errors.join(', ')}`);
-}
-
-// Modification
-cvData.header.name = 'New Name';
+if (!valid) throw new Error(errors.join(', '));
 
 // Écriture
-await writeUserCvFile(userId, filename, cvData);
+await writeUserCvFile(userId, filename, modifiedData);
 ```
 
-### Background Job Pattern
-
-```javascript
-import { enqueueJob } from '@/lib/backgroundTasks/jobQueue';
-import { generateCvJob } from '@/lib/backgroundTasks/generateCvJob';
-
-// Créer la tâche en DB
-const task = await prisma.backgroundTask.create({
-  data: {
-    id: crypto.randomUUID(),
-    title: 'Generating CV...',
-    type: 'generate_cv',
-    status: 'queued',
-    createdAt: BigInt(Date.now()),
-    deviceId,
-    userId,
-    payload: JSON.stringify(payload)
-  }
-});
-
-// Enqueue le job
-enqueueJob(() => generateCvJob(task.id, userId, payload));
-
-return Response.json({ taskId: task.id });
-```
-
-### Feature Usage Pattern
+### Vérification Crédits/Limites
 
 ```javascript
 import { canUseFeature, incrementFeatureCounter } from '@/lib/subscription/featureUsage';
 import { debitCredit } from '@/lib/subscription/credits';
 
-// Vérifier les limites
+// Vérifier accès
 const { allowed, needsCredit, reason } = await canUseFeature(userId, 'gpt_cv_generation');
 
 if (!allowed) {
   return apiError({ error: reason, status: 403 });
 }
 
-// Si crédit requis, débiter
+// Débiter si nécessaire
 if (needsCredit) {
-  const debited = await debitCredit(userId, 1, 'gpt_cv_generation');
-  if (!debited) {
-    return apiError({ error: 'Insufficient credits', status: 402 });
-  }
+  await debitCredit(userId, 1, 'gpt_cv_generation');
 }
 
-// Exécuter l'action...
+// Exécuter action...
 
-// Incrémenter le compteur
+// Incrémenter compteur
 await incrementFeatureCounter(userId, 'gpt_cv_generation');
 ```
 
-### Provider Pattern (React)
+### Background Job
 
-```jsx
-// components/MyProvider.jsx
-'use client';
-import { createContext, useContext, useState } from 'react';
+```javascript
+import { enqueueJob } from '@/lib/background-jobs/jobQueue';
 
-const MyContext = createContext();
-
-export function MyProvider({ children }) {
-  const [state, setState] = useState(initialState);
-
-  const actions = {
-    doSomething: () => setState(/*...*/),
-  };
-
-  return (
-    <MyContext.Provider value={{ ...state, ...actions }}>
-      {children}
-    </MyContext.Provider>
-  );
-}
-
-export function useMyContext() {
-  const context = useContext(MyContext);
-  if (!context) {
-    throw new Error('useMyContext must be used within MyProvider');
+// Créer tâche en DB
+const task = await prisma.cvGenerationTask.create({
+  data: {
+    userId,
+    sourceCvFileId,
+    mode: 'adapt',
+    status: 'pending',
+    totalOffers: 1
   }
-  return context;
+});
+
+// Enqueuer exécution (max 3 concurrent)
+enqueueJob(() => startSingleOfferGeneration(task.id, offer.id));
+```
+
+### Composant React avec Hooks
+
+```javascript
+// components/Example.jsx
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useNotifications } from '@/components/providers/NotificationProvider';
+
+export default function Example({ cvId }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const { addNotification } = useNotifications();
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch(`/api/cv/${cvId}`);
+        if (!res.ok) throw new Error('Fetch failed');
+        setData(await res.json());
+      } catch (error) {
+        addNotification({ type: 'error', message: error.message });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [cvId]);
+
+  if (loading) return <SkeletonLoader />;
+  if (!data) return <EmptyState />;
+
+  return <div>{/* ... */}</div>;
 }
 ```
 
 ---
 
-## Conventions
+## Pattern i18n pour Notifications de Tâches
 
-### Commits
+Les messages de succès/erreur des tâches de fond supportent trois formats via la fonction `parseSuccessMessage` dans `BackgroundTasksProvider` :
 
-Format : `<type>(<scope>): <description>`
+### Formats supportés
 
-| Type | Usage |
-|------|-------|
-| `feat` | Nouvelle fonctionnalité |
-| `fix` | Correction bug |
-| `refactor` | Refactoring (pas de changement fonctionnel) |
-| `docs` | Documentation |
-| `chore` | Maintenance |
-| `style` | Formatting |
-| `test` | Tests |
+**1. Clé de traduction simple**
 
-**Exemples** :
-```
-feat(cv): add translation to German
-fix(auth): handle expired JWT tokens
-refactor(subscription): extract credit logic
-docs: update API reference
+```javascript
+// Dans la tâche
+successMessage: "taskQueue.messages.pipelineCompleted"
+
+// Résultat : t("taskQueue.messages.pipelineCompleted")
 ```
 
-### Branches
+**2. JSON avec clé et paramètres**
 
-| Pattern | Usage |
-|---------|-------|
-| `main` | Production |
-| `release` | Pre-production |
-| `dev` | Development |
-| `feature/*` | Nouvelles features |
-| `improvement/*` | Améliorations |
-| `bug/*` | Corrections bugs |
-| `hotfix/*` | Fixes urgents (depuis main) |
+```javascript
+// Dans la tâche
+successMessage: JSON.stringify({
+  key: "taskQueue.messages.cvGenerated",
+  params: { count: 3, filename: "cv.json" }
+})
 
-### Nommage
+// Résultat : t("taskQueue.messages.cvGenerated", { count: 3, filename: "cv.json" })
+```
 
-| Élément | Convention | Exemple |
-|---------|------------|---------|
-| Composants | PascalCase | `CvGeneratorModal.jsx` |
-| Hooks | camelCase + use | `useCvList.js` |
-| API Routes | route.js | `app/api/cv/route.js` |
-| Lib modules | camelCase | `lib/cv/storage.js` |
-| Variables | camelCase | `const userId` |
-| Constantes | UPPER_SNAKE | `const MAX_CONCURRENT_JOBS` |
-| Types DB | PascalCase | `CvFile`, `User` |
+**3. Message texte brut (legacy)**
+
+```javascript
+// Dans la tâche
+successMessage: "CV généré avec succès"
+
+// Résultat : "CV généré avec succès" (affiché tel quel)
+```
+
+### Exemple d'implémentation
+
+```javascript
+// Dans le job de génération
+await prisma.backgroundTask.update({
+  where: { id: taskId },
+  data: {
+    status: 'completed',
+    successMessage: JSON.stringify({
+      key: 'taskQueue.messages.cvGenerated',
+      params: { count: generatedCount }
+    })
+  }
+});
+
+// Dans locales/fr/common.json
+{
+  "taskQueue": {
+    "messages": {
+      "cvGenerated": "{{count}} CV généré(s) avec succès"
+    }
+  }
+}
+```
+
+### Gestion des erreurs
+
+Les erreurs suivent le même pattern :
+
+```javascript
+// Erreur avec clé de traduction
+error: JSON.stringify({
+  translationKey: 'errors.api.openai.timeout',
+  source: 'LinkedIn'
+})
+
+// Clé directe
+error: 'errors.api.background.taskFailed'
+```
 
 ---
 
-## Tests Manuels
+## Tests
 
-### Tester l'authentification
+### Structure
 
-1. Créer un compte via `/auth?mode=register`
-2. Vérifier l'email (ou bypass via Prisma Studio)
-3. Se connecter via `/auth`
-4. Vérifier la session dans `session.user`
+```
+test/
+├── unit/           # Tests unitaires
+├── integration/    # Tests intégration API
+└── e2e/            # Tests end-to-end
+```
 
-### Tester la génération CV
-
-1. Aller sur la page principale
-2. Cliquer "Générer depuis offre"
-3. Entrer une URL d'offre d'emploi
-4. Observer la tâche dans la queue
-5. Vérifier le CV généré
-
-### Tester les webhooks Stripe
+### Exécution
 
 ```bash
-# Terminal 1: Stripe CLI
-stripe listen --forward-to localhost:3001/api/webhooks/stripe
+# Tests unitaires (à implémenter)
+npm test
 
-# Terminal 2: Trigger event
-stripe trigger checkout.session.completed
+# Tests E2E avec Playwright (à implémenter)
+npm run test:e2e
 ```
+
+---
+
+## Déploiement
+
+### Production
+
+1. **Build**
+   ```bash
+   npm run build
+   ```
+
+2. **Migrations**
+   ```bash
+   npx prisma migrate deploy
+   ```
+
+3. **Démarrer**
+   ```bash
+   npm run start
+   ```
+
+### Variables Production
+
+```env
+NODE_ENV=production
+DATABASE_URL="postgresql://..."
+NEXTAUTH_URL="https://app.fitmycv.io"
+# ... autres variables
+```
+
+### Checklist Pré-déploiement
+
+- [ ] Variables d'environnement configurées
+- [ ] Migrations appliquées
+- [ ] Seed exécuté (si première installation)
+- [ ] Webhooks Stripe configurés
+- [ ] DNS et certificats SSL
+- [ ] Backup base de données
+
+---
+
+## Incrémentation de Version
+
+Lors d'une nouvelle version, mettre à jour **tous** les fichiers :
+
+| Fichier | Champ |
+|---------|-------|
+| `package.json` | `"version": "x.x.x.x"` |
+| `package-lock.json` | `"version": "x.x.x.x"` (2 occurrences) |
+| `README.md` | `**Version:** x.x.x.x` |
+| `docs/index.md` | `\| **Version** \| x.x.x.x \|` |
 
 ---
 
 ## Debugging
 
-### Logs serveur
+### Logs
 
 ```javascript
-// Logs structurés
-console.log('[CV] Generating:', { userId, filename });
-console.error('[OpenAI] Error:', { error, model });
+// Côté serveur
+console.log('[API] /api/example:', data);
+console.error('[ERROR] /api/example:', error);
+
+// Avec contexte
+console.log(`[CV] User ${userId} - Operation: ${operation}`);
 ```
 
-### Prisma Studio
+### PostgreSQL (psql)
 
 ```bash
-npx prisma studio
-# → http://localhost:5555
+# Connexion avec DATABASE_URL du .env
+psql "$DATABASE_URL"
+
+# Ou extraire les infos du .env
+# Format: postgresql://user:password@host:port/database
 ```
 
-### Network (Browser)
+Utiliser `psql` pour interroger directement la base PostgreSQL. Les identifiants et l'environnement (dev/prod) sont définis dans le fichier `.env` via la variable `DATABASE_URL`.
 
-1. DevTools → Network
-2. Filtrer par `api/`
-3. Vérifier status codes et payloads
-
-### Environnement
+### Stripe CLI
 
 ```bash
-# Vérifier les variables
-node -e "console.log(process.env.DATABASE_URL)"
-```
+# Écouter webhooks en local
+stripe listen --forward-to localhost:3001/api/webhooks/stripe
 
----
-
-## Performance Tips
-
-### Prisma
-
-```javascript
-// Utiliser select pour limiter les champs
-const user = await prisma.user.findUnique({
-  where: { id: userId },
-  select: { id: true, name: true, email: true }
-});
-
-// Utiliser include avec parcimonie
-const cv = await prisma.cvFile.findUnique({
-  where: { id: cvId },
-  include: { versions: { take: 5 } }  // Limiter
-});
-```
-
-### React
-
-```jsx
-// Mémoisation
-const MemoizedComponent = React.memo(ExpensiveComponent);
-
-// useMemo pour calculs coûteux
-const sorted = useMemo(() =>
-  data.sort((a, b) => b.date - a.date),
-  [data]
-);
-
-// useCallback pour fonctions passées en props
-const handleClick = useCallback(() => {
-  doSomething(id);
-}, [id]);
-```
-
-### Next.js
-
-```javascript
-// Métadonnées statiques
-export const metadata = {
-  title: 'FitMyCV.io',
-};
-
-// Revalidation pour pages dynamiques
-export const revalidate = 3600; // 1 heure
-```
-
----
-
-## Sécurité Checklist
-
-- [ ] Valider toutes les entrées utilisateur
-- [ ] Utiliser `auth()` dans chaque API route protégée
-- [ ] Sanitizer le HTML (XSS prevention)
-- [ ] Ne pas exposer d'erreurs détaillées en production
-- [ ] Vérifier les permissions (admin vs user)
-- [ ] Rate limiting sur les endpoints sensibles
-- [ ] CSRF protection via NextAuth
-- [ ] Secrets dans `.env` (pas dans le code)
-
----
-
-## Troubleshooting
-
-### "ECONNREFUSED" PostgreSQL
-
-```bash
-# Vérifier que PostgreSQL tourne
-sudo systemctl status postgresql
-
-# Ou avec Docker
-docker ps | grep postgres
-```
-
-### "Module not found"
-
-```bash
-# Regénérer node_modules
-rm -rf node_modules package-lock.json
-npm install
-
-# Regénérer Prisma client
-npx prisma generate
-```
-
-### "JWT expired"
-
-Session expirée - se reconnecter. Vérifier `NEXTAUTH_SECRET` est constant.
-
-### "OpenAI rate limit"
-
-Attendre ou utiliser un autre API key. Vérifier les quotas sur platform.openai.com.
-
-### Migrations Prisma échouent
-
-```bash
-# Reset en dev (perte de données!)
-npm run db:reset
-
-# Ou corriger manuellement
-npx prisma migrate resolve --applied <migration_name>
+# Trigger événement test
+stripe trigger payment_intent.succeeded
 ```
 
 ---
 
 ## Ressources
 
-- [Next.js Docs](https://nextjs.org/docs)
+### Documentation Interne
+
+- `docs/index.md` - Index documentation
+- `docs/architecture.md` - Architecture technique
+- `docs/api-reference.md` - Référence API
+- `docs/data-models.md` - Modèles de données
+- `docs/components.md` - Composants React
+- `docs/html-docs/` - Documentation HTML complète (accès admin via `/api/admin/docs/`)
+
+### Documentation Externe
+
+- [Next.js 16 Docs](https://nextjs.org/docs)
 - [Prisma Docs](https://www.prisma.io/docs)
-- [NextAuth Docs](https://next-auth.js.org)
-- [Tailwind CSS](https://tailwindcss.com/docs)
+- [NextAuth.js Docs](https://next-auth.js.org)
+- [Stripe API](https://stripe.com/docs/api)
 - [OpenAI API](https://platform.openai.com/docs)
-- [Stripe Docs](https://stripe.com/docs)
+- [Tailwind CSS](https://tailwindcss.com/docs)

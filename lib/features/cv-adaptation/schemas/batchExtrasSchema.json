@@ -1,0 +1,90 @@
+{
+  "name": "adapted_extras",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "extras": {
+        "type": "array",
+        "description": "Liste des extras adaptes",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Nom de l'extra (Permis, Benevolat, Hobbies, etc.)"
+            },
+            "summary": {
+              "type": "string",
+              "description": "Description adaptee de l'extra"
+            }
+          },
+          "required": ["name", "summary"],
+          "additionalProperties": false
+        }
+      },
+      "modifications": {
+        "type": "array",
+        "description": "Liste detaillee des modifications effectuees avec avant/apres/raison",
+        "items": {
+          "type": "object",
+          "properties": {
+            "field": {
+              "type": "string",
+              "description": "Nom de l'extra modifie"
+            },
+            "action": {
+              "type": "string",
+              "enum": ["modified", "added", "removed"],
+              "description": "Type de modification"
+            },
+            "before": {
+              "type": "string",
+              "description": "Valeur originale avant modification"
+            },
+            "after": {
+              "type": "string",
+              "description": "Valeur apres modification"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Raison IA expliquant pourquoi cette modification a ete faite"
+            }
+          },
+          "required": ["field", "action", "before", "after", "reason"],
+          "additionalProperties": false
+        }
+      },
+      "extras_modifications": {
+        "type": "array",
+        "description": "Mapping explicite entre extras source et extras adaptes (OBLIGATOIRE pour chaque extra)",
+        "items": {
+          "type": "object",
+          "properties": {
+            "before_name": {
+              "type": ["string", "null"],
+              "description": "Nom de l'extra source (null si ajout)"
+            },
+            "after_name": {
+              "type": ["string", "null"],
+              "description": "Nom de l'extra adapte (null si suppression)"
+            },
+            "action": {
+              "type": "string",
+              "enum": ["kept", "modified", "removed", "added"],
+              "description": "kept=inchange, modified=renomme ou reformule, removed=supprime, added=ajoute"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Justification du changement"
+            }
+          },
+          "required": ["before_name", "after_name", "action", "reason"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": ["extras", "modifications", "extras_modifications"],
+    "additionalProperties": false
+  }
+}

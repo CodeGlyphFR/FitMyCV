@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stack Technique | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Architecture</a>
+          <span>/</span>
+          <span>Stack Technique</span>
+        </div>
+
+        <h1>Stack Technique</h1>
+        <p class="lead">
+          FitMyCV.io est construit sur une stack moderne et performante, optimisée pour les applications SaaS avec traitement IA intensif.
+        </p>
+
+        <h2>Vue d'ensemble de la Stack</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Architecture technologique</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Frontend["FRONTEND"]
+        Next["Next.js 16<br/>App Router"]
+        React["React 19"]
+        Tailwind["Tailwind CSS 4"]
+        i18n["next-intl"]
+    end
+
+    subgraph Backend["BACKEND"]
+        API["API Routes<br/>113 endpoints"]
+        Auth["NextAuth.js 5"]
+        Prisma["Prisma 6"]
+    end
+
+    subgraph External["SERVICES EXTERNES"]
+        OpenAI["OpenAI API"]
+        Stripe["Stripe<br/>Payments"]
+        Resend["Resend<br/>Emails"]
+    end
+
+    subgraph Data["DONNÉES"]
+        PG[(PostgreSQL)]
+        FS["File System<br/>CV JSON"]
+    end
+
+    Frontend --> Backend
+    Backend --> External
+    Backend --> Data
+          </div>
+        </div>
+
+        <h2>Détail des Technologies</h2>
+
+        <h3>Frontend</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Technologie</th>
+              <th>Version</th>
+              <th>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Next.js</strong></td>
+              <td>16.x</td>
+              <td>Framework React avec App Router, SSR, API Routes</td>
+            </tr>
+            <tr>
+              <td><strong>React</strong></td>
+              <td>19.x</td>
+              <td>Bibliothèque UI avec Server Components</td>
+            </tr>
+            <tr>
+              <td><strong>Tailwind CSS</strong></td>
+              <td>4.x</td>
+              <td>Framework CSS utility-first</td>
+            </tr>
+            <tr>
+              <td><strong>next-intl</strong></td>
+              <td>3.x</td>
+              <td>Internationalisation (fr, en, de, es)</td>
+            </tr>
+            <tr>
+              <td><strong>Lucide React</strong></td>
+              <td>-</td>
+              <td>Icônes SVG</td>
+            </tr>
+            <tr>
+              <td><strong>Recharts</strong></td>
+              <td>-</td>
+              <td>Graphiques (admin dashboard)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Backend</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Technologie</th>
+              <th>Version</th>
+              <th>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Next.js API Routes</strong></td>
+              <td>16.x</td>
+              <td>113 endpoints RESTful</td>
+            </tr>
+            <tr>
+              <td><strong>NextAuth.js</strong></td>
+              <td>5.x</td>
+              <td>Authentification (credentials, Google, LinkedIn)</td>
+            </tr>
+            <tr>
+              <td><strong>Prisma</strong></td>
+              <td>6.x</td>
+              <td>ORM pour PostgreSQL (34 modèles)</td>
+            </tr>
+            <tr>
+              <td><strong>Zod</strong></td>
+              <td>-</td>
+              <td>Validation de schémas</td>
+            </tr>
+            <tr>
+              <td><strong>bcrypt</strong></td>
+              <td>-</td>
+              <td>Hachage des mots de passe</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Services Externes</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>Usage</th>
+              <th>Configuration</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>OpenAI API</strong></td>
+              <td>Génération et optimisation CV</td>
+              <td>Modèles configurables en DB (Setting)</td>
+            </tr>
+            <tr>
+              <td><strong>Stripe</strong></td>
+              <td>Paiements, abonnements</td>
+              <td>Webhooks pour sync</td>
+            </tr>
+            <tr>
+              <td><strong>Resend</strong></td>
+              <td>Emails transactionnels</td>
+              <td>Templates en DB</td>
+            </tr>
+            <tr>
+              <td><strong>Puppeteer</strong></td>
+              <td>Export PDF</td>
+              <td>Headless Chrome</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Structure des Dossiers</h2>
+
+        <pre><code>fitmycv-app/
+├── app/                          # Next.js App Router
+│   ├── [locale]/                 # Routes i18n
+│   │   ├── (auth)/              # Routes authentification
+│   │   ├── (protected)/         # Routes protégées
+│   │   └── admin/               # Dashboard admin
+│   └── api/                     # 113 API Routes
+│       ├── auth/                # NextAuth endpoints
+│       ├── cv/                  # CRUD CV
+│       ├── admin/               # Endpoints admin
+│       ├── subscription/        # Stripe integration
+│       └── ...
+├── components/                   # 138 composants React
+│   ├── cv/                      # Éditeur CV
+│   ├── admin/                   # Dashboard admin
+│   ├── ui/                      # Composants UI réutilisables
+│   └── ...
+├── lib/                         # 31 modules métier
+│   ├── auth/                    # Authentification
+│   ├── cv-core/                 # Logique CV
+│   ├── openai-core/             # Client OpenAI
+│   ├── cv-generation/           # Pipeline génération
+│   ├── cv-improvement/          # Pipeline optimisation
+│   ├── subscription/            # Abonnements & crédits
+│   └── ...
+├── prisma/
+│   └── schema.prisma            # 34 modèles
+├── locales/                     # Traductions
+│   ├── fr.json
+│   ├── en.json
+│   ├── de.json
+│   └── es.json
+└── public/                      # Assets statiques</code></pre>
+
+        <h2>Configuration Environnement</h2>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Variables d'environnement requises</div>
+          <p>Ces variables sont essentielles au fonctionnement de l'application.</p>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>DATABASE_URL</code></td>
+              <td>URL de connexion PostgreSQL</td>
+            </tr>
+            <tr>
+              <td><code>NEXTAUTH_SECRET</code></td>
+              <td>Secret pour les sessions NextAuth</td>
+            </tr>
+            <tr>
+              <td><code>NEXTAUTH_URL</code></td>
+              <td>URL de base de l'application</td>
+            </tr>
+            <tr>
+              <td><code>OPENAI_API_KEY</code></td>
+              <td>Clé API OpenAI</td>
+            </tr>
+            <tr>
+              <td><code>STRIPE_SECRET_KEY</code></td>
+              <td>Clé secrète Stripe</td>
+            </tr>
+            <tr>
+              <td><code>STRIPE_WEBHOOK_SECRET</code></td>
+              <td>Secret pour validation webhooks</td>
+            </tr>
+            <tr>
+              <td><code>RESEND_API_KEY</code></td>
+              <td>Clé API Resend (emails)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Modèles OpenAI</h2>
+
+        <p>Les modèles utilisés sont configurables dynamiquement via la table <code>Setting</code> :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Setting Key</th>
+              <th>Usage</th>
+              <th>Valeur par défaut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>model_cv_generation</code></td>
+              <td>Pipeline génération CV</td>
+              <td><code>gpt-4o</code></td>
+            </tr>
+            <tr>
+              <td><code>model_cv_improvement</code></td>
+              <td>Pipeline optimisation CV</td>
+              <td><code>gpt-4o</code></td>
+            </tr>
+            <tr>
+              <td><code>model_match_score</code></td>
+              <td>Calcul score de matching</td>
+              <td><code>gpt-4o-mini</code></td>
+            </tr>
+            <tr>
+              <td><code>model_translate</code></td>
+              <td>Traduction CV</td>
+              <td><code>gpt-4o-mini</code></td>
+            </tr>
+            <tr>
+              <td><code>model_pdf_import</code></td>
+              <td>Import PDF</td>
+              <td><code>gpt-4o</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Performances et Optimisations</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Cache OpenAI (CAG)</h4>
+            <ul>
+              <li>Prompt caching actif</li>
+              <li>90% réduction coûts tokens cachés</li>
+              <li>TTL: 5 min (dev) / 24h (prod)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Parallélisation</h4>
+            <ul>
+              <li>Batches exécutés en parallèle</li>
+              <li>Promise.allSettled pour résilience</li>
+              <li>Max 3 tâches concurrentes</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Background Jobs</h4>
+            <ul>
+              <li>Queue in-memory</li>
+              <li>Tracking en base de données</li>
+              <li>Retry automatique avec backoff</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

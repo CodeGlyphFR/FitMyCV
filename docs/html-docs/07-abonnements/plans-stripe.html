@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plans Stripe | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Abonnements</a>
+          <span>/</span>
+          <span>Plans Stripe</span>
+        </div>
+
+
+        <h1>Plans Stripe</h1>
+        <p class="lead">
+          Configuration et gestion des plans d'abonnement via Stripe.
+        </p>
+
+        <h2>Plans Disponibles</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Plan</th>
+              <th>Prix</th>
+              <th>Generations/mois</th>
+              <th>Features</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Free</strong></td>
+              <td>0 EUR</td>
+              <td>3</td>
+              <td>Export PDF</td>
+            </tr>
+            <tr>
+              <td><strong>Pro</strong></td>
+              <td>9.99 EUR/mois</td>
+              <td>50</td>
+              <td>+ Export DOCX, Optimisation</td>
+            </tr>
+            <tr>
+              <td><strong>Premium</strong></td>
+              <td>19.99 EUR/mois</td>
+              <td>Illimite</td>
+              <td>+ Multi-langue, Support prioritaire</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Configuration Stripe</h2>
+
+        <pre><code>// Modèle SubscriptionPlan
+model SubscriptionPlan {
+  id                String   @id @default(cuid())
+  name              String
+  stripePriceId     String   @unique
+  stripeProductId   String
+  price             Decimal
+  interval          String   // monthly, yearly
+  features          Json
+  limits            Json
+  isActive          Boolean  @default(true)
+}</code></pre>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

@@ -1,14 +1,20 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
-import { getReviewState, processReviewAction, processBatchReviewAction } from '@/lib/cv/changeTracking';
+import prisma from '@/lib/prisma';
+import { getReviewState, getReviewStateForSection, processReviewAction, processBatchReviewAction } from '@/lib/cv-core/changeTracking';
 import { CommonErrors } from '@/lib/api/apiErrors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/cvs/changes?file=xxx.json
+ * GET /api/cvs/changes?file=xxx.json[&section=xxx][&field=xxx][&expIndex=0]
  * Récupère l'état de review des modifications d'un CV
+ *
+ * Paramètres optionnels :
+ * - section : filtrer par section (summary, skills, experience, etc.)
+ * - field : filtrer par champ (hard_skills, tools, etc.) - requiert section
+ * - expIndex : filtrer par index d'expérience - requiert section=experience
  *
  * Response:
  * {
@@ -27,6 +33,10 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const filename = searchParams.get('file');
+    const section = searchParams.get('section');
+    const field = searchParams.get('field');
+    const expIndexStr = searchParams.get('expIndex');
+    const expIndex = expIndexStr !== null ? parseInt(expIndexStr, 10) : undefined;
 
     if (!filename) {
       return NextResponse.json(
@@ -35,9 +45,38 @@ export async function GET(request) {
       );
     }
 
-    const reviewState = await getReviewState(session.user.id, filename);
+    let reviewState;
 
-    console.log(`[API /cvs/changes] GET ${filename}: reviewState=${reviewState ? `${reviewState.pendingChanges?.length || 0} changes` : 'null'}`);
+    // Si une section est spécifiée, utiliser le filtrage par section
+    if (section) {
+      reviewState = await getReviewStateForSection(
+        session.user.id,
+        filename,
+        section,
+        field || undefined,
+        expIndex
+      );
+      console.log(`[API /cvs/changes] GET ${filename} section=${section} field=${field || 'all'} expIndex=${expIndex ?? 'all'}: ${reviewState?.pendingChanges?.length || 0} changes`);
+    } else {
+      // Sinon, récupérer tous les changements
+      reviewState = await getReviewState(session.user.id, filename);
+      console.log(`[API /cvs/changes] GET ${filename}: reviewState=${reviewState ? `${reviewState.pendingChanges?.length || 0} changes` : 'null'}`);
+    }
+
+    // Récupérer les raisons des skills "kept" depuis le contenu du CV
+    // (pour affichage du bouton info)
+    let keptSkillReasons = {};
+    try {
+      const cvFile = await prisma.cvFile.findUnique({
+        where: { userId_filename: { userId: session.user.id, filename } },
+        select: { content: true },
+      });
+      if (cvFile?.content?._keptSkillReasons) {
+        keptSkillReasons = cvFile.content._keptSkillReasons;
+      }
+    } catch (e) {
+      console.error('[API /cvs/changes] Error fetching keptSkillReasons:', e);
+    }
 
     if (!reviewState) {
       return NextResponse.json({
@@ -45,12 +84,15 @@ export async function GET(request) {
         pendingChanges: [],
         pendingSourceVersion: null,
         progress: { total: 0, reviewed: 0, pending: 0, percentComplete: 100 },
+        keptSkillReasons,
       });
     }
 
     return NextResponse.json({
       filename,
+      section, // Inclure la section dans la réponse pour le client
       ...reviewState,
+      keptSkillReasons,
     });
   } catch (error) {
     console.error('[changes] GET Error:', error);

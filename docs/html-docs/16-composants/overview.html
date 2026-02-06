@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Composants React | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Composants</span>
+        </div>
+
+        <h1>Composants React</h1>
+        <p class="lead">
+          FitMyCV.io comprend <strong>138 composants React</strong> organisés par domaine fonctionnel. L'application utilise React 19 avec Server Components et Client Components.
+        </p>
+
+        <h2>Organisation</h2>
+
+        <pre><code>components/
+├── cv/                    # Éditeur et gestion CV (42 composants)
+│   ├── editor/           # Sections éditables
+│   ├── preview/          # Prévisualisation
+│   └── templates/        # Templates visuels
+├── admin/                 # Dashboard admin (28 composants)
+│   ├── tabs/             # Onglets principaux
+│   ├── charts/           # Graphiques
+│   └── email/            # Gestion emails
+├── auth/                  # Authentification (8 composants)
+├── dashboard/             # Dashboard utilisateur (12 composants)
+├── onboarding/            # Flux onboarding (6 composants)
+├── subscription/          # Gestion abonnement (10 composants)
+├── job-offers/            # Offres d'emploi (8 composants)
+├── ui/                    # Composants UI réutilisables (24 composants)
+└── layout/                # Layout et navigation</code></pre>
+
+        <h2>Composants Principaux</h2>
+
+        <h3>CV Editor</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Architecture de l'éditeur CV</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Editor["CV EDITOR"]
+        CvEditor["CvEditor.jsx<br/>(Container)"]
+        Sidebar["EditorSidebar"]
+        Preview["CvPreview"]
+    end
+
+    subgraph Sections["SECTIONS"]
+        Header["HeaderSection"]
+        Summary["SummarySection"]
+        Experiences["ExperiencesSection"]
+        Skills["SkillsSection"]
+        Education["EducationSection"]
+        Projects["ProjectsSection"]
+    end
+
+    subgraph State["STATE"]
+        Context["CvContext"]
+        Reducer["cvReducer"]
+    end
+
+    CvEditor --> Sidebar
+    CvEditor --> Preview
+    Sidebar --> Sections
+    Sections --> Context
+    Context --> Reducer
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>CvEditor</code></td>
+              <td>Client</td>
+              <td>Container principal avec state management</td>
+            </tr>
+            <tr>
+              <td><code>EditorSidebar</code></td>
+              <td>Client</td>
+              <td>Navigation entre sections</td>
+            </tr>
+            <tr>
+              <td><code>CvPreview</code></td>
+              <td>Client</td>
+              <td>Prévisualisation temps réel</td>
+            </tr>
+            <tr>
+              <td><code>HeaderSection</code></td>
+              <td>Client</td>
+              <td>Édition infos personnelles</td>
+            </tr>
+            <tr>
+              <td><code>ExperienceItem</code></td>
+              <td>Client</td>
+              <td>Édition d'une expérience</td>
+            </tr>
+            <tr>
+              <td><code>SkillsEditor</code></td>
+              <td>Client</td>
+              <td>Gestion des compétences</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Dashboard Admin</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>AdminDashboard</code></td>
+              <td>Container avec tabs</td>
+            </tr>
+            <tr>
+              <td><code>OverviewTab</code></td>
+              <td>KPIs et métriques globales</td>
+            </tr>
+            <tr>
+              <td><code>UsersTab</code></td>
+              <td>Gestion utilisateurs</td>
+            </tr>
+            <tr>
+              <td><code>OpenAICostsTab</code></td>
+              <td>Monitoring coûts IA</td>
+            </tr>
+            <tr>
+              <td><code>SettingsTab</code></td>
+              <td>Configuration système</td>
+            </tr>
+            <tr>
+              <td><code>KPICard</code></td>
+              <td>Carte métrique avec trend</td>
+            </tr>
+            <tr>
+              <td><code>MRRHistoryChart</code></td>
+              <td>Graphique revenus</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>UI Components</h3>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Forms</h4>
+            <ul>
+              <li><code>Input</code></li>
+              <li><code>Textarea</code></li>
+              <li><code>Select</code></li>
+              <li><code>Checkbox</code></li>
+              <li><code>DatePicker</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Feedback</h4>
+            <ul>
+              <li><code>Button</code></li>
+              <li><code>Modal</code></li>
+              <li><code>Toast</code></li>
+              <li><code>Spinner</code></li>
+              <li><code>ProgressBar</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Display</h4>
+            <ul>
+              <li><code>Card</code></li>
+              <li><code>Badge</code></li>
+              <li><code>Avatar</code></li>
+              <li><code>Tooltip</code></li>
+              <li><code>Tabs</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Navigation</h4>
+            <ul>
+              <li><code>Sidebar</code></li>
+              <li><code>Breadcrumb</code></li>
+              <li><code>Dropdown</code></li>
+              <li><code>ContextMenu</code></li>
+              <li><code>Pagination</code></li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>ContextMenu (D&eacute;taill&eacute;)</h3>
+
+        <p>Menu contextuel r&eacute;utilisable avec ic&ocirc;ne kebab (&loz;), utilis&eacute; pour remplacer les boutons edit/delete par un menu unifi&eacute;.</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge">Props</span>
+            <span class="data-flow-title">Configuration du composant</span>
+          </div>
+          <div class="data-flow-content">
+            <table>
+              <thead>
+                <tr>
+                  <th>Prop</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>items</code></td>
+                  <td>Array</td>
+                  <td>Liste des actions du menu</td>
+                </tr>
+                <tr>
+                  <td><code>className</code></td>
+                  <td>string</td>
+                  <td>Classes CSS additionnelles</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h5>Structure d'un item</h5>
+            <pre><code>{
+  icon: LucideIcon,     // Ic&ocirc;ne optionnelle
+  label: string,        // Texte de l'action
+  onClick: () => void,  // Callback au clic
+  danger: boolean       // Style rouge pour suppressions
+}</code></pre>
+
+            <h5>Exemple d'utilisation</h5>
+            <pre><code class="language-jsx">import ContextMenu from '@/components/ui/ContextMenu';
+import { Pencil, Trash2 } from 'lucide-react';
+
+&lt;ContextMenu
+  items={[
+    {
+      icon: Pencil,
+      label: t('common.edit'),
+      onClick: () => setEditMode(true)
+    },
+    {
+      icon: Trash2,
+      label: t('common.delete'),
+      onClick: handleDelete,
+      danger: true
+    }
+  ]}
+/&gt;</code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Fonctionnalit&eacute;s</div>
+          <ul>
+            <li><strong>Positionnement dynamique</strong> : Calcul automatique pour &eacute;viter les d&eacute;bordements</li>
+            <li><strong>React Portal</strong> : Rendu via <code>createPortal</code> (z-index 10002)</li>
+            <li><strong>Fermeture automatique</strong> : Click outside, Escape, scroll</li>
+            <li><strong>Accessibilit&eacute;</strong> : Attributs ARIA (<code>role="menu"</code>, <code>aria-expanded</code>)</li>
+          </ul>
+        </div>
+
+        <h2>Patterns</h2>
+
+        <h3>Server vs Client Components</h3>
+
+        <pre><code>// Server Component (par défaut)
+// app/dashboard/page.jsx
+export default async function DashboardPage() {
+  const session = await auth();
+  const cvFiles = await prisma.cvFile.findMany({
+    where: { userId: session.user.id }
+  });
+
+  return (
+    <div>
+      <h1>Mes CV</h1>
+      <CvList cvFiles={cvFiles} /> {/* Client Component */}
+    </div>
+  );
+}
+
+// Client Component
+// components/cv/CvList.jsx
+'use client';
+
+import { useState } from 'react';
+
+export function CvList({ cvFiles }) {
+  const [selected, setSelected] = useState(null);
+
+  return (
+    <ul>
+      {cvFiles.map(cv => (
+        <li key={cv.id} onClick={() => setSelected(cv.id)}>
+          {cv.filename}
+        </li>
+      ))}
+    </ul>
+  );
+}</code></pre>
+
+        <h3>Context Pattern</h3>
+
+        <pre><code>// components/cv/CvContext.jsx
+'use client';
+
+import { createContext, useContext, useReducer } from 'react';
+
+const CvContext = createContext(null);
+
+export function CvProvider({ children, initialCv }) {
+  const [state, dispatch] = useReducer(cvReducer, {
+    cv: initialCv,
+    isDirty: false,
+    isSaving: false
+  });
+
+  return (
+    <CvContext.Provider value={{ state, dispatch }}>
+      {children}
+    </CvContext.Provider>
+  );
+}
+
+export function useCv() {
+  const context = useContext(CvContext);
+  if (!context) {
+    throw new Error('useCv must be used within CvProvider');
+  }
+  return context;
+}
+
+function cvReducer(state, action) {
+  switch (action.type) {
+    case 'UPDATE_HEADER':
+      return {
+        ...state,
+        cv: { ...state.cv, header: action.payload },
+        isDirty: true
+      };
+    case 'ADD_EXPERIENCE':
+      return {
+        ...state,
+        cv: {
+          ...state.cv,
+          sections: {
+            ...state.cv.sections,
+            experiences: [...state.cv.sections.experiences, action.payload]
+          }
+        },
+        isDirty: true
+      };
+    // ...
+    default:
+      return state;
+  }
+}</code></pre>
+
+        <h3>Hook Pattern</h3>
+
+        <pre><code>// hooks/useAutoSave.js
+'use client';
+
+import { useEffect, useRef } from 'react';
+import { useCv } from '@/components/cv/CvContext';
+
+export function useAutoSave(cvId, delay = 2000) {
+  const { state, dispatch } = useCv();
+  const timeoutRef = useRef(null);
+
+  useEffect(() => {
+    if (!state.isDirty) return;
+
+    // Debounce
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(async () => {
+      dispatch({ type: 'SET_SAVING', payload: true });
+
+      try {
+        await fetch(`/api/cv/${cvId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state.cv)
+        });
+
+        dispatch({ type: 'SAVED' });
+      } catch (error) {
+        console.error('Auto-save failed:', error);
+      } finally {
+        dispatch({ type: 'SET_SAVING', payload: false });
+      }
+    }, delay);
+
+    return () => clearTimeout(timeoutRef.current);
+  }, [state.cv, state.isDirty, cvId, delay, dispatch]);
+}</code></pre>
+
+        <h2>Hooks Personnalisés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Hook</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>useCv()</code></td>
+              <td>Accès au context CV</td>
+            </tr>
+            <tr>
+              <td><code>useAutoSave()</code></td>
+              <td>Sauvegarde automatique avec debounce</td>
+            </tr>
+            <tr>
+              <td><code>useTaskProgress()</code></td>
+              <td>Suivi progression SSE</td>
+            </tr>
+            <tr>
+              <td><code>useSubscription()</code></td>
+              <td>État abonnement courant</td>
+            </tr>
+            <tr>
+              <td><code>useCredits()</code></td>
+              <td>Solde et transactions</td>
+            </tr>
+            <tr>
+              <td><code>useOpenAICostsData()</code></td>
+              <td>Données coûts admin</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Conventions</h2>
+
+        <ul>
+          <li><strong>Fichiers</strong> : PascalCase pour composants (<code>CvEditor.jsx</code>)</li>
+          <li><strong>Exports</strong> : Named exports pour composants réutilisables</li>
+          <li><strong>'use client'</strong> : Uniquement quand nécessaire (state, effects, events)</li>
+          <li><strong>Props</strong> : Destructuring avec valeurs par défaut</li>
+          <li><strong>Styles</strong> : Tailwind CSS classes, pas de CSS modules</li>
+        </ul>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

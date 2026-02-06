@@ -1,0 +1,98 @@
+{
+  "name": "adapted_education",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "education": {
+        "type": "array",
+        "description": "Liste des formations adaptées",
+        "items": {
+          "type": "object",
+          "properties": {
+            "institution": {
+              "type": "string",
+              "description": "Nom de l'établissement (conservé tel quel)"
+            },
+            "degree": {
+              "type": "string",
+              "description": "Diplôme traduit dans la langue cible"
+            },
+            "field_of_study": {
+              "type": "string",
+              "description": "Domaine d'études traduit dans la langue cible"
+            },
+            "start_date": {
+              "type": "string",
+              "description": "Date de début (conservée telle quelle)"
+            },
+            "end_date": {
+              "type": "string",
+              "description": "Date de fin (conservée telle quelle)"
+            },
+            "location": {
+              "anyOf": [
+                { "type": "null" },
+                {
+                  "type": "object",
+                  "properties": {
+                    "city": { "type": "string" },
+                    "region": { "type": "string" },
+                    "country_code": { "type": "string" }
+                  },
+                  "required": ["city", "region", "country_code"],
+                  "additionalProperties": false
+                }
+              ],
+              "description": "Localisation (conservée telle quelle)"
+            }
+          },
+          "required": ["institution", "degree", "field_of_study", "start_date", "end_date", "location"],
+          "additionalProperties": false
+        }
+      },
+      "education_modifications": {
+        "type": "array",
+        "description": "Mapping explicite entre formations source et adaptées",
+        "items": {
+          "type": "object",
+          "properties": {
+            "education_index": {
+              "type": "integer",
+              "description": "Index de la formation dans le tableau source (0-based)"
+            },
+            "degree_before": {
+              "type": "string",
+              "description": "Diplôme avant modification"
+            },
+            "degree_after": {
+              "type": "string",
+              "description": "Diplôme après modification"
+            },
+            "field_before": {
+              "type": "string",
+              "description": "Domaine d'études avant modification"
+            },
+            "field_after": {
+              "type": "string",
+              "description": "Domaine d'études après modification"
+            },
+            "action": {
+              "type": "string",
+              "enum": ["kept", "modified"],
+              "description": "kept=inchangé, modified=traduit"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Justification du changement"
+            }
+          },
+          "required": ["education_index", "degree_before", "degree_after", "field_before", "field_after", "action", "reason"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": ["education", "education_modifications"],
+    "additionalProperties": false
+  }
+}

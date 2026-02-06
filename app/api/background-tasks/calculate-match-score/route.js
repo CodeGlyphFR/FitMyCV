@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
-import { scheduleCalculateMatchScoreJob } from "@/lib/backgroundTasks/calculateMatchScoreJob";
+import { scheduleCalculateMatchScoreJob } from "@/lib/scoring/job";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
 import { CommonErrors, AuthErrors, BackgroundErrors, CvErrors } from "@/lib/api/apiErrors";
@@ -105,7 +105,7 @@ export async function POST(request) {
 
     const taskData = {
       title: `Calcul du score de match en cours...`,
-      successMessage: `Score de match calculé avec succès`,
+      successMessage: 'taskQueue.messages.matchScoreCompleted',
       type: 'calculate-match-score',
       status: 'queued',
       shouldUpdateCvList: false, // Pas besoin de rafraîchir la liste des CVs

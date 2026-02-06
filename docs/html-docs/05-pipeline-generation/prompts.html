@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompts IA - Pipeline Génération | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar injectée par layout.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header injecté par layout.js -->
+      <div id="header-container"></div>
+
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Pipeline Génération</a>
+          <span>/</span>
+          <span>Prompts IA</span>
+        </div>
+
+        <h1>Prompts IA</h1>
+        <p class="lead">
+          Le pipeline de g&eacute;n&eacute;ration utilise 14 fichiers de prompts organis&eacute;s par phase (7 phases &times; 2 fichiers system/user). Chaque prompt suit une structure standardis&eacute;e et respecte la hi&eacute;rarchie de priorit&eacute;s V&Eacute;RIT&Eacute; &gt; LANGUE &gt; ATS &gt; STYLE.
+        </p>
+
+        <h2>Organisation des Fichiers</h2>
+
+        <p>Les prompts suivent un pattern <code>{phase}-{system|user}.md</code> pour s&eacute;parer les instructions syst&egrave;me des donn&eacute;es utilisateur.</p>
+
+        <pre><code>lib/features/cv-adaptation/prompts/
+├── classify-system.md              # Phase 1 : Classification (system)
+├── classify-user.md                # Phase 1 : Classification (user)
+├── batch-experience-system.md      # Phase 2 : Adaptation exp&eacute;riences (system)
+├── batch-experience-user.md        # Phase 2 : Adaptation exp&eacute;riences (user)
+├── batch-project-system.md         # Phase 3 : Adaptation projets (system)
+├── batch-project-user.md           # Phase 3 : Adaptation projets (user)
+├── batch-skills-system.md          # Phase 4 : Skills - hard/soft/tools (system)
+├── batch-skills-user.md            # Phase 4 : Skills (user)
+├── batch-extras-system.md          # Phase 5 : Extras - hobbies, langues (system)
+├── batch-extras-user.md            # Phase 5 : Extras (user)
+├── batch-summary-system.md         # Phase 6 : R&eacute;sum&eacute; professionnel (system)
+├── batch-summary-user.md           # Phase 6 : R&eacute;sum&eacute; (user)
+├── recompose-languages-system.md   # Phase 7 : Langues - format CECRL (system)
+└── recompose-languages-user.md     # Phase 7 : Langues (user)</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Pattern system/user</div>
+          <p>Chaque phase utilise deux fichiers : <code>*-system.md</code> contient les instructions et r&egrave;gles de l'IA, <code>*-user.md</code> structure les donn&eacute;es d'entr&eacute;e (CV source, offre d'emploi).</p>
+        </div>
+
+        <h2>Structure Standard d'un Prompt</h2>
+
+        <p>Chaque prompt suit un template standardisé :</p>
+
+        <pre><code># [Nom de la Mission]
+
+## Contexte
+[Description du contexte et de l'objectif]
+
+## Priorités (STRICTES)
+1. **VÉRITÉ** (P1) : Jamais d'information inventée
+2. **LANGUE** (P2) : Contenu dans la langue cible
+3. **ATS** (P3) : Mots-clés exacts de l'offre
+4. **STYLE** (P4) : Ton professionnel adapté
+
+## Input
+[Description des données en entrée]
+
+## Output
+[Description du format de sortie attendu]
+
+## Règles
+- [Règle 1]
+- [Règle 2]
+- ...
+
+## Exemples
+### Exemple 1 - [Description]
+**Input:**
+```json
+{ ... }
+```
+**Output:**
+```json
+{ ... }
+```
+
+## Anti-Patterns
+❌ Ne JAMAIS faire : [exemple interdit]
+✅ Faire à la place : [exemple correct]</code></pre>
+
+        <h2>Hiérarchie des Priorités</h2>
+
+        <div class="callout callout-error">
+          <div class="callout-title">P1 - VÉRITÉ (Non négociable)</div>
+          <p>Chaque mot du CV généré DOIT pouvoir être tracé vers le CV source. Aucune information inventée, aucune compétence ajoutée, aucune durée modifiée.</p>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">P2 - LANGUE</div>
+          <p>Tout le contenu doit &ecirc;tre dans la langue cible du CV. <strong>4 langues support&eacute;es</strong> : Fran&ccedil;ais (FR), Anglais (EN), Espagnol (ES), Allemand (DE).</p>
+          <p><strong>Exceptions</strong> (restent inchang&eacute;s) :</p>
+          <ul>
+            <li>Noms propres et entreprises</li>
+            <li>Technologies et frameworks (React, Docker, AWS...)</li>
+            <li>Certifications (AWS Certified, ITIL...)</li>
+            <li>URLs et liens</li>
+            <li>Niveaux CECRL pour les langues (A1-C2)</li>
+          </ul>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">P3 - ATS (Applicant Tracking System)</div>
+          <p>Intégrer les mots-clés EXACTS de l'offre d'emploi pour maximiser le score ATS. Utiliser la terminologie de l'offre quand elle correspond à une compétence existante.</p>
+        </div>
+
+        <div class="callout callout-success">
+          <div class="callout-title">P4 - STYLE</div>
+          <p>Ton professionnel, phrases d'action, format adapté au secteur. Reformulations autorisées tant que le sens est préservé.</p>
+        </div>
+
+        <h2>Prompts par Phase</h2>
+
+        <h3>Phase Classification</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge">classify-system.md</span>
+            <span class="data-flow-title">Classification des items</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Mission</h5>
+            <p>Analyser chaque expérience et projet du CV source pour décider de son traitement.</p>
+
+            <h5>Décisions possibles</h5>
+            <table>
+              <tr>
+                <td><code>KEEP</code></td>
+                <td>Garder et adapter l'item</td>
+              </tr>
+              <tr>
+                <td><code>REMOVE</code></td>
+                <td>Supprimer (non pertinent)</td>
+              </tr>
+              <tr>
+                <td><code>MOVE_TO_PROJECTS</code></td>
+                <td>Convertir expérience → projet</td>
+              </tr>
+            </table>
+
+            <h5>Critères de décision</h5>
+            <ul>
+              <li>Pertinence par rapport au poste cible</li>
+              <li>Ancienneté (> 10 ans = candidat REMOVE)</li>
+              <li>Durée (< 3 mois = candidat MOVE_TO_PROJECTS)</li>
+              <li>Transferabilité des compétences</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Phase Batches - Experiences</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge">batch-experience-system.md</span>
+            <span class="data-flow-title">Adaptation d'exp&eacute;rience</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Mission</h5>
+            <p>Reformuler une expérience professionnelle pour maximiser sa pertinence vis-à-vis de l'offre cible.</p>
+
+            <h5>Règles clés</h5>
+            <ul>
+              <li>Le titre de poste peut être reformulé si une variante existe dans l'offre</li>
+              <li>Les responsabilités sont réordonnées par pertinence</li>
+              <li>Les verbes d'action sont adaptés au secteur</li>
+              <li>Les métriques et chiffres sont CONSERVÉS tels quels</li>
+            </ul>
+
+            <h5>Exemple de reformulation</h5>
+            <pre><code>// AVANT
+"Développer des applications web"
+
+// APRÈS (si l'offre mentionne "APIs REST")
+"Concevoir et développer des APIs REST et applications web"
+
+// INTERDIT (invention)
+"Développer des applications web et mobiles" // mobile non mentionné</code></pre>
+          </div>
+        </div>
+
+        <h3>Phase Batches - Skills</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge">batch-skills-system.md</span>
+            <span class="data-flow-title">Adaptation des comp&eacute;tences</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Mission</h5>
+            <p>Adapter les comp&eacute;tences du CV source pour les aligner avec l'offre d'emploi, en utilisant le pattern <code>before/after</code> pour tra&ccedil;abilit&eacute; et rollback.</p>
+
+            <h5>Cat&eacute;gories de sortie</h5>
+            <table>
+              <tr>
+                <td><code>hard_skills</code></td>
+                <td>Comp&eacute;tences techniques avec niveau (0-5)</td>
+              </tr>
+              <tr>
+                <td><code>soft_skills</code></td>
+                <td>Soft skills (liste de strings)</td>
+              </tr>
+              <tr>
+                <td><code>tools</code></td>
+                <td>Outils et technologies avec niveau (0-5)</td>
+              </tr>
+              <tr>
+                <td><code>methodologies</code></td>
+                <td>M&eacute;thodologies (Agile, Scrum...)</td>
+              </tr>
+            </table>
+
+            <h5>Actions de modification</h5>
+            <p>Chaque modification est trac&eacute;e avec <code>before</code>, <code>after</code>, <code>action</code>, <code>reason</code> et <code>translated</code> :</p>
+            <ul>
+              <li><code>kept</code> - Conserv&eacute; tel quel</li>
+              <li><code>modified</code> - Traduit/reformul&eacute;</li>
+              <li><code>removed</code> - Supprim&eacute; (n&eacute;cessite <code>translated</code> pour rollback)</li>
+              <li><code>added</code> - Ajout&eacute; depuis l'offre</li>
+              <li><code>level_adjusted</code> - Niveau modifi&eacute;</li>
+              <li><code>split</code> - S&eacute;par&eacute; (ex: "React/Vue" &rarr; 2 skills)</li>
+              <li><code>moved</code> - Chang&eacute; de cat&eacute;gorie</li>
+              <li><code>merged</code> - Doublon fusionn&eacute;</li>
+              <li><code>inferred</code> - D&eacute;duit des exp&eacute;riences</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Champ translated (rollback)</div>
+          <p>Pour les skills supprim&eacute;s (<code>action: removed</code>), le champ <code>translated</code> est <strong>obligatoire</strong>. Il contient la traduction du skill dans la langue cible pour permettre un rollback coh&eacute;rent lors de la review.</p>
+        </div>
+
+        <h3>Phase Batches - Summary</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge">batch-summary-system.md</span>
+            <span class="data-flow-title">G&eacute;n&eacute;ration du r&eacute;sum&eacute;</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Mission</h5>
+            <p>Générer un résumé professionnel percutant basé sur les expériences adaptées et l'offre cible.</p>
+
+            <h5>Structure du résumé</h5>
+            <ol>
+              <li><strong>Accroche</strong> : Titre + années d'expérience</li>
+              <li><strong>Expertise</strong> : Domaines clés alignés avec l'offre</li>
+              <li><strong>Réalisations</strong> : 1-2 accomplissements majeurs</li>
+              <li><strong>Valeur</strong> : Ce que le candidat apporte</li>
+            </ol>
+
+            <h5>Contraintes</h5>
+            <ul>
+              <li>3-5 phrases maximum</li>
+              <li>Intégrer 3-5 mots-clés de l'offre</li>
+              <li>Première personne implicite (pas de "Je")</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>G&eacute;n&eacute;ration URLs pour Projets (Templates)</h2>
+
+        <p>Lors de la g&eacute;n&eacute;ration de CV templates (candidats fictifs), les projets peuvent inclure des URLs coh&eacute;rentes avec le profil g&eacute;n&eacute;r&eacute;.</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge">projects</span>
+            <span class="data-flow-title">Champs url et url_label</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>R&egrave;gles de g&eacute;n&eacute;ration</h5>
+            <ul>
+              <li>L'URL doit &ecirc;tre coh&eacute;rente avec le <code>header.full_name</code> du candidat fictif</li>
+              <li>Le <code>url_label</code> d&eacute;crit le type de lien (ex: "GitHub", "Portfolio", "Demo")</li>
+              <li>Les URLs doivent &ecirc;tre plausibles mais fictives (domaines existants, usernames g&eacute;n&eacute;r&eacute;s)</li>
+            </ul>
+
+            <h5>Exemples de sortie</h5>
+            <pre><code>{
+  "projects": [
+    {
+      "name": "E-commerce Platform",
+      "url": "https://github.com/marie-dupont/ecommerce-platform",
+      "url_label": "GitHub"
+    },
+    {
+      "name": "Portfolio Personnel",
+      "url": "https://marie-dupont.dev",
+      "url_label": "Portfolio"
+    },
+    {
+      "name": "Application Mobile Fitness",
+      "url": "https://play.google.com/store/apps/details?id=com.fitness.app",
+      "url_label": "Google Play"
+    }
+  ]
+}</code></pre>
+
+            <h5>Types de liens g&eacute;n&eacute;r&eacute;s</h5>
+            <table>
+              <tr>
+                <td><code>GitHub</code></td>
+                <td>Pour projets open source ou repos priv&eacute;s</td>
+              </tr>
+              <tr>
+                <td><code>Portfolio</code></td>
+                <td>Site personnel du candidat</td>
+              </tr>
+              <tr>
+                <td><code>Demo</code></td>
+                <td>Lien vers une d&eacute;mo live</td>
+              </tr>
+              <tr>
+                <td><code>Google Play</code> / <code>App Store</code></td>
+                <td>Pour applications mobiles</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">CV Templates uniquement</div>
+          <p>Cette fonctionnalit&eacute; s'applique aux CV templates (candidats fictifs g&eacute;n&eacute;r&eacute;s pour d&eacute;monstration). Pour les CV r&eacute;els, les URLs proviennent du CV source et ne sont jamais invent&eacute;es.</p>
+        </div>
+
+        <h2>Syst&egrave;me de Cache (CAG)</h2>
+
+        <p>Les prompts utilisent un syst&egrave;me de cache pour optimiser les co&ucirc;ts :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Cache A (Job Offer)</h4>
+            <p>Injecté dans : Experiences, Projects, Extras</p>
+            <pre><code>## Offre d'emploi (CACHE A)
+- Titre: {title}
+- Skills requis: {required}
+- Skills souhaitables: {niceToHave}
+- Soft skills: {soft}
+- Méthodologies: {methodologies}
+- Responsabilités: {top5}</code></pre>
+          </div>
+          <div class="card">
+            <h4>Cache B (Enrichi)</h4>
+            <p>Injecté dans : Skills, Summary</p>
+            <pre><code>## Contexte (CACHE B)
+{Cache A}
+
+## Expériences adaptées
+{summaryExperiences}
+
+## Projets adaptés
+{summaryProjects}</code></pre>
+          </div>
+        </div>
+
+        <h2>Anti-Hallucination</h2>
+
+        <div class="callout callout-error">
+          <div class="callout-title">Règle fondamentale</div>
+          <p><strong>"Chaque mot doit pointer vers la source"</strong></p>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Exemple INTERDIT</th>
+              <th>Raison</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Ajout compétence</td>
+              <td>"Python" → "Python/IA"</td>
+              <td>IA non mentionné dans la source</td>
+            </tr>
+            <tr>
+              <td>Modification durée</td>
+              <td>"2 ans" → "3 ans"</td>
+              <td>Falsification</td>
+            </tr>
+            <tr>
+              <td>Ajout métrique</td>
+              <td>"Amélioration" → "Amélioration de 30%"</td>
+              <td>Chiffre inventé</td>
+            </tr>
+            <tr>
+              <td>Invention responsabilité</td>
+              <td>Ajouter "Management d'équipe"</td>
+              <td>Non présent dans la source</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Traçabilité des Modifications</h2>
+
+        <p>Chaque prompt demande de documenter les modifications :</p>
+
+        <pre><code>{
+  "modifications": [
+    {
+      "field": "title",
+      "action": "reformulated",
+      "before": "Développeur Web",
+      "after": "Développeur Full Stack",
+      "reason": "Alignement avec titre de l'offre"
+    },
+    {
+      "field": "responsibilities[0]",
+      "action": "reworded",
+      "before": "Création d'applications",
+      "after": "Développement d'APIs REST",
+      "reason": "Mise en avant skill requis"
+    }
+  ]
+}</code></pre>
+
+        <h2>Chargement des Prompts</h2>
+
+        <pre><code>// lib/features/cv-adaptation/utils/promptLoader.js
+import fs from 'fs/promises';
+import path from 'path';
+
+const PROMPTS_DIR = path.join(process.cwd(), 'lib/features/cv-adaptation/prompts');
+
+export async function loadPrompt(promptPath) {
+  const fullPath = path.join(PROMPTS_DIR, `${promptPath}.md`);
+  const content = await fs.readFile(fullPath, 'utf-8');
+  return content;
+}
+
+// Utilisation
+const systemPrompt = await loadPrompt('batch-experience-system');
+const userPrompt = await loadPrompt('batch-experience-user');
+const messages = [
+  { role: 'system', content: systemPrompt },
+  { role: 'user', content: userPrompt.replace('{{DATA}}', JSON.stringify(inputData)) }
+];</code></pre>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

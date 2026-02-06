@@ -155,7 +155,7 @@ export async function proxy(request) {
   // Headers de sécurité pour toutes les réponses
   const securityHeaders = {
     // Protection contre le clickjacking
-    'X-Frame-Options': 'DENY',
+    'X-Frame-Options': 'SAMEORIGIN',
 
     // Empêche le navigateur de détecter le MIME type
     'X-Content-Type-Options': 'nosniff',
@@ -166,19 +166,22 @@ export async function proxy(request) {
     // Politique de referrer stricte
     'Referrer-Policy': 'strict-origin-when-cross-origin',
 
+    // Isolation cross-origin (protection contre les attaques Spectre/side-channel)
+    'Cross-Origin-Opener-Policy': 'same-origin',
+
     // Permissions Policy (anciennement Feature-Policy)
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
 
     // Content Security Policy
     'Content-Security-Policy': [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://editor.unlayer.com", // Next.js + reCAPTCHA + Unlayer
-      "style-src 'self' 'unsafe-inline'", // Tailwind nécessite unsafe-inline
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://editor.unlayer.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com", // Next.js + reCAPTCHA + Unlayer + Mermaid/Prism (docs)
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com", // Tailwind + Google Fonts + Prism (docs)
       "img-src 'self' data: https:",
-      "font-src 'self' data:",
+      "font-src 'self' data: https://fonts.gstatic.com",
       `connect-src ${connectSrcSources.join(' ')} https://editor.unlayer.com https://api.unlayer.com`,
-      "frame-src https://www.google.com https://editor.unlayer.com", // reCAPTCHA + Unlayer frames
-      "frame-ancestors 'none'",
+      "frame-src 'self' https://www.google.com https://editor.unlayer.com", // reCAPTCHA + Unlayer frames + Admin docs
+      "frame-ancestors 'self'",
       "base-uri 'self'",
       "form-action 'self'",
     ].join('; '),

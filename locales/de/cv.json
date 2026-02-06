@@ -26,13 +26,14 @@
   },
   "cvGenerator": {
     "title": "Lebenslauf mit AI generieren",
-    "description": "Geben Sie Stellenanzeigen zur Analyse ein (Links oder PDF/Word-Dateien), um angepasste Lebensläufe basierend auf dem ausgewählten Referenz-Lebenslauf zu generieren.",
+    "description": "Geben Sie Stellenanzeigen zur Analyse ein (Links oder PDF-Dateien), um angepasste Lebensläufe basierend auf dem ausgewählten Referenz-Lebenslauf zu generieren.",
     "referenceCV": "Referenz-Lebenslauf",
     "selectCV": "Wählen Sie einen Lebenslauf",
     "noManualCV": "Kein manueller Lebenslauf verfügbar. Erstellen Sie einen Lebenslauf, bevor Sie die KI-Generierung starten.",
     "createTemplateOption": "Neue Lebenslauf-Vorlage erstellen",
     "templateCreationLabel": "Lebenslauf-Vorlage erstellen",
     "links": "Links zu Stellenangeboten",
+    "languageHint": "Für beste Ergebnisse verwenden Sie ein Stellenangebot in derselben Sprache wie Ihr Referenz-Lebenslauf.",
     "loadRecentLink": "Einen kürzlichen Link laden",
     "recentLinks": "Kürzliche Links",
     "addLink": "Link hinzufügen",
@@ -145,6 +146,9 @@
       "hint": "Verschieben Sie Abschnitte, um die Anzeigereihenfolge anzupassen",
       "reset": "Zurücksetzen",
       "close": "Schließen"
+    },
+    "placeholders": {
+      "filename": "Mein_Lebenslauf"
     }
   },
   "newCvModal": {
@@ -157,6 +161,11 @@
     "creating": "Erstellen...",
     "cancel": "Abbrechen",
     "hint": "Sie können alle Abschnitte später im Bearbeitungsmodus vervollständigen.",
+    "placeholders": {
+      "fullName": "Z.B.: Max Mustermann",
+      "currentTitle": "Z.B.: Full-Stack-Entwickler",
+      "email": "email@beispiel.de"
+    },
     "errors": {
       "fillRequired": "Bitte geben Sie den vollständigen Namen und die aktuelle Position ein.",
       "generic": "Fehler"
@@ -204,6 +213,13 @@
     "responsibilities": "Verantwortlichkeiten",
     "deliverables": "Ergebnisse",
     "skillsUsed": "Verwendete Fähigkeiten",
+    "responsibilitiesPerLine": "Verantwortlichkeiten (1/Zeile)",
+    "deliverablesPerLine": "Ergebnisse (1/Zeile)",
+    "skillsUsedComma": "Fähigkeiten (Kommas)",
+    "position": "Stelle",
+    "period": "Zeitraum",
+    "location": "Standort",
+    "content": "Inhalt",
     "technologies": "Technologien",
     "hardSkills": "Technische",
     "tools": "Werkzeuge",
@@ -227,6 +243,10 @@
       "projectName": "Projektname",
       "role": "Rolle",
       "description": "Beschreibung",
+      "descriptionHint": "Beschreiben Sie kurz Ihre Rolle...",
+      "responsibilitiesHint": "Eine pro Zeile...",
+      "deliverablesHint": "Eines pro Zeile...",
+      "skillsUsedHint": "React, TypeScript, Agile...",
       "skillName": "Name",
       "skillLabel": "Bezeichnung",
       "chooseLevel": "Niveau wählen…",
@@ -237,12 +257,23 @@
       "experienceTitleShort": "Titel",
       "experienceCompanyShort": "Unternehmen",
       "experienceDepartment": "Abteilung/Kunde",
-      "experienceStartShort": "Beginn (YYYY oder YYYY-MM)",
-      "experienceEndShort": "Ende (YYYY, YYYY-MM)",
+      "experienceTitleHint": "Z.B.: Projektleiter",
+      "experienceCompanyHint": "Z.B.: Acme Corp",
+      "experienceDepartmentHint": "Z.B.: Marketing-Abteilung",
+      "experienceStartShort": "Beginn",
+      "experienceEndShort": "Ende",
+      "dateFormat": "YYYY-MM",
       "experienceEndShortWithPresent": "Ende (YYYY, YYYY-MM oder aktuell)",
       "city": "Stadt",
+      "cityHint": "Berlin",
       "region": "Region",
-      "countryCode": "Land (Code)"
+      "regionHint": "Bayern",
+      "countryCode": "Land (Code)",
+      "selectCountry": "Land",
+      "projectUrl": "Projekt-URL (GitHub, Portfolio...)",
+      "projectUrlExample": "https://github.com/...",
+      "projectUrlLabel": "Linktitel (z.B. Auf GitHub ansehen)",
+      "summaryDescription": "Beschreiben Sie Ihr berufliches Profil..."
     }
   },
   "sourceInfo": {
@@ -364,6 +395,7 @@
     "title": "Änderung überprüfen",
     "before": "Vorher",
     "after": "Nachher",
+    "levelChange": "Niveau",
     "empty": "(leer)",
     "accept": "Akzeptieren",
     "reject": "Ablehnen",
@@ -384,6 +416,7 @@
     "validating": "Wird bestätigt...",
     "pendingWarning": "{count} nicht überprüfte Änderung(en). Sie werden standardmäßig akzeptiert.",
     "validationSuccess": "Lebenslauf erfolgreich gespeichert",
-    "validationError": "Fehler beim Speichern"
+    "validationError": "Fehler beim Speichern",
+    "skillsConsolidated": "Kompetenzen zusammengefasst zu"
   }
 }

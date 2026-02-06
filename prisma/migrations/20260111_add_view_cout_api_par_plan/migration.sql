@@ -2,10 +2,7 @@
 -- Vue qui calcule les coûts API min/moyen/max par plan d'abonnement
 -- Basée sur les coûts mensuels des utilisateurs (OpenAIUsage)
 
--- Drop existing view first to allow type changes
-DROP VIEW IF EXISTS v_cout_api_par_plan;
-
-CREATE VIEW v_cout_api_par_plan AS
+CREATE OR REPLACE VIEW v_cout_api_par_plan AS
 WITH user_monthly_costs AS (
   -- Calcul du coût mensuel total par utilisateur (mois en cours)
   SELECT

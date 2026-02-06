@@ -23,6 +23,7 @@
     "loadingInProgress": "Laden läuft ...",
     "taskQueue": "Aufgabenwarteschlange",
     "delete": "Löschen",
+    "deleteTooltip": "Löschen (Strg+Klick für Mehrfachlöschung)",
     "cvInProgress": "Lebenslauf wird bearbeitet",
     "jobTitlePlaceholder": "Geben Sie eine Stellenbezeichnung ein (z.B. Full-Stack-Entwickler)",
     "jobTitlePlaceholderMobile": "z.B. Full-Stack-Entwickler",
@@ -90,7 +91,10 @@
   "export": {
     "noCvSelected": "Kein Lebenslauf für den Export ausgewählt.",
     "errors": {
-      "exportFailed": "Fehler beim PDF-Export. Bitte erneut versuchen."
+      "exportFailed": "Fehler beim PDF-Export. Bitte erneut versuchen.",
+      "missingFilename": "Dateiname fehlt",
+      "noSectionSelected": "Bitte wählen Sie mindestens einen Abschnitt",
+      "accessRestricted": "Zugriff auf diese Funktion eingeschränkt"
     }
   },
   "footer": {
@@ -246,6 +250,8 @@
   },
   "header": {
     "modalTitle": "Kopfzeile bearbeiten",
+    "identity": "Identität",
+    "contact": "Kontakt",
     "fullName": "Vollständiger Name",
     "currentTitle": "Aktuelle Position",
     "email": "E-Mail",
@@ -253,6 +259,7 @@
     "city": "Stadt",
     "region": "Region",
     "countryCode": "Land (Code)",
+    "location": "Standort",
     "links": "Links",
     "noLinks": "Keine Links vorhanden.",
     "labelPlaceholder": "Label (z.B. GitHub)",
@@ -264,6 +271,7 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "delete": "Löschen",
+    "deleteAll": "Alle löschen",
     "add": "Hinzufügen",
     "loading": "Laden...",
     "error": "Fehler",
@@ -272,7 +280,11 @@
     "confirmation": "Bestätigung",
     "locale": "de-DE",
     "yes": "Ja",
-    "no": "Nein"
+    "no": "Nein",
+    "noResults": "Keine Ergebnisse",
+    "clear": "Keines",
+    "today": "Heute",
+    "ongoing": "Laufend"
   },
   "editMode": {
     "on": "✏️ Bearbeitung AN",
@@ -381,5 +393,55 @@
     "unit": "Kredit",
     "unitPlural": "Kredite",
     "useCredits": "{count} Cr. verwenden"
+  },
+  "notifications": {
+    "viewOptions": "Optionen anzeigen",
+    "viewMyOptions": "Meine Optionen anzeigen",
+    "closeNotification": "Benachrichtigung schließen"
+  },
+  "jobOffer": {
+    "viewDetails": "Stellenangebot-Details anzeigen",
+    "untitled": "Unbenanntes Angebot",
+    "company": "Unternehmen",
+    "noData": "Keine Daten für dieses Angebot verfügbar",
+    "requirements": "Anforderungen",
+    "skills": "Kompetenzen",
+    "responsibilities": "Aufgaben",
+    "benefits": "Vorteile",
+    "experience": "Erfahrung",
+    "education": "Ausbildung",
+    "languages": "Sprachen",
+    "required": "Erforderlich",
+    "niceToHave": "Wünschenswert",
+    "softSkills": "Soft Skills",
+    "hardSkills": "Technische Fähigkeiten",
+    "tools": "Tools & Technologien",
+    "methodologies": "Methodologien",
+    "years": "Jahre",
+    "from": "Ab",
+    "upTo": "Bis zu",
+    "viewOriginal": "Originalangebot anzeigen",
+    "periods": {
+      "year": "Jahr",
+      "month": "Monat",
+      "day": "Tag",
+      "hour": "Stunde"
+    },
+    "remote": {
+      "full": "100% Remote",
+      "hybrid": "Hybrid",
+      "onsite": "Vor Ort",
+      "partial": "Teilweise Remote"
+    },
+    "recruitmentProcess": {
+      "title": "Bewerbungsprozess",
+      "steps": "Schritte",
+      "step": "Schritt",
+      "contact": "Kontakt",
+      "deadline": "Bewerbungsfrist",
+      "duration": "Dauer"
+    },
+    "languageRequired": "Erforderliche Sprache",
+    "languageNiceToHave": "Wünschenswerte Sprache"
   }
 }

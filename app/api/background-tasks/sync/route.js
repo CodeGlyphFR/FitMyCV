@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
-import { killRegisteredProcess } from '@/lib/backgroundTasks/processRegistry';
+import { killRegisteredProcess } from '@/lib/background-jobs/processRegistry';
 import { updateCvFile } from '@/lib/events/prismaWithEvents';
 import { refundCredit } from '@/lib/subscription/credits';
 
