@@ -260,7 +260,7 @@ export default function Skills(props){
                         <ContextMenu
                           items={[
                             { icon: Pencil, label: t("common.edit"), onClick: () => setOpenHard(true) },
-                            { icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.hard_skills", value: [] }), danger: true }
+                            ...(hasHard ? [{ icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.hard_skills", value: [] }), danger: true }] : [])
                           ]}
                         />
                       )}
@@ -314,7 +314,7 @@ export default function Skills(props){
                           <ContextMenu
                             items={[
                               { icon: Pencil, label: t("common.edit"), onClick: () => setOpenTools(true) },
-                              { icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.tools", value: [] }), danger: true }
+                              ...(hasTools ? [{ icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.tools", value: [] }), danger: true }] : [])
                             ]}
                           />
                         )}
@@ -359,7 +359,7 @@ export default function Skills(props){
                           <ContextMenu
                             items={[
                               { icon: Pencil, label: t("common.edit"), onClick: () => setOpenMeth(true) },
-                              { icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.methodologies", value: [] }), danger: true }
+                              ...(hasMethods ? [{ icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.methodologies", value: [] }), danger: true }] : [])
                             ]}
                           />
                         )}
@@ -414,7 +414,7 @@ export default function Skills(props){
                       <ContextMenu
                         items={[
                           { icon: Pencil, label: t("common.edit"), onClick: () => setOpenSoft(true) },
-                          { icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.soft_skills", value: [] }), danger: true }
+                          ...(hasSoft ? [{ icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.soft_skills", value: [] }), danger: true }] : [])
                         ]}
                       />
                     )}
