@@ -129,10 +129,11 @@ export default function ContextMenu({ items, className = "", compact = false, da
         ref={triggerRef}
         type="button"
         onClick={handleOpen}
-        className={`no-print flex items-center justify-center ${compact ? 'p-0.5' : 'p-1'} rounded text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200 ${className}`}
+        className={`no-print flex items-center justify-center ${compact ? 'p-0' : 'p-1 hover:bg-white/10'} rounded text-white/50 hover:text-white transition-all duration-200 ${className}`}
         aria-label="Menu"
         aria-expanded={isOpen}
         aria-haspopup="true"
+        {...(compact ? { style: { minHeight: 0, minWidth: 0 } } : {})}
         {...(dataOnboarding ? { 'data-onboarding': dataOnboarding } : {})}
       >
         <MoreVertical className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />

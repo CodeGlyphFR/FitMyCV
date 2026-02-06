@@ -401,7 +401,7 @@ export default function Skills(props){
               {/* Soft skills - affiche soit le bloc normal, soit les orphelins */}
               {hasSoft ? (
                 <div>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1 items-end">
                     {filteredSoft.map((m, i) => {
                       const softName = getSkillName(m);
                       return (
@@ -419,6 +419,8 @@ export default function Skills(props){
                     />
                     {canEditSoft && (
                       <ContextMenu
+                        compact
+                        className="h-[22.5px] w-[22.5px] rounded-sm"
                         items={[
                           { icon: Pencil, label: t("common.edit"), onClick: () => setOpenSoft(true) },
                           ...(hasSoft ? [{ icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.soft_skills", value: [] }), danger: true }] : [])
