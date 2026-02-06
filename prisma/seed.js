@@ -418,7 +418,6 @@ const AI_MODEL_SETTINGS = [
     category: 'ai_models',
     description: 'Modèle utilisé pour la génération de CV',
   },
-  // NOTE: model_cv_planning a été supprimé (obsolète)
   {
     settingName: 'model_match_score',
     value: 'gpt-4.1-mini-2025-04-14',
@@ -433,7 +432,7 @@ const AI_MODEL_SETTINGS = [
   },
   {
     settingName: 'model_extract_job_offer',
-    value: 'gpt-4o-mini',
+    value: 'o4-mini',
     category: 'ai_models',
     description: "Modèle pour extraction d'offres d'emploi",
   },
@@ -472,29 +471,29 @@ const AI_MODEL_SETTINGS = [
     settingName: 'model_cv_classify',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline Adaptation: Modèle pour la phase classification (KEEP/REMOVE/MOVE)',
+    description: 'Pipeline v2: Modèle pour la phase classification (KEEP/REMOVE/MOVE)',
   },
   {
     settingName: 'model_cv_batch_experience',
-    value: 'gpt-4o',
+    value: 'o4-mini',
     category: 'ai_models',
-    description: 'Pipeline Adaptation: Modèle pour adaptation des expériences',
+    description: 'Pipeline v2: Modèle pour adaptation des expériences',
   },
   {
     settingName: 'model_cv_batch_projects',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline Adaptation: Modèle pour adaptation des projets',
+    description: 'Pipeline v2: Modèle pour adaptation des projets',
   },
   {
     settingName: 'model_cv_batch_extras',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline Adaptation: Modèle pour adaptation des extras',
+    description: 'Pipeline v2: Modèle pour adaptation des extras',
   },
   {
     settingName: 'model_cv_batch_education',
-    value: 'gpt-4o-mini',
+    value: 'gpt-4.1-mini-2025-04-14',
     category: 'ai_models',
     description: 'Pipeline Adaptation: Modèle pour traduction des formations',
   },
@@ -506,52 +505,52 @@ const AI_MODEL_SETTINGS = [
   },
   {
     settingName: 'model_cv_batch_skills',
-    value: 'gpt-4o-mini',
+    value: 'o4-mini',
     category: 'ai_models',
-    description: 'Pipeline Adaptation: Modèle pour déduction des compétences',
+    description: 'Pipeline v2: Modèle pour déduction des compétences',
   },
   {
     settingName: 'model_cv_batch_summary',
-    value: 'gpt-4o-mini',
+    value: 'o4-mini',
     category: 'ai_models',
-    description: 'Pipeline Adaptation: Modèle pour génération du summary',
+    description: 'Pipeline v2: Modèle pour génération du summary',
   },
   // Pipeline Amélioration CV - Models par stage
   {
     settingName: 'model_improve_preprocess',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline Amélioration: Modèle pour classifier les suggestions',
+    description: 'Pipeline Amélioration v2: Modèle pour classifier les suggestions',
   },
   {
     settingName: 'model_improve_experience',
     value: 'gpt-4.1-2025-04-14',
     category: 'ai_models',
-    description: 'Pipeline Amélioration: Modèle pour améliorer une expérience',
+    description: 'Pipeline Amélioration v2: Modèle pour améliorer une expérience',
   },
   {
     settingName: 'model_improve_project',
     value: 'gpt-4.1-2025-04-14',
     category: 'ai_models',
-    description: 'Pipeline Amélioration: Modèle pour améliorer ou créer un projet',
+    description: 'Pipeline Amélioration v2: Modèle pour améliorer ou créer un projet',
   },
   {
     settingName: 'model_improve_summary',
     value: 'gpt-4.1-mini-2025-04-14',
     category: 'ai_models',
-    description: 'Pipeline Amélioration: Modèle pour mettre à jour le summary',
+    description: 'Pipeline Amélioration v2: Modèle pour mettre à jour le summary',
   },
   {
     settingName: 'model_improve_classify_skills',
     value: 'gpt-4o',
     category: 'ai_models',
-    description: 'Pipeline Amélioration: Modèle pour classifier les skills ajoutées',
+    description: 'Pipeline Amélioration v2: Modèle pour classifier les skills ajoutées',
   },
   {
     settingName: 'model_improve_languages',
     value: 'gpt-4.1-mini-2025-04-14',
     category: 'ai_models',
-    description: 'Pipeline Amélioration: Modèle pour améliorer les langues',
+    description: 'Modèle pour optimisation des langues (Pipeline V2)',
   },
   {
     settingName: 'model_improve_extras',
@@ -831,112 +830,125 @@ async function main() {
 
   const results = [];
   let totalCreated = 0;
-  let totalSkipped = 0;
 
-  // ===== 1. Email Triggers (insertIfNotExists) =====
+  // ===== 1. Email Triggers (upsert) =====
   let triggersCreated = 0;
-  let triggersSkipped = 0;
+  let triggersUpdated = 0;
   const triggerMap = {}; // Store trigger IDs for template association
   for (const trigger of EMAIL_TRIGGERS) {
     try {
-      const existing = await prisma.emailTrigger.findUnique({ where: { name: trigger.name } });
-      if (!existing) {
-        const result = await prisma.emailTrigger.create({ data: trigger });
-        triggerMap[trigger.name] = result.id;
-        triggersCreated++;
-      } else {
-        triggerMap[trigger.name] = existing.id;
-        triggersSkipped++;
-      }
+      const result = await prisma.emailTrigger.upsert({
+        where: { name: trigger.name },
+        create: trigger,
+        update: {
+          label: trigger.label,
+          description: trigger.description,
+          variables: trigger.variables,
+          category: trigger.category,
+          icon: trigger.icon,
+          isSystem: trigger.isSystem,
+        },
+      });
+      triggerMap[trigger.name] = result.id;
+      triggersCreated++;
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('🎯', 'Email Triggers', triggersCreated, EMAIL_TRIGGERS.length));
-  results.push({ created: triggersCreated, skipped: triggersSkipped });
+  results.push({ created: triggersCreated, updated: triggersUpdated });
 
-  // ===== 2. Email Templates (insertIfNotExists - chargés depuis fichiers JSON) =====
+  // ===== 2. Email Templates (delete all + recreate from JSON files) =====
   const emailTemplates = loadEmailTemplates();
   let templatesCreated = 0;
-  let templatesSkipped = 0;
+  await prisma.emailTemplate.deleteMany({});
   for (const template of emailTemplates) {
     try {
-      const existing = await prisma.emailTemplate.findFirst({ where: { name: template.name } });
-      if (!existing) {
-        const triggerId = template.triggerName ? triggerMap[template.triggerName] : null;
-        await prisma.emailTemplate.create({
-          data: {
-            name: template.name,
-            subject: template.subject,
-            variables: template.variables,
-            htmlContent: template.htmlContent,
-            designJson: template.designJson,
-            isActive: true,
-            isDefault: template.isDefault,
-            triggerId: triggerId,
-          },
-        });
-        templatesCreated++;
-      } else {
-        templatesSkipped++;
-      }
+      const triggerId = template.triggerName ? triggerMap[template.triggerName] : null;
+      await prisma.emailTemplate.create({
+        data: {
+          name: template.name,
+          subject: template.subject,
+          variables: template.variables,
+          htmlContent: template.htmlContent,
+          designJson: template.designJson,
+          isActive: template.isActive ?? true,
+          isDefault: template.isDefault ?? false,
+          triggerId: triggerId,
+        },
+      });
+      templatesCreated++;
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('📧', 'Email Templates', templatesCreated, emailTemplates.length));
-  results.push({ created: templatesCreated, skipped: templatesSkipped });
+  results.push({ created: templatesCreated });
 
-  // ===== 3. Credit Packs (insertIfNotExists, Stripe sync après) =====
+  // ===== 3. Credit Packs (delete all + recreate, Stripe sync après) =====
   let packsCreated = 0;
-  let packsSkipped = 0;
+  await prisma.creditPack.deleteMany({});
   for (const pack of CREDIT_PACKS) {
     try {
-      const existing = await prisma.creditPack.findFirst({ where: { name: pack.name } });
-      if (!existing) {
-        await prisma.creditPack.create({ data: pack });
-        packsCreated++;
-      } else {
-        packsSkipped++;
-      }
+      await prisma.creditPack.create({ data: pack });
+      packsCreated++;
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('💰', 'Credit Packs', packsCreated, CREDIT_PACKS.length));
-  results.push({ created: packsCreated, skipped: packsSkipped });
+  results.push({ created: packsCreated });
 
-  // ===== 4. Subscription Plans (insertIfNotExists - ne jamais écraser les plans existants) =====
+  // ===== 4. Subscription Plans (upsert plan + upsert feature limits) =====
   let plansCreated = 0;
-  let plansSkipped = 0;
   for (const planData of SUBSCRIPTION_PLANS) {
     try {
-      const existing = await prisma.subscriptionPlan.findUnique({ where: { name: planData.name } });
-
-      if (!existing) {
-        // Create new plan only if it doesn't exist
-        await prisma.subscriptionPlan.create({
-          data: {
-            name: planData.name,
-            description: planData.description,
-            isFree: planData.isFree,
-            tier: planData.tier,
-            isPopular: planData.isPopular,
-            priceMonthly: planData.priceMonthly,
-            priceYearly: planData.priceYearly,
-            yearlyDiscountPercent: planData.yearlyDiscountPercent,
-            priceCurrency: planData.priceCurrency,
-            featureLimits: {
-              create: Object.entries(planData.features).map(([featureName, config]) => ({
-                featureName,
-                isEnabled: config.enabled,
-                usageLimit: config.limit,
-              })),
-            },
+      const plan = await prisma.subscriptionPlan.upsert({
+        where: { name: planData.name },
+        create: {
+          name: planData.name,
+          description: planData.description,
+          isFree: planData.isFree,
+          tier: planData.tier,
+          isPopular: planData.isPopular,
+          priceMonthly: planData.priceMonthly,
+          priceYearly: planData.priceYearly,
+          yearlyDiscountPercent: planData.yearlyDiscountPercent,
+          priceCurrency: planData.priceCurrency,
+          featureLimits: {
+            create: Object.entries(planData.features).map(([featureName, config]) => ({
+              featureName,
+              isEnabled: config.enabled,
+              usageLimit: config.limit,
+            })),
+          },
+        },
+        update: {
+          description: planData.description,
+          isFree: planData.isFree,
+          tier: planData.tier,
+          isPopular: planData.isPopular,
+          priceMonthly: planData.priceMonthly,
+          priceYearly: planData.priceYearly,
+          yearlyDiscountPercent: planData.yearlyDiscountPercent,
+          priceCurrency: planData.priceCurrency,
+        },
+      });
+      // Upsert each feature limit for this plan
+      for (const [featureName, config] of Object.entries(planData.features)) {
+        await prisma.subscriptionPlanFeatureLimit.upsert({
+          where: { planId_featureName: { planId: plan.id, featureName } },
+          create: {
+            planId: plan.id,
+            featureName,
+            isEnabled: config.enabled,
+            usageLimit: config.limit,
+          },
+          update: {
+            isEnabled: config.enabled,
+            usageLimit: config.limit,
           },
         });
-        plansCreated++;
-      } else {
-        plansSkipped++;
       }
+      plansCreated++;
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('💳', 'Subscription Plans', plansCreated, SUBSCRIPTION_PLANS.length));
-  results.push({ created: plansCreated, skipped: plansSkipped });
+  results.push({ created: plansCreated });
 
   // ===== 5. Stripe Sync =====
   let stripeSynced = false;
@@ -945,41 +957,52 @@ async function main() {
   }
   console.log(formatStripeLine(stripeSynced));
 
-  // ===== 6. OpenAI Pricing (insertIfNotExists) =====
+  // ===== 6. OpenAI Pricing (upsert) =====
   let pricingCreated = 0;
-  let pricingSkipped = 0;
   for (const pricing of OPENAI_PRICING) {
     try {
-      const existing = await prisma.openAIPricing.findUnique({ where: { modelName: pricing.modelName } });
-      if (!existing) {
-        await prisma.openAIPricing.create({ data: pricing });
-        pricingCreated++;
-      } else {
-        pricingSkipped++;
-      }
+      await prisma.openAIPricing.upsert({
+        where: { modelName: pricing.modelName },
+        create: pricing,
+        update: {
+          inputPricePerMToken: pricing.inputPricePerMToken,
+          outputPricePerMToken: pricing.outputPricePerMToken,
+          cachePricePerMToken: pricing.cachePricePerMToken,
+          description: pricing.description,
+          isActive: pricing.isActive,
+        },
+      });
+      pricingCreated++;
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('🤖', 'OpenAI Pricing', pricingCreated, OPENAI_PRICING.length));
-  results.push({ created: pricingCreated, skipped: pricingSkipped });
+  results.push({ created: pricingCreated });
 
-  // ===== 7. OpenAI Alerts (insertIfNotExists) =====
+  // ===== 7. OpenAI Alerts (upsert) =====
   let alertsCreated = 0;
-  let alertsSkipped = 0;
   for (const alert of OPENAI_ALERTS) {
     try {
       const existing = await prisma.openAIAlert.findFirst({ where: { type: alert.type } });
-      if (!existing) {
-        await prisma.openAIAlert.create({ data: alert });
-        alertsCreated++;
+      if (existing) {
+        await prisma.openAIAlert.update({
+          where: { id: existing.id },
+          data: {
+            threshold: alert.threshold,
+            enabled: alert.enabled,
+            name: alert.name,
+            description: alert.description,
+          },
+        });
       } else {
-        alertsSkipped++;
+        await prisma.openAIAlert.create({ data: alert });
       }
+      alertsCreated++;
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('🔔', 'OpenAI Alerts', alertsCreated, OPENAI_ALERTS.length));
-  results.push({ created: alertsCreated, skipped: alertsSkipped });
+  results.push({ created: alertsCreated });
 
-  // ===== 8. Settings (insertIfNotExists - ne jamais écraser les valeurs existantes) =====
+  // ===== 8. Settings (upsert - écrase les valeurs existantes) =====
   const allSettings = [
     ...AI_MODEL_SETTINGS,
     ...CREDIT_SETTINGS,
@@ -990,30 +1013,28 @@ async function main() {
     ...CV_DISPLAY_SETTINGS,
   ];
   let settingsCreated = 0;
-  let settingsSkipped = 0;
   for (const setting of allSettings) {
     try {
-      const existing = await prisma.setting.findUnique({
+      await prisma.setting.upsert({
         where: { settingName: setting.settingName },
+        create: setting,
+        update: {
+          value: setting.value,
+          category: setting.category,
+          description: setting.description,
+        },
       });
-      if (!existing) {
-        await prisma.setting.create({ data: setting });
-        settingsCreated++;
-      } else {
-        settingsSkipped++;
-      }
+      settingsCreated++;
     } catch (error) { /* ignore */ }
   }
   console.log(formatLine('⚙️ ', 'Settings', settingsCreated, allSettings.length));
-  results.push({ created: settingsCreated, skipped: settingsSkipped });
+  results.push({ created: settingsCreated });
 
   // ===== Summary =====
   totalCreated = results.reduce((sum, r) => sum + (r.created || 0), 0);
-  totalSkipped = results.reduce((sum, r) => sum + (r.skipped || 0), 0);
-  const totalUpdated = results.reduce((sum, r) => sum + (r.updated || 0), 0);
 
   console.log('\n────────────────────────────────────────────────────');
-  console.log(`✨ Seeding complete! ${COLORS.green}${totalCreated} created${COLORS.reset}, ${COLORS.cyan}${totalUpdated} updated${COLORS.reset}, ${COLORS.dim}${totalSkipped} skipped${COLORS.reset}\n`);
+  console.log(`✨ Seeding complete! ${COLORS.green}${totalCreated} upserted/created${COLORS.reset}\n`);
 }
 
 main()
