@@ -107,13 +107,12 @@ export default function OnboardingOrchestrator() {
   useEffect(() => { if (currentStep !== 6) step6ModalShownRef.current = false; }, [currentStep]);
   useEffect(() => { if (currentStep !== 8) step8ModalShownRef.current = false; }, [currentStep]);
 
-  // ========== STEP 1: EDIT KEBAB BUTTON INTERCEPTION (ALL KEBABS) ==========
+  // ========== STEP 1: CLICK ANYWHERE → OPEN MODAL ==========
   useEffect(() => {
     if (currentStep !== 1) return;
 
-    const handleKebabClick = (e) => {
-      const kebab = e.target.closest('[data-onboarding-edit-kebab]') || e.target.closest('[data-onboarding-click-zone]');
-      if (!kebab || step1ModalShownRef.current) return;
+    const handleStep1Click = (e) => {
+      if (step1ModalShownRef.current) return;
       e.preventDefault();
       e.stopPropagation();
       step1ModalShownRef.current = true;
@@ -122,10 +121,10 @@ export default function OnboardingOrchestrator() {
       setCurrentScreen(0);
     };
 
-    document.addEventListener('click', handleKebabClick, { capture: true });
+    document.addEventListener('click', handleStep1Click, { capture: true });
 
     return () => {
-      document.removeEventListener('click', handleKebabClick, { capture: true });
+      document.removeEventListener('click', handleStep1Click, { capture: true });
     };
   }, [currentStep]);
 
