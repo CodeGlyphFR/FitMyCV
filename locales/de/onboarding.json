@@ -146,12 +146,48 @@
         "tooltip": "✅ Ihr neuer Lebenslauf ist fertig! Klicken Sie hier, um ihn zu öffnen"
       },
       "step5": {
+        "title": "KI-Review",
+        "description": "KI-Änderungen überprüfen und validieren",
+        "tooltip": "🔍 Überprüfen Sie die von der KI an Ihrem Lebenslauf vorgenommenen Änderungen",
+        "modal": {
+          "screen1": {
+            "title": "KI-Änderungen überprüfen",
+            "description": "Die KI hat Ihren Lebenslauf optimiert, um dem Stellenangebot zu entsprechen. Jede Änderung ist farblich hervorgehoben, damit Sie die volle Kontrolle behalten.",
+            "blocks": {
+              "modified": {
+                "title": "Änderung",
+                "description": "Ein bestehendes Element wurde von der KI umformuliert oder angepasst"
+              },
+              "added": {
+                "title": "Hinzufügung",
+                "description": "Ein neues Element wurde hinzugefügt, um Ihr Profil zu stärken"
+              },
+              "removed": {
+                "title": "Entfernung",
+                "description": "Ein Element wurde entfernt, da es für das Angebot nicht relevant ist"
+              }
+            },
+            "tip": "Sie behalten die Kontrolle: Jeder Vorschlag kann einzeln akzeptiert oder abgelehnt werden."
+          },
+          "screen2": {
+            "title": "Akzeptieren oder ablehnen",
+            "description": "Klicken Sie auf ein hervorgehobenes Element, um die Details der Änderung zu sehen. Akzeptieren oder lehnen Sie jeden KI-Vorschlag ab.",
+            "checklist": [
+              "Klicken Sie auf ein hervorgehobenes Element, um die Änderung zu sehen",
+              "Akzeptieren oder lehnen Sie jeden Vorschlag einzeln ab",
+              "Verwenden Sie \"Alle akzeptieren\" oder \"Alle ablehnen\" für schnellere Bearbeitung"
+            ],
+            "tip": "Der Schritt wird automatisch abgeschlossen, wenn alle Änderungen bearbeitet sind."
+          }
+        }
+      },
+      "step6": {
         "title": "Match-Score",
         "description": "Kompatibilität mit einem Stellenangebot berechnen",
         "tooltip": "🎯 Berechnen Sie die Kompatibilität Ihres Lebenslaufs mit einem Stellenangebot",
         "fallbackMessage": "Dieser Schritt erfordert ein zugeordnetes Stellenangebot. Möchten Sie ihn überspringen?"
       },
-      "step6": {
+      "step7": {
         "title": "KI-Optimierung",
         "description": "Lebenslauf mit KI-Vorschlägen optimieren",
         "tooltip": "🚀 Optimieren Sie Ihren Lebenslauf, um Ihren Score zu erhöhen",
@@ -194,12 +230,30 @@
           }
         }
       },
-      "step7": {
-        "title": "Verlauf",
-        "description": "KI-Änderungsverlauf einsehen",
-        "tooltip": "📝 Entdecken Sie alle von der KI vorgenommenen Änderungen"
-      },
       "step8": {
+        "title": "Versionsverwaltung",
+        "description": "Versionen Ihres Lebenslaufs verwalten und wiederherstellen",
+        "tooltip": "🔄 Entdecken Sie das Versionssystem Ihres Lebenslaufs",
+        "modal": {
+          "screen1": {
+            "title": "Ihr Lebenslauf hat einen vollständigen Verlauf",
+            "description": "Jede KI-Aktion erstellt automatisch einen Snapshot Ihres Lebenslaufs vor der Änderung. Sie können jederzeit zwischen den Versionen navigieren.",
+            "blocks": {
+              "snapshot": { "title": "Automatische Snapshots", "description": "Vor jeder KI-Änderung wird der aktuelle Zustand Ihres Lebenslaufs gespeichert" },
+              "ai_action": { "title": "Vollständige Rückverfolgbarkeit", "description": "Jede Version zeigt den Aktionstyp an: Generierung, Optimierung oder Wiederherstellung" },
+              "score_tracking": { "title": "Score pro Version", "description": "Vergleichen Sie Match-Scores zwischen verschiedenen Versionen" }
+            },
+            "tip": "Sie verlieren nie etwas: Jeder Zustand Ihres Lebenslaufs wird aufbewahrt."
+          },
+          "screen2": {
+            "title": "Beliebige Version wiederherstellen",
+            "description": "Wenn eine Änderung nicht passt, gehen Sie mit einem Klick zurück. Das Versionssystem gibt Ihnen volle Kontrolle.",
+            "checklist": ["Klicken Sie auf eine Version, um sie in der Vorschau anzuzeigen", "Verwenden Sie \"Wiederherstellen\", um zu diesem Zustand zurückzukehren", "Die Wiederherstellung erstellt selbst eine neue Version (nichts geht verloren)"],
+            "tip": "Experimentieren Sie ohne Angst: Sie können jederzeit zurückkehren."
+          }
+        }
+      },
+      "step9": {
         "title": "PDF-Export",
         "description": "Ihren optimierten Lebenslauf als PDF exportieren",
         "tooltip": "📄 Exportieren Sie Ihren optimierten Lebenslauf als PDF",

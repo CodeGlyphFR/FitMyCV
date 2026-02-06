@@ -163,6 +163,8 @@ export default function ChangeHighlight({
         <span
           ref={highlightRef}
           onClick={handleClick}
+          data-review-change-pending="true"
+          data-review-change-type={change.changeType}
           className={`relative cursor-pointer ${colors.text} ${colors.bg} rounded transition-all duration-200 ${colors.hover} ${className}`}
         >
           {change.afterDisplay}
@@ -194,6 +196,8 @@ export default function ChangeHighlight({
       <div
         ref={highlightRef}
         onClick={handleClick}
+        data-review-change-pending="true"
+        data-review-change-type={change.changeType}
         className={`relative cursor-pointer ${colors.text} ${colors.bg} ${colors.hover} rounded px-1 py-0.5 transition-all duration-200 ${className}`}
       >
         {children}

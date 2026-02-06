@@ -239,6 +239,8 @@ export default function SkillItemHighlight({
       <span
         ref={highlightRef}
         onClick={handleClick}
+        data-review-change-pending="true"
+        data-review-change-type={change.changeType}
         className={`relative inline cursor-pointer transition-all duration-200 ${
           isAdded
             ? "text-emerald-300 bg-emerald-500/20 rounded"

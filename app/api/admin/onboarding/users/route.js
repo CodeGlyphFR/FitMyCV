@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 import {
+  ONBOARDING_MODALS,
   determineUserStatus,
   calculateProgress,
   getStepNameFr,
@@ -17,7 +18,7 @@ import {
  * - page: numéro de page (défaut: 1)
  * - limit: nombre d'items par page (défaut: 10, max: 50)
  * - status: filtre par statut (completed, in_progress, skipped, not_started, stuck, all)
- * - step: filtre par étape actuelle (0-8)
+ * - step: filtre par étape actuelle (0-9)
  * - search: recherche par nom/email
  * - sortBy: tri (newest, oldest, progress)
  */
@@ -93,7 +94,7 @@ export async function GET(request) {
         modalsCompleted: state?.modals
           ? Object.values(state.modals).filter(m => m.completed).length
           : 0,
-        totalModals: 6,
+        totalModals: ONBOARDING_MODALS.length,
         progressPercent: progress,
         startedAt: state?.timestamps?.startedAt || null,
         completedAt: state?.timestamps?.completedAt || null,
@@ -120,7 +121,7 @@ export async function GET(request) {
     // Filtrer par étape
     if (stepFilter !== null && stepFilter !== undefined && stepFilter !== '') {
       const stepNum = parseInt(stepFilter, 10);
-      if (!isNaN(stepNum) && stepNum >= 0 && stepNum <= 8) {
+      if (!isNaN(stepNum) && stepNum >= 0 && stepNum <= 9) {
         processedUsers = processedUsers.filter(user => user.currentStep === stepNum);
       }
     }

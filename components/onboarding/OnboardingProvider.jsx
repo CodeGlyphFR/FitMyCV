@@ -50,7 +50,7 @@ export default function OnboardingProvider({ children }) {
   });
 
   // UI state
-  const [checklistExpanded, setChecklistExpanded] = useState(true);
+  const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   // Timestamps pour tracking
@@ -187,6 +187,18 @@ export default function OnboardingProvider({ children }) {
       }
     }
   }, [isAuthenticated]);
+
+  /**
+   * Forcer la checklist en mode réduit au démarrage de l'onboarding (step 0 → 1)
+   */
+  useEffect(() => {
+    if (currentStep === 1 && isActive && !completedSteps.includes(1)) {
+      setChecklistExpanded(false);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('onboarding-checklist-expanded');
+      }
+    }
+  }, [currentStep, isActive, completedSteps]);
 
   /**
    * Tracker un event (pour télémétrie)
@@ -335,7 +347,13 @@ export default function OnboardingProvider({ children }) {
     // Actions
     skipOnboarding,
     completeOnboarding,
-    resetOnboarding,
+    resetOnboarding: async () => {
+      await resetOnboarding();
+      setChecklistExpanded(false);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('onboarding-checklist-expanded');
+      }
+    },
 
     // UI
     toggleChecklist,

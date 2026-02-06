@@ -146,12 +146,48 @@
         "tooltip": "✅ ¡Tu nuevo CV está listo! Haz clic aquí para abrirlo"
       },
       "step5": {
+        "title": "Review IA",
+        "description": "Revisar y validar las modificaciones de la IA",
+        "tooltip": "🔍 Revisa las modificaciones realizadas por la IA en tu CV",
+        "modal": {
+          "screen1": {
+            "title": "Revisión de modificaciones IA",
+            "description": "La IA ha optimizado tu CV para corresponder a la oferta. Cada modificación está resaltada con un código de colores para que mantengas el control total.",
+            "blocks": {
+              "modified": {
+                "title": "Modificación",
+                "description": "Un elemento existente fue reformulado o ajustado por la IA"
+              },
+              "added": {
+                "title": "Adición",
+                "description": "Se añadió un nuevo elemento para fortalecer tu perfil"
+              },
+              "removed": {
+                "title": "Eliminación",
+                "description": "Se eliminó un elemento por no ser relevante para la oferta"
+              }
+            },
+            "tip": "Mantienes el control: cada sugerencia puede ser aceptada o rechazada individualmente."
+          },
+          "screen2": {
+            "title": "Acepta o rechaza",
+            "description": "Haz clic en cualquier elemento resaltado para ver el detalle de la modificación. Acepta o rechaza cada sugerencia de la IA.",
+            "checklist": [
+              "Haz clic en un elemento resaltado para ver la modificación",
+              "Acepta o rechaza cada sugerencia individualmente",
+              "Usa \"Aceptar todo\" o \"Rechazar todo\" para ir más rápido"
+            ],
+            "tip": "El paso se completa automáticamente cuando todas las modificaciones están procesadas."
+          }
+        }
+      },
+      "step6": {
         "title": "Puntuación de coincidencia",
         "description": "Calcula la compatibilidad con una oferta de empleo",
         "tooltip": "🎯 Calcula la compatibilidad de tu CV con una oferta de empleo",
         "fallbackMessage": "Este paso requiere una oferta de empleo asociada. ¿Quieres saltarlo?"
       },
-      "step6": {
+      "step7": {
         "title": "Optimización con IA",
         "description": "Optimiza el CV con sugerencias de IA",
         "tooltip": "🚀 Optimiza tu CV para aumentar tu puntuación",
@@ -194,12 +230,30 @@
           }
         }
       },
-      "step7": {
-        "title": "Historial",
-        "description": "Ver historial de modificaciones de IA",
-        "tooltip": "📝 Descubre todas las modificaciones realizadas por la IA"
-      },
       "step8": {
+        "title": "Gestión de versiones",
+        "description": "Gestiona y restaura las versiones de tu CV",
+        "tooltip": "🔄 Descubre el sistema de versiones de tu CV",
+        "modal": {
+          "screen1": {
+            "title": "Tu CV tiene un historial completo",
+            "description": "Cada acción de la IA crea automáticamente un snapshot de tu CV antes de la modificación. Puedes navegar entre las versiones en cualquier momento.",
+            "blocks": {
+              "snapshot": { "title": "Snapshots automáticos", "description": "Antes de cada modificación de la IA, el estado actual de tu CV se guarda" },
+              "ai_action": { "title": "Trazabilidad completa", "description": "Cada versión indica el tipo de acción: generación, optimización o restauración" },
+              "score_tracking": { "title": "Puntuación por versión", "description": "Compara las puntuaciones de coincidencia entre las diferentes versiones" }
+            },
+            "tip": "Nunca pierdes nada: cada estado de tu CV se conserva."
+          },
+          "screen2": {
+            "title": "Restaura cualquier versión",
+            "description": "Si una modificación no te conviene, vuelve atrás con un clic. El sistema de versiones te da control total.",
+            "checklist": ["Haz clic en una versión para previsualizarla", "Usa \"Restaurar\" para volver a ese estado", "La restauración crea a su vez una nueva versión (nada se pierde)"],
+            "tip": "Experimenta sin miedo: siempre puedes volver atrás."
+          }
+        }
+      },
+      "step9": {
         "title": "Exportación PDF",
         "description": "Exporta tu CV optimizado a formato PDF",
         "tooltip": "📄 Exporta tu CV optimizado a formato PDF",

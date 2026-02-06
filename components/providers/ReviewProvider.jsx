@@ -26,6 +26,7 @@ import {
   ReviewContext,
   REVIEW_EVENTS,
 } from "@/lib/cv-core/review/hooks/useReviewContext";
+import { emitOnboardingEvent, ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
 
 /**
  * ReviewProvider - Contexte complet pour la review par section
@@ -231,6 +232,7 @@ export function ReviewProvider({
           if (result.allReviewed) {
             setPendingSourceVersion(null);
             setPreviousContent(null);
+            emitOnboardingEvent(ONBOARDING_EVENTS.ALL_REVIEWS_COMPLETED);
           }
 
           // Rafraîchir les données du Server Component APRÈS un micro-tick
@@ -283,6 +285,7 @@ export function ReviewProvider({
           if (result.allReviewed) {
             setPendingSourceVersion(null);
             setPreviousContent(null);
+            emitOnboardingEvent(ONBOARDING_EVENTS.ALL_REVIEWS_COMPLETED);
           }
 
           // Rafraîchir les données du Server Component APRÈS un micro-tick
@@ -339,6 +342,7 @@ export function ReviewProvider({
           if (result.allReviewed) {
             setPendingSourceVersion(null);
             setPreviousContent(null);
+            emitOnboardingEvent(ONBOARDING_EVENTS.ALL_REVIEWS_COMPLETED);
           }
 
           // Rafraîchir le Server Component
@@ -394,6 +398,7 @@ export function ReviewProvider({
           if (result.allReviewed) {
             setPendingSourceVersion(null);
             setPreviousContent(null);
+            emitOnboardingEvent(ONBOARDING_EVENTS.ALL_REVIEWS_COMPLETED);
           }
 
           // Rafraîchir le Server Component

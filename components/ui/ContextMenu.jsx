@@ -135,6 +135,7 @@ export default function ContextMenu({ items, className = "", compact = false, da
         aria-haspopup="true"
         {...(compact ? { style: { minHeight: 0, minWidth: 0 } } : {})}
         {...(dataOnboarding ? { 'data-onboarding': dataOnboarding } : {})}
+        data-onboarding-edit-kebab
       >
         <MoreVertical className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
       </button>
