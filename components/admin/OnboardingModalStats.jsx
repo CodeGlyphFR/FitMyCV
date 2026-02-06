@@ -2,7 +2,7 @@
 
 /**
  * Composant affichant les statistiques de complétion des modales d'onboarding
- * Grille 2x3 avec mini-cards pour chaque modale
+ * Grille 2x4 avec mini-cards pour chaque modale
  */
 export function OnboardingModalStats({ data }) {
   if (!data || Object.keys(data).length === 0) {
@@ -15,13 +15,15 @@ export function OnboardingModalStats({ data }) {
   }
 
   // Ordre des modales
-  const modalOrder = ['welcome', 'step1', 'step2', 'step6', 'step8', 'completion'];
+  const modalOrder = ['welcome', 'step1', 'step2', 'step5', 'step7', 'step8', 'step9', 'completion'];
   const modalIcons = {
     welcome: '👋',
     step1: '✏️',
-    step2: '🤖',
-    step6: '⚡',
-    step8: '📤',
+    step2: '✨',
+    step5: '🔍',
+    step7: '🚀',
+    step8: '🔄',
+    step9: '📥',
     completion: '🎉',
   };
 
@@ -29,7 +31,7 @@ export function OnboardingModalStats({ data }) {
     <div className="bg-white/10 backdrop-blur-xl rounded-lg border border-white/20 p-6">
       <h3 className="text-lg font-semibold text-white mb-4">Taux de complétion des modales</h3>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {modalOrder.map(key => {
           const modal = data[key];
           if (!modal) return null;

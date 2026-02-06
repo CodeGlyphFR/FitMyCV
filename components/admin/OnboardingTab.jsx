@@ -85,7 +85,7 @@ export function OnboardingTab({ period, refreshKey, isInitialLoad = true }) {
           value={`${kpis.completionRate}%`}
           subtitle={`${kpis.completed} complétés`}
           subtitleClassName="text-emerald-400/70"
-          description="Pourcentage d'utilisateurs ayant terminé les 8 étapes de l'onboarding parmi ceux qui l'ont démarré"
+          description="Pourcentage d'utilisateurs ayant terminé les 9 étapes de l'onboarding parmi ceux qui l'ont démarré"
         />
         <KPICard
           icon="⏭️"
@@ -132,7 +132,7 @@ export function OnboardingTab({ period, refreshKey, isInitialLoad = true }) {
           value={kpis.completed}
           subtitle={kpis.totalUsers > 0 ? `${Math.round((kpis.completed / kpis.totalUsers) * 100)}% du total` : '-'}
           subtitleClassName="text-emerald-400/60"
-          description="Utilisateurs ayant terminé les 8 étapes avec succès"
+          description="Utilisateurs ayant terminé les 9 étapes avec succès"
         />
         <KPICard
           icon="🔄"
