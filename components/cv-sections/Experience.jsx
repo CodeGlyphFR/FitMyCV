@@ -33,7 +33,7 @@ import { useReview } from "@/components/providers/ReviewProvider";
 import CountrySelect from "@/components/ui/CountrySelect";
 import MonthPicker from "@/components/ui/MonthPicker";
 import ContextMenu from "@/components/ui/ContextMenu";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Plus } from "lucide-react";
 
 
 export default function Experience(props){
@@ -259,9 +259,9 @@ export default function Experience(props){
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
-                className="no-print rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-xs text-white hover:bg-white/30 transition-colors duration-200"
+                className="no-print flex items-center justify-center p-1 rounded text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200"
               >
-                {t("common.add")}
+                <Plus className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
@@ -306,6 +306,7 @@ export default function Experience(props){
                       { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(i) },
                       { icon: Trash2, label: t("common.delete"), onClick: () => setDelIndex(e._originalIndex ?? i), danger: true }
                     ]}
+                    {...(i === 0 ? { dataOnboarding: "edit-experience" } : {})}
                   />
                 )}
               </div>

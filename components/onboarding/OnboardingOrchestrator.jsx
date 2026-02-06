@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useOnboarding } from '@/hooks/useOnboarding';
-import { useAdmin } from '@/components/admin/AdminProvider';
 import { useOnboardingSteps } from '@/lib/onboarding/useOnboardingSteps';
 import { getStepById } from '@/lib/onboarding/onboardingSteps';
 import { ONBOARDING_TIMINGS, STEP_TO_MODAL_KEY } from '@/lib/onboarding/onboardingConfig';
@@ -40,7 +39,6 @@ export default function OnboardingOrchestrator() {
     markStepComplete, completeOnboarding, updateOnboardingState, markModalCompleted, markTooltipClosed,
   } = useOnboarding();
 
-  const { editing, setEditing } = useAdmin();
   const onboardingSteps = useOnboardingSteps();
 
   // État local pour les modals
@@ -57,7 +55,6 @@ export default function OnboardingOrchestrator() {
   const [generatedCvFilename, setGeneratedCvFilename] = useState(onboardingState?.step4?.cvFilename || null);
 
   // Refs
-  const prevEditingRef = useRef(editing);
   const step1ModalShownRef = useRef(false);
   const step2ModalShownRef = useRef(false);
   const step6ModalShownRef = useRef(false);
@@ -109,15 +106,15 @@ export default function OnboardingOrchestrator() {
   useEffect(() => { if (currentStep !== 6) step6ModalShownRef.current = false; }, [currentStep]);
   useEffect(() => { if (currentStep !== 8) step8ModalShownRef.current = false; }, [currentStep]);
 
-  // ========== STEP 1: EDIT MODE BUTTON INTERCEPTION ==========
+  // ========== STEP 1: EDIT EXPERIENCE BUTTON INTERCEPTION ==========
   useEffect(() => {
     if (currentStep !== 1) return;
 
-    let editModeButton = null;
+    let editExperienceButton = null;
     let attempts = 0;
     const maxAttempts = Math.ceil(BUTTON_POLLING_TIMEOUT / BUTTON_POLLING_INTERVAL);
 
-    const handleEditModeButtonClick = (e) => {
+    const handleEditExperienceButtonClick = (e) => {
       if (step1ModalShownRef.current) return;
       e.preventDefault();
       e.stopPropagation();
@@ -128,9 +125,9 @@ export default function OnboardingOrchestrator() {
     };
 
     const interval = setInterval(() => {
-      editModeButton = document.querySelector('[data-onboarding="edit-mode-button"]');
-      if (editModeButton) {
-        editModeButton.addEventListener('click', handleEditModeButtonClick, { capture: true });
+      editExperienceButton = document.querySelector('[data-onboarding="edit-experience"]');
+      if (editExperienceButton) {
+        editExperienceButton.addEventListener('click', handleEditExperienceButtonClick, { capture: true });
         clearInterval(interval);
       } else if (++attempts >= maxAttempts) {
         clearInterval(interval);
@@ -139,18 +136,11 @@ export default function OnboardingOrchestrator() {
 
     return () => {
       clearInterval(interval);
-      if (editModeButton) editModeButton.removeEventListener('click', handleEditModeButtonClick, { capture: true });
+      if (editExperienceButton) editExperienceButton.removeEventListener('click', handleEditExperienceButtonClick, { capture: true });
     };
   }, [currentStep]);
 
-  // ========== STEP 1: VALIDATION (exit edit mode) ==========
-  useEffect(() => {
-    if (currentStep !== 1 || modalOpen) return;
-    if (prevEditingRef.current === true && editing === false) {
-      markStepComplete(1);
-    }
-    prevEditingRef.current = editing;
-  }, [currentStep, editing, modalOpen, markStepComplete]);
+  // Step 1 validation is now handled in handleModalComplete (editing is always active)
 
   // ========== STEP 2: AI GENERATE BUTTON INTERCEPTION ==========
   useEffect(() => {
@@ -397,10 +387,8 @@ export default function OnboardingOrchestrator() {
 
     // Actions spécifiques par étape (même si fermé par X)
     if (currentStep === 1) {
-      setTimeout(() => {
-        prevEditingRef.current = false;
-        setEditing(true).catch(() => {});
-      }, MODAL_ANIMATION_DELAY);
+      // Editing est toujours actif, valider directement le step
+      markStepComplete(1);
     }
     if (currentStep === 2) {
       setTimeout(() => emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_GENERATOR), MODAL_ANIMATION_DELAY);
@@ -423,10 +411,8 @@ export default function OnboardingOrchestrator() {
     }
 
     if (currentStep === 1) {
-      setTimeout(() => {
-        prevEditingRef.current = false;
-        setEditing(true).catch(() => {});
-      }, MODAL_CLOSE_ANIMATION_DURATION);
+      // Editing est toujours actif, valider directement le step
+      markStepComplete(1);
     } else if (currentStep === 2) {
       setTimeout(() => emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_GENERATOR), MODAL_CLOSE_ANIMATION_DURATION);
     } else if (currentStep === 6) {

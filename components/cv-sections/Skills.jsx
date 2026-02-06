@@ -12,7 +12,8 @@ import SkillItemHighlight, { RemovedSkillsDisplay, RemovedSkillsDisplayBlock, Re
 import SectionReviewActions from "@/components/cv-review/SectionReviewActions";
 import SkillsReviewActions from "@/components/cv-review/SkillsReviewActions";
 import { normalizeToNumber, VALID_SKILL_LEVELS, SKILL_LEVEL_KEYS } from "@/lib/constants/skillLevels";
-import { Code, Wrench, Workflow, Heart, Plus, Trash2 } from "lucide-react";
+import { Code, Wrench, Workflow, Heart, Plus, Trash2, Pencil } from "lucide-react";
+import ContextMenu from "@/components/ui/ContextMenu";
 import {
   ModalSection,
   FormField,
@@ -256,7 +257,12 @@ export default function Skills(props){
                     <div className="flex items-center gap-2">
                       <SkillsReviewActions field="hard_skills" />
                       {editing && (
-                        <button onClick={() => setOpenHard(true)} className="flex items-center justify-center p-1 rounded text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 opacity-70 hover:opacity-100" /></button>
+                        <ContextMenu
+                          items={[
+                            { icon: Pencil, label: t("common.edit"), onClick: () => setOpenHard(true) },
+                            { icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.hard_skills", value: [] }), danger: true }
+                          ]}
+                        />
                       )}
                     </div>
                   </div>
@@ -305,7 +311,12 @@ export default function Skills(props){
                       <div className="flex items-center gap-2">
                         <SkillsReviewActions field="tools" />
                         {editing && (
-                          <button onClick={() => setOpenTools(true)} className="flex items-center justify-center p-1 rounded text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 opacity-70 hover:opacity-100" /></button>
+                          <ContextMenu
+                            items={[
+                              { icon: Pencil, label: t("common.edit"), onClick: () => setOpenTools(true) },
+                              { icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.tools", value: [] }), danger: true }
+                            ]}
+                          />
                         )}
                       </div>
                     </div>
@@ -345,7 +356,12 @@ export default function Skills(props){
                       <div className="flex items-center gap-2">
                         <SkillsReviewActions field="methodologies" />
                         {editing && (
-                          <button onClick={() => setOpenMeth(true)} className="flex items-center justify-center p-1 rounded text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 opacity-70 hover:opacity-100" /></button>
+                          <ContextMenu
+                            items={[
+                              { icon: Pencil, label: t("common.edit"), onClick: () => setOpenMeth(true) },
+                              { icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.methodologies", value: [] }), danger: true }
+                            ]}
+                          />
                         )}
                       </div>
                     </div>
@@ -395,9 +411,12 @@ export default function Skills(props){
                       badgeClassName="inline-block rounded-sm border border-white/15 px-1.5 py-0.5 text-[11px] opacity-90"
                     />
                     {editing && (
-                      <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center p-1 rounded cursor-pointer text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200">
-                        <img src="/icons/edit.png" alt="Edit" className="h-3 w-3 opacity-70 hover:opacity-100" />
-                      </span>
+                      <ContextMenu
+                        items={[
+                          { icon: Pencil, label: t("common.edit"), onClick: () => setOpenSoft(true) },
+                          { icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.soft_skills", value: [] }), danger: true }
+                        ]}
+                      />
                     )}
                   </div>
                 </div>
@@ -405,7 +424,11 @@ export default function Skills(props){
                 <div className="rounded-2xl border border-white/15 p-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold mb-2">{cvT("cvSections.softSkills")}</h3>
-                    <span onClick={() => setOpenSoft(true)} role="button" tabIndex={0} className="inline-flex items-center justify-center p-1 rounded cursor-pointer text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200"><img src="/icons/edit.png" alt="Edit" className="h-3 w-3 opacity-70 hover:opacity-100" /></span>
+                    <ContextMenu
+                      items={[
+                        { icon: Pencil, label: t("common.edit"), onClick: () => setOpenSoft(true) },
+                      ]}
+                    />
                   </div>
                   <div className="text-sm opacity-60">{t("cvSections.noSoftSkills")}</div>
                 </div>

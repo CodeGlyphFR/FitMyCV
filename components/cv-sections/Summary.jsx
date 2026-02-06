@@ -51,14 +51,6 @@ export default function Summary(props){
         <div className="flex items-center justify-between gap-2 w-full">
           <span>{title}</span>
           <div className="flex items-center gap-2">
-            {editing && (
-              <ContextMenu
-                items={[
-                  { icon: Pencil, label: t("common.edit"), onClick: () => setOpen(true) },
-                  ...(isEmpty ? [] : [{ icon: Trash2, label: t("common.delete"), onClick: clear, danger: true }])
-                ]}
-              />
-            )}
             {/* Barre de progression review */}
             <div className="no-print">
               <ReviewProgressBar />
@@ -67,6 +59,14 @@ export default function Summary(props){
             <div className="no-print">
               <VersionSelector />
             </div>
+            {editing && (
+              <ContextMenu
+                items={[
+                  { icon: Pencil, label: t("common.edit"), onClick: () => setOpen(true) },
+                  ...(isEmpty ? [] : [{ icon: Trash2, label: t("common.delete"), onClick: clear, danger: true }])
+                ]}
+              />
+            )}
           </div>
         </div>
       }

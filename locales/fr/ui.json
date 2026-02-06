@@ -271,6 +271,7 @@
     "save": "Enregistrer",
     "cancel": "Annuler",
     "delete": "Supprimer",
+    "deleteAll": "Tout supprimer",
     "add": "Ajouter",
     "loading": "Chargement...",
     "error": "Erreur",

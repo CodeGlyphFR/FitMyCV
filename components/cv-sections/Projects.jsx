@@ -28,7 +28,7 @@ import ReviewableItemCard from "@/components/cv-review/ReviewableItemCard";
 import { useItemChanges } from "@/components/cv-review/useItemChanges";
 import MonthPicker from "@/components/ui/MonthPicker";
 import ContextMenu from "@/components/ui/ContextMenu";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Plus } from "lucide-react";
 
 // Normalise une date vers le format YYYY-MM pour comparaison et sauvegarde
 function normalizeDate(s){
@@ -250,9 +250,9 @@ export default function Projects(props){
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
-                className="no-print text-xs rounded-lg border-2 border-white/40 bg-white/20 backdrop-blur-sm px-2 py-1 text-white hover:bg-white/30 transition-colors duration-200"
+                className="no-print flex items-center justify-center p-1 rounded text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200"
               >
-                {t("common.add")}
+                <Plus className="h-3.5 w-3.5" />
               </button>
             )}
           </div>

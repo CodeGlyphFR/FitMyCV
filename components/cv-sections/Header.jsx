@@ -266,6 +266,16 @@ export default function Header(props){
     <header className="page mb-6 flex items-start justify-between gap-4 bg-white/15 backdrop-blur-xl p-4 rounded-2xl shadow-2xl relative overflow-visible min-h-[120px]">
       <div className="pr-24">
         <div className="flex items-center gap-2">
+          {editing && (
+            <button
+              data-onboarding="edit-button"
+              onClick={()=>setOpen(true)}
+              className="no-print flex items-center justify-center p-1 rounded text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200"
+              type="button"
+            >
+              <img src="/icons/edit.png" alt="Edit" className="h-3 w-3 opacity-70 hover:opacity-100" />
+            </button>
+          )}
           <h1 className="text-2xl font-bold text-white drop-shadow-lg">{toTitleCase(header.full_name) || ""}</h1>
           {hasJobOffer && (
             <button
@@ -354,18 +364,6 @@ export default function Header(props){
           )}
         </div>
       </div>
-
-      {/* Bouton d'édition du header en mode édition */}
-      {(editing && settings.feature_edit_mode) ? (
-        <button
-          data-onboarding="edit-button"
-          onClick={()=>setOpen(true)}
-          className="no-print absolute bottom-3 right-3 flex items-center justify-center p-1 rounded text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200"
-          type="button"
-        >
-          <img src="/icons/edit.png" alt="Edit" className="h-3 w-3 opacity-70 hover:opacity-100" />
-        </button>
-      ) : null}
 
       {/* Bouton de traduction en bas à droite */}
       {(!editing && settings.feature_translate) ? (
