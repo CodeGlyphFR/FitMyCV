@@ -2,12 +2,13 @@
 import React from "react";
 import { useReview } from "@/components/providers/ReviewProvider";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { Check, X } from "lucide-react";
 
 /**
  * Spinner de chargement réutilisable
  */
 const LoadingSpinner = () => (
-  <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
   </svg>
@@ -62,34 +63,28 @@ export default function SkillsReviewActions({ field }) {
   };
 
   return (
-    <div className="flex items-center gap-2 text-xs no-print mt-2">
+    <div className="flex items-center gap-2 no-print">
       {isBatchProcessing ? (
-        <span className="inline-flex items-center gap-2 text-white/70">
+        <span className="text-white/70">
           <LoadingSpinner />
-          {t("review.processing") || "Traitement en cours..."}
         </span>
       ) : (
         <>
           <button
             onClick={handleAcceptAll}
             disabled={isBatchProcessing}
-            className="inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 hover:underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-1 rounded-md flex items-center justify-center text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+            title={t("review.acceptAll")}
           >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            {t("review.acceptAll")}
+            <Check className="w-4 h-4" />
           </button>
-          <span className="text-white/30">•</span>
           <button
             onClick={handleRejectAll}
             disabled={isBatchProcessing}
-            className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 hover:underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-1 rounded-md flex items-center justify-center text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+            title={t("review.rejectAll")}
           >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            {t("review.rejectAll")}
+            <X className="w-4 h-4" />
           </button>
         </>
       )}
@@ -129,34 +124,28 @@ export function SkillsReviewActionsV2({ review }) {
   };
 
   return (
-    <div className="flex items-center gap-2 text-xs no-print mt-2">
+    <div className="flex items-center gap-2 no-print">
       {isProcessing ? (
-        <span className="inline-flex items-center gap-2 text-white/70">
+        <span className="text-white/70">
           <LoadingSpinner />
-          {t("review.processing") || "Traitement en cours..."}
         </span>
       ) : (
         <>
           <button
             onClick={handleAcceptAll}
             disabled={isProcessing}
-            className="inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 hover:underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-1 rounded-md flex items-center justify-center text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+            title={t("review.acceptAll")}
           >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            {t("review.acceptAll")}
+            <Check className="w-4 h-4" />
           </button>
-          <span className="text-white/30">•</span>
           <button
             onClick={handleRejectAll}
             disabled={isProcessing}
-            className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 hover:underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-1 rounded-md flex items-center justify-center text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+            title={t("review.rejectAll")}
           >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            {t("review.rejectAll")}
+            <X className="w-4 h-4" />
           </button>
         </>
       )}
