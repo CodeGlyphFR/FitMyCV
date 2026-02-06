@@ -231,9 +231,27 @@
         }
       },
       "step8": {
-        "title": "Historique",
-        "description": "Consulter l'historique des modifications IA",
-        "tooltip": "📝 Découvrez toutes les modifications apportées par l'IA"
+        "title": "Gestion des versions",
+        "description": "Gérez et restaurez les versions de votre CV",
+        "tooltip": "🔄 Découvrez le système de versions de votre CV",
+        "modal": {
+          "screen1": {
+            "title": "Votre CV a un historique complet",
+            "description": "Chaque action de l'IA crée automatiquement un snapshot de votre CV avant modification. Vous pouvez naviguer entre les versions à tout moment.",
+            "blocks": {
+              "snapshot": { "title": "Snapshots automatiques", "description": "Avant chaque modification IA, l'état actuel de votre CV est sauvegardé" },
+              "ai_action": { "title": "Traçabilité complète", "description": "Chaque version indique le type d'action : génération, optimisation ou restauration" },
+              "score_tracking": { "title": "Score par version", "description": "Comparez les scores de match entre les différentes versions" }
+            },
+            "tip": "Vous ne perdez jamais rien : chaque état de votre CV est conservé."
+          },
+          "screen2": {
+            "title": "Restaurez n'importe quelle version",
+            "description": "Si une modification ne vous convient pas, revenez en arrière en un clic. Le système de versions vous donne un contrôle total.",
+            "checklist": ["Cliquez sur une version pour la prévisualiser", "Utilisez \"Restaurer\" pour revenir à cet état", "La restauration crée elle-même une nouvelle version (rien n'est perdu)"],
+            "tip": "Expérimentez sans crainte : vous pouvez toujours revenir en arrière."
+          }
+        }
       },
       "step9": {
         "title": "Export PDF",

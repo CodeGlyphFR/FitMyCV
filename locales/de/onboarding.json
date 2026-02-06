@@ -231,9 +231,27 @@
         }
       },
       "step8": {
-        "title": "Verlauf",
-        "description": "KI-Änderungsverlauf einsehen",
-        "tooltip": "📝 Entdecken Sie alle von der KI vorgenommenen Änderungen"
+        "title": "Versionsverwaltung",
+        "description": "Versionen Ihres Lebenslaufs verwalten und wiederherstellen",
+        "tooltip": "🔄 Entdecken Sie das Versionssystem Ihres Lebenslaufs",
+        "modal": {
+          "screen1": {
+            "title": "Ihr Lebenslauf hat einen vollständigen Verlauf",
+            "description": "Jede KI-Aktion erstellt automatisch einen Snapshot Ihres Lebenslaufs vor der Änderung. Sie können jederzeit zwischen den Versionen navigieren.",
+            "blocks": {
+              "snapshot": { "title": "Automatische Snapshots", "description": "Vor jeder KI-Änderung wird der aktuelle Zustand Ihres Lebenslaufs gespeichert" },
+              "ai_action": { "title": "Vollständige Rückverfolgbarkeit", "description": "Jede Version zeigt den Aktionstyp an: Generierung, Optimierung oder Wiederherstellung" },
+              "score_tracking": { "title": "Score pro Version", "description": "Vergleichen Sie Match-Scores zwischen verschiedenen Versionen" }
+            },
+            "tip": "Sie verlieren nie etwas: Jeder Zustand Ihres Lebenslaufs wird aufbewahrt."
+          },
+          "screen2": {
+            "title": "Beliebige Version wiederherstellen",
+            "description": "Wenn eine Änderung nicht passt, gehen Sie mit einem Klick zurück. Das Versionssystem gibt Ihnen volle Kontrolle.",
+            "checklist": ["Klicken Sie auf eine Version, um sie in der Vorschau anzuzeigen", "Verwenden Sie \"Wiederherstellen\", um zu diesem Zustand zurückzukehren", "Die Wiederherstellung erstellt selbst eine neue Version (nichts geht verloren)"],
+            "tip": "Experimentieren Sie ohne Angst: Sie können jederzeit zurückkehren."
+          }
+        }
       },
       "step9": {
         "title": "PDF-Export",

@@ -231,9 +231,27 @@
         }
       },
       "step8": {
-        "title": "History",
-        "description": "View AI modification history",
-        "tooltip": "📝 Discover all modifications made by AI"
+        "title": "Version Management",
+        "description": "Manage and restore versions of your CV",
+        "tooltip": "🔄 Discover the version system of your CV",
+        "modal": {
+          "screen1": {
+            "title": "Your CV has a complete history",
+            "description": "Each AI action automatically creates a snapshot of your CV before modification. You can navigate between versions at any time.",
+            "blocks": {
+              "snapshot": { "title": "Automatic snapshots", "description": "Before each AI modification, the current state of your CV is saved" },
+              "ai_action": { "title": "Full traceability", "description": "Each version indicates the action type: generation, optimization, or restoration" },
+              "score_tracking": { "title": "Score per version", "description": "Compare match scores between different versions" }
+            },
+            "tip": "You never lose anything: every state of your CV is preserved."
+          },
+          "screen2": {
+            "title": "Restore any version",
+            "description": "If a modification doesn't suit you, go back in one click. The version system gives you full control.",
+            "checklist": ["Click on a version to preview it", "Use \"Restore\" to go back to that state", "Restoration itself creates a new version (nothing is lost)"],
+            "tip": "Experiment without fear: you can always go back."
+          }
+        }
       },
       "step9": {
         "title": "PDF Export",

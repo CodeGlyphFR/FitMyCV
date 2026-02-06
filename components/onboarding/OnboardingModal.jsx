@@ -602,6 +602,57 @@ export default function OnboardingModal({
                 </div>
               )}
 
+              {/* Écran type: step8_version_system (Step 8 - Écran 1/2) */}
+              {screens[currentScreen]?.type === 'step8_version_system' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].description}
+                    </p>
+
+                    <div className="space-y-3">
+                      {screens[currentScreen].blocks.map((block, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <span className="text-2xl flex-shrink-0">{block.emoji}</span>
+                          <div>
+                            <p className="text-white font-medium text-sm md:text-base">{block.title}</p>
+                            <p className="text-white/60 text-xs md:text-sm">{block.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <TipBox className="mt-4">
+                    {screens[currentScreen].tip}
+                  </TipBox>
+                </div>
+              )}
+
+              {/* Écran type: step8_restore_version (Step 8 - Écran 2/2) */}
+              {screens[currentScreen]?.type === 'step8_restore_version' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].description}
+                    </p>
+
+                    <div className="space-y-2">
+                      {screens[currentScreen].checklist.map((item, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-left">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          </div>
+                          <span className="text-white/80 text-sm md:text-base">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <TipBox className="mt-4">
+                    {screens[currentScreen].tip}
+                  </TipBox>
+                </div>
+              )}
+
               {/* Écran type: step9_export (Step 9 - Écrans 1-2) */}
               {(screens[currentScreen]?.type === 'step9_export_ready' ||
                 screens[currentScreen]?.type === 'step9_export_custom') && (

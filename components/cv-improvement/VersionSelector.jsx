@@ -245,7 +245,7 @@ export default function VersionSelector() {
   );
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" data-onboarding="history">
       {/* Lien Restaurer - visible uniquement sur une version précédente */}
       {!isLatestVersion && (
         <button
