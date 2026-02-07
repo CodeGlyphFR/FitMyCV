@@ -46,13 +46,35 @@ export async function POST(request) {
 
     if (!stripeCustomerId || stripeCustomerId.startsWith('local_')) {
       // Créer un nouveau customer Stripe
-      const customer = await stripe.customers.create({
+      const customerParams = {
         email: user.email,
         name: user.name || undefined,
         metadata: {
           userId,
         },
-      });
+      };
+
+      // Appliquer le modèle de rendu de facture si configuré
+      if (process.env.STRIPE_INVOICE_TEMPLATE_ID) {
+        customerParams.invoice_settings = {
+          rendering_options: {
+            template: process.env.STRIPE_INVOICE_TEMPLATE_ID,
+          },
+        };
+      }
+
+      let customer;
+      try {
+        customer = await stripe.customers.create(customerParams);
+      } catch (templateError) {
+        if (process.env.STRIPE_INVOICE_TEMPLATE_ID) {
+          console.warn(`[Checkout Credits] Template facture invalide (${process.env.STRIPE_INVOICE_TEMPLATE_ID}), création client sans template:`, templateError.message);
+          delete customerParams.invoice_settings;
+          customer = await stripe.customers.create(customerParams);
+        } else {
+          throw templateError;
+        }
+      }
 
       stripeCustomerId = customer.id;
 
