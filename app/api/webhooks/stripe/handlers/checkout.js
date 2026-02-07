@@ -65,12 +65,14 @@ export async function handleCheckoutCompleted(session) {
     }
   }
 
-  // Attribuer les crédits
+  // Attribuer les crédits (avec le montant réellement payé après réductions/coupons)
+  const pricePaid = (session.amount_total || 0) / 100; // Stripe amount en centimes → euros
   let result;
   try {
     result = await grantCredits(userId, creditAmount, 'purchase', {
       stripePaymentIntentId: paymentIntentId,
       source: 'credit_pack_purchase',
+      pricePaid,
     });
 
     if (!result.success) {
