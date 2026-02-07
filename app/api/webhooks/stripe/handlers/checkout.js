@@ -49,14 +49,20 @@ export async function handleCheckoutCompleted(session) {
   }
 
   // Vérifier si les crédits n'ont pas déjà été attribués (idempotence)
-  const existingTransaction = await prisma.creditTransaction.findFirst({
-    where: { stripePaymentIntentId: paymentIntentId },
-  });
+  // Note: Pour les checkouts gratuits (coupon 100%), paymentIntentId est null.
+  // On ne fait la vérification que si paymentIntentId existe, sinon on risque de matcher
+  // toutes les transactions ayant stripePaymentIntentId=null (ex: crédits de bienvenue).
+  // L'idempotence des checkouts gratuits est assurée par le StripeWebhookLog (eventId unique).
+  if (paymentIntentId) {
+    const existingTransaction = await prisma.creditTransaction.findFirst({
+      where: { stripePaymentIntentId: paymentIntentId },
+    });
 
-  if (existingTransaction) {
-    console.log(`[Webhook] ✓ Anti-duplication: crédits déjà attribués par payment_intent.succeeded pour PaymentIntent ${paymentIntentId}`);
-    console.log(`[Webhook] → La facture sera créée dans charge.succeeded (billing_details garantis disponibles)`);
-    return;
+    if (existingTransaction) {
+      console.log(`[Webhook] ✓ Anti-duplication: crédits déjà attribués par payment_intent.succeeded pour PaymentIntent ${paymentIntentId}`);
+      console.log(`[Webhook] → La facture sera créée dans charge.succeeded (billing_details garantis disponibles)`);
+      return;
+    }
   }
 
   // Attribuer les crédits
@@ -80,7 +86,11 @@ export async function handleCheckoutCompleted(session) {
     throw error;
   }
 
-  console.log(`[Webhook] ${creditAmount} crédits attribués à user ${userId} (checkout.session.completed)`);
-  console.log(`[Webhook] → La facture sera créée dans charge.succeeded (billing details garantis disponibles)`);
-  // Note: L'email de confirmation est envoyé dans handleChargeSucceeded après création de la facture
+  if (paymentIntentId) {
+    console.log(`[Webhook] ${creditAmount} crédits attribués à user ${userId} (checkout.session.completed)`);
+    console.log(`[Webhook] → La facture sera créée dans charge.succeeded (billing details garantis disponibles)`);
+  } else {
+    console.log(`[Webhook] ${creditAmount} crédits attribués à user ${userId} (checkout gratuit, coupon 100%)`);
+    console.log(`[Webhook] → Pas de facture à créer (paiement à 0€)`);
+  }
 }
