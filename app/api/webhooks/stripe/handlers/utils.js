@@ -47,7 +47,7 @@ export async function createInvoiceForCreditPurchase({ customer, amount, currenc
 
     // Créer un draft invoice
     // L'Invoice hérite automatiquement des billing details du Customer mis à jour ci-dessus
-    const invoice = await stripe.invoices.create({
+    const invoiceParams = {
       customer: customer,
       auto_advance: false, // Ne pas envoyer automatiquement
       collection_method: 'charge_automatically',
@@ -58,7 +58,27 @@ export async function createInvoiceForCreditPurchase({ customer, amount, currenc
         paymentIntentId: paymentIntent.id,
         source: 'credit_pack_purchase',
       },
-    });
+    };
+
+    // Appliquer le modèle de rendu de facture si configuré
+    if (process.env.STRIPE_INVOICE_TEMPLATE_ID) {
+      invoiceParams.rendering = {
+        template: process.env.STRIPE_INVOICE_TEMPLATE_ID,
+      };
+    }
+
+    let invoice;
+    try {
+      invoice = await stripe.invoices.create(invoiceParams);
+    } catch (templateError) {
+      if (process.env.STRIPE_INVOICE_TEMPLATE_ID) {
+        console.warn(`[Webhook] Template facture invalide (${process.env.STRIPE_INVOICE_TEMPLATE_ID}), création facture sans template:`, templateError.message);
+        delete invoiceParams.rendering;
+        invoice = await stripe.invoices.create(invoiceParams);
+      } else {
+        throw templateError;
+      }
+    }
 
     // Ajouter l'item à la facture
     await stripe.invoiceItems.create({

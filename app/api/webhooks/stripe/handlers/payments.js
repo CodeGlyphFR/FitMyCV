@@ -39,11 +39,13 @@ export async function handlePaymentSuccess(paymentIntent) {
   }
 
   // Attribuer les crédits (FALLBACK - normalement géré par checkout.session.completed)
+  const pricePaid = (paymentIntent.amount || 0) / 100; // Stripe amount en centimes → euros
   let result;
   try {
     result = await grantCredits(userId, creditAmount, 'purchase', {
       stripePaymentIntentId: paymentIntent.id,
       source: 'credit_pack_purchase',
+      pricePaid,
     });
 
     if (!result.success) {
@@ -108,9 +110,11 @@ export async function handleChargeSucceeded(charge) {
     console.log(`[Webhook] Transaction inexistante pour PaymentIntent ${paymentIntentId}, création dans charge.succeeded`);
 
     try {
+      const chargePricePaid = (paymentIntent.amount || 0) / 100; // Stripe amount en centimes → euros
       const result = await grantCredits(userId, creditAmount, 'purchase', {
         stripePaymentIntentId: paymentIntentId,
         source: 'credit_pack_purchase',
+        pricePaid: chargePricePaid,
       });
 
       if (!result.success) {
