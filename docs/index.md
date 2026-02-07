@@ -9,7 +9,7 @@
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | FitMyCV.io |
-| **Version** | 1.0.9.6 |
+| **Version** | 1.0.9.7 |
 | **Type** | Application SaaS |
 | **Framework** | Next.js 16.1.1 (App Router) |
 | **Base de données** | PostgreSQL via Prisma 6 |
