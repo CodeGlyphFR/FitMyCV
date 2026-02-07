@@ -35,26 +35,31 @@ export default function RealtimeRefreshProvider({ children }) {
 
   // Callback quand un CV est mis à jour
   const handleCvUpdate = useCallback((data) => {
+    // Lire le cookie cvFile pour savoir quel CV est actuellement affiché
+    const cookies = document.cookie.split(';');
+    const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
+    const currentFile = cvFileCookie ? decodeURIComponent(cvFileCookie.split('=')[1]) : null;
 
-    // 1. Rafraîchir la page Next.js (Server Component - affichage du CV)
-    router.refresh();
+    const isCurrentCv = data.filename === currentFile;
 
-    // 2. Petit délai pour laisser le temps à la DB de se synchroniser
-    setTimeout(() => {
-      // 3. Déclencher des événements pour les composants clients
-      if (typeof window !== 'undefined') {
+    if (isCurrentCv) {
+      // CV actuellement affiché → refresh complet (Server Components + events)
+      router.refresh();
 
-        // Événement pour Header (match score)
-        window.dispatchEvent(new CustomEvent('realtime:cv:updated', { detail: data }));
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('realtime:cv:updated', { detail: data }));
+          window.dispatchEvent(new CustomEvent('realtime:cv:metadata:updated', { detail: data }));
+        }
+      }, 100);
+    }
 
-        // Événement pour CVImprovementPanel
-        window.dispatchEvent(new CustomEvent('realtime:cv:metadata:updated', { detail: data }));
-
-        // Événement pour TopBar (liste des CVs)
+    // Toujours mettre à jour la liste (un nouveau CV doit apparaître dans le dropdown)
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
         window.dispatchEvent(new CustomEvent('realtime:cv:list:changed', { detail: data }));
-
-      }
-    }, 100); // Délai de 100ms pour laisser router.refresh() faire son travail
+      }, isCurrentCv ? 100 : 0);
+    }
   }, [router]);
 
   // Callback pour tout changement DB

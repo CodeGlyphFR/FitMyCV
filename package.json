@@ -1,7 +1,7 @@
 {
   "name": "FitMyCV",
   "private": true,
-  "version": "1.0.9.5",
+  "version": "1.0.9.6",
   "scripts": {
     "dev": "dotenv -e .env -- next dev",
     "build": "next build",
@@ -49,6 +49,7 @@
     "puppeteer": "^24.34.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "qs": "^6.14.1",
     "react": "^19.2.3",
     "react-animated-counter": "^1.8.4",
     "react-dom": "^19.2.3",
