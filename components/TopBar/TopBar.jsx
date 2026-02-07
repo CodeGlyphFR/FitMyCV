@@ -288,7 +288,10 @@ export default function TopBar() {
 
   React.useEffect(() => {
     if (!isAuthenticated) return undefined;
-    const onChanged = () => operations.reload();
+    const onChanged = (event) => {
+      const preferredFile = event?.detail?.file;
+      operations.reload(preferredFile);
+    };
     window.addEventListener("cv:list:changed", onChanged);
     window.addEventListener("realtime:cv:list:changed", onChanged);
     window.addEventListener("focus", onChanged);

@@ -193,11 +193,10 @@ export default function Header(props){
       const selectedFile = event?.detail?.file;
       const cvActuallyChanged = selectedFile && selectedFile !== lastLoadedCvRef.current;
 
-      fetchSourceInfo();
-
-      // Ne réinitialiser l'offre que si le CV a vraiment changé
-      // (évite le "no data" lors d'un simple focus de fenêtre)
+      // Ne refetch que si le CV a réellement changé
+      // (évite le flash visuel et la disparition temporaire des icônes score/offre)
       if (cvActuallyChanged) {
+        fetchSourceInfo();
         lastLoadedCvRef.current = selectedFile;
         resetJobOfferDetails();
       } else if (isJobOfferModalOpen && !jobOfferDetails) {
