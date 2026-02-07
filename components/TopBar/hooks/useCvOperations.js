@@ -119,17 +119,22 @@ export function useCvOperations({
       let nextCurrent = null;
       if (preferredCurrent && normalizedItems.some((it) => it.file === preferredCurrent)) {
         nextCurrent = preferredCurrent;
-      } else if (serverSuggested) {
-        nextCurrent = serverSuggested;
       } else if (hasCandidate) {
         nextCurrent = candidate;
+      } else if (serverSuggested) {
+        nextCurrent = serverSuggested;
       } else if (normalizedItems.length) {
         nextCurrent = normalizedItems[0].file;
       }
 
       if (nextCurrent) {
+        const cvChanged = nextCurrent !== lastSelectedRef.current;
         setCurrent(nextCurrent);
         lastSelectedRef.current = nextCurrent;
+
+        // Synchroniser le cookie cvFile (nécessaire pour fetchSourceInfo/fetchMatchScore)
+        document.cookie = "cvFile=" + encodeURIComponent(nextCurrent) + "; path=/; max-age=31536000";
+
         try {
           localStorage.setItem("admin:cv", nextCurrent);
         } catch (_err) {}
@@ -140,7 +145,9 @@ export function useCvOperations({
           lastSelectedMetaRef.current = matched;
         }
 
-        if (typeof window !== "undefined") {
+        // Ne dispatcher cv:selected que si le CV a réellement changé
+        // (évite les refetch inutiles dans Header qui causent un flash visuel)
+        if (cvChanged && typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("cv:selected", { detail: { file: nextCurrent } }));
         }
       }
