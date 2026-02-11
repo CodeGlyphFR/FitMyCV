@@ -3,6 +3,8 @@
  * Centralizes all i18n imports for the Word export API
  */
 
+import { SKILL_LEVEL_KEYS, normalizeToNumber } from '@/lib/constants/skillLevels';
+
 // French translations
 import frUi from "@/locales/fr/ui.json";
 import frErrors from "@/locales/fr/errors.json";
@@ -76,12 +78,21 @@ export function getTranslation(language, path) {
  * Translate skill/language levels
  */
 export function translateLevel(language, level, type = 'skill') {
-  if (!level) return '';
+  if (level === null || level === undefined || level === '') return '';
 
-  const path = type === 'skill' ? `skillLevels.${level}` : `languageLevels.${level}`;
+  let lookupKey = level;
+
+  if (type === 'skill') {
+    const numeric = normalizeToNumber(level);
+    if (numeric !== null) {
+      lookupKey = SKILL_LEVEL_KEYS[numeric] || level;
+    }
+  }
+
+  const path = type === 'skill' ? `skillLevels.${lookupKey}` : `languageLevels.${lookupKey}`;
   const translated = getTranslation(language, path);
 
-  return translated === path ? level : translated;
+  return translated === path ? String(level) : translated;
 }
 
 /**
