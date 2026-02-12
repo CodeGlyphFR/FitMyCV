@@ -39,26 +39,32 @@ jobs:
 
       - name: Auto-Sync Stripe Products
         run: |
-          echo "--- DEBUG : OÙ SUIS-JE ? ---"
-          pwd
-          echo "--- DEBUG : LISTE DES FICHIERS ---"
-          ls -R | grep -i sync-stripe.js
+          # 1. On s'assure d'être au bon endroit (le workspace du checkout)
+          cd $GITHUB_WORKSPACE
           
-          # Extraction sécurisée des credentials
-          DB_PASS=$(grep '^DATABASE_URL=' /home/erickdesmet/STAGING_SAAS/FitMyCV/app/.env | cut -d ':' -f3 | cut -d '@' -f1)
-          export DATABASE_URL="postgresql://fitmycv:$DB_PASS@localhost:5432/fitmycv_release"
-          export STRIPE_SECRET_KEY=$(grep '^STRIPE_SECRET_KEY=' /home/erickdesmet/STAGING_SAAS/FitMyCV/app/.env | cut -d '=' -f2- | tr -d '"')
-
-          # On cherche le fichier et on l'exécute peu importe où il est
-          SCRIPT_PATH=$(find . -name "sync-stripe.js" | head -n 1)
+          # 2. On vérifie la présence du fichier avec le nom exact que tu m'as donné
+          # Tu as dit : "sync staging stripe", vérifie bien l'extension et les tirets.
+          # On va chercher "sync-staging-stripe.js" ou "sync_staging_stripe.js"
           
-          if [ -z "$SCRIPT_PATH" ]; then
-            echo "ERREUR : sync-stripe.js est introuvable dans tout le répertoire !"
+          SCRIPT_FILE=$(find . -maxdepth 3 -name "*sync*staging*stripe*.js" | head -n 1)
+          
+          if [ -z "$SCRIPT_FILE" ]; then
+            echo "❌ Fichier introuvable dans le dossier cloné !"
+            echo "Contenu du dossier actuel :"
+            ls -F
             exit 1
           fi
-          
-          echo "Exécution de : $SCRIPT_PATH"
-          node "$SCRIPT_PATH"
+
+          echo "🚀 Fichier trouvé : $SCRIPT_FILE"
+
+          # 3. Récupération des secrets sur le serveur
+          APP_PATH="/home/erickdesmet/STAGING_SAAS/FitMyCV/app"
+          DB_PASS=$(grep '^DATABASE_URL=' $APP_PATH/.env | cut -d ':' -f3 | cut -d '@' -f1)
+          export DATABASE_URL="postgresql://fitmycv:$DB_PASS@localhost:5432/fitmycv_release"
+          export STRIPE_SECRET_KEY=$(grep '^STRIPE_SECRET_KEY=' $APP_PATH/.env | cut -d '=' -f2- | tr -d '"')
+
+          # 4. Exécution
+          node "$SCRIPT_FILE"
 
       - name: Docker Build
         run: |
