@@ -1,0 +1,51 @@
+name: 🧪 Pre-prod (PR Lifecycle)
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened, closed]
+
+jobs:
+  # JOB 1 : Déploiement (si la PR est ouverte ou mise à jour)
+  deploy-preview:
+    if: github.event.action != 'closed'
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clone DB (Prod -> Release)
+        run: |
+          pg_dump fitmycv_prod > /tmp/prod_sync.sql
+          psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'fitmycv_release' AND pid <> pg_backend_pid();" postgres || true
+          dropdb --if-exists fitmycv_release
+          createdb fitmycv_release
+          psql fitmycv_release < /tmp/prod_sync.sql
+
+      - name: Docker Build
+        # On utilise un tag fixe 'fitmycv:preview' pour correspondre à ton docker-compose.staging.yml
+        run: docker build -t fitmycv:preview .
+
+      - name: Deploy via Docker Compose (Staging)
+        run: |
+          # Passage dans ton dossier permanent de staging
+          cd /home/erickdesmet/STAGING_SAAS/FitMyCV/app
+          # Relance le service avec le .env local et le docker-compose.staging.yml
+          docker compose -f docker-compose.staging.yml up -d --force-recreate
+
+      - name: Post-deploy (Migrations)
+        run: |
+          # Migrations de schéma et de données sur la base 'fitmycv_release'
+          docker exec fitmycv-preview npx prisma migrate deploy
+          docker exec fitmycv-preview npm run db:migrate-data
+
+  # JOB 2 : Nettoyage (si la PR est fermée ou mergée)
+  cleanup-preview:
+    if: github.event.action == 'closed'
+    runs-on: self-hosted
+    steps:
+      - name: Stop Staging Server
+        run: |
+          echo "Fermeture de la PR détectée. Arrêt du serveur de test..."
+          cd /home/erickdesmet/STAGING_SAAS/FitMyCV/app
+          docker compose -f docker-compose.staging.yml down

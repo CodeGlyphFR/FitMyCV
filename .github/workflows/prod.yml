@@ -1,0 +1,55 @@
+name: 🚀 Production Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  release-and-deploy:
+    runs-on: self-hosted
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Automated Versioning
+        run: |
+          git config user.name "github-actions"
+          git config user.email "action@github.com"
+          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+          chmod +x ./scripts/bump-version.sh
+          ./scripts/bump-version.sh "$COMMIT_MESSAGE"
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          git add .
+          git commit -m "chore(release): v$NEW_VERSION [skip ci]"
+          git tag "v$NEW_VERSION"
+          git push origin main --tags
+
+      - name: Sync Dev & Release Branches
+        run: |
+          for branch in release dev; do
+            git checkout $branch
+            git merge main
+            git push origin $branch
+          done
+          git checkout main
+
+      - name: Docker Build
+        run: docker build -t fitmycv:latest .
+
+      - name: Deploy via Docker Compose (Production)
+        run: |
+          # Passage dans ton dossier permanent de prod
+          cd /home/erickdesmet/PROD_SAAS/FitMyCV/app
+          # Relance le service avec le .env local et le docker-compose.prod.yml
+          docker compose -f docker-compose.prod.yml up -d --force-recreate
+
+      - name: Post-deploy (Migrations)
+        run: |
+          # Exécution des migrations de schéma et de données via le container
+          docker exec fitmycv-prod npx prisma migrate deploy
+          docker exec fitmycv-prod npm run db:migrate-data

@@ -4,6 +4,7 @@ const SITE_NAME = "FitMyCV.io";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   env: {
     NEXT_PUBLIC_APP_VERSION: version,
     NEXT_PUBLIC_SITE_NAME: SITE_NAME,

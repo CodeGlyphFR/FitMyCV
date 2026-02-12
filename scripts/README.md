@@ -1,116 +1,46 @@
-# Scripts de Maintenance
+# 🛠️ Scripts & Automatisation
 
-Guide pour l'utilisation des scripts en environnement de production.
+Ce dossier contient les outils de maintenance et les moteurs de l'automatisation du projet FitMyCV.io.
 
----
+## ⚠️ Avertissement Production
 
-## Prérequis
-
-Tous les scripts utilisent les variables d'environnement du fichier `.env` :
-- `DATABASE_URL` - Connexion PostgreSQL (indique l'environnement dev/prod)
-- `STRIPE_SECRET_KEY` - Clé Stripe (test ou live selon l'environnement)
-
-**Vérifier l'environnement avant exécution** : La variable `DATABASE_URL` dans `.env` détermine si vous êtes en dev ou prod.
+Depuis la mise en place du workflow CI/CD avec GitHub Actions, la plupart des migrations de données sont automatisées.
+**Ne lancez plus de scripts de migration manuellement sur le serveur de production.**
 
 ---
 
-## Scripts Disponibles
+## 🚀 Automatisation (CI/CD)
 
-### Synchronisation Stripe
+Ces scripts sont les piliers de ton usine logicielle et sont principalement appelés par GitHub Actions.
 
-```bash
-node scripts/sync-stripe.mjs
-```
-
-Synchronise les produits et prix Stripe avec la base de données :
-- Crée les produits/prix manquants dans Stripe
-- Met à jour les IDs Stripe en DB (`stripePriceId`, `stripeProductId`)
-
-**Note** : La synchronisation est aussi déclenchée automatiquement depuis l'interface Admin.
+* **`bump-version.sh`** : Calcule et propage le nouveau numéro de version dans toute la codebase en fonction du message de commit (Conventional Commits).
+* **`run-data-migrations.js`** : Moteur d'exécution des migrations de données. Il joue les scripts situés dans `prisma/data-migrations/` une seule fois.
 
 ---
 
-### Migrations de Données
+## 📦 Maintenance Manuelle
 
-#### Migration CV vers Database
+Outils nécessitant une intervention humaine ponctuelle ou utilisés en développement.
 
-```bash
-node scripts/migrate-cv-to-database.mjs
-```
+### 💳 Stripe
+* **`sync-stripe.mjs`** : Synchronise les plans d'abonnement et les packs de crédits entre la base de données et Stripe.
 
-Migre les CV du filesystem vers la base de données (champ `content` JSON).
-
-#### Migration Feature Names
-
-```bash
-node scripts/migrate-feature-names.js
-```
-
-Met à jour les noms de features dans les compteurs et transactions.
-
-#### Migration Skill Proficiency
-
-```bash
-node scripts/migrate-skill-proficiency.mjs
-```
-
-Migre le format des niveaux de compétences dans les CV.
+### 📧 Emails
+* **`preview-emails.js`** : Lance un serveur local (Port 3001) pour prévisualiser les templates d'emails avec support Dark/Light mode.
+* **`export-email-templates.js`** : Exporte les templates de la base de données vers `prisma/email-templates/` au format JSON pour le versionnage.
 
 ---
 
-### Nettoyage de Données
+## 💾 Migrations de Données
 
-#### Nettoyage Métadonnées CV
+Pour toute modification de données (naming, nettoyage, calculs) générée par Claude Code :
 
-```bash
-node scripts/clean-cv-metadata.js
-```
-
-Nettoie les métadonnées obsolètes des CV.
-
-#### Suppression Domaines CV
-
-```bash
-node scripts/remove-domains-from-cvs.js
-```
-
-Supprime les domaines de compétences des CV (restructuration).
+1.  **Emplacement** : Ne plus créer de fichiers à la racine de ce dossier. Utilisez `/prisma/data-migrations/`.
+2.  **Format** : `YYYYMMDD_HHMM_description.js`.
+3.  **Exécution** : Automatique lors de chaque déploiement (Pré-prod et Prod) via la commande `npm run db:migrate-data`.
 
 ---
 
-### Email
+## 🔍 Debug & Diagnostic
 
-#### Export Templates Email
-
-```bash
-node scripts/export-email-templates.js
-```
-
-Exporte les templates email de la base de données.
-
-#### Preview Emails
-
-```bash
-node scripts/preview-emails.js
-```
-
-Prévisualise les templates email en local.
-
----
-
-### Debug (Développement)
-
-Scripts de debug pour la génération CV :
-- `check-batch.mjs`, `check-batch2.mjs`, `check-batch3.mjs`
-- `debug-new-generation.mjs`
-- `debug-projects.mjs`
-- `debug-skills-format.mjs`
-
----
-
-## Bonnes Pratiques Production
-
-1. **Toujours vérifier `.env`** avant d'exécuter un script
-2. **Backup base de données** avant les migrations de données
-3. **Tester en dev** avant d'exécuter en production
-4. **Logger l'exécution** des scripts de migration pour traçabilité
+Les scripts de type `check-batch*.mjs` ou `debug-*.mjs` sont des outils de diagnostic ponctuel. Ils permettent d'auditer les résultats de l'IA sans modifier la base de données.

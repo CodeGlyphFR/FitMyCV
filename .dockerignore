@@ -1,0 +1,31 @@
+# Dépendances et builds
+node_modules
+.next
+out
+build
+
+# Environnement et secrets
+.env
+.env.local
+.env.production
+.env.development
+*.log
+
+# Outils de développement et éditeurs
+.vscode
+.claude
+.github
+.git
+.worktrees
+.playwright-mcp
+_bmad
+_bmad-output
+logs
+
+# Documentation
+README.md
+CLAUDE.md
+
+# Docker lui-même
+Dockerfile
+.dockerignore
