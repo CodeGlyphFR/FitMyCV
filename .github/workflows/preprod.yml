@@ -13,6 +13,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Extract Recaptcha Key from local .env
+        id: vars
+        run: |
+          # On cherche la ligne dans ton .env de staging et on extrait la valeur après le '='
+          # Le -f2- permet de gérer les cas où la clé contiendrait elle-même un signe '='
+          STR_KEY=$(grep '^NEXT_PUBLIC_RECAPTCHA_SITE_KEY=' /home/erickdesmet/STAGING_SAAS/FitMyCV/app/.env | cut -d '=' -f2-)
+          echo "RECAPTCHA_KEY=$STR_KEY" >> $GITHUB_ENV
+
       - name: Clone DB (Prod -> Release)
         run: |
           pg_dump fitmycv_prod > /tmp/prod_sync.sql
@@ -22,18 +30,21 @@ jobs:
           psql fitmycv_release < /tmp/prod_sync.sql
 
       - name: Docker Build
-        run: docker build -t fitmycv:preview .
+        run: |
+          # On passe la clé extraite comme argument de build
+          docker build \
+            --build-arg NEXT_PUBLIC_RECAPTCHA_SITE_KEY="${{ env.RECAPTCHA_KEY }}" \
+            -t fitmycv:preview .
 
       - name: Deploy via Docker Compose (Staging)
         run: |
           cd /home/erickdesmet/STAGING_SAAS/FitMyCV/app
           docker compose -f docker-compose.staging.yml up -d --force-recreate
-          # Attente de l'initialisation
+          # Attente de l'initialisation pour éviter que les migrations échouent si le container boot
           sleep 10
 
       - name: Post-deploy (Migrations)
         run: |
-          # Utilisation des scripts npm
           docker exec fitmycv-preview npm run db:migrate-deploy
           docker exec fitmycv-preview npm run db:migrate-data
 
