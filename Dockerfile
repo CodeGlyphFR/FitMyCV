@@ -20,24 +20,16 @@ RUN npx prisma generate
 RUN npm run build
 
 # --- Stage 3: Runner ---
-FROM node:20-alpine AS runner
+FROM node:20.19-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Copie du mode standalone
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/package.json ./package.json
+# ... (tes autres copies standalone)
 
-# --- AJOUT ICI ---
-# On récupère le CLI Prisma du builder pour qu'il soit présent dans le container final
+# On récupère TOUTE la famille Prisma (le CLI, le Client et les Engines)
 COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-# -----------------
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
-EXPOSE 3000
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["node", "server.js"]
+# On s'assure que Prisma a les droits d'exécution
+RUN chmod +x ./node_modules/.bin/prisma
