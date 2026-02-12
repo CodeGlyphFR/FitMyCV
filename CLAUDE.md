@@ -29,18 +29,19 @@ Le projet utilise un versioning automatique à 4 parties (`X.X.X.X`) basé sur l
 
 ### Règles de préfixes de commit
 
-| Préfixe | Partie | Quand l'utiliser |
-|---|---|---|
-| `feat!:` ou `BREAKING CHANGE:` | **1er** (Major) | Changement **cassant** pour les utilisateurs existants : suppression d'une fonctionnalité, changement d'API incompatible, migration obligatoire. **Très rare.** |
-| `feat:` | **2ème** (Minor) | Fonctionnalité **réellement nouvelle** qui n'existait pas avant : nouveau module, nouvelle page, nouvelle capacité utilisateur. |
-| `fix:` | **3ème** (Patch) | Correction de bug, optimisation, amélioration, modification ou refactoring d'une feature **existante**. |
-| Autre (`chore:`, `docs:`, `style:`, ...) | **4ème** (Build) | Tout ce qui ne touche pas au comportement : config, documentation, CI/CD, dépendances. |
+| Préfixe | Partie | Quand l'utiliser | Exemples |
+|---|---|---|---|
+| `feat!:` ou `BREAKING CHANGE:` | **1er** (Major) | Changement **cassant** pour les utilisateurs existants : suppression d'une fonctionnalité, changement d'API incompatible, migration obligatoire. **Très rare.** | `feat!: supprimer l'ancien système de paiement` |
+| `feat:` | **2ème** (Minor) | Fonctionnalité **réellement nouvelle** qui n'existait pas avant : nouveau module, nouvelle page, nouvelle capacité utilisateur. | `feat: ajouter l'export PDF du CV` |
+| `fix:` | **3ème** (Patch) | Correction de bug **fonctionnel**, optimisation, amélioration ou modification d'une feature **existante** dans l'application. | `fix: corriger l'affichage du CV sur mobile` |
+| Autre (`chore:`, `docs:`, `style:`, ...) | **4ème** (Build) | Tout ce qui **ne touche pas au comportement utilisateur** : scripts, CI/CD, config, documentation, dépendances, tooling, refactoring interne. | `chore: mettre à jour le pipeline CI` |
 
 ### ⚠️ Erreurs fréquentes à éviter
 
 * **NE PAS utiliser `feat:` pour une amélioration d'une feature existante** → utiliser `fix:` à la place.
 * **NE PAS utiliser `feat!:` pour une nouvelle feature** → utiliser `feat:` (sans `!`). Le `!` signifie BREAKING CHANGE uniquement.
-* **Un commit `fix:` dans une PR suffit** à incrémenter le 3ème chiffre, même si d'autres commits n'ont pas de préfixe.
+* **NE PAS utiliser `fix:` pour du tooling/scripts/CI/CD** → utiliser `chore:` à la place. `fix:` est réservé aux bugs **fonctionnels** visibles par l'utilisateur.
+* **Un commit `fix:` dans une PR suffit** à incrémenter le 3ème chiffre, même si d'autres commits n'ont pas de préfixe. Le script retient le **plus haut niveau** trouvé parmi tous les commits.
 
 ### Fonctionnement automatique
 
