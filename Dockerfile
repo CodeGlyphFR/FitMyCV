@@ -1,4 +1,8 @@
-# --- Stages 1 & 2 (Deps) inchangés ---
+# ============================================================
+# Multi-stage Docker build for FitMyCV (Next.js 16 Standalone)
+# ============================================================
+
+# --- Stage 1: All dependencies (build + dev) ---
 FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -6,47 +10,65 @@ COPY package*.json ./
 COPY prisma ./prisma
 RUN npm ci
 
+# --- Stage 2: Production dependencies only ---
 FROM node:20-alpine AS production-deps
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npm ci --omit=dev
 
-# --- Stage 3: Build avec injection des clés publiques ---
+# --- Stage 3: Build ---
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# [cite_start]Déclaration des arguments de build pour le Frontend [cite: 1]
+# Public env vars injected at build time (baked into client JS by Next.js)
 ARG NEXT_PUBLIC_RECAPTCHA_SITE_KEY
 ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 ARG NEXT_PUBLIC_SITE_URL
 ARG NEXT_PUBLIC_APP_URL
 
-# Conversion en variables d'environnement pour Next.js
 ENV NEXT_PUBLIC_RECAPTCHA_SITE_KEY=$NEXT_PUBLIC_RECAPTCHA_SITE_KEY
 ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 
+# Dummy .env for Prisma schema validation during build
 RUN cp .env.example .env
 ENV NODE_ENV=production
 RUN npx prisma generate
 RUN npm run build
 
-# --- Stage 4: Runner (Reste identique) ---
-FROM node:20.19-alpine AS runner
+# --- Stage 4: Production runner ---
+FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 RUN apk add --no-cache libc6-compat openssl
+
+# 1. Production node_modules (Prisma CLI, stripe, etc.)
 COPY --from=production-deps /app/node_modules ./node_modules
+
+# 2. Next.js standalone server (overlays minimal deps)
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+
+# 3. Prisma (schema + migrations + data-migrations)
 COPY --from=builder /app/prisma ./prisma
+
+# 4. Post-deploy scripts (migrations runner, stripe sync)
+COPY --from=builder /app/scripts ./scripts
+
+# 5. Full package.json (needed for npm run scripts)
+COPY --from=builder /app/package.json ./package.json
 
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/api/health || exit 1
+
 CMD ["node", "server.js"]
