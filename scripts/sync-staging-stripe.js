@@ -44,6 +44,14 @@ async function syncStaging() {
       limit: 100,
     });
 
+    // Debug: show what Stripe Test returned
+    console.log(`  Found ${prices.data.length} active prices in Stripe Test:`);
+    for (const price of prices.data) {
+      const type = price.type === 'recurring' ? `recurring/${price.recurring.interval}` : 'one_time';
+      console.log(`    - ${price.product.name} | ${type} | ${price.id}`);
+    }
+    console.log('');
+
     // Group prices by product
     const productMap = {};
     for (const price of prices.data) {
@@ -63,6 +71,14 @@ async function syncStaging() {
       }
     }
 
+    // Debug: show DB plan names for matching
+    const dbPlans = await prisma.subscriptionPlan.findMany({ select: { name: true } });
+    const dbPacks = await prisma.creditPack.findMany({ select: { name: true } });
+    console.log(`  DB SubscriptionPlan names: [${dbPlans.map((p) => `"${p.name}"`).join(', ')}]`);
+    console.log(`  DB CreditPack names: [${dbPacks.map((p) => `"${p.name}"`).join(', ')}]`);
+    console.log(`  Stripe product names: [${Object.keys(productMap).map((n) => `"${n}"`).join(', ')}]`);
+    console.log('');
+
     // Update SubscriptionPlan table (monthly + yearly prices)
     for (const [name, data] of Object.entries(productMap)) {
       if (data.monthly || data.yearly) {
@@ -78,6 +94,8 @@ async function syncStaging() {
           if (result.count > 0) {
             console.log(`  ✅ Plan: ${name} (monthly: ${data.monthly || '—'}, yearly: ${data.yearly || '—'})`);
             stats.plans++;
+          } else {
+            console.log(`  ⚠️  Plan not found in DB: "${name}"`);
           }
         } catch (err) {
           console.error(`  ❌ Plan ${name}: ${err.message}`);
@@ -154,11 +172,27 @@ async function syncStaging() {
       const allLivePromos = await stripeLive.promotionCodes.list({ limit: 100 });
       const allTestPromos = await stripeTest.promotionCodes.list({ limit: 100 });
 
-      // Helper to extract coupon ID from promo (can be string or object)
+      // Helper to extract coupon ID from promo (handles both old and new Stripe API)
+      // Old API: promo.coupon = string | { id: '...' }
+      // New API (Clover 2025-09-30+): promo.promotion = { type: 'coupon', coupon: '...' | { id: '...' } }
       const getCouponId = (promo) => {
+        // New API: promotion.coupon
+        if (promo.promotion?.coupon) {
+          const c = promo.promotion.coupon;
+          return typeof c === 'string' ? c : c?.id || null;
+        }
+        // Old API: coupon
         if (typeof promo.coupon === 'string') return promo.coupon;
         return promo.coupon?.id || null;
       };
+
+      // Debug: show what Stripe returned
+      console.log(`  Found ${allLivePromos.data.length} promo codes in Live:`);
+      for (const p of allLivePromos.data) {
+        console.log(`    - code: "${p.code}" | coupon: ${getCouponId(p)} | active: ${p.active}`);
+      }
+      console.log(`  Found ${allTestPromos.data.length} promo codes in Test`);
+      console.log('');
 
       // Refresh test coupons list (includes newly created ones)
       const updatedTestCoupons = await stripeTest.coupons.list({ limit: 100 });
@@ -175,7 +209,7 @@ async function syncStaging() {
           for (const promo of liveCouponPromos) {
             if (!testPromoCodes.has(promo.code)) {
               const params = {
-                coupon: coupon.id,
+                promotion: { type: 'coupon', coupon: coupon.id },
                 code: promo.code,
                 active: promo.active,
               };
