@@ -37,26 +37,21 @@ jobs:
           # Nettoyage des clients de prod (impératif)
           psql fitmycv_release -c "UPDATE \"User\" SET \"stripeCustomerId\" = NULL;"
 
-      - name: Auto-Sync Stripe Products
+      - name: Deploy via Docker Compose (Staging)
         run: |
-          cd $GITHUB_WORKSPACE
+          cd /home/erickdesmet/STAGING_SAAS/FitMyCV/app
+          docker compose -f docker-compose.staging.yml down || true
+          docker rm -f fitmycv-preview || true
+          docker compose -f docker-compose.staging.yml up -d --force-recreate
           
-          # 1. On trouve le script (déjà validé par ton dernier run)
-          SCRIPT_FILE=$(find . -maxdepth 3 -name "*sync*staging*stripe*.js" | head -n 1)
+          # On attend que le container soit bien "Up"
+          sleep 15
 
-          # 2. CONFIGURATION DES MODULES
-          # On pointe vers le dossier node_modules de ton staging pour récupérer 'stripe' et 'pg'
-          export NODE_PATH="/home/erickdesmet/STAGING_SAAS/FitMyCV/app/node_modules"
-
-          # 3. SECRETS
-          APP_PATH="/home/erickdesmet/STAGING_SAAS/FitMyCV/app"
-          DB_PASS=$(grep '^DATABASE_URL=' $APP_PATH/.env | cut -d ':' -f3 | cut -d '@' -f1)
-          export DATABASE_URL="postgresql://fitmycv:$DB_PASS@localhost:5432/fitmycv_release"
-          export STRIPE_SECRET_KEY=$(grep '^STRIPE_SECRET_KEY=' $APP_PATH/.env | cut -d '=' -f2- | tr -d '"')
-
-          # 4. EXÉCUTION
-          echo "🚀 Lancement avec NODE_PATH=$NODE_PATH"
-          node "$SCRIPT_FILE"
+      - name: Auto-Sync Stripe Products (Inside Docker)
+        run: |
+          # On exécute le script DIRECTEMENT dans le container qui vient de démarrer
+          # car lui possède tous les node_modules 
+          docker exec fitmycv-preview node scripts/sync-staging-stripe.js
 
       - name: Docker Build
         run: |
