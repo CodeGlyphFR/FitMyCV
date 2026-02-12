@@ -2,13 +2,16 @@
 /**
  * Comprehensive Stripe synchronization for staging/pre-production
  *
- * Syncs: Products & Prices (subscriptions + credit packs), Coupons, Promotion Codes
+ * Phase 1: Sync Products & Prices (Live → Test)
+ * Phase 2: Update DB (SubscriptionPlan + CreditPack) from Stripe Test
+ * Phase 3: Sync Coupons (Live → Test)
+ * Phase 4: Sync Promotion Codes (Live → Test)
  *
  * Required env vars:
  *   STRIPE_SECRET_KEY      - Stripe TEST mode secret key (from staging .env)
  *   DATABASE_URL           - Staging database connection string
  * Optional:
- *   STRIPE_LIVE_SECRET_KEY - Stripe LIVE mode secret key (for coupon/promo sync)
+ *   STRIPE_LIVE_SECRET_KEY - Stripe LIVE mode secret key (for full sync)
  */
 
 const { PrismaClient } = require('@prisma/client');
@@ -30,94 +33,167 @@ async function syncStaging() {
     : null;
 
   const prisma = new PrismaClient();
-  const stats = { plans: 0, packs: 0, coupons: 0, promos: 0, errors: [] };
+  const stats = { products: 0, prices: 0, plans: 0, packs: 0, coupons: 0, promos: 0, errors: [] };
 
   try {
     // ============================================
-    // 1. Sync Products & Prices from Stripe Test
+    // Phase 1: Sync Products & Prices (Live → Test)
     // ============================================
-    console.log('\n📦 --- Syncing Products & Prices ---\n');
+    if (stripeLive) {
+      console.log('\n🔄 --- Phase 1: Syncing Products & Prices (Live → Test) ---\n');
 
-    const prices = await stripeTest.prices.list({
-      expand: ['data.product'],
-      active: true,
-      limit: 100,
-    });
+      const liveProducts = await stripeLive.products.list({ active: true, limit: 100 });
+      const testProducts = await stripeTest.products.list({ active: true, limit: 100 });
+      const testProductsByName = new Map(testProducts.data.map((p) => [p.name, p]));
 
-    // Debug: show what Stripe Test returned
-    console.log(`  Found ${prices.data.length} active prices in Stripe Test:`);
-    for (const price of prices.data) {
-      const type = price.type === 'recurring' ? `recurring/${price.recurring.interval}` : 'one_time';
-      console.log(`    - ${price.product.name} | ${type} | ${price.id}`);
-    }
-    console.log('');
+      for (const liveProd of liveProducts.data) {
+        let testProd = testProductsByName.get(liveProd.name);
 
-    // Group prices by product
-    const productMap = {};
-    for (const price of prices.data) {
-      const productName = price.product.name;
-      if (!productMap[productName]) {
-        productMap[productName] = { productId: price.product.id };
-      }
-
-      if (price.type === 'recurring') {
-        if (price.recurring.interval === 'month') {
-          productMap[productName].monthly = price.id;
-        } else if (price.recurring.interval === 'year') {
-          productMap[productName].yearly = price.id;
+        if (!testProd) {
+          testProd = await stripeTest.products.create({
+            name: liveProd.name,
+            ...(liveProd.description && { description: liveProd.description }),
+          });
+          console.log(`  ✅ Product created: ${liveProd.name}`);
+          stats.products++;
+        } else {
+          console.log(`  ⏭️  Product exists: ${liveProd.name}`);
         }
-      } else if (price.type === 'one_time') {
-        productMap[productName].oneTime = price.id;
+
+        // Sync prices for this product
+        const livePrices = await stripeLive.prices.list({
+          product: liveProd.id,
+          active: true,
+          limit: 100,
+        });
+        const testPrices = await stripeTest.prices.list({
+          product: testProd.id,
+          active: true,
+          limit: 100,
+        });
+
+        for (const livePrice of livePrices.data) {
+          // Match by: amount + currency + type + interval
+          const exists = testPrices.data.some(
+            (tp) =>
+              tp.unit_amount === livePrice.unit_amount &&
+              tp.currency === livePrice.currency &&
+              tp.type === livePrice.type &&
+              (livePrice.type !== 'recurring' ||
+                tp.recurring?.interval === livePrice.recurring?.interval)
+          );
+
+          if (!exists) {
+            const params = {
+              product: testProd.id,
+              currency: livePrice.currency,
+              unit_amount: livePrice.unit_amount,
+            };
+            if (livePrice.type === 'recurring') {
+              params.recurring = {
+                interval: livePrice.recurring.interval,
+                interval_count: livePrice.recurring.interval_count,
+              };
+            }
+            await stripeTest.prices.create(params);
+            const label =
+              livePrice.type === 'recurring'
+                ? `${livePrice.recurring.interval}ly`
+                : 'one_time';
+            console.log(
+              `    ✅ Price: ${livePrice.unit_amount / 100} ${livePrice.currency.toUpperCase()} (${label})`
+            );
+            stats.prices++;
+          }
+        }
       }
+    } else {
+      console.log('\n⚠️  STRIPE_LIVE_SECRET_KEY not set — skipping Live → Test product sync');
     }
 
-    // Debug: show DB plan names for matching
+    // ============================================
+    // Phase 2: Update DB from Stripe Test
+    // ============================================
+    console.log('\n📦 --- Phase 2: Updating DB from Stripe Test ---\n');
+
     const dbPlans = await prisma.subscriptionPlan.findMany({ select: { name: true } });
     const dbPacks = await prisma.creditPack.findMany({ select: { name: true } });
+    const dbNames = new Set([...dbPlans.map((p) => p.name), ...dbPacks.map((p) => p.name)]);
+
     console.log(`  DB SubscriptionPlan names: [${dbPlans.map((p) => `"${p.name}"`).join(', ')}]`);
     console.log(`  DB CreditPack names: [${dbPacks.map((p) => `"${p.name}"`).join(', ')}]`);
-    console.log(`  Stripe product names: [${Object.keys(productMap).map((n) => `"${n}"`).join(', ')}]`);
+
+    // Fetch products from Test and match against DB names
+    const testProducts = await stripeTest.products.list({ active: true, limit: 100 });
+    const matched = new Map();
+    for (const product of testProducts.data) {
+      // Keep only the first (newest) product per name
+      if (dbNames.has(product.name) && !matched.has(product.name)) {
+        matched.set(product.name, product);
+      }
+    }
+
+    console.log(
+      `  Matched Stripe products: [${[...matched.keys()].map((n) => `"${n}"`).join(', ')}]`
+    );
     console.log('');
 
-    // Update SubscriptionPlan table (monthly + yearly prices)
-    for (const [name, data] of Object.entries(productMap)) {
-      if (data.monthly || data.yearly) {
+    // For each matched product, fetch its prices and update DB
+    for (const [name, product] of matched) {
+      const productPrices = await stripeTest.prices.list({
+        product: product.id,
+        active: true,
+        limit: 100,
+      });
+
+      let monthly = null;
+      let yearly = null;
+      let oneTime = null;
+
+      for (const price of productPrices.data) {
+        if (price.type === 'recurring') {
+          if (price.recurring.interval === 'month' && !monthly) monthly = price.id;
+          else if (price.recurring.interval === 'year' && !yearly) yearly = price.id;
+        } else if (price.type === 'one_time' && !oneTime) {
+          oneTime = price.id;
+        }
+      }
+
+      // Update SubscriptionPlan (recurring prices)
+      if (monthly || yearly) {
         try {
           const result = await prisma.subscriptionPlan.updateMany({
             where: { name },
             data: {
-              stripeProductId: data.productId,
-              ...(data.monthly && { stripePriceIdMonthly: data.monthly }),
-              ...(data.yearly && { stripePriceIdYearly: data.yearly }),
+              stripeProductId: product.id,
+              ...(monthly && { stripePriceIdMonthly: monthly }),
+              ...(yearly && { stripePriceIdYearly: yearly }),
             },
           });
           if (result.count > 0) {
-            console.log(`  ✅ Plan: ${name} (monthly: ${data.monthly || '—'}, yearly: ${data.yearly || '—'})`);
+            console.log(
+              `  ✅ Plan: ${name} (monthly: ${monthly || '—'}, yearly: ${yearly || '—'})`
+            );
             stats.plans++;
-          } else {
-            console.log(`  ⚠️  Plan not found in DB: "${name}"`);
           }
         } catch (err) {
           console.error(`  ❌ Plan ${name}: ${err.message}`);
           stats.errors.push(`plan:${name}`);
         }
       }
-    }
 
-    // Update CreditPack table (one-time prices)
-    console.log('');
-    for (const [name, data] of Object.entries(productMap)) {
-      if (data.oneTime) {
+      // Update CreditPack (one-time price)
+      if (oneTime) {
         try {
           const result = await prisma.creditPack.updateMany({
             where: { name },
             data: {
-              stripeProductId: data.productId,
-              stripePriceId: data.oneTime,
+              stripeProductId: product.id,
+              stripePriceId: oneTime,
             },
           });
           if (result.count > 0) {
-            console.log(`  ✅ CreditPack: ${name} → ${data.oneTime}`);
+            console.log(`  ✅ CreditPack: ${name} → ${oneTime}`);
             stats.packs++;
           }
         } catch (err) {
@@ -127,11 +203,23 @@ async function syncStaging() {
       }
     }
 
+    // Warn about DB names not found in Stripe
+    for (const plan of dbPlans) {
+      if (plan.name !== 'Gratuit' && !matched.has(plan.name)) {
+        console.log(`  ⚠️  Plan "${plan.name}" not found in Stripe Test`);
+      }
+    }
+    for (const pack of dbPacks) {
+      if (!matched.has(pack.name)) {
+        console.log(`  ⚠️  CreditPack "${pack.name}" not found in Stripe Test`);
+      }
+    }
+
     // ============================================
-    // 2. Sync Coupons & Promotion Codes (Live → Test)
+    // Phase 3: Sync Coupons (Live → Test)
     // ============================================
     if (stripeLive) {
-      console.log('\n🎫 --- Syncing Coupons (Live → Test) ---\n');
+      console.log('\n🎫 --- Phase 3: Syncing Coupons (Live → Test) ---\n');
 
       const liveCoupons = await stripeLive.coupons.list({ limit: 100 });
       const testCoupons = await stripeTest.coupons.list({ limit: 100 });
@@ -165,28 +253,26 @@ async function syncStaging() {
         }
       }
 
-      // Sync Promotion Codes
-      console.log('\n🏷️  --- Syncing Promotion Codes (Live → Test) ---\n');
+      // ============================================
+      // Phase 4: Sync Promotion Codes (Live → Test)
+      // ============================================
+      console.log('\n🏷️  --- Phase 4: Syncing Promotion Codes (Live → Test) ---\n');
 
-      // Fetch all promo codes at once (SDK v20+ doesn't support coupon filter on list)
       const allLivePromos = await stripeLive.promotionCodes.list({ limit: 100 });
       const allTestPromos = await stripeTest.promotionCodes.list({ limit: 100 });
 
-      // Helper to extract coupon ID from promo (handles both old and new Stripe API)
-      // Old API: promo.coupon = string | { id: '...' }
-      // New API (Clover 2025-09-30+): promo.promotion = { type: 'coupon', coupon: '...' | { id: '...' } }
+      // Helper: extract coupon ID (handles old + new Stripe API)
+      // Old API: promo.coupon = string | { id }
+      // New API (Clover 2025-09-30+): promo.promotion = { type: 'coupon', coupon: string | { id } }
       const getCouponId = (promo) => {
-        // New API: promotion.coupon
         if (promo.promotion?.coupon) {
           const c = promo.promotion.coupon;
           return typeof c === 'string' ? c : c?.id || null;
         }
-        // Old API: coupon
         if (typeof promo.coupon === 'string') return promo.coupon;
         return promo.coupon?.id || null;
       };
 
-      // Debug: show what Stripe returned
       console.log(`  Found ${allLivePromos.data.length} promo codes in Live:`);
       for (const p of allLivePromos.data) {
         console.log(`    - code: "${p.code}" | coupon: ${getCouponId(p)} | active: ${p.active}`);
@@ -194,7 +280,7 @@ async function syncStaging() {
       console.log(`  Found ${allTestPromos.data.length} promo codes in Test`);
       console.log('');
 
-      // Refresh test coupons list (includes newly created ones)
+      // Refresh test coupons (includes newly created ones from Phase 3)
       const updatedTestCoupons = await stripeTest.coupons.list({ limit: 100 });
       const availableTestCouponIds = new Set(updatedTestCoupons.data.map((c) => c.id));
 
@@ -202,8 +288,12 @@ async function syncStaging() {
         if (!availableTestCouponIds.has(coupon.id)) continue;
 
         try {
-          const liveCouponPromos = allLivePromos.data.filter((p) => getCouponId(p) === coupon.id);
-          const testCouponPromos = allTestPromos.data.filter((p) => getCouponId(p) === coupon.id);
+          const liveCouponPromos = allLivePromos.data.filter(
+            (p) => getCouponId(p) === coupon.id
+          );
+          const testCouponPromos = allTestPromos.data.filter(
+            (p) => getCouponId(p) === coupon.id
+          );
           const testPromoCodes = new Set(testCouponPromos.map((p) => p.code));
 
           for (const promo of liveCouponPromos) {
@@ -237,7 +327,9 @@ async function syncStaging() {
     // Summary
     console.log('\n' + '═'.repeat(50));
     console.log('📊 Sync Summary:');
-    console.log(`   Plans:          ${stats.plans}`);
+    console.log(`   Products:       ${stats.products}`);
+    console.log(`   Prices:         ${stats.prices}`);
+    console.log(`   Plans (DB):     ${stats.plans}`);
     console.log(`   Credit Packs:   ${stats.packs}`);
     console.log(`   Coupons:        ${stats.coupons}`);
     console.log(`   Promo Codes:    ${stats.promos}`);
