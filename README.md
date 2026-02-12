@@ -2,7 +2,7 @@
 
 > Application SaaS de génération de CV optimisés par IA
 
-**Version:** 1.0.10.0
+**Version:** 1.0.11.0
 
 ---
 
