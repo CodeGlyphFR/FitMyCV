@@ -25,15 +25,28 @@ bash scripts/bump-version.sh "msg" # Incrémenter la version manuellement
 
 **Il est STRICTEMENT INTERDIT de modifier manuellement les numéros de version dans les fichiers.**
 
-Le projet utilise un script de propagation automatique `scripts/bump-version.sh`.
-Pour changer la version, utiliser le script avec un message respectant les **Conventional Commits** :
+Le projet utilise un versioning automatique à 4 parties (`X.X.X.X`) basé sur les préfixes **Conventional Commits** des messages de commit. Le script `scripts/bump-version.sh` scanne tous les commits de la PR et applique le plus haut niveau détecté.
 
-* **`feat!:`** ou **`BREAKING CHANGE:`** → Incrémente le **1er** chiffre (Major).
-* **`feat:`** → Incrémente le **2ème** chiffre (Minor).
-* **`fix:`** → Incrémente le **3ème** chiffre (Patch).
-* **Tout autre message** → Incrémente le **4ème** chiffre (Build).
+### Règles de préfixes de commit
 
-*Note : En production, ce processus est entièrement automatisé par GitHub Actions lors du merge sur `main`.*
+| Préfixe | Partie | Quand l'utiliser |
+|---|---|---|
+| `feat!:` ou `BREAKING CHANGE:` | **1er** (Major) | Changement **cassant** pour les utilisateurs existants : suppression d'une fonctionnalité, changement d'API incompatible, migration obligatoire. **Très rare.** |
+| `feat:` | **2ème** (Minor) | Fonctionnalité **réellement nouvelle** qui n'existait pas avant : nouveau module, nouvelle page, nouvelle capacité utilisateur. |
+| `fix:` | **3ème** (Patch) | Correction de bug, optimisation, amélioration, modification ou refactoring d'une feature **existante**. |
+| Autre (`chore:`, `docs:`, `style:`, ...) | **4ème** (Build) | Tout ce qui ne touche pas au comportement : config, documentation, CI/CD, dépendances. |
+
+### ⚠️ Erreurs fréquentes à éviter
+
+* **NE PAS utiliser `feat:` pour une amélioration d'une feature existante** → utiliser `fix:` à la place.
+* **NE PAS utiliser `feat!:` pour une nouvelle feature** → utiliser `feat:` (sans `!`). Le `!` signifie BREAKING CHANGE uniquement.
+* **Un commit `fix:` dans une PR suffit** à incrémenter le 3ème chiffre, même si d'autres commits n'ont pas de préfixe.
+
+### Fonctionnement automatique
+
+* Le bump est **entièrement automatisé** par GitHub Actions lors du merge sur `main`.
+* Le script scanne **tous les commits** de la PR (pas le message de merge) et applique le niveau le plus élevé trouvé.
+* La version est propagée dans tous les fichiers de la codebase (`package.json`, `docs/`, `README.md`, etc.).
 
 ## Migrations de Données (Post-Prisma)
 
