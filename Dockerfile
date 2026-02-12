@@ -24,11 +24,17 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# On ne copie que le mode standalone (très léger)
+# Copie du mode standalone
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/package.json ./package.json
+
+# --- AJOUT ICI ---
+# On récupère le CLI Prisma du builder pour qu'il soit présent dans le container final
+COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+# -----------------
 
 EXPOSE 3000
 ENV PORT=3000
