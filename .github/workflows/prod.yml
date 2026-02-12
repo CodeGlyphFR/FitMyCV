@@ -1,0 +1,81 @@
+name: "🚀 Production Deploy"
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release-and-deploy:
+    runs-on: self-hosted
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Automated Versioning
+        run: |
+          git config user.name "github-actions"
+          git config user.email "action@github.com"
+          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+          chmod +x ./scripts/bump-version.sh
+          ./scripts/bump-version.sh "$COMMIT_MESSAGE"
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          git add .
+          git commit -m "chore(release): v$NEW_VERSION [skip ci]"
+          git tag "v$NEW_VERSION"
+          git push origin main --tags
+
+      - name: Sync Dev Branch
+        run: |
+          git checkout dev
+          git merge main
+          git push origin dev
+          git checkout main
+
+      - name: Extract Public Config
+        run: |
+          PROD_ENV="/home/erickdesmet/PROD_SAAS/FitMyCV/app/.env"
+
+          echo "RECAPTCHA_KEY=$(grep '^NEXT_PUBLIC_RECAPTCHA_SITE_KEY=' $PROD_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
+          echo "STRIPE_PK=$(grep '^NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=' $PROD_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
+          echo "APP_URL=$(grep '^NEXT_PUBLIC_SITE_URL=' $PROD_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
+
+      - name: Docker Build
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_RECAPTCHA_SITE_KEY="${{ env.RECAPTCHA_KEY }}" \
+            --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="${{ env.STRIPE_PK }}" \
+            --build-arg NEXT_PUBLIC_SITE_URL="${{ env.APP_URL }}" \
+            --build-arg NEXT_PUBLIC_APP_URL="${{ env.APP_URL }}" \
+            -t fitmycv:latest .
+
+      - name: Deploy via Docker Compose (Production)
+        run: |
+          cd /home/erickdesmet/PROD_SAAS/FitMyCV/app
+          docker compose -f docker-compose.prod.yml up -d --force-recreate
+
+      - name: Wait for Application Ready
+        run: |
+          echo "⏳ Waiting for application to start..."
+          for i in $(seq 1 30); do
+            if docker exec fitmycv-prod node -e "fetch('http://localhost:'+(process.env.PORT||3000)+'/api/health').then(r=>{if(r.ok)process.exit(0);else process.exit(1)}).catch(()=>process.exit(1))" 2>/dev/null; then
+              echo "✅ Application is ready!"
+              exit 0
+            fi
+            echo "  Attempt $i/30..."
+            sleep 5
+          done
+          echo "❌ Application failed to start within 150s"
+          docker logs fitmycv-prod --tail 50
+          exit 1
+
+      - name: Post-deploy (Migrations)
+        run: |
+          echo "🔄 Running Prisma migrations..."
+          docker exec fitmycv-prod npx prisma migrate deploy
+          echo "🔄 Running data migrations..."
+          docker exec fitmycv-prod node scripts/run-data-migrations.js

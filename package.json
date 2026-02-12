@@ -1,7 +1,7 @@
 {
   "name": "FitMyCV",
   "private": true,
-  "version": "1.0.9.6",
+  "version": "1.0.9.7",
   "scripts": {
     "dev": "dotenv -e .env -- next dev",
     "build": "next build",
@@ -10,7 +10,9 @@
     "db:setup": "prisma migrate deploy && prisma db seed",
     "db:reset": "prisma migrate reset",
     "db:seed": "prisma db seed",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "db:migrate-deploy": "prisma migrate deploy",
+    "db:migrate-data": "node scripts/run-data-migrations.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -61,13 +63,13 @@
     "supports-color": "^10.2.2",
     "tailwind-scrollbar": "^4.0.2",
     "turndown": "^7.2.2",
+    "prisma": "^6.19.1",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.23",
     "dotenv-cli": "^11.0.0",
     "postcss": "^8.5.6",
-    "prisma": "^6.19.1",
     "tailwindcss": "^4.1.18"
   }
 }

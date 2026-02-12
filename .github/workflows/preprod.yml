@@ -1,0 +1,147 @@
+name: "🧪 Pre-prod (PR Lifecycle)"
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, closed]
+
+jobs:
+  # ─────────────────────────────────────────────
+  # CI: Build validation (no Docker)
+  # ─────────────────────────────────────────────
+  ci:
+    if: github.event.action != 'closed'
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: |
+          cp .env.example .env
+          npx prisma generate
+
+      - name: Build application
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Security audit (informational)
+        run: npm audit --audit-level=critical || true
+        continue-on-error: true
+
+  # ─────────────────────────────────────────────
+  # CD: Deploy to staging
+  # ─────────────────────────────────────────────
+  deploy-preview:
+    needs: ci
+    if: github.event.action != 'closed'
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract Environment Config
+        run: |
+          STAGING_ENV="/home/erickdesmet/STAGING_SAAS/FitMyCV/app/.env"
+          PROD_ENV="/home/erickdesmet/PROD_SAAS/FitMyCV/app/.env"
+
+          # Public keys for Next.js build (read from server .env files)
+          echo "RECAPTCHA_KEY=$(grep '^NEXT_PUBLIC_RECAPTCHA_SITE_KEY=' $STAGING_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
+          echo "STRIPE_PK=$(grep '^NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=' $STAGING_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
+          echo "APP_URL=$(grep '^NEXT_PUBLIC_SITE_URL=' $STAGING_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
+
+          # Stripe LIVE key for coupon sync (read-only from prod)
+          echo "STRIPE_LIVE_KEY=$(grep '^STRIPE_SECRET_KEY=' $PROD_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
+
+      - name: Clone Database (Prod → Staging)
+        if: github.event.action == 'opened' || github.event.action == 'reopened'
+        run: |
+          echo "📦 Cloning production database to staging..."
+          pg_dump fitmycv_prod > /tmp/prod_sync.sql
+
+          psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'fitmycv_release' AND pid <> pg_backend_pid();" postgres || true
+          dropdb --if-exists fitmycv_release
+          createdb fitmycv_release
+          psql fitmycv_release < /tmp/prod_sync.sql
+          rm -f /tmp/prod_sync.sql
+
+          # Sanitize: remove all Stripe Live references
+          psql fitmycv_release <<'EOSQL'
+            UPDATE "User" SET "stripeCustomerId" = NULL;
+            UPDATE "Subscription" SET
+              "stripeCustomerId" = 'staging_' || "id",
+              "stripeSubscriptionId" = NULL,
+              "stripePriceId" = NULL,
+              "status" = 'canceled';
+          EOSQL
+          echo "✅ Database cloned and sanitized"
+
+      - name: Docker Build
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_RECAPTCHA_SITE_KEY="${{ env.RECAPTCHA_KEY }}" \
+            --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="${{ env.STRIPE_PK }}" \
+            --build-arg NEXT_PUBLIC_SITE_URL="${{ env.APP_URL }}" \
+            --build-arg NEXT_PUBLIC_APP_URL="${{ env.APP_URL }}" \
+            -t fitmycv:preview .
+
+      - name: Deploy Container
+        run: |
+          cd /home/erickdesmet/STAGING_SAAS/FitMyCV/app
+          docker compose -f docker-compose.staging.yml down || true
+          docker rm -f fitmycv-preview || true
+          docker compose -f docker-compose.staging.yml up -d --force-recreate
+
+      - name: Wait for Application Ready
+        run: |
+          echo "⏳ Waiting for application to start..."
+          for i in $(seq 1 30); do
+            if docker exec fitmycv-preview node -e "fetch('http://localhost:'+(process.env.PORT||3000)+'/api/health').then(r=>{if(r.ok)process.exit(0);else process.exit(1)}).catch(()=>process.exit(1))" 2>/dev/null; then
+              echo "✅ Application is ready!"
+              exit 0
+            fi
+            echo "  Attempt $i/30..."
+            sleep 5
+          done
+          echo "❌ Application failed to start within 150s"
+          docker logs fitmycv-preview --tail 50
+          exit 1
+
+      - name: Run Database Migrations
+        run: |
+          echo "🔄 Running Prisma migrations..."
+          docker exec fitmycv-preview npx prisma migrate deploy
+          echo "🔄 Running data migrations..."
+          docker exec fitmycv-preview node scripts/run-data-migrations.js
+
+      - name: Sync Stripe (Test Environment)
+        run: |
+          echo "🔄 Syncing Stripe products and coupons..."
+          docker exec \
+            -e STRIPE_LIVE_SECRET_KEY="${{ env.STRIPE_LIVE_KEY }}" \
+            fitmycv-preview node scripts/sync-staging-stripe.js
+
+  # ─────────────────────────────────────────────
+  # Cleanup on PR close (merge or reject)
+  # ─────────────────────────────────────────────
+  cleanup:
+    if: github.event.action == 'closed'
+    runs-on: self-hosted
+    steps:
+      - name: Stop Staging Container
+        run: |
+          echo "🧹 Cleaning up staging environment..."
+          cd /home/erickdesmet/STAGING_SAAS/FitMyCV/app
+          docker compose -f docker-compose.staging.yml down || true
+          docker rm -f fitmycv-preview || true
+          echo "✅ Container stopped"
+
+      - name: Drop Staging Database
+        run: |
+          psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'fitmycv_release' AND pid <> pg_backend_pid();" postgres || true
+          dropdb --if-exists fitmycv_release
+          echo "✅ Database fitmycv_release dropped"
