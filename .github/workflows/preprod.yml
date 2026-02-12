@@ -92,9 +92,9 @@ jobs:
       - name: Deploy Container
         run: |
           cd /home/erickdesmet/STAGING_SAAS/FitMyCV/app
-          docker compose -f docker-compose.staging.yml down || true
+          docker compose -p fitmycv-staging -f docker-compose.staging.yml down || true
           docker rm -f fitmycv-preview || true
-          docker compose -f docker-compose.staging.yml up -d --force-recreate
+          docker compose -p fitmycv-staging -f docker-compose.staging.yml up -d --force-recreate
 
       - name: Wait for Application Ready
         run: |
@@ -136,7 +136,7 @@ jobs:
         run: |
           echo "🧹 Cleaning up staging environment..."
           cd /home/erickdesmet/STAGING_SAAS/FitMyCV/app
-          docker compose -f docker-compose.staging.yml down || true
+          docker compose -p fitmycv-staging -f docker-compose.staging.yml down || true
           docker rm -f fitmycv-preview || true
           echo "✅ Container stopped"
 

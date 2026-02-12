@@ -56,7 +56,7 @@ jobs:
       - name: Deploy via Docker Compose (Production)
         run: |
           cd /home/erickdesmet/PROD_SAAS/FitMyCV/app
-          docker compose -f docker-compose.prod.yml up -d --force-recreate
+          docker compose -p fitmycv-prod -f docker-compose.prod.yml up -d --force-recreate
 
       - name: Wait for Application Ready
         run: |
