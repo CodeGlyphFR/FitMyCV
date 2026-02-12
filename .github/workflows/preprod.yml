@@ -27,15 +27,31 @@ jobs:
 
       - name: Clone DB (Prod -> Release)
         run: |
+          # Clone standard
           pg_dump fitmycv_prod > /tmp/prod_sync.sql
           psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'fitmycv_release' AND pid <> pg_backend_pid();" postgres || true
           dropdb --if-exists fitmycv_release
           createdb fitmycv_release
           psql fitmycv_release < /tmp/prod_sync.sql
           
-          # --- NOUVELLE ÉTAPE : Nettoyage Stripe ---
-          # On remet à null les IDs Stripe pour forcer la re-création en Staging
+          # Nettoyage des clients de prod (impératif)
           psql fitmycv_release -c "UPDATE \"User\" SET \"stripeCustomerId\" = NULL;"
+
+      - name: Auto-Sync Stripe Products (via existing script)
+        run: |
+          cd /home/erickdesmet/STAGING_SAAS/FitMyCV/app
+          
+          # 1. On récupère la DATABASE_URL de base pour avoir le user/pass, 
+          # mais on remplace le nom de la base par fitmycv_release à la volée
+          RAW_DB_URL=$(grep '^DATABASE_URL=' .env | cut -d '=' -f2- | tr -d '"')
+          # On remplace la fin de l'URL par /fitmycv_release
+          export DATABASE_URL="${RAW_DB_URL%/*}/fitmycv_release"
+          
+          # 2. On récupère la clé Stripe
+          export STRIPE_SECRET_KEY=$(grep '^STRIPE_SECRET_KEY=' .env | cut -d '=' -f2- | tr -d '"')
+          
+          # 3. On lance le script
+          node scripts/sync-stripe.js
 
       - name: Docker Build
         run: |
