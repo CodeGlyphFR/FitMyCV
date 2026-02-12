@@ -37,22 +37,28 @@ jobs:
           # Nettoyage des clients de prod (impératif)
           psql fitmycv_release -c "UPDATE \"User\" SET \"stripeCustomerId\" = NULL;"
 
-      - name: Auto-Sync Stripe Products (via existing script)
+      - name: Auto-Sync Stripe Products
         run: |
-          # 1. On reste dans le dossier où GitHub a cloné le code (le workspace)
-          cd $GITHUB_WORKSPACE
+          echo "--- DEBUG : OÙ SUIS-JE ? ---"
+          pwd
+          echo "--- DEBUG : LISTE DES FICHIERS ---"
+          ls -R | grep -i sync-stripe.js
           
-          # 2. On définit l'URL de la DB de release pour ton script
-          # On récupère le pass dans le .env existant sur le serveur
+          # Extraction sécurisée des credentials
           DB_PASS=$(grep '^DATABASE_URL=' /home/erickdesmet/STAGING_SAAS/FitMyCV/app/.env | cut -d ':' -f3 | cut -d '@' -f1)
           export DATABASE_URL="postgresql://fitmycv:$DB_PASS@localhost:5432/fitmycv_release"
-          
-          # 3. On récupère la clé Stripe (Test) du .env du serveur
           export STRIPE_SECRET_KEY=$(grep '^STRIPE_SECRET_KEY=' /home/erickdesmet/STAGING_SAAS/FitMyCV/app/.env | cut -d '=' -f2- | tr -d '"')
+
+          # On cherche le fichier et on l'exécute peu importe où il est
+          SCRIPT_PATH=$(find . -name "sync-stripe.js" | head -n 1)
           
-          # 4. On lance ton script. Si ton dossier s'appelle "Scripts" avec un S majuscule, 
-          # attention à la casse sous Linux !
-          node scripts/sync-stripe.js || node Scripts/sync-stripe.js
+          if [ -z "$SCRIPT_PATH" ]; then
+            echo "ERREUR : sync-stripe.js est introuvable dans tout le répertoire !"
+            exit 1
+          fi
+          
+          echo "Exécution de : $SCRIPT_PATH"
+          node "$SCRIPT_PATH"
 
       - name: Docker Build
         run: |
