@@ -24,8 +24,6 @@ FROM node:20.19-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# ... (tes autres copies standalone)
-
 # On récupère TOUTE la famille Prisma (le CLI, le Client et les Engines)
 COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
