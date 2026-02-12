@@ -11,7 +11,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# On simule l'environnement pour le build Next.js
+# .env.example est nécessaire pour valider le build Next.js
 RUN cp .env.example .env
 ENV NODE_ENV=production
 RUN npx prisma generate
@@ -22,30 +22,30 @@ FROM node:20.19-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Indispensable pour que Prisma (moteurs binaires) fonctionne sur Alpine
+# Indispensable pour Prisma sur Alpine
 RUN apk add --no-cache libc6-compat openssl
 
 # --- RÉCUPÉRATION DE L'APPLICATION (MODE STANDALONE) ---
-# On copie le contenu du dossier standalone généré par Next.js
+# On copie le contenu du dossier standalone
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-# --- PRÉPARATION POUR LES MIGRATIONS ---
-# On copie le schéma Prisma (nécessaire pour npx prisma migrate deploy)
+# --- PRÉPARATION POUR LES MIGRATIONS (FIX WASM PRISMA 6) ---
+# On copie le dossier prisma (schéma)
 COPY --from=builder /app/prisma ./prisma
 
-# On récupère le CLI et les moteurs Prisma du builder
-COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+# CORRECTIF : On copie les dossiers complets au lieu de juste le binaire .bin
+# Cela permet au CLI de trouver ses fichiers .wasm internes
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
-# On s'assure que Prisma a les droits d'exécution
-RUN chmod +x ./node_modules/.bin/prisma
+# On crée un lien symbolique propre pour la commande prisma
+RUN ln -s /app/node_modules/prisma/build/index.js /usr/local/bin/prisma && chmod +x /usr/local/bin/prisma
 
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Lancement de l'application (server.js est créé par le mode standalone)
+# Lancement de l'application
 CMD ["node", "server.js"]
