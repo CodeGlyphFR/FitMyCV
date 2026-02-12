@@ -9,6 +9,7 @@ build
 .env.local
 .env.production
 .env.development
+!.env.example
 *.log
 
 # Outils de développement et éditeurs

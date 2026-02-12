@@ -12,9 +12,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# On ajoute une URL de DB fictive pour satisfaire Prisma pendant le build
-ENV DATABASE_URL="postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public"
-# On s'assure que Next.js sait qu'on est en prod
+RUN cp .env.example .env
+
 ENV NODE_ENV=production
 
 RUN npx prisma generate
