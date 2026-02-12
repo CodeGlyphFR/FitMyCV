@@ -150,6 +150,16 @@ async function syncStaging() {
       // Sync Promotion Codes
       console.log('\n🏷️  --- Syncing Promotion Codes (Live → Test) ---\n');
 
+      // Fetch all promo codes at once (SDK v20+ doesn't support coupon filter on list)
+      const allLivePromos = await stripeLive.promotionCodes.list({ limit: 100 });
+      const allTestPromos = await stripeTest.promotionCodes.list({ limit: 100 });
+
+      // Helper to extract coupon ID from promo (can be string or object)
+      const getCouponId = (promo) => {
+        if (typeof promo.coupon === 'string') return promo.coupon;
+        return promo.coupon?.id || null;
+      };
+
       // Refresh test coupons list (includes newly created ones)
       const updatedTestCoupons = await stripeTest.coupons.list({ limit: 100 });
       const availableTestCouponIds = new Set(updatedTestCoupons.data.map((c) => c.id));
@@ -158,17 +168,11 @@ async function syncStaging() {
         if (!availableTestCouponIds.has(coupon.id)) continue;
 
         try {
-          const livePromos = await stripeLive.promotionCodes.list({
-            coupon: coupon.id,
-            limit: 100,
-          });
-          const testPromos = await stripeTest.promotionCodes.list({
-            coupon: coupon.id,
-            limit: 100,
-          });
-          const testPromoCodes = new Set(testPromos.data.map((p) => p.code));
+          const liveCouponPromos = allLivePromos.data.filter((p) => getCouponId(p) === coupon.id);
+          const testCouponPromos = allTestPromos.data.filter((p) => getCouponId(p) === coupon.id);
+          const testPromoCodes = new Set(testCouponPromos.map((p) => p.code));
 
-          for (const promo of livePromos.data) {
+          for (const promo of liveCouponPromos) {
             if (!testPromoCodes.has(promo.code)) {
               const params = {
                 coupon: coupon.id,
