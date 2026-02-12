@@ -30,12 +30,12 @@ fi
 BUMP="build"
 while IFS= read -r line; do
     [ -z "$line" ] && continue
-    if [[ "$line" == *"feat!:"* || "$line" == *"BREAKING CHANGE:"* ]]; then
+    if [[ "$line" =~ ^feat!: || "$line" =~ ^BREAKING\ CHANGE: ]]; then
         BUMP="major"
         break
-    elif [[ "$line" == *"feat:"* ]]; then
+    elif [[ "$line" =~ ^feat: ]]; then
         BUMP="minor"
-    elif [[ "$line" == *"fix:"* && "$BUMP" != "minor" ]]; then
+    elif [[ "$line" =~ ^fix: && "$BUMP" != "minor" ]]; then
         BUMP="patch"
     fi
 done <<< "$ALL_MESSAGES"
