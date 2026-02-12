@@ -39,19 +39,20 @@ jobs:
 
       - name: Auto-Sync Stripe Products (via existing script)
         run: |
-          cd /home/erickdesmet/STAGING_SAAS/FitMyCV/app
+          # 1. On reste dans le dossier où GitHub a cloné le code (le workspace)
+          cd $GITHUB_WORKSPACE
           
-          # 1. On récupère la DATABASE_URL de base pour avoir le user/pass, 
-          # mais on remplace le nom de la base par fitmycv_release à la volée
-          RAW_DB_URL=$(grep '^DATABASE_URL=' .env | cut -d '=' -f2- | tr -d '"')
-          # On remplace la fin de l'URL par /fitmycv_release
-          export DATABASE_URL="${RAW_DB_URL%/*}/fitmycv_release"
+          # 2. On définit l'URL de la DB de release pour ton script
+          # On récupère le pass dans le .env existant sur le serveur
+          DB_PASS=$(grep '^DATABASE_URL=' /home/erickdesmet/STAGING_SAAS/FitMyCV/app/.env | cut -d ':' -f3 | cut -d '@' -f1)
+          export DATABASE_URL="postgresql://fitmycv:$DB_PASS@localhost:5432/fitmycv_release"
           
-          # 2. On récupère la clé Stripe
-          export STRIPE_SECRET_KEY=$(grep '^STRIPE_SECRET_KEY=' .env | cut -d '=' -f2- | tr -d '"')
+          # 3. On récupère la clé Stripe (Test) du .env du serveur
+          export STRIPE_SECRET_KEY=$(grep '^STRIPE_SECRET_KEY=' /home/erickdesmet/STAGING_SAAS/FitMyCV/app/.env | cut -d '=' -f2- | tr -d '"')
           
-          # 3. On lance le script
-          node scripts/sync-stripe.js
+          # 4. On lance ton script. Si ton dossier s'appelle "Scripts" avec un S majuscule, 
+          # attention à la casse sous Linux !
+          node scripts/sync-stripe.js || node Scripts/sync-stripe.js
 
       - name: Docker Build
         run: |
