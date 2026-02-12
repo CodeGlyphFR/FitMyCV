@@ -13,13 +13,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract Recaptcha Key from local .env
+      - name: Extract Public Config from local .env
         id: vars
         run: |
-          # On cherche la ligne dans ton .env de staging et on extrait la valeur après le '='
-          # Le -f2- permet de gérer les cas où la clé contiendrait elle-même un signe '='
-          STR_KEY=$(grep '^NEXT_PUBLIC_RECAPTCHA_SITE_KEY=' /home/erickdesmet/STAGING_SAAS/FitMyCV/app/.env | cut -d '=' -f2-)
-          echo "RECAPTCHA_KEY=$STR_KEY" >> $GITHUB_ENV
+          # On extrait les 3 clés critiques pour le build frontend
+          RECAPTCHA=$(grep '^NEXT_PUBLIC_RECAPTCHA_SITE_KEY=' /home/erickdesmet/STAGING_SAAS/FitMyCV/app/.env | cut -d '=' -f2-)
+          STRIPE_PK=$(grep '^NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=' /home/erickdesmet/STAGING_SAAS/FitMyCV/app/.env | cut -d '=' -f2-)
+          
+          # On force l'URL de staging pour que Stripe et l'Auth ne pointent pas vers la prod
+          echo "RECAPTCHA_KEY=$RECAPTCHA" >> $GITHUB_ENV
+          echo "STRIPE_PK=$STRIPE_PK" >> $GITHUB_ENV
+          echo "APP_URL=https://dev.fitmycv.io" >> $GITHUB_ENV
 
       - name: Clone DB (Prod -> Release)
         run: |
@@ -31,29 +35,21 @@ jobs:
 
       - name: Docker Build
         run: |
-          # On passe la clé extraite comme argument de build
+          # On injecte les variables publiques pour que Next.js les "cuise" dans le JS
           docker build \
             --build-arg NEXT_PUBLIC_RECAPTCHA_SITE_KEY="${{ env.RECAPTCHA_KEY }}" \
+            --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="${{ env.STRIPE_PK }}" \
+            --build-arg NEXT_PUBLIC_SITE_URL="${{ env.APP_URL }}" \
+            --build-arg NEXT_PUBLIC_APP_URL="${{ env.APP_URL }}" \
             -t fitmycv:preview .
 
       - name: Deploy via Docker Compose (Staging)
         run: |
           cd /home/erickdesmet/STAGING_SAAS/FitMyCV/app
           docker compose -f docker-compose.staging.yml up -d --force-recreate
-          # Attente de l'initialisation pour éviter que les migrations échouent si le container boot
           sleep 10
 
       - name: Post-deploy (Migrations)
         run: |
           docker exec fitmycv-preview npm run db:migrate-deploy
           docker exec fitmycv-preview npm run db:migrate-data
-
-  cleanup-preview:
-    if: github.event.action == 'closed'
-    runs-on: self-hosted
-    steps:
-      - name: Stop Staging Server
-        run: |
-          echo "Fermeture de la PR détectée. Arrêt du serveur de test..."
-          cd /home/erickdesmet/STAGING_SAAS/FitMyCV/app
-          docker compose -f docker-compose.staging.yml down
