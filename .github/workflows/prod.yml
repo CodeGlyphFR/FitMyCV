@@ -43,13 +43,13 @@ jobs:
 
       - name: Deploy via Docker Compose (Production)
         run: |
-          # Passage dans ton dossier permanent de prod
           cd /home/erickdesmet/PROD_SAAS/FitMyCV/app
-          # Relance le service avec le .env local et le docker-compose.prod.yml
           docker compose -f docker-compose.prod.yml up -d --force-recreate
+          # Attente de l'initialisation pour éviter l'erreur 128
+          sleep 10 
 
       - name: Post-deploy (Migrations)
         run: |
-          # Exécution des migrations de schéma et de données via le container
-          docker exec fitmycv-prod npx prisma migrate deploy
+          # Utilisation des scripts npm pour respecter la version de Prisma
+          docker exec fitmycv-prod npm run db:migrate-deploy
           docker exec fitmycv-prod npm run db:migrate-data

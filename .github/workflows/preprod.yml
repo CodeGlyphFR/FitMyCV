@@ -6,7 +6,6 @@ on:
     types: [opened, synchronize, reopened, closed]
 
 jobs:
-  # JOB 1 : Déploiement (si la PR est ouverte ou mise à jour)
   deploy-preview:
     if: github.event.action != 'closed'
     runs-on: self-hosted
@@ -23,23 +22,21 @@ jobs:
           psql fitmycv_release < /tmp/prod_sync.sql
 
       - name: Docker Build
-        # On utilise un tag fixe 'fitmycv:preview' pour correspondre à ton docker-compose.staging.yml
         run: docker build -t fitmycv:preview .
 
       - name: Deploy via Docker Compose (Staging)
         run: |
-          # Passage dans ton dossier permanent de staging
           cd /home/erickdesmet/STAGING_SAAS/FitMyCV/app
-          # Relance le service avec le .env local et le docker-compose.staging.yml
           docker compose -f docker-compose.staging.yml up -d --force-recreate
+          # Attente de l'initialisation
+          sleep 10
 
       - name: Post-deploy (Migrations)
         run: |
-          # Migrations de schéma et de données sur la base 'fitmycv_release'
-          docker exec fitmycv-preview npx prisma migrate deploy
+          # Utilisation des scripts npm
+          docker exec fitmycv-preview npm run db:migrate-deploy
           docker exec fitmycv-preview npm run db:migrate-data
 
-  # JOB 2 : Nettoyage (si la PR est fermée ou mergée)
   cleanup-preview:
     if: github.event.action == 'closed'
     runs-on: self-hosted
