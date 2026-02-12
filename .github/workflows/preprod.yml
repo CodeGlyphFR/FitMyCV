@@ -32,6 +32,10 @@ jobs:
           dropdb --if-exists fitmycv_release
           createdb fitmycv_release
           psql fitmycv_release < /tmp/prod_sync.sql
+          
+          # --- NOUVELLE ÉTAPE : Nettoyage Stripe ---
+          # On remet à null les IDs Stripe pour forcer la re-création en Staging
+          psql fitmycv_release -c "UPDATE \"User\" SET \"stripeCustomerId\" = NULL;"
 
       - name: Docker Build
         run: |
