@@ -39,31 +39,23 @@ jobs:
 
       - name: Auto-Sync Stripe Products
         run: |
-          # 1. On s'assure d'être au bon endroit (le workspace du checkout)
           cd $GITHUB_WORKSPACE
           
-          # 2. On vérifie la présence du fichier avec le nom exact que tu m'as donné
-          # Tu as dit : "sync staging stripe", vérifie bien l'extension et les tirets.
-          # On va chercher "sync-staging-stripe.js" ou "sync_staging_stripe.js"
-          
+          # 1. On trouve le script (déjà validé par ton dernier run)
           SCRIPT_FILE=$(find . -maxdepth 3 -name "*sync*staging*stripe*.js" | head -n 1)
-          
-          if [ -z "$SCRIPT_FILE" ]; then
-            echo "❌ Fichier introuvable dans le dossier cloné !"
-            echo "Contenu du dossier actuel :"
-            ls -F
-            exit 1
-          fi
 
-          echo "🚀 Fichier trouvé : $SCRIPT_FILE"
+          # 2. CONFIGURATION DES MODULES
+          # On pointe vers le dossier node_modules de ton staging pour récupérer 'stripe' et 'pg'
+          export NODE_PATH="/home/erickdesmet/STAGING_SAAS/FitMyCV/app/node_modules"
 
-          # 3. Récupération des secrets sur le serveur
+          # 3. SECRETS
           APP_PATH="/home/erickdesmet/STAGING_SAAS/FitMyCV/app"
           DB_PASS=$(grep '^DATABASE_URL=' $APP_PATH/.env | cut -d ':' -f3 | cut -d '@' -f1)
           export DATABASE_URL="postgresql://fitmycv:$DB_PASS@localhost:5432/fitmycv_release"
           export STRIPE_SECRET_KEY=$(grep '^STRIPE_SECRET_KEY=' $APP_PATH/.env | cut -d '=' -f2- | tr -d '"')
 
-          # 4. Exécution
+          # 4. EXÉCUTION
+          echo "🚀 Lancement avec NODE_PATH=$NODE_PATH"
           node "$SCRIPT_FILE"
 
       - name: Docker Build
