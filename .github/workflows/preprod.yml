@@ -66,7 +66,19 @@ jobs:
       - name: Deploy via Docker Compose (Staging)
         run: |
           cd /home/erickdesmet/STAGING_SAAS/FitMyCV/app
+          
+          # 1. On tente un arrêt propre
+          docker compose -f docker-compose.staging.yml down || true
+          
+          # 2. SOLUTION AU BUG : On force la suppression du container par son nom.
+          # Cela débloque l'état "removal in progress" si Docker est perdu.
+          docker rm -f fitmycv-preview || true
+          
+          # 3. On relance avec la nouvelle image buildée.
+          # --force-recreate garantit qu'on ne réutilise pas un vieux container.
           docker compose -f docker-compose.staging.yml up -d --force-recreate
+          
+          # 4. On attend que l'app soit prête pour les migrations
           sleep 10
 
       - name: Post-deploy (Migrations)
