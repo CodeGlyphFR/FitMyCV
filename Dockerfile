@@ -4,7 +4,7 @@
 
 # --- Stage 1: All dependencies (build + dev) ---
 FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma
@@ -13,6 +13,7 @@ RUN npm ci
 
 # --- Stage 2: Production dependencies only ---
 FROM node:20-alpine AS production-deps
+RUN apk add --no-cache python3 make g++
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma
