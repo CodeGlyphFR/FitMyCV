@@ -103,7 +103,7 @@ type,name,module,path,hash
 "md","step-03-step-validation","bmb","bmb/workflows/workflow-compliance-check/steps/step-03-step-validation.md","b8555740ea8564a25db39fc6cb52fc29c7e03b414863f61e5358a3e44a5ca0e0"
 "md","step-03-tools-configuration","bmb","bmb/workflows/create-workflow/steps/step-03-tools-configuration.md","d2dc11b74ecdccc4fb011d722f6f8ae4a4f88daa2e93fc3366029ddd7c469dc7"
 "md","step-03-type-metadata","bmb","bmb/workflows/agent/steps-c/step-03-type-metadata.md","27ad8735640e0f26f5653ffd30780fba1c62546d21242ee413f70531ad2f4919"
-"md","step-04-file-validation","bmb","bmb/workflows/workflow-compliance-check/steps/step-04-file-validation.md","a6d9c6da4e2f0c106950e98c1f196fdf04c1.0.13.0667840a3403fcde0a658bd"
+"md","step-04-file-validation","bmb","bmb/workflows/workflow-compliance-check/steps/step-04-file-validation.md","a6d9c6da4e2f0c106950e98c1f196fdf04c1.0.14.0667840a3403fcde0a658bd"
 "md","step-04-persona","bmb","bmb/workflows/agent/steps-c/step-04-persona.md","a1ae461c74906ce5e188b401f5f14969e8d8f71d9e274a2a39130f94d4384a0e"
 "md","step-04-plan-review","bmb","bmb/workflows/create-workflow/steps/step-04-plan-review.md","da187dd54077f27c99afa9a78daca21d4e6bbe6b92709df15096e34b1bfbf7c3"
 "md","step-04-strategy","bmb","bmb/reference/workflows/meal-prep-nutrition/steps/step-04-strategy.md","5401a0a59ed5c82c00776e7d650c6d359a77baef8c0acee463a7bbcf0a612fed"
