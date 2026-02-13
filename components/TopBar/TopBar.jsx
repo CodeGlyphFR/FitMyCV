@@ -478,7 +478,7 @@ export default function TopBar() {
               className="h-8 w-8 flex items-center justify-center rounded-full border border-white/40 bg-white/20 backdrop-blur-sm hover:bg-white/30 hover:shadow-sm-xl transition-all duration-200"
               aria-label={t("topbar.userMenu")}
             >
-              <img src="/icons/user.png" alt={t("topbar.userMenu")} className="h-5 w-5" />
+              <img src="/icons/user.svg" alt={t("topbar.userMenu")} className="h-5 w-5" />
             </button>
           </div>
 
@@ -536,7 +536,7 @@ export default function TopBar() {
               type="button"
               title={t("topbar.taskQueue")}
             >
-              <img src="/icons/task.png" alt={t("topbar.taskQueue")} className="h-4 w-4" />
+              <img src="/icons/task.svg" alt={t("topbar.taskQueue")} className="h-4 w-4" />
             </button>
 
             <TaskQueueDropdown
@@ -589,7 +589,7 @@ export default function TopBar() {
             <div className="flex-1 order-7 md:order-10 lg:flex-none flex justify-start lg:justify-end px-2 md:px-4 py-1 min-w-0">
               <div className="relative w-full md:max-w-[280px] lg:max-w-[400px] flex items-center group job-title-input-wrapper">
                 <span className="absolute left-0 text-white/70 drop-shadow flex items-center justify-center w-6 h-6">
-                  <img src="/icons/search.png" alt="Search" className="h-4 w-4" />
+                  <img src="/icons/search.svg" alt="Search" className="h-4 w-4" />
                 </span>
                 <input
                   type="text"

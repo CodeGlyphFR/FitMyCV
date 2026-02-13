@@ -314,7 +314,7 @@ export default function CVImprovementPanel({ cvFile }) {
           : labels.title}
       >
         <span className={`transition-all duration-300 ${shouldDisableButton ? 'blur-sm' : 'blur-0'}`}>
-          <img src="/icons/analyzer.png" alt="Analyzer" className="h-4 w-4" />
+          <img src="/icons/analyzer.svg" alt="Analyzer" className="h-4 w-4" />
         </span>
         {shouldDisableButton && (
           <div className="absolute inset-0 flex items-center justify-center animate-spin-slow">

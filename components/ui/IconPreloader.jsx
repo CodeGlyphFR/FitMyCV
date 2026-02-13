@@ -10,15 +10,15 @@ export default function IconPreloader() {
   return (
     <>
       {/* Pré-charger toutes les icônes critiques de la TopBar */}
-      <link rel="preload" href="/icons/add.png" as="image" />
-      <link rel="preload" href="/icons/import.png" as="image" />
-      <link rel="preload" href="/icons/search.png" as="image" />
+      <link rel="preload" href="/icons/add.svg" as="image" />
+      <link rel="preload" href="/icons/import.svg" as="image" />
+      <link rel="preload" href="/icons/search.svg" as="image" />
       <link rel="preload" href="/icons/translate.png" as="image" />
-      <link rel="preload" href="/icons/openai-symbol.png" as="image" />
-      <link rel="preload" href="/icons/delete.png" as="image" />
-      <link rel="preload" href="/icons/export.png" as="image" />
-      <link rel="preload" href="/icons/task.png" as="image" />
-      <link rel="preload" href="/icons/user.png" as="image" />
+      <link rel="preload" href="/icons/openai-symbol.svg" as="image" />
+      <link rel="preload" href="/icons/delete.svg" as="image" />
+      <link rel="preload" href="/icons/export.svg" as="image" />
+      <link rel="preload" href="/icons/task.svg" as="image" />
+      <link rel="preload" href="/icons/user.svg" as="image" />
     </>
   );
 }

@@ -74,9 +74,9 @@ export function GrapesJsEditorModal({
             upload: false,
             assets: [
               { src: '/icons/logo_email.png', name: 'Logo FitMyCV' },
-              { src: '/icons/import.png', name: 'Import' },
-              { src: '/icons/export.png', name: 'Export' },
-              { src: '/icons/openai-symbol.png', name: 'OpenAI' },
+              { src: '/icons/import.svg', name: 'Import' },
+              { src: '/icons/export.svg', name: 'Export' },
+              { src: '/icons/openai-symbol.svg', name: 'OpenAI' },
             ],
           },
           canvas: {

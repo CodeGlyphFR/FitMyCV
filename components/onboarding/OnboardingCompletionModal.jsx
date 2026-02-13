@@ -74,10 +74,10 @@ const ComingSoonItem = ({ emoji, title, description }) => (
 
 // Mapping des clés features vers les icônes (identiques à TopBar)
 const FEATURE_ICONS = {
-  import: '/icons/import.png',
-  create: '/icons/add.png',
-  generate: '/icons/search.png',
-  delete: '/icons/delete.png',
+  import: '/icons/import.svg',
+  create: '/icons/add.svg',
+  generate: '/icons/search.svg',
+  delete: '/icons/delete.svg',
   translate: '/icons/translate.png',
 };
 

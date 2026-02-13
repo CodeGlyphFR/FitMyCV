@@ -520,7 +520,7 @@ export default function EmptyState() {
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center group-hover:scale-110 group-hover:bg-white/30 transition-all duration-300">
                   <Image
-                    src="/icons/import.png"
+                    src="/icons/import.svg"
                     alt="Import"
                     width={40}
                     height={40}

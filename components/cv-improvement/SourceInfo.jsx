@@ -117,7 +117,7 @@ export default function SourceInfo({ sourceType, sourceValue, jobOfferInfo, sour
         `}
         type="button"
       >
-        <img src="/icons/infos.png" alt="Info" className="h-4 w-4 opacity-70 hover:opacity-100 transition-opacity" />
+        <img src="/icons/infos.svg" alt="Info" className="h-4 w-4 opacity-70 hover:opacity-100 transition-opacity" />
       </button>
 
       {/* Tooltip animé */}
