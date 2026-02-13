@@ -185,12 +185,14 @@ export default function ChangeReviewPopover({
         )}
 
         {/* Pour les langues: afficher le changement de niveau de façon lisible */}
-        {change.section === "languages" && change.beforeValue && change.afterValue && (
+        {/* Vérifier que beforeValue/afterValue sont des objets individuels (pas des tableaux) */}
+        {change.section === "languages" && change.beforeValue && change.afterValue &&
+         !Array.isArray(change.beforeValue) && !Array.isArray(change.afterValue) && (
           <p className="text-xs text-amber-300/90 max-w-[250px]">
             <span className="font-medium text-white/90">{t("review.levelChange") || "Niveau"} : </span>
-            <span className="line-through opacity-70">{change.beforeValue?.level || change.beforeValue}</span>
+            <span className="line-through opacity-70">{change.beforeValue?.level || (typeof change.beforeValue === 'string' ? change.beforeValue : '')}</span>
             <span className="mx-1.5">→</span>
-            <span className="font-medium">{change.afterValue?.level || change.afterValue}</span>
+            <span className="font-medium">{change.afterValue?.level || (typeof change.afterValue === 'string' ? change.afterValue : '')}</span>
           </p>
         )}
 

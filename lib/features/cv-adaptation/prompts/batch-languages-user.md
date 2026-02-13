@@ -21,6 +21,6 @@
 
 **IMPORTANT**:
 - Ne JAMAIS augmenter artificiellement le niveau (seulement reformuler)
-- Si le contenu est déjà dans la langue cible et correctement aligné, utilise `action: "kept"`
+- Utilise `action: "kept"` UNIQUEMENT si name_before = name_after ET level_before = level_after (aucun changement de texte). Toute traduction, même mineure, est `action: "modified"`.
 
 Réponds en JSON valide.

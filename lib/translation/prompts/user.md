@@ -11,10 +11,21 @@ Traduis le CV JSON suivant en **{targetLanguage}**.
 - Les noms de compétences techniques si applicable
 - Les labels et descriptions de projets
 - Les titres de formation et domaines d'études
+- Les noms de langues dans la section `languages` (ex: "Français" → "French", "Anglais" → "English")
+- Les niveaux de langue dans la section `languages` (ex: "Courant" → "Fluent", "Bilingue" → "Bilingual")
 
 ### 2. NE PAS TRADUIRE
 
-{INCLUDE:_shared/language-policy.md}
+- Noms de personnes
+- Emails et numéros de téléphone
+- URLs et liens
+- Codes pays (FR, US, GB, etc.)
+- Dates (format YYYY-MM ou YYYY)
+- Noms de technologies et outils (JavaScript, Python, Docker, AWS, etc.)
+- Métadonnées techniques (generated_at, created_at, etc.)
+- Noms propres d'entreprises internationales connues
+- Niveaux CECRL (A1, A2, B1, B2, C1, C2) - codes internationaux
+- Noms des champs JSON (clés)
 
 ### 3. STRUCTURE
 
