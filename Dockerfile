@@ -49,12 +49,15 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 # Chromium pour Puppeteer (export PDF + extraction URL) + polices pour le rendu
+# GraphicsMagick + Ghostscript pour pdf2pic (conversion PDF → images lors de l'import)
 RUN apk add --no-cache \
     libc6-compat \
     openssl \
     chromium \
     font-noto \
-    font-freefont
+    font-freefont \
+    graphicsmagick \
+    ghostscript
 
 # Puppeteer : utiliser Chromium système au lieu de télécharger le sien
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
