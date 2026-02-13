@@ -89,8 +89,8 @@ Pour chaque langue, générer une entrée dans `language_modifications`:
 
 ### Actions possibles
 
-- **kept** : Aucune modification (déjà correct)
-- **modified** : Traduction et/ou alignement effectué
+- **kept** : Aucune modification — `name_before` = `name_after` ET `level_before` = `level_after` (texte identique)
+- **modified** : Toute modification, y compris une simple traduction du nom ou du niveau
 
 ---
 
