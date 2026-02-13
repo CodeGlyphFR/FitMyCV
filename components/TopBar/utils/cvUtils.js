@@ -52,16 +52,16 @@ export function getCvIcon(createdBy, originalCreatedBy, className, isTranslated 
     return <span className={className}>🚀</span>; // Icône fusée pour CV amélioré
   }
   if (createdBy === 'generate-cv-job-title') {
-    return <img src="/icons/search.png" alt="Search" className={className} loading="eager" />;
+    return <img src="/icons/search.svg" alt="Search" className={className} loading="eager" />;
   }
   if (createdBy === 'generate-cv' || createdBy === 'create-template') {
     return <GptLogo className={className} />;
   }
   if (createdBy === 'import-pdf') {
-    return <img src="/icons/import.png" alt="Import" className={className} loading="eager" />;
+    return <img src="/icons/import.svg" alt="Import" className={className} loading="eager" />;
   }
   // CVs manuels (créés from scratch)
-  return <img src="/icons/add.png" alt="Add" className={className} loading="eager" />;
+  return <img src="/icons/add.svg" alt="Add" className={className} loading="eager" />;
 }
 
 /**

@@ -294,7 +294,7 @@ export default function CvGeneratorModal({
               onClick={addLinkField}
               className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 hover:border-white/30 transition-colors duration-200 inline-flex items-center gap-1"
             >
-              <img src="/icons/add.png" alt="" className="h-3 w-3 " /> {t("cvGenerator.addLink")}
+              <img src="/icons/add.svg" alt="" className="h-3 w-3 " /> {t("cvGenerator.addLink")}
             </button>
           </div>
           <p className="text-xs text-amber-300/80 flex items-start gap-1.5">

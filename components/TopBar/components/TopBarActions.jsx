@@ -43,7 +43,7 @@ export default function TopBarActions({
           className="rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm text-white text-sm hover:bg-white/30 hover:shadow-sm-xl inline-flex items-center justify-center h-8 w-8 order-9 md:order-6 transition-all duration-200"
           type="button"
         >
-          <img src="/icons/add.png" alt="Add" className="h-4 w-4" />
+          <img src="/icons/add.svg" alt="Add" className="h-4 w-4" />
         </button>
       )}
 
@@ -55,7 +55,7 @@ export default function TopBarActions({
           type="button"
           title={t("pdfImport.title")}
         >
-          <img src="/icons/import.png" alt="Import" className="h-4 w-4" />
+          <img src="/icons/import.svg" alt="Import" className="h-4 w-4" />
         </button>
       )}
 
@@ -68,7 +68,7 @@ export default function TopBarActions({
           type="button"
           title="Exporter en PDF"
         >
-          <img src="/icons/export.png" alt="Export" className="h-4 w-4" />
+          <img src="/icons/export.svg" alt="Export" className="h-4 w-4" />
         </button>
       )}
 
@@ -106,7 +106,7 @@ export default function TopBarActions({
         style={{ WebkitTouchCallout: 'none' }}
         title={t("topbar.deleteTooltip")}
       >
-        <img src="/icons/delete.png" alt="Delete" className="h-4 w-4 pointer-events-none select-none" draggable="false" />
+        <img src="/icons/delete.svg" alt="Delete" className="h-4 w-4 pointer-events-none select-none" draggable="false" />
       </button>
 
       {/* Credits Counter - Mode crédits-only uniquement */}

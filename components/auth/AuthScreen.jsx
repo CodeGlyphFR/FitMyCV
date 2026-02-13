@@ -217,7 +217,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
           <div className="rounded-3xl border-2 border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl p-6 space-y-6">
         <div className="flex justify-center mb-4">
           <Image
-            src="/icons/logo.png"
+            src="/icons/logo_small.png"
             alt="FitMyCV.io"
             width={250}
             height={75}
