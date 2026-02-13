@@ -20,7 +20,7 @@
   "findings": {
     "project_classification": {
       "name": "FitMyCV",
-      "version": "1.0.14.0",
+      "version": "1.0.15.0",
       "repository_type": "monolith",
       "parts_count": 1,
       "primary_language": "JavaScript/JSX",
