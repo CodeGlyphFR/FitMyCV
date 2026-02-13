@@ -99,7 +99,7 @@ export async function POST(request) {
         '--disable-features=TranslateUI',
         '--disable-ipc-flooding-protection'
       ],
-      executablePath: puppeteer.executablePath(),
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
       timeout: 60000
     });
 

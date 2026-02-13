@@ -4,18 +4,21 @@
 
 # --- Stage 1: All dependencies (build + dev) ---
 FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm ci
 
 # --- Stage 2: Production dependencies only ---
 FROM node:20-alpine AS production-deps
+RUN apk add --no-cache python3 make g++
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm ci --omit=dev
 
 # --- Stage 3: Build ---
@@ -45,7 +48,17 @@ RUN npm run build
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-RUN apk add --no-cache libc6-compat openssl
+# Chromium pour Puppeteer (export PDF + extraction URL) + polices pour le rendu
+RUN apk add --no-cache \
+    libc6-compat \
+    openssl \
+    chromium \
+    font-noto \
+    font-freefont
+
+# Puppeteer : utiliser Chromium système au lieu de télécharger le sien
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 # 1. Production node_modules (Prisma CLI, stripe, etc.)
 COPY --from=production-deps /app/node_modules ./node_modules
