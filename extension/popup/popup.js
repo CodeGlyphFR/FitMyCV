@@ -24,6 +24,10 @@ function showView(name) {
     el.style.display = key === name ? '' : 'none';
   });
 
+  // Hide generate button when not on main view
+  const genContainer = document.getElementById('generate-container');
+  if (genContainer) genContainer.style.display = name === 'main' ? '' : 'none';
+
   // Stop progress refresh when leaving main view
   if (name !== 'main') {
     stopProgressRefresh();
@@ -144,6 +148,7 @@ async function showMainView() {
   const progressContainer = document.getElementById('progress-inline-container');
   const offerContainer = document.getElementById('offer-list-container');
   const creditsContainer = document.getElementById('credits-container');
+  const generateContainer = document.getElementById('generate-container');
 
   await initCvSelector(cvContainer, () => {
     // CV changed — re-render credits
@@ -152,7 +157,7 @@ async function showMainView() {
   // Inline progress (auto-hides when no session tasks)
   initProgress(progressContainer);
 
-  await initOfferList(offerContainer, creditsContainer);
+  await initOfferList(offerContainer, creditsContainer, generateContainer);
 }
 
 // --- Logo link ---

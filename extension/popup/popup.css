@@ -95,10 +95,20 @@ header {
 /* --- Views --- */
 .view {
   flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .view-content {
   padding: 16px;
+}
+
+/* --- Generate button bar (pinned) --- */
+#generate-container {
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--app-bg);
+  flex-shrink: 0;
 }
 
 /* --- Buttons --- */

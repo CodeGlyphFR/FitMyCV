@@ -13,7 +13,10 @@ let creditBalance = null;
 let costPerOffer = 2;
 let isSubmitting = false;
 
-export async function initOfferList(container, creditsContainer) {
+let generateContainer = null;
+
+export async function initOfferList(container, creditsContainer, genContainer) {
+  generateContainer = genContainer;
 
   // Load persisted picklist
   const data = await browser.storage.local.get(STORAGE_KEY);
@@ -63,6 +66,13 @@ export async function addOffer(offerData) {
 function removeOffer(index) {
   offers.splice(index, 1);
   persistOffers();
+}
+
+function reRender() {
+  render(
+    document.getElementById('offer-list-container'),
+    document.getElementById('credits-container'),
+  );
 }
 
 function getScoreClass(score) {
@@ -150,15 +160,19 @@ function renderCredits(creditsContainer) {
     }
   }
 
-  // Generate button
-  const genBtn = document.createElement('button');
-  genBtn.className = 'btn btn-primary';
-  genBtn.disabled = !canGenerate;
-  genBtn.textContent = offers.length > 0
-    ? t('offers.generateButton', { count: offers.length })
-    : t('offers.generateButtonDefault');
-  genBtn.addEventListener('click', handleGenerate);
-  creditsContainer.appendChild(genBtn);
+  // Generate button — pinned at bottom
+  if (generateContainer) {
+    generateContainer.innerHTML = '';
+    const genBtn = document.createElement('button');
+    genBtn.className = 'btn btn-primary';
+    genBtn.disabled = !canGenerate;
+    genBtn.textContent = offers.length > 0
+      ? t('offers.generateButton', { count: offers.length })
+      : t('offers.generateButtonDefault');
+    genBtn.addEventListener('click', handleGenerate);
+    generateContainer.appendChild(genBtn);
+    generateContainer.style.display = '';
+  }
 }
 
 async function handleAddOffer() {
@@ -201,9 +215,7 @@ async function handleAddOffer() {
     }
 
     // Re-render
-    const container = document.getElementById('offer-list-container');
-    const creditsContainer = document.getElementById('credits-container');
-    render(container, creditsContainer);
+    reRender();
 
   } catch (err) {
     addBtn.textContent = t('offers.extractError');
@@ -254,9 +266,7 @@ async function handleGenerate() {
   ]);
 
   // Re-render list without the submitted offers
-  const container = document.getElementById('offer-list-container');
-  const creditsContainer = document.getElementById('credits-container');
-  render(container, creditsContainer);
+  reRender();
 
   try {
     const result = await submitOffers(selectedCv, offersPayload, getLang());
@@ -323,16 +333,14 @@ async function handleGenerate() {
     offers.push(...submittedOffers);
     await persistOffers();
 
-    const creditsContainer = document.getElementById('credits-container');
     const errEl = document.createElement('div');
     errEl.className = 'error-msg';
     errEl.textContent = err.message || t('offers.submitError');
-    creditsContainer.prepend(errEl);
+    document.getElementById('credits-container').prepend(errEl);
     setTimeout(() => errEl.remove(), 3000);
 
     // Re-render to restore offers + button state
-    const container = document.getElementById('offer-list-container');
-    render(container, creditsContainer);
+    reRender();
   } finally {
     isSubmitting = false;
   }
