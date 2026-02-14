@@ -5,6 +5,7 @@
 import browser from 'webextension-polyfill';
 import { fetchCreditBalance, fetchCreditCosts, submitOffers } from '../../lib/api-client.js';
 import { getSelectedCv } from './cv-selector.js';
+import { t, getLang } from '../../lib/i18n.js';
 
 const STORAGE_KEY = 'fitmycv_picklist';
 let offers = [];
@@ -77,7 +78,7 @@ function render(container, creditsContainer) {
   // Add button
   const addBtn = document.createElement('button');
   addBtn.className = 'btn-add-offer';
-  addBtn.textContent = '+ Ajouter l\'offre de cette page';
+  addBtn.textContent = t('offers.addButton');
   addBtn.id = 'btn-add-offer';
   addBtn.addEventListener('click', handleAddOffer);
   container.appendChild(addBtn);
@@ -85,7 +86,7 @@ function render(container, creditsContainer) {
   if (offers.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
-    empty.textContent = 'Aucune offre ajoutee. Naviguez sur un site d\'emploi et cliquez ci-dessus.';
+    empty.textContent = t('offers.emptyState');
     container.appendChild(empty);
   } else {
     const scrollWrapper = document.createElement('div');
@@ -96,11 +97,11 @@ function render(container, creditsContainer) {
       el.className = 'offer-item';
       el.innerHTML = `
         <div style="flex:1; min-width:0">
-          <div class="offer-title">${escapeHtml(offer.title || 'Sans titre')}</div>
+          <div class="offer-title">${escapeHtml(offer.title || t('offers.noTitle'))}</div>
           <div class="offer-host">${escapeHtml(offer.hostname)}</div>
         </div>
         <span class="offer-score ${getScoreClass(offer.score)}">${offer.score}</span>
-        <button class="offer-remove" data-index="${index}" title="Retirer">&times;</button>
+        <button class="offer-remove" data-index="${index}" title="${escapeHtml(t('offers.removeTitle'))}">&times;</button>
       `;
       el.querySelector('.offer-remove').addEventListener('click', () => {
         removeOffer(index);
@@ -136,15 +137,15 @@ function renderCredits(creditsContainer) {
     const costClass = hasEnough ? 'credits-cost' : 'credits-insufficient';
 
     bar.innerHTML = `
-      <span class="credits-balance">Solde: ${balanceText}</span>
-      <span class="${costClass}">Cout: ${totalCost} credits (${offers.length} x ${costPerOffer})</span>
+      <span class="credits-balance">${escapeHtml(t('offers.creditsBalance', { balance: balanceText }))}</span>
+      <span class="${costClass}">${escapeHtml(t('offers.creditsCost', { total: totalCost, count: offers.length, cost: costPerOffer }))}</span>
     `;
     creditsContainer.appendChild(bar);
 
     if (!hasEnough) {
       const warning = document.createElement('div');
       warning.className = 'warning-msg';
-      warning.textContent = `Credits insuffisants. Il vous manque ${totalCost - availableCredits} credits.`;
+      warning.textContent = t('offers.creditsInsufficient', { missing: totalCost - availableCredits });
       creditsContainer.appendChild(warning);
     }
   }
@@ -154,8 +155,8 @@ function renderCredits(creditsContainer) {
   genBtn.className = 'btn btn-primary';
   genBtn.disabled = !canGenerate;
   genBtn.textContent = offers.length > 0
-    ? `Generer ${offers.length} CV`
-    : 'Generer les CV';
+    ? t('offers.generateButton', { count: offers.length })
+    : t('offers.generateButtonDefault');
   genBtn.addEventListener('click', handleGenerate);
   creditsContainer.appendChild(genBtn);
 }
@@ -165,7 +166,7 @@ async function handleAddOffer() {
   if (!addBtn) return;
 
   addBtn.disabled = true;
-  addBtn.textContent = 'Extraction en cours...';
+  addBtn.textContent = t('offers.extracting');
 
   try {
     const result = await browser.runtime.sendMessage({ type: 'EXTRACT_OFFER' });
@@ -173,16 +174,16 @@ async function handleAddOffer() {
     if (result?.error) {
       addBtn.textContent = result.error;
       setTimeout(() => {
-        addBtn.textContent = '+ Ajouter l\'offre de cette page';
+        addBtn.textContent = t('offers.addButton');
         addBtn.disabled = false;
       }, 2000);
       return;
     }
 
     if (!result?.content) {
-      addBtn.textContent = 'Aucun contenu extrait';
+      addBtn.textContent = t('offers.noContent');
       setTimeout(() => {
-        addBtn.textContent = '+ Ajouter l\'offre de cette page';
+        addBtn.textContent = t('offers.addButton');
         addBtn.disabled = false;
       }, 2000);
       return;
@@ -191,9 +192,9 @@ async function handleAddOffer() {
     const { duplicate } = await addOffer(result);
 
     if (duplicate) {
-      addBtn.textContent = 'Offre deja ajoutee';
+      addBtn.textContent = t('offers.alreadyAdded');
       setTimeout(() => {
-        addBtn.textContent = '+ Ajouter l\'offre de cette page';
+        addBtn.textContent = t('offers.addButton');
         addBtn.disabled = false;
       }, 1500);
       return;
@@ -205,9 +206,9 @@ async function handleAddOffer() {
     render(container, creditsContainer);
 
   } catch (err) {
-    addBtn.textContent = 'Erreur d\'extraction';
+    addBtn.textContent = t('offers.extractError');
     setTimeout(() => {
-      addBtn.textContent = '+ Ajouter l\'offre de cette page';
+      addBtn.textContent = t('offers.addButton');
       addBtn.disabled = false;
     }, 2000);
   }
@@ -232,7 +233,7 @@ async function handleGenerate() {
   const tempTasks = submittedOffers.map((o, i) => ({
     id: `temp-${now}-${i}`,
     type: 'cv_generation',
-    title: o.title || 'Generation CV',
+    title: o.title || t('progress.defaultTitle'),
     status: 'analyzing',
     createdAt: now + i,
     sourceUrl: o.sourceUrl,
@@ -258,7 +259,7 @@ async function handleGenerate() {
   render(container, creditsContainer);
 
   try {
-    const result = await submitOffers(selectedCv, offersPayload);
+    const result = await submitOffers(selectedCv, offersPayload, getLang());
 
     // Replace temp tasks with real task IDs from server response
     const storageData = await browser.storage.local.get(['fitmycv_active_tasks', 'fitmycv_session_task_ids']);
@@ -325,7 +326,7 @@ async function handleGenerate() {
     const creditsContainer = document.getElementById('credits-container');
     const errEl = document.createElement('div');
     errEl.className = 'error-msg';
-    errEl.textContent = err.message || 'Erreur lors de l\'envoi';
+    errEl.textContent = err.message || t('offers.submitError');
     creditsContainer.prepend(errEl);
     setTimeout(() => errEl.remove(), 3000);
 

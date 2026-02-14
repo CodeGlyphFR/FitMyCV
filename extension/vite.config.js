@@ -9,16 +9,23 @@ const browser = process.env.TARGET_BROWSER || 'chrome';
 
 const apiBase = process.env.API_BASE || 'https://app.fitmycv.io';
 
-// Simple plugin to copy static assets (icons) to dist
-function copyIcons(outDir) {
+// Simple plugin to copy static assets (icons + locales) to dist
+function copyStaticAssets(outDir) {
   return {
-    name: 'copy-icons',
+    name: 'copy-static-assets',
     closeBundle() {
-      const src = resolve(__dirname, 'icons');
-      const dest = resolve(outDir, 'icons');
-      if (existsSync(src)) {
-        mkdirSync(dest, { recursive: true });
-        cpSync(src, dest, { recursive: true, filter: (s) => !s.endsWith('README.md') });
+      const iconsSrc = resolve(__dirname, 'icons');
+      const iconsDest = resolve(outDir, 'icons');
+      if (existsSync(iconsSrc)) {
+        mkdirSync(iconsDest, { recursive: true });
+        cpSync(iconsSrc, iconsDest, { recursive: true, filter: (s) => !s.endsWith('README.md') });
+      }
+
+      const localesSrc = resolve(__dirname, 'locales');
+      const localesDest = resolve(outDir, 'locales');
+      if (existsSync(localesSrc)) {
+        mkdirSync(localesDest, { recursive: true });
+        cpSync(localesSrc, localesDest, { recursive: true });
       }
     },
   };
@@ -44,6 +51,6 @@ export default defineConfig({
       ],
       browser,
     }),
-    copyIcons(outDir),
+    copyStaticAssets(outDir),
   ],
 });

@@ -4,38 +4,29 @@
 
 import browser from 'webextension-polyfill';
 import { pollTaskSync, cancelTask } from '../../lib/api-client.js';
+import { t } from '../../lib/i18n.js';
 
 const STORAGE_KEY = 'fitmycv_active_tasks';
 let pollInterval = null;
 const MAX_POLL_DURATION_MS = 12 * 60 * 60 * 1000; // 12 hours
 let pollStartTime = null;
 
-const STEP_LABELS = {
-  classify: 'Classification\u2026',
-  batch_experience: 'Adaptation des exp\u00e9riences\u2026',
-  batch_project: 'Adaptation des projets\u2026',
-  batch_extras: 'Adaptation des extras\u2026',
-  batch_education: 'Adaptation des formations\u2026',
-  batch_languages: 'Adaptation des langues\u2026',
-  batch_skills: 'Adaptation des comp\u00e9tences\u2026',
-  batch_summary: 'R\u00e9daction du r\u00e9sum\u00e9\u2026',
-  recompose: 'Assemblage du CV\u2026',
-};
-
 function getStatusDisplay(task) {
-  if (task.status === 'completed') return 'CV g\u00e9n\u00e9r\u00e9 \u2713';
-  if (task.status === 'failed') return '\u00c9chou\u00e9';
-  if (task.status === 'cancelled') return 'Annul\u00e9';
-  if (task.status === 'analyzing') return 'Analyse de l\'offre\u2026';
+  if (task.status === 'completed') return t('progress.status.completed');
+  if (task.status === 'failed') return t('progress.status.failed');
+  if (task.status === 'cancelled') return t('progress.status.cancelled');
+  if (task.status === 'analyzing') return t('progress.status.analyzing');
 
   if (task.currentStep) {
-    return STEP_LABELS[task.currentStep] || 'Traitement en cours\u2026';
+    const stepKey = `progress.steps.${task.currentStep}`;
+    const stepLabel = t(stepKey);
+    return stepLabel !== stepKey ? stepLabel : t('progress.status.running');
   }
 
-  if (task.currentPhase === 'extracting') return 'Extraction de l\'offre\u2026';
+  if (task.currentPhase === 'extracting') return t('progress.status.extracting');
 
-  if (task.status === 'queued') return 'En file d\'attente\u2026';
-  if (task.status === 'running') return 'Traitement en cours\u2026';
+  if (task.status === 'queued') return t('progress.status.queued');
+  if (task.status === 'running') return t('progress.status.running');
   return task.status;
 }
 
@@ -150,12 +141,12 @@ async function renderTasks(container) {
     const isCancellable = ['queued', 'running', 'analyzing'].includes(task.status);
     let cancelHtml = '';
     if (isCancellable) {
-      cancelHtml = `<button class="task-remove" data-action="cancel-task" data-task-id="${escapeHtml(task.id)}" title="Annuler">&times;</button>`;
+      cancelHtml = `<button class="task-remove" data-action="cancel-task" data-task-id="${escapeHtml(task.id)}" title="${escapeHtml(t('progress.cancelTitle'))}">&times;</button>`;
     }
 
     el.innerHTML = `
       <div class="progress-header">
-        <div class="progress-title">${escapeHtml(task.title || 'Generation CV')}</div>
+        <div class="progress-title">${escapeHtml(task.title || t('progress.defaultTitle'))}</div>
         ${cancelHtml}
       </div>
       <div class="progress-meta">
@@ -228,7 +219,7 @@ async function renderTasks(container) {
   if (hasTerminalTasks) {
     const clearLink = document.createElement('button');
     clearLink.className = 'btn-clear-tasks';
-    clearLink.textContent = 'Effacer';
+    clearLink.textContent = t('progress.clearButton');
     clearLink.addEventListener('click', async () => {
       const stored = await browser.storage.local.get([STORAGE_KEY, 'fitmycv_session_task_ids']);
       const storedTasks = stored[STORAGE_KEY] || [];

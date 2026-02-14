@@ -1,0 +1,98 @@
+{
+  "header": {
+    "credits": "{credits} Credits",
+    "logout": "Abmelden"
+  },
+  "login": {
+    "title": "Anmelden",
+    "subtitle": "Melden Sie sich mit Ihrem FitMyCV-Konto an",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "emailPlaceholder": "ihre@email.de",
+    "passwordPlaceholder": "Passwort",
+    "submit": "Anmelden",
+    "submitting": "Anmeldung...",
+    "or": "oder",
+    "continueGoogle": "Mit Google fortfahren",
+    "continueGithub": "Mit GitHub fortfahren",
+    "forgotPassword": "Passwort vergessen?",
+    "createAccount": "Konto erstellen",
+    "errors": {
+      "emptyFields": "Bitte fullen Sie alle Felder aus",
+      "connectionError": "Verbindungsfehler. Uberprufen Sie Ihre Internetverbindung."
+    }
+  },
+  "cvSelector": {
+    "empty": "Kein Lebenslauf gefunden.",
+    "createLink": "Erstellen Sie einen auf FitMyCV",
+    "loadError": "Fehler beim Laden der Lebenslaufe"
+  },
+  "offers": {
+    "addButton": "+ Angebot dieser Seite hinzufugen",
+    "extracting": "Wird extrahiert...",
+    "noContent": "Kein Inhalt extrahiert",
+    "alreadyAdded": "Angebot bereits hinzugefugt",
+    "extractError": "Extraktionsfehler",
+    "emptyState": "Keine Angebote hinzugefugt. Besuchen Sie eine Jobseite und klicken Sie oben.",
+    "noTitle": "Ohne Titel",
+    "removeTitle": "Entfernen",
+    "creditsBalance": "Guthaben: {balance}",
+    "creditsCost": "Kosten: {total} Credits ({count} x {cost})",
+    "creditsInsufficient": "Nicht genugend Credits. Es fehlen {missing} Credits.",
+    "generateButton": "{count} Lebenslauf generieren",
+    "generateButtonDefault": "Lebenslaufe generieren",
+    "submitError": "Fehler beim Senden"
+  },
+  "progress": {
+    "defaultTitle": "Lebenslauf-Erstellung",
+    "cancelTitle": "Abbrechen",
+    "clearButton": "Loschen",
+    "steps": {
+      "classify": "Klassifizierung\u2026",
+      "batch_experience": "Erfahrungen anpassen\u2026",
+      "batch_project": "Projekte anpassen\u2026",
+      "batch_extras": "Extras anpassen\u2026",
+      "batch_education": "Ausbildung anpassen\u2026",
+      "batch_languages": "Sprachen anpassen\u2026",
+      "batch_skills": "Fahigkeiten anpassen\u2026",
+      "batch_summary": "Zusammenfassung schreiben\u2026",
+      "recompose": "Lebenslauf zusammenstellen\u2026"
+    },
+    "status": {
+      "completed": "Lebenslauf erstellt \u2713",
+      "failed": "Fehlgeschlagen",
+      "cancelled": "Abgebrochen",
+      "analyzing": "Angebot wird analysiert\u2026",
+      "extracting": "Angebot wird extrahiert\u2026",
+      "queued": "In Warteschlange\u2026",
+      "running": "Wird verarbeitet\u2026"
+    }
+  },
+  "errors": {
+    "sessionExpired": "Sitzung abgelaufen",
+    "invalidCredentials": "E-Mail oder Passwort falsch",
+    "emailNotVerified": "E-Mail nicht verifiziert. Prufen Sie Ihren Posteingang.",
+    "emailAndPasswordRequired": "E-Mail und Passwort erforderlich",
+    "tokenRequired": "Sitzung erforderlich",
+    "tokenExpired": "Sitzung abgelaufen",
+    "tokenInvalid": "Ungultige Sitzung",
+    "serviceUnavailable": "Dienst vorubergehend nicht verfugbar (Wartung)",
+    "baseFileRequired": "Basis-Lebenslauf erforderlich",
+    "offersRequired": "Mindestens ein Angebot erforderlich",
+    "offerContentInsufficient": "Angebotsinhalt unzureichend",
+    "sourceCvNotFound": "Quell-Lebenslauf nicht gefunden",
+    "cancelParamsMissing": "Abbruchparameter fehlen",
+    "taskNotFound": "Aufgabe nicht gefunden",
+    "notAuthenticated": "Nicht authentifiziert",
+    "serverError": "Serverfehler",
+    "limitReached": "Nicht genugend Credits"
+  },
+  "detector": {
+    "success": "\u2713 Hinzugefugt",
+    "duplicate": "Bereits hinzugefugt",
+    "error": "\u2715 Fehler"
+  },
+  "langSelector": {
+    "title": "Sprache"
+  }
+}

@@ -4,6 +4,7 @@
 
 import browser from 'webextension-polyfill';
 import { login } from '../../lib/api-client.js';
+import { t } from '../../lib/i18n.js';
 
 export function initLogin(onLoginSuccess) {
   const form = document.getElementById('login-form');
@@ -44,7 +45,7 @@ export function initLogin(onLoginSuccess) {
     const password = passwordInput.value;
 
     if (!email || !password) {
-      showError('Veuillez remplir tous les champs');
+      showError(t('login.errors.emptyFields'));
       return;
     }
 
@@ -54,7 +55,7 @@ export function initLogin(onLoginSuccess) {
       const user = await login(email, password);
       onLoginSuccess(user);
     } catch (err) {
-      showError(err.message || 'Erreur de connexion. Vérifiez votre connexion internet.');
+      showError(err.message || t('login.errors.connectionError'));
     } finally {
       setLoading(false);
     }

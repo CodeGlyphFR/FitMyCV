@@ -107,17 +107,38 @@ function createButton() {
 
 // ─── Button: state management ────────────────────────────────────────
 
+const LANG_KEY = 'fitmycv_language';
+
+const BUTTON_TEXT = {
+  fr: { success: '\u2713 Ajoute',       duplicate: 'Deja ajoute',       error: '\u2715 Erreur' },
+  en: { success: '\u2713 Added',        duplicate: 'Already added',     error: '\u2715 Error' },
+  es: { success: '\u2713 Agregado',     duplicate: 'Ya agregado',       error: '\u2715 Error' },
+  de: { success: '\u2713 Hinzugefugt',  duplicate: 'Bereits hinzugefugt', error: '\u2715 Fehler' },
+};
+
+function getButtonText(state) {
+  // Read synchronously from the last cached language; async lookup happens on click
+  const lang = _cachedLang || 'en';
+  return BUTTON_TEXT[lang]?.[state] || BUTTON_TEXT.en[state] || state;
+}
+
+let _cachedLang = 'en';
+// Pre-load cached language
+browser.storage.local.get(LANG_KEY).then(d => {
+  _cachedLang = d[LANG_KEY] || 'en';
+}).catch(() => {});
+
 const BUTTON_STATES = {
-  default:   { text: 'FitMyCV +',     bg: '#10b981', disabled: false },
-  loading:   { text: '⏳',            bg: '#9ca3af', disabled: true  },
-  success:   { text: '✓ Ajouté',      bg: '#059669', disabled: true  },
-  duplicate: { text: 'Déjà ajouté',   bg: '#f59e0b', disabled: true  },
-  error:     { text: '✕ Erreur',      bg: '#ef4444', disabled: true  },
+  default:   { text: 'FitMyCV +',                    bg: '#10b981', disabled: false },
+  loading:   { text: '\u23F3',                        bg: '#9ca3af', disabled: true  },
+  success:   { text: () => getButtonText('success'),  bg: '#059669', disabled: true  },
+  duplicate: { text: () => getButtonText('duplicate'), bg: '#f59e0b', disabled: true  },
+  error:     { text: () => getButtonText('error'),    bg: '#ef4444', disabled: true  },
 };
 
 function setButtonState(btn, state) {
   const s = BUTTON_STATES[state] || BUTTON_STATES.default;
-  btn.textContent = s.text;
+  btn.textContent = typeof s.text === 'function' ? s.text() : s.text;
   btn.style.background = s.bg;
   btn.style.color = '#fff';
   btn.disabled = s.disabled;
@@ -137,6 +158,12 @@ async function handleButtonClick(e) {
 
   const btn = document.getElementById(BTN_ID);
   if (!btn || btn.disabled) return;
+
+  // Refresh cached language before showing localized states
+  try {
+    const d = await browser.storage.local.get(LANG_KEY);
+    _cachedLang = d[LANG_KEY] || 'en';
+  } catch { /* use cached */ }
 
   setButtonState(btn, 'loading');
 

@@ -6,6 +6,7 @@
 
 import browser from 'webextension-polyfill';
 import { isAuthenticated, getUser, logout, fetchCreditBalance } from '../lib/api-client.js';
+import { initI18n, t, getLang, setLang, onLangChange } from '../lib/i18n.js';
 import { initLogin } from './views/login.js';
 import { initCvSelector } from './views/cv-selector.js';
 import { initOfferList } from './views/offer-list.js';
@@ -29,9 +30,70 @@ function showView(name) {
   }
 }
 
+// --- i18n helpers ---
+
+function translateStaticElements() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const translated = t(key);
+    if (translated !== key) el.textContent = translated;
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    const translated = t(key);
+    if (translated !== key) el.placeholder = translated;
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    const translated = t(key);
+    if (translated !== key) el.title = translated;
+  });
+}
+
+function initLangSelector() {
+  const flags = document.querySelectorAll('.lang-flag');
+  const currentLang = getLang();
+
+  flags.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === currentLang);
+    btn.addEventListener('click', () => {
+      setLang(btn.dataset.lang);
+    });
+  });
+}
+
+function updateLangSelectorActive() {
+  const currentLang = getLang();
+  document.querySelectorAll('.lang-flag').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === currentLang);
+  });
+}
+
 // --- Initialization ---
 
 async function init() {
+  // Initialize i18n first
+  await initI18n();
+  translateStaticElements();
+  initLangSelector();
+
+  // Update <html lang>
+  document.documentElement.lang = getLang();
+
+  // React to language changes
+  onLangChange(async (lang) => {
+    document.documentElement.lang = lang;
+    translateStaticElements();
+    updateLangSelectorActive();
+
+    // Re-render dynamic views
+    const authenticated = await isAuthenticated();
+    if (authenticated) {
+      loadHeaderCredits();
+      showMainView();
+    }
+  });
+
   // Check auth state
   const authenticated = await isAuthenticated();
 
@@ -64,7 +126,7 @@ async function loadHeaderCredits() {
     if (credits !== null) {
       const el = document.getElementById('credits-display');
       const container = document.getElementById('header-credits');
-      el.textContent = `${credits} crédits`;
+      el.textContent = t('header.credits', { credits });
       container.style.display = '';
     }
   } catch { /* silent */ }

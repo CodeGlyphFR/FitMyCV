@@ -11,14 +11,14 @@
     <!-- Header -->
     <header id="header">
       <div class="header-left">
-        <span class="logo">FitMyCV</span>
+        <img src="../icons/logo_small.png" alt="FitMyCV" class="logo-img">
       </div>
       <div class="header-center" id="header-credits" style="display:none">
         <span id="credits-display" class="credits-display"></span>
       </div>
       <div class="header-right" id="header-user" style="display:none">
         <span id="user-name" class="user-name"></span>
-        <button id="btn-logout" class="btn-icon" title="Deconnexion">
+        <button id="btn-logout" class="btn-icon" data-i18n-title="header.logout" title="Deconnexion">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
             <polyline points="16 17 21 12 16 7"/>
@@ -31,25 +31,25 @@
     <!-- View: Login -->
     <section id="view-login" class="view">
       <div class="view-content">
-        <h2>Connexion</h2>
-        <p class="text-secondary">Connectez-vous avec votre compte FitMyCV</p>
+        <h2 data-i18n="login.title">Connexion</h2>
+        <p class="text-secondary" data-i18n="login.subtitle">Connectez-vous avec votre compte FitMyCV</p>
         <form id="login-form">
           <div class="field">
-            <label for="login-email">Email</label>
-            <input type="email" id="login-email" placeholder="votre@email.com" required autocomplete="email">
+            <label for="login-email" data-i18n="login.email">Email</label>
+            <input type="email" id="login-email" data-i18n-placeholder="login.emailPlaceholder" placeholder="votre@email.com" required autocomplete="email">
           </div>
           <div class="field">
-            <label for="login-password">Mot de passe</label>
-            <input type="password" id="login-password" placeholder="Mot de passe" required autocomplete="current-password">
+            <label for="login-password" data-i18n="login.password">Mot de passe</label>
+            <input type="password" id="login-password" data-i18n-placeholder="login.passwordPlaceholder" placeholder="Mot de passe" required autocomplete="current-password">
           </div>
           <div id="login-error" class="error-msg" style="display:none"></div>
           <button type="submit" class="btn btn-primary" id="btn-login">
-            <span class="btn-text">Se connecter</span>
-            <span class="btn-loading" style="display:none">Connexion...</span>
+            <span class="btn-text" data-i18n="login.submit">Se connecter</span>
+            <span class="btn-loading" style="display:none" data-i18n="login.submitting">Connexion...</span>
           </button>
         </form>
         <div class="login-separator">
-          <span>ou</span>
+          <span data-i18n="login.or">ou</span>
         </div>
         <div class="oauth-buttons">
           <button type="button" class="btn-oauth" id="btn-oauth-google">
@@ -59,18 +59,18 @@
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 0 0 1 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
-            Continuer avec Google
+            <span data-i18n="login.continueGoogle">Continuer avec Google</span>
           </button>
           <button type="button" class="btn-oauth" id="btn-oauth-github">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
             </svg>
-            Continuer avec GitHub
+            <span data-i18n="login.continueGithub">Continuer avec GitHub</span>
           </button>
         </div>
         <div class="login-links">
-          <a href="#" id="link-forgot">Mot de passe oublie ?</a>
-          <a href="#" id="link-register">Creer un compte</a>
+          <a href="#" id="link-forgot" data-i18n="login.forgotPassword">Mot de passe oublie ?</a>
+          <a href="#" id="link-register" data-i18n="login.createAccount">Creer un compte</a>
         </div>
       </div>
     </section>
@@ -91,6 +91,21 @@
         <div id="credits-container"></div>
       </div>
     </section>
+    <!-- Language Selector -->
+    <footer id="lang-selector" class="lang-selector">
+      <button class="lang-flag" data-lang="fr" title="Francais">
+        <img src="../icons/fr.svg" alt="FR" width="20" height="15">
+      </button>
+      <button class="lang-flag" data-lang="en" title="English">
+        <img src="../icons/gb.svg" alt="EN" width="20" height="15">
+      </button>
+      <button class="lang-flag" data-lang="es" title="Espanol">
+        <img src="../icons/es.svg" alt="ES" width="20" height="15">
+      </button>
+      <button class="lang-flag" data-lang="de" title="Deutsch">
+        <img src="../icons/de.svg" alt="DE" width="20" height="15">
+      </button>
+    </footer>
   </div>
 
   <script type="module" src="popup.js"></script>

@@ -57,29 +57,36 @@ export async function isAuthenticated() {
   return !!token;
 }
 
-// --- Error message mapping (server i18n keys → French UI messages) ---
+import { t } from './i18n.js';
 
-const ERROR_MESSAGES = {
-  'errors.api.auth.invalidCredentials': 'Email ou mot de passe incorrect',
-  'errors.api.auth.emailNotVerified': 'Email non vérifié. Vérifiez votre boîte de réception.',
-  'errors.api.auth.emailAndPasswordRequired': 'Email et mot de passe requis',
-  'errors.api.auth.tokenRequired': 'Session requise',
-  'errors.api.auth.tokenExpired': 'Session expirée',
-  'errors.api.auth.tokenInvalid': 'Session invalide',
-  'errors.api.extension.serviceUnavailable': 'Service temporairement indisponible (maintenance)',
-  'errors.api.extension.baseFileRequired': 'CV de base requis',
-  'errors.api.extension.offersRequired': 'Au moins une offre est requise',
-  'errors.api.extension.offerContentInsufficient': 'Contenu de l\'offre insuffisant',
-  'errors.api.extension.sourceCvNotFound': 'CV source introuvable',
-  'errors.api.extension.cancelParamsMissing': 'Paramètres d\'annulation manquants',
-  'errors.api.extension.taskNotFound': 'Tâche introuvable',
-  'errors.api.common.notAuthenticated': 'Non authentifié',
-  'errors.api.common.serverError': 'Erreur serveur',
-  'errors.api.subscription.limitReached': 'Crédits insuffisants',
+// --- Error key mapping (server i18n keys → extension i18n keys) ---
+
+const ERROR_KEY_MAP = {
+  'errors.api.auth.invalidCredentials': 'errors.invalidCredentials',
+  'errors.api.auth.emailNotVerified': 'errors.emailNotVerified',
+  'errors.api.auth.emailAndPasswordRequired': 'errors.emailAndPasswordRequired',
+  'errors.api.auth.tokenRequired': 'errors.tokenRequired',
+  'errors.api.auth.tokenExpired': 'errors.tokenExpired',
+  'errors.api.auth.tokenInvalid': 'errors.tokenInvalid',
+  'errors.api.extension.serviceUnavailable': 'errors.serviceUnavailable',
+  'errors.api.extension.baseFileRequired': 'errors.baseFileRequired',
+  'errors.api.extension.offersRequired': 'errors.offersRequired',
+  'errors.api.extension.offerContentInsufficient': 'errors.offerContentInsufficient',
+  'errors.api.extension.sourceCvNotFound': 'errors.sourceCvNotFound',
+  'errors.api.extension.cancelParamsMissing': 'errors.cancelParamsMissing',
+  'errors.api.extension.taskNotFound': 'errors.taskNotFound',
+  'errors.api.common.notAuthenticated': 'errors.notAuthenticated',
+  'errors.api.common.serverError': 'errors.serverError',
+  'errors.api.subscription.limitReached': 'errors.limitReached',
 };
 
 function resolveErrorMessage(errorKey) {
-  return ERROR_MESSAGES[errorKey] || errorKey;
+  const i18nKey = ERROR_KEY_MAP[errorKey];
+  if (i18nKey) {
+    const translated = t(i18nKey);
+    if (translated !== i18nKey) return translated;
+  }
+  return errorKey;
 }
 
 // --- Token refresh ---
@@ -157,7 +164,7 @@ async function apiFetch(path, options = {}) {
   // Still 401 after retry — clear credentials and throw
   if (response.status === 401) {
     await clearToken();
-    throw new AuthError('Session expirée');
+    throw new AuthError(t('errors.sessionExpired'));
   }
 
   return response;

@@ -6,22 +6,22 @@
 
 import browser from 'webextension-polyfill';
 import { fetchCvList } from '../../lib/api-client.js';
+import { t } from '../../lib/i18n.js';
 
 const LANGUAGE_FLAGS = {
-  fr: '\uD83C\uDDEB\uD83C\uDDF7',
-  en: '\uD83C\uDDEC\uD83C\uDDE7',
-  es: '\uD83C\uDDEA\uD83C\uDDF8',
-  de: '\uD83C\uDDE9\uD83C\uDDEA',
-  it: '\uD83C\uDDEE\uD83C\uDDF9',
-  pt: '\uD83C\uDDF5\uD83C\uDDF9',
-  nl: '\uD83C\uDDF3\uD83C\uDDF1',
+  fr: 'fr.svg',
+  en: 'gb.svg',
+  es: 'es.svg',
+  de: 'de.svg',
+  it: 'fr.svg',
+  pt: 'fr.svg',
+  nl: 'fr.svg',
 };
 
 function getCvIcon(item) {
-  if (item.isTranslated) return '\uD83C\uDF10'; // globe
-  if (item.isGenerated) return '\u2728';         // sparkles
-  if (item.isImported) return '\uD83D\uDCE5';    // inbox
-  return '\uD83D\uDCC4';                          // page
+  if (item.isTranslated) return '<img src="../icons/translate.png" alt="">';
+  if (item.isImported) return '<img src="../icons/import.svg" alt="">';
+  return '<img src="../icons/add.svg" alt="">';
 }
 
 const SELECTED_CV_KEY = 'fitmycv_selected_cv';
@@ -45,7 +45,7 @@ export async function initCvSelector(container, onChange) {
     if (items.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          Aucun CV trouve. <a href="#" id="link-create-cv">Creez-en un sur FitMyCV</a>
+          ${escapeHtml(t('cvSelector.empty'))} <a href="#" id="link-create-cv">${escapeHtml(t('cvSelector.createLink'))}</a>
         </div>
       `;
       container.querySelector('#link-create-cv')?.addEventListener('click', (e) => {
@@ -73,12 +73,13 @@ export async function initCvSelector(container, onChange) {
       el.className = 'cv-item';
       el.dataset.file = item.file;
 
-      const flag = item.language ? (LANGUAGE_FLAGS[item.language] || '') : '';
+      const flagFile = item.language ? (LANGUAGE_FLAGS[item.language] || null) : null;
+      const flagHtml = flagFile ? `<span class="cv-item-flag"><img src="../icons/${flagFile}" alt="${item.language}"></span>` : '';
 
       el.innerHTML = `
         <span class="cv-item-icon">${getCvIcon(item)}</span>
         <span class="cv-item-label">${escapeHtml(item.label)}</span>
-        ${flag ? `<span class="cv-item-flag">${flag}</span>` : ''}
+        ${flagHtml}
       `;
 
       el.addEventListener('click', () => {
@@ -112,7 +113,7 @@ export async function initCvSelector(container, onChange) {
     });
 
   } catch (err) {
-    container.innerHTML = `<div class="error-msg">Erreur chargement des CVs: ${escapeHtml(err.message)}</div>`;
+    container.innerHTML = `<div class="error-msg">${escapeHtml(t('cvSelector.loadError'))}: ${escapeHtml(err.message)}</div>`;
   }
 }
 

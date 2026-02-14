@@ -56,10 +56,10 @@ header {
   background: rgba(255, 255, 255, 0.03);
 }
 
-.logo {
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--emerald-400);
+.logo-img {
+  height: 22px;
+  width: auto;
+  display: block;
 }
 
 .header-center {
@@ -361,6 +361,14 @@ h2 {
 .cv-item-icon {
   flex-shrink: 0;
   font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.cv-item-icon img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
 }
 
 .cv-item-label {
@@ -374,6 +382,14 @@ h2 {
 .cv-item-flag {
   flex-shrink: 0;
   font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.cv-item-flag img {
+  width: 18px;
+  height: 13px;
+  object-fit: contain;
 }
 
 .cv-item-special {
@@ -644,4 +660,38 @@ h2 {
 ::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 2px;
+}
+
+/* --- Language Selector --- */
+.lang-selector {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.lang-flag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 6px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.15s;
+}
+
+.lang-flag:hover {
+  opacity: 0.8;
+  background: var(--surface);
+}
+
+.lang-flag.active {
+  opacity: 1;
+  border-color: var(--emerald-500);
+  background: rgba(16, 185, 129, 0.1);
 }
