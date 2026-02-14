@@ -207,7 +207,9 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
       return;
     }
     setError("");
-    signIn(provider, { callbackUrl: "/" });
+    const params = new URLSearchParams(window.location.search);
+    const callbackUrl = params.get('callbackUrl') || '/';
+    signIn(provider, { callbackUrl });
   }
 
   return (

@@ -93,9 +93,58 @@ bash ~/.claude/skills/postgres-prisma/scripts/query_db.sh "SELECT * FROM \"Table
 
 ## Structure Projet
 
-* `app/api/` : 114 API Routes (auth, cv, admin...).
+* `app/api/` : API Routes (auth, cv, admin, extension...).
 * `prisma/` : Schémas, migrations et `data-migrations/`.
 * `scripts/` : Scripts d'automatisation (versioning, runner de données).
 * `docs/` : Documentation technique (Markdown et HTML) à maintenir synchronisées.
+* `extension/` : Extension navigateur Chrome/Firefox (voir section dédiée ci-dessous).
+
+## Extension Navigateur (`extension/`)
+
+Extension Chrome/Firefox Manifest V3 pour extraire les offres d'emploi depuis les sites d'emploi et lancer la génération de CV optimisés via le SaaS.
+
+### Stack Extension
+
+* **Build** : Vite + `vite-plugin-web-extension`, ESM
+* **Manifest V3** : Service worker, content scripts, popup
+* **Dépendances** : `@mozilla/readability`, `turndown` (HTML→Markdown), `webextension-polyfill`
+
+### Commandes Extension
+
+```bash
+cd extension && npm run dev           # Build watch + API dev (dev.fitmycv.io)
+cd extension && npm run build:chrome  # Build production Chrome
+cd extension && npm run build:firefox # Build production Firefox
+cd extension && npm run zip:chrome    # Zip pour publication Chrome Web Store
+```
+
+### Architecture Extension
 
 ```
+extension/
+├── background/service-worker.js    # Badge, polling tâches, message routing
+├── content-scripts/
+│   ├── detector.js                 # Détection d'offres sur job boards
+│   ├── extractor.js                # Extraction contenu HTML→Markdown
+│   └── auth-receiver.js           # Réception token OAuth depuis le SaaS
+├── popup/
+│   ├── popup.html / popup.js / popup.css
+│   └── views/                     # login, cv-selector, offer-list, progress
+├── lib/
+│   ├── api-client.js              # Client API authentifié (Bearer JWT)
+│   ├── scoring.js                 # Scoring CV↔offre
+│   └── site-selectors.js          # Sélecteurs CSS par job board
+├── manifest.json                  # Config Manifest V3
+└── vite.config.js                 # Config build (__API_BASE__, TARGET_BROWSER)
+```
+
+### Points Clés Extension ↔ SaaS
+
+* **Variable `__API_BASE__`** : Définie dans `vite.config.js` via `API_BASE` env var (défaut: `https://fitmycv.io`)
+* **Variable `TARGET_BROWSER`** : Utiliser `TARGET_BROWSER` (pas `process.env.BROWSER` qui est pris par VS Code Server)
+* **Auth** : L'extension s'authentifie via `/api/auth/extension-token` → JWT vérifié par `withExtensionAuth` (`lib/api/withExtensionAuth.js`)
+* **API Extension** : Routes `/api/ext/*` — CVs, crédits, tâches background
+* **CORS** : Géré dans `proxy.js` (pas middleware.js)
+* **Flux données** : Extension envoie du Markdown brut → serveur exécute `extractJobOfferFromMarkdown()` → stocke du JSON structuré → pipeline CV fonctionne
+* **Sites supportés** : LinkedIn, Indeed, APEC, France Travail, Glassdoor, Welcome to the Jungle, Monster, CadreEmploi, HelloWork, LesJeudis
+* **Chargement dev** : `chrome://extensions` → Mode développeur → Charger l'extension non empaquetée → `extension/dist/chrome/`
