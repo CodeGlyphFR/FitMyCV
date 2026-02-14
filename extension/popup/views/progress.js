@@ -116,6 +116,12 @@ async function renderTasks(container) {
   container.innerHTML = '';
 
   const apiBase = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.io';
+  const TERMINAL_STATUSES = ['completed', 'failed', 'cancelled'];
+  const hasTerminalTasks = tasks.some(t => TERMINAL_STATUSES.includes(t.status));
+
+  // Scrollable wrapper for task items
+  const scrollWrapper = document.createElement('div');
+  scrollWrapper.className = 'progress-tasks-scroll';
 
   for (const task of tasks) {
     const el = document.createElement('div');
@@ -199,19 +205,36 @@ async function renderTasks(container) {
       });
     }
 
-    container.appendChild(el);
+    scrollWrapper.appendChild(el);
   }
 
-  // "Clear" button — always visible when there are tasks
-  const clearLink = document.createElement('button');
-  clearLink.className = 'btn-clear-tasks';
-  clearLink.textContent = 'Effacer';
-  clearLink.addEventListener('click', async () => {
-    await browser.storage.local.remove('fitmycv_session_task_ids');
-    container.innerHTML = '';
-    container.style.display = 'none';
-  });
-  container.appendChild(clearLink);
+  container.appendChild(scrollWrapper);
+
+  // "Clear" button — outside scroll, only removes terminal tasks
+  if (hasTerminalTasks) {
+    const clearLink = document.createElement('button');
+    clearLink.className = 'btn-clear-tasks';
+    clearLink.textContent = 'Effacer';
+    clearLink.addEventListener('click', async () => {
+      const stored = await browser.storage.local.get([STORAGE_KEY, 'fitmycv_session_task_ids']);
+      const storedTasks = stored[STORAGE_KEY] || [];
+      const sessionIds = stored['fitmycv_session_task_ids'] || [];
+
+      // Keep only in-progress task IDs in the session
+      const remainingIds = sessionIds.filter(id => {
+        const task = storedTasks.find(t => t.id === id);
+        return task && !TERMINAL_STATUSES.includes(task.status);
+      });
+
+      if (remainingIds.length > 0) {
+        await browser.storage.local.set({ 'fitmycv_session_task_ids': remainingIds });
+      } else {
+        await browser.storage.local.remove('fitmycv_session_task_ids');
+      }
+      await renderTasks(container);
+    });
+    container.appendChild(clearLink);
+  }
 }
 
 function escapeHtml(str) {

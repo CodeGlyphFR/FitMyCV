@@ -558,6 +558,9 @@ h2 {
 
 #progress-inline-container {
   margin-bottom: 12px;
+}
+
+.progress-tasks-scroll {
   max-height: 186px;
   overflow-y: auto;
 }
