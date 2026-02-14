@@ -56,6 +56,11 @@ header {
   background: rgba(255, 255, 255, 0.03);
 }
 
+.logo-link {
+  display: flex;
+  align-items: center;
+}
+
 .logo-img {
   height: 22px;
   width: auto;
@@ -692,6 +697,4 @@ h2 {
 
 .lang-flag.active {
   opacity: 1;
-  border-color: var(--emerald-500);
-  background: rgba(16, 185, 129, 0.1);
 }

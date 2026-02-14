@@ -155,6 +155,14 @@ async function showMainView() {
   await initOfferList(offerContainer, creditsContainer);
 }
 
+// --- Logo link ---
+
+const API_BASE = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.io';
+document.getElementById('logo-link').addEventListener('click', (e) => {
+  e.preventDefault();
+  browser.tabs.create({ url: API_BASE });
+});
+
 // --- Logout ---
 
 document.getElementById('btn-logout').addEventListener('click', async () => {
