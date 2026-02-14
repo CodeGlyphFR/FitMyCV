@@ -140,14 +140,9 @@ function renderCredits(creditsContainer) {
     const bar = document.createElement('div');
     bar.className = 'credits-bar';
 
-    const balanceText = availableCredits !== null
-      ? `${availableCredits} credits`
-      : 'Credits: --';
-
     const costClass = hasEnough ? 'credits-cost' : 'credits-insufficient';
 
     bar.innerHTML = `
-      <span class="credits-balance">${escapeHtml(t('offers.creditsBalance', { balance: balanceText }))}</span>
       <span class="${costClass}">${escapeHtml(t('offers.creditsCost', { total: totalCost, count: offers.length, cost: costPerOffer }))}</span>
     `;
     creditsContainer.appendChild(bar);

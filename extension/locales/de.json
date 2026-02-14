@@ -36,7 +36,6 @@
     "emptyState": "Keine Angebote hinzugefugt. Besuchen Sie eine Jobseite und klicken Sie oben.",
     "noTitle": "Ohne Titel",
     "removeTitle": "Entfernen",
-    "creditsBalance": "Guthaben: {balance}",
     "creditsCost": "Kosten: {total} Credits ({count} x {cost})",
     "creditsInsufficient": "Nicht genugend Credits. Es fehlen {missing} Credits.",
     "generateButton": "{count} Lebenslauf generieren",

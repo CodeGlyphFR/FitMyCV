@@ -36,7 +36,6 @@
     "emptyState": "No offers added. Browse a job site and click above.",
     "noTitle": "Untitled",
     "removeTitle": "Remove",
-    "creditsBalance": "Balance: {balance}",
     "creditsCost": "Cost: {total} credits ({count} x {cost})",
     "creditsInsufficient": "Insufficient credits. You need {missing} more credits.",
     "generateButton": "Generate {count} CV",

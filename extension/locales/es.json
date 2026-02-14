@@ -36,7 +36,6 @@
     "emptyState": "Sin ofertas agregadas. Navega en un sitio de empleo y haz clic arriba.",
     "noTitle": "Sin titulo",
     "removeTitle": "Eliminar",
-    "creditsBalance": "Saldo: {balance}",
     "creditsCost": "Costo: {total} creditos ({count} x {cost})",
     "creditsInsufficient": "Creditos insuficientes. Te faltan {missing} creditos.",
     "generateButton": "Generar {count} CV",

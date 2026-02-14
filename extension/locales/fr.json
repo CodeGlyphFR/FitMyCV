@@ -36,7 +36,6 @@
     "emptyState": "Aucune offre ajoutee. Naviguez sur un site d'emploi et cliquez ci-dessus.",
     "noTitle": "Sans titre",
     "removeTitle": "Retirer",
-    "creditsBalance": "Solde: {balance}",
     "creditsCost": "Cout: {total} credits ({count} x {cost})",
     "creditsInsufficient": "Credits insuffisants. Il vous manque {missing} credits.",
     "generateButton": "Generer {count} CV",

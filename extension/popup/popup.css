@@ -511,10 +511,6 @@ h2 {
   font-size: 12px;
 }
 
-.credits-balance {
-  color: var(--text-secondary);
-}
-
 .credits-cost {
   color: var(--emerald-400);
   font-weight: 600;
