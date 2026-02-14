@@ -5,7 +5,7 @@
  */
 
 import browser from 'webextension-polyfill';
-import { isAuthenticated, getUser, logout } from '../lib/api-client.js';
+import { isAuthenticated, getUser, logout, fetchCreditBalance } from '../lib/api-client.js';
 import { initLogin } from './views/login.js';
 import { initCvSelector } from './views/cv-selector.js';
 import { initOfferList } from './views/offer-list.js';
@@ -52,6 +52,22 @@ function showUserHeader(user) {
   const userName = document.getElementById('user-name');
   headerUser.style.display = 'flex';
   userName.textContent = user?.name || user?.email || '';
+
+  // Load credit balance in header
+  loadHeaderCredits();
+}
+
+async function loadHeaderCredits() {
+  try {
+    const balance = await fetchCreditBalance();
+    const credits = balance?.credits ?? balance?.balance ?? null;
+    if (credits !== null) {
+      const el = document.getElementById('credits-display');
+      const container = document.getElementById('header-credits');
+      el.textContent = `${credits} crédits`;
+      container.style.display = '';
+    }
+  } catch { /* silent */ }
 }
 
 async function onLoginSuccess(user) {

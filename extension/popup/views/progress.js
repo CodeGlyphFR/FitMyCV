@@ -99,10 +99,17 @@ async function renderTasks(container) {
   const allTasks = data[STORAGE_KEY] || [];
   const sessionTaskIds = data['fitmycv_session_task_ids'] || [];
 
-  // Show only tasks from this extension session (not full history)
+  // Show only tasks from this extension session, sorted like the SaaS task manager:
+  // active tasks first (running/queued/analyzing), then the rest by date desc
+  const ACTIVE_STATUSES = { running: 0, queued: 1, analyzing: 1 };
   const tasks = allTasks
     .filter(t => t.type === 'cv_generation' && sessionTaskIds.includes(t.id))
-    .sort((a, b) => b.createdAt - a.createdAt)
+    .sort((a, b) => {
+      const pa = ACTIVE_STATUSES[a.status] ?? 2;
+      const pb = ACTIVE_STATUSES[b.status] ?? 2;
+      if (pa !== pb) return pa - pb;
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    })
     .slice(0, 20);
 
   // Hide container entirely when no tasks
@@ -143,7 +150,7 @@ async function renderTasks(container) {
     const isCancellable = ['queued', 'running', 'analyzing'].includes(task.status);
     let cancelHtml = '';
     if (isCancellable) {
-      cancelHtml = `<button class="btn-cancel-task" data-action="cancel-task" data-task-id="${escapeHtml(task.id)}">Annuler</button>`;
+      cancelHtml = `<button class="task-remove" data-action="cancel-task" data-task-id="${escapeHtml(task.id)}" title="Annuler">&times;</button>`;
     }
 
     el.innerHTML = `
@@ -160,12 +167,22 @@ async function renderTasks(container) {
       </div>
     `;
 
-    // Completed card → clickable, opens CV in SaaS
+    // Completed card → clickable, sets cvFile cookie then opens SaaS
     if (task.status === 'completed') {
-      el.addEventListener('click', (e) => {
+      el.addEventListener('click', async (e) => {
         if (e.target.closest('a')) return; // don't intercept hostname link
-        const cvQuery = task.cvFile ? `?cv=${encodeURIComponent(task.cvFile)}` : '';
-        browser.tabs.create({ url: `${apiBase}${cvQuery}` });
+        if (task.cvFile) {
+          const url = new URL(apiBase);
+          await browser.cookies.set({
+            url: apiBase,
+            name: 'cvFile',
+            value: task.cvFile,
+            path: '/',
+            domain: url.hostname,
+            expirationDate: Math.floor(Date.now() / 1000) + 31536000,
+          });
+        }
+        browser.tabs.create({ url: apiBase });
       });
     }
 
@@ -175,19 +192,14 @@ async function renderTasks(container) {
       cancelBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const tid = cancelBtn.dataset.taskId;
-        cancelBtn.textContent = 'Annulation\u2026';
         cancelBtn.disabled = true;
 
         const cancelTimeout = setTimeout(() => {
-          cancelBtn.textContent = 'Erreur (timeout)';
-          setTimeout(() => {
-            cancelBtn.textContent = 'Annuler';
-            cancelBtn.disabled = false;
-          }, 2000);
+          cancelBtn.disabled = false;
         }, 10000);
 
         try {
-          const response = await cancelTask(tid);
+          await cancelTask(tid);
           clearTimeout(cancelTimeout);
           const stored = await browser.storage.local.get(STORAGE_KEY);
           const tasks = stored[STORAGE_KEY] || [];
@@ -196,11 +208,7 @@ async function renderTasks(container) {
           await renderTasks(container);
         } catch {
           clearTimeout(cancelTimeout);
-          cancelBtn.textContent = 'Erreur';
-          setTimeout(() => {
-            cancelBtn.textContent = 'Annuler';
-            cancelBtn.disabled = false;
-          }, 2000);
+          cancelBtn.disabled = false;
         }
       });
     }

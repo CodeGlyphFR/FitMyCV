@@ -43,14 +43,14 @@ async function updatePicklistBadge() {
 
 function setIconActive(tabId) {
   browser.action.setIcon({
-    path: { 16: 'icons/icon-16.png', 48: 'icons/icon-48.png', 128: 'icons/icon-128.png' },
+    path: { 16: '/icons/icon-16.png', 48: '/icons/icon-48.png', 128: '/icons/icon-128.png' },
     tabId,
   });
 }
 
 function setIconInactive(tabId) {
   browser.action.setIcon({
-    path: { 16: 'icons/icon-16-grey.png', 48: 'icons/icon-48-grey.png', 128: 'icons/icon-128-grey.png' },
+    path: { 16: '/icons/icon-16-grey.png', 48: '/icons/icon-48-grey.png', 128: '/icons/icon-128-grey.png' },
     tabId,
   });
 }
