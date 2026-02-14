@@ -88,6 +88,9 @@ function render(container, creditsContainer) {
     empty.textContent = 'Aucune offre ajoutee. Naviguez sur un site d\'emploi et cliquez ci-dessus.';
     container.appendChild(empty);
   } else {
+    const scrollWrapper = document.createElement('div');
+    scrollWrapper.className = 'offer-items-scroll';
+
     offers.forEach((offer, index) => {
       const el = document.createElement('div');
       el.className = 'offer-item';
@@ -103,8 +106,10 @@ function render(container, creditsContainer) {
         removeOffer(index);
         render(container, creditsContainer);
       });
-      container.appendChild(el);
+      scrollWrapper.appendChild(el);
     });
+
+    container.appendChild(scrollWrapper);
   }
 
   // Credits bar

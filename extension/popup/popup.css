@@ -445,6 +445,11 @@ h2 {
   cursor: not-allowed;
 }
 
+.offer-items-scroll {
+  max-height: 192px;
+  overflow-y: auto;
+}
+
 .empty-state {
   text-align: center;
   padding: 24px 16px;
@@ -487,11 +492,37 @@ h2 {
   margin-bottom: 8px;
 }
 
+.progress-item.clickable {
+  cursor: pointer;
+}
+
+.progress-item.clickable:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-focus);
+}
+
 .progress-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+}
+
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progress-source-link {
+  color: var(--text-tertiary);
+  text-decoration: none;
+  font-size: 11px;
+}
+
+.progress-source-link:hover {
+  text-decoration: underline;
+  color: var(--text-secondary);
 }
 
 .progress-title {
@@ -501,20 +532,6 @@ h2 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.progress-source {
-  font-size: 11px;
-  margin-bottom: 4px;
-}
-
-.progress-source a {
-  color: var(--text-secondary);
-  text-decoration: none;
-}
-
-.progress-source a:hover {
-  text-decoration: underline;
 }
 
 .progress-status {
@@ -539,29 +556,10 @@ h2 {
 .dot.failed { background: var(--red-400); }
 .dot.cancelled { background: var(--text-tertiary); }
 
-.progress-action {
-  margin-top: 8px;
-}
-
-.progress-action a {
-  color: var(--emerald-400);
-  text-decoration: none;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.progress-action a:hover {
-  color: var(--emerald-300);
-}
-
-.progress-error {
-  color: var(--red-400);
-  font-size: 11px;
-  margin-top: 4px;
-}
-
 #progress-inline-container {
   margin-bottom: 12px;
+  max-height: 186px;
+  overflow-y: auto;
 }
 
 .btn-clear-tasks {

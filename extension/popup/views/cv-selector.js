@@ -24,6 +24,7 @@ function getCvIcon(item) {
   return '\uD83D\uDCC4';                          // page
 }
 
+const SELECTED_CV_KEY = 'fitmycv_selected_cv';
 let selectedCv = null;
 let onChangeCallback = null;
 
@@ -92,8 +93,10 @@ export async function initCvSelector(container, onChange) {
     container.innerHTML = '';
     container.appendChild(dropdown);
 
-    // Pre-select current or first CV
-    const defaultItem = items.find(i => i.file === current) || items[0];
+    // Pre-select: stored > current API > first
+    const storedData = await browser.storage.local.get(SELECTED_CV_KEY);
+    const storedCv = storedData[SELECTED_CV_KEY] || null;
+    const defaultItem = items.find(i => i.file === storedCv) || items.find(i => i.file === current) || items[0];
     selectCv(defaultItem, trigger, list);
 
     // Toggle dropdown
@@ -115,6 +118,7 @@ export async function initCvSelector(container, onChange) {
 
 function selectCv(item, trigger, list) {
   selectedCv = item.file;
+  browser.storage.local.set({ [SELECTED_CV_KEY]: item.file });
   trigger.textContent = item.label;
 
   // Update selected state

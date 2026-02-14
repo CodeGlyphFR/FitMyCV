@@ -39,18 +39,51 @@ async function updatePicklistBadge() {
   }
 }
 
-async function setBadgeDetected(tabId) {
-  // Only show per-tab "!" if the picklist is empty (picklist badge takes priority)
-  const data = await browser.storage.local.get(PICKLIST_KEY);
-  const picklist = data[PICKLIST_KEY] || [];
-  if (picklist.length > 0) return;
+// --- Icon Management (active = colored, inactive = greyscale) ---
 
-  browser.action.setBadgeText({ text: '!', tabId });
-  browser.action.setBadgeBackgroundColor({ color: BADGE_COLOR, tabId });
+const ICON_SIZES = [16, 48];
+let greyIconCache = null; // { 16: ImageData, 48: ImageData }
+
+async function generateGreyIcons() {
+  if (greyIconCache) return greyIconCache;
+  const cache = {};
+  for (const size of ICON_SIZES) {
+    const url = browser.runtime.getURL(`icons/icon-${size}.png`);
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const bitmap = await createImageBitmap(blob);
+    const canvas = new OffscreenCanvas(size, size);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(bitmap, 0, 0);
+    const imageData = ctx.getImageData(0, 0, size, size);
+    const pixels = imageData.data;
+    for (let i = 0; i < pixels.length; i += 4) {
+      const grey = Math.round(0.299 * pixels[i] + 0.587 * pixels[i + 1] + 0.114 * pixels[i + 2]);
+      pixels[i] = grey;
+      pixels[i + 1] = grey;
+      pixels[i + 2] = grey;
+    }
+    cache[size] = imageData;
+  }
+  greyIconCache = cache;
+  return cache;
 }
 
-function clearBadge(tabId) {
-  browser.action.setBadgeText({ text: '', tabId });
+async function setIconActive(tabId) {
+  const path = {};
+  for (const size of ICON_SIZES) path[size] = `icons/icon-${size}.png`;
+  browser.action.setIcon({ path, tabId });
+}
+
+async function setIconInactive(tabId) {
+  try {
+    const cache = await generateGreyIcons();
+    const imageData = {};
+    for (const size of ICON_SIZES) imageData[size] = cache[size];
+    browser.action.setIcon({ imageData, tabId });
+  } catch {
+    // Fallback: keep default icon if OffscreenCanvas fails
+  }
 }
 
 // --- Polling ---
@@ -201,13 +234,13 @@ browser.runtime.onMessage.addListener((message, sender) => {
   switch (message.type) {
     case 'JOB_OFFER_DETECTED':
       if (sender.tab?.id) {
-        setBadgeDetected(sender.tab.id);
+        setIconActive(sender.tab.id);
       }
       return;
 
     case 'JOB_OFFER_NOT_DETECTED':
       if (sender.tab?.id) {
-        clearBadge(sender.tab.id);
+        setIconInactive(sender.tab.id);
       }
       return;
 
@@ -256,10 +289,10 @@ browser.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-// Clear badge when navigating away
+// Reset icon to inactive when navigating away
 browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === 'loading') {
-    clearBadge(tabId);
+    setIconInactive(tabId);
   }
 });
 

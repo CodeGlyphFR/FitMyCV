@@ -115,41 +115,29 @@ async function renderTasks(container) {
   container.style.display = '';
   container.innerHTML = '';
 
+  const apiBase = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.io';
+
   for (const task of tasks) {
     const el = document.createElement('div');
     el.className = 'progress-item';
+    if (task.status === 'completed') el.classList.add('clickable');
 
     const statusLabel = getStatusDisplay(task);
     const dotClass = task.status;
 
-    let sourceHtml = '';
+    // Line 2 left: hostname link
+    let hostnameHtml = '';
     if (task.sourceUrl) {
       try {
         const hostname = new URL(task.sourceUrl).hostname.replace('www.', '');
-        sourceHtml = `<div class="progress-source"><a href="${escapeHtml(task.sourceUrl)}" target="_blank">${escapeHtml(hostname)}</a></div>`;
+        hostnameHtml = `<a class="progress-source-link" href="${escapeHtml(task.sourceUrl)}" target="_blank">${escapeHtml(hostname)}</a>`;
       } catch { /* invalid URL — skip */ }
     }
 
     const isCancellable = ['queued', 'running', 'analyzing'].includes(task.status);
     let cancelHtml = '';
     if (isCancellable) {
-      cancelHtml = `
-        <button class="btn-cancel-task" data-action="cancel-task" data-task-id="${escapeHtml(task.id)}">Annuler</button>
-      `;
-    }
-
-    let actionHtml = '';
-    if (task.status === 'completed') {
-      actionHtml = `
-        <div class="progress-action">
-          <a href="#" data-action="view-cv">Voir le CV sur FitMyCV &rarr;</a>
-        </div>
-      `;
-    }
-
-    let errorHtml = '';
-    if (task.status === 'failed' && task.error) {
-      errorHtml = `<div class="progress-error">${escapeHtml(task.error)}</div>`;
+      cancelHtml = `<button class="btn-cancel-task" data-action="cancel-task" data-task-id="${escapeHtml(task.id)}">Annuler</button>`;
     }
 
     el.innerHTML = `
@@ -157,34 +145,33 @@ async function renderTasks(container) {
         <div class="progress-title">${escapeHtml(task.title || 'Generation CV')}</div>
         ${cancelHtml}
       </div>
-      ${sourceHtml}
-      <div class="progress-status">
-        <span class="dot ${dotClass}"></span>
-        ${statusLabel}
+      <div class="progress-meta">
+        ${hostnameHtml}
+        <div class="progress-status">
+          <span class="dot ${dotClass}"></span>
+          ${statusLabel}
+        </div>
       </div>
-      ${errorHtml}
-      ${actionHtml}
     `;
 
-    // Handle "View CV" click
-    const viewLink = el.querySelector('[data-action="view-cv"]');
-    if (viewLink) {
-      viewLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        const apiBase = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.io';
-        browser.tabs.create({ url: apiBase });
+    // Completed card → clickable, opens CV in SaaS
+    if (task.status === 'completed') {
+      el.addEventListener('click', (e) => {
+        if (e.target.closest('a')) return; // don't intercept hostname link
+        const cvQuery = task.cvFile ? `?cv=${encodeURIComponent(task.cvFile)}` : '';
+        browser.tabs.create({ url: `${apiBase}${cvQuery}` });
       });
     }
 
     // Handle "Cancel" click
     const cancelBtn = el.querySelector('[data-action="cancel-task"]');
     if (cancelBtn) {
-      cancelBtn.addEventListener('click', async () => {
+      cancelBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
         const tid = cancelBtn.dataset.taskId;
         cancelBtn.textContent = 'Annulation\u2026';
         cancelBtn.disabled = true;
 
-        // Timeout to prevent infinite "Annulation..." state
         const cancelTimeout = setTimeout(() => {
           cancelBtn.textContent = 'Erreur (timeout)';
           setTimeout(() => {
@@ -196,7 +183,6 @@ async function renderTasks(container) {
         try {
           const response = await cancelTask(tid);
           clearTimeout(cancelTimeout);
-          // Update local storage immediately
           const stored = await browser.storage.local.get(STORAGE_KEY);
           const tasks = stored[STORAGE_KEY] || [];
           const updated = tasks.map(t => t.id === tid ? { ...t, status: 'cancelled' } : t);
@@ -216,19 +202,16 @@ async function renderTasks(container) {
     container.appendChild(el);
   }
 
-  // "Clear" link when all tasks are finished
-  const allDone = tasks.every(t => t.status === 'completed' || t.status === 'failed' || t.status === 'cancelled');
-  if (allDone) {
-    const clearLink = document.createElement('button');
-    clearLink.className = 'btn-clear-tasks';
-    clearLink.textContent = 'Effacer';
-    clearLink.addEventListener('click', async () => {
-      await browser.storage.local.remove('fitmycv_session_task_ids');
-      container.innerHTML = '';
-      container.style.display = 'none';
-    });
-    container.appendChild(clearLink);
-  }
+  // "Clear" button — always visible when there are tasks
+  const clearLink = document.createElement('button');
+  clearLink.className = 'btn-clear-tasks';
+  clearLink.textContent = 'Effacer';
+  clearLink.addEventListener('click', async () => {
+    await browser.storage.local.remove('fitmycv_session_task_ids');
+    container.innerHTML = '';
+    container.style.display = 'none';
+  });
+  container.appendChild(clearLink);
 }
 
 function escapeHtml(str) {
