@@ -20,6 +20,7 @@ import prisma from '@/lib/prisma';
 import { registerTaskTypeStart, enqueueJob } from '@/lib/background-jobs/jobQueue';
 import { startSingleOfferGeneration } from '@/lib/features/cv-adaptation';
 import { incrementFeatureCounter, refundFeatureUsage } from '@/lib/subscription/featureUsage';
+import { ExtensionErrors, CommonErrors } from '@/lib/api/apiErrors';
 
 function extractDomain(url) {
   try {
@@ -36,27 +37,18 @@ export const POST = withExtensionAuth(async (request, { userId }) => {
 
     // Validate input
     if (!baseFile || typeof baseFile !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'baseFile is required' },
-        { status: 400 }
-      );
+      return ExtensionErrors.baseFileRequired();
     }
 
     if (!Array.isArray(offers) || offers.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'At least one offer is required' },
-        { status: 400 }
-      );
+      return ExtensionErrors.offersRequired();
     }
 
     // Validate each offer
     for (let i = 0; i < offers.length; i++) {
       const offer = offers[i];
       if (!offer?.content || typeof offer.content !== 'string' || offer.content.trim().length < 50) {
-        return NextResponse.json(
-          { success: false, error: `Offer ${i} has insufficient content (minimum 50 characters)` },
-          { status: 400 }
-        );
+        return ExtensionErrors.offerContentInsufficient(i);
       }
     }
 
@@ -67,10 +59,7 @@ export const POST = withExtensionAuth(async (request, { userId }) => {
     });
 
     if (!cvFile) {
-      return NextResponse.json(
-        { success: false, error: 'Source CV not found' },
-        { status: 404 }
-      );
+      return ExtensionErrors.sourceCvNotFound();
     }
 
     const totalOffers = offers.length;
@@ -124,10 +113,7 @@ export const POST = withExtensionAuth(async (request, { userId }) => {
 
   } catch (error) {
     console.error('[generate-cv-from-content] Error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return CommonErrors.serverError();
   }
 });
 

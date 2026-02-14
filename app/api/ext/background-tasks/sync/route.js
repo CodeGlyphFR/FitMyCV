@@ -9,6 +9,7 @@ import { withExtensionAuth } from '@/lib/api/withExtensionAuth';
 import prisma from '@/lib/prisma';
 import { killRegisteredProcess } from '@/lib/background-jobs/processRegistry';
 import { refundCredit } from '@/lib/subscription/credits';
+import { ExtensionErrors, CommonErrors } from '@/lib/api/apiErrors';
 
 const MAX_RETURNED_TASKS = 150;
 
@@ -171,10 +172,7 @@ export const GET = withExtensionAuth(async (request, { userId }) => {
     });
   } catch (error) {
     console.error('[ext/sync] Error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch tasks' },
-      { status: 500 }
-    );
+    return CommonErrors.serverError();
   }
 });
 
@@ -185,10 +183,7 @@ export const DELETE = withExtensionAuth(async (request, { userId }) => {
     const action = searchParams.get('action');
 
     if (!taskId || action !== 'cancel') {
-      return NextResponse.json(
-        { success: false, error: 'taskId and action=cancel required' },
-        { status: 400 }
-      );
+      return ExtensionErrors.cancelParamsMissing();
     }
 
     // Verify ownership
@@ -198,10 +193,7 @@ export const DELETE = withExtensionAuth(async (request, { userId }) => {
     });
 
     if (!task) {
-      return NextResponse.json(
-        { success: false, error: 'Task not found' },
-        { status: 404 }
-      );
+      return ExtensionErrors.taskNotFound();
     }
 
     const shouldRefund = task.status === 'queued' || task.status === 'running';
@@ -257,9 +249,6 @@ export const DELETE = withExtensionAuth(async (request, { userId }) => {
     });
   } catch (error) {
     console.error('[ext/cancel] Error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to cancel task' },
-      { status: 500 }
-    );
+    return CommonErrors.serverError();
   }
 });

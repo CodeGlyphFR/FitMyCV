@@ -6,6 +6,7 @@
  */
 
 import browser from 'webextension-polyfill';
+import { shouldRefreshToken } from './token-utils.js';
 
 // Base URL — configurable via build env
 const API_BASE = typeof __API_BASE__ !== 'undefined'
@@ -56,9 +57,79 @@ export async function isAuthenticated() {
   return !!token;
 }
 
+// --- Error message mapping (server i18n keys → French UI messages) ---
+
+const ERROR_MESSAGES = {
+  'errors.api.auth.invalidCredentials': 'Email ou mot de passe incorrect',
+  'errors.api.auth.emailNotVerified': 'Email non vérifié. Vérifiez votre boîte de réception.',
+  'errors.api.auth.emailAndPasswordRequired': 'Email et mot de passe requis',
+  'errors.api.auth.tokenRequired': 'Session requise',
+  'errors.api.auth.tokenExpired': 'Session expirée',
+  'errors.api.auth.tokenInvalid': 'Session invalide',
+  'errors.api.extension.serviceUnavailable': 'Service temporairement indisponible (maintenance)',
+  'errors.api.extension.baseFileRequired': 'CV de base requis',
+  'errors.api.extension.offersRequired': 'Au moins une offre est requise',
+  'errors.api.extension.offerContentInsufficient': 'Contenu de l\'offre insuffisant',
+  'errors.api.extension.sourceCvNotFound': 'CV source introuvable',
+  'errors.api.extension.cancelParamsMissing': 'Paramètres d\'annulation manquants',
+  'errors.api.extension.taskNotFound': 'Tâche introuvable',
+  'errors.api.common.notAuthenticated': 'Non authentifié',
+  'errors.api.common.serverError': 'Erreur serveur',
+  'errors.api.subscription.limitReached': 'Crédits insuffisants',
+};
+
+function resolveErrorMessage(errorKey) {
+  return ERROR_MESSAGES[errorKey] || errorKey;
+}
+
+// --- Token refresh ---
+
+let refreshInProgress = null;
+
+async function refreshToken() {
+  const token = await getToken();
+  if (!token) return false;
+
+  try {
+    const response = await fetch(`${API_BASE}/api/auth/extension-token/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) return false;
+
+    const data = await response.json();
+    if (data.success && data.token) {
+      await setToken(data.token);
+      if (data.user) await setUser(data.user);
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+async function ensureTokenFresh() {
+  const token = await getToken();
+  if (!token || !shouldRefreshToken(token)) return;
+
+  // Mutex: avoid concurrent refresh calls
+  if (!refreshInProgress) {
+    refreshInProgress = refreshToken().finally(() => { refreshInProgress = null; });
+  }
+  await refreshInProgress;
+}
+
 // --- API helpers ---
 
 async function apiFetch(path, options = {}) {
+  // Proactive refresh: renew if token expires in < 24h
+  await ensureTokenFresh();
+
   const token = await getToken();
   const url = `${API_BASE}${path}`;
 
@@ -71,15 +142,22 @@ async function apiFetch(path, options = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  let response = await fetch(url, { ...options, headers });
 
-  // Handle 401 — token expired or invalid
+  // Reactive refresh: on 401, try refresh once then retry
+  if (response.status === 401 && token) {
+    const refreshed = await refreshToken();
+    if (refreshed) {
+      const newToken = await getToken();
+      headers['Authorization'] = `Bearer ${newToken}`;
+      response = await fetch(url, { ...options, headers });
+    }
+  }
+
+  // Still 401 after retry — clear credentials and throw
   if (response.status === 401) {
     await clearToken();
-    throw new AuthError('Session expired');
+    throw new AuthError('Session expirée');
   }
 
   return response;
@@ -108,7 +186,7 @@ export async function login(email, password) {
   const data = await response.json();
 
   if (!response.ok || !data.success) {
-    throw new Error(data.error || 'Login failed');
+    throw new Error(resolveErrorMessage(data.error || 'Login failed'));
   }
 
   await setToken(data.token);
@@ -175,7 +253,7 @@ export async function submitOffers(baseFile, offers, language = 'fr') {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to submit offers');
+    throw new Error(resolveErrorMessage(data.error || 'Failed to submit offers'));
   }
 
   return data;

@@ -4,10 +4,10 @@
  * Extension proxy for feature costs.
  */
 
-import { NextResponse } from 'next/server';
 import { withExtensionAuth } from '@/lib/api/withExtensionAuth';
 import { getBooleanSettingValue } from '@/lib/settings/settingsUtils';
 import prisma from '@/lib/prisma';
+import { CommonErrors } from '@/lib/api/apiErrors';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -41,7 +41,7 @@ export const GET = withExtensionAuth(async () => {
     const subscriptionModeEnabled = await getBooleanSettingValue('subscription_mode_enabled', true);
 
     if (subscriptionModeEnabled) {
-      return NextResponse.json({
+      return Response.json({
         showCosts: false,
         subscriptionModeEnabled: true,
         costs: {},
@@ -63,13 +63,13 @@ export const GET = withExtensionAuth(async () => {
       costs[feature] = isNaN(parsed) ? (DEFAULT_COSTS[feature] ?? 1) : parsed;
     }
 
-    return NextResponse.json({
+    return Response.json({
       showCosts: true,
       subscriptionModeEnabled: false,
       costs,
     });
   } catch (error) {
     console.error('[ext/credits/costs] Error:', error);
-    return NextResponse.json({ error: 'Failed to fetch costs' }, { status: 500 });
+    return CommonErrors.serverError();
   }
 });

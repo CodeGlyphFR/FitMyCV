@@ -9,8 +9,11 @@
  */
 
 import browser from 'webextension-polyfill';
+import { shouldRefreshToken } from '../lib/token-utils.js';
 
 const ALARM_NAME = 'fitmycv-poll-tasks';
+const ALARM_TOKEN_REFRESH = 'fitmycv-token-refresh';
+const TOKEN_REFRESH_INTERVAL_MINUTES = 720; // 12 hours
 const POLL_INTERVAL_MINUTES = 0.5; // 30 seconds (minimum for MV3 alarms)
 const BADGE_COLOR = '#10b981'; // emerald-500
 const PICKLIST_KEY = 'fitmycv_picklist';
@@ -66,11 +69,47 @@ async function getDeviceId() {
   return id;
 }
 
-async function pollTasks() {
+async function attemptTokenRefresh() {
   const token = await getToken();
+  if (!token || !shouldRefreshToken(token)) return false;
+
+  try {
+    const API_BASE = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.io';
+    const response = await fetch(`${API_BASE}/api/auth/extension-token/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) return false;
+
+    const data = await response.json();
+    if (data.success && data.token) {
+      await browser.storage.local.set({
+        [STORAGE_KEYS.TOKEN]: data.token,
+        ...(data.user && { 'fitmycv_user': data.user }),
+      });
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+async function pollTasks() {
+  let token = await getToken();
   if (!token) {
     await stopPolling();
     return;
+  }
+
+  // Proactive refresh before polling
+  if (shouldRefreshToken(token)) {
+    await attemptTokenRefresh();
+    token = await getToken();
   }
 
   try {
@@ -82,15 +121,25 @@ async function pollTasks() {
     const params = new URLSearchParams({ deviceId });
     if (since) params.set('since', String(since));
 
-    const response = await fetch(`${API_BASE}/api/ext/background-tasks/sync?${params}`, {
+    let response = await fetch(`${API_BASE}/api/ext/background-tasks/sync?${params}`, {
       headers: { 'Authorization': `Bearer ${token}` },
     });
 
+    // Reactive retry on 401
     if (response.status === 401) {
-      // Token expired — clear credentials and notify popup
+      const refreshed = await attemptTokenRefresh();
+      if (refreshed) {
+        const newToken = await getToken();
+        response = await fetch(`${API_BASE}/api/ext/background-tasks/sync?${params}`, {
+          headers: { 'Authorization': `Bearer ${newToken}` },
+        });
+      }
+    }
+
+    if (response.status === 401) {
+      // Token expired and refresh failed — clear credentials and notify popup
       await browser.storage.local.remove([STORAGE_KEYS.TOKEN, 'fitmycv_user']);
       await stopPolling();
-      // Notify popup to show login view
       try {
         await browser.runtime.sendMessage({ type: 'AUTH_EXPIRED' });
       } catch { /* popup may not be open */ }
@@ -198,10 +247,12 @@ browser.runtime.onMessage.addListener((message, sender) => {
   }
 });
 
-// Handle alarms (polling)
+// Handle alarms (polling + token refresh)
 browser.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM_NAME) {
     pollTasks();
+  } else if (alarm.name === ALARM_TOKEN_REFRESH) {
+    attemptTokenRefresh();
   }
 });
 
@@ -212,15 +263,21 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
   }
 });
 
-// On install, generate device ID + update badge
+// On install, generate device ID + update badge + setup token refresh alarm
 browser.runtime.onInstalled.addListener(async () => {
   await getDeviceId();
   await updatePicklistBadge();
+  browser.alarms.create(ALARM_TOKEN_REFRESH, {
+    periodInMinutes: TOKEN_REFRESH_INTERVAL_MINUTES,
+  });
 });
 
-// On startup, update picklist badge
+// On startup, update picklist badge + ensure token refresh alarm exists
 browser.runtime.onStartup.addListener(async () => {
   await updatePicklistBadge();
+  browser.alarms.create(ALARM_TOKEN_REFRESH, {
+    periodInMinutes: TOKEN_REFRESH_INTERVAL_MINUTES,
+  });
 });
 
 // Update badge when picklist changes in storage

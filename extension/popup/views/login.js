@@ -54,12 +54,7 @@ export function initLogin(onLoginSuccess) {
       const user = await login(email, password);
       onLoginSuccess(user);
     } catch (err) {
-      const msg = err.message === 'Invalid credentials'
-        ? 'Email ou mot de passe incorrect'
-        : err.message === 'Service temporarily unavailable'
-          ? 'Service temporairement indisponible (maintenance)'
-          : 'Erreur de connexion. Verifiez votre connexion internet.';
-      showError(msg);
+      showError(err.message || 'Erreur de connexion. Vérifiez votre connexion internet.');
     } finally {
       setLoading(false);
     }

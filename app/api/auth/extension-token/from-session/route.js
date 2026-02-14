@@ -6,19 +6,16 @@
  * endpoint provides a token the extension can store.
  */
 
-import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import { signExtensionToken } from '@/lib/auth/extensionToken';
+import { CommonErrors } from '@/lib/api/apiErrors';
 
 export async function GET() {
   try {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: 'Not authenticated' },
-        { status: 401 }
-      );
+      return CommonErrors.notAuthenticated();
     }
 
     const token = await signExtensionToken(session.user.id, {
@@ -26,7 +23,7 @@ export async function GET() {
       email: session.user.email,
     });
 
-    return NextResponse.json({
+    return Response.json({
       success: true,
       token,
       user: {
@@ -36,9 +33,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('[from-session] Error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to generate token' },
-      { status: 500 }
-    );
+    return CommonErrors.serverError();
   }
 }

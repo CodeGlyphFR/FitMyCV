@@ -5,10 +5,10 @@
  * Accepts JSON { email, password } — no reCAPTCHA required.
  */
 
-import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { signExtensionToken } from '@/lib/auth/extensionToken';
+import { AuthErrors, ExtensionErrors, CommonErrors } from '@/lib/api/apiErrors';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -20,10 +20,7 @@ export async function POST(request) {
     const password = body?.password ?? '';
 
     if (!email || !password) {
-      return NextResponse.json(
-        { success: false, error: 'Email and password are required' },
-        { status: 400 }
-      );
+      return AuthErrors.emailAndPasswordRequired();
     }
 
     const user = await prisma.user.findUnique({
@@ -34,27 +31,18 @@ export async function POST(request) {
     // Generic error to avoid revealing which field is wrong
     if (!user || !user.passwordHash) {
       console.warn(`[extension-auth] Failed login attempt: ${email} (user not found or no password)`);
-      return NextResponse.json(
-        { success: false, error: 'Invalid credentials' },
-        { status: 401 }
-      );
+      return ExtensionErrors.invalidCredentials();
     }
 
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
       console.warn(`[extension-auth] Failed login attempt: ${email} (wrong password)`);
-      return NextResponse.json(
-        { success: false, error: 'Invalid credentials' },
-        { status: 401 }
-      );
+      return ExtensionErrors.invalidCredentials();
     }
 
     // Verify email is confirmed
     if (!user.emailVerified) {
-      return NextResponse.json(
-        { success: false, error: 'Email not verified' },
-        { status: 403 }
-      );
+      return ExtensionErrors.emailNotVerified();
     }
 
     // Check maintenance mode
@@ -62,10 +50,7 @@ export async function POST(request) {
       where: { settingName: 'maintenance_enabled' },
     });
     if (maintenanceSetting?.value === '1' && user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, error: 'Service temporarily unavailable' },
-        { status: 503 }
-      );
+      return ExtensionErrors.serviceUnavailable();
     }
 
     const token = await signExtensionToken(user.id, {
@@ -73,7 +58,7 @@ export async function POST(request) {
       email: user.email,
     });
 
-    return NextResponse.json({
+    return Response.json({
       success: true,
       token,
       user: {
@@ -83,9 +68,6 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error('[extension-token] Error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return CommonErrors.serverError();
   }
 }
