@@ -171,18 +171,24 @@ async function renderTasks(container) {
     if (task.status === 'completed') {
       el.addEventListener('click', async (e) => {
         if (e.target.closest('a')) return; // don't intercept hostname link
+        let targetUrl = apiBase;
         if (task.cvFile) {
-          const url = new URL(apiBase);
-          await browser.cookies.set({
-            url: apiBase,
-            name: 'cvFile',
-            value: task.cvFile,
-            path: '/',
-            domain: url.hostname,
-            expirationDate: Math.floor(Date.now() / 1000) + 31536000,
-          });
+          try {
+            const url = new URL(apiBase);
+            await browser.cookies.set({
+              url: apiBase,
+              name: 'cvFile',
+              value: task.cvFile,
+              path: '/',
+              domain: url.hostname,
+              expirationDate: Math.floor(Date.now() / 1000) + 31536000,
+            });
+          } catch {
+            // Fallback: pass cvFile as URL parameter if cookies API unavailable
+            targetUrl = `${apiBase}?cvFile=${encodeURIComponent(task.cvFile)}`;
+          }
         }
-        browser.tabs.create({ url: apiBase });
+        browser.tabs.create({ url: targetUrl });
       });
     }
 
