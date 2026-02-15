@@ -5,6 +5,7 @@
 import browser from 'webextension-polyfill';
 import { fetchCreditBalance, fetchCreditCosts, submitOffers } from '../../lib/api-client.js';
 import { getSelectedCv } from './cv-selector.js';
+import { refreshProgress } from './progress.js';
 import { t, getLang } from '../../lib/i18n.js';
 
 const STORAGE_KEY = 'fitmycv_picklist';
@@ -260,8 +261,9 @@ async function handleGenerate() {
     }),
   ]);
 
-  // Re-render list without the submitted offers
+  // Re-render list without the submitted offers + show temp tasks in progress immediately
   reRender();
+  refreshProgress();
 
   try {
     const result = await submitOffers(selectedCv, offersPayload, getLang());
@@ -311,6 +313,9 @@ async function handleGenerate() {
       'fitmycv_active_tasks': allTasks,
       'fitmycv_session_task_ids': sessionIds,
     });
+
+    // Refresh progress to show real task IDs/statuses
+    refreshProgress();
 
     // Start polling (will update task statuses from the API)
     browser.runtime.sendMessage({ type: 'START_POLLING' });

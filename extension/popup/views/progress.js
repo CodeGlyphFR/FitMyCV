@@ -85,6 +85,12 @@ export function stopProgressRefresh() {
   }
 }
 
+/** Re-render progress tasks immediately (called after temp tasks are stored) */
+export async function refreshProgress() {
+  const container = document.getElementById('progress-inline-container');
+  if (container) await renderTasks(container);
+}
+
 async function renderTasks(container) {
   const data = await browser.storage.local.get([STORAGE_KEY, 'fitmycv_session_task_ids']);
   const allTasks = data[STORAGE_KEY] || [];
