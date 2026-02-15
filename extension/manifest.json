@@ -38,22 +38,7 @@
   ],
   "content_scripts": [
     {
-      "matches": [
-        "*://*.linkedin.com/*",
-        "*://*.indeed.com/*",
-        "*://*.indeed.fr/*",
-        "*://*.apec.fr/*",
-        "*://*.francetravail.fr/*",
-        "*://*.pole-emploi.fr/*",
-        "*://*.welcometothejungle.com/*",
-        "*://*.monster.fr/*",
-        "*://*.monster.com/*",
-        "*://*.glassdoor.fr/*",
-        "*://*.glassdoor.com/*",
-        "*://*.cadremploi.fr/*",
-        "*://*.hellowork.com/*",
-        "*://*.lesjeudis.com/*"
-      ],
+      "matches": ["*://*/*"],
       "js": [
         "content-scripts/detector.js"
       ],

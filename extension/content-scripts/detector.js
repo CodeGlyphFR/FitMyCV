@@ -274,6 +274,39 @@ async function injectButton(retries = 8) {
   watchButtonPresence();
 }
 
+// ─── Job keyword detection (for unknown sites) ─────────────────────
+
+const JOB_KEYWORDS = [
+  // FR
+  'mission', 'profil', 'compétence', 'competence', 'expérience', 'experience',
+  'formation', 'qualification', 'responsabilité', 'candidat', 'poste',
+  'contrat', 'cdi', 'cdd', 'salaire', 'rémunération', 'télétravail',
+  'recrutement', 'embauche',
+  // EN
+  'responsibilities', 'requirements', 'qualifications', 'job description',
+  'salary', 'benefits', 'remote', 'candidate', 'apply now', 'position',
+  // DE
+  'anforderungen', 'qualifikationen', 'aufgaben', 'stellenbeschreibung',
+  // ES
+  'requisitos', 'responsabilidades', 'puesto', 'candidato',
+];
+
+/**
+ * Quick keyword check to determine if text looks like a job offer.
+ * Used on unknown sites to avoid false positives.
+ * @param {string} text
+ * @returns {boolean}
+ */
+function looksLikeJobOffer(text) {
+  const lower = text.toLowerCase();
+  let count = 0;
+  for (const kw of JOB_KEYWORDS) {
+    if (lower.includes(kw)) count++;
+    if (count >= 3) return true;
+  }
+  return false;
+}
+
 // ─── Detection ───────────────────────────────────────────────────────
 
 let lastDetectedContent = null;
@@ -285,6 +318,7 @@ function detectJobOffer(force = false) {
   // Skip if we already detected on this exact URL (unless forced)
   if (!force && url === lastDetectedUrl) return;
 
+  const knownSite = isKnownJobSite(hostname);
   const selectors = getSelectorsForHostname(hostname);
   let found = false;
 
@@ -292,6 +326,8 @@ function detectJobOffer(force = false) {
     try {
       const el = document.querySelector(selector);
       if (el && el.textContent.trim().length > 200) {
+        // On unknown sites, verify content looks like a job offer
+        if (!knownSite && !looksLikeJobOffer(el.textContent)) continue;
         found = true;
         break;
       }
@@ -378,42 +414,41 @@ function setupSidePanelObserver() {
 }
 
 // ─── Initial detection ───────────────────────────────────────────────
-if (isKnownJobSite(location.hostname)) {
-  // Wait for DOM to be ready, then detect
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', detectJobOffer);
-  } else {
-    detectJobOffer();
-  }
 
-  // --- SPA navigation detection ---
-  // Listen for URL changes (pushState/replaceState/popstate)
-  let currentUrl = location.href;
-
-  const urlObserver = new MutationObserver(() => {
-    if (location.href !== currentUrl) {
-      currentUrl = location.href;
-      lastDetectedUrl = null; // Reset so we re-detect
-      debouncedDetect();
-    }
-  });
-
-  urlObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
-
-  window.addEventListener('popstate', () => {
-    lastDetectedUrl = null;
-    debouncedDetect();
-  });
-
-  // --- Side-panel detection (Indeed, etc.) ---
-  // On sites like Indeed, clicking a different job changes the content
-  // in a side panel WITHOUT changing the URL. We observe the job
-  // description container for content swaps.
-  setupSidePanelObserver();
+// Wait for DOM to be ready, then detect
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', detectJobOffer);
+} else {
+  detectJobOffer();
 }
+
+// --- SPA navigation detection ---
+// Listen for URL changes (pushState/replaceState/popstate)
+let currentUrl = location.href;
+
+const urlObserver = new MutationObserver(() => {
+  if (location.href !== currentUrl) {
+    currentUrl = location.href;
+    lastDetectedUrl = null; // Reset so we re-detect
+    debouncedDetect();
+  }
+});
+
+urlObserver.observe(document.body, {
+  childList: true,
+  subtree: true,
+});
+
+window.addEventListener('popstate', () => {
+  lastDetectedUrl = null;
+  debouncedDetect();
+});
+
+// --- Side-panel detection (Indeed, etc.) ---
+// On sites like Indeed, clicking a different job changes the content
+// in a side panel WITHOUT changing the URL. We observe the job
+// description container for content swaps.
+setupSidePanelObserver();
 
 // ─── Listen for extraction requests from the popup/service worker ────
 browser.runtime.onMessage.addListener((message) => {
