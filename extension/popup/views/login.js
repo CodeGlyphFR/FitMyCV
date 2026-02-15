@@ -6,7 +6,13 @@ import browser from 'webextension-polyfill';
 import { login } from '../../lib/api-client.js';
 import { t } from '../../lib/i18n.js';
 
+let loginInitialized = false;
+
 export function initLogin(onLoginSuccess) {
+  // Prevent duplicate event listeners if called multiple times
+  if (loginInitialized) return;
+  loginInitialized = true;
+
   const form = document.getElementById('login-form');
   const emailInput = document.getElementById('login-email');
   const passwordInput = document.getElementById('login-password');
@@ -20,7 +26,7 @@ export function initLogin(onLoginSuccess) {
   // Links — open SaaS in new tab
   document.getElementById('link-forgot').addEventListener('click', (e) => {
     e.preventDefault();
-    browser.tabs.create({ url: `${API_BASE}/auth?mode=forgot` });
+    browser.tabs.create({ url: `${API_BASE}/auth/forgot-password` });
   });
 
   document.getElementById('link-register').addEventListener('click', (e) => {

@@ -98,12 +98,14 @@ async function init() {
     }
   });
 
+  // Always initialize login form listeners (idempotent, safe to call once)
+  initLogin(onLoginSuccess);
+
   // Check auth state
   const authenticated = await isAuthenticated();
 
   if (!authenticated) {
     showView('login');
-    initLogin(onLoginSuccess);
     return;
   }
 
@@ -184,7 +186,6 @@ browser.runtime.onMessage.addListener((message) => {
     stopProgressRefresh();
     document.getElementById('header-user').style.display = 'none';
     showView('login');
-    initLogin(onLoginSuccess);
   }
 });
 

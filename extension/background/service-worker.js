@@ -28,6 +28,13 @@ const STORAGE_KEYS = {
 // --- Badge Management ---
 
 async function updatePicklistBadge() {
+  // Only show badge when authenticated
+  const token = await getToken();
+  if (!token) {
+    browser.action.setBadgeText({ text: '' });
+    return;
+  }
+
   const data = await browser.storage.local.get(PICKLIST_KEY);
   const picklist = data[PICKLIST_KEY] || [];
   const count = picklist.length;
@@ -282,9 +289,9 @@ browser.runtime.onStartup.addListener(async () => {
   });
 });
 
-// Update badge when picklist changes in storage
+// Update badge when picklist or token changes in storage
 browser.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes[PICKLIST_KEY]) {
+  if (area === 'local' && (changes[PICKLIST_KEY] || changes[STORAGE_KEYS.TOKEN])) {
     updatePicklistBadge();
   }
 });
