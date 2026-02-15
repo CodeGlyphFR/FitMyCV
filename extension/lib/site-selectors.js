@@ -85,6 +85,11 @@ export const SITE_SELECTORS = {
     '.job-description',
     '.offer-description',
   ],
+  'meteojob.com': [
+    '.offer-main-content',
+    '.job-offer-details',
+    '.cc-job-offer',
+  ],
 };
 
 export const SITE_TITLE_SELECTORS = {
@@ -107,20 +112,74 @@ export const SITE_TITLE_SELECTORS = {
     '.t-24.t-bold',
   ],
   'welcometothejungle.com': [
+    '[data-testid="job-metadata-block"] + h2',
+    'h2.wui-text',
     '[data-testid="job-header-title"]',
     'h1[class*="Title"]',
-    'h2[data-testid="job-section-title"]',
   ],
-  'pole-emploi.fr': ['h1.title', '.intitule-offre', 'h1[class*="title"]'],
-  'francetravail.fr': ['h1.title', '.intitule-offre', 'h1[class*="title"]'],
+  'pole-emploi.fr': [
+    '#detailOffreVolet h1.title',
+    'h1.t2.title',
+    'h1.title',
+    '.intitule-offre',
+  ],
+  'francetravail.fr': [
+    '#detailOffreVolet h1.title',
+    'h1.t2.title',
+    'h1.title',
+    '.intitule-offre',
+  ],
   'apec.fr': ['h1.offer-title', '.job-title', 'h1[class*="title"]'],
   'monster.fr': ['h1[class*="title"]', '.job-header h1'],
   'monster.com': ['h1[class*="title"]', '.job-header h1'],
-  'glassdoor.fr': ['[data-test="job-title"]', 'h1[class*="title"]'],
-  'glassdoor.com': ['[data-test="job-title"]', 'h1[class*="title"]'],
-  'cadremploi.fr': ['.c-jobOffer__title h1', 'h1[class*="title"]'],
+  'glassdoor.fr': [
+    'h1[id^="jd-job-title"]',
+    '[data-test="job-title"]',
+    'h1[class*="heading_Level1"]',
+  ],
+  'glassdoor.com': [
+    'h1[id^="jd-job-title"]',
+    '[data-test="job-title"]',
+    'h1[class*="heading_Level1"]',
+  ],
+  'cadremploi.fr': [
+    'h1.job__title',
+    '.c-jobOffer__title h1',
+    'h1[class*="title"]',
+  ],
   'hellowork.com': ['h1[class*="title"]', '.tw-title h1'],
   'lesjeudis.com': ['h1.job-title', 'h1[class*="title"]'],
+  'meteojob.com': [
+    'h1 .cc-job-offer-title',
+    'h1.cc-font-size-base',
+  ],
+};
+
+export const SITE_DETAIL_PANEL_SELECTORS = {
+  'indeed.com': [
+    '.jobsearch-RightPane',
+    '.jobsearch-ViewjobPaneWrapper',
+    '.jobsearch-ViewJobLayout--embedded',
+  ],
+  'indeed.fr': [
+    '.jobsearch-RightPane',
+    '.jobsearch-ViewjobPaneWrapper',
+    '.jobsearch-ViewJobLayout--embedded',
+  ],
+  'linkedin.com': [
+    '.jobs-search__job-details',
+    '.scaffold-layout__detail',
+    '.job-view-layout',
+    '[class*="job-view-layout"]',
+  ],
+  'glassdoor.com': [
+    '[class*="TwoColumnLayout_columnRight"]',
+    '[class*="JobDetails_jobDetailsContainer"]',
+  ],
+  'glassdoor.fr': [
+    '[class*="TwoColumnLayout_columnRight"]',
+    '[class*="JobDetails_jobDetailsContainer"]',
+  ],
 };
 
 export const GENERIC_TITLE_SELECTORS = [
@@ -183,6 +242,35 @@ export function getTitleSelectorsForHostname(hostname) {
     if (host.includes(domain)) return selectors;
   }
   return GENERIC_TITLE_SELECTORS;
+}
+
+/**
+ * Get detail panel element for split-panel sites
+ * @param {string} hostname
+ * @returns {Element|null}
+ */
+export function getDetailPanelForHostname(hostname) {
+  const host = hostname.replace(/^www\./, '');
+  for (const [domain, selectors] of Object.entries(SITE_DETAIL_PANEL_SELECTORS)) {
+    if (host.includes(domain)) {
+      for (const selector of selectors) {
+        const el = document.querySelector(selector);
+        if (el) return el;
+      }
+      return null;
+    }
+  }
+  return null;
+}
+
+/**
+ * Check if hostname is a known split-panel site
+ * @param {string} hostname
+ * @returns {boolean}
+ */
+export function isSplitPanelSite(hostname) {
+  const host = hostname.replace(/^www\./, '');
+  return Object.keys(SITE_DETAIL_PANEL_SELECTORS).some(d => host.includes(d));
 }
 
 /**

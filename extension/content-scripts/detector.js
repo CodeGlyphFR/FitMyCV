@@ -10,6 +10,12 @@
  */
 
 import browser from 'webextension-polyfill';
+import {
+  getTitleSelectorsForHostname,
+  getDetailPanelForHostname,
+  isSplitPanelSite,
+  isKnownJobSite,
+} from '../lib/site-selectors.js';
 
 const PICKLIST_KEY = 'fitmycv_picklist';
 const TOKEN_KEY = 'fitmycv_token';
@@ -169,13 +175,32 @@ function detectPhase2() {
   return score >= 40;
 }
 
-// ─── H1 anchor for button placement ─────────────────────────────────
+// ─── Button anchor for placement ────────────────────────────────────
 
 /**
- * Find the H1 most likely to be the job title.
- * Priority: H1 inside main content area, then first H1 on page.
+ * Find the best anchor element for the FitMyCV button.
+ * 1. Split-panel sites: search in detail panel only
+ * 2. Known full-page sites: use site-specific selectors
+ * 3. Unknown sites: return null (no button injected)
  */
-function findJobTitleH1() {
+function findButtonAnchor() {
+  const hostname = location.hostname;
+
+  if (!isKnownJobSite(hostname)) return null;
+
+  const titleSelectors = getTitleSelectorsForHostname(hostname);
+  const detailPanel = getDetailPanelForHostname(hostname);
+  const searchRoot = detailPanel || document;
+
+  for (const selector of titleSelectors) {
+    try {
+      const el = searchRoot.querySelector(selector);
+      if (el && el.textContent.trim().length > 3) return el;
+    } catch { /* invalid selector, skip */ }
+  }
+
+  if (detailPanel || isSplitPanelSite(hostname)) return null;
+
   const mainContent = document.querySelector('main, article, [role="main"]');
   if (mainContent) {
     const h1 = mainContent.querySelector('h1');
@@ -183,8 +208,50 @@ function findJobTitleH1() {
   }
   const h1 = document.querySelector('h1');
   if (h1 && h1.textContent.trim().length > 3) return h1;
+
   return null;
 }
+
+// ─── Button: site-specific styles ───────────────────────────────────
+
+const SITE_BUTTON_STYLES = {
+  'linkedin.com': {
+    fontSize: '14px', padding: '6px 14px', margin: '8px 0 0 0', display: 'block', width: 'fit-content',
+  },
+  'indeed.com': {
+    fontSize: '12px', padding: '4px 10px', margin: '4px 0 0 0', display: 'inline-flex',
+  },
+  'indeed.fr': {
+    fontSize: '12px', padding: '4px 10px', margin: '4px 0 0 0', display: 'inline-flex',
+  },
+  'glassdoor.com': {
+    fontSize: '13px', padding: '5px 12px', margin: '8px 0 0 0', display: 'block', width: 'fit-content',
+  },
+  'glassdoor.fr': {
+    fontSize: '13px', padding: '5px 12px', margin: '8px 0 0 0', display: 'block', width: 'fit-content',
+  },
+  'welcometothejungle.com': {
+    fontSize: '13px', padding: '6px 14px', margin: '12px 0 0 0', display: 'block', width: 'fit-content',
+  },
+  'francetravail.fr': {
+    fontSize: '13px', padding: '5px 12px', margin: '8px 0 0 0', display: 'block', width: 'fit-content',
+  },
+  'apec.fr': {
+    fontSize: '13px', padding: '5px 12px', margin: '8px 0 0 0', display: 'inline-flex',
+  },
+  'hellowork.com': {
+    fontSize: '13px', padding: '5px 12px', margin: '8px 0 0 0', display: 'block', width: 'fit-content',
+  },
+  'meteojob.com': {
+    fontSize: '13px', padding: '5px 12px', margin: '8px 0 0 0', display: 'inline-flex',
+  },
+  'cadremploi.fr': {
+    fontSize: '13px', padding: '5px 12px', margin: '8px 0 0 0', display: 'inline-flex',
+  },
+  'monster.fr': {
+    fontSize: '13px', padding: '5px 12px', margin: '8px 0 0 0', display: 'inline-flex',
+  },
+};
 
 // ─── Button: create DOM element ──────────────────────────────────────
 
@@ -214,6 +281,15 @@ function createButton() {
     position: 'relative',
     zIndex: '1000',
   });
+
+  // Site-specific style overrides
+  const host = location.hostname.replace(/^www\./, '');
+  for (const [domain, styles] of Object.entries(SITE_BUTTON_STYLES)) {
+    if (host.includes(domain)) {
+      Object.assign(btn.style, styles);
+      break;
+    }
+  }
 
   btn.addEventListener('mouseenter', () => {
     if (!btn.disabled) btn.style.background = '#34d399';
@@ -354,7 +430,12 @@ function watchButtonPresence() {
 }
 
 async function injectButton(retries = 8) {
-  if (document.getElementById(BTN_ID)) return;
+  const existing = document.getElementById(BTN_ID);
+  if (existing) {
+    const anchor = findButtonAnchor();
+    if (anchor && anchor.nextElementSibling === existing) return;
+    existing.remove();
+  }
 
   if (buttonRetryTimeout) {
     clearTimeout(buttonRetryTimeout);
@@ -365,7 +446,7 @@ async function injectButton(retries = 8) {
   const tokenData = await browser.storage.local.get(TOKEN_KEY);
   if (!tokenData[TOKEN_KEY]) return;
 
-  const anchor = findJobTitleH1();
+  const anchor = findButtonAnchor();
   if (!anchor) {
     if (retries > 0) {
       const delay = Math.min(500 * Math.pow(1.3, 8 - retries), 3000);
@@ -373,6 +454,9 @@ async function injectButton(retries = 8) {
     }
     return;
   }
+
+  // Final guard after async operations
+  if (document.getElementById(BTN_ID)) return;
 
   const btn = createButton();
   anchor.insertAdjacentElement('afterend', btn);
@@ -422,7 +506,8 @@ let contentObserverRetries = 0;
 const MAX_CONTENT_RETRIES = 15;
 
 function setupContentObserver() {
-  const container = document.querySelector(
+  const detailPanel = getDetailPanelForHostname(location.hostname);
+  const container = detailPanel || document.querySelector(
     'main, article, [role="main"], #root, #app, #__next'
   );
 
@@ -443,6 +528,7 @@ function setupContentObserver() {
     if (current !== lastContentSnapshot && current.length > 50) {
       lastContentSnapshot = current;
       lastDetectedUrl = null;
+      removeButton();
       debouncedDetect();
     }
   });
@@ -469,6 +555,8 @@ const urlObserver = new MutationObserver(() => {
   if (location.href !== currentUrl) {
     currentUrl = location.href;
     lastDetectedUrl = null;
+    contentObserverRetries = 0;
+    setupContentObserver();
     debouncedDetect();
   }
 });
