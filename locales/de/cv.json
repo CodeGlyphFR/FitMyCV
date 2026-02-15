@@ -418,5 +418,39 @@
     "validationSuccess": "Lebenslauf erfolgreich gespeichert",
     "validationError": "Fehler beim Speichern",
     "skillsConsolidated": "Kompetenzen zusammengefasst zu"
+  },
+  "extensionPromo": {
+    "installButton": "Browser-Erweiterung installieren",
+    "installButtonHint": "Stellenangebote mit einem Klick von LinkedIn, Indeed und 10+ Seiten erfassen",
+    "tutorial": {
+      "title": "FitMyCV Browser-Erweiterung",
+      "screen1": {
+        "title": "Sparen Sie Zeit mit der Erweiterung",
+        "description": "Die FitMyCV-Erweiterung integriert sich direkt in Jobseiten. Ein \"FitMyCV +\"-Button erscheint bei jedem Angebot, um Ihren Lebenslauf mit einem Klick zu erfassen und zu generieren.",
+        "checklist1": "Automatische Erfassung von Stellenangeboten",
+        "checklist2": "Lebenslauf-Generierung direkt von der Seite",
+        "checklist3": "Stapelauswahl und -versand von Angeboten",
+        "checklist4": "Synchronisation mit Ihrem FitMyCV-Konto"
+      },
+      "screen2": {
+        "title": "Installation",
+        "description": "Installieren Sie die Erweiterung in Sekunden aus dem Store Ihres Browsers.",
+        "step1": "Klicken Sie auf die Schaltfläche unten, um den Store zu öffnen",
+        "step2": "Klicken Sie auf \"Hinzufügen\", um die Erweiterung zu installieren",
+        "step3": "Laden Sie Ihre geöffneten Tabs neu",
+        "comingSoon": "Demnächst verfügbar",
+        "comingSoonHint": "Die Erweiterung wird bald in den Stores verfügbar sein. Kontaktieren Sie uns für einen frühen Zugang.",
+        "installChrome": "Für Chrome installieren",
+        "installFirefox": "Für Firefox installieren",
+        "installSafari": "Für Safari installieren"
+      },
+      "screen3": {
+        "title": "So funktioniert es",
+        "phase1": "Erfassen",
+        "phase2": "Auswählen",
+        "phase3": "Generierung"
+      },
+      "understood": "Verstanden!"
+    }
   }
 }
