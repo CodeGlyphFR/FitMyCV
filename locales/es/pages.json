@@ -399,15 +399,37 @@
         ]
       },
       {
+        "id": "browser-extension",
+        "title": "13. Extensión del navegador",
+        "content": [
+          { "type": "paragraph", "text": "FitMyCV ofrece una extensión para los navegadores Chrome, Edge, Brave y Firefox. Esta extensión añade funciones de captura de ofertas de empleo directamente desde los sitios de empleo." },
+          { "type": "subtitle", "text": "13.1 Datos recopilados por la extensión" },
+          { "type": "list", "items": [
+            "URLs de las ofertas de empleo que elija capturar",
+            "Contenido textual de las ofertas de empleo (título, descripción, ubicación) extraído de la página visitada",
+            "Token de autenticación almacenado localmente en el navegador para mantener su sesión"
+          ]},
+          { "type": "subtitle", "text": "13.2 Funcionamiento" },
+          { "type": "list", "items": [
+            "La extensión no recopila ningún dato fuera de las páginas de ofertas de empleo en las que usted hace clic activamente en el botón \"FitMyCV +\"",
+            "El contenido extraído se envía a nuestros servidores únicamente para la generación de CV, y se procesa de la misma manera que las ofertas enviadas a través del sitio web",
+            "Las ofertas capturadas se almacenan temporalmente en el almacenamiento local del navegador hasta su envío",
+            "No se recopila ni se transmite ningún historial de navegación"
+          ]},
+          { "type": "subtitle", "text": "13.3 Permisos" },
+          { "type": "paragraph", "text": "La extensión requiere los siguientes permisos: acceso a la pestaña activa (para detectar ofertas de empleo), almacenamiento local (para guardar sus ofertas y preferencias), cookies (para la autenticación con su cuenta FitMyCV)." }
+        ]
+      },
+      {
         "id": "international",
-        "title": "13. Transferencias internacionales",
+        "title": "14. Transferencias internacionales",
         "content": [
           { "type": "paragraph", "text": "Algunos datos pueden transferirse fuera de la Unión Europea (OpenAI, Resend en Estados Unidos). Estas transferencias se rigen por cláusulas contractuales tipo aprobadas por la Comisión Europea." }
         ]
       },
       {
         "id": "modifications",
-        "title": "14. Modificaciones",
+        "title": "15. Modificaciones",
         "content": [
           { "type": "paragraph", "text": "Esta política puede modificarse en cualquier momento. Los cambios se publicarán en esta página con la fecha de actualización. En caso de cambios sustanciales, se le notificará por email." }
         ]

@@ -1,0 +1,97 @@
+{
+  "header": {
+    "credits": "{credits} creditos",
+    "logout": "Cerrar sesion"
+  },
+  "login": {
+    "title": "Iniciar sesion",
+    "subtitle": "Inicia sesion con tu cuenta FitMyCV",
+    "email": "Correo electronico",
+    "password": "Contrasena",
+    "emailPlaceholder": "tu@correo.com",
+    "passwordPlaceholder": "Contrasena",
+    "submit": "Iniciar sesion",
+    "submitting": "Conectando...",
+    "or": "o",
+    "continueGoogle": "Continuar con Google",
+    "continueGithub": "Continuar con GitHub",
+    "forgotPassword": "Olvidaste tu contrasena?",
+    "createAccount": "Crear una cuenta",
+    "errors": {
+      "emptyFields": "Por favor completa todos los campos",
+      "connectionError": "Error de conexion. Verifica tu conexion a internet."
+    }
+  },
+  "cvSelector": {
+    "empty": "Ningun CV encontrado.",
+    "createLink": "Crea uno en FitMyCV",
+    "loadError": "Error al cargar los CVs"
+  },
+  "offers": {
+    "addButton": "+ Agregar oferta de esta pagina",
+    "extracting": "Extrayendo...",
+    "noContent": "Sin contenido extraido",
+    "alreadyAdded": "Oferta ya agregada",
+    "extractError": "Error de extraccion",
+    "emptyState": "Sin ofertas agregadas. Navega en un sitio de empleo y haz clic arriba.",
+    "noTitle": "Sin titulo",
+    "removeTitle": "Eliminar",
+    "creditsCost": "Costo: {total} creditos ({count} x {cost})",
+    "creditsInsufficient": "Creditos insuficientes. Te faltan {missing} creditos.",
+    "generateButton": "Generar {count} CV",
+    "generateButtonDefault": "Generar CVs",
+    "submitError": "Error al enviar la solicitud"
+  },
+  "progress": {
+    "defaultTitle": "Generacion de CV",
+    "cancelTitle": "Cancelar",
+    "clearButton": "Limpiar",
+    "steps": {
+      "classify": "Clasificando\u2026",
+      "batch_experience": "Adaptando experiencias\u2026",
+      "batch_project": "Adaptando proyectos\u2026",
+      "batch_extras": "Adaptando extras\u2026",
+      "batch_education": "Adaptando formacion\u2026",
+      "batch_languages": "Adaptando idiomas\u2026",
+      "batch_skills": "Adaptando habilidades\u2026",
+      "batch_summary": "Redactando resumen\u2026",
+      "recompose": "Ensamblando CV\u2026"
+    },
+    "status": {
+      "completed": "CV generado \u2713",
+      "failed": "Fallido",
+      "cancelled": "Cancelado",
+      "analyzing": "Analizando oferta\u2026",
+      "extracting": "Extrayendo oferta\u2026",
+      "queued": "En cola\u2026",
+      "running": "Procesando\u2026"
+    }
+  },
+  "errors": {
+    "sessionExpired": "Sesion expirada",
+    "invalidCredentials": "Correo o contrasena incorrectos",
+    "emailNotVerified": "Correo no verificado. Revisa tu bandeja de entrada.",
+    "emailAndPasswordRequired": "Correo y contrasena requeridos",
+    "tokenRequired": "Sesion requerida",
+    "tokenExpired": "Sesion expirada",
+    "tokenInvalid": "Sesion invalida",
+    "serviceUnavailable": "Servicio temporalmente no disponible (mantenimiento)",
+    "baseFileRequired": "CV base requerido",
+    "offersRequired": "Se requiere al menos una oferta",
+    "offerContentInsufficient": "Contenido de oferta insuficiente",
+    "sourceCvNotFound": "CV fuente no encontrado",
+    "cancelParamsMissing": "Parametros de cancelacion faltantes",
+    "taskNotFound": "Tarea no encontrada",
+    "notAuthenticated": "No autenticado",
+    "serverError": "Error del servidor",
+    "limitReached": "Creditos insuficientes"
+  },
+  "detector": {
+    "success": "\u2713 Agregado",
+    "duplicate": "Ya agregado",
+    "error": "\u2715 Error"
+  },
+  "langSelector": {
+    "title": "Idioma"
+  }
+}

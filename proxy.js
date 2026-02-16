@@ -1,6 +1,40 @@
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
+// --- Extension CORS ---
+const EXTENSION_ORIGIN_PATTERNS = [
+  /^chrome-extension:\/\//,
+  /^moz-extension:\/\//,
+];
+
+const EXTRA_ORIGINS = (process.env.EXTENSION_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
+
+function isAllowedExtensionOrigin(origin) {
+  if (!origin) return false;
+  if (process.env.NODE_ENV !== 'production') {
+    return EXTENSION_ORIGIN_PATTERNS.some(p => p.test(origin));
+  }
+  if (EXTRA_ORIGINS.includes(origin)) return true;
+  return EXTENSION_ORIGIN_PATTERNS.some(p => p.test(origin));
+}
+
+function isExtensionRoute(pathname) {
+  return pathname.startsWith('/api/ext/') || pathname.startsWith('/api/auth/extension-token');
+}
+
+function setCorsHeaders(response, origin) {
+  response.headers.set('Access-Control-Allow-Origin', origin);
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  response.headers.set('Access-Control-Max-Age', '86400');
+  return response;
+}
+
+// --- Rate limiting ---
+
 // Rate limiting store (in-memory, consider Redis for production)
 const rateLimitStore = new Map();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
@@ -9,6 +43,9 @@ const RATE_LIMIT_MAX_REQUESTS = {
   '/api/auth/signin': 10,
   '/api/admin/users': 60, // Limite plus haute pour l'admin des utilisateurs
   '/api/admin': 40, // Augmenté pour les autres routes admin
+  '/api/ext/background-tasks/sync': 120, // Extension polling
+  '/api/ext/': 60, // Extension API routes
+  '/api/auth/extension-token': 10, // Extension login
   '/api/background-tasks/sync': 120, // Polling fréquent + événements temps réel
   '/api/background-tasks': 30, // Autres endpoints de création de tâches
   '/api/feedback': 10,
@@ -67,6 +104,20 @@ export async function proxy(request) {
   // WebSocket upgrade requests cannot handle redirects or extra headers
   if (pathname.startsWith('/_next/webpack-hmr')) {
     return NextResponse.next();
+  }
+
+  // --- Extension CORS handling ---
+  if (isExtensionRoute(pathname)) {
+    const origin = request.headers.get('origin');
+
+    // Handle preflight OPTIONS
+    if (request.method === 'OPTIONS') {
+      if (isAllowedExtensionOrigin(origin)) {
+        const response = new NextResponse(null, { status: 204 });
+        return setCorsHeaders(response, origin);
+      }
+      return new NextResponse(null, { status: 403 });
+    }
   }
 
   // Obtenir l'IP du client (compatible avec proxies)
@@ -201,6 +252,14 @@ export async function proxy(request) {
   if (pathname.startsWith('/api/')) {
     const rateLimit = checkRateLimit(ip, pathname);
     response.headers.set('X-RateLimit-Remaining', String(rateLimit.remaining));
+  }
+
+  // Ajouter les headers CORS pour les routes extension
+  if (isExtensionRoute(pathname)) {
+    const origin = request.headers.get('origin');
+    if (isAllowedExtensionOrigin(origin)) {
+      setCorsHeaders(response, origin);
+    }
   }
 
   return response;

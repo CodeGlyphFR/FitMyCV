@@ -28,7 +28,7 @@ export const metadata = {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function getCV(userId, versionNumber = null){
+async function getCV(userId, versionNumber = null, cvParam = null){
   const cookieStore = await cookies();
   const cvCookie = (cookieStore.get("cvFile") || {}).value;
   await ensureUserCvDir(userId);
@@ -39,7 +39,7 @@ async function getCV(userId, versionNumber = null){
     return null;
   }
 
-  const file = (cvCookie && availableFiles.includes(cvCookie)) ? cvCookie : availableFiles[0];
+  const file = (cvParam && availableFiles.includes(cvParam)) ? cvParam : (cvCookie && availableFiles.includes(cvCookie)) ? cvCookie : availableFiles[0];
 
   let cvData;
   try {

@@ -208,9 +208,15 @@ export default function OnboardingModal({
           {/* Titre et boutons */}
           <div className="flex items-center justify-between p-4 md:p-6">
             <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full ${iconBg} flex items-center justify-center flex-shrink-0`}>
-                {IconComponent && <IconComponent className={`w-4 h-4 md:w-5 md:h-5 ${iconColor}`} />}
-              </div>
+              {IconComponent && (
+                typeof IconComponent === 'string'
+                  ? <img src={IconComponent} alt="" className="w-8 h-8 md:w-10 md:h-10 flex-shrink-0" />
+                  : (
+                    <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full ${iconBg} flex items-center justify-center flex-shrink-0`}>
+                      <IconComponent className={`w-4 h-4 md:w-5 md:h-5 ${iconColor}`} />
+                    </div>
+                  )
+              )}
               <div className="flex-1 min-w-0">
                 <h2
                   id="onboarding-modal-title"
@@ -295,6 +301,11 @@ export default function OnboardingModal({
               onDragEnd={handleDragEnd}
               className="p-4 md:p-6 md:pb-16 cursor-grab active:cursor-grabbing"
             >
+              {/* customRender : le parent contrôle le rendu */}
+              {screens[currentScreen]?.customRender
+                ? screens[currentScreen].customRender(screens[currentScreen])
+                : (
+                <>
               {/* Écran type: master_cv */}
               {screens[currentScreen]?.type === 'master_cv' && (
                 <div className="flex flex-col h-full">
@@ -384,6 +395,60 @@ export default function OnboardingModal({
                   <p className="text-base md:text-lg text-white/90 max-w-xl">
                     {screens[currentScreen].description}
                   </p>
+                </div>
+              )}
+
+              {/* Écran type: ext_install (Installation extension navigateur) */}
+              {screens[currentScreen]?.type === 'ext_install' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-white/80 text-sm md:text-base leading-relaxed text-left">
+                      {screens[currentScreen].description}
+                    </p>
+
+                    {/* Étapes numérotées */}
+                    {screens[currentScreen].steps && (
+                      <div className="space-y-3 ml-2">
+                        {screens[currentScreen].steps.map((step, idx) => (
+                          <div key={idx} className="flex items-start gap-3 text-left">
+                            <div className="w-6 h-6 rounded-full bg-sky-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <span className="text-xs font-bold text-sky-400">{idx + 1}</span>
+                            </div>
+                            <span className="text-white/80 text-sm md:text-base">{step}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Boutons store ou message "bientôt disponible" */}
+                    {screens[currentScreen].storeButtons && (
+                      <div className="space-y-2 pt-2">
+                        {screens[currentScreen].storeButtons.map((btn, idx) => (
+                          <a
+                            key={idx}
+                            href={btn.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                              btn.primary
+                                ? 'bg-sky-500 hover:bg-sky-600 text-white'
+                                : 'bg-white/10 hover:bg-white/15 text-white/80 border border-white/20'
+                            }`}
+                          >
+                            {btn.label}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Message "bientôt disponible" si pas de boutons store */}
+                    {screens[currentScreen].comingSoon && (
+                      <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                        <p className="text-amber-300 text-sm font-medium">{screens[currentScreen].comingSoon.title}</p>
+                        <p className="text-white/60 text-xs mt-1">{screens[currentScreen].comingSoon.hint}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -689,6 +754,8 @@ export default function OnboardingModal({
                     </p>
                   </div>
                 </div>
+              )}
+                </>
               )}
             </motion.div>
           </AnimatePresence>
