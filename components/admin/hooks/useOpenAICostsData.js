@@ -3,7 +3,7 @@ import { getFeatureConfig } from '@/lib/analytics/featureConfig';
 
 /**
  * Hook pour gérer toutes les données OpenAI Costs
- * Consolide: data, pricings, alerts, balance, generation costs, improvement costs
+ * Consolide: data, pricings, alerts, generation costs, improvement costs
  */
 export function useOpenAICostsData({ period, userId, refreshKey }) {
   // Main data state
@@ -14,10 +14,6 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
   // Pricing state
   const [pricings, setPricings] = useState([]);
   const [isPriorityMode, setIsPriorityMode] = useState(false);
-
-  // Balance state
-  const [balance, setBalance] = useState(null);
-  const [balanceLoading, setBalanceLoading] = useState(true);
 
   // CV Generation costs state
   const [lastGenerationCost, setLastGenerationCost] = useState(null);
@@ -37,7 +33,6 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
   useEffect(() => {
     fetchData();
     fetchPricings();
-    fetchBalance();
     fetchAlerts();
     fetchLastGenerationCost();
     fetchLastImprovementCost();
@@ -72,21 +67,6 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
       setIsPriorityMode(result.isPriorityMode || false);
     } catch (err) {
       console.error('Error fetching pricings:', err);
-    }
-  };
-
-  const fetchBalance = async () => {
-    try {
-      setBalanceLoading(true);
-      const response = await fetch('/api/admin/openai-balance');
-      if (!response.ok) throw new Error('Failed to fetch balance');
-      const result = await response.json();
-      setBalance(result.balance);
-    } catch (err) {
-      console.error('Error fetching balance:', err);
-      setBalance(null);
-    } finally {
-      setBalanceLoading(false);
     }
   };
 
@@ -502,10 +482,6 @@ export function useOpenAICostsData({ period, userId, refreshKey }) {
     isPriorityMode,
     setIsPriorityMode,
     fetchPricings,
-
-    // Balance
-    balance,
-    balanceLoading,
 
     // Alerts
     alerts,
