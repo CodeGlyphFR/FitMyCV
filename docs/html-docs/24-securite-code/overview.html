@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sécurité du Code | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Sécurité du Code</span>
+        </div>
+
+        <h1>Sécurité du Code</h1>
+        <p class="lead">
+          FitMyCV intègre trois modules de sécurité dans <code>lib/security/</code> : la validation des fichiers uploadés (magic numbers, MIME, taille), un logger sécurisé qui masque automatiquement les données personnelles (PII), et une couche de sanitisation XSS avec whitelist HTML stricte.
+        </p>
+
+        <!-- ─── Architecture ─── -->
+
+        <h2>Architecture Sécurité</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Modules de sécurité &mdash; lib/security/</div>
+          <div class="mermaid">
+graph TB
+    subgraph Security["lib/security/"]
+        FV["fileValidation.js<br/>Validation uploads"]
+        SL["secureLogger.js<br/>Logger sécurisé"]
+        XSS["xssSanitization.js<br/>Protection XSS"]
+    end
+
+    UPLOAD["Upload PDF"] --> FV
+    FV -->|"valid: true"| STORE["Stockage fichier"]
+    FV -->|"valid: false"| REJECT["Rejet + erreur"]
+
+    LOGS["Toute opération<br/>loguée"] --> SL
+    SL --> CONSOLE["Console<br/>(données masquées)"]
+
+    INPUT["Données utilisateur<br/>(CV, formulaires)"] --> XSS
+    XSS --> DB["Base de données<br/>(données saines)"]
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Module</th>
+              <th>Fichier</th>
+              <th>Responsabilité</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Validation Uploads</strong></td>
+              <td><code>fileValidation.js</code></td>
+              <td>Vérification MIME, magic numbers, taille, nom de fichier, path traversal</td>
+            </tr>
+            <tr>
+              <td><strong>Logger Sécurisé</strong></td>
+              <td><code>secureLogger.js</code></td>
+              <td>Masquage automatique des emails, tokens, clés API, mots de passe, userIds</td>
+            </tr>
+            <tr>
+              <td><strong>Sanitisation XSS</strong></td>
+              <td><code>xssSanitization.js</code></td>
+              <td>Whitelist HTML, échappement, nettoyage URLs, validation emails, sanitisation CV</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ─── fileValidation ─── -->
+
+        <h2>Validation des Fichiers Uploadés</h2>
+
+        <p>Le module <code>fileValidation.js</code> implémente une validation en <strong>5 couches</strong> pour les fichiers uploadés, suivant le principe de défense en profondeur.</p>
+
+        <h3>Pipeline de validation</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">5 couches de validation d'un upload</div>
+          <div class="mermaid">
+graph LR
+    A["1. Présence<br/>fichier"] --> B["2. Nom<br/>valide"]
+    B --> C["3. Type MIME<br/>autorisé"]
+    C --> D["4. Taille<br/>≤ limite"]
+    D --> E["5. Magic Number<br/>vérifié"]
+    E --> F["✅ Fichier<br/>accepté"]
+
+    B -.->|"❌"| R1["Rejet"]
+    C -.->|"❌"| R2["Rejet"]
+    D -.->|"❌"| R3["Rejet"]
+    E -.->|"❌"| R4["Rejet"]
+          </div>
+        </div>
+
+        <h3>validateUploadedFile(file, options)</h3>
+
+        <pre><code class="language-javascript">import { validateUploadedFile } from '@/lib/security/fileValidation';
+
+const result = await validateUploadedFile(file, {
+  allowedTypes: ['application/pdf'],  // Types MIME autorisés
+  maxSize: 10 * 1024 * 1024,          // 10 MB (optionnel)
+});
+
+if (result.valid) {
+  // result.buffer contient le Buffer du fichier
+  await saveFile(result.buffer);
+} else {
+  // result.error contient le message d'erreur
+  throw new Error(result.error);
+}</code></pre>
+
+        <h3>Vérification Magic Numbers</h3>
+
+        <p>Le type MIME déclaré par le navigateur peut être falsifié. La validation vérifie les <strong>premiers octets</strong> du fichier (magic numbers) pour confirmer le type réel :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Magic Number (hex)</th>
+              <th>Représentation ASCII</th>
+              <th>Taille max</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>application/pdf</code></td>
+              <td><code>25 50 44 46</code></td>
+              <td><code>%PDF</code></td>
+              <td>10 MB</td>
+            </tr>
+            <tr>
+              <td><em>Autres types</em></td>
+              <td><em>Extensible</em></td>
+              <td>&mdash;</td>
+              <td>5 MB (défaut)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-javascript">// Signatures internes
+const FILE_SIGNATURES = {
+  pdf: [
+    [0x25, 0x50, 0x44, 0x46], // %PDF
+  ],
+};
+
+// Vérification : les 4 premiers octets doivent correspondre
+function verifyMagicNumber(buffer, expectedType) {
+  const type = expectedType.split('/')[1]; // 'application/pdf' → 'pdf'
+  const signatures = FILE_SIGNATURES[type];
+  return signatures.some(sig =>
+    sig.every((byte, i) => buffer[i] === byte)
+  );
+}</code></pre>
+
+        <h3>sanitizeFilename(filename)</h3>
+
+        <p>Nettoie un nom de fichier pour prévenir les injections :</p>
+
+        <pre><code class="language-javascript">import { sanitizeFilename } from '@/lib/security/fileValidation';
+
+sanitizeFilename('rapport final.pdf');
+// → "rapport_final_pdf"
+
+sanitizeFilename('../../../etc/passwd');
+// → "etc_passwd"
+
+sanitizeFilename('..hidden');
+// → "hidden"
+
+sanitizeFilename('');
+// → "file_1708099200000"  (nom généré avec timestamp)</code></pre>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Règle</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Caractères non alphanumériques</td>
+              <td>Remplacés par <code>_</code></td>
+            </tr>
+            <tr>
+              <td>Séquences de points (<code>..</code>)</td>
+              <td>Réduites à un seul <code>.</code></td>
+            </tr>
+            <tr>
+              <td>Points en début de nom</td>
+              <td>Supprimés (prévention fichiers cachés)</td>
+            </tr>
+            <tr>
+              <td>Longueur maximale</td>
+              <td>Tronqué à 255 caractères</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>isPathSafe(filepath)</h3>
+
+        <p>Détecte les tentatives de path traversal :</p>
+
+        <pre><code class="language-javascript">import { isPathSafe } from '@/lib/security/fileValidation';
+
+isPathSafe('uploads/cv/2024/report.pdf');  // → true
+isPathSafe('../../../etc/passwd');          // → false (.. détecté)
+isPathSafe('~/secret/file.txt');           // → false (~/ détecté)
+isPathSafe('path//to//file');              // → false (// détecté)
+isPathSafe('path\\to\\file');              // → false (\\ détecté)</code></pre>
+
+        <div class="callout callout-warning">
+          <strong>Patterns dangereux détectés</strong> &mdash; La fonction bloque 4 patterns : <code>..</code> (traversal parent), <code>~/</code> (home directory), <code>//</code> (double slash), <code>\</code> (backslash Windows).
+        </div>
+
+        <!-- ─── secureLogger ─── -->
+
+        <h2>Logger Sécurisé &mdash; Masquage PII</h2>
+
+        <p>Le module <code>secureLogger.js</code> remplace <code>console.log</code> par des fonctions qui masquent automatiquement les <strong>données personnelles identifiables (PII)</strong> avant affichage dans les logs.</p>
+
+        <h3>Types de données masquées</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Donnée</th>
+              <th>Pattern détecté</th>
+              <th>Résultat masqué</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Email</strong></td>
+              <td><code>user@domain.com</code></td>
+              <td><code>u***r@domain.com</code></td>
+            </tr>
+            <tr>
+              <td><strong>Clé API</strong></td>
+              <td><code>sk-proj-abc123...</code></td>
+              <td><code>[API_KEY_HIDDEN]</code></td>
+            </tr>
+            <tr>
+              <td><strong>Token Bearer</strong></td>
+              <td><code>bearer eyJhbGci...</code></td>
+              <td><code>bearer [TOKEN_HIDDEN]</code></td>
+            </tr>
+            <tr>
+              <td><strong>Mot de passe</strong></td>
+              <td><code>"password":"secret"</code></td>
+              <td><code>"password":"[HIDDEN]"</code></td>
+            </tr>
+            <tr>
+              <td><strong>Token JSON</strong></td>
+              <td><code>"token":"eyJ..."</code></td>
+              <td><code>"token":"[HIDDEN]"</code></td>
+            </tr>
+            <tr>
+              <td><strong>User ID</strong></td>
+              <td><code>userId: "clx9abc..."</code></td>
+              <td><code>userId: "usr_a1b2c3"</code> (hash SHA-256)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>API du logger</h3>
+
+        <pre><code class="language-javascript">import logger from '@/lib/security/secureLogger';
+
+// Remplacement direct de console.*
+logger.log('User login:', { email: 'jean@example.com', token: 'secret' });
+// Console: User login: { email: "j***n@example.com", token: "[HIDDEN]" }
+
+logger.warn('API call failed', { apiKey: 'sk-proj-abc123def456' });
+// Console: API call failed { apiKey: "[API_KEY_HIDDEN]" }
+
+logger.error('Auth error', 'bearer eyJhbGciOiJIUzI1NiJ9...');
+// Console: Auth error bearer [TOKEN_HIDDEN]
+
+// Logger avec contexte
+logger.context('auth', 'warn', 'Failed login for', 'user@test.com');
+// Console: [auth] Failed login for u***r@test.com</code></pre>
+
+        <h3>Fonctions exportées</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fonction</th>
+              <th>Équivalent</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>secureLog(...args)</code></td>
+              <td><code>console.log</code></td>
+              <td>Log standard avec masquage PII</td>
+            </tr>
+            <tr>
+              <td><code>secureWarn(...args)</code></td>
+              <td><code>console.warn</code></td>
+              <td>Warning avec masquage PII</td>
+            </tr>
+            <tr>
+              <td><code>secureError(...args)</code></td>
+              <td><code>console.error</code></td>
+              <td>Erreur avec masquage PII</td>
+            </tr>
+            <tr>
+              <td><code>secureInfo(...args)</code></td>
+              <td><code>console.info</code></td>
+              <td>Info avec masquage PII</td>
+            </tr>
+            <tr>
+              <td><code>logWithContext(ctx, level, ...args)</code></td>
+              <td>&mdash;</td>
+              <td>Log avec préfixe <code>[ctx]</code> et masquage</td>
+            </tr>
+            <tr>
+              <td><code>sanitizeData(data)</code></td>
+              <td>&mdash;</td>
+              <td>Sanitise un objet/string sans le logger</td>
+            </tr>
+            <tr>
+              <td><code>hashUserId(userId)</code></td>
+              <td>&mdash;</td>
+              <td>Hash SHA-256 tronqué : <code>usr_a1b2c3</code></td>
+            </tr>
+            <tr>
+              <td><code>maskEmail(email)</code></td>
+              <td>&mdash;</td>
+              <td>Masquage partiel : <code>j***n@domain.com</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Traitement récursif des objets</h3>
+
+        <p>La fonction <code>sanitizeData()</code> parcourt récursivement les objets et applique les règles de masquage selon le <strong>nom de la clé</strong> :</p>
+
+        <pre><code class="language-javascript">import { sanitizeData } from '@/lib/security/secureLogger';
+
+const data = {
+  user: {
+    userId: 'clx9abc123def456',
+    email: 'jean.dupont@gmail.com',
+    password: 'SuperSecret123',
+    profile: {
+      name: 'Jean Dupont',
+      token: 'eyJhbGciOiJIUzI1NiJ9'
+    }
+  }
+};
+
+sanitizeData(data);
+// → {
+//   user: {
+//     userId: "usr_a1b2c3",
+//     email: "j***t@gmail.com",
+//     password: "[HIDDEN]",
+//     profile: {
+//       name: "Jean Dupont",
+//       token: "[HIDDEN]"
+//     }
+//   }
+// }</code></pre>
+
+        <div class="callout callout-info">
+          <strong>Clés masquées automatiquement</strong> &mdash; Les clés suivantes sont entièrement remplacées par <code>[HIDDEN]</code> : <code>password</code>, <code>token</code>, <code>apiKey</code>, <code>secret</code>, <code>passwordHash</code>.
+        </div>
+
+        <!-- ─── XSS Sanitization ─── -->
+
+        <h2>Sanitisation XSS</h2>
+
+        <p>Le module <code>xssSanitization.js</code> fournit une protection contre les attaques <strong>Cross-Site Scripting (XSS)</strong> avec une approche par whitelist pour les données utilisateur.</p>
+
+        <h3>Stratégies de sanitisation</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Trois niveaux de sanitisation</div>
+          <div class="mermaid">
+graph TB
+    INPUT["Données utilisateur"]
+
+    INPUT --> S1["escapeHtml()<br/>Échappement total"]
+    INPUT --> S2["sanitizeHtml()<br/>Whitelist de balises"]
+    INPUT --> S3["stripHtml()<br/>Suppression totale"]
+
+    S1 --> O1["&amp;lt;script&amp;gt; → visible<br/>mais inoffensif"]
+    S2 --> O2["&lt;b&gt;, &lt;em&gt; conservés<br/>&lt;script&gt; supprimé"]
+    S3 --> O3["Texte brut uniquement"]
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fonction</th>
+              <th>Stratégie</th>
+              <th>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>escapeHtml(str)</code></td>
+              <td>Échappe tous les caractères HTML</td>
+              <td>Affichage de texte dans du HTML</td>
+            </tr>
+            <tr>
+              <td><code>sanitizeHtml(html)</code></td>
+              <td>Whitelist de balises autorisées</td>
+              <td>Contenu riche (éditeur)</td>
+            </tr>
+            <tr>
+              <td><code>stripHtml(str)</code></td>
+              <td>Supprime tout le HTML</td>
+              <td>Données structurées (CV, JSON)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>escapeHtml(str)</h3>
+
+        <p>Échappe les 6 caractères HTML dangereux :</p>
+
+        <pre><code class="language-javascript">import { escapeHtml } from '@/lib/security/xssSanitization';
+
+escapeHtml('&lt;script&gt;alert("XSS")&lt;/script&gt;');
+// → "&amp;lt;script&amp;gt;alert(&amp;quot;XSS&amp;quot;)&amp;lt;/script&amp;gt;"
+
+escapeHtml("L'utilisateur &amp; son profil");
+// → "L&amp;#x27;utilisateur &amp;amp; son profil"</code></pre>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Caractère</th>
+              <th>Encodage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>&amp;</code></td><td><code>&amp;amp;</code></td></tr>
+            <tr><td><code>&lt;</code></td><td><code>&amp;lt;</code></td></tr>
+            <tr><td><code>&gt;</code></td><td><code>&amp;gt;</code></td></tr>
+            <tr><td><code>"</code></td><td><code>&amp;quot;</code></td></tr>
+            <tr><td><code>'</code></td><td><code>&amp;#x27;</code></td></tr>
+            <tr><td><code>/</code></td><td><code>&amp;#x2F;</code></td></tr>
+          </tbody>
+        </table>
+
+        <h3>sanitizeHtml(html) &mdash; Whitelist</h3>
+
+        <p>Autorise uniquement les balises de mise en forme basique et supprime tout le reste :</p>
+
+        <pre><code class="language-javascript">// Balises autorisées (whitelist)
+const ALLOWED_TAGS = ['b', 'i', 'em', 'strong', 'u', 'br', 'p', 'ul', 'ol', 'li'];
+
+// Aucun attribut autorisé (sécurité maximale)
+const ALLOWED_ATTRIBUTES = {};</code></pre>
+
+        <p>La sanitisation se fait en 4 passes :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Passe</th>
+              <th>Action</th>
+              <th>Exemple</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1</strong></td>
+              <td>Suppression des blocs <code>&lt;script&gt;</code> et <code>&lt;style&gt;</code></td>
+              <td><code>&lt;script&gt;alert(1)&lt;/script&gt;</code> &rarr; <code></code></td>
+            </tr>
+            <tr>
+              <td><strong>2</strong></td>
+              <td>Suppression des URLs <code>javascript:</code></td>
+              <td><code>javascript:alert(1)</code> &rarr; <code>alert(1)</code></td>
+            </tr>
+            <tr>
+              <td><strong>3</strong></td>
+              <td>Suppression des event handlers (<code>onclick</code>, <code>onload</code>...)</td>
+              <td><code>onclick="hack()"</code> &rarr; <code></code></td>
+            </tr>
+            <tr>
+              <td><strong>4</strong></td>
+              <td>Filtrage des balises (whitelist) + suppression des attributs</td>
+              <td><code>&lt;div class="x"&gt;</code> &rarr; <code></code>, <code>&lt;b&gt;</code> &rarr; <code>&lt;b&gt;</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>sanitizeCvData(cvData)</h3>
+
+        <p>Fonction spécialisée pour les données de CV. Les CVs étant des données <strong>structurées en JSON</strong>, tout le HTML est supprimé (stratégie <code>stripHtml</code>) :</p>
+
+        <pre><code class="language-javascript">import { sanitizeCvData } from '@/lib/security/xssSanitization';
+
+const dirtyData = {
+  name: 'Jean &lt;script&gt;alert(1)&lt;/script&gt; Dupont',
+  experience: [
+    {
+      title: 'Dev &lt;b onclick="hack()"&gt;Full-Stack&lt;/b&gt;',
+      description: '&lt;p&gt;Développement&lt;/p&gt; &lt;img src=x onerror=alert(1)&gt;'
+    }
+  ]
+};
+
+sanitizeCvData(dirtyData);
+// → {
+//   name: "Jean  Dupont",
+//   experience: [{
+//     title: "Dev Full-Stack",
+//     description: "Développement "
+//   }]
+// }</code></pre>
+
+        <h3>sanitizeUrl(url)</h3>
+
+        <p>Valide et sanitise les URLs en vérifiant le protocole :</p>
+
+        <pre><code class="language-javascript">import { sanitizeUrl } from '@/lib/security/xssSanitization';
+
+sanitizeUrl('https://github.com/user');     // → "https://github.com/user"
+sanitizeUrl('http://example.com');           // → "http://example.com"
+sanitizeUrl('javascript:alert(1)');          // → null (protocole bloqué)
+sanitizeUrl('data:text/html,...');            // → null (protocole bloqué)
+sanitizeUrl('ftp://files.com/cv.pdf');       // → null (non autorisé)
+sanitizeUrl('not-a-url');                    // → null (invalide)</code></pre>
+
+        <div class="callout callout-warning">
+          <strong>Protocoles autorisés</strong> &mdash; Seuls <code>http:</code> et <code>https:</code> sont acceptés par défaut. Les protocoles <code>javascript:</code>, <code>data:</code> et <code>vbscript:</code> sont explicitement bloqués.
+        </div>
+
+        <h3>sanitizeEmail(email)</h3>
+
+        <p>Valide le format et nettoie les caractères dangereux :</p>
+
+        <pre><code class="language-javascript">import { sanitizeEmail } from '@/lib/security/xssSanitization';
+
+sanitizeEmail('Jean.Dupont@Gmail.COM');       // → "jean.dupont@gmail.com"
+sanitizeEmail('  user@test.fr  ');            // → "user@test.fr"
+sanitizeEmail('user&lt;script&gt;@evil.com');  // → null (caractères dangereux)
+sanitizeEmail('not-an-email');                // → null (format invalide)</code></pre>
+
+        <!-- ─── Résumé ─── -->
+
+        <h2>Récapitulatif des protections</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Menace</th>
+              <th>Protection</th>
+              <th>Module</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Upload de fichier malveillant</td>
+              <td>Magic numbers + MIME + taille</td>
+              <td><code>fileValidation.js</code></td>
+            </tr>
+            <tr>
+              <td>Path traversal (<code>../../etc/passwd</code>)</td>
+              <td><code>isPathSafe()</code> + <code>sanitizeFilename()</code></td>
+              <td><code>fileValidation.js</code></td>
+            </tr>
+            <tr>
+              <td>Fuite de PII dans les logs</td>
+              <td>Masquage automatique emails, tokens, IDs</td>
+              <td><code>secureLogger.js</code></td>
+            </tr>
+            <tr>
+              <td>XSS stocké (données CV)</td>
+              <td><code>sanitizeCvData()</code> strip complet</td>
+              <td><code>xssSanitization.js</code></td>
+            </tr>
+            <tr>
+              <td>XSS réfléchi (inputs)</td>
+              <td><code>escapeHtml()</code></td>
+              <td><code>xssSanitization.js</code></td>
+            </tr>
+            <tr>
+              <td>Injection via URL (<code>javascript:</code>)</td>
+              <td><code>sanitizeUrl()</code> whitelist protocoles</td>
+              <td><code>xssSanitization.js</code></td>
+            </tr>
+            <tr>
+              <td>Injection via email</td>
+              <td><code>sanitizeEmail()</code> validation + nettoyage</td>
+              <td><code>xssSanitization.js</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-success">
+          <strong>Défense en profondeur</strong> &mdash; Ces trois modules forment une couche de sécurité applicative qui complète les protections au niveau middleware (CORS, CSP, rate limiting) et infrastructure (HTTPS, WAF).
+        </div>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

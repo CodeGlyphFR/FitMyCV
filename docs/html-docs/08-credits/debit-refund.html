@@ -128,21 +128,61 @@ export async function getCreditBalance(userId) {
 
         <p>D&eacute;bit <strong>atomique</strong> avec v&eacute;rification de la balance. Utilis&eacute; pour les usages normaux de features.</p>
 
-        <pre><code class="language-javascript">// Signature
-debitCredit(userId, amount, type = 'usage', metadata = {})
+        <pre><code class="language-javascript">// lib/subscription/credits.js
 
-// metadata accept&eacute;es:
-// { featureName, taskId, cvFileId, extra: {...} }
+export async function debitCredit(userId, amount, type = 'usage', metadata = {}) {
+  if (amount &lt;= 0) {
+    return { success: false, error: 'Le montant doit &ecirc;tre sup&eacute;rieur &agrave; 0' };
+  }
 
-// Flux interne (transaction Prisma):
-// 1. V&eacute;rifier balance >= amount (sinon erreur "Cr&eacute;dits insuffisants")
-// 2. Cr&eacute;er CreditTransaction (amount: -N, type)
-// 3. D&eacute;cr&eacute;menter CreditBalance.balance, incr&eacute;menter totalUsed
-// 4. &Eacute;mettre SSE: dbEmitter.emitCreditsUpdate(userId, {action: 'debit', ...})
+  try {
+    // Transaction atomique pour garantir la coh&eacute;rence
+    const result = await prisma.$transaction(async (tx) =&gt; {
+      // V&eacute;rifier la balance actuelle
+      const balance = await tx.creditBalance.findUnique({
+        where: { userId },
+      });
 
-// Retour:
-// { success: true, transaction, balance: newBalance }
-// { success: false, error: "Cr&eacute;dits insuffisants" }</code></pre>
+      if (!balance || balance.balance &lt; amount) {
+        throw new Error('Cr&eacute;dits insuffisants');
+      }
+
+      // Cr&eacute;er la transaction de d&eacute;bit
+      const transaction = await tx.creditTransaction.create({
+        data: {
+          userId,
+          amount: -amount, // N&eacute;gatif pour d&eacute;bit
+          type,
+          featureName: metadata.featureName || null,
+          taskId: metadata.taskId || null,
+          cvFileId: metadata.cvFileId || null,
+          metadata: metadata.extra ? JSON.stringify(metadata.extra) : null,
+        },
+      });
+
+      // Mettre &agrave; jour la balance
+      const updatedBalance = await tx.creditBalance.update({
+        where: { userId },
+        data: {
+          balance: { decrement: amount },
+          totalUsed: { increment: amount },
+        },
+      });
+
+      return { transaction, balance: updatedBalance };
+    });
+
+    // &Eacute;mettre SSE pour mise &agrave; jour temps r&eacute;el
+    dbEmitter.emitCreditsUpdate(userId, {
+      action: 'debit', amount, newBalance: result.balance.balance, type,
+    });
+
+    return { success: true, transaction: result.transaction,
+             balance: result.balance.balance };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}</code></pre>
 
         <div class="callout callout-info">
           <div class="callout-title">Transaction atomique</div>
@@ -153,17 +193,53 @@ debitCredit(userId, amount, type = 'usage', metadata = {})
 
         <p>D&eacute;bit <strong>forc&eacute;</strong> sans v&eacute;rification de balance. Utilis&eacute; exclusivement pour les <strong>chargebacks</strong>. Peut rendre la balance n&eacute;gative.</p>
 
-        <pre><code class="language-javascript">// Signature
-debitCredits(userId, amount, type = 'chargeback', metadata = {})
+        <pre><code class="language-javascript">// lib/subscription/credits.js
 
-// metadata accept&eacute;es:
-// { relatedTransactionId, ... } (s&eacute;rialis&eacute; en JSON)
+export async function debitCredits(userId, amount, type = 'chargeback', metadata = {}) {
+  if (amount &lt;= 0) {
+    return { success: false, error: 'Le montant doit &ecirc;tre sup&eacute;rieur &agrave; 0' };
+  }
 
-// Diff&eacute;rences avec debitCredit():
-// - PAS de v&eacute;rification de balance
-// - Utilise upsert (cr&eacute;e la balance si n'existe pas)
-// - La balance PEUT devenir n&eacute;gative
-// - &Eacute;met SSE: dbEmitter.emitCreditsUpdate(userId, {action: 'debit_forced', ...})</code></pre>
+  try {
+    const result = await prisma.$transaction(async (tx) =&gt; {
+      // Cr&eacute;er la transaction de d&eacute;bit
+      const transaction = await tx.creditTransaction.create({
+        data: {
+          userId,
+          amount: -amount,
+          type,
+          relatedTransactionId: metadata.relatedTransactionId || null,
+          metadata: JSON.stringify(metadata),
+        },
+      });
+
+      // Mettre &agrave; jour ou cr&eacute;er la balance (SANS v&eacute;rifier si suffisant)
+      const updatedBalance = await tx.creditBalance.upsert({
+        where: { userId },
+        create: {
+          userId,
+          balance: -amount, // Balance n&eacute;gative si pas de balance existante
+          totalUsed: amount,
+        },
+        update: {
+          balance: { decrement: amount }, // Peut devenir n&eacute;gatif
+          totalUsed: { increment: amount },
+        },
+      });
+
+      return { transaction, balance: updatedBalance };
+    });
+
+    dbEmitter.emitCreditsUpdate(userId, {
+      action: 'debit_forced', amount, newBalance: result.balance.balance, type,
+    });
+
+    return { success: true, transaction: result.transaction,
+             newBalance: result.balance.balance };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}</code></pre>
 
         <div class="callout callout-warning">
           <div class="callout-title">Balance n&eacute;gative = utilisateur bloqu&eacute;</div>
@@ -174,17 +250,77 @@ debitCredits(userId, amount, type = 'chargeback', metadata = {})
 
         <p>Rembourse une transaction de d&eacute;bit sp&eacute;cifique. Utilis&eacute; automatiquement lors de l'&eacute;chec d'une <code>BackgroundTask</code>.</p>
 
-        <pre><code class="language-javascript">// Signature
-refundCredit(userId, originalTransactionId, reason = 'Remboursement automatique')
+        <pre><code class="language-javascript">// lib/subscription/credits.js
 
-// Flux interne (transaction Prisma):
-// 1. V&eacute;rifier que la transaction d'origine existe et n'est pas d&eacute;j&agrave; rembours&eacute;e
-//    (double-check hors transaction + dans transaction pour race condition)
-// 2. V&eacute;rifier que amount < 0 (seul un d&eacute;bit peut &ecirc;tre rembours&eacute;)
-// 3. Cr&eacute;er CreditTransaction (type: 'refund', relatedTransactionId)
-// 4. Marquer la transaction d'origine: refunded = true
-// 5. Incr&eacute;menter CreditBalance.balance + totalRefunded
-// 6. &Eacute;mettre SSE: dbEmitter.emitCreditsUpdate(userId, {action: 'refund', ...})</code></pre>
+export async function refundCredit(userId, originalTransactionId,
+                                   reason = 'Remboursement automatique') {
+  try {
+    // V&eacute;rifier d'abord si d&eacute;j&agrave; rembours&eacute;e (hors transaction pour &eacute;viter lock inutile)
+    const existingTransaction = await prisma.creditTransaction.findUnique({
+      where: { id: originalTransactionId },
+      select: { refunded: true },
+    });
+    if (existingTransaction?.refunded) {
+      return { success: true, alreadyRefunded: true };
+    }
+
+    // Transaction atomique
+    const result = await prisma.$transaction(async (tx) =&gt; {
+      const originalTransaction = await tx.creditTransaction.findUnique({
+        where: { id: originalTransactionId },
+      });
+      if (!originalTransaction) throw new Error('Transaction introuvable');
+      if (originalTransaction.userId !== userId)
+        throw new Error('Transaction n\'appartient pas &agrave; cet utilisateur');
+      if (originalTransaction.refunded) return { alreadyRefunded: true }; // Race condition
+      if (originalTransaction.amount &gt;= 0)
+        throw new Error('Seules les transactions de d&eacute;bit peuvent &ecirc;tre rembours&eacute;es');
+
+      const refundAmount = Math.abs(originalTransaction.amount);
+
+      // Cr&eacute;er la transaction de remboursement
+      const refundTransaction = await tx.creditTransaction.create({
+        data: {
+          userId, amount: refundAmount, type: 'refund',
+          featureName: originalTransaction.featureName,
+          taskId: originalTransaction.taskId,
+          relatedTransactionId: originalTransactionId,
+          metadata: JSON.stringify({ reason }),
+        },
+      });
+
+      // Marquer la transaction d'origine comme rembours&eacute;e
+      await tx.creditTransaction.update({
+        where: { id: originalTransactionId },
+        data: { refunded: true },
+      });
+
+      // Incr&eacute;menter la balance
+      const updatedBalance = await tx.creditBalance.update({
+        where: { userId },
+        data: {
+          balance: { increment: refundAmount },
+          totalRefunded: { increment: refundAmount },
+        },
+      });
+
+      return { refundTransaction, balance: updatedBalance };
+    });
+
+    if (result.alreadyRefunded) return { success: true, alreadyRefunded: true };
+
+    dbEmitter.emitCreditsUpdate(userId, {
+      action: 'refund',
+      amount: Math.abs(result.refundTransaction.amount),
+      newBalance: result.balance.balance,
+    });
+
+    return { success: true, transaction: result.refundTransaction,
+             balance: result.balance.balance };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}</code></pre>
 
         <div class="diagram">
           <div class="diagram-title">Flux de remboursement avec idempotence</div>
@@ -208,25 +344,88 @@ flowchart TD
 
         <p>Attribue des cr&eacute;dits (achat ou cadeau). Inclut une <strong>triple idempotence</strong> pour les achats Stripe.</p>
 
-        <pre><code class="language-javascript">// Signature
-grantCredits(userId, amount, type = 'purchase', metadata = {})
+        <pre><code class="language-javascript">// lib/subscription/credits.js
 
-// metadata accept&eacute;es:
-// { stripePaymentIntentId, source, pricePaid }
+export async function grantCredits(userId, amount, type = 'purchase', metadata = {}) {
+  if (amount &lt;= 0) return { success: false, error: 'Montant invalide' };
 
-// Flux interne:
-// 1. V&eacute;rifier que l'utilisateur existe (FK check)
-// 2. Si stripePaymentIntentId fourni: v&eacute;rifier qu'il n'existe pas d&eacute;j&agrave;
-//    (SELECT sur CreditTransaction.stripePaymentIntentId)
-// 3. Transaction atomique:
-//    - Cr&eacute;er CreditTransaction (amount: +N, stripePaymentIntentId)
-//    - Upsert CreditBalance (incr&eacute;menter balance + totalPurchased/totalGifted)
-//    - Si purchase: calculer balanceAfterLastPurchase
-// 4. &Eacute;mettre SSE: dbEmitter.emitCreditsUpdate(userId, {action: 'grant', ...})
+  // V&eacute;rifier que l'utilisateur existe (FK check)
+  const userExists = await prisma.user.findUnique({
+    where: { id: userId }, select: { id: true },
+  });
+  if (!userExists) return { success: false, error: `Utilisateur ${userId} introuvable` };
 
-// Gestion race condition:
-// Si erreur P2002 (unique constraint sur stripePaymentIntentId):
-// → Retourner { success: true, alreadyProcessed: true }</code></pre>
+  try {
+    // Niveau 2: V&eacute;rification d'idempotence applicative
+    if (metadata.stripePaymentIntentId) {
+      const existingTransaction = await prisma.creditTransaction.findFirst({
+        where: { stripePaymentIntentId: metadata.stripePaymentIntentId },
+      });
+      if (existingTransaction) {
+        return { success: true, transaction: existingTransaction,
+                 alreadyProcessed: true };
+      }
+    }
+
+    // Transaction atomique
+    const result = await prisma.$transaction(async (tx) =&gt; {
+      const transaction = await tx.creditTransaction.create({
+        data: {
+          userId, amount, type,
+          stripePaymentIntentId: metadata.stripePaymentIntentId || null,
+          metadata: metadata.source ? JSON.stringify({
+            source: metadata.source, pricePaid: metadata.pricePaid
+          }) : null,
+        },
+      });
+
+      // Calculer balanceAfterLastPurchase si achat
+      let balanceAfterLastPurchaseValue = undefined;
+      if (type === 'purchase') {
+        const current = await tx.creditBalance.findUnique({
+          where: { userId }, select: { balance: true },
+        });
+        balanceAfterLastPurchaseValue = (current?.balance || 0) + amount;
+      }
+
+      // Upsert CreditBalance
+      const balance = await tx.creditBalance.upsert({
+        where: { userId },
+        create: {
+          userId, balance: amount,
+          totalPurchased: type === 'purchase' ? amount : 0,
+          totalGifted: type === 'gift' ? amount : 0,
+          balanceAfterLastPurchase: type === 'purchase' ? amount : 0,
+        },
+        update: {
+          balance: { increment: amount },
+          totalPurchased: type === 'purchase' ? { increment: amount } : undefined,
+          totalGifted: type === 'gift' ? { increment: amount } : undefined,
+          balanceAfterLastPurchase: balanceAfterLastPurchaseValue,
+        },
+      });
+
+      return { transaction, balance };
+    });
+
+    dbEmitter.emitCreditsUpdate(userId, {
+      action: 'grant', amount, newBalance: result.balance.balance, type,
+    });
+
+    return { success: true, transaction: result.transaction,
+             balance: result.balance.balance };
+  } catch (error) {
+    // Niveau 3: Race condition - unique constraint P2002
+    if (error.code === 'P2002' &amp;&amp; metadata.stripePaymentIntentId) {
+      const existingTransaction = await prisma.creditTransaction.findFirst({
+        where: { stripePaymentIntentId: metadata.stripePaymentIntentId },
+      });
+      return { success: true, transaction: existingTransaction,
+               alreadyProcessed: true };
+    }
+    return { success: false, error: error.message };
+  }
+}</code></pre>
 
         <h3>Idempotence &agrave; 3 niveaux (achats Stripe)</h3>
 

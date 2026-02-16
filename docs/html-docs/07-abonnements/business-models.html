@@ -368,6 +368,217 @@ if (welcomeCredits > 0) {
           <p>Changer de mod&egrave;le en production affecte <strong>imm&eacute;diatement</strong> tous les utilisateurs. Les abonnements Stripe existants restent actifs c&ocirc;t&eacute; Stripe mais les limites ne sont plus appliqu&eacute;es en mode cr&eacute;dits. Il est recommand&eacute; de tester sur l'environnement de pr&eacute;-production (<code>dev.fitmycv.io</code>) avant.</p>
         </div>
 
+        <!-- ==================== DECISION canUseFeature ==================== -->
+        <h2>Arbre de D&eacute;cision : <code>canUseFeature()</code></h2>
+
+        <p><strong>Fichier :</strong> <code>lib/subscription/featureUsage.js</code></p>
+
+        <p>Fonction centrale qui d&eacute;termine si un utilisateur peut utiliser une feature. L'arbre de d&eacute;cision diff&egrave;re selon le mode actif :</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Arbre de d&eacute;cision complet de canUseFeature()</div>
+          <div class="mermaid">
+flowchart TD
+    Start["canUseFeature(userId, featureName)"]
+
+    BalCheck{"Balance &lt; 0 ?<br/>(chargeback)"}
+    ModeCheck{"subscription_mode_enabled ?"}
+
+    subgraph Credits["MODE CRÉDITS-ONLY"]
+        CreditCost["getCreditCostForFeature()"]
+        CostZero{"cost === 0 ?"}
+        CreditSuff{"balance >= cost ?"}
+        CreditFree["✅ Feature gratuite<br/>useCredit: false"]
+        CreditUse["✅ Utiliser crédits<br/>useCredit: true"]
+        CreditBlock["❌ Crédits insuffisants"]
+    end
+
+    subgraph Sub["MODE ABONNEMENT"]
+        GetSub["getUserSubscriptionWithPlan()"]
+        SubActive{"status === 'active' ?"}
+        FindLimit["Trouver featureLimit dans plan"]
+        PremReq{"premiumRequired ?<br/>(cost === 0)"}
+        IsPrem{"Plan Premium ?"}
+        Enabled{"featureLimit.isEnabled ?"}
+        LimitInf{"usageLimit === -1 ?"}
+        Counter["getOrCreateFeatureCounter()"]
+        UnderLimit{"count &lt; limit ?"}
+        SubCreditSuff{"balance >= cost ?"}
+        PremOk["✅ Premium inclus<br/>useCredit: false"]
+        PremBlock["❌ Réservé Premium"]
+        SubUnlimited["✅ Illimité<br/>useCredit: false"]
+        SubOk["✅ Limite non atteinte<br/>useCredit: false"]
+        SubCreditUse["✅ Via crédits<br/>useCredit: true"]
+        SubBlock["❌ Limite + crédits insuffisants"]
+        DisabledCred{"Crédits suffisants ?"}
+        DisabledOk["✅ Feature désactivée → crédits"]
+        DisabledBlock["❌ Désactivée + insuffisant"]
+    end
+
+    Start --> BalCheck
+    BalCheck -->|"Oui"| BlockNeg["❌ Balance négative"]
+    BalCheck -->|"Non"| ModeCheck
+
+    ModeCheck -->|"false"| CreditCost
+    CreditCost --> CostZero
+    CostZero -->|"Oui"| CreditFree
+    CostZero -->|"Non"| CreditSuff
+    CreditSuff -->|"Oui"| CreditUse
+    CreditSuff -->|"Non"| CreditBlock
+
+    ModeCheck -->|"true"| GetSub
+    GetSub --> SubActive
+    SubActive -->|"Non"| SubInactive["❌ Abonnement inactif"]
+    SubActive -->|"Oui"| FindLimit
+    FindLimit --> PremReq
+    PremReq -->|"Oui"| IsPrem
+    IsPrem -->|"Oui"| PremOk
+    IsPrem -->|"Non"| PremBlock
+    PremReq -->|"Non"| Enabled
+    Enabled -->|"Non"| DisabledCred
+    DisabledCred -->|"Oui"| DisabledOk
+    DisabledCred -->|"Non"| DisabledBlock
+    Enabled -->|"Oui"| LimitInf
+    LimitInf -->|"Oui"| SubUnlimited
+    LimitInf -->|"Non"| Counter
+    Counter --> UnderLimit
+    UnderLimit -->|"Oui"| SubOk
+    UnderLimit -->|"Non"| SubCreditSuff
+    SubCreditSuff -->|"Oui"| SubCreditUse
+    SubCreditSuff -->|"Non"| SubBlock
+          </div>
+        </div>
+
+        <h3>Code source : canUseFeature() (extrait cl&eacute;)</h3>
+
+        <pre><code class="language-javascript">// lib/subscription/featureUsage.js — Logique duale
+export async function canUseFeature(userId, featureName) {
+  // 0. Balance négative (chargeback) → BLOQUÉ
+  const creditBalance = await getCreditBalance(userId);
+  if (creditBalance.balance &lt; 0) return { canUse: false, reason: 'Balance négative' };
+
+  // 0.5 Mode crédits-only ?
+  const subscriptionEnabled = await isSubscriptionModeEnabled();
+
+  if (!subscriptionEnabled) {
+    // MODE CRÉDITS: cost=0 signifie GRATUIT (pas Premium required)
+    const { cost } = await getCreditCostForFeature(featureName);
+    if (cost === 0) return { canUse: true, useCredit: false };
+    if (creditBalance.balance >= cost)
+      return { canUse: true, useCredit: true, creditCost: cost };
+    return { canUse: false, reason: 'Crédits insuffisants' };
+  }
+
+  // MODE ABONNEMENT: cost=0 signifie Premium required
+  const subscription = await getUserSubscriptionWithPlan(userId);
+  const featureLimit = subscription.plan.featureLimits.find(/*...*/);
+  const { cost, premiumRequired } = await getCreditCostForFeature(featureName);
+
+  // Premium required (cost=0 en mode abo)
+  if (premiumRequired) {
+    return subscription.plan.name === 'Premium'
+      ? { canUse: true, useCredit: false }
+      : { canUse: false, reason: 'Réservé Premium' };
+  }
+
+  // Feature désactivée → fallback crédits
+  if (!featureLimit.isEnabled) {
+    return creditBalance.balance >= cost
+      ? { canUse: true, useCredit: true }
+      : { canUse: false };
+  }
+
+  // Limite illimitée ou non atteinte
+  if (featureLimit.usageLimit === -1) return { canUse: true };
+  const counter = await getOrCreateFeatureCounter(userId, featureName, /*...*/);
+  if (counter.count &lt; featureLimit.usageLimit) return { canUse: true };
+
+  // Limite atteinte → fallback crédits
+  return creditBalance.balance >= cost
+    ? { canUse: true, useCredit: true }
+    : { canUse: false };
+}</code></pre>
+
+        <h3>Compteurs Mensuels &mdash; Reset Automatique</h3>
+
+        <div class="callout callout-info">
+          <div class="callout-title">P&eacute;riode bas&eacute;e sur la date anniversaire</div>
+          <p>Les compteurs mensuels (<code>FeatureUsageCounter</code>) utilisent la date anniversaire de l'abonnement, pas le mois calendaire. La fonction <code>getCurrentPeriod(subscription)</code> calcule <code>periodStart</code> et <code>periodEnd</code> &agrave; partir de <code>subscription.currentPeriodStart</code>. Au changement de p&eacute;riode, <code>getOrCreateFeatureCounter()</code> reset automatiquement le compteur &agrave; 0.</p>
+        </div>
+
+        <pre><code class="language-javascript">// Reset automatique au changement de période
+async function getOrCreateFeatureCounter(userId, featureName, periodStart, periodEnd) {
+  let counter = await prisma.featureUsageCounter.findFirst({
+    where: { userId, featureName },
+  });
+
+  // Si la période a changé → reset le compteur
+  if (counter &amp;&amp; counter.periodStart.getTime() !== periodStart.getTime()) {
+    return await prisma.featureUsageCounter.update({
+      where: { id: counter.id },
+      data: { count: 0, periodStart, periodEnd },
+    });
+  }
+  return counter;
+}</code></pre>
+
+        <h3>Fonctions Compl&eacute;mentaires</h3>
+
+        <table>
+          <thead>
+            <tr><th>Fonction</th><th>R&ocirc;le</th><th>SSE</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>incrementFeatureCounter()</code></td>
+              <td>V&eacute;rifie + incr&eacute;mente + d&eacute;bite cr&eacute;dit si n&eacute;cessaire</td>
+              <td>&Eacute;met <code>CreditBalance</code> ou <code>FeatureUsageCounter</code></td>
+            </tr>
+            <tr>
+              <td><code>refundFeatureUsage(taskId)</code></td>
+              <td>Rembourse un cr&eacute;dit ou d&eacute;cr&eacute;mente un compteur suite &agrave; &eacute;chec de task</td>
+              <td>&Eacute;met <code>credit_refunded</code> ou <code>counter_refunded</code></td>
+            </tr>
+            <tr>
+              <td><code>resetFeatureCounters(userId)</code></td>
+              <td>Supprime tous les compteurs (renouvellement abonnement)</td>
+              <td>&mdash;</td>
+            </tr>
+            <tr>
+              <td><code>getUserFeatureCounters(userId)</code></td>
+              <td>R&eacute;cup&egrave;re tous les compteurs avec limites pour l'UI</td>
+              <td>&mdash;</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== SETTINGS UTILS ==================== -->
+        <h2>Utilitaires Settings (<code>settingsUtils.js</code>)</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/settings/settingsUtils.js</code></p>
+
+        <p>Fonctions pour r&eacute;cup&eacute;rer les valeurs de la table <code>Setting</code> avec conversion de type automatique :</p>
+
+        <pre><code class="language-javascript">// Récupère un setting brut (string)
+export async function getSettingValue(settingName, defaultValue = null)
+
+// Convertit en nombre (parseInt)
+export async function getNumericSettingValue(settingName, defaultValue = 0)
+
+// Convertit en booléen ("1"/"true" → true)
+export async function getBooleanSettingValue(settingName, defaultValue = false)
+
+// Raccourci pour le toggle principal
+export async function isSubscriptionModeEnabled() {
+  return await getBooleanSettingValue('subscription_mode_enabled', true);
+  // Défaut: true (mode abonnement actif par défaut)
+}</code></pre>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Pas de cache</div>
+          <p>Les settings sont lus &agrave; chaque appel depuis la DB (pas de cache). Cela permet de changer le mode &eacute;conomique en temps r&eacute;el via l'interface d'administration sans red&eacute;marrage.</p>
+        </div>
+
         <h2>Fichiers Cl&eacute;s</h2>
 
         <table>

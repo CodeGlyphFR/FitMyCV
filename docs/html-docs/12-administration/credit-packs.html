@@ -370,6 +370,126 @@ window.location.href = url;
 // 4. Cr&eacute;dits ajout&eacute;s au CreditBalance de l'utilisateur
 // 5. CreditTransaction cr&eacute;&eacute;e (type: 'purchase', stripePaymentIntentId)</code></pre>
 
+        <h2>Code source des routes API</h2>
+
+        <h3>POST /api/admin/credit-packs (cr&eacute;ation)</h3>
+
+        <pre><code class="language-javascript">// app/api/admin/credit-packs/route.js
+
+export async function POST(request) {
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Admin required' }, { status: 403 });
+  }
+
+  const { creditAmount, price, priceCurrency, isActive } = await request.json();
+
+  // Validations
+  if (typeof creditAmount !== 'number' || creditAmount &lt;= 0)
+    return NextResponse.json({ error: 'Cr&eacute;dits &gt; 0 requis' }, { status: 400 });
+  if (typeof price !== 'number' || price &lt; 0)
+    return NextResponse.json({ error: 'Prix invalide' }, { status: 400 });
+
+  // V&eacute;rifier unicit&eacute; de creditAmount
+  const existing = await prisma.creditPack.findUnique({
+    where: { creditAmount },
+  });
+  if (existing) {
+    return NextResponse.json(
+      { error: `Un pack avec ${creditAmount} cr&eacute;dits existe d&eacute;j&agrave;` },
+      { status: 409 }
+    );
+  }
+
+  // Cr&eacute;er le pack (nom auto-g&eacute;n&eacute;r&eacute;)
+  const pack = await prisma.creditPack.create({
+    data: {
+      name: `${creditAmount} Cr&eacute;dits`,
+      creditAmount, price, priceCurrency,
+      isActive: isActive ?? true,
+    },
+  });
+
+  // Synchronisation Stripe non-bloquante
+  syncStripeProductsInternal()
+    .catch(err =&gt; console.warn('[Admin] Stripe sync failed:', err));
+
+  return NextResponse.json({ pack }, { status: 201 });
+}</code></pre>
+
+        <h3>PATCH /api/admin/credit-packs/[id] (modification)</h3>
+
+        <pre><code class="language-javascript">// app/api/admin/credit-packs/[id]/route.js
+
+export async function PATCH(request, { params }) {
+  const { id } = await params; // Next.js 16: params async
+  const packId = parseInt(id, 10);
+
+  const existingPack = await prisma.creditPack.findUnique({
+    where: { id: packId },
+  });
+  if (!existingPack) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  const { creditAmount, price, priceCurrency, isActive } = await request.json();
+
+  // V&eacute;rifier unicit&eacute; creditAmount (exclut le pack en cours)
+  if (creditAmount !== undefined) {
+    const conflict = await prisma.creditPack.findFirst({
+      where: { creditAmount, NOT: { id: packId } },
+    });
+    if (conflict) return NextResponse.json(
+      { error: `Pack ${creditAmount} cr&eacute;dits existe d&eacute;j&agrave;` }, { status: 409 });
+  }
+
+  // Construire les donn&eacute;es de mise &agrave; jour
+  const updateData = {};
+  if (creditAmount !== undefined) {
+    updateData.creditAmount = creditAmount;
+    updateData.name = `${creditAmount} Cr&eacute;dits`; // R&eacute;g&eacute;n&eacute;rer le nom
+  }
+  if (price !== undefined) updateData.price = price;
+  if (priceCurrency !== undefined) updateData.priceCurrency = priceCurrency;
+  if (isActive !== undefined) updateData.isActive = isActive;
+
+  const updatedPack = await prisma.creditPack.update({
+    where: { id: packId }, data: updateData,
+  });
+
+  // Synchronisation Stripe (g&egrave;re archivage ancien Price si prix chang&eacute;)
+  syncStripeProductsInternal()
+    .catch(err =&gt; console.warn('[Admin] Stripe sync failed:', err));
+
+  return NextResponse.json({ pack: updatedPack });
+}</code></pre>
+
+        <h3>DELETE /api/admin/credit-packs/[id] (suppression)</h3>
+
+        <pre><code class="language-javascript">// app/api/admin/credit-packs/[id]/route.js
+
+export async function DELETE(request, { params }) {
+  const { id } = await params;
+  const packId = parseInt(id, 10);
+
+  const existingPack = await prisma.creditPack.findUnique({
+    where: { id: packId },
+  });
+  if (!existingPack) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  // Supprimer de la DB
+  await prisma.creditPack.delete({ where: { id: packId } });
+
+  // Archiver sur Stripe (non-bloquant)
+  syncStripeProductsInternal()
+    .catch(err =&gt; console.warn('[Admin] Stripe sync failed:', err));
+
+  return NextResponse.json({ success: true });
+}</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Next.js 16 : params async</div>
+          <p>Depuis Next.js 16, le param&egrave;tre <code>params</code> des routes dynamiques est une <strong>Promise</strong>. Il faut utiliser <code>const { id } = await params;</code> au lieu de l'acc&egrave;s direct <code>params.id</code>.</p>
+        </div>
+
         <h2>Fichiers Cl&eacute;s</h2>
 
         <table>

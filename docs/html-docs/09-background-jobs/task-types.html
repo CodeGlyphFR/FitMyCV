@@ -154,9 +154,47 @@ isImprovementTask(task)   // true si type === 'improve-cv'</code></pre>
           </tbody>
         </table>
 
+        <h3>Durées par défaut (DEFAULT_DURATIONS)</h3>
+
+        <p>Utilisées pour la barre de progression quand pas assez de données télémétrie (<code>MIN_CALLS_FOR_AVERAGE = 1</code>) :</p>
+
+        <pre><code class="language-javascript">// lib/background-jobs/taskFeatureMapping.js
+
+export const DEFAULT_DURATIONS = {
+  'generation': 35000,             // 35s - Génération CV complète
+  'template-creation': 40000,      // 40s - Template création
+  'import': 60000,                 // 60s - Import PDF avec extraction
+  'translate-cv': 20000,           // 20s - Traduction CV
+  'calculate-match-score': 15000,  // 15s - Calcul score match
+  'job-title-generation': 30000,   // 30s - Génération depuis job title
+  'improve-cv': 25000,             // 25s - Optimisation CV
+};</code></pre>
+
         <div class="callout callout-info">
-          <strong>Durées dynamiques</strong> — La barre de progression utilise la moyenne des appels OpenAI précédents (seuil : <code>MIN_CALLS_FOR_AVERAGE = 1</code>). Sinon, les <code>DEFAULT_DURATIONS</code> s'appliquent.
+          <strong>Durées dynamiques</strong> — Dès qu'au moins 1 appel OpenAI a été mesuré pour un type de tâche, la durée moyenne réelle remplace la durée par défaut. La fonction <code>getDefaultDuration(taskType)</code> retourne 30s comme fallback générique.
         </div>
+
+        <h3>Configuration des phases (TASK_PHASES)</h3>
+
+        <pre><code class="language-javascript">// lib/background-jobs/taskFeatureMapping.js
+
+export const TASK_PHASES = {
+  'improve-cv': [
+    { name: 'Classification + Preprocessing', weight: 0.2 },
+    { name: 'Amélioration expériences', weight: 0.4 },
+    { name: 'Amélioration projets', weight: 0.2 },
+    { name: 'Summary + Fusion', weight: 0.2 },
+  ],
+};
+
+// Helpers
+export function getFeaturesForTaskType(taskType) {
+  return TASK_TYPE_TO_FEATURES[taskType] || [];
+}
+
+export function getDefaultDuration(taskType) {
+  return DEFAULT_DURATIONS[taskType] || 30000; // 30s fallback
+}</code></pre>
 
         <h2>Phases de progression (improve-cv)</h2>
 
@@ -235,6 +273,55 @@ const { schedule, run } = createJobRunner({
         <div class="callout callout-success">
           <strong>Lazy loading</strong> — <code>getService</code> utilise un <code>import()</code> dynamique pour charger le service uniquement au moment de l'exécution, réduisant le temps de démarrage du serveur.
         </div>
+
+        <h2>Cycle de vie complet d'une tâche</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Cycle de vie d'une BackgroundTask</div>
+          <div class="mermaid">
+stateDiagram-v2
+    [*] --> queued : Route API crée la tâche
+    queued --> running : processQueue() dépile
+    running --> completed : Job terminé avec succès
+    running --> failed : Erreur / timeout
+    running --> cancelled : Utilisateur annule
+    failed --> [*] : refundFeatureUsage()
+    cancelled --> [*] : refundFeatureUsage()
+    completed --> [*]
+          </div>
+        </div>
+
+        <h2>Constantes TASK_TYPES (code source)</h2>
+
+        <pre><code class="language-javascript">// lib/background-jobs/taskTypes.js
+
+export const TASK_TYPES = {
+  GENERATION: 'generation',
+  CV_GENERATION: 'cv_generation',
+  TEMPLATE_CREATION: 'template-creation',
+  IMPORT_PDF: 'import-pdf',
+  TRANSLATE: 'translate-cv',
+  MATCH_SCORE: 'calculate-match-score',
+  IMPROVE: 'improve-cv',
+};
+
+export const AI_GENERATION_TYPES = [
+  TASK_TYPES.GENERATION,
+  TASK_TYPES.CV_GENERATION,
+  TASK_TYPES.TEMPLATE_CREATION,
+];
+
+export function isAiGenerationTask(task) {
+  return task &amp;&amp; AI_GENERATION_TYPES.includes(task.type);
+}
+
+export function isMatchScoreTask(task) {
+  return task &amp;&amp; task.type === TASK_TYPES.MATCH_SCORE;
+}
+
+export function isImprovementTask(task) {
+  return task &amp;&amp; task.type === TASK_TYPES.IMPROVE;
+}</code></pre>
 
         <h2>Tri des tâches pour l'affichage</h2>
 

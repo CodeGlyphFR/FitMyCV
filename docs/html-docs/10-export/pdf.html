@@ -162,14 +162,96 @@ export async function POST(request) {
   });
 }</code></pre>
 
-        <h2>Gestion des erreurs</h2>
+        <h2>Arguments Puppeteer (production)</h2>
 
-        <p>En cas d'erreur durant la génération PDF :</p>
-        <ul>
-          <li>Le browser Puppeteer est toujours fermé via un bloc <code>finally</code></li>
-          <li>Le crédit est remboursé via <code>refundFeatureUsage(usageId)</code></li>
-          <li>L'erreur est loguée et une réponse 500 est retournée</li>
-        </ul>
+        <p>Le lancement de Puppeteer utilise une configuration optimisée pour un environnement Docker :</p>
+
+        <pre><code class="language-javascript">// app/api/export-pdf/route.js
+
+const browser = await puppeteer.launch({
+  headless: 'new',
+  args: [
+    '--no-sandbox',                       // Requis en Docker
+    '--disable-setuid-sandbox',           // Requis en Docker
+    '--disable-dev-shm-usage',            // Utilise /tmp au lieu de /dev/shm
+    '--disable-accelerated-2d-canvas',    // Pas besoin de GPU
+    '--no-first-run',
+    '--no-zygote',                        // Réduit l'utilisation mémoire
+    '--disable-gpu',
+    '--disable-web-security',
+    '--disable-background-timer-throttling',
+    '--disable-backgrounding-occluded-windows',
+    '--disable-renderer-backgrounding',
+    '--disable-features=TranslateUI',
+    '--disable-ipc-flooding-protection'
+  ],
+  executablePath: process.env.PUPPETEER_EXECUTABLE_PATH
+    || puppeteer.executablePath(),
+  timeout: 60000  // 60s timeout pour le lancement
+});</code></pre>
+
+        <div class="callout callout-warning">
+          <strong>PUPPETEER_EXECUTABLE_PATH</strong> — En production Docker, cette variable d'environnement pointe vers le Chromium installé dans l'image (<code>/usr/bin/chromium</code>). En développement local, Puppeteer utilise son Chromium intégré.
+        </div>
+
+        <h2>Styles CSS d'export (getExportStyles)</h2>
+
+        <p>La fonction <code>getExportStyles()</code> combine les styles de base avec des règles CSS spécifiques pour la pagination PDF :</p>
+
+        <pre><code class="language-javascript">// lib/pdf/cvStyles.js — getExportStyles() (extraits clés)
+
+// Blocs indivisibles : break-inside: avoid
+'.experience-header-block'           // Header + Description
+'.experience-responsibilities-block' // Responsabilités
+'.experience-deliverables-block'     // Livrables + Technologies
+'.education-item'                    // Diplôme
+'.project-item'                      // Projet
+'.skill-category'                    // Catégorie de compétences
+'.languages-grid'                    // Grille de langues
+
+// Règles @media print
+'.section-title'  → break-after: avoid  // Titre jamais seul en bas de page
+'body'            → print-color-adjust: exact  // Préserve les couleurs</code></pre>
+
+        <h2>Gestion des erreurs et remboursement</h2>
+
+        <pre><code class="language-javascript">// app/api/export-pdf/route.js — Pattern de remboursement
+
+let creditTransactionId = null;
+let creditUsed = false;
+
+try {
+  // 1. Débit du crédit
+  const usageResult = await incrementFeatureCounter(userId, 'export_cv');
+  creditTransactionId = usageResult.transactionId;
+  creditUsed = usageResult.usedCredit;
+
+  // 2. Chargement du CV (remboursement si introuvable)
+  let cvData;
+  try {
+    cvData = await readUserCvFileWithMeta(userId, filename);
+  } catch (error) {
+    if (creditUsed &amp;&amp; creditTransactionId) {
+      await refundCredit(userId, creditTransactionId, 'CV introuvable');
+    }
+    return CvErrors.notFound();
+  }
+
+  // 3. Génération PDF via Puppeteer
+  const pdfBuffer = await page.pdf({ format: 'A4', ... });
+
+  // 4. Tracking télémétrie (succès)
+  await trackCvExport({ userId, status: 'success', duration });
+
+} catch (error) {
+  // 5. Remboursement automatique en cas d'erreur
+  if (creditUsed &amp;&amp; creditTransactionId &amp;&amp; userId) {
+    await refundCredit(userId, creditTransactionId,
+      `Échec export PDF: ${error.message}`);
+  }
+  // Tracking télémétrie (erreur)
+  await trackCvExport({ userId, status: 'error', error: error.message });
+}</code></pre>
 
         <h2>Sections générées</h2>
 

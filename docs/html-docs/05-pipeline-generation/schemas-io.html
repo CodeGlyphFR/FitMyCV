@@ -737,6 +737,167 @@ const response = await openai.chat.completions.create({
           </tbody>
         </table>
 
+        <!-- ==================== DEFINITIONS $defs ==================== -->
+        <h2>D&eacute;finitions r&eacute;f&eacute;renc&eacute;es ($defs)</h2>
+
+        <p>Le schema <code>batchSkillsSchema.json</code> utilise le m&eacute;canisme <code>$defs</code> / <code>$ref</code> de JSON Schema pour factoriser deux types de skills. Voici la structure exacte issue du fichier source :</p>
+
+        <pre><code class="language-json">// batchSkillsSchema.json (extrait $defs)
+{
+  "$defs": {
+    "skill_with_proficiency": {
+      "type": "object",
+      "properties": {
+        "action": { "type": "string", "enum": ["renamed", "kept", "deleted"] },
+        "skill_final": { "type": "string", "description": "Nom final dans la langue de l'offre" },
+        "proficiency": {
+          "type": "integer",
+          "enum": [0, 1, 2, 3, 4, 5],
+          "description": "0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert"
+        },
+        "probability": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "reason": { "type": ["string", "null"] },
+        "original_value": { "type": "string" },
+        "original_position": { "type": "integer" }
+      },
+      "required": ["action", "skill_final", "proficiency", "probability",
+                    "reason", "original_value", "original_position"],
+      "additionalProperties": false
+    },
+    "skill_simple": {
+      "type": "object",
+      "properties": {
+        "action": { "type": "string", "enum": ["renamed", "kept", "deleted"] },
+        "skill_final": { "type": "string" },
+        "probability": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "reason": { "type": ["string", "null"] },
+        "original_value": { "type": "string" },
+        "original_position": { "type": "integer" }
+      },
+      "required": ["action", "skill_final", "probability",
+                    "reason", "original_value", "original_position"],
+      "additionalProperties": false
+    }
+  }
+}</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Diff&eacute;rence cl&eacute; : proficiency</div>
+          <p><code>skill_with_proficiency</code> (utilis&eacute; par <code>hard_skills</code> et <code>tools</code>) contient un champ <code>proficiency</code> avec une <strong>enum stricte [0-5]</strong>. <code>skill_simple</code> (utilis&eacute; par <code>soft_skills</code> et <code>methodologies</code>) n'a <strong>pas de proficiency</strong> &mdash; ces cat&eacute;gories n'utilisent pas de niveaux.</p>
+        </div>
+
+        <!-- ==================== SCHEMA EXPERIENCE DETAIL ==================== -->
+        <h2>D&eacute;tails Schema batchExperienceSchema.json</h2>
+
+        <p>Le schema d'exp&eacute;rience est le plus repr&eacute;sentatif du pattern <code>{value, reason} | null</code> utilis&eacute; dans le pipeline. Voici la d&eacute;finition exacte de chaque propri&eacute;t&eacute; :</p>
+
+        <pre><code class="language-json">// batchExperienceSchema.json (structure complète)
+{
+  "name": "adapted_experience",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "object",
+        "description": "Titre de poste ATS-friendly (TOUJOURS retourné)",
+        "properties": {
+          "value": { "type": "string" },
+          "reason": { "type": "string" }
+        },
+        "required": ["value", "reason"]
+      },
+      "description": {
+        "type": ["object", "null"],
+        "description": "null si non modifiée",
+        "properties": { "value": { "type": "string" }, "reason": { "type": "string" } }
+      },
+      "responsibilities": {
+        "type": ["object", "null"],
+        "properties": {
+          "value": { "type": "array", "items": { "type": "string" } },
+          "reason": { "type": "string" }
+        }
+      },
+      "deliverables": {
+        "type": ["object", "null"],
+        "properties": {
+          "value": { "type": "array", "items": { "type": "string" } },
+          "reason": { "type": "string" }
+        }
+      },
+      "skill_changes": {
+        "type": "array",
+        "items": {
+          "properties": {
+            "before": { "type": "string" },
+            "after": { "type": ["string", "null"] },
+            "reason": { "type": "string" }
+          }
+        }
+      },
+      "domain": { "type": "string" },
+      "years_in_domain": { "type": "number" }
+    },
+    "required": ["title", "description", "responsibilities",
+                  "deliverables", "skill_changes", "domain", "years_in_domain"]
+  }
+}</code></pre>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Asym&eacute;trie title vs autres champs</div>
+          <p><code>title</code> est d&eacute;fini comme <code>"type": "object"</code> (jamais null) car le titre est <strong>toujours</strong> retourn&eacute;. Les champs <code>description</code>, <code>responsibilities</code> et <code>deliverables</code> sont <code>"type": ["object", "null"]</code> (null si inchang&eacute;s). Cette diff&eacute;rence est volontaire : le titre est syst&eacute;matiquement &eacute;valu&eacute; pour optimisation ATS.</p>
+        </div>
+
+        <!-- ==================== SCHEMA CLASSIFICATION DETAIL ==================== -->
+        <h2>D&eacute;tails Schema classificationSchema.json</h2>
+
+        <p>Le schema de classification est le plus simple du pipeline mais impose des contraintes strictes sur les &eacute;num&eacute;rations :</p>
+
+        <table>
+          <thead>
+            <tr><th>Cible</th><th>Enum <code>action</code></th><th>Diff&eacute;rence</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>experiences[]</code></td>
+              <td><code>["KEEP", "REMOVE", "MOVE_TO_PROJECTS"]</code></td>
+              <td>3 actions possibles (d&eacute;placement vers projets)</td>
+            </tr>
+            <tr>
+              <td><code>projects[]</code></td>
+              <td><code>["KEEP", "REMOVE"]</code></td>
+              <td>2 actions seulement (pas de MOVE_TO_PROJECTS)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>Chaque &eacute;l&eacute;ment requiert exactement 3 champs : <code>index</code> (integer, 0-based), <code>action</code> (enum), <code>reason</code> (string). <code>additionalProperties: false</code> sur chaque item.</p>
+
+        <!-- ==================== VALIDATION & CHARGEMENT ==================== -->
+        <h2>Chargement et Validation des Schemas</h2>
+
+        <p>Les schemas sont charg&eacute;s comme des fichiers JSON standard et pass&eacute;s &agrave; l'API OpenAI via le param&egrave;tre <code>response_format</code>. Le mode <code>strict: true</code> active la validation c&ocirc;t&eacute; serveur :</p>
+
+        <pre><code class="language-javascript">import classificationSchema from '@/lib/features/cv-adaptation/schemas/classificationSchema.json';
+
+const response = await openai.chat.completions.create({
+  model: modelName,
+  messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
+  response_format: {
+    type: 'json_schema',
+    json_schema: classificationSchema  // { name, strict, schema }
+  }
+});
+
+// La réponse est GARANTIE de respecter le schema
+const result = JSON.parse(response.choices[0].message.content);</code></pre>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Garantie de conformit&eacute;</div>
+          <p>Avec <code>strict: true</code>, OpenAI utilise le <strong>guided decoding</strong> pour s'assurer que chaque token g&eacute;n&eacute;r&eacute; respecte le schema. Pas besoin de validation c&ocirc;t&eacute; client. Cela &eacute;limine les erreurs de format (champs manquants, types incorrects, valeurs hors enum) qui &eacute;taient fr&eacute;quentes avec le mode JSON libre.</p>
+        </div>
+
         <!-- ==================== CONVENTIONS ==================== -->
         <h2>Conventions Transversales</h2>
 

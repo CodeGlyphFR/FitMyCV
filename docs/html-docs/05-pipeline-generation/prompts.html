@@ -806,6 +806,248 @@ async function processIncludeDirectives(content, useCache) {
           </tbody>
         </table>
 
+        <!-- ==================== PROMPTS PARTAGES ==================== -->
+        <h2>Prompts Partag&eacute;s (lib/prompts-shared/)</h2>
+
+        <p>Les prompts system du pipeline incluent des fichiers partag&eacute;s via la directive <code>{INCLUDE:_shared/fichier.md}</code>. Ces fichiers d&eacute;finissent les r&egrave;gles transversales appliqu&eacute;es &agrave; toutes les phases.</p>
+
+        <pre><code class="language-bash">lib/prompts-shared/
+├── system-base.md           # Préfixe commun : rôle d'expert + détection de profil
+├── cv-adaptation-rules.md   # Règles par profil, compétences, anti-hallucination
+├── language-policy.md       # Politique de langue multilingue (FR/EN/DE/ES)
+├── response-format.md       # Format JSON strict (pas de markdown, pas de texte)
+├── json-instructions.md     # Template JSON détaillé pour chaque section du CV
+└── scoring-rules.md         # Format de scoring unifié (4 catégories pondérées)</code></pre>
+
+        <!-- system-base.md -->
+        <h3>system-base.md &mdash; Pr&eacute;fixe Commun</h3>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Inclus dans TOUS les prompts system du pipeline</div>
+          <p>D&eacute;finit le r&ocirc;le d'expert en recrutement et optimisation ATS, la d&eacute;tection automatique du profil candidat (Junior / Confirm&eacute; / Senior), et le principe fondamental de pr&eacute;servation des comp&eacute;tences du m&ecirc;me domaine.</p>
+        </div>
+
+        <table>
+          <thead>
+            <tr><th>Profil</th><th>Crit&egrave;res de d&eacute;tection</th><th>Priorit&eacute;s d'adaptation</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-success">Junior</span></td>
+              <td>&lt; 3 ans d'exp&eacute;rience OU jeune dipl&ocirc;m&eacute;</td>
+              <td>Formation d&eacute;taill&eacute;e, stages/alternances, projets acad&eacute;miques</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">Confirm&eacute;</span></td>
+              <td>3-10 ans avec postes &agrave; responsabilit&eacute;</td>
+              <td>Exp&eacute;riences avec r&eacute;sultats chiffr&eacute;s, &eacute;volution de carri&egrave;re</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">Senior</span></td>
+              <td>&gt; 10 ans OU postes de direction</td>
+              <td>Synth&egrave;se exp&eacute;riences anciennes, focus 10-15 derni&egrave;res ann&eacute;es</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-error">
+          <div class="callout-title">Principe fondamental (system-base.md)</div>
+          <p>&laquo; Adapter le CV pour l'offre SANS supprimer les comp&eacute;tences pertinentes du candidat. Une comp&eacute;tence est pertinente si elle appartient au m&ecirc;me DOMAINE que l'offre, m&ecirc;me si elle n'est pas mentionn&eacute;e textuellement. &raquo;</p>
+        </div>
+
+        <!-- cv-adaptation-rules.md -->
+        <h3>cv-adaptation-rules.md &mdash; R&egrave;gles d'Adaptation</h3>
+
+        <p>Fichier le plus volumineux des prompts partag&eacute;s. Contient <strong>7 sections</strong> de r&egrave;gles :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>1. R&egrave;gles par profil</h4>
+            <p>Templates d'accroche sp&eacute;cifiques (Junior, Confirm&eacute;, Senior) avec format pr&eacute;d&eacute;fini.</p>
+          </div>
+          <div class="card">
+            <h4>2. Comp&eacute;tences</h4>
+            <p><strong>Arbre de d&eacute;cision</strong> pour classification en 4 cat&eacute;gories mutuellement exclusives (hard_skills, tools, soft_skills, methodologies). Inclut un tableau d'erreurs fr&eacute;quentes.</p>
+          </div>
+          <div class="card">
+            <h4>3. Exp&eacute;riences</h4>
+            <p>Format <code>[Verbe infinitif] + [T&acirc;che] + [R&eacute;sultat chiffr&eacute;]</code>. Max 5 bullets, interdiction d'en ajouter sans raison.</p>
+          </div>
+          <div class="card">
+            <h4>4. Anti-Hallucination</h4>
+            <p>R&egrave;gle d'or : &laquo; Chaque ligne doit &ecirc;tre d&eacute;fendable en entretien &raquo;. Table de d&eacute;ductions valides vs invalides.</p>
+          </div>
+        </div>
+
+        <h4>Classification des comp&eacute;tences &mdash; Arbre de d&eacute;cision</h4>
+
+        <table>
+          <thead>
+            <tr><th>Question &agrave; poser</th><th>Si OUI</th><th>Exemples</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Qualit&eacute; personnelle/comportementale ?</td>
+              <td><code>soft_skills</code></td>
+              <td>Leadership, Communication, Autonomie</td>
+            </tr>
+            <tr>
+              <td>Logiciel/service/plateforme installable ?</td>
+              <td><code>tools</code></td>
+              <td>Docker, AWS, Jira, Figma, Excel</td>
+            </tr>
+            <tr>
+              <td>Framework/m&eacute;thode/processus formel ?</td>
+              <td><code>methodologies</code></td>
+              <td>Scrum, Agile, CI/CD, Lean, TDD</td>
+            </tr>
+            <tr>
+              <td>Savoir-faire technique/expertise ?</td>
+              <td><code>hard_skills</code></td>
+              <td>JavaScript, Python, SEO, Machine Learning</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Erreurs fr&eacute;quentes document&eacute;es</h4>
+
+        <table>
+          <thead>
+            <tr><th>Erreur courante</th><th>Pourquoi c'est faux</th><th>Correction</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Docker &rarr; hard_skills</td><td>Docker est un logiciel qu'on installe</td><td>&rarr; <code>tools</code></td></tr>
+            <tr><td>AWS &rarr; hard_skills</td><td>AWS est une plateforme/service</td><td>&rarr; <code>tools</code></td></tr>
+            <tr><td>Gestion de projet &rarr; methodologies</td><td>C'est un domaine d'expertise</td><td>&rarr; <code>hard_skills</code></td></tr>
+            <tr><td>DevOps &rarr; tools</td><td>DevOps est une approche/m&eacute;thodologie</td><td>&rarr; <code>methodologies</code></td></tr>
+          </tbody>
+        </table>
+
+        <!-- language-policy.md -->
+        <h3>language-policy.md &mdash; Politique de Langue</h3>
+
+        <p>D&eacute;finit la r&egrave;gle g&eacute;n&eacute;rale : <strong>r&eacute;pondre dans la m&ecirc;me langue que le contenu source</strong>. Sp&eacute;cificit&eacute;s par op&eacute;ration :</p>
+
+        <table>
+          <thead>
+            <tr><th>Op&eacute;ration</th><th>Langue de sortie</th><th>R&egrave;gle</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>G&eacute;n&eacute;ration depuis offre</td><td>Langue de l'offre</td><td>Offre en FR &rarr; CV en FR</td></tr>
+            <tr><td>Scoring/Analyse</td><td>Langue du CV (<code>cvLanguage</code>)</td><td>Suggestions dans la m&ecirc;me langue</td></tr>
+            <tr><td>Am&eacute;lioration</td><td>Langue du CV original</td><td>Coh&eacute;rence linguistique</td></tr>
+            <tr><td>Traduction</td><td><code>targetLanguage</code></td><td>Sauf noms propres, URLs, CECRL</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">&Eacute;l&eacute;ments NON traduisibles (toutes op&eacute;rations)</div>
+          <p>Noms de personnes, emails, URLs, codes pays, dates (YYYY-MM), noms de technologies (JavaScript, Docker, AWS...), niveaux CECRL (A1-C2), noms d'entreprises internationales.</p>
+        </div>
+
+        <!-- scoring-rules.md -->
+        <h3>scoring-rules.md &mdash; Format de Scoring</h3>
+
+        <p>D&eacute;finit le calcul du <strong>match score</strong> sur 100, bas&eacute; sur 4 cat&eacute;gories pond&eacute;r&eacute;es :</p>
+
+        <pre><code class="language-javascript">score_final = (technical_skills &times; 0.35) +
+              (experience &times; 0.30) +
+              (education &times; 0.20) +
+              (soft_skills_languages &times; 0.15)
+// Tolérance : &plusmn;2 points max par rapport à la formule</code></pre>
+
+        <table>
+          <thead>
+            <tr><th>Cat&eacute;gorie</th><th>Poids</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>technical_skills</code></td><td><strong>35%</strong></td><td>Technologies, langages, frameworks, outils requis</td></tr>
+            <tr><td><code>experience</code></td><td><strong>30%</strong></td><td>Ann&eacute;es d'exp&eacute;rience, secteur, responsabilit&eacute;s</td></tr>
+            <tr><td><code>education</code></td><td><strong>20%</strong></td><td>Dipl&ocirc;mes, domaine d'&eacute;tudes, certifications</td></tr>
+            <tr><td><code>soft_skills_languages</code></td><td><strong>15%</strong></td><td>Comp&eacute;tences comportementales + langues</td></tr>
+          </tbody>
+        </table>
+
+        <!-- response-format.md + json-instructions.md -->
+        <h3>response-format.md &amp; json-instructions.md</h3>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>response-format.md</h4>
+            <p>R&egrave;gle absolue : r&eacute;ponse <strong>UNIQUEMENT</strong> en JSON pur. Pas de texte avant/apr&egrave;s, pas de blocs markdown. La r&eacute;ponse commence par <code>&#123;</code> et se termine par <code>&#125;</code>.</p>
+            <ul>
+              <li>Tableaux vides : <code>[]</code> (pas <code>null</code>)</li>
+              <li>Valeurs null : <code>null</code> (pas <code>"null"</code>)</li>
+              <li>Skills : <strong>MAJUSCULE</strong> obligatoire en d&eacute;but de nom</li>
+              <li>Logiciels &rarr; <code>tools</code>, JAMAIS <code>hard_skills</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>json-instructions.md</h4>
+            <p>Template d&eacute;taill&eacute; pour chaque section du CV JSON : header, summary, skills (avec niveaux 0-5), experience, education, languages, projects, extras, m&eacute;tadonn&eacute;es.</p>
+            <ul>
+              <li>Dates : <code>YYYY-MM</code> ou <code>YYYY</code></li>
+              <li>Proficiency hard_skills/tools : nombres 0-5</li>
+              <li>R&egrave;gle critique : NE JAMAIS combiner les exp&eacute;riences</li>
+              <li>D&eacute;composition comp&eacute;tences combin&eacute;es (CAO SolidWorks &rarr; hard_skill + tool)</li>
+            </ul>
+          </div>
+        </div>
+
+        <h4>Niveaux de proficiency (hard_skills &amp; tools)</h4>
+
+        <table>
+          <thead>
+            <tr><th>Valeur</th><th>Niveau</th><th>Crit&egrave;re</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>0</strong></td><td>Awareness</td><td>Exposition occasionnelle, th&eacute;orie</td></tr>
+            <tr><td><strong>1</strong></td><td>Beginner</td><td>~1 an ou projets acad&eacute;miques</td></tr>
+            <tr><td><strong>2</strong></td><td>Intermediate</td><td>2-3 ans, r&ocirc;le secondaire</td></tr>
+            <tr><td><strong>3</strong></td><td>Proficient</td><td>Contexte professionnel r&eacute;gulier</td></tr>
+            <tr><td><strong>4</strong></td><td>Advanced</td><td>3-7 ans, r&eacute;sultats d&eacute;montr&eacute;s</td></tr>
+            <tr><td><strong>5</strong></td><td>Expert</td><td>7+ ans, r&eacute;f&eacute;rence dans le domaine</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== DIAGRAMME INCLUDE ==================== -->
+        <h2>M&eacute;canisme INCLUDE &mdash; Diagramme</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Cha&icirc;ne d'inclusion des prompts partag&eacute;s</div>
+          <div class="mermaid">
+flowchart TD
+    subgraph Shared["lib/prompts-shared/"]
+        SB["system-base.md<br/>(rôle expert + profils)"]
+        CAR["cv-adaptation-rules.md<br/>(7 sections de règles)"]
+        LP["language-policy.md<br/>(politique multilingue)"]
+        RF["response-format.md<br/>(JSON strict)"]
+        JI["json-instructions.md<br/>(template JSON CV)"]
+        SR["scoring-rules.md<br/>(4 catégories pondérées)"]
+    end
+
+    subgraph Pipeline["Prompts system du pipeline"]
+        CS["classify-system.md"]
+        BES["batch-experience-system.md"]
+        BPS["batch-project-system.md"]
+        BSS["batch-skills-system.md"]
+        BSU["batch-summary-system.md"]
+        Others["... (autres system prompts)"]
+    end
+
+    SB -->|"INCLUDE"| CS
+    SB -->|"INCLUDE"| BES
+    SB -->|"INCLUDE"| BPS
+    SB -->|"INCLUDE"| BSS
+    SB -->|"INCLUDE"| BSU
+    SB -->|"INCLUDE"| Others
+
+    SB -->|"inclut en cascade"| CAR
+    LP -.->|"inclus selon besoin"| BES
+    LP -.->|"inclus selon besoin"| Others
+          </div>
+        </div>
+
         <!-- ==================== LIENS ==================== -->
         <h2>Voir aussi</h2>
 

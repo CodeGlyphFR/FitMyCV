@@ -253,14 +253,178 @@ flowchart LR
           </tbody>
         </table>
 
-        <h2>Utilitaires d'Affichage</h2>
+        <!-- ==================== PLANUTILS COMPLET ==================== -->
+        <h2>Utilitaires de Plans (<code>planUtils.js</code>)</h2>
 
-        <pre><code class="language-javascript">// lib/subscription/planUtils.js
+        <p><strong>Fichier :</strong> <code>lib/subscription/planUtils.js</code> &mdash; 10 fonctions export&eacute;es utilis&eacute;es dans toute l'application.</p>
 
-getPlanIcon(plan)       // "🎯" (Free), "⚡" (Pro), "👑" (Premium)
-getPlanColorClass(plan) // Classes Tailwind gradient par tier
-formatPlanPrice(plan, 'monthly')  // "9.99€/mois" ou "Gratuit"
-getYearlyDiscount(plan) // Pourcentage d'&eacute;conomie annuelle</code></pre>
+        <h3>Identification des Plans</h3>
+
+        <pre><code class="language-javascript">// Détecte si un plan est gratuit (priorité au flag, fallback sur prix)
+export function isFreePlan(plan) {
+  if (!plan) return false;
+  return plan.isFree ?? (plan.priceMonthly === 0 &amp;&amp; plan.priceYearly === 0);
+}
+
+// Obtient le tier numérique (0=Gratuit, 1=Pro, 2=Premium)
+export function getPlanTier(plan) {
+  if (!plan) return 0;
+  if (typeof plan.tier === 'number') return plan.tier;
+  // Fallback par prix
+  if (plan.priceMonthly === 0 &amp;&amp; plan.priceYearly === 0) return 0;
+  if (plan.priceMonthly > 20) return 2;
+  return 1;
+}
+
+// Vérifie si populaire/recommandé
+export function isPopularPlan(plan) {
+  return plan?.isPopular ?? false;
+}</code></pre>
+
+        <h3>Comparaison de Plans</h3>
+
+        <pre><code class="language-javascript">// Compare deux plans : upgrade, downgrade ou same
+export function comparePlans(currentPlan, targetPlan) {
+  if (!currentPlan || !targetPlan) return 'same';
+  const currentTier = getPlanTier(currentPlan);
+  const targetTier = getPlanTier(targetPlan);
+  if (targetTier > currentTier) return 'upgrade';
+  if (targetTier &lt; currentTier) return 'downgrade';
+  return 'same';
+}
+
+// Raccourcis
+export function isUpgrade(current, target) {
+  return comparePlans(current, target) === 'upgrade';
+}
+export function isDowngrade(current, target) {
+  return comparePlans(current, target) === 'downgrade';
+}</code></pre>
+
+        <h3>Table de Comparaison des Tiers</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Propri&eacute;t&eacute;</th>
+              <th><span class="badge badge-success">Tier 0 &mdash; Gratuit</span></th>
+              <th><span class="badge badge-primary">Tier 1 &mdash; Pro</span></th>
+              <th><span class="badge badge-warning">Tier 2 &mdash; Premium</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>isFree</strong></td>
+              <td><code>true</code></td>
+              <td><code>false</code></td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><strong>priceMonthly</strong></td>
+              <td>0&euro;</td>
+              <td>&le; 20&euro;</td>
+              <td>&gt; 20&euro;</td>
+            </tr>
+            <tr>
+              <td><strong>Stripe</strong></td>
+              <td>Pas de sync</td>
+              <td>Product + 2 Prices</td>
+              <td>Product + 2 Prices</td>
+            </tr>
+            <tr>
+              <td><strong>Couleur Tailwind</strong></td>
+              <td><code>from-gray-500/20</code></td>
+              <td><code>from-blue-500/20 to-cyan-500/20</code></td>
+              <td><code>from-purple-500/20 to-pink-500/20</code></td>
+            </tr>
+            <tr>
+              <td><strong>Features cost=0</strong></td>
+              <td>Non autoris&eacute;</td>
+              <td>Non autoris&eacute;</td>
+              <td>Incluses gratuitement</td>
+            </tr>
+            <tr>
+              <td><strong>Compteurs</strong></td>
+              <td>Limites strictes</td>
+              <td>Limites &eacute;tendues</td>
+              <td>Illimit&eacute; (<code>-1</code>)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Fonctions d'Affichage</h3>
+
+        <pre><code class="language-javascript">// Icône par tier
+export function getPlanIcon(plan) {
+  switch (getPlanTier(plan)) {
+    case 2: return "&#128081;"; // Premium (couronne)
+    case 1: return "&#9889;";  // Pro (éclair)
+    default: return "&#127919;"; // Gratuit (cible)
+  }
+}
+
+// Classes Tailwind gradient par tier
+export function getPlanColorClass(plan) {
+  switch (getPlanTier(plan)) {
+    case 2: return "from-purple-500/20 to-pink-500/20 border-purple-500/50";
+    case 1: return "from-blue-500/20 to-cyan-500/20 border-blue-500/50";
+    default: return "from-gray-500/20 to-gray-600/20 border-gray-500/50";
+  }
+}
+
+// Formatage du prix
+export function formatPlanPrice(plan, period = 'monthly') {
+  if (isFreePlan(plan)) return "Gratuit";
+  const price = period === 'yearly' ? plan.priceYearly : plan.priceMonthly;
+  const suffix = period === 'yearly' ? '/an' : '/mois';
+  return `${price}&#8364;${suffix}`;
+}
+
+// Calcul du pourcentage d'économie annuelle
+export function getYearlyDiscount(plan) {
+  if (!plan?.priceYearly || !plan?.priceMonthly) return 0;
+  const monthlyTotal = plan.priceMonthly * 12;
+  return Math.round(((monthlyTotal - plan.priceYearly) / monthlyTotal) * 100);
+  // Ex: 9.99*12=119.88, yearly=95.90 → (119.88-95.90)/119.88*100 = 20%
+}</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Fallback robuste</div>
+          <p>Toutes les fonctions g&egrave;rent <code>plan === null</code> avec des valeurs par d&eacute;faut s&ucirc;res (tier 0, prix &laquo; 0&euro; &raquo;, couleur grise). Cela &eacute;vite les crashes si l'abonnement n'est pas encore charg&eacute;.</p>
+        </div>
+
+        <!-- ==================== CHECKOUT IMPACT ==================== -->
+        <h2>Impact sur le Checkout</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Mode Abonnement</h4>
+            <ul>
+              <li>Grille des 3 plans avec toggle mensuel/annuel</li>
+              <li>Boutons Upgrade/Downgrade via <code>comparePlans()</code></li>
+              <li>Affichage discount annuel via <code>getYearlyDiscount()</code></li>
+              <li>Checkout Stripe : mode <code>subscription</code></li>
+              <li>Section cr&eacute;dits pour extension des limites</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Mode Cr&eacute;dits</h4>
+            <ul>
+              <li>Pas de grille de plans</li>
+              <li>Balance de cr&eacute;dits + historique</li>
+              <li>Packs de cr&eacute;dits (<code>CreditPack</code>)</li>
+              <li>Checkout Stripe : mode <code>payment</code> (one-time)</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ==================== VOIR AUSSI ==================== -->
+        <h2>Voir aussi</h2>
+
+        <ul>
+          <li><a href="./business-models.html">Mod&egrave;les &Eacute;conomiques</a> &mdash; Toggle subscription_mode_enabled, canUseFeature()</li>
+          <li><a href="./overview.html">Vue d'ensemble Abonnements</a></li>
+        </ul>
       </div>
     </main>
   </div>

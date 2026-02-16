@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Événements SSE (Server-Sent Events) | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Événements SSE</span>
+        </div>
+
+        <h1>Événements SSE (Server-Sent Events)</h1>
+        <p class="lead">
+          Système de synchronisation temps réel basé sur Server-Sent Events : un singleton <code>dbEmitter</code> côté serveur émet les changements de base de données, l'endpoint <code>/api/events/stream</code> les diffuse aux clients connectés, et le hook <code>useRealtimeSync</code> les consomme côté React.
+        </p>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 1 : Architecture SSE -->
+        <!-- ============================================================ -->
+        <h2 id="architecture">Architecture SSE</h2>
+        <p>
+          FitMyCV utilise les <strong>Server-Sent Events</strong> (SSE) pour la communication temps réel unidirectionnelle serveur → client. Ce choix évite la complexité de WebSocket tout en permettant la mise à jour instantanée de l'interface lors des opérations asynchrones (génération de CV, amélioration, crédits, etc.).
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Architecture SSE globale</div>
+          <div class="mermaid">
+flowchart LR
+    subgraph Server["Serveur Next.js"]
+        API["API Routes<br/>(mutations Prisma)"]
+        PWE["prismaWithEvents.js<br/>(wrappers)"]
+        Emitter["dbEmitter.js<br/>(EventEmitter singleton)"]
+        Stream["GET /api/events/stream<br/>(SSE endpoint)"]
+    end
+
+    subgraph Client["Client React"]
+        Hook["useRealtimeSync<br/>(EventSource)"]
+        Components["Composants React"]
+        WindowEvents["window.dispatchEvent<br/>(CustomEvent)"]
+    end
+
+    API -->|"create/update"| PWE
+    PWE -->|"emit()"| Emitter
+    Emitter -->|"on()"| Stream
+    Stream -->|"SSE text/event-stream"| Hook
+    Hook -->|"callbacks"| Components
+    Hook -->|"dispatchEvent"| WindowEvents
+    WindowEvents -->|"addEventListener"| Components
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <strong>Pourquoi SSE plutôt que WebSocket ?</strong> SSE est plus simple à implémenter avec Next.js App Router, fonctionne nativement avec HTTP/2, gère la reconnexion automatique via <code>EventSource</code>, et suffit pour un flux unidirectionnel (serveur → client). Les mutations client → serveur passent par les API REST classiques.
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 2 : dbEmitter Singleton -->
+        <!-- ============================================================ -->
+        <h2 id="dbemitter">dbEmitter — Singleton EventEmitter</h2>
+        <p>
+          Le <code>dbEmitter</code> est un singleton global basé sur <code>EventEmitter</code> de Node.js. Il utilise <code>globalThis</code> pour garantir une instance unique en environnement serverless (hot reload Next.js). Il centralise tous les événements de changement de base de données.
+        </p>
+
+        <pre><code class="language-javascript">// lib/events/dbEmitter.js
+import { EventEmitter } from 'events';
+
+class DBEmitter extends EventEmitter {
+  constructor() {
+    super();
+    this.setMaxListeners(100); // Gérer plusieurs connexions SSE simultanées
+  }
+  // ... méthodes d'émission
+}
+
+// Singleton via globalThis (survit aux hot reloads)
+if (!globalThis.__dbEmitter) {
+  globalThis.__dbEmitter = new DBEmitter();
+}
+const dbEmitter = globalThis.__dbEmitter;
+export default dbEmitter;</code></pre>
+
+        <h3 id="event-types">Types d'événements</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Événement</th>
+              <th>Méthode d'émission</th>
+              <th>Paramètres</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>task:updated</code></td>
+              <td><code>emitTaskUpdate(taskId, userId, data)</code></td>
+              <td><code>{ taskId, userId, data }</code></td>
+              <td>Mise à jour d'une BackgroundTask (statut, progression)</td>
+            </tr>
+            <tr>
+              <td><code>cv:updated</code></td>
+              <td><code>emitCvUpdate(filename, userId, data)</code></td>
+              <td><code>{ filename, userId, data }</code></td>
+              <td>Mise à jour ou création d'un fichier CV</td>
+            </tr>
+            <tr>
+              <td><code>db:change</code></td>
+              <td><code>emitDbChange(entity, id, userId, data)</code></td>
+              <td><code>{ entity, id, userId, data }</code></td>
+              <td>Changement DB générique (wrapper <code>withEvents</code>)</td>
+            </tr>
+            <tr>
+              <td><code>cv_generation:offer_progress</code></td>
+              <td><code>emitCvGenerationProgress(userId, data)</code></td>
+              <td><code>{ userId, data }</code></td>
+              <td>Progression d'une génération CV pour une offre</td>
+            </tr>
+            <tr>
+              <td><code>cv_generation:offer_completed</code></td>
+              <td><code>emitCvGenerationOfferCompleted(userId, data)</code></td>
+              <td><code>{ userId, data }</code></td>
+              <td>Génération CV terminée pour une offre</td>
+            </tr>
+            <tr>
+              <td><code>cv_generation:offer_failed</code></td>
+              <td><code>emitCvGenerationOfferFailed(userId, data)</code></td>
+              <td><code>{ userId, data }</code></td>
+              <td>Génération CV échouée pour une offre</td>
+            </tr>
+            <tr>
+              <td><code>cv_generation:completed</code></td>
+              <td><code>emitCvGenerationCompleted(userId, data)</code></td>
+              <td><code>{ userId, data }</code></td>
+              <td>Tâche de génération entièrement terminée</td>
+            </tr>
+            <tr>
+              <td><code>cv_improvement:progress</code></td>
+              <td><code>emitCvImprovementProgress(userId, data)</code></td>
+              <td><code>{ userId, data }</code></td>
+              <td>Progression d'une amélioration CV</td>
+            </tr>
+            <tr>
+              <td><code>cv_improvement:completed</code></td>
+              <td><code>emitCvImprovementCompleted(userId, data)</code></td>
+              <td><code>{ userId, data }</code></td>
+              <td>Amélioration CV terminée</td>
+            </tr>
+            <tr>
+              <td><code>cv_improvement:failed</code></td>
+              <td><code>emitCvImprovementFailed(userId, data)</code></td>
+              <td><code>{ userId, data }</code></td>
+              <td>Amélioration CV échouée</td>
+            </tr>
+            <tr>
+              <td><code>credits:updated</code></td>
+              <td><code>emitCreditsUpdate(userId, data)</code></td>
+              <td><code>{ userId, data }</code></td>
+              <td>Mise à jour des crédits (dépense, remboursement, achat)</td>
+            </tr>
+            <tr>
+              <td><code>settings:updated</code></td>
+              <td><code>emitSettingsUpdate(data)</code></td>
+              <td><code>{ userId: '*', data }</code></td>
+              <td>Broadcast settings à <strong>tous</strong> les utilisateurs connectés</td>
+            </tr>
+            <tr>
+              <td><code>onboarding:updated</code></td>
+              <td><code>emitOnboardingUpdate(userId, data)</code></td>
+              <td><code>{ userId, data }</code></td>
+              <td>Mise à jour de l'état de l'onboarding</td>
+            </tr>
+            <tr>
+              <td><code>onboarding:reset</code></td>
+              <td><code>emitOnboardingReset(userId, data)</code></td>
+              <td><code>{ userId, data }</code></td>
+              <td>Reset de l'onboarding utilisateur</td>
+            </tr>
+            <tr>
+              <td><code>email:verified</code></td>
+              <td><code>emitEmailVerified(userId, data)</code></td>
+              <td><code>{ userId, data }</code></td>
+              <td>Validation d'adresse email</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <strong>Événement broadcast</strong> : L'événement <code>settings:updated</code> est le seul à utiliser <code>userId: '*'</code>, ce qui le diffuse à <strong>tous</strong> les clients connectés. Tous les autres événements sont filtrés par <code>userId</code> pour n'atteindre que l'utilisateur concerné.
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 3 : prismaWithEvents Wrappers -->
+        <!-- ============================================================ -->
+        <h2 id="prisma-with-events">prismaWithEvents — Wrappers Prisma</h2>
+        <p>
+          Le module <code>lib/events/prismaWithEvents.js</code> fournit des wrappers autour des opérations Prisma qui émettent automatiquement des événements via <code>dbEmitter</code> après chaque mutation réussie. Cela garantit que toute modification en base de données déclenche une notification temps réel.
+        </p>
+
+        <h3 id="fonctions-wrappers">Fonctions disponibles</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Fonction</th>
+              <th>Opération Prisma</th>
+              <th>Événement émis</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>updateBackgroundTask(taskId, userId, data)</code></td>
+              <td><code>prisma.backgroundTask.updateMany</code></td>
+              <td><code>task:updated</code></td>
+              <td>Met à jour une tâche et notifie le client</td>
+            </tr>
+            <tr>
+              <td><code>updateCvFile(userId, filename, data)</code></td>
+              <td><code>prisma.cvFile.update</code></td>
+              <td><code>cv:updated</code></td>
+              <td>Met à jour un fichier CV et notifie le client</td>
+            </tr>
+            <tr>
+              <td><code>createBackgroundTask(data)</code></td>
+              <td><code>prisma.backgroundTask.create</code></td>
+              <td><code>task:updated</code></td>
+              <td>Crée une tâche et notifie avec le statut initial</td>
+            </tr>
+            <tr>
+              <td><code>createCvFile(data)</code></td>
+              <td><code>prisma.cvFile.create</code></td>
+              <td><code>cv:updated</code></td>
+              <td>Crée un fichier CV et notifie (<code>created: true</code>)</td>
+            </tr>
+            <tr>
+              <td><code>withEvents(operation, entity, id, userId)</code></td>
+              <td>Quelconque</td>
+              <td><code>db:change</code></td>
+              <td>Wrapper générique pour toute opération Prisma</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="exemples-wrappers">Exemples d'utilisation</h3>
+        <pre><code class="language-javascript">import {
+  updateBackgroundTask,
+  updateCvFile,
+  createBackgroundTask,
+  createCvFile,
+  withEvents
+} from '@/lib/events/prismaWithEvents';
+
+// Mettre à jour une tâche background (émet task:updated)
+await updateBackgroundTask(taskId, userId, {
+  status: 'COMPLETED',
+  progress: 100,
+  result: JSON.stringify({ files: generatedFiles }),
+});
+
+// Mettre à jour un fichier CV (émet cv:updated)
+await updateCvFile(userId, 'cv-marketing.docx', {
+  status: 'READY',
+  score: 87,
+});
+
+// Créer une tâche background (émet task:updated avec status initial)
+const task = await createBackgroundTask({
+  userId,
+  type: 'CV_GENERATION',
+  status: 'PENDING',
+});
+
+// Wrapper générique (émet db:change)
+await withEvents(
+  () => prisma.offer.update({ where: { id: offerId }, data: { status: 'ACTIVE' } }),
+  'offer', offerId, userId
+);</code></pre>
+
+        <div class="callout callout-info">
+          <strong>Gestion d'erreurs</strong> : Les fonctions <code>update*</code> utilisent <code>console.warn</code> et retournent <code>null</code> en cas d'erreur (non-bloquant). Les fonctions <code>create*</code> propagent l'erreur (<code>throw</code>) car une création échouée est généralement critique.
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 4 : Endpoint SSE -->
+        <!-- ============================================================ -->
+        <h2 id="endpoint-sse">Endpoint /api/events/stream</h2>
+        <p>
+          L'endpoint <code>GET /api/events/stream</code> maintient une connexion SSE ouverte avec chaque client authentifié. Il s'abonne aux événements du <code>dbEmitter</code> et les transmet au client en filtrant par <code>userId</code>.
+        </p>
+
+        <h3 id="config-endpoint">Configuration</h3>
+        <pre><code class="language-javascript">// app/api/events/stream/route.js
+export const runtime = 'nodejs';        // Runtime Node.js requis (pas Edge)
+export const dynamic = 'force-dynamic'; // Pas de cache</code></pre>
+
+        <h3 id="workflow-sse">Workflow de connexion</h3>
+        <div class="diagram">
+          <div class="diagram-title">Cycle de vie d'une connexion SSE</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant C as Client (EventSource)
+    participant S as GET /api/events/stream
+    participant E as dbEmitter
+    participant A as API Routes
+
+    C->>S: GET /api/events/stream
+    S->>S: auth() - vérifier session
+    S->>S: Créer ReadableStream
+    S-->>C: Response (text/event-stream)
+    S->>E: on('task:updated', handler)
+    S->>E: on('cv:updated', handler)
+    S->>E: on('credits:updated', handler)
+    Note over S,E: +12 autres événements
+    S-->>C: event: connected
+
+    loop Keep-alive (30s)
+        S-->>C: : keep-alive
+    end
+
+    A->>E: emitTaskUpdate(taskId, userId, data)
+    E->>S: handler({taskId, userId, data})
+    S->>S: Filtrer par userId
+    S-->>C: event: task:updated\ndata: {...}
+
+    C->>S: Fermeture (abort signal)
+    S->>E: off() - désabonner tous les handlers
+    S->>S: clearInterval(keepAlive)
+    S->>S: controller.close()
+          </div>
+        </div>
+
+        <h3 id="headers-sse">Headers de réponse SSE</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Header</th>
+              <th>Valeur</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Content-Type</code></td>
+              <td><code>text/event-stream</code></td>
+              <td>Type MIME standard SSE</td>
+            </tr>
+            <tr>
+              <td><code>Cache-Control</code></td>
+              <td><code>no-cache, no-transform</code></td>
+              <td>Désactiver tout cache</td>
+            </tr>
+            <tr>
+              <td><code>Connection</code></td>
+              <td><code>keep-alive</code></td>
+              <td>Maintenir la connexion ouverte</td>
+            </tr>
+            <tr>
+              <td><code>X-Accel-Buffering</code></td>
+              <td><code>no</code></td>
+              <td>Désactiver le buffering nginx</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="filtrage-securite">Filtrage par utilisateur</h3>
+        <p>Chaque handler vérifie que l'événement appartient à l'utilisateur connecté avant de le transmettre :</p>
+        <pre><code class="language-javascript">// Filtrage standard par userId
+const handleTaskUpdate = ({ taskId, userId: eventUserId, data }) => {
+  if (eventUserId === userId) {  // Ne transmettre que ses propres événements
+    sendEvent('task:updated', { taskId, data, timestamp: Date.now() });
+  }
+};
+
+// Cas spécial : broadcast (settings:updated)
+const handleSettingsUpdate = ({ userId: eventUserId, data }) => {
+  if (eventUserId === '*') {  // '*' = broadcast à tous
+    sendEvent('settings:updated', { ...data, timestamp: Date.now() });
+  }
+};</code></pre>
+
+        <h3 id="keep-alive">Keep-alive</h3>
+        <p>Un commentaire SSE <code>: keep-alive</code> est envoyé toutes les <strong>30 secondes</strong> pour maintenir la connexion et empêcher les proxies/load balancers de fermer la connexion inactive.</p>
+        <pre><code class="language-javascript">const keepAliveInterval = setInterval(() => {
+  try {
+    controller.enqueue(encoder.encode(': keep-alive\n\n'));
+  } catch (error) {
+    clearInterval(keepAliveInterval); // Connexion fermée
+  }
+}, 30000);</code></pre>
+
+        <h3 id="cleanup">Cleanup à la déconnexion</h3>
+        <p>Lorsque le client ferme la connexion (navigation, fermeture d'onglet), le <code>AbortSignal</code> déclenche le nettoyage automatique :</p>
+        <pre><code class="language-javascript">request.signal.addEventListener('abort', () => {
+  // Désabonner tous les handlers (15 événements)
+  dbEmitter.off('task:updated', handleTaskUpdate);
+  dbEmitter.off('cv:updated', handleCvUpdate);
+  // ... 13 autres off()
+  clearInterval(keepAliveInterval);
+  controller.close();
+});</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 5 : Hook useRealtimeSync -->
+        <!-- ============================================================ -->
+        <h2 id="hook">Hook useRealtimeSync</h2>
+        <p>
+          Le hook React <code>useRealtimeSync</code> encapsule la logique de connexion <code>EventSource</code> côté client. Il gère automatiquement la connexion, la déconnexion, la reconnexion en cas d'erreur, et dispatche les événements aux composants via des callbacks et des <code>CustomEvent</code> sur <code>window</code>.
+        </p>
+
+        <h3 id="signature-hook">Signature</h3>
+        <pre><code class="language-javascript">import { useRealtimeSync } from '@/hooks/useRealtimeSync';
+
+const { connected, error, reconnect } = useRealtimeSync({
+  onTaskUpdate: (data) => { /* { taskId, data, timestamp } */ },
+  onCvUpdate: (data) => { /* { filename, data, timestamp } */ },
+  onDbChange: (data) => { /* { entity, id, data, timestamp } */ },
+  enabled: true,  // Activer/désactiver la sync
+});</code></pre>
+
+        <h3 id="options-hook">Options</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>Type</th>
+              <th>Défaut</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>onTaskUpdate</code></td>
+              <td><code>Function</code></td>
+              <td><code>undefined</code></td>
+              <td>Callback déclenché lors d'un événement <code>task:updated</code></td>
+            </tr>
+            <tr>
+              <td><code>onCvUpdate</code></td>
+              <td><code>Function</code></td>
+              <td><code>undefined</code></td>
+              <td>Callback déclenché lors d'un événement <code>cv:updated</code></td>
+            </tr>
+            <tr>
+              <td><code>onDbChange</code></td>
+              <td><code>Function</code></td>
+              <td><code>undefined</code></td>
+              <td>Callback déclenché lors d'un événement <code>db:change</code></td>
+            </tr>
+            <tr>
+              <td><code>enabled</code></td>
+              <td><code>boolean</code></td>
+              <td><code>true</code></td>
+              <td>Activer/désactiver la connexion SSE</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="retour-hook">Valeurs de retour</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Propriété</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>connected</code></td>
+              <td><code>boolean</code></td>
+              <td><code>true</code> si la connexion SSE est active</td>
+            </tr>
+            <tr>
+              <td><code>error</code></td>
+              <td><code>string | null</code></td>
+              <td>Message d'erreur en cas de déconnexion</td>
+            </tr>
+            <tr>
+              <td><code>reconnect</code></td>
+              <td><code>Function</code></td>
+              <td>Force une reconnexion manuelle</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="reconnexion">Reconnexion automatique</h3>
+        <p>En cas de perte de connexion, le hook tente une reconnexion automatique après <strong>5 secondes</strong> :</p>
+        <pre><code class="language-javascript">eventSource.onerror = (err) => {
+  setConnected(false);
+  setError('Connexion perdue');
+  eventSource.close();
+  eventSourceRef.current = null;
+
+  // Reconnexion automatique après 5s
+  if (enabled && isAuthenticated) {
+    reconnectTimeoutRef.current = setTimeout(() => {
+      connect();
+    }, 5000);
+  }
+};</code></pre>
+
+        <h3 id="custom-events">Événements dispatched via window</h3>
+        <p>
+          Certains événements SSE sont redispatchés comme <code>CustomEvent</code> sur l'objet <code>window</code>, permettant à n'importe quel composant de l'application de les écouter sans passer par le hook directement :
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Événement SSE</th>
+              <th>CustomEvent window</th>
+              <th>Consommateur typique</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>credits:updated</code></td>
+              <td><code>credits-updated</code></td>
+              <td>Composants affichant le solde de crédits</td>
+            </tr>
+            <tr>
+              <td><code>settings:updated</code></td>
+              <td><code>settings:updated</code></td>
+              <td><code>SettingsContext</code> (refresh global)</td>
+            </tr>
+            <tr>
+              <td><code>onboarding:updated</code></td>
+              <td><code>onboarding:updated</code></td>
+              <td>Composants d'onboarding</td>
+            </tr>
+            <tr>
+              <td><code>onboarding:reset</code></td>
+              <td><code>onboarding:reset</code></td>
+              <td>Composants d'onboarding</td>
+            </tr>
+            <tr>
+              <td><code>email:verified</code></td>
+              <td><code>email:verified</code></td>
+              <td>Bannière de vérification d'email</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-javascript">// Exemple : écouter les mises à jour de crédits dans un composant
+useEffect(() => {
+  const handleCredits = (event) => {
+    const { balance, reason } = event.detail;
+    setCredits(balance);
+  };
+
+  window.addEventListener('credits-updated', handleCredits);
+  return () => window.removeEventListener('credits-updated', handleCredits);
+}, []);</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 6 : Patterns d'utilisation -->
+        <!-- ============================================================ -->
+        <h2 id="patterns">Patterns d'utilisation</h2>
+
+        <h3 id="pattern-generation">Suivi de génération CV</h3>
+        <p>La génération de CV est le cas d'usage principal du système SSE. Le serveur émet des événements de progression pour chaque offre traitée :</p>
+        <pre><code class="language-javascript">// Côté serveur (pipeline de génération)
+import dbEmitter from '@/lib/events/dbEmitter';
+
+// Progression pour chaque offre
+dbEmitter.emitCvGenerationProgress(userId, {
+  taskId,
+  offerId,
+  offerTitle: 'Développeur Full-Stack',
+  step: 'analyzing',
+  progress: 30,
+});
+
+// Offre terminée
+dbEmitter.emitCvGenerationOfferCompleted(userId, {
+  taskId,
+  offerId,
+  filename: 'cv-fullstack-2024.docx',
+  score: 92,
+});
+
+// Tâche entière terminée
+dbEmitter.emitCvGenerationCompleted(userId, {
+  taskId,
+  totalOffers: 3,
+  successCount: 2,
+  failedCount: 1,
+});</code></pre>
+
+        <h3 id="pattern-credits">Mise à jour des crédits en temps réel</h3>
+        <pre><code class="language-javascript">// Côté serveur (après débit de crédits)
+dbEmitter.emitCreditsUpdate(userId, {
+  balance: 47,
+  spent: 3,
+  reason: 'cv_generation',
+});
+
+// Côté client (via window CustomEvent, pas de callback nécessaire)
+window.addEventListener('credits-updated', (event) => {
+  const { balance } = event.detail;
+  updateCreditsBadge(balance);
+});</code></pre>
+
+        <h3 id="pattern-settings">Broadcast de settings (admin)</h3>
+        <pre><code class="language-javascript">// Côté serveur (admin modifie les settings globaux)
+dbEmitter.emitSettingsUpdate({
+  maintenanceMode: true,
+  message: 'Maintenance prévue à 22h',
+});
+
+// Côté client : tous les utilisateurs connectés reçoivent l'événement
+// via SettingsContext qui écoute le CustomEvent 'settings:updated'</code></pre>
+
+        <h3 id="pattern-composant">Utilisation dans un composant React</h3>
+        <pre><code class="language-javascript">'use client';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
+import { useCallback } from 'react';
+
+export default function TaskProgressPanel({ taskId }) {
+  const handleTaskUpdate = useCallback((data) => {
+    if (data.taskId === taskId) {
+      // Mettre à jour la progression affichée
+      setProgress(data.data.progress);
+      setStatus(data.data.status);
+    }
+  }, [taskId]);
+
+  const { connected, error, reconnect } = useRealtimeSync({
+    onTaskUpdate: handleTaskUpdate,
+    enabled: true,
+  });
+
+  return (
+    &lt;div&gt;
+      {!connected && &lt;span&gt;Reconnexion...&lt;/span&gt;}
+      {error && &lt;button onClick={reconnect}&gt;Reconnecter&lt;/button&gt;}
+      {/* ... UI de progression */}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 7 : Fichiers Clés -->
+        <!-- ============================================================ -->
+        <h2 id="fichiers">Fichiers Clés</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/events/dbEmitter.js</code></td>
+              <td>Singleton EventEmitter global — centralise tous les événements DB (15 types)</td>
+            </tr>
+            <tr>
+              <td><code>lib/events/prismaWithEvents.js</code></td>
+              <td>Wrappers Prisma qui émettent automatiquement des événements après mutation</td>
+            </tr>
+            <tr>
+              <td><code>app/api/events/stream/route.js</code></td>
+              <td>Endpoint SSE — maintient la connexion, filtre par userId, keep-alive 30s</td>
+            </tr>
+            <tr>
+              <td><code>hooks/useRealtimeSync.js</code></td>
+              <td>Hook React — gère EventSource, reconnexion auto, dispatch CustomEvents</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

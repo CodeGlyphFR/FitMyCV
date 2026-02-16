@@ -308,6 +308,85 @@ try {
           </tbody>
         </table>
 
+        <h2>Pipeline HTML partagé (lib/pdf/)</h2>
+
+        <p>Le point d'entrée <code>lib/pdf/index.js</code> ré-exporte tous les modules du pipeline :</p>
+
+        <pre><code class="language-javascript">// lib/pdf/index.js — Ré-exports
+export { translations, getTranslation, translateLevel,
+         getSectionTitle, createTranslator } from './cvTranslations';
+export { formatDate, formatLocation, isSectionEnabled, isSubsectionEnabled,
+         filterItems, sortExperiences, sortEducation,
+         sanitizeFilenameForHeader, prepareCvData,
+         DEFAULT_SECTION_ORDER } from './cvUtils';
+export { getBaseStyles, getExportStyles, getPreviewStyles } from './cvStyles';
+export { generateHeaderSection, createSectionGenerators,
+         generateSectionsHtml } from './sectionGenerators';</code></pre>
+
+        <h3>prepareCvData() — Préparation des données</h3>
+
+        <pre><code class="language-javascript">// lib/pdf/cvUtils.js (extraits clés)
+
+export const DEFAULT_SECTION_ORDER = [
+  'summary', 'experience', 'education', 'projects',
+  'skills', 'languages', 'extras'
+];
+
+export function prepareCvData(cvData, selections) {
+  const header = cvData.header || {};
+  const contact = cvData.contact || {};
+  const summary = cvData.summary || {};
+  const section_titles = cvData.section_titles || {};
+
+  // Trier et filtrer les données
+  let experience = sortExperiences(cvData.experience || []);
+  experience = filterItems(experience, selections, 'experience');
+
+  let education = sortEducation(cvData.education || []);
+  education = filterItems(education, selections, 'education');
+
+  let projects = filterItems(cvData.projects || [], selections, 'projects');
+  let skills = cvData.skills || {};
+  let languages = filterItems(cvData.languages || [], selections, 'languages');
+
+  return { header, contact, summary, experience, education,
+           projects, skills, languages, section_titles };
+}</code></pre>
+
+        <h3>Assemblage HTML final (export-pdf)</h3>
+
+        <pre><code class="language-javascript">// app/api/export-pdf/route.js — generateCvHtml()
+
+function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrder = null) {
+  const t = (path) =&gt; getTranslation(language, path);
+  const order = sectionsOrder || DEFAULT_SECTION_ORDER;
+
+  // Préparer les données
+  const data = prepareCvData(cvData, selections);
+
+  // Créer les générateurs de sections
+  const sectionGenerators = createSectionGenerators(data, language, selections, {
+    isExport: true, shouldBreakBefore: () =&gt; false,
+  });
+
+  // Générer le header
+  const headerHtml = generateHeaderSection(
+    data.header, data.contact, selections, language);
+
+  // Générer les sections dans l'ordre
+  const sectionsHtml = generateSectionsHtml(sectionGenerators, order);
+
+  return `&lt;!DOCTYPE html&gt;
+    &lt;html lang="${language}"&gt;
+    &lt;head&gt;&lt;style&gt;${getExportStyles()}&lt;/style&gt;&lt;/head&gt;
+    &lt;body&gt;
+      &lt;div class="cv-container"&gt;
+        ${headerHtml}
+        ${sectionsHtml}
+      &lt;/div&gt;
+    &lt;/body&gt;&lt;/html&gt;`;
+}</code></pre>
+
         <h2>Prochaines sections</h2>
         <ul>
           <li><a href="./pdf.html">Export PDF</a> — Détails du pipeline Puppeteer</li>

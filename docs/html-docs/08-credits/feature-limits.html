@@ -312,6 +312,171 @@ export async function resetFeatureCounters(userId) {
 // Note: Si le compteur existe mais date d'une ancienne p&eacute;riode,
 // count est retourn&eacute; &agrave; 0 (reset logique sans &eacute;criture DB)</code></pre>
 
+        <h2>Co&ucirc;ts en Cr&eacute;dits par Feature</h2>
+
+        <p>Le co&ucirc;t en cr&eacute;dits est d&eacute;fini dans <code>lib/subscription/creditCost.js</code> et configurable dynamiquement via les <strong>Settings</strong> admin (cl&eacute; : <code>credits_{featureName}</code>).</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Setting</th>
+              <th>Co&ucirc;t par d&eacute;faut</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>create_cv_manual</code></td>
+              <td><code>credits_create_cv_manual</code></td>
+              <td>1</td>
+              <td>Cr&eacute;ation manuelle de CV</td>
+            </tr>
+            <tr>
+              <td><code>edit_cv</code></td>
+              <td><code>credits_edit_cv</code></td>
+              <td>1</td>
+              <td>Mode &eacute;dition du CV</td>
+            </tr>
+            <tr>
+              <td><code>export_cv</code></td>
+              <td><code>credits_export_cv</code></td>
+              <td>1</td>
+              <td>Export PDF / DOCX</td>
+            </tr>
+            <tr>
+              <td><code>match_score</code></td>
+              <td><code>credits_match_score</code></td>
+              <td>1</td>
+              <td>Score de correspondance CV &harr; offre</td>
+            </tr>
+            <tr>
+              <td><code>translate_cv</code></td>
+              <td><code>credits_translate_cv</code></td>
+              <td>1</td>
+              <td>Traduction de CV</td>
+            </tr>
+            <tr>
+              <td><code>gpt_cv_generation</code></td>
+              <td><code>credits_gpt_cv_generation</code></td>
+              <td>2</td>
+              <td>G&eacute;n&eacute;ration CV avec IA</td>
+            </tr>
+            <tr>
+              <td><code>optimize_cv</code></td>
+              <td><code>credits_optimize_cv</code></td>
+              <td>2</td>
+              <td>Optimisation CV (skills + suggestions)</td>
+            </tr>
+            <tr>
+              <td><code>generate_cv_from_job_title</code></td>
+              <td><code>credits_generate_cv_from_job_title</code></td>
+              <td>3</td>
+              <td>G&eacute;n&eacute;ration CV depuis titre de poste</td>
+            </tr>
+            <tr>
+              <td><code>import_pdf</code></td>
+              <td><code>credits_import_pdf</code></td>
+              <td>5</td>
+              <td>Import et extraction CV depuis PDF</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-javascript">// lib/subscription/creditCost.js
+
+export async function getCreditCostForFeature(featureName) {
+  const settingName = `credits_${featureName}`;
+  const defaultCost = DEFAULT_CREDIT_COSTS[featureName] ?? 1;
+
+  const cost = await getNumericSettingValue(settingName, defaultCost);
+
+  // 0 = Premium requis (bloquer m&ecirc;me avec cr&eacute;dits)
+  const premiumRequired = cost === 0;
+
+  return { cost, premiumRequired, settingName };
+}</code></pre>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Co&ucirc;t = 0 signifie Premium requis</div>
+          <p>En mode <strong>abonnement</strong>, un co&ucirc;t de 0 signifie que la feature est r&eacute;serv&eacute;e aux abonn&eacute;s <strong>Premium</strong> et ne peut pas &ecirc;tre d&eacute;bloqu&eacute;e avec des cr&eacute;dits. En mode <strong>cr&eacute;dits-only</strong>, un co&ucirc;t de 0 signifie que la feature est <strong>gratuite</strong> pour tous.</p>
+        </div>
+
+        <h2>Code complet canUseFeature()</h2>
+
+        <pre><code class="language-javascript">// lib/subscription/featureUsage.js (extraits cl&eacute;s)
+
+export async function canUseFeature(userId, featureName) {
+  // 0. Balance n&eacute;gative = bloqu&eacute; (chargeback)
+  const creditBalance = await getCreditBalance(userId);
+  if (creditBalance.balance &lt; 0) {
+    return { canUse: false, reason: 'Balance n&eacute;gative', actionRequired: true,
+             redirectUrl: '/account/subscriptions?tab=credits' };
+  }
+
+  // 0.5 V&eacute;rifier le mode actif
+  const subscriptionEnabled = await isSubscriptionModeEnabled();
+
+  if (!subscriptionEnabled) {
+    // MODE CR&Eacute;DITS-ONLY
+    const { cost } = await getCreditCostForFeature(featureName);
+    if (cost === 0) return { canUse: true, useCredit: false, creditsOnlyMode: true };
+    if (creditBalance.balance &gt;= cost)
+      return { canUse: true, useCredit: true, creditBalance: creditBalance.balance,
+               creditCost: cost, creditsOnlyMode: true };
+    return { canUse: false, useCredit: false, actionRequired: true,
+             creditsOnlyMode: true };
+  }
+
+  // MODE ABONNEMENT
+  // 1. R&eacute;cup&eacute;rer abonnement + plan + featureLimits
+  const subscription = await getUserSubscriptionWithPlan(userId);
+  if (!subscription || subscription.status !== 'active')
+    return { canUse: false, reason: 'Aucun abonnement actif' };
+
+  // 2. Trouver la limite de la feature dans le plan
+  const featureLimit = subscription.plan.featureLimits
+    .find(fl =&gt; fl.featureName === featureName);
+
+  // 3. Co&ucirc;t en cr&eacute;dits
+  const { cost, premiumRequired } = await getCreditCostForFeature(featureName);
+
+  // 3.6 Premium requis (cost === 0)
+  if (premiumRequired) {
+    const isPremium = subscription.plan.name === 'Premium';
+    if (!isPremium) return { canUse: false, reason: 'Premium requis' };
+    return { canUse: true, useCredit: false, creditCost: 0 };
+  }
+
+  // 4. Feature d&eacute;sactiv&eacute;e → fallback cr&eacute;dits
+  if (!featureLimit?.isEnabled) {
+    if (creditBalance.balance &gt;= cost)
+      return { canUse: true, useCredit: true, creditBalance: creditBalance.balance,
+               creditCost: cost };
+    return { canUse: false, actionRequired: true };
+  }
+
+  // 5. Limite illimit&eacute;e (-1)
+  if (featureLimit.usageLimit === -1)
+    return { canUse: true, useCredit: false };
+
+  // 6. V&eacute;rifier compteur mensuel
+  const { periodStart, periodEnd } = getCurrentPeriod(subscription);
+  const counter = await getOrCreateFeatureCounter(
+    userId, featureName, periodStart, periodEnd);
+
+  if (counter.count &lt; featureLimit.usageLimit)
+    return { canUse: true, useCredit: false };
+
+  // 7. Limite atteinte → fallback cr&eacute;dits
+  if (creditBalance.balance &gt;= cost)
+    return { canUse: true, useCredit: true, creditBalance: creditBalance.balance,
+             creditCost: cost };
+
+  return { canUse: false, reason: 'Limite atteinte + cr&eacute;dits insuffisants',
+           actionRequired: true };
+}</code></pre>
+
         <h2>Utilitaires macroFeatures.js</h2>
 
         <pre><code class="language-javascript">// Filtrer les features IA

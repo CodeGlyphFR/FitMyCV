@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Internationalisation (i18n) | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Internationalisation (i18n)</span>
+        </div>
+
+        <h1>Internationalisation (i18n)</h1>
+        <p class="lead">
+          FitMyCV supporte 4 langues (FR, EN, ES, DE) avec un système i18n à deux niveaux : l'application SaaS (Next.js) utilise des fichiers JSON modulaires chargés côté serveur et client, tandis que l'extension navigateur dispose de son propre système i18n léger et autonome.
+        </p>
+
+        <!-- ─── Architecture Globale ─── -->
+
+        <h2>Architecture Globale</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Architecture i18n - Vue d'ensemble</div>
+          <div class="mermaid">
+graph TB
+    subgraph SaaS["Application SaaS (Next.js)"]
+        LOCALES["locales/<br/>fr/ en/ es/ de/<br/>(10 fichiers JSON par langue)"]
+        CVH["cvLanguageHelper.js<br/>(traducteur côté serveur)"]
+        SKILL["skillLevels.js<br/>(niveaux multi-langues)"]
+        CLIENT["Composants React<br/>(useTranslation hook)"]
+    end
+
+    subgraph EXT["Extension Navigateur"]
+        I18N["lib/i18n.js<br/>(module i18n léger)"]
+        EXT_LOCALES["locales/<br/>fr.json en.json es.json de.json"]
+    end
+
+    LOCALES --> CVH
+    LOCALES --> CLIENT
+    SKILL --> CVH
+    SKILL --> CLIENT
+    EXT_LOCALES --> I18N
+    I18N --> POPUP["Popup UI"]
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>SaaS (Next.js)</th>
+              <th>Extension</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Langues</strong></td>
+              <td>fr, en, es, de</td>
+              <td>fr, en, es, de</td>
+            </tr>
+            <tr>
+              <td><strong>Fichiers</strong></td>
+              <td>10 fichiers JSON par langue (40 total)</td>
+              <td>1 fichier JSON par langue (4 total)</td>
+            </tr>
+            <tr>
+              <td><strong>Emplacement</strong></td>
+              <td><code>locales/{lang}/*.json</code></td>
+              <td><code>extension/locales/{lang}.json</code></td>
+            </tr>
+            <tr>
+              <td><strong>Chargement</strong></td>
+              <td>Import statique (bundled)</td>
+              <td>Fetch dynamique via <code>browser.runtime.getURL()</code></td>
+            </tr>
+            <tr>
+              <td><strong>Stockage préférence</strong></td>
+              <td>Cookie / session utilisateur</td>
+              <td><code>browser.storage.local</code></td>
+            </tr>
+            <tr>
+              <td><strong>Fallback</strong></td>
+              <td>Français (fr)</td>
+              <td>Anglais (en)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ─── Structure locales/ ─── -->
+
+        <h2>Structure des Fichiers Locales (SaaS)</h2>
+
+        <p>Chaque langue dispose de <strong>10 fichiers JSON</strong> dans <code>locales/{lang}/</code>, organisés par domaine fonctionnel :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Contenu</th>
+              <th>Exemples de clés</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ui.json</code></td>
+              <td>Interface utilisateur principale (topbar, modales, formulaires)</td>
+              <td><code>topbar.myCvs</code>, <code>common.save</code>, <code>emptyState.welcome</code></td>
+            </tr>
+            <tr>
+              <td><code>cv.json</code></td>
+              <td>Sections et contenu du CV</td>
+              <td><code>cvSections.experience</code>, <code>skillLevels.expert</code></td>
+            </tr>
+            <tr>
+              <td><code>auth.json</code></td>
+              <td>Authentification et formulaires de connexion</td>
+              <td><code>signIn.title</code>, <code>signUp.submit</code></td>
+            </tr>
+            <tr>
+              <td><code>errors.json</code></td>
+              <td>Messages d'erreur</td>
+              <td><code>api.unauthorized</code>, <code>validation.required</code></td>
+            </tr>
+            <tr>
+              <td><code>enums.json</code></td>
+              <td>Valeurs d'énumération traduites</td>
+              <td><code>contractType.CDI</code>, <code>remote.hybrid</code></td>
+            </tr>
+            <tr>
+              <td><code>subscription.json</code></td>
+              <td>Abonnements et paiements</td>
+              <td><code>plans.pro.name</code>, <code>billing.monthly</code></td>
+            </tr>
+            <tr>
+              <td><code>tasks.json</code></td>
+              <td>File d'attente et statuts des tâches</td>
+              <td><code>status.running</code>, <code>steps.classify</code></td>
+            </tr>
+            <tr>
+              <td><code>onboarding.json</code></td>
+              <td>Parcours d'accueil utilisateur</td>
+              <td><code>step1.title</code>, <code>welcome.description</code></td>
+            </tr>
+            <tr>
+              <td><code>account.json</code></td>
+              <td>Gestion du compte utilisateur</td>
+              <td><code>profile.name</code>, <code>settings.language</code></td>
+            </tr>
+            <tr>
+              <td><code>pages.json</code></td>
+              <td>Contenu des pages statiques</td>
+              <td><code>about.title</code>, <code>pricing.header</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-bash"># Structure des fichiers locales
+locales/
+├── fr/
+│   ├── ui.json            # Interface principale
+│   ├── cv.json            # Sections CV
+│   ├── auth.json          # Authentification
+│   ├── errors.json        # Messages d'erreur
+│   ├── enums.json         # Énumérations traduites
+│   ├── subscription.json  # Abonnements
+│   ├── tasks.json         # Tâches background
+│   ├── onboarding.json    # Onboarding
+│   ├── account.json       # Gestion compte
+│   └── pages.json         # Pages statiques
+├── en/
+│   └── ... (même structure)
+├── es/
+│   └── ... (même structure)
+└── de/
+    └── ... (même structure)</code></pre>
+
+        <div class="callout callout-info">
+          <strong>Convention de nommage</strong> &mdash; Les clés JSON utilisent le format <code>camelCase</code> avec une hiérarchie par points. Par exemple : <code>topbar.cvTypes.generate-cv</code> pour le label du type de CV "généré avec offre".
+        </div>
+
+        <!-- ─── cvLanguageHelper ─── -->
+
+        <h2>cvLanguageHelper &mdash; Traducteur côté serveur</h2>
+
+        <p>Le module <code>lib/i18n/cvLanguageHelper.js</code> fournit un système de traduction <strong>indépendant de la langue de l'interface</strong>. Il permet de générer les titres de section d'un CV dans la langue du CV (pas celle du site).</p>
+
+        <h3>getTranslatorForCvLanguage(cvLanguage)</h3>
+
+        <p>Crée une fonction de traduction <code>t(path)</code> pour une langue donnée en fusionnant les 9 fichiers JSON de la langue :</p>
+
+        <pre><code class="language-javascript">import { getTranslatorForCvLanguage } from '@/lib/i18n/cvLanguageHelper';
+
+// Créer un traducteur pour un CV en allemand
+const t = getTranslatorForCvLanguage('de');
+
+// Utiliser la notation par points pour accéder aux traductions
+t('cvSections.experience');  // → "Berufserfahrung"
+t('skillLevels.expert');     // → "Experte"</code></pre>
+
+        <div class="callout callout-warning">
+          <strong>Langue du CV vs langue du site</strong> &mdash; Un utilisateur peut naviguer sur le site en français mais avoir un CV en anglais. Le <code>cvLanguageHelper</code> garantit que les sections du CV sont toujours dans la langue du CV, pas celle de l'interface.
+        </div>
+
+        <h3>getCvSectionTitleInCvLanguage(sectionKey, customTitle, cvLanguage)</h3>
+
+        <p>Détermine intelligemment le titre d'une section en tenant compte des titres personnalisés :</p>
+
+        <pre><code class="language-javascript">import { getCvSectionTitleInCvLanguage } from '@/lib/i18n/cvLanguageHelper';
+
+// Titre par défaut → traduit dans la langue du CV
+getCvSectionTitleInCvLanguage('experience', null, 'en');
+// → "Experience"
+
+// Titre par défaut FR sur un CV EN → retraduit en anglais
+getCvSectionTitleInCvLanguage('education', 'Formation', 'en');
+// → "Education"  (reconnaît "Formation" comme défaut FR)
+
+// Titre personnalisé → conservé tel quel
+getCvSectionTitleInCvLanguage('experience', 'Mon Parcours Pro', 'en');
+// → "Mon Parcours Pro"  (titre custom, pas touché)</code></pre>
+
+        <p>La fonction reconnaît les titres par défaut dans les 4 langues :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Section</th>
+              <th>FR</th>
+              <th>EN</th>
+              <th>ES</th>
+              <th>DE</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>summary</code></td>
+              <td>Résumé</td>
+              <td>Summary</td>
+              <td>Resumen</td>
+              <td>Zusammenfassung</td>
+            </tr>
+            <tr>
+              <td><code>experience</code></td>
+              <td>Expérience</td>
+              <td>Experience</td>
+              <td>Experiencia</td>
+              <td>Berufserfahrung</td>
+            </tr>
+            <tr>
+              <td><code>education</code></td>
+              <td>Éducation, Formation</td>
+              <td>Education</td>
+              <td>Educación, Formación</td>
+              <td>Ausbildung</td>
+            </tr>
+            <tr>
+              <td><code>skills</code></td>
+              <td>Compétences</td>
+              <td>Skills</td>
+              <td>Habilidades, Competencias</td>
+              <td>Fähigkeiten, Kompetenzen</td>
+            </tr>
+            <tr>
+              <td><code>projects</code></td>
+              <td>Projets personnels</td>
+              <td>Personal Projects</td>
+              <td>Proyectos personales</td>
+              <td>Persönliche Projekte</td>
+            </tr>
+            <tr>
+              <td><code>languages</code></td>
+              <td>Langues</td>
+              <td>Languages</td>
+              <td>Idiomas</td>
+              <td>Sprachen</td>
+            </tr>
+            <tr>
+              <td><code>extras</code></td>
+              <td>Informations complémentaires</td>
+              <td>Additional Information</td>
+              <td>Información adicional</td>
+              <td>Zusätzliche Informationen</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ─── skillLevels ─── -->
+
+        <h2>skillLevels &mdash; Niveaux de compétence multi-langues</h2>
+
+        <p>Le module <code>lib/constants/skillLevels.js</code> est la <strong>source unique de vérité</strong> pour les niveaux de compétence. Il utilise une échelle numérique (0-5) comme représentation canonique en base de données, avec un mapping vers des clés i18n.</p>
+
+        <h3>Échelle de niveaux</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Niveau</th>
+              <th>Clé i18n</th>
+              <th>FR</th>
+              <th>EN</th>
+              <th>ES</th>
+              <th>DE</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>0</strong></td>
+              <td><code>awareness</code></td>
+              <td>Notions</td>
+              <td>Awareness</td>
+              <td>Conocimiento</td>
+              <td>Grundkenntnisse</td>
+            </tr>
+            <tr>
+              <td><strong>1</strong></td>
+              <td><code>beginner</code></td>
+              <td>Débutant</td>
+              <td>Beginner</td>
+              <td>Principiante</td>
+              <td>Anfänger</td>
+            </tr>
+            <tr>
+              <td><strong>2</strong></td>
+              <td><code>intermediate</code></td>
+              <td>Intermédiaire</td>
+              <td>Intermediate</td>
+              <td>Intermedio</td>
+              <td>Mittelstufe</td>
+            </tr>
+            <tr>
+              <td><strong>3</strong></td>
+              <td><code>proficient</code></td>
+              <td>Compétent</td>
+              <td>Proficient</td>
+              <td>Competente</td>
+              <td>Kompetent</td>
+            </tr>
+            <tr>
+              <td><strong>4</strong></td>
+              <td><code>advanced</code></td>
+              <td>Avancé</td>
+              <td>Advanced</td>
+              <td>Avanzado</td>
+              <td>Fortgeschritten</td>
+            </tr>
+            <tr>
+              <td><strong>5</strong></td>
+              <td><code>expert</code></td>
+              <td>Expert</td>
+              <td>Expert</td>
+              <td>Experto</td>
+              <td>Experte</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Normalisation des valeurs</h3>
+
+        <p>La fonction <code>normalizeToNumber()</code> convertit toute variante textuelle en niveau numérique, supportant <strong>plus de 40 synonymes</strong> dans les 4 langues :</p>
+
+        <pre><code class="language-javascript">import { normalizeToNumber } from '@/lib/constants/skillLevels';
+
+normalizeToNumber(3);              // → 3  (déjà numérique)
+normalizeToNumber('expert');       // → 5  (clé canonique EN)
+normalizeToNumber('maîtrise');     // → 5  (variante FR)
+normalizeToNumber('fortgeschritten'); // → 4  (variante DE)
+normalizeToNumber('intermedio');    // → 2  (variante ES)
+normalizeToNumber('senior');       // → 5  (synonyme courant)
+normalizeToNumber('junior');       // → 1  (synonyme courant)
+normalizeToNumber(null);           // → null (invalide)</code></pre>
+
+        <h3>Label localisé</h3>
+
+        <pre><code class="language-javascript">import { getLocalizedLabel } from '@/lib/constants/skillLevels';
+
+// Avec une fonction de traduction t()
+getLocalizedLabel(4, t);           // → "Avancé" (si t est configuré en FR)
+getLocalizedLabel('senior', t);    // → "Expert" (normalise d'abord en 5)</code></pre>
+
+        <!-- ─── Extension i18n ─── -->
+
+        <h2>Extension &mdash; Système i18n</h2>
+
+        <p>L'extension navigateur possède son propre système i18n léger dans <code>extension/lib/i18n.js</code>, totalement indépendant du SaaS.</p>
+
+        <h3>Fonctionnement</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux i18n de l'extension</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant P as Popup
+    participant I as i18n.js
+    participant S as browser.storage
+    participant F as locales/*.json
+
+    P->>I: initI18n()
+    I->>S: get(fitmycv_language)
+    alt Langue sauvegardée
+        S-->>I: "fr"
+    else Pas de préférence
+        I->>I: navigator.language → "fr"
+    end
+    I->>F: fetch(locales/fr.json)
+    F-->>I: { header: {...}, login: {...} }
+    I-->>P: Prêt
+
+    P->>I: t('header.credits', { credits: 5 })
+    I-->>P: "5 credits"
+
+    P->>I: setLang('en')
+    I->>S: set(fitmycv_language, 'en')
+    I->>F: fetch(locales/en.json)
+    I->>P: onLangChange callback
+          </div>
+        </div>
+
+        <h3>API du module i18n</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fonction</th>
+              <th>Description</th>
+              <th>Signature</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>initI18n()</code></td>
+              <td>Initialise : charge la langue sauvegardée ou détecte depuis le navigateur</td>
+              <td><code>async () =&gt; void</code></td>
+            </tr>
+            <tr>
+              <td><code>t(key, params?)</code></td>
+              <td>Traduit une clé avec substitution de placeholders <code>{name}</code></td>
+              <td><code>(string, Object?) =&gt; string</code></td>
+            </tr>
+            <tr>
+              <td><code>getLang()</code></td>
+              <td>Retourne le code langue actuel</td>
+              <td><code>() =&gt; string</code></td>
+            </tr>
+            <tr>
+              <td><code>setLang(lang)</code></td>
+              <td>Change la langue, sauvegarde et notifie les listeners</td>
+              <td><code>async (string) =&gt; void</code></td>
+            </tr>
+            <tr>
+              <td><code>onLangChange(fn)</code></td>
+              <td>Enregistre un callback appelé lors du changement de langue</td>
+              <td><code>(Function) =&gt; void</code></td>
+            </tr>
+            <tr>
+              <td><code>LANGS</code></td>
+              <td>Liste des langues supportées</td>
+              <td><code>['fr', 'en', 'es', 'de']</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Structure d'un fichier locale (extension)</h3>
+
+        <p>Chaque fichier <code>extension/locales/{lang}.json</code> contient un objet plat à 2 niveaux, organisé par vue :</p>
+
+        <pre><code class="language-json">{
+  "header": {
+    "credits": "{credits} credits",
+    "logout": "Deconnexion"
+  },
+  "login": {
+    "title": "Connexion",
+    "submit": "Se connecter",
+    "errors": {
+      "emptyFields": "Veuillez remplir tous les champs"
+    }
+  },
+  "offers": {
+    "addButton": "+ Ajouter l'offre de cette page",
+    "generateButton": "Generer {count} CV",
+    "creditsCost": "Cout: {total} credits ({count} x {cost})"
+  },
+  "progress": {
+    "steps": {
+      "classify": "Classification...",
+      "batch_experience": "Adaptation des experiences..."
+    }
+  },
+  "detector": {
+    "success": "✓ Ajoute",
+    "duplicate": "Deja ajoute"
+  }
+}</code></pre>
+
+        <div class="callout callout-info">
+          <strong>Placeholders</strong> &mdash; Les variables dynamiques sont entourées d'accolades simples : <code>{credits}</code>, <code>{count}</code>, <code>{total}</code>. La fonction <code>t()</code> effectue une substitution via <code>String.replace()</code> avec regex.
+        </div>
+
+        <!-- ─── Pattern client ─── -->
+
+        <h2>Pattern d'utilisation côté client (SaaS)</h2>
+
+        <p>L'application Next.js utilise un hook <code>useTranslation</code> qui charge les traductions de la langue active de l'utilisateur et fournit une fonction <code>t()</code> similaire :</p>
+
+        <pre><code class="language-javascript">// Côté composant React
+const { t } = useTranslation();
+
+// Accès aux traductions
+t('topbar.myCvs');           // → "Mes CVs"
+t('common.save');            // → "Enregistrer"
+t('emptyState.welcome', { firstName: 'Jean' });
+// → "Bienvenue Jean sur votre gestionnaire de CV"</code></pre>
+
+        <h3>Interpolation de variables</h3>
+
+        <p>Les traductions supportent l'interpolation avec la syntaxe <code>{variable}</code> :</p>
+
+        <pre><code class="language-json">// locales/fr/ui.json
+{
+  "emptyState": {
+    "welcome": "Bienvenue {firstName} sur votre gestionnaire de CV"
+  },
+  "bulkDeleteModal": {
+    "selected": "{count} CV sélectionné(s)",
+    "confirmMessage": "Voulez-vous vraiment supprimer {count} CV ?"
+  },
+  "credits": {
+    "useCredits": "Utiliser {count} Cr."
+  }
+}</code></pre>
+
+        <h3>Flux de résolution complet</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Résolution d'une traduction côté serveur (pipeline CV)</div>
+          <div class="mermaid">
+graph LR
+    A["Pipeline CV<br/>cvLanguage: 'en'"] --> B["getTranslatorForCvLanguage('en')"]
+    B --> C["Fusionne 9 fichiers JSON<br/>en/*.json"]
+    C --> D["t('cvSections.experience')"]
+    D --> E["'Experience'"]
+
+    F["normalizeToNumber('maîtrise')"] --> G["5"]
+    G --> H["getLevelKey(5)"]
+    H --> I["'expert'"]
+    I --> J["t('skillLevels.expert')"]
+    J --> K["'Expert'"]
+          </div>
+        </div>
+
+        <div class="callout callout-success">
+          <strong>Couverture complète</strong> &mdash; Le système i18n couvre l'intégralité de l'application : interface utilisateur, sections de CV, niveaux de compétence, messages d'erreur, processus de paiement, emails transactionnels, et l'extension navigateur.
+        </div>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

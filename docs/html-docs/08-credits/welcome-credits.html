@@ -203,6 +203,114 @@ await prisma.creditBalance.create({
         <h2>D&eacute;clenchement</h2>
 
         <p><code>assignDefaultPlan()</code> est appel&eacute; automatiquement par le callback <strong>NextAuth</strong> lors de la premi&egrave;re connexion d'un utilisateur (OAuth Google/GitHub ou email).</p>
+
+        <h3>Double appel dans NextAuth (lib/auth/options.js)</h3>
+
+        <p><code>assignDefaultPlan()</code> est appel&eacute; &agrave; <strong>deux endroits</strong> dans le cycle d'authentification, garantissant qu'aucun utilisateur ne reste sans plan :</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Points d'appel dans le cycle NextAuth</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant NA as NextAuth
+    participant DB as Base de donn&eacute;es
+    participant AP as assignDefaultPlan()
+
+    U->>NA: Premi&egrave;re connexion (OAuth ou email)
+
+    rect rgb(240, 249, 255)
+    Note over NA,DB: &Eacute;v&eacute;nement createUser (nouvel utilisateur uniquement)
+    NA->>DB: Cr&eacute;er le User
+    NA->>AP: assignDefaultPlan(user.id)
+    AP->>DB: Cr&eacute;er Subscription ou CreditBalance
+    end
+
+    rect rgb(240, 255, 240)
+    Note over NA,DB: Callback signIn (&agrave; chaque connexion)
+    NA->>AP: assignDefaultPlan(user.id)
+    Note right of AP: Idempotent : ignore si d&eacute;j&agrave; fait
+    AP-->>NA: { success: true }
+    end
+          </div>
+        </div>
+
+        <pre><code class="language-javascript">// lib/auth/options.js - &Eacute;v&eacute;nement createUser (nouvel utilisateur)
+events: {
+  async createUser({ user }) {
+    // V&eacute;rifier si inscriptions autoris&eacute;es
+    const registrationBlocked = regSetting?.value === '0'
+      || maintenanceSetting?.value === '1';
+    if (registrationBlocked) return; // Ne pas attribuer de ressources
+
+    // Attribuer automatiquement le plan gratuit
+    try {
+      await assignDefaultPlan(user.id);
+      logger.context('auth', 'info', `Plan gratuit attribu&eacute; &agrave; user ${user.id}`);
+    } catch (error) {
+      console.error('[auth] Erreur attribution plan gratuit:', error);
+    }
+  },
+},
+
+// lib/auth/options.js - Callback signIn (fallback &agrave; chaque connexion)
+callbacks: {
+  async signIn({ user, account }) {
+    // G&egrave;re le cas o&ugrave; un utilisateur cr&eacute;&eacute; en mode cr&eacute;dits
+    // se connecte apr&egrave;s r&eacute;activation du mode abonnement
+    try {
+      const result = await assignDefaultPlan(user.id);
+      if (result.success &amp;&amp; result.subscription) {
+        logger.context('auth', 'info',
+          `Plan par d&eacute;faut attribu&eacute; (signIn fallback) &agrave; user ${user.id}`);
+      }
+    } catch (error) {
+      console.error('[auth] Erreur attribution plan (signIn):', error);
+    }
+
+    return true;
+  },
+}</code></pre>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Robustesse du double appel</div>
+          <p>Le callback <code>signIn</code> agit comme <strong>filet de s&eacute;curit&eacute;</strong> : si <code>createUser</code> &eacute;choue (erreur r&eacute;seau, timeout DB), la prochaine connexion rattrapera l'attribution du plan. Gr&acirc;ce &agrave; l'<strong>idempotence</strong> de <code>assignDefaultPlan()</code>, aucun doublon n'est cr&eacute;&eacute;.</p>
+        </div>
+
+        <h2>Sc&eacute;nario de changement de mode</h2>
+
+        <p>Le fallback <code>signIn</code> g&egrave;re un cas sp&eacute;cifique : un utilisateur cr&eacute;&eacute; en mode <strong>cr&eacute;dits-only</strong> qui se reconnecte apr&egrave;s le passage en mode <strong>abonnement</strong>.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>&Eacute;tape</th>
+              <th>Mode actif</th>
+              <th>Action</th>
+              <th>R&eacute;sultat</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1. Inscription</td>
+              <td>Cr&eacute;dits-only</td>
+              <td><code>createUser</code> &rarr; <code>assignDefaultPlan()</code></td>
+              <td>CreditBalance cr&eacute;&eacute;e (pas de Subscription)</td>
+            </tr>
+            <tr>
+              <td>2. Admin bascule</td>
+              <td>Abonnement</td>
+              <td>Setting <code>subscription_mode_enabled = true</code></td>
+              <td>Rien ne change en DB</td>
+            </tr>
+            <tr>
+              <td>3. Reconnexion</td>
+              <td>Abonnement</td>
+              <td><code>signIn</code> &rarr; <code>assignDefaultPlan()</code></td>
+              <td>Subscription cr&eacute;&eacute;e (plan Gratuit) + CreditBalance d&eacute;j&agrave; existante</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </main>
   </div>

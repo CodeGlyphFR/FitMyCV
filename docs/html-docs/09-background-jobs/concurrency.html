@@ -194,6 +194,63 @@ function processQueue() {
   };
 }</code></pre>
 
+        <h2>Code complet canStartTaskType()</h2>
+
+        <pre><code class="language-javascript">// lib/background-jobs/jobQueue.js
+
+export function canStartTaskType(userId, taskType) {
+  const userTypes = activeTaskTypes.get(userId);
+
+  // Pas de tâches actives pour cet utilisateur
+  if (!userTypes || userTypes.size === 0) {
+    return { allowed: true };
+  }
+
+  // Pour cv_generation: permettre plusieurs avec limite
+  if (taskType === 'cv_generation') {
+    const currentCount = userTypes.get('cv_generation') || 0;
+    if (currentCount &gt;= MAX_CV_GENERATION_PER_USER) {
+      return {
+        allowed: false,
+        reason: 'max_cv_generation_reached',
+        message: `Maximum ${MAX_CV_GENERATION_PER_USER} générations CV simultanées`
+      };
+    }
+    return { allowed: true };
+  }
+
+  // Autres types: 1 seul à la fois
+  const currentCount = userTypes.get(taskType) || 0;
+  if (currentCount &gt; 0) {
+    return {
+      allowed: false,
+      reason: 'task_type_already_running',
+      message: `Une tâche de type "${taskType}" est déjà en cours`
+    };
+  }
+
+  // Vérifier la limite de types concurrents
+  const activeTypesCount = [...userTypes.values()].filter(c =&gt; c &gt; 0).length;
+  if (activeTypesCount &gt;= MAX_CONCURRENT_TASK_TYPES) {
+    return {
+      allowed: false,
+      reason: 'max_concurrent_types_reached',
+      message: `Maximum ${MAX_CONCURRENT_TASK_TYPES} types de tâches en parallèle`
+    };
+  }
+
+  return { allowed: true };
+}</code></pre>
+
+        <h2>getActiveTaskTypes()</h2>
+
+        <pre><code class="language-javascript">// lib/background-jobs/jobQueue.js
+
+export function getActiveTaskTypes(userId) {
+  const userTypes = activeTaskTypes.get(userId);
+  return userTypes ? Array.from(userTypes.keys()) : [];
+}</code></pre>
+
         <h2>Annulation de tâches</h2>
 
         <p>Le registre <code>processRegistry.js</code> permet d'annuler n'importe quelle tâche en cours via son <code>taskId</code> :</p>

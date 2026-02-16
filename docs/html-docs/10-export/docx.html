@@ -168,6 +168,111 @@ export async function POST(request) {
           <strong>Avantage DOCX</strong> — L'export Word ne nécessite pas de browser headless, ce qui le rend plus léger et plus rapide que l'export PDF. Le document généré est éditable par l'utilisateur dans Word, Google Docs ou LibreOffice.
         </div>
 
+        <h2>Code complet de l'endpoint</h2>
+
+        <pre><code class="language-javascript">// app/api/export-word/route.js
+
+export async function POST(request) {
+  const startTime = Date.now();
+  let creditTransactionId = null;
+  let creditUsed = false;
+  let userId = null;
+
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return CommonErrors.notAuthenticated();
+    userId = session.user.id;
+
+    const requestData = await request.json();
+    let filename = requestData.filename;
+    const language = requestData.language || 'fr';
+    const selections = requestData.selections || null;
+    const sectionsOrder = requestData.sectionsOrder || DEFAULT_SECTION_ORDER;
+
+    // Débit du crédit (feature: export_cv)
+    const usageResult = await incrementFeatureCounter(userId, 'export_cv');
+    if (!usageResult.success) {
+      return NextResponse.json({
+        error: usageResult.error,
+        actionRequired: usageResult.actionRequired,
+        redirectUrl: usageResult.redirectUrl
+      }, { status: 403 });
+    }
+    creditTransactionId = usageResult.transactionId;
+    creditUsed = usageResult.usedCredit;
+
+    // Chargement du CV (remboursement si introuvable)
+    const cvResult = await readUserCvFileWithMeta(userId, filename);
+
+    // Génération du document Word via documentBuilder.js
+    const doc = generateWordDocument(
+      cvResult.content, cvResult.language, selections, sectionsOrder
+    );
+    const docxBuffer = await Packer.toBuffer(doc);
+
+    // Tracking télémétrie
+    await trackCvExport({ userId, duration: Date.now() - startTime,
+                          status: 'success', format: 'word' });
+
+    // Retour avec Content-Disposition pour téléchargement
+    const { asciiSafe, encoded } = sanitizeFilenameForHeader(filename);
+    return new NextResponse(docxBuffer, {
+      headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition': `attachment; filename="${asciiSafe}.docx"; filename*=UTF-8''${encoded}.docx`
+      }
+    });
+  } catch (error) {
+    // Remboursement automatique en cas d'erreur
+    if (creditUsed &amp;&amp; creditTransactionId &amp;&amp; userId) {
+      await refundCredit(userId, creditTransactionId,
+        `Échec export Word: ${error.message}`);
+    }
+    return NextResponse.json({ error: 'Erreur export Word' }, { status: 500 });
+  }
+}</code></pre>
+
+        <h2>Architecture du Document Word</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Structure du document Word généré</div>
+          <div class="mermaid">
+flowchart TD
+    Doc["Document"]
+    Doc --> Section["Section unique"]
+    Section --> Props["Properties<br/>(marges, orientation)"]
+    Section --> Children["Children (paragraphes)"]
+
+    Children --> Header["En-tête<br/>(Heading1: nom, titre)"]
+    Children --> Contact["Contact<br/>(email, tél, lieu)"]
+    Children --> Summary["Résumé<br/>(Paragraph normal)"]
+    Children --> Exp["Expériences<br/>(Heading2 + bullets)"]
+    Children --> Edu["Formation<br/>(Heading2 + paragraphs)"]
+    Children --> Skills["Compétences<br/>(catégories en gras)"]
+    Children --> Lang["Langues<br/>(niveaux CECRL)"]
+          </div>
+        </div>
+
+        <h2>Sanitisation des noms de fichiers</h2>
+
+        <pre><code class="language-javascript">// app/api/export-word/route.js
+
+function sanitizeFilenameForHeader(filename) {
+  // ASCII-safe : retirer accents et caractères spéciaux
+  const asciiSafe = filename
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')  // Retirer diacritiques
+    .replace(/[^\x20-\x7E]/g, '_')   // Remplacer non-ASCII
+    .replace(/["\\]/g, '_');          // Remplacer quotes/backslash
+
+  // Encodage RFC 5987 pour les navigateurs modernes
+  const encoded = encodeURIComponent(filename).replace(/'/g, '%27');
+
+  return { asciiSafe, encoded };
+}
+// Résultat dans le header:
+// Content-Disposition: attachment; filename="Mon_CV.docx"; filename*=UTF-8''Mon%20CV.docx</code></pre>
+
       </div>
     </main>
   </div>

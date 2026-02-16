@@ -50,7 +50,7 @@
           </div>
           <div class="card">
             <h4>Statistiques</h4>
-            <p>123 API Routes, 200+ Composants React, 34 Modèles Prisma, 34 Modules lib/, 4 Langues</p>
+            <p>123 API Routes, 239 Composants React, 34 Modèles Prisma, 30+ Modules lib/, 4 Langues</p>
           </div>
           <div class="card">
             <h4>Pipelines IA</h4>
@@ -154,6 +154,22 @@ flowchart TB
           <li><strong>Export</strong> - PDF (Puppeteer) et DOCX avec templates personnalisables</li>
           <li><strong>Traduction</strong> - CV multilingue (FR, EN, ES, DE) via OpenAI</li>
           <li><strong>Email</strong> - Double transport SMTP/Resend avec templates dynamiques</li>
+          <li><strong>&Eacute;v&eacute;nements SSE</strong> - Temps réel via Server-Sent Events (dbEmitter)</li>
+        </ul>
+
+        <h3>Infrastructure</h3>
+        <ul>
+          <li><strong>Docker</strong> - Build multi-stage (4 stages), Chromium, Puppeteer</li>
+          <li><strong>CI/CD</strong> - GitHub Actions (pre-prod + production), versioning automatique</li>
+          <li><strong>Middleware</strong> - Rate limiting, CORS extension, security headers CSP/HSTS</li>
+          <li><strong>Scripts</strong> - Versioning, migrations de données, sync Stripe, emails</li>
+        </ul>
+
+        <h3>S&eacute;curit&eacute; &amp; Conformit&eacute;</h3>
+        <ul>
+          <li><strong>RGPD</strong> - Consentement cookies, rétention données, audit trail</li>
+          <li><strong>S&eacute;curit&eacute; Code</strong> - Validation uploads, sanitisation XSS, logger sécurisé</li>
+          <li><strong>Internationalisation</strong> - 4 langues (FR, EN, ES, DE), 40 fichiers locales</li>
         </ul>
 
         <h2>Structure de la Documentation</h2>
@@ -216,7 +232,35 @@ flowchart TB
             </tr>
             <tr>
               <td><strong>Composants React</strong></td>
-              <td>200+ composants en 16 catégories, patterns, architecture</td>
+              <td>239 composants en 17 catégories, patterns, architecture</td>
+            </tr>
+            <tr>
+              <td><strong>D&eacute;ploiement &amp; Docker</strong></td>
+              <td>Dockerfile multi-stage, CI/CD GitHub Actions, variables d'environnement, health checks</td>
+            </tr>
+            <tr>
+              <td><strong>Middleware &amp; S&eacute;curit&eacute;</strong></td>
+              <td>proxy.js, CORS extension, rate limiting, security headers CSP/HSTS</td>
+            </tr>
+            <tr>
+              <td><strong>RGPD &amp; Consentement</strong></td>
+              <td>Cookies, consentement utilisateur, rétention données, audit trail CRON</td>
+            </tr>
+            <tr>
+              <td><strong>&Eacute;v&eacute;nements SSE</strong></td>
+              <td>Server-Sent Events, dbEmitter, prismaWithEvents, temps réel</td>
+            </tr>
+            <tr>
+              <td><strong>Internationalisation</strong></td>
+              <td>4 langues (FR/EN/ES/DE), locales, cvLanguageHelper, extension i18n</td>
+            </tr>
+            <tr>
+              <td><strong>S&eacute;curit&eacute; du Code</strong></td>
+              <td>Validation uploads, sanitisation XSS, logger sécurisé avec masquage PII</td>
+            </tr>
+            <tr>
+              <td><strong>Scripts &amp; Automatisation</strong></td>
+              <td>Versioning, migrations de données, sync Stripe, export/preview emails</td>
             </tr>
           </tbody>
         </table>
