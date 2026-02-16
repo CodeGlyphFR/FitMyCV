@@ -17,6 +17,15 @@ import {
   isKnownJobSite,
 } from '../lib/site-selectors.js';
 
+// Signal presence to the FitMyCV web app for extension detection
+(function signalPresence() {
+  const host = location.hostname;
+  if (host === 'app.fitmycv.io' || host === 'dev.fitmycv.io' || host === 'localhost') {
+    document.documentElement.dataset.fitmycvExtension = 'true';
+    window.dispatchEvent(new CustomEvent('fitmycv:extension-ready'));
+  }
+})();
+
 const PICKLIST_KEY = 'fitmycv_picklist';
 const TOKEN_KEY = 'fitmycv_token';
 const BTN_ID = 'fitmycv-add-btn';

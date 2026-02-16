@@ -8,6 +8,7 @@ import BulkDeleteCvModal from "../modals/BulkDeleteCvModal";
 import NewCvModal from "../modals/NewCvModal";
 import ExportPdfModal from "../modals/ExportPdfModal";
 import TaskQueueModal from "@/components/task-queue/TaskQueueModal";
+import ExtensionTutorialModal from "../modals/ExtensionTutorialModal";
 import Modal from "@/components/ui/Modal";
 
 /**
@@ -24,6 +25,8 @@ export default function TopBarModals({
   refreshLinkHistory,
   baseSelectorRef,
   baseDropdownRef,
+  extensionDetected,
+  onOpenExtensionTutorial,
   t
 }) {
   return (
@@ -58,6 +61,8 @@ export default function TopBarModals({
         t={t}
         baseSelectorRef={baseSelectorRef}
         baseDropdownRef={baseDropdownRef}
+        extensionDetected={extensionDetected}
+        onOpenExtensionTutorial={onOpenExtensionTutorial}
       />
 
       <PdfImportModal
@@ -154,6 +159,11 @@ export default function TopBarModals({
         setSectionsOrder={exportModal.setSectionsOrder}
         resetSectionsOrder={exportModal.resetSectionsOrder}
         t={t}
+      />
+
+      <ExtensionTutorialModal
+        open={modals.openExtensionTutorial}
+        onClose={() => modals.setOpenExtensionTutorial(false)}
       />
 
       {/* Modal de confirmation pour génération par titre de poste */}

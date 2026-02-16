@@ -10,6 +10,7 @@ import { CREATE_TEMPLATE_OPTION } from "../utils/constants";
 import { useCreditCost } from "@/hooks/useCreditCost";
 import CreditCostDisplay from "@/components/ui/CreditCostDisplay";
 import { LANGUAGE_FLAGS } from "@/lib/cv-core/language/languageConstants";
+import { ChevronRight } from "lucide-react";
 
 /**
  * Modal de génération de CV à partir d'une offre d'emploi
@@ -43,6 +44,8 @@ export default function CvGeneratorModal({
   t,
   baseSelectorRef,
   baseDropdownRef,
+  extensionDetected,
+  onOpenExtensionTutorial,
 }) {
   // Récupérer les coûts en crédits
   const { showCosts, getCost } = useCreditCost();
@@ -65,6 +68,21 @@ export default function CvGeneratorModal({
         <div className="text-sm text-white/90 drop-shadow bg-emerald-500/10 border border-emerald-500/50 rounded-lg p-3 text-justify">
           {t("cvGenerator.description")}
         </div>
+
+        {!extensionDetected && onOpenExtensionTutorial && (
+          <button
+            type="button"
+            onClick={onOpenExtensionTutorial}
+            className="w-full flex items-center gap-3 rounded-lg border border-sky-500/40 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-2.5 text-left transition-colors group"
+          >
+            <img src="/icons/extension-brain.png" alt="" className="w-8 h-8 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-sky-300">{t("extensionPromo.installButton")}</div>
+              <div className="text-xs text-white/50 mt-0.5">{t("extensionPromo.installButtonHint")}</div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-sky-400/60 shrink-0" />
+          </button>
+        )}
 
         <div className="space-y-2">
           <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("cvGenerator.referenceCV")}</div>
