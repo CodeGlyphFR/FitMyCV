@@ -418,5 +418,39 @@
     "validationSuccess": "CV guardado correctamente",
     "validationError": "Error al guardar el CV",
     "skillsConsolidated": "competencias consolidadas en"
+  },
+  "extensionPromo": {
+    "installButton": "Instalar extensión del navegador",
+    "installButtonHint": "Captura ofertas de empleo en un clic desde LinkedIn, Indeed y +10 sitios",
+    "tutorial": {
+      "title": "Extensión de navegador FitMyCV",
+      "screen1": {
+        "title": "Ahorra tiempo con la extensión",
+        "description": "La extensión FitMyCV se integra directamente en los sitios de empleo. Un botón \"FitMyCV +\" aparece en cada oferta para capturar y generar tu CV en un clic.",
+        "checklist1": "Captura automática de ofertas de empleo",
+        "checklist2": "Generación de CV directamente desde el sitio",
+        "checklist3": "Selección y envío grupal de ofertas",
+        "checklist4": "Sincronización con tu cuenta FitMyCV"
+      },
+      "screen2": {
+        "title": "Instalación",
+        "description": "Instala la extensión en segundos desde la tienda de tu navegador.",
+        "step1": "Haz clic en el botón de abajo para abrir la tienda",
+        "step2": "Haz clic en \"Agregar\" para instalar la extensión",
+        "step3": "Recarga tus pestañas abiertas",
+        "comingSoon": "Próximamente",
+        "comingSoonHint": "La extensión estará disponible próximamente en las tiendas. Contáctanos para acceso anticipado.",
+        "installChrome": "Instalar para Chrome",
+        "installFirefox": "Instalar para Firefox",
+        "installSafari": "Instalar para Safari"
+      },
+      "screen3": {
+        "title": "Cómo funciona",
+        "phase1": "Capture",
+        "phase2": "Seleccione",
+        "phase3": "Generación"
+      },
+      "understood": "¡Entendido!"
+    }
   }
 }

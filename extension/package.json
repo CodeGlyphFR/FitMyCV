@@ -1,0 +1,23 @@
+{
+  "name": "fitmycv-extension",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "API_BASE=https://dev.fitmycv.io vite build --watch --mode development",
+    "build": "vite build",
+    "build:chrome": "API_BASE=https://app.fitmycv.io vite build --mode production",
+    "build:firefox": "TARGET_BROWSER=firefox vite build --mode production",
+    "zip:chrome": "cd dist/chrome && zip -r ../../fitmycv-chrome.zip .",
+    "zip:firefox": "cd dist/firefox && zip -r ../../fitmycv-firefox.zip ."
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "turndown": "^7.2.0",
+    "webextension-polyfill": "^0.12.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0",
+    "vite-plugin-web-extension": "^4.0.0"
+  }
+}

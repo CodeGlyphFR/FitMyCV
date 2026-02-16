@@ -399,15 +399,37 @@
         ]
       },
       {
+        "id": "browser-extension",
+        "title": "13. Browser-Erweiterung",
+        "content": [
+          { "type": "paragraph", "text": "FitMyCV bietet eine Erweiterung für die Browser Chrome, Edge, Brave und Firefox an. Diese Erweiterung fügt Funktionen zur Erfassung von Stellenangeboten direkt von Jobseiten hinzu." },
+          { "type": "subtitle", "text": "13.1 Von der Erweiterung erhobene Daten" },
+          { "type": "list", "items": [
+            "URLs der Stellenangebote, die Sie erfassen möchten",
+            "Textinhalt der Stellenangebote (Titel, Beschreibung, Standort), der von der besuchten Seite extrahiert wird",
+            "Authentifizierungstoken, das lokal im Browser gespeichert wird, um Ihre Sitzung aufrechtzuerhalten"
+          ]},
+          { "type": "subtitle", "text": "13.2 Funktionsweise" },
+          { "type": "list", "items": [
+            "Die Erweiterung erhebt keine Daten außerhalb der Stellenangebots-Seiten, auf denen Sie aktiv auf die Schaltfläche \"FitMyCV +\" klicken",
+            "Extrahierte Inhalte werden nur zur Lebenslauf-Generierung an unsere Server übermittelt und dann auf die gleiche Weise verarbeitet wie über die Website eingereichte Angebote",
+            "Erfasste Angebote werden vorübergehend im lokalen Speicher des Browsers gespeichert, bis sie übermittelt werden",
+            "Es wird kein Browserverlauf erfasst oder übertragen"
+          ]},
+          { "type": "subtitle", "text": "13.3 Berechtigungen" },
+          { "type": "paragraph", "text": "Die Erweiterung benötigt folgende Berechtigungen: Zugriff auf den aktiven Tab (zur Erkennung von Stellenangeboten), lokaler Speicher (zum Speichern Ihrer Angebote und Einstellungen), Cookies (zur Authentifizierung mit Ihrem FitMyCV-Konto)." }
+        ]
+      },
+      {
         "id": "international",
-        "title": "13. Internationale Übermittlungen",
+        "title": "14. Internationale Übermittlungen",
         "content": [
           { "type": "paragraph", "text": "Einige Daten können außerhalb der Europäischen Union übertragen werden (OpenAI, Resend in den Vereinigten Staaten). Diese Übertragungen werden durch von der Europäischen Kommission genehmigte Standardvertragsklauseln geregelt." }
         ]
       },
       {
         "id": "modifications",
-        "title": "14. Änderungen",
+        "title": "15. Änderungen",
         "content": [
           { "type": "paragraph", "text": "Diese Richtlinie kann jederzeit geändert werden. Änderungen werden auf dieser Seite mit dem Aktualisierungsdatum veröffentlicht. Bei wesentlichen Änderungen werden Sie per E-Mail benachrichtigt." }
         ]

@@ -69,3 +69,7 @@ _*/
 
 # Git worktrees managed by worktree-manager
 .worktrees/
+
+# Extension browser (builds et dépendances)
+extension/dist/
+extension/node_modules/

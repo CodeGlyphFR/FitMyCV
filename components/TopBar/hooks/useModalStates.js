@@ -343,6 +343,9 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     }
   }
 
+  // Extension Tutorial
+  const [openExtensionTutorial, setOpenExtensionTutorial] = React.useState(false);
+
   // User menu
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const [userMenuRect, setUserMenuRect] = React.useState(null);
@@ -460,6 +463,10 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     jobTitleConfirmModal,
     confirmJobTitleGeneration,
     cancelJobTitleConfirmation,
+
+    // Extension Tutorial
+    openExtensionTutorial,
+    setOpenExtensionTutorial,
 
     // User Menu
     userMenuOpen,

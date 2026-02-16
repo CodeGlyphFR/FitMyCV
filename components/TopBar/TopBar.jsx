@@ -8,6 +8,7 @@ import { useNotifications } from "@/components/notifications/NotificationProvide
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { useLinkHistory } from "@/hooks/useLinkHistory";
+import { useExtensionDetected } from "@/hooks/useExtensionDetected";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useOutsideClick } from "@/hooks/useOutsideClick";
 import DefaultCvIcon from "@/components/ui/DefaultCvIcon";
@@ -63,6 +64,7 @@ export default function TopBar() {
   const { t, language } = useLanguage();
   const { settings } = useSettings();
   const { history: linkHistory, addLinksToHistory, deleteLink: deleteLinkHistory, refreshHistory: refreshLinkHistory } = useLinkHistory();
+  const extensionDetected = useExtensionDetected();
   const { currentStep, onboardingState } = useOnboarding();
   const { showCosts, getCost } = useCreditCost();
   const { getProgress } = usePipelineProgressContext();
@@ -124,6 +126,12 @@ export default function TopBar() {
     addNotification,
     t,
   });
+
+  // Extension tutorial: fermer le générateur et ouvrir le tuto
+  const handleOpenExtensionTutorial = React.useCallback(() => {
+    generator.closeGenerator();
+    modals.setOpenExtensionTutorial(true);
+  }, [generator, modals]);
 
   // Subscription data hook
   const { planName, planIcon, creditBalance, creditRatio, creditsOnlyMode, loading: subscriptionLoading } = useSubscriptionData();
@@ -670,6 +678,8 @@ export default function TopBar() {
         refreshLinkHistory={refreshLinkHistory}
         baseSelectorRef={baseSelectorRef}
         baseDropdownRef={baseDropdownRef}
+        extensionDetected={extensionDetected}
+        onOpenExtensionTutorial={handleOpenExtensionTutorial}
         t={t}
       />
 

@@ -1,0 +1,97 @@
+{
+  "header": {
+    "credits": "{credits} credits",
+    "logout": "Logout"
+  },
+  "login": {
+    "title": "Login",
+    "subtitle": "Sign in with your FitMyCV account",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "your@email.com",
+    "passwordPlaceholder": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in...",
+    "or": "or",
+    "continueGoogle": "Continue with Google",
+    "continueGithub": "Continue with GitHub",
+    "forgotPassword": "Forgot password?",
+    "createAccount": "Create an account",
+    "errors": {
+      "emptyFields": "Please fill in all fields",
+      "connectionError": "Connection error. Check your internet connection."
+    }
+  },
+  "cvSelector": {
+    "empty": "No CV found.",
+    "createLink": "Create one on FitMyCV",
+    "loadError": "Error loading CVs"
+  },
+  "offers": {
+    "addButton": "+ Add offer from this page",
+    "extracting": "Extracting...",
+    "noContent": "No content extracted",
+    "alreadyAdded": "Offer already added",
+    "extractError": "Extraction error",
+    "emptyState": "No offers added. Browse a job site and click above.",
+    "noTitle": "Untitled",
+    "removeTitle": "Remove",
+    "creditsCost": "Cost: {total} credits ({count} x {cost})",
+    "creditsInsufficient": "Insufficient credits. You need {missing} more credits.",
+    "generateButton": "Generate {count} CV",
+    "generateButtonDefault": "Generate CVs",
+    "submitError": "Error sending request"
+  },
+  "progress": {
+    "defaultTitle": "CV Generation",
+    "cancelTitle": "Cancel",
+    "clearButton": "Clear",
+    "steps": {
+      "classify": "Classifying\u2026",
+      "batch_experience": "Adapting experiences\u2026",
+      "batch_project": "Adapting projects\u2026",
+      "batch_extras": "Adapting extras\u2026",
+      "batch_education": "Adapting education\u2026",
+      "batch_languages": "Adapting languages\u2026",
+      "batch_skills": "Adapting skills\u2026",
+      "batch_summary": "Writing summary\u2026",
+      "recompose": "Assembling CV\u2026"
+    },
+    "status": {
+      "completed": "CV generated \u2713",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "analyzing": "Analyzing offer\u2026",
+      "extracting": "Extracting offer\u2026",
+      "queued": "Queued\u2026",
+      "running": "Processing\u2026"
+    }
+  },
+  "errors": {
+    "sessionExpired": "Session expired",
+    "invalidCredentials": "Incorrect email or password",
+    "emailNotVerified": "Email not verified. Check your inbox.",
+    "emailAndPasswordRequired": "Email and password required",
+    "tokenRequired": "Session required",
+    "tokenExpired": "Session expired",
+    "tokenInvalid": "Invalid session",
+    "serviceUnavailable": "Service temporarily unavailable (maintenance)",
+    "baseFileRequired": "Base CV required",
+    "offersRequired": "At least one offer is required",
+    "offerContentInsufficient": "Insufficient offer content",
+    "sourceCvNotFound": "Source CV not found",
+    "cancelParamsMissing": "Missing cancellation parameters",
+    "taskNotFound": "Task not found",
+    "notAuthenticated": "Not authenticated",
+    "serverError": "Server error",
+    "limitReached": "Insufficient credits"
+  },
+  "detector": {
+    "success": "\u2713 Added",
+    "duplicate": "Already added",
+    "error": "\u2715 Error"
+  },
+  "langSelector": {
+    "title": "Language"
+  }
+}
