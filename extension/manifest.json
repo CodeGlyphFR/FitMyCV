@@ -1,5 +1,15 @@
 {
   "manifest_version": 3,
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "extension@fitmycv.io",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "data_collected": false,
+        "required": ["none"]
+      }
+    }
+  },
   "name": "FitMyCV - Job Offer Extractor",
   "version": "1.0.0",
   "description": "Extract job offers and generate tailored CVs with FitMyCV.io",
@@ -15,6 +25,7 @@
   ],
   "background": {
     "service_worker": "background/service-worker.js",
+    "scripts": ["background/service-worker.js"],
     "type": "module"
   },
   "action": {
