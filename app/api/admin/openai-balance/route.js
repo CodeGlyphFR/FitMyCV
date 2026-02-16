@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/session';
 
 // Simple in-memory cache
 let cachedBalance = null;
@@ -15,6 +16,11 @@ const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
  */
 export async function GET() {
   try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+    }
+
     // Check cache first
     if (cachedBalance !== null && cacheTimestamp && Date.now() - cacheTimestamp < CACHE_DURATION_MS) {
       return NextResponse.json({
